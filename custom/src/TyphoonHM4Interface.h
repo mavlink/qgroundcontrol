@@ -32,6 +32,7 @@ public:
     void    enterBindMode           ();
     void    initM4                  ();
     QString m4StateStr              ();
+    void    resetBind               ();
 
     CameraControl* cameraControl    () { return _cameraControl; }
 
@@ -97,7 +98,8 @@ signals:
     void    controllerLocationChanged           ();
     void    destroyed                           ();
     //-- WIFI
-    void    newWifiSSID                         (QString ssid);
+    void    newWifiSSID                         (QString ssid, int rssi);
+    void    newWifiRSSI                         (int rssi);
     void    scanComplete                        ();
     void    authenticationError                 ();
     void    wifiConnected                       ();
@@ -134,6 +136,7 @@ private:
     ControllerLocation      _controllerLocation;
     bool                    _binding;
     bool                    _bound;
+    bool                    _resetBind;
     Vehicle*                _vehicle;
     QNetworkAccessManager*  _networkManager;
     CameraControl*          _cameraControl;

@@ -19,7 +19,7 @@ class TyphoonHQuickInterface : public QObject
     Q_OBJECT
 public:
     TyphoonHQuickInterface(QObject* parent = NULL);
-    ~TyphoonHQuickInterface() {}
+    ~TyphoonHQuickInterface();
 
     //-- QtQuick Interface
     enum M4State {
@@ -46,12 +46,15 @@ public:
     Q_PROPERTY(bool             scanningWiFi    READ    scanningWiFi                        NOTIFY scanningWiFiChanged)
     Q_PROPERTY(bool             bindingWiFi     READ    bindingWiFi                         NOTIFY bindingWiFiChanged)
     Q_PROPERTY(QString          connectedSSID   READ    connectedSSID                       NOTIFY connectedSSIDChanged)
+    Q_PROPERTY(int              rssi            READ    rssi                                NOTIFY rssiChanged)
 
     Q_INVOKABLE void enterBindMode  ();
     Q_INVOKABLE void initM4         ();
     Q_INVOKABLE void startScan      ();
+    Q_INVOKABLE void stopScan       ();
     Q_INVOKABLE void bindWIFI       (QString ssid, QString password);
     Q_INVOKABLE bool isWIFIConnected();
+    Q_INVOKABLE void resetWifi      ();
 
     M4State     m4State             ();
     QString     m4StateStr          ();
@@ -71,6 +74,7 @@ public:
     QStringList ssidList            () { return _ssidList; }
     bool        scanningWiFi        () { return _scanningWiFi; }
     bool        bindingWiFi         () { return _bindingWiFi; }
+    int         rssi                () { return _rssi; }
 
     void    init                    (TyphoonHM4Interface* pHandler);
 
@@ -83,19 +87,28 @@ signals:
     void    wifiConnected               ();
     void    connectedSSIDChanged        ();
     void    bindingWiFiChanged          ();
+    void    rssiChanged                 ();
 
 private slots:
     void    _m4StateChanged             ();
     void    _destroyed                  ();
     void    _controllerLocationChanged  ();
-    void    _newSSID                    (QString ssid);
+    void    _newSSID                    (QString ssid, int rssi);
+    void    _newRSSI                    (int rssi);
     void    _scanComplete               ();
     void    _authenticationError        ();
     void    _wifiConnected              ();
+    void    _scanWifi                   ();
+    void    _delayedBind                ();
 
 private:
-    TyphoonHM4Interface*   _pHandler;
-    QStringList         _ssidList;
-    bool                _scanningWiFi;
-    bool                _bindingWiFi;
+    TyphoonHM4Interface*    _pHandler;
+    QStringList             _ssidList;
+    QString                 _ssid;
+    QString                 _password;
+    QTimer                  _scanTimer;
+    bool                    _scanEnabled;
+    bool                    _scanningWiFi;
+    bool                    _bindingWiFi;
+    int                     _rssi;
 };

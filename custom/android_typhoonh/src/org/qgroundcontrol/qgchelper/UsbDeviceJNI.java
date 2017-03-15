@@ -41,7 +41,8 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
 
     // WiFi: https://stackoverflow.com/questions/36098871/how-to-search-and-connect-to-a-specific-wifi-network-in-android-programmatically/36099552#36099552
 
-    private static native void nativeNewWifiItem(String ssid);
+    private static native void nativeNewWifiItem(String ssid, int rssi);
+    private static native void nativeNewWifiRSSI(int rssi);
     private static native void nativeScanComplete();
     private static native void nativeAuthError();
     private static native void nativeWifiConnected();
@@ -78,6 +79,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         //-- WiFi
         mainWifi = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+        mainWifi.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "QGCScanner");
         receiverWifi = new WifiReceiver();
         if(mainWifi.isWifiEnabled() == false) {
             mainWifi.setWifiEnabled(true);
@@ -86,6 +88,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
         filter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
         filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
         filter.addAction(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
+        filter.addAction(WifiManager.RSSI_CHANGED_ACTION);
         registerReceiver(receiverWifi, filter);
     }
 
@@ -116,6 +119,27 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     }
 
     public static void restoreScreenOn() {
+    }
+
+    public static void disconnectWifi() {
+        mainWifi.disconnect();
+    }
+
+    public static void reconnectWifi() {
+        mainWifi.reconnect();
+    }
+
+    public static void resetWifi() {
+        List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
+        //-- Disable everything
+        mainWifi.disconnect();
+        for( WifiConfiguration i : list ) {
+            if(i.SSID != null) {
+                mainWifi.removeNetwork(i.networkId);
+            }
+        }
+        currentConnection = "";
+        mainWifi.saveConfiguration();
     }
 
     public static void bindSSID(String ssid, String passphrase) {
@@ -176,17 +200,26 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
         return currentConnection;
     }
 
+    public static void enableWiFi() {
+        mainWifi.setWifiEnabled(true);
+    }
+
+    public static void disableWiFi() {
+        mainWifi.setWifiEnabled(false);
+    }
+
     class WifiReceiver extends BroadcastReceiver {
         public void onReceive(Context c, Intent intent) {
             try {
                 if(intent.getAction().equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)) {
                     if(receiverMode == ReceiverMode.SCANNING) {
                         List<ScanResult> wifiList = mainWifi.getScanResults();
-                        for(int i = 0; i < wifiList.size(); i++) {
-                            Log.i(TAG, "SSID: " + wifiList.get(i).SSID + " | " + wifiList.get(i).capabilities + " | " + wifiList.get(i).frequency + " | " + wifiList.get(i).level);
-                            nativeNewWifiItem(wifiList.get(i).SSID);
+                        if (wifiList != null) {
+                            for(int i = 0; i < wifiList.size(); i++) {
+                                //Log.i(TAG, "SSID: " + wifiList.get(i).SSID + " | " + wifiList.get(i).capabilities + " | " + wifiList.get(i).frequency + " | " + wifiList.get(i).level);
+                                nativeNewWifiItem(wifiList.get(i).SSID, wifiList.get(i).level);
+                            }
                         }
-                        receiverMode = ReceiverMode.DISABLED;
                         nativeScanComplete();
                     }
                 } else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
@@ -217,6 +250,10 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
                             nativeAuthError();
                         }
                     }
+                } else if (intent.getAction().equals(WifiManager.RSSI_CHANGED_ACTION)) {
+                    WifiInfo wi = mainWifi.getConnectionInfo();
+                    Log.e(TAG, "RSSI: " + wi.getRssi());
+                    nativeNewWifiRSSI(wi.getRssi());
                 }
             } catch(Exception e) {
             }

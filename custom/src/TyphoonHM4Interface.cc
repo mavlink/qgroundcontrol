@@ -85,6 +85,7 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     , _sendRxInfoEnd(false)
     , _binding(false)
     , _bound(false)
+    , _resetBind(false)
     , _vehicle(NULL)
     , _networkManager(NULL)
     , _cameraControl(NULL)
@@ -161,6 +162,14 @@ TyphoonHM4Interface::init(bool skipConnections)
 }
 
 //-----------------------------------------------------------------------------
+void
+TyphoonHM4Interface::resetBind() {
+    _resetBind = true;
+    _rxBindInfoFeedback.clear();
+    _unbind();
+}
+
+//-----------------------------------------------------------------------------
 QString
 TyphoonHM4Interface::m4StateStr()
 {
@@ -191,14 +200,19 @@ TyphoonHM4Interface::m4StateStr()
 void
 TyphoonHM4Interface::_vehicleReady(bool ready)
 {
-    if(ready && _vehicle) {
-        _cameraControl->setVehicle(_vehicle);
-        _initStreaming();
-        //-- First boot, not bound
-        if(_m4State == TyphoonHQuickInterface::M4_STATE_AWAIT) {
-            enterBindMode();
-        } else if(_m4State == TyphoonHQuickInterface::M4_STATE_RUN && !_bound) {
-            enterBindMode();
+    if(_vehicle) {
+        if(ready) {
+            qCDebug(YuneecLog) << "_vehicleReady( YES )";
+            _cameraControl->setVehicle(_vehicle);
+            _initStreaming();
+            //-- First boot, not bound
+            if(_m4State == TyphoonHQuickInterface::M4_STATE_AWAIT) {
+                enterBindMode();
+            } else if(_m4State == TyphoonHQuickInterface::M4_STATE_RUN && (!_bound || _resetBind)) {
+                enterBindMode();
+            }
+        } else {
+            qCDebug(YuneecLog) << "_vehicleReady( NOT )";
         }
     }
 }
@@ -218,6 +232,7 @@ void
 TyphoonHM4Interface::_vehicleAdded(Vehicle* vehicle)
 {
     if(!_vehicle) {
+        qCDebug(YuneecLog) << "_vehicleAdded()";
         _vehicle = vehicle;
         connect(_vehicle, &Vehicle::remoteControlRSSIChanged, this, &TyphoonHM4Interface::_remoteControlRSSIChanged);
         //-- There are two defines for the argument to this function. One, in theory sets the
@@ -232,10 +247,12 @@ void
 TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
 {
     if(_vehicle == vehicle) {
+        qCDebug(YuneecLog) << "_vehicleRemoved()";
         disconnect(_vehicle, &Vehicle::remoteControlRSSIChanged, this, &TyphoonHM4Interface::_remoteControlRSSIChanged);
         _cameraControl->setVehicle(NULL);
         _vehicle = NULL;
         _bound = false;
+        _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
     }
 }
 
@@ -298,9 +315,10 @@ TyphoonHM4Interface::enterBindMode()
 void
 TyphoonHM4Interface::softReboot()
 {
-    if(_bound) {
+    if(_bound && !_resetBind) {
         qCDebug(YuneecLog) << "softReboot() -> Already bound. Skipping it...";
     } else {
+        _resetBind = false;
         qCDebug(YuneecLog) << "softReboot()";
         _timer.stop();
         if(_commPort) {

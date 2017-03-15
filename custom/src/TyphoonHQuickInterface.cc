@@ -5,6 +5,8 @@
  *
  */
 
+#include "QGCApplication.h"
+
 #include "TyphoonHQuickInterface.h"
 #include "TyphoonHM4Interface.h"
 
@@ -15,14 +17,34 @@
 extern const char* jniClassName;
 #endif
 
+#if defined __android__
+void
+reset_jni()
+{
+    QAndroidJniEnvironment env;
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+}
+#endif
+
 //-----------------------------------------------------------------------------
 TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     : QObject(parent)
     , _pHandler(NULL)
+    , _scanEnabled(false)
     , _scanningWiFi(false)
     , _bindingWiFi(false)
+    , _rssi(0)
 {
+    qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
+}
 
+//-----------------------------------------------------------------------------
+TyphoonHQuickInterface::~TyphoonHQuickInterface()
+{
+    qCDebug(YuneecLog) << "TyphoonHQuickInterface Destroyed";
 }
 
 //-----------------------------------------------------------------------------
@@ -35,9 +57,11 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(_pHandler, &TyphoonHM4Interface::destroyed,                    this, &TyphoonHQuickInterface::_destroyed);
         connect(_pHandler, &TyphoonHM4Interface::controllerLocationChanged,    this, &TyphoonHQuickInterface::_controllerLocationChanged);
         connect(_pHandler, &TyphoonHM4Interface::newWifiSSID,                  this, &TyphoonHQuickInterface::_newSSID);
+        connect(_pHandler, &TyphoonHM4Interface::newWifiRSSI,                  this, &TyphoonHQuickInterface::_newRSSI);
         connect(_pHandler, &TyphoonHM4Interface::scanComplete,                 this, &TyphoonHQuickInterface::_scanComplete);
         connect(_pHandler, &TyphoonHM4Interface::authenticationError,          this, &TyphoonHQuickInterface::_authenticationError);
         connect(_pHandler, &TyphoonHM4Interface::wifiConnected,                this, &TyphoonHQuickInterface::_wifiConnected);
+        connect(&_scanTimer, &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
     }
 }
 
@@ -147,49 +171,42 @@ void
 TyphoonHQuickInterface::startScan()
 {
     _ssidList.clear();
-    _scanningWiFi = true;
-    emit scanningWiFiChanged();
+    _scanEnabled  = true;
     emit ssidListChanged();
 #if defined __android__
-    QAndroidJniEnvironment env;
-    if (env->ExceptionCheck()) {
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-    }
-    QAndroidJniObject::callStaticMethod<void>(jniClassName, "startWifiScan", "()V");
+    _scanWifi();
 #else
-    _newSSID(QString("Some SSID"));
-    _newSSID(QString("Another SSID"));
-    _newSSID(QString("Yet Another SSID"));
-    _newSSID(QString("More SSID"));
-    _newSSID(QString("CIA Headquarters"));
-    _newSSID(QString("Trump Putin Direct"));
-    _newSSID(QString("Short"));
-    _newSSID(QString("A Whole Lot Longer and Useless"));
+    _newSSID(QString("Some SSID"), 0);
+    _newSSID(QString("Another SSID"), -10);
+    _newSSID(QString("Yet Another SSID"), -20);
+    _newSSID(QString("More SSID"), -30);
+    _newSSID(QString("CIA Headquarters"), -40);
+    _newSSID(QString("Trump Putin Direct"), -50);
+    _newSSID(QString("Short"), -60);
+    _newSSID(QString("A Whole Lot Longer and Useless"), -90);
 #endif
 }
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::bindWIFI(QString ssid, QString password)
+TyphoonHQuickInterface::stopScan()
 {
-    _ssidList.clear();
-    emit ssidListChanged();
-    _bindingWiFi = true;
-    emit bindingWiFiChanged();
+    _scanTimer.stop();
+    _scanEnabled = false;
+    _scanningWiFi = false;
+    emit scanningWiFiChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_scanWifi()
+{
 #if defined __android__
-    QAndroidJniEnvironment env;
-    if (env->ExceptionCheck()) {
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-    }
-    QAndroidJniObject javaSSID = QAndroidJniObject::fromString(ssid);
-    QAndroidJniObject javaPassword = QAndroidJniObject::fromString(password);
-    QAndroidJniObject::callStaticMethod<void>(jniClassName, "bindSSID", "(Ljava/lang/String;Ljava/lang/String;)V", javaSSID.object<jstring>(), javaPassword.object<jstring>());
-#else
-    Q_UNUSED(ssid);
-    Q_UNUSED(password);
+    reset_jni();
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "startWifiScan", "()V");
 #endif
+    _scanningWiFi = true;
+    emit scanningWiFiChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -198,14 +215,62 @@ TyphoonHQuickInterface::isWIFIConnected()
 {
     bool res = false;
 #if defined __android__
-    QAndroidJniEnvironment env;
-    if (env->ExceptionCheck()) {
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-    }
+    reset_jni();
     res = (bool)QAndroidJniObject::callStaticMethod<jboolean>(jniClassName, "isWIFIConnected", "()B");
 #endif
     return res;
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::resetWifi()
+{
+#if defined __android__
+    stopScan();
+    reset_jni();
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "resetWifi", "()V");
+    startScan();
+    emit connectedSSIDChanged();
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::bindWIFI(QString ssid, QString password)
+{
+    stopScan();
+    _ssidList.clear();
+    emit ssidListChanged();
+    _bindingWiFi = true;
+    emit bindingWiFiChanged();
+    _ssid = ssid;
+    _password = password;
+#if defined __android__
+    reset_jni();
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "disconnectWifi", "()V");
+    //-- There isn't currently a way to disconnect and remove a Vehicle from here.
+    //   The Wifi disconnect above will cause the vehicle to disconnect on its own
+    //   after a heartbeat timeout.
+    QTimer::singleShot(5000, this, &TyphoonHQuickInterface::_delayedBind);
+#else
+    Q_UNUSED(ssid);
+    Q_UNUSED(password);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_delayedBind()
+{
+#if defined __android__
+    if(_pHandler) {
+        _pHandler->resetBind();
+    }
+    reset_jni();
+    QAndroidJniObject javaSSID = QAndroidJniObject::fromString(_ssid);
+    QAndroidJniObject javaPassword = QAndroidJniObject::fromString(_password);
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "bindSSID", "(Ljava/lang/String;Ljava/lang/String;)V", javaSSID.object<jstring>(), javaPassword.object<jstring>());
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -214,26 +279,26 @@ TyphoonHQuickInterface::connectedSSID()
 {
     QString ssid;
 #if defined __android__
-    QAndroidJniEnvironment env;
-    if (env->ExceptionCheck()) {
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-    }
+    reset_jni();
     QAndroidJniObject str = QAndroidJniObject::callStaticObjectMethod(jniClassName, "connectedSSID", "()Ljava/lang/String;");
     ssid = str.toString();
     if(ssid.startsWith("\"")) ssid.remove(0,1);
     if(ssid.endsWith("\""))   ssid.remove(ssid.size()-1,1);
+#else
+    ssid = "CIA Headquarters";
 #endif
     return ssid;
 }
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::_newSSID(QString ssid)
+TyphoonHQuickInterface::_newSSID(QString ssid, int rssi)
 {
+    Q_UNUSED(rssi)
 #if defined(QT_DEBUG)
     if(!_ssidList.contains(ssid)) {
         _ssidList << ssid;
+        _ssidList.sort(Qt::CaseInsensitive);
         emit ssidListChanged();
     }
 #else
@@ -248,8 +313,22 @@ TyphoonHQuickInterface::_newSSID(QString ssid)
 
 //-----------------------------------------------------------------------------
 void
+TyphoonHQuickInterface::_newRSSI(int rssi)
+{
+    if(_rssi != rssi) {
+        _rssi = rssi;
+        emit rssiChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 TyphoonHQuickInterface::_scanComplete()
 {
+    if(_scanEnabled) {
+        _scanTimer.setSingleShot(true);
+        _scanTimer.start(2000);
+    }
     _scanningWiFi = false;
     emit scanningWiFiChanged();
 }
@@ -258,16 +337,19 @@ TyphoonHQuickInterface::_scanComplete()
 void
 TyphoonHQuickInterface::_authenticationError()
 {
+    qCDebug(YuneecLog) << "TyphoonHQuickInterface::_authenticationError()";
     _bindingWiFi = false;
     emit bindingWiFiChanged();
     emit connectedSSIDChanged();
     emit authenticationError();
+    startScan();
 }
 
 //-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::_wifiConnected()
 {
+    qCDebug(YuneecLog) << "TyphoonHQuickInterface::_wifiConnected()";
     _bindingWiFi = false;
     emit bindingWiFiChanged();
     emit connectedSSIDChanged();

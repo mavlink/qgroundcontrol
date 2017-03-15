@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/qml">
         <file alias="TyphoonHQuickInterface/Widgets/OnOffSwitch.qml">res/OnOffSwitch.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/SSIDButton.qml">res/SSIDButton.qml</file>
         <file alias="TyphoonHQuickInterface/Widgets/qmldir">res/qmldir</file>
     </qresource>
     <qresource prefix="/typhoonh">
@@ -10,6 +11,7 @@
         <file alias="camera.wav">res/camera.wav</file>
         <file alias="CameraIndicator.qml">res/CameraIndicator.qml</file>
         <file alias="CogWheel.svg">res/CogWheel.svg</file>
+        <file alias="checkMark.svg">res/checkMark.svg</file>
         <file alias="CompassIndicator.svg">res/CompassIndicator.svg</file>
         <file alias="InstrumentWidget.qml">res/InstrumentWidget.qml</file>
         <file alias="logoWhite.svg">res/logoWhite.svg</file>
