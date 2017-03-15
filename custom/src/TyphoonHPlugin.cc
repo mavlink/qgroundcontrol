@@ -140,7 +140,7 @@ bool TyphoonHOptions::showSensorCalibrationLevel(void) const
 
 bool TyphoonHOptions::showSensorCalibrationOrient(void) const
 {
-    return qgcApp()->toolbox()->corePlugin()->showAdvancedUI();
+    return false;
 }
 
 //-----------------------------------------------------------------------------
