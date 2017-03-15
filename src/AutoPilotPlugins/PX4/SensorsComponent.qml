@@ -7,18 +7,18 @@
  *
  ****************************************************************************/
 
+import QtQuick                  2.3
+import QtQuick.Controls         1.2
+import QtQuick.Controls.Styles  1.4
+import QtQuick.Dialogs          1.2
 
-import QtQuick 2.3
-import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.4
-import QtQuick.Dialogs 1.2
-
-import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
-import QGroundControl.Palette 1.0
-import QGroundControl.Controls 1.0
-import QGroundControl.ScreenTools 1.0
-import QGroundControl.Controllers 1.0
+import QGroundControl               1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.ScreenTools   1.0
+import QGroundControl.Controllers   1.0
 
 SetupPage {
     id:             sensorsPage
@@ -336,6 +336,7 @@ SetupPage {
                     width:          parent.buttonWidth
                     text:           qsTr("Compass")
                     indicatorGreen: cal_mag0_id.value != 0
+                    visible:        QGroundControl.corePlugin.options.showSensorCalibrationCompass
 
                     onClicked: {
                         preCalibrationDialogType = "compass"
@@ -349,6 +350,7 @@ SetupPage {
                     width:          parent.buttonWidth
                     text:           qsTr("Gyroscope")
                     indicatorGreen: cal_gyro0_id.value != 0
+                    visible:        QGroundControl.corePlugin.options.showSensorCalibrationGyro
 
                     onClicked: {
                         preCalibrationDialogType = "gyro"
@@ -362,6 +364,7 @@ SetupPage {
                     width:          parent.buttonWidth
                     text:           qsTr("Accelerometer")
                     indicatorGreen: cal_acc0_id.value != 0
+                    visible:        QGroundControl.corePlugin.options.showSensorCalibrationAccel
 
                     onClicked: {
                         preCalibrationDialogType = "accel"
@@ -376,6 +379,7 @@ SetupPage {
                     text:           qsTr("Level Horizon")
                     indicatorGreen: sens_board_x_off.value != 0 || sens_board_y_off != 0 | sens_board_z_off != 0
                     enabled:        cal_acc0_id.value != 0 && cal_gyro0_id.value != 0
+                    visible:        QGroundControl.corePlugin.options.showSensorCalibrationLevel
 
                     onClicked: {
                         preCalibrationDialogType = "level"
@@ -388,7 +392,7 @@ SetupPage {
                     id:             airspeedButton
                     width:          parent.buttonWidth
                     text:           qsTr("Airspeed")
-                    visible:        (controller.vehicle.fixedWing || controller.vehicle.vtol) && controller.getParameterFact(-1, "CBRK_AIRSPD_CHK").value != 162128
+                    visible:        (controller.vehicle.fixedWing || controller.vehicle.vtol) && controller.getParameterFact(-1, "CBRK_AIRSPD_CHK").value != 162128 && QGroundControl.corePlugin.options.showSensorCalibrationAirspeed
                     indicatorGreen: sens_dpres_off.value != 0
 
                     onClicked: {
@@ -410,6 +414,8 @@ SetupPage {
                     id:         setOrientationsButton
                     width:      parent.buttonWidth
                     text:       qsTr("Set Orientations")
+                    visible:    QGroundControl.corePlugin.options.showSensorCalibrationOrient
+
                     onClicked:  {
                         setOrientationsDialogShowBoardOrientation = true
                         showDialog(setOrientationsDialogComponent, qsTr("Set Orientations"), sensorsPage.showDialogDefaultWidth, StandardButton.Ok)

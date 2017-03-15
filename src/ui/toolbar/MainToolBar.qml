@@ -67,28 +67,6 @@ Rectangle {
         flyButton.checked = true
     }
 
-    // Easter egg mechanism
-    MouseArea {
-        anchors.fill: parent
-        onClicked: {
-            console.log("easter egg click", ++_clickCount)
-            eggTimer.restart()
-            if (_clickCount == 5) {
-                QGroundControl.corePlugin.showAdvancedUI = true
-            } else if (_clickCount == 7) {
-                QGroundControl.corePlugin.showTouchAreas = true
-            }
-        }
-
-        property int _clickCount: 0
-
-        Timer {
-            id:             eggTimer
-            interval:       1000
-            onTriggered:    parent._clickCount = 0
-        }
-    }
-
     /// Bottom single pixel divider
     Rectangle {
         anchors.left:   parent.left
@@ -230,17 +208,6 @@ Rectangle {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             Layout.fillWidth:   true
-            visible:            _activeVehicle
-        }
-
-        QGCLabel {
-            id:                     waitForVehicle
-            anchors.verticalCenter: parent.verticalCenter
-            text:                   qsTr("Waiting For Vehicle Connection")
-            font.pointSize:         ScreenTools.mediumFontPointSize
-            font.family:            ScreenTools.demiboldFontFamily
-            color:                  colorRed
-            visible:                !_activeVehicle
         }
     }
 

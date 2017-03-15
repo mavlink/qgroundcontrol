@@ -646,7 +646,7 @@ void RadioComponentController::_setInternalCalibrationValuesFromParameters(void)
             if (paramFact) {
                 paramChannel = paramFact->rawValue().toInt();
 
-                if (paramChannel != 0) {
+                if (paramChannel > 0 && paramChannel <= _chanMax()) {
                     _rgFunctionChannelMapping[i] = paramChannel - 1;
                     _rgChannelInfo[paramChannel - 1].function = (enum rcCalFunctions)i;
                 }
