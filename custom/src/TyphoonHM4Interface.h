@@ -32,6 +32,7 @@ public:
     void    enterBindMode           ();
     void    initM4                  ();
     QString m4StateStr              ();
+    void    resetBind               ();
 
     CameraControl* cameraControl    () { return _cameraControl; }
 
@@ -57,6 +58,7 @@ private slots:
     void    _remoteControlRSSIChanged           (uint8_t rssi);
 
 private:
+    bool    _exitToAwait                        ();
     bool    _enterRun                           ();
     bool    _exitRun                            ();
     bool    _startBind                          ();
@@ -97,7 +99,8 @@ signals:
     void    controllerLocationChanged           ();
     void    destroyed                           ();
     //-- WIFI
-    void    newWifiSSID                         (QString ssid);
+    void    newWifiSSID                         (QString ssid, int rssi);
+    void    newWifiRSSI                         ();
     void    scanComplete                        ();
     void    authenticationError                 ();
     void    wifiConnected                       ();
@@ -134,6 +137,7 @@ private:
     ControllerLocation      _controllerLocation;
     bool                    _binding;
     bool                    _bound;
+    bool                    _resetBind;
     Vehicle*                _vehicle;
     QNetworkAccessManager*  _networkManager;
     CameraControl*          _cameraControl;

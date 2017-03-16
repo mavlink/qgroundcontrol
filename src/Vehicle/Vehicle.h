@@ -290,7 +290,8 @@ public:
     Q_PROPERTY(bool                 coaxialMotors           READ coaxialMotors                                          CONSTANT)
     Q_PROPERTY(bool                 xConfigMotors           READ xConfigMotors                                          CONSTANT)
     Q_PROPERTY(bool                 isOfflineEditingVehicle READ isOfflineEditingVehicle                                CONSTANT)
-    Q_PROPERTY(QString              brandImage              READ brandImage                                             NOTIFY firmwareTypeChanged)
+    Q_PROPERTY(QString              brandImageIndoor        READ brandImageIndoor                                       NOTIFY firmwareTypeChanged)
+    Q_PROPERTY(QString              brandImageOutdoor       READ brandImageOutdoor                                      NOTIFY firmwareTypeChanged)
     Q_PROPERTY(QStringList          unhealthySensors        READ unhealthySensors                                       NOTIFY unhealthySensorsChanged)
     Q_PROPERTY(QString              missionFlightMode       READ missionFlightMode                                      CONSTANT)
     Q_PROPERTY(QString              rtlFlightMode           READ rtlFlightMode                                          CONSTANT)
@@ -567,7 +568,8 @@ public:
     uint8_t         baseMode                () const { return _base_mode; }
     uint32_t        customMode              () const { return _custom_mode; }
     bool            isOfflineEditingVehicle () const { return _offlineEditingVehicle; }
-    QString         brandImage              () const;
+    QString         brandImageIndoor        () const;
+    QString         brandImageOutdoor       () const;
     QStringList     unhealthySensors        () const;
     QString         missionFlightMode       () const;
     QString         rtlFlightMode           () const;
@@ -656,6 +658,7 @@ public:
     const QVariantList& toolBarIndicators   ();
     const QVariantList& cameraList          (void) const;
 
+    bool supportsMissionItemInt(void) const { return _supportsMissionItemInt; }
 
 public slots:
     /// Sets the firmware plugin instance data associated with this Vehicle. This object will be parented to the Vehicle
@@ -820,6 +823,7 @@ private:
     void _sendNextQueuedMavCommand(void);
     void _updatePriorityLink(void);
     void _commonInit(void);
+    void _startMissionRequest(void);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
@@ -877,6 +881,8 @@ private:
     uint32_t        _telemetryTXBuffer;
     uint32_t        _telemetryLNoise;
     uint32_t        _telemetryRNoise;
+    bool            _vehicleCapabilitiesKnown;
+    bool            _supportsMissionItemInt;
 
     typedef struct {
         int     component;

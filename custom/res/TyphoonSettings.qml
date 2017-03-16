@@ -18,6 +18,7 @@ import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Palette               1.0
 import QGroundControl.Controllers           1.0
 import TyphoonHQuickInterface               1.0
+import TyphoonHQuickInterface.Widgets       1.0
 
 QGCView {
     id:                 qgcView
@@ -29,7 +30,7 @@ QGCView {
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
     property var  _selectedSSID:                ""
-    property var  _telemetryText:               qsTr("Binding")
+    property var  _connectText:                 qsTr("Connect")
 
     ExclusiveGroup  { id: ssidGroup }
     QGCPalette      { id: qgcPal }
@@ -37,153 +38,170 @@ QGCView {
     Connections {
         target: TyphoonHQuickInterface
         onAuthenticationError: {
+            QGroundControl.skipSetupPage = false
             authErrorDialog.visible = true
+        }
+        onWifiConnected: {
+            QGroundControl.skipSetupPage = false
+            TyphoonHQuickInterface.stopScan();
+            mainWindow.showFlyView()
+        }
+        onScanningWiFiChanged: {
+            if(TyphoonHQuickInterface.scanningWiFi) {
+                imageRotation.start()
+            }
+        }
+        onBindTimeout: {
+            QGroundControl.skipSetupPage = false
+            timeoutDialog.visible = true;
         }
     }
 
-    function getWiFiStatus() {
-        if(TyphoonHQuickInterface.bindingWiFi) {
-            return qsTr("Connecting...")
-        }
-        if(TyphoonHQuickInterface.scanningWiFi) {
-            return qsTr("Scanning...")
-        }
-        if(TyphoonHQuickInterface.connectedSSID != "") {
-            return qsTr("Connected to ") + TyphoonHQuickInterface.connectedSSID
-        }
-        return ""
+    Component.onDestruction: {
+        TyphoonHQuickInterface.stopScan();
+    }
+
+    Component.onCompleted: {
+        TyphoonHQuickInterface.startScan();
     }
 
     QGCViewPanel {
         id:             panel
         anchors.fill:   parent
+        QGCLabel {
+            text:               qsTr("Connecting...")
+            visible:            TyphoonHQuickInterface.bindingWiFi
+            font.family:        ScreenTools.demiboldFontFamily
+            anchors.top:        parent.top
+            anchors.topMargin:  parent.height * 0.3333
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
+        QGCColoredImage {
+            height:             ScreenTools.defaultFontPixelHeight * 2
+            width:              height
+            source:             "/qmlimages/MapSync.svg"
+            sourceSize.height:  height
+            fillMode:           Image.PreserveAspectFit
+            mipmap:             true
+            smooth:             true
+            color:              qgcPal.buttonText
+            visible:            TyphoonHQuickInterface.bindingWiFi
+            anchors.centerIn:   parent
+            RotationAnimation on rotation {
+                id:             connectionRotation
+                loops:          Animation.Infinite
+                from:           0
+                to:             360
+                duration:       500
+                running:        TyphoonHQuickInterface.bindingWiFi
+            }
+        }
         QGCFlickable {
             clip:               true
             anchors.fill:       parent
             contentHeight:      settingsColumn.height
             contentWidth:       settingsColumn.width
+            visible:            !TyphoonHQuickInterface.bindingWiFi
             Column {
                 id:                 settingsColumn
                 width:              qgcView.width
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
                 //-----------------------------------------------------------------
-                //-- RX/TX Bind
-                /* We are binding automatically now. Leaving it here for the time being.
+                //-- WIFI AP Connection
                 Item {
                     width:              qgcView.width * 0.8
-                    height:             rcBindLabel.height
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    QGCLabel {
-                        id:             rcBindLabel
-                        text:           qsTr("RC Binding")
-                        font.family:    ScreenTools.demiboldFontFamily
-                    }
-                }
-                Rectangle {
-                    height:         rcBindRow.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:          qgcView.width * 0.8
-                    color:          qgcPal.windowShade
-                    anchors.margins: ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    Row {
-                        id:         rcBindRow
-                        spacing:    ScreenTools.defaultFontPixelWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                        Item {
-                            width:              ScreenTools.defaultFontPixelWidth
-                            height:             1
-                        }
-                        QGCButton {
-                            text:       qsTr("Bind")
-                            width:      _labelWidth
-                            enabled:    QGroundControl.multiVehicleManager.activeVehicle
-                            onClicked:  TyphoonHQuickInterface.enterBindMode()
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        Item {
-                            width:              ScreenTools.defaultFontPixelWidth * 2
-                            height:             1
-                        }
-                        QGCLabel {
-                            width:      _editFieldWidth
-                            text:       TyphoonHQuickInterface.m4StateStr
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-                }
-                */
-                //-----------------------------------------------------------------
-                //-- WIFI Bind
-                Item {
-                    width:              qgcView.width * 0.8
-                    height:             wifiBindLabel.height
+                    height:             resetButton.height
                     anchors.margins:    ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
                         id:             wifiBindLabel
-                        text:           _telemetryText
+                        anchors.left:   parent.left
+                        text: {
+                            if(TyphoonHQuickInterface.connectedSSID != "") {
+                                return qsTr("Connected to ") + TyphoonHQuickInterface.connectedSSID
+                            } else {
+                                return qsTr("Connected to Vehicle")
+                            }
+                        }
                         font.family:    ScreenTools.demiboldFontFamily
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    QGCButton {
+                        id:             resetButton
+                        text:           qsTr("Reset All Links")
+                        anchors.right:  parent.right
+                        onClicked: {
+                            QGroundControl.skipSetupPage = true
+                            if(QGroundControl.multiVehicleManager.activeVehicle) {
+                                QGroundControl.multiVehicleManager.activeVehicle.autoDisconnect = true;
+                            }
+                            TyphoonHQuickInterface.resetWifi();
+                        }
+                        anchors.verticalCenter: parent.verticalCenter
                     }
                 }
                 Rectangle {
                     height:         scanCol.height + (ScreenTools.defaultFontPixelHeight * 2)
                     width:          qgcView.width * 0.8
                     color:          qgcPal.windowShade
+                    visible:        !TyphoonHQuickInterface.bindingWiFi
                     anchors.margins: ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     Column {
                         id:         scanCol
                         spacing:    ScreenTools.defaultFontPixelHeight * 0.25
+                        width:      ScreenTools.defaultFontPixelWidth * 40
                         anchors.horizontalCenter: parent.horizontalCenter
                         Item {
                             width:  1
                             height: ScreenTools.defaultFontPixelHeight
                         }
-                        Row {
-                            spacing:        ScreenTools.defaultFontPixelWidth
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            QGCButton {
-                                text:       qsTr("Refresh")
-                                width:      _labelWidth
-                                onClicked:  TyphoonHQuickInterface.startScan()
-                                enabled:    !TyphoonHQuickInterface.scanningWiFi
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            QGCButton {
-                                text:       qsTr("Bind")
-                                width:      _labelWidth
-                                enabled:    _selectedSSID !== "" && _selectedSSID != TyphoonHQuickInterface.connectedSSID
-                                primary:    _selectedSSID !== "" && _selectedSSID != TyphoonHQuickInterface.connectedSSID
-                                onClicked: {
-                                    passwordDialog.visible = true
-                                }
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
                         Item {
-                            width:      1
-                            height:     TyphoonHQuickInterface.ssidList.length > 0 ? ScreenTools.defaultFontPixelHeight : 0
-                        }
-                        Item {
-                            width:      wifiStatusLabel.width
-                            height:     wifiStatusLabel.height * 2
-                            visible:    wifiStatusLabel.text !== ""
+                            width:  ScreenTools.defaultFontPixelWidth * 36
+                            height: scanningIcon.height
                             anchors.horizontalCenter: parent.horizontalCenter
                             QGCLabel {
-                                id:             wifiStatusLabel
-                                text:           getWiFiStatus()
-                                anchors.centerIn: parent
+                                text:           qsTr("Select Vehicle to Connect")
+                                anchors.left:   parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QGCColoredImage {
+                                id:                 scanningIcon
+                                height:             ScreenTools.defaultFontPixelHeight * 2
+                                width:              height
+                                source:             "/qmlimages/MapSync.svg"
+                                sourceSize.height:  height
+                                fillMode:           Image.PreserveAspectFit
+                                mipmap:             true
+                                smooth:             true
+                                color:              qgcPal.buttonText
+                                anchors.right:      parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                RotationAnimation on rotation {
+                                    id:             imageRotation
+                                    loops:          1
+                                    from:           0
+                                    to:             360
+                                    duration:       500
+                                    running:        false
+                                }
+                                MouseArea {
+                                    anchors.fill:   parent
+                                    onClicked:      TyphoonHQuickInterface.startScan();
+                                }
                             }
                         }
                         Repeater {
                             model:          TyphoonHQuickInterface.ssidList
                             delegate:
-                            QGCButton {
-                                width:      ScreenTools.defaultFontPixelWidth * 36
-                                text:       modelData
-                                exclusiveGroup: ssidGroup
+                            SSIDButton {
+                                exclusiveGroup:     ssidGroup
+                                text:               modelData
+                                source:             "qrc:/typhoonh/checkMark.svg"
+                                showIcon:           TyphoonHQuickInterface.connectedSSID === modelData
+                                enabled:            TyphoonHQuickInterface.connectedSSID !== modelData
+                                anchors.horizontalCenter:   parent.horizontalCenter
                                 onClicked:  {
                                     if(_selectedSSID === modelData) {
                                         _selectedSSID = ""
@@ -191,9 +209,9 @@ QGCView {
                                     } else {
                                         _selectedSSID = modelData
                                         checked = true
+                                        passwordDialog.visible = true
                                     }
                                 }
-                                anchors.horizontalCenter: parent.horizontalCenter
                             }
                         }
                     }
@@ -205,7 +223,39 @@ QGCView {
             }
         }
     }
-
+    //-- Connection Timeout
+    Rectangle {
+        id:         timeoutDialog
+        width:      timeoutCol.width  * 1.5
+        height:     timeoutCol.height * 1.5
+        radius:     ScreenTools.defaultFontPixelWidth * 0.5
+        color:      qgcPal.window
+        visible:    false
+        border.color: qgcPal.text
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        Keys.onBackPressed: {
+            timeoutDialog.visible = false
+        }
+        Column {
+            id:         timeoutCol
+            spacing:    ScreenTools.defaultFontPixelHeight
+            anchors.centerIn: parent
+            QGCLabel {
+                text:   qsTr("Connection Timeout")
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            QGCButton {
+                text:       qsTr("Close")
+                width:      _labelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                onClicked:  {
+                    timeoutDialog.visible = false
+                }
+            }
+        }
+    }
+    //-- Authentication Error Dialog
     Rectangle {
         id:         authErrorDialog
         width:      badPpwdCol.width  * 1.5
@@ -224,7 +274,7 @@ QGCView {
             spacing:    ScreenTools.defaultFontPixelHeight
             anchors.centerIn: parent
             QGCLabel {
-                text:   qsTr("Invalid ") + _telemetryText + qsTr(" Password")
+                text:   qsTr("Invalid ") + _connectText + qsTr(" Password")
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             QGCButton {
@@ -237,7 +287,7 @@ QGCView {
             }
         }
     }
-
+    //-- Password Dialog
     Rectangle {
         id:         passwordDialog
         width:      pwdCol.width  * 1.25
@@ -275,8 +325,14 @@ QGCView {
                     enabled:    passwordField.text.length > 7
                     onClicked:  {
                         Qt.inputMethod.hide();
+                        QGroundControl.skipSetupPage = true
+                        //-- If we were connected to something, let it go away when it disconnects.
+                        if(QGroundControl.multiVehicleManager.activeVehicle) {
+                            QGroundControl.multiVehicleManager.activeVehicle.autoDisconnect = true;
+                        }
                         TyphoonHQuickInterface.bindWIFI(_selectedSSID, passwordField.text)
                         _selectedSSID = ""
+                        passwordField.text = ""
                         passwordDialog.visible = false
                     }
                 }
@@ -285,11 +341,12 @@ QGCView {
                     width:      _labelWidth
                     onClicked:  {
                         Qt.inputMethod.hide();
+                        ssidGroup.current = null
+                        passwordField.text = ""
                         passwordDialog.visible = false
                     }
                 }
             }
         }
     }
-
 }

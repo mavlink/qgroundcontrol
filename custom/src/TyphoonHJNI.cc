@@ -34,14 +34,24 @@ jniSetup(JNIEnv *envA, jobject thizA)
 
 //-----------------------------------------------------------------------------
 static void
-jniNewWifiItem(JNIEnv *envA, jobject thizA, jstring jSsid)
+jniNewWifiItem(JNIEnv *envA, jobject thizA, jstring jSsid, jint rssi)
 {
     jniSetup(envA, thizA);
     if(TyphoonHM4Interface::pTyphoonHandler) {
         const char *stringL = envA->GetStringUTFChars(jSsid, NULL);
         QString ssid = QString::fromUtf8(stringL);
         envA->ReleaseStringUTFChars(jSsid, stringL);
-        emit TyphoonHM4Interface::pTyphoonHandler->newWifiSSID(ssid);
+        emit TyphoonHM4Interface::pTyphoonHandler->newWifiSSID(ssid, (int)rssi);
+    }
+}
+
+//-----------------------------------------------------------------------------
+static void
+jniNewWifiRSSI(JNIEnv *envA, jobject thizA)
+{
+    jniSetup(envA, thizA);
+    if(TyphoonHM4Interface::pTyphoonHandler) {
+        emit TyphoonHM4Interface::pTyphoonHandler->newWifiRSSI();
     }
 }
 
@@ -80,7 +90,8 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/)
 {
     //-- Register C++ functions exposed to Android
     static JNINativeMethod javaMethods[] {
-        {"nativeNewWifiItem",  "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniNewWifiItem)},
+        {"nativeNewWifiItem",  "(Ljava/lang/String;I)V", reinterpret_cast<void *>(jniNewWifiItem)},
+        {"nativeNewWifiRSSI",  "()V", reinterpret_cast<void *>(jniNewWifiRSSI)},
         {"nativeScanComplete", "()V", reinterpret_cast<void *>(jniScanComplete)},
         {"nativeAuthError",    "()V", reinterpret_cast<void *>(jniAuthError)},
         {"nativeWifiConnected","()V", reinterpret_cast<void *>(jniWifiConnected)}
