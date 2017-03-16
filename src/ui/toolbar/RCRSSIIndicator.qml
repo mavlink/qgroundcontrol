@@ -24,7 +24,9 @@ Item {
     width:          rssiRow.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    visible:        activeVehicle ? activeVehicle.supportsRadio : true
+    visible:        _activeVehicle ? _activeVehicle.supportsRadio : true
+
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
     Component {
         id: rcRSSIInfo
@@ -45,21 +47,21 @@ Item {
 
                 QGCLabel {
                     id:             rssiLabel
-                    text:           activeVehicle ? (activeVehicle.rcRSSI != 255 ? qsTr("RC RSSI Status") : qsTr("RC RSSI Data Unavailable")) : qsTr("N/A", "No data available")
+                    text:           _activeVehicle ? (_activeVehicle.rcRSSI != 255 ? qsTr("RC RSSI Status") : qsTr("RC RSSI Data Unavailable")) : qsTr("N/A", "No data available")
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
                 GridLayout {
                     id:                 rcrssiGrid
-                    visible:            activeVehicle && activeVehicle.rcRSSI != 255
+                    visible:            _activeVehicle && _activeVehicle.rcRSSI != 255
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     columnSpacing:      ScreenTools.defaultFontPixelWidth
                     columns:            2
                     anchors.horizontalCenter: parent.horizontalCenter
 
                     QGCLabel { text: qsTr("RSSI:") }
-                    QGCLabel { text: activeVehicle ? (activeVehicle.rcRSSI + "%") : 0 }
+                    QGCLabel { text: _activeVehicle ? (_activeVehicle.rcRSSI + "%") : 0 }
                 }
             }
 
@@ -84,14 +86,14 @@ Item {
             sourceSize.height:  height
             source:             "/qmlimages/RC.svg"
             fillMode:           Image.PreserveAspectFit
-            opacity:            activeVehicle ? (((activeVehicle.rcRSSI < 0) || (activeVehicle.rcRSSI > 100)) ? 0.5 : 1) : 0.5
+            opacity:            _activeVehicle ? (((_activeVehicle.rcRSSI < 0) || (_activeVehicle.rcRSSI > 100)) ? 0.5 : 1) : 0.5
             color:              qgcPal.buttonText
         }
 
         SignalStrength {
             anchors.verticalCenter: parent.verticalCenter
             size:                   parent.height * 0.5
-            percent:                activeVehicle ? ((activeVehicle.rcRSSI > 100) ? 0 : activeVehicle.rcRSSI) : 0
+            percent:                _activeVehicle ? ((_activeVehicle.rcRSSI > 100) ? 0 : _activeVehicle.rcRSSI) : 0
         }
     }
 

@@ -27,7 +27,10 @@ QGCColoredImage {
     source:             "/qmlimages/TelemRSSI.svg"
     fillMode:           Image.PreserveAspectFit
     color:              qgcPal.buttonText
-    visible:            activeVehicle ? (activeVehicle.telemetryLRSSI < 0) : false
+    visible:            _activeVehicle ? (_activeVehicle.telemetryLRSSI < 0) : false
+
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
     Component {
         id: telemRSSIInfo
         Rectangle {
@@ -55,19 +58,19 @@ QGCColoredImage {
                     columns:            2
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel { text: qsTr("Local RSSI:") }
-                    QGCLabel { text: activeVehicle.telemetryLRSSI + " dBm" }
+                    QGCLabel { text: _activeVehicle.telemetryLRSSI + " dBm" }
                     QGCLabel { text: qsTr("Remote RSSI:") }
-                    QGCLabel { text: activeVehicle.telemetryRRSSI + " dBm" }
+                    QGCLabel { text: _activeVehicle.telemetryRRSSI + " dBm" }
                     QGCLabel { text: qsTr("RX Errors:") }
-                    QGCLabel { text: activeVehicle.telemetryRXErrors }
+                    QGCLabel { text: _activeVehicle.telemetryRXErrors }
                     QGCLabel { text: qsTr("Errors Fixed:") }
-                    QGCLabel { text: activeVehicle.telemetryFixed }
+                    QGCLabel { text: _activeVehicle.telemetryFixed }
                     QGCLabel { text: qsTr("TX Buffer:") }
-                    QGCLabel { text: activeVehicle.telemetryTXBuffer }
+                    QGCLabel { text: _activeVehicle.telemetryTXBuffer }
                     QGCLabel { text: qsTr("Local Noise:") }
-                    QGCLabel { text: activeVehicle.telemetryLNoise }
+                    QGCLabel { text: _activeVehicle.telemetryLNoise }
                     QGCLabel { text: qsTr("Remote Noise:") }
-                    QGCLabel { text: activeVehicle.telemetryRNoise }
+                    QGCLabel { text: _activeVehicle.telemetryRNoise }
                 }
             }
             Component.onCompleted: {
