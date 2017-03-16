@@ -24,6 +24,8 @@ Item {
 
     signal  activated()
     signal  hideIt(bool state)
+    signal  bigger()
+    signal  smaller()
 
     MouseArea {
         anchors.fill: parent
@@ -31,6 +33,32 @@ Item {
         onClicked: {
             pip.activated()
         }
+    }
+
+    QGCButton {
+        id: largerButton
+        visible: !isHidden
+        anchors.left: parent.left
+        anchors.bottom: smallerButton.top
+        height: 20
+        width: height
+        anchors.margins: 5
+        text: "+"
+        opacity: 0.5
+        onClicked: pip.bigger()
+    }
+
+    QGCButton {
+        id: smallerButton
+        visible: !isHidden
+        anchors.left: parent.left
+        anchors.bottom: closePIP.top
+        height: 20
+        width: height
+        anchors.margins: 5
+        text: "-"
+        opacity: 0.5
+        onClicked: pip.smaller()
     }
 
     //-- PIP Corner Indicator
