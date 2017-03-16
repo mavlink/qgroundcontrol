@@ -27,6 +27,10 @@ FlightMap {
     anchors.fill:   parent
     mapName:        _mapName
 
+    gesture.acceptedGestures: _followVehicle ?
+                                          MapGestureArea.PinchGesture :
+                                          MapGestureArea.PinchGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
+
     property alias  missionController: missionController
     property var    flightWidgets
     property var    rightPanelWidth
@@ -38,6 +42,8 @@ FlightMap {
     property var    _gotoHereCoordinate:            QtPositioning.coordinate()
     property int    _retaskSequence:                0
     property real   _toolButtonTopMargin:           parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
+
+    property bool   followVehicleConnection:        _followVehicle  ///< Only use to create connection on
 
     Component.onCompleted: {
         QGroundControl.flightMapPosition = center

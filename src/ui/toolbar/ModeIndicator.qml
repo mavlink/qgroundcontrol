@@ -23,9 +23,12 @@ Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
     width:          flightModeSelector.width
+
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
     QGCLabel {
         id:                     flightModeSelector
-        text:                   activeVehicle ? activeVehicle.flightMode : qsTr("N/A", "No data to display")
+        text:                   _activeVehicle ? _activeVehicle.flightMode : qsTr("N/A", "No data to display")
         font.pointSize:         ScreenTools.mediumFontPointSize
         color:                  qgcPal.buttonText
         anchors.verticalCenter: parent.verticalCenter
@@ -35,20 +38,20 @@ Item {
         Component {
             id: flightModeMenuItemComponent
             MenuItem {
-                onTriggered: activeVehicle.flightMode = text
+                onTriggered: _activeVehicle.flightMode = text
             }
         }
         property var flightModesMenuItems: []
         function updateFlightModesMenu() {
-            if (activeVehicle && activeVehicle.flightModeSetAvailable) {
+            if (_activeVehicle && _activeVehicle.flightModeSetAvailable) {
                 // Remove old menu items
                 for (var i = 0; i < flightModesMenuItems.length; i++) {
                     flightModesMenu.removeItem(flightModesMenuItems[i])
                 }
                 flightModesMenuItems.length = 0
                 // Add new items
-                for (var i = 0; i < activeVehicle.flightModes.length; i++) {
-                    var menuItem = flightModeMenuItemComponent.createObject(null, { "text": activeVehicle.flightModes[i] })
+                for (var i = 0; i < _activeVehicle.flightModes.length; i++) {
+                    var menuItem = flightModeMenuItemComponent.createObject(null, { "text": _activeVehicle.flightModes[i] })
                     flightModesMenuItems.push(menuItem)
                     flightModesMenu.insertItem(i, menuItem)
                 }
@@ -60,7 +63,7 @@ Item {
             onActiveVehicleChanged: flightModeSelector.updateFlightModesMenu()
         }
         MouseArea {
-            visible:        activeVehicle && activeVehicle.flightModeSetAvailable
+            visible:        _activeVehicle && _activeVehicle.flightModeSetAvailable
             anchors.fill:   parent
             onClicked:      flightModesMenu.popup()
         }
