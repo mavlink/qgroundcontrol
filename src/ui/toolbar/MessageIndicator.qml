@@ -25,15 +25,17 @@ Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
     function getMessageColor() {
-        if (activeVehicle) {
-            if (activeVehicle.messageTypeNone)
+        if (_activeVehicle) {
+            if (_activeVehicle.messageTypeNone)
                 return colorGrey
-            if (activeVehicle.messageTypeNormal)
+            if (_activeVehicle.messageTypeNormal)
                 return colorBlue;
-            if (activeVehicle.messageTypeWarning)
+            if (_activeVehicle.messageTypeWarning)
                 return colorOrange;
-            if (activeVehicle.messageTypeError)
+            if (_activeVehicle.messageTypeError)
                 return colorRed;
             // Cannot be so make make it obnoxious to show error
             console.log("Invalid vehicle message type")
@@ -50,7 +52,7 @@ Item {
         sourceSize.height:  height
         fillMode:           Image.PreserveAspectFit
         cache:              false
-        visible:            activeVehicle && activeVehicle.messageCount > 0 && isMessageImportant
+        visible:            _activeVehicle && _activeVehicle.messageCount > 0 && isMessageImportant
     }
 
     QGCColoredImage {
