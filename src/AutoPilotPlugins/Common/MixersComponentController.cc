@@ -29,9 +29,13 @@ QGC_LOGGING_CATEGORY(MixersComponentControllerVerboseLog, "MixersComponentContro
 const int MixersComponentController::_updateInterval = 150;              ///< Interval for timer which updates radio channel widgets
 
 MixersComponentController::MixersComponentController(void)
-    : _mixers(new QmlObjectListModel(this))
+    : _refreshGUIButton(NULL)
+//    , _mixersManagerStatusText(NULL)
+    , _statusText(NULL)
+    , _mixers(new QmlObjectListModel(this))
     , _mockMetaData(FactMetaData::valueTypeString, this)
     , _mockFactList()
+    , _guiInit(false)
 {
 //    _getMixersCountButton = NULL;
 //#ifdef UNITTEST_BUILD
@@ -56,6 +60,7 @@ MixersComponentController::MixersComponentController(void)
     _mockFactList.append(fact);
 
     connect(_vehicle->mixersManager(), &MixersManager::mixerDataReadyChanged, this, &MixersComponentController::_updateMixers);
+    connect(_vehicle->mixersManager(), &MixersManager::mixerManagerStatusChanged, this, &MixersComponentController::_updateMixersManagerStatus);
 
     _vehicle->mixersManager()->requestMixerDownload(0);
 }
@@ -70,7 +75,8 @@ MixersComponentController::~MixersComponentController()
 
 void MixersComponentController::guiUpdated(void)
 {
-
+    _guiInit = true;
+    _updateMixersManagerStatus(_vehicle->mixersManager()->mixerManagerStatus());
 }
 
 
@@ -156,3 +162,24 @@ void MixersComponentController::_updateMixers(void){
     }
 }
 
+void MixersComponentController::_updateMixersManagerStatus(MixersManager::MIXERS_MANAGER_STATUS_e mixerManagerStatus) {
+    if(!_guiInit)
+        return;
+    switch(mixerManagerStatus){
+    case MixersManager::MIXERS_MANAGER_WAITING:
+        _statusText->setProperty("text", "WAITING");
+        break;
+    case MixersManager::MIXERS_MANAGER_DOWNLOADING_ALL:
+        _statusText->setProperty("text", "DOWNLOADING ALL");
+        break;
+    case MixersManager::MIXERS_MANAGER_DOWNLOADING_MISSING:
+        _statusText->setProperty("text", "DOWNLOADING MISSING");
+        break;
+    case MixersManager::MIXERS_MANAGER_DOWNLOADING_MIXER_INFO:
+        _statusText->setProperty("text", "DOWNLOADING MIXER INFO");
+        break;
+    default:
+        _statusText->setProperty("text", "");
+        break;
+    }
+}

@@ -71,7 +71,7 @@ void MixersManager::_msgTimeout(void)
         case MIXERS_MANAGER_DOWNLOADING_MISSING:{
             _retryCount++;
             if(_retryCount > _maxRetryCount) {
-                _status = MIXERS_MANAGER_WAITING;
+                _setStatus(MIXERS_MANAGER_WAITING);
                 _expectedAck = AckNone;
                 qDebug("Retry count exceeded while requesting missing data");
             } else {
@@ -312,7 +312,7 @@ bool MixersManager::_requestMixerAll(unsigned int group){
                                          &command);
 
     _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
-    _status = MIXERS_MANAGER_DOWNLOADING_ALL;
+    _setStatus(MIXERS_MANAGER_DOWNLOADING_ALL);
     _startAckTimeout(AckAll);
     return true;
 }
@@ -333,6 +333,8 @@ void MixersManager::clearMixerGroupMessages(unsigned int group){
 }
 
 void MixersManager::_mixerDataDownloadComplete(unsigned int group){
+    _setStatus(MIXERS_MANAGER_WAITING);
+
     if(_buildAll(group)){
         emit mixerDataReadyChanged(true);
     }
@@ -356,7 +358,7 @@ bool MixersManager::_buildAll(unsigned int group){
 //* Request a missing messages. true if there is missing data */
 bool MixersManager::_requestMissingData(unsigned int group){
     mavlink_mixer_data_t chk;
-    _status = MIXERS_MANAGER_DOWNLOADING_MISSING;
+    _setStatus(MIXERS_MANAGER_DOWNLOADING_MISSING);
     _actionGroup = group;
     _retryCount = 0;
 
@@ -473,8 +475,8 @@ bool MixersManager::_requestMissingData(unsigned int group){
     }
 
     _mixerDataDownloadComplete(group);
-    _status = MIXERS_MANAGER_WAITING;
-    emit mixerDataReadyChanged(true);
+    _setStatus(MIXERS_MANAGER_WAITING);
+
     return false;
 }
 
@@ -714,7 +716,7 @@ bool MixersManager::_buildConnections(unsigned int group){
             }
         }
     }
-    return false;
+    return true;
 }
 
 

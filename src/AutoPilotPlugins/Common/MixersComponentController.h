@@ -23,6 +23,7 @@
 #include "QGCLoggingCategory.h"
 #include "AutoPilotPlugin.h"
 #include <FactMetaData.h>
+#include "MixersManager.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MixersComponentControllerLog)
 Q_DECLARE_LOGGING_CATEGORY(MixersComponentControllerVerboseLog)
@@ -39,18 +40,11 @@ public:
     MixersComponentController(void);
     ~MixersComponentController();
 
-//    Q_PROPERTY(QQuickItem* getMixersCountButton MEMBER _getMixersCountButton    NOTIFY getMixersCountButtonChanged)
-//    Q_PROPERTY(QQuickItem* requestAllButton MEMBER _requestAllButton    NOTIFY requestAllButtonChanged)
-//    Q_PROPERTY(QQuickItem* requestMissingButton MEMBER _requestMissingButton    NOTIFY requestMissingButtonChanged)
-//    Q_PROPERTY(QQuickItem* requestSubmixerCountButton MEMBER _requestSubmixerCountButton   NOTIFY requestSubmixerCountButtonChanged)
     Q_PROPERTY(QQuickItem* refreshGUIButton MEMBER _refreshGUIButton   NOTIFY refreshGUIButtonChanged)
+    Q_PROPERTY(QQuickItem* statusText   MEMBER _statusText      NOTIFY statusTextChanged)
 
-    Q_PROPERTY(QmlObjectListModel*  mixersList          MEMBER _mixers          CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  mixersList          MEMBER _mixers              CONSTANT)
 
-//    Q_INVOKABLE void getMixersCountButtonClicked(void);
-//    Q_INVOKABLE void requestAllButtonClicked(void);
-//    Q_INVOKABLE void requestMissingButtonClicked(void);
-//    Q_INVOKABLE void requestSubmixerCountButtonClicked(void);
     Q_INVOKABLE void refreshGUIButtonClicked(void);
     Q_INVOKABLE void guiUpdated(void);
 
@@ -61,16 +55,10 @@ public:
         
     
 signals:
-//    void getMixersCountButtonChanged(void);
-//    void requestAllButtonChanged(void);
-//    void requestMissingButtonChanged(void);
-//    void requestSubmixerCountButtonChanged(void);
     void refreshGUIButtonChanged(void);
+    void statusTextChanged(void);
+//    void mixersManagerStatusTextChanged(void);
 
-//    void statusTextChanged(void);
-//    void nextButtonChanged(void);
-//    void skipButtonChanged(void);
-        
     void groupValueChanged(unsigned int groupValue);
     void parameterValueChanged(float paramValue);
         
@@ -80,27 +68,21 @@ signals:
 private slots:
 //    void _rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels]);
     void _updateMixers(void);
+    void _updateMixersManagerStatus(MixersManager::MIXERS_MANAGER_STATUS_e mixerManagerStatus);
 
-private:
-
-    
+private:    
     static const int _updateInterval;   ///< Interval for ui update timer
 
-//    QQuickItem* _getMixersCountButton;
-//    QQuickItem* _requestAllButton;
-//    QQuickItem* _requestMissingButton;
-//    QQuickItem* _requestSubmixerCountButton;
     QQuickItem* _refreshGUIButton;
+    QQuickItem* _statusText;
+//    QQuickItem* _mixersManagerStatusText;
+
     QmlObjectListModel* _mixers;
 
     FactMetaData _mockMetaData;
     QList<Fact*> _mockFactList;
 
-//    QQuickItem* _statusText;
-//    QQuickItem* _nextButton;
-//    QQuickItem* _skipButton;
-    
-//    QString _imageHelp;
+    bool _guiInit;
     
 //#ifdef UNITTEST_BUILD
 //    // Nasty hack to expose controller to unit test code
