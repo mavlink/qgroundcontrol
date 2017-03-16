@@ -52,6 +52,7 @@ public:
     Q_INVOKABLE void requestMissingButtonClicked(void);
     Q_INVOKABLE void requestSubmixerCountButtonClicked(void);
     Q_INVOKABLE void refreshGUIButtonClicked(void);
+    Q_INVOKABLE void guiUpdated(void);
 
     unsigned int groupValue(void);
     unsigned int mixerIndexValue(void);

@@ -22,7 +22,6 @@
 #include "QGCLoggingCategory.h"
 #include "LinkInterface.h"
 #include "MixerFacts.h"
-#include "MixerMetaData.h"
 
 class Vehicle;
 
@@ -36,10 +35,15 @@ public:
     MixersManager(Vehicle* vehicle);
     ~MixersManager();
 
-    /// true: Parameters are ready for use
-    Q_PROPERTY(bool mixerDataReady READ mixerDataReady NOTIFY mixerDataReadyChanged)
-    bool mixerDataReady(void) { return _mixerDataReady; }
+    typedef enum {
+        MIXERS_MANAGER_WAITING = 0,
+        MIXERS_MANAGER_DOWNLOADING_ALL,
+        MIXERS_MANAGER_DOWNLOADING_MISSING,
+    } MIXERS_MANAGER_STATUS_e;
 
+    /// true: Mixer data is ready for use
+    Q_PROPERTY(bool mixerDataReady READ mixerDataReady NOTIFY mixerDataReadyChanged)
+    bool mixerDataReady(void);
     
     bool inProgress(void);
 
@@ -53,8 +57,10 @@ public:
     bool requestConnectionCount(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType);
     bool requestConnection(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType, unsigned conn);
 
+    void clearMixerGroupMessages(unsigned int group);
+
     MixerGroup* getMixerGroup(unsigned int groupID);
-    MixerMetaData* getMixerMetaData() {return &_mixerMetaData;}
+//    MixerMetaData* getMixerMetaData() {return &_mixerMetaData;}
 
     // These values are public so the unit test can set appropriate signal wait times
     static const int _ackTimeoutMilliseconds = 1000;
@@ -89,17 +95,15 @@ private:
     LinkInterface*      _dedicatedLink;
 
     MixerGroups         _mixerGroupsData;
-    MixerMetaData       _mixerMetaData;
 
     QList<mavlink_mixer_data_t*> _mixerDataMessages;
     QTimer*             _ackTimeoutTimer;
     AckType_t           _expectedAck;
     int                 _retryCount;
-    bool                _getMissing;
-    unsigned int        _requestGroup;
 
-    bool                _mixerDataReady;               ///< true: mixer data load complete
-    bool                _missingMixerData;             ///< true: mixer data missing from load
+    MIXERS_MANAGER_STATUS_e _status;
+
+    unsigned int        _actionGroup;      // The group which MixerManager is working with
 
     void _startAckTimeout(AckType_t ack);
 
@@ -139,12 +143,8 @@ private:
     /// return true if successfull*/
     bool _parameterValuesFromMessages(unsigned int group);
 
-    ///* Set connection points from mixer data messages
-    /// return true if successfull*/
-    bool _connectionsFromMessages(unsigned int group);
-
     ///* Get mixer connection count from whatever vehicle data source is available*/
-    int _getMixerConnCountFromVehicle(int mixerType, int connType);
+    int _getMixerConnCountFromVehicle(unsigned int group,int mixerType, int connType);
 
     ///* Set parameter Fact value from whatever vehicle data source is available*/
     void _setParameterFactFromVehicle(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int param, Fact* paramFact);

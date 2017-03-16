@@ -55,6 +55,10 @@ SetupPage {
                 factPanel:  tuningPage.viewPanel
             }
 
+            Component.onCompleted: {
+                mixers.guiUpdated()
+            }
+
             QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             RowLayout {

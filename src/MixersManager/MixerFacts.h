@@ -13,6 +13,7 @@
 #include <QObject>
 #include <Fact.h>
 #include <FactMetaData.h>
+#include <MixerMetaData.h>
 #include <QMap>
 #include <QmlObjectListModel.h>
 #include <QMetaType>
@@ -73,9 +74,9 @@ public:
     // Main mixer Fact describing mixer type
     Fact *mixer                         (void) const { return _mixer; }
 
-    Mixer*  getSubmixer(unsigned int mixerID);
-    Fact*   getParameter(unsigned int paramIndex);
-    void appendSubmixer(unsigned int mixerID, Mixer *submixer);
+    Mixer*  getSubmixer(int mixerID);
+    Fact*   getParameter(int paramIndex);
+    void appendSubmixer(int mixerID, Mixer *submixer);
     void appendParamFact(Fact* paramFact);
     void appendInputConnection(MixerConnection *inputConn);
     void appendOutputConnection(MixerConnection *outputConn);
@@ -86,7 +87,7 @@ protected:
     QmlObjectListModel    _submixers;
     QmlObjectListModel    _inputConnections;
     QmlObjectListModel    _outputConnections;
-    Fact*           _mixer;
+    Fact*                 _mixer;
 };
 
 
@@ -98,18 +99,45 @@ class MixerGroup : public QObject
     Q_OBJECT
     Q_DISABLE_COPY(MixerGroup)
 
+    enum {
+        MIXERGROUP_STRUCTURE_CREATED = 0x01,
+        MIXERGROUP_PARAMETERS_CREATED = 0x02,
+        MIXERGROUP_PARAMETER_VALUES_SET = 0x04,
+        MIXERGROUP_CONNECTIONS_CREATED = 0x08,
+        MIXERGROUP_CONNECTION_VALUES_SET = 0x10,
+        MIXERGROUP_CONNECTION_ALIASES_SET = 0x20,
+        MIXERGROUP_DATA_COMPLETE = 0x40,
+
+//        MIXERGROUP_DOWNLOADED_CAPABILITIES = 0x100,
+        MIXERGROUP_DOWNLOADED_STREAM_ALL = 0x200,
+        MIXERGROUP_DOWNLOADED_MISSING = 0x400,
+//        MIXERGROUP_DOWNLOADED_MIXER_SCRIPT = 0x800,
+//        MIXERGROUP_DOWNLOADED_MIXER_DESCRIPTIONS = 0x1000,
+//        MIXERGROUP_DOWNLOADED_CONNECTION_DESCIPTIONS = 0x2000,
+//        MIXERGROUP_DOWNLOADED_DEBUG_DATA = 0x4000
+        MIXERGROUP_GROUP_EXISTS = 0x8000,
+    };
+
 public:
     MixerGroup(QObject* parent = NULL);
     ~MixerGroup();
 
     // Parameters (Mixer private constants or variables)
     QObjectList mixers              (void) const { return _mixers; }
+    MixerMetaData* getMixerMetaData(void) {return &_mixerMetaData;}
 
-    Mixer* getMixer(unsigned int mixerID);
-    void appendMixer(unsigned int mixerID, Mixer *mixer);
+    Mixer* getMixer(int mixerID);
+    void appendMixer(int mixerID, Mixer *mixer);
+    unsigned int getGroupStatus(void) {return _groupStatus;}
+    void setGroupStatusFlags(unsigned int flags) {_groupStatus |= flags;}
+    void deleteGroupMixers(void);
+    bool dataComplete(void) {return ((_groupStatus & MIXERGROUP_DATA_COMPLETE) != 0);}
 
 private:
-    QObjectList _mixers ;
+    QObjectList     _mixers ;
+    MixerMetaData   _mixerMetaData;
+    unsigned int    _groupStatus;
+
 };
 
 
@@ -121,9 +149,9 @@ class MixerGroups : public QObject
 public:
     MixerGroups(QObject* parent = NULL);
     ~MixerGroups();
-    void deleteGroup(unsigned int groupID);
-    void addGroup(unsigned int groupID, MixerGroup *group);
-    MixerGroup* getGroup(unsigned int groupID);
+    void deleteGroup(int groupID);
+    void addGroup(int groupID, MixerGroup *group);
+    MixerGroup* getGroup(int groupID);
 
 private:
     QMap<int, MixerGroup*> _mixerGroups;

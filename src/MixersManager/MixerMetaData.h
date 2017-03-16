@@ -24,11 +24,11 @@ public:
     MixerMetaData();
     ~MixerMetaData();
 
-    Fact* GetMixerType(int typeID) {return _mixerTypeMap[typeID];};
-    FactMetaData* GetMixerParameterMetaData(int typeID, int parameterID);
+    Fact* getMixerType(int typeID) {return _mixerTypeMap[typeID];};
+    FactMetaData* getMixerParameterMetaData(int typeID, int parameterID);
 
-    int GetMixerParameterCount(int mixerTypeID);
-    int GetMixerConnCount(int mixerTypeID, int connType);
+    int getMixerParameterCount(int mixerTypeID);
+    int getMixerConnCount(int mixerTypeID, int connType);
 
 
 protected:

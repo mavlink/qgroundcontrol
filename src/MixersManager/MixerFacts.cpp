@@ -48,7 +48,7 @@ Mixer::~Mixer(){
 }
 
 
-Mixer* Mixer::getSubmixer(unsigned int mixerID){
+Mixer* Mixer::getSubmixer(int mixerID){
     if(mixerID > _submixers.count())
         return nullptr;
     if(mixerID == 0)
@@ -56,14 +56,14 @@ Mixer* Mixer::getSubmixer(unsigned int mixerID){
     return qobject_cast<Mixer *>(_submixers[mixerID-1]);
 }
 
-Fact* Mixer::getParameter(unsigned int paramIndex){
+Fact* Mixer::getParameter(int paramIndex){
     if(paramIndex >= _parameters.count())
         return nullptr;
     return qobject_cast<Fact *>(_parameters[paramIndex]);
 }
 
 
-void Mixer::appendSubmixer(unsigned int mixerID, Mixer *submixer){
+void Mixer::appendSubmixer(int mixerID, Mixer *submixer){
     Q_CHECK_PTR(submixer);
     submixer->setParent(this);
     _submixers.append(submixer);
@@ -100,35 +100,48 @@ void Mixer::appendOutputConnection(MixerConnection *outputConn)
 
 MixerGroup::MixerGroup(QObject* parent)
     : QObject(parent)
-    ,_mixers()
+    , _mixers()
+    , _mixerMetaData()
+    , _groupStatus(0)
 {
 };
 
 MixerGroup::~MixerGroup(){
-    //Delete and remove all parameters
-    foreach(QObject *mixobj, _mixers){
-        delete qobject_cast<Fact *>(mixobj);
-    }
-    _mixers.clear();
+    deleteGroupMixers();
 };
 
-Mixer* MixerGroup::getMixer(unsigned int mixerID){
+Mixer* MixerGroup::getMixer(int mixerID){
     if(mixerID >= _mixers.count())
         return nullptr;
     return qobject_cast<Mixer *>(_mixers[mixerID]);
 }
 
-void MixerGroup::appendMixer(unsigned int mixerID, Mixer *mixer){
+void MixerGroup::appendMixer(int mixerID, Mixer *mixer){
     mixer->setParent(this);
     _mixers.append(mixer);
     Q_ASSERT(mixerID == _mixers.count()-1);
 }
 
+void MixerGroup::deleteGroupMixers(void){
+    //Delete and remove all mixers
+    foreach(QObject *mixobj, _mixers){
+        delete qobject_cast<Fact *>(mixobj);
+    }
+    _mixers.clear();
+
+    _groupStatus &= !(  MIXERGROUP_STRUCTURE_CREATED
+                      | MIXERGROUP_PARAMETERS_CREATED
+                      | MIXERGROUP_PARAMETER_VALUES_SET
+                      | MIXERGROUP_CONNECTIONS_CREATED
+                      | MIXERGROUP_CONNECTION_VALUES_SET
+                      | MIXERGROUP_CONNECTION_ALIASES_SET
+                      | MIXERGROUP_DATA_COMPLETE);
+}
 
 
 MixerGroups::MixerGroups(QObject* parent)
     : QObject(parent)
-    ,_mixerGroups()
+    , _mixerGroups()
 {
 }
 
@@ -138,14 +151,14 @@ MixerGroups::~MixerGroups()
     _mixerGroups.clear();
 }
 
-void MixerGroups::addGroup(unsigned int groupID, MixerGroup *group){
+void MixerGroups::addGroup(int groupID, MixerGroup *group){
     if(_mixerGroups.contains(groupID))
         delete _mixerGroups.value(groupID);
     _mixerGroups[groupID] = group;
 
 }
 
-void MixerGroups::deleteGroup(unsigned int groupID){
+void MixerGroups::deleteGroup(int groupID){
     if(_mixerGroups.contains(groupID)){
         MixerGroup *pgroup = _mixerGroups.value(groupID);
         delete pgroup;
@@ -153,7 +166,7 @@ void MixerGroups::deleteGroup(unsigned int groupID){
     }
 }
 
-MixerGroup* MixerGroups::getGroup(unsigned int groupID){
+MixerGroup* MixerGroups::getGroup(int groupID){
     if(_mixerGroups.contains(groupID))
         return _mixerGroups[groupID];
     else

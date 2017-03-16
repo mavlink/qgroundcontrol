@@ -18,20 +18,19 @@
 #include "QGCApplication.h"
 #include <cstring>
 
+#include "MixerMetaData.h"
+
 QGC_LOGGING_CATEGORY(MixersManagerLog, "MixersManagerLog")
 
 MixersManager::MixersManager(Vehicle* vehicle)
     : _vehicle(vehicle)
     , _dedicatedLink(NULL)
     , _mixerGroupsData(this)
-    , _mixerMetaData()
     , _mixerDataMessages()
     , _ackTimeoutTimer(NULL)
     , _expectedAck(AckNone)
-    , _getMissing(false)
-    , _requestGroup(0)
-    , _mixerDataReady(false)
-    , _missingMixerData(true)
+    , _status(MIXERS_MANAGER_WAITING)
+    , _actionGroup(0)
 {
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &MixersManager::_mavlinkMessageReceived);
     
@@ -58,6 +57,9 @@ void MixersManager::_paramValueUpdated(const QVariant& value){
 
 void MixersManager::_ackTimeout(void)
 {
+    if(_status == MIXERS_MANAGER_WAITING)
+        return;
+
     if (_expectedAck == AckNone) {
         return;
     }
@@ -66,20 +68,20 @@ void MixersManager::_ackTimeout(void)
     case AckAll:
         qCDebug(MixersManagerLog) << "Mixer request all data - timeout.  Received " << _mixerDataMessages.length() << " messages";
         _retryCount = 0;
-        _requestMissingData(_requestGroup);
+        _requestMissingData(_actionGroup);
         break;
     default:
         break;
     }
 
-    if(_getMissing) {
+    if(_status == MIXERS_MANAGER_DOWNLOADING_MISSING) {
         _retryCount++;
         if(_retryCount > _maxRetryCount) {
-            _getMissing = false;
+            _status = MIXERS_MANAGER_WAITING;
             _expectedAck = AckNone;
             qDebug("Retry count exceeded while requesting missing data");
         } else {
-            _requestMissingData(_requestGroup);
+            _requestMissingData(_actionGroup);
         }
     }
 
@@ -91,6 +93,15 @@ void MixersManager::_startAckTimeout(AckType_t ack)
     _expectedAck = ack;
     _ackTimeoutTimer->start();
 }
+
+bool MixersManager::mixerDataReady() {
+
+    MixerGroup *group = _mixerGroupsData.getGroup(_actionGroup);
+    if(group==nullptr)
+        return false;
+    return group->dataComplete();
+}
+
 
 bool MixersManager::requestMixerCount(unsigned int group){
     mavlink_message_t       messageOut;
@@ -260,10 +271,13 @@ bool MixersManager::requestConnection(unsigned int group, unsigned int mixer, un
 
 
 bool MixersManager::requestMixerAll(unsigned int group){
+    if(_status != MIXERS_MANAGER_WAITING)
+        return false;
+
     mavlink_message_t       messageOut;
     mavlink_command_long_t  command;
 
-    _requestGroup = group;
+    _actionGroup = group;
     _retryCount = 0;
 
     command.command = MAV_CMD_REQUEST_MIXER_SEND_ALL;
@@ -282,14 +296,15 @@ bool MixersManager::requestMixerAll(unsigned int group){
 
     _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
     _startAckTimeout(AckAll);
-    _mixerDataReady = false;
-    emit mixerDataReadyChanged(false);
     return true;
 }
 
 bool MixersManager::requestMissingData(unsigned int group){
+    if(_status != MIXERS_MANAGER_WAITING)
+        return true;
+
     _retryCount = 0;
-    _requestGroup = group;
+    _actionGroup = group;
     if(!_requestMissingData(group)){
         mixerDataDownloadComplete(group);
     }
@@ -297,9 +312,22 @@ bool MixersManager::requestMissingData(unsigned int group){
     return false;
 }
 
+void MixersManager::clearMixerGroupMessages(unsigned int group){
+    mavlink_mixer_data_t *msg;
+    _actionGroup = group;
+    QMutableListIterator<mavlink_mixer_data_t*> i(_mixerDataMessages);
+    while (i.hasNext()) {
+        msg = i.value();
+        Q_CHECK_PTR(msg);
+        if(msg->mixer_group == group){
+            delete msg;
+            i.remove();
+        }
+    }
+}
+
 void MixersManager::mixerDataDownloadComplete(unsigned int group){
     if(_buildAll(group)){
-        _mixerDataReady = true;
         emit mixerDataReadyChanged(true);
     }
 }
@@ -322,16 +350,19 @@ bool MixersManager::_buildAll(unsigned int group){
 //* Request a missing messages. true if there is missing data */
 bool MixersManager::_requestMissingData(unsigned int group){
     mavlink_mixer_data_t chk;
-    _getMissing = true;
+    _status = MIXERS_MANAGER_DOWNLOADING_MISSING;
+    _actionGroup = group;
     _retryCount = 0;
 
     int found_index;
     int mixer_count;
     int submixer_count;
     int parameter_count;
-    int mixer_type;
+//    int mixer_type;
     int mixer_input_conn_count;
     int mixer_output_conn_count;
+
+    memset(&chk, 0, sizeof(mavlink_mixer_data_t));
     chk.mixer_group = group;
 
     chk.data_type = MIXER_DATA_TYPE_MIXER_COUNT;
@@ -360,11 +391,14 @@ bool MixersManager::_requestMissingData(unsigned int group){
             if(found_index == -1){
                 requestMixerType(group, chk.mixer_index, chk.mixer_sub_index);
                 return true;
-            } else {
-                mixer_type = _mixerDataMessages[found_index]->data_value;
             }
+//            else {
+//                mixer_type = _mixerDataMessages[found_index]->data_value;
+//                //TODO Use mixer type instead of requesting counts
+//            }
 
             //Check for mixer parameter count
+            //TODO Change this to choose data source depending on situation
             chk.data_type = MIXER_DATA_TYPE_PARAMETER_COUNT;
             found_index = _getMessageOfKind(&chk);
             if(found_index == -1){
@@ -431,88 +465,9 @@ bool MixersManager::_requestMissingData(unsigned int group){
             }
         }
     }
-    _getMissing = false;
+    _status = MIXERS_MANAGER_WAITING;
     return false;
 }
-
-//bool MixersManager::_buildFactsFromMessages(unsigned int group){
-//    mavlink_mixer_data_t msg;
-
-// HAVE CUT OUT BITS IMPLEMENTED ELSEWHERE SO FAR
-
-//            //Input connection count
-//            msg.parameter_index=0;
-//            msg.connection_type=1;
-//            msg.data_type = MIXER_DATA_TYPE_CONNECTION_COUNT;
-//            found_index = _getMessageOfKind(&msg);
-//            if(found_index == -1){
-//                return false;
-//            }
-//            mixer_conn_count = _mixerDataMessages[found_index]->data_value;
-
-//            //Input connections
-//            msg.connection_type=1;
-//            msg.data_type = MIXER_DATA_TYPE_CONNECTION;
-//            for(msg.parameter_index=0; msg.parameter_index<mixer_conn_count; msg.parameter_index++){
-//                found_index = _getMessageOfKind(&msg);
-//                if(found_index == -1){
-//                    return false;
-//                }
-
-//                //Mixer or submixer
-//                if(msg.mixer_sub_index == 0){
-//                    mixer->addConnection(_mixerDataMessages[found_index]->connection_type,
-//                                         _mixerDataMessages[found_index]->parameter_index,
-//                                         _mixerDataMessages[found_index]->connection_group,
-//                                         _mixerDataMessages[found_index]->data_value );
-//                } else {
-//                    submixer->addConnection(_mixerDataMessages[found_index]->connection_type,
-//                                         _mixerDataMessages[found_index]->parameter_index,
-//                                         _mixerDataMessages[found_index]->connection_group,
-//                                         _mixerDataMessages[found_index]->data_value );
-//                }
-//            }
-
-//            //Output connection count
-//            msg.parameter_index=0;
-//            msg.connection_type=0;
-//            msg.data_type = MIXER_DATA_TYPE_CONNECTION_COUNT;
-//            found_index = _getMessageOfKind(&msg);
-//            if(found_index == -1){
-//                return false;
-//            }
-//            mixer_conn_count = _mixerDataMessages[found_index]->data_value;
-
-//            //Output connections
-//            msg.connection_type=0;
-//            msg.data_type = MIXER_DATA_TYPE_CONNECTION;
-//            for(msg.parameter_index=0; msg.parameter_index<mixer_conn_count; msg.parameter_index++){
-//                found_index = _getMessageOfKind(&msg);
-//                if(found_index == -1){
-//                    return false;
-//                }
-
-//                //Mixer or submixer
-//                if(msg.mixer_sub_index == 0){
-//                    mixer->addConnection(_mixerDataMessages[found_index]->connection_type,
-//                                         _mixerDataMessages[found_index]->parameter_index,
-//                                         _mixerDataMessages[found_index]->connection_group,
-//                                         _mixerDataMessages[found_index]->data_value );
-//                } else {
-//                    submixer->addConnection(_mixerDataMessages[found_index]->connection_type,
-//                                         _mixerDataMessages[found_index]->parameter_index,
-//                                         _mixerDataMessages[found_index]->connection_group,
-//                                         _mixerDataMessages[found_index]->data_value );
-//                }
-//            }
-//        }
-//    }
-
-//    _mixerDataReady = true;
-//    emit mixerDataReadyChanged(true);
-//    return true;
-//}
-
 
 
 ///* Build mixer structure from messages.  This only includes mixers and submixers with type facts
@@ -530,9 +485,15 @@ bool MixersManager::_buildStructureFromMessages(unsigned int group){
 //    emit mixerDataReadyChanged(false);
 
     //Delete existing mixer group data
-    _mixerGroupsData.deleteGroup(group);
-    MixerGroup *mixer_group = new MixerGroup();
-    _mixerGroupsData.addGroup(group, mixer_group);
+    MixerGroup *mixer_group = _mixerGroupsData.getGroup(group);
+    if(mixer_group != nullptr) {
+        mixer_group->deleteGroupMixers();
+    } else {
+        mixer_group = new MixerGroup();
+        _mixerGroupsData.addGroup(group, mixer_group);
+    }
+
+    MixerMetaData *mixer_metadata = mixer_group->getMixerMetaData();
 
     msg.mixer_group = group;
     msg.data_type = MIXER_DATA_TYPE_MIXER_COUNT;
@@ -555,7 +516,7 @@ bool MixersManager::_buildStructureFromMessages(unsigned int group){
         mixer_type = _mixerDataMessages[found_index]->data_value;
 
         //Add mixer to the group
-        mixer = new Mixer(_mixerMetaData.GetMixerType(mixer_type) );
+        mixer = new Mixer(mixer_metadata->getMixerType(mixer_type));
         mixer_group->appendMixer(msg.mixer_index, mixer);
 
         msg.data_type = MIXER_DATA_TYPE_SUBMIXER_COUNT;
@@ -580,7 +541,7 @@ bool MixersManager::_buildStructureFromMessages(unsigned int group){
 
 
             } else {
-                submixer = new Mixer(_mixerMetaData.GetMixerType(mixer_type));
+                submixer = new Mixer(mixer_metadata->getMixerType(mixer_type));
                 mixer->appendSubmixer(msg.mixer_sub_index, submixer);
             }
 
@@ -603,6 +564,8 @@ bool MixersManager::_buildParametersFromHeaders(unsigned int group){
     if(mixer_group == nullptr)
         return false;
 
+    MixerMetaData *mixer_metadata = mixer_group->getMixerMetaData();
+
     QObjectList mixers = mixer_group->mixers();
 
     for(mixIndex = 0; mixIndex<mixers.count(); mixIndex++){
@@ -610,9 +573,9 @@ bool MixersManager::_buildParametersFromHeaders(unsigned int group){
         mixType = mixer->mixer()->rawValue().toInt(&convOK);
         Q_ASSERT(convOK==true);
 
-        paramCount = _mixerMetaData.GetMixerParameterCount(mixType);
+        paramCount = mixer_metadata->getMixerParameterCount(mixType);
         for(int paramIndex=0; paramIndex<paramCount; paramIndex++){
-            metaData = _mixerMetaData.GetMixerParameterMetaData(mixType, paramIndex);
+            metaData = mixer_metadata->getMixerParameterMetaData(mixType, paramIndex);
             Q_CHECK_PTR(metaData);
             param = new Fact(-1, metaData->name(), FactMetaData::valueTypeFloat, mixer->parameters());
             param->setMetaData(metaData);
@@ -627,9 +590,9 @@ bool MixersManager::_buildParametersFromHeaders(unsigned int group){
             subType = submixer->mixer()->rawValue().toInt(&convOK);
             Q_ASSERT(convOK==true);
 
-            paramCount = _mixerMetaData.GetMixerParameterCount(mixType);
+            paramCount = mixer_metadata->getMixerParameterCount(mixType);
             for(int paramIndex=0; paramIndex<paramCount; paramIndex++){
-                metaData = _mixerMetaData.GetMixerParameterMetaData(subType, paramIndex);
+                metaData = mixer_metadata->getMixerParameterMetaData(subType, paramIndex);
                 Q_CHECK_PTR(metaData);
                 param = new Fact(-1, metaData->name(), FactMetaData::valueTypeFloat, submixer->parameters());
                 param->setMetaData(metaData);
@@ -640,9 +603,14 @@ bool MixersManager::_buildParametersFromHeaders(unsigned int group){
     return true;
 }
 
-int MixersManager::_getMixerConnCountFromVehicle(int mixerType, int connType)
+int MixersManager::_getMixerConnCountFromVehicle(unsigned int group, int mixerType, int connType)
 {
-    return _mixerMetaData.GetMixerConnCount(mixerType, connType);
+    MixerGroup *mixer_group = _mixerGroupsData.getGroup(group);
+    if(mixer_group == nullptr)
+        return false;
+    MixerMetaData *mixer_metadata = mixer_group->getMixerMetaData();
+
+    return mixer_metadata->getMixerConnCount(mixerType, connType);
 }
 
 void MixersManager::_setMixerConnectionFromVehicle(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int connType, unsigned int connIndex, MixerConnection* conn )
@@ -683,7 +651,6 @@ bool MixersManager::_buildConnections(unsigned int group){
     MixerConnection  *conn;
     int mixType, subType, mixIndex, subIndex, connCount, subCount;
     bool convOK;
-    FactMetaData *metaData;
 
     MixerGroup *mixer_group = _mixerGroupsData.getGroup(group);
     if(mixer_group == nullptr)
@@ -697,18 +664,16 @@ bool MixersManager::_buildConnections(unsigned int group){
         Q_ASSERT(convOK==true);
 
         //Output connections
-        connCount = _getMixerConnCountFromVehicle(mixType, 0);
+        connCount = _getMixerConnCountFromVehicle(group, mixType, 0);
         for(int connIndex=0; connIndex<connCount; connIndex++){
-            Q_CHECK_PTR(metaData);
             conn = new MixerConnection();
             _setMixerConnectionFromVehicle(group, mixIndex, 0, 0, connIndex, conn);
             mixer->appendOutputConnection(conn);
         }
 
         //Input connections
-        connCount = _getMixerConnCountFromVehicle(mixType, 1);
+        connCount = _getMixerConnCountFromVehicle(group, mixType, 1);
         for(int connIndex=0; connIndex<connCount; connIndex++){
-            Q_CHECK_PTR(metaData);
             conn = new MixerConnection();
             _setMixerConnectionFromVehicle(group, mixIndex, 0, 1, connIndex, conn);
             mixer->appendInputConnection(conn);
@@ -723,18 +688,16 @@ bool MixersManager::_buildConnections(unsigned int group){
             Q_ASSERT(convOK==true);
 
             //Output connections
-            connCount = _getMixerConnCountFromVehicle(subType, 0);
+            connCount = _getMixerConnCountFromVehicle(group, subType, 0);
             for(int connIndex=0; connIndex<connCount; connIndex++){
-                Q_CHECK_PTR(metaData);
                 conn = new MixerConnection();
                 _setMixerConnectionFromVehicle(group, mixIndex, subIndex, 0, connIndex, conn);
                 submixer->appendOutputConnection(conn);
             }
 
             //Input connections
-            connCount = _getMixerConnCountFromVehicle(subType, 1);
+            connCount = _getMixerConnCountFromVehicle(group, subType, 1);
             for(int connIndex=0; connIndex<connCount; connIndex++){
-                Q_CHECK_PTR(metaData);
                 conn = new MixerConnection();
                 _setMixerConnectionFromVehicle(group, mixIndex, subIndex, 1, connIndex, conn);
                 submixer->appendInputConnection(conn);
@@ -777,7 +740,7 @@ bool MixersManager::_parameterValuesFromMessages(unsigned int group){
     Mixer *mixer;
     Mixer *submixer;
     Fact *parameter;
-    int mixIndex, subIndex, paramCount, subCount, msgIndex, paramIndex;
+    int mixIndex, subIndex, paramCount, subCount, paramIndex;
 
     MixerGroup *mixer_group = _mixerGroupsData.getGroup(group);
     if(mixer_group == nullptr)
@@ -810,12 +773,6 @@ bool MixersManager::_parameterValuesFromMessages(unsigned int group){
         }
     }
     return true;
-}
-
-///* Set connection points from mixer data messages
-/// return true if successfull*/
-bool MixersManager::_connectionsFromMessages(unsigned int group){
-    return false;
 }
 
 
@@ -946,8 +903,8 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 
             _collectMixerData(&mixerData);
 
-            if(_getMissing) {
-                _requestMissingData(_requestGroup);
+            if(_status == MIXERS_MANAGER_DOWNLOADING_MISSING) {
+                _requestMissingData(_actionGroup);
             }
 
             switch(mixerData.data_type){

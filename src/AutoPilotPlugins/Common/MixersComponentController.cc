@@ -56,6 +56,8 @@ MixersComponentController::MixersComponentController(void)
     _mockFactList.append(fact);
 
     connect(_vehicle->mixersManager(), &MixersManager::mixerDataReadyChanged, this, &MixersComponentController::_updateMixers);
+
+    _vehicle->mixersManager()->requestMixerAll(0);
 }
 
 
@@ -63,6 +65,12 @@ MixersComponentController::MixersComponentController(void)
 MixersComponentController::~MixersComponentController()
 {
 //    _storeSettings();
+}
+
+
+void MixersComponentController::guiUpdated(void)
+{
+
 }
 
 

@@ -42,19 +42,19 @@ MixerMetaData::~MixerMetaData(){
     _mixerTypeMap.clear();
 }
 
-FactMetaData* MixerMetaData::GetMixerParameterMetaData(int typeID, int parameterID) {
+FactMetaData* MixerMetaData::getMixerParameterMetaData(int typeID, int parameterID) {
     if(_mixerParameterMetaDataMap.contains(typeID))
         if( _mixerParameterMetaDataMap[typeID].contains(parameterID))
             return _mixerParameterMetaDataMap[typeID][parameterID];
     return nullptr;
 }
 
-int MixerMetaData::GetMixerParameterCount(int mixerTypeID){
+int MixerMetaData::getMixerParameterCount(int mixerTypeID){
     if(mixerTypeID >= MIXER_TYPES_COUNT) return 0;
     return mixer_parameter_count[mixerTypeID];
 }
 
-int MixerMetaData::GetMixerConnCount(int mixerTypeID, int connType){
+int MixerMetaData::getMixerConnCount(int mixerTypeID, int connType){
     if(connType >= MIXER_TYPES_COUNT) return 0;
     switch(connType){
     case 0:
