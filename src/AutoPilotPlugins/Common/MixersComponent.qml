@@ -53,7 +53,7 @@ SetupPage {
             MixersComponentController {
                 id:         mixers
                 factPanel:  tuningPage.viewPanel
-                statusText:     statusText
+                mixersManagerStatusText:     mixersManagerStatusText
             }
 
             Component.onCompleted: {
@@ -280,14 +280,9 @@ SetupPage {
                             }
                         }
 
-//                        QGCTextField {
-//                            id: mixersManagerStatusText
-//                            text: mixers.mixersManagerStatusText
-//                        }
-
                         // Status Text
                         QGCLabel {
-                            id:         statusText
+                            id:         mixersManagerStatusText
                             width:      ScreenTools.defaultFontPixelWidth * 30
                             wrapMode:   Text.WordWrap
                             font.pointSize: ScreenTools.largeFontPointSize

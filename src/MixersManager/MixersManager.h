@@ -45,18 +45,18 @@ public:
     /// true: Mixer data is ready for use
     Q_PROPERTY(bool mixerDataReady READ mixerDataReady NOTIFY mixerDataReadyChanged)
     Q_PROPERTY(MIXERS_MANAGER_STATUS_e mixerManagerStatus READ mixerManagerStatus NOTIFY mixerManagerStatusChanged)
+    Q_PROPERTY(MixerGroup* mixerGroupStatus READ mixerGroupStatus NOTIFY mixerGroupStatusChanged)
+
     bool mixerDataReady(void);
+    MixerGroup* mixerGroupStatus(void);
 
     MIXERS_MANAGER_STATUS_e mixerManagerStatus(void) {return _status;}
-    
-    bool inProgress(void);
 
     bool requestMixerDownload(unsigned int group);
 
     void clearMixerGroupMessages(unsigned int group);
 
     MixerGroup* getMixerGroup(unsigned int groupID);
-//    MixerMetaData* getMixerMetaData() {return &_mixerMetaData;}
 
     // These values are public so the unit test can set appropriate signal wait times
     static const int _ackTimeoutMilliseconds = 1000;
@@ -66,6 +66,7 @@ signals:
     void mixerDataReadyChanged(bool mixerDataReady);
     void missingMixerDataChanged(bool missingMixerData);
     void mixerManagerStatusChanged(MIXERS_MANAGER_STATUS_e status);
+    void mixerGroupStatusChanged(MixerGroup *mixerGroup);
 
 protected:
     void _paramValueUpdated(const QVariant& value);

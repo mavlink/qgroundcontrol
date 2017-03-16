@@ -51,7 +51,7 @@ MixerGroup* MixersManager::getMixerGroup(unsigned int groupID){
 }
 
 void MixersManager::_paramValueUpdated(const QVariant& value){
-
+    Q_UNUSED(value)
 }
 
 void MixersManager::_msgTimeout(void)
@@ -105,6 +105,9 @@ bool MixersManager::mixerDataReady() {
     return group->dataComplete();
 }
 
+MixerGroup* MixersManager::mixerGroupStatus(void) {
+    return _mixerGroupsData.getGroup(_actionGroup);
+}
 
 bool MixersManager::_requestMixerCount(unsigned int group){
     mavlink_message_t       messageOut;
@@ -278,8 +281,8 @@ bool MixersManager::requestMixerDownload(unsigned int group){
 
     MixerGroup* mixerGroup = getMixerGroup(group);
     if(mixerGroup == nullptr) {
-        mixerGroup = new MixerGroup();
-        _mixerGroupsData.addGroup(group, mixerGroup);
+        mixerGroup = new MixerGroup(group);
+        _mixerGroupsData.addGroup(mixerGroup);
     }
 
     _requestMixerAll(group);
@@ -501,8 +504,8 @@ bool MixersManager::_buildStructureFromMessages(unsigned int group){
     {
         mixer_group->deleteGroupMixers();
     } else {
-        mixer_group = new MixerGroup();
-        _mixerGroupsData.addGroup(group, mixer_group);
+        mixer_group = new MixerGroup(group);
+        _mixerGroupsData.addGroup(mixer_group);
     }
 
     MixerMetaData *mixer_metadata = mixer_group->getMixerMetaData();

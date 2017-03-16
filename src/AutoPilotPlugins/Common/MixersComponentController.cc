@@ -30,8 +30,7 @@ const int MixersComponentController::_updateInterval = 150;              ///< In
 
 MixersComponentController::MixersComponentController(void)
     : _refreshGUIButton(NULL)
-//    , _mixersManagerStatusText(NULL)
-    , _statusText(NULL)
+    , _mixersManagerStatusText(NULL)
     , _mixers(new QmlObjectListModel(this))
     , _mockMetaData(FactMetaData::valueTypeString, this)
     , _mockFactList()
@@ -61,6 +60,7 @@ MixersComponentController::MixersComponentController(void)
 
     connect(_vehicle->mixersManager(), &MixersManager::mixerDataReadyChanged, this, &MixersComponentController::_updateMixers);
     connect(_vehicle->mixersManager(), &MixersManager::mixerManagerStatusChanged, this, &MixersComponentController::_updateMixersManagerStatus);
+    connect(_vehicle->mixersManager(), &MixersManager::mixerGroupStatusChanged, this, &MixersComponentController::_updateMixerGroupStatus);
 
     _vehicle->mixersManager()->requestMixerDownload(0);
 }
@@ -146,19 +146,23 @@ float MixersComponentController::parameterValue(void)
     return 0.0;
 }
 
-void MixersComponentController::_updateMixers(void){
+void MixersComponentController::_updateMixers(bool dataReady){
 
-    MixerGroup *mixerGroup = _vehicle->mixersManager()->getMixerGroup(0);
-    if(mixerGroup != nullptr){
-        _mixers->swapObjectList(mixerGroup->mixers());
-    } else {
-        QObjectList newMixerList;
-        Fact* fact;
+    if(dataReady) {
+        MixerGroup *mixerGroup = _vehicle->mixersManager()->getMixerGroup(0);
+        if(mixerGroup != nullptr){
+            _mixers->swapObjectList(mixerGroup->mixers());
+        } else {
+            QObjectList newMixerList;
+            Fact* fact;
 
-        foreach(fact, _mockFactList){
-            newMixerList.append(fact);
+            foreach(fact, _mockFactList){
+                newMixerList.append(fact);
+            }
+        _mixers->swapObjectList(newMixerList);
         }
-    _mixers->swapObjectList(newMixerList);
+    } else {
+        _mixers->clear();
     }
 }
 
@@ -167,19 +171,25 @@ void MixersComponentController::_updateMixersManagerStatus(MixersManager::MIXERS
         return;
     switch(mixerManagerStatus){
     case MixersManager::MIXERS_MANAGER_WAITING:
-        _statusText->setProperty("text", "WAITING");
+        _mixersManagerStatusText->setProperty("text", "WAITING");
         break;
     case MixersManager::MIXERS_MANAGER_DOWNLOADING_ALL:
-        _statusText->setProperty("text", "DOWNLOADING ALL");
+         _mixersManagerStatusText->setProperty("text", "DOWNLOADING ALL");
         break;
     case MixersManager::MIXERS_MANAGER_DOWNLOADING_MISSING:
-        _statusText->setProperty("text", "DOWNLOADING MISSING");
+         _mixersManagerStatusText->setProperty("text", "DOWNLOADING MISSING");
         break;
     case MixersManager::MIXERS_MANAGER_DOWNLOADING_MIXER_INFO:
-        _statusText->setProperty("text", "DOWNLOADING MIXER INFO");
+         _mixersManagerStatusText->setProperty("text", "DOWNLOADING MIXER INFO");
         break;
     default:
-        _statusText->setProperty("text", "");
+         _mixersManagerStatusText->setProperty("text", "");
         break;
     }
+}
+
+
+void MixersComponentController::_updateMixerGroupStatus(MixerGroup *mixerGroup){
+    unsigned int status = mixerGroup->getGroupStatus();
+    Q_UNUSED(status)
 }

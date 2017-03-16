@@ -41,7 +41,7 @@ public:
     ~MixersComponentController();
 
     Q_PROPERTY(QQuickItem* refreshGUIButton MEMBER _refreshGUIButton   NOTIFY refreshGUIButtonChanged)
-    Q_PROPERTY(QQuickItem* statusText   MEMBER _statusText      NOTIFY statusTextChanged)
+    Q_PROPERTY(QQuickItem* mixersManagerStatusText   MEMBER _mixersManagerStatusText      NOTIFY mixersManagerStatusTextChanged)
 
     Q_PROPERTY(QmlObjectListModel*  mixersList          MEMBER _mixers              CONSTANT)
 
@@ -56,8 +56,7 @@ public:
     
 signals:
     void refreshGUIButtonChanged(void);
-    void statusTextChanged(void);
-//    void mixersManagerStatusTextChanged(void);
+    void mixersManagerStatusTextChanged(void);
 
     void groupValueChanged(unsigned int groupValue);
     void parameterValueChanged(float paramValue);
@@ -67,15 +66,15 @@ signals:
 
 private slots:
 //    void _rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels]);
-    void _updateMixers(void);
+    void _updateMixers(bool dataReady);
     void _updateMixersManagerStatus(MixersManager::MIXERS_MANAGER_STATUS_e mixerManagerStatus);
+    void _updateMixerGroupStatus(MixerGroup *mixerGroup);
 
 private:    
     static const int _updateInterval;   ///< Interval for ui update timer
 
     QQuickItem* _refreshGUIButton;
-    QQuickItem* _statusText;
-//    QQuickItem* _mixersManagerStatusText;
+    QQuickItem* _mixersManagerStatusText;
 
     QmlObjectListModel* _mixers;
 

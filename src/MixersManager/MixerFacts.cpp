@@ -65,28 +65,28 @@ Fact* Mixer::getParameter(int paramIndex){
 
 void Mixer::appendSubmixer(int mixerID, Mixer *submixer){
     Q_CHECK_PTR(submixer);
-    submixer->setParent(this);
+    submixer->setParent(&_submixers);
     _submixers.append(submixer);
     Q_ASSERT(mixerID == _submixers.count());
 }
 
 void Mixer::appendParamFact(Fact* paramFact){
     Q_CHECK_PTR(paramFact);
-    paramFact->setParent(this);
+    paramFact->setParent(&_parameters);
     _parameters.append(paramFact);
 }
 
 void Mixer::appendInputConnection(MixerConnection *inputConn)
 {
     Q_CHECK_PTR(inputConn);
-    inputConn->setParent(this);
+    inputConn->setParent(&_inputConnections);
     _inputConnections.append(inputConn);
 }
 
 void Mixer::appendOutputConnection(MixerConnection *outputConn)
 {
     Q_CHECK_PTR(outputConn);
-    outputConn->setParent(this);
+    outputConn->setParent(&_outputConnections);
     _outputConnections.append(outputConn);
 }
 
@@ -98,11 +98,12 @@ void Mixer::appendOutputConnection(MixerConnection *outputConn)
 //    _mixerConnections[connType][connID] = new MixerConnection(connGroup , connChannel);
 //}
 
-MixerGroup::MixerGroup(QObject* parent)
+MixerGroup::MixerGroup(unsigned int groupID, QObject* parent)
     : QObject(parent)
     , _mixers()
     , _mixerMetaData()
     , _groupStatus(0)
+    , _groupID(groupID)
 {
 };
 
@@ -151,11 +152,12 @@ MixerGroups::~MixerGroups()
     _mixerGroups.clear();
 }
 
-void MixerGroups::addGroup(int groupID, MixerGroup *group){
+void MixerGroups::addGroup(MixerGroup *group){
+    unsigned int groupID = group->groupID();
     if(_mixerGroups.contains(groupID))
         delete _mixerGroups.value(groupID);
-    _mixerGroups[groupID] = group;
     group->setParent(this);
+    _mixerGroups[groupID] = group;
 }
 
 void MixerGroups::deleteGroup(int groupID){

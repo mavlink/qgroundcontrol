@@ -119,7 +119,7 @@ class MixerGroup : public QObject
     };
 
 public:
-    MixerGroup(QObject* parent = NULL);
+    MixerGroup(unsigned int groupID, QObject* parent = NULL);
     ~MixerGroup();
 
     // Parameters (Mixer private constants or variables)
@@ -132,11 +132,13 @@ public:
     void setGroupStatusFlags(unsigned int flags) {_groupStatus |= flags;}
     void deleteGroupMixers(void);
     bool dataComplete(void) {return ((_groupStatus & MIXERGROUP_DATA_COMPLETE) != 0);}
+    unsigned int groupID(void) {return _groupID;}
 
 private:
     QObjectList     _mixers ;
     MixerMetaData   _mixerMetaData;
     unsigned int    _groupStatus;
+    unsigned int    _groupID;
 
 };
 
@@ -150,7 +152,7 @@ public:
     MixerGroups(QObject* parent = NULL);
     ~MixerGroups();
     void deleteGroup(int groupID);
-    void addGroup(int groupID, MixerGroup *group);
+    void addGroup(MixerGroup *group);
     MixerGroup* getGroup(int groupID);
 
 private:
