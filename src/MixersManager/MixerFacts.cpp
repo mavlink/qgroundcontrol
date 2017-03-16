@@ -155,7 +155,7 @@ void MixerGroups::addGroup(int groupID, MixerGroup *group){
     if(_mixerGroups.contains(groupID))
         delete _mixerGroups.value(groupID);
     _mixerGroups[groupID] = group;
-
+    group->setParent(this);
 }
 
 void MixerGroups::deleteGroup(int groupID){

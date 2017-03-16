@@ -39,23 +39,19 @@ public:
         MIXERS_MANAGER_WAITING = 0,
         MIXERS_MANAGER_DOWNLOADING_ALL,
         MIXERS_MANAGER_DOWNLOADING_MISSING,
+        MIXERS_MANAGER_DOWNLOADING_MIXER_INFO,
     } MIXERS_MANAGER_STATUS_e;
 
     /// true: Mixer data is ready for use
     Q_PROPERTY(bool mixerDataReady READ mixerDataReady NOTIFY mixerDataReadyChanged)
+    Q_PROPERTY(MIXERS_MANAGER_STATUS_e mixerManagerStatus READ mixerManagerStatus NOTIFY mixerManagerStatusChanged)
     bool mixerDataReady(void);
+
+    MIXERS_MANAGER_STATUS_e mixerManagerStatus(void) {return _status;}
     
     bool inProgress(void);
 
-    bool requestMixerCount(unsigned int group);
-    bool requestSubmixerCount(unsigned int group, unsigned int mixer);
-    bool requestMixerType(unsigned int group, unsigned int mixer, unsigned int submixer);
-    bool requestParameterCount(unsigned int group, unsigned int mixer, unsigned int submixer);
-    bool requestParameter(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int parameter);
-    bool requestMixerAll(unsigned int group);
-    bool requestMissingData(unsigned int group);
-    bool requestConnectionCount(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType);
-    bool requestConnection(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType, unsigned conn);
+    bool requestMixerDownload(unsigned int group);
 
     void clearMixerGroupMessages(unsigned int group);
 
@@ -69,13 +65,14 @@ public:
 signals:
     void mixerDataReadyChanged(bool mixerDataReady);
     void missingMixerDataChanged(bool missingMixerData);
+    void mixerManagerStatusChanged(MIXERS_MANAGER_STATUS_e status);
 
 protected:
     void _paramValueUpdated(const QVariant& value);
     
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
-    void _ackTimeout(void);
+    void _msgTimeout(void);
 
 private:
     typedef enum {
@@ -107,7 +104,20 @@ private:
 
     void _startAckTimeout(AckType_t ack);
 
-    void mixerDataDownloadComplete(unsigned int group);
+    void _setStatus(MIXERS_MANAGER_STATUS_e newStatus);
+
+    void _mixerDataDownloadComplete(unsigned int group);
+
+    bool _requestMixerAll(unsigned int group);
+
+    bool _requestMixerCount(unsigned int group);
+    bool _requestSubmixerCount(unsigned int group, unsigned int mixer);
+    bool _requestMixerType(unsigned int group, unsigned int mixer, unsigned int submixer);
+    bool _requestParameterCount(unsigned int group, unsigned int mixer, unsigned int submixer);
+    bool _requestParameter(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int parameter);
+    bool _requestConnectionCount(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType);
+    bool _requestConnection(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType, unsigned conn);
+
 
     //* Return index of matching message,group,mixer,submixer and parameter etc..*/
     int _getMessageOfKind(const mavlink_mixer_data_t* data);
@@ -116,7 +126,8 @@ private:
     /// The test against data is dependent on the mixer data type*/
     bool _collectMixerData(const mavlink_mixer_data_t* data);
 
-    ///* Request a missing message. true if there is missing data */
+    ///* Request a missing message. true if there is missing data
+    /// call to mixerDataDownloadComplete if no data is missing*/
     bool _requestMissingData(unsigned int group);
 
 //    ///* Build mixer Fact database from the messages collected*/

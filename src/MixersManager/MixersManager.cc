@@ -38,7 +38,7 @@ MixersManager::MixersManager(Vehicle* vehicle)
     _ackTimeoutTimer->setSingleShot(true);
     _ackTimeoutTimer->setInterval(_ackTimeoutMilliseconds);
     
-    connect(_ackTimeoutTimer, &QTimer::timeout, this, &MixersManager::_ackTimeout);
+    connect(_ackTimeoutTimer, &QTimer::timeout, this, &MixersManager::_msgTimeout);
 }
 
 MixersManager::~MixersManager()
@@ -54,37 +54,32 @@ void MixersManager::_paramValueUpdated(const QVariant& value){
 
 }
 
-
-void MixersManager::_ackTimeout(void)
+void MixersManager::_msgTimeout(void)
 {
-    if(_status == MIXERS_MANAGER_WAITING)
-        return;
+    switch(int(_status))
+    {
+        case MIXERS_MANAGER_WAITING:
+            return;
+            break;
 
-    if (_expectedAck == AckNone) {
-        return;
-    }
-
-    switch(_expectedAck){
-    case AckAll:
-        qCDebug(MixersManagerLog) << "Mixer request all data - timeout.  Received " << _mixerDataMessages.length() << " messages";
-        _retryCount = 0;
-        _requestMissingData(_actionGroup);
-        break;
-    default:
-        break;
-    }
-
-    if(_status == MIXERS_MANAGER_DOWNLOADING_MISSING) {
-        _retryCount++;
-        if(_retryCount > _maxRetryCount) {
-            _status = MIXERS_MANAGER_WAITING;
-            _expectedAck = AckNone;
-            qDebug("Retry count exceeded while requesting missing data");
-        } else {
+        case MIXERS_MANAGER_DOWNLOADING_ALL:
+            qCDebug(MixersManagerLog) << "Mixer request all data - timeout.  Received " << _mixerDataMessages.length() << " messages";
+            _retryCount = 0;
             _requestMissingData(_actionGroup);
+            break;
+
+        case MIXERS_MANAGER_DOWNLOADING_MISSING:{
+            _retryCount++;
+            if(_retryCount > _maxRetryCount) {
+                _status = MIXERS_MANAGER_WAITING;
+                _expectedAck = AckNone;
+                qDebug("Retry count exceeded while requesting missing data");
+            } else {
+                _requestMissingData(_actionGroup);
+            }
+            break;
         }
     }
-
     _expectedAck = AckNone;
 }
 
@@ -93,6 +88,14 @@ void MixersManager::_startAckTimeout(AckType_t ack)
     _expectedAck = ack;
     _ackTimeoutTimer->start();
 }
+
+void MixersManager::_setStatus(MIXERS_MANAGER_STATUS_e newStatus){
+    if(_status != newStatus) {
+        _status = newStatus;
+        emit(mixerManagerStatusChanged(_status));
+    }
+}
+
 
 bool MixersManager::mixerDataReady() {
 
@@ -103,7 +106,7 @@ bool MixersManager::mixerDataReady() {
 }
 
 
-bool MixersManager::requestMixerCount(unsigned int group){
+bool MixersManager::_requestMixerCount(unsigned int group){
     mavlink_message_t       messageOut;
     mavlink_command_long_t  command;
 
@@ -126,7 +129,7 @@ bool MixersManager::requestMixerCount(unsigned int group){
     return true;
 }
 
-bool MixersManager::requestSubmixerCount(unsigned int group, unsigned int mixer){
+bool MixersManager::_requestSubmixerCount(unsigned int group, unsigned int mixer){
     mavlink_message_t       messageOut;
     mavlink_command_long_t  command;
 
@@ -150,7 +153,7 @@ bool MixersManager::requestSubmixerCount(unsigned int group, unsigned int mixer)
 }
 
 
-bool MixersManager::requestMixerType(unsigned int group, unsigned int mixer, unsigned int submixer){
+bool MixersManager::_requestMixerType(unsigned int group, unsigned int mixer, unsigned int submixer){
     mavlink_message_t       messageOut;
     mavlink_command_long_t  command;
 
@@ -174,7 +177,7 @@ bool MixersManager::requestMixerType(unsigned int group, unsigned int mixer, uns
 }
 
 
-bool MixersManager::requestParameterCount(unsigned int group, unsigned int mixer, unsigned int submixer){
+bool MixersManager::_requestParameterCount(unsigned int group, unsigned int mixer, unsigned int submixer){
     mavlink_message_t       messageOut;
     mavlink_command_long_t  command;
 
@@ -197,7 +200,7 @@ bool MixersManager::requestParameterCount(unsigned int group, unsigned int mixer
     return true;
 }
 
-bool MixersManager::requestParameter(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int parameter){
+bool MixersManager::_requestParameter(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int parameter){
     mavlink_message_t       messageOut;
     mavlink_command_long_t  command;
 
@@ -220,7 +223,7 @@ bool MixersManager::requestParameter(unsigned int group, unsigned int mixer, uns
     return true;
 }
 
-bool MixersManager::requestConnectionCount(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType){
+bool MixersManager::_requestConnectionCount(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType){
     mavlink_message_t       messageOut;
     mavlink_command_long_t  command;
 
@@ -244,7 +247,7 @@ bool MixersManager::requestConnectionCount(unsigned int group, unsigned int mixe
     return true;
 }
 
-bool MixersManager::requestConnection(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType, unsigned conn){
+bool MixersManager::_requestConnection(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType, unsigned conn){
     mavlink_message_t       messageOut;
     mavlink_command_long_t  command;
 
@@ -269,8 +272,22 @@ bool MixersManager::requestConnection(unsigned int group, unsigned int mixer, un
 }
 
 
+bool MixersManager::requestMixerDownload(unsigned int group){
+    if(_status != MIXERS_MANAGER_WAITING)
+        return false;
 
-bool MixersManager::requestMixerAll(unsigned int group){
+    MixerGroup* mixerGroup = getMixerGroup(group);
+    if(mixerGroup == nullptr) {
+        mixerGroup = new MixerGroup();
+        _mixerGroupsData.addGroup(group, mixerGroup);
+    }
+
+    _requestMixerAll(group);
+    return true;
+}
+
+
+bool MixersManager::_requestMixerAll(unsigned int group){
     if(_status != MIXERS_MANAGER_WAITING)
         return false;
 
@@ -295,22 +312,11 @@ bool MixersManager::requestMixerAll(unsigned int group){
                                          &command);
 
     _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+    _status = MIXERS_MANAGER_DOWNLOADING_ALL;
     _startAckTimeout(AckAll);
     return true;
 }
 
-bool MixersManager::requestMissingData(unsigned int group){
-    if(_status != MIXERS_MANAGER_WAITING)
-        return true;
-
-    _retryCount = 0;
-    _actionGroup = group;
-    if(!_requestMissingData(group)){
-        mixerDataDownloadComplete(group);
-    }
-    emit mixerDataReadyChanged(false);
-    return false;
-}
 
 void MixersManager::clearMixerGroupMessages(unsigned int group){
     mavlink_mixer_data_t *msg;
@@ -326,7 +332,7 @@ void MixersManager::clearMixerGroupMessages(unsigned int group){
     }
 }
 
-void MixersManager::mixerDataDownloadComplete(unsigned int group){
+void MixersManager::_mixerDataDownloadComplete(unsigned int group){
     if(_buildAll(group)){
         emit mixerDataReadyChanged(true);
     }
@@ -368,7 +374,7 @@ bool MixersManager::_requestMissingData(unsigned int group){
     chk.data_type = MIXER_DATA_TYPE_MIXER_COUNT;
     found_index = _getMessageOfKind(&chk);
     if(found_index == -1){
-        requestMixerCount(group);
+        _requestMixerCount(group);
         return true;
     } else {
         mixer_count = _mixerDataMessages[found_index]->data_value;
@@ -378,7 +384,7 @@ bool MixersManager::_requestMissingData(unsigned int group){
         chk.data_type = MIXER_DATA_TYPE_SUBMIXER_COUNT;
         found_index = _getMessageOfKind(&chk);
         if(found_index == -1){
-            requestSubmixerCount(group, chk.mixer_index);
+            _requestSubmixerCount(group, chk.mixer_index);
             return true;
         } else {
             submixer_count = _mixerDataMessages[found_index]->data_value;
@@ -389,7 +395,7 @@ bool MixersManager::_requestMissingData(unsigned int group){
             chk.data_type = MIXER_DATA_TYPE_MIXTYPE;
             found_index = _getMessageOfKind(&chk);
             if(found_index == -1){
-                requestMixerType(group, chk.mixer_index, chk.mixer_sub_index);
+                _requestMixerType(group, chk.mixer_index, chk.mixer_sub_index);
                 return true;
             }
 //            else {
@@ -402,7 +408,7 @@ bool MixersManager::_requestMissingData(unsigned int group){
             chk.data_type = MIXER_DATA_TYPE_PARAMETER_COUNT;
             found_index = _getMessageOfKind(&chk);
             if(found_index == -1){
-                requestParameterCount(group, chk.mixer_index, chk.mixer_sub_index);
+                _requestParameterCount(group, chk.mixer_index, chk.mixer_sub_index);
                 return true;
             } else {
                 parameter_count = _mixerDataMessages[found_index]->data_value;
@@ -413,7 +419,7 @@ bool MixersManager::_requestMissingData(unsigned int group){
                 chk.data_type = MIXER_DATA_TYPE_PARAMETER;
                 found_index = _getMessageOfKind(&chk);
                 if(found_index == -1){
-                    requestParameter(group, chk.mixer_index, chk.mixer_sub_index, chk.parameter_index);
+                    _requestParameter(group, chk.mixer_index, chk.mixer_sub_index, chk.parameter_index);
                     return true;
                 }
             }
@@ -424,7 +430,7 @@ bool MixersManager::_requestMissingData(unsigned int group){
             chk.data_type = MIXER_DATA_TYPE_CONNECTION_COUNT;
             found_index = _getMessageOfKind(&chk);
             if(found_index == -1){
-                requestConnectionCount(group, chk.mixer_index, chk.mixer_sub_index, chk.connection_type);
+                _requestConnectionCount(group, chk.mixer_index, chk.mixer_sub_index, chk.connection_type);
                 return true;
             } else {
                 mixer_input_conn_count = _mixerDataMessages[found_index]->data_value;
@@ -436,7 +442,7 @@ bool MixersManager::_requestMissingData(unsigned int group){
                 chk.data_type = MIXER_DATA_TYPE_CONNECTION;
                 found_index = _getMessageOfKind(&chk);
                 if(found_index == -1){
-                    requestConnection(group, chk.mixer_index, chk.mixer_sub_index, chk.connection_type, chk.parameter_index);
+                    _requestConnection(group, chk.mixer_index, chk.mixer_sub_index, chk.connection_type, chk.parameter_index);
                     return true;
                 }
             }
@@ -447,7 +453,7 @@ bool MixersManager::_requestMissingData(unsigned int group){
             chk.data_type = MIXER_DATA_TYPE_CONNECTION_COUNT;
             found_index = _getMessageOfKind(&chk);
             if(found_index == -1){
-                requestConnectionCount(group, chk.mixer_index, chk.mixer_sub_index, chk.connection_type);
+                _requestConnectionCount(group, chk.mixer_index, chk.mixer_sub_index, chk.connection_type);
                 return true;
             } else {
                 mixer_output_conn_count = _mixerDataMessages[found_index]->data_value;
@@ -459,13 +465,16 @@ bool MixersManager::_requestMissingData(unsigned int group){
                 chk.data_type = MIXER_DATA_TYPE_CONNECTION;
                 found_index = _getMessageOfKind(&chk);
                 if(found_index == -1){
-                    requestConnection(group, chk.mixer_index, chk.mixer_sub_index, chk.connection_type, chk.parameter_index);
+                    _requestConnection(group, chk.mixer_index, chk.mixer_sub_index, chk.connection_type, chk.parameter_index);
                     return true;
                 }
             }
         }
     }
+
+    _mixerDataDownloadComplete(group);
     _status = MIXERS_MANAGER_WAITING;
+    emit mixerDataReadyChanged(true);
     return false;
 }
 
@@ -486,7 +495,8 @@ bool MixersManager::_buildStructureFromMessages(unsigned int group){
 
     //Delete existing mixer group data
     MixerGroup *mixer_group = _mixerGroupsData.getGroup(group);
-    if(mixer_group != nullptr) {
+    if(mixer_group == nullptr)
+    {
         mixer_group->deleteGroupMixers();
     } else {
         mixer_group = new MixerGroup();
@@ -890,7 +900,7 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
     switch (message.msgid) {
         case MAVLINK_MSG_ID_MIXER_DATA: {
-            if(_expectedAck == AckAll)
+            if(_status == MIXERS_MANAGER_DOWNLOADING_ALL)
                 _ackTimeoutTimer->start();
             else {
                 _ackTimeoutTimer->stop();

@@ -247,29 +247,29 @@ SetupPage {
                             text:               "0"
                         }
 
-                        QGCButton {
-                            id:getMixersCountButton
-                            text: qsTr("Request mixer count")
-                            onClicked: {
-                                mixers.getMixersCountButtonClicked()
-                            }
-                        }
+//                        QGCButton {
+//                            id:getMixersCountButton
+//                            text: qsTr("Request mixer count")
+//                            onClicked: {
+//                                mixers.getMixersCountButtonClicked()
+//                            }
+//                        }
 
-                        QGCButton {
-                            id:requestAllButton
-                            text: qsTr("Request all")
-                            onClicked: {
-                                mixers.requestAllButtonClicked()
-                            }
-                        }
+//                        QGCButton {
+//                            id:requestAllButton
+//                            text: qsTr("Request all")
+//                            onClicked: {
+//                                mixers.requestAllButtonClicked()
+//                            }
+//                        }
 
-                        QGCButton {
-                            id:requestMissing
-                            text: qsTr("Request missing")
-                            onClicked: {
-                                mixers.requestMissingButtonClicked()
-                            }
-                        }
+//                        QGCButton {
+//                            id:requestMissing
+//                            text: qsTr("Request missing")
+//                            onClicked: {
+//                                mixers.requestMissingButtonClicked()
+//                            }
+//                        }
 
                         QGCButton {
                             id:refreshGUI

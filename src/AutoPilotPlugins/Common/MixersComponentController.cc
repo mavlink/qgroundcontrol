@@ -57,7 +57,7 @@ MixersComponentController::MixersComponentController(void)
 
     connect(_vehicle->mixersManager(), &MixersManager::mixerDataReadyChanged, this, &MixersComponentController::_updateMixers);
 
-    _vehicle->mixersManager()->requestMixerAll(0);
+    _vehicle->mixersManager()->requestMixerDownload(0);
 }
 
 
@@ -74,26 +74,26 @@ void MixersComponentController::guiUpdated(void)
 }
 
 
-void MixersComponentController::getMixersCountButtonClicked(void)
-{
-    _vehicle->mixersManager()->requestMixerCount(0);
-}
+//void MixersComponentController::getMixersCountButtonClicked(void)
+//{
+//    _vehicle->mixersManager()->requestMixerCount(0);
+//}
 
 
-void MixersComponentController::requestAllButtonClicked(void)
-{
-    _vehicle->mixersManager()->requestMixerAll(0);
-}
+//void MixersComponentController::requestAllButtonClicked(void)
+//{
+//    _vehicle->mixersManager()->requestMixerAll(0);
+//}
 
-void MixersComponentController::requestMissingButtonClicked(void)
-{
-    _vehicle->mixersManager()->requestMissingData(0);
-}
+//void MixersComponentController::requestMissingButtonClicked(void)
+//{
+//    _vehicle->mixersManager()->requestMissingData(0);
+//}
 
-void MixersComponentController::requestSubmixerCountButtonClicked(void)
-{
-    _vehicle->mixersManager()->requestSubmixerCount(0, 0);
-}
+//void MixersComponentController::requestSubmixerCountButtonClicked(void)
+//{
+//    _vehicle->mixersManager()->requestSubmixerCount(0, 0);
+//}
 
 void MixersComponentController::refreshGUIButtonClicked(void){
     QObjectList newMixerList;
