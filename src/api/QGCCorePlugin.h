@@ -41,7 +41,7 @@ public:
     Q_PROPERTY(bool         showAdvancedUI      READ showAdvancedUI     WRITE setShowAdvancedUI    NOTIFY showAdvancedUIChanged)
 
     Q_PROPERTY(QString      brandImageIndoor    READ brandImageIndoor   CONSTANT)
-    Q_PROPERTY(QString      brandImageOutdoor   READ brandImageIndoor   CONSTANT)
+    Q_PROPERTY(QString      brandImageOutdoor   READ brandImageOutdoor  CONSTANT)
 
     /// The list of settings under the Settings Menu
     /// @return A list of QGCSettings
