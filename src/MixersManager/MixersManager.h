@@ -128,10 +128,10 @@ private:
     /// When a supported group is found a MixerGroup is created for it*/
     bool _searchSupportedMixerGroup(unsigned int group);
 
-    bool _requestSearchMixerGroup();
-    bool _requestSearchNextMixerGroup();
-    bool _requestDownloadMixerGroup();
-    bool _requestDownloadNextMixerGroup();
+    bool _searchMixerGroup();
+    bool _searchNextMixerGroup();
+    bool _downloadMixerGroup();
+    bool _downloadNextMixerGroup();
 
     ///* Create a mixer group and add it to the mixer groups if the group is missing
     /// return pointer to the existing group or the new one*/

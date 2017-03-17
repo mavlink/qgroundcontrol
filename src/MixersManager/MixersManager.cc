@@ -82,10 +82,10 @@ void MixersManager::_msgTimeout(void)
     case MIXERS_MANAGER_IDENTIFYING_SUPPORTED_GROUPS: {
         _retryCount++;
         if(_retryCount > _maxRetryCount){
-            _requestSearchNextMixerGroup();
+            _searchNextMixerGroup();
             return;
         } else {
-            _requestSearchMixerGroup();
+            _searchMixerGroup();
             return;
         }
         break;
@@ -293,42 +293,43 @@ bool MixersManager::searchAllMixerGroupsAndDownload(void) {
     _setStatus(MIXERS_MANAGER_IDENTIFYING_SUPPORTED_GROUPS);
     _actionGroup = 0;
     _retryCount = 0;
-    _requestSearchMixerGroup();
+    _searchMixerGroup();
     return true;
 }
 
-bool MixersManager::_requestSearchMixerGroup()
+bool MixersManager::_searchMixerGroup()
 {
     return _requestMixerCount(_actionGroup);
 }
 
-bool MixersManager::_requestSearchNextMixerGroup()
+bool MixersManager::_searchNextMixerGroup()
 {
     _retryCount = 0;
     _actionGroup++;
     if(_actionGroup > 1){
         _actionGroup = 0;
-        return _requestDownloadMixerGroup();
+        return _downloadMixerGroup();
     }
-    return _requestSearchMixerGroup();
+    return _searchMixerGroup();
 }
 
-bool MixersManager::_requestDownloadMixerGroup()
+bool MixersManager::_downloadMixerGroup()
 {
     if(getMixerGroup(_actionGroup) == nullptr) {
-        return _requestDownloadNextMixerGroup();
+        return _downloadNextMixerGroup();
     }
 
+    _retryCount = 0;
     return _requestMixerAll(_actionGroup);
 }
 
-bool MixersManager::_requestDownloadNextMixerGroup()
+bool MixersManager::_downloadNextMixerGroup()
 {
     _retryCount = 0;
     _actionGroup++;
     if(_actionGroup > 1)
         return false;
-    return _requestDownloadMixerGroup();
+    return _downloadMixerGroup();
 }
 
 
@@ -337,7 +338,6 @@ bool MixersManager::_requestMixerAll(unsigned int group){
     mavlink_command_long_t  command;
 
     _actionGroup = group;
-    _retryCount = 0;
 
     command.command = MAV_CMD_REQUEST_MIXER_SEND_ALL;
     command.param1 = group; //Group
@@ -517,8 +517,7 @@ bool MixersManager::_requestMissingData(unsigned int group){
     }
 
     _mixerDataDownloadComplete(group);
-    _setStatus(MIXERS_MANAGER_WAITING);
-
+    _downloadNextMixerGroup();
     return false;
 }
 
@@ -977,8 +976,10 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
             switch(mixerData.data_type){
             case MIXER_DATA_TYPE_MIXER_COUNT: {
                 if(_status == MIXERS_MANAGER_IDENTIFYING_SUPPORTED_GROUPS) {
-                    _createMixerGroup(mixerData.mixer_group);
-                    _requestSearchNextMixerGroup();
+                    if(mixerData.data_value > 0){
+                        _createMixerGroup(mixerData.mixer_group);
+                    }
+                    _searchNextMixerGroup();
                 }
                 qDebug() << "Received mixer count from group:"
                                           << mixerData.mixer_group
