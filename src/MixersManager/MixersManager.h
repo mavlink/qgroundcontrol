@@ -37,6 +37,7 @@ public:
 
     typedef enum {
         MIXERS_MANAGER_WAITING = 0,
+        MIXERS_MANAGER_IDENTIFYING_SUPPORTED_GROUPS,
         MIXERS_MANAGER_DOWNLOADING_ALL,
         MIXERS_MANAGER_DOWNLOADING_MISSING,
         MIXERS_MANAGER_DOWNLOADING_MIXER_INFO,
@@ -52,9 +53,8 @@ public:
 
     MIXERS_MANAGER_STATUS_e mixerManagerStatus(void) {return _status;}
 
-    bool requestMixerDownload(unsigned int group);
-
-    void clearMixerGroupMessages(unsigned int group);
+    ///* Search for all supported groups and download missing groups*/
+    bool searchAllMixerGroupsAndDownload(void);
 
     MixerGroup* getMixerGroup(unsigned int groupID);
 
@@ -101,7 +101,8 @@ private:
 
     MIXERS_MANAGER_STATUS_e _status;
 
-    unsigned int        _actionGroup;      // The group which MixerManager is working with
+    unsigned int        _actionGroup;       // The group which MixerManager is working with
+    bool                _groupsIndentified; // The mixer groups have been checked and added to _mixerGroupsData
 
     void _startAckTimeout(AckType_t ack);
 
@@ -123,9 +124,28 @@ private:
     //* Return index of matching message,group,mixer,submixer and parameter etc..*/
     int _getMessageOfKind(const mavlink_mixer_data_t* data);
 
+    ///* Check for support on each possible mixer group on an AP
+    /// When a supported group is found a MixerGroup is created for it*/
+    bool _searchSupportedMixerGroup(unsigned int group);
+
+    bool _requestSearchMixerGroup();
+    bool _requestSearchNextMixerGroup();
+    bool _requestDownloadMixerGroup();
+    bool _requestDownloadNextMixerGroup();
+
+    ///* Create a mixer group and add it to the mixer groups if the group is missing
+    /// return pointer to the existing group or the new one*/
+    MixerGroup* _createMixerGroup(unsigned int group);
+
     ///* Collect mixer data into a list.  Only one list entry per group, data_type, mixer, submixer etc...
     /// The test against data is dependent on the mixer data type*/
     bool _collectMixerData(const mavlink_mixer_data_t* data);
+
+    ///* clear all of the recieved mixer messages for a given group */
+    void _clearMixerGroupMessages(unsigned int group);
+
+    ///* request to download data on a particular mixer group*/
+    bool _requestMixerDownload(unsigned int group);
 
     ///* Request a missing message. true if there is missing data
     /// call to mixerDataDownloadComplete if no data is missing*/
@@ -137,7 +157,6 @@ private:
     ///* Build all mixer data structure and content from whatever source is available
     /// return true if successfull*/
     bool _buildAll(unsigned int group);
-
 
     ///* Build mixer structure from messages.  This only includes mixers and submixers with type facts
     /// return true if successfull*/

@@ -62,7 +62,6 @@ MixersComponentController::MixersComponentController(void)
     connect(_vehicle->mixersManager(), &MixersManager::mixerManagerStatusChanged, this, &MixersComponentController::_updateMixersManagerStatus);
     connect(_vehicle->mixersManager(), &MixersManager::mixerGroupStatusChanged, this, &MixersComponentController::_updateMixerGroupStatus);
 
-    _vehicle->mixersManager()->requestMixerDownload(0);
 }
 
 
@@ -77,6 +76,7 @@ void MixersComponentController::guiUpdated(void)
 {
     _guiInit = true;
     _updateMixersManagerStatus(_vehicle->mixersManager()->mixerManagerStatus());
+    _vehicle->mixersManager()->searchAllMixerGroupsAndDownload();
 }
 
 
@@ -167,8 +167,8 @@ void MixersComponentController::_updateMixers(bool dataReady){
 }
 
 void MixersComponentController::_updateMixersManagerStatus(MixersManager::MIXERS_MANAGER_STATUS_e mixerManagerStatus) {
-    if(!_guiInit)
-        return;
+//    if(!_guiInit)
+//        return;
     switch(mixerManagerStatus){
     case MixersManager::MIXERS_MANAGER_WAITING:
         _mixersManagerStatusText->setProperty("text", "WAITING");

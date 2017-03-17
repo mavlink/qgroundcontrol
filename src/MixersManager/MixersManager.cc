@@ -58,27 +58,39 @@ void MixersManager::_msgTimeout(void)
 {
     switch(int(_status))
     {
-        case MIXERS_MANAGER_WAITING:
-            return;
-            break;
+    case MIXERS_MANAGER_WAITING:
+        return;
+        break;
 
-        case MIXERS_MANAGER_DOWNLOADING_ALL:
-            qCDebug(MixersManagerLog) << "Mixer request all data - timeout.  Received " << _mixerDataMessages.length() << " messages";
-            _retryCount = 0;
+    case MIXERS_MANAGER_DOWNLOADING_ALL: {
+        qCDebug(MixersManagerLog) << "Mixer request all data - timeout.  Received " << _mixerDataMessages.length() << " messages";
+        _retryCount = 0;
+        _requestMissingData(_actionGroup);
+        break;
+    }
+    case MIXERS_MANAGER_DOWNLOADING_MISSING:{
+        _retryCount++;
+        if(_retryCount > _maxRetryCount) {
+            _setStatus(MIXERS_MANAGER_WAITING);
+            _expectedAck = AckNone;
+            qCDebug(MixersManagerLog) << "Retry count exceeded while requesting missing data";
+        } else {
             _requestMissingData(_actionGroup);
-            break;
-
-        case MIXERS_MANAGER_DOWNLOADING_MISSING:{
-            _retryCount++;
-            if(_retryCount > _maxRetryCount) {
-                _setStatus(MIXERS_MANAGER_WAITING);
-                _expectedAck = AckNone;
-                qDebug("Retry count exceeded while requesting missing data");
-            } else {
-                _requestMissingData(_actionGroup);
-            }
-            break;
         }
+        break;
+    }
+    case MIXERS_MANAGER_IDENTIFYING_SUPPORTED_GROUPS: {
+        _retryCount++;
+        if(_retryCount > _maxRetryCount){
+            _requestSearchNextMixerGroup();
+            return;
+        } else {
+            _requestSearchMixerGroup();
+            return;
+        }
+        break;
+    }
+
     }
     _expectedAck = AckNone;
 }
@@ -275,25 +287,52 @@ bool MixersManager::_requestConnection(unsigned int group, unsigned int mixer, u
 }
 
 
-bool MixersManager::requestMixerDownload(unsigned int group){
+bool MixersManager::searchAllMixerGroupsAndDownload(void) {
     if(_status != MIXERS_MANAGER_WAITING)
         return false;
+    _setStatus(MIXERS_MANAGER_IDENTIFYING_SUPPORTED_GROUPS);
+    _actionGroup = 0;
+    _retryCount = 0;
+    _requestSearchMixerGroup();
+    return true;
+}
 
-    MixerGroup* mixerGroup = getMixerGroup(group);
-    if(mixerGroup == nullptr) {
-        mixerGroup = new MixerGroup(group);
-        _mixerGroupsData.addGroup(mixerGroup);
+bool MixersManager::_requestSearchMixerGroup()
+{
+    return _requestMixerCount(_actionGroup);
+}
+
+bool MixersManager::_requestSearchNextMixerGroup()
+{
+    _retryCount = 0;
+    _actionGroup++;
+    if(_actionGroup > 1){
+        _actionGroup = 0;
+        return _requestDownloadMixerGroup();
+    }
+    return _requestSearchMixerGroup();
+}
+
+bool MixersManager::_requestDownloadMixerGroup()
+{
+    if(getMixerGroup(_actionGroup) == nullptr) {
+        return _requestDownloadNextMixerGroup();
     }
 
-    _requestMixerAll(group);
-    return true;
+    return _requestMixerAll(_actionGroup);
+}
+
+bool MixersManager::_requestDownloadNextMixerGroup()
+{
+    _retryCount = 0;
+    _actionGroup++;
+    if(_actionGroup > 1)
+        return false;
+    return _requestDownloadMixerGroup();
 }
 
 
 bool MixersManager::_requestMixerAll(unsigned int group){
-    if(_status != MIXERS_MANAGER_WAITING)
-        return false;
-
     mavlink_message_t       messageOut;
     mavlink_command_long_t  command;
 
@@ -321,7 +360,7 @@ bool MixersManager::_requestMixerAll(unsigned int group){
 }
 
 
-void MixersManager::clearMixerGroupMessages(unsigned int group){
+void MixersManager::_clearMixerGroupMessages(unsigned int group){
     mavlink_mixer_data_t *msg;
     _actionGroup = group;
     QMutableListIterator<mavlink_mixer_data_t*> i(_mixerDataMessages);
@@ -498,15 +537,12 @@ bool MixersManager::_buildStructureFromMessages(unsigned int group){
 //    _mixerDataReady = false;
 //    emit mixerDataReadyChanged(false);
 
-    //Delete existing mixer group data
     MixerGroup *mixer_group = _mixerGroupsData.getGroup(group);
     if(mixer_group == nullptr)
-    {
-        mixer_group->deleteGroupMixers();
-    } else {
-        mixer_group = new MixerGroup(group);
-        _mixerGroupsData.addGroup(mixer_group);
-    }
+        return false;
+
+    //Delete existing mixer group mixer data - not metadata
+    mixer_group->deleteGroupMixers();
 
     MixerMetaData *mixer_metadata = mixer_group->getMixerMetaData();
 
@@ -884,6 +920,22 @@ int MixersManager::_getMessageOfKind(const mavlink_mixer_data_t* data){
     return -1;
 }
 
+bool MixersManager::_searchSupportedMixerGroup(unsigned int group)
+{
+    _setStatus(MixersManager::MIXERS_MANAGER_IDENTIFYING_SUPPORTED_GROUPS);
+    _actionGroup = group;
+    return _requestMixerCount(group);
+}
+
+MixerGroup* MixersManager::_createMixerGroup(unsigned int group)
+{
+    MixerGroup *mixerGroup = getMixerGroup(group);
+    if(mixerGroup == nullptr) {
+        mixerGroup = new MixerGroup(group);
+        _mixerGroupsData.addGroup(mixerGroup);
+    }
+    return mixerGroup;
+}
 
 bool MixersManager::_collectMixerData(const mavlink_mixer_data_t* data){
     //Check if this kind of message is in the list already. Add it if it is not there.
@@ -924,6 +976,10 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 
             switch(mixerData.data_type){
             case MIXER_DATA_TYPE_MIXER_COUNT: {
+                if(_status == MIXERS_MANAGER_IDENTIFYING_SUPPORTED_GROUPS) {
+                    _createMixerGroup(mixerData.mixer_group);
+                    _requestSearchNextMixerGroup();
+                }
                 qDebug() << "Received mixer count from group:"
                                           << mixerData.mixer_group
                                           << " count:"
