@@ -43,7 +43,7 @@ Item {
         if(TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED) {
             return qgcPal.text
         } else {
-            return toolBar.colorGrey;
+            return qgcPal.colorGrey;
         }
     }
 
@@ -200,7 +200,7 @@ Item {
                         height:             parent.height
                         width:              parent.width * 0.5
                         radius:             width * 0.5
-                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_PHOTO ? toolBar.colorGreen : "black"
+                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_PHOTO ? qgcPal.colorGreen : "black"
                         anchors.left:       parent.left
                         QGCColoredImage {
                             height:             parent.height * 0.75
@@ -208,7 +208,7 @@ Item {
                             sourceSize.width:   width
                             source:             "qrc:/typhoonh/camera.svg"
                             fillMode:           Image.PreserveAspectFit
-                            color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_PHOTO ? "black" : toolBar.colorGrey
+                            color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_PHOTO ? "black" : qgcPal.colorGrey
                             anchors.centerIn:   parent
                         }
                     }
@@ -216,7 +216,7 @@ Item {
                         height:             parent.height
                         width:              parent.width * 0.5
                         radius:             width * 0.5
-                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? toolBar.colorGreen : "black"
+                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? qgcPal.colorGreen : "black"
                         anchors.right:      parent.right
                         QGCColoredImage {
                             height:             parent.height * 0.75
@@ -224,7 +224,7 @@ Item {
                             sourceSize.width:   width
                             source:             "qrc:/typhoonh/video.svg"
                             fillMode:           Image.PreserveAspectFit
-                            color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? "black" : toolBar.colorGrey
+                            color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? "black" : qgcPal.colorGrey
                             anchors.centerIn:   parent
                         }
                     }
@@ -256,7 +256,7 @@ Item {
                         sourceSize.width:   width
                         source:             "qrc:/typhoonh/video.svg"
                         fillMode:           Image.PreserveAspectFit
-                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? toolBar.colorGreen : toolBar.colorGrey
+                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? qgcPal.colorGreen : qgcPal.colorGrey
                         visible:            TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO && TyphoonHQuickInterface.cameraControl.videoStatus !== CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
                         anchors.centerIn:   parent
                         MouseArea {
@@ -272,7 +272,7 @@ Item {
                         id:                 stopVideoButton
                         height:             parent.height * 0.5
                         width:              height
-                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? toolBar.colorRed : toolBar.colorGrey
+                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? qgcPal.colorRed : qgcPal.colorGrey
                         visible:            TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO && TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
                         anchors.centerIn:   parent
                         MouseArea {
@@ -290,7 +290,7 @@ Item {
                         sourceSize.width:   width
                         source:             "qrc:/typhoonh/camera.svg"
                         fillMode:           Image.PreserveAspectFit
-                        color:              TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED ? toolBar.colorGreen : toolBar.colorGrey
+                        color:              TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED ? qgcPal.colorGreen : qgcPal.colorGrey
                         visible:            !startVideoButton.visible && !stopVideoButton.visible
                         anchors.centerIn:   parent
                         MouseArea {

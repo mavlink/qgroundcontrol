@@ -39,7 +39,7 @@ Item {
             sourceSize.width:   width
             source:             "qrc:/typhoonh/video.svg"
             fillMode:           Image.PreserveAspectFit
-            color:              TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING ? toolBar.colorRed : toolBar.colorGrey
+            color:              TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING ? qgcPal.colorRed : qgcPal.colorGrey
         }
         QGCLabel {
             text:               TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING ? TyphoonHQuickInterface.cameraControl.recordTimeStr : "00:00:00"

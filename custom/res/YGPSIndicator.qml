@@ -28,13 +28,13 @@ Item {
 
     function getGPSColor() {
         if(!activeVehicle || activeVehicle.gps.count.rawValue < 1) {
-            return toolBar.colorGrey;
+            return qgcPal.colorGrey;
         } else if(activeVehicle.gps.hdop.rawValue > 1.4) {
-            return toolBar.colorRed;
+            return qgcPal.colorRed;
         } else if(activeVehicle.gps.hdop.rawValue > 0.9) {
-            return toolBar.colorOrange;
+            return qgcPal.colorOrange;
         } else {
-            return toolBar.colorGreen;
+            return qgcPal.colorGreen;
         }
     }
 
