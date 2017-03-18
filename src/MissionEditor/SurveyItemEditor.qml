@@ -166,7 +166,10 @@ Rectangle {
         anchors.right:      parent.right
         spacing:            _margin
 
-        SectionHeader { text: qsTr("Camera") }
+        SectionHeader {
+            text:       qsTr("Camera")
+            showSpacer: false
+        }
 
         QGCComboBox {
             id:             gridTypeCombo
@@ -327,8 +330,6 @@ Rectangle {
                 }
             }
 
-            Item { height: _sectionSpacer;  width: 1; visible: !ScreenTools.isTinyScreen }
-
             SectionHeader { text: qsTr("Grid") }
 
             GridLayout {
@@ -395,8 +396,6 @@ Rectangle {
             spacing:        _margin
             visible:        gridTypeCombo.currentIndex == _gridTypeManual
 
-            Item { height: _sectionSpacer;  width: 1; visible: !ScreenTools.isTinyScreen }
-
             SectionHeader { text: qsTr("Grid") }
 
             FactTextFieldGrid {
@@ -446,8 +445,6 @@ Rectangle {
                 }
             }
         }
-
-        Item { height: _sectionSpacer;  width: 1; visible: !ScreenTools.isTinyScreen }
 
         SectionHeader { text: qsTr("Statistics") }
 

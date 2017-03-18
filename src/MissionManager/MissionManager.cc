@@ -91,7 +91,7 @@ void MissionManager::writeMissionItems(const QList<MissionItem*>& missionItems)
 /// This begins the write sequence with the vehicle. This may be called during a retry.
 void MissionManager::_writeMissionCount(void)
 {
-    qCDebug(MissionManagerLog) << "_writeMissionCount retry count" << _retryCount;
+    qCDebug(MissionManagerLog) << "_writeMissionCount count:_retryCount" << _missionItems.count() << _retryCount;
 
     mavlink_message_t       message;
     mavlink_mission_count_t missionCount;
@@ -427,7 +427,7 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message, bool m
         seq =           missionItem.seq;
     }
     
-    qCDebug(MissionManagerLog) << "_handleMissionItem sequenceNumber:" << seq;
+    qCDebug(MissionManagerLog) << "_handleMissionItem sequenceNumber:" << seq << command;
     
     if (_itemIndicesToRead.contains(seq)) {
         _itemIndicesToRead.removeOne(seq);
@@ -483,8 +483,6 @@ void MissionManager::_handleMissionRequest(const mavlink_message_t& message, boo
     
     mavlink_msg_mission_request_decode(&message, &missionRequest);
     
-    qCDebug(MissionManagerLog) << "_handleMissionRequest sequenceNumber:" << missionRequest.seq;
-    
     if (!_itemIndicesToWrite.contains(missionRequest.seq)) {
         if (missionRequest.seq > _missionItems.count()) {
             _sendError(RequestRangeError, QString("Vehicle requested item outside range, count:request %1:%2. Send to Vehicle failed.").arg(_missionItems.count()).arg(missionRequest.seq));
@@ -497,11 +495,13 @@ void MissionManager::_handleMissionRequest(const mavlink_message_t& message, boo
         _itemIndicesToWrite.removeOne(missionRequest.seq);
     }
     
-    mavlink_message_t       messageOut;
+    MissionItem* item = _missionItems[missionRequest.seq];
+    qCDebug(MissionManagerLog) << "_handleMissionRequest sequenceNumber:" << missionRequest.seq << item->command();
+
+    mavlink_message_t   messageOut;
     if (missionItemInt) {
         mavlink_mission_item_int_t missionItem;
 
-        MissionItem* item = _missionItems[missionRequest.seq];
 
         missionItem.target_system =     _vehicle->id();
         missionItem.target_component =  MAV_COMP_ID_MISSIONPLANNER;
@@ -525,8 +525,6 @@ void MissionManager::_handleMissionRequest(const mavlink_message_t& message, boo
                                                  &missionItem);
     } else {
         mavlink_mission_item_t missionItem;
-
-        MissionItem* item = _missionItems[missionRequest.seq];
 
         missionItem.target_system =     _vehicle->id();
         missionItem.target_component =  MAV_COMP_ID_MISSIONPLANNER;
