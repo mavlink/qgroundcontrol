@@ -179,6 +179,7 @@ TyphoonHQuickInterface::startScan(int delay)
         _scanWifi();
     }
 #else
+    Q_UNUSED(delay);
     _newSSID(QString("Some SSID"), 0);
     _newSSID(QString("Another SSID"), -10);
     _newSSID(QString("Yet Another SSID"), -20);

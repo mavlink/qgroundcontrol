@@ -24,17 +24,7 @@ Rectangle {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
-    property bool isMessageImportant:   _activeVehicle ? !_activeVehicle.messageTypeNormal && !_activeVehicle.messageTypeNone : false
-    property bool isBackgroundDark:     true
-    property bool opaqueBackground:     false
-
-    readonly property color colorGreen:     "#05f068"
-    readonly property color colorOrange:    "#f0ab06"
-    readonly property color colorRed:       "#fc4638"
-    readonly property color colorGrey:      "#7f7f7f"
-    readonly property color colorBlue:      "#636efe"
-    readonly property color colorWhite:     "#ffffff"
+    property var  _activeVehicle:  QGroundControl.multiVehicleManager.activeVehicle
 
     signal showSettingsView
     signal showSetupView
@@ -74,7 +64,7 @@ Rectangle {
         anchors.bottom: parent.bottom
         height:         1
         color:          "black"
-        visible:        qgcPal.globalTheme == QGCPalette.Light
+        visible:        qgcPal.globalTheme === QGCPalette.Light
     }
 
     RowLayout {
@@ -217,7 +207,7 @@ Rectangle {
         anchors.bottom: parent.bottom
         height:         toolBar.height * 0.05
         width:          _activeVehicle ? _activeVehicle.parameterManager.loadProgress * parent.width : 0
-        color:          colorGreen
+        color:          qgcPal.colorGreen
     }
 
 }
