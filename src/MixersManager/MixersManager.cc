@@ -121,6 +121,30 @@ MixerGroup* MixersManager::mixerGroupStatus(void) {
     return _mixerGroupsData.getGroup(_actionGroup);
 }
 
+bool MixersManager::_requestGroupType(unsigned int group){
+    mavlink_message_t       messageOut;
+    mavlink_command_long_t  command;
+
+    command.command = MAV_CMD_REQUEST_MIXER_DATA;
+    command.param1 = group; //Group
+    command.param2 = 0; //Mixer
+    command.param3 = 0; //SubMixer
+    command.param4 = 0; //Parameter
+    command.param5 = MIXER_DATA_TYPE_GROUP_TYPE; //Type
+
+    _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_command_long_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                         _dedicatedLink->mavlinkChannel(),
+                                         &messageOut,
+                                         &command);
+
+    _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+    _startAckTimeout(AckGroupType);
+    return true;
+}
+
+
 bool MixersManager::_requestMixerCount(unsigned int group){
     mavlink_message_t       messageOut;
     mavlink_command_long_t  command;
@@ -299,7 +323,7 @@ bool MixersManager::searchAllMixerGroupsAndDownload(void) {
 
 bool MixersManager::_searchMixerGroup()
 {
-    return _requestMixerCount(_actionGroup);
+    return _requestGroupType(_actionGroup);
 }
 
 bool MixersManager::_searchNextMixerGroup()
@@ -974,13 +998,16 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
             }
 
             switch(mixerData.data_type){
-            case MIXER_DATA_TYPE_MIXER_COUNT: {
+            case MIXER_DATA_TYPE_GROUP_TYPE: {
                 if(_status == MIXERS_MANAGER_IDENTIFYING_SUPPORTED_GROUPS) {
                     if(mixerData.data_value > 0){
                         _createMixerGroup(mixerData.mixer_group);
                     }
                     _searchNextMixerGroup();
                 }
+                break;
+            }
+            case MIXER_DATA_TYPE_MIXER_COUNT: {
                 qDebug() << "Received mixer count from group:"
                                           << mixerData.mixer_group
                                           << " count:"

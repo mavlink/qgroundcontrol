@@ -78,6 +78,7 @@ private slots:
 private:
     typedef enum {
         AckNone,            ///< State machine is idle
+        AckGroupType,       ///< MIXER_DATA is group type
         AckMixersCount,     ///< MIXER_DATA mixers count message expected
         AckSubmixersCount,  ///< MIXER_DATA submixers count message expected
         AckMixerType,       ///< MIXER_DATA mixer type value message expected
@@ -112,6 +113,7 @@ private:
 
     bool _requestMixerAll(unsigned int group);
 
+    bool _requestGroupType(unsigned int group);
     bool _requestMixerCount(unsigned int group);
     bool _requestSubmixerCount(unsigned int group, unsigned int mixer);
     bool _requestMixerType(unsigned int group, unsigned int mixer, unsigned int submixer);
