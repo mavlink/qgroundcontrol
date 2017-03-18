@@ -53,7 +53,7 @@ Item {
         text:                   qsTr("Waiting For Vehicle Connection")
         font.pointSize:         ScreenTools.mediumFontPointSize
         font.family:            ScreenTools.demiboldFontFamily
-        color:                  colorRed
+        color:                  qgcPal.colorRed
         visible:                !_activeVehicle
     }
 
@@ -108,7 +108,7 @@ Item {
             text:                   qsTr("COMMUNICATION LOST")
             font.pointSize:         ScreenTools.largeFontPointSize
             font.family:            ScreenTools.demiboldFontFamily
-            color:                  colorRed
+            color:                  qgcPal.colorRed
         }
     }
 }
