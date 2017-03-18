@@ -293,8 +293,10 @@ void SurveyMissionItem::setDirty(bool dirty)
     }
 }
 
-void SurveyMissionItem::save(QJsonObject& saveObject) const
+void SurveyMissionItem::save(QJsonArray&  missionItems) const
 {
+    QJsonObject saveObject;
+
     saveObject[JsonHelper::jsonVersionKey] =                    3;
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
@@ -344,6 +346,8 @@ void SurveyMissionItem::save(QJsonObject& saveObject) const
     }
 
     saveObject[_jsonPolygonObjectKey] = polygonArray;
+
+    missionItems.append(saveObject);
 }
 
 void SurveyMissionItem::setSequenceNumber(int sequenceNumber)

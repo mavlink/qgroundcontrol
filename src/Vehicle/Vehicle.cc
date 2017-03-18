@@ -1661,10 +1661,9 @@ void Vehicle::_startMissionRequest(void)
             _missionManager->requestMissionItems();
         } else {
             QmlObjectListModel* visualItems = NULL;
-            QmlObjectListModel* complexItems = NULL;
             QDir missionAutoLoadDir(missionAutoLoadDirPath);
             QString autoloadFilename = missionAutoLoadDir.absoluteFilePath(tr("AutoLoad%1.mission").arg(_id));
-            if (MissionController::loadItemsFromFile(this, autoloadFilename, &visualItems, &complexItems)) {
+            if (MissionController::loadItemsFromFile(this, autoloadFilename, &visualItems)) {
                 MissionController::sendItemsToVehicle(this, visualItems);
             }
         }

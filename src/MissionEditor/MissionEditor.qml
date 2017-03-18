@@ -585,6 +585,7 @@ QGCView {
                         highlightMoveDuration: 250
 
                         delegate: MissionItemEditor {
+                            map:            editorMap
                             missionItem:    object
                             width:          parent.width
                             readOnly:       false
@@ -601,8 +602,7 @@ QGCView {
                                 setCurrentItem(removeIndex)
                             }
 
-                            onInsert:               insertSimpleMissionItem(editorMap.center, index)
-                            onMoveHomeToMapCenter:  _visualItems.get(0).coordinate = editorMap.center
+                            onInsert: insertSimpleMissionItem(editorMap.center, index)
                         }
                     } // QGCListView
                 } // Item - Mission Item editor
