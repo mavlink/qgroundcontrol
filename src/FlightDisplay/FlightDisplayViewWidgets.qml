@@ -28,7 +28,7 @@ Item {
     property alias  guidedModeBar:          _guidedModeBar
     property bool   gotoEnabled:            _activeVehicle && _activeVehicle.guidedMode && _activeVehicle.flying
     property var    qgcView
-    property bool   isBackgroundDark
+    property bool   useLightColors
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property bool   _isSatellite:           _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
@@ -36,7 +36,7 @@ Item {
 
     readonly property real _margins:        ScreenTools.defaultFontPixelHeight * 0.5
 
-    QGCMapPalette { id: mapPal; lightColors: isBackgroundDark }
+    QGCMapPalette { id: mapPal; lightColors: useLightColors }
     QGCPalette    { id: qgcPal }
 
     function getPreferredInstrumentWidth() {

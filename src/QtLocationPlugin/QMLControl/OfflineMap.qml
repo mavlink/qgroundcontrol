@@ -37,12 +37,13 @@ QGCView {
     property string savedMapType:       ""
     property bool   _showPreview:       true
     property bool   _defaultSet:        offlineMapView && offlineMapView._currentSelection && offlineMapView._currentSelection.defaultSet
-    property real   _margins:           ScreenTools.defaultFontPixelWidth /2
+    property real   _margins:           ScreenTools.defaultFontPixelWidth / 2
 
     property bool   _saveRealEstate:          ScreenTools.isTinyScreen || ScreenTools.isShortScreen
     property real   _adjustableFontPointSize: _saveRealEstate ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
 
-    property var _mapAdjustedColor: _map.isSatelliteMap ? "white" : "black"
+    property var    _mapAdjustedColor:  _map.isSatelliteMap ? "white" : "black"
+    property bool   _tooManyTiles:      QGroundControl.mapEngineManager.tileCount > _maxTilesForDownload
 
     readonly property real minZoomLevel: 3
     readonly property real maxZoomLevel: 20
@@ -358,7 +359,14 @@ QGCView {
                 color:              Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.85)
                 radius:             ScreenTools.defaultFontPixelWidth * 0.5
                 visible:            false
-                property bool       _extraButton:   !_defaultSet && ((!offlineMapView._currentSelection.complete && !offlineMapView._currentSelection.downloading) || (!offlineMapView._currentSelection.complete && offlineMapView._currentSelection.downloading))
+
+                property bool       _extraButton: {
+                    if(!offlineMapView._currentSelection)
+                        return false;
+                    var curSel = offlineMapView._currentSelection;
+                    return !_defaultSet && ((!curSel.complete && !curSel.downloading) || (!curSel.complete && curSel.downloading));
+                }
+
                 property real       _labelWidth:    ScreenTools.defaultFontPixelWidth * 10
                 property real       _valueWidth:    ScreenTools.defaultFontPixelWidth * 14
                 Column {
@@ -582,7 +590,7 @@ QGCView {
                     anchors.margins:    ScreenTools.defaultFontPixelWidth
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right:      parent.right
-                    width:              ScreenTools.defaultFontPixelWidth * 24
+                    width:              ScreenTools.defaultFontPixelWidth * (ScreenTools.isTinyScreen ? 24 : 28)
                     height:             Math.min(parent.height - (anchors.margins * 2), addNewSetFlickable.y + addNewSetColumn.height + addNewSetLabel.anchors.margins)
                     color:              Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.85)
                     radius:             ScreenTools.defaultFontPixelWidth * 0.5
@@ -616,9 +624,9 @@ QGCView {
                             id:                 addNewSetColumn
                             anchors.left:       parent.left
                             anchors.right:      parent.right
-                            spacing:            ScreenTools.defaultFontPixelHeight / (ScreenTools.isTinyScreen ? 4 : 2)
-
+                            spacing:            ScreenTools.defaultFontPixelHeight * (ScreenTools.isTinyScreen ? 0.25 : 0.5)
                             Column {
+                                spacing:            ScreenTools.isTinyScreen ? 0 : ScreenTools.defaultFontPixelHeight * 0.25
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
                                 QGCLabel { text: qsTr("Name:") }
@@ -628,8 +636,8 @@ QGCView {
                                     anchors.right:  parent.right
                                 }
                             }
-
                             Column {
+                                spacing:            ScreenTools.isTinyScreen ? 0 : ScreenTools.defaultFontPixelHeight * 0.25
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
                                 QGCLabel {
@@ -661,7 +669,7 @@ QGCView {
                             Rectangle {
                                 anchors.left:   parent.left
                                 anchors.right:  parent.right
-                                height:         zoomColumn.height + ScreenTools.defaultFontPixelHeight / 2
+                                height:         zoomColumn.height + ScreenTools.defaultFontPixelHeight * 0.5
                                 color:          qgcPal.window
                                 border.color:   qgcPal.text
                                 radius:         ScreenTools.defaultFontPixelWidth * 0.5
@@ -723,7 +731,7 @@ QGCView {
 
                                     GridLayout {
                                         columns:    2
-                                        rowSpacing: 0
+                                        rowSpacing: ScreenTools.isTinyScreen ? 0 : ScreenTools.defaultFontPixelHeight * 0.5
                                         QGCLabel {
                                             text:           qsTr("Count:")
                                             font.pointSize: _adjustableFontPointSize
@@ -745,13 +753,20 @@ QGCView {
                                 } // Column - Zoom info
                             } // Rectangle - Zoom info
 
+                            QGCLabel {
+                                text:       qsTr("Too many tiles")
+                                visible:    _tooManyTiles
+                                color:      qgcPal.warningText
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 QGCButton {
-                                    text:       _tooManyTiles ? qsTr("Too many tiles") : qsTr("Download")
+                                    id:         downloadButton
+                                    text:       qsTr("Download")
                                     enabled:    !_tooManyTiles && setName.text.length > 0
-                                    property bool _tooManyTiles: QGroundControl.mapEngineManager.tileCount > _maxTilesForDownload
                                     onClicked: {
                                         if(QGroundControl.mapEngineManager.findName(setName.text)) {
                                             duplicateName.visible = true
@@ -762,7 +777,8 @@ QGCView {
                                     }
                                 }
                                 QGCButton {
-                                    text: qsTr("Cancel")
+                                    text:   qsTr("Cancel")
+                                    width:  downloadButton.width
                                     onClicked: {
                                         showList()
                                     }
