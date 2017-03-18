@@ -965,11 +965,58 @@
         { "id": 510, "rawName": "MAV_CMD_GET_MESSAGE_INTERVAL", "friendlyName": "Get message interval" },
         { "id": 511, "rawName": "MAV_CMD_SET_MESSAGE_INTERVAL", "friendlyName": "Set message interval" },
         { "id": 520, "rawName": "MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES", "friendlyName": "Get capabilities" },
-        { "id": 2000, "rawName": "MAV_CMD_IMAGE_START_CAPTURE", "friendlyName": "Start image capture" },
+        {
+            "id":           2000,
+            "rawName":      "MAV_CMD_IMAGE_START_CAPTURE",
+            "friendlyName": "Start image capture" ,
+            "description":  "Start taking one or more photos.",
+            "category":     "Camera",
+            "param1": {
+                "label":            "Interval",
+                "default":          0,
+                "units":            "secs",
+                "decimalPlaces":    0
+            },
+            "param2": {
+                "label":            "Photo count",
+                "default":          1,
+                "decimalPlaces":    0
+            },
+            "param3": {
+                "label":            "Resolution",
+                "default":          -1,
+                "decimalPlaces":    0
+            },
+            "param6": {
+                "label":            "Camera id",
+                "default":          0,
+                "decimalPlaces":    0
+            }
+        },
         { "id": 2001, "rawName": "MAV_CMD_IMAGE_STOP_CAPTURE", "friendlyName": "Stop image capture" },
         { "id": 2003, "rawName": "MAV_CMD_DO_TRIGGER_CONTROL", "friendlyName": "Trigger control" },
-        { "id": 2500, "rawName": "MAV_CMD_VIDEO_START_CAPTURE", "friendlyName": "Start video capture" },
-        { "id": 2501, "rawName": "MAV_CMD_VIDEO_STOP_CAPTURE", "friendlyName": "Stop video cpture" },
+        {
+            "id":           2500,
+            "rawName":      "MAV_CMD_VIDEO_START_CAPTURE",
+            "friendlyName": "Start video capture",
+            "description":  "Start taking video.",
+            "category":     "Camera",
+            "param1": {
+                "label":            "Camera id",
+                "default":          0,
+                "decimalPlaces":    0
+            },
+            "param2": {
+                "label":            "FPS",
+                "default":          -1,
+                "decimalPlaces":    0
+            },
+            "param3": {
+                "label":            "Resolution",
+                "default":          -1,
+                "decimalPlaces":    0
+            }
+        },
         { "id": 2800, "rawName": "MAV_CMD_PANORAMA_CREATE", "friendlyName": "Create panorama" },
         {
             "id": 3000,

@@ -50,8 +50,6 @@ static const struct EnumInfo_s _rgMavFrameInfo[] = {
 SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
     : VisualMissionItem(vehicle, parent)
     , _rawEdit(false)
-    , _homePositionSpecialCase(false)
-    , _showHomePosition(false)
     , _commandTree(qgcApp()->toolbox()->missionCommandTree())
     , _altitudeRelativeToHomeFact   (0, "Altitude is relative to home", FactMetaData::valueTypeUint32)
     , _supportedCommandFact         (0, "Command:",                     FactMetaData::valueTypeUint32)
@@ -82,8 +80,6 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missio
     , _missionItem(missionItem)
     , _rawEdit(false)
     , _dirty(false)
-    , _homePositionSpecialCase(false)
-    , _showHomePosition(false)
     , _commandTree(qgcApp()->toolbox()->missionCommandTree())
     , _altitudeRelativeToHomeFact   (0, "Altitude is relative to home", FactMetaData::valueTypeUint32)
     , _supportedCommandFact         (0, "Command:",                     FactMetaData::valueTypeUint32)
@@ -112,8 +108,6 @@ SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, QObject* pa
     , _missionItem(other._vehicle)
     , _rawEdit(false)
     , _dirty(false)
-    , _homePositionSpecialCase(false)
-    , _showHomePosition(false)
     , _commandTree(qgcApp()->toolbox()->missionCommandTree())
     , _altitudeRelativeToHomeFact   (0, "Altitude is relative to home", FactMetaData::valueTypeUint32)
     , _supportedCommandFact         (0, "Command:",                     FactMetaData::valueTypeUint32)
@@ -246,9 +240,11 @@ SimpleMissionItem::~SimpleMissionItem()
 {    
 }
 
-void SimpleMissionItem::save(QJsonObject& saveObject) const
+void SimpleMissionItem::save(QJsonArray&  missionItems) const
 {
-    _missionItem.save(saveObject);
+    QJsonObject itemObject;
+    _missionItem.save(itemObject);
+    missionItems.append(itemObject);
 }
 
 bool SimpleMissionItem::load(QTextStream &loadStream)
@@ -582,14 +578,6 @@ void SimpleMissionItem::_sendFriendlyEditAllowedChanged(void)
 QString SimpleMissionItem::category(void) const
 {
     return _commandTree->getUIInfo(_vehicle, (MAV_CMD)command())->category();
-}
-
-void SimpleMissionItem::setShowHomePosition(bool showHomePosition)
-{
-    if (showHomePosition != _showHomePosition) {
-        _showHomePosition = showHomePosition;
-        emit showHomePositionChanged(_showHomePosition);
-    }
 }
 
 void SimpleMissionItem::setCommand(MavlinkQmlSingleton::Qml_MAV_CMD command)
