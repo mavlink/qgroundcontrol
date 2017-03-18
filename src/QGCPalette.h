@@ -60,6 +60,13 @@ class QGCPalette : public QObject
     Q_PROPERTY(QColor brandingPurple        READ brandingPurple                                         NOTIFY paletteChanged)
     Q_PROPERTY(QColor brandingBlue          READ brandingBlue                                           NOTIFY paletteChanged)
 
+    Q_PROPERTY(QColor colorGreen            READ colorGreen             CONSTANT)
+    Q_PROPERTY(QColor colorOrange           READ colorOrange            CONSTANT)
+    Q_PROPERTY(QColor colorRed              READ colorRed               CONSTANT)
+    Q_PROPERTY(QColor colorGrey             READ colorGrey              CONSTANT)
+    Q_PROPERTY(QColor colorBlue             READ colorBlue              CONSTANT)
+    Q_PROPERTY(QColor colorWhite            READ colorWhite             CONSTANT)
+
 public:
     enum ColorGroup {
         Disabled = 0,
@@ -134,6 +141,13 @@ public:
 
     /// Blue color from branding guidelines
     QColor brandingBlue(void)           const { return _brandingBlue[_theme][_colorGroupEnabled ? 1 : 0]; }
+
+    QColor colorGreen   () { return QColor("#05f068"); }
+    QColor colorOrange  () { return QColor("#f0ab06"); }
+    QColor colorRed     () { return QColor("#fc4638"); }
+    QColor colorGrey    () { return QColor("#7f7f7f"); }
+    QColor colorBlue    () { return QColor("#636efe"); }
+    QColor colorWhite   () { return QColor("#ffffff"); }
 
     void setWindow(QColor& color)               { _window[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
     void setWindowShade(QColor& color)          { _windowShade[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }

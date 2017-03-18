@@ -25,18 +25,19 @@ Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
-    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _isMessageImportant:    _activeVehicle ? !_activeVehicle.messageTypeNormal && !_activeVehicle.messageTypeNone : false
 
     function getMessageColor() {
         if (_activeVehicle) {
             if (_activeVehicle.messageTypeNone)
-                return colorGrey
+                return qgcPal.colorGrey
             if (_activeVehicle.messageTypeNormal)
-                return colorBlue;
+                return qgcPal.colorBlue;
             if (_activeVehicle.messageTypeWarning)
-                return colorOrange;
+                return qgcPal.colorOrange;
             if (_activeVehicle.messageTypeError)
-                return colorRed;
+                return qgcPal.colorRed;
             // Cannot be so make make it obnoxious to show error
             console.log("Invalid vehicle message type")
             return "purple";
@@ -52,7 +53,7 @@ Item {
         sourceSize.height:  height
         fillMode:           Image.PreserveAspectFit
         cache:              false
-        visible:            _activeVehicle && _activeVehicle.messageCount > 0 && isMessageImportant
+        visible:            _activeVehicle && _activeVehicle.messageCount > 0 && _isMessageImportant
     }
 
     QGCColoredImage {
