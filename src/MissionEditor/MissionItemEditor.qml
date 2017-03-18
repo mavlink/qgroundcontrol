@@ -18,13 +18,13 @@ Rectangle {
     color:  _currentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
     radius: _radius
 
+    property var    map             ///< Map control
     property var    missionItem     ///< MissionItem associated with this editor
     property bool   readOnly        ///< true: read only view, false: full editing view
 
     signal clicked
     signal remove
     signal insert
-    signal moveHomeToMapCenter
 
     property bool   _currentItem:           missionItem.isCurrentItem
     property color  _outerTextColor:        _currentItem ? "black" : qgcPal.text
@@ -125,7 +125,7 @@ Rectangle {
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.left:           label.right
         anchors.top:            parent.top
-        visible:                missionItem.sequenceNumber != 0 && missionItem.isCurrentItem && !missionItem.rawEdit && missionItem.isSimpleItem
+        visible:                missionItem.isCurrentItem && !missionItem.rawEdit && missionItem.isSimpleItem
         text:                   missionItem.commandName
 
         Component {
@@ -141,9 +141,9 @@ Rectangle {
 
     QGCLabel {
         anchors.fill:       commandPicker
-        visible:            missionItem.sequenceNumber == 0 || !missionItem.isCurrentItem || !missionItem.isSimpleItem
+        visible:            !missionItem.isCurrentItem || !missionItem.isSimpleItem
         verticalAlignment:  Text.AlignVCenter
-        text:               missionItem.sequenceNumber == 0 ? qsTr("Mission Settings") : missionItem.commandName
+        text:               missionItem.commandName
         color:              _outerTextColor
     }
 
@@ -154,7 +154,7 @@ Rectangle {
         anchors.left:       parent.left
         anchors.top:        commandPicker.bottom
         height:             item ? item.height : 0
-        source:             missionItem.sequenceNumber == 0 ? "qrc:/qml/MissionSettingsEditor.qml" : missionItem.editorQml
+        source:             missionItem.editorQml
 
         onLoaded: {
             item.visible = Qt.binding(function() { return _currentItem; })

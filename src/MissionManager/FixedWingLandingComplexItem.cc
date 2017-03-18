@@ -105,8 +105,10 @@ void FixedWingLandingComplexItem::setDirty(bool dirty)
     }
 }
 
-void FixedWingLandingComplexItem::save(QJsonObject& saveObject) const
+void FixedWingLandingComplexItem::save(QJsonArray&  missionItems) const
 {
+    QJsonObject saveObject;
+
     saveObject[JsonHelper::jsonVersionKey] =                    1;
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
@@ -128,6 +130,8 @@ void FixedWingLandingComplexItem::save(QJsonObject& saveObject) const
     saveObject[_jsonLoiterClockwiseKey] =           _loiterClockwise;
     saveObject[_jsonLoiterAltitudeRelativeKey] =    _loiterAltitudeRelative;
     saveObject[_jsonLandingAltitudeRelativeKey] =   _landingAltitudeRelative;
+
+    missionItems.append(saveObject);
 }
 
 void FixedWingLandingComplexItem::setSequenceNumber(int sequenceNumber)
@@ -236,7 +240,7 @@ QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
                            0.0, 0.0, 0.0, 0.0,                 // param 1-4
                            _landingCoordinate.latitude(),
                            _landingCoordinate.longitude(),
-                           0.0,                                // altitude
+                           _landingAltitudeFact.rawValue().toDouble(),
                            true,                               // autoContinue
                            false,                              // isCurrentItem
                            pMissionItems);                     // parent - allow delete on pMissionItems to delete everthing

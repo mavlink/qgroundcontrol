@@ -32,10 +32,8 @@ public:
     Q_PROPERTY(QString          category                READ category                                           NOTIFY commandChanged)
     Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command                WRITE setCommand            NOTIFY commandChanged)
     Q_PROPERTY(bool             friendlyEditAllowed     READ friendlyEditAllowed                                NOTIFY friendlyEditAllowedChanged)
-    Q_PROPERTY(bool             homePosition            READ homePosition                                       CONSTANT)                           ///< true: This item is being used as a home position indicator
     Q_PROPERTY(bool             rawEdit                 READ rawEdit                WRITE setRawEdit            NOTIFY rawEditChanged)              ///< true: raw item editing with all params
     Q_PROPERTY(bool             relativeAltitude        READ relativeAltitude                                   NOTIFY frameChanged)
-    Q_PROPERTY(bool             showHomePosition        READ showHomePosition       WRITE setShowHomePosition   NOTIFY showHomePositionChanged)
 
     // These properties are used to display the editing ui
     Q_PROPERTY(QmlObjectListModel*  checkboxFacts   READ checkboxFacts  NOTIFY uiModelChanged)
@@ -47,9 +45,7 @@ public:
     QString         category            (void) const;
     MavlinkQmlSingleton::Qml_MAV_CMD command(void) const { return (MavlinkQmlSingleton::Qml_MAV_CMD)_missionItem._commandFact.cookedValue().toInt(); }
     bool            friendlyEditAllowed (void) const;
-    bool            homePosition        (void) const    { return _homePositionSpecialCase; }
     bool            rawEdit             (void) const;
-    bool            showHomePosition    (void) const    { return _showHomePosition; }
 
 
     QmlObjectListModel* textFieldFacts  (void);
@@ -61,9 +57,6 @@ public:
     void setCommandByIndex(int index);
 
     void setCommand(MavlinkQmlSingleton::Qml_MAV_CMD command);
-
-    void setHomePositionSpecialCase(bool homePositionSpecialCase) { _homePositionSpecialCase = homePositionSpecialCase; }
-    void setShowHomePosition(bool showHomePosition);
 
     void setAltDifference   (double altDifference);
     void setAltPercent      (double altPercent);
@@ -99,7 +92,7 @@ public:
     void setDirty           (bool dirty) final;
     void setCoordinate      (const QGeoCoordinate& coordinate) final;
     void setSequenceNumber  (int sequenceNumber) final;
-    void save               (QJsonObject& saveObject) const final;
+    void save               (QJsonArray&  missionItems) const final;
 
 public slots:
     void setDefaultsForCommand(void);
@@ -111,7 +104,6 @@ signals:
     void headingDegreesChanged      (double heading);
     void rawEditChanged             (bool rawEdit);
     void uiModelChanged             (void);
-    void showHomePositionChanged    (bool showHomePosition);
 
 private slots:
     void _setDirtyFromSignal(void);
@@ -132,8 +124,6 @@ private:
     MissionItem _missionItem;
     bool        _rawEdit;
     bool        _dirty;
-    bool        _homePositionSpecialCase;   ///< true: This item is being used as a ui home position indicator
-    bool        _showHomePosition;
 
     MissionCommandTree* _commandTree;
 

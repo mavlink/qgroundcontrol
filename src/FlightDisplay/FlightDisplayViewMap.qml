@@ -210,9 +210,13 @@ FlightMap {
         }
     }
 
-    // Add the mission items to the map
-    MissionItemView {
+    // Add the mission item visuals to the map
+    Repeater {
         model: _mainIsMap ? missionController.visualItems : 0
+
+        delegate: MissionItemMapVisual {
+            map: flightMap
+        }
     }
 
     // Add lines between waypoints
