@@ -48,12 +48,15 @@ Rectangle {
                     break;
                 }
             }
+            missionItem.cameraOrientationFixed = false
             if (index == -1) {
                 gridTypeCombo.currentIndex = _gridTypeManual
             } else {
-                var listIndex = index - _gridTypeCamera
                 gridTypeCombo.currentIndex = index
-                missionItem.cameraOrientationFixed = _vehicleCameraList[listIndex].fixedOrientation
+                if (index != 1) {
+                    // Specific camera is selected
+                    missionItem.cameraOrientationFixed = _vehicleCameraList[index - _gridTypeCamera].fixedOrientation
+                }
             }
         }
     }
@@ -228,7 +231,7 @@ Rectangle {
                 QGCRadioButton {
                     width:          _editFieldWidth
                     text:           "Landscape"
-                    checked:        missionItem.cameraOrientationLandscape.value == 1
+                    checked:        !!missionItem.cameraOrientationLandscape.value
                     exclusiveGroup: cameraOrientationGroup
                     onClicked:      missionItem.cameraOrientationLandscape.value = 1
                 }
@@ -236,7 +239,7 @@ Rectangle {
                 QGCRadioButton {
                     id:             cameraOrientationPortrait
                     text:           "Portrait"
-                    checked:        missionItem.cameraOrientationLandscape.value == 0
+                    checked:        !missionItem.cameraOrientationLandscape.value
                     exclusiveGroup: cameraOrientationGroup
                     onClicked:      missionItem.cameraOrientationLandscape.value = 0
                 }
@@ -372,7 +375,7 @@ Rectangle {
                 QGCRadioButton {
                     id:                     fixedAltitudeRadio
                     text:                   qsTr("Altitude")
-                    checked:                missionItem.fixedValueIsAltitude.value
+                    checked:                !!missionItem.fixedValueIsAltitude.value
                     exclusiveGroup:         fixedValueGroup
                     onClicked:              missionItem.fixedValueIsAltitude.value = 1
                 }
