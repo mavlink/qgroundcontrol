@@ -36,6 +36,7 @@ private:
     SDL_GameController *sdlController;
     bool    _isGameController;
     int     _index;      ///< Index for SDL_JoystickOpen
+
 };
 
 #endif // JOYSTICKSDL_H

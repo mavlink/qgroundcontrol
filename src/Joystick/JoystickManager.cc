@@ -19,10 +19,7 @@
 #endif
 
 #ifdef __android__
-    /*
-     * Android Joystick not yet supported
-     * #include "JoystickAndroid.h"
-     */
+    #include "JoystickAndroid.h"
 #endif
 
 QGC_LOGGING_CATEGORY(JoystickManagerLog, "JoystickManagerLog")
@@ -55,8 +52,7 @@ void JoystickManager::setToolbox(QGCToolbox *toolbox)
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-void JoystickManager::init()
-{
+void JoystickManager::init() {
 #ifdef __sdljoystick__
     if (JoystickSDL::init()) {
         _setActiveJoystickFromSettings();
@@ -64,9 +60,8 @@ void JoystickManager::init()
         _joystickCheckTimer.start(250);
     }
 #elif defined(__android__)
-    /*
-     * Android Joystick not yet supported
-     */
+    _setActiveJoystickFromSettings();
+    //TODO: Investigate Android events for Joystick hot plugging & run _joystickCheckTimer if possible
 #endif
 }
 
@@ -78,10 +73,7 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
     // Get the latest joystick mapping
     newMap = JoystickSDL::discover(_multiVehicleManager);
 #elif defined(__android__)
-    /*
-     * Android Joystick not yet supported
-     * _name2JoystickMap = JoystickAndroid::discover(_multiVehicleManager);
-     */
+    _name2JoystickMap = JoystickAndroid::discover(_multiVehicleManager);
 #endif
 
     if (_activeJoystick && !newMap.contains(_activeJoystick->name())) {
@@ -188,6 +180,9 @@ void JoystickManager::setActiveJoystickName(const QString& name)
     setActiveJoystick(_name2JoystickMap[name]);
 }
 
+/*
+ * TODO: move this to the right place: JoystickSDL.cc and JoystickAndroid.cc respectively and call through Joystick.cc
+ */
 void JoystickManager::_updateAvailableJoysticks(void)
 {
 #ifdef __sdljoystick__
@@ -211,7 +206,7 @@ void JoystickManager::_updateAvailableJoysticks(void)
     }
 #elif defined(__android__)
     /*
-     * Android Joystick not yet supported
+     * TODO: Investigate Android events for Joystick hot plugging
      */
 #endif
 }

@@ -68,8 +68,9 @@ QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicl
             newRet[name] = new JoystickSDL(name, qMax(0,axisCount), qMax(0,buttonCount), qMax(0,hatCount), i, isGameController, _multiVehicleManager);
         } else {
             newRet[name] = ret[name];
-            if (newRet[name]->index() != i) {
-                newRet[name]->setIndex(i); // This joystick index has been remapped by SDL
+            JoystickSDL *j = (JoystickSDL*)newRet[name];
+            if (j->index() != i) {
+                j->setIndex(i); // This joystick index has been remapped by SDL
             }
             // Anything left in ret after we exit the loop has been removed (unplugged) and needs to be cleaned up.
             // We will handle that in JoystickManager in case the removed joystick was in use.
