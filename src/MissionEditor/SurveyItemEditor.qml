@@ -144,6 +144,16 @@ Rectangle {
         }
     }
 
+    Connections {
+        target: missionItem
+
+        onCameraValueChanged: {
+            if (gridTypeCombo.currentIndex >= _gridTypeCustomCamera && !_noCameraValueRecalc) {
+                recalcFromCameraValues()
+            }
+        }
+    }
+
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     ExclusiveGroup {
