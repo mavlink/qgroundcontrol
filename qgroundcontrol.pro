@@ -498,6 +498,11 @@ HEADERS += \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
 
+AndroidBuild {
+HEADERS += \
+	src/Joystick/JoystickAndroid.h \
+}
+
 DebugBuild {
 HEADERS += \
     src/comm/MockLink.h \
@@ -587,6 +592,7 @@ iOSBuild {
 
 AndroidBuild {
     SOURCES += src/MobileScreenMgr.cc \
+	src/Joystick/JoystickAndroid.cc \
 }
 
 SOURCES += \
