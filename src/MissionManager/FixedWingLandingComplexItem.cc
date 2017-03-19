@@ -339,6 +339,7 @@ void FixedWingLandingComplexItem::_recalcFromRadiusChange(void)
 
             _ignoreRecalcSignals = true;
             emit loiterCoordinateChanged(_loiterCoordinate);
+            emit coordinateChanged(_loiterCoordinate);
             _ignoreRecalcSignals = false;
         }
     }
@@ -376,6 +377,7 @@ void FixedWingLandingComplexItem::_recalcFromHeadingAndDistanceChange(void)
         _ignoreRecalcSignals = true;
         emit loiterTangentCoordinateChanged(_loiterTangentCoordinate);
         emit loiterCoordinateChanged(_loiterCoordinate);
+        emit coordinateChanged(_loiterCoordinate);
         _ignoreRecalcSignals = false;
     }
 }
