@@ -143,7 +143,6 @@ LinuxBuild {
             imageformats \
             platforminputcontexts \
             platforms \
-            platformthemes \
             position \
             sqldrivers
 
