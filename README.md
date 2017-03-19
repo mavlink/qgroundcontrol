@@ -38,7 +38,7 @@ QGroundControl builds are supported for OSX, Linux, Windows, iOS and Android. QG
 * Windows: Vista or higher, 32 bit, [Visual Studio 2015 compiler](http://www.visualstudio.com/downloads/download-visual-studio-vs#d-express-windows-desktop)
 * iOS: 8.0 and higher
 * Android: Jelly Bean (4.1) and higher. Standard QGC is built against ndk version 19.
-* Qt version: 5.5.1 ONLY
+* Qt version: 5.7.1 ONLY
 
 ###### Install QT
 You need to install Qt as described below instead of using pre-built packages from say, a Linux distribution because QGroundControl needs access to private Qt headers.
