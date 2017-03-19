@@ -56,32 +56,6 @@ Map {
         return dist
     }
 
-    function calculateScale() {
-        var coord1, coord2, dist, text, f
-        f = 0
-        coord1 = _map.toCoordinate(Qt.point(0, scale.y))
-        coord2 = _map.toCoordinate(Qt.point(0 + scaleImage.sourceSize.width, scale.y))
-        dist = Math.round(coord1.distanceTo(coord2))
-        if (dist === 0) {
-            // not visible
-        } else {
-            for (var i = 0; i < scaleLengths.length - 1; i++) {
-                if (dist < (scaleLengths[i] + scaleLengths[i+1]) / 2 ) {
-                    f = scaleLengths[i] / dist
-                    dist = scaleLengths[i]
-                    break;
-                }
-            }
-            if (f === 0) {
-                f = dist / scaleLengths[i]
-                dist = scaleLengths[i]
-            }
-        }
-        text = formatDistance(dist)
-        scaleImage.width = (scaleImage.sourceSize.width * f) - 2 * scaleImageLeft.sourceSize.width
-        scaleText.text = text
-    }
-
     function setVisibleRegion(region) {
         // This works around a bug on Qt where if you set a visibleRegion and then the user moves or zooms the map
         // and then you set the same visibleRegion the map will not move/scale appropriately since it thinks there

@@ -111,8 +111,8 @@ Item {
 
     function calculateScale() {
         var scaleLinePixelLength = 100
-        var leftCoord = mapControl.toCoordinate(Qt.point(0, scale.y))
-        var rightCoord = mapControl.toCoordinate(Qt.point(scaleLinePixelLength, scale.y))
+        var leftCoord = mapControl.toCoordinate(Qt.point(0, scale.y), false /* clipToViewPort */)
+        var rightCoord = mapControl.toCoordinate(Qt.point(scaleLinePixelLength, scale.y), false /* clipToViewPort */)
         var scaleLineMeters = Math.round(leftCoord.distanceTo(rightCoord))
 
         if (QGroundControl.settingsManager.unitsSettings.distanceUnits.value == UnitsSettings.DistanceUnitsFeet) {

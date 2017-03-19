@@ -231,7 +231,7 @@ Item {
                         }
                     }
 
-                    var clickCoordinate = map.toCoordinate(Qt.point(mouse.x, mouse.y))
+                    var clickCoordinate = map.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
                     var polygonPath = _newPolygon.path
                     if (polygonPath.length == 0) {
                         // Add first coordinate
@@ -275,7 +275,7 @@ Item {
                     return
                 }
                 if (_newPolygon.path.length) {
-                    var dragCoordinate = map.toCoordinate(Qt.point(mouse.x, mouse.y))
+                    var dragCoordinate = map.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
                     var polygonPath = _newPolygon.path
                     if (justClicked){
                         // Add new drag coordinate

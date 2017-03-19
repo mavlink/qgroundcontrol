@@ -147,7 +147,7 @@ Item {
             anchors.fill: map
 
             onClicked: {
-                var coordinate = map.toCoordinate(Qt.point(mouse.x, mouse.y))
+                var coordinate = map.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
                 coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
                 coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                 coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
