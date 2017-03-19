@@ -125,7 +125,10 @@ void MissionController::_newMissionItemsAvailableFromVehicle(void)
 
         _missionItemsRequested = false;
 
-        MissionSettingsComplexItem::scanForMissionSettings(_visualItems, _activeVehicle);
+        if (_editMode) {
+            // Scan for mission settings
+            MissionSettingsComplexItem::scanForMissionSettings(_visualItems, _activeVehicle);
+        }
 
         _initAllVisualItems();
         emit newItemsFromVehicle();
