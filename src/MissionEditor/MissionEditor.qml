@@ -382,7 +382,7 @@ QGCView {
                             return
                         }
 
-                        var coordinate = editorMap.toCoordinate(Qt.point(mouse.x, mouse.y))
+                        var coordinate = editorMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
                         coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
                         coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                         coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
@@ -429,7 +429,7 @@ QGCView {
                     function liveDrag() {
                         if (!itemDragger.preventCoordinateBindingLoop && Drag.active) {
                             var point = Qt.point(itemDragger.x + (itemDragger.width  / 2), itemDragger.y + (itemDragger.height / 2))
-                            var coordinate = editorMap.toCoordinate(point)
+                            var coordinate = editorMap.toCoordinate(point, false /* clipToViewPort */)
                             coordinate.altitude = itemDragger.coordinateItem.coordinate.altitude
                             itemDragger.preventCoordinateBindingLoop = true
                             itemDragger.coordinateItem.coordinate = coordinate

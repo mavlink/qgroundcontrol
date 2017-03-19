@@ -81,10 +81,10 @@ Item {
             var topRight = Qt.point(rect.x + rect.width, rect.y)
             var bottomLeft = Qt.point(rect.x, rect.y + rect.height)
             var bottomRight = Qt.point(rect.x + rect.width, rect.y + rect.height)
-            _missionItem.addPolygonCoordinate(map.toCoordinate(topLeft))
-            _missionItem.addPolygonCoordinate(map.toCoordinate(topRight))
-            _missionItem.addPolygonCoordinate(map.toCoordinate(bottomRight))
-            _missionItem.addPolygonCoordinate(map.toCoordinate(bottomLeft))
+            _missionItem.addPolygonCoordinate(map.toCoordinate(topLeft, false /* clipToViewPort */))
+            _missionItem.addPolygonCoordinate(map.toCoordinate(topRight, false /* clipToViewPort */))
+            _missionItem.addPolygonCoordinate(map.toCoordinate(bottomRight, false /* clipToViewPort */))
+            _missionItem.addPolygonCoordinate(map.toCoordinate(bottomLeft, false /* clipToViewPort */))
         }
     }
 
