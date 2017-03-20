@@ -55,7 +55,7 @@ QGCView {
     Component.onCompleted: {
         QGroundControl.mapEngineManager.loadTileSets()
         updateMap()
-        savedCenter = _map.toCoordinate(Qt.point(_map.width / 2, _map.height / 2))
+        savedCenter = _map.toCoordinate(Qt.point(_map.width / 2, _map.height / 2), false /* clipToViewPort */)
     }
 
     Connections {
@@ -76,8 +76,8 @@ QGCView {
             var yl = 0
             var xr = _map.width.toFixed(0) - 1  // Must be within boundaries of visible map
             var yr = _map.height.toFixed(0) - 1 // Must be within boundaries of visible map
-            var c0 = _map.toCoordinate(Qt.point(xl, yl))
-            var c1 = _map.toCoordinate(Qt.point(xr, yr))
+            var c0 = _map.toCoordinate(Qt.point(xl, yl), false /* clipToViewPort */)
+            var c1 = _map.toCoordinate(Qt.point(xr, yr), false /* clipToViewPort */)
             QGroundControl.mapEngineManager.updateForCurrentView(c0.longitude, c0.latitude, c1.longitude, c1.latitude, sliderMinZoom.value, sliderMaxZoom.value, mapType)
         }
     }
@@ -142,7 +142,7 @@ QGCView {
     function enterInfoView() {
         _map.visible = true
         isMapInteractive = false
-        savedCenter = _map.toCoordinate(Qt.point(_map.width / 2, _map.height / 2))
+        savedCenter = _map.toCoordinate(Qt.point(_map.width / 2, _map.height / 2), false /* clipToViewPort */)
         savedZoom = _map.zoomLevel
         savedMapType = mapType
         if(!offlineMapView._currentSelection.defaultSet) {

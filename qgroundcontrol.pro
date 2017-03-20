@@ -440,6 +440,7 @@ HEADERS += \
     src/MissionManager/MissionController.h \
     src/MissionManager/MissionItem.h \
     src/MissionManager/MissionManager.h \
+    src/MissionManager/MissionSettingsComplexItem.h \
     src/MissionManager/PlanElementController.h \
     src/MissionManager/QGCMapPolygon.h \
     src/MissionManager/RallyPoint.h \
@@ -496,6 +497,11 @@ HEADERS += \
     src/uas/UAS.h \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
+
+AndroidBuild {
+HEADERS += \
+	src/Joystick/JoystickAndroid.h \
+}
 
 DebugBuild {
 HEADERS += \
@@ -586,6 +592,7 @@ iOSBuild {
 
 AndroidBuild {
     SOURCES += src/MobileScreenMgr.cc \
+	src/Joystick/JoystickAndroid.cc \
 }
 
 SOURCES += \
@@ -610,6 +617,7 @@ SOURCES += \
     src/MissionManager/MissionController.cc \
     src/MissionManager/MissionItem.cc \
     src/MissionManager/MissionManager.cc \
+    src/MissionManager/MissionSettingsComplexItem.cc \
     src/MissionManager/PlanElementController.cc \
     src/MissionManager/QGCMapPolygon.cc \
     src/MissionManager/RallyPoint.cc \

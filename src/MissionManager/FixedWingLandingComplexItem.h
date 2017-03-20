@@ -80,7 +80,7 @@ public:
     void setDirty           (bool dirty) final;
     void setCoordinate      (const QGeoCoordinate& coordinate) final { setLoiterCoordinate(coordinate); }
     void setSequenceNumber  (int sequenceNumber) final;
-    void save               (QJsonObject& saveObject) const final;
+    void save               (QJsonArray&  missionItems) const final;
 
     static const char* jsonComplexItemTypeValue;
 

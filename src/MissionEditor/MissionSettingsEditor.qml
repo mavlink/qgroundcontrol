@@ -19,6 +19,12 @@ Rectangle {
     visible:            missionItem.isCurrentItem
     radius:             _radius
 
+    ExclusiveGroup {
+        id: sectionHeaderExclusiverGroup
+    }
+
+    property ExclusiveGroup sectionHeaderGroup: ScreenTools.isShortScreen ? sectionHeaderExclusiverGroup : null
+
     Loader {
         id:              deferedload
         active:          valuesRect.visible
@@ -37,7 +43,7 @@ Rectangle {
                 property bool   _offlineEditing:            _missionVehicle.isOfflineEditingVehicle
                 property bool   _showOfflineEditingCombos:  _offlineEditing && _noMissionItemsAdded
                 property bool   _showCruiseSpeed:           !_missionVehicle.multiRotor
-                property bool   _showHoverSpeed:            _missionVehicle.multiRotor || missionController.vehicle.vtol
+                property bool   _showHoverSpeed:            _missionVehicle.multiRotor || _missionVehicle.vtol
                 property bool   _multipleFirmware:          QGroundControl.supportedFirmwareCount > 2
                 property real   _fieldWidth:                ScreenTools.defaultFontPixelWidth * 16
                 property bool   _mobile:                    ScreenTools.isMobile
@@ -54,54 +60,72 @@ Rectangle {
                     anchors.top:    parent.top
                     spacing:        _margin
 
-                    SectionHeader { text: qsTr("Planned Home Position") }
+                    SectionHeader {
+                        id:             plannedHomePositionSection
+                        text:           qsTr("Planned Home Position")
+                        showSpacer:     false
+                        exclusiveGroup: sectionHeaderGroup
+                    }
 
-                    Repeater {
-                        model: missionItem.textFieldFacts
-                        RowLayout {
+                    Column {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        spacing:        _margin
+                        visible:        plannedHomePositionSection.checked
+
+                        GridLayout {
                             anchors.left:   parent.left
                             anchors.right:  parent.right
-                            spacing:        _margin
-                            visible:        _mobile ? index == 2 : true // Cheating here since we known we only have Lat/Lon/Alt
+                            columnSpacing:  ScreenTools.defaultFontPixelWidth
+                            rowSpacing:     columnSpacing
+                            columns:        2
 
-                            QGCLabel { text: object.name; Layout.fillWidth: true }
+                            QGCLabel {
+                                text: qsTr("Latitude")
+                            }
                             FactTextField {
-                                Layout.preferredWidth:  _fieldWidth
-                                showUnits:  true
-                                fact:       object
-                                visible:    !_root.readOnly
+                                fact:               missionItem.plannedHomePositionLatitude
+                                Layout.fillWidth:   true
                             }
-                            FactLabel {
-                                Layout.preferredWidth:  _fieldWidth
-                                fact:       object
-                                visible:    _root.readOnly
+
+                            QGCLabel {
+                                text: qsTr("Longitude")
                             }
+                            FactTextField {
+                                fact:               missionItem.plannedHomePositionLongitude
+                                Layout.fillWidth:   true
+                            }
+
+                            QGCLabel {
+                                text: qsTr("Altitude")
+                            }
+                            FactTextField {
+                                fact:               missionItem.plannedHomePositionAltitude
+                                Layout.fillWidth:   true
+                            }
+                        }
+
+                        QGCLabel {
+                            width:                  parent.width
+                            wrapMode:               Text.WordWrap
+                            font.pointSize:         ScreenTools.smallFontPointSize
+                            text:                   qsTr("Actual position set by vehicle at flight time.")
+                            horizontalAlignment:    Text.AlignHCenter
+                        }
+
+                        QGCButton {
+                            text:                       qsTr("Set Home To Map Center")
+                            onClicked:                  missionItem.coordinate = map.center
+                            anchors.horizontalCenter:   parent.horizontalCenter
                         }
                     }
 
-                    QGCLabel {
-                        width:                  parent.width
-                        wrapMode:               Text.WordWrap
-                        font.pointSize:         ScreenTools.smallFontPointSize
-                        text:                   qsTr("Actual position set by vehicle at flight time.")
-                        horizontalAlignment:    Text.AlignHCenter
-                    }
-
-                    QGCButton {
-                        text:                       qsTr("Set Home To Map Center")
-                        onClicked:                  editorRoot.moveHomeToMapCenter()
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                    }
-
-                    Item {
-                        height:     _sectionSpacer
-                        width:      1
-                        visible:    !ScreenTools.isTinyScreen
-                    }
-
                     SectionHeader {
+                        id:             vehicleInfoSectionHeader
                         text:           qsTr("Vehicle Info")
-                        visible:        _multipleFirmware
+                        visible:        _multipleFirmware && _showOfflineEditingCombos
+                        checked:        false
+                        exclusiveGroup: sectionHeaderGroup
                     }
 
                     GridLayout {
@@ -110,74 +134,197 @@ Rectangle {
                         columnSpacing:  ScreenTools.defaultFontPixelWidth
                         rowSpacing:     columnSpacing
                         columns:        2
-                        visible:        _multipleFirmware
+                        visible:        vehicleInfoSectionHeader.visible && vehicleInfoSectionHeader.checked
 
                         QGCLabel {
-                            text:       _firmwareLabel
-                            visible:    _showOfflineEditingCombos
-                            Layout.fillWidth: true
+                            text:               _firmwareLabel
+                            Layout.fillWidth:   true
                         }
                         FactComboBox {
-                            fact:               QGroundControl.settingsManager.appSettings.offlineEditingFirmwareType
-                            indexModel:         false
-                            visible:            _showOfflineEditingCombos
+                            fact:                   QGroundControl.settingsManager.appSettings.offlineEditingFirmwareType
+                            indexModel:             false
                             Layout.preferredWidth:  _fieldWidth
                         }
 
                         QGCLabel {
-                            text:       _vehicleLabel
-                            visible:    _showOfflineEditingCombos
-                            Layout.fillWidth: true
+                            text:               _vehicleLabel
+                            Layout.fillWidth:   true
                         }
                         FactComboBox {
-                            id:                 offlineVehicleCombo
-                            fact:               QGroundControl.settingsManager.appSettings.offlineEditingVehicleType
-                            indexModel:         false
-                            visible:            _showOfflineEditingCombos
+                            fact:                   QGroundControl.settingsManager.appSettings.offlineEditingVehicleType
+                            indexModel:             false
                             Layout.preferredWidth:  _fieldWidth
                         }
 
                         QGCLabel {
-                            text:       qsTr("Cruise speed")
-                            visible:    _showCruiseSpeed
-                            Layout.fillWidth: true
-                        }
-                        FactTextField {
-                            fact:               QGroundControl.settingsManager.appSettings.offlineEditingCruiseSpeed
+                            text:               qsTr("Cruise speed")
                             visible:            _showCruiseSpeed
+                            Layout.fillWidth:   true
+                        }
+                        FactTextField {
+                            fact:                   QGroundControl.settingsManager.appSettings.offlineEditingCruiseSpeed
+                            visible:                _showCruiseSpeed
                             Layout.preferredWidth:  _fieldWidth
                         }
 
                         QGCLabel {
-                            text:       qsTr("Hover speed")
-                            visible:    _showHoverSpeed
-                            Layout.fillWidth: true
+                            text:               qsTr("Hover speed")
+                            visible:            _showHoverSpeed
+                            Layout.fillWidth:   true
                         }
                         FactTextField {
-                            fact:               QGroundControl.settingsManager.appSettings.offlineEditingHoverSpeed
-                            visible:            _showHoverSpeed
+                            fact:                   QGroundControl.settingsManager.appSettings.offlineEditingHoverSpeed
+                            visible:                _showHoverSpeed
                             Layout.preferredWidth:  _fieldWidth
                         }
                     } // GridLayout
 
-                    RowLayout {
+                    SectionHeader {
+                        id:             missionDefaultsSectionHeader
+                        text:           qsTr("Mission Defaults")
+                        checked:        false
+                        exclusiveGroup: sectionHeaderGroup
+                    }
+
+                    Column {
                         anchors.left:   parent.left
                         anchors.right:  parent.right
                         spacing:        _margin
-                        visible:        !_multipleFirmware
-                        QGCLabel { text: qsTr("Hover speed"); Layout.fillWidth: true }
-                        FactTextField {
-                            Layout.preferredWidth:  _fieldWidth
-                            fact:       QGroundControl.settingsManager.appSettings.offlineEditingHoverSpeed
+                        visible:        missionDefaultsSectionHeader.checked
+
+                        GridLayout {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            columnSpacing:  ScreenTools.defaultFontPixelWidth
+                            rowSpacing:     columnSpacing
+                            columns:        2
+
+                            QGCLabel {
+                                text:       qsTr("Altitude")
+                            }
+                            FactTextField {
+                                fact:               QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
+                                Layout.fillWidth:   true
+                            }
+
+                            QGCCheckBox {
+                                id:         flightSpeedCheckBox
+                                text:       qsTr("Flight speed")
+                                visible:    !_missionVehicle.vtol
+                                checked:    missionItem.specifyMissionFlightSpeed
+                                onClicked:  missionItem.specifyMissionFlightSpeed = checked
+                            }
+                            FactTextField {
+                                Layout.fillWidth:   true
+                                fact:               missionItem.missionFlightSpeed
+                                visible:            flightSpeedCheckBox.visible
+                                enabled:            flightSpeedCheckBox.checked
+                            }
+                        } // GridLayout
+
+                        /*
+                          FIXME: NYI
+                        FactComboBox {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            fact:           missionItem.missionEndAction
+                            indexModel:     false
+                        }
+                        */
+                    }
+
+                    SectionHeader {
+                        id:             cameraSectionHeader
+                        text:           qsTr("Camera")
+                        checked:        false
+                        exclusiveGroup: sectionHeaderGroup
+                    }
+
+                    Column {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        spacing:        _margin
+                        visible:        cameraSectionHeader.checked
+
+                        FactComboBox {
+                            id:             cameraActionCombo
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            fact:           missionItem.cameraAction
+                            indexModel:     false
+                        }
+
+                        RowLayout {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            visible:        cameraActionCombo.currentIndex == 1
+
+                            QGCLabel {
+                                text:               qsTr("Time")
+                                Layout.fillWidth:   true
+                            }
+                            FactTextField {
+                                fact:                   missionItem.cameraPhotoIntervalTime
+                                Layout.preferredWidth:  _fieldWidth
+                            }
+                        }
+
+                        RowLayout {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            visible:        cameraActionCombo.currentIndex == 2
+
+                            QGCLabel {
+                                text:               qsTr("Distance")
+                                Layout.fillWidth:   true
+                            }
+                            FactTextField {
+                                fact:                   missionItem.cameraPhotoIntervalDistance
+                                Layout.preferredWidth:  _fieldWidth
+                            }
+                        }
+
+                        GridLayout {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            columnSpacing:  0
+                            rowSpacing:     0
+                            columns:        3
+
+                            Item { width: 1; height: 1 }
+                            QGCLabel { text: qsTr("Pitch") }
+                            QGCLabel { text: qsTr("Yaw") }
+
+                            QGCCheckBox {
+                                id:                 gimbalCheckBox
+                                text:               qsTr("Gimbal")
+                                checked:            missionItem.specifyGimbal
+                                onClicked:          missionItem.specifyGimbal = checked
+                                Layout.fillWidth:   true
+                            }
+                            FactTextField {
+                                fact:           missionItem.gimbalPitch
+                                implicitWidth:  ScreenTools.defaultFontPixelWidth * 9
+                                enabled:        gimbalCheckBox.checked
+                            }
+
+                            FactTextField {
+                                fact:           missionItem.gimbalYaw
+                                implicitWidth:  ScreenTools.defaultFontPixelWidth * 9
+                                enabled:        gimbalCheckBox.checked
+                            }
                         }
                     }
 
                     QGCLabel {
-                        width:          parent.width
-                        wrapMode:       Text.WordWrap
-                        font.pointSize: ScreenTools.smallFontPointSize
-                        text:           qsTr("Speeds are only used for time calculations. Actual vehicle speed will not be affected.")
-                        horizontalAlignment: Text.AlignHCenter
+                        width:                  parent.width
+                        wrapMode:               Text.WordWrap
+                        font.pointSize:         ScreenTools.smallFontPointSize
+                        text:                   qsTr("Speeds are only used for time calculations. Actual vehicle speed will not be affected.")
+                        horizontalAlignment:    Text.AlignHCenter
+                        visible:                _offlineEditing && _missionVehicle.vtol
                     }
                 } // Column
             } // Item

@@ -40,6 +40,9 @@ public:
 
     const VisualMissionItem& operator=(const VisualMissionItem& other);
 
+    Q_PROPERTY(bool homePosition        READ homePosition                                   CONSTANT)                       ///< true: This item is being used as a home position indicator
+    Q_PROPERTY(bool showHomePosition    READ showHomePosition   WRITE setShowHomePosition   NOTIFY showHomePositionChanged)
+
     // The following properties are calculated/set by the MissionController recalc methods
 
     Q_PROPERTY(double altDifference READ altDifference  WRITE setAltDifference  NOTIFY altDifferenceChanged)    ///< Change in altitude from previous waypoint
@@ -87,6 +90,11 @@ public:
 
     // Property accesors
 
+    bool homePosition               (void) const { return _homePositionSpecialCase; }
+    bool showHomePosition           (void) const { return _showHomePosition; }
+    void setHomePositionSpecialCase (bool homePositionSpecialCase) { _homePositionSpecialCase = homePositionSpecialCase; }
+    void setShowHomePosition        (bool showHomePosition);
+
     double altDifference    (void) const { return _altDifference; }
     double altPercent       (void) const { return _altPercent; }
     double azimuth          (void) const { return _azimuth; }
@@ -126,8 +134,8 @@ public:
     virtual void setSequenceNumber  (int sequenceNumber) = 0;
 
     /// Save the item(s) in Json format
-    ///     @param saveObject Save the item to this json object
-    virtual void save(QJsonObject& saveObject) const = 0;
+    ///     @param missionItems Current set of mission items, new items should be appended to the end
+    virtual void save(QJsonArray&  missionItems) const = 0;
 
     /// @return The QML resource file which contains the control which visualizes the item on the map.
     virtual QString mapVisualQML(void) const = 0;
@@ -137,6 +145,7 @@ public:
     static const char* jsonTypeComplexItemValue;    ///< Item type is Complex Item
 
 signals:
+    void showHomePositionChanged        (bool showHomePosition);
     void altDifferenceChanged           (double altDifference);
     void altPercentChanged              (double altPercent);
     void azimuthChanged                 (double azimuth);
@@ -162,6 +171,8 @@ protected:
     Vehicle*    _vehicle;
     bool        _isCurrentItem;
     bool        _dirty;
+    bool        _homePositionSpecialCase;   ///< true: This item is being used as a ui home position indicator
+    bool        _showHomePosition;
     double      _altDifference;             ///< Difference in altitude from previous waypoint
     double      _altPercent;                ///< Percent of total altitude change in mission
     double      _azimuth;                   ///< Azimuth to previous waypoint

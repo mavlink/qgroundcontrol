@@ -48,12 +48,15 @@ Rectangle {
                     break;
                 }
             }
+            missionItem.cameraOrientationFixed = false
             if (index == -1) {
                 gridTypeCombo.currentIndex = _gridTypeManual
             } else {
-                var listIndex = index - _gridTypeCamera
                 gridTypeCombo.currentIndex = index
-                missionItem.cameraOrientationFixed = _vehicleCameraList[listIndex].fixedOrientation
+                if (index != 1) {
+                    // Specific camera is selected
+                    missionItem.cameraOrientationFixed = _vehicleCameraList[index - _gridTypeCamera].fixedOrientation
+                }
             }
         }
     }
@@ -144,6 +147,16 @@ Rectangle {
         }
     }
 
+    Connections {
+        target: missionItem
+
+        onCameraValueChanged: {
+            if (gridTypeCombo.currentIndex >= _gridTypeCustomCamera && !_noCameraValueRecalc) {
+                recalcFromCameraValues()
+            }
+        }
+    }
+
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     ExclusiveGroup {
@@ -166,7 +179,10 @@ Rectangle {
         anchors.right:      parent.right
         spacing:            _margin
 
-        SectionHeader { text: qsTr("Camera") }
+        SectionHeader {
+            text:       qsTr("Camera")
+            showSpacer: false
+        }
 
         QGCComboBox {
             id:             gridTypeCombo
@@ -215,7 +231,7 @@ Rectangle {
                 QGCRadioButton {
                     width:          _editFieldWidth
                     text:           "Landscape"
-                    checked:        missionItem.cameraOrientationLandscape.value == 1
+                    checked:        !!missionItem.cameraOrientationLandscape.value
                     exclusiveGroup: cameraOrientationGroup
                     onClicked:      missionItem.cameraOrientationLandscape.value = 1
                 }
@@ -223,7 +239,7 @@ Rectangle {
                 QGCRadioButton {
                     id:             cameraOrientationPortrait
                     text:           "Portrait"
-                    checked:        missionItem.cameraOrientationLandscape.value == 0
+                    checked:        !missionItem.cameraOrientationLandscape.value
                     exclusiveGroup: cameraOrientationGroup
                     onClicked:      missionItem.cameraOrientationLandscape.value = 0
                 }
@@ -327,8 +343,6 @@ Rectangle {
                 }
             }
 
-            Item { height: _sectionSpacer;  width: 1; visible: !ScreenTools.isTinyScreen }
-
             SectionHeader { text: qsTr("Grid") }
 
             GridLayout {
@@ -361,7 +375,7 @@ Rectangle {
                 QGCRadioButton {
                     id:                     fixedAltitudeRadio
                     text:                   qsTr("Altitude")
-                    checked:                missionItem.fixedValueIsAltitude.value
+                    checked:                !!missionItem.fixedValueIsAltitude.value
                     exclusiveGroup:         fixedValueGroup
                     onClicked:              missionItem.fixedValueIsAltitude.value = 1
                 }
@@ -394,8 +408,6 @@ Rectangle {
             anchors.right:  parent.right
             spacing:        _margin
             visible:        gridTypeCombo.currentIndex == _gridTypeManual
-
-            Item { height: _sectionSpacer;  width: 1; visible: !ScreenTools.isTinyScreen }
 
             SectionHeader { text: qsTr("Grid") }
 
@@ -446,8 +458,6 @@ Rectangle {
                 }
             }
         }
-
-        Item { height: _sectionSpacer;  width: 1; visible: !ScreenTools.isTinyScreen }
 
         SectionHeader { text: qsTr("Statistics") }
 

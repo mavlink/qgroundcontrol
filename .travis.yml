@@ -89,9 +89,9 @@ before_install:
 install:
   # linux dependencies: qt
   - if [ "${SPEC}" = "linux-g++-64" ]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.8.0-linux-min.tar.bz2 &&
-        tar jxf Qt5.8.0-linux-min.tar.bz2 -C /tmp &&
-        export PATH=/tmp/Qt5.8-linux/5.8/gcc_64/bin:$PATH &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.7.1-linux-min.tar.bz2 &&
+        tar jxf Qt5.7.1-linux-min.tar.bz2 -C /tmp &&
+        export PATH=/tmp/Qt5.7-linux/5.7/gcc_64/bin:$PATH &&
         export DISPLAY=:99.0 &&
         sh -e /etc/init.d/xvfb start
         ;
@@ -99,8 +99,8 @@ install:
 
   # android dependencies: qt, gstreamer, android-ndk
   - if [ "${SPEC}" = "android-g++" ]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.8.0-android-min.tar.bz2 &&
-        tar jxf Qt5.8.0-android-min.tar.bz2 -C /tmp &&
+        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.7.1-android-min.tar.bz2 &&
+        tar jxf Qt5.7.1-android-min.tar.bz2 -C /tmp &&
         wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-armv7-1.5.2.tar.bz2 &&
         mkdir -p ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
         tar jxf gstreamer-1.0-android-armv7-1.5.2.tar.bz2 -C ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
@@ -109,7 +109,7 @@ install:
         ./android-ndk-r10e-linux-x86_64.bin > /dev/null &&
         export ANDROID_NDK_ROOT=`pwd`/android-ndk-r10e &&
         export ANDROID_SDK_ROOT=/usr/local/android-sdk &&
-        export PATH=/tmp/Qt5.8-android/5.8/android_armv7/bin:`pwd`/android-ndk-r10e:$PATH && echo $PATH
+        export PATH=/tmp/Qt5.7-android/5.7/android_armv7/bin:`pwd`/android-ndk-r10e:$PATH && echo $PATH
         ;
     fi
 

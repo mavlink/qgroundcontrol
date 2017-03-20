@@ -25,7 +25,7 @@ MapItemView {
     delegate: MissionItemIndicator {
         id:             itemIndicator
         coordinate:     object.coordinate
-        visible:        object.specifiesCoordinate && (index != 0 || object.showHomePosition)
+        visible:        object.specifiesCoordinate
         z:              QGroundControl.zOrderMapItems
         missionItem:    object
         sequenceNumber: object.sequenceNumber
