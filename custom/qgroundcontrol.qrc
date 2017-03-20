@@ -8,7 +8,6 @@
     <qresource prefix="/qml">
         <file alias="AirframeComponent.qml">../src/AutoPilotPlugins/PX4/AirframeComponent.qml</file>
         <file alias="AirframeComponentSummary.qml">../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
-        <file alias="AnalyzeView.qml">../src/AnalyzeView/AnalyzeView.qml</file>
         <file alias="AppSettings.qml">../src/ui/AppSettings.qml</file>
         <file alias="DebugWindow.qml">../src/ui/preferences/DebugWindow.qml</file>
         <file alias="FirmwareUpgrade.qml">../src/VehicleSetup/FirmwareUpgrade.qml</file>
@@ -18,7 +17,6 @@
         <file alias="GeneralSettings.qml">../src/ui/preferences/GeneralSettings.qml</file>
         <file alias="GeoFenceEditor.qml">../src/MissionEditor/GeoFenceEditor.qml</file>
         <file alias="GeoTagPage.qml">../src/AnalyzeView/GeoTagPage.qml</file>
-        <file alias="LogDownloadPage.qml">../src/AnalyzeView/LogDownloadPage.qml</file>
         <file alias="MainWindowHybrid.qml">../src/ui/MainWindowHybrid.qml</file>
         <file alias="MainWindowInner.qml">../src/ui/MainWindowInner.qml</file>
         <file alias="MainWindowNative.qml">../src/ui/MainWindowNative.qml</file>

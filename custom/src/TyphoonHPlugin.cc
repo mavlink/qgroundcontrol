@@ -258,6 +258,14 @@ TyphoonHPlugin::settingsPages()
                 QUrl::fromUserInput("qrc:/typhoonh/logoWhite.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pTyphoonSettings));
+        if (_showAdvancedUI) {
+            if(!_pLogDownload) {
+                _pLogDownload = new QGCSettings(tr("Log Download"),
+                    QUrl::fromUserInput("qrc:/typhoonh/LogDownload.qml"),
+                    QUrl::fromUserInput("qrc:/qmlimages/LogDownloadIcon"));
+            }
+            _settingsList.append(QVariant::fromValue((QGCSettings*)_pLogDownload));
+        }
 #ifdef QT_DEBUG
         if(!_pMockLink) {
             _pMockLink = new QGCSettings(tr("MockLink"),
