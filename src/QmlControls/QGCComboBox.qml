@@ -27,13 +27,15 @@ ComboBox {
                 border.color:  control._qgcPal.buttonText
             }
 
-            Image {
-                id: imageItem
-                source: "/qmlimages/arrow-down.png"
+            QGCColoredImage {
+                id:                     image
+                width:                  ScreenTools.defaultFontPixelHeight / 2
+                height:                 width
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                anchors.rightMargin: dropDownButtonWidth / 2
-                opacity: control.enabled ? 0.6 : 0.3
+                anchors.right:          parent.right
+                anchors.rightMargin:    dropDownButtonWidth / 2
+                source:                 "/qmlimages/arrow-down.png"
+                color:                  qgcPal.text
             }
         }
     }

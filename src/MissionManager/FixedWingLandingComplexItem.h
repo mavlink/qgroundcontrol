@@ -53,7 +53,6 @@ public:
 
     double              complexDistance     (void) const final;
     int                 lastSequenceNumber  (void) const final;
-    QmlObjectListModel* getMissionItems     (void) const final;
     bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     double              greatestDistanceTo  (const QGeoCoordinate &other) const final;
     void                setCruiseSpeed      (double cruiseSpeed) final;
@@ -72,6 +71,7 @@ public:
     QGeoCoordinate  exitCoordinate          (void) const final { return _landingCoordinate; }
     int             sequenceNumber          (void) const final { return _sequenceNumber; }
     double          flightSpeed             (void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
 
     bool coordinateHasRelativeAltitude      (void) const final { return true; }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return true; }
@@ -80,7 +80,7 @@ public:
     void setDirty           (bool dirty) final;
     void setCoordinate      (const QGeoCoordinate& coordinate) final { setLoiterCoordinate(coordinate); }
     void setSequenceNumber  (int sequenceNumber) final;
-    void save               (QJsonArray&  missionItems) const final;
+    void save               (QJsonArray&  missionItems) final;
 
     static const char* jsonComplexItemTypeValue;
 

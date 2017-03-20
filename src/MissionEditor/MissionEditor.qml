@@ -579,7 +579,7 @@ QGCView {
                         spacing:        _margin / 2
                         orientation:    ListView.Vertical
                         model:          missionController.visualItems
-                        cacheBuffer:    height * 2
+                        cacheBuffer:    Math.max(height * 2, 0)
                         clip:           true
                         currentIndex:   _currentMissionIndex
                         highlightMoveDuration: 250
