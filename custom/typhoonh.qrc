@@ -24,6 +24,7 @@
         <file alias="CompassIndicator.svg">res/images/CompassIndicator.svg</file>
         <file alias="Home.svg">res/images/Home.svg</file>
         <file alias="InstrumentWidget.qml">res/InstrumentWidget.qml</file>
+        <file alias="LogDownload.qml">res/LogDownload.qml</file>
         <file alias="logoWhite.svg">res/images/logoWhite.svg</file>
         <file alias="mapIcon.svg">res/images/mapIcon.svg</file>
         <file alias="ModeIndicator.qml">res/ModeIndicator.qml</file>

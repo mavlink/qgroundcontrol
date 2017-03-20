@@ -104,9 +104,10 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
 //-----------------------------------------------------------------------------
 TyphoonHM4Interface::~TyphoonHM4Interface()
 {
+    _state = STATE_NONE;
     _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
     QThread::msleep(SEND_INTERVAL);
-    _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
+    _exitRun();
     QThread::msleep(SEND_INTERVAL);
     emit destroyed();
     if(_commPort) {
