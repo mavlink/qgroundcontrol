@@ -34,11 +34,10 @@ public:
     MissionController(QObject* parent = NULL);
     ~MissionController();
 
-    Q_PROPERTY(QGeoCoordinate       plannedHomePosition READ plannedHomePosition    NOTIFY plannedHomePositionChanged)
-    Q_PROPERTY(QmlObjectListModel*  visualItems         READ visualItems            NOTIFY visualItemsChanged)
-    Q_PROPERTY(QmlObjectListModel*  complexVisualItems  READ complexVisualItems     NOTIFY complexVisualItemsChanged)
-    Q_PROPERTY(QmlObjectListModel*  waypointLines       READ waypointLines          NOTIFY waypointLinesChanged)
-
+    // Mission settings
+    Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition    NOTIFY plannedHomePositionChanged)
+    Q_PROPERTY(QmlObjectListModel*  visualItems             READ visualItems            NOTIFY visualItemsChanged)
+    Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines          NOTIFY waypointLinesChanged)
     Q_PROPERTY(QStringList          complexMissionItemNames MEMBER _complexMissionItemNames CONSTANT)
 
     Q_PROPERTY(double               missionDistance         READ missionDistance        NOTIFY missionDistanceChanged)
@@ -67,9 +66,8 @@ public:
     ///     @param[in] vehicle Vehicle we are loading items for
     ///     @param[in] filename File to load from
     ///     @param[out] visualItems Visual items loaded, returns NULL if error
-    ///     @param[out] complexItems Complex items loaded, returns NULL if error
     /// @return success/fail
-    static bool loadItemsFromFile(Vehicle* vehicle, const QString& filename, QmlObjectListModel** visualItems, QmlObjectListModel** complexItems);
+    static bool loadItemsFromFile(Vehicle* vehicle, const QString& filename, QmlObjectListModel** visualItems);
 
     /// Sends the mission items to the specified vehicle
     static void sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems);
@@ -94,7 +92,6 @@ public:
 
     QGeoCoordinate      plannedHomePosition (void);
     QmlObjectListModel* visualItems         (void) { return _visualItems; }
-    QmlObjectListModel* complexVisualItems  (void) { return _complexItems; }
     QmlObjectListModel* waypointLines       (void) { return &_waypointLines; }
 
     double  missionDistance         (void) const { return _missionDistance; }
@@ -110,7 +107,6 @@ public:
 signals:
     void plannedHomePositionChanged(QGeoCoordinate plannedHomePosition);
     void visualItemsChanged(void);
-    void complexVisualItemsChanged(void);
     void waypointLinesChanged(void);
     void newItemsFromVehicle(void);
     void missionDistanceChanged(double missionDistance);
@@ -151,10 +147,10 @@ private:
     bool _findPreviousAltitude(int newIndex, double* prevAltitude, MAV_FRAME* prevFrame);
     static double _normalizeLat(double lat);
     static double _normalizeLon(double lon);
-    static void _addPlannedHomePosition(Vehicle* vehicle, QmlObjectListModel* visualItems, bool addToCenter);
-    static bool _loadJsonMissionFile(Vehicle* vehicle, const QByteArray& bytes, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString);
-    static bool _loadJsonMissionFileV1(Vehicle* vehicle, const QJsonObject& json, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString);
-    static bool _loadJsonMissionFileV2(Vehicle* vehicle, const QJsonObject& json, QmlObjectListModel* visualItems, QmlObjectListModel* complexItems, QString& errorString);
+    static void _addMissionSettings(Vehicle* vehicle, QmlObjectListModel* visualItems, bool addToCenter);
+    static bool _loadJsonMissionFile(Vehicle* vehicle, const QByteArray& bytes, QmlObjectListModel* visualItems, QString& errorString);
+    static bool _loadJsonMissionFileV1(Vehicle* vehicle, const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
+    static bool _loadJsonMissionFileV2(Vehicle* vehicle, const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
     static bool _loadTextMissionFile(Vehicle* vehicle, QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString);
     int _nextSequenceNumber(void);
     void _setMissionDistance(double missionDistance);
@@ -171,7 +167,6 @@ private:
 
 private:
     QmlObjectListModel* _visualItems;
-    QmlObjectListModel* _complexItems;
     QmlObjectListModel  _waypointLines;
     CoordVectHashTable  _linesTable;
     bool                _firstItemsFromVehicle;
@@ -189,6 +184,8 @@ private:
     QStringList         _complexMissionItemNames;
 
     static const char*  _settingsGroup;
+
+    // Json file keys for persistence
     static const char*  _jsonFileTypeValue;
     static const char*  _jsonFirmwareTypeKey;
     static const char*  _jsonVehicleTypeKey;

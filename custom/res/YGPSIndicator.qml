@@ -22,7 +22,7 @@ import QGroundControl.Palette               1.0
 //-- GPS Indicator
 Item {
     id:             satelitte
-    width:          (gpsSignal.x + gpsSignal.width) * 1.1
+    width:          (gpsSignal.x + gpsSignal.width)
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 

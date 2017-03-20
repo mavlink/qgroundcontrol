@@ -27,7 +27,7 @@ DEFINES += QGC_DISABLE_UVC
 DEFINES += DISABLE_ZEROCONF
 
 RESOURCES += \
-    $$PWD/typhoonh.qrc \
+    $$QGCROOT/custom/typhoonh.qrc
 
 SOURCES += \
     $$PWD/src/CameraControl.cc \

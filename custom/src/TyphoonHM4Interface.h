@@ -104,6 +104,7 @@ signals:
     void    scanComplete                        ();
     void    authenticationError                 ();
     void    wifiConnected                       ();
+    void    batteryUpdate                       ();
 
 private:
     M4SerialComm* _commPort;

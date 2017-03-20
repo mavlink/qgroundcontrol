@@ -44,7 +44,7 @@ Rectangle {
     function liveDrag() {
         if (!itemDragger._preventCoordinateBindingLoop && itemDrag.drag.active) {
             var point = Qt.point(itemDragger.x + _touchMarginHorizontal + itemIndicator.anchorPoint.x, itemDragger.y + _touchMarginVertical + itemIndicator.anchorPoint.y)
-            var coordinate = map.toCoordinate(point)
+            var coordinate = map.toCoordinate(point, false /* clipToViewPort */)
             itemDragger._preventCoordinateBindingLoop = true
             coordinate.altitude = itemCoordinate.altitude
             itemCoordinate = coordinate

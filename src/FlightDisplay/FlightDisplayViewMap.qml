@@ -210,9 +210,13 @@ FlightMap {
         }
     }
 
-    // Add the mission items to the map
-    MissionItemView {
+    // Add the mission item visuals to the map
+    Repeater {
         model: _mainIsMap ? missionController.visualItems : 0
+
+        delegate: MissionItemMapVisual {
+            map: flightMap
+        }
     }
 
     // Add lines between waypoints
@@ -299,7 +303,7 @@ FlightMap {
                     flightWidgets.guidedModeBar.state = "Shown"
                 } else {
                     if (flightWidgets.gotoEnabled) {
-                        _gotoHereCoordinate = flightMap.toCoordinate(Qt.point(mouse.x, mouse.y))
+                        _gotoHereCoordinate = flightMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
                         flightWidgets.guidedModeBar.confirmAction(flightWidgets.guidedModeBar.confirmGoTo)
                     }
                 }

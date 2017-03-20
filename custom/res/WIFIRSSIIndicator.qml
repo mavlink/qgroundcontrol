@@ -23,7 +23,7 @@ import TyphoonHQuickInterface               1.0
 //-------------------------------------------------------------------------
 //-- WIFI RSSI Indicator
 Item {
-    width:          wifiRSSIRow.width * 1.1
+    width:          wifiRSSIRow.width
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 

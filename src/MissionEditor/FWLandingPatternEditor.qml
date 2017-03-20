@@ -49,9 +49,9 @@ Rectangle {
             text:           qsTr("WIP (NOT FOR REAL FLIGHT!)")
         }
 
-        Item { width: 1; height: _margin }
-
-        SectionHeader { text: qsTr("Loiter point") }
+        SectionHeader {
+            text: qsTr("Loiter point")
+        }
 
         Item { width: 1; height: _spacer }
 
@@ -79,8 +79,6 @@ Rectangle {
             checked:        missionItem.loiterClockwise
             onClicked:      missionItem.loiterClockwise = checked
         }
-
-        Item { width: 1; height: ScreenTools.defaultFontPixelHeight / 2 }
 
         SectionHeader { text: qsTr("Landing point") }
 

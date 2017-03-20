@@ -60,6 +60,7 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(_pHandler, &TyphoonHM4Interface::scanComplete,                 this, &TyphoonHQuickInterface::_scanComplete);
         connect(_pHandler, &TyphoonHM4Interface::authenticationError,          this, &TyphoonHQuickInterface::_authenticationError);
         connect(_pHandler, &TyphoonHM4Interface::wifiConnected,                this, &TyphoonHQuickInterface::_wifiConnected);
+        connect(_pHandler, &TyphoonHM4Interface::batteryUpdate,                this, &TyphoonHQuickInterface::_batteryUpdate);
         connect(&_scanTimer, &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
     }
 }
@@ -296,6 +297,18 @@ TyphoonHQuickInterface::rssi()
 }
 
 //-----------------------------------------------------------------------------
+qreal
+TyphoonHQuickInterface::rcBattery()
+{
+    qreal res = 0.0;
+#if defined __android__
+    reset_jni();
+    res = (qreal)QAndroidJniObject::callStaticMethod<jfloat>(jniClassName, "getBatteryLevel", "()F");
+#endif
+   return res;
+}
+
+//-----------------------------------------------------------------------------
 QString
 TyphoonHQuickInterface::connectedSSID()
 {
@@ -373,6 +386,13 @@ TyphoonHQuickInterface::_wifiConnected()
     emit bindingWiFiChanged();
     emit connectedSSIDChanged();
     emit wifiConnected();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_batteryUpdate()
+{
+    emit rcBatteryChanged();
 }
 
 //-----------------------------------------------------------------------------
