@@ -516,6 +516,7 @@ HEADERS += \
     src/uas/UAS.h \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
+    src/AnalyzeView/LogDownloadController.h \
 
 AndroidBuild {
 HEADERS += \
@@ -550,7 +551,6 @@ HEADERS += \
 !MobileBuild {
 HEADERS += \
     src/AnalyzeView/GeoTagController.h \
-    src/AnalyzeView/LogDownloadController.h \
     src/GPS/Drivers/src/gps_helper.h \
     src/GPS/Drivers/src/ubx.h \
     src/GPS/GPSManager.h \
@@ -690,6 +690,7 @@ SOURCES += \
     src/main.cc \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
+    src/AnalyzeView/LogDownloadController.cc \
 
 DebugBuild {
 SOURCES += \
@@ -712,7 +713,6 @@ contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
 !MobileBuild {
 SOURCES += \
     src/AnalyzeView/GeoTagController.cc \
-    src/AnalyzeView/LogDownloadController.cc \
     src/GPS/Drivers/src/gps_helper.cpp \
     src/GPS/Drivers/src/ubx.cpp \
     src/GPS/GPSManager.cc \

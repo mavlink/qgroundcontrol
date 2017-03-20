@@ -11,14 +11,16 @@
 #include "LogDownloadController.h"
 #include "MultiVehicleManager.h"
 #include "QGCMAVLink.h"
+#if !defined(__mobile__)
 #include "QGCFileDialog.h"
+#include "MainWindow.h"
+#endif
 #include "UAS.h"
 #include "QGCApplication.h"
 #include "QGCToolbox.h"
 #include "QGCMapEngine.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
-#include "MainWindow.h"
 
 #include <QDebug>
 #include <QSettings>
@@ -503,13 +505,22 @@ LogDownloadController::_requestLogList(uint32_t start, uint32_t end)
 
 //----------------------------------------------------------------------------------------
 void
-LogDownloadController::download(void)
+LogDownloadController::download(QString path)
 {
-    QString dir = QGCFileDialog::getExistingDirectory(
+    QString dir = path;
+#if defined(__mobile__)
+    if(dir.isEmpty()) {
+        dir = QDir::homePath();
+    }
+#else
+    if(dir.isEmpty()) {
+        dir = QGCFileDialog::getExistingDirectory(
                 MainWindow::instance(),
                 "Log Download Directory",
                 QDir::homePath(),
                 QGCFileDialog::ShowDirsOnly | QGCFileDialog::DontResolveSymlinks);
+    }
+#endif
     downloadToDirectory(dir);
 }
 
