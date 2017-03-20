@@ -387,8 +387,6 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<MixerConnection>                ("QGroundControl.Controllers",          1, 0, "MixerConnection");
 
     qmlRegisterType<MixersComponentController>          ("QGroundControl.Controllers", 1, 0, "MixersComponentController");
-    //TODO: Probably remove this registration
-    qmlRegisterType<MixerGroupUIData>                   ("QGroundControl.Controllers", 1, 0, "MixerGroupUIData");
 
     qmlRegisterType<ESP8266ComponentController>         ("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
     qmlRegisterType<ScreenToolsController>              ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");

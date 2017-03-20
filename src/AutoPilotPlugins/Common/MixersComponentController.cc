@@ -26,26 +26,13 @@ QGC_LOGGING_CATEGORY(MixersComponentControllerVerboseLog, "MixersComponentContro
 //MixersComponentController* MixersComponentController::_unitTestController = NULL;
 //#endif
 
-MixerGroupUIData::MixerGroupUIData(QObject *parent)
-    :QObject(parent)
-    , _groupName("DEFAULT_NAME")
-    , _mixerID(99)
-{
-    setObjectName("DEFAULT_OBJECT_NAME");
-}
-
-
 const int MixersComponentController::_updateInterval = 150;              ///< Interval for timer which updates radio channel widgets
 
 MixersComponentController::MixersComponentController(void)
-    : _refreshGUIButton(NULL)
-    , _mixersManagerStatusText(NULL)
+    : _mixersManagerStatusText(NULL)
     , _mixers(new QmlObjectListModel(this))
     , _groups(new QmlObjectListModel(this))
-//    , _selectedGroup(0)
-    , _mockMetaData(FactMetaData::valueTypeString, this)
-    , _mockFactList()
-    , _guiInit(false)
+    , _selectedGroup(0)
 {
 //    _getMixersCountButton = NULL;
 //#ifdef UNITTEST_BUILD
@@ -53,27 +40,10 @@ MixersComponentController::MixersComponentController(void)
 //    _unitTestController = this;
 //#endif
 
-    _mockMetaData.setName("MOCK_METADATA");
-    _mockMetaData.setGroup("MIXER_COMP_CONTROLLER");
-    _mockMetaData.setRawDefaultValue("MOCK_STRING");
-
-    Fact *fact;
-
-    fact = new Fact(-1, "Mock Fact 1", FactMetaData::valueTypeString, this);
-    fact->setMetaData(&_mockMetaData);
-    fact->setRawValue("1");
-    _mockFactList.append(fact);
-
-    fact = new Fact(-1, "Mock Fact 2", FactMetaData::valueTypeString, this);
-    fact->setMetaData(&_mockMetaData);
-    fact->setRawValue("2");
-    _mockFactList.append(fact);
-
     // Connect external connections
     connect(_vehicle->mixersManager(), &MixersManager::mixerDataReadyChanged, this, &MixersComponentController::_updateMixers);
     connect(_vehicle->mixersManager(), &MixersManager::mixerManagerStatusChanged, this, &MixersComponentController::_updateMixersManagerStatus);
-    connect(_vehicle->mixersManager(), &MixersManager::mixerGroupStatusChanged, this, &MixersComponentController::_updateMixerGroupStatus);
-
+    connect(this, &MixersComponentController::selectedGroupChanged, this, &MixersComponentController::_updateSelectedGroup);
 }
 
 
@@ -87,66 +57,9 @@ MixersComponentController::~MixersComponentController()
 
 void MixersComponentController::guiUpdated(void)
 {
-    _guiInit = true;
     _updateMixersManagerStatus(_vehicle->mixersManager()->mixerManagerStatus());
     _vehicle->mixersManager()->searchAllMixerGroupsAndDownload();
 }
-
-
-//void MixersComponentController::getMixersCountButtonClicked(void)
-//{
-//    _vehicle->mixersManager()->requestMixerCount(0);
-//}
-
-
-//void MixersComponentController::requestAllButtonClicked(void)
-//{
-//    _vehicle->mixersManager()->requestMixerAll(0);
-//}
-
-//void MixersComponentController::requestMissingButtonClicked(void)
-//{
-//    _vehicle->mixersManager()->requestMissingData(0);
-//}
-
-//void MixersComponentController::requestSubmixerCountButtonClicked(void)
-//{
-//    _vehicle->mixersManager()->requestSubmixerCount(0, 0);
-//}
-
-void MixersComponentController::refreshGUIButtonClicked(void){
-    QObjectList newMixerList;
-    Fact* fact;
-
-    foreach(fact, _mockFactList){
-        newMixerList.append(fact);
-    }
-
-    _mixers->swapObjectList(newMixerList);
-}
-
-
-//void RadioComponentController::_loadSettings(void)
-//{
-//    QSettings settings;
-    
-//    settings.beginGroup(_settingsGroup);
-//    _transmitterMode = settings.value(_settingsKeyTransmitterMode, 2).toInt();
-//    settings.endGroup();
-    
-//    if (_transmitterMode != 1 || _transmitterMode != 2) {
-//        _transmitterMode = 2;
-//    }
-//}
-
-//void RadioComponentController::_storeSettings(void)
-//{
-//    QSettings settings;
-    
-//    settings.beginGroup(_settingsGroup);
-//    settings.setValue(_settingsKeyTransmitterMode, _transmitterMode);
-//    settings.endGroup();
-//}
 
 
 unsigned int MixersComponentController::groupValue(void)
@@ -163,35 +76,32 @@ float MixersComponentController::parameterValue(void)
 void MixersComponentController::_updateMixers(bool dataReady){
 
     if(dataReady) {
-        QMap<int, MixerGroup*>* mixerGroups = _vehicle->mixersManager()->getMixerGroups()->getMixerGroups();
         MixerGroup *mixerGroup;
-
         _groups->clear();
 
-        QObjectList newGroupsList;
-//        Fact *groupData;
-        foreach(mixerGroup, *mixerGroups){
-            newGroupsList.append(new MixerGroupUIData());
-            newGroupsList.append(new MixerGroupUIData());
-            newGroupsList.append(new MixerGroupUIData());
-//            groupData = new Fact(-1, mixerGroup->groupName(), FactMetaData::valueTypeUint16, this);
-//            groupData->setMetaData(&_mockMetaData);
-//            groupData->setRawValue(mixerGroup->groupID());
-//            newGroupsList.append(groupData);
-        }
-        _groups->swapObjectList(newGroupsList);
+//        QMap<int, MixerGroup*>* mixerGroups = _vehicle->mixersManager()->getMixerGroups()->getMixerGroups();
+//  For the combobox that just doesn't work
+//        QObjectList newGroupsList;
+//        foreach(mixerGroup, *mixerGroups){
+//            newGroupsList.append(mixerGroup);
+//        }
+//        _groups->swapObjectList(newGroupsList);
 
-        mixerGroup = _vehicle->mixersManager()->getMixerGroup(0);
+        // Pick a default mixer group selection
+        if(_vehicle->mixersManager()->getMixerGroup(0) != nullptr){
+            _selectedGroup = 0;
+        } else if(_vehicle->mixersManager()->getMixerGroup(1) != nullptr) {
+            _selectedGroup = 1;
+        } else {
+            _mixers->clear();
+            return;
+        }
+
+        mixerGroup = _vehicle->mixersManager()->getMixerGroup(_selectedGroup);
         if(mixerGroup != nullptr){
             _mixers->swapObjectList(mixerGroup->mixers());
         } else {
-            QObjectList newMixerList;
-            Fact* fact;
-
-            foreach(fact, _mockFactList){
-                newMixerList.append(fact);
-            }
-        _mixers->swapObjectList(newMixerList);
+            _mixers->clear();
         }
     } else {
         _mixers->clear();
@@ -199,8 +109,6 @@ void MixersComponentController::_updateMixers(bool dataReady){
 }
 
 void MixersComponentController::_updateMixersManagerStatus(MixersManager::MIXERS_MANAGER_STATUS_e mixerManagerStatus) {
-//    if(!_guiInit)
-//        return;
     switch(mixerManagerStatus){
     case MixersManager::MIXERS_MANAGER_WAITING:
         _mixersManagerStatusText->setProperty("text", "WAITING");
@@ -221,7 +129,13 @@ void MixersComponentController::_updateMixersManagerStatus(MixersManager::MIXERS
 }
 
 
-void MixersComponentController::_updateMixerGroupStatus(MixerGroup *mixerGroup){
-    unsigned int status = mixerGroup->getGroupStatus();
-    Q_UNUSED(status)
+void MixersComponentController::_updateSelectedGroup(unsigned int group){
+    Q_UNUSED(group)
+
+    MixerGroup *mixerGroup = _vehicle->mixersManager()->getMixerGroup(_selectedGroup);
+    if(mixerGroup != nullptr){
+        _mixers->swapObjectList(mixerGroup->mixers());
+    } else {
+        _mixers->clear();
+    }
 }

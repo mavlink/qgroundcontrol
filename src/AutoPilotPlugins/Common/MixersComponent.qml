@@ -245,94 +245,31 @@ SetupPage {
                         QGCLabel { text: qsTr("Group") }
 
                         QGCComboBox {
-                            function listProperty(item)
-                            {
-                                for (var p in item)
-                                console.log(p + ": " + item[p]);
-                            }
-
                             id:                 mixerGroupCombo
-//                            anchors.margins:    _margins
                             anchors.top:        parent.top
-//                            anchors.left:       gimbalOutLabel.right
                             width:              ScreenTools.defaultFontPixelWidth * 30
-                            model:              mixers.groupsList
-//                            currentIndex:       mixers.selectedGroup
+                            model: ListModel {
+                                id: comboBoxModel
+                                ListElement { groupName: "LOCAL";       groupID: 0 }
+                                ListElement { groupName: "FAILSAFE";    groupID: 1 }
+                            }
+                            currentIndex:       mixers.selectedGroup
                             textRole:           "groupName"
+                            focus:              true
 
                             onCurrentIndexChanged: {
-                                if(mixers.groupsList) {
-                                    for(var i = 0; i < mixers.groupsList.count; i++)
-                                        listProperty(mixers.groupsList.get(i))
-    //                                var sqlid = mixerGroupCombo.mixerGroupData.groupName
-    //                                console.log(sqlid);
-                                }
+                                    mixers.selectedGroup = currentIndex;
                             }
 //                            onActivated: mixers.selectedGroup = get(index)
                         }
 
-//                        QGCLabel {
-//                            text: mixers.groupsList[0].groupName
-//                            width:              ScreenTools.defaultFontPixelWidth * 30
-//                        }
-
-//                        Column {
-//                            spacing:            _margins * 0.5
-//                            ExclusiveGroup { id: polarityGroup }
-//                            QGCRadioButton {
-//                                checked:        0 === 1
-//                                exclusiveGroup: polarityGroup
-//                                text:           "Local mixer"
-////                                onClicked: {
-////                                    if(_camTriggerPol) {
-////                                        _camTriggerPol.value = 0
-////                                    }
-////                                }
-//                            }
-//                            QGCRadioButton {
-//                                checked:        0 === 1
-//                                exclusiveGroup: polarityGroup
-//                                text:           "Failsafe mixer"
-//                                enabled:        false
-////                                onClicked: {
-////                                    if(_camTriggerPol) {
-////                                        _camTriggerPol.value = 1
-////                                    }
-////                                }
-//                            }
-//                        }
-
 //                        QGCButton {
-//                            id:getMixersCountButton
-//                            text: qsTr("Request mixer count")
+//                            id:refreshGUI
+//                            text: qsTr("REFRESH GUI")
 //                            onClicked: {
-//                                mixers.getMixersCountButtonClicked()
+//                                mixers.refreshGUIButtonClicked()
 //                            }
 //                        }
-
-//                        QGCButton {
-//                            id:requestAllButton
-//                            text: qsTr("Request all")
-//                            onClicked: {
-//                                mixers.requestAllButtonClicked()
-//                            }
-//                        }
-
-//                        QGCButton {
-//                            id:requestMissing
-//                            text: qsTr("Request missing")
-//                            onClicked: {
-//                                mixers.requestMissingButtonClicked()
-//                            }
-//                        }
-
-                        QGCButton {
-                            id:refreshGUI
-                            text: qsTr("REFRESH GUI")
-                            onClicked: {
-                                mixers.refreshGUIButtonClicked()
-                            }
-                        }
 
                         // Status Text
                         QGCLabel {
