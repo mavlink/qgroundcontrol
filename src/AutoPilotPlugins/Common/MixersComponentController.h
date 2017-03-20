@@ -44,28 +44,17 @@ public:
     Q_PROPERTY(QQuickItem* mixersManagerStatusText   MEMBER _mixersManagerStatusText      NOTIFY mixersManagerStatusTextChanged)
 
     Q_PROPERTY(QmlObjectListModel*  mixersList          MEMBER _mixers              CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  groupsList          MEMBER _groups              CONSTANT)
     Q_PROPERTY(unsigned int         selectedGroup       MEMBER _selectedGroup       NOTIFY selectedGroupChanged)
 
     Q_INVOKABLE void guiUpdated(void);
-
-    unsigned int groupValue(void);
-    unsigned int mixerIndexValue(void);
-    unsigned int submixerIndexValue(void);
-    float        parameterValue(void);
         
     
 signals:
     void mixersManagerStatusTextChanged(void);
-
     void selectedGroupChanged(unsigned int groupValue);
     void parameterValueChanged(float paramValue);
         
-//    /// Signalled to QML to indicate reboot is required
-//    void functionMappingChangedAPMReboot(void);
-
 private slots:
-//    void _rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels]);
     void _updateMixers(bool dataReady);
     void _updateMixersManagerStatus(MixersManager::MIXERS_MANAGER_STATUS_e mixerManagerStatus);
     void _updateSelectedGroup(unsigned int group);
@@ -76,7 +65,6 @@ private:
     QQuickItem* _mixersManagerStatusText;
 
     QmlObjectListModel* _mixers;
-    QmlObjectListModel* _groups;
     unsigned int        _selectedGroup;
 
 //#ifdef UNITTEST_BUILD

@@ -31,7 +31,6 @@ const int MixersComponentController::_updateInterval = 150;              ///< In
 MixersComponentController::MixersComponentController(void)
     : _mixersManagerStatusText(NULL)
     , _mixers(new QmlObjectListModel(this))
-    , _groups(new QmlObjectListModel(this))
     , _selectedGroup(0)
 {
 //    _getMixersCountButton = NULL;
@@ -51,7 +50,6 @@ MixersComponentController::MixersComponentController(void)
 MixersComponentController::~MixersComponentController()
 {
     delete _mixers;
-//    _storeSettings();
 }
 
 
@@ -62,47 +60,17 @@ void MixersComponentController::guiUpdated(void)
 }
 
 
-unsigned int MixersComponentController::groupValue(void)
-{    
-//    return _selectedGroup;
-    return 0;
-}
-
-float MixersComponentController::parameterValue(void)
-{
-    return 0.0;
-}
-
 void MixersComponentController::_updateMixers(bool dataReady){
 
     if(dataReady) {
-        MixerGroup *mixerGroup;
-        _groups->clear();
-
-//        QMap<int, MixerGroup*>* mixerGroups = _vehicle->mixersManager()->getMixerGroups()->getMixerGroups();
-//  For the combobox that just doesn't work
-//        QObjectList newGroupsList;
-//        foreach(mixerGroup, *mixerGroups){
-//            newGroupsList.append(mixerGroup);
-//        }
-//        _groups->swapObjectList(newGroupsList);
-
         // Pick a default mixer group selection
         if(_vehicle->mixersManager()->getMixerGroup(0) != nullptr){
             _selectedGroup = 0;
         } else if(_vehicle->mixersManager()->getMixerGroup(1) != nullptr) {
             _selectedGroup = 1;
-        } else {
-            _mixers->clear();
-            return;
         }
 
-        mixerGroup = _vehicle->mixersManager()->getMixerGroup(_selectedGroup);
-        if(mixerGroup != nullptr){
-            _mixers->swapObjectList(mixerGroup->mixers());
-        } else {
-            _mixers->clear();
-        }
+        _updateSelectedGroup(_selectedGroup);
     } else {
         _mixers->clear();
     }
