@@ -34,6 +34,7 @@ public:
     Q_PROPERTY(bool                     showSensorCalibrationLevel      READ showSensorCalibrationLevel     NOTIFY showSensorCalibrationLevelChanged)
     Q_PROPERTY(bool                     showSensorCalibrationAirspeed   READ showSensorCalibrationAirspeed  NOTIFY showSensorCalibrationAirspeedChanged)
     Q_PROPERTY(bool                     showSensorCalibrationOrient     READ showSensorCalibrationOrient    NOTIFY showSensorCalibrationOrientChanged)
+    Q_PROPERTY(bool                     showFirmwareUpgrade             READ showFirmwareUpgrade            NOTIFY showFirmwareUpgradeChanged)
 
     /// Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /// @return true if QGC should consolidate both menus into one.
@@ -59,6 +60,8 @@ public:
     virtual bool showSensorCalibrationAirspeed  () const { return true; }
     virtual bool showSensorCalibrationOrient    () const { return true; }
 
+    virtual bool showFirmwareUpgrade            () const { return true; }
+
 signals:
     void showSensorCalibrationCompassChanged    (bool show);
     void showSensorCalibrationGyroChanged       (bool show);
@@ -66,6 +69,7 @@ signals:
     void showSensorCalibrationLevelChanged      (bool show);
     void showSensorCalibrationAirspeedChanged   (bool show);
     void showSensorCalibrationOrientChanged     (bool show);
+    void showFirmwareUpgradeChanged             (bool show);
 
 private:
     CustomInstrumentWidget* _defaultInstrumentWidget;
