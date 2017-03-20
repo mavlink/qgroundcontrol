@@ -41,7 +41,7 @@ Rectangle {
 
                 property var    _missionVehicle:            missionController.vehicle
                 property bool   _offlineEditing:            _missionVehicle.isOfflineEditingVehicle
-                property bool   _showOfflineEditingCombos:  _offlineEditing && _noMissionItemsAdded
+                property bool   _showOfflineVehicleCombos:  _offlineEditing && _multipleFirmware && _noMissionItemsAdded
                 property bool   _showCruiseSpeed:           !_missionVehicle.multiRotor
                 property bool   _showHoverSpeed:            _missionVehicle.multiRotor || _missionVehicle.vtol
                 property bool   _multipleFirmware:          QGroundControl.supportedFirmwareCount > 2
@@ -123,7 +123,7 @@ Rectangle {
                     SectionHeader {
                         id:             vehicleInfoSectionHeader
                         text:           qsTr("Vehicle Info")
-                        visible:        _multipleFirmware && _showOfflineEditingCombos
+                        visible:        _offlineEditing
                         checked:        false
                         exclusiveGroup: sectionHeaderGroup
                     }
@@ -139,21 +139,25 @@ Rectangle {
                         QGCLabel {
                             text:               _firmwareLabel
                             Layout.fillWidth:   true
+                            visible:            _showOfflineVehicleCombos
                         }
                         FactComboBox {
                             fact:                   QGroundControl.settingsManager.appSettings.offlineEditingFirmwareType
                             indexModel:             false
                             Layout.preferredWidth:  _fieldWidth
+                            visible:                _showOfflineVehicleCombos
                         }
 
                         QGCLabel {
                             text:               _vehicleLabel
                             Layout.fillWidth:   true
+                            visible:            _showOfflineVehicleCombos
                         }
                         FactComboBox {
                             fact:                   QGroundControl.settingsManager.appSettings.offlineEditingVehicleType
                             indexModel:             false
                             Layout.preferredWidth:  _fieldWidth
+                            visible:                _showOfflineVehicleCombos
                         }
 
                         QGCLabel {

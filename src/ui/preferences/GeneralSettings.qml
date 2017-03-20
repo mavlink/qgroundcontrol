@@ -338,7 +338,9 @@ QGCView {
                         //-----------------------------------------------------------------
                         //-- Mission AutoLoad
                         Row {
-                            spacing: ScreenTools.defaultFontPixelWidth
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    _autoLoadDir.visible
+
                             QGCCheckBox {
                                 id:                     autoLoadCheckbox
                                 anchors.verticalCenter: parent.verticalCenter
