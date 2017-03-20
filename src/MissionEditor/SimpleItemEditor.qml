@@ -27,6 +27,7 @@ Rectangle {
         anchors.left:    valuesRect.left
         anchors.right:   valuesRect.right
         anchors.top:     valuesRect.top
+
         sourceComponent: Component {
             Item {
                 id:                 valuesItem
@@ -113,6 +114,11 @@ Rectangle {
                             text:   object.name
                             fact:   object
                         }
+                    }
+
+                    CameraSection {
+                        checked:    missionItem.cameraSection.settingsSpecified
+                        visible:    missionItem.cameraSection.available
                     }
                 } // Column
             } // Item

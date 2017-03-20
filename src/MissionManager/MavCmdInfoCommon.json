@@ -32,6 +32,7 @@
             "specifiesCoordinate":  true,
             "friendlyEdit":         true,
             "category":             "Basic",
+            "cameraSection":        true,
             "param1": {
                 "label":            "Hold",
                 "units":            "secs",
