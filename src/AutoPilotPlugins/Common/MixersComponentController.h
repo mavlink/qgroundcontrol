@@ -32,6 +32,23 @@ namespace Ui {
     class MixersComponentController;
 }
 
+class MixerGroupUIData : public QObject
+{
+    Q_OBJECT
+    Q_DISABLE_COPY(MixerGroupUIData)
+
+    Q_PROPERTY(QString          groupName READ groupName    CONSTANT)
+    Q_PROPERTY(unsigned int     mixerID   READ mixerID      CONSTANT)
+public:
+    MixerGroupUIData(QObject *parent=NULL);
+    QString groupName(void) {return _groupName;}
+    unsigned int mixerID(void) {return _mixerID;}
+
+private:
+    QString         _groupName;
+    unsigned int    _mixerID;
+};
+
 class MixersComponentController : public FactPanelController
 {
     Q_OBJECT
@@ -44,6 +61,8 @@ public:
     Q_PROPERTY(QQuickItem* mixersManagerStatusText   MEMBER _mixersManagerStatusText      NOTIFY mixersManagerStatusTextChanged)
 
     Q_PROPERTY(QmlObjectListModel*  mixersList          MEMBER _mixers              CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  groupsList          MEMBER _groups              CONSTANT)
+//    Q_PROPERTY(unsigned int         selectedGroup       MEMBER _selectedGroup       NOTIFY selectedGroupChanged)
 
     Q_INVOKABLE void refreshGUIButtonClicked(void);
     Q_INVOKABLE void guiUpdated(void);
@@ -51,7 +70,7 @@ public:
     unsigned int groupValue(void);
     unsigned int mixerIndexValue(void);
     unsigned int submixerIndexValue(void);
-    float parameterValue(void);
+    float        parameterValue(void);
         
     
 signals:
@@ -77,6 +96,8 @@ private:
     QQuickItem* _mixersManagerStatusText;
 
     QmlObjectListModel* _mixers;
+    QmlObjectListModel* _groups;
+//    unsigned int        _selectedGroup;
 
     FactMetaData _mockMetaData;
     QList<Fact*> _mockFactList;

@@ -26,12 +26,23 @@ QGC_LOGGING_CATEGORY(MixersComponentControllerVerboseLog, "MixersComponentContro
 //MixersComponentController* MixersComponentController::_unitTestController = NULL;
 //#endif
 
+MixerGroupUIData::MixerGroupUIData(QObject *parent)
+    :QObject(parent)
+    , _groupName("DEFAULT_NAME")
+    , _mixerID(99)
+{
+    setObjectName("DEFAULT_OBJECT_NAME");
+}
+
+
 const int MixersComponentController::_updateInterval = 150;              ///< Interval for timer which updates radio channel widgets
 
 MixersComponentController::MixersComponentController(void)
     : _refreshGUIButton(NULL)
     , _mixersManagerStatusText(NULL)
     , _mixers(new QmlObjectListModel(this))
+    , _groups(new QmlObjectListModel(this))
+//    , _selectedGroup(0)
     , _mockMetaData(FactMetaData::valueTypeString, this)
     , _mockFactList()
     , _guiInit(false)
@@ -58,6 +69,7 @@ MixersComponentController::MixersComponentController(void)
     fact->setRawValue("2");
     _mockFactList.append(fact);
 
+    // Connect external connections
     connect(_vehicle->mixersManager(), &MixersManager::mixerDataReadyChanged, this, &MixersComponentController::_updateMixers);
     connect(_vehicle->mixersManager(), &MixersManager::mixerManagerStatusChanged, this, &MixersComponentController::_updateMixersManagerStatus);
     connect(_vehicle->mixersManager(), &MixersManager::mixerGroupStatusChanged, this, &MixersComponentController::_updateMixerGroupStatus);
@@ -68,6 +80,7 @@ MixersComponentController::MixersComponentController(void)
 
 MixersComponentController::~MixersComponentController()
 {
+    delete _mixers;
 //    _storeSettings();
 }
 
@@ -138,6 +151,7 @@ void MixersComponentController::refreshGUIButtonClicked(void){
 
 unsigned int MixersComponentController::groupValue(void)
 {    
+//    return _selectedGroup;
     return 0;
 }
 
@@ -149,7 +163,25 @@ float MixersComponentController::parameterValue(void)
 void MixersComponentController::_updateMixers(bool dataReady){
 
     if(dataReady) {
-        MixerGroup *mixerGroup = _vehicle->mixersManager()->getMixerGroup(0);
+        QMap<int, MixerGroup*>* mixerGroups = _vehicle->mixersManager()->getMixerGroups()->getMixerGroups();
+        MixerGroup *mixerGroup;
+
+        _groups->clear();
+
+        QObjectList newGroupsList;
+//        Fact *groupData;
+        foreach(mixerGroup, *mixerGroups){
+            newGroupsList.append(new MixerGroupUIData());
+            newGroupsList.append(new MixerGroupUIData());
+            newGroupsList.append(new MixerGroupUIData());
+//            groupData = new Fact(-1, mixerGroup->groupName(), FactMetaData::valueTypeUint16, this);
+//            groupData->setMetaData(&_mockMetaData);
+//            groupData->setRawValue(mixerGroup->groupID());
+//            newGroupsList.append(groupData);
+        }
+        _groups->swapObjectList(newGroupsList);
+
+        mixerGroup = _vehicle->mixersManager()->getMixerGroup(0);
         if(mixerGroup != nullptr){
             _mixers->swapObjectList(mixerGroup->mixers());
         } else {

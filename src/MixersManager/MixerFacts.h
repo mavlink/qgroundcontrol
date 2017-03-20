@@ -99,6 +99,9 @@ class MixerGroup : public QObject
     Q_OBJECT
     Q_DISABLE_COPY(MixerGroup)
 
+    Q_PROPERTY(QString          groupName   READ groupName     CONSTANT)
+    Q_PROPERTY(unsigned int     groupID     READ groupID       CONSTANT)
+
     enum {
         MIXERGROUP_STRUCTURE_CREATED = 0x01,
         MIXERGROUP_PARAMETERS_CREATED = 0x02,
@@ -119,7 +122,7 @@ class MixerGroup : public QObject
     };
 
 public:
-    MixerGroup(unsigned int groupID, QObject* parent = NULL);
+    MixerGroup(unsigned int groupID=0, QObject* parent = NULL);
     ~MixerGroup();
 
     // Parameters (Mixer private constants or variables)
@@ -132,14 +135,19 @@ public:
     void setGroupStatusFlags(unsigned int flags) {_groupStatus |= flags;}
     void deleteGroupMixers(void);
     bool dataComplete(void) {return ((_groupStatus & MIXERGROUP_DATA_COMPLETE) != 0);}
+
     unsigned int groupID(void) {return _groupID;}
+    void setGroupID(unsigned int groupID) {_groupID = groupID;}
+
+    QString groupName(void) {return _groupName;}
+    void setGroupName(QString groupName) {_groupName = groupName;}
 
 private:
     QObjectList     _mixers ;
     MixerMetaData   _mixerMetaData;
     unsigned int    _groupStatus;
     unsigned int    _groupID;
-
+    QString         _groupName;
 };
 
 
@@ -154,6 +162,7 @@ public:
     void deleteGroup(int groupID);
     void addGroup(MixerGroup *group);
     MixerGroup* getGroup(int groupID);
+    QMap<int, MixerGroup*>* getMixerGroups(void) {return &_mixerGroups;}
 
 private:
     QMap<int, MixerGroup*> _mixerGroups;

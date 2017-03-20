@@ -110,11 +110,18 @@ void MixersManager::_setStatus(MIXERS_MANAGER_STATUS_e newStatus){
 
 
 bool MixersManager::mixerDataReady() {
-
-    MixerGroup *group = _mixerGroupsData.getGroup(_actionGroup);
-    if(group==nullptr)
+    if(!_groupsIndentified)
         return false;
-    return group->dataComplete();
+    if(_status != MIXERS_MANAGER_WAITING){
+        return false;
+    }
+
+//    MixerGroup* mixerGroup;
+//    foreach(mixerGroup, _mixerGroupsData){
+//        if(!mixerGroup->dataComplete())
+//            return false;
+//    }
+    return true;
 }
 
 MixerGroup* MixersManager::mixerGroupStatus(void) {
@@ -351,8 +358,11 @@ bool MixersManager::_downloadNextMixerGroup()
 {
     _retryCount = 0;
     _actionGroup++;
-    if(_actionGroup > 1)
+    if(_actionGroup > 1) {
+            _setStatus(MIXERS_MANAGER_WAITING);
+            emit mixerDataReadyChanged(true);
         return false;
+    }
     return _downloadMixerGroup();
 }
 
@@ -399,11 +409,7 @@ void MixersManager::_clearMixerGroupMessages(unsigned int group){
 }
 
 void MixersManager::_mixerDataDownloadComplete(unsigned int group){
-    _setStatus(MIXERS_MANAGER_WAITING);
-
-    if(_buildAll(group)){
-        emit mixerDataReadyChanged(true);
-    }
+    _buildAll(group);
 }
 
 bool MixersManager::_buildAll(unsigned int group){
@@ -555,10 +561,6 @@ bool MixersManager::_buildStructureFromMessages(unsigned int group){
 
     Mixer *mixer;
     Mixer *submixer;
-
-    //TODO Put this back
-//    _mixerDataReady = false;
-//    emit mixerDataReadyChanged(false);
 
     MixerGroup *mixer_group = _mixerGroupsData.getGroup(group);
     if(mixer_group == nullptr)

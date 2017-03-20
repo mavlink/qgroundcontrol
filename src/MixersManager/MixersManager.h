@@ -57,6 +57,7 @@ public:
     bool searchAllMixerGroupsAndDownload(void);
 
     MixerGroup* getMixerGroup(unsigned int groupID);
+    MixerGroups* getMixerGroups(void) {return &_mixerGroupsData;}
 
     // These values are public so the unit test can set appropriate signal wait times
     static const int _ackTimeoutMilliseconds = 1000;

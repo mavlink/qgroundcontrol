@@ -381,11 +381,15 @@ void QGCApplication::_initCommon(void)
 
     qmlRegisterType<ParameterEditorController>      ("QGroundControl.Controllers",          1, 0, "ParameterEditorController");
 
-    //TOO Move these to ToolBox?
+    //TOO Move these to vehicle or toolbox?
+    qmlRegisterType<MixerGroup>                     ("QGroundControl.Controllers",          1, 0, "MixerGroup");
     qmlRegisterType<Mixer>                          ("QGroundControl.Controllers",          1, 0, "Mixer");
     qmlRegisterType<MixerConnection>                ("QGroundControl.Controllers",          1, 0, "MixerConnection");
 
     qmlRegisterType<MixersComponentController>          ("QGroundControl.Controllers", 1, 0, "MixersComponentController");
+    //TODO: Probably remove this registration
+    qmlRegisterType<MixerGroupUIData>                   ("QGroundControl.Controllers", 1, 0, "MixerGroupUIData");
+
     qmlRegisterType<ESP8266ComponentController>         ("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
     qmlRegisterType<ScreenToolsController>              ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
     qmlRegisterType<MissionController>                  ("QGroundControl.Controllers", 1, 0, "MissionController");

@@ -104,6 +104,7 @@ MixerGroup::MixerGroup(unsigned int groupID, QObject* parent)
     , _mixerMetaData()
     , _groupStatus(0)
     , _groupID(groupID)
+    , _groupName("GROUP_DEFAULT_NAME")
 {
 };
 
