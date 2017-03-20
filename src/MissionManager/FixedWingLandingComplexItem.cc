@@ -105,7 +105,7 @@ void FixedWingLandingComplexItem::setDirty(bool dirty)
     }
 }
 
-void FixedWingLandingComplexItem::save(QJsonArray&  missionItems) const
+void FixedWingLandingComplexItem::save(QJsonArray&  missionItems)
 {
     QJsonObject saveObject;
 
@@ -203,10 +203,8 @@ bool FixedWingLandingComplexItem::specifiesCoordinate(void) const
     return true;
 }
 
-QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
+void FixedWingLandingComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
 {
-    QmlObjectListModel* pMissionItems = new QmlObjectListModel;
-
     int seqNum = _sequenceNumber;
 
     MissionItem* item = new MissionItem(seqNum++,                           // sequence number
@@ -215,8 +213,8 @@ QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
                                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  // param 1-7
                                         true,                               // autoContinue
                                         false,                              // isCurrentItem
-                                        pMissionItems);                     // parent - allow delete on pMissionItems to delete everthing
-    pMissionItems->append(item);
+                                        missionItemParent);
+    items.append(item);
 
     float loiterRadius = _loiterRadiusFact.rawValue().toDouble() * (_loiterClockwise ? 1.0 : -1.0);
     item = new MissionItem(seqNum++,
@@ -231,8 +229,8 @@ QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
                            _loiterAltitudeFact.rawValue().toDouble(),
                            true,                            // autoContinue
                            false,                           // isCurrentItem
-                           pMissionItems);                  // parent - allow delete on pMissionItems to delete everthing
-    pMissionItems->append(item);
+                           missionItemParent);
+    items.append(item);
 
     item = new MissionItem(seqNum++,
                            MAV_CMD_NAV_LAND,
@@ -243,10 +241,8 @@ QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
                            _landingAltitudeFact.rawValue().toDouble(),
                            true,                               // autoContinue
                            false,                              // isCurrentItem
-                           pMissionItems);                     // parent - allow delete on pMissionItems to delete everthing
-    pMissionItems->append(item);
-
-    return pMissionItems;
+                           missionItemParent);
+    items.append(item);
 }
 
 double FixedWingLandingComplexItem::complexDistance(void) const

@@ -27,6 +27,8 @@
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
 
+class MissionItem;
+
 // Abstract base class for all Simple and Complex visual mission objects.
 class VisualMissionItem : public QObject
 {
@@ -132,13 +134,19 @@ public:
     virtual void setDirty           (bool dirty) = 0;
     virtual void setCoordinate      (const QGeoCoordinate& coordinate) = 0;
     virtual void setSequenceNumber  (int sequenceNumber) = 0;
+    virtual int  lastSequenceNumber (void) const = 0;
 
     /// Save the item(s) in Json format
     ///     @param missionItems Current set of mission items, new items should be appended to the end
-    virtual void save(QJsonArray&  missionItems) const = 0;
+    virtual void save(QJsonArray&  missionItems) = 0;
 
     /// @return The QML resource file which contains the control which visualizes the item on the map.
     virtual QString mapVisualQML(void) const = 0;
+
+    /// Returns the mission items associated with the complex item. Caller is responsible for freeing.
+    ///     @param items List to append to
+    ///     @param missionItemParent Parent object for newly created MissionItems
+    virtual void appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent) = 0;
 
     static const char* jsonTypeKey;                 ///< Json file attribute which specifies the item type
     static const char* jsonTypeSimpleItemValue;     ///< Item type is MISSION_ITEM
@@ -162,6 +170,7 @@ signals:
     void specifiesCoordinateChanged     (void);
     void isStandaloneCoordinateChanged  (void);
     void flightSpeedChanged             (double flightSpeed);
+    void lastSequenceNumberChanged      (int sequenceNumber);
 
     void coordinateHasRelativeAltitudeChanged       (bool coordinateHasRelativeAltitude);
     void exitCoordinateHasRelativeAltitudeChanged   (bool exitCoordinateHasRelativeAltitude);

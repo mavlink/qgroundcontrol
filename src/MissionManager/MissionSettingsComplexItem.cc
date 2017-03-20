@@ -26,11 +26,6 @@ const char* MissionSettingsComplexItem::_plannedHomePositionLatitudeName =  "Pla
 const char* MissionSettingsComplexItem::_plannedHomePositionLongitudeName = "PlannedHomePositionLongitude";
 const char* MissionSettingsComplexItem::_plannedHomePositionAltitudeName =  "PlannedHomePositionAltitude";
 const char* MissionSettingsComplexItem::_missionFlightSpeedName =           "FlightSpeed";
-const char* MissionSettingsComplexItem::_gimbalPitchName =                  "GimbalPitch";
-const char* MissionSettingsComplexItem::_gimbalYawName =                    "GimbalYaw";
-const char* MissionSettingsComplexItem::_cameraActionName =                 "CameraAction";
-const char* MissionSettingsComplexItem::_cameraPhotoIntervalDistanceName =  "CameraPhotoIntervalDistance";
-const char* MissionSettingsComplexItem::_cameraPhotoIntervalTimeName =      "CameraPhotoIntervalTime";
 const char* MissionSettingsComplexItem::_missionEndActionName =             "MissionEndAction";
 
 QMap<QString, FactMetaData*> MissionSettingsComplexItem::_metaDataMap;
@@ -38,16 +33,10 @@ QMap<QString, FactMetaData*> MissionSettingsComplexItem::_metaDataMap;
 MissionSettingsComplexItem::MissionSettingsComplexItem(Vehicle* vehicle, QObject* parent)
     : ComplexMissionItem(vehicle, parent)
     , _specifyMissionFlightSpeed(false)
-    , _specifyGimbal(false)
     , _plannedHomePositionLatitudeFact  (0, _plannedHomePositionLatitudeName,   FactMetaData::valueTypeDouble)
     , _plannedHomePositionLongitudeFact (0, _plannedHomePositionLongitudeName,  FactMetaData::valueTypeDouble)
     , _plannedHomePositionAltitudeFact  (0, _plannedHomePositionAltitudeName,   FactMetaData::valueTypeDouble)
     , _missionFlightSpeedFact           (0, _missionFlightSpeedName,            FactMetaData::valueTypeDouble)
-    , _gimbalYawFact                    (0, _gimbalYawName,                     FactMetaData::valueTypeDouble)
-    , _gimbalPitchFact                  (0, _gimbalPitchName,                   FactMetaData::valueTypeDouble)
-    , _cameraActionFact                 (0, _cameraActionName,                  FactMetaData::valueTypeDouble)
-    , _cameraPhotoIntervalDistanceFact  (0, _cameraPhotoIntervalDistanceName,   FactMetaData::valueTypeDouble)
-    , _cameraPhotoIntervalTimeFact      (0, _cameraPhotoIntervalTimeName,       FactMetaData::valueTypeUint32)
     , _missionEndActionFact             (0, _missionEndActionName,              FactMetaData::valueTypeUint32)
     , _sequenceNumber(0)
     , _dirty(false)
@@ -62,21 +51,11 @@ MissionSettingsComplexItem::MissionSettingsComplexItem(Vehicle* vehicle, QObject
     _plannedHomePositionLongitudeFact.setMetaData   (_metaDataMap[_plannedHomePositionLongitudeName]);
     _plannedHomePositionAltitudeFact.setMetaData    (_metaDataMap[_plannedHomePositionAltitudeName]);
     _missionFlightSpeedFact.setMetaData             (_metaDataMap[_missionFlightSpeedName]);
-    _gimbalPitchFact.setMetaData                    (_metaDataMap[_gimbalPitchName]);
-    _gimbalYawFact.setMetaData                      (_metaDataMap[_gimbalYawName]);
-    _cameraActionFact.setMetaData                   (_metaDataMap[_cameraActionName]);
-    _cameraPhotoIntervalDistanceFact.setMetaData    (_metaDataMap[_cameraPhotoIntervalDistanceName]);
-    _cameraPhotoIntervalTimeFact.setMetaData        (_metaDataMap[_cameraPhotoIntervalTimeName]);
     _missionEndActionFact.setMetaData               (_metaDataMap[_missionEndActionName]);
 
     _plannedHomePositionLatitudeFact.setRawValue    (_plannedHomePositionLatitudeFact.rawDefaultValue());
     _plannedHomePositionLongitudeFact.setRawValue   (_plannedHomePositionLongitudeFact.rawDefaultValue());
     _plannedHomePositionAltitudeFact.setRawValue    (_plannedHomePositionAltitudeFact.rawDefaultValue());
-    _gimbalPitchFact.setRawValue                    (_gimbalPitchFact.rawDefaultValue());
-    _gimbalYawFact.setRawValue                      (_gimbalYawFact.rawDefaultValue());
-    _cameraActionFact.setRawValue                   (_cameraActionFact.rawDefaultValue());
-    _cameraPhotoIntervalDistanceFact.setRawValue    (_cameraPhotoIntervalDistanceFact.rawDefaultValue());
-    _cameraPhotoIntervalTimeFact.setRawValue        (_cameraPhotoIntervalTimeFact.rawDefaultValue());
     _missionEndActionFact.setRawValue               (_missionEndActionFact.rawDefaultValue());
 
     // FIXME: Flight speed default value correctly based firmware parameter if online
@@ -86,19 +65,17 @@ MissionSettingsComplexItem::MissionSettingsComplexItem(Vehicle* vehicle, QObject
 
     setHomePositionSpecialCase(true);
 
-    connect(this, &MissionSettingsComplexItem::specifyMissionFlightSpeedChanged,    this, &MissionSettingsComplexItem::_setDirtyAndUpdateLastSequenceNumber);
-    connect(this, &MissionSettingsComplexItem::specifyGimbalChanged,                this, &MissionSettingsComplexItem::_setDirtyAndUpdateLastSequenceNumber);
+    connect(this,               &MissionSettingsComplexItem::specifyMissionFlightSpeedChanged,  this, &MissionSettingsComplexItem::_setDirtyAndUpdateLastSequenceNumber);
+    connect(&_cameraSection,    &CameraSection::missionItemCountChanged,                        this, &MissionSettingsComplexItem::_setDirtyAndUpdateLastSequenceNumber);
 
     connect(&_plannedHomePositionLatitudeFact,  &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirtyAndUpdateCoordinate);
     connect(&_plannedHomePositionLongitudeFact, &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirtyAndUpdateCoordinate);
     connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirtyAndUpdateCoordinate);
+
     connect(&_missionFlightSpeedFact,           &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirty);
-    connect(&_gimbalPitchFact,                  &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirty);
-    connect(&_gimbalYawFact,                    &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirty);
-    connect(&_cameraActionFact,                 &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirtyAndUpdateLastSequenceNumber);
-    connect(&_cameraPhotoIntervalDistanceFact,  &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirty);
-    connect(&_cameraPhotoIntervalTimeFact,      &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirty);
     connect(&_missionEndActionFact,             &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirty);
+
+    connect(&_cameraSection, &CameraSection::dirtyChanged, this, &MissionSettingsComplexItem::_cameraSectionDirtyChanged);
 }
 
 
@@ -110,14 +87,6 @@ void MissionSettingsComplexItem::setSpecifyMissionFlightSpeed(bool specifyMissio
     }
 }
 
-void MissionSettingsComplexItem::setSpecifyGimbal(bool specifyGimbal)
-{
-    if (specifyGimbal != _specifyGimbal) {
-        _specifyGimbal = specifyGimbal;
-        emit specifyGimbalChanged(specifyGimbal);
-    }
-}
-
 int MissionSettingsComplexItem::lastSequenceNumber(void) const
 {
     int lastSequenceNumber = _sequenceNumber + 1;   // +1 for planned home position
@@ -125,12 +94,7 @@ int MissionSettingsComplexItem::lastSequenceNumber(void) const
     if (_specifyMissionFlightSpeed) {
         lastSequenceNumber++;
     }
-    if (_specifyGimbal) {
-        lastSequenceNumber++;
-    }
-    if (_cameraActionFact.rawValue().toInt() != CameraActionNone) {
-        lastSequenceNumber++;
-    }
+    lastSequenceNumber += _cameraSection.missionItemCount();
 
     return lastSequenceNumber;
 }
@@ -143,20 +107,21 @@ void MissionSettingsComplexItem::setDirty(bool dirty)
     }
 }
 
-void MissionSettingsComplexItem::save(QJsonArray&  missionItems) const
+void MissionSettingsComplexItem::save(QJsonArray&  missionItems)
 {
-    QmlObjectListModel* items = getMissionItems();
+    QList<MissionItem*> items;
+
+    appendMissionItems(items, this);
 
     // First item show be planned home position, we are not reponsible for save/load
     // Remained we just output as is
-    for (int i=1; i<items->count(); i++) {
-        MissionItem* item = items->value<MissionItem*>(i);
+    for (int i=1; i<items.count(); i++) {
+        MissionItem* item = items[i];
         QJsonObject saveObject;
         item->save(saveObject);
         missionItems.append(saveObject);
+        item->deleteLater();
     }
-
-    items->deleteLater();
 }
 
 void MissionSettingsComplexItem::setSequenceNumber(int sequenceNumber)
@@ -173,52 +138,7 @@ bool MissionSettingsComplexItem::load(const QJsonObject& complexObject, int sequ
     Q_UNUSED(complexObject);
     Q_UNUSED(sequenceNumber);
     Q_UNUSED(errorString);
-#if 0
-    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { JsonHelper::jsonVersionKey,                   QJsonValue::Double, true },
-        { VisualMissionItem::jsonTypeKey,               QJsonValue::String, true },
-        { ComplexMissionItem::jsonComplexItemTypeKey,   QJsonValue::String, true },
-        { _jsonLoiterCoordinateKey,                     QJsonValue::Array,  true },
-        { _jsonLoiterRadiusKey,                         QJsonValue::Double, true },
-        { _jsonLoiterClockwiseKey,                      QJsonValue::Bool,   true },
-        { _jsonLoiterAltitudeRelativeKey,               QJsonValue::Bool,   true },
-        { _jsonLandingCoordinateKey,                    QJsonValue::Array,  true },
-        { _jsonLandingAltitudeRelativeKey,              QJsonValue::Bool,   true },
-    };
-    if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
-        return false;
-    }
 
-    QString itemType = complexObject[VisualMissionItem::jsonTypeKey].toString();
-    QString complexType = complexObject[ComplexMissionItem::jsonComplexItemTypeKey].toString();
-    if (itemType != VisualMissionItem::jsonTypeComplexItemValue || complexType != jsonComplexItemTypeValue) {
-        errorString = tr("QGroundControl does not support loading this complex mission item type: %1:2").arg(itemType).arg(complexType);
-        return false;
-    }
-
-    setSequenceNumber(sequenceNumber);
-
-    QGeoCoordinate coordinate;
-    if (!JsonHelper::loadGeoCoordinate(complexObject[_jsonLoiterCoordinateKey], true /* altitudeRequired */, coordinate, errorString)) {
-        return false;
-    }
-    _loiterCoordinate = coordinate;
-    _loiterAltitudeFact.setRawValue(coordinate.altitude());
-
-    if (!JsonHelper::loadGeoCoordinate(complexObject[_jsonLandingCoordinateKey], true /* altitudeRequired */, coordinate, errorString)) {
-        return false;
-    }
-    _landingCoordinate = coordinate;
-    _landingAltitudeFact.setRawValue(coordinate.altitude());
-
-    _loiterRadiusFact.setRawValue(complexObject[_jsonLoiterRadiusKey].toDouble());
-    _loiterClockwise  = complexObject[_jsonLoiterClockwiseKey].toBool();
-    _loiterAltitudeRelative = complexObject[_jsonLoiterAltitudeRelativeKey].toBool();
-    _landingAltitudeRelative = complexObject[_jsonLandingAltitudeRelativeKey].toBool();
-
-    _landingCoordSet = true;
-    _recalcFromHeadingAndDistanceChange();
-#endif
     return true;
 }
 
@@ -233,13 +153,11 @@ bool MissionSettingsComplexItem::specifiesCoordinate(void) const
     return false;
 }
 
-QmlObjectListModel* MissionSettingsComplexItem::getMissionItems(void) const
+void MissionSettingsComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
 {
-    QmlObjectListModel* pMissionItems = new QmlObjectListModel;
-
     int seqNum = _sequenceNumber;
 
-    // IMPORTANT NOTE: If anything changed here you just also change MissionSettingsComplexItem::scanForMissionSettings
+    // IMPORTANT NOTE: If anything changes here you must also change MissionSettingsComplexItem::scanForMissionSettings
 
     // Planned home position
     MissionItem* item = new MissionItem(seqNum++,
@@ -254,23 +172,8 @@ QmlObjectListModel* MissionSettingsComplexItem::getMissionItems(void) const
                                         _plannedHomePositionAltitudeFact.rawValue().toDouble(),
                                         true,                   // autoContinue
                                         false,                  // isCurrentItem
-                                        pMissionItems);         // parent - allow delete on pMissionItems to delete everthing
-    pMissionItems->append(item);
-
-    if (_specifyGimbal) {
-        MissionItem* item = new MissionItem(seqNum++,
-                                            MAV_CMD_DO_MOUNT_CONTROL,
-                                            MAV_FRAME_MISSION,
-                                            _gimbalPitchFact.rawValue().toDouble(),
-                                            0,                                      // Gimbal roll
-                                            _gimbalYawFact.rawValue().toDouble(),
-                                            0, 0, 0,                                // param 4-6 not used
-                                            MAV_MOUNT_MODE_MAVLINK_TARGETING,
-                                            true,                                   // autoContinue
-                                            false,                                  // isCurrentItem
-                                            pMissionItems);                         // parent - allow delete on pMissionItems to delete everthing
-        pMissionItems->append(item);
-    }
+                                        missionItemParent);
+    items.append(item);
 
     if (_specifyMissionFlightSpeed) {
         qDebug() << _missionFlightSpeedFact.rawValue().toDouble();
@@ -284,152 +187,78 @@ QmlObjectListModel* MissionSettingsComplexItem::getMissionItems(void) const
                                             0, 0, 0,                                                            // param 5-7 not used
                                             true,                                                               // autoContinue
                                             false,                                                              // isCurrentItem
-                                            pMissionItems);                                                     // parent - allow delete on pMissionItems to delete everthing
-        pMissionItems->append(item);
+                                            missionItemParent);
+        items.append(item);
     }
 
-    if (_cameraActionFact.rawValue().toInt() != CameraActionNone) {
-        MissionItem* item = NULL;
-
-        switch (_cameraActionFact.rawValue().toInt()) {
-        case TakePhotosIntervalTime:
-            item = new MissionItem(seqNum++,
-                                   MAV_CMD_IMAGE_START_CAPTURE,
-                                   MAV_FRAME_MISSION,
-                                   _cameraPhotoIntervalTimeFact.rawValue().toInt(), // Interval
-                                   0,                                               // Unlimited photo count
-                                   -1,                                              // Max resolution
-                                   0, 0,                                            // param 4-5 not used
-                                   0,                                               // Camera ID
-                                   0,                                               // param 7 not used
-                                   true,                                            // autoContinue
-                                   false,                                           // isCurrentItem
-                                   pMissionItems);                                  // parent - allow delete on pMissionItems to delete everthing
-            break;
-        case TakePhotoIntervalDistance:
-            item = new MissionItem(seqNum++,
-                                   MAV_CMD_DO_SET_CAM_TRIGG_DIST,
-                                   MAV_FRAME_MISSION,
-                                   _cameraPhotoIntervalDistanceFact.rawValue().toDouble(),  // Trigger distance
-                                   0, 0, 0, 0, 0, 0,                                        // param 2-7 not used
-                                   true,                                                    // autoContinue
-                                   false,                                                   // isCurrentItem
-                                   pMissionItems);                                          // parent - allow delete on pMissionItems to delete everthing
-            break;
-        case TakeVideo:
-            item = new MissionItem(seqNum++,
-                                   MAV_CMD_VIDEO_START_CAPTURE,
-                                   MAV_FRAME_MISSION,
-                                   0,                                               // Camera ID
-                                   -1,                                              // Max fps
-                                   -1,                                              // Max resolution
-                                   0, 0, 0, 0,                                      // param 5-7 not used
-                                   true,                                            // autoContinue
-                                   false,                                           // isCurrentItem
-                                   pMissionItems);                                  // parent - allow delete on pMissionItems to delete everthing
-            break;
-        }
-        if (item) {
-            pMissionItems->append(item);
-        }
-    }
-
-    return pMissionItems;
+    _cameraSection.appendMissionItems(items, missionItemParent, seqNum);
 }
 
-void MissionSettingsComplexItem::scanForMissionSettings(QmlObjectListModel* visualItems, Vehicle* vehicle)
+bool MissionSettingsComplexItem::scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle)
 {
-    bool foundGimbal = false;
     bool foundSpeed = false;
-    bool foundCameraAction = false;
+    bool foundCameraSection = false;
+    bool stopLooking = false;
 
-    MissionSettingsComplexItem* settingsItem = visualItems->value<MissionSettingsComplexItem*>(0);
+    qCDebug(MissionSettingsComplexItemLog) << "MissionSettingsComplexItem::scanForMissionSettings count:scanIndex" << visualItems->count() << scanIndex;
+
+    MissionSettingsComplexItem* settingsItem = visualItems->value<MissionSettingsComplexItem*>(scanIndex);
     if (!settingsItem) {
-        qWarning() << "First item is not MissionSettingsComplexItem";
-        return;
+        qWarning() << "Item specified by scanIndex not MissionSettingsComplexItem";
+        return false;
     }
 
     // Scan through the initial mission items for possible mission settings
 
-    while (visualItems->count()> 1) {
-        SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(1);
+    scanIndex++;
+    while (!stopLooking && visualItems->count() > 1) {
+        SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(scanIndex);
         if (!item) {
-            // We hit a complex item there can be no more possible mission settings
-            return;
+            // We hit a complex item, there can be no more possible mission settings
+            break;
         }
         MissionItem& missionItem = item->missionItem();
 
-        // See MissionSettingsComplexItem::getMissionItems for specs on what compomises a known mission settings
+        qCDebug(MissionSettingsComplexItemLog) << item->command() << missionItem.param1() << missionItem.param2() << missionItem.param3() << missionItem.param4() << missionItem.param5() << missionItem.param6() << missionItem.param7() ;
+
+        // See MissionSettingsComplexItem::getMissionItems for specs on what compomises a known mission setting
 
         switch ((MAV_CMD)item->command()) {
-        case MAV_CMD_DO_MOUNT_CONTROL:
-            if (!foundGimbal && missionItem.param2() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == MAV_MOUNT_MODE_MAVLINK_TARGETING) {
-                foundGimbal = true;
-                settingsItem->setSpecifyGimbal(true);
-                settingsItem->gimbalPitch()->setRawValue(missionItem.param1());
-                settingsItem->gimbalYaw()->setRawValue(missionItem.param3());
-                visualItems->removeAt(1)->deleteLater();
-            } else {
-                return;
-            }
-            break;
-
         case MAV_CMD_DO_CHANGE_SPEED:
             if (!foundSpeed && missionItem.param3() == -1 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
                 if (vehicle->multiRotor()) {
                     if (missionItem.param1() != 1) {
-                        return;
+                        stopLooking = true;
+                        break;
                     }
                 } else {
                     if (missionItem.param1() != 0) {
-                        return;
+                        stopLooking = true;
+                        break;
                     }
                 }
                 foundSpeed = true;
                 settingsItem->setSpecifyMissionFlightSpeed(true);
                 settingsItem->missionFlightSpeed()->setRawValue(missionItem.param2());
-                visualItems->removeAt(1)->deleteLater();
-            } else {
-                return;
+                visualItems->removeAt(scanIndex)->deleteLater();
+                continue;
             }
-            break;
-
-        case MAV_CMD_IMAGE_START_CAPTURE:
-            if (!foundCameraAction && missionItem.param1() != 0 && missionItem.param2() == 0 && missionItem.param3() == -1 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
-                foundCameraAction = true;
-                settingsItem->cameraAction()->setRawValue(TakePhotosIntervalTime);
-                settingsItem->cameraPhotoIntervalTime()->setRawValue(missionItem.param1());
-                visualItems->removeAt(1)->deleteLater();
-            } else {
-                return;
-            }
-            break;
-
-        case MAV_CMD_DO_SET_CAM_TRIGG_DIST:
-            if (!foundCameraAction && missionItem.param1() != 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
-                foundCameraAction = true;
-                settingsItem->cameraAction()->setRawValue(TakePhotoIntervalDistance);
-                settingsItem->cameraPhotoIntervalDistance()->setRawValue(missionItem.param1());
-                visualItems->removeAt(1)->deleteLater();
-            } else {
-                return;
-            }
-            break;
-
-        case MAV_CMD_VIDEO_START_CAPTURE:
-            if (!foundCameraAction && missionItem.param1() == 0 && missionItem.param2() == -1 && missionItem.param3() == -1 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
-                foundCameraAction = true;
-                settingsItem->cameraAction()->setRawValue(TakeVideo);
-                visualItems->removeAt(1)->deleteLater();
-            } else {
-                return;
-            }
+            stopLooking = true;
             break;
 
         default:
-            return;
+            if (!foundCameraSection) {
+                if (settingsItem->_cameraSection.scanForCameraSection(visualItems, scanIndex)) {
+                    foundCameraSection = true;
+                    continue;
+                }
+            }
+            stopLooking = true;
+            break;
         }
     }
+
+    return foundSpeed || foundCameraSection;
 }
 
 double MissionSettingsComplexItem::complexDistance(void) const
@@ -473,4 +302,11 @@ void MissionSettingsComplexItem::_setDirtyAndUpdateCoordinate(void)
 QGeoCoordinate MissionSettingsComplexItem::coordinate(void) const
 {
     return QGeoCoordinate(_plannedHomePositionLatitudeFact.rawValue().toDouble(), _plannedHomePositionLongitudeFact.rawValue().toDouble(), _plannedHomePositionAltitudeFact.rawValue().toDouble());
+}
+
+void MissionSettingsComplexItem::_cameraSectionDirtyChanged(bool dirty)
+{
+    if (dirty) {
+        setDirty(true);
+    }
 }

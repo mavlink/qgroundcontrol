@@ -90,8 +90,10 @@ private:
 /// friendlyName            string  rawName     Short description of command
 /// description             string              Long description of command
 /// specifiesCoordinate     bool    false       true: Command specifies a lat/lon/alt coordinate
+/// specifiesAltitudeOnly   bool    false       true: Command specifies an altitude only (no coordinate)
 /// standaloneCoordinate    bool    false       true: Vehicle does not fly through coordinate associated with command (exampl: ROI)
 /// friendlyEdit            bool    false       true: Command supports friendly editing dialog, false: Command supports 'Show all values" style editing only
+/// cameraSection           bool    false       true: Camera section of additional settings is added to editor
 /// category                string  Advanced    Category which this command belongs to
 /// paramRemove             string              Used by an override to remove params, example: "1,3" will remove params 1 and 3 on the override
 /// param[1-7]              object              MissionCommandParamInfo object
@@ -112,7 +114,9 @@ public:
     Q_PROPERTY(QString  rawName                 READ rawName                CONSTANT)
     Q_PROPERTY(bool     isStandaloneCoordinate  READ isStandaloneCoordinate CONSTANT)
     Q_PROPERTY(bool     specifiesCoordinate     READ specifiesCoordinate    CONSTANT)
+    Q_PROPERTY(bool     specifiesAltitudeOnly   READ specifiesAltitudeOnly  CONSTANT)
     Q_PROPERTY(int      command                 READ intCommand             CONSTANT)
+    Q_PROPERTY(bool     cameraSection           READ cameraSection          CONSTANT)
 
     MAV_CMD command(void) const { return _command; }
     int     intCommand(void) const { return (int)_command; }
@@ -124,6 +128,8 @@ public:
     QString rawName                 (void) const;
     bool    isStandaloneCoordinate  (void) const;
     bool    specifiesCoordinate     (void) const;
+    bool    specifiesAltitudeOnly   (void) const;
+    bool    cameraSection           (void) const;
 
     /// Load the data in the object from the specified json
     ///     @param jsonObject Json object to load from
@@ -178,8 +184,10 @@ private:
     static const char* _rawNameJsonKey;
     static const char* _standaloneCoordinateJsonKey;
     static const char* _specifiesCoordinateJsonKey;
+    static const char* _specifiesAltitudeOnlyJsonKey;
     static const char* _unitsJsonKey;
-    static const char* _commentJsonKey;
+    static const char* _commentJsonKey;    
+    static const char* _cameraSectionJsonKey;
     static const char* _advancedCategory;
 
     friend class MissionCommandTree;    

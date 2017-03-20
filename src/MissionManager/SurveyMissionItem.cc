@@ -294,7 +294,7 @@ void SurveyMissionItem::setDirty(bool dirty)
     }
 }
 
-void SurveyMissionItem::save(QJsonArray&  missionItems) const
+void SurveyMissionItem::save(QJsonArray&  missionItems)
 {
     QJsonObject saveObject;
 
@@ -822,11 +822,10 @@ void SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLi
     }
 }
 
-QmlObjectListModel* SurveyMissionItem::getMissionItems(void) const
+void SurveyMissionItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
 {
-    QmlObjectListModel* pMissionItems = new QmlObjectListModel;
-
     int seqNum = _sequenceNumber;
+
     for (int i=0; i<_gridPoints.count(); i++) {
         QGeoCoordinate coord = _gridPoints[i].value<QGeoCoordinate>();
         double altitude = _gridAltitudeFact.rawValue().toDouble();
@@ -840,8 +839,8 @@ QmlObjectListModel* SurveyMissionItem::getMissionItems(void) const
                                             altitude,
                                             true,                           // autoContinue
                                             false,                          // isCurrentItem
-                                            pMissionItems);                 // parent - allow delete on pMissionItems to delete everthing
-        pMissionItems->append(item);
+                                            missionItemParent);
+        items.append(item);
 
         if (_cameraTriggerFact.rawValue().toBool() && i == 0) {
             // Turn on camera
@@ -852,8 +851,8 @@ QmlObjectListModel* SurveyMissionItem::getMissionItems(void) const
                                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,   // param 2-7
                                                 true,                           // autoContinue
                                                 false,                          // isCurrentItem
-                                                pMissionItems);                 // parent - allow delete on pMissionItems to delete everthing
-            pMissionItems->append(item);
+                                                missionItemParent);
+            items.append(item);
         }
     }
 
@@ -866,11 +865,9 @@ QmlObjectListModel* SurveyMissionItem::getMissionItems(void) const
                                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0,   // param 2-7
                                             true,                           // autoContinue
                                             false,                          // isCurrentItem
-                                            pMissionItems);                 // parent - allow delete on pMissionItems to delete everthing
-        pMissionItems->append(item);
+                                            missionItemParent);
+        items.append(item);
     }
-
-    return pMissionItems;
 }
 
 void SurveyMissionItem::_cameraTriggerChanged(void)

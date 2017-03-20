@@ -14,6 +14,7 @@
 #include "VisualMissionItem.h"
 #include "MissionItem.h"
 #include "MissionCommandTree.h"
+#include "CameraSection.h"
 
 /// A SimpleMissionItem is used to represent a single MissionItem to the ui.
 class SimpleMissionItem : public VisualMissionItem
@@ -35,10 +36,19 @@ public:
     Q_PROPERTY(bool             rawEdit                 READ rawEdit                WRITE setRawEdit            NOTIFY rawEditChanged)              ///< true: raw item editing with all params
     Q_PROPERTY(bool             relativeAltitude        READ relativeAltitude                                   NOTIFY frameChanged)
 
+    /// Optional sections
+    Q_PROPERTY(QObject*         cameraSection           READ cameraSection                                      NOTIFY cameraSectionChanged)
+
     // These properties are used to display the editing ui
     Q_PROPERTY(QmlObjectListModel*  checkboxFacts   READ checkboxFacts  NOTIFY uiModelChanged)
     Q_PROPERTY(QmlObjectListModel*  comboboxFacts   READ comboboxFacts  NOTIFY uiModelChanged)
     Q_PROPERTY(QmlObjectListModel*  textFieldFacts  READ textFieldFacts NOTIFY uiModelChanged)
+
+    /// Scans the loaded items for additional section settings
+    ///     @param visualItems List of all visual items
+    ///     @param scanIndex Index to start scanning from
+    ///     @param vehicle Vehicle associated with this mission
+    void scanForSections(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle);
 
     // Property accesors
     
@@ -46,7 +56,7 @@ public:
     MavlinkQmlSingleton::Qml_MAV_CMD command(void) const { return (MavlinkQmlSingleton::Qml_MAV_CMD)_missionItem._commandFact.cookedValue().toInt(); }
     bool            friendlyEditAllowed (void) const;
     bool            rawEdit             (void) const;
-
+    CameraSection*  cameraSection       (void) { return _cameraSection; }
 
     QmlObjectListModel* textFieldFacts  (void);
     QmlObjectListModel* checkboxFacts   (void);
@@ -69,6 +79,7 @@ public:
     bool relativeAltitude(void) { return _missionItem.frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT; }
 
     MissionItem& missionItem(void) { return _missionItem; }
+    const MissionItem& missionItem(void) const { return _missionItem; }
 
     // Overrides from VisualMissionItem
 
@@ -84,6 +95,7 @@ public:
     int             sequenceNumber          (void) const final { return _missionItem.sequenceNumber(); }
     double          flightSpeed             (void) final;
     QString         mapVisualQML            (void) const final { return QStringLiteral("SimpleItemMapVisual.qml"); }
+    void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
 
     bool coordinateHasRelativeAltitude      (void) const final { return _missionItem.relativeAltitude(); }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return coordinateHasRelativeAltitude(); }
@@ -92,7 +104,8 @@ public:
     void setDirty           (bool dirty) final;
     void setCoordinate      (const QGeoCoordinate& coordinate) final;
     void setSequenceNumber  (int sequenceNumber) final;
-    void save               (QJsonArray&  missionItems) const final;
+    int  lastSequenceNumber (void) const final;
+    void save               (QJsonArray&  missionItems) final;
 
 public slots:
     void setDefaultsForCommand(void);
@@ -104,9 +117,11 @@ signals:
     void headingDegreesChanged      (double heading);
     void rawEditChanged             (bool rawEdit);
     void uiModelChanged             (void);
+    void cameraSectionChanged       (QObject* cameraSection);
 
 private slots:
     void _setDirtyFromSignal(void);
+    void _cameraSectionDirtyChanged(bool dirty);
     void _sendCommandChanged(void);
     void _sendCoordinateChanged(void);
     void _sendFrameChanged(void);
@@ -114,16 +129,20 @@ private slots:
     void _sendUiModelChanged(void);
     void _syncAltitudeRelativeToHomeToFrame(const QVariant& value);
     void _syncFrameToAltitudeRelativeToHome(void);
+    void _updateLastSequenceNumber(void);
 
 private:
     void _clearParamMetaData(void);
     void _connectSignals(void);
     void _setupMetaData(void);
+    void _updateCameraSection(void);
 
 private:
     MissionItem _missionItem;
     bool        _rawEdit;
     bool        _dirty;
+
+    CameraSection* _cameraSection;
 
     MissionCommandTree* _commandTree;
 
