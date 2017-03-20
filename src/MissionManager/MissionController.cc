@@ -126,8 +126,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(void)
         _missionItemsRequested = false;
 
         if (_editMode) {
-            // Scan for mission settings
-            MissionSettingsComplexItem::scanForMissionSettings(_visualItems, _activeVehicle);
+            MissionController::_scanForAdditionalSettings(_visualItems, _activeVehicle);
         }
 
         _initAllVisualItems();
@@ -159,16 +158,8 @@ void MissionController::sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel*
 
         for (int i=0; i<visualMissionItems->count(); i++) {
             VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(visualMissionItems->get(i));
-            if (visualItem->isSimpleItem()) {
-                missionItems.append(new MissionItem(qobject_cast<SimpleMissionItem*>(visualItem)->missionItem()));
-            } else {
-                ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(visualItem);
-                QmlObjectListModel* complexMissionItems = complexItem->getMissionItems();
-                for (int j=0; j<complexMissionItems->count(); j++) {
-                    missionItems.append(new MissionItem(*qobject_cast<MissionItem*>(complexMissionItems->get(j))));
-                }
-                complexMissionItems->deleteLater();
-            }
+
+            visualItem->appendMissionItems(missionItems, NULL);
         }
 
         vehicle->missionManager()->writeMissionItems(missionItems);
@@ -185,13 +176,8 @@ int MissionController::_nextSequenceNumber(void)
         qWarning() << "Internal error: Empty visual item list";
         return 0;
     } else {
-        VisualMissionItem* lastItem = qobject_cast<VisualMissionItem*>(_visualItems->get(_visualItems->count() - 1));
-
-        if (lastItem->isSimpleItem()) {
-            return lastItem->sequenceNumber() + 1;
-        } else {
-            return qobject_cast<ComplexMissionItem*>(lastItem)->lastSequenceNumber() + 1;
-        }
+        VisualMissionItem* lastItem = _visualItems->value<VisualMissionItem*>(_visualItems->count() - 1);
+        return lastItem->lastSequenceNumber() + 1;
     }
 }
 
@@ -374,12 +360,11 @@ bool MissionController::_loadJsonMissionFileV1(Vehicle* vehicle, const QJsonObje
             SimpleMissionItem* item = new SimpleMissionItem(vehicle, visualItems);
             if (item->load(itemObject, itemObject["id"].toInt(), errorString)) {
                 qCDebug(MissionControllerLog) << "Json load: adding simple item expectedSequence:actualSequence" << nextSequenceNumber << item->sequenceNumber();
+                nextSequenceNumber = item->lastSequenceNumber() + 1;
                 visualItems->append(item);
             } else {
                 return false;
             }
-
-            nextSequenceNumber++;
         }
     } while (nextSimpleItemIndex < itemArray.count() || nextComplexItemIndex < surveyItems.count());
 
@@ -465,7 +450,8 @@ bool MissionController::_loadJsonMissionFileV2(Vehicle* vehicle, const QJsonObje
         if (itemType == VisualMissionItem::jsonTypeSimpleItemValue) {
             qCDebug(MissionControllerLog) << "Loading MISSION_ITEM: nextSequenceNumber" << nextSequenceNumber;
             SimpleMissionItem* simpleItem = new SimpleMissionItem(vehicle, visualItems);
-            if (simpleItem->load(itemObject, nextSequenceNumber++, errorString)) {
+            if (simpleItem->load(itemObject, nextSequenceNumber, errorString)) {
+                nextSequenceNumber = simpleItem->lastSequenceNumber() + 1;
                 visualItems->append(simpleItem);
             } else {
                 return false;
@@ -612,7 +598,7 @@ void MissionController::loadFromFile(const QString& filename)
         _addMissionSettings(_activeVehicle, _visualItems, true /* addToCenter */);
     }
 
-    MissionSettingsComplexItem::scanForMissionSettings(_visualItems, _activeVehicle);
+    MissionController::_scanForAdditionalSettings(_visualItems, _activeVehicle);
 
     _initAllVisualItems();
 }
@@ -1062,16 +1048,8 @@ void MissionController::_recalcSequence(void)
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
 
-        item->setSequenceNumber(sequenceNumber++);
-        if (!item->isSimpleItem()) {
-            ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(item);
-
-            if (complexItem) {
-                sequenceNumber = complexItem->lastSequenceNumber() + 1;
-            } else {
-                qWarning() << "isSimpleItem == false, yet not ComplexMissionItem";
-            }
-        }
+        item->setSequenceNumber(sequenceNumber);
+        sequenceNumber = item->lastSequenceNumber() + 1;
     }
 }
 
@@ -1158,6 +1136,7 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
     connect(visualItem, &VisualMissionItem::coordinateHasRelativeAltitudeChanged,       this, &MissionController::_recalcWaypointLines);
     connect(visualItem, &VisualMissionItem::exitCoordinateHasRelativeAltitudeChanged,   this, &MissionController::_recalcWaypointLines);
     connect(visualItem, &VisualMissionItem::flightSpeedChanged,                         this, &MissionController::_recalcAltitudeRangeBearing);
+    connect(visualItem, &VisualMissionItem::lastSequenceNumberChanged,                  this, &MissionController::_recalcSequence);
 
     if (visualItem->isSimpleItem()) {
         // We need to track commandChanged on simple item since recalc has special handling for takeoff command
@@ -1168,10 +1147,12 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
             qWarning() << "isSimpleItem == true, yet not SimpleMissionItem";
         }
     } else {
-        // We need to track changes of lastSequenceNumber so we can recalc sequence numbers for subsequence items
         ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(visualItem);
-        connect(complexItem, &ComplexMissionItem::lastSequenceNumberChanged, this, &MissionController::_recalcSequence);
-        connect(complexItem, &ComplexMissionItem::complexDistanceChanged, this, &MissionController::_recalcAltitudeRangeBearing);
+        if (complexItem) {
+            connect(complexItem, &ComplexMissionItem::complexDistanceChanged, this, &MissionController::_recalcAltitudeRangeBearing);
+        } else {
+            qWarning() << "ComplexMissionItem not found";
+        }
     }
 }
 
@@ -1472,7 +1453,7 @@ QString MissionController::fileExtension(void) const
     return QGCApplication::missionFileExtension;
 }
 
-double  MissionController::cruiseSpeed(void) const
+double MissionController::cruiseSpeed(void) const
 {
     if (_activeVehicle) {
         return _activeVehicle->cruiseSpeed();
@@ -1481,11 +1462,35 @@ double  MissionController::cruiseSpeed(void) const
     }
 }
 
-double  MissionController::hoverSpeed(void) const
+double MissionController::hoverSpeed(void) const
 {
     if (_activeVehicle) {
         return _activeVehicle->hoverSpeed();
     } else {
         return 0.0f;
+    }
+}
+
+void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualItems, Vehicle* vehicle)
+{
+    int scanIndex = 0;
+    while (scanIndex < visualItems->count()) {
+        VisualMissionItem* visualItem = visualItems->value<VisualMissionItem*>(scanIndex);
+
+        qCDebug(MissionControllerLog) << "MissionController::_scanForAdditionalSettings count:scanIndex" << visualItems->count() << scanIndex;
+
+        MissionSettingsComplexItem* settingsItem = qobject_cast<MissionSettingsComplexItem*>(visualItem);
+        if (settingsItem && settingsItem->scanForMissionSettings(visualItems, scanIndex, vehicle)) {
+            continue;
+        }
+
+        SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
+        if (simpleItem && simpleItem->cameraSection()->available()) {
+            scanIndex++;
+            simpleItem->scanForSections(visualItems, scanIndex, vehicle);
+            continue;
+        }
+
+        scanIndex++;
     }
 }

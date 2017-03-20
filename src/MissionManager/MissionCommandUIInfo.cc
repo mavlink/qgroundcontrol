@@ -35,8 +35,10 @@ const char* MissionCommandUIInfo::_paramRemoveJsonKey           = "paramRemove";
 const char* MissionCommandUIInfo::_rawNameJsonKey               = "rawName";
 const char* MissionCommandUIInfo::_standaloneCoordinateJsonKey  = "standaloneCoordinate";
 const char* MissionCommandUIInfo::_specifiesCoordinateJsonKey   = "specifiesCoordinate";
+const char* MissionCommandUIInfo::_specifiesAltitudeOnlyJsonKey = "specifiesAltitudeOnly";
 const char* MissionCommandUIInfo::_unitsJsonKey                 = "units";
 const char* MissionCommandUIInfo::_commentJsonKey               = "comment";
+const char* MissionCommandUIInfo::_cameraSectionJsonKey         = "cameraSection";
 const char* MissionCommandUIInfo::_advancedCategory             = "Advanced";
 
 MissionCmdParamInfo::MissionCmdParamInfo(QObject* parent)
@@ -143,10 +145,28 @@ bool MissionCommandUIInfo::isStandaloneCoordinate(void) const
     }
 }
 
-bool MissionCommandUIInfo::specifiesCoordinate (void) const
+bool MissionCommandUIInfo::specifiesCoordinate(void) const
 {
     if (_infoMap.contains(_specifiesCoordinateJsonKey)) {
         return _infoMap[_specifiesCoordinateJsonKey].toBool();
+    } else {
+        return false;
+    }
+}
+
+bool MissionCommandUIInfo::specifiesAltitudeOnly(void) const
+{
+    if (_infoMap.contains(_specifiesAltitudeOnlyJsonKey)) {
+        return _infoMap[_specifiesAltitudeOnlyJsonKey].toBool();
+    } else {
+        return false;
+    }
+}
+
+bool MissionCommandUIInfo::cameraSection(void) const
+{
+    if (_infoMap.contains(_cameraSectionJsonKey)) {
+        return _infoMap[_cameraSectionJsonKey].toBool();
     } else {
         return false;
     }
@@ -187,7 +207,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
     QStringList allKeys;
     allKeys << _idJsonKey << _rawNameJsonKey << _friendlyNameJsonKey << _descriptionJsonKey << _standaloneCoordinateJsonKey << _specifiesCoordinateJsonKey
             <<_friendlyEditJsonKey << _param1JsonKey << _param2JsonKey << _param3JsonKey << _param4JsonKey << _param5JsonKey << _param6JsonKey << _param7JsonKey
-            << _paramRemoveJsonKey << _categoryJsonKey;
+            << _paramRemoveJsonKey << _categoryJsonKey << _cameraSectionJsonKey<< _specifiesAltitudeOnlyJsonKey;
 
     // Look for unknown keys in top level object
     foreach (const QString& key, jsonObject.keys()) {
@@ -219,7 +239,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
     QList<QJsonValue::Type> types;
     types << QJsonValue::Double << QJsonValue::String << QJsonValue::String<< QJsonValue::String << QJsonValue::Bool << QJsonValue::Bool << QJsonValue::Bool
           << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object
-          << QJsonValue::String << QJsonValue::String;
+          << QJsonValue::String << QJsonValue::String << QJsonValue::Bool << QJsonValue::Bool;
     if (!JsonHelper::validateKeyTypes(jsonObject, allKeys, types, internalError)) {
         errorString = _loadErrorString(internalError);
         return false;
@@ -247,8 +267,14 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
     if (jsonObject.contains(_specifiesCoordinateJsonKey)) {
         _infoMap[_specifiesCoordinateJsonKey] = jsonObject.value(_specifiesCoordinateJsonKey).toVariant();
     }
+    if (jsonObject.contains(_specifiesAltitudeOnlyJsonKey)) {
+        _infoMap[_specifiesAltitudeOnlyJsonKey] = jsonObject.value(_specifiesAltitudeOnlyJsonKey).toBool();
+    }
     if (jsonObject.contains(_friendlyEditJsonKey)) {
         _infoMap[_friendlyEditJsonKey] = jsonObject.value(_friendlyEditJsonKey).toVariant();
+    }
+    if (jsonObject.contains(_cameraSectionJsonKey)) {
+        _infoMap[_cameraSectionJsonKey] = jsonObject.value(_cameraSectionJsonKey).toVariant();
     }
     if (jsonObject.contains(_paramRemoveJsonKey)) {
         QStringList indexList = jsonObject.value(_paramRemoveJsonKey).toString().split(QStringLiteral(","));
