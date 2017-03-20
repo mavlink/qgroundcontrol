@@ -1,6 +1,7 @@
 import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtQuick.Layouts  1.2
+import QtGraphicalEffects 1.0
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
@@ -41,10 +42,14 @@ QGCMouseArea {
             id:                 label
             Layout.fillWidth:   true
 
-            Image {
+            QGCColoredImage {
+                id:                     image
+                width:                  label.height / 2
+                height:                 width
                 anchors.right:          parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 source:                 "/qmlimages/arrow-down.png"
+                color:                  qgcPal.text
                 visible:                !_root.checked
             }
         }

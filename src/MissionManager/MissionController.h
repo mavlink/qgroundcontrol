@@ -160,6 +160,7 @@ private:
     void _setMissionCruiseDistance(double missionCruiseDistance);
     void _setMissionCruiseTime(double missionCruiseTime);
     void _setMissionMaxTelemetry(double missionMaxTelemetry);
+    static void _scanForAdditionalSettings(QmlObjectListModel* visualItems, Vehicle* vehicle);
 
     // Overrides from PlanElementController
     void _activeVehicleBeingRemoved(void) final;
