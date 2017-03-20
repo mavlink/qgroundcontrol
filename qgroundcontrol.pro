@@ -255,12 +255,31 @@ include(src/QtLocationPlugin/QGCLocationPlugin.pri)
 include(QGCExternalLibs.pri)
 
 #
-# Main QGroundControl portion of project file
+# Resources (custom code can replace them)
 #
 
-RESOURCES += \
-    qgroundcontrol.qrc \
-    qgcresources.qrc
+CustomBuild {
+    exists($$PWD/custom/qgroundcontrol.qrc) {
+        message("Using custom qgroundcontrol.qrc")
+        RESOURCES += $$PWD/custom/qgroundcontrol.qrc
+    } else {
+        RESOURCES += $$PWD/qgroundcontrol.qrc
+    }
+    exists($$PWD/custom/qgcresources.qrc) {
+        message("Using custom qgcresources.qrc")
+        RESOURCES += $$PWD/custom/qgcresources.qrc
+    } else {
+        RESOURCES += $$PWD/qgcresources.qrc
+    }
+} else {
+    RESOURCES += \
+        $$PWD/qgroundcontrol.qrc \
+        $$PWD/qgcresources.qrc
+}
+
+#
+# Main QGroundControl portion of project file
+#
 
 DebugBuild {
     # Unit Test resources
