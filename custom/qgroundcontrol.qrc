@@ -24,7 +24,6 @@
         <file alias="MainWindowNative.qml">../src/ui/MainWindowNative.qml</file>
         <file alias="MavlinkSettings.qml">../src/ui/preferences/MavlinkSettings.qml</file>
         <file alias="MissionEditor.qml">../src/MissionEditor/MissionEditor.qml</file>
-        <file alias="MissionSettingsEditor.qml">../src/MissionEditor/MissionSettingsEditor.qml</file>
         <file alias="MixersComponent.qml">../src/AutoPilotPlugins/Common/MixersComponent.qml</file>
         <file alias="MockLink.qml">../src/ui/preferences/MockLink.qml</file>
         <file alias="MockLinkSettings.qml">../src/ui/preferences/MockLinkSettings.qml</file>
@@ -49,6 +48,7 @@
         <file alias="QGroundControl/Controls/MissionItemIndexLabel.qml">../src/QmlControls/MissionItemIndexLabel.qml</file>
         <file alias="QGroundControl/Controls/MissionItemMapVisual.qml">../src/MissionEditor/MissionItemMapVisual.qml</file>
         <file alias="QGroundControl/Controls/MissionItemStatus.qml">../src/MissionEditor/MissionItemStatus.qml</file>
+        <file alias="QGroundControl/Controls/MissionSettingsMapVisual.qml">../src/MissionEditor/MissionSettingsMapVisual.qml</file>
         <file alias="QGroundControl/Controls/ModeSwitchDisplay.qml">../src/QmlControls/ModeSwitchDisplay.qml</file>
         <file alias="QGroundControl/Controls/MultiRotorMotorDisplay.qml">../src/QmlControls/MultiRotorMotorDisplay.qml</file>
         <file alias="QGroundControl/Controls/OfflineMapButton.qml">../src/QmlControls/OfflineMapButton.qml</file>
@@ -148,6 +148,7 @@
         <file alias="SetupView.qml">../src/VehicleSetup/SetupView.qml</file>
         <file alias="SimpleItemEditor.qml">../src/MissionEditor/SimpleItemEditor.qml</file>
         <file alias="SurveyItemEditor.qml">../src/MissionEditor/SurveyItemEditor.qml</file>
+        <file alias="MissionSettingsEditor.qml">../src/MissionEditor/MissionSettingsEditor.qml</file>
         <file alias="test.qml">../src/test.qml</file>
         <file alias="VehicleSummary.qml">../src/VehicleSetup/VehicleSummary.qml</file>
         <file alias="VirtualJoystick.qml">../src/FlightDisplay/VirtualJoystick.qml</file>
@@ -159,11 +160,6 @@
         <file alias="MavCmdInfoRover.json">../src/MissionManager/MavCmdInfoRover.json</file>
         <file alias="MavCmdInfoSub.json">../src/MissionManager/MavCmdInfoSub.json</file>
         <file alias="MavCmdInfoVTOL.json">../src/MissionManager/MavCmdInfoVTOL.json</file>
-        <file alias="Vehicle/VehicleFact.json">../src/Vehicle/VehicleFact.json</file>
-        <file alias="Vehicle/BatteryFact.json">../src/Vehicle/BatteryFact.json</file>
-        <file alias="Vehicle/GPSFact.json">../src/Vehicle/GPSFact.json</file>
-        <file alias="Vehicle/WindFact.json">../src/Vehicle/WindFact.json</file>
-        <file alias="Vehicle/VibrationFact.json">../src/Vehicle/VibrationFact.json</file>
         <file alias="App.SettingsGroup.json">../src/Settings/App.SettingsGroup.json</file>
         <file alias="AutoConnect.SettingsGroup.json">../src/Settings/AutoConnect.SettingsGroup.json</file>
         <file alias="Survey.SettingsGroup.json">../src/MissionManager/Survey.SettingsGroup.json</file>
@@ -172,6 +168,12 @@
         <file alias="RallyPoint.FactMetaData.json">../src/MissionManager/RallyPoint.FactMetaData.json</file>
         <file alias="FWLandingPattern.FactMetaData.json">../src/MissionManager/FWLandingPattern.FactMetaData.json</file>
         <file alias="USBBoardInfo.json">../src/comm/USBBoardInfo.json</file>
+        <file alias="MissionSettings.FactMetaData.json">../src/MissionManager/MissionSettings.FactMetaData.json</file>
+        <file alias="Vehicle/VehicleFact.json">../src/Vehicle/VehicleFact.json</file>
+        <file alias="Vehicle/BatteryFact.json">../src/Vehicle/BatteryFact.json</file>
+        <file alias="Vehicle/GPSFact.json">../src/Vehicle/GPSFact.json</file>
+        <file alias="Vehicle/WindFact.json">../src/Vehicle/WindFact.json</file>
+        <file alias="Vehicle/VibrationFact.json">../src/Vehicle/VibrationFact.json</file>
         <file alias="Vehicle/TemperatureFact.json">../src/Vehicle/TemperatureFact.json</file>
     </qresource>
     <qresource prefix="/MockLink">

@@ -58,15 +58,15 @@ Item {
 
     function getBatteryIcon() {
         if(_activeVehicle) {
-            if(_activeVehicle.battery.percentRemaining.value > 95) {
+            if(TyphoonHQuickInterface.rcBattery > 0.95) {
                 return "/typhoonh/battery_100.svg"
-            } else if(_activeVehicle.battery.percentRemaining.value > 75) {
+            } else if(TyphoonHQuickInterface.rcBattery > 0.75) {
                 return "/typhoonh/battery_80.svg"
-            } else if(_activeVehicle.battery.percentRemaining.value > 55) {
+            } else if(TyphoonHQuickInterface.rcBattery > 0.55) {
                 return "/typhoonh/battery_60.svg"
-            } else if(_activeVehicle.battery.percentRemaining.value > 35) {
+            } else if(TyphoonHQuickInterface.rcBattery > 0.35) {
                 return "/typhoonh/battery_40.svg"
-            } else if(_activeVehicle.battery.percentRemaining.value > 15) {
+            } else if(TyphoonHQuickInterface.rcBattery > 0.15) {
                 return "/typhoonh/battery_20.svg"
             }
         }
