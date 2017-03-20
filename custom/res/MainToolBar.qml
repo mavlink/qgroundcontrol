@@ -34,19 +34,19 @@ Rectangle {
     signal showAnalyzeView
 
     function checkSettingsButton() {
-
+        settingsButton.checked = true
     }
 
     function checkSetupButton() {
-
+        setupButton.checked = true
     }
 
     function checkPlanButton() {
-
+        planButton.checked = true
     }
 
     function checkFlyButton() {
-
+        homeButton.checked = true
     }
 
     function checkAnalyzeButton() {
@@ -54,7 +54,6 @@ Rectangle {
     }
 
     Component.onCompleted: {
-        //-- TODO: Get this from the actual state
         homeButton.checked = true
     }
 
