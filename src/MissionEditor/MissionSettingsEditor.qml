@@ -19,12 +19,6 @@ Rectangle {
     visible:            missionItem.isCurrentItem
     radius:             _radius
 
-    ExclusiveGroup {
-        id: sectionHeaderExclusiverGroup
-    }
-
-    property ExclusiveGroup sectionHeaderGroup: ScreenTools.isShortScreen ? sectionHeaderExclusiverGroup : null
-
     Loader {
         id:              deferedload
         active:          valuesRect.visible
@@ -41,7 +35,7 @@ Rectangle {
 
                 property var    _missionVehicle:            missionController.vehicle
                 property bool   _offlineEditing:            _missionVehicle.isOfflineEditingVehicle
-                property bool   _showOfflineEditingCombos:  _offlineEditing && _noMissionItemsAdded
+                property bool   _showOfflineVehicleCombos:  _offlineEditing && _multipleFirmware && _noMissionItemsAdded
                 property bool   _showCruiseSpeed:           !_missionVehicle.multiRotor
                 property bool   _showHoverSpeed:            _missionVehicle.multiRotor || _missionVehicle.vtol
                 property bool   _multipleFirmware:          QGroundControl.supportedFirmwareCount > 2
@@ -64,7 +58,6 @@ Rectangle {
                         id:             plannedHomePositionSection
                         text:           qsTr("Planned Home Position")
                         showSpacer:     false
-                        exclusiveGroup: sectionHeaderGroup
                     }
 
                     Column {
@@ -123,9 +116,8 @@ Rectangle {
                     SectionHeader {
                         id:             vehicleInfoSectionHeader
                         text:           qsTr("Vehicle Info")
-                        visible:        _multipleFirmware && _showOfflineEditingCombos
+                        visible:        _offlineEditing
                         checked:        false
-                        exclusiveGroup: sectionHeaderGroup
                     }
 
                     GridLayout {
@@ -139,21 +131,25 @@ Rectangle {
                         QGCLabel {
                             text:               _firmwareLabel
                             Layout.fillWidth:   true
+                            visible:            _showOfflineVehicleCombos
                         }
                         FactComboBox {
                             fact:                   QGroundControl.settingsManager.appSettings.offlineEditingFirmwareType
                             indexModel:             false
                             Layout.preferredWidth:  _fieldWidth
+                            visible:                _showOfflineVehicleCombos
                         }
 
                         QGCLabel {
                             text:               _vehicleLabel
                             Layout.fillWidth:   true
+                            visible:            _showOfflineVehicleCombos
                         }
                         FactComboBox {
                             fact:                   QGroundControl.settingsManager.appSettings.offlineEditingVehicleType
                             indexModel:             false
                             Layout.preferredWidth:  _fieldWidth
+                            visible:                _showOfflineVehicleCombos
                         }
 
                         QGCLabel {
@@ -183,7 +179,6 @@ Rectangle {
                         id:             missionDefaultsSectionHeader
                         text:           qsTr("Mission Defaults")
                         checked:        false
-                        exclusiveGroup: sectionHeaderGroup
                     }
 
                     Column {
@@ -233,89 +228,8 @@ Rectangle {
                         */
                     }
 
-                    SectionHeader {
-                        id:             cameraSectionHeader
-                        text:           qsTr("Camera")
-                        checked:        false
-                        exclusiveGroup: sectionHeaderGroup
-                    }
-
-                    Column {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        spacing:        _margin
-                        visible:        cameraSectionHeader.checked
-
-                        FactComboBox {
-                            id:             cameraActionCombo
-                            anchors.left:   parent.left
-                            anchors.right:  parent.right
-                            fact:           missionItem.cameraAction
-                            indexModel:     false
-                        }
-
-                        RowLayout {
-                            anchors.left:   parent.left
-                            anchors.right:  parent.right
-                            spacing:        ScreenTools.defaultFontPixelWidth
-                            visible:        cameraActionCombo.currentIndex == 1
-
-                            QGCLabel {
-                                text:               qsTr("Time")
-                                Layout.fillWidth:   true
-                            }
-                            FactTextField {
-                                fact:                   missionItem.cameraPhotoIntervalTime
-                                Layout.preferredWidth:  _fieldWidth
-                            }
-                        }
-
-                        RowLayout {
-                            anchors.left:   parent.left
-                            anchors.right:  parent.right
-                            spacing:        ScreenTools.defaultFontPixelWidth
-                            visible:        cameraActionCombo.currentIndex == 2
-
-                            QGCLabel {
-                                text:               qsTr("Distance")
-                                Layout.fillWidth:   true
-                            }
-                            FactTextField {
-                                fact:                   missionItem.cameraPhotoIntervalDistance
-                                Layout.preferredWidth:  _fieldWidth
-                            }
-                        }
-
-                        GridLayout {
-                            anchors.left:   parent.left
-                            anchors.right:  parent.right
-                            columnSpacing:  0
-                            rowSpacing:     0
-                            columns:        3
-
-                            Item { width: 1; height: 1 }
-                            QGCLabel { text: qsTr("Pitch") }
-                            QGCLabel { text: qsTr("Yaw") }
-
-                            QGCCheckBox {
-                                id:                 gimbalCheckBox
-                                text:               qsTr("Gimbal")
-                                checked:            missionItem.specifyGimbal
-                                onClicked:          missionItem.specifyGimbal = checked
-                                Layout.fillWidth:   true
-                            }
-                            FactTextField {
-                                fact:           missionItem.gimbalPitch
-                                implicitWidth:  ScreenTools.defaultFontPixelWidth * 9
-                                enabled:        gimbalCheckBox.checked
-                            }
-
-                            FactTextField {
-                                fact:           missionItem.gimbalYaw
-                                implicitWidth:  ScreenTools.defaultFontPixelWidth * 9
-                                enabled:        gimbalCheckBox.checked
-                            }
-                        }
+                    CameraSection {
+                        checked: missionItem.cameraSection.settingsSpecified
                     }
 
                     QGCLabel {
