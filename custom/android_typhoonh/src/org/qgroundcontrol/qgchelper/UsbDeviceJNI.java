@@ -19,6 +19,8 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiConfiguration;
 
+import android.os.BatteryManager;
+
 import org.qtproject.qt5.android.bindings.QtActivity;
 import org.qtproject.qt5.android.bindings.QtApplication;
 
@@ -39,6 +41,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     private static ReceiverMode receiverMode = ReceiverMode.DISABLED;
     private static String currentConnection;
     private static int currentWifiRssi = 0;
+    private static float batteryLevel = 0.0f;
 
     // WiFi: https://stackoverflow.com/questions/36098871/how-to-search-and-connect-to-a-specific-wifi-network-in-android-programmatically/36099552#36099552
 
@@ -47,6 +50,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     private static native void nativeScanComplete();
     private static native void nativeAuthError();
     private static native void nativeWifiConnected();
+    private static native void nativeBatteryUpdate();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -88,6 +92,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
             mainWifi.setWifiEnabled(true);
         }
         IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_BATTERY_CHANGED);
         filter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
         filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
         filter.addAction(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
@@ -135,6 +140,10 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
 
     public static int wifiRssi() {
         return currentWifiRssi;
+    }
+
+    public static float getBatteryLevel() {
+        return batteryLevel;
     }
 
     public static void findWifiConfig() {
@@ -277,6 +286,12 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
                     Log.e(TAG, "RSSI: " + wifiInfo.getRssi());
                     currentWifiRssi = wifiInfo.getRssi();
                     nativeNewWifiRSSI();
+                } else if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
+                    int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+                    int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+                    batteryLevel = level / (float)scale;
+                    Log.e(TAG, "Battery: " + batteryLevel);
+                    nativeBatteryUpdate();
                 }
             } catch(Exception e) {
             }

@@ -81,7 +81,11 @@ class TyphoonHOptions : public QGCOptions
 public:
     TyphoonHOptions(TyphoonHPlugin* plugin, QObject* parent = NULL);
     bool        combineSettingsAndSetup     () { return true;  }
+#if defined(__android__)
     double      toolbarHeightMultiplier     () { return 1.25; }
+#else
+    double      toolbarHeightMultiplier     () { return 1.5; }
+#endif
     bool        enablePlanViewSelector      () { return false; }
     CustomInstrumentWidget* instrumentWidget();
     bool        showSensorCalibrationCompass   () const final;
@@ -315,9 +319,9 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
     } else if (metaData.name() == AppSettings::appFontPointSizeName) {
         int defaultFontPointSize;
 #if !defined(__macos__)
-        defaultFontPointSize = 16.0;
+        defaultFontPointSize = 16;
 #else
-        defaultFontPointSize = 13.0;
+        defaultFontPointSize = 10;
 #endif
         metaData.setRawDefaultValue(defaultFontPointSize);
         return false;

@@ -47,6 +47,7 @@ public:
     Q_PROPERTY(bool             bindingWiFi     READ    bindingWiFi                         NOTIFY bindingWiFiChanged)
     Q_PROPERTY(QString          connectedSSID   READ    connectedSSID                       NOTIFY connectedSSIDChanged)
     Q_PROPERTY(int              rssi            READ    rssi                                NOTIFY rssiChanged)
+    Q_PROPERTY(qreal            rcBattery       READ    rcBattery                           NOTIFY rcBatteryChanged)
 
     Q_INVOKABLE void enterBindMode  ();
     Q_INVOKABLE void initM4         ();
@@ -75,6 +76,7 @@ public:
     bool        scanningWiFi        () { return _scanningWiFi; }
     bool        bindingWiFi         () { return _bindingWiFi; }
     int         rssi                ();
+    qreal       rcBattery           ();
 
     void        init                (TyphoonHM4Interface* pHandler);
 
@@ -89,6 +91,7 @@ signals:
     void    bindingWiFiChanged          ();
     void    rssiChanged                 ();
     void    bindTimeout                 ();
+    void    rcBatteryChanged            ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -102,6 +105,7 @@ private slots:
     void    _scanWifi                   ();
     void    _delayedBind                ();
     void    _bindTimeout                ();
+    void    _batteryUpdate              ();
 
 private:
     TyphoonHM4Interface*    _pHandler;
