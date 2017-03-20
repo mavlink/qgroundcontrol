@@ -81,6 +81,7 @@ QGeoTiledMapReplyQGC::~QGeoTiledMapReplyQGC()
 void
 QGeoTiledMapReplyQGC::_clearReply()
 {
+    _timer.stop();
     if (_reply) {
         _reply->deleteLater();
         _reply = 0;
@@ -107,6 +108,7 @@ QGeoTiledMapReplyQGC::_returnBadTile()
 void
 QGeoTiledMapReplyQGC::abort()
 {
+    _timer.stop();
     if (_reply)
         _reply->abort();
 }
