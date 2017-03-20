@@ -125,7 +125,7 @@ public:
     bool            downloadingLogs         () { return _downloadingLogs; }
 
     Q_INVOKABLE void refresh                ();
-    Q_INVOKABLE void download               ();
+    Q_INVOKABLE void download               (QString path = QString());
     Q_INVOKABLE void eraseAll               ();
     Q_INVOKABLE void cancel                 ();
 
