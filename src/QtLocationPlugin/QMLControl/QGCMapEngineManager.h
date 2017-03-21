@@ -46,6 +46,7 @@ public:
     //-- Disk Space in MB
     Q_PROPERTY(quint32              freeDiskSpace   READ    freeDiskSpace   NOTIFY  freeDiskSpaceChanged)
     Q_PROPERTY(quint32              diskSpace       READ    diskSpace       CONSTANT)
+    Q_PROPERTY(int                  selectedCount   READ    selectedCount   NOTIFY selectedCountChanged)
 
     Q_INVOKABLE void                loadTileSets            ();
     Q_INVOKABLE void                updateForCurrentView    (double lon0, double lat0, double lon1, double lat1, int minZoom, int maxZoom, const QString& mapName);
@@ -55,6 +56,9 @@ public:
     Q_INVOKABLE void                deleteTileSet           (QGCCachedTileSet* tileSet);
     Q_INVOKABLE QString             getUniqueName           ();
     Q_INVOKABLE bool                findName                (const QString& name);
+    Q_INVOKABLE void                selectAll               ();
+    Q_INVOKABLE void                selectNone              ();
+    Q_INVOKABLE void                exportSets              (QString path = QString());
 
     int                             tileX0                  () { return _totalSet.tileX0; }
     int                             tileX1                  () { return _totalSet.tileX1; }
@@ -72,6 +76,7 @@ public:
     QString                         errorMessage            () { return _errorMessage; }
     quint64                         freeDiskSpace           () { return _freeDiskSpace; }
     quint64                         diskSpace               () { return _diskSpace; }
+    int                             selectedCount           ();
 
     void                            setMapboxToken          (QString token);
     void                            setMaxMemCache          (quint32 size);
@@ -95,6 +100,7 @@ signals:
     void maxDiskCacheChanged    ();
     void errorMessageChanged    ();
     void freeDiskSpaceChanged   ();
+    void selectedCountChanged   ();
 
 public slots:
     void taskError              (QGCMapTask::TaskType type, QString error);
@@ -105,6 +111,7 @@ private slots:
     void _tileSetDeleted        (quint64 setID);
     void _updateTotals          (quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
     void _resetCompleted        ();
+    void _exportCompleted       ();
 
 private:
     void _updateDiskFreeSpace   ();

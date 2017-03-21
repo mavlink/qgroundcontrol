@@ -119,7 +119,8 @@ public:
         taskUpdateTileDownloadState,
         taskDeleteTileSet,
         taskPruneCache,
-        taskReset
+        taskReset,
+        taskExport
     };
 
     QGCMapTask(TaskType type)
@@ -363,6 +364,37 @@ public:
 
 signals:
     void resetCompleted();
+};
+
+//-----------------------------------------------------------------------------
+class QGCExportTileTask : public QGCMapTask
+{
+    Q_OBJECT
+public:
+    QGCExportTileTask(QVector<QGCCachedTileSet*> sets, QString path)
+        : QGCMapTask(QGCMapTask::taskExport)
+        , _sets(sets)
+        , _path(path)
+    {}
+
+    ~QGCExportTileTask()
+    {
+    }
+
+    QVector<QGCCachedTileSet*> sets() { return _sets; }
+    QString                    path() { return _path; }
+
+    void setExportCompleted()
+    {
+        emit exportCompleted();
+    }
+
+private:
+    QVector<QGCCachedTileSet*>  _sets;
+    QString                     _path;
+
+signals:
+    void exportCompleted();
 };
 
 

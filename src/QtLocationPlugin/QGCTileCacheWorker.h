@@ -59,13 +59,15 @@ private:
     void        _deleteTileSet          (QGCMapTask* mtask);
     void        _resetCacheDatabase     (QGCMapTask* mtask);
     void        _pruneCache             (QGCMapTask* mtask);
+    void        _exportSets             (QGCMapTask* mtask);
+    bool        _testTask               (QGCMapTask* mtask);
     void        _testInternet           ();
 
     quint64     _findTile               (const QString hash);
     bool        _findTileSetID          (const QString name, quint64& setID);
     void        _updateSetTotals        (QGCCachedTileSet* set);
     bool        _init                   ();
-    void        _createDB               ();
+    bool        _createDB               (QSqlDatabase *db, bool createDefault = true);
     quint64     _getDefaultTileSet      ();
     void        _updateTotals           ();
 

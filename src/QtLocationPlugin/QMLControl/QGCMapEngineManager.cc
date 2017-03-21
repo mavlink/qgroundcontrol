@@ -308,6 +308,9 @@ QGCMapEngineManager::taskError(QGCMapTask::TaskType type, QString error)
     case QGCMapTask::taskReset:
         task = "Reset Tile Sets";
         break;
+    case QGCMapTask::taskExport:
+        task = "Export Tile Sets";
+        break;
     default:
         task = "Database Error";
         break;
@@ -349,6 +352,70 @@ QGCMapEngineManager::findName(const QString& name)
         }
     }
     return false;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMapEngineManager::selectAll() {
+    for(int i = 0; i < _tileSets.count(); i++ ) {
+        QGCCachedTileSet* set = qobject_cast<QGCCachedTileSet*>(_tileSets.get(i));
+        Q_ASSERT(set);
+        set->setSelected(true);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMapEngineManager::selectNone() {
+    for(int i = 0; i < _tileSets.count(); i++ ) {
+        QGCCachedTileSet* set = qobject_cast<QGCCachedTileSet*>(_tileSets.get(i));
+        Q_ASSERT(set);
+        set->setSelected(false);
+    }
+}
+
+//-----------------------------------------------------------------------------
+int
+QGCMapEngineManager::selectedCount() {
+    int count = 0;
+    for(int i = 0; i < _tileSets.count(); i++ ) {
+        QGCCachedTileSet* set = qobject_cast<QGCCachedTileSet*>(_tileSets.get(i));
+        Q_ASSERT(set);
+        if(set->selected()) {
+            count++;
+        }
+    }
+    return count;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMapEngineManager::exportSets(QString path) {
+    QString dir = path;
+    if(dir.isEmpty()) {
+        dir = QDir(QDir::homePath()).filePath(QString("export_%1.db").arg(QDateTime::currentDateTime().toTime_t()));
+    }
+    QVector<QGCCachedTileSet*> sets;
+    for(int i = 0; i < _tileSets.count(); i++ ) {
+        QGCCachedTileSet* set = qobject_cast<QGCCachedTileSet*>(_tileSets.get(i));
+        Q_ASSERT(set);
+        if(set->selected()) {
+            sets.append(set);
+        }
+    }
+    if(sets.count()) {
+        QGCExportTileTask* task = new QGCExportTileTask(sets, dir);
+        connect(task, &QGCExportTileTask::exportCompleted, this, &QGCMapEngineManager::_exportCompleted);
+        connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
+        getQGCMapEngine()->addTask(task);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMapEngineManager::_exportCompleted()
+{
+
 }
 
 //-----------------------------------------------------------------------------
