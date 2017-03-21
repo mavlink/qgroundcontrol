@@ -24,6 +24,7 @@ Rectangle {
     property alias  model:              repeater.model
     property var    showAlternateIcon                   ///< List of bool values, one for each button in strip - true: show alternate icon, false: show normal icon
     property var    rotateImage                         ///< List of bool values, one for each button in strip - true: animation rotation, false: static image
+    property var    animateImage                        ///< List of bool values, one for each button in strip - true: animate image, false: static image
     property var    buttonEnabled                       ///< List of bool values, one for each button in strip - true: button enabled, false: button disabled
     property var    buttonVisible                       ///< List of bool values, one for each button in strip - true: button visible, false: button invisible
     property real   maxHeight                           ///< Maximum height for control, determines whether text is hidden to make control shorter
@@ -123,6 +124,7 @@ Rectangle {
                 property var    _alternateIconSource:   modelData.alternateIconSource
                 property var    _source:                (_root.showAlternateIcon && _root.showAlternateIcon[index]) ? _alternateIconSource : _iconSource
                 property bool   rotateImage:            _root.rotateImage ? _root.rotateImage[index] : false
+                property bool   animateImage:           _root.animateImage ? _root.animateImage[index] : false
 
                 onExclusiveGroupChanged: {
                     if (exclusiveGroup) {
@@ -136,6 +138,15 @@ Rectangle {
                     } else {
                         imageRotation.running = false
                         button.rotation = 0
+                    }
+                }
+
+                onAnimateImageChanged: {
+                    if (animateImage) {
+                        opacityAnimation.running = true
+                    } else {
+                        opacityAnimation.running = false
+                        button.opacity = 1
                     }
                 }
 
@@ -170,6 +181,14 @@ Rectangle {
                             running:        false
                         }
 
+                        NumberAnimation on opacity {
+                            id:         opacityAnimation
+                            running:    false
+                            from:       0
+                            to:         1.0
+                            loops:      Animation.Infinite
+                            duration:   2000
+                        }
                     }
 
                     QGCMouseArea {

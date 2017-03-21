@@ -718,6 +718,7 @@ QGCView {
                     z:                  QGroundControl.zOrderWidgets
                     showAlternateIcon:  [ false, false, _syncDropDownController.dirty, false, false, false, false ]
                     rotateImage:        [ false, false, _syncDropDownController.syncInProgress, false, false, false, false ]
+                    animateImage:       [ false, false, _syncDropDownController.dirty, false, false, false, false ]
                     buttonEnabled:      [ true, true, !_syncDropDownController.syncInProgress, true, true, true, true ]
                     buttonVisible:      [ true, true, true, true, true, _showZoom, _showZoom ]
                     maxHeight:          mapScale.y - toolStrip.y
