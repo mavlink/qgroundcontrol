@@ -36,6 +36,7 @@ Rectangle {
 
     property string _messagePanelText:              "missing message panel text"
     property bool   _fullParameterVehicleAvailable: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && !QGroundControl.multiVehicleManager.activeVehicle.parameterManager.missingParameters
+    property var    _corePlugin:                    QGroundControl.corePlugin
 
     function showSummaryPanel()
     {
@@ -231,14 +232,14 @@ Rectangle {
             }
 
             Repeater {
-                model:              QGroundControl.corePlugin.settingsPages
-                visible:            QGroundControl.corePlugin.options.combineSettingsAndSetup
+                model:              _corePlugin.settingsPages
+                visible:            _corePlugin.options.combineSettingsAndSetup
                 SubMenuButton {
                     imageResource:      modelData.icon
                     setupIndicator:     false
                     exclusiveGroup:     setupButtonGroup
                     text:               modelData.title
-                    visible:            QGroundControl.corePlugin.options.combineSettingsAndSetup
+                    visible:            _corePlugin.options.combineSettingsAndSetup
                     onClicked:          panelLoader.setSource(modelData.url)
                     Layout.fillWidth:   true
                 }
@@ -261,7 +262,7 @@ Rectangle {
                 imageResource:      "/qmlimages/FirmwareUpgradeIcon.png"
                 setupIndicator:     false
                 exclusiveGroup:     setupButtonGroup
-                visible:            !ScreenTools.isMobile
+                visible:            !ScreenTools.isMobile && _corePlugin.options.showFirmwareUpgrade
                 text:               "Firmware"
                 Layout.fillWidth:   true
 
@@ -311,7 +312,7 @@ Rectangle {
             SubMenuButton {
                 setupIndicator:     false
                 exclusiveGroup:     setupButtonGroup
-                visible:            QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && QGroundControl.corePlugin.showAdvancedUI
+                visible:            QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && _corePlugin.showAdvancedUI
                 text:               "Parameters"
                 Layout.fillWidth:   true
 
