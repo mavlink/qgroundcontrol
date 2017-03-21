@@ -38,8 +38,8 @@ public:
     AutoPilotPlugin(Vehicle* vehicle, QObject* parent);
     ~AutoPilotPlugin();
 
-    Q_PROPERTY(QVariantList vehicleComponents   READ vehicleComponents  CONSTANT)                       ///< List of VehicleComponent objects
-    Q_PROPERTY(bool         setupComplete       READ setupComplete      NOTIFY setupCompleteChanged)    ///< false: One or more vehicle components require setup
+    Q_PROPERTY(QVariantList vehicleComponents   READ vehicleComponents  NOTIFY vehicleComponentsChanged)    ///< List of VehicleComponent objects
+    Q_PROPERTY(bool         setupComplete       READ setupComplete      NOTIFY setupCompleteChanged)        ///< false: One or more vehicle components require setup
 
     /// Called when parameters are ready for the first time. Note that parameters may still be missing.
     /// Overrides must call base class.
@@ -56,6 +56,7 @@ public:
 
 signals:
     void setupCompleteChanged(bool setupComplete);
+    void vehicleComponentsChanged(void);
 
 protected:
     /// All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin
