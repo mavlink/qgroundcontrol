@@ -15,10 +15,10 @@
             "paramRemove":  "4"
         },
         {
-            "id":                   22,
-            "comment":              "MAV_CMD_NAV_TAKEOFF",
-            "specifiesCoordinate":  false,
-            "paramRemove":          "2,3,4,5,6"
+            "id":                       22,
+            "comment":                  "MAV_CMD_NAV_TAKEOFF",
+            "specifiesCoordinate":      false,
+            "specifiesAltitudeOnly":    true
         },
         {
             "id":           82,
