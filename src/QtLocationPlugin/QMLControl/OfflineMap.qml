@@ -37,7 +37,8 @@ QGCView {
     property string savedMapType:       ""
     property bool   _showPreview:       true
     property bool   _defaultSet:        offlineMapView && offlineMapView._currentSelection && offlineMapView._currentSelection.defaultSet
-    property real   _margins:           ScreenTools.defaultFontPixelWidth / 2
+    property real   _margins:           ScreenTools.defaultFontPixelWidth * 0.5
+    property real   _buttonSize:        ScreenTools.defaultFontPixelWidth * 12
 
     property bool   _saveRealEstate:          ScreenTools.isTinyScreen || ScreenTools.isShortScreen
     property real   _adjustableFontPointSize: _saveRealEstate ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
@@ -100,15 +101,26 @@ QGCView {
         _map.visible = true
         _tileSetList.visible = false
         infoView.visible = false
+        _exporTiles.visible = false
         addNewSetView.visible = true
     }
 
     function showList() {
+        _exporTiles.visible = false
         isMapInteractive = false
         _map.visible = false
         _tileSetList.visible = true
         infoView.visible = false
         addNewSetView.visible = false
+    }
+
+    function showExport() {
+        isMapInteractive = false
+        _map.visible = false
+        _tileSetList.visible = false
+        infoView.visible = false
+        addNewSetView.visible = false
+        _exporTiles.visible = true
     }
 
     function showInfo() {
@@ -796,7 +808,7 @@ QGCView {
             clip:               true
             anchors.margins:    ScreenTools.defaultFontPixelWidth
             anchors.top:        parent.top
-            anchors.bottom:     _optionsButton.top
+            anchors.bottom:     _listButtonRow.top
             anchors.left:       parent.left
             anchors.right:      parent.right
             contentHeight:      _cacheList.height
@@ -806,7 +818,6 @@ QGCView {
                 width:      Math.min(_tileSetList.width, (ScreenTools.defaultFontPixelWidth  * 50).toFixed(0))
                 spacing:    ScreenTools.defaultFontPixelHeight * 0.5
                 anchors.horizontalCenter: parent.horizontalCenter
-
                 OfflineMapButton {
                     id:             firstButton
                     text:           qsTr("Add new set")
@@ -834,15 +845,94 @@ QGCView {
                 }
             }
         }
+        Row {
+            id:                 _listButtonRow
+            visible:            _tileSetList.visible
+            spacing:            _margins
+            anchors.bottom:     parent.bottom
+            anchors.right:      parent.right
+            anchors.margins:    ScreenTools.defaultFontPixelWidth
+            QGCButton {
+                text:           qsTr("Import")
+                width:          _buttonSize
+            }
+            QGCButton {
+                text:           qsTr("Export")
+                width:          _buttonSize
+                enabled:        QGroundControl.mapEngineManager.tileSets.count > 1
+                onClicked:      showExport()
+            }
+            QGCButton {
+                text:           qsTr("Options")
+                width:          _buttonSize
+                onClicked:      showDialog(optionsDialogComponent, qsTr("Offline Maps Options"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+            }
+        }
 
-        QGCButton {
-            id:              _optionsButton
-            text:            qsTr("Options")
-            visible:         _tileSetList.visible
-            anchors.bottom:  parent.bottom
-            anchors.right:   parent.right
-            anchors.margins: ScreenTools.defaultFontPixelWidth
-            onClicked:       showDialog(optionsDialogComponent, qsTr("Offline Maps Options"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+        //-- Export Tile Sets
+        QGCFlickable {
+            id:                 _exporTiles
+            clip:               true
+            visible:            false
+            anchors.margins:    ScreenTools.defaultFontPixelWidth
+            anchors.top:        parent.top
+            anchors.bottom:     _exportButtonRow.top
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            contentHeight:      _exportList.height
+            Column {
+                id:         _exportList
+                width:      Math.min(_exporTiles.width, (ScreenTools.defaultFontPixelWidth  * 50).toFixed(0))
+                spacing:    ScreenTools.defaultFontPixelHeight * 0.5
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel {
+                    text:           qsTr("Select Tile Sets to Export")
+                    font.pointSize: ScreenTools.mediumFontPointSize
+                }
+                Item { width: 1; height: ScreenTools.defaultFontPixelHeight; }
+                Repeater {
+                    model: QGroundControl.mapEngineManager.tileSets
+                    delegate: QGCCheckBox {
+                        text:           object.name
+                        checked:        object.selected
+                        onClicked: {
+                            object.selected = checked
+                        }
+                    }
+                }
+            }
+        }
+        Row {
+            id:                 _exportButtonRow
+            visible:            _exporTiles.visible
+            spacing:            _margins
+            anchors.bottom:     parent.bottom
+            anchors.right:      parent.right
+            anchors.margins:    ScreenTools.defaultFontPixelWidth
+            QGCButton {
+                text:           qsTr("All")
+                width:          _buttonSize
+                onClicked:      QGroundControl.mapEngineManager.selectAll()
+            }
+            QGCButton {
+                text:           qsTr("None")
+                width:          _buttonSize
+                onClicked:      QGroundControl.mapEngineManager.selectNone()
+            }
+            QGCButton {
+                text:           qsTr("Export")
+                width:          _buttonSize
+                enabled:        QGroundControl.mapEngineManager.selectedCount > 0
+                onClicked: {
+                    QGroundControl.mapEngineManager.exportSets()
+                    showList()
+                }
+            }
+            QGCButton {
+                text:           qsTr("Cancel")
+                width:          _buttonSize
+                onClicked:       showList()
+            }
         }
     } // QGCViewPanel
 } // QGCView
