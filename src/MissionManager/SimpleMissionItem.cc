@@ -578,6 +578,8 @@ void SimpleMissionItem::setDefaultsForCommand(void)
     case MAV_CMD_NAV_LAND:
         _missionItem.setParam7(0);
         break;
+    default:
+        break;
     }
 
     _missionItem.setAutoContinue(true);
