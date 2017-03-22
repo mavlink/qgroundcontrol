@@ -87,6 +87,7 @@ public:
     bool            isSimpleItem            (void) const final { return true; }
     bool            isStandaloneCoordinate  (void) const final;
     bool            specifiesCoordinate     (void) const final;
+    bool            specifiesAltitudeOnly   (void) const final;
     QString         commandDescription      (void) const final;
     QString         commandName             (void) const final;
     QString         abbreviation            (void) const final;

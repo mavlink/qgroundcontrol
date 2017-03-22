@@ -80,3 +80,7 @@ void PX4GeoFenceManager::_circleRadiusRawValueChanged(QVariant value)
     emit circleRadiusChanged(value.toFloat());
 }
 
+void PX4GeoFenceManager::removeAll(void)
+{
+    // Only params so nothing to do
+}

@@ -29,6 +29,14 @@ public:
     QGCMapEngineManager(QGCApplication* app);
     ~QGCMapEngineManager();
 
+    enum ImportAction {
+        ActionNone,
+        ActionImporting,
+        ActionExporting,
+        ActionDone,
+    };
+    Q_ENUMS(ImportAction)
+
     Q_PROPERTY(int                  tileX0          READ    tileX0          NOTIFY tileX0Changed)
     Q_PROPERTY(int                  tileX1          READ    tileX1          NOTIFY tileX1Changed)
     Q_PROPERTY(int                  tileY0          READ    tileY0          NOTIFY tileY0Changed)
@@ -46,6 +54,12 @@ public:
     //-- Disk Space in MB
     Q_PROPERTY(quint32              freeDiskSpace   READ    freeDiskSpace   NOTIFY  freeDiskSpaceChanged)
     Q_PROPERTY(quint32              diskSpace       READ    diskSpace       CONSTANT)
+    //-- Tile set export
+    Q_PROPERTY(int                  selectedCount   READ    selectedCount   NOTIFY selectedCountChanged)
+    Q_PROPERTY(int                  actionProgress  READ    actionProgress  NOTIFY actionProgressChanged)
+    Q_PROPERTY(ImportAction         importAction    READ    importAction    NOTIFY importActionChanged)
+
+    Q_PROPERTY(bool                 importReplace   READ    importReplace   WRITE   setImportReplace   NOTIFY importReplaceChanged)
 
     Q_INVOKABLE void                loadTileSets            ();
     Q_INVOKABLE void                updateForCurrentView    (double lon0, double lat0, double lon1, double lat1, int minZoom, int maxZoom, const QString& mapName);
@@ -55,6 +69,11 @@ public:
     Q_INVOKABLE void                deleteTileSet           (QGCCachedTileSet* tileSet);
     Q_INVOKABLE QString             getUniqueName           ();
     Q_INVOKABLE bool                findName                (const QString& name);
+    Q_INVOKABLE void                selectAll               ();
+    Q_INVOKABLE void                selectNone              ();
+    Q_INVOKABLE bool                exportSets              (QString path = QString());
+    Q_INVOKABLE bool                importSets              (QString path = QString());
+    Q_INVOKABLE void                resetAction             ();
 
     int                             tileX0                  () { return _totalSet.tileX0; }
     int                             tileX1                  () { return _totalSet.tileX1; }
@@ -72,10 +91,15 @@ public:
     QString                         errorMessage            () { return _errorMessage; }
     quint64                         freeDiskSpace           () { return _freeDiskSpace; }
     quint64                         diskSpace               () { return _diskSpace; }
+    int                             selectedCount           ();
+    int                             actionProgress          () { return _actionProgress; }
+    ImportAction                    importAction            () { return _importAction; }
+    bool                            importReplace           () { return _importReplace; }
 
     void                            setMapboxToken          (QString token);
     void                            setMaxMemCache          (quint32 size);
     void                            setMaxDiskCache         (quint32 size);
+    void                            setImportReplace        (bool replace) { _importReplace = replace; emit importReplaceChanged(); }
 
     void                            setErrorMessage         (const QString& error) { _errorMessage = error; emit errorMessageChanged(); }
 
@@ -95,6 +119,10 @@ signals:
     void maxDiskCacheChanged    ();
     void errorMessageChanged    ();
     void freeDiskSpaceChanged   ();
+    void selectedCountChanged   ();
+    void actionProgressChanged  ();
+    void importActionChanged    ();
+    void importReplaceChanged   ();
 
 public slots:
     void taskError              (QGCMapTask::TaskType type, QString error);
@@ -105,6 +133,8 @@ private slots:
     void _tileSetDeleted        (quint64 setID);
     void _updateTotals          (quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
     void _resetCompleted        ();
+    void _actionCompleted       ();
+    void _actionProgressHandler (int percentage);
 
 private:
     void _updateDiskFreeSpace   ();
@@ -122,6 +152,9 @@ private:
     quint32     _diskSpace;
     QmlObjectListModel _tileSets;
     QString     _errorMessage;
+    int         _actionProgress;
+    ImportAction _importAction;
+    bool        _importReplace;
 };
 
 #endif

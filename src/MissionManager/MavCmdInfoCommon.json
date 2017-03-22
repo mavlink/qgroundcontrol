@@ -182,25 +182,20 @@
         { "id": 24, "rawName": "MAV_CMD_NAV_TAKEOFF_LOCAL", "friendlyName": "Takeoff local" },
         { "id": 25, "rawName": "MAV_CMD_NAV_FOLLOW", "friendlyName": "Nav follow" },
         {
-            "id":                    30,
-            "rawName":              "MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT",
-            "friendlyName":         "Change Altitude",
-            "description":          "Continue on the current course and climb/descend to specified altitude. When the altitude is reached continue to the next command.",
-            "specifiesCoordinate":  false,
-            "friendlyEdit":         true,
-            "category":             "Flight control",
+            "id":                       30,
+            "rawName":                  "MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT",
+            "friendlyName":             "Change Altitude",
+            "description":              "Continue on the current course and climb/descend to specified altitude. When the altitude is reached continue to the next command.",
+            "specifiesCoordinate":      false,
+            "specifiesAltitudeOnly":    true,
+            "friendlyEdit":             true,
+            "category":                 "Flight control",
             "param1": {
                 "label":            "Mode",
                 "enumStrings":      "Climb,Neutral,Descend",
                 "enumValues":       "1,0,2",
                 "default":          1,
                 "decimalPlaces":    0
-            },
-            "param7": {
-                "label":            "Altitude",
-                "units":            "m",
-                "default":          55,
-                "decimalPlaces":    2
             }
         },
         {
@@ -391,21 +386,17 @@
             }
         },
         {
-            "id":           113,
-            "rawName":      "MAV_CMD_CONDITION_CHANGE_ALT",
-            "description":  "Delay the mission until the specified altitide is reached.",
-            "friendlyName": "Wait for altitude",
-            "category":     "Conditionals",
+            "id":                           113,
+            "rawName":                  "MAV_CMD_CONDITION_CHANGE_ALT",
+            "description":              "Delay the mission until the specified altitide is reached.",
+            "friendlyName":             "Wait for altitude",
+            "category":                 "Conditionals",
+            "specifiesCoordinate":      false,
+            "specifiesAltitudeOnly":    true,
             "param1": {
                 "label":            "Rate",
                 "units":            "m/s",
                 "default":          5,
-                "decimalPlaces":    2
-            },
-            "param7": {
-                "label":            "Altitude",
-                "units":            "m",
-                "default":          55,
                 "decimalPlaces":    2
             }
         },

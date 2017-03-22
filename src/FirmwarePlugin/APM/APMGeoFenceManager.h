@@ -14,6 +14,8 @@
 #include "QGCMAVLink.h"
 #include "FactSystem.h"
 
+class QmlObjectListModel;
+
 class APMGeoFenceManager : public GeoFenceManager
 {
     Q_OBJECT
@@ -25,7 +27,7 @@ public:
     // Overrides from GeoFenceManager
     bool            inProgress          (void) const final;
     void            loadFromVehicle     (void) final;
-    void            sendToVehicle       (const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon) final;
+    void            sendToVehicle       (const QGeoCoordinate& breachReturn, QmlObjectListModel& polygon) final;
     bool            circleEnabled       (void) const final { return _circleEnabled; }
     bool            polygonEnabled      (void) const final { return _polygonEnabled; }
     bool            breachReturnEnabled (void) const final { return _breachReturnEnabled; }
@@ -33,6 +35,7 @@ public:
     QVariantList    params              (void) const final { return _params; }
     QStringList     paramLabels         (void) const final { return _paramLabels; }
     QString         editorQml           (void) const final;
+    void            removeAll           (void) final;
 
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);

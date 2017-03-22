@@ -13,6 +13,8 @@
 #include "MAVLinkProtocol.h"
 #include "QGCApplication.h"
 #include "ParameterManager.h"
+#include "QmlObjectListModel.h"
+#include "QGCQGeoCoordinate.h"
 
 const char* APMGeoFenceManager::_fenceTotalParam =  "FENCE_TOTAL";
 const char* APMGeoFenceManager::_fenceActionParam = "FENCE_ACTION";
@@ -44,7 +46,7 @@ APMGeoFenceManager::~APMGeoFenceManager()
 
 }
 
-void APMGeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon)
+void APMGeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlObjectListModel& polygon)
 {
     if (_vehicle->isOfflineEditingVehicle()) {
         return;
@@ -61,21 +63,20 @@ void APMGeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, const
 
     // Validate
     int validatedPolygonCount = 0;
-    if (polygonEnabled()) {
-        if (polygon.count() >= 3) {
-            validatedPolygonCount = polygon.count();
-        }
-        if (polygon.count() > std::numeric_limits<uint8_t>::max()) {
-            _sendError(TooManyPoints, QStringLiteral("Geo-Fence polygon has too many points: %1.").arg(_polygon.count()));
-            validatedPolygonCount = 0;
-        }
+    if (polygon.count() >= 3) {
+        validatedPolygonCount = polygon.count();
+    }
+    if (polygon.count() > std::numeric_limits<uint8_t>::max()) {
+        _sendError(TooManyPoints, QStringLiteral("Geo-Fence polygon has too many points: %1.").arg(_polygon.count()));
+        validatedPolygonCount = 0;
     }
 
     _breachReturnPoint = breachReturn;
+    _polygon.clear();
     if (validatedPolygonCount) {
-        _polygon = polygon;
-    } else {
-        _polygon.clear();
+        for (int i=0; i<polygon.count(); i++) {
+            _polygon.append(polygon.value<QGCQGeoCoordinate*>(i)->coordinate());
+        }
     }
 
     // Total point count, +1 polygon close in last index, +1 for breach in index 0
@@ -306,7 +307,7 @@ void APMGeoFenceManager::_parametersReady(void)
 
 float APMGeoFenceManager::circleRadius(void) const
 {
-    if (_circleEnabled) {
+    if (_circleRadiusFact) {
         return _circleRadiusFact->rawValue().toFloat();
     } else {
         return 0.0;
@@ -327,4 +328,11 @@ QString APMGeoFenceManager::editorQml(void) const
     } else {
         return QStringLiteral("qrc:/FirmwarePlugin/NoGeoFenceEditor.qml");
     }
+}
+
+void APMGeoFenceManager::removeAll(void)
+{
+    QmlObjectListModel emptyPolygon;
+
+    sendToVehicle(_breachReturnPoint, emptyPolygon);
 }

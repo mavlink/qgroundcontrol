@@ -24,7 +24,6 @@ Column {
         anchors.right:  parent.right
         wrapMode:       Text.WordWrap
         text:           qsTr("Click in map to set breach return point.")
-        visible:        geoFenceController.breachReturnSupported
     }
 
     QGCLabel { text: qsTr("Fence Settings:") }
@@ -73,14 +72,15 @@ Column {
         }
     }
 
-    QGCMapPolygonControls {
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        flightMap:      editorMap
-        polygon:        geoFenceController.polygon
-        sectionLabel:   qsTr("Fence Polygon:")
-        visible:        geoFenceController.polygonSupported
+    QGCButton {
+        text:       qsTr("Add fence")
+        visible:    geoFenceController.mapPolygon.count < 3
+        onClicked:  geoFenceController.addFence()
+    }
 
-        onPolygonEditCompleted: geoFenceController.validateBreachReturn()
+    QGCButton {
+        text:       qsTr("Remove fence")
+        visible:    geoFenceController.mapPolygon.count >= 3
+        onClicked:  geoFenceController.removeFence()
     }
 }

@@ -28,6 +28,7 @@ public:
     QVariantList    params          (void) const final { return _params; }
     QStringList     paramLabels     (void) const final { return _paramLabels; }
     QString         editorQml       (void) const final { return QStringLiteral("qrc:/FirmwarePlugin/PX4/PX4GeoFenceEditor.qml"); }
+    void            removeAll       (void) final;
 
 private slots:
     void _circleRadiusRawValueChanged(QVariant value);

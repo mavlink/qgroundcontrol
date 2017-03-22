@@ -52,6 +52,7 @@ QGCCachedTileSet::QGCCachedTileSet(const QString& name)
     , _noMoreTiles(false)
     , _batchRequested(false)
     , _manager(NULL)
+    , _selected(false)
 {
 
 }
@@ -348,4 +349,15 @@ void
 QGCCachedTileSet::setManager(QGCMapEngineManager* mgr)
 {
     _manager = mgr;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCachedTileSet::setSelected(bool sel)
+{
+    _selected = sel;
+    emit selectedChanged();
+    if(_manager) {
+        emit _manager->selectedCountChanged();
+    }
 }

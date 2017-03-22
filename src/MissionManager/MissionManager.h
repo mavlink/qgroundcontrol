@@ -49,6 +49,9 @@ public:
     ///     @param altChangeOnly true: only altitude change, false: lat/lon/alt change
     void writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoCoord, bool altChangeOnly);
 
+    /// Removes all mission items from vehicle
+    void removeAll(void);
+
     /// Error codes returned in error signal
     typedef enum {
         InternalError,
@@ -66,7 +69,7 @@ public:
     static const int _maxRetryCount = 5;
     
 signals:
-    void newMissionItemsAvailable(void);
+    void newMissionItemsAvailable(bool removeAllRequested);
     void inProgressChanged(bool inProgress);
     void error(int errorCode, const QString& errorMsg);
     void currentItemChanged(int currentItem);
