@@ -18,6 +18,7 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 #include "JsonHelper.h"
+#include "QGCQGeoCoordinate.h"
 
 #ifndef __mobile__
 #include "MainWindow.h"
@@ -25,6 +26,7 @@
 #endif
 
 #include <QJsonDocument>
+#include <QJsonArray>
 
 QGC_LOGGING_CATEGORY(GeoFenceControllerLog, "GeoFenceControllerLog")
 
@@ -34,8 +36,10 @@ const char* GeoFenceController::_jsonBreachReturnKey =  "breachReturn";
 GeoFenceController::GeoFenceController(QObject* parent)
     : PlanElementController(parent)
     , _dirty(false)
+    , _mapPolygon(this)
 {
-
+    connect(_mapPolygon.qmlPathModel(), &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
+    connect(_mapPolygon.qmlPathModel(), &QmlObjectListModel::dirtyChanged, this, &GeoFenceController::_polygonDirtyChanged);
 }
 
 GeoFenceController::~GeoFenceController()
@@ -61,7 +65,7 @@ void GeoFenceController::startStaticActiveVehicle(Vehicle* vehicle)
 
 void GeoFenceController::_init(void)
 {
-    connect(&_polygon, &QGCMapPolygon::dirtyChanged, this, &GeoFenceController::_polygonDirtyChanged);
+
 }
 
 void GeoFenceController::setBreachReturnPoint(const QGeoCoordinate& breachReturnPoint)
@@ -139,13 +143,11 @@ bool GeoFenceController::_loadJsonFile(QJsonDocument& jsonDoc, QString& errorStr
     }
 
     if (polygonEnabled()) {
-        if (!_polygon.loadFromJson(json, false /* reauired */, errorString)) {
+        if (!_mapPolygon.loadFromJson(json, true, errorString)) {
             return false;
         }
-    } else {
-        _polygon.clear();
     }
-    _polygon.setDirty(false);
+    _mapPolygon.setDirty(false);
 
     return true;
 }
@@ -289,7 +291,7 @@ void GeoFenceController::saveToFile(const QString& filename)
         }
 
         if (polygonEnabled()) {
-            _polygon.saveToJson(fenceFileObject);
+            _mapPolygon.saveToJson(fenceFileObject);
         }
 
         QJsonDocument saveDoc(fenceFileObject);
@@ -314,7 +316,7 @@ void GeoFenceController::saveToFilePicker(void)
 void GeoFenceController::removeAll(void)
 {
     setBreachReturnPoint(QGeoCoordinate());
-    _polygon.clear();
+    _mapPolygon.clear();
 }
 
 void GeoFenceController::loadFromVehicle(void)
@@ -329,8 +331,8 @@ void GeoFenceController::loadFromVehicle(void)
 void GeoFenceController::sendToVehicle(void)
 {
     if (_activeVehicle->parameterManager()->parametersReady() && !syncInProgress()) {
-        _activeVehicle->geoFenceManager()->sendToVehicle(_breachReturnPoint, _polygon.coordinateList());
-        _polygon.setDirty(false);
+        _activeVehicle->geoFenceManager()->sendToVehicle(_breachReturnPoint, _mapPolygon.pathModel());
+        _mapPolygon.setDirty(false);
         setDirty(false);
     } else {
         qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle call at wrong time" << _activeVehicle->parameterManager()->parametersReady() << syncInProgress();
@@ -344,7 +346,7 @@ bool GeoFenceController::syncInProgress(void) const
 
 bool GeoFenceController::dirty(void) const
 {
-    return _dirty | _polygon.dirty();
+    return _dirty;
 }
 
 
@@ -353,7 +355,7 @@ void GeoFenceController::setDirty(bool dirty)
     if (dirty != _dirty) {
         _dirty = dirty;
         if (!dirty) {
-            _polygon.setDirty(dirty);
+            _mapPolygon.setDirty(dirty);
         }
         emit dirtyChanged(dirty);
     }
@@ -388,9 +390,11 @@ void GeoFenceController::_setDirty(void)
 
 void GeoFenceController::_setPolygonFromManager(const QList<QGeoCoordinate>& polygon)
 {
-    _polygon.setPath(polygon);
-    _polygon.setDirty(false);
-    emit polygonPathChanged(_polygon.path());
+    _mapPolygon.clear();
+    for (int i=0; i<polygon.count(); i++) {
+        _mapPolygon.appendVertex(polygon[i]);
+    }
+    _mapPolygon.setDirty(false);
 }
 
 void GeoFenceController::_setReturnPointFromManager(QGeoCoordinate breachReturnPoint)
@@ -431,3 +435,30 @@ QString GeoFenceController::fileExtension(void) const
 {
     return QGCApplication::fenceFileExtension;
 }
+
+bool GeoFenceController::containsItems(void) const
+{
+    return _mapPolygon.count() > 2;
+}
+
+void GeoFenceController::_updateContainsItems(void)
+{
+    emit containsItemsChanged(containsItems());
+}
+
+void GeoFenceController::removeAllFromVehicle(void)
+{
+    _activeVehicle->geoFenceManager()->removeAll();
+}
+
+void GeoFenceController::addFence(void)
+{
+    // GeoFenceMapVisuals control is resposible for this
+    emit addFencePolygon();
+}
+
+void GeoFenceController::removeFence(void)
+{
+    _mapPolygon.clear();
+}
+

@@ -149,3 +149,10 @@ bool APMRallyPointManager::rallyPointsSupported(void) const
 {
     return _vehicle->parameterManager()->parameterExists(_vehicle->defaultComponentId(), _rallyTotalParam);
 }
+
+void APMRallyPointManager::removeAll(void)
+{
+    QList<QGeoCoordinate> noRallyPoints;
+
+    sendToVehicle(noRallyPoints);
+}

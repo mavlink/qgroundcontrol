@@ -82,9 +82,11 @@ public:
     void saveToFilePicker           (void) final;
     void saveToFile                 (const QString& filename) final;
     void removeAll                  (void) final;
+    void removeAllFromVehicle       (void) final;
     bool syncInProgress             (void) const final;
     bool dirty                      (void) const final;
     void setDirty                   (bool dirty) final;
+    bool containsItems              (void) const final;
 
     QString fileExtension(void) const final;
 
@@ -122,7 +124,7 @@ signals:
     void hoverSpeedChanged(double hoverSpeed);
 
 private slots:
-    void _newMissionItemsAvailableFromVehicle();
+    void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
     void _itemCommandChanged(void);
     void _activeVehicleHomePositionAvailableChanged(bool homePositionAvailable);
     void _activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition);
@@ -131,6 +133,7 @@ private slots:
     void _recalcWaypointLines(void);
     void _recalcAltitudeRangeBearing(void);
     void _homeCoordinateChanged(void);
+    void _updateContainsItems(void);
 
 private:
     void _init(void);

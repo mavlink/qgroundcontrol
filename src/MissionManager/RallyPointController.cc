@@ -40,7 +40,7 @@ RallyPointController::RallyPointController(QObject* parent)
     , _dirty(false)
     , _currentRallyPoint(NULL)
 {
-
+    connect(&_points, &QmlObjectListModel::countChanged, this, &RallyPointController::_updateContainsItems);
 }
 
 RallyPointController::~RallyPointController()
@@ -312,4 +312,19 @@ void RallyPointController::setCurrentRallyPoint(QObject* rallyPoint)
 void RallyPointController::_setFirstPointCurrent(void)
 {
     setCurrentRallyPoint(_points.count() ? _points[0] : NULL);
+}
+
+bool RallyPointController::containsItems(void) const
+{
+    return _points.count() > 0;
+}
+
+void RallyPointController::_updateContainsItems(void)
+{
+    emit containsItemsChanged(containsItems());
+}
+
+void RallyPointController::removeAllFromVehicle(void)
+{
+    _activeVehicle->rallyPointManager()->removeAll();
 }

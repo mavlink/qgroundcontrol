@@ -10,6 +10,7 @@
 #include "QGCMapPolygon.h"
 #include "QGCGeo.h"
 #include "JsonHelper.h"
+#include "QGCQGeoCoordinate.h"
 
 #include <QGeoRectangle>
 #include <QDebug>
@@ -17,21 +18,13 @@
 
 const char* QGCMapPolygon::_jsonPolygonKey = "polygon";
 
-QGCMapPolygon::QGCMapPolygon(QObject* parent)
+QGCMapPolygon::QGCMapPolygon(QObject* newCoordParent, QObject* parent)
     : QObject(parent)
+    , _newCoordParent(newCoordParent)
     , _dirty(false)
 {
-
-}
-
-const QGCMapPolygon& QGCMapPolygon::operator=(const QGCMapPolygon& other)
-{
-    _polygonPath = other._polygonPath;
-    setDirty(true);
-
-    emit pathChanged();
-
-    return *this;
+    connect(&_polygonModel, &QmlObjectListModel::dirtyChanged, this, &QGCMapPolygon::_polygonModelDirtyChanged);
+    connect(&_polygonModel, &QmlObjectListModel::countChanged, this, &QGCMapPolygon::_polygonModelCountChanged);
 }
 
 void QGCMapPolygon::clear(void)
@@ -48,13 +41,18 @@ void QGCMapPolygon::clear(void)
     // will cause the polygon to go away.
     _polygonPath.clear();
 
+    _polygonModel.clearAndDeleteContents();
+
     setDirty(true);
 }
 
-void QGCMapPolygon::adjustCoordinate(int vertexIndex, const QGeoCoordinate coordinate)
+void QGCMapPolygon::adjustVertex(int vertexIndex, const QGeoCoordinate coordinate)
 {
     _polygonPath[vertexIndex] = QVariant::fromValue(coordinate);
     emit pathChanged();
+
+    _polygonModel.value<QGCQGeoCoordinate*>(vertexIndex)->setCoordinate(coordinate);
+
     setDirty(true);
 }
 
@@ -126,9 +124,12 @@ QGeoCoordinate QGCMapPolygon::center(void) const
 void QGCMapPolygon::setPath(const QList<QGeoCoordinate>& path)
 {
     _polygonPath.clear();
+    _polygonModel.clearAndDeleteContents();
     foreach(const QGeoCoordinate& coord, path) {
-        _polygonPath << QVariant::fromValue(coord);
+        _polygonPath.append(QVariant::fromValue(coord));
+        _polygonModel.append(new QGCQGeoCoordinate(coord, _newCoordParent));
     }
+
     setDirty(true);
     emit pathChanged();
 }
@@ -136,6 +137,12 @@ void QGCMapPolygon::setPath(const QList<QGeoCoordinate>& path)
 void QGCMapPolygon::setPath(const QVariantList& path)
 {
     _polygonPath = path;
+
+    _polygonModel.clearAndDeleteContents();
+    for (int i=0; i<_polygonPath.count(); i++) {
+        _polygonModel.append(new QGCQGeoCoordinate(_polygonPath[i].value<QGeoCoordinate>(), _newCoordParent));
+    }
+
     setDirty(true);
     emit pathChanged();
 }
@@ -175,9 +182,70 @@ QList<QGeoCoordinate> QGCMapPolygon::coordinateList(void) const
 {
     QList<QGeoCoordinate> coords;
 
-    for (int i=0; i<count(); i++) {
-        coords.append((*this)[i]);
+    for (int i=0; i<_polygonPath.count(); i++) {
+        coords.append(_polygonPath[i].value<QGeoCoordinate>());
     }
 
     return coords;
+}
+
+void QGCMapPolygon::splitPolygonSegment(int vertexIndex)
+{
+    int nextIndex = vertexIndex + 1;
+    if (nextIndex > _polygonPath.length() - 1) {
+        nextIndex = 0;
+    }
+
+    QGeoCoordinate firstVertex = _polygonPath[vertexIndex].value<QGeoCoordinate>();
+    QGeoCoordinate nextVertex = _polygonPath[nextIndex].value<QGeoCoordinate>();
+
+    double distance = firstVertex.distanceTo(nextVertex);
+    double azimuth = firstVertex.azimuthTo(nextVertex);
+    QGeoCoordinate newVertex = firstVertex.atDistanceAndAzimuth(distance / 2, azimuth);
+
+    if (nextIndex == 0) {
+        appendVertex(newVertex);
+    } else {
+        _polygonModel.insert(nextIndex, new QGCQGeoCoordinate(newVertex, this));
+        _polygonPath.insert(nextIndex, QVariant::fromValue(newVertex));
+        emit pathChanged();
+    }
+}
+
+void QGCMapPolygon::appendVertex(const QGeoCoordinate& coordinate)
+{
+    _polygonPath.append(QVariant::fromValue(coordinate));
+    _polygonModel.append(new QGCQGeoCoordinate(coordinate, _newCoordParent));
+    emit pathChanged();
+}
+
+void QGCMapPolygon::_polygonModelDirtyChanged(bool dirty)
+{
+    if (dirty) {
+        setDirty(true);
+    }
+}
+
+void QGCMapPolygon::removeVertex(int vertexIndex)
+{
+    if (vertexIndex < 0 && vertexIndex > _polygonPath.length() - 1) {
+        qWarning() << "Call to removePolygonCoordinate with bad vertexIndex:count" << vertexIndex << _polygonPath.length();
+        return;
+    }
+
+    if (_polygonPath.length() <= 3) {
+        // Don't allow the user to trash the polygon
+        return;
+    }
+
+    QObject* coordObj = _polygonModel.removeAt(vertexIndex);
+    coordObj->deleteLater();
+
+    _polygonPath.removeAt(vertexIndex);
+    emit pathChanged();
+}
+
+void QGCMapPolygon::_polygonModelCountChanged(int count)
+{
+    emit countChanged(count);
 }

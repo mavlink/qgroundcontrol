@@ -95,27 +95,41 @@ void MissionController::_init(void)
 }
 
 // Called when new mission items have completed downloading from Vehicle
-void MissionController::_newMissionItemsAvailableFromVehicle(void)
+void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllRequested)
 {
     qCDebug(MissionControllerLog) << "_newMissionItemsAvailableFromVehicle";
 
-    if (!_editMode || _missionItemsRequested || _visualItems->count() == 1) {
-        // Fly Mode:
+    if (!_editMode || removeAllRequested || _missionItemsRequested || _visualItems->count() == 1) {
+        // Fly Mode (accept if):
         //      - Always accepts new items from the vehicle so Fly view is kept up to date
-        // Edit Mode:
+        // Edit Mode (accept if):
         //      - Either a load from vehicle was manually requested or
         //      - The initial automatic load from a vehicle completed and the current editor is empty
+        //      - Remove all way requested from Fly view (clear mission on flight end)
 
         QmlObjectListModel* newControllerMissionItems = new QmlObjectListModel(this);
         const QList<MissionItem*>& newMissionItems = _activeVehicle->missionManager()->missionItems();
+        qCDebug(MissionControllerLog) << "loading from vehicle: count"<< newMissionItems.count();
 
-        qCDebug(MissionControllerLog) << "loading from vehicle: count"<< _visualItems->count();
-        foreach(const MissionItem* missionItem, newMissionItems) {
+        int i = 0;
+        if (_activeVehicle->firmwarePlugin()->sendHomePositionToVehicle() && newMissionItems.count() != 0) {
+            // First item is fake home position
+            _addMissionSettings(_activeVehicle, newControllerMissionItems, false /* addToCenter */);
+            MissionSettingsComplexItem* settingsItem = newControllerMissionItems->value<MissionSettingsComplexItem*>(0);
+            if (!settingsItem) {
+                qWarning() << "First item is not settings item";
+                return;
+            }
+            settingsItem->setCoordinate(newMissionItems[0]->coordinate());
+            i = 1;
+        }
+
+        for (; i<newMissionItems.count(); i++) {
+            const MissionItem* missionItem = newMissionItems[i];
             newControllerMissionItems->append(new SimpleMissionItem(_activeVehicle, *missionItem, this));
         }
 
         _deinitAllVisualItems();
-
         _visualItems->deleteLater();
         _visualItems = newControllerMissionItems;
 
@@ -1112,9 +1126,10 @@ void MissionController::_initAllVisualItems(void)
 
     _recalcAll();
 
-    emit visualItemsChanged();
-
     connect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::dirtyChanged);
+    connect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::_updateContainsItems);
+
+    emit visualItemsChanged();
 
     _visualItems->setDirty(false);
 }
@@ -1126,6 +1141,7 @@ void MissionController::_deinitAllVisualItems(void)
     }
 
     disconnect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::dirtyChanged);
+    disconnect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::_updateContainsItems);
 }
 
 void MissionController::_initVisualItem(VisualMissionItem* visualItem)
@@ -1493,4 +1509,20 @@ void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualIte
 
         scanIndex++;
     }
+}
+
+void MissionController::_updateContainsItems(void)
+{
+    emit containsItemsChanged(containsItems());
+}
+
+bool MissionController::containsItems(void) const
+{
+    return _visualItems ? _visualItems->count() > 1 : false;
+}
+
+void MissionController::removeAllFromVehicle(void)
+{
+    _missionItemsRequested = true;
+    _activeVehicle->missionManager()->removeAll();
 }
