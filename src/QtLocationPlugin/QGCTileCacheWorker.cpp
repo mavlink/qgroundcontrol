@@ -157,6 +157,9 @@ QGCCacheWorker::run()
                 case QGCMapTask::taskExport:
                     _exportSets(task);
                     break;
+                case QGCMapTask::taskImport:
+                    _importSets(task);
+                    break;
                 case QGCMapTask::taskTestInternet:
                     _testInternet();
                     break;
@@ -632,6 +635,22 @@ QGCCacheWorker::_resetCacheDatabase(QGCMapTask* mtask)
     query.exec(s);
     _valid = _createDB(_db);
     task->setResetCompleted();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCacheWorker::_importSets(QGCMapTask* mtask)
+{
+    if(!_testTask(mtask)) {
+        return;
+    }
+    QGCImportTileTask* task = static_cast<QGCImportTileTask*>(mtask);
+
+
+
+
+
+    task->setImportCompleted();
 }
 
 //-----------------------------------------------------------------------------
