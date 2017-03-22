@@ -114,6 +114,7 @@ QGCView {
         _tileSetList.visible = true
         infoView.visible = false
         addNewSetView.visible = false
+        QGroundControl.mapEngineManager.resetAction();
     }
 
     function showExport() {
@@ -1047,8 +1048,8 @@ QGCView {
                     BusyIndicator {
                         visible:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionImporting
                         running:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionImporting
-                        width:          ScreenTools.defaultFontPixelWidth
-                        height:         ScreenTools.defaultFontPixelWidth
+                        width:          ScreenTools.defaultFontPixelWidth * 2
+                        height:         width
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     ExclusiveGroup { id: radioGroup }
@@ -1077,7 +1078,7 @@ QGCView {
                         visible:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionDone
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: {
-                            showList()
+                            showList();
                             rootLoader.sourceComponent = null
                         }
                     }
@@ -1107,7 +1108,7 @@ QGCView {
                             text:           qsTr("Cancel")
                             width:          _bigButtonSize * 1.25
                             onClicked: {
-                                showList()
+                                showList();
                                 rootLoader.sourceComponent = null
                             }
                         }
