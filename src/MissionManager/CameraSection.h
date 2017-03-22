@@ -49,6 +49,9 @@ public:
     Fact*   cameraPhotoIntervalTime     (void) { return &_cameraPhotoIntervalTimeFact; }
     Fact*   cameraPhotoIntervalDistance (void) { return &_cameraPhotoIntervalDistanceFact; }
 
+    ///< @return The gimbal yaw specified by this item, NaN if not specified
+    double specifiedGimbalYaw(void) const;
+
     /// Scans the loaded items for the section items
     ///     @param visualItems Item list
     ///     @param scanIndex Index to start scanning from
@@ -75,10 +78,12 @@ signals:
     void dirtyChanged               (bool dirty);
     bool specifyGimbalChanged       (bool specifyGimbal);
     void missionItemCountChanged    (int missionItemCount);
+    void specifiedGimbalYawChanged  (double gimbalYaw);
 
 private slots:
     void _setDirty(void);
     void _setDirtyAndUpdateMissionItemCount(void);
+    void _updateSpecifiedGimbalYaw(void);
 
 private:
     bool    _available;

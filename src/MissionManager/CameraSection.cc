@@ -55,6 +55,8 @@ CameraSection::CameraSection(QObject* parent)
     connect(&_gimbalYawFact,                    &Fact::valueChanged, this, &CameraSection::_setDirty);
     connect(&_cameraPhotoIntervalDistanceFact,  &Fact::valueChanged, this, &CameraSection::_setDirty);
     connect(&_cameraPhotoIntervalTimeFact,      &Fact::valueChanged, this, &CameraSection::_setDirty);
+
+    connect(&_gimbalYawFact,                    &Fact::valueChanged, this, &CameraSection::_updateSpecifiedGimbalYaw);
 }
 
 void CameraSection::setSpecifyGimbal(bool specifyGimbal)
@@ -253,4 +255,14 @@ void CameraSection::setAvailable(bool available)
         _available = available;
         emit availableChanged(available);
     }
+}
+
+double CameraSection::specifiedGimbalYaw(void) const
+{
+    return _specifyGimbal ? _gimbalYawFact.rawValue().toDouble() : std::numeric_limits<double>::quiet_NaN();
+}
+
+void CameraSection::_updateSpecifiedGimbalYaw(void)
+{
+    emit specifiedGimbalYawChanged(specifiedGimbalYaw());
 }
