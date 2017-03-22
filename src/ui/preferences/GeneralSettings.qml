@@ -277,7 +277,7 @@ QGCView {
                                 icon:       StandardIcon.Warning
                                 standardButtons: StandardButton.Yes | StandardButton.No
                                 title:      qsTr("Clear Settings")
-                                text:       qsTr("All saved settings will be reset the next time you start QGroundControl. Is this really what you want?")
+                                text:       qsTr("All saved settings will be reset the next time you start %1. Is this really what you want?").arg(QGroundControl.appName)
                                 onYes: {
                                     QGroundControl.deleteAllSettingsNextBoot()
                                     clearDialog.visible = false
@@ -598,7 +598,7 @@ QGCView {
 
                 QGCLabel {
                     anchors.horizontalCenter:   parent.horizontalCenter
-                    text:                       qsTr("QGroundControl Version: " + QGroundControl.qgcVersion)
+                    text:                       qsTr("%1 Version: %2").arg(QGroundControl.appName).arg(QGroundControl.qgcVersion)
                 }
             } // settingsColumn
         } // QGCFlickable

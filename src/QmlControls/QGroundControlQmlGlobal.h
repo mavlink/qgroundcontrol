@@ -37,6 +37,8 @@ public:
     QGroundControlQmlGlobal(QGCApplication* app);
     ~QGroundControlQmlGlobal();
 
+    Q_PROPERTY(QString              appName             READ appName                CONSTANT)
+
     Q_PROPERTY(FlightMapSettings*   flightMapSettings   READ flightMapSettings      CONSTANT)
     Q_PROPERTY(LinkManager*         linkManager         READ linkManager            CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager READ multiVehicleManager    CONSTANT)
@@ -123,6 +125,7 @@ public:
 
     // Property accesors
 
+    QString                 appName             ()  { return qgcApp()->applicationName(); }
     FlightMapSettings*      flightMapSettings   ()  { return _flightMapSettings; }
     LinkManager*            linkManager         ()  { return _linkManager; }
     MultiVehicleManager*    multiVehicleManager ()  { return _multiVehicleManager; }
