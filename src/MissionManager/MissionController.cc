@@ -560,7 +560,7 @@ bool MissionController::_loadTextMissionFile(Vehicle* vehicle, QTextStream& stre
             }
         }
     } else {
-        errorString = QStringLiteral("The mission file is not compatible with this version of QGroundControl.");
+        errorString = QStringLiteral("The mission file is not compatible with this version of %1.").arg(qgcApp()->applicationName());
         return false;
     }
 

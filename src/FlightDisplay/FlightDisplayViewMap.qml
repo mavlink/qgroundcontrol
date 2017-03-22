@@ -27,35 +27,64 @@ FlightMap {
     anchors.fill:   parent
     mapName:        _mapName
 
-    gesture.acceptedGestures: _followVehicle ?
-                                          MapGestureArea.PinchGesture :
-                                          MapGestureArea.PinchGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
-
     property alias  missionController: missionController
     property var    flightWidgets
     property var    rightPanelWidth
 
-    property bool   _followVehicle:                 true
+    property bool   _followVehicleSetting:          true                                                    ///< User facing setting for follow vehicle
+    property bool   _followVehicle:                 _followVehicleSetting && _activeVehicleCoordinateValid  ///< Control map follow vehicle functionality
     property var    _activeVehicle:                 QGroundControl.multiVehicleManager.activeVehicle
     property bool   _activeVehicleCoordinateValid:  _activeVehicle ? _activeVehicle.coordinateValid : false
     property var    activeVehicleCoordinate:        _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property var    _gotoHereCoordinate:            QtPositioning.coordinate()
     property int    _retaskSequence:                0
     property real   _toolButtonTopMargin:           parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
-
-    property bool   followVehicleConnection:        _followVehicle  ///< Only use to create connection on
+    property bool   _firstVehicleCoordinate:        false
+    property bool   _centerUpdateFromTimer:         true
 
     Component.onCompleted: {
         QGroundControl.flightMapPosition = center
         QGroundControl.flightMapZoom = zoomLevel
     }
-    onCenterChanged: QGroundControl.flightMapPosition = center
+
     onZoomLevelChanged: QGroundControl.flightMapZoom = zoomLevel
 
+    onCenterChanged: {
+        if (_centerUpdateFromTimer) {
+            _centerUpdateFromTimer = false
+        } else {
+            vehicleCenterTimer.restart()
+        }
+
+        QGroundControl.flightMapPosition = center
+    }
+
     onActiveVehicleCoordinateChanged: {
-        if (_followVehicle && _activeVehicleCoordinateValid && activeVehicleCoordinate.isValid) {
+        if (!_firstVehicleCoordinate && _activeVehicleCoordinateValid) {
+            _firstVehicleCoordinate = true
+            updateMapToVehiclePosition()
+        }
+    }
+
+    function updateMapToVehiclePosition() {
+        if (_followVehicle) {
             _initialMapPositionSet = true
-            flightMap.center  = activeVehicleCoordinate
+            _firstVehicleCoordinate = true
+            _centerUpdateFromTimer = true
+            flightMap.center = activeVehicleCoordinate
+        }
+    }
+
+    Timer {
+        id:                 vehicleCenterTimer
+        interval:           5000
+        running:            true
+        triggeredOnStart:   true
+        repeat:             true
+
+        onTriggered: {
+            triggeredOnStart = false
+            updateMapToVehiclePosition()
         }
     }
 
@@ -149,9 +178,9 @@ FlightMap {
             map:                _flightMap
             fitFunctions:       mapFitFunctions
             showFollowVehicle:  true
-            followVehicle:      _followVehicle
+            followVehicle:      _followVehicleSetting
 
-            onFollowVehicleChanged: _followVehicle = followVehicle
+            onFollowVehicleChanged: _followVehicleSetting = followVehicle
         }
     }
 

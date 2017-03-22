@@ -17,6 +17,8 @@
 #include "QGCFileDialog.h"
 #include "QGCApplication.h"
 #include "QGCFileDownload.h"
+#include "QGCOptions.h"
+#include "QGCCorePlugin.h"
 
 #include <QStandardPaths>
 #include <QRegularExpression>
@@ -41,7 +43,9 @@ uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
 
 /// @Brief Constructs a new FirmwareUpgradeController Widget. This widget is used within the PX4VehicleConfig set of screens.
 FirmwareUpgradeController::FirmwareUpgradeController(void)
-    : _downloadManager(NULL)
+    : _singleFirmwareURL(qgcApp()->toolbox()->corePlugin()->options()->firmwareUpgradeSingleURL())
+    , _singleFirmwareMode(!_singleFirmwareURL.isEmpty())
+    , _downloadManager(NULL)
     , _downloadNetworkReply(NULL)
     , _statusLog(NULL)
     , _selectedFirmwareType(StableFirmware)
@@ -108,6 +112,11 @@ void FirmwareUpgradeController::flash(AutoPilotStackType_t stackType,
 void FirmwareUpgradeController::flash(const FirmwareIdentifier& firmwareId)
 {
     flash(firmwareId.autopilotStackType, firmwareId.firmwareType, firmwareId.firmwareVehicleType);
+}
+
+void FirmwareUpgradeController::flashSingleFirmwareMode(void)
+{
+    flash(SingleFirmwareMode, StableFirmware, DefaultVehicleFirmware);
 }
 
 void FirmwareUpgradeController::cancel(void)
@@ -202,7 +211,8 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackAPM, DeveloperFirmware, CopterFirmware,         "http://firmware.ardupilot.org/Copter/latest/PX4/ArduCopter-v4.px4"},
         { AutoPilotStackAPM, DeveloperFirmware, HeliFirmware,           "http://firmware.ardupilot.org/Copter/latest/PX4-heli/ArduCopter-v4.px4"},
         { AutoPilotStackAPM, DeveloperFirmware, PlaneFirmware,          "http://firmware.ardupilot.org/Plane/latest/PX4/ArduPlane-v4.px4"},
-        { AutoPilotStackAPM, DeveloperFirmware, RoverFirmware,          "http://firmware.ardupilot.org/Rover/latest/PX4/APMrover2-v4.px4"}
+        { AutoPilotStackAPM, DeveloperFirmware, RoverFirmware,          "http://firmware.ardupilot.org/Rover/latest/PX4/APMrover2-v4.px4"},
+        { SingleFirmwareMode,StableFirmware,    DefaultVehicleFirmware, _singleFirmwareURL},
     };
 
     //////////////////////////////////// PX4FMUV2 firmwares //////////////////////////////////////////////////
@@ -228,6 +238,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackAPM, DeveloperFirmware, PlaneFirmware,          "http://firmware.ardupilot.org/Plane/latest/PX4/ArduPlane-v2.px4"},
         { AutoPilotStackAPM, DeveloperFirmware, RoverFirmware,          "http://firmware.ardupilot.org/Rover/latest/PX4/APMrover2-v2.px4"},
         { AutoPilotStackAPM, DeveloperFirmware, SubFirmware,            "http://firmware.ardupilot.org/Sub/latest/PX4/ArduSub-v2.px4"},
+        { SingleFirmwareMode,StableFirmware,    DefaultVehicleFirmware, _singleFirmwareURL},
     };
 
     //////////////////////////////////// PX4FMU aerocore firmwares //////////////////////////////////////////////////
@@ -299,6 +310,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/tap-v1_default.px4"},
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/tap-v1_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/tap-v1_default.px4"},
+        { SingleFirmwareMode,StableFirmware,    DefaultVehicleFirmware, _singleFirmwareURL},
     };
     //////////////////////////////////// ASCV1 firmwares //////////////////////////////////////////////////
     FirmwareToUrlElement_t rgASCV1FirmwareArray[] = {
@@ -376,6 +388,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         const FirmwareToUrlElement_t& element = rg3DRRadioFirmwareArray[i];
         _rg3DRRadioFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
+
+    size = sizeof(rg3DRRadioFirmwareArray)/sizeof(rg3DRRadioFirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rg3DRRadioFirmwareArray[i];
+        _rg3DRRadioFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
 }
 
 /// @brief Called when the findBootloader process is unable to sync to the bootloader. Moves the state
@@ -429,7 +447,6 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
                                                            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation), // Initial directory
                                                            "Firmware Files (*.px4 *.bin *.ihx)");                               // File filter
     } else {
-
         if (prgFirmware->contains(firmwareId)) {
             _firmwareFilename = prgFirmware->value(firmwareId);
         } else {

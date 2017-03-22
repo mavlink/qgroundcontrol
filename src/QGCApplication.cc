@@ -191,12 +191,12 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     if (!_runningUnitTests) {
         if (getuid() == 0) {
             QMessageBox msgBox;
-            msgBox.setInformativeText("You are running QGroundControl as root. "
-                                      "You should not do this since it will cause other issues with QGroundControl. "
-                                      "QGroundControl will now exit. "
+            msgBox.setInformativeText(tr("You are running %1 as root. "
+                                      "You should not do this since it will cause other issues with %1. "
+                                      "%1 will now exit. "
                                       "If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:\n"
                                       "sudo usermod -a -G dialout $USER\n"
-                                      "sudo apt-get remove modemmanager");
+                                      "sudo apt-get remove modemmanager").arg(qgcApp()->applicationName()));
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.setDefaultButton(QMessageBox::Ok);
             msgBox.exec();

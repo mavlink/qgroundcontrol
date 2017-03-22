@@ -141,7 +141,7 @@ Rectangle {
                 horizontalAlignment:    Text.AlignHCenter
                 wrapMode:               Text.WordWrap
                 font.pointSize:         ScreenTools.mediumFontPointSize
-                text:                   "QGroundControl does not currently support setup of your vehicle type. " +
+                text:                   tr("%1 does not currently support setup of your vehicle type. ").arg(QGroundControl.appName) +
                                         "If your vehicle is already configured you can still Fly."
 
                 onLinkActivated: Qt.openUrlExternally(link)
@@ -162,7 +162,7 @@ Rectangle {
                 horizontalAlignment:    Text.AlignHCenter
                 wrapMode:               Text.WordWrap
                 font.pointSize:         ScreenTools.largeFontPointSize
-                text:                   "Connect vehicle to your device and QGroundControl will automatically detect it." +
+                text:                   qsTr("Connect vehicle to your device and %1 will automatically detect it.").arg(QGroundControl.appName) +
                                         (ScreenTools.isMobile ? "" : " Click Firmware on the left to upgrade your vehicle.")
 
                 onLinkActivated: Qt.openUrlExternally(link)

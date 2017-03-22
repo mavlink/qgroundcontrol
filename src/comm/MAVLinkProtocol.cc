@@ -193,7 +193,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 {
                     warnedUserNonMavlink = true;
                     emit protocolStatusMessage(tr("MAVLink Protocol"), tr("There is a MAVLink Version or Baud Rate Mismatch. "
-                                                                          "Please check if the baud rates of QGroundControl and your autopilot are the same."));
+                                                                          "Please check if the baud rates of %1 and your autopilot are the same.").arg(qgcApp()->applicationName()));
                 }
             }
         }

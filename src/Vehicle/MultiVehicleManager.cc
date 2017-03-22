@@ -97,16 +97,16 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
                                       << vehicleType;
 
     if (vehicleId == _mavlinkProtocol->getSystemId()) {
-        _app->showMessage(QString("Warning: A vehicle is using the same system id as QGroundControl: %1").arg(vehicleId));
+        _app->showMessage(QString("Warning: A vehicle is using the same system id as %1: %2").arg(qgcApp()->applicationName()).arg(vehicleId));
     }
 
 //    QSettings settings;
 //    bool mavlinkVersionCheck = settings.value("VERSION_CHECK_ENABLED", true).toBool();
 //    if (mavlinkVersionCheck && vehicleMavlinkVersion != MAVLINK_VERSION) {
 //        _ignoreVehicleIds += vehicleId;
-//        _app->showMessage(QString("The MAVLink protocol version on vehicle #%1 and QGroundControl differ! "
+//        _app->showMessage(QString("The MAVLink protocol version on vehicle #%1 and %2 differ! "
 //                                  "It is unsafe to use different MAVLink versions. "
-//                                  "QGroundControl therefore refuses to connect to vehicle #%1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(vehicleId).arg(vehicleMavlinkVersion).arg(MAVLINK_VERSION));
+//                                  "%2 therefore refuses to connect to vehicle #%1, which sends MAVLink version %3 (%2 uses version %4).").arg(vehicleId).arg(qgcApp()->applicationName()).arg(vehicleMavlinkVersion).arg(MAVLINK_VERSION));
 //        return;
 //    }
 

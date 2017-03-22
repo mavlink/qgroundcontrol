@@ -80,8 +80,9 @@ public:
     Q_PROPERTY(bool     dirty                   READ dirty                  WRITE setDirty              NOTIFY dirtyChanged)                    ///< Item is dirty and requires save/send
     Q_PROPERTY(bool     isCurrentItem           READ isCurrentItem          WRITE setIsCurrentItem      NOTIFY isCurrentItemChanged)
     Q_PROPERTY(int      sequenceNumber          READ sequenceNumber         WRITE setSequenceNumber     NOTIFY sequenceNumberChanged)
-    Q_PROPERTY(bool     specifiesCoordinate     READ specifiesCoordinate                                NOTIFY specifiesCoordinateChanged)      ///< Item is associated with a coordinate position
-    Q_PROPERTY(bool     isStandaloneCoordinate  READ isStandaloneCoordinate                             NOTIFY isStandaloneCoordinateChanged)   ///< Waypoint line does not go through item
+    Q_PROPERTY(bool     specifiesCoordinate     READ specifiesCoordinate                                NOTIFY specifiesCoordinateChanged)      ///< true: Item is associated with a coordinate position
+    Q_PROPERTY(bool     isStandaloneCoordinate  READ isStandaloneCoordinate                             NOTIFY isStandaloneCoordinateChanged)   ///< true: Waypoint line does not go through item
+    Q_PROPERTY(bool     specifiesAltitudeOnly   READ specifiesAltitudeOnly                              NOTIFY specifiesAltitudeOnlyChanged)    ///< true: Item has altitude only, no full coordinate
     Q_PROPERTY(bool     isSimpleItem            READ isSimpleItem                                       NOTIFY isSimpleItemChanged)             ///< Simple or Complex MissionItem
     Q_PROPERTY(QString  editorQml               MEMBER _editorQml                                       CONSTANT)                               ///< Qml code for editing this item
     Q_PROPERTY(QString  mapVisualQML            READ mapVisualQML                                       CONSTANT)                               ///< QMl code for map visuals
@@ -119,6 +120,7 @@ public:
     virtual bool            isSimpleItem            (void) const = 0;
     virtual bool            isStandaloneCoordinate  (void) const = 0;
     virtual bool            specifiesCoordinate     (void) const = 0;
+    virtual bool            specifiesAltitudeOnly   (void) const = 0;;
     virtual QString         commandDescription      (void) const = 0;
     virtual QString         commandName             (void) const = 0;
     virtual QString         abbreviation            (void) const = 0;
@@ -169,6 +171,7 @@ signals:
     void isSimpleItemChanged            (bool isSimpleItem);
     void specifiesCoordinateChanged     (void);
     void isStandaloneCoordinateChanged  (void);
+    void specifiesAltitudeOnlyChanged     (void);
     void flightSpeedChanged             (double flightSpeed);
     void lastSequenceNumberChanged      (int sequenceNumber);
 
