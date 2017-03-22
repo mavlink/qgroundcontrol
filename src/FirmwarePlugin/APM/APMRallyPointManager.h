@@ -27,6 +27,8 @@ public:
     void sendToVehicle          (const QList<QGeoCoordinate>& rgPoints) final;
     bool rallyPointsSupported   (void) const final;
 
+    void removeAll              (void);
+
     QString editorQml(void) const final { return QStringLiteral("qrc:/FirmwarePlugin/APM/APMRallyPointEditor.qml"); }
 
 private slots:

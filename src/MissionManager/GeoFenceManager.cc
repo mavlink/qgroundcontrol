@@ -9,6 +9,7 @@
 
 #include "GeoFenceManager.h"
 #include "Vehicle.h"
+#include "QmlObjectListModel.h"
 
 QGC_LOGGING_CATEGORY(GeoFenceManagerLog, "GeoFenceManagerLog")
 
@@ -37,7 +38,7 @@ void GeoFenceManager::loadFromVehicle(void)
     emit loadComplete(QGeoCoordinate(), QList<QGeoCoordinate>());
 }
 
-void GeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon)
+void GeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlObjectListModel& polygon)
 {
     Q_UNUSED(breachReturn);
     Q_UNUSED(polygon);

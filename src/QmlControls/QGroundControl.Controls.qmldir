@@ -10,6 +10,8 @@ ExclusiveGroupItem      1.0 ExclusiveGroupItem.qml
 FactSliderPanel         1.0 FactSliderPanel.qml
 FlightModeDropdown      1.0 FlightModeDropdown.qml
 FlightModeMenu          1.0 FlightModeMenu.qml
+GeoFenceEditor          1.0 GeoFenceEditor.qml
+GeoFenceMapVisuals      1.0 GeoFenceMapVisuals.qml
 GuidedBar               1.0 GuidedBar.qml
 IndicatorButton         1.0 IndicatorButton.qml
 JoystickThumbPad        1.0 JoystickThumbPad.qml

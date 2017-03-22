@@ -38,6 +38,8 @@ public:
     /// Send the current settings to the vehicle
     virtual void sendToVehicle(const QList<QGeoCoordinate>& rgPoints);
 
+    virtual void removeAll(void) { };
+
     virtual bool rallyPointsSupported(void) const { return false; }
 
     QList<QGeoCoordinate> points(void) const { return _rgPoints; }

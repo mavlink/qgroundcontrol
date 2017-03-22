@@ -33,7 +33,7 @@ public:
     
     int count(void) const;
     
-    bool dirty(void) { return _dirty; }
+    bool dirty(void) const { return _dirty; }
     void setDirty(bool dirty);
     
     void append(QObject* object);
