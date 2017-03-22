@@ -481,7 +481,20 @@ QGCMapEngineManager::_actionProgressHandler(int percentage)
 void
 QGCMapEngineManager::_actionCompleted()
 {
+    ImportAction oldState = _importAction;
     _importAction = ActionDone;
+    emit importActionChanged();
+    //-- If we just imported, reload it all
+    if(oldState == ActionImporting) {
+        loadTileSets();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMapEngineManager::resetAction()
+{
+    _importAction = ActionNone;
     emit importActionChanged();
 }
 

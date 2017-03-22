@@ -73,6 +73,7 @@ public:
     Q_INVOKABLE void                selectNone              ();
     Q_INVOKABLE bool                exportSets              (QString path = QString());
     Q_INVOKABLE bool                importSets              (QString path = QString());
+    Q_INVOKABLE void                resetAction             ();
 
     int                             tileX0                  () { return _totalSet.tileX0; }
     int                             tileX1                  () { return _totalSet.tileX1; }
