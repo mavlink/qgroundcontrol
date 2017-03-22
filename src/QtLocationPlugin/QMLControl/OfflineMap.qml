@@ -858,11 +858,13 @@ QGCView {
             QGCButton {
                 text:           qsTr("Import")
                 width:          _buttonSize
+                visible:        !ScreenTools.isMobile
                 onClicked:      rootLoader.sourceComponent = importDialog
             }
             QGCButton {
                 text:           qsTr("Export")
                 width:          _buttonSize
+                visible:        !ScreenTools.isMobile
                 enabled:        QGroundControl.mapEngineManager.tileSets.count > 1
                 onClicked:      showExport()
             }
@@ -939,7 +941,7 @@ QGCView {
                 width:          _bigButtonSize
                 enabled:        QGroundControl.mapEngineManager.selectedCount > 0
                 onClicked: {
-                    showList()
+                    rootLoader.sourceComponent = exportToDevice
                 }
             }
             QGCButton {
@@ -1100,8 +1102,7 @@ QGCView {
                             text:           qsTr("Import From Device")
                             width:          _bigButtonSize * 1.25
                             onClicked: {
-                                showList();
-                                rootLoader.sourceComponent = null
+                                rootLoader.sourceComponent = importFromDevice
                             }
                         }
                         QGCButton {
@@ -1111,6 +1112,96 @@ QGCView {
                                 showList();
                                 rootLoader.sourceComponent = null
                             }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: importFromDevice
+        Rectangle {
+            width:      mainWindow.width
+            height:     mainWindow.height
+            color:      "black"
+            anchors.centerIn: parent
+            Rectangle {
+                width:  parent.width  * 0.45
+                height: importCol.height * 1.5
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  qgcPal.windowShadeDark
+                border.color: qgcPal.text
+                anchors.centerIn: parent
+                Column {
+                    id:                 importCol
+                    spacing:            ScreenTools.defaultFontPixelHeight
+                    width:              parent.width
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           qsTr("Map Tile Set Import From Device");
+                        font.family:        ScreenTools.demiboldFontFamily
+                        font.pointSize:     ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           qsTr("NOT YET IMPLEMENTED");
+                        font.family:        ScreenTools.demiboldFontFamily
+                        font.pointSize:     ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCButton {
+                        text:           qsTr("Close")
+                        width:          _bigButtonSize * 1.25
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        onClicked: {
+                            showList();
+                            rootLoader.sourceComponent = null
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: exportToDevice
+        Rectangle {
+            width:      mainWindow.width
+            height:     mainWindow.height
+            color:      "black"
+            anchors.centerIn: parent
+            Rectangle {
+                width:  parent.width  * 0.45
+                height: importCol.height * 1.5
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  qgcPal.windowShadeDark
+                border.color: qgcPal.text
+                anchors.centerIn: parent
+                Column {
+                    id:                 importCol
+                    spacing:            ScreenTools.defaultFontPixelHeight
+                    width:              parent.width
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           qsTr("Map Tile Set Export To Device");
+                        font.family:        ScreenTools.demiboldFontFamily
+                        font.pointSize:     ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           qsTr("NOT YET IMPLEMENTED");
+                        font.family:        ScreenTools.demiboldFontFamily
+                        font.pointSize:     ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCButton {
+                        text:           qsTr("Close")
+                        width:          _bigButtonSize * 1.25
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        onClicked: {
+                            showList();
+                            rootLoader.sourceComponent = null
                         }
                     }
                 }
