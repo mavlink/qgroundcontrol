@@ -12,11 +12,16 @@ QGCFlickable {
     contentHeight:  geoFenceEditorRect.height
     clip:           true
 
+    property real   availableWidth
+    property real   availableHeight
+    property var    myGeoFenceController
+    property var    flightMap
+
     readonly property real  _editFieldWidth:    Math.min(width - _margin * 2, ScreenTools.defaultFontPixelWidth * 15)
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
 
-    property var polygon: geoFenceController.polygon
+    property var polygon: myGeoFenceController.polygon
 
     Rectangle {
         id:     geoFenceEditorRect
@@ -60,9 +65,11 @@ QGCFlickable {
                 anchors.margins:    _margin
                 anchors.top:        geoLabel.bottom
                 anchors.left:       parent.left
-                source:             geoFenceController.editorQml
+                source:             myGeoFenceController.editorQml
 
-                property real availableWidth: parent.width - (_margin * 2)
+                property real   availableWidth:     parent.width - (_margin * 2)
+                property var    geoFenceController: myGeoFenceController
+                property var    myFlightMap:        flightMap
             }
         }
     }

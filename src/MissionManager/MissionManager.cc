@@ -73,7 +73,7 @@ void MissionManager::writeMissionItems(const QList<MissionItem*>& missionItems)
             }
         }
     }
-    emit newMissionItemsAvailable();
+    emit newMissionItemsAvailable(missionItems.count() == 0);
 
     qCDebug(MissionManagerLog) << "writeMissionItems count:" << _missionItems.count();
     
@@ -306,7 +306,7 @@ void MissionManager::_readTransactionComplete(void)
     _vehicle->sendMessageOnLink(_dedicatedLink, message);
 
     _finishTransaction(true);
-    emit newMissionItemsAvailable();
+    emit newMissionItemsAvailable(false);
 }
 
 void MissionManager::_handleMissionCount(const mavlink_message_t& message)
@@ -737,7 +737,7 @@ void MissionManager::_finishTransaction(bool success)
     if (!success && _readTransactionInProgress) {
         // Read from vehicle failed, clear partial list
         _missionItems.clear();
-        emit newMissionItemsAvailable();
+        emit newMissionItemsAvailable(false);
     }
 
     _itemIndicesToRead.clear();
@@ -766,4 +766,11 @@ void MissionManager::_handleMissionCurrent(const mavlink_message_t& message)
         _currentMissionItem = missionCurrent.seq;
         emit currentItemChanged(_currentMissionItem);
     }
+}
+
+void MissionManager::removeAll(void)
+{
+    QList<MissionItem*> emptyList;
+
+    writeMissionItems(emptyList);
 }

@@ -129,9 +129,7 @@ QGCView {
             mapFitFunctions.fitMapViewportToMissionItems()
         }
 
-        onVisualItemsChanged: {
-            itemDragger.clearItem()
-        }
+        onVisualItemsChanged: itemDragger.clearItem()
 
         onNewItemsFromVehicle: {
             if (_visualItems && _visualItems.count != 1) {
@@ -162,17 +160,6 @@ QGCView {
             } else {
                 geoFenceController.loadFromFilePicker()
                 mapFitFunctions.fitMapViewportToFenceItems()
-            }
-        }
-
-        function validateBreachReturn() {
-            if (geoFenceController.polygon.path.length > 0) {
-                if (!geoFenceController.polygon.containsCoordinate(geoFenceController.breachReturnPoint)) {
-                    geoFenceController.breachReturnPoint = geoFenceController.polygon.center()
-                }
-                if (!geoFenceController.polygon.containsCoordinate(geoFenceController.breachReturnPoint)) {
-                    geoFenceController.breachReturnPoint = geoFenceController.polygon.path[0]
-                }
             }
         }
 
@@ -393,12 +380,6 @@ QGCView {
                                 insertSimpleMissionItem(coordinate, missionController.visualItems.count)
                             }
                             break
-                        case _layerGeoFence:
-                            if (geoFenceController.breachReturnEnabled) {
-                                geoFenceController.breachReturnPoint = coordinate
-                                geoFenceController.validateBreachReturn()
-                            }
-                            break
                         case _layerRallyPoints:
                             if (rallyPointController.rallyPointsSupported) {
                                 rallyPointController.addPoint(coordinate)
@@ -492,6 +473,7 @@ QGCView {
                     anchors.top:        parent.top
                     anchors.leftMargin: parent.width - _rightPanelWidth
                     anchors.left:       parent.left
+                    z:                  QGroundControl.zOrderWidgets
                     spacing:            _horizontalMargin
                     visible:            QGroundControl.corePlugin.options.enablePlanViewSelector
 
@@ -613,40 +595,20 @@ QGCView {
                     anchors.top:        planElementSelectorRow.bottom
                     anchors.right:      parent.right
                     opacity:            _rightPanelOpacity
-                    z:                  QGroundControl.zOrderTopMost
-                    source:             _editingLayer == _layerGeoFence ? "qrc:/qml/GeoFenceEditor.qml" : ""
+                    z:                  QGroundControl.zOrderWidgets
+                    sourceComponent:    _editingLayer == _layerGeoFence ? geoFenceEditorComponent : undefined
 
-                    property real availableWidth:   _rightPanelWidth
-                    property real availableHeight:  ScreenTools.availableHeight
+                    property real   availableWidth:         _rightPanelWidth
+                    property real   availableHeight:        ScreenTools.availableHeight
+                    property var    myGeoFenceController:   geoFenceController
                 }
 
-                // GeoFence polygon
-                MapPolygon {
-                    border.color:   "#80FF0000"
-                    border.width:   3
-                    path:           geoFenceController.polygon.path
-                    z:              QGroundControl.zOrderMapItems
-                    visible:        geoFenceController.polygonEnabled
-                }
-
-                // GeoFence circle
-                MapCircle {
-                    border.color:   "#80FF0000"
-                    border.width:   3
-                    center:         missionController.plannedHomePosition
-                    radius:         geoFenceController.circleRadius
-                    z:              QGroundControl.zOrderMapItems
-                    visible:        geoFenceController.circleEnabled
-                }
-
-                // GeoFence breach return point
-                MapQuickItem {
-                    anchorPoint.x:  sourceItem.anchorPointX
-                    anchorPoint.y:  sourceItem.anchorPointY
-                    coordinate:     geoFenceController.breachReturnPoint
-                    visible:        geoFenceController.breachReturnEnabled
-                    sourceItem:     MissionItemIndexLabel { label: "F" }
-                    z:              QGroundControl.zOrderMapItems
+                GeoFenceMapVisuals {
+                    map:                    editorMap
+                    myGeoFenceController:   geoFenceController
+                    interactive:            _editingLayer == _layerGeoFence
+                    homePosition:           missionController.plannedHomePosition
+                    planView:               true
                 }
 
                 // Rally Point Editor
@@ -996,5 +958,16 @@ QGCView {
                 }
             }
         } // Column
+    }
+
+    Component {
+        id: geoFenceEditorComponent
+
+        GeoFenceEditor {
+            availableWidth:         _rightPanelWidth
+            availableHeight:        ScreenTools.availableHeight
+            myGeoFenceController:   geoFenceController
+            flightMap:              editorMap
+        }
     }
 } // QGCVIew
