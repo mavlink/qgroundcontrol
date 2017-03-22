@@ -30,7 +30,8 @@
 #include "time.h"
 
 const char* kDefaultSet = "Default Tile Set";
-const QString kSession  = QLatin1String("QGeoTileWorkerSession");
+const QString kSession          = QLatin1String("QGeoTileWorkerSession");
+const QString kExportSession    = QLatin1String("QGeoTileExportSession");
 
 QGC_LOGGING_CATEGORY(QGCTileCacheLog, "QGCTileCacheLog")
 
@@ -153,6 +154,12 @@ QGCCacheWorker::run()
                 case QGCMapTask::taskReset:
                     _resetCacheDatabase(task);
                     break;
+                case QGCMapTask::taskExport:
+                    _exportSets(task);
+                    break;
+                case QGCMapTask::taskImport:
+                    _importSets(task);
+                    break;
                 case QGCMapTask::taskTestInternet:
                     _testInternet();
                     break;
@@ -262,8 +269,7 @@ QGCCacheWorker::_saveTile(QGCMapTask *mtask)
 void
 QGCCacheWorker::_getTile(QGCMapTask* mtask)
 {
-    if(!_valid) {
-        mtask->setError("No Cache Database");
+    if(!_testTask(mtask)) {
         return;
     }
     bool found = false;
@@ -291,8 +297,7 @@ QGCCacheWorker::_getTile(QGCMapTask* mtask)
 void
 QGCCacheWorker::_getTileSets(QGCMapTask* mtask)
 {
-    if(!_valid) {
-        mtask->setError("No Cache Database");
+    if(!_testTask(mtask)) {
         return;
     }
     QGCFetchTileSetTask* task = static_cast<QGCFetchTileSetTask*>(mtask);
@@ -506,8 +511,7 @@ QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
 void
 QGCCacheWorker::_getTileDownloadList(QGCMapTask* mtask)
 {
-    if(!_valid) {
-        mtask->setError("No Cache Database");
+    if(!_testTask(mtask)) {
         return;
     }
     QList<QGCTile*> tiles;
@@ -538,8 +542,7 @@ QGCCacheWorker::_getTileDownloadList(QGCMapTask* mtask)
 void
 QGCCacheWorker::_updateTileDownloadState(QGCMapTask* mtask)
 {
-    if(!_valid) {
-        mtask->setError("No Cache Database");
+    if(!_testTask(mtask)) {
         return;
     }
     QGCUpdateTileDownloadStateTask* task = static_cast<QGCUpdateTileDownloadStateTask*>(mtask);
@@ -563,8 +566,7 @@ QGCCacheWorker::_updateTileDownloadState(QGCMapTask* mtask)
 void
 QGCCacheWorker::_pruneCache(QGCMapTask* mtask)
 {
-    if(!_valid) {
-        mtask->setError("No Cache Database");
+    if(!_testTask(mtask)) {
         return;
     }
     QGCPruneCacheTask* task = static_cast<QGCPruneCacheTask*>(mtask);
@@ -594,8 +596,7 @@ QGCCacheWorker::_pruneCache(QGCMapTask* mtask)
 void
 QGCCacheWorker::_deleteTileSet(QGCMapTask* mtask)
 {
-    if(!_valid) {
-        mtask->setError("No Cache Database");
+    if(!_testTask(mtask)) {
         return;
     }
     QGCDeleteTileSetTask* task = static_cast<QGCDeleteTileSetTask*>(mtask);
@@ -613,12 +614,12 @@ QGCCacheWorker::_deleteTileSet(QGCMapTask* mtask)
     _updateTotals();
     task->setTileSetDeleted();
 }
+
 //-----------------------------------------------------------------------------
 void
 QGCCacheWorker::_resetCacheDatabase(QGCMapTask* mtask)
 {
-    if(!_valid) {
-        mtask->setError("No Cache Database");
+    if(!_testTask(mtask)) {
         return;
     }
     QGCResetTask* task = static_cast<QGCResetTask*>(mtask);
@@ -632,8 +633,286 @@ QGCCacheWorker::_resetCacheDatabase(QGCMapTask* mtask)
     query.exec(s);
     s = QString("DROP TABLE TilesDownload");
     query.exec(s);
-    _createDB();
+    _valid = _createDB(_db);
     task->setResetCompleted();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCacheWorker::_importSets(QGCMapTask* mtask)
+{
+    if(!_testTask(mtask)) {
+        return;
+    }
+    QGCImportTileTask* task = static_cast<QGCImportTileTask*>(mtask);
+    //-- If replacing, simply copy over it
+    if(task->replace()) {
+        //-- Close and delete old database
+        if(_db) {
+            delete _db;
+            _db = NULL;
+            QSqlDatabase::removeDatabase(kSession);
+        }
+        QFile file(_databasePath);
+        file.remove();
+        //-- Copy given database
+        QFile::copy(task->path(), _databasePath);
+        task->setProgress(25);
+        _init();
+        if(_valid) {
+            task->setProgress(50);
+            _db = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE", kSession));
+            _db->setDatabaseName(_databasePath);
+            _db->setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
+            _valid = _db->open();
+        }
+        task->setProgress(100);
+    } else {
+        //-- Open imported set
+        QSqlDatabase* dbImport = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE", kExportSession));
+        dbImport->setDatabaseName(task->path());
+        dbImport->setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
+        if (dbImport->open()) {
+            QSqlQuery query(*dbImport);
+            //-- Prepare progress report
+            quint64 tileCount = 0;
+            quint64 currentCount = 0;
+            QString s;
+            s = QString("SELECT COUNT(tileID) FROM Tiles");
+            if(query.exec(s)) {
+                if(query.next()) {
+                    tileCount  = query.value(0).toULongLong();
+                }
+            }
+            if(!tileCount) {
+                qWarning() << "No tiles found in imported database";
+                tileCount = 1; //-- Let it run through
+            }
+            //-- Iterate Tile Sets
+            s = QString("SELECT * FROM TileSets ORDER BY defaultSet DESC, name ASC");
+            if(query.exec(s)) {
+                while(query.next()) {
+                    QString name            = query.value("name").toString();
+                    quint64 setID           = query.value("setID").toULongLong();
+                    QString mapType         = query.value("typeStr").toString();
+                    double  topleftLat      = query.value("topleftLat").toDouble();
+                    double  topleftLon      = query.value("topleftLon").toDouble();
+                    double  bottomRightLat  = query.value("bottomRightLat").toDouble();
+                    double  bottomRightLon  = query.value("bottomRightLon").toDouble();
+                    int     minZoom         = query.value("minZoom").toInt();
+                    int     maxZoom         = query.value("maxZoom").toInt();
+                    int     type            = query.value("type").toInt();
+                    quint32 numTiles        = query.value("numTiles").toUInt();
+                    int     defaultSet      = query.value("defaultSet").toInt();
+                    quint64 insertSetID     = _getDefaultTileSet();
+                    //-- If not default set, create new one
+                    if(!defaultSet) {
+                        //-- Check if we have this tile set already
+                        int testCount = 0;
+                        while (true) {
+                            QString testName;
+                            testName.sprintf("%s %03d", name.toLatin1().data(), ++testCount);
+                            if(!_findTileSetID(testName, insertSetID) || testCount > 99) {
+                                if(testCount > 1) {
+                                    name = testName;
+                                }
+                                break;
+                            }
+                        }
+                        //-- Create new set
+                        QSqlQuery cQuery(*_db);
+                        cQuery.prepare("INSERT INTO TileSets("
+                            "name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, minZoom, maxZoom, type, numTiles, defaultSet, date"
+                            ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                        cQuery.addBindValue(name);
+                        cQuery.addBindValue(mapType);
+                        cQuery.addBindValue(topleftLat);
+                        cQuery.addBindValue(topleftLon);
+                        cQuery.addBindValue(bottomRightLat);
+                        cQuery.addBindValue(bottomRightLon);
+                        cQuery.addBindValue(minZoom);
+                        cQuery.addBindValue(maxZoom);
+                        cQuery.addBindValue(type);
+                        cQuery.addBindValue(numTiles);
+                        cQuery.addBindValue(defaultSet);
+                        cQuery.addBindValue(QDateTime::currentDateTime().toTime_t());
+                        if(!cQuery.exec()) {
+                            task->setError("Error adding imported tile set to database");
+                            break;
+                        } else {
+                            //-- Get just created (auto-incremented) setID
+                            insertSetID = cQuery.lastInsertId().toULongLong();
+                        }
+                    }
+                    //-- Find set tiles
+                    QSqlQuery cQuery(*_db);
+                    QSqlQuery subQuery(*dbImport);
+                    QString sb = QString("SELECT * FROM Tiles WHERE tileID IN (SELECT A.tileID FROM SetTiles A JOIN SetTiles B ON A.tileID = B.tileID WHERE B.setID = %1 GROUP BY A.tileID HAVING COUNT(A.tileID) = 1)").arg(setID);
+                    if(subQuery.exec(sb)) {
+                        _db->transaction();
+                        while(subQuery.next()) {
+                            QString hash    = subQuery.value("hash").toString();
+                            QString format  = subQuery.value("format").toString();
+                            QByteArray img  = subQuery.value("tile").toByteArray();
+                            int type        = subQuery.value("type").toInt();
+                            //-- Save tile
+                            cQuery.prepare("INSERT INTO Tiles(hash, format, tile, size, type, date) VALUES(?, ?, ?, ?, ?, ?)");
+                            cQuery.addBindValue(hash);
+                            cQuery.addBindValue(format);
+                            cQuery.addBindValue(img);
+                            cQuery.addBindValue(img.size());
+                            cQuery.addBindValue(type);
+                            cQuery.addBindValue(QDateTime::currentDateTime().toTime_t());
+                            if(cQuery.exec()) {
+                                quint64 importTileID = cQuery.lastInsertId().toULongLong();
+                                QString s = QString("INSERT INTO SetTiles(tileID, setID) VALUES(%1, %2)").arg(importTileID).arg(insertSetID);
+                                cQuery.prepare(s);
+                                cQuery.exec();
+                                currentCount++;
+                                task->setProgress((int)((double)currentCount / (double)tileCount * 100.0));
+                            }
+                        }
+                        _db->commit();
+                        //-- Update tile count
+                        s = QString("SELECT COUNT(size) FROM Tiles A INNER JOIN SetTiles B on A.tileID = B.tileID WHERE B.setID = %1").arg(insertSetID);
+                        if(cQuery.exec(s)) {
+                            if(cQuery.next()) {
+                                quint64 count  = cQuery.value(0).toULongLong();
+                                s = QString("UPDATE TileSets SET numTiles = %1 WHERE setID = %2").arg(count).arg(insertSetID);
+                                cQuery.exec(s);
+                            }
+                        }
+                    }
+                }
+            } else {
+                task->setError("No tile set in database");
+            }
+            delete dbImport;
+            QSqlDatabase::removeDatabase(kExportSession);
+        } else {
+            task->setError("Error opening import database");
+        }
+    }
+    task->setImportCompleted();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCacheWorker::_exportSets(QGCMapTask* mtask)
+{
+    if(!_testTask(mtask)) {
+        return;
+    }
+    QGCExportTileTask* task = static_cast<QGCExportTileTask*>(mtask);
+    //-- Delete target if it exists
+    QFile file(task->path());
+    file.remove();
+    //-- Create exported database
+    QSqlDatabase *dbExport = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE", kExportSession));
+    dbExport->setDatabaseName(task->path());
+    dbExport->setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
+    if (dbExport->open()) {
+        if(_createDB(dbExport, false)) {
+            //-- Prepare progress report
+            quint64 tileCount = 0;
+            quint64 currentCount = 0;
+            for(int i = 0; i < task->sets().count(); i++) {
+                QGCCachedTileSet* set = task->sets()[i];
+                //-- Default set has no unique tiles
+                if(set->defaultSet()) {
+                    tileCount += set->totalTileCount();
+                } else {
+                    tileCount += set->uniqueTileCount();
+                }
+            }
+            if(!tileCount) {
+                tileCount = 1;
+            }
+            //-- Iterate sets to save
+            for(int i = 0; i < task->sets().count(); i++) {
+                QGCCachedTileSet* set = task->sets()[i];
+                //-- Create Tile Exported Set
+                QSqlQuery exportQuery(*dbExport);
+                exportQuery.prepare("INSERT INTO TileSets("
+                    "name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, minZoom, maxZoom, type, numTiles, defaultSet, date"
+                    ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                exportQuery.addBindValue(set->name());
+                exportQuery.addBindValue(set->mapTypeStr());
+                exportQuery.addBindValue(set->topleftLat());
+                exportQuery.addBindValue(set->topleftLon());
+                exportQuery.addBindValue(set->bottomRightLat());
+                exportQuery.addBindValue(set->bottomRightLon());
+                exportQuery.addBindValue(set->minZoom());
+                exportQuery.addBindValue(set->maxZoom());
+                exportQuery.addBindValue(set->type());
+                exportQuery.addBindValue(set->totalTileCount());
+                exportQuery.addBindValue(set->defaultSet());
+                exportQuery.addBindValue(QDateTime::currentDateTime().toTime_t());
+                if(!exportQuery.exec()) {
+                    task->setError("Error adding tile set to exported database");
+                    break;
+                } else {
+                    //-- Get just created (auto-incremented) setID
+                    quint64 exportSetID = exportQuery.lastInsertId().toULongLong();
+                    //-- Find set tiles
+                    QString s = QString("SELECT * FROM SetTiles WHERE setID = %1").arg(set->id());
+                    QSqlQuery query(*_db);
+                    if(query.exec(s)) {
+                        dbExport->transaction();
+                        while(query.next()) {
+                            quint64 tileID = query.value("tileID").toULongLong();
+                            //-- Get tile
+                            QString s = QString("SELECT * FROM Tiles WHERE tileID = \"%1\"").arg(tileID);
+                            QSqlQuery subQuery(*_db);
+                            if(subQuery.exec(s)) {
+                                if(subQuery.next()) {
+                                    QString hash    = subQuery.value("hash").toString();
+                                    QString format  = subQuery.value("format").toString();
+                                    QByteArray img  = subQuery.value("tile").toByteArray();
+                                    int type        = subQuery.value("type").toInt();
+                                    //-- Save tile
+                                    exportQuery.prepare("INSERT INTO Tiles(hash, format, tile, size, type, date) VALUES(?, ?, ?, ?, ?, ?)");
+                                    exportQuery.addBindValue(hash);
+                                    exportQuery.addBindValue(format);
+                                    exportQuery.addBindValue(img);
+                                    exportQuery.addBindValue(img.size());
+                                    exportQuery.addBindValue(type);
+                                    exportQuery.addBindValue(QDateTime::currentDateTime().toTime_t());
+                                    if(exportQuery.exec()) {
+                                        quint64 exportTileID = exportQuery.lastInsertId().toULongLong();
+                                        QString s = QString("INSERT INTO SetTiles(tileID, setID) VALUES(%1, %2)").arg(exportTileID).arg(exportSetID);
+                                        exportQuery.prepare(s);
+                                        exportQuery.exec();
+                                        currentCount++;
+                                        task->setProgress((int)((double)currentCount / (double)tileCount * 100.0));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    dbExport->commit();
+                }
+            }
+        } else {
+            task->setError("Error creating export database");
+        }
+    } else {
+        qCritical() << "Map Cache SQL error (create export database):" << dbExport->lastError();
+        task->setError("Error opening export database");
+    }
+    delete dbExport;
+    QSqlDatabase::removeDatabase(kExportSession);
+    task->setExportCompleted();
+}
+
+//-----------------------------------------------------------------------------
+bool QGCCacheWorker::_testTask(QGCMapTask* mtask)
+{
+    if(!_valid) {
+        mtask->setError("No Cache Database");
+        return false;
+    }
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -648,7 +927,10 @@ QGCCacheWorker::_init()
         _db->setDatabaseName(_databasePath);
         _db->setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
         if (_db->open()) {
-            _createDB();
+            _valid = _createDB(_db);
+            if(!_valid) {
+                _failed = true;
+            }
         } else {
             qCritical() << "Map Cache SQL error (init() open db):" << _db->lastError();
             _failed = true;
@@ -665,10 +947,11 @@ QGCCacheWorker::_init()
 }
 
 //-----------------------------------------------------------------------------
-void
-QGCCacheWorker::_createDB()
+bool
+QGCCacheWorker::_createDB(QSqlDatabase* db, bool createDefault)
 {
-    QSqlQuery query(*_db);
+    bool res = false;
+    QSqlQuery query(*db);
     if(!query.exec(
         "CREATE TABLE IF NOT EXISTS Tiles ("
         "tileID INTEGER PRIMARY KEY NOT NULL, "
@@ -719,13 +1002,13 @@ QGCCacheWorker::_createDB()
                     qWarning() << "Map Cache SQL error (create TilesDownload db):" << query.lastError().text();
                 } else {
                     //-- Database it ready for use
-                    _valid = true;
+                    res = true;
                 }
             }
         }
     }
     //-- Create default tile set
-    if(_valid) {
+    if(res && createDefault) {
         QString s = QString("SELECT name FROM TileSets WHERE name = \"%1\"").arg(kDefaultSet);
         if(query.exec(s)) {
             if(!query.next()) {
@@ -734,19 +1017,19 @@ QGCCacheWorker::_createDB()
                 query.addBindValue(1);
                 query.addBindValue(QDateTime::currentDateTime().toTime_t());
                 if(!query.exec()) {
-                    qWarning() << "Map Cache SQL error (Creating default tile set):" << _db->lastError();
-                    _valid = false;
+                    qWarning() << "Map Cache SQL error (Creating default tile set):" << db->lastError();
+                    res = false;
                 }
             }
         } else {
-            qWarning() << "Map Cache SQL error (Looking for default tile set):" << _db->lastError();
+            qWarning() << "Map Cache SQL error (Looking for default tile set):" << db->lastError();
         }
     }
-    if(!_valid) {
+    if(!res) {
         QFile file(_databasePath);
         file.remove();
     }
-    _failed = !_valid;
+    return res;
 }
 
 //-----------------------------------------------------------------------------

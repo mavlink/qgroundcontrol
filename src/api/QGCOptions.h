@@ -35,6 +35,7 @@ public:
     Q_PROPERTY(bool                     showSensorCalibrationAirspeed   READ showSensorCalibrationAirspeed  NOTIFY showSensorCalibrationAirspeedChanged)
     Q_PROPERTY(bool                     showSensorCalibrationOrient     READ showSensorCalibrationOrient    NOTIFY showSensorCalibrationOrientChanged)
     Q_PROPERTY(bool                     showFirmwareUpgrade             READ showFirmwareUpgrade            NOTIFY showFirmwareUpgradeChanged)
+    Q_PROPERTY(QString                  firmwareUpgradeSingleURL        READ firmwareUpgradeSingleURL       CONSTANT)
 
     /// Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /// @return true if QGC should consolidate both menus into one.
@@ -53,14 +54,19 @@ public:
     virtual CustomInstrumentWidget* instrumentWidget();
 
     /// By returning false you can hide the following sensor calibration pages
-    virtual bool showSensorCalibrationCompass   () const { return true; }
-    virtual bool showSensorCalibrationGyro      () const { return true; }
-    virtual bool showSensorCalibrationAccel     () const { return true; }
-    virtual bool showSensorCalibrationLevel     () const { return true; }
-    virtual bool showSensorCalibrationAirspeed  () const { return true; }
-    virtual bool showSensorCalibrationOrient    () const { return true; }
+    virtual bool    showSensorCalibrationCompass    () const { return true; }
+    virtual bool    showSensorCalibrationGyro       () const { return true; }
+    virtual bool    showSensorCalibrationAccel      () const { return true; }
+    virtual bool    showSensorCalibrationLevel      () const { return true; }
+    virtual bool    showSensorCalibrationAirspeed   () const { return true; }
+    virtual bool    showSensorCalibrationOrient     () const { return true; }
 
-    virtual bool showFirmwareUpgrade            () const { return true; }
+    virtual bool    showFirmwareUpgrade             () const { return true; }
+
+    /// If returned QString in non-empty it means that firmware upgrade will run in a mode which only
+    /// supports downloading a single firmware file from the URL. It also supports custom install through
+    /// the Advanced options.
+    virtual QString firmwareUpgradeSingleURL        () const { return QString(); }
 
 signals:
     void showSensorCalibrationCompassChanged    (bool show);
