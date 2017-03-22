@@ -60,6 +60,7 @@ private:
     void        _resetCacheDatabase     (QGCMapTask* mtask);
     void        _pruneCache             (QGCMapTask* mtask);
     void        _exportSets             (QGCMapTask* mtask);
+    void        _importSets             (QGCMapTask* mtask);
     bool        _testTask               (QGCMapTask* mtask);
     void        _testInternet           ();
 

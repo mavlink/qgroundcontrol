@@ -120,7 +120,8 @@ public:
         taskDeleteTileSet,
         taskPruneCache,
         taskReset,
-        taskExport
+        taskExport,
+        taskImport
     };
 
     QGCMapTask(TaskType type)
@@ -386,12 +387,12 @@ public:
 
     void setExportCompleted()
     {
-        emit exportCompleted();
+        emit actionCompleted();
     }
 
     void setProgress(int percentage)
     {
-        emit exportProgress(percentage);
+        emit actionProgress(percentage);
     }
 
 private:
@@ -399,10 +400,47 @@ private:
     QString                     _path;
 
 signals:
-    void exportCompleted        ();
-    void exportProgress         (int percentage);
+    void actionCompleted        ();
+    void actionProgress         (int percentage);
 
 };
 
+//-----------------------------------------------------------------------------
+class QGCImportTileTask : public QGCMapTask
+{
+    Q_OBJECT
+public:
+    QGCImportTileTask(QString path, bool replace)
+        : QGCMapTask(QGCMapTask::taskImport)
+        , _path(path)
+        , _replace(replace)
+    {}
+
+    ~QGCImportTileTask()
+    {
+    }
+
+    QString                    path     () { return _path; }
+    bool                       replace  () { return _replace; }
+
+    void setImportCompleted()
+    {
+        emit actionCompleted();
+    }
+
+    void setProgress(int percentage)
+    {
+        emit actionProgress(percentage);
+    }
+
+private:
+    QString                     _path;
+    bool                        _replace;
+
+signals:
+    void actionCompleted        ();
+    void actionProgress         (int percentage);
+
+};
 
 #endif // QGC_MAP_ENGINE_DATA_H

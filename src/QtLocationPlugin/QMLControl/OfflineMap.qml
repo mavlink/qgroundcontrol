@@ -15,11 +15,12 @@ import QtQuick.Layouts          1.2
 import QtLocation               5.3
 import QtPositioning            5.3
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.FlightMap     1.0
+import QGroundControl                       1.0
+import QGroundControl.Controls              1.0
+import QGroundControl.ScreenTools           1.0
+import QGroundControl.Palette               1.0
+import QGroundControl.FlightMap             1.0
+import QGroundControl.QGCMapEngineManager   1.0
 
 QGCView {
     id:             offlineMapView
@@ -856,6 +857,7 @@ QGCView {
             QGCButton {
                 text:           qsTr("Import")
                 width:          _buttonSize
+                onClicked:      rootLoader.sourceComponent = importDialog
             }
             QGCButton {
                 text:           qsTr("Export")
@@ -926,8 +928,9 @@ QGCView {
                 enabled:        QGroundControl.mapEngineManager.selectedCount > 0
                 onClicked: {
                     showList();
-                    QGroundControl.mapEngineManager.exportSets()
-                    rootLoader.sourceComponent = exportToDiskProgress
+                    if(QGroundControl.mapEngineManager.exportSets()) {
+                        rootLoader.sourceComponent = exportToDiskProgress
+                    }
                 }
             }
             QGCButton {
@@ -935,7 +938,6 @@ QGCView {
                 width:          _bigButtonSize
                 enabled:        QGroundControl.mapEngineManager.selectedCount > 0
                 onClicked: {
-                    QGroundControl.mapEngineManager.exportSets()
                     showList()
                 }
             }
@@ -956,18 +958,18 @@ QGCView {
             anchors.centerIn: parent
             Rectangle {
                 width:  parent.width  * 0.5
-                height: cameraSettingsCol.height * 1.25
+                height: exportCol.height * 1.25
                 radius: ScreenTools.defaultFontPixelWidth
                 color:  qgcPal.windowShadeDark
                 border.color: qgcPal.text
                 anchors.centerIn: parent
                 Column {
-                    id:                 cameraSettingsCol
+                    id:                 exportCol
                     spacing:            ScreenTools.defaultFontPixelHeight
                     width:              parent.width
                     anchors.centerIn:   parent
                     QGCLabel {
-                        text:               QGroundControl.mapEngineManager.exporting ? qsTr("Tile Set Export Progress") : qsTr("Tile Set Export Completed")
+                        text:               QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionExporting ? qsTr("Tile Set Export Progress") : qsTr("Tile Set Export Completed")
                         font.family:        ScreenTools.demiboldFontFamily
                         font.pointSize:     ScreenTools.mediumFontPointSize
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -976,7 +978,7 @@ QGCView {
                         id:             progressBar
                         width:          parent.width * 0.45
                         maximumValue:   100
-                        value:          QGroundControl.mapEngineManager.exportProgress
+                        value:          QGroundControl.mapEngineManager.actionProgress
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     BusyIndicator {
@@ -994,6 +996,120 @@ QGCView {
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: {
                             rootLoader.sourceComponent = null
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: importDialog
+        Rectangle {
+            width:      mainWindow.width
+            height:     mainWindow.height
+            color:      "black"
+            anchors.centerIn: parent
+            Rectangle {
+                width:  parent.width  * 0.45
+                height: importCol.height * 1.5
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  qgcPal.windowShadeDark
+                border.color: qgcPal.text
+                anchors.centerIn: parent
+                Column {
+                    id:                 importCol
+                    spacing:            ScreenTools.defaultFontPixelHeight
+                    width:              parent.width
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text: {
+                            if(QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone) {
+                                return qsTr("Map Tile Set Import");
+                            } else if(QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionImporting) {
+                                return qsTr("Map Tile Set Import Progress");
+                            } else {
+                                return qsTr("Map Tile Set Import Completed");
+                            }
+                        }
+                        font.family:        ScreenTools.demiboldFontFamily
+                        font.pointSize:     ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    ProgressBar {
+                        id:             progressBar
+                        width:          parent.width * 0.45
+                        maximumValue:   100
+                        visible:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionImporting
+                        value:          QGroundControl.mapEngineManager.actionProgress
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    BusyIndicator {
+                        visible:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionImporting
+                        running:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionImporting
+                        width:          ScreenTools.defaultFontPixelWidth
+                        height:         ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    ExclusiveGroup { id: radioGroup }
+                    Column {
+                        spacing:            ScreenTools.defaultFontPixelHeight
+                        width:              ScreenTools.defaultFontPixelWidth * 24
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCRadioButton {
+                            exclusiveGroup: radioGroup
+                            text:           qsTr("Append to existing set")
+                            checked:        !QGroundControl.mapEngineManager.importReplace
+                            onClicked:      QGroundControl.mapEngineManager.importReplace = !checked
+                            visible:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone
+                        }
+                        QGCRadioButton {
+                            exclusiveGroup: radioGroup
+                            text:           qsTr("Replace existing set")
+                            checked:        QGroundControl.mapEngineManager.importReplace
+                            onClicked:      QGroundControl.mapEngineManager.importReplace = checked
+                            visible:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone
+                        }
+                    }
+                    QGCButton {
+                        text:           qsTr("Close")
+                        width:          _bigButtonSize * 1.25
+                        visible:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionDone
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        onClicked: {
+                            showList()
+                            rootLoader.sourceComponent = null
+                        }
+                    }
+                    Row {
+                        spacing:            _margins
+                        visible:            QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCButton {
+                            text:           qsTr("Import From Disk")
+                            width:          _bigButtonSize * 1.25
+                            onClicked: {
+                                if(!QGroundControl.mapEngineManager.importSets()) {
+                                    showList();
+                                    rootLoader.sourceComponent = null
+                                }
+                            }
+                        }
+                        QGCButton {
+                            text:           qsTr("Import From Device")
+                            width:          _bigButtonSize * 1.25
+                            onClicked: {
+                                showList();
+                                rootLoader.sourceComponent = null
+                            }
+                        }
+                        QGCButton {
+                            text:           qsTr("Cancel")
+                            width:          _bigButtonSize * 1.25
+                            onClicked: {
+                                showList()
+                                rootLoader.sourceComponent = null
+                            }
                         }
                     }
                 }

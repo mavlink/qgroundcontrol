@@ -41,8 +41,9 @@ QGCMapEngineManager::QGCMapEngineManager(QGCApplication* app)
     , _setID(UINT64_MAX)
     , _freeDiskSpace(0)
     , _diskSpace(0)
-    , _exportProgress(0)
-    , _exporting(false)
+    , _actionProgress(0)
+    , _importAction(ActionNone)
+    , _importReplace(false)
 {
 
 }
@@ -397,7 +398,40 @@ QGCMapEngineManager::selectedCount() {
 
 //-----------------------------------------------------------------------------
 bool
+QGCMapEngineManager::importSets(QString path) {
+    _importAction = ActionNone;
+    emit importActionChanged();
+    QString dir = path;
+    if(dir.isEmpty()) {
+#if defined(__mobile__)
+        //-- TODO: This has to be something fixed
+        dir = QDir(QDir::homePath()).filePath(QString("export_%1.db").arg(QDateTime::currentDateTime().toTime_t()));
+#else
+        dir = QGCFileDialog::getOpenFileName(
+            MainWindow::instance(),
+            "Export Tile Set",
+            QDir::homePath(),
+            "Tile Sets (*.qgctiledb)");
+#endif
+    }
+    if(!dir.isEmpty()) {
+        _importAction = ActionImporting;
+        emit importActionChanged();
+        QGCImportTileTask* task = new QGCImportTileTask(dir, _importReplace);
+        connect(task, &QGCImportTileTask::actionCompleted, this, &QGCMapEngineManager::_actionCompleted);
+        connect(task, &QGCImportTileTask::actionProgress, this, &QGCMapEngineManager::_actionProgressHandler);
+        connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
+        getQGCMapEngine()->addTask(task);
+        return true;
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+bool
 QGCMapEngineManager::exportSets(QString path) {
+    _importAction = ActionNone;
+    emit importActionChanged();
     QString dir = path;
     if(dir.isEmpty()) {
 #if defined(__mobile__)
@@ -422,11 +456,11 @@ QGCMapEngineManager::exportSets(QString path) {
             }
         }
         if(sets.count()) {
-            _exporting = true;
-            emit exportingChanged();
+            _importAction = ActionExporting;
+            emit importActionChanged();
             QGCExportTileTask* task = new QGCExportTileTask(sets, dir);
-            connect(task, &QGCExportTileTask::exportCompleted, this, &QGCMapEngineManager::_exportCompleted);
-            connect(task, &QGCExportTileTask::exportProgress, this, &QGCMapEngineManager::_exportProgressHandler);
+            connect(task, &QGCExportTileTask::actionCompleted, this, &QGCMapEngineManager::_actionCompleted);
+            connect(task, &QGCExportTileTask::actionProgress, this, &QGCMapEngineManager::_actionProgressHandler);
             connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
             getQGCMapEngine()->addTask(task);
             return true;
@@ -437,18 +471,18 @@ QGCMapEngineManager::exportSets(QString path) {
 
 //-----------------------------------------------------------------------------
 void
-QGCMapEngineManager::_exportProgressHandler(int percentage)
+QGCMapEngineManager::_actionProgressHandler(int percentage)
 {
-    _exportProgress = percentage;
-    emit exportProgressChanged();
+    _actionProgress = percentage;
+    emit actionProgressChanged();
 }
 
 //-----------------------------------------------------------------------------
 void
-QGCMapEngineManager::_exportCompleted()
+QGCMapEngineManager::_actionCompleted()
 {
-    _exporting = false;
-    emit exportingChanged();
+    _importAction = ActionDone;
+    emit importActionChanged();
 }
 
 //-----------------------------------------------------------------------------
