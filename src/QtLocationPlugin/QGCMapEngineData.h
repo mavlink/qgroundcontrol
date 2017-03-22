@@ -389,12 +389,19 @@ public:
         emit exportCompleted();
     }
 
+    void setProgress(int percentage)
+    {
+        emit exportProgress(percentage);
+    }
+
 private:
     QVector<QGCCachedTileSet*>  _sets;
     QString                     _path;
 
 signals:
-    void exportCompleted();
+    void exportCompleted        ();
+    void exportProgress         (int percentage);
+
 };
 
 

@@ -641,27 +641,40 @@ QGCCacheWorker::_exportSets(QGCMapTask* mtask)
     if(!_testTask(mtask)) {
         return;
     }
-    bool res = false;
     QGCExportTileTask* task = static_cast<QGCExportTileTask*>(mtask);
+    //-- Delete target if it exists
+    QFile file(task->path());
+    file.remove();
     //-- Create exported database
     QSqlDatabase *dbExport = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE", kExportSession));
     dbExport->setDatabaseName(task->path());
     dbExport->setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
     if (dbExport->open()) {
         if(_createDB(dbExport, false)) {
+            //-- Prepare progress report
+            quint64 tileCount = 0;
+            quint64 currentCount = 0;
+            for(int i = 0; i < task->sets().count(); i++) {
+                QGCCachedTileSet* set = task->sets()[i];
+                //-- Default set has no unique tiles
+                if(set->defaultSet()) {
+                    tileCount += set->totalTileCount();
+                } else {
+                    tileCount += set->uniqueTileCount();
+                }
+            }
+            if(!tileCount) {
+                tileCount = 1;
+            }
             //-- Iterate sets to save
             for(int i = 0; i < task->sets().count(); i++) {
                 QGCCachedTileSet* set = task->sets()[i];
                 //-- Create Tile Exported Set
                 QSqlQuery exportQuery(*dbExport);
                 exportQuery.prepare("INSERT INTO TileSets("
-                    "name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, minZoom, maxZoom, type, numTiles, date"
-                    ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                QString name = set->name();
-                if(set->defaultSet()) {
-                    name = "Exported Default Set";
-                }
-                exportQuery.addBindValue(name);
+                    "name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, minZoom, maxZoom, type, numTiles, defaultSet, date"
+                    ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                exportQuery.addBindValue(set->name());
                 exportQuery.addBindValue(set->mapTypeStr());
                 exportQuery.addBindValue(set->topleftLat());
                 exportQuery.addBindValue(set->topleftLon());
@@ -671,6 +684,7 @@ QGCCacheWorker::_exportSets(QGCMapTask* mtask)
                 exportQuery.addBindValue(set->maxZoom());
                 exportQuery.addBindValue(set->type());
                 exportQuery.addBindValue(set->totalTileCount());
+                exportQuery.addBindValue(set->defaultSet());
                 exportQuery.addBindValue(QDateTime::currentDateTime().toTime_t());
                 if(!exportQuery.exec()) {
                     task->setError("Error adding tile set to exported database");
@@ -682,6 +696,7 @@ QGCCacheWorker::_exportSets(QGCMapTask* mtask)
                     QString s = QString("SELECT * FROM SetTiles WHERE setID = %1").arg(set->id());
                     QSqlQuery query(*_db);
                     if(query.exec(s)) {
+                        dbExport->transaction();
                         while(query.next()) {
                             quint64 tileID = query.value("tileID").toULongLong();
                             //-- Get tile
@@ -706,11 +721,14 @@ QGCCacheWorker::_exportSets(QGCMapTask* mtask)
                                         QString s = QString("INSERT INTO SetTiles(tileID, setID) VALUES(%1, %2)").arg(exportTileID).arg(exportSetID);
                                         exportQuery.prepare(s);
                                         exportQuery.exec();
+                                        currentCount++;
+                                        task->setProgress((int)((double)currentCount / (double)tileCount * 100.0));
                                     }
                                 }
                             }
                         }
                     }
+                    dbExport->commit();
                 }
             }
         } else {
@@ -721,9 +739,7 @@ QGCCacheWorker::_exportSets(QGCMapTask* mtask)
         task->setError("Error opening export database");
     }
     delete dbExport;
-    if(res) {
-        task->setExportCompleted();
-    }
+    task->setExportCompleted();
 }
 
 //-----------------------------------------------------------------------------

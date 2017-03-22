@@ -46,7 +46,10 @@ public:
     //-- Disk Space in MB
     Q_PROPERTY(quint32              freeDiskSpace   READ    freeDiskSpace   NOTIFY  freeDiskSpaceChanged)
     Q_PROPERTY(quint32              diskSpace       READ    diskSpace       CONSTANT)
+    //-- Tile set export
     Q_PROPERTY(int                  selectedCount   READ    selectedCount   NOTIFY selectedCountChanged)
+    Q_PROPERTY(int                  exportProgress  READ    exportProgress  NOTIFY exportProgressChanged)
+    Q_PROPERTY(bool                 exporting       READ    exporting       NOTIFY exportingChanged)
 
     Q_INVOKABLE void                loadTileSets            ();
     Q_INVOKABLE void                updateForCurrentView    (double lon0, double lat0, double lon1, double lat1, int minZoom, int maxZoom, const QString& mapName);
@@ -58,7 +61,7 @@ public:
     Q_INVOKABLE bool                findName                (const QString& name);
     Q_INVOKABLE void                selectAll               ();
     Q_INVOKABLE void                selectNone              ();
-    Q_INVOKABLE void                exportSets              (QString path = QString());
+    Q_INVOKABLE bool                exportSets              (QString path = QString());
 
     int                             tileX0                  () { return _totalSet.tileX0; }
     int                             tileX1                  () { return _totalSet.tileX1; }
@@ -77,6 +80,8 @@ public:
     quint64                         freeDiskSpace           () { return _freeDiskSpace; }
     quint64                         diskSpace               () { return _diskSpace; }
     int                             selectedCount           ();
+    int                             exportProgress          () { return _exportProgress; }
+    bool                            exporting               () { return _exporting; }
 
     void                            setMapboxToken          (QString token);
     void                            setMaxMemCache          (quint32 size);
@@ -101,6 +106,8 @@ signals:
     void errorMessageChanged    ();
     void freeDiskSpaceChanged   ();
     void selectedCountChanged   ();
+    void exportProgressChanged  ();
+    void exportingChanged       ();
 
 public slots:
     void taskError              (QGCMapTask::TaskType type, QString error);
@@ -112,6 +119,7 @@ private slots:
     void _updateTotals          (quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
     void _resetCompleted        ();
     void _exportCompleted       ();
+    void _exportProgressHandler (int percentage);
 
 private:
     void _updateDiskFreeSpace   ();
@@ -129,6 +137,8 @@ private:
     quint32     _diskSpace;
     QmlObjectListModel _tileSets;
     QString     _errorMessage;
+    int         _exportProgress;
+    bool        _exporting;
 };
 
 #endif

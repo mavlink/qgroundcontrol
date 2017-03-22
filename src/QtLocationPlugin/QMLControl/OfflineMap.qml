@@ -39,6 +39,7 @@ QGCView {
     property bool   _defaultSet:        offlineMapView && offlineMapView._currentSelection && offlineMapView._currentSelection.defaultSet
     property real   _margins:           ScreenTools.defaultFontPixelWidth * 0.5
     property real   _buttonSize:        ScreenTools.defaultFontPixelWidth * 12
+    property real   _bigButtonSize:     ScreenTools.defaultFontPixelWidth * 16
 
     property bool   _saveRealEstate:          ScreenTools.isTinyScreen || ScreenTools.isShortScreen
     property real   _adjustableFontPointSize: _saveRealEstate ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
@@ -850,8 +851,8 @@ QGCView {
             visible:            _tileSetList.visible
             spacing:            _margins
             anchors.bottom:     parent.bottom
-            anchors.right:      parent.right
             anchors.margins:    ScreenTools.defaultFontPixelWidth
+            anchors.horizontalCenter: parent.horizontalCenter
             QGCButton {
                 text:           qsTr("Import")
                 width:          _buttonSize
@@ -907,21 +908,31 @@ QGCView {
             visible:            _exporTiles.visible
             spacing:            _margins
             anchors.bottom:     parent.bottom
-            anchors.right:      parent.right
             anchors.margins:    ScreenTools.defaultFontPixelWidth
+            anchors.horizontalCenter: parent.horizontalCenter
             QGCButton {
-                text:           qsTr("All")
-                width:          _buttonSize
+                text:           qsTr("Select All")
+                width:          _bigButtonSize
                 onClicked:      QGroundControl.mapEngineManager.selectAll()
             }
             QGCButton {
-                text:           qsTr("None")
-                width:          _buttonSize
+                text:           qsTr("Select None")
+                width:          _bigButtonSize
                 onClicked:      QGroundControl.mapEngineManager.selectNone()
             }
             QGCButton {
-                text:           qsTr("Export")
-                width:          _buttonSize
+                text:           qsTr("Export to Disk")
+                width:          _bigButtonSize
+                enabled:        QGroundControl.mapEngineManager.selectedCount > 0
+                onClicked: {
+                    showList();
+                    QGroundControl.mapEngineManager.exportSets()
+                    rootLoader.sourceComponent = exportToDiskProgress
+                }
+            }
+            QGCButton {
+                text:           qsTr("Export to Device")
+                width:          _bigButtonSize
                 enabled:        QGroundControl.mapEngineManager.selectedCount > 0
                 onClicked: {
                     QGroundControl.mapEngineManager.exportSets()
@@ -930,9 +941,64 @@ QGCView {
             }
             QGCButton {
                 text:           qsTr("Cancel")
-                width:          _buttonSize
+                width:          _bigButtonSize
                 onClicked:       showList()
             }
         }
     } // QGCViewPanel
+
+    Component {
+        id: exportToDiskProgress
+        Rectangle {
+            width:      mainWindow.width
+            height:     mainWindow.height
+            color:      "black"
+            anchors.centerIn: parent
+            Rectangle {
+                width:  parent.width  * 0.5
+                height: cameraSettingsCol.height * 1.25
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  qgcPal.windowShadeDark
+                border.color: qgcPal.text
+                anchors.centerIn: parent
+                Column {
+                    id:                 cameraSettingsCol
+                    spacing:            ScreenTools.defaultFontPixelHeight
+                    width:              parent.width
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:               QGroundControl.mapEngineManager.exporting ? qsTr("Tile Set Export Progress") : qsTr("Tile Set Export Completed")
+                        font.family:        ScreenTools.demiboldFontFamily
+                        font.pointSize:     ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    ProgressBar {
+                        id:             progressBar
+                        width:          parent.width * 0.45
+                        maximumValue:   100
+                        value:          QGroundControl.mapEngineManager.exportProgress
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    BusyIndicator {
+                        visible:        QGroundControl.mapEngineManager.exporting
+                        running:        QGroundControl.mapEngineManager.exporting
+                        width:          exportCloseButton.height
+                        height:         exportCloseButton.height
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCButton {
+                        id:             exportCloseButton
+                        text:           qsTr("Close")
+                        width:          _buttonSize
+                        visible:        !QGroundControl.mapEngineManager.exporting
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        onClicked: {
+                            rootLoader.sourceComponent = null
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 } // QGCView
