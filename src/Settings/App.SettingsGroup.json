@@ -38,7 +38,7 @@
 {
     "name":             "batteryPercentRemainingAnnounce",
     "shortDescription": "Announce battery remaining percent",
-    "longDescription":  "QGroundControl will announce the remaining battery percent when it falls below the specified percentage.",
+    "longDescription":  "Announce the remaining battery percent when it falls below the specified percentage.",
     "type":             "uint32",
     "defaultValue":     30,
     "units":            "%",
@@ -92,8 +92,8 @@
 },
 {
     "name":             "BaseDeviceFontPointSize",
-    "shortDescription": "QGroundControl font size",
-    "longDescription":  "The point size for the default font used in QGroundControl.",
+    "shortDescription": "Application font size",
+    "longDescription":  "The point size for the default font used.",
     "type":             "uint32",
     "units":            "pt",
     "min":              6,
@@ -102,8 +102,8 @@
 },
 {
     "name":             "StyleIsDark",
-    "shortDescription": "QGroundControl color scheme",
-    "longDescription":  "The color scheme for the QGroundControl user interface.",
+    "shortDescription": "Application color scheme",
+    "longDescription":  "The color scheme for the user interface.",
     "type":             "uint32",
     "enumStrings":      "Indoor,Outdoor",
     "enumValues":       "1,0"

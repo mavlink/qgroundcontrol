@@ -2,7 +2,7 @@
 {
     "name":             "VideoSource",
     "shortDescription": "Video source",
-    "longDescription":  "Source for video. UDP, RTSP and UVC Cameras may be supported supported depending on Vehicle and QGroundControl version.",
+    "longDescription":  "Source for video. UDP, RTSP and UVC Cameras may be supported depending on Vehicle and ground station version.",
     "type":             "string",
     "defaultValue":     ""
 },
