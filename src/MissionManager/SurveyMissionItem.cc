@@ -381,7 +381,7 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumbe
 
     int version = v2Object[JsonHelper::jsonVersionKey].toInt();
     if (version != 2 && version != 3) {
-        errorString = tr("QGroundControl does not support this version of survey items");
+        errorString = tr("%1 does not support this version of survey items").arg(qgcApp()->applicationName());
         return false;
     }
     if (version == 2) {
@@ -411,7 +411,7 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumbe
     QString itemType = v2Object[VisualMissionItem::jsonTypeKey].toString();
     QString complexType = v2Object[ComplexMissionItem::jsonComplexItemTypeKey].toString();
     if (itemType != VisualMissionItem::jsonTypeComplexItemValue || complexType != jsonComplexItemTypeValue) {
-        errorString = tr("QGroundControl does not support loading this complex mission item type: %1:2").arg(itemType).arg(complexType);
+        errorString = tr("%1 does not support loading this complex mission item type: %2:%3").arg(qgcApp()->applicationName()).arg(itemType).arg(complexType);
         return false;
     }
 
