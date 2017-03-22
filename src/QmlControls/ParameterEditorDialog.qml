@@ -83,17 +83,6 @@ QGCViewDialog {
             anchors.left:   parent.left
             anchors.right:  parent.right
 
-            // Checkbox to allow manual entry of enumerated or bitmask parameters
-            QGCCheckBox {
-                id:         manualEntry
-                visible:    factCombo.visible || bitmaskColumn.visible
-                text:       qsTr("Manual Entry (Advanced User)")
-
-                onClicked: {
-                    valueField.text = fact.valueString
-                }
-            }
-
             QGCLabel {
                 id:         validationError
                 width:      parent.width
@@ -234,7 +223,7 @@ QGCViewDialog {
             Row {
                 width:      parent.width
                 spacing:    ScreenTools.defaultFontPixelWidth / 2
-                visible:    showRCToParam
+                visible:    showRCToParam || factCombo.visible || bitmaskColumn.visible
 
                 Rectangle {
                     height: 1
@@ -253,6 +242,17 @@ QGCViewDialog {
                     width:  ScreenTools.defaultFontPixelWidth * 5
                     color:  qgcPal.text
                     anchors.verticalCenter: _advanced.verticalCenter
+                }
+            }
+
+            // Checkbox to allow manual entry of enumerated or bitmask parameters
+            QGCCheckBox {
+                id:         manualEntry
+                visible:    _advanced.checked && (factCombo.visible || bitmaskColumn.visible)
+                text:       qsTr("Manual Entry")
+
+                onClicked: {
+                    valueField.text = fact.valueString
                 }
             }
 
