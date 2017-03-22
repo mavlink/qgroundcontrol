@@ -574,8 +574,8 @@ public:
     QString         missionFlightMode       () const;
     QString         rtlFlightMode           () const;
     QString         takeControlFlightMode   () const;
-    double          cruiseSpeed             () const { return _cruiseSpeed; }
-    double          hoverSpeed              () const { return _hoverSpeed; }
+    double          defaultCruiseSpeed      () const { return _defaultCruiseSpeed; }
+    double          defaultHoverSpeed       () const { return _defaultHoverSpeed; }
     QString         firmwareTypeString      () const;
     QString         vehicleTypeString       () const;
     int             telemetryRRSSI          () { return _telemetryRRSSI; }
@@ -690,8 +690,8 @@ signals:
     void prearmErrorChanged(const QString& prearmError);
     void soloFirmwareChanged(bool soloFirmware);
     void unhealthySensorsChanged(void);
-    void cruiseSpeedChanged(double cruiseSpeed);
-    void hoverSpeedChanged(double hoverSpeed);
+    void defaultCruiseSpeedChanged(double cruiseSpeed);
+    void defaultHoverSpeedChanged(double hoverSpeed);
     void firmwareTypeChanged(void);
     void vehicleTypeChanged(void);
 
@@ -872,8 +872,8 @@ private:
     uint32_t        _onboardControlSensorsUnhealthy;
     bool            _gpsRawIntMessageAvailable;
     bool            _globalPositionIntMessageAvailable;
-    double          _cruiseSpeed;
-    double          _hoverSpeed;
+    double          _defaultCruiseSpeed;
+    double          _defaultHoverSpeed;
     int             _telemetryRRSSI;
     int             _telemetryLRSSI;
     uint32_t        _telemetryRXErrors;

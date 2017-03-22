@@ -26,6 +26,7 @@
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
+#include "MissionController.h"
 
 class MissionItem;
 
@@ -42,8 +43,31 @@ public:
 
     const VisualMissionItem& operator=(const VisualMissionItem& other);
 
-    Q_PROPERTY(bool homePosition        READ homePosition                                   CONSTANT)                       ///< true: This item is being used as a home position indicator
-    Q_PROPERTY(bool showHomePosition    READ showHomePosition   WRITE setShowHomePosition   NOTIFY showHomePositionChanged)
+    Q_PROPERTY(bool             homePosition                        READ homePosition                                                   CONSTANT)                                           ///< true: This item is being used as a home position indicator
+    Q_PROPERTY(bool             showHomePosition                    READ showHomePosition                   WRITE setShowHomePosition   NOTIFY showHomePositionChanged)
+    Q_PROPERTY(QGeoCoordinate   coordinate                          READ coordinate                         WRITE setCoordinate         NOTIFY coordinateChanged)                           ///< This is the entry point for a waypoint line into the item. For a simple item it is also the location of the item
+    Q_PROPERTY(bool             coordinateHasRelativeAltitude       READ coordinateHasRelativeAltitude                                  NOTIFY coordinateHasRelativeAltitudeChanged)        ///< true: coordinate.latitude is relative to home altitude
+    Q_PROPERTY(QGeoCoordinate   exitCoordinate                      READ exitCoordinate                                                 NOTIFY exitCoordinateChanged)                       ///< This is the exit point for a waypoint line coming out of the item.
+    Q_PROPERTY(bool             exitCoordinateHasRelativeAltitude   READ exitCoordinateHasRelativeAltitude                              NOTIFY exitCoordinateHasRelativeAltitudeChanged)    ///< true: coordinate.latitude is relative to home altitude
+    Q_PROPERTY(bool             exitCoordinateSameAsEntry           READ exitCoordinateSameAsEntry                                      NOTIFY exitCoordinateSameAsEntryChanged)            ///< true: exitCoordinate and coordinate are the same value
+    Q_PROPERTY(QString          commandDescription                  READ commandDescription                                             NOTIFY commandDescriptionChanged)
+    Q_PROPERTY(QString          commandName                         READ commandName                                                    NOTIFY commandNameChanged)
+    Q_PROPERTY(QString          abbreviation                        READ abbreviation                                                   NOTIFY abbreviationChanged)
+    Q_PROPERTY(bool             dirty                               READ dirty                              WRITE setDirty              NOTIFY dirtyChanged)                                ///< Item is dirty and requires save/send
+    Q_PROPERTY(bool             isCurrentItem                       READ isCurrentItem                      WRITE setIsCurrentItem      NOTIFY isCurrentItemChanged)
+    Q_PROPERTY(int              sequenceNumber                      READ sequenceNumber                     WRITE setSequenceNumber     NOTIFY sequenceNumberChanged)
+    Q_PROPERTY(bool             specifiesCoordinate                 READ specifiesCoordinate                                            NOTIFY specifiesCoordinateChanged)                  ///< true: Item is associated with a coordinate position
+    Q_PROPERTY(bool             isStandaloneCoordinate              READ isStandaloneCoordinate                                         NOTIFY isStandaloneCoordinateChanged)               ///< true: Waypoint line does not go through item
+    Q_PROPERTY(bool             specifiesAltitudeOnly               READ specifiesAltitudeOnly                                          NOTIFY specifiesAltitudeOnlyChanged)                ///< true: Item has altitude only, no full coordinate
+    Q_PROPERTY(bool             isSimpleItem                        READ isSimpleItem                                                   NOTIFY isSimpleItemChanged)                         ///< Simple or Complex MissionItem
+    Q_PROPERTY(QString          editorQml                           MEMBER _editorQml                                                   CONSTANT)                                           ///< Qml code for editing this item
+    Q_PROPERTY(QString          mapVisualQML                        READ mapVisualQML                                                   CONSTANT)                                           ///< QMl code for map visuals
+    Q_PROPERTY(QmlObjectListModel* childItems                       READ childItems                                                     CONSTANT)
+    Q_PROPERTY(double           specifiedFlightSpeed                READ specifiedFlightSpeed                                           NOTIFY specifiedFlightSpeedChanged)                 ///< NaN if this item does not specify flight speed
+    Q_PROPERTY(double           specifiedGimbalYaw                  READ specifiedGimbalYaw                                             NOTIFY specifiedGimbalYawChanged)                   ///< NaN if this item goes not specify gimbal yaw
+    Q_PROPERTY(double           missionGimbalYaw                    READ missionGimbalYaw                                               NOTIFY missionGimbalYawChanged)                     ///< Current gimbal yaw state at this point in mission
+    Q_PROPERTY(double           missionVehicleYaw                   READ missionVehicleYaw                                              NOTIFY missionVehicleYawChanged)                    ///< Expected vehicle yaw at this point in mission
+    Q_PROPERTY(double           showMissionGimbalYaw                READ showMissionGimbalYaw                                           NOTIFY missionGimbalYawChanged)                     ///< true: Show gimbal yaw position on map indicators
 
     // The following properties are calculated/set by the MissionController recalc methods
 
@@ -51,45 +75,6 @@ public:
     Q_PROPERTY(double altPercent    READ altPercent     WRITE setAltPercent     NOTIFY altPercentChanged)       ///< Percent of total altitude change in mission altitude
     Q_PROPERTY(double azimuth       READ azimuth        WRITE setAzimuth        NOTIFY azimuthChanged)          ///< Azimuth to previous waypoint
     Q_PROPERTY(double distance      READ distance       WRITE setDistance       NOTIFY distanceChanged)         ///< Distance to previous waypoint
-
-    /// This property returns whether the item supports changing flight speed. If it does not it will return NaN.
-    Q_PROPERTY(double flightSpeed   READ flightSpeed                            NOTIFY flightSpeedChanged)
-
-    // Visual mission items have two coordinates associated with them:
-
-    /// This is the entry point for a waypoint line into the item. For a simple item it is also the location of the item
-    Q_PROPERTY(QGeoCoordinate coordinate        READ coordinate     WRITE setCoordinate NOTIFY coordinateChanged)
-
-    /// @return true: coordinate.latitude is relative to home altitude
-    Q_PROPERTY(bool coordinateHasRelativeAltitude READ coordinateHasRelativeAltitude NOTIFY coordinateHasRelativeAltitudeChanged)
-
-    /// This is the exit point for a waypoint line coming out of the item.
-    Q_PROPERTY(QGeoCoordinate exitCoordinate    READ exitCoordinate                     NOTIFY exitCoordinateChanged)
-
-    /// @return true: coordinate.latitude is relative to home altitude
-    Q_PROPERTY(bool exitCoordinateHasRelativeAltitude READ exitCoordinateHasRelativeAltitude NOTIFY exitCoordinateHasRelativeAltitudeChanged)
-
-    /// @return true: exitCoordinate and coordinate are the same value
-    Q_PROPERTY(bool exitCoordinateSameAsEntry READ exitCoordinateSameAsEntry NOTIFY exitCoordinateSameAsEntryChanged)
-
-    // General properties associated with all types of visual mission items
-
-    Q_PROPERTY(QString  commandDescription      READ commandDescription                                 NOTIFY commandDescriptionChanged)
-    Q_PROPERTY(QString  commandName             READ commandName                                        NOTIFY commandNameChanged)
-    Q_PROPERTY(QString  abbreviation            READ abbreviation                                       NOTIFY abbreviationChanged)
-    Q_PROPERTY(bool     dirty                   READ dirty                  WRITE setDirty              NOTIFY dirtyChanged)                    ///< Item is dirty and requires save/send
-    Q_PROPERTY(bool     isCurrentItem           READ isCurrentItem          WRITE setIsCurrentItem      NOTIFY isCurrentItemChanged)
-    Q_PROPERTY(int      sequenceNumber          READ sequenceNumber         WRITE setSequenceNumber     NOTIFY sequenceNumberChanged)
-    Q_PROPERTY(bool     specifiesCoordinate     READ specifiesCoordinate                                NOTIFY specifiesCoordinateChanged)      ///< true: Item is associated with a coordinate position
-    Q_PROPERTY(bool     isStandaloneCoordinate  READ isStandaloneCoordinate                             NOTIFY isStandaloneCoordinateChanged)   ///< true: Waypoint line does not go through item
-    Q_PROPERTY(bool     specifiesAltitudeOnly   READ specifiesAltitudeOnly                              NOTIFY specifiesAltitudeOnlyChanged)    ///< true: Item has altitude only, no full coordinate
-    Q_PROPERTY(bool     isSimpleItem            READ isSimpleItem                                       NOTIFY isSimpleItemChanged)             ///< Simple or Complex MissionItem
-    Q_PROPERTY(QString  editorQml               MEMBER _editorQml                                       CONSTANT)                               ///< Qml code for editing this item
-    Q_PROPERTY(QString  mapVisualQML            READ mapVisualQML                                       CONSTANT)                               ///< QMl code for map visuals
-
-    /// List of child mission items. Child mission item are subsequent mision items which do not specify a coordinate. They
-    /// are shown next to the exitCoordinate indidcator in the ui.
-    Q_PROPERTY(QmlObjectListModel*  childItems      READ childItems     CONSTANT)
 
     // Property accesors
 
@@ -127,7 +112,12 @@ public:
     virtual QGeoCoordinate  coordinate              (void) const = 0;
     virtual QGeoCoordinate  exitCoordinate          (void) const = 0;
     virtual int             sequenceNumber          (void) const = 0;
-    virtual double          flightSpeed             (void) = 0;
+    virtual double          specifiedFlightSpeed    (void) = 0;
+    virtual double          specifiedGimbalYaw      (void) = 0;
+
+    /// Update item to mission flight status at point where this item appears in mission.
+    /// IMPORTANT: Overrides must call base class implementation
+    virtual void setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus);
 
     virtual bool coordinateHasRelativeAltitude      (void) const = 0;
     virtual bool exitCoordinateHasRelativeAltitude  (void) const = 0;
@@ -150,6 +140,11 @@ public:
     ///     @param missionItemParent Parent object for newly created MissionItems
     virtual void appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent) = 0;
 
+    double  missionGimbalYaw    (void) const { return _missionGimbalYaw; }
+    double  missionVehicleYaw   (void) const { return _missionVehicleYaw; }
+    bool    showMissionGimbalYaw(void) const { return !qIsNaN(_missionGimbalYaw); }
+    void    setMissionVehicleYaw(double vehicleYaw);
+
     static const char* jsonTypeKey;                 ///< Json file attribute which specifies the item type
     static const char* jsonTypeSimpleItemValue;     ///< Item type is MISSION_ITEM
     static const char* jsonTypeComplexItemValue;    ///< Item type is Complex Item
@@ -171,9 +166,12 @@ signals:
     void isSimpleItemChanged            (bool isSimpleItem);
     void specifiesCoordinateChanged     (void);
     void isStandaloneCoordinateChanged  (void);
-    void specifiesAltitudeOnlyChanged     (void);
-    void flightSpeedChanged             (double flightSpeed);
+    void specifiesAltitudeOnlyChanged   (void);
+    void specifiedFlightSpeedChanged    (void);
+    void specifiedGimbalYawChanged      (void);
     void lastSequenceNumberChanged      (int sequenceNumber);
+    void missionGimbalYawChanged        (double missionGimbalYaw);
+    void missionVehicleYawChanged       (double missionVehicleYaw);
 
     void coordinateHasRelativeAltitudeChanged       (bool coordinateHasRelativeAltitude);
     void exitCoordinateHasRelativeAltitudeChanged   (bool exitCoordinateHasRelativeAltitude);
@@ -190,6 +188,10 @@ protected:
     double      _azimuth;                   ///< Azimuth to previous waypoint
     double      _distance;                  ///< Distance to previous waypoint
     QString     _editorQml;                 ///< Qml resource for editing item
+    double      _missionGimbalYaw;
+    double      _missionVehicleYaw;
+
+    MissionController::MissionFlightStatus_t    _missionFlightStatus;
 
     /// This is used to reference any subsequent mission items which do not specify a coordinate.
     QmlObjectListModel  _childItems;

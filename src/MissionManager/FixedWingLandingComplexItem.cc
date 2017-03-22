@@ -250,12 +250,6 @@ double FixedWingLandingComplexItem::complexDistance(void) const
     return _loiterCoordinate.distanceTo(_landingCoordinate);
 }
 
-void FixedWingLandingComplexItem::setCruiseSpeed(double cruiseSpeed)
-{
-    // We don't care about cruise speed
-    Q_UNUSED(cruiseSpeed);
-}
-
 void FixedWingLandingComplexItem::setLandingCoordinate(const QGeoCoordinate& coordinate)
 {
     if (coordinate != _landingCoordinate) {

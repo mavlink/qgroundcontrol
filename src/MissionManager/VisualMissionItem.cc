@@ -31,6 +31,8 @@ VisualMissionItem::VisualMissionItem(Vehicle* vehicle, QObject* parent)
     , _altPercent(0.0)
     , _azimuth(0.0)
     , _distance(0.0)
+    , _missionGimbalYaw(std::numeric_limits<double>::quiet_NaN())
+    , _missionVehicleYaw(std::numeric_limits<double>::quiet_NaN())
 {
 
 }
@@ -115,5 +117,22 @@ void VisualMissionItem::setShowHomePosition(bool showHomePosition)
     if (showHomePosition != _showHomePosition) {
         _showHomePosition = showHomePosition;
         emit showHomePositionChanged(_showHomePosition);
+    }
+}
+
+void VisualMissionItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
+{
+    _missionFlightStatus = missionFlightStatus;
+    if (_missionFlightStatus.gimbalYaw != _missionGimbalYaw) {
+        _missionGimbalYaw = _missionFlightStatus.gimbalYaw;
+        emit missionGimbalYawChanged(_missionGimbalYaw);
+    }
+}
+
+void VisualMissionItem::setMissionVehicleYaw(double vehicleYaw)
+{
+    if (!qFuzzyCompare(_missionVehicleYaw, vehicleYaw)) {
+        _missionVehicleYaw = vehicleYaw;
+        emit missionVehicleYawChanged(_missionVehicleYaw);
     }
 }
