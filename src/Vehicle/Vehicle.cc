@@ -166,6 +166,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(this, &Vehicle::_sendMessageOnLinkOnThread, this, &Vehicle::_sendMessageOnLink, Qt::QueuedConnection);
     connect(this, &Vehicle::flightModeChanged,          this, &Vehicle::_handleFlightModeChanged);
     connect(this, &Vehicle::armedChanged,               this, &Vehicle::_announceArmedChanged);
+
     _uas = new UAS(_mavlink, this, _firmwarePluginManager);
 
     connect(_uas, &UAS::imageReady,                     this, &Vehicle::_imageReady);
@@ -317,14 +318,16 @@ void Vehicle::_commonInit(void)
     _firmwarePlugin = _firmwarePluginManager->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
 
     _missionManager = new MissionManager(this);
-    connect(_missionManager, &MissionManager::error, this, &Vehicle::_missionManagerError);
+    connect(_missionManager, &MissionManager::error,                    this, &Vehicle::_missionManagerError);
+    connect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_newMissionItemsAvailable);
 
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
 
     // GeoFenceManager needs to access ParameterManager so make sure to create after
     _geoFenceManager = _firmwarePlugin->newGeoFenceManager(this);
-    connect(_geoFenceManager, &GeoFenceManager::error, this, &Vehicle::_geoFenceManagerError);
+    connect(_geoFenceManager, &GeoFenceManager::error,          this, &Vehicle::_geoFenceManagerError);
+    connect(_geoFenceManager, &GeoFenceManager::loadComplete,   this, &Vehicle::_newGeoFenceAvailable);
 
     _rallyPointManager = _firmwarePlugin->newRallyPointManager(this);
     connect(_rallyPointManager, &RallyPointManager::error, this, &Vehicle::_rallyPointManagerError);

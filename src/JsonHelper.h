@@ -14,6 +14,8 @@
 #include <QVariantList>
 #include <QGeoCoordinate>
 
+class QmlObjectListModel;
+
 class JsonHelper
 {
 public:
@@ -52,6 +54,12 @@ public:
                                   QGeoCoordinate&   coordinate,         ///< returned QGeoCordinate
                                   QString&          errorString);       ///< returned error string if load failure
 
+    /// Loads a polygon from an array
+    static bool loadPolygon(const QJsonArray&   polygonArray,   ///< Array of coordinates
+                            QmlObjectListModel& list,           ///< Empty list to add vertices to
+                            QObject*            parent,         ///< parent for newly allocated QGCQGeoCoordinates
+                            QString&            errorString);   ///< returned error string if load failure
+
     /// Saves a QGeoCoordinate
     static void saveGeoCoordinate(const QGeoCoordinate& coordinate,     ///< QGeoCoordinate to save
                                   bool                  writeAltitude,  ///< true: write altitude to json
@@ -75,6 +83,10 @@ public:
     static void saveGeoCoordinateArray(const QList<QGeoCoordinate>& rgPoints,       ///< points to save
                                        bool                         writeAltitude,  ///< true: write altitide value
                                        QJsonValue&                  jsonValue);     ///< json value to save to
+
+    /// Saves a polygon to a json array
+    static void savePolygon(QmlObjectListModel& list,           ///< List which contains vertices
+                            QJsonArray&         polygonArray);  ///< Array to save into
 
     static bool parseEnum(const QJsonObject& jsonObject, QStringList& enumStrings, QStringList& enumValues, QString& errorString);
 

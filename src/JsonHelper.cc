@@ -7,8 +7,9 @@
  *
  ****************************************************************************/
 
-
 #include "JsonHelper.h"
+#include "QGCQGeoCoordinate.h"
+#include "QmlObjectListModel.h"
 
 #include <QJsonArray>
 #include <QJsonParseError>
@@ -307,4 +308,31 @@ QString JsonHelper::_jsonValueTypeToString(QJsonValue::Type type)
     }
 
     return QObject::tr("Unknown type: %1").arg(type);
+}
+
+bool JsonHelper::loadPolygon(const QJsonArray& polygonArray, QmlObjectListModel& list, QObject* parent, QString& errorString)
+{
+    for (int i=0; i<polygonArray.count(); i++) {
+        const QJsonValue& pointValue = polygonArray[i];
+
+        QGeoCoordinate pointCoord;
+        if (!JsonHelper::loadGeoCoordinate(pointValue, false /* altitudeRequired */, pointCoord, errorString)) {
+            list.clearAndDeleteContents();
+            return false;
+        }
+        list.append(new QGCQGeoCoordinate(pointCoord, parent));
+    }
+
+    return true;
+}
+
+void JsonHelper::savePolygon(QmlObjectListModel& list, QJsonArray& polygonArray)
+{
+    for (int i=0; i<list.count(); i++) {
+        QGeoCoordinate vertex = list.value<QGCQGeoCoordinate*>(i)->coordinate();
+
+        QJsonValue jsonValue;
+        JsonHelper::saveGeoCoordinate(vertex, false /* writeAltitude */, jsonValue);
+        polygonArray.append(jsonValue);
+    }
 }

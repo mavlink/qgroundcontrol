@@ -113,9 +113,9 @@ Item {
                 coordList.push(edgeCoordinate)
             }
         }
-        if (mapGeoFenceController.polygonEnabled && mapGeoFenceController.polygon.count() > 2) {
-            for (var i=0; i<mapGeoFenceController.polygon.count(); i++) {
-                coordList.push(mapGeoFenceController.polygon.path[i])
+        if (mapGeoFenceController.polygonEnabled && mapGeoFenceController.mapPolygon.path.count > 2) {
+            for (var i=0; i<mapGeoFenceController.mapPolygon.path.count; i++) {
+                coordList.push(mapGeoFenceController.mapPolygon.path[i])
             }
         }
     }

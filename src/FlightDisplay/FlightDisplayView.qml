@@ -148,6 +148,7 @@ QGCView {
                 anchors.fill:       parent
                 flightWidgets:      flightDisplayViewWidgets
                 rightPanelWidth:    ScreenTools.defaultFontPixelHeight * 9
+                qgcView:            root
             }
         }
 

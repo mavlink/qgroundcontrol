@@ -37,16 +37,18 @@ public:
     Q_INVOKABLE void addPoint(QGeoCoordinate point);
     Q_INVOKABLE void removePoint(QObject* rallyPoint);
 
-    void loadFromVehicle    (void) final;
-    void sendToVehicle      (void) final;
-    void loadFromFilePicker (void) final;
-    void loadFromFile       (const QString& filename) final;
-    void saveToFilePicker   (void) final;
-    void saveToFile         (const QString& filename) final;
-    void removeAll          (void) final;
-    bool syncInProgress     (void) const final;
-    bool dirty              (void) const final { return _dirty; }
-    void setDirty           (bool dirty) final;
+    void loadFromVehicle        (void) final;
+    void sendToVehicle          (void) final;
+    void loadFromFilePicker     (void) final;
+    void loadFromFile           (const QString& filename) final;
+    void saveToFilePicker       (void) final;
+    void saveToFile             (const QString& filename) final;
+    void removeAll              (void) final;
+    void removeAllFromVehicle   (void) final;
+    bool syncInProgress         (void) const final;
+    bool dirty                  (void) const final { return _dirty; }
+    void setDirty               (bool dirty) final;
+    bool containsItems          (void) const final;
 
     QString fileExtension(void) const final;
 
@@ -65,6 +67,7 @@ signals:
 private slots:
     void _loadComplete(const QList<QGeoCoordinate> rgPoints);
     void _setFirstPointCurrent(void);
+    void _updateContainsItems(void);
 
 private:
     bool _loadJsonFile(QJsonDocument& jsonDoc, QString& errorString);

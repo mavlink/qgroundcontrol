@@ -27,7 +27,6 @@
         <file alias="FlightDisplayViewUVC.qml">src/FlightDisplay/FlightDisplayViewUVC.qml</file>
         <file alias="FlightModesComponentSummary.qml">src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
         <file alias="GeneralSettings.qml">src/ui/preferences/GeneralSettings.qml</file>
-        <file alias="GeoFenceEditor.qml">src/MissionEditor/GeoFenceEditor.qml</file>
         <file alias="GeoTagPage.qml">src/AnalyzeView/GeoTagPage.qml</file>
         <file alias="JoystickConfig.qml">src/VehicleSetup/JoystickConfig.qml</file>
         <file alias="LinkSettings.qml">src/ui/preferences/LinkSettings.qml</file>
@@ -57,6 +56,8 @@
         <file alias="QGroundControl/Controls/FlightModeDropdown.qml">src/QmlControls/FlightModeDropdown.qml</file>
         <file alias="QGroundControl/Controls/FlightModeMenu.qml">src/QmlControls/FlightModeMenu.qml</file>
         <file alias="QGroundControl/Controls/FWLandingPatternMapVisual.qml">src/MissionEditor/FWLandingPatternMapVisual.qml</file>
+        <file alias="QGroundControl/Controls/GeoFenceEditor.qml">src/MissionEditor/GeoFenceEditor.qml</file>
+        <file alias="QGroundControl/Controls/GeoFenceMapVisuals.qml">src/MissionEditor/GeoFenceMapVisuals.qml</file>
         <file alias="QGroundControl/Controls/GuidedBar.qml">src/QmlControls/GuidedBar.qml</file>
         <file alias="QGroundControl/Controls/IndicatorButton.qml">src/QmlControls/IndicatorButton.qml</file>
         <file alias="QGroundControl/Controls/JoystickThumbPad.qml">src/QmlControls/JoystickThumbPad.qml</file>

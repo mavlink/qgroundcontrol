@@ -25,17 +25,14 @@ public:
     PlanElementController(QObject* parent = NULL);
     ~PlanElementController();
     
-    /// true: information is currently being saved/sent, false: no active save/send in progress
-    Q_PROPERTY(bool syncInProgress READ syncInProgress NOTIFY syncInProgressChanged)
+    Q_PROPERTY(bool     containsItems   READ containsItems                  NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
+    Q_PROPERTY(bool     syncInProgress  READ syncInProgress                 NOTIFY syncInProgressChanged)   ///< true: information is currently being saved/sent, false: no active save/send in progress
+    Q_PROPERTY(bool     dirty           READ dirty          WRITE setDirty  NOTIFY dirtyChanged)            ///< true: unsaved/sent changes are present, false: no changes since last save/send
+    Q_PROPERTY(QString  fileExtension   READ fileExtension                  CONSTANT)                       ///< Returns the file extention for plan element file type.
+    Q_PROPERTY(Vehicle* vehicle         READ vehicle                        NOTIFY vehicleChanged)
 
-    /// true: unsaved/sent changes are present, false: no changes since last save/send
-    Q_PROPERTY(bool dirty READ dirty WRITE setDirty NOTIFY dirtyChanged)
-
-    /// Returns the file extention for plan element file type.
-    Q_PROPERTY(QString fileExtension READ fileExtension CONSTANT)
     virtual QString fileExtension(void) const = 0;
 
-    Q_PROPERTY(Vehicle* vehicle READ vehicle NOTIFY vehicleChanged)
 
     /// Should be called immediately upon Component.onCompleted.
     ///     @param editMode true: controller being used in Plan view, false: controller being used in Fly view
@@ -51,8 +48,10 @@ public:
     Q_INVOKABLE virtual void loadFromFile(const QString& filename) = 0;
     Q_INVOKABLE virtual void saveToFilePicker(void) = 0;
     Q_INVOKABLE virtual void saveToFile(const QString& filename) = 0;
-    Q_INVOKABLE virtual void removeAll(void) = 0;
+    Q_INVOKABLE virtual void removeAll(void) = 0;                       ///< Removes all from controller only, synce required to remove from vehicle
+    Q_INVOKABLE virtual void removeAllFromVehicle(void) = 0;            ///< Removes all from vehicle and controller
 
+    virtual bool containsItems  (void) const = 0;
     virtual bool syncInProgress (void) const = 0;
     virtual bool dirty          (void) const = 0;
     virtual void setDirty       (bool dirty) = 0;
@@ -60,6 +59,7 @@ public:
     Vehicle* vehicle(void) { return _activeVehicle; }
 
 signals:
+    void containsItemsChanged   (bool containsItems);
     void syncInProgressChanged  (bool syncInProgress);
     void dirtyChanged           (bool dirty);
     void vehicleChanged         (Vehicle* vehicle);

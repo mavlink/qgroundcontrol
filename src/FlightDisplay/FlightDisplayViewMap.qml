@@ -8,10 +8,11 @@
  ****************************************************************************/
 
 
-import QtQuick                      2.3
-import QtQuick.Controls             1.2
-import QtLocation                   5.3
-import QtPositioning                5.3
+import QtQuick          2.3
+import QtQuick.Controls 1.2
+import QtLocation       5.3
+import QtPositioning    5.3
+import QtQuick.Dialogs  1.2
 
 import QGroundControl               1.0
 import QGroundControl.FlightDisplay 1.0
@@ -30,6 +31,7 @@ FlightMap {
     property alias  missionController: missionController
     property var    flightWidgets
     property var    rightPanelWidth
+    property var    qgcView             ///< QGCView control which contains this map
 
     property bool   _followVehicleSetting:          true                                                    ///< User facing setting for follow vehicle
     property bool   _followVehicle:                 _followVehicleSetting && _activeVehicleCoordinateValid  ///< Control map follow vehicle functionality
@@ -104,6 +106,49 @@ FlightMap {
     RallyPointController {
         id: rallyPointController
         Component.onCompleted: start(false /* editMode */)
+    }
+
+    // The following code is used to track vehicle states such that we prompt to remove mission from vehicle when mission completes
+
+    property bool vehicleArmed:                 _activeVehicle ? _activeVehicle.armed : false
+    property bool vehicleWasArmed:              false
+    property bool vehicleInMissionFlightMode:   _activeVehicle ? (_activeVehicle.flightMode === _activeVehicle.missionFlightMode) : false
+    property bool promptForMissionRemove:       false
+
+    onVehicleArmedChanged: {
+        if (vehicleArmed) {
+            if (!promptForMissionRemove) {
+                promptForMissionRemove = vehicleInMissionFlightMode
+                vehicleWasArmed = true
+            }
+        } else {
+            if (promptForMissionRemove && (missionController.containsItems || geoFenceController.containsItems || rallyPointController.containsItems)) {
+                qgcView.showDialog(removeMissionDialogComponent, qsTr("Flight complete"), showDialogDefaultWidth, StandardButton.No | StandardButton.Yes)
+            }
+            promptForMissionRemove = false
+        }
+    }
+
+    onVehicleInMissionFlightModeChanged: {
+        if (!promptForMissionRemove && vehicleArmed) {
+            promptForMissionRemove = true
+        }
+    }
+
+    Component {
+        id: removeMissionDialogComponent
+
+        QGCViewMessage {
+            message: qsTr("Do you want to remove the mission from the vehicle?")
+
+            function accept() {
+                missionController.removeAllFromVehicle()
+                geoFenceController.removeAllFromVehicle()
+                rallyPointController.removeAllFromVehicle()
+                hideDialog()
+
+            }
+        }
     }
 
     ExclusiveGroup {
@@ -253,32 +298,11 @@ FlightMap {
         model: _mainIsMap ? missionController.waypointLines : 0
     }
 
-    // GeoFence polygon
-    MapPolygon {
-        border.color:   "#80FF0000"
-        border.width:   3
-        path:           geoFenceController.polygon.path
-        visible:        geoFenceController.polygonEnabled
-    }
-
-    // GeoFence circle
-    MapCircle {
-        border.color:   "#80FF0000"
-        border.width:   3
-        center:         missionController.plannedHomePosition
-        radius:         geoFenceController.circleRadius
-        z:              QGroundControl.zOrderMapItems
-        visible:        geoFenceController.circleEnabled
-    }
-
-    // GeoFence breach return point
-    MapQuickItem {
-        anchorPoint.x:  sourceItem.anchorPointX
-        anchorPoint.y:  sourceItem.anchorPointY
-        coordinate:     geoFenceController.breachReturnPoint
-        visible:        geoFenceController.breachReturnEnabled
-        sourceItem:     MissionItemIndexLabel { label: "F" }
-        z:              QGroundControl.zOrderMapItems
+    GeoFenceMapVisuals {
+        map:                    flightMap
+        myGeoFenceController:   geoFenceController
+        interactive:            false
+        homePosition:           _activeVehicle && _activeVehicle.homePositionAvailable ? _activeVehicle.homePosition : undefined
     }
 
     // Rally points on map

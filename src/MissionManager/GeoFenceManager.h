@@ -16,6 +16,7 @@
 #include "QGCLoggingCategory.h"
 
 class Vehicle;
+class QmlObjectListModel;
 
 Q_DECLARE_LOGGING_CATEGORY(GeoFenceManagerLog)
 
@@ -36,7 +37,9 @@ public:
     virtual void loadFromVehicle(void);
 
     /// Send the current settings to the vehicle
-    virtual void sendToVehicle(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
+    virtual void sendToVehicle(const QGeoCoordinate& breachReturn, QmlObjectListModel& polygon);
+
+    virtual void removeAll(void) { };
 
     virtual bool circleEnabled          (void) const { return false; }
     virtual bool polygonEnabled         (void) const { return false; }
