@@ -64,6 +64,7 @@ public:
     bool            isSimpleItem            (void) const final { return false; }
     bool            isStandaloneCoordinate  (void) const final { return false; }
     bool            specifiesCoordinate     (void) const final;
+    bool            specifiesAltitudeOnly   (void) const final { return false; }
     QString         commandDescription      (void) const final { return "Landing Pattern"; }
     QString         commandName             (void) const final { return "Landing Pattern"; }
     QString         abbreviation            (void) const final { return "L"; }

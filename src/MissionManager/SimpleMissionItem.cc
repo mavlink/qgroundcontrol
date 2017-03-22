@@ -185,6 +185,7 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::commandDescriptionChanged);
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::abbreviationChanged);
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::specifiesCoordinateChanged);
+    connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::specifiesAltitudeOnlyChanged);
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::isStandaloneCoordinateChanged);
 
     // Whenever these properties change the ui model changes as well
@@ -296,6 +297,16 @@ bool SimpleMissionItem::specifiesCoordinate(void) const
     }
 }
 
+bool SimpleMissionItem::specifiesAltitudeOnly(void) const
+{
+    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, (MAV_CMD)command());
+    if (uiInfo) {
+        return uiInfo->specifiesAltitudeOnly();
+    } else {
+        return false;
+    }
+}
+
 QString SimpleMissionItem::commandDescription(void) const
 {
     const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, (MAV_CMD)command());
@@ -392,9 +403,10 @@ QmlObjectListModel* SimpleMissionItem::textFieldFacts(void)
         Fact*           rgParamFacts[7] =       { &_missionItem._param1Fact, &_missionItem._param2Fact, &_missionItem._param3Fact, &_missionItem._param4Fact, &_missionItem._param5Fact, &_missionItem._param6Fact, &_missionItem._param7Fact };
         FactMetaData*   rgParamMetaData[7] =    { &_param1MetaData, &_param2MetaData, &_param3MetaData, &_param4MetaData, &_param5MetaData, &_param6MetaData, &_param7MetaData };
 
-        bool altitudeAdded = false;
+        const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, command);
+
         for (int i=1; i<=7; i++) {
-            const MissionCmdParamInfo* paramInfo = _commandTree->getUIInfo(_vehicle, command)->getParamInfo(i);
+            const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i);
 
             if (paramInfo && paramInfo->enumStrings().count() == 0) {
                 Fact*               paramFact =     rgParamFacts[i-1];
@@ -406,14 +418,10 @@ QmlObjectListModel* SimpleMissionItem::textFieldFacts(void)
                 paramMetaData->setRawUnits(paramInfo->units());
                 paramFact->setMetaData(paramMetaData);
                 model->append(paramFact);
-
-                if (i == 7) {
-                    altitudeAdded = true;
-                }
             }
         }
 
-        if (specifiesCoordinate() && !altitudeAdded) {
+        if (uiInfo->specifiesCoordinate() || uiInfo->specifiesAltitudeOnly()) {
             _missionItem._param7Fact._setName("Altitude");
             _missionItem._param7Fact.setMetaData(_altitudeMetaData);
             model->append(&_missionItem._param7Fact);
@@ -430,7 +438,7 @@ QmlObjectListModel* SimpleMissionItem::checkboxFacts(void)
 
     if (rawEdit()) {
         model->append(&_missionItem._autoContinueFact);
-    } else if (specifiesCoordinate() && !_homePositionSpecialCase) {
+    } else if ((specifiesCoordinate() || specifiesAltitudeOnly()) && !_homePositionSpecialCase) {
         model->append(&_altitudeRelativeToHomeFact);
     }
 
@@ -483,7 +491,7 @@ bool SimpleMissionItem::friendlyEditAllowed(void) const
             return false;
         }
 
-        if (specifiesCoordinate()) {
+        if (specifiesCoordinate() || specifiesAltitudeOnly()) {
             return _missionItem.frame() == MAV_FRAME_GLOBAL || _missionItem.frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT;
         }
 
@@ -560,14 +568,22 @@ void SimpleMissionItem::setDefaultsForCommand(void)
         }
     }
 
-    if (command == MAV_CMD_NAV_WAYPOINT) {
+    switch (command) {
+    case MAV_CMD_NAV_WAYPOINT:
         // We default all acceptance radius to 0. This allows flight controller to be in control of
         // accept radius.
         _missionItem.setParam2(0);
+        break;
+
+    case MAV_CMD_NAV_LAND:
+        _missionItem.setParam7(0);
+        break;
+    default:
+        break;
     }
 
     _missionItem.setAutoContinue(true);
-    _missionItem.setFrame(specifiesCoordinate() ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_MISSION);
+    _missionItem.setFrame((specifiesCoordinate() || specifiesAltitudeOnly()) ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_MISSION);
     setRawEdit(false);
 }
 

@@ -5,20 +5,11 @@
 
     "mavCmdInfo": [
         {
-            "id":           21,
-            "comment":      "MAV_CMD_NAV_LAND",
-            "paramRemove":  "1,4",
-            "param7": {
-                "label":            "Altitude",
-                "units":            "m",
-                "default":          0,
-                "decimalPlaces":    1
-            }
-        },
-        {
-            "id":           22,
-            "comment":      "MAV_CMD_NAV_TAKEOFF",
-            "paramRemove":  "4"
+            "id":                       21,
+            "comment":                  "MAV_CMD_NAV_LAND",
+            "paramRemove":              "1,4",
+            "specifiesCoordinate":      false,
+            "specifiesAltitudeOnly":    true
         }
     ]
 }
