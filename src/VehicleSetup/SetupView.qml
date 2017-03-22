@@ -232,14 +232,14 @@ Rectangle {
             }
 
             Repeater {
-                model:              _corePlugin.settingsPages
-                visible:            _corePlugin.options.combineSettingsAndSetup
+                model:                  _corePlugin ? _corePlugin.settingsPages : []
+                visible:                _corePlugin && _corePlugin.options.combineSettingsAndSetup
                 SubMenuButton {
                     imageResource:      modelData.icon
                     setupIndicator:     false
                     exclusiveGroup:     setupButtonGroup
                     text:               modelData.title
-                    visible:            _corePlugin.options.combineSettingsAndSetup
+                    visible:            _corePlugin && _corePlugin.options.combineSettingsAndSetup
                     onClicked:          panelLoader.setSource(modelData.url)
                     Layout.fillWidth:   true
                 }
@@ -312,7 +312,7 @@ Rectangle {
             SubMenuButton {
                 setupIndicator:     false
                 exclusiveGroup:     setupButtonGroup
-                visible:            QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && _corePlugin.showAdvancedUI
+                visible:            QGroundControl.multiVehicleManager && QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && _corePlugin.showAdvancedUI
                 text:               "Parameters"
                 Layout.fillWidth:   true
 
