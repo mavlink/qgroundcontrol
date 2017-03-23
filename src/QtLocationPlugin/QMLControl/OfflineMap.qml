@@ -31,7 +31,7 @@ QGCView {
 
     property string mapKey:             "lastMapType"
 
-    property string mapType:            QGroundControl.flightMapSettings.mapProvider + " " + QGroundControl.flightMapSettings.mapType
+    property string mapType:            _settings.mapProvider.enumStringValue + " " + _settings.mapType.enumStringValue
     property bool   isMapInteractive:   false
     property var    savedCenter:        undefined
     property real   savedZoom:          3
@@ -47,6 +47,7 @@ QGCView {
 
     property var    _mapAdjustedColor:  _map.isSatelliteMap ? "white" : "black"
     property bool   _tooManyTiles:      QGroundControl.mapEngineManager.tileCount > _maxTilesForDownload
+    property var    _settings:          QGroundControl.settingsManager.flightMapSettings
 
     readonly property real minZoomLevel: 3
     readonly property real maxZoomLevel: 20
@@ -97,7 +98,7 @@ QGCView {
 
     function addNewSet() {
         isMapInteractive = true
-        mapType = QGroundControl.flightMapSettings.mapProvider + " " + QGroundControl.flightMapSettings.mapType
+        mapType = _settings.mapProvider.enumStringValue + " " + _settings.mapType.enumStringValue
         resetMapToDefaults()
         handleChanges()
         _map.visible = true
