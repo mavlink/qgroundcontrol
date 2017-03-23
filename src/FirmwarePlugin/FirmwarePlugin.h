@@ -267,6 +267,9 @@ public:
     /// Returns a list of CameraMetaData objects for available cameras on the vehicle.
     virtual const QVariantList& cameraList(const Vehicle* vehicle);
 
+    /// @true: When flying a mission the vehicle is always facing towards the next waypoint
+    virtual bool vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const;
+
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const char* px4FollowMeFlightMode;
 

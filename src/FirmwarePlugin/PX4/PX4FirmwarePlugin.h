@@ -63,6 +63,7 @@ public:
     QString             missionFlightMode               (void) override;
     QString             rtlFlightMode                   (void) override;
     QString             takeControlFlightMode           (void) override;
+    bool                vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const override;
 
 protected:
     typedef struct {
