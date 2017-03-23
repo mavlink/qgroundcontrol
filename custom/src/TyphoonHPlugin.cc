@@ -324,6 +324,9 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
     } else if (metaData.name() == AppSettings::virtualJoystickName) {
         metaData.setRawDefaultValue(false);
         return false;
+    } else if (metaData.name() == AppSettings::defaultMissionItemAltitudeSettingsName) {
+        metaData.setRawDefaultValue(25);
+        return true;
     } else if (metaData.name() == AppSettings::appFontPointSizeName) {
         int defaultFontPointSize;
 #if !defined(__macos__)
