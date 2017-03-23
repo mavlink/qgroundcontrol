@@ -2436,6 +2436,10 @@ const QVariantList& Vehicle::cameraList(void) const
     return emptyList;
 }
 
+bool Vehicle::vehicleYawsToNextWaypointInMission(void) const
+{
+    return _firmwarePlugin->vehicleYawsToNextWaypointInMission(this);
+}
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------

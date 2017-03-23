@@ -939,9 +939,12 @@ void MissionController::_recalcMissionFlightStatus()
         }
 
         // Look for gimbal change
-        double gimbalYaw = item->specifiedGimbalYaw();
-        if (!qIsNaN(gimbalYaw)) {
-            _missionFlightStatus.gimbalYaw = gimbalYaw;
+        if (_activeVehicle->vehicleYawsToNextWaypointInMission()) {
+            // We current only support gimbal display in this mode
+            double gimbalYaw = item->specifiedGimbalYaw();
+            if (!qIsNaN(gimbalYaw)) {
+                _missionFlightStatus.gimbalYaw = gimbalYaw;
+            }
         }
 
         if (i == 0) {

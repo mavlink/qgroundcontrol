@@ -498,3 +498,12 @@ QString PX4FirmwarePlugin::takeControlFlightMode(void)
 {
     return QString(_manualFlightMode);
 }
+
+bool PX4FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const
+{
+    if ( vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("MIS_YAWMODE"))) {
+        Fact* yawMode = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("MIS_YAWMODE"));
+        return yawMode && yawMode->rawValue().toInt() == 1;
+    }
+    return false;
+}
