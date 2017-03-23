@@ -164,7 +164,7 @@ FlightMap {
         color:              qgcPal.window
         title:              qsTr("Fly")
         z:                  QGroundControl.zOrderWidgets
-        buttonVisible:      [ true, true, _showZoom, _showZoom ]
+        buttonVisible:      [ true, _showZoom, _showZoom ]
         maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y   // Massive reach across hack
 
         property bool _showZoom: !ScreenTools.isMobile
@@ -174,11 +174,6 @@ FlightMap {
                 name:               "Center",
                 iconSource:         "/qmlimages/MapCenter.svg",
                 dropPanelComponent: centerMapDropPanel
-            },
-            {
-                name:               "Map",
-                iconSource:         "/qmlimages/MapType.svg",
-                dropPanelComponent: mapTypeDropPanel
             },
             {
                 name:               "In",
@@ -226,33 +221,6 @@ FlightMap {
             followVehicle:      _followVehicleSetting
 
             onFollowVehicleChanged: _followVehicleSetting = followVehicle
-        }
-    }
-
-    Component {
-        id: mapTypeDropPanel
-
-        Column {
-            spacing: ScreenTools.defaultFontPixelHeight / 2
-
-            QGCLabel { text: qsTr("Map type:") }
-            Row {
-                spacing: ScreenTools.defaultFontPixelWidth
-                Repeater {
-                    model: QGroundControl.flightMapSettings.mapTypes
-
-                    QGCButton {
-                        checkable:      true
-                        checked:        QGroundControl.flightMapSettings.mapType === text
-                        text:           modelData
-                        exclusiveGroup: _mapTypeButtonsExclusiveGroup
-                        onClicked: {
-                            QGroundControl.flightMapSettings.mapType = text
-                            dropPanel.hide()
-                        }
-                    }
-                }
-            }
         }
     }
 
