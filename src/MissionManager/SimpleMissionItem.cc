@@ -75,7 +75,7 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
 
     setDefaultsForCommand();
 
-    connect(&_missionItem, &MissionItem::flightSpeedChanged, this, &SimpleMissionItem::flightSpeedChanged);
+    connect(&_missionItem, &MissionItem::specifiedFlightSpeedChanged, this, &SimpleMissionItem::specifiedFlightSpeedChanged);
 
     connect(this, &SimpleMissionItem::sequenceNumberChanged,    this, &SimpleMissionItem::lastSequenceNumberChanged);
     connect(this, &SimpleMissionItem::cameraSectionChanged,     this, &SimpleMissionItem::_setDirtyFromSignal);
@@ -637,9 +637,14 @@ void SimpleMissionItem::setSequenceNumber(int sequenceNumber)
     }
 }
 
-double SimpleMissionItem::flightSpeed(void)
+double SimpleMissionItem::specifiedFlightSpeed(void)
 {
-    return missionItem().flightSpeed();
+    return missionItem().specifiedFlightSpeed();
+}
+
+double SimpleMissionItem::specifiedGimbalYaw(void)
+{
+    return _cameraSection->available() ? _cameraSection->specifiedGimbalYaw() : missionItem().specifiedGimbalYaw();
 }
 
 void SimpleMissionItem::scanForSections(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle)
@@ -671,7 +676,10 @@ void SimpleMissionItem::_updateCameraSection(void)
 
     connect(_cameraSection, &CameraSection::dirtyChanged,               this, &SimpleMissionItem::_cameraSectionDirtyChanged);
     connect(_cameraSection, &CameraSection::availableChanged,           this, &SimpleMissionItem::_updateLastSequenceNumber);
-    connect(_cameraSection, &CameraSection::missionItemCountChanged,    this, &SimpleMissionItem::_updateLastSequenceNumber);
+    connect(_cameraSection, &CameraSection::missionItemCountChanged,    this, &SimpleMissionItem::_updateLastSequenceNumber);    
+    connect(_cameraSection, &CameraSection::availableChanged,           this, &SimpleMissionItem::specifiedGimbalYawChanged);
+    connect(_cameraSection, &CameraSection::specifyGimbalChanged,       this, &SimpleMissionItem::specifiedGimbalYawChanged);
+    connect(_cameraSection, &CameraSection::specifiedGimbalYawChanged,  this, &SimpleMissionItem::specifiedGimbalYawChanged);
 
     emit cameraSectionChanged(_cameraSection);
 }

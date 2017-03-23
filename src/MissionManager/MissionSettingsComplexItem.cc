@@ -76,6 +76,10 @@ MissionSettingsComplexItem::MissionSettingsComplexItem(Vehicle* vehicle, QObject
     connect(&_missionEndActionFact,             &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirty);
 
     connect(&_cameraSection, &CameraSection::dirtyChanged, this, &MissionSettingsComplexItem::_cameraSectionDirtyChanged);
+
+    connect(&_missionFlightSpeedFact,   &Fact::valueChanged,                        this, &MissionSettingsComplexItem::specifiedFlightSpeedChanged);
+    connect(&_cameraSection,            &CameraSection::specifyGimbalChanged,       this, &MissionSettingsComplexItem::specifiedGimbalYawChanged);
+    connect(&_cameraSection,            &CameraSection::specifiedGimbalYawChanged,  this, &MissionSettingsComplexItem::specifiedGimbalYawChanged);
 }
 
 
@@ -266,12 +270,6 @@ double MissionSettingsComplexItem::complexDistance(void) const
     return 0;
 }
 
-void MissionSettingsComplexItem::setCruiseSpeed(double cruiseSpeed)
-{
-    // We don't care about cruise speed
-    Q_UNUSED(cruiseSpeed);
-}
-
 void MissionSettingsComplexItem::_setDirty(void)
 {
     setDirty(true);
@@ -309,4 +307,14 @@ void MissionSettingsComplexItem::_cameraSectionDirtyChanged(bool dirty)
     if (dirty) {
         setDirty(true);
     }
+}
+
+double MissionSettingsComplexItem::specifiedFlightSpeed(void)
+{
+    return _specifyMissionFlightSpeed ? _missionFlightSpeedFact.rawValue().toDouble() : std::numeric_limits<double>::quiet_NaN();
+}
+
+double MissionSettingsComplexItem::specifiedGimbalYaw(void)
+{
+    return _cameraSection.specifyGimbal() ? _cameraSection.gimbalYaw()->rawValue().toDouble() : std::numeric_limits<double>::quiet_NaN();
 }

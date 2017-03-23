@@ -94,7 +94,8 @@ public:
     QGeoCoordinate  coordinate              (void) const final { return _missionItem.coordinate(); }
     QGeoCoordinate  exitCoordinate          (void) const final { return coordinate(); }
     int             sequenceNumber          (void) const final { return _missionItem.sequenceNumber(); }
-    double          flightSpeed             (void) final;
+    double          specifiedFlightSpeed    (void) final;
+    double          specifiedGimbalYaw      (void) final;
     QString         mapVisualQML            (void) const final { return QStringLiteral("SimpleItemMapVisual.qml"); }
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
 

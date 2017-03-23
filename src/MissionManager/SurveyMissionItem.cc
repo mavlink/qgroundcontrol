@@ -122,12 +122,6 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     connect(&_cameraTriggerFact,            &Fact::valueChanged, this, &SurveyMissionItem::_cameraTriggerChanged);
 
     connect(&_cameraTriggerDistanceFact, &Fact::valueChanged, this, &SurveyMissionItem::timeBetweenShotsChanged);
-
-    // NULL check since object creation during unit testing passes NULL for vehicle
-    if (_vehicle) {
-        connect(_vehicle, &Vehicle::cruiseSpeedChanged, this, &SurveyMissionItem::timeBetweenShotsChanged);
-        connect(_vehicle, &Vehicle::hoverSpeedChanged,  this, &SurveyMissionItem::timeBetweenShotsChanged);
-    }
 }
 
 void SurveyMissionItem::_setSurveyDistance(double surveyDistance)
@@ -881,10 +875,11 @@ double SurveyMissionItem::timeBetweenShots(void) const
     return _cruiseSpeed == 0 ? 0 : _cameraTriggerDistanceFact.rawValue().toDouble() / _cruiseSpeed;
 }
 
-void SurveyMissionItem::setCruiseSpeed(double cruiseSpeed)
+void SurveyMissionItem::setMissionFlightStatus  (MissionController::MissionFlightStatus_t& missionFlightStatus)
 {
-    if (!qFuzzyCompare(_cruiseSpeed, cruiseSpeed)) {
-        _cruiseSpeed = cruiseSpeed;
+    ComplexMissionItem::setMissionFlightStatus(missionFlightStatus);
+    if (!qFuzzyCompare(_cruiseSpeed, missionFlightStatus.vehicleSpeed)) {
+        _cruiseSpeed = missionFlightStatus.vehicleSpeed;
         emit timeBetweenShotsChanged();
     }
 }
