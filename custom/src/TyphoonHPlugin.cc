@@ -333,6 +333,12 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
 #endif
         metaData.setRawDefaultValue(defaultFontPointSize);
         return false;
+    } else if (metaData.name() == AppSettings::offlineEditingFirmwareTypeSettingsName) {
+        metaData.setRawDefaultValue(MAV_AUTOPILOT_PX4);
+        return false;
+    } else if (metaData.name() == AppSettings::offlineEditingVehicleTypeSettingsName) {
+        metaData.setRawDefaultValue(MAV_TYPE_QUADROTOR);
+        return false;
     }
     return true;
 }
