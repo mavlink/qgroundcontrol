@@ -19,15 +19,6 @@ Window {
     id:         _rootWindow
     visible:    true
 
-    width:      792
-    height:     444
-    onWidthChanged: {
-        console.log("Width: " + width)
-    }
-    onHeightChanged: {
-        console.log("Height: " + height)
-    }
-
     property bool _forceClose: false
 
     onClosing: {
