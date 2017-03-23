@@ -16,11 +16,11 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 #include "MavlinkQmlSingleton.h"
-#include "VisualMissionItem.h"
 
 #include <QHash>
 
 class CoordinateVector;
+class VisualMissionItem;
 
 Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
@@ -33,6 +33,20 @@ class MissionController : public PlanElementController
 public:
     MissionController(QObject* parent = NULL);
     ~MissionController();
+
+    typedef struct {
+        double maxTelemetryDistance;
+        double totalDistance;
+        double totalTime;
+        double hoverDistance;
+        double hoverTime;
+        double cruiseDistance;
+        double cruiseTime;
+        double cruiseSpeed;
+        double hoverSpeed;
+        double vehicleSpeed;    //</ Either cruise or hover speed based on vehicle type and vtol state
+        double gimbalYaw;       ///< NaN signals yaw was never changed
+    } MissionFlightStatus_t;
 
     // Mission settings
     Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition    NOTIFY plannedHomePositionChanged)
@@ -96,15 +110,13 @@ public:
     QmlObjectListModel* visualItems         (void) { return _visualItems; }
     QmlObjectListModel* waypointLines       (void) { return &_waypointLines; }
 
-    double  missionDistance         (void) const { return _missionDistance; }
-    double  missionTime             (void) const { return _missionTime; }
-    double  missionHoverDistance    (void) const { return _missionHoverDistance; }
-    double  missionHoverTime        (void) const { return _missionHoverTime; }
-    double  missionCruiseDistance   (void) const { return _missionCruiseDistance; }
-    double  missionCruiseTime       (void) const { return _missionCruiseTime; }
-    double  missionMaxTelemetry     (void) const { return _missionMaxTelemetry; }
-    double  cruiseSpeed             (void) const;
-    double  hoverSpeed              (void) const;
+    double  missionDistance         (void) const { return _missionFlightStatus.totalDistance; }
+    double  missionTime             (void) const { return _missionFlightStatus.totalTime; }
+    double  missionHoverDistance    (void) const { return _missionFlightStatus.hoverDistance; }
+    double  missionHoverTime        (void) const { return _missionFlightStatus.hoverTime; }
+    double  missionCruiseDistance   (void) const { return _missionFlightStatus.cruiseDistance; }
+    double  missionCruiseTime       (void) const { return _missionFlightStatus.cruiseTime; }
+    double  missionMaxTelemetry     (void) const { return _missionFlightStatus.maxTelemetryDistance; }
 
 signals:
     void plannedHomePositionChanged(QGeoCoordinate plannedHomePosition);
@@ -118,10 +130,6 @@ signals:
     void missionCruiseDistanceChanged(double missionCruiseDistance);
     void missionCruiseTimeChanged(void);
     void missionMaxTelemetryChanged(double missionMaxTelemetry);
-    void cruiseDistanceChanged(double cruiseDistance);
-    void hoverDistanceChanged(double hoverDistance);
-    void cruiseSpeedChanged(double cruiseSpeed);
-    void hoverSpeedChanged(double hoverSpeed);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
@@ -131,7 +139,7 @@ private slots:
     void _inProgressChanged(bool inProgress);
     void _currentMissionItemChanged(int sequenceNumber);
     void _recalcWaypointLines(void);
-    void _recalcAltitudeRangeBearing(void);
+    void _recalcMissionFlightStatus(void);
     void _homeCoordinateChanged(void);
     void _updateContainsItems(void);
 
@@ -170,22 +178,16 @@ private:
     void _activeVehicleSet(void) final;
 
 private:
-    QmlObjectListModel* _visualItems;
-    QmlObjectListModel  _waypointLines;
-    CoordVectHashTable  _linesTable;
-    bool                _firstItemsFromVehicle;
-    bool                _missionItemsRequested;
-    bool                _queuedSend;
-    double              _missionDistance;
-    double              _missionTime;
-    double              _missionHoverDistance;
-    double              _missionHoverTime;
-    double              _missionCruiseDistance;
-    double              _missionCruiseTime;
-    double              _missionMaxTelemetry;    
-    QString             _surveyMissionItemName;
-    QString             _fwLandingMissionItemName;
-    QStringList         _complexMissionItemNames;
+    QmlObjectListModel*     _visualItems;
+    QmlObjectListModel      _waypointLines;
+    CoordVectHashTable      _linesTable;
+    bool                    _firstItemsFromVehicle;
+    bool                    _missionItemsRequested;
+    bool                    _queuedSend;
+    MissionFlightStatus_t   _missionFlightStatus;
+    QString                 _surveyMissionItemName;
+    QString                 _fwLandingMissionItemName;
+    QStringList             _complexMissionItemNames;
 
     static const char*  _settingsGroup;
 
