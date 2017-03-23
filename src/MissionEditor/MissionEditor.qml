@@ -59,6 +59,11 @@ QGCView {
     readonly property int _layerRallyPoints:    3
     property int _editingLayer: _layerMission
 
+    Component.onCompleted: {
+        toolbar.missionController =     Qt.binding(function () { return missionController })
+        toolbar.currentMissionItem =    Qt.binding(function () { return _currentMissionItem })
+    }
+
     onActiveVehiclePositionChanged: updateMapToVehiclePosition()
 
     Connections {
