@@ -236,6 +236,7 @@ QGCView {
     /// Sets a new current mission item
     ///     @param sequenceNumber - index for new item, -1 to clear current item
     function setCurrentItem(sequenceNumber) {
+        console.log("setCurrentItem", sequenceNumber, _currentMissionIndex)
         if (sequenceNumber !== _currentMissionIndex) {
             _currentMissionItem = undefined
             _currentMissionIndex = -1
@@ -244,7 +245,7 @@ QGCView {
                 if (visualItem.sequenceNumber == sequenceNumber) {
                     _currentMissionItem = visualItem
                     _currentMissionItem.isCurrentItem = true
-                    _currentMissionIndex = i
+                    _currentMissionIndex = sequenceNumber
                 } else {
                     visualItem.isCurrentItem = false
                 }
