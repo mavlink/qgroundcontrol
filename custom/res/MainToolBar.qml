@@ -55,9 +55,6 @@ Rectangle {
 
     Component.onCompleted: {
         homeButton.checked = true
-        var space = (mainRow.childrenRect.width - brandingLogo.width) / mainRow.children.length
-        mainRow.spacing = space
-        mainRow.visible = true
     }
 
     /// Bottom single pixel divider
@@ -94,11 +91,11 @@ Rectangle {
 
     Row {
         id:                     mainRow
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
         anchors.bottomMargin:   1
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 2
-        anchors.fill:           parent
-        spacing:                0
-        visible:                false
+        anchors.horizontalCenter: parent.horizontalCenter
+        spacing:                30 //-- Hard coded to fit the ST16 Screen
 
         ExclusiveGroup { id: mainActionGroup }
 
@@ -162,21 +159,7 @@ Rectangle {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
-            source:             "/typhoonh/RCIndicator.qml"
-        }
-
-        Loader {
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
             source:             "/typhoonh/YGPSIndicator.qml"
-        }
-
-        Loader {
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
-            source:             "/typhoonh/WIFIRSSIIndicator.qml"
         }
 
         Loader {
@@ -186,26 +169,46 @@ Rectangle {
             source:             "/typhoonh/BatteryIndicator.qml"
         }
 
-    }
+        Rectangle {
+            height:             parent.height * 0.75
+            width:              1
+            color:              qgcPal.text
+            opacity:            0.5
+            anchors.verticalCenter: parent.verticalCenter
+        }
 
-    Item {
-        id:                     brandingLogo
-        anchors.right:          parent.right
-        height:                 parent.height * 0.33
-        width:                  logoImage.width
-        anchors.margins:        ScreenTools.defaultFontPixelHeight * 0.66
-        anchors.verticalCenter: parent.verticalCenter
-        Image {
-            id:                 logoImage
+        Loader {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
-            fillMode:           Image.PreserveAspectFit
-            source:             _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
-            property bool   _outdoorPalette:        qgcPal.globalTheme === QGCPalette.Light
-            property bool   _corePluginBranding:    QGroundControl.corePlugin.brandImageIndoor.length !== 0
-            property string _brandImageIndoor:      _corePluginBranding ? QGroundControl.corePlugin.brandImageIndoor  : (_activeVehicle ? _activeVehicle.brandImageIndoor : "")
-            property string _brandImageOutdoor:     _corePluginBranding ? QGroundControl.corePlugin.brandImageOutdoor : (_activeVehicle ? _activeVehicle.brandImageOutdoor : "")
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+            source:             "/typhoonh/RCIndicator.qml"
         }
+
+        Loader {
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+            source:             "/typhoonh/WIFIRSSIIndicator.qml"
+        }
+
+        Item {
+            width:              logoImage.width
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+            Image {
+                id:             logoImage
+                height:         parent.height * 0.45
+                fillMode:       Image.PreserveAspectFit
+                source:         _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
+                anchors.verticalCenter: parent.verticalCenter
+                property bool   _outdoorPalette:        qgcPal.globalTheme === QGCPalette.Light
+                property bool   _corePluginBranding:    QGroundControl.corePlugin.brandImageIndoor.length !== 0
+                property string _brandImageIndoor:      _corePluginBranding ? QGroundControl.corePlugin.brandImageIndoor  : (_activeVehicle ? _activeVehicle.brandImageIndoor : "")
+                property string _brandImageOutdoor:     _corePluginBranding ? QGroundControl.corePlugin.brandImageOutdoor : (_activeVehicle ? _activeVehicle.brandImageOutdoor : "")
+            }
+        }
+
     }
 
     // Progress bar
