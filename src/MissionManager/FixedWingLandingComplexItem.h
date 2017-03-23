@@ -55,7 +55,6 @@ public:
     int                 lastSequenceNumber  (void) const final;
     bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     double              greatestDistanceTo  (const QGeoCoordinate &other) const final;
-    void                setCruiseSpeed      (double cruiseSpeed) final;
     QString             mapVisualQML        (void) const final { return QStringLiteral("FWLandingPatternMapVisual.qml"); }
 
     // Overrides from VisualMissionItem
@@ -71,7 +70,8 @@ public:
     QGeoCoordinate  coordinate              (void) const final { return _loiterCoordinate; }
     QGeoCoordinate  exitCoordinate          (void) const final { return _landingCoordinate; }
     int             sequenceNumber          (void) const final { return _sequenceNumber; }
-    double          flightSpeed             (void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    double          specifiedFlightSpeed    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    double          specifiedGimbalYaw      (void) final { return std::numeric_limits<double>::quiet_NaN(); }
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
 
     bool coordinateHasRelativeAltitude      (void) const final { return true; }

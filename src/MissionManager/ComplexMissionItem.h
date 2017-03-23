@@ -38,9 +38,6 @@ public:
     /// @return the greatest distance from any point of the complex item to some coordinate
     virtual double greatestDistanceTo(const QGeoCoordinate &other) const = 0;
 
-    /// Informs the complex item of the cruise speed it will fly at
-    virtual void setCruiseSpeed(double cruiseSpeed) = 0;
-
     /// This mission item attribute specifies the type of the complex item.
     static const char* jsonComplexItemTypeKey;
 

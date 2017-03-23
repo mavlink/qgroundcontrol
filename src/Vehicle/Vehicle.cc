@@ -102,8 +102,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _onboardControlSensorsUnhealthy(0)
     , _gpsRawIntMessageAvailable(false)
     , _globalPositionIntMessageAvailable(false)
-    , _cruiseSpeed(_settingsManager->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
-    , _hoverSpeed(_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
+    , _defaultCruiseSpeed(_settingsManager->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
+    , _defaultHoverSpeed(_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
     , _telemetryRRSSI(0)
     , _telemetryLRSSI(0)
     , _telemetryRXErrors(0)
@@ -265,8 +265,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _onboardControlSensorsUnhealthy(0)
     , _gpsRawIntMessageAvailable(false)
     , _globalPositionIntMessageAvailable(false)
-    , _cruiseSpeed(_settingsManager->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
-    , _hoverSpeed(_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
+    , _defaultCruiseSpeed(_settingsManager->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
+    , _defaultHoverSpeed(_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
     , _vehicleCapabilitiesKnown(true)
     , _supportsMissionItemInt(false)
     , _connectionLost(false)
@@ -385,14 +385,14 @@ void Vehicle::_offlineVehicleTypeSettingChanged(QVariant value)
 
 void Vehicle::_offlineCruiseSpeedSettingChanged(QVariant value)
 {
-    _cruiseSpeed = value.toDouble();
-    emit cruiseSpeedChanged(_cruiseSpeed);
+    _defaultCruiseSpeed = value.toDouble();
+    emit defaultCruiseSpeedChanged(_defaultCruiseSpeed);
 }
 
 void Vehicle::_offlineHoverSpeedSettingChanged(QVariant value)
 {
-    _hoverSpeed = value.toDouble();
-    emit hoverSpeedChanged(_hoverSpeed);
+    _defaultHoverSpeed = value.toDouble();
+    emit defaultHoverSpeedChanged(_defaultHoverSpeed);
 }
 
 QString Vehicle::firmwareTypeString(void) const
