@@ -85,7 +85,8 @@ Map {
     }
 
     function updateActiveMapType() {
-        var fullMapName = QGroundControl.flightMapSettings.mapProvider + " " + QGroundControl.flightMapSettings.mapType
+        var settings =  QGroundControl.settingsManager.flightMapSettings
+        var fullMapName = settings.mapProvider.enumStringValue + " " + settings.mapType.enumStringValue
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
             if (fullMapName === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]
@@ -97,8 +98,13 @@ Map {
     Component.onCompleted: updateActiveMapType()
 
     Connections {
-        target:             QGroundControl.flightMapSettings
-        onMapTypeChanged:   updateActiveMapType()
+        target:             QGroundControl.settingsManager.flightMapSettings.mapType
+        onRawValueChanged:  updateActiveMapType()
+    }
+
+    Connections {
+        target:             QGroundControl.settingsManager.flightMapSettings.mapProvider
+        onRawValueChanged:  updateActiveMapType()
     }
 
     /// Ground Station location

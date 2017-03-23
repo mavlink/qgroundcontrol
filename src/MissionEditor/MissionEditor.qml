@@ -678,11 +678,11 @@ QGCView {
                     color:              qgcPal.window
                     title:              qsTr("Plan")
                     z:                  QGroundControl.zOrderWidgets
-                    showAlternateIcon:  [ false, false, _syncDropDownController.dirty, false, false, false, false ]
-                    rotateImage:        [ false, false, _syncDropDownController.syncInProgress, false, false, false, false ]
-                    animateImage:       [ false, false, _syncDropDownController.dirty, false, false, false, false ]
-                    buttonEnabled:      [ true, true, !_syncDropDownController.syncInProgress, true, true, true, true ]
-                    buttonVisible:      [ true, true, true, true, true, _showZoom, _showZoom ]
+                    showAlternateIcon:  [ false, false, _syncDropDownController.dirty, false, false, false ]
+                    rotateImage:        [ false, false, _syncDropDownController.syncInProgress, false, false, false ]
+                    animateImage:       [ false, false, _syncDropDownController.dirty, false, false, false ]
+                    buttonEnabled:      [ true, true, !_syncDropDownController.syncInProgress, true, true, true ]
+                    buttonVisible:      [ true, true, true, true, _showZoom, _showZoom ]
                     maxHeight:          mapScale.y - toolStrip.y
 
                     property bool _showZoom: !ScreenTools.isMobile
@@ -708,11 +708,6 @@ QGCView {
                             name:               "Center",
                             iconSource:         "/qmlimages/MapCenter.svg",
                             dropPanelComponent: centerMapDropPanel
-                        },
-                        {
-                            name:               "Map",
-                            iconSource:         "/qmlimages/MapType.svg",
-                            dropPanelComponent: mapTypeDropPanel
                         },
                         {
                             name:               "In",
@@ -900,34 +895,6 @@ QGCView {
         CenterMapDropPanel {
             map:            editorMap
             fitFunctions:   mapFitFunctions
-        }
-    }
-
-    Component {
-        id: mapTypeDropPanel
-
-        Column {
-            spacing: _margin
-
-            QGCLabel { text: qsTr("Map type:") }
-            Row {
-                spacing: ScreenTools.defaultFontPixelWidth
-                Repeater {
-                    model: QGroundControl.flightMapSettings.mapTypes
-
-                    QGCButton {
-                        checkable:      true
-                        checked:        QGroundControl.flightMapSettings.mapType === text
-                        text:           modelData
-                        exclusiveGroup: _mapTypeButtonsExclusiveGroup
-
-                        onClicked: {
-                            QGroundControl.flightMapSettings.mapType = text
-                            dropPanel.hide()
-                        }
-                    }
-                }
-            }
         }
     }
 
