@@ -49,18 +49,18 @@ public:
     } MissionFlightStatus_t;
 
     // Mission settings
-    Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition    NOTIFY plannedHomePositionChanged)
-    Q_PROPERTY(QmlObjectListModel*  visualItems             READ visualItems            NOTIFY visualItemsChanged)
-    Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines          NOTIFY waypointLinesChanged)
-    Q_PROPERTY(QStringList          complexMissionItemNames MEMBER _complexMissionItemNames CONSTANT)
+    Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition        NOTIFY plannedHomePositionChanged)
+    Q_PROPERTY(QmlObjectListModel*  visualItems             READ visualItems                NOTIFY visualItemsChanged)
+    Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines              NOTIFY waypointLinesChanged)
+    Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
 
-    Q_PROPERTY(double               missionDistance         READ missionDistance        NOTIFY missionDistanceChanged)
-    Q_PROPERTY(double               missionTime             READ missionTime            NOTIFY missionTimeChanged)
-    Q_PROPERTY(double               missionHoverDistance    READ missionHoverDistance   NOTIFY missionHoverDistanceChanged)
-    Q_PROPERTY(double               missionCruiseDistance   READ missionCruiseDistance  NOTIFY missionCruiseDistanceChanged)
-    Q_PROPERTY(double               missionHoverTime        READ missionHoverTime       NOTIFY missionHoverTimeChanged)
-    Q_PROPERTY(double               missionCruiseTime       READ missionCruiseTime      NOTIFY missionCruiseTimeChanged)
-    Q_PROPERTY(double               missionMaxTelemetry     READ missionMaxTelemetry    NOTIFY missionMaxTelemetryChanged)
+    Q_PROPERTY(double               missionDistance         READ missionDistance            NOTIFY missionDistanceChanged)
+    Q_PROPERTY(double               missionTime             READ missionTime                NOTIFY missionTimeChanged)
+    Q_PROPERTY(double               missionHoverDistance    READ missionHoverDistance       NOTIFY missionHoverDistanceChanged)
+    Q_PROPERTY(double               missionCruiseDistance   READ missionCruiseDistance      NOTIFY missionCruiseDistanceChanged)
+    Q_PROPERTY(double               missionHoverTime        READ missionHoverTime           NOTIFY missionHoverTimeChanged)
+    Q_PROPERTY(double               missionCruiseTime       READ missionCruiseTime          NOTIFY missionCruiseTimeChanged)
+    Q_PROPERTY(double               missionMaxTelemetry     READ missionMaxTelemetry        NOTIFY missionMaxTelemetryChanged)
 
     Q_INVOKABLE void removeMissionItem(int index);
 
@@ -106,9 +106,10 @@ public:
 
     // Property accessors
 
-    QGeoCoordinate      plannedHomePosition (void);
-    QmlObjectListModel* visualItems         (void) { return _visualItems; }
-    QmlObjectListModel* waypointLines       (void) { return &_waypointLines; }
+    QGeoCoordinate      plannedHomePosition     (void);
+    QmlObjectListModel* visualItems             (void) { return _visualItems; }
+    QmlObjectListModel* waypointLines           (void) { return &_waypointLines; }
+    QStringList         complexMissionItemNames (void) const;
 
     double  missionDistance         (void) const { return _missionFlightStatus.totalDistance; }
     double  missionTime             (void) const { return _missionFlightStatus.totalTime; }
@@ -130,6 +131,7 @@ signals:
     void missionCruiseDistanceChanged(double missionCruiseDistance);
     void missionCruiseTimeChanged(void);
     void missionMaxTelemetryChanged(double missionMaxTelemetry);
+    void complexMissionItemNamesChanged(void);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
@@ -187,7 +189,6 @@ private:
     MissionFlightStatus_t   _missionFlightStatus;
     QString                 _surveyMissionItemName;
     QString                 _fwLandingMissionItemName;
-    QStringList             _complexMissionItemNames;
 
     static const char*  _settingsGroup;
 

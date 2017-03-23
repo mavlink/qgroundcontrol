@@ -49,6 +49,7 @@ QGCView {
     property var    activeVehiclePosition:  _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property bool   _lightWidgetBorders:    editorMap.isSatelliteMap
     property bool   _addWaypointOnClick:    false
+    property bool   _singleComplexItem:     missionController.complexMissionItemNames.length == 1
 
     /// The controller which should be called for load/save, send to/from vehicle calls
     property var _syncDropDownController: missionController
@@ -75,6 +76,14 @@ QGCView {
             _firstVehiclePosition = false
             editorMap.center = _activeVehicle.coordinate
         }
+    }
+
+    function addComplexItem(complexItemName) {
+        var coordinate = editorMap.center
+        coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
+        coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
+        coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
+        var sequenceNumber = missionController.insertComplexMissionItem(complexItemName, coordinate, missionController.visualItems.count)
     }
 
     property bool _firstMissionLoadComplete:    false
@@ -696,7 +705,7 @@ QGCView {
                         {
                             name:               "Pattern",
                             iconSource:         "/qmlimages/MapDrawShape.svg",
-                            dropPanelComponent: patternDropPanel
+                            dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
                         },
                         {
                             name:                   "Sync",
@@ -728,6 +737,11 @@ QGCView {
                         switch (index) {
                         case 0:
                             _addWaypointOnClick = checked
+                            break
+                        case 1:
+                            if (_singleComplexItem) {
+                                addComplexItem(missionController.complexMissionItemNames[0])
+                            }
                             break
                         case 5:
                             editorMap.zoomLevel += 0.5
@@ -947,12 +961,7 @@ QGCView {
                     Layout.fillWidth:   true
 
                     onClicked: {
-                        var coordinate = editorMap.center
-                        coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
-                        coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
-                        coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
-                        var sequenceNumber = missionController.insertComplexMissionItem(modelData, coordinate, missionController.visualItems.count)
-                        setCurrentItem(sequenceNumber)
+                        addComplexItem(modelData)
                         dropPanel.hide()
                     }
                 }
