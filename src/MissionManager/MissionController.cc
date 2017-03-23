@@ -794,7 +794,7 @@ void MissionController::_recalcWaypointLines(void)
         qWarning() << "First item is not MissionSettingsComplexItem";
     }
 
-    bool    showHomePosition =  false; // FIXME: settingsItem->showHomePosition();
+    bool showHomePosition = settingsItem->showHomePosition();
 
     qCDebug(MissionControllerLog) << "_recalcWaypointLines";
 
