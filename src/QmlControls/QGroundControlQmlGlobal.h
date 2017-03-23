@@ -17,7 +17,6 @@
 #include "QGCToolbox.h"
 #include "QGCApplication.h"
 #include "LinkManager.h"
-#include "FlightMapSettings.h"
 #include "SettingsFact.h"
 #include "FactMetaData.h"
 #include "SimulatedPosition.h"
@@ -39,7 +38,6 @@ public:
 
     Q_PROPERTY(QString              appName             READ appName                CONSTANT)
 
-    Q_PROPERTY(FlightMapSettings*   flightMapSettings   READ flightMapSettings      CONSTANT)
     Q_PROPERTY(LinkManager*         linkManager         READ linkManager            CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager READ multiVehicleManager    CONSTANT)
     Q_PROPERTY(QGCMapEngineManager* mapEngineManager    READ mapEngineManager       CONSTANT)
@@ -126,7 +124,6 @@ public:
     // Property accesors
 
     QString                 appName             ()  { return qgcApp()->applicationName(); }
-    FlightMapSettings*      flightMapSettings   ()  { return _flightMapSettings; }
     LinkManager*            linkManager         ()  { return _linkManager; }
     MultiVehicleManager*    multiVehicleManager ()  { return _multiVehicleManager; }
     QGCMapEngineManager*    mapEngineManager    ()  { return _mapEngineManager; }
@@ -172,7 +169,6 @@ signals:
     void skipSetupPageChanged           ();
 
 private:
-    FlightMapSettings*      _flightMapSettings;
     LinkManager*            _linkManager;
     MultiVehicleManager*    _multiVehicleManager;
     QGCMapEngineManager*    _mapEngineManager;
