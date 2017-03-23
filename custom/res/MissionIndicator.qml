@@ -22,7 +22,7 @@ import QGroundControl.Palette               1.0
 Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    width:          missionLabel.width
+    width:          missionIcon.width
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property var    _missionModes:   ["Execute Mission", "Pause Mission", "Resume Mission", "Restart Mission", "Cancel Mission", "End Mission"]
@@ -66,12 +66,16 @@ Item {
         }
     }
 
-    QGCLabel {
-        id:                     missionLabel
-        text:                   qsTr("Mission")
-        font.pointSize:         ScreenTools.mediumFontPointSize
-        color:                  qgcPal.buttonText
-        anchors.centerIn:       parent
+    QGCColoredImage {
+        id:                 missionIcon
+        anchors.top:        parent.top
+        anchors.bottom:     parent.bottom
+        width:              height
+        sourceSize.width:   width
+        source:             "/typhoonh/mission.svg"
+        fillMode:           Image.PreserveAspectFit
+        opacity:            _activeVehicle ? 1 : 0.5
+        color:              qgcPal.text
     }
 
     MouseArea {

@@ -55,6 +55,9 @@ Rectangle {
 
     Component.onCompleted: {
         homeButton.checked = true
+        var space = (mainRow.childrenRect.width - brandingLogo.width) / mainRow.children.length
+        mainRow.spacing = space
+        mainRow.visible = true
     }
 
     /// Bottom single pixel divider
@@ -90,10 +93,12 @@ Rectangle {
     }
 
     Row {
+        id:                     mainRow
         anchors.bottomMargin:   1
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 2
         anchors.fill:           parent
-        spacing:                ScreenTools.defaultFontPixelWidth * 2.25
+        spacing:                0
+        visible:                false
 
         ExclusiveGroup { id: mainActionGroup }
 
@@ -104,6 +109,46 @@ Rectangle {
             exclusiveGroup:     mainActionGroup
             source:             "/typhoonh/Home.svg"
             onClicked:          toolBar.showFlyView()
+        }
+
+        QGCToolBarButton {
+            id:                 setupButton
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            exclusiveGroup:     mainActionGroup
+            source:             "/qmlimages/Gears.svg"
+            onClicked:          toolBar.showSetupView()
+        }
+
+        QGCToolBarButton {
+            id:                 planButton
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            exclusiveGroup:     mainActionGroup
+            source:             "/qmlimages/Plan.svg"
+            onClicked:          toolBar.showPlanView()
+        }
+
+        Rectangle {
+            height:             parent.height * 0.75
+            width:              1
+            color:              qgcPal.text
+            opacity:            0.5
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
+        Loader {
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+            source:             "/typhoonh/MissionIndicator.qml"
+        }
+
+        Loader {
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+            source:             "/toolbar/MessageIndicator.qml"
         }
 
         Loader {
@@ -141,41 +186,10 @@ Rectangle {
             source:             "/typhoonh/BatteryIndicator.qml"
         }
 
-        QGCToolBarButton {
-            id:                 setupButton
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            exclusiveGroup:     mainActionGroup
-            source:             "/qmlimages/Gears.svg"
-            onClicked:          toolBar.showSetupView()
-        }
-
-        Loader {
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
-            source:             "/toolbar/MessageIndicator.qml"
-        }
-
-        QGCToolBarButton {
-            id:                 planButton
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            exclusiveGroup:     mainActionGroup
-            source:             "/qmlimages/Plan.svg"
-            onClicked:          toolBar.showPlanView()
-        }
-
-        Loader {
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
-            source:             "/typhoonh/MissionIndicator.qml"
-        }
-
     }
 
     Item {
+        id:                     brandingLogo
         anchors.right:          parent.right
         height:                 parent.height * 0.33
         width:                  logoImage.width
