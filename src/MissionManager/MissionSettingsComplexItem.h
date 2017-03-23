@@ -60,7 +60,6 @@ public:
     int                 lastSequenceNumber  (void) const final;
     bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     double              greatestDistanceTo  (const QGeoCoordinate &other) const final;
-    void                setCruiseSpeed      (double cruiseSpeed) final;
     QString             mapVisualQML        (void) const final { return QStringLiteral("MissionSettingsMapVisual.qml"); }
 
     // Overrides from VisualMissionItem
@@ -76,7 +75,8 @@ public:
     QGeoCoordinate  coordinate              (void) const final;
     QGeoCoordinate  exitCoordinate          (void) const final { return coordinate(); }
     int             sequenceNumber          (void) const final { return _sequenceNumber; }
-    double          flightSpeed             (void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    double          specifiedFlightSpeed    (void) final;
+    double          specifiedGimbalYaw      (void) final;
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
 
     bool coordinateHasRelativeAltitude      (void) const final { return true; }
@@ -94,10 +94,10 @@ signals:
     bool specifyMissionFlightSpeedChanged(bool specifyMissionFlightSpeed);
 
 private slots:
-    void _setDirtyAndUpdateLastSequenceNumber(void);
-    void _setDirtyAndUpdateCoordinate(void);
-    void _setDirty(void);
-    void _cameraSectionDirtyChanged(bool dirty);
+    void _setDirtyAndUpdateLastSequenceNumber   (void);
+    void _setDirtyAndUpdateCoordinate           (void);
+    void _setDirty                              (void);
+    void _cameraSectionDirtyChanged             (bool dirty);
 
 private:
     bool            _specifyMissionFlightSpeed;
