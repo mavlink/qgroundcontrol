@@ -52,6 +52,8 @@ MissionController::MissionController(QObject *parent)
     , _firstItemsFromVehicle(false)
     , _missionItemsRequested(false)
     , _queuedSend(false)
+    , _surveyMissionItemName(tr("Survey"))
+    , _fwLandingMissionItemName(tr("Fixed Wing Landing"))
 {
     _missionFlightStatus.maxTelemetryDistance = 0;
     _missionFlightStatus.totalDistance = 0;
@@ -63,10 +65,6 @@ MissionController::MissionController(QObject *parent)
     _missionFlightStatus.cruiseSpeed = 0;
     _missionFlightStatus.hoverSpeed = 0;
     _missionFlightStatus.gimbalYaw = 0;
-
-    _surveyMissionItemName = tr("Survey");
-    _fwLandingMissionItemName = tr("Fixed Wing Landing");
-    _complexMissionItemNames << _surveyMissionItemName << _fwLandingMissionItemName;
 }
 
 MissionController::~MissionController()
@@ -1290,6 +1288,8 @@ void MissionController::_activeVehicleSet(void)
 
     _activeVehicleHomePositionChanged(_activeVehicle->homePosition());
     _activeVehicleHomePositionAvailableChanged(_activeVehicle->homePositionAvailable());
+
+    emit complexMissionItemNamesChanged();
 }
 
 void MissionController::_activeVehicleHomePositionAvailableChanged(bool homePositionAvailable)
@@ -1572,4 +1572,16 @@ void MissionController::removeAllFromVehicle(void)
 {
     _missionItemsRequested = true;
     _activeVehicle->missionManager()->removeAll();
+}
+
+QStringList MissionController::complexMissionItemNames(void) const
+{
+    QStringList complexItems;
+
+    complexItems.append(_surveyMissionItemName);
+    if (_activeVehicle->fixedWing()) {
+        complexItems.append(_fwLandingMissionItemName);
+    }
+
+    return complexItems;
 }
