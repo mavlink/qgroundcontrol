@@ -64,7 +64,7 @@ Rectangle {
         highlightMoveDuration:  250
         orientation:            ListView.Horizontal
         spacing:                0
-        width:                  parent.width - valueGrid.width - valueMissionGrid.width - (_margins * 2)
+        width:                  parent.width -  (_margins * 2)
         clip:                   true
         currentIndex:           _currentMissionIndex
 
