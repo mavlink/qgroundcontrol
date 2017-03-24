@@ -349,12 +349,12 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
 QString
 TyphoonHPlugin::brandImageIndoor(void) const
 {
-    return QStringLiteral("/typhoonh/YuneecBrandImage.png");
+    return QStringLiteral("/typhoonh/YuneecBrandImage.svg");
 }
 
 QString
 TyphoonHPlugin::brandImageOutdoor(void) const
 {
-    return brandImageIndoor();
+    return QStringLiteral("/typhoonh/YuneecBrandImageBlack.svg");
 }
 

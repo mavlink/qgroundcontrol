@@ -40,6 +40,7 @@
         <file alias="wifi.svg">res/images/wifi.svg</file>
         <file alias="WIFIRSSIIndicator.qml">res/WIFIRSSIIndicator.qml</file>
         <file alias="YGPSIndicator.qml">res/YGPSIndicator.qml</file>
-        <file alias="YuneecBrandImage.png">src/FirmwarePlugin/YuneecBrandImage.png</file>
+        <file alias="YuneecBrandImage.svg">src/FirmwarePlugin/YuneecBrandImage.svg</file>
+        <file alias="YuneecBrandImageBlack.svg">src/FirmwarePlugin/YuneecBrandImageBlack.svg</file>
     </qresource>
 </RCC>
