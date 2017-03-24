@@ -93,50 +93,45 @@ Rectangle {
         anchors.bottomMargin:       1
         anchors.horizontalCenter:   parent.horizontalCenter
 
-        Row {
-            spacing:        ScreenTools.defaultFontPixelWidth * 2
+        GridLayout {
+            columns:        4
+            rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.15
+            columnSpacing:  _margins
             anchors.verticalCenter: parent.verticalCenter
-            Column {
-                spacing:    ScreenTools.defaultFontPixelHeight * 0.25
-                QGCLabel {
-                    text: qsTr("Selected")
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-                QGCLabel {
-                    text: qsTr("Waypoint")
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
+
+            QGCLabel {
+                text: qsTr("Selected Waypoint")
+                Layout.columnSpan: 4
+                font.pointSize: ScreenTools.smallFontPointSize
             }
 
-            GridLayout {
-                columns:        4
-                rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
-                columnSpacing:  _margins
+            QGCLabel { text: qsTr("Distance:"); font.pointSize: ScreenTools.smallFontPointSize }
+            QGCLabel {
+                text: _distanceText
+                font.pointSize: ScreenTools.smallFontPointSize
+                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 8
+                horizontalAlignment: Text.AlignRight
+            }
 
-                QGCLabel { text: qsTr("Distance:") }
-                QGCLabel {
-                    text: _distanceText
-                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 8
-                    horizontalAlignment: Text.AlignRight
-                }
+            QGCLabel { text: qsTr("Gradient:"); font.pointSize: ScreenTools.smallFontPointSize }
+            QGCLabel { text: _gradientText
+                font.pointSize: ScreenTools.smallFontPointSize
+                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 6
+                horizontalAlignment: Text.AlignRight
+            }
 
-                QGCLabel { text: qsTr("Gradient:") }
-                QGCLabel { text: _gradientText
-                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 6
-                    horizontalAlignment: Text.AlignRight
-                }
+            QGCLabel { text: qsTr("Alt Diff:"); font.pointSize: ScreenTools.smallFontPointSize }
+            QGCLabel { text: _altDifferenceText
+                font.pointSize: ScreenTools.smallFontPointSize
+                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 8
+                horizontalAlignment: Text.AlignRight
+            }
 
-                QGCLabel { text: qsTr("Alt Diff:") }
-                QGCLabel { text: _altDifferenceText
-                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 8
-                    horizontalAlignment: Text.AlignRight
-                }
-
-                QGCLabel { text: qsTr("Azimuth:") }
-                QGCLabel { text: _azimuthText
-                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 6
-                    horizontalAlignment: Text.AlignRight
-                }
+            QGCLabel { text: qsTr("Azimuth:"); font.pointSize: ScreenTools.smallFontPointSize }
+            QGCLabel { text: _azimuthText
+                font.pointSize: ScreenTools.smallFontPointSize
+                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 6
+                horizontalAlignment: Text.AlignRight
             }
         }
 
@@ -145,43 +140,37 @@ Rectangle {
             height: 1
         }
 
-        Row {
-            spacing:        ScreenTools.defaultFontPixelWidth * 2
+        GridLayout {
+            columns:        4
+            rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
+            columnSpacing:  _margins
             anchors.verticalCenter: parent.verticalCenter
-            Column {
-                spacing:    ScreenTools.defaultFontPixelHeight * 0.25
-                QGCLabel {
-                    text: qsTr("Total")
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-                QGCLabel {
-                    text: qsTr("Mission")
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
+
+            QGCLabel {
+                text: qsTr("Total Mission")
+                Layout.columnSpan: 4
+                font.pointSize: ScreenTools.smallFontPointSize
             }
 
-            GridLayout {
-                columns:        4
-                rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
-                columnSpacing:  _margins
+            QGCLabel { text: qsTr("Distance:"); font.pointSize: ScreenTools.smallFontPointSize }
+            QGCLabel { text: _missionDistanceText
+                font.pointSize: ScreenTools.smallFontPointSize
+                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
+                horizontalAlignment: Text.AlignRight
+            }
 
-                QGCLabel { text: qsTr("Distance:") }
-                QGCLabel { text: _missionDistanceText
-                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
-                    horizontalAlignment: Text.AlignRight
-                }
+            QGCLabel { text: qsTr("Time:"); font.pointSize: ScreenTools.smallFontPointSize }
+            QGCLabel { text: _missionTimeText
+                font.pointSize: ScreenTools.smallFontPointSize
+                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 6
+                horizontalAlignment: Text.AlignRight
+            }
 
-                QGCLabel { text: qsTr("Time:") }
-                QGCLabel { text: _missionTimeText
-                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 6
-                    horizontalAlignment: Text.AlignRight
-                }
-
-                QGCLabel { text: qsTr("Max Telem Dist:") }
-                QGCLabel { text: _missionMaxTelemetryText
-                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
-                    horizontalAlignment: Text.AlignRight
-                }
+            QGCLabel { text: qsTr("Max Telem Dist:"); font.pointSize: ScreenTools.smallFontPointSize }
+            QGCLabel { text: _missionMaxTelemetryText
+                font.pointSize: ScreenTools.smallFontPointSize
+                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
+                horizontalAlignment: Text.AlignRight
             }
         }
 
