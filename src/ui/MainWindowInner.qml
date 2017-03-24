@@ -259,6 +259,7 @@ Item {
         anchors.left:       parent.left
         anchors.right:      parent.right
         anchors.top:        parent.top
+        opacity:            planToolBar.visible ? 0 : 1
         z:                  QGroundControl.zOrderTopMost
 
         Component.onCompleted:  ScreenTools.availableHeight = parent.height - toolBar.height
