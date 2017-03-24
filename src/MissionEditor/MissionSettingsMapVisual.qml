@@ -114,7 +114,7 @@ Item {
                     model: _missionItem.childItems
 
                     delegate: MissionItemIndexLabel {
-                        label:                  object.abbreviation
+                        label:                  object.abbreviation.length === 0 ? object.sequenceNumber : object.abbreviation.charAt(0)
                         checked:                object.isCurrentItem
                         z:                      2
                         specifiesCoordinate:    false

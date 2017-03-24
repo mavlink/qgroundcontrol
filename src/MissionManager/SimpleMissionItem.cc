@@ -336,15 +336,15 @@ QString SimpleMissionItem::abbreviation() const
 
     switch(command()) {
     default:
-        return QString::number(sequenceNumber());
+        return QString();
     case MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF:
-        return QStringLiteral("T");
+        return QStringLiteral("Takeoff");
     case MavlinkQmlSingleton::MAV_CMD_NAV_LAND:
-        return QStringLiteral("L");
+        return QStringLiteral("Land");
     case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF:
-        return QStringLiteral("VT");
+        return QStringLiteral("VTOL Takeoff");
     case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_LAND:
-        return QStringLiteral("VL");
+        return QStringLiteral("VTOL Land");
     }
 }
 

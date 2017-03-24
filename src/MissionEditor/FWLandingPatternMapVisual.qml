@@ -204,6 +204,7 @@ Item {
 
             sourceItem:
                 MissionItemIndexLabel {
+                index:      _missionItem.sequenceNumber
                 label:      "Loiter"
                 checked:    _missionItem.isCurrentItem
 
@@ -238,6 +239,7 @@ Item {
 
             sourceItem:
                 MissionItemIndexLabel {
+                index:      _missionItem.lastSequenceNumber
                 label:      "Land"
                 checked:    _missionItem.isCurrentItem
 
