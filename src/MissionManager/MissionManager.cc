@@ -496,7 +496,7 @@ void MissionManager::_handleMissionRequest(const mavlink_message_t& message, boo
     }
     
     MissionItem* item = _missionItems[missionRequest.seq];
-    qCDebug(MissionManagerLog) << "_handleMissionRequest sequenceNumber:" << missionRequest.seq << item->command();
+    qCDebug(MissionManagerLog) << "_handleMissionRequest sequenceNumber:command" << missionRequest.seq << item->command();
 
     mavlink_message_t   messageOut;
     if (missionItemInt) {
