@@ -52,7 +52,7 @@ Rectangle {
     property string _missionTimeText:           isNaN(_missionTime) ? "-.-" : Number(_missionTime / 60).toFixed(1) + " min"
     property string _missionMaxTelemetryText:   isNaN(_missionMaxTelemetry) ? "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_missionMaxTelemetry).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
 
-    readonly property real _margins:    ScreenTools.defaultFontPixelWidth
+    readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
     QGCPalette { id: qgcPal }
 
@@ -94,20 +94,22 @@ Rectangle {
         }
 
         GridLayout {
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            columns:                4
-            rowSpacing:             0
-            columnSpacing:          _margins
+            anchors.top:    parent.top
+            anchors.bottom: parent.bottom
+            columns:        5
+            rowSpacing:     0
+            columnSpacing:  _margins / 4
 
             QGCLabel {
-                text: qsTr("Selected waypoint")
-                Layout.columnSpan: 4
-                font.pointSize: ScreenTools.smallFontPointSize
+                text:               qsTr("Selected waypoint")
+                Layout.columnSpan:  5
+                font.pointSize:     ScreenTools.smallFontPointSize
             }
 
             QGCLabel { text: qsTr("Distance:") }
             QGCLabel { text: _distanceText }
+
+            Item { width: 1; height: 1 }
 
             QGCLabel { text: qsTr("Gradient:") }
             QGCLabel { text: _gradientText }
@@ -115,31 +117,57 @@ Rectangle {
             QGCLabel { text: qsTr("Alt diff:") }
             QGCLabel { text: _altDifferenceText }
 
+            Item { width: 1; height: 1 }
+
             QGCLabel { text: qsTr("Azimuth:") }
             QGCLabel { text: _azimuthText }
         }
 
         GridLayout {
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            columns:                4
-            rowSpacing:             0
-            columnSpacing:          _margins
+            anchors.top:    parent.top
+            anchors.bottom: parent.bottom
+            columns:        5
+            rowSpacing:     0
+            columnSpacing:  _margins / 4
 
             QGCLabel {
-                text: qsTr("Total mission")
-                Layout.columnSpan: 4
-                font.pointSize: ScreenTools.smallFontPointSize
+                text:               qsTr("Total mission")
+                Layout.columnSpan:  5
+                font.pointSize:     ScreenTools.smallFontPointSize
             }
 
             QGCLabel { text: qsTr("Distance:") }
             QGCLabel { text: _missionDistanceText }
+
+            Item { width: 1; height: 1 }
 
             QGCLabel { text: qsTr("Max telem dist:") }
             QGCLabel { text: _missionMaxTelemetryText }
 
             QGCLabel { text: qsTr("Time:") }
             QGCLabel { text: _missionTimeText }
+        }
+
+        GridLayout {
+            anchors.top:    parent.top
+            anchors.bottom: parent.bottom
+            columns:        3
+            rowSpacing:     0
+            columnSpacing:  _margins / 4
+
+            QGCLabel {
+                text:               qsTr("Battery")
+                Layout.columnSpan:  3
+                font.pointSize:     ScreenTools.smallFontPointSize
+            }
+
+            QGCLabel { text: qsTr("Batteries required:") }
+            QGCLabel { text: "--.--" }
+
+            Item { width: 1; height: 1 }
+
+            QGCLabel { text: qsTr("Swap waypoint:") }
+            QGCLabel { text: "--" }
         }
     }
 
