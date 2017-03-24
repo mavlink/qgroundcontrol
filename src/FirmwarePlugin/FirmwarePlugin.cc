@@ -431,3 +431,8 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
 
     return _cameraList;
 }
+
+bool FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const
+{
+    return vehicle->multiRotor() ? false : true;
+}

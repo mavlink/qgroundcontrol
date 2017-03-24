@@ -49,6 +49,7 @@ QGCView {
     property var    activeVehiclePosition:  _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property bool   _lightWidgetBorders:    editorMap.isSatelliteMap
     property bool   _addWaypointOnClick:    false
+    property bool   _singleComplexItem:     missionController.complexMissionItemNames.length == 1
 
     /// The controller which should be called for load/save, send to/from vehicle calls
     property var _syncDropDownController: missionController
@@ -57,6 +58,11 @@ QGCView {
     readonly property int _layerGeoFence:       2
     readonly property int _layerRallyPoints:    3
     property int _editingLayer: _layerMission
+
+    Component.onCompleted: {
+        toolbar.missionController =     Qt.binding(function () { return missionController })
+        toolbar.currentMissionItem =    Qt.binding(function () { return _currentMissionItem })
+    }
 
     onActiveVehiclePositionChanged: updateMapToVehiclePosition()
 
@@ -75,6 +81,15 @@ QGCView {
             _firstVehiclePosition = false
             editorMap.center = _activeVehicle.coordinate
         }
+    }
+
+    function addComplexItem(complexItemName) {
+        var coordinate = editorMap.center
+        coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
+        coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
+        coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
+        var sequenceNumber = missionController.insertComplexMissionItem(complexItemName, coordinate, missionController.visualItems.count)
+        setCurrentItem(sequenceNumber)
     }
 
     property bool _firstMissionLoadComplete:    false
@@ -244,7 +259,7 @@ QGCView {
                 if (visualItem.sequenceNumber == sequenceNumber) {
                     _currentMissionItem = visualItem
                     _currentMissionItem.isCurrentItem = true
-                    _currentMissionIndex = i
+                    _currentMissionIndex = sequenceNumber
                 } else {
                     visualItem.isCurrentItem = false
                 }
@@ -678,11 +693,11 @@ QGCView {
                     color:              qgcPal.window
                     title:              qsTr("Plan")
                     z:                  QGroundControl.zOrderWidgets
-                    showAlternateIcon:  [ false, false, _syncDropDownController.dirty, false, false, false, false ]
-                    rotateImage:        [ false, false, _syncDropDownController.syncInProgress, false, false, false, false ]
-                    animateImage:       [ false, false, _syncDropDownController.dirty, false, false, false, false ]
-                    buttonEnabled:      [ true, true, !_syncDropDownController.syncInProgress, true, true, true, true ]
-                    buttonVisible:      [ true, true, true, true, true, _showZoom, _showZoom ]
+                    showAlternateIcon:  [ false, false, _syncDropDownController.dirty, false, false, false ]
+                    rotateImage:        [ false, false, _syncDropDownController.syncInProgress, false, false, false ]
+                    animateImage:       [ false, false, _syncDropDownController.dirty, false, false, false ]
+                    buttonEnabled:      [ true, true, !_syncDropDownController.syncInProgress, true, true, true ]
+                    buttonVisible:      [ true, true, true, true, _showZoom, _showZoom ]
                     maxHeight:          mapScale.y - toolStrip.y
 
                     property bool _showZoom: !ScreenTools.isMobile
@@ -696,7 +711,7 @@ QGCView {
                         {
                             name:               "Pattern",
                             iconSource:         "/qmlimages/MapDrawShape.svg",
-                            dropPanelComponent: patternDropPanel
+                            dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
                         },
                         {
                             name:                   "Sync",
@@ -708,11 +723,6 @@ QGCView {
                             name:               "Center",
                             iconSource:         "/qmlimages/MapCenter.svg",
                             dropPanelComponent: centerMapDropPanel
-                        },
-                        {
-                            name:               "Map",
-                            iconSource:         "/qmlimages/MapType.svg",
-                            dropPanelComponent: mapTypeDropPanel
                         },
                         {
                             name:               "In",
@@ -728,6 +738,11 @@ QGCView {
                         switch (index) {
                         case 0:
                             _addWaypointOnClick = checked
+                            break
+                        case 1:
+                            if (_singleComplexItem) {
+                                addComplexItem(missionController.complexMissionItemNames[0])
+                            }
                             break
                         case 5:
                             editorMap.zoomLevel += 0.5
@@ -904,34 +919,6 @@ QGCView {
     }
 
     Component {
-        id: mapTypeDropPanel
-
-        Column {
-            spacing: _margin
-
-            QGCLabel { text: qsTr("Map type:") }
-            Row {
-                spacing: ScreenTools.defaultFontPixelWidth
-                Repeater {
-                    model: QGroundControl.flightMapSettings.mapTypes
-
-                    QGCButton {
-                        checkable:      true
-                        checked:        QGroundControl.flightMapSettings.mapType === text
-                        text:           modelData
-                        exclusiveGroup: _mapTypeButtonsExclusiveGroup
-
-                        onClicked: {
-                            QGroundControl.flightMapSettings.mapType = text
-                            dropPanel.hide()
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    Component {
         id: patternDropPanel
 
         ColumnLayout {
@@ -947,12 +934,7 @@ QGCView {
                     Layout.fillWidth:   true
 
                     onClicked: {
-                        var coordinate = editorMap.center
-                        coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
-                        coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
-                        coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
-                        var sequenceNumber = missionController.insertComplexMissionItem(modelData, coordinate, missionController.visualItems.count)
-                        setCurrentItem(sequenceNumber)
+                        addComplexItem(modelData)
                         dropPanel.hide()
                     }
                 }

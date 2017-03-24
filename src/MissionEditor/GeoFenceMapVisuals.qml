@@ -146,7 +146,7 @@ Item {
             border.width:   2
             border.color:   "orange"
             color:          "transparent"
-            center:         homePosition ? homePosition : undefined
+            center:         homePosition ? homePosition : QtPositioning.coordinate()
             radius:         myGeoFenceController.circleRadius
             visible:        planView || geoFenceController.circleEnabled
         }

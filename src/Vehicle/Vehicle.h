@@ -660,6 +660,9 @@ public:
 
     bool supportsMissionItemInt(void) const { return _supportsMissionItemInt; }
 
+    /// @true: When flying a mission the vehicle is always facing towards the next waypoint
+    bool vehicleYawsToNextWaypointInMission(void) const;
+
 public slots:
     /// Sets the firmware plugin instance data associated with this Vehicle. This object will be parented to the Vehicle
     /// and destroyed when the vehicle goes away.

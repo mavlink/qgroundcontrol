@@ -89,24 +89,27 @@ Rectangle {
         }
     }
 
+    ExclusiveGroup { id: mainActionGroup }
+
+    QGCToolBarButton {
+        id:                 homeButton
+        anchors.top:        parent.top
+        anchors.bottom:     parent.bottom
+        anchors.left:       parent.left
+        anchors.leftMargin: 10
+        exclusiveGroup:     mainActionGroup
+        source:             "/typhoonh/Home.svg"
+        onClicked:          toolBar.showFlyView()
+    }
+
     Row {
         id:                     mainRow
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         anchors.bottomMargin:   1
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.left:           homeButton.right
+        anchors.leftMargin:     30
         spacing:                30 //-- Hard coded to fit the ST16 Screen
-
-        ExclusiveGroup { id: mainActionGroup }
-
-        QGCToolBarButton {
-            id:                 homeButton
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            exclusiveGroup:     mainActionGroup
-            source:             "/typhoonh/Home.svg"
-            onClicked:          toolBar.showFlyView()
-        }
 
         QGCToolBarButton {
             id:                 setupButton
@@ -191,24 +194,26 @@ Rectangle {
             source:             "/typhoonh/WIFIRSSIIndicator.qml"
         }
 
-        Item {
-            width:              logoImage.width
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
-            Image {
-                id:             logoImage
-                height:         parent.height * 0.45
-                fillMode:       Image.PreserveAspectFit
-                source:         _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
-                anchors.verticalCenter: parent.verticalCenter
-                property bool   _outdoorPalette:        qgcPal.globalTheme === QGCPalette.Light
-                property bool   _corePluginBranding:    QGroundControl.corePlugin.brandImageIndoor.length !== 0
-                property string _brandImageIndoor:      _corePluginBranding ? QGroundControl.corePlugin.brandImageIndoor  : (_activeVehicle ? _activeVehicle.brandImageIndoor : "")
-                property string _brandImageOutdoor:     _corePluginBranding ? QGroundControl.corePlugin.brandImageOutdoor : (_activeVehicle ? _activeVehicle.brandImageOutdoor : "")
-            }
-        }
+    }
 
+    Item {
+        width:              logoImage.width
+        anchors.top:        parent.top
+        anchors.bottom:     parent.bottom
+        anchors.right:      parent.right
+        anchors.rightMargin: 10
+        anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+        Image {
+            id:             logoImage
+            height:         parent.height * 0.45
+            fillMode:       Image.PreserveAspectFit
+            source:         _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
+            anchors.verticalCenter: parent.verticalCenter
+            property bool   _outdoorPalette:        qgcPal.globalTheme === QGCPalette.Light
+            property bool   _corePluginBranding:    QGroundControl.corePlugin.brandImageIndoor.length !== 0
+            property string _brandImageIndoor:      _corePluginBranding ? QGroundControl.corePlugin.brandImageIndoor  : (_activeVehicle ? _activeVehicle.brandImageIndoor : "")
+            property string _brandImageOutdoor:     _corePluginBranding ? QGroundControl.corePlugin.brandImageOutdoor : (_activeVehicle ? _activeVehicle.brandImageOutdoor : "")
+        }
     }
 
     // Progress bar

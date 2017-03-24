@@ -93,7 +93,7 @@ Item {
         ScreenTools.availableHeight = parent.height - toolBar.height
         hideAllViews()
         planViewLoader.visible = true
-        toolBar.checkPlanButton()
+        planToolBar.visible = true
     }
 
     function showFlyView() {
@@ -259,6 +259,7 @@ Item {
         anchors.left:       parent.left
         anchors.right:      parent.right
         anchors.top:        parent.top
+        opacity:            planToolBar.visible ? 0 : 1
         z:                  QGroundControl.zOrderTopMost
 
         Component.onCompleted:  ScreenTools.availableHeight = parent.height - toolBar.height
@@ -267,6 +268,20 @@ Item {
         onShowPlanView:         mainWindow.showPlanView()
         onShowFlyView:          mainWindow.showFlyView()
         onShowAnalyzeView:      mainWindow.showAnalyzeView()
+    }
+
+    PlanToolBar {
+        id:                 planToolBar
+        height:             ScreenTools.toolbarHeight
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        anchors.top:        parent.top
+        z:                  toolBar.z + 1
+
+        onShowFlyView: {
+            planToolBar.visible = false
+            mainWindow.showFlyView()
+        }
     }
 
     Loader {
@@ -292,12 +307,16 @@ Item {
         anchors.top:        toolBar.bottom
         anchors.bottom:     parent.bottom
         visible:            false
+
+        property var planToolBar: planToolBar
     }
 
     Loader {
         id:                 planViewLoader
         anchors.fill:       parent
         visible:            false
+
+        property var toolbar: planToolBar
     }
 
     FlightDisplayView {

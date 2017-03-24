@@ -7,10 +7,10 @@
  *
  ****************************************************************************/
 
-
 import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtQuick.Layouts  1.2
+import QtQuick.Dialogs  1.2
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -19,20 +19,19 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 
 Item {
-    property var  _activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
-    property bool _communicationLost:    _activeVehicle ? _activeVehicle.connectionLost : false
+    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
+    property bool _communicationLost:   _activeVehicle ? _activeVehicle.connectionLost : false
 
     QGCPalette { id: qgcPal }
-
 
     // Easter egg mechanism
     MouseArea {
         anchors.fill: parent
         onClicked: {
-            console.log("easter egg click", ++_clickCount)
+            _clickCount++
             eggTimer.restart()
-            if (_clickCount == 5) {
-                QGroundControl.corePlugin.showAdvancedUI = true
+            if (_clickCount == 5 && !QGroundControl.corePlugin.showAdvancedUI) {
+                advancedModeConfirmation.visible = true
             } else if (_clickCount == 7) {
                 QGroundControl.corePlugin.showTouchAreas = true
             }
@@ -44,6 +43,18 @@ Item {
             id:             eggTimer
             interval:       1000
             onTriggered:    parent._clickCount = 0
+        }
+
+        MessageDialog {
+            id:                 advancedModeConfirmation
+            title:              qsTr("Advanced Mode")
+            text:               QGroundControl.corePlugin.showAdvancedUIMessage
+            standardButtons:    StandardButton.Yes | StandardButton.No
+
+            onYes: {
+                QGroundControl.corePlugin.showAdvancedUI = true
+                visible = false
+            }
         }
     }
 

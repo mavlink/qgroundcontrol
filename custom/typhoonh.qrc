@@ -4,6 +4,7 @@
         <file alias="TyphoonHQuickInterface/Widgets/SSIDButton.qml">res/SSIDButton.qml</file>
         <file alias="TyphoonHQuickInterface/Widgets/qmldir">res/qmldir</file>
         <file alias="QGroundControl/Controls/MainToolBar.qml">res/MainToolBar.qml</file>
+        <file alias="QGroundControl/Controls/PlanToolBar.qml">res/PlanToolBar.qml</file>
     </qresource>
     <qresource prefix="/typhoonh">
         <file alias="BatteryIndicator.qml">res/BatteryIndicator.qml</file>
