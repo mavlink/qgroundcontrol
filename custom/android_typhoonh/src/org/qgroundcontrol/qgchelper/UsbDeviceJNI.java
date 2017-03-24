@@ -151,7 +151,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
         for( WifiConfiguration i : list ) {
             if(i.SSID != null) {
                 Log.i(TAG, "Found config: " + i.SSID + " | " + i.priority);
-                if(i.SSID.startsWith("CGO3P") || i.SSID.startsWith("CGOPRO")) {
+                if(i.SSID.startsWith("CGO3P") || i.SSID.startsWith("CGOPRO") || i.SSID.startsWith("CGOET")) {
                     currentConnection = i.SSID;
                 }
             }
@@ -263,10 +263,10 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
                                     currentConnection = wifiInfo.getSSID();
                                     if(receiverMode == ReceiverMode.BINDING) {
                                         receiverMode = ReceiverMode.DISABLED;
-                                        nativeWifiConnected();
-                                        currentWifiRssi = wifiInfo.getRssi();
-                                        nativeNewWifiRSSI();
                                     }
+                                    nativeWifiConnected();
+                                    currentWifiRssi = wifiInfo.getRssi();
+                                    nativeNewWifiRSSI();
                                 }
                             }
                         }

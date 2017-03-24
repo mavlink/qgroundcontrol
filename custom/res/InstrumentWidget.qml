@@ -185,9 +185,16 @@ Item {
                     color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
+                QGCLabel {
+                    id:         cameraLabel
+                    text:       TyphoonHQuickInterface.connectedCamera
+                    visible:    TyphoonHQuickInterface.connectedCamera !== ""
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
                 Item {
-                    height: _spacers
-                    width:  1
+                    height:     cameraLabel.height
+                    width:      1
+                    visible:    TyphoonHQuickInterface.connectedCamera === ""
                 }
                 //-- Camera Mode
                 Rectangle {

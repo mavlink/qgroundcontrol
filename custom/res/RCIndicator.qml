@@ -30,45 +30,39 @@ Item {
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
     function getBatteryColor() {
-        if(_activeVehicle) {
-            if(TyphoonHQuickInterface.rcBattery > 0.75) {
-                return qgcPal.text
-            }
-            if(TyphoonHQuickInterface.rcBattery > 0.5) {
-                return qgcPal.colorOrange
-            }
-            if(TyphoonHQuickInterface.rcBattery > 0.1) {
-                return qgcPal.colorRed
-            }
+        if(TyphoonHQuickInterface.rcBattery > 0.75) {
+            return qgcPal.colorGreen
         }
-        return qgcPal.colorGrey
+        if(TyphoonHQuickInterface.rcBattery > 0.5) {
+            return qgcPal.colorOrange
+        }
+        if(TyphoonHQuickInterface.rcBattery > 0.1) {
+            return qgcPal.colorRed
+        }
+        return qgcPal.text
     }
 
     function getBatteryPercentageText() {
-        if(_activeVehicle) {
-            if(TyphoonHQuickInterface.rcBattery > 0.98) {
-                return "100%"
-            }
-            if(TyphoonHQuickInterface.rcBattery > 0.1) {
-                return (TyphoonHQuickInterface.rcBattery * 100).toFixed(0) + '%'
-            }
+        if(TyphoonHQuickInterface.rcBattery > 0.98) {
+            return "100%"
+        }
+        if(TyphoonHQuickInterface.rcBattery > 0.1) {
+            return (TyphoonHQuickInterface.rcBattery * 100).toFixed(0) + '%'
         }
         return "N/A"
     }
 
     function getBatteryIcon() {
-        if(_activeVehicle) {
-            if(TyphoonHQuickInterface.rcBattery > 0.95) {
-                return "/typhoonh/battery_100.svg"
-            } else if(TyphoonHQuickInterface.rcBattery > 0.75) {
-                return "/typhoonh/battery_80.svg"
-            } else if(TyphoonHQuickInterface.rcBattery > 0.55) {
-                return "/typhoonh/battery_60.svg"
-            } else if(TyphoonHQuickInterface.rcBattery > 0.35) {
-                return "/typhoonh/battery_40.svg"
-            } else if(TyphoonHQuickInterface.rcBattery > 0.15) {
-                return "/typhoonh/battery_20.svg"
-            }
+        if(TyphoonHQuickInterface.rcBattery > 0.95) {
+            return "/typhoonh/battery_100.svg"
+        } else if(TyphoonHQuickInterface.rcBattery > 0.75) {
+            return "/typhoonh/battery_80.svg"
+        } else if(TyphoonHQuickInterface.rcBattery > 0.55) {
+            return "/typhoonh/battery_60.svg"
+        } else if(TyphoonHQuickInterface.rcBattery > 0.35) {
+            return "/typhoonh/battery_40.svg"
+        } else if(TyphoonHQuickInterface.rcBattery > 0.15) {
+            return "/typhoonh/battery_20.svg"
         }
         return "/typhoonh/battery_0.svg"
     }
@@ -105,7 +99,7 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
 
                     QGCLabel { text: qsTr("RSSI:") }
-                    QGCLabel { text: _activeVehicle ? (_activeVehicle.rcRSSI + "%") : 'N/A' }
+                    QGCLabel { text: _activeVehicle ? (_activeVehicle.rcRSSI > 100 ? 'N/A' : _activeVehicle.rcRSSI + "%") : 'N/A' }
                     QGCLabel { text: qsTr("Battery:") }
                     QGCLabel { text: getBatteryPercentageText() }
                 }
@@ -125,12 +119,13 @@ Item {
         anchors.bottom: parent.bottom
         spacing:        ScreenTools.defaultFontPixelWidth
         QGCColoredImage {
-            width:              height
             anchors.top:        parent.top
+            width:              height
             anchors.bottom:     parent.bottom
             sourceSize.height:  height
             source:             "/qmlimages/RC.svg"
             fillMode:           Image.PreserveAspectFit
+            opacity:            _activeVehicle ? 1 : 0.5
             color:              qgcPal.buttonText
         }
         Column {
@@ -138,7 +133,7 @@ Item {
             SignalStrength {
                 size:                   rcRow.height * 0.5
                 percent:                _activeVehicle ? ((_activeVehicle.rcRSSI > 100) ? 0 : _activeVehicle.rcRSSI) : 0
-                opacity:                _activeVehicle ? (((_activeVehicle.rcRSSI < 0) || (_activeVehicle.rcRSSI > 100)) ? 0.5 : 1) : 0.5
+                opacity:                _activeVehicle ? 1 : 0.5
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Row {

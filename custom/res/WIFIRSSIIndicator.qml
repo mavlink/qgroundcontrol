@@ -27,6 +27,8 @@ Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
+    property bool _hasWifi: TyphoonHQuickInterface.rssi > -100 && TyphoonHQuickInterface.rssi < 0
+
     Component {
         id: wifiRSSIInfo
 
@@ -46,14 +48,14 @@ Item {
 
                 QGCLabel {
                     id:             rssiLabel
-                    text:           TyphoonHQuickInterface.rssi < 0 ? qsTr("Video/Telemetry RSSI Status") : qsTr("Video/Telemetry Link Data Unavailable")
+                    text:           _hasWifi ? qsTr("Video/Telemetry RSSI Status") : qsTr("Video/Telemetry Link Data Unavailable")
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
                 GridLayout {
                     id:                 rcrssiGrid
-                    visible:            TyphoonHQuickInterface.rssi < 0
+                    visible:            _hasWifi
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     columnSpacing:      ScreenTools.defaultFontPixelWidth
                     columns:            2
@@ -85,8 +87,8 @@ Item {
             sourceSize.height:  height
             source:             "/typhoonh/wifi.svg"
             fillMode:           Image.PreserveAspectFit
-            opacity:            TyphoonHQuickInterface.rssi < 0 ? 1 : 0.5
-            color:              qgcPal.buttonText
+            opacity:            _hasWifi ? 1 : 0.5
+            color:              qgcPal.text
         }
         SignalStrength {
             anchors.verticalCenter: parent.verticalCenter

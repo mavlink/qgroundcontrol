@@ -46,6 +46,7 @@ public:
     Q_PROPERTY(bool             scanningWiFi    READ    scanningWiFi                        NOTIFY scanningWiFiChanged)
     Q_PROPERTY(bool             bindingWiFi     READ    bindingWiFi                         NOTIFY bindingWiFiChanged)
     Q_PROPERTY(QString          connectedSSID   READ    connectedSSID                       NOTIFY connectedSSIDChanged)
+    Q_PROPERTY(QString          connectedCamera READ    connectedCamera                     NOTIFY connectedSSIDChanged)
     Q_PROPERTY(int              rssi            READ    rssi                                NOTIFY rssiChanged)
     Q_PROPERTY(qreal            rcBattery       READ    rcBattery                           NOTIFY rcBatteryChanged)
 
@@ -60,6 +61,7 @@ public:
     M4State     m4State             ();
     QString     m4StateStr          ();
     QString     connectedSSID       ();
+    QString     connectedCamera     ();
 
     CameraControl* cameraControl    ();
 
