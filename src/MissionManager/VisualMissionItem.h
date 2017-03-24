@@ -56,6 +56,7 @@ public:
     Q_PROPERTY(bool             dirty                               READ dirty                              WRITE setDirty              NOTIFY dirtyChanged)                                ///< Item is dirty and requires save/send
     Q_PROPERTY(bool             isCurrentItem                       READ isCurrentItem                      WRITE setIsCurrentItem      NOTIFY isCurrentItemChanged)
     Q_PROPERTY(int              sequenceNumber                      READ sequenceNumber                     WRITE setSequenceNumber     NOTIFY sequenceNumberChanged)
+    Q_PROPERTY(int              lastSequenceNumber                  READ lastSequenceNumber                                             NOTIFY lastSequenceNumberChanged)
     Q_PROPERTY(bool             specifiesCoordinate                 READ specifiesCoordinate                                            NOTIFY specifiesCoordinateChanged)                  ///< true: Item is associated with a coordinate position
     Q_PROPERTY(bool             isStandaloneCoordinate              READ isStandaloneCoordinate                                         NOTIFY isStandaloneCoordinateChanged)               ///< true: Waypoint line does not go through item
     Q_PROPERTY(bool             specifiesAltitudeOnly               READ specifiesAltitudeOnly                                          NOTIFY specifiesAltitudeOnlyChanged)                ///< true: Item has altitude only, no full coordinate
