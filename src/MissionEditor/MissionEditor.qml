@@ -89,6 +89,7 @@ QGCView {
         coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
         coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
         var sequenceNumber = missionController.insertComplexMissionItem(complexItemName, coordinate, missionController.visualItems.count)
+        setCurrentItem(sequenceNumber)
     }
 
     property bool _firstMissionLoadComplete:    false
