@@ -17,7 +17,7 @@ Rectangle {
     anchors.right:      parent.right
     anchors.top:        parent.top
     z:                  toolBar.z + 1
-    color:              qgcPal.window
+    color:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.8) : Qt.rgba(0,0,0,0.75)
     visible:            false
 
     signal showFlyView
@@ -55,6 +55,14 @@ Rectangle {
     readonly property real _margins:            ScreenTools.defaultFontPixelWidth
 
     QGCPalette { id: qgcPal }
+
+    //-- Eat mouse events, preventing them from reaching toolbar, which is underneath us.
+    MouseArea {
+        anchors.fill:   parent
+        onWheel:        { wheel.accepted = true; }
+        onPressed:      { mouse.accepted = true; }
+        onReleased:     { mouse.accepted = true; }
+    }
 
     QGCToolBarButton {
         id:                 settingsButton
@@ -142,7 +150,7 @@ Rectangle {
 
         GridLayout {
             columns:        4
-            rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
+            rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.15
             columnSpacing:  _margins
             anchors.verticalCenter: parent.verticalCenter
 
@@ -181,7 +189,7 @@ Rectangle {
 
         GridLayout {
             columns:        2
-            rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
+            rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.15
             columnSpacing:  _margins
             anchors.verticalCenter: parent.verticalCenter
 
