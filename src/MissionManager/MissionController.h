@@ -21,6 +21,7 @@
 
 class CoordinateVector;
 class VisualMissionItem;
+class MissionItem;
 
 Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
@@ -174,6 +175,7 @@ private:
     void _setMissionCruiseTime(double missionCruiseTime);
     void _setMissionMaxTelemetry(double missionMaxTelemetry);
     static void _scanForAdditionalSettings(QmlObjectListModel* visualItems, Vehicle* vehicle);
+    static bool _convertToMissionItems(QmlObjectListModel* visualMissionItems, QList<MissionItem*>& rgMissionItems, QObject* missionItemParent);
 
     // Overrides from PlanElementController
     void _activeVehicleBeingRemoved(void) final;
