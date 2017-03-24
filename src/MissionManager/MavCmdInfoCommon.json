@@ -991,7 +991,7 @@
             "id":           2500,
             "rawName":      "MAV_CMD_VIDEO_START_CAPTURE",
             "friendlyName": "Start video capture",
-            "description":  "Start taking video.",
+            "description":  "Start video capture.",
             "category":     "Camera",
             "param1": {
                 "label":            "Camera id",
@@ -1006,6 +1006,18 @@
             "param3": {
                 "label":            "Resolution",
                 "default":          -1,
+                "decimalPlaces":    0
+            }
+        },
+        {
+            "id":           2501,
+            "rawName":      "MAV_CMD_VIDEO_STOP_CAPTURE",
+            "friendlyName": "Stop video capture",
+            "description":  "Stop video capture.",
+            "category":     "Camera",
+            "param1": {
+                "label":            "Camera id",
+                "default":          0,
                 "decimalPlaces":    0
             }
         },

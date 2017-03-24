@@ -23,11 +23,14 @@ class CameraSection : public QObject
 public:
     CameraSection(QObject* parent = NULL);
 
+    // These nume values must match the json meta data
     enum CameraAction {
         CameraActionNone,
         TakePhotosIntervalTime,
         TakePhotoIntervalDistance,
-        TakeVideo
+        StopTakingPhotos,
+        TakeVideo,
+        StopTakingVideo
     };
     Q_ENUMS(CameraAction)
 
