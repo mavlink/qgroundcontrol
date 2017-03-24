@@ -245,7 +245,7 @@ bool MissionSettingsComplexItem::addMissionEndAction(QList<MissionItem*>& items,
         qCDebug(MissionSettingsComplexItemLog) << "Appending end action Land seqNum" << seqNum;
         item = new MissionItem(seqNum,
                                MAV_CMD_NAV_LAND,
-                               lastWaypointFrame,
+                               MAV_FRAME_GLOBAL_RELATIVE_ALT,
                                0,                               // abort Altitude
                                0, 0,                            // not used
                                0,                               // yaw
