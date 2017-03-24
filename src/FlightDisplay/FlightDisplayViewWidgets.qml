@@ -318,7 +318,7 @@ Item {
                 guidedModeConfirm.confirmText = qsTr("move vehicle")
                 break;
             case confirmRetask:
-                guidedModeConfirm.confirmText = qsTr("active waypoint change")
+                guidedModeConfirm.confirmText = qsTr("activate waypoint change")
                 break;
             case confirmOrbit:
                 guidedModeConfirm.confirmText = qsTr("enter orbit mode")

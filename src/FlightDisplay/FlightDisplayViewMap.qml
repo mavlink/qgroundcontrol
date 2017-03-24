@@ -257,7 +257,12 @@ FlightMap {
         model: _mainIsMap ? missionController.visualItems : 0
 
         delegate: MissionItemMapVisual {
-            map: flightMap
+            map:        flightMap
+
+            onClicked: {
+                _retaskSequence = object.sequenceNumber
+                flightWidgets.guidedModeBar.confirmAction(parent.flightWidgets.guidedModeBar.confirmRetask)
+            }
         }
     }
 
