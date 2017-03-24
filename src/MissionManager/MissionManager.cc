@@ -405,7 +405,7 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message, bool m
         param4 =        missionItem.param4;
         param5 =        (double)missionItem.x / qPow(10.0, 7.0);
         param6 =        (double)missionItem.y / qPow(10.0, 7.0);
-        param7 =        (double)missionItem.z / qPow(10.0, 7.0);
+        param7 =        (double)missionItem.z;
         autoContinue =  missionItem.autocontinue;
         isCurrentItem = missionItem.current;
         seq =           missionItem.seq;
@@ -513,7 +513,7 @@ void MissionManager::_handleMissionRequest(const mavlink_message_t& message, boo
         missionItem.param4 =            item->param4();
         missionItem.x =                 item->param5() * qPow(10.0, 7.0);
         missionItem.y =                 item->param6() * qPow(10.0, 7.0);
-        missionItem.z =                 item->param7() * qPow(10.0, 7.0);
+        missionItem.z =                 item->param7();
         missionItem.frame =             item->frame();
         missionItem.current =           missionRequest.seq == 0;
         missionItem.autocontinue =      item->autoContinue();
