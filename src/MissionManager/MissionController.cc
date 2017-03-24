@@ -734,14 +734,11 @@ void MissionController::saveToFile(const QString& filename)
 
         // Save the visual items
 
-        QJsonArray          rgJsonMissionItems;
-        int                 lastSeqNum = 0;
-
+        QJsonArray rgJsonMissionItems;
         for (int i=0; i<_visualItems->count(); i++) {
             VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
 
             visualItem->save(rgJsonMissionItems);
-           lastSeqNum = visualItem->lastSequenceNumber();
         }
 
         // Mission settings has a special case for end mission action
