@@ -15,6 +15,7 @@
 #include "SimpleMissionItem.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
+#include "MissionCommandUIInfo.h"
 
 #include <QPolygonF>
 
@@ -180,7 +181,7 @@ void MissionSettingsComplexItem::appendMissionItems(QList<MissionItem*>& items, 
     items.append(item);
 
     if (_specifyMissionFlightSpeed) {
-        qDebug() << _missionFlightSpeedFact.rawValue().toDouble();
+        qCDebug(MissionSettingsComplexItemLog) << "Appending MAV_CMD_DO_CHANGE_SPEED";
         MissionItem* item = new MissionItem(seqNum++,
                                             MAV_CMD_DO_CHANGE_SPEED,
                                             MAV_FRAME_MISSION,
@@ -196,6 +197,85 @@ void MissionSettingsComplexItem::appendMissionItems(QList<MissionItem*>& items, 
     }
 
     _cameraSection.appendMissionItems(items, missionItemParent, seqNum);
+}
+
+bool MissionSettingsComplexItem::addMissionEndAction(QList<MissionItem*>& items, int seqNum, QObject* missionItemParent)
+{
+    MissionItem* item = NULL;
+
+    // IMPORTANT NOTE: If anything changes here you must also change MissionSettingsComplexItem::scanForMissionSettings
+
+    // Find last waypoint coordinate information so we have a lat/lon/alt to use
+    QGeoCoordinate  lastWaypointCoord;
+    MAV_FRAME       lastWaypointFrame;
+
+    bool found = false;
+    for (int i=items.count()-1; i>0; i--) {
+        MissionItem* missionItem = items[i];
+
+        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_vehicle, (MAV_CMD)missionItem->command());
+        if (uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
+            lastWaypointCoord = missionItem->coordinate();
+            lastWaypointFrame = missionItem->frame();
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        return false;
+    }
+
+    switch(_missionEndActionFact.rawValue().toInt()) {
+    case MissionEndLoiter:
+        qCDebug(MissionSettingsComplexItemLog) << "Appending end action Loiter seqNum" << seqNum;
+        item = new MissionItem(seqNum,
+                               MAV_CMD_NAV_LOITER_UNLIM,
+                               lastWaypointFrame,
+                               0, 0,                        // param 1-2 unused
+                               0,                           // use default loiter radius
+                               0,                           // param 4 not used
+                               lastWaypointCoord.latitude(),
+                               lastWaypointCoord.longitude(),
+                               lastWaypointCoord.altitude(),
+                               true,                        // autoContinue
+                               false,                       // isCurrentItem
+                               missionItemParent);
+        break;
+    case MissionEndLand:
+        qCDebug(MissionSettingsComplexItemLog) << "Appending end action Land seqNum" << seqNum;
+        item = new MissionItem(seqNum,
+                               MAV_CMD_NAV_LAND,
+                               MAV_FRAME_GLOBAL_RELATIVE_ALT,
+                               0,                               // abort Altitude
+                               0, 0,                            // not used
+                               0,                               // yaw
+                               lastWaypointCoord.latitude(),
+                               lastWaypointCoord.longitude(),
+                               0,                               // altitude
+                               true,                            // autoContinue
+                               false,                           // isCurrentItem
+                               missionItemParent);
+        break;
+    case MissionEndRTL:
+        qCDebug(MissionSettingsComplexItemLog) << "Appending end action RTL seqNum" << seqNum;
+        item = new MissionItem(seqNum,
+                               MAV_CMD_NAV_RETURN_TO_LAUNCH,
+                               MAV_FRAME_MISSION,
+                               0, 0, 0, 0, 0, 0, 0,        // param 1-7 not used
+                               true,                       // autoContinue
+                               false,                      // isCurrentItem
+                               missionItemParent);
+        break;
+    default:
+        break;
+    }
+
+    if (item) {
+        items.append(item);
+        return true;
+    } else {
+        return false;
+    }
 }
 
 bool MissionSettingsComplexItem::scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle)
@@ -245,6 +325,7 @@ bool MissionSettingsComplexItem::scanForMissionSettings(QmlObjectListModel* visu
                 settingsItem->setSpecifyMissionFlightSpeed(true);
                 settingsItem->missionFlightSpeed()->setRawValue(missionItem.param2());
                 visualItems->removeAt(scanIndex)->deleteLater();
+                qCDebug(MissionSettingsComplexItemLog) << "Scan: Found MAV_CMD_DO_CHANGE_SPEED";
                 continue;
             }
             stopLooking = true;
@@ -254,10 +335,48 @@ bool MissionSettingsComplexItem::scanForMissionSettings(QmlObjectListModel* visu
             if (!foundCameraSection) {
                 if (settingsItem->_cameraSection.scanForCameraSection(visualItems, scanIndex)) {
                     foundCameraSection = true;
+                    qCDebug(MissionSettingsComplexItemLog) << "Scan: Found Camera Section";
                     continue;
                 }
             }
             stopLooking = true;
+            break;
+        }
+    }
+
+    // Look at the end of the mission for end actions
+
+    int lastIndex = visualItems->count() - 1;
+    SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(lastIndex);
+    if (item) {
+        MissionItem& missionItem = item->missionItem();
+
+        switch ((MAV_CMD)item->command()) {
+        case MAV_CMD_NAV_LOITER_UNLIM:
+            if (missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0) {
+                qCDebug(MissionSettingsComplexItemLog) << "Scan: Found end action Loiter";
+                settingsItem->missionEndAction()->setRawValue(MissionEndLoiter);
+                visualItems->removeAt(lastIndex)->deleteLater();
+            }
+            break;
+
+        case MAV_CMD_NAV_LAND:
+            if (missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param7() == 0) {
+                qCDebug(MissionSettingsComplexItemLog) << "Scan: Found end action Land";
+                settingsItem->missionEndAction()->setRawValue(MissionEndLand);
+                visualItems->removeAt(lastIndex)->deleteLater();
+            }
+            break;
+
+        case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+            if (missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+                qCDebug(MissionSettingsComplexItemLog) << "Scan: Found end action RTL";
+                settingsItem->missionEndAction()->setRawValue(MissionEndRTL);
+                visualItems->removeAt(lastIndex)->deleteLater();
+            }
+            break;
+
+        default:
             break;
         }
     }

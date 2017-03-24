@@ -166,22 +166,46 @@ void MissionController::sendToVehicle(void)
     _visualItems->setDirty(false);
 }
 
+/// Converts from visual items to MissionItems
+///     @param missionItemParent QObject parent for newly allocated MissionItems
+/// @return true: Mission end action was added to end of list
+bool MissionController::_convertToMissionItems(QmlObjectListModel* visualMissionItems, QList<MissionItem*>& rgMissionItems, QObject* missionItemParent)
+{
+    bool endActionSet = false;
+    int lastSeqNum = 0;
+
+    for (int i=0; i<visualMissionItems->count(); i++) {
+        VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(visualMissionItems->get(i));
+
+        lastSeqNum = visualItem->lastSequenceNumber();
+        visualItem->appendMissionItems(rgMissionItems, missionItemParent);
+
+        qCDebug(MissionControllerLog) << "_convertToMissionItems seqNum:lastSeqNum:command"
+                                      << visualItem->sequenceNumber()
+                                      << lastSeqNum
+                                      << visualItem->commandName();
+    }
+
+    // Mission settings has a special case for end mission action
+    MissionSettingsComplexItem* settingsItem = visualMissionItems->value<MissionSettingsComplexItem*>(0);
+    if (settingsItem) {
+        endActionSet = settingsItem->addMissionEndAction(rgMissionItems, lastSeqNum + 1, missionItemParent);
+    }
+
+    return endActionSet;
+}
+
 void MissionController::sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems)
 {
     if (vehicle) {
-        // Convert to MissionItems so we can send to vehicle
-        QList<MissionItem*> missionItems;
+        QList<MissionItem*> rgMissionItems;
 
-        for (int i=0; i<visualMissionItems->count(); i++) {
-            VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(visualMissionItems->get(i));
+        _convertToMissionItems(visualMissionItems, rgMissionItems, vehicle);
 
-            visualItem->appendMissionItems(missionItems, NULL);
-        }
+        vehicle->missionManager()->writeMissionItems(rgMissionItems);
 
-        vehicle->missionManager()->writeMissionItems(missionItems);
-
-        for (int i=0; i<missionItems.count(); i++) {
-            missionItems[i]->deleteLater();
+        for (int i=0; i<rgMissionItems.count(); i++) {
+            rgMissionItems[i]->deleteLater();
         }
     }
 }
@@ -464,9 +488,9 @@ bool MissionController::_loadJsonMissionFileV2(Vehicle* vehicle, const QJsonObje
         QString itemType = itemObject[VisualMissionItem::jsonTypeKey].toString();
 
         if (itemType == VisualMissionItem::jsonTypeSimpleItemValue) {
-            qCDebug(MissionControllerLog) << "Loading MISSION_ITEM: nextSequenceNumber" << nextSequenceNumber;
             SimpleMissionItem* simpleItem = new SimpleMissionItem(vehicle, visualItems);
             if (simpleItem->load(itemObject, nextSequenceNumber, errorString)) {
+                qCDebug(MissionControllerLog) << "Loading simple item: nextSequenceNumber:command" << nextSequenceNumber << simpleItem->command();
                 nextSequenceNumber = simpleItem->lastSequenceNumber() + 1;
                 visualItems->append(simpleItem);
             } else {
@@ -709,12 +733,30 @@ void MissionController::saveToFile(const QString& filename)
         missionFileObject[_jsonHoverSpeedKey] = _activeVehicle->defaultHoverSpeed();
 
         // Save the visual items
-        QJsonArray  rgMissionItems;
+
+        QJsonArray rgJsonMissionItems;
         for (int i=0; i<_visualItems->count(); i++) {
             VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
-            visualItem->save(rgMissionItems);
+
+            visualItem->save(rgJsonMissionItems);
         }
-        missionFileObject[_jsonItemsKey] = rgMissionItems;
+
+        // Mission settings has a special case for end mission action
+        if (settingsItem) {
+            QList<MissionItem*> rgMissionItems;
+
+            if (_convertToMissionItems(_visualItems, rgMissionItems, this /* missionItemParent */)) {
+                QJsonObject saveObject;
+                MissionItem* missionItem = rgMissionItems[rgMissionItems.count() - 1];
+                missionItem->save(saveObject);
+                rgJsonMissionItems.append(saveObject);
+            }
+            for (int i=0; i<rgMissionItems.count(); i++) {
+                rgMissionItems[i]->deleteLater();
+            }
+        }
+
+        missionFileObject[_jsonItemsKey] = rgJsonMissionItems;
 
         QJsonDocument saveDoc(missionFileObject);
         file.write(saveDoc.toJson());
