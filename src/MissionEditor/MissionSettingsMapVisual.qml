@@ -20,7 +20,11 @@ import QGroundControl.FlightMap     1.0
 
 /// Mission Settings map visuals
 Item {
+    id: _root
+
     property var map    ///< Map control to place item in
+
+    signal clicked(int sequenceNumber)
 
     property var    _missionItem:       object
     property var    _itemVisual
@@ -103,7 +107,7 @@ Item {
             z:              QGroundControl.zOrderMapItems
             missionItem:    _missionItem
 
-            onClicked: setCurrentItem(_missionItem.sequenceNumber)
+            onClicked: _root.clicked(_missionItem.sequenceNumber)
 
             // These are the non-coordinate child mission items attached to this item
             Row {
@@ -119,7 +123,7 @@ Item {
                         z:                      2
                         specifiesCoordinate:    false
 
-                        onClicked: setCurrentItem(object.sequenceNumber)
+                        onClicked: _root.Clicked(object.sequenceNumber)
                     }
                 }
             }
