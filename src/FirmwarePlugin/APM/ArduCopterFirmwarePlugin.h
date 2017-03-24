@@ -69,6 +69,7 @@ public:
     QString geoFenceRadiusParam(Vehicle* vehicle) final;
     QString offlineEditingParamFile(Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Copter.OfflineEditing.params"); }
     QString takeControlFlightMode(void) final;
+    bool vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const final;
 
 private:
     static bool _remapParamNameIntialized;

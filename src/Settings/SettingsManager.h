@@ -18,6 +18,7 @@
 #include "UnitsSettings.h"
 #include "AutoConnectSettings.h"
 #include "VideoSettings.h"
+#include "FlightMapSettings.h"
 
 #include <QVariantList>
 
@@ -33,6 +34,7 @@ public:
     Q_PROPERTY(QObject* unitsSettings       READ unitsSettings          CONSTANT)
     Q_PROPERTY(QObject* autoConnectSettings READ autoConnectSettings    CONSTANT)
     Q_PROPERTY(QObject* videoSettings       READ videoSettings          CONSTANT)
+    Q_PROPERTY(QObject* flightMapSettings   READ flightMapSettings      CONSTANT)
 
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
@@ -41,12 +43,14 @@ public:
     UnitsSettings*          unitsSettings       (void) { return _unitsSettings; }
     AutoConnectSettings*    autoConnectSettings (void) { return _autoConnectSettings; }
     VideoSettings*          videoSettings       (void) { return _videoSettings; }
+    FlightMapSettings*      flightMapSettings   (void) { return _flightMapSettings; }
 
 private:
     AppSettings*            _appSettings;
     UnitsSettings*          _unitsSettings;
     AutoConnectSettings*    _autoConnectSettings;
     VideoSettings*          _videoSettings;
+    FlightMapSettings*      _flightMapSettings;
 };
 
 #endif

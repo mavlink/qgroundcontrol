@@ -443,7 +443,6 @@ HEADERS += \
     src/CmdLineOptParser.h \
     src/FirmwarePlugin/PX4/px4_custom_mode.h \
     src/FlightDisplay/VideoManager.h \
-    src/FlightMap/FlightMapSettings.h \
     src/FlightMap/Widgets/ValuesWidgetController.h \
     src/FollowMe/FollowMe.h \
     src/GAudioOutput.h \
@@ -502,6 +501,7 @@ HEADERS += \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
     src/Settings/AppSettings.h \
     src/Settings/AutoConnectSettings.h \
+    src/Settings/FlightMapSettings.h \
     src/Settings/SettingsGroup.h \
     src/Settings/SettingsManager.h \
     src/Settings/UnitsSettings.h \
@@ -622,7 +622,6 @@ SOURCES += \
     src/AnalyzeView/ExifParser.cc \
     src/CmdLineOptParser.cc \
     src/FlightDisplay/VideoManager.cc \
-    src/FlightMap/FlightMapSettings.cc \
     src/FlightMap/Widgets/ValuesWidgetController.cc \
     src/FollowMe/FollowMe.cc \
     src/GAudioOutput.cc \
@@ -678,6 +677,7 @@ SOURCES += \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
     src/Settings/AppSettings.cc \
     src/Settings/AutoConnectSettings.cc \
+    src/Settings/FlightMapSettings.cc \
     src/Settings/SettingsGroup.cc \
     src/Settings/SettingsManager.cc \
     src/Settings/UnitsSettings.cc \

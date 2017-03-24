@@ -150,6 +150,37 @@ void CameraSection::appendMissionItems(QList<MissionItem*>& items, QObject* miss
                                    false,                       // isCurrentItem
                                    missionItemParent);
             break;
+
+        case StopTakingVideo:
+            item = new MissionItem(nextSequenceNumber++,
+                                   MAV_CMD_VIDEO_STOP_CAPTURE,
+                                   MAV_FRAME_MISSION,
+                                   0,                           // Camera ID
+                                   0, 0, 0, 0, 0, 0,            // param 2-7 not used
+                                   true,                        // autoContinue
+                                   false,                       // isCurrentItem
+                                   missionItemParent);
+            break;
+
+        case StopTakingPhotos:
+            item = new MissionItem(nextSequenceNumber++,
+                                   MAV_CMD_DO_SET_CAM_TRIGG_DIST,
+                                   MAV_FRAME_MISSION,
+                                   0,                               // Trigger distance = 0 means stop
+                                   0, 0, 0, 0, 0, 0,                // param 2-7 not used
+                                   true,                            // autoContinue
+                                   false,                           // isCurrentItem
+                                   missionItemParent);
+            items.append(item);
+            item = new MissionItem(nextSequenceNumber++,
+                                   MAV_CMD_IMAGE_STOP_CAPTURE,
+                                   MAV_FRAME_MISSION,
+                                   0,                           // camera id
+                                   0, 0, 0, 0, 0, 0,            // param 2-7 not used
+                                   true,                        // autoContinue
+                                   false,                       // isCurrentItem
+                                   missionItemParent);
+            break;
         }
         if (item) {
             items.append(item);
@@ -204,20 +235,48 @@ bool CameraSection::scanForCameraSection(QmlObjectListModel* visualItems, int sc
             break;
 
         case MAV_CMD_DO_SET_CAM_TRIGG_DIST:
-            if (!foundCameraAction && missionItem.param1() != 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+            if (!foundCameraAction && missionItem.param1() >= 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+                // At this point we don't know if we have a stop taking photos pair, or a single distance trigger where the user specified 0
+                // We need to look at the next item to check for the stop taking photos pari
+
+                if (missionItem.param1() == 0 && scanIndex < visualItems->count() - 1) {
+                    SimpleMissionItem* nextItem = visualItems->value<SimpleMissionItem*>(scanIndex + 1);
+                    if (nextItem) {
+                        missionItem = nextItem->missionItem();
+                        if ((MAV_CMD)item->command() == MAV_CMD_IMAGE_STOP_CAPTURE && missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+                            foundCameraAction = true;
+                            cameraAction()->setRawValue(StopTakingPhotos);
+                            visualItems->removeAt(scanIndex)->deleteLater();
+                            visualItems->removeAt(scanIndex)->deleteLater();
+                            break;
+                        }
+                    }
+                }
+
+                // We didn't find a stop taking photos pair, so this is a regular trigger distance item
                 foundCameraAction = true;
                 cameraAction()->setRawValue(TakePhotoIntervalDistance);
                 cameraPhotoIntervalDistance()->setRawValue(missionItem.param1());
                 visualItems->removeAt(scanIndex)->deleteLater();
-            } else {
-                stopLooking = true;
+                break;
             }
+            stopLooking = true;
             break;
 
         case MAV_CMD_VIDEO_START_CAPTURE:
             if (!foundCameraAction && missionItem.param1() == 0 && missionItem.param2() == -1 && missionItem.param3() == -1 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
                 foundCameraAction = true;
                 cameraAction()->setRawValue(TakeVideo);
+                visualItems->removeAt(scanIndex)->deleteLater();
+            } else {
+                stopLooking = true;
+            }
+            break;
+
+        case MAV_CMD_VIDEO_STOP_CAPTURE:
+            if (!foundCameraAction && missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+                foundCameraAction = true;
+                cameraAction()->setRawValue(StopTakingVideo);
                 visualItems->removeAt(scanIndex)->deleteLater();
             } else {
                 stopLooking = true;

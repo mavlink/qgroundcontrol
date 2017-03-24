@@ -21,7 +21,6 @@ static const char* kQmlGlobalKeyName = "QGCQml";
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     : QGCTool(app)
-    , _flightMapSettings(NULL)
     , _linkManager(NULL)
     , _multiVehicleManager(NULL)
     , _mapEngineManager(NULL)
@@ -47,7 +46,6 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
 
-    _flightMapSettings      = toolbox->flightMapSettings();
     _linkManager            = toolbox->linkManager();
     _multiVehicleManager    = toolbox->multiVehicleManager();
     _mapEngineManager       = toolbox->mapEngineManager();

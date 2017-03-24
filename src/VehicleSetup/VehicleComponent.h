@@ -34,7 +34,7 @@ class VehicleComponent : public QObject
     Q_PROPERTY(bool     requiresSetup           READ requiresSetup          CONSTANT)
     Q_PROPERTY(bool     setupComplete           READ setupComplete          STORED false NOTIFY setupCompleteChanged)
     Q_PROPERTY(QString  iconResource            READ iconResource           CONSTANT)
-    Q_PROPERTY(QUrl     setupSource             READ setupSource            CONSTANT)
+    Q_PROPERTY(QUrl     setupSource             READ setupSource            NOTIFY setupSourceChanged)
     Q_PROPERTY(QUrl     summaryQmlSource        READ summaryQmlSource       CONSTANT)
     Q_PROPERTY(bool     allowSetupWhileArmed    READ allowSetupWhileArmed   CONSTANT)
     
@@ -65,6 +65,7 @@ public:
 
 signals:
     void setupCompleteChanged(bool setupComplete);
+    void setupSourceChanged(void);
 
 protected slots:
     void _triggerUpdated(QVariant value);

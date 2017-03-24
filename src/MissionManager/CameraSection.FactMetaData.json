@@ -3,8 +3,8 @@
     "name":             "CameraAction",
     "shortDescription": "Specify whether the camera should take photos or video",
     "type":             "uint32",
-    "enumStrings":      "Continue current action,Take photos (time),Take photos (distance),Take video",
-    "enumValues":       "0,1,2,3",
+    "enumStrings":      "Continue current action,Take photos (time),Take photos (distance),Stop taking photos,Start recording video,Stop recording video",
+    "enumValues":       "0,1,2,3,4,5",
     "defaultValue":     0
 },
 {
