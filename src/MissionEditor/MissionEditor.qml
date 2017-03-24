@@ -49,7 +49,7 @@ QGCView {
     property var    activeVehiclePosition:  _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property bool   _lightWidgetBorders:    editorMap.isSatelliteMap
     property bool   _addWaypointOnClick:    false
-    property bool   _singleComplexItem:     missionController.complexMissionItemNames.length == 1
+    property bool   _singleComplexItem:     missionController.complexMissionItemNames.length === 1
 
     /// The controller which should be called for load/save, send to/from vehicle calls
     property var _syncDropDownController: missionController
@@ -459,7 +459,8 @@ QGCView {
                     model: missionController.visualItems
 
                     delegate: MissionItemMapVisual {
-                        map: editorMap
+                        map:        editorMap
+                        onClicked:  setCurrentItem(sequenceNumber)
                     }
                 }
 
@@ -701,6 +702,10 @@ QGCView {
                     maxHeight:          mapScale.y - toolStrip.y
 
                     property bool _showZoom: !ScreenTools.isMobile
+
+                    property bool mySingleComplexItem: _singleComplexItem
+
+                    onMySingleComplexItemChanged: console.log(model[1].dropPanelComponent)
 
                     model: [
                         {
