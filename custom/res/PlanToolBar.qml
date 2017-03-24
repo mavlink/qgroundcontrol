@@ -136,7 +136,7 @@ Rectangle {
         }
 
         Item {
-            width:  20
+            width:  10
             height: 1
         }
 
@@ -170,6 +170,38 @@ Rectangle {
             QGCLabel { text: _missionMaxTelemetryText
                 font.pointSize: ScreenTools.smallFontPointSize
                 Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
+                horizontalAlignment: Text.AlignRight
+            }
+        }
+
+        Item {
+            width:  10
+            height: 1
+        }
+
+        GridLayout {
+            columns:        2
+            rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
+            columnSpacing:  _margins
+            anchors.verticalCenter: parent.verticalCenter
+
+            QGCLabel {
+                text:               qsTr("Battery")
+                Layout.columnSpan:  2
+                font.pointSize:     ScreenTools.smallFontPointSize
+            }
+
+            QGCLabel { text: qsTr("Batteries required:"); font.pointSize: ScreenTools.smallFontPointSize }
+            QGCLabel { text: "--.--"
+                font.pointSize: ScreenTools.smallFontPointSize
+                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 6
+                horizontalAlignment: Text.AlignRight
+            }
+
+            QGCLabel { text: qsTr("Swap waypoint:"); font.pointSize: ScreenTools.smallFontPointSize }
+            QGCLabel { text: "--"
+                font.pointSize: ScreenTools.smallFontPointSize
+                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 6
                 horizontalAlignment: Text.AlignRight
             }
         }
