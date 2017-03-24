@@ -52,7 +52,14 @@ public:
     QObject* cameraSection(void) { return &_cameraSection; }
 
     /// Scans the loaded items for settings items
-    static bool scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicl);
+    static bool scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle);
+
+    /// Adds the optional mission end action to the list
+    ///     @param items Mission items list to append to
+    ///     @param seqNum Sequence number for new item
+    ///     @param missionItemParent Parent for newly allocated MissionItems
+    /// @return true: Mission end action was added
+    bool addMissionEndAction(QList<MissionItem*>& items, int seqNum, QObject* missionItemParent);
 
     // Overrides from ComplexMissionItem
 
