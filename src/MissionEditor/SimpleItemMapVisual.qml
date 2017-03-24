@@ -116,7 +116,7 @@ Item {
 
                     delegate: MissionItemIndexLabel {
                         z:                      2
-                        label:                  object.abbreviation
+                        label:                  object.abbreviation.length === 0 ? object.sequenceNumber : object.abbreviation.charAt(0)
                         checked:                object.isCurrentItem
                         specifiesCoordinate:    false
 
