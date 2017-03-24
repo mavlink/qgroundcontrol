@@ -217,15 +217,12 @@ Rectangle {
                             }
                         } // GridLayout
 
-                        /*
-                          FIXME: NYI
                         FactComboBox {
                             anchors.left:   parent.left
                             anchors.right:  parent.right
                             fact:           missionItem.missionEndAction
                             indexModel:     false
                         }
-                        */
                     }
 
                     CameraSection {
