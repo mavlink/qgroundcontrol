@@ -20,7 +20,11 @@ import QGroundControl.FlightMap     1.0
 
 /// Fixed Wing Landing Pattern map visuals
 Item {
+    id: _root
+
     property var map    ///< Map control to place item in
+
+    signal clicked(int sequenceNumber)
 
     property var _missionItem:  object
     property var _itemVisuals: [ ]
@@ -207,7 +211,7 @@ Item {
                 label:      "Loiter"
                 checked:    _missionItem.isCurrentItem
 
-                onClicked: setCurrentItem(_missionItem.sequenceNumber)
+                onClicked: _root.clicked(_missionItem.sequenceNumber)
             }
         }
     }
@@ -241,7 +245,7 @@ Item {
                 label:      "Land"
                 checked:    _missionItem.isCurrentItem
 
-                onClicked: setCurrentItem(_missionItem.sequenceNumber)
+                onClicked: _root.clicked(_missionItem.sequenceNumber)
             }
         }
     }

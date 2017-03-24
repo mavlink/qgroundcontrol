@@ -20,6 +20,8 @@ import QGroundControl.FlightMap     1.0
 
 /// Survey Complex Mission Item visuals
 Item {
+    id: _root
+
     property var map    ///< Map control to place item in
 
     property var _missionItem:      object
@@ -29,6 +31,8 @@ Item {
     property var _exitCoordinate
     property var _dragHandles
     property var _splitHandles
+
+    signal clicked(int sequenceNumber)
 
     function _addVisualElements() {
         _polygon = polygonComponent.createObject(map)
@@ -148,12 +152,10 @@ Item {
             coordinate:     _missionItem.coordinate
             visible:        _missionItem.exitCoordinate.isValid
 
-            sourceItem:
-                MissionItemIndexLabel {
+            sourceItem: MissionItemIndexLabel {
                 label:      "Entry"
                 checked:    _missionItem.isCurrentItem
-
-                onClicked: setCurrentItem(_missionItem.sequenceNumber)
+                onClicked:  _root.clicked(_missionItem.sequenceNumber)
             }
         }
     }
@@ -169,12 +171,10 @@ Item {
             coordinate:     _missionItem.exitCoordinate
             visible:        _missionItem.exitCoordinate.isValid
 
-            sourceItem:
-                MissionItemIndexLabel {
+            sourceItem: MissionItemIndexLabel {
                 label:      "Exit"
                 checked:    _missionItem.isCurrentItem
-
-                onClicked: setCurrentItem(_missionItem.sequenceNumber)
+                onClicked:  _root.clicked(_missionItem.sequenceNumber)
             }
         }
     }

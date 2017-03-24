@@ -17,11 +17,13 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 
 
-/// Mission item edit control
+/// Mission item map visual
 Item {
     id: _root
 
     property var map    ///< Map control to place item in
+
+    signal clicked(int sequenceNumber)
 
     property var _visualItem
 
@@ -32,6 +34,7 @@ Item {
                 console.log("Error loading Qml: ", object.mapVisualQML, component.errorString())
             }
             _visualItem = component.createObject(map, { "map": _root.map })
+            _visualItem.clicked.connect(_root.clicked)
         }
     }
 

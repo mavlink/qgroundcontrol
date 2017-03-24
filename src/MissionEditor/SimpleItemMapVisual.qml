@@ -20,6 +20,7 @@ import QGroundControl.FlightMap     1.0
 
 /// Simple Mission Item visuals
 Item {
+    id: _root
     property var map    ///< Map control to place item in
 
     property var    _missionItem:       object
@@ -27,6 +28,8 @@ Item {
     property var    _dragArea
     property bool   _itemVisualShowing: false
     property bool   _dragAreaShowing:   false
+
+    signal clicked(int sequenceNumber)
 
     function hideItemVisuals() {
         if (_itemVisualShowing) {
@@ -104,7 +107,7 @@ Item {
             missionItem:    _missionItem
             sequenceNumber: _missionItem.sequenceNumber
 
-            onClicked: setCurrentItem(_missionItem.sequenceNumber)
+            onClicked: _root.clicked(_missionItem.sequenceNumber)
 
             // These are the non-coordinate child mission items attached to this item
             Row {
@@ -120,7 +123,7 @@ Item {
                         checked:                object.isCurrentItem
                         specifiesCoordinate:    false
 
-                        onClicked: setCurrentItem(object.sequenceNumber)
+                        onClicked: _root.clicked(object.sequenceNumber)
                     }
                 }
             }
