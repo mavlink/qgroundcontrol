@@ -150,6 +150,7 @@ Item {
 
             sourceItem:
                 MissionItemIndexLabel {
+                index:      _missionItem.sequenceNumber
                 label:      "Entry"
                 checked:    _missionItem.isCurrentItem
 
@@ -171,6 +172,7 @@ Item {
 
             sourceItem:
                 MissionItemIndexLabel {
+                index:      _missionItem.lastSequenceNumber
                 label:      "Exit"
                 checked:    _missionItem.isCurrentItem
 
