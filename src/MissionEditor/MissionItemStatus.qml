@@ -20,8 +20,8 @@ import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 
 Rectangle {
-    width:      _expanded ? expandedWidth : _collapsedWidth
-    height:     Math.max(valueGrid.height, valueMissionGrid.height) + (_margins * 2)
+    width:      expandedWidth
+    height:     ScreenTools.defaultFontPixelHeight * 7
     radius:     ScreenTools.defaultFontPixelWidth * 0.5
     color:      qgcPal.window
     opacity:    0.80
@@ -33,9 +33,6 @@ Rectangle {
     property real   missionDistance             ///< Total mission distance
     property real   missionTime                 ///< Total mission time
     property real   missionMaxTelemetry
-
-    property real   _collapsedWidth:            valueGrid.width + (_margins * 2)
-    property bool   _expanded:                  true
 
     property bool   _statusValid:               currentMissionItem != undefined
     property bool   _missionValid:              missionItems != undefined
@@ -59,92 +56,38 @@ Rectangle {
 
     readonly property real _margins:    ScreenTools.defaultFontPixelWidth
 
-    MouseArea {
-        anchors.fill:   parent
-        onClicked:      _expanded = !_expanded
-    }
+    QGCListView {
+        id:                     statusListView
+        anchors.fill:           parent
+        anchors.margins:        _margins
+        model:                  missionItems
+        highlightMoveDuration:  250
+        orientation:            ListView.Horizontal
+        spacing:                0
+        width:                  parent.width -  (_margins * 2)
+        clip:                   true
+        currentIndex:           _currentMissionIndex
 
-    Row {
-        anchors.fill:       parent
-        anchors.margins:    _margins
-        spacing:            _margins
+        delegate: Item {
+            height:     statusListView.height
+            width:      display ? (indicator.width + spacing)  : 0
+            visible:    display
 
-        GridLayout {
-            id:                     valueGrid
-            columns:                2
-            rowSpacing:             0
-            columnSpacing:          _margins
-            anchors.verticalCenter: parent.verticalCenter
+            property real availableHeight:  height - indicator.height
+            property bool graphAbsolute:    true
+            readonly property bool display: object.specifiesCoordinate && !object.isStandaloneCoordinate
+            readonly property real spacing: ScreenTools.defaultFontPixelWidth * ScreenTools.smallFontPointRatio
 
-            QGCLabel { text: qsTr("Selected waypoint"); Layout.columnSpan: 2 }
-
-            QGCLabel { text: qsTr("Distance:") }
-            QGCLabel { text: _distanceText }
-
-            QGCLabel { text: qsTr("Alt diff:") }
-            QGCLabel { text: _altDifferenceText }
-
-            QGCLabel { text: qsTr("Gradient:") }
-            QGCLabel { text: _gradientText }
-
-            QGCLabel { text: qsTr("Azimuth:") }
-            QGCLabel { text: _azimuthText }
-        }
-
-        QGCListView {
-            id:                     statusListView
-            model:                  missionItems
-            highlightMoveDuration:  250
-            anchors.leftMargin:     _margins
-            anchors.rightMargin:    _margins
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            orientation:            ListView.Horizontal
-            spacing:                0
-            visible:                _expanded
-            width:                  parent.width - valueGrid.width - valueMissionGrid.width - (_margins * 2)
-            clip:                   true
-            currentIndex:           _currentMissionIndex
-
-            delegate: Item {
-                height:     statusListView.height
-                width:      display ? (indicator.width + spacing)  : 0
-                visible:    display
-
-                property real availableHeight:  height - indicator.height
-                property bool graphAbsolute:    true
-                readonly property bool display: object.specifiesCoordinate && !object.isStandaloneCoordinate
-                readonly property real spacing: ScreenTools.defaultFontPixelWidth * ScreenTools.smallFontPointRatio
-
-                MissionItemIndexLabel {
-                    id:                         indicator
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    y:                          availableHeight - (availableHeight * object.altPercent)
-                    small:                      true
-                    checked:                    object.isCurrentItem
-                    label:                      object.abbreviation
-                    visible:                    object.relativeAltitude ? true : (object.homePosition || graphAbsolute)
-                }
+            MissionItemIndexLabel {
+                id:                         indicator
+                anchors.horizontalCenter:   parent.horizontalCenter
+                y:                          availableHeight - (availableHeight * object.altPercent)
+                small:                      true
+                checked:                    object.isCurrentItem
+                label:                      object.abbreviation
+                visible:                    object.relativeAltitude ? true : (object.homePosition || graphAbsolute)
             }
-        }
-
-        Grid {
-            id:                 valueMissionGrid
-            columns:            2
-            columnSpacing:      _margins
-            anchors.verticalCenter: parent.verticalCenter
-
-            QGCLabel { text: qsTr("Total mission") }
-            QGCLabel { text: qsTr(" ") }
-
-            QGCLabel { text: qsTr("Distance:") }
-            QGCLabel { text: _missionDistanceText }
-
-            QGCLabel { text: qsTr("Time:") }
-            QGCLabel { text: _missionTimeText }
-
-            QGCLabel { text: qsTr("Max telem dist:") }
-            QGCLabel { text: _missionMaxTelemetryText }
         }
     }
 }
+
