@@ -1,19 +1,5 @@
 [
 {
-    "name":             "PlannedHomePositionLatitude",
-    "shortDescription": "Planned home position latitude",
-    "type":             "double",
-    "decimalPlaces":    7,
-    "defaultValue":     37.803784
-},
-{
-    "name":             "PlannedHomePositionLongitude",
-    "shortDescription": "Planned home position longitude",
-    "type":             "double",
-    "decimalPlaces":    7,
-    "defaultValue":     -122.462276
-},
-{
     "name":             "PlannedHomePositionAltitude",
     "shortDescription": "Planned home position altitude",
     "type":             "double",

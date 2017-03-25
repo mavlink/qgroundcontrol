@@ -7,13 +7,6 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief QGC Map Background
- *   @author Gus Grubba <mavlink@grubba.com>
- */
-
 import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtLocation       5.3
@@ -27,34 +20,21 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Vehicle               1.0
 import QGroundControl.Mavlink               1.0
+import QGroundControl.QGCPositionManager    1.0
 
 Map {
     id: _map
 
+    zoomLevel:                  QGroundControl.flightMapZoom
+    center:                     QGroundControl.flightMapPosition
+    gesture.flickDeceleration:  3000
+    plugin:                     Plugin { name: "QGroundControl" }
+
     property string mapName:            'defaultMap'
     property bool   isSatelliteMap:     activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+    property var    gcsPosition:        QtPositioning.coordinate()
 
     readonly property real  maxZoomLevel: 20
-    property variant        scaleLengths: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
-
-    function formatDistance(meters)
-    {
-        var dist = Math.round(meters)
-        if (dist > 1000 ){
-            if (dist > 100000){
-                dist = Math.round(dist / 1000)
-            }
-            else{
-                dist = Math.round(dist / 100)
-                dist = dist / 10
-            }
-            dist = dist + " km"
-        }
-        else{
-            dist = dist + " m"
-        }
-        return dist
-    }
 
     function setVisibleRegion(region) {
         // This works around a bug on Qt where if you set a visibleRegion and then the user moves or zooms the map
@@ -64,13 +44,18 @@ Map {
         _map.visibleRegion = region
     }
 
-    zoomLevel:                  18
-    center:                     QGroundControl.lastKnownHomePosition
-    gesture.flickDeceleration:  3000
-
-    plugin: Plugin { name: "QGroundControl" }
-
     ExclusiveGroup { id: mapTypeGroup }
+
+    // Update ground station position
+    Connections {
+        target: QGroundControl.qgcPositionManger
+
+        onLastPositionUpdated: {
+            if (valid && lastPosition.latitude && Math.abs(lastPosition.latitude)  > 0.001 && lastPosition.longitude && Math.abs(lastPosition.longitude)  > 0.001) {
+                gcsPosition = QtPositioning.coordinate(lastPosition.latitude,lastPosition.longitude)
+            }
+        }
+    }
 
     function updateActiveMapType() {
         var settings =  QGroundControl.settingsManager.flightMapSettings
@@ -99,10 +84,10 @@ Map {
     MapQuickItem {
         anchorPoint.x:  sourceItem.anchorPointX
         anchorPoint.y:  sourceItem.anchorPointY
-        visible:        mainWindow.gcsPosition.isValid
-        coordinate:     mainWindow.gcsPosition
+        visible:        gcsPosition.isValid
+        coordinate:     gcsPosition
         sourceItem:     MissionItemIndexLabel {
-            label: "Q"
+        label:          "Q"
         }
     }
 } // Map

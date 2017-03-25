@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-#include "MissionSettingsComplexItem.h"
+#include "MissionSettingsItem.h"
 #include "JsonHelper.h"
 #include "MissionController.h"
 #include "QGCGeo.h"
@@ -21,21 +21,17 @@
 
 QGC_LOGGING_CATEGORY(MissionSettingsComplexItemLog, "MissionSettingsComplexItemLog")
 
-const char* MissionSettingsComplexItem::jsonComplexItemTypeValue = "MissionSettings";
+const char* MissionSettingsItem::jsonComplexItemTypeValue = "MissionSettings";
 
-const char* MissionSettingsComplexItem::_plannedHomePositionLatitudeName =  "PlannedHomePositionLatitude";
-const char* MissionSettingsComplexItem::_plannedHomePositionLongitudeName = "PlannedHomePositionLongitude";
-const char* MissionSettingsComplexItem::_plannedHomePositionAltitudeName =  "PlannedHomePositionAltitude";
-const char* MissionSettingsComplexItem::_missionFlightSpeedName =           "FlightSpeed";
-const char* MissionSettingsComplexItem::_missionEndActionName =             "MissionEndAction";
+const char* MissionSettingsItem::_plannedHomePositionAltitudeName =  "PlannedHomePositionAltitude";
+const char* MissionSettingsItem::_missionFlightSpeedName =           "FlightSpeed";
+const char* MissionSettingsItem::_missionEndActionName =             "MissionEndAction";
 
-QMap<QString, FactMetaData*> MissionSettingsComplexItem::_metaDataMap;
+QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
 
-MissionSettingsComplexItem::MissionSettingsComplexItem(Vehicle* vehicle, QObject* parent)
+MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
     : ComplexMissionItem(vehicle, parent)
     , _specifyMissionFlightSpeed(false)
-    , _plannedHomePositionLatitudeFact  (0, _plannedHomePositionLatitudeName,   FactMetaData::valueTypeDouble)
-    , _plannedHomePositionLongitudeFact (0, _plannedHomePositionLongitudeName,  FactMetaData::valueTypeDouble)
     , _plannedHomePositionAltitudeFact  (0, _plannedHomePositionAltitudeName,   FactMetaData::valueTypeDouble)
     , _missionFlightSpeedFact           (0, _missionFlightSpeedName,            FactMetaData::valueTypeDouble)
     , _missionEndActionFact             (0, _missionEndActionName,              FactMetaData::valueTypeUint32)
@@ -48,14 +44,10 @@ MissionSettingsComplexItem::MissionSettingsComplexItem(Vehicle* vehicle, QObject
         _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/MissionSettings.FactMetaData.json"), NULL /* metaDataParent */);
     }
 
-    _plannedHomePositionLatitudeFact.setMetaData    (_metaDataMap[_plannedHomePositionLatitudeName]);
-    _plannedHomePositionLongitudeFact.setMetaData   (_metaDataMap[_plannedHomePositionLongitudeName]);
     _plannedHomePositionAltitudeFact.setMetaData    (_metaDataMap[_plannedHomePositionAltitudeName]);
     _missionFlightSpeedFact.setMetaData             (_metaDataMap[_missionFlightSpeedName]);
     _missionEndActionFact.setMetaData               (_metaDataMap[_missionEndActionName]);
 
-    _plannedHomePositionLatitudeFact.setRawValue    (_plannedHomePositionLatitudeFact.rawDefaultValue());
-    _plannedHomePositionLongitudeFact.setRawValue   (_plannedHomePositionLongitudeFact.rawDefaultValue());
     _plannedHomePositionAltitudeFact.setRawValue    (_plannedHomePositionAltitudeFact.rawDefaultValue());
     _missionEndActionFact.setRawValue               (_missionEndActionFact.rawDefaultValue());
 
@@ -66,25 +58,24 @@ MissionSettingsComplexItem::MissionSettingsComplexItem(Vehicle* vehicle, QObject
 
     setHomePositionSpecialCase(true);
 
-    connect(this,               &MissionSettingsComplexItem::specifyMissionFlightSpeedChanged,  this, &MissionSettingsComplexItem::_setDirtyAndUpdateLastSequenceNumber);
-    connect(&_cameraSection,    &CameraSection::missionItemCountChanged,                        this, &MissionSettingsComplexItem::_setDirtyAndUpdateLastSequenceNumber);
+    connect(this,               &MissionSettingsItem::specifyMissionFlightSpeedChanged,  this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
+    connect(&_cameraSection,    &CameraSection::missionItemCountChanged,                        this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
 
-    connect(&_plannedHomePositionLatitudeFact,  &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirtyAndUpdateCoordinate);
-    connect(&_plannedHomePositionLongitudeFact, &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirtyAndUpdateCoordinate);
-    connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirtyAndUpdateCoordinate);
+    connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged, this, &MissionSettingsItem::_setDirty);
+    connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged, this, &MissionSettingsItem::_updateAltitudeInCoordinate);
 
-    connect(&_missionFlightSpeedFact,           &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirty);
-    connect(&_missionEndActionFact,             &Fact::valueChanged, this, &MissionSettingsComplexItem::_setDirty);
+    connect(&_missionFlightSpeedFact,           &Fact::valueChanged, this, &MissionSettingsItem::_setDirty);
+    connect(&_missionEndActionFact,             &Fact::valueChanged, this, &MissionSettingsItem::_setDirty);
 
-    connect(&_cameraSection, &CameraSection::dirtyChanged, this, &MissionSettingsComplexItem::_cameraSectionDirtyChanged);
+    connect(&_cameraSection, &CameraSection::dirtyChanged, this, &MissionSettingsItem::_cameraSectionDirtyChanged);
 
-    connect(&_missionFlightSpeedFact,   &Fact::valueChanged,                        this, &MissionSettingsComplexItem::specifiedFlightSpeedChanged);
-    connect(&_cameraSection,            &CameraSection::specifyGimbalChanged,       this, &MissionSettingsComplexItem::specifiedGimbalYawChanged);
-    connect(&_cameraSection,            &CameraSection::specifiedGimbalYawChanged,  this, &MissionSettingsComplexItem::specifiedGimbalYawChanged);
+    connect(&_missionFlightSpeedFact,   &Fact::valueChanged,                        this, &MissionSettingsItem::specifiedFlightSpeedChanged);
+    connect(&_cameraSection,            &CameraSection::specifyGimbalChanged,       this, &MissionSettingsItem::specifiedGimbalYawChanged);
+    connect(&_cameraSection,            &CameraSection::specifiedGimbalYawChanged,  this, &MissionSettingsItem::specifiedGimbalYawChanged);
 }
 
 
-void MissionSettingsComplexItem::setSpecifyMissionFlightSpeed(bool specifyMissionFlightSpeed)
+void MissionSettingsItem::setSpecifyMissionFlightSpeed(bool specifyMissionFlightSpeed)
 {
     if (specifyMissionFlightSpeed != _specifyMissionFlightSpeed) {
         _specifyMissionFlightSpeed = specifyMissionFlightSpeed;
@@ -92,7 +83,7 @@ void MissionSettingsComplexItem::setSpecifyMissionFlightSpeed(bool specifyMissio
     }
 }
 
-int MissionSettingsComplexItem::lastSequenceNumber(void) const
+int MissionSettingsItem::lastSequenceNumber(void) const
 {
     int lastSequenceNumber = _sequenceNumber;
 
@@ -104,7 +95,7 @@ int MissionSettingsComplexItem::lastSequenceNumber(void) const
     return lastSequenceNumber;
 }
 
-void MissionSettingsComplexItem::setDirty(bool dirty)
+void MissionSettingsItem::setDirty(bool dirty)
 {
     if (_dirty != dirty) {
         _dirty = dirty;
@@ -112,14 +103,14 @@ void MissionSettingsComplexItem::setDirty(bool dirty)
     }
 }
 
-void MissionSettingsComplexItem::save(QJsonArray&  missionItems)
+void MissionSettingsItem::save(QJsonArray&  missionItems)
 {
     QList<MissionItem*> items;
 
     appendMissionItems(items, this);
 
     // First item show be planned home position, we are not reponsible for save/load
-    // Remained we just output as is
+    // Remaining items we just output as is
     for (int i=1; i<items.count(); i++) {
         MissionItem* item = items[i];
         QJsonObject saveObject;
@@ -129,7 +120,7 @@ void MissionSettingsComplexItem::save(QJsonArray&  missionItems)
     }
 }
 
-void MissionSettingsComplexItem::setSequenceNumber(int sequenceNumber)
+void MissionSettingsItem::setSequenceNumber(int sequenceNumber)
 {
     if (_sequenceNumber != sequenceNumber) {
         _sequenceNumber = sequenceNumber;
@@ -138,7 +129,7 @@ void MissionSettingsComplexItem::setSequenceNumber(int sequenceNumber)
     }
 }
 
-bool MissionSettingsComplexItem::load(const QJsonObject& complexObject, int sequenceNumber, QString& errorString)
+bool MissionSettingsItem::load(const QJsonObject& complexObject, int sequenceNumber, QString& errorString)
 {
     Q_UNUSED(complexObject);
     Q_UNUSED(sequenceNumber);
@@ -147,22 +138,22 @@ bool MissionSettingsComplexItem::load(const QJsonObject& complexObject, int sequ
     return true;
 }
 
-double MissionSettingsComplexItem::greatestDistanceTo(const QGeoCoordinate &other) const
+double MissionSettingsItem::greatestDistanceTo(const QGeoCoordinate &other) const
 {
     Q_UNUSED(other);
     return 0;
 }
 
-bool MissionSettingsComplexItem::specifiesCoordinate(void) const
+bool MissionSettingsItem::specifiesCoordinate(void) const
 {
     return false;
 }
 
-void MissionSettingsComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
+void MissionSettingsItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
 {
     int seqNum = _sequenceNumber;
 
-    // IMPORTANT NOTE: If anything changes here you must also change MissionSettingsComplexItem::scanForMissionSettings
+    // IMPORTANT NOTE: If anything changes here you must also change MissionSettingsItem::scanForMissionSettings
 
     // Planned home position
     MissionItem* item = new MissionItem(seqNum++,
@@ -172,8 +163,8 @@ void MissionSettingsComplexItem::appendMissionItems(QList<MissionItem*>& items, 
                                         0,                      // Acceptance radius
                                         0,                      // Not sure?
                                         0,                      // Yaw
-                                        _plannedHomePositionLatitudeFact.rawValue().toDouble(),
-                                        _plannedHomePositionLongitudeFact.rawValue().toDouble(),
+                                        coordinate().latitude(),
+                                        coordinate().longitude(),
                                         _plannedHomePositionAltitudeFact.rawValue().toDouble(),
                                         true,                   // autoContinue
                                         false,                  // isCurrentItem
@@ -199,11 +190,11 @@ void MissionSettingsComplexItem::appendMissionItems(QList<MissionItem*>& items, 
     _cameraSection.appendMissionItems(items, missionItemParent, seqNum);
 }
 
-bool MissionSettingsComplexItem::addMissionEndAction(QList<MissionItem*>& items, int seqNum, QObject* missionItemParent)
+bool MissionSettingsItem::addMissionEndAction(QList<MissionItem*>& items, int seqNum, QObject* missionItemParent)
 {
     MissionItem* item = NULL;
 
-    // IMPORTANT NOTE: If anything changes here you must also change MissionSettingsComplexItem::scanForMissionSettings
+    // IMPORTANT NOTE: If anything changes here you must also change MissionSettingsItem::scanForMissionSettings
 
     // Find last waypoint coordinate information so we have a lat/lon/alt to use
     QGeoCoordinate  lastWaypointCoord;
@@ -278,17 +269,17 @@ bool MissionSettingsComplexItem::addMissionEndAction(QList<MissionItem*>& items,
     }
 }
 
-bool MissionSettingsComplexItem::scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle)
+bool MissionSettingsItem::scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle)
 {
     bool foundSpeed = false;
     bool foundCameraSection = false;
     bool stopLooking = false;
 
-    qCDebug(MissionSettingsComplexItemLog) << "MissionSettingsComplexItem::scanForMissionSettings count:scanIndex" << visualItems->count() << scanIndex;
+    qCDebug(MissionSettingsComplexItemLog) << "MissionSettingsItem::scanForMissionSettings count:scanIndex" << visualItems->count() << scanIndex;
 
-    MissionSettingsComplexItem* settingsItem = visualItems->value<MissionSettingsComplexItem*>(scanIndex);
+    MissionSettingsItem* settingsItem = visualItems->value<MissionSettingsItem*>(scanIndex);
     if (!settingsItem) {
-        qWarning() << "Item specified by scanIndex not MissionSettingsComplexItem";
+        qWarning() << "Item specified by scanIndex not MissionSettingsItem";
         return false;
     }
 
@@ -305,7 +296,7 @@ bool MissionSettingsComplexItem::scanForMissionSettings(QmlObjectListModel* visu
 
         qCDebug(MissionSettingsComplexItemLog) << item->command() << missionItem.param1() << missionItem.param2() << missionItem.param3() << missionItem.param4() << missionItem.param5() << missionItem.param6() << missionItem.param7() ;
 
-        // See MissionSettingsComplexItem::getMissionItems for specs on what compomises a known mission setting
+        // See MissionSettingsItem::getMissionItems for specs on what compomises a known mission setting
 
         switch ((MAV_CMD)item->command()) {
         case MAV_CMD_DO_CHANGE_SPEED:
@@ -384,56 +375,57 @@ bool MissionSettingsComplexItem::scanForMissionSettings(QmlObjectListModel* visu
     return foundSpeed || foundCameraSection;
 }
 
-double MissionSettingsComplexItem::complexDistance(void) const
+double MissionSettingsItem::complexDistance(void) const
 {
     return 0;
 }
 
-void MissionSettingsComplexItem::_setDirty(void)
+void MissionSettingsItem::_setDirty(void)
 {
     setDirty(true);
 }
 
-void MissionSettingsComplexItem::setCoordinate(const QGeoCoordinate& coordinate)
+void MissionSettingsItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
-    if (this->coordinate() != coordinate) {
-        _plannedHomePositionLatitudeFact.setRawValue(coordinate.latitude());
-        _plannedHomePositionLongitudeFact.setRawValue(coordinate.longitude());
+    if (_plannedHomePositionCoordinate != coordinate) {
+        _plannedHomePositionCoordinate = coordinate;
+        emit coordinateChanged(coordinate);
+        emit exitCoordinateChanged(coordinate);
         _plannedHomePositionAltitudeFact.setRawValue(coordinate.altitude());
     }
 }
 
-void MissionSettingsComplexItem::_setDirtyAndUpdateLastSequenceNumber(void)
+void MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber(void)
 {
     emit lastSequenceNumberChanged(lastSequenceNumber());
     setDirty(true);
 }
 
-void MissionSettingsComplexItem::_setDirtyAndUpdateCoordinate(void)
-{
-    emit coordinateChanged(coordinate());
-    emit exitCoordinateChanged(coordinate());
-    setDirty(true);
-}
-
-QGeoCoordinate MissionSettingsComplexItem::coordinate(void) const
-{
-    return QGeoCoordinate(_plannedHomePositionLatitudeFact.rawValue().toDouble(), _plannedHomePositionLongitudeFact.rawValue().toDouble(), _plannedHomePositionAltitudeFact.rawValue().toDouble());
-}
-
-void MissionSettingsComplexItem::_cameraSectionDirtyChanged(bool dirty)
+void MissionSettingsItem::_cameraSectionDirtyChanged(bool dirty)
 {
     if (dirty) {
         setDirty(true);
     }
 }
 
-double MissionSettingsComplexItem::specifiedFlightSpeed(void)
+double MissionSettingsItem::specifiedFlightSpeed(void)
 {
     return _specifyMissionFlightSpeed ? _missionFlightSpeedFact.rawValue().toDouble() : std::numeric_limits<double>::quiet_NaN();
 }
 
-double MissionSettingsComplexItem::specifiedGimbalYaw(void)
+double MissionSettingsItem::specifiedGimbalYaw(void)
 {
     return _cameraSection.specifyGimbal() ? _cameraSection.gimbalYaw()->rawValue().toDouble() : std::numeric_limits<double>::quiet_NaN();
+}
+
+void MissionSettingsItem::_updateAltitudeInCoordinate(QVariant value)
+{
+    double newAltitude = value.toDouble();
+
+    if (!qFuzzyCompare(_plannedHomePositionCoordinate.altitude(), newAltitude)) {
+
+        _plannedHomePositionCoordinate.setAltitude(newAltitude);
+        emit coordinateChanged(_plannedHomePositionCoordinate);
+        emit exitCoordinateChanged(_plannedHomePositionCoordinate);
+    }
 }
