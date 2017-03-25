@@ -18,12 +18,12 @@
 
 Q_DECLARE_LOGGING_CATEGORY(MissionSettingsComplexItemLog)
 
-class MissionSettingsComplexItem : public ComplexMissionItem
+class MissionSettingsItem : public ComplexMissionItem
 {
     Q_OBJECT
 
 public:
-    MissionSettingsComplexItem(Vehicle* vehicle, QObject* parent = NULL);
+    MissionSettingsItem(Vehicle* vehicle, QObject* parent = NULL);
 
     enum MissionEndAction {
         MissionEndNoAction,
@@ -36,14 +36,10 @@ public:
     Q_PROPERTY(bool     specifyMissionFlightSpeed       READ specifyMissionFlightSpeed      WRITE setSpecifyMissionFlightSpeed  NOTIFY specifyMissionFlightSpeedChanged)
     Q_PROPERTY(Fact*    missionFlightSpeed              READ missionFlightSpeed                                                 CONSTANT)
     Q_PROPERTY(Fact*    missionEndAction                READ missionEndAction                                                   CONSTANT)
-    Q_PROPERTY(Fact*    plannedHomePositionLatitude     READ plannedHomePositionLatitude                                        CONSTANT)
-    Q_PROPERTY(Fact*    plannedHomePositionLongitude    READ plannedHomePositionLongitude                                       CONSTANT)
     Q_PROPERTY(Fact*    plannedHomePositionAltitude     READ plannedHomePositionAltitude                                        CONSTANT)
     Q_PROPERTY(QObject* cameraSection                   READ cameraSection                                                      CONSTANT)
 
     bool    specifyMissionFlightSpeed   (void) const { return _specifyMissionFlightSpeed; }
-    Fact*   plannedHomePositionLatitude (void) { return &_plannedHomePositionLatitudeFact; }
-    Fact*   plannedHomePositionLongitude(void) { return &_plannedHomePositionLongitudeFact; }
     Fact*   plannedHomePositionAltitude (void) { return &_plannedHomePositionAltitudeFact; }
     Fact*   missionFlightSpeed          (void) { return &_missionFlightSpeedFact; }
     Fact*   missionEndAction            (void) { return &_missionEndActionFact; }
@@ -79,8 +75,8 @@ public:
     QString         commandDescription      (void) const final { return "Mission Settings"; }
     QString         commandName             (void) const final { return "Mission Settings"; }
     QString         abbreviation            (void) const final { return "H"; }
-    QGeoCoordinate  coordinate              (void) const final;
-    QGeoCoordinate  exitCoordinate          (void) const final { return coordinate(); }
+    QGeoCoordinate  coordinate              (void) const final { return _plannedHomePositionCoordinate; }
+    QGeoCoordinate  exitCoordinate          (void) const final { return _plannedHomePositionCoordinate; }
     int             sequenceNumber          (void) const final { return _sequenceNumber; }
     double          specifiedFlightSpeed    (void) final;
     double          specifiedGimbalYaw      (void) final;
@@ -102,14 +98,13 @@ signals:
 
 private slots:
     void _setDirtyAndUpdateLastSequenceNumber   (void);
-    void _setDirtyAndUpdateCoordinate           (void);
     void _setDirty                              (void);
     void _cameraSectionDirtyChanged             (bool dirty);
+    void _updateAltitudeInCoordinate            (QVariant value);
 
 private:
     bool            _specifyMissionFlightSpeed;
-    Fact            _plannedHomePositionLatitudeFact;
-    Fact            _plannedHomePositionLongitudeFact;
+    QGeoCoordinate  _plannedHomePositionCoordinate;     // Does not include altitde
     Fact            _plannedHomePositionAltitudeFact;
     Fact            _missionFlightSpeedFact;
     Fact            _missionEndActionFact;
@@ -120,8 +115,6 @@ private:
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 
-    static const char* _plannedHomePositionLatitudeName;
-    static const char* _plannedHomePositionLongitudeName;
     static const char* _plannedHomePositionAltitudeName;
     static const char* _missionFlightSpeedName;
     static const char* _missionEndActionName;

@@ -22,6 +22,7 @@
 class CoordinateVector;
 class VisualMissionItem;
 class MissionItem;
+class MissionSettingsItem;
 
 Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
@@ -50,7 +51,6 @@ public:
     } MissionFlightStatus_t;
 
     // Mission settings
-    Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition        NOTIFY plannedHomePositionChanged)
     Q_PROPERTY(QmlObjectListModel*  visualItems             READ visualItems                NOTIFY visualItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines              NOTIFY waypointLinesChanged)
     Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
@@ -107,7 +107,6 @@ public:
 
     // Property accessors
 
-    QGeoCoordinate      plannedHomePosition     (void);
     QmlObjectListModel* visualItems             (void) { return _visualItems; }
     QmlObjectListModel* waypointLines           (void) { return &_waypointLines; }
     QStringList         complexMissionItemNames (void) const;
@@ -121,7 +120,6 @@ public:
     double  missionMaxTelemetry     (void) const { return _missionFlightStatus.maxTelemetryDistance; }
 
 signals:
-    void plannedHomePositionChanged(QGeoCoordinate plannedHomePosition);
     void visualItemsChanged(void);
     void waypointLinesChanged(void);
     void newItemsFromVehicle(void);
@@ -137,13 +135,11 @@ signals:
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
     void _itemCommandChanged(void);
-    void _activeVehicleHomePositionAvailableChanged(bool homePositionAvailable);
     void _activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition);
     void _inProgressChanged(bool inProgress);
     void _currentMissionItemChanged(int sequenceNumber);
     void _recalcWaypointLines(void);
     void _recalcMissionFlightStatus(void);
-    void _homeCoordinateChanged(void);
     void _updateContainsItems(void);
 
 private:
@@ -176,6 +172,7 @@ private:
     void _setMissionMaxTelemetry(double missionMaxTelemetry);
     static void _scanForAdditionalSettings(QmlObjectListModel* visualItems, Vehicle* vehicle);
     static bool _convertToMissionItems(QmlObjectListModel* visualMissionItems, QList<MissionItem*>& rgMissionItems, QObject* missionItemParent);
+    void _setPlannedHomePositionFromFirstCoordinate(void);
 
     // Overrides from PlanElementController
     void _activeVehicleBeingRemoved(void) final;
@@ -183,6 +180,7 @@ private:
 
 private:
     QmlObjectListModel*     _visualItems;
+    MissionSettingsItem*    _settingsItem;
     QmlObjectListModel      _waypointLines;
     CoordVectHashTable      _linesTable;
     bool                    _firstItemsFromVehicle;

@@ -34,41 +34,53 @@ FlightMap {
     property var    qgcView             ///< QGCView control which contains this map
 
     property var    _activeVehicle:                 QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _activeVehicleCoordinateValid:  _activeVehicle ? _activeVehicle.coordinateValid : false
-    property var    activeVehicleCoordinate:        _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
+    property var    _activeVehicleCoordinate:       _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property var    _gotoHereCoordinate:            QtPositioning.coordinate()
     property int    _retaskSequence:                0
     property real   _toolButtonTopMargin:           parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
 
     property bool   _disableVehicleTracking:        false
     property bool   _keepVehicleCentered:           _mainIsMap ? false : true
-    property bool   _followVehicleSetting:          true                                                    ///< User facing setting for follow vehicle
-    property bool   _followVehicle:                 _followVehicleSetting && _activeVehicleCoordinateValid  ///< Control map follow vehicle functionality
-    property bool   _firstVehiclePosition:          true
+    property bool   _firstVehiclePositionReceived:  false
+    property bool   _userPanned:                    false
 
     Component.onCompleted: {
         QGroundControl.flightMapPosition = center
         QGroundControl.flightMapZoom = zoomLevel
+        possibleCenterToGCSPosition()
     }
 
+    // Track last known map position and zoom in settings
     onZoomLevelChanged: QGroundControl.flightMapZoom = zoomLevel
+    onCenterChanged:    QGroundControl.flightMapPosition = center
 
-    // When the user pans the map we leave things alone until the panRecenterTimer fires
+    // We move the map to the gcs position id:
+    //  - We don't have a vehicle position yet
+    //  - The user has not futzed with the map
+    onGcsPositionChanged: possibleCenterToGCSPosition()
+
+    function possibleCenterToGCSPosition() {
+        if (!_firstVehiclePositionReceived && !_userPanned && gcsPosition.isValid) {
+            center = gcsPosition
+        }
+    }
+
+    // When the user pans the map we stop responding to vehicle coordinate updates until the panRecenterTimer fires
     Connections {
         target: gesture
 
         onPanFinished: {
+            _userPanned = true
             _disableVehicleTracking = true
             panRecenterTimer.start()
         }
 
         onFlickFinished: {
+            _userPanned = true
             _disableVehicleTracking = true
             panRecenterTimer.start()
         }
     }
-
-    onCenterChanged: QGroundControl.flightMapPosition = center
 
     function pointInRect(point, rect) {
         return point.x > rect.x &&
@@ -100,22 +112,22 @@ FlightMap {
     }
 
     function recenterNeeded() {
-        var vehiclePoint = flightMap.fromCoordinate(activeVehicleCoordinate, false /* clipToViewport */)
+        var vehiclePoint = flightMap.fromCoordinate(_activeVehicleCoordinate, false /* clipToViewport */)
         var centerViewport = Qt.rect(0, 0, width, height)
         return !pointInRect(vehiclePoint, centerViewport)
     }
 
     function updateMapToVehiclePosition() {
-        if (_followVehicle && !_disableVehicleTracking) {
+        if (_activeVehicleCoordinate.isValid && !_disableVehicleTracking) {
             if (_keepVehicleCentered) {
-                _firstVehiclePosition = true
-                flightMap.center = activeVehicleCoordinate
+                _firstVehiclePositionReceived = true
+                flightMap.center = _activeVehicleCoordinate
             } else {
-                if (_firstVehiclePosition) {
-                    _firstVehiclePosition = false
-                    flightMap.center = activeVehicleCoordinate
+                if (!_firstVehiclePositionReceived) {
+                    _firstVehiclePositionReceived = true
+                    flightMap.center = _activeVehicleCoordinate
                 } else if (recenterNeeded()) {
-                    animatedMapRecenter(flightMap.center, activeVehicleCoordinate)
+                    animatedMapRecenter(flightMap.center, _activeVehicleCoordinate)
                 }
             }
         }
@@ -266,10 +278,6 @@ FlightMap {
         CenterMapDropPanel {
             map:                _flightMap
             fitFunctions:       mapFitFunctions
-            showFollowVehicle:  true
-            followVehicle:      _followVehicleSetting
-
-            onFollowVehicleChanged: _followVehicleSetting = followVehicle
         }
     }
 

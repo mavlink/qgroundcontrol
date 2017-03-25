@@ -19,6 +19,11 @@
 
 static const char* kQmlGlobalKeyName = "QGCQml";
 
+const char* QGroundControlQmlGlobal::_flightMapPositionSettingsGroup =          "FlightMapPosition";
+const char* QGroundControlQmlGlobal::_flightMapPositionLatitudeSettingsKey =    "Latitude";
+const char* QGroundControlQmlGlobal::_flightMapPositionLongitudeSettingsKey =   "Longitude";
+const char* QGroundControlQmlGlobal::_flightMapZoomSettingsKey =                "FlightMapZoom";
+
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     : QGCTool(app)
     , _linkManager(NULL)
@@ -178,5 +183,46 @@ void QGroundControlQmlGlobal::setSkipSetupPage(bool skip)
     if(_skipSetupPage != skip) {
         _skipSetupPage = skip;
         emit skipSetupPageChanged();
+    }
+}
+
+QGeoCoordinate QGroundControlQmlGlobal::flightMapPosition(void)
+{
+    QSettings       settings;
+    QGeoCoordinate  coord;
+
+    settings.beginGroup(_flightMapPositionSettingsGroup);
+    coord.setLatitude(settings.value(_flightMapPositionLatitudeSettingsKey, 37.803784).toDouble());
+    coord.setLongitude(settings.value(_flightMapPositionLongitudeSettingsKey, -122.462276).toDouble());
+
+    return coord;
+}
+
+double QGroundControlQmlGlobal::flightMapZoom(void)
+{
+    QSettings settings;
+
+    return settings.value(_flightMapZoomSettingsKey, 18).toDouble();
+}
+
+void QGroundControlQmlGlobal::setFlightMapPosition(QGeoCoordinate& coordinate)
+{
+    if (coordinate != flightMapPosition()) {
+        QSettings settings;
+
+        settings.beginGroup(_flightMapPositionSettingsGroup);
+        settings.setValue(_flightMapPositionLatitudeSettingsKey, coordinate.latitude());
+        settings.setValue(_flightMapPositionLongitudeSettingsKey, coordinate.longitude());
+        emit flightMapPositionChanged(coordinate);
+    }
+}
+
+void QGroundControlQmlGlobal::setFlightMapZoom(double zoom)
+{
+    if (zoom != flightMapZoom()) {
+        QSettings settings;
+
+        settings.setValue(_flightMapZoomSettingsKey, zoom);
+        emit flightMapZoomChanged(zoom);
     }
 }

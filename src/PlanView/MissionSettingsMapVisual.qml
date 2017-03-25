@@ -103,7 +103,7 @@ Item {
 
         MissionItemIndicator {
             coordinate:     _missionItem.coordinate
-            visible:        _missionItem.showHomePosition
+            visible:        coordinate.isValid
             z:              QGroundControl.zOrderMapItems
             missionItem:    _missionItem
 
