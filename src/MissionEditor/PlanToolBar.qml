@@ -25,15 +25,17 @@ Rectangle {
     property var    missionController
     property var    currentMissionItem          ///< Mission item to display status for
 
-    property var    missionItems:               missionController.visualItems
-    property real   missionDistance:            missionController.missionDistance
-    property real   missionTime:                missionController.missionTime
-    property real   missionMaxTelemetry:        missionController.missionMaxTelemetry
+    property var    missionItems:               _controllerValid ? missionController.visualItems : undefined
+    property real   missionDistance:            _controllerValid ? missionController.missionDistance : NaN
+    property real   missionTime:                _controllerValid ? missionController.missionTime : NaN
+    property real   missionMaxTelemetry:        _controllerValid ? missionController.missionMaxTelemetry : NaN
+    property bool   missionDirty:               _controllerValid ? missionController.dirty : false
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
 
     property bool   _statusValid:               currentMissionItem != undefined
     property bool   _missionValid:              missionItems != undefined
+    property bool   _controllerValid:           missionController != undefined
 
     property real   _distance:                  _statusValid ? currentMissionItem.distance : NaN
     property real   _altDifference:             _statusValid ? currentMissionItem.altDifference : NaN
@@ -184,7 +186,7 @@ Rectangle {
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
         text:                   _activeVehicle ? qsTr("Upload") : qsTr("Save")
-        visible:                missionController.dirty
+        visible:                missionDirty
         primary:                true
 
         onClicked: {
@@ -197,7 +199,7 @@ Rectangle {
 
         NumberAnimation on opacity {
             id:         opacityAnimation
-            running:    missionController.dirty
+            running:    missionDirty
             from:       0.5
             to:         1.0
             loops:      Animation.Infinite
