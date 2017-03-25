@@ -456,12 +456,25 @@ SetupPage {
                             Column {
                                 spacing: ScreenTools.defaultFontPixelHeight / 3
 
-                                QGCCheckBox {
-                                    id:         exponential
-                                    checked:    _activeJoystick ? _activeJoystick.exponential : false
-                                    text:       qsTr("Use exponential curve on roll, pitch, yaw")
+                                QGCLabel {
+                                    id:                 expoSliderLabel
+                                    text:               qsTr("Exponential:")
+                                }
 
-                                    onClicked:  _activeJoystick.exponential = checked
+                                Row {
+                                    QGCSlider {
+                                        id: expoSlider
+                                        minimumValue: 0
+                                        maximumValue: 0.75
+
+                                        Component.onCompleted: value=-_activeJoystick.exponential
+                                        onValueChanged: _activeJoystick.exponential=-value
+                                     }
+
+                                    QGCLabel {
+                                        id:     expoSliderIndicator
+                                        text:   expoSlider.value.toFixed(2)
+                                    }
                                 }
                             }
 
