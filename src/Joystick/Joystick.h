@@ -72,7 +72,7 @@ public:
     Q_INVOKABLE QString getButtonAction(int button);
 
     Q_PROPERTY(int throttleMode READ throttleMode WRITE setThrottleMode NOTIFY throttleModeChanged)
-    Q_PROPERTY(bool exponential READ exponential WRITE setExponential NOTIFY exponentialChanged)
+    Q_PROPERTY(float exponential READ exponential WRITE setExponential NOTIFY exponentialChanged)
     Q_PROPERTY(bool accumulator READ accumulator WRITE setAccumulator NOTIFY accumulatorChanged)
 	Q_PROPERTY(bool requiresCalibration READ requiresCalibration CONSTANT)
     
@@ -106,8 +106,8 @@ public:
     int throttleMode(void);
     void setThrottleMode(int mode);
 
-    bool exponential(void);
-    void setExponential(bool expo);
+    float exponential(void);
+    void setExponential(float expo);
 
     bool accumulator(void);
     void setAccumulator(bool accu);
@@ -141,7 +141,7 @@ signals:
 
     void throttleModeChanged(int mode);
 
-    void exponentialChanged(bool exponential);
+    void exponentialChanged(float exponential);
 
     void accumulatorChanged(bool accumulator);
 
@@ -206,7 +206,7 @@ protected:
 
     ThrottleMode_t      _throttleMode;
 
-    bool                _exponential;
+    float                _exponential;
     bool                _accumulator;
     bool                _deadband;
 

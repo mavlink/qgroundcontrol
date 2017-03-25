@@ -35,6 +35,7 @@
 #include "QGCApplication.h"
 #include "Vehicle.h"
 #include "UAS.h"
+#include "QGroundControlQmlGlobal.h"
 
 // FlightGear _fgProcess start and connection is quite fragile. Uncomment the define below to get higher level of debug output
 // for tracking down problems.
@@ -938,7 +939,7 @@ bool QGCFlightGearLink::connectSimulation()
     }
 
     // We start out at our home position
-    QGeoCoordinate homePosition = qgcApp()->lastKnownHomePosition();
+    QGeoCoordinate homePosition = QGroundControlQmlGlobal::flightMapPosition();
     _fgArgList << QString("--lat=%1").arg(homePosition.latitude());
     _fgArgList << QString("--lon=%1").arg(homePosition.longitude());
     // The altitude is not set because an altitude not equal to the ground altitude leads to a non-zero default throttle in flightgear
