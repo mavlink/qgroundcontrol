@@ -45,8 +45,6 @@ QGCView {
     property var    _visualItems:           missionController.visualItems
     property var    _currentMissionItem
     property int    _currentMissionIndex:   0
-    property bool   _firstVehiclePosition:  true
-    property var    activeVehiclePosition:  _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property bool   _lightWidgetBorders:    editorMap.isSatelliteMap
     property bool   _addWaypointOnClick:    false
     property bool   _singleComplexItem:     missionController.complexMissionItemNames.length === 1
@@ -62,25 +60,6 @@ QGCView {
     Component.onCompleted: {
         toolbar.missionController =     Qt.binding(function () { return missionController })
         toolbar.currentMissionItem =    Qt.binding(function () { return _currentMissionItem })
-    }
-
-    onActiveVehiclePositionChanged: updateMapToVehiclePosition()
-
-    Connections {
-        target: QGroundControl.multiVehicleManager
-
-        onActiveVehicleChanged: {
-            // When the active vehicle changes we need to allow the first vehicle position to move the map again
-            _firstVehiclePosition = true
-            updateMapToVehiclePosition()
-        }
-    }
-
-    function updateMapToVehiclePosition() {
-        if (_activeVehicle && _activeVehicle.coordinateValid && _activeVehicle.coordinate.isValid && _firstVehiclePosition) {
-            _firstVehiclePosition = false
-            editorMap.center = _activeVehicle.coordinate
-        }
     }
 
     function addComplexItem(complexItemName) {

@@ -34,6 +34,7 @@ Rectangle {
                 height:             valuesColumn.height + (_margin * 2)
 
                 property var    _missionVehicle:            missionController.vehicle
+                property bool   _vehicleHasHomePosition:    _missionVehicle.homePosition.isValid
                 property bool   _offlineEditing:            _missionVehicle.isOfflineEditingVehicle
                 property bool   _showOfflineVehicleCombos:  _offlineEditing && _multipleFirmware && _noMissionItemsAdded
                 property bool   _showCruiseSpeed:           !_missionVehicle.multiRotor
@@ -58,13 +59,14 @@ Rectangle {
                         id:             plannedHomePositionSection
                         text:           qsTr("Planned Home Position")
                         showSpacer:     false
+                        visible:        !_vehicleHasHomePosition
                     }
 
                     Column {
                         anchors.left:   parent.left
                         anchors.right:  parent.right
                         spacing:        _margin
-                        visible:        plannedHomePositionSection.checked
+                        visible:        plannedHomePositionSection.checked && !_vehicleHasHomePosition
 
                         GridLayout {
                             anchors.left:   parent.left
@@ -72,22 +74,6 @@ Rectangle {
                             columnSpacing:  ScreenTools.defaultFontPixelWidth
                             rowSpacing:     columnSpacing
                             columns:        2
-
-                            QGCLabel {
-                                text: qsTr("Latitude")
-                            }
-                            FactTextField {
-                                fact:               missionItem.plannedHomePositionLatitude
-                                Layout.fillWidth:   true
-                            }
-
-                            QGCLabel {
-                                text: qsTr("Longitude")
-                            }
-                            FactTextField {
-                                fact:               missionItem.plannedHomePositionLongitude
-                                Layout.fillWidth:   true
-                            }
 
                             QGCLabel {
                                 text: qsTr("Altitude")
@@ -178,7 +164,7 @@ Rectangle {
                     SectionHeader {
                         id:             missionDefaultsSectionHeader
                         text:           qsTr("Mission Defaults")
-                        checked:        false
+                        checked:        true
                     }
 
                     Column {

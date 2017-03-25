@@ -19,7 +19,6 @@ import QGroundControl.Controls              1.0
 import QGroundControl.FlightDisplay         1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
-import QGroundControl.QGCPositionManager   1.0
 
 /// Inner common QML for mainWindow
 Item {
@@ -29,7 +28,6 @@ Item {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    property var    gcsPosition:        QtPositioning.coordinate()  // Starts as invalid coordinate
     property var    currentPopUp:       null
     property real   currentCenterX:     0
     property var    activeVehicle:      QGroundControl.multiVehicleManager.activeVehicle
@@ -39,7 +37,7 @@ Item {
 
     readonly property string _settingsViewSource:   "AppSettings.qml"
     readonly property string _setupViewSource:      "SetupView.qml"
-    readonly property string _planViewSource:       "MissionEditor.qml"
+    readonly property string _planViewSource:       "PlanView.qml"
     readonly property string _analyzeViewSource:    "AnalyzeView.qml"
 
     onHeightChanged: {
@@ -178,24 +176,6 @@ Item {
 
         onTriggered: {
             mainWindow.reallyClose()
-        }
-    }
-
-    //-- Detect tablet position
-    Connections {
-        target: QGroundControl.qgcPositionManger
-        onLastPositionUpdated: {
-            if(valid) {
-                if(lastPosition.latitude) {
-                    if(Math.abs(lastPosition.latitude)  > 0.001) {
-                        if(lastPosition.longitude) {
-                            if(Math.abs(lastPosition.longitude)  > 0.001) {
-                                gcsPosition = QtPositioning.coordinate(lastPosition.latitude,lastPosition.longitude)
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 

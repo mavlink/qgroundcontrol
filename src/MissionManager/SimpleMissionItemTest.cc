@@ -156,7 +156,6 @@ void SimpleMissionItemTest::_testSignals(void)
         headingDegreesChangedIndex,
         rawEditChangedIndex,
         uiModelChangedIndex,
-        showHomePositionChangedIndex,
         maxSignalIndex
     };
 
@@ -170,7 +169,6 @@ void SimpleMissionItemTest::_testSignals(void)
         headingDegreesChangedMask =         1 << headingDegreesChangedIndex,
         rawEditChangedMask =                1 << rawEditChangedIndex,
         uiModelChangedMask =                1 << uiModelChangedIndex,
-        showHomePositionChangedMask =       1 << showHomePositionChangedIndex,
     };
 
     static const size_t cSimpleMissionItemSignals = maxSignalIndex;
@@ -185,7 +183,6 @@ void SimpleMissionItemTest::_testSignals(void)
     rgSimpleMissionItemSignals[headingDegreesChangedIndex] =        SIGNAL(headingDegreesChanged(double));
     rgSimpleMissionItemSignals[rawEditChangedIndex] =               SIGNAL(rawEditChanged(bool));
     rgSimpleMissionItemSignals[uiModelChangedIndex] =               SIGNAL(uiModelChanged());
-    rgSimpleMissionItemSignals[showHomePositionChangedIndex] =      SIGNAL(showHomePositionChanged(bool));
 
     MissionItem missionItem(1,              // sequence number
                             MAV_CMD_NAV_WAYPOINT,
