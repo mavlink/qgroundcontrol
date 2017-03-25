@@ -53,6 +53,7 @@ Item {
         for (var i=0; i<_viewList.length; i++) {
             _viewList[i].visible = false
         }
+        planToolBar.visible = false
     }
 
     function showSettingsView() {
