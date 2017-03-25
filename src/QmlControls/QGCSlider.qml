@@ -13,6 +13,7 @@ import QtQuick.Controls.Styles  1.4
 
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
+import QtQuick.Controls.Private     1.0
 
 Slider {
     property var _qgcPal: QGCPalette { colorGroupEnabled: enabled }

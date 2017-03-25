@@ -338,6 +338,7 @@ public:
     Q_PROPERTY(Fact* climbRate          READ climbRate          CONSTANT)
     Q_PROPERTY(Fact* altitudeRelative   READ altitudeRelative   CONSTANT)
     Q_PROPERTY(Fact* altitudeAMSL       READ altitudeAMSL       CONSTANT)
+    Q_PROPERTY(Fact* flightDistance     READ flightDistance     CONSTANT)
 
     Q_PROPERTY(FactGroup* gps         READ gpsFactGroup         CONSTANT)
     Q_PROPERTY(FactGroup* battery     READ batteryFactGroup     CONSTANT)
@@ -594,6 +595,7 @@ public:
     Fact* climbRate         (void) { return &_climbRateFact; }
     Fact* altitudeRelative  (void) { return &_altitudeRelativeFact; }
     Fact* altitudeAMSL      (void) { return &_altitudeAMSLFact; }
+    Fact* flightDistance    (void) { return &_flightDistanceFact; }
 
     FactGroup* gpsFactGroup         (void) { return &_gpsFactGroup; }
     FactGroup* batteryFactGroup     (void) { return &_batteryFactGroup; }
@@ -982,6 +984,7 @@ private:
     Fact _climbRateFact;
     Fact _altitudeRelativeFact;
     Fact _altitudeAMSLFact;
+    Fact _flightDistanceFact;
 
     VehicleGPSFactGroup         _gpsFactGroup;
     VehicleBatteryFactGroup     _batteryFactGroup;
@@ -997,6 +1000,7 @@ private:
     static const char* _climbRateFactName;
     static const char* _altitudeRelativeFactName;
     static const char* _altitudeAMSLFactName;
+    static const char* _flightDistanceFactName;
 
     static const char* _gpsFactGroupName;
     static const char* _batteryFactGroupName;
