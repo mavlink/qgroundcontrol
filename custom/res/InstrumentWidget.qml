@@ -462,6 +462,43 @@ Item {
                         Layout.maximumHeight: 2
                     }
                     QGCLabel {
+                        text:       "Auto Exposure"
+                        Layout.fillWidth: true
+                    }
+                    OnOffSwitch {
+                        checked:     TyphoonHQuickInterface.cameraControl.aeMode === CameraControl.AE_MODE_AUTO
+                        Layout.alignment: Qt.AlignRight
+                        onClicked:  TyphoonHQuickInterface.cameraControl.aeMode = checked ? CameraControl.AE_MODE_AUTO : CameraControl.AE_MODE_MANUAL
+                    }
+                    Rectangle {
+                        color:      qgcPal.button
+                        height:     1
+                        width:      mainWindow.width * 0.4
+                        Layout.columnSpan: 2
+                        Layout.maximumHeight: 2
+                    }
+                    QGCLabel {
+                        text:       "EV Compensation"
+                        Layout.fillWidth: true
+                    }
+                    QGCComboBox {
+                        width:       _editFieldWidth
+                        model:       TyphoonHQuickInterface.cameraControl.evList
+                        currentIndex:TyphoonHQuickInterface.cameraControl.currentEV
+                        onActivated: {
+                            TyphoonHQuickInterface.cameraControl.currentEV = index
+                        }
+                        Layout.preferredWidth:  _editFieldWidth
+                        enabled:    TyphoonHQuickInterface.cameraControl.aeMode === CameraControl.AE_MODE_AUTO
+                    }
+                    Rectangle {
+                        color:      qgcPal.button
+                        height:     1
+                        width:      mainWindow.width * 0.4
+                        Layout.columnSpan: 2
+                        Layout.maximumHeight: 2
+                    }
+                    QGCLabel {
                         text:       "ISO"
                         Layout.fillWidth: true
                     }
@@ -473,8 +510,7 @@ Item {
                             TyphoonHQuickInterface.cameraControl.currentIso = index
                         }
                         Layout.preferredWidth:  _editFieldWidth
-                        //-- Not Yet
-                        enabled:    false
+                        enabled:    TyphoonHQuickInterface.cameraControl.aeMode !== CameraControl.AE_MODE_AUTO
                     }
                     Rectangle {
                         color:      qgcPal.button
@@ -495,8 +531,7 @@ Item {
                             TyphoonHQuickInterface.cameraControl.currentShutter = index
                         }
                         Layout.preferredWidth:  _editFieldWidth
-                        //-- Not Yet
-                        enabled:    false
+                        enabled:    TyphoonHQuickInterface.cameraControl.aeMode !== CameraControl.AE_MODE_AUTO
                     }
                     Rectangle {
                         color:      qgcPal.button
@@ -511,7 +546,11 @@ Item {
                     }
                     QGCComboBox {
                         width:       _editFieldWidth
-                        model:       TyphoonHQuickInterface.cameraControl.colorModeList
+                        model:       TyphoonHQuickInterface.cameraControl.iqModeList
+                        currentIndex:TyphoonHQuickInterface.cameraControl.currentIQ
+                        onActivated: {
+                            TyphoonHQuickInterface.cameraControl.currentIQ = index
+                        }
                         //-- Not Yet
                         enabled:    false
                         Layout.preferredWidth:  _editFieldWidth
@@ -529,9 +568,11 @@ Item {
                     }
                     QGCComboBox {
                         width:       _editFieldWidth
-                        model:       ["Raw", "Jpeg", "Raw+Jpeg"]
-                        //-- Not Yet
-                        enabled:    false
+                        model:       TyphoonHQuickInterface.cameraControl.photoFormatList
+                        currentIndex:TyphoonHQuickInterface.cameraControl.currentPhotoFmt
+                        onActivated: {
+                            TyphoonHQuickInterface.cameraControl.currentPhotoFmt = index
+                        }
                         Layout.preferredWidth:  _editFieldWidth
                     }
                     Rectangle {
@@ -541,14 +582,17 @@ Item {
                         Layout.columnSpan: 2
                         Layout.maximumHeight: 2
                     }
-                    /* Not Supported by MAVLink
                     QGCLabel {
                         text:       "Metering Mode"
                         Layout.fillWidth: true
                     }
                     QGCComboBox {
                         width:       _editFieldWidth
-                        model:       ["Spot", "Center", "Average"]
+                        model:       TyphoonHQuickInterface.cameraControl.meteringList
+                        currentIndex:TyphoonHQuickInterface.cameraControl.currentMetering
+                        onActivated: {
+                            TyphoonHQuickInterface.cameraControl.currentMetering = index
+                        }
                         Layout.preferredWidth:  _editFieldWidth
                     }
                     Rectangle {
@@ -558,7 +602,6 @@ Item {
                         Layout.columnSpan: 2
                         Layout.maximumHeight: 2
                     }
-                    */
                     QGCLabel {
                         text:       "Screen Grid"
                         Layout.fillWidth: true

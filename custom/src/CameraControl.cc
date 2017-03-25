@@ -43,12 +43,14 @@ video_res_t videoResOptions[] = {
 
 //-----------------------------------------------------------------------------
 // Color Mode (CMD=SET_IQ_TYPE&mode=x)
-color_mode_t colorModeOptions[] = {
+iq_mode_t iqModeOptions[] = {
     {"Natural",  0},
     {"Enhanced", 1},
     {"Raw",      2},
     {"Night",    3}
 };
+
+#define NUM_IQ_MODES (sizeof(iqModeOptions) / sizeof(iq_mode_t))
 
 //-----------------------------------------------------------------------------
 // Metering Mode (CMD=SET_METERING_MODE&mode=x)
@@ -58,13 +60,17 @@ metering_mode_t meteringModeOptions[] = {
     {"Average", 2}
 };
 
+#define NUM_METERING_VALUES (sizeof(meteringModeOptions) / sizeof(metering_mode_t))
+
 //-----------------------------------------------------------------------------
-// Metering Mode (CMD=SET_PHOTO_FORMAT&format=dng)
+// Photo Format Mode (CMD=SET_PHOTO_FORMAT&format=dng)
 photo_format_t photoFormatOptions[] = {
     {"DNG",         "dng"},
     {"Jpeg",        "jpg"},
     {"DNG + Jpeg",  "dng+jpg"}
 };
+
+#define NUM_PHOTO_FORMAT_VALUES (sizeof(photoFormatOptions) / sizeof(photo_format_t))
 
 //-----------------------------------------------------------------------------
 // White Balance (CMD=SET_WHITEBLANCE_MODE&mode=x)
@@ -83,16 +89,16 @@ white_balance_t whiteBalanceOptions[] = {
 //-----------------------------------------------------------------------------
 // ISO Values
 iso_values_t isoValues[] = {
-    {"100",  "ISO_100"},
-    {"150",  "ISO_150"},
-    {"200",  "ISO_200"},
-    {"300",  "ISO_300"},
-    {"400",  "ISO_400"},
-    {"600",  "ISO_600"},
-    {"800",  "ISO_800"},
-    {"1600", "ISO_1600"},
-    {"3200", "ISO_3200"},
-    {"Auto", ""}
+    {"100"},
+    {"150"},
+    {"200"},
+    {"300"},
+    {"400"},
+    {"600"},
+    {"800"},
+    {"1600"},
+    {"3200"},
+    {"Auto"}
 };
 
 #define NUM_ISO_VALUES (sizeof(isoValues) / sizeof(iso_values_t))
@@ -113,27 +119,41 @@ shutter_speeds_t shutterSpeeds[] = {
     { "1/2000", "2000"},
     { "1/4000", "4000"},
     { "1/8000", "8000"},
-    { "Auto", 1.0f}
+    { "Auto", ""}
 };
 
 #define NUM_SHUTTER_VALUES (sizeof(shutterSpeeds) / sizeof(shutter_speeds_t))
 
 //-----------------------------------------------------------------------------
+// Exposure Compensation
+exposure_compsensation_t evOptions[] = {
+    { "-2.0", "-2.0"},
+    { "-1.5", "-1.5"},
+    { "-1.0", "-1.0"},
+    { "-0.5", "-0.5"},
+    {   "0",  "0.0"},
+    { "+0.5", "0.5"},
+    { "+1.0", "1.0"},
+    { "+1.5", "1.5"},
+    { "+2.0", "2.0"},
+};
+
+#define NUM_EV_VALUES (sizeof(evOptions) / sizeof(exposure_compsensation_t))
+
+//-----------------------------------------------------------------------------
 CameraControl::CameraControl(QObject* parent)
     : QObject(parent)
     , _vehicle(NULL)
-    , _waitingShutter(false)
     , _cameraSupported(CAMERA_SUPPORT_UNDEFINED)
     , _httpErrorCount(0)
     , _currentVideoResIndex(0)
-    , _currentWb(0)
+    , _currentWB(0)
     , _currentIso(NUM_ISO_VALUES - 1)
     , _currentShutter(NUM_SHUTTER_VALUES - 1)
+    , _currentPhotoFmt(1)
     , _networkManager(NULL)
 {
-    memset(&_cameraStatus,   0, sizeof(camera_capture_status_t));
-    memset(&_cameraSettings, 0, sizeof(camera_settings_t));
-    _cameraStatus.video_status = VIDEO_CAPTURE_STATUS_UNDEFINED;
+    _resetCameraValues();
     _cameraSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/camera.wav"));
     _cameraSound.setLoopCount(1);
     _cameraSound.setVolume(0.9);
@@ -167,13 +187,17 @@ CameraControl::setVehicle(Vehicle* vehicle)
 {
     if(_vehicle) {
         _vehicle = NULL;
+        disconnect(&_statusTimer, &QTimer::timeout, this, &CameraControl::_getCameraStatus);
     }
     if(vehicle) {
         _vehicle = vehicle;
+        _resetCameraValues();
         _cameraSupported = CAMERA_SUPPORT_UNDEFINED;
         _httpErrorCount = 0;
         emit cameraModeChanged();
         emit videoStatusChanged();
+        connect(&_statusTimer, &QTimer::timeout, this, &CameraControl::_getCameraStatus);
+        _statusTimer.setSingleShot(true);
         //-- Ambarella Interface
         _initStreaming();
     }
@@ -185,7 +209,7 @@ CameraControl::_sendAmbRequest(QNetworkRequest request)
 {
     QNetworkReply* reply = networkManager()->get(request);
     connect(reply, &QNetworkReply::finished,  this, &CameraControl::_httpFinished);
-    QTimer::singleShot(100, this, &CameraControl::_getCameraStatus);
+    _statusTimer.start(100);
 }
 
 //-----------------------------------------------------------------------------
@@ -209,13 +233,7 @@ CameraControl::takePhoto()
 {
     qCDebug(YuneecCameraLog) << "takePhoto()";
     if(_vehicle && _cameraSupported == CAMERA_SUPPORT_YES) {
-        if(_waitingShutter) {
-            _errorSound.setLoopCount(1);
-            _errorSound.play();
-        } else {
-            _waitingShutter = true;
-            _sendAmbRequest(QNetworkRequest(QString("%1TAKE_PHOTO").arg(kAmbCommand)));
-        }
+        _sendAmbRequest(QNetworkRequest(QString("%1TAKE_PHOTO").arg(kAmbCommand)));
     }
 }
 
@@ -224,7 +242,7 @@ void
 CameraControl::startVideo()
 {
     qCDebug(YuneecCameraLog) << "startVideo()";
-    if(_vehicle && videoStatus() == VIDEO_CAPTURE_STATUS_STOPPED && _amb_cam_status.cam_mode == CAMERA_MODE_VIDEO) {
+    if(_vehicle && videoStatus() == VIDEO_CAPTURE_STATUS_STOPPED && _ambarellaStatus.cam_mode == CAMERA_MODE_VIDEO) {
         _sendAmbRequest(QNetworkRequest(QString("%1START_RECORD").arg(kAmbCommand)));
         _videoSound.setLoopCount(1);
         _videoSound.play();
@@ -243,7 +261,6 @@ CameraControl::stopVideo()
         _sendAmbRequest(QNetworkRequest(QString("%1STOP_RECORD").arg(kAmbCommand)));
         _videoSound.setLoopCount(2);
         _videoSound.play();
-        QTimer::singleShot(250, this, &CameraControl::_requestCaptureStatus);
     }
 }
 
@@ -282,13 +299,109 @@ CameraControl::setCurrentVideoRes(quint32 index)
 
 //-----------------------------------------------------------------------------
 void
+CameraControl::setCurrentWB(quint32 index)
+{
+    if(index < NUM_WB_VALUES) {
+        qCDebug(YuneecCameraLog) << "setCurrentWb:" << whiteBalanceOptions[index].description;
+        _sendAmbRequest(QNetworkRequest(QString("%1SET_WHITEBLANCE_MODE&mode=%2").arg(kAmbCommand).arg(whiteBalanceOptions[index].mode)));
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::setCurrentIso(quint32 index)
+{
+    if(index < NUM_ISO_VALUES) {
+        qCDebug(YuneecCameraLog) << "setCurrentIso:" << isoValues[index].description;
+        //-- If ISO is "locked", set Auto Mode
+        if(index == (NUM_ISO_VALUES - 1)) {
+            setAeMode(AE_MODE_AUTO);
+        } else {
+            _sendAmbRequest(QNetworkRequest(QString("%1SET_SH_TM_ISO&time=%2&value=ISO_%3").arg(kAmbCommand).arg(_ambarellaStatus.shutter_time).arg(isoValues[index].description)));
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::setCurrentShutter(quint32 index)
+{
+    if(index < NUM_SHUTTER_VALUES) {
+        qCDebug(YuneecCameraLog) << "setCurrentShutter:" << shutterSpeeds[index].description;
+        //-- If Shutter Speed is "locked", set Auto Mode
+        if(index == (NUM_SHUTTER_VALUES - 1)) {
+            setAeMode(AE_MODE_AUTO);
+        } else {
+            _sendAmbRequest(QNetworkRequest(QString("%1SET_SH_TM_ISO&time=%2&value=%3").arg(kAmbCommand).arg(shutterSpeeds[index].value).arg(_ambarellaStatus.iso_value)));
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::setCurrentIQ(quint32 index)
+{
+    if(index < NUM_IQ_MODES) {
+        qCDebug(YuneecCameraLog) << "setCurrentIQ:" << iqModeOptions[index].description;
+        _sendAmbRequest(QNetworkRequest(QString("%1SET_IQ_TYPE&mode=%2").arg(kAmbCommand).arg(iqModeOptions[index].mode)));
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::setCurrentPhotoFmt(quint32 index)
+{
+    if(index < NUM_PHOTO_FORMAT_VALUES) {
+        qCDebug(YuneecCameraLog) << "setCurrentPhotoFmt:" << photoFormatOptions[index].description;
+        _sendAmbRequest(QNetworkRequest(QString("%1SET_PHOTO_FORMAT&format=%2").arg(kAmbCommand).arg(photoFormatOptions[index].mode)));
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::setCurrentMetering(quint32 index)
+{
+    if(index < NUM_METERING_VALUES) {
+        qCDebug(YuneecCameraLog) << "setCurrentMetering:" << meteringModeOptions[index].description;
+        _sendAmbRequest(QNetworkRequest(QString("%1SET_METERING_MODE&mode=%2").arg(kAmbCommand).arg(meteringModeOptions[index].mode)));
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::setCurrentEV(quint32 index)
+{
+    if(index < NUM_EV_VALUES) {
+        qCDebug(YuneecCameraLog) << "setCurrentEV:" << evOptions[index].description;
+        _sendAmbRequest(QNetworkRequest(QString("%1SET_EXPOSURE_VALUE&mode=%2").arg(kAmbCommand).arg(evOptions[index].value)));
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::setAeMode(AEMode mode)
+{
+    qCDebug(YuneecCameraLog) << "setAeMode:" << mode;
+    _sendAmbRequest(QNetworkRequest(QString("%1SET_AE_ENABLE&mode=%2").arg(kAmbCommand).arg(mode)));
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::formatCard()
+{
+    _sendAmbRequest(QNetworkRequest(QString("%1FORMAT_CARD").arg(kAmbCommand)));
+}
+
+//-----------------------------------------------------------------------------
+void
 CameraControl::_handleVideoResStatus()
 {
-    for(int i = 0; i < NUM_VIDEO_RES; i++) {
-        if(_amb_cam_status.video_mode == videoResOptions[i].video_mode) {
+    for(uint32_t i = 0; i < NUM_VIDEO_RES; i++) {
+        if(_ambarellaStatus.video_mode == videoResOptions[i].video_mode) {
             if(_currentVideoResIndex != i) {
                 _currentVideoResIndex = i;
                 emit currentVideoResChanged();
+                return;
             }
         }
     }
@@ -320,7 +433,7 @@ void
 CameraControl::_handleCameraStatus(int http_code, QByteArray data)
 {
     if(http_code == 200) {
-        qCDebug(YuneecLogVerbose) << "GET_STATUS" << data;
+        //qCDebug(YuneecLogVerbose) << "GET_STATUS" << data;
         _cameraSupported = CAMERA_SUPPORT_YES;
         QJsonParseError jsonParseError;
         QJsonDocument doc = QJsonDocument::fromJson(data, &jsonParseError);
@@ -328,61 +441,138 @@ CameraControl::_handleCameraStatus(int http_code, QByteArray data)
             qWarning() <<  "Unable to parse camera status" << jsonParseError.errorString();
         } else {
             QJsonObject set = doc.object();
-            _amb_cam_status.rval            = set.value(QString("rval")).toInt();
-            _amb_cam_status.msg_id          = set.value(QString("msg_id")).toInt();
+            _ambarellaStatus.rval            = set.value(QString("rval")).toInt();
+            _ambarellaStatus.msg_id          = set.value(QString("msg_id")).toInt();
             //-- Camera Mode
             int cam_mode = set.value(QString("cam_mode")).toString().toInt();
-            if(_amb_cam_status.cam_mode != cam_mode) {
-                _amb_cam_status.cam_mode = cam_mode;
+            if(_ambarellaStatus.cam_mode != cam_mode) {
+                _ambarellaStatus.cam_mode = cam_mode;
                 emit cameraModeChanged();
             }
             //-- Status
             QString status = set.value(QString("status")).toString();
-            if(status != _amb_cam_status.status) {
-                _amb_cam_status.status = status;
+            if(status != _ambarellaStatus.status) {
+                _ambarellaStatus.status = status;
                 emit videoStatusChanged();
             }
-            _amb_cam_status.sdfree          = set.value(QString("sdfree")).toString().toUInt();
-            _amb_cam_status.sdtotal         = set.value(QString("sdtotal")).toString().toUInt();
+            //-- Storage
+            quint32 sdfree = set.value(QString("sdfree")).toString().toUInt();
+            if(_ambarellaStatus.sdfree != sdfree) {
+                _ambarellaStatus.sdfree = sdfree;
+                emit sdFreeChanged();
+            }
+            quint32 sdTotal = set.value(QString("sdtotal")).toString().toUInt();
+            if(_ambarellaStatus.sdtotal != sdTotal) {
+                _ambarellaStatus.sdtotal = sdTotal;
+                emit sdTotalChanged();
+            }
             //-- Recording Time
-            int rec_time = set.value(QString("record_time")).toString().toUInt();
-            if(_amb_cam_status.record_time != rec_time) {
-                _amb_cam_status.record_time = rec_time;
+            uint32_t rec_time = set.value(QString("record_time")).toString().toUInt();
+            if(_ambarellaStatus.record_time != rec_time) {
+                _ambarellaStatus.record_time = rec_time;
                 emit recordTimeChanged();
             }
-            _amb_cam_status.white_balance   = set.value(QString("white_balance")).toString().toInt();
-            _amb_cam_status.ae_enabled      = set.value(QString("ae_enabled")).toString().toInt() != 0;
-            _amb_cam_status.iq_type         = set.value(QString("iq_type")).toString().toInt();
-            _amb_cam_status.exposure_value  = set.value(QString("exposure_value")).toString().toFloat();
+            //-- White Balance
+            uint32_t wbLock = set.value(QString("awb_lock")).toString().toUInt();
+            uint32_t wb = set.value(QString("white_balance")).toString().toUInt();
+            if(_ambarellaStatus.white_balance != wb || _ambarellaStatus.awb_lock != wbLock) {
+                _ambarellaStatus.white_balance = wb;
+                _ambarellaStatus.awb_lock = wbLock;
+                if(wbLock) {
+                    _currentWB = NUM_WB_VALUES - 1;
+                } else {
+                    for(uint32_t i = 0; i < NUM_WB_VALUES; i++) {
+                        if(whiteBalanceOptions[i].mode == wb) {
+                            _currentWB = i;
+                            break;
+                        }
+                    }
+                }
+                emit currentWbChanged();
+            }
+            //-- Auto Exposure Mode
+            int ae = set.value(QString("ae_enabled")).toString().toInt();
+            if(_ambarellaStatus.ae_enabled != ae) {
+                _ambarellaStatus.ae_enabled = ae;
+                emit aeModeChanged();
+                //-- If AE enabled, lock ISO and Shutter
+                if(ae == 0) {
+                    _currentIso = NUM_ISO_VALUES - 1;
+                    _currentShutter = NUM_SHUTTER_VALUES - 1;
+                    emit currentIsoChanged();
+                    emit currentShutterChanged();
+                }
+            }
+            //-- Color IQ
+            uint32_t iq = set.value(QString("iq_type")).toString().toUInt();
+            if(_ambarellaStatus.iq_type != iq && iq < NUM_IQ_MODES) {
+                _ambarellaStatus.iq_type = iq;
+                emit currentIQChanged();
+            }
+            //-- EV
+            QString ev = set.value(QString("exposure_value")).toString();
+            if(_ambarellaStatus.exposure_value != ev) {
+                uint32_t idx = 100000;
+                for(uint32_t i = 0; i < NUM_EV_VALUES; i++) {
+                    if(ev == evOptions[i].value) {
+                        idx = i;
+                        break;
+                    }
+                }
+                if(idx < NUM_EV_VALUES) {
+                    _currentEV = idx;
+                    emit currentEVChanged();
+                }
+            }
             //-- Current Video Resolution and FPS
-            _amb_cam_status.video_mode      = set.value(QString("video_mode")).toString();
+            _ambarellaStatus.video_mode      = set.value(QString("video_mode")).toString();
             _handleVideoResStatus();
-            _amb_cam_status.awb_lock        = set.value(QString("awb_lock")).toString().toInt();
-            _amb_cam_status.audio_switch    = set.value(QString("audio_switch")).toString().toInt() != 0;
-            _amb_cam_status.shutter_time    = set.value(QString("shutter_time")).toString().toInt();
-            _amb_cam_status.iso_value       = set.value(QString("iso_value")).toString();
-            _amb_cam_status.photo_format    = set.value(QString("photo_format")).toString();
-            _amb_cam_status.rtsp_res        = set.value(QString("rtsp_res")).toString();
-            _amb_cam_status.photo_mode      = set.value(QString("photo_mode")).toString().toInt();
-            _amb_cam_status.photo_num       = set.value(QString("photo_num")).toString().toInt();
-            _amb_cam_status.photo_times     = set.value(QString("photo_num")).toString().toInt();
-            _amb_cam_status.ev_step         = set.value(QString("ev_step")).toString().toFloat();
-            _amb_cam_status.interval_ms     = set.value(QString("interval_ms")).toString().toInt();
-            _amb_cam_status.cam_scene       = set.value(QString("cam_scene")).toString().toInt();
-            _amb_cam_status.audio_enable    = set.value(QString("audio_enable")).toString().toInt() != 0;
-            _amb_cam_status.left_time       = set.value(QString("left_time")).toString().toInt();
-            _amb_cam_status.metering_mode   = set.value(QString("metering_mode")).toString().toInt();
-            _amb_cam_status.x_ratio         = set.value(QString("x_ratio")).toString().toFloat();
-            _amb_cam_status.y_ratio         = set.value(QString("y_ratio")).toString().toFloat();
-            _amb_cam_status.layers          = set.value(QString("layers")).toString().toInt();
-            _amb_cam_status.pitch           = set.value(QString("pitch")).toString().toInt();
-            _amb_cam_status.yaw             = set.value(QString("yaw")).toString().toInt();
-            _amb_cam_status.timer_photo_sta = set.value(QString("timer_photo_sta")).toString().toInt();
+            //-- Shutter and ISO (Manual Mode)
+            _ambarellaStatus.shutter_time    = set.value(QString("shutter_time")).toString();
+            _ambarellaStatus.iso_value       = set.value(QString("iso_value")).toString();
+            //-- Photo Format
+            QString pf = set.value(QString("photo_format")).toString();
+            if(_ambarellaStatus.photo_format != pf) {
+                _ambarellaStatus.photo_format = pf;
+                uint32_t idx = 100000;
+                for(uint32_t i = 0; i < NUM_PHOTO_FORMAT_VALUES; i++) {
+                    if(pf == photoFormatOptions[i].mode) {
+                        idx = i;
+                        break;
+                    }
+                }
+                if(idx < NUM_PHOTO_FORMAT_VALUES) {
+                    _currentPhotoFmt = idx;
+                    emit currentPhotoFmtChanged();
+                }
+            }
+            //-- Metering
+            uint32_t m = set.value(QString("metering_mode")).toString().toUInt();
+            if(_ambarellaStatus.metering_mode != m && m < NUM_METERING_VALUES) {
+                _ambarellaStatus.metering_mode = m;
+                emit currentMeteringChanged();
+            }
+            _ambarellaStatus.rtsp_res        = set.value(QString("rtsp_res")).toString();
+            _ambarellaStatus.photo_mode      = set.value(QString("photo_mode")).toString().toInt();
+            _ambarellaStatus.photo_num       = set.value(QString("photo_num")).toString().toInt();
+            _ambarellaStatus.photo_times     = set.value(QString("photo_num")).toString().toInt();
+            _ambarellaStatus.ev_step         = set.value(QString("ev_step")).toString();
+            _ambarellaStatus.interval_ms     = set.value(QString("interval_ms")).toString().toInt();
+            _ambarellaStatus.cam_scene       = set.value(QString("cam_scene")).toString().toInt();
+            _ambarellaStatus.audio_enable    = set.value(QString("audio_enable")).toString().toInt() != 0;
+            _ambarellaStatus.left_time       = set.value(QString("left_time")).toString().toInt();
+            _ambarellaStatus.audio_switch    = set.value(QString("audio_switch")).toString().toInt() != 0;
+            _ambarellaStatus.x_ratio         = set.value(QString("x_ratio")).toString().toFloat();
+            _ambarellaStatus.y_ratio         = set.value(QString("y_ratio")).toString().toFloat();
+            _ambarellaStatus.layers          = set.value(QString("layers")).toString().toInt();
+            _ambarellaStatus.pitch           = set.value(QString("pitch")).toString().toInt();
+            _ambarellaStatus.yaw             = set.value(QString("yaw")).toString().toInt();
+            _ambarellaStatus.timer_photo_sta = set.value(QString("timer_photo_sta")).toString().toInt();
             //-- If recording video, we do this more often
             if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
-                QTimer::singleShot(500, this, &CameraControl::_getCameraStatus);
+                _statusTimer.start(500);
             } else {
-                QTimer::singleShot(2000, this, &CameraControl::_getCameraStatus);
+                _statusTimer.start(2000);
             }
         }
     } else {
@@ -390,7 +580,7 @@ CameraControl::_handleCameraStatus(int http_code, QByteArray data)
             if(_httpErrorCount++ > 5) {
                 _cameraSupported = CAMERA_SUPPORT_NO;
             } else {
-                QTimer::singleShot(500, this, &CameraControl::_getCameraStatus);
+                _statusTimer.start(500);
             }
         }
     }
@@ -402,12 +592,12 @@ CameraControl::_handleTakePhotoStatus(int http_code, QByteArray data)
 {
     if(http_code == 200) {
         qCDebug(YuneecLogVerbose) << "TAKE_PHOTO" << data;
-        if(_waitingShutter) {
-            if(data.contains("status\":\"OK")) {
-                _waitingShutter = false;
-            } else {
-                qWarning() << "TAKE_PHOTO Not OK";
-            }
+        if(data.contains("status\":\"OK")) {
+            _cameraSound.setLoopCount(1);
+            _cameraSound.play();
+        } else {
+            _errorSound.setLoopCount(1);
+            _errorSound.play();
         }
     }
 }
@@ -417,7 +607,7 @@ CameraControl::VideoStatus
 CameraControl::videoStatus()
 {
     if(_cameraSupported == CAMERA_SUPPORT_YES) {
-        if(_amb_cam_status.status == "recording")
+        if(_ambarellaStatus.status == "recording")
             return VIDEO_CAPTURE_STATUS_RUNNING;
         else
             return VIDEO_CAPTURE_STATUS_STOPPED;
@@ -430,10 +620,20 @@ CameraControl::CameraMode
 CameraControl::cameraMode()
 {
     if(_cameraSupported == CAMERA_SUPPORT_YES) {
-        qCDebug(YuneecCameraLog) << "Get cameraMode:" << _amb_cam_status.cam_mode;
-        return (CameraMode)_amb_cam_status.cam_mode;
+        qCDebug(YuneecCameraLog) << "Get cameraMode:" << _ambarellaStatus.cam_mode;
+        return (CameraMode)_ambarellaStatus.cam_mode;
     }
     return CAMERA_MODE_UNDEFINED;
+}
+
+//-----------------------------------------------------------------------------
+CameraControl::AEMode
+CameraControl::aeMode()
+{
+    if(_cameraSupported == CAMERA_SUPPORT_YES) {
+        return (AEMode)_ambarellaStatus.ae_enabled;
+    }
+    return AE_MODE_UNDEFINED;
 }
 
 //-----------------------------------------------------------------------------
@@ -451,15 +651,15 @@ CameraControl::videoResList()
 
 //-----------------------------------------------------------------------------
 QStringList
-CameraControl::colorModeList()
+CameraControl::iqModeList()
 {
 
-    if(_colorModeList.size() == 0) {
-        for(size_t i = 0; i < sizeof(colorModeOptions) / sizeof(color_mode_t); i++) {
-            _colorModeList.append(colorModeOptions[i].description);
+    if(_iqModeList.size() == 0) {
+        for(size_t i = 0; i < NUM_IQ_MODES; i++) {
+            _iqModeList.append(iqModeOptions[i].description);
         }
     }
-    return _colorModeList;
+    return _iqModeList;
 }
 
 //-----------------------------------------------------------------------------
@@ -496,6 +696,42 @@ CameraControl::shutterList()
         }
     }
     return _shutterList;
+}
+
+//-----------------------------------------------------------------------------
+QStringList
+CameraControl::meteringList()
+{
+    if(_meteringList.size() == 0) {
+        for(size_t i = 0; i < NUM_METERING_VALUES; i++) {
+            _meteringList.append(meteringModeOptions[i].description);
+        }
+    }
+    return _meteringList;
+}
+
+//-----------------------------------------------------------------------------
+QStringList
+CameraControl::photoFormatList()
+{
+    if(_photoFormatList.size() == 0) {
+        for(size_t i = 0; i < NUM_PHOTO_FORMAT_VALUES; i++) {
+            _photoFormatList.append(photoFormatOptions[i].description);
+        }
+    }
+    return _photoFormatList;
+}
+
+//-----------------------------------------------------------------------------
+QStringList
+CameraControl::evList()
+{
+    if(_evList.size() == 0) {
+        for(uint32_t i = 0; i < NUM_EV_VALUES; i++) {
+            _evList.append(evOptions[i].description);
+        }
+    }
+    return _evList;
 }
 
 //-----------------------------------------------------------------------------
@@ -536,7 +772,7 @@ quint32
 CameraControl::recordTime()
 {
     if(_cameraSupported == CAMERA_SUPPORT_YES) {
-        return _amb_cam_status.record_time;
+        return _ambarellaStatus.record_time;
     }
     return 0;
 }
@@ -548,192 +784,11 @@ CameraControl::recordTimeStr()
     return QTime(0, 0).addSecs(recordTime()).toString("hh:mm:ss");
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-//-----------------------------------------------------------------------------
-void
-CameraControl::setCurrentIso(quint32 index)
-{
-    if(index < NUM_ISO_VALUES) {
-        _currentIso = index;
-        emit currentIsoChanged();
-        float lock = 1.0f;
-        if(index == (NUM_ISO_VALUES - 1)) {
-            lock = 0.0f;
-            //-- If ISO is locked, so must be shutter speed
-            _cameraSettings.shutter_speed_locked = 0;
-            if(_currentShutter != (NUM_SHUTTER_VALUES - 1)) {
-                _currentShutter = (NUM_SHUTTER_VALUES - 1);
-                emit currentShutterChanged();
-            }
-        }
-        _setSettings_1(DEFAULT_VALUE, DEFAULT_VALUE, DEFAULT_VALUE, DEFAULT_VALUE, DEFAULT_VALUE, (float)index, lock);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-CameraControl::setCurrentShutter(quint32 index)
-{
-    if(index < NUM_SHUTTER_VALUES) {
-        _currentShutter = index;
-        emit currentShutterChanged();
-        float lock = 1.0f;
-        if(index == (NUM_SHUTTER_VALUES - 1)) {
-            lock = 0.0f;
-            //-- If shutter speed is locked, so must be ISO
-            _cameraSettings.iso_sensitivity_locked = 0;
-            if(_currentIso != (NUM_ISO_VALUES - 1)) {
-                _currentIso = (NUM_ISO_VALUES - 1);
-                emit currentIsoChanged();
-            }
-        }
-        _setSettings_1(DEFAULT_VALUE, DEFAULT_VALUE, DEFAULT_VALUE, shutterSpeeds[index].speed, lock);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-CameraControl::_setSettings_1(float p1, float p2, float p3, float p4, float p5, float p6, float p7)
-{
-    if (_vehicle && _cameraStatus.data_ready) {
-        qCDebug(YuneecCameraLog) << "_setSettings_1()" << p1 << p2 << p3 << p4 << p5 << p6 << p7;
-        _vehicle->sendMavCommand(
-            MAV_COMP_ID_CAMERA,                                     // Target component
-            MAV_CMD_SET_CAMERA_SETTINGS_1,                          // Command id
-            true,                                                   // ShowError
-            p1 >= 0 ? p1 : 0,                                       // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
-            p2 >= 0 ? p2 : _cameraSettings.aperture,                // Aperture
-            p3 >= 0 ? p3 : _cameraSettings.aperture_locked,         // Aperture Locked
-            p4 >= 0 ? p4 : _cameraSettings.shutter_speed,           // Shutter Speed
-            p5 >= 0 ? p5 : _cameraSettings.shutter_speed_locked,    // Shutter Speed Locked
-            p6 >= 0 ? p6 : _cameraSettings.iso_sensitivity,         // ISO
-            p7 >= 0 ? p7 : _cameraSettings.iso_sensitivity_locked); // ISO Locked
-        //-- There is no reply other than "accepted" or not. There is no
-        //   guarantee that these settings took. Let's request an updated
-        //   set of camera settings.
-        QTimer::singleShot(500, this, &CameraControl::_requestCameraSettings);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-CameraControl::_setSettings_2(float p1, float p2, float p3, float p4, float p5, float p6)
-{
-    if (_vehicle && _cameraStatus.data_ready) {
-        qCDebug(YuneecCameraLog) << "_setSettings_2()" << p1 << p2 << p3 << p4 << p5 << p6;
-        _vehicle->sendMavCommand(
-            MAV_COMP_ID_CAMERA,                                     // Target component
-            MAV_CMD_SET_CAMERA_SETTINGS_2,                          // Command id
-            true,                                                   // ShowError
-            p1 >= 0 ? p1 : 0,                                       // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
-            p2 >= 0 ? p2 : _cameraSettings.white_balance_locked,    // White Balance Locked
-            p3 >= 0 ? p3 : _cameraSettings.white_balance,           // White Balance
-            p4 >= 0 ? p4 : _cameraSettings.mode_id,                 // Set Video/Photo Mode
-            p5 >= 0 ? p5 : _cameraSettings.color_mode_id,           // Color Mode (IQ)
-            p6 >= 0 ? p6 : _cameraSettings.image_format_id,         // Image Format
-            0);                                                     // Reserved
-        //-- There is no reply other than "accepted" or not. There is no
-        //   guarantee that these settings took. Let's request an updated
-        //   set of camera settings. If changing camera modes, it can be
-        //   quite a while before we can send another command, so we wait
-        //   an extra amount of time if that's the case.
-        QTimer::singleShot(p5 < 0 ? 500 : 2000, this, &CameraControl::_requestCameraSettings);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-CameraControl::_updateIso(int iso, int locked)
-{
-    if(_cameraSettings.iso_sensitivity != iso || _cameraSettings.iso_sensitivity_locked != locked) {
-        _cameraSettings.iso_sensitivity = iso;
-        _cameraSettings.iso_sensitivity_locked  = locked;
-        if(locked == 0) {
-            _currentIso = NUM_ISO_VALUES - 1;
-        } else {
-            _currentIso = iso;
-        }
-        emit currentIsoChanged();
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-CameraControl::_updateShutter(int speed, int locked)
-{
-    if(_cameraSettings.shutter_speed != speed || _cameraSettings.shutter_speed_locked != locked) {
-        _cameraSettings.shutter_speed = speed;
-        _cameraSettings.shutter_speed_locked  = locked;
-        if(locked == 0) {
-            _currentShutter = NUM_SHUTTER_VALUES - 1;
-        } else {
-            _currentShutter = speed;
-        }
-        emit currentShutterChanged();
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-CameraControl::_updateVideoRes(int w, int h, float f)
-{
-    if(_cameraStatus.video_framerate     != f ||
-        _cameraStatus.video_resolution_h != w ||
-        _cameraStatus.video_resolution_v != h)
-    {
-        _cameraStatus.video_framerate       = f;
-        _cameraStatus.video_resolution_h    = w;
-        _cameraStatus.video_resolution_v    = h;
-    }
-    _currentVideoResIndex = _findVideoRes(w, h, f);
-    emit currentVideoResChanged();
-}
-
-//-----------------------------------------------------------------------------
-int
-CameraControl::_findVideoRes(int w, int h, float f)
-{
-    for(size_t i = 0; i < NUM_VIDEO_RES; i++) {
-        if(videoResOptions[i].fps     == f &&
-            videoResOptions[i].with   == w &&
-            videoResOptions[i].height == h)
-        {
-            return i;
-        }
-    }
-    return 0;
-}
-
-//-----------------------------------------------------------------------------
-void
-CameraControl::setCurrentWb(quint32 index)
-{
-    if(index < NUM_WB_VALUES) {
-        qCDebug(YuneecCameraLog) << "setCurrentWb:" << wbValues[index].description;
-        _currentWb = index;
-        emit currentWbChanged();
-        float lock = 1.0f;
-        if(index == (NUM_WB_VALUES - 1)) {
-            lock = 0.0f;
-        }
-        _setSettings_2(DEFAULT_VALUE, lock, (float)index);
-    }
-}
 //-----------------------------------------------------------------------------
 void
 CameraControl::_updateAspectRatio()
 {
+    /*
     qCDebug(YuneecCameraLog) << "_updateAspectRatio() Mode:" << _cameraSettings.mode_id;
     if(_cameraSettings.data_ready) {
         //-- Photo Mode
@@ -746,4 +801,44 @@ CameraControl::_updateAspectRatio()
             qgcApp()->toolbox()->settingsManager()->videoSettings()->aspectRatio()->setRawValue(videoResOptions[_currentVideoResIndex].aspectRatio);
         }
     }
+    */
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::_resetCameraValues()
+{
+    _ambarellaStatus.rval = 0;
+    _ambarellaStatus.msg_id = 0;
+    _ambarellaStatus.cam_mode = 0;
+    _ambarellaStatus.status.clear();
+    _ambarellaStatus.sdfree = 0;
+    _ambarellaStatus.sdtotal = 0;
+    _ambarellaStatus.record_time = 0;
+    _ambarellaStatus.white_balance = 0;
+    _ambarellaStatus.ae_enabled = 0;
+    _ambarellaStatus.iq_type = 0;
+    _ambarellaStatus.exposure_value.clear();
+    _ambarellaStatus.video_mode.clear();
+    _ambarellaStatus.awb_lock = 0;
+    _ambarellaStatus.audio_switch = 0;
+    _ambarellaStatus.shutter_time.clear();
+    _ambarellaStatus.iso_value.clear();
+    _ambarellaStatus.photo_format.clear();
+    _ambarellaStatus.rtsp_res.clear();
+    _ambarellaStatus.photo_mode = 0;
+    _ambarellaStatus.photo_num = 0;
+    _ambarellaStatus.photo_times = 0;
+    _ambarellaStatus.ev_step.clear();
+    _ambarellaStatus.interval_ms = 0;
+    _ambarellaStatus.cam_scene = 0;
+    _ambarellaStatus.audio_enable = 0;
+    _ambarellaStatus.left_time = 0;
+    _ambarellaStatus.metering_mode = 0;
+    _ambarellaStatus.x_ratio = 0.0f;
+    _ambarellaStatus.y_ratio = 0.0f;
+    _ambarellaStatus.layers = 0;
+    _ambarellaStatus.pitch = 0;
+    _ambarellaStatus.yaw = 0;
+    _ambarellaStatus.timer_photo_sta = 0;
 }
