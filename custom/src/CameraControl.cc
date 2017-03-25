@@ -11,6 +11,7 @@
 #include "CameraControl.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "QGCMapEngine.h"
 
 #include <QJsonParseError>
 #include <QJsonArray>
@@ -225,6 +226,17 @@ void
 CameraControl::_getCameraStatus()
 {
     _sendAmbRequest(QNetworkRequest(QString("%1GET_STATUS").arg(kAmbCommand)));
+    //-- Make sure we're always asking for it
+    if(_cameraSupported != CAMERA_SUPPORT_NO) {
+        _statusTimer.start(10000);
+    }
+}
+
+//-----------------------------------------------------------------------------
+QString
+CameraControl::sdFreeStr()
+{
+    return QGCMapEngine::bigSizeToString((quint64)_ambarellaStatus.sdfree * 1024);
 }
 
 //-----------------------------------------------------------------------------
@@ -244,8 +256,6 @@ CameraControl::startVideo()
     qCDebug(YuneecCameraLog) << "startVideo()";
     if(_vehicle && videoStatus() == VIDEO_CAPTURE_STATUS_STOPPED && _ambarellaStatus.cam_mode == CAMERA_MODE_VIDEO) {
         _sendAmbRequest(QNetworkRequest(QString("%1START_RECORD").arg(kAmbCommand)));
-        _videoSound.setLoopCount(1);
-        _videoSound.play();
     } else {
         _errorSound.setLoopCount(1);
         _errorSound.play();
@@ -259,8 +269,6 @@ CameraControl::stopVideo()
     qCDebug(YuneecCameraLog) << "stopVideo()";
     if(_vehicle && videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
         _sendAmbRequest(QNetworkRequest(QString("%1STOP_RECORD").arg(kAmbCommand)));
-        _videoSound.setLoopCount(2);
-        _videoSound.play();
     }
 }
 
@@ -379,7 +387,7 @@ CameraControl::setCurrentEV(quint32 index)
 
 //-----------------------------------------------------------------------------
 void
-CameraControl::setAeMode(AEMode mode)
+CameraControl::setAeMode(AEModes mode)
 {
     qCDebug(YuneecCameraLog) << "setAeMode:" << mode;
     _sendAmbRequest(QNetworkRequest(QString("%1SET_AE_ENABLE&mode=%2").arg(kAmbCommand).arg(mode)));
@@ -390,6 +398,37 @@ void
 CameraControl::formatCard()
 {
     _sendAmbRequest(QNetworkRequest(QString("%1FORMAT_CARD").arg(kAmbCommand)));
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::_handleShutterStatus()
+{
+    for(uint32_t i = 0; i < NUM_SHUTTER_VALUES; i++) {
+        if(_ambarellaStatus.video_mode == shutterSpeeds[i].value) {
+            if(_currentShutter != i) {
+                _currentShutter = i;
+                emit currentShutterChanged();
+                return;
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::_handleISOStatus()
+{
+    for(uint32_t i = 0; i < NUM_ISO_VALUES; i++) {
+        QString iso = QString("ISO_%1").arg(isoValues[i].description);
+        if(_ambarellaStatus.video_mode == iso) {
+            if(_currentShutter != i) {
+                _currentShutter = i;
+                emit currentShutterChanged();
+                return;
+            }
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -433,7 +472,7 @@ void
 CameraControl::_handleCameraStatus(int http_code, QByteArray data)
 {
     if(http_code == 200) {
-        //qCDebug(YuneecLogVerbose) << "GET_STATUS" << data;
+        qCDebug(YuneecLogVerbose) << "GET_STATUS" << data;
         _cameraSupported = CAMERA_SUPPORT_YES;
         QJsonParseError jsonParseError;
         QJsonDocument doc = QJsonDocument::fromJson(data, &jsonParseError);
@@ -452,8 +491,16 @@ CameraControl::_handleCameraStatus(int http_code, QByteArray data)
             //-- Status
             QString status = set.value(QString("status")).toString();
             if(status != _ambarellaStatus.status) {
+                bool was_running = videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING;
                 _ambarellaStatus.status = status;
                 emit videoStatusChanged();
+                if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
+                    _videoSound.setLoopCount(1);
+                    _videoSound.play();
+                } else if(was_running) {
+                    _videoSound.setLoopCount(2);
+                    _videoSound.play();
+                }
             }
             //-- Storage
             quint32 sdfree = set.value(QString("sdfree")).toString().toUInt();
@@ -488,20 +535,31 @@ CameraControl::_handleCameraStatus(int http_code, QByteArray data)
                         }
                     }
                 }
-                emit currentWbChanged();
+                emit currentWBChanged();
             }
             //-- Auto Exposure Mode
-            int ae = set.value(QString("ae_enabled")).toString().toInt();
-            if(_ambarellaStatus.ae_enabled != ae) {
-                _ambarellaStatus.ae_enabled = ae;
+            int ae = set.value(QString("ae_enable")).toString().toInt();
+            if(_ambarellaStatus.ae_enable != ae) {
+                _ambarellaStatus.ae_enable = ae;
                 emit aeModeChanged();
+                qDebug() << "AE Mode:" << ae;
                 //-- If AE enabled, lock ISO and Shutter
-                if(ae == 0) {
+                if(ae) {
                     _currentIso = NUM_ISO_VALUES - 1;
                     _currentShutter = NUM_SHUTTER_VALUES - 1;
                     emit currentIsoChanged();
                     emit currentShutterChanged();
+                } else {
+                    _handleShutterStatus();
+                    _handleISOStatus();
                 }
+            }
+            //-- Shutter and ISO (Manual Mode)
+            _ambarellaStatus.shutter_time    = set.value(QString("shutter_time")).toString();
+            _ambarellaStatus.iso_value       = set.value(QString("iso_value")).toString();
+            if(!ae) {
+                _handleShutterStatus();
+                _handleISOStatus();
             }
             //-- Color IQ
             uint32_t iq = set.value(QString("iq_type")).toString().toUInt();
@@ -527,9 +585,6 @@ CameraControl::_handleCameraStatus(int http_code, QByteArray data)
             //-- Current Video Resolution and FPS
             _ambarellaStatus.video_mode      = set.value(QString("video_mode")).toString();
             _handleVideoResStatus();
-            //-- Shutter and ISO (Manual Mode)
-            _ambarellaStatus.shutter_time    = set.value(QString("shutter_time")).toString();
-            _ambarellaStatus.iso_value       = set.value(QString("iso_value")).toString();
             //-- Photo Format
             QString pf = set.value(QString("photo_format")).toString();
             if(_ambarellaStatus.photo_format != pf) {
@@ -572,7 +627,7 @@ CameraControl::_handleCameraStatus(int http_code, QByteArray data)
             if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
                 _statusTimer.start(500);
             } else {
-                _statusTimer.start(2000);
+                _statusTimer.start(5000);
             }
         }
     } else {
@@ -607,7 +662,7 @@ CameraControl::VideoStatus
 CameraControl::videoStatus()
 {
     if(_cameraSupported == CAMERA_SUPPORT_YES) {
-        if(_ambarellaStatus.status == "recording")
+        if(cameraMode() == CAMERA_MODE_VIDEO && _ambarellaStatus.status == "record")
             return VIDEO_CAPTURE_STATUS_RUNNING;
         else
             return VIDEO_CAPTURE_STATUS_STOPPED;
@@ -627,11 +682,11 @@ CameraControl::cameraMode()
 }
 
 //-----------------------------------------------------------------------------
-CameraControl::AEMode
+CameraControl::AEModes
 CameraControl::aeMode()
 {
     if(_cameraSupported == CAMERA_SUPPORT_YES) {
-        return (AEMode)_ambarellaStatus.ae_enabled;
+        return (AEModes)_ambarellaStatus.ae_enable;
     }
     return AE_MODE_UNDEFINED;
 }
@@ -810,13 +865,13 @@ CameraControl::_resetCameraValues()
 {
     _ambarellaStatus.rval = 0;
     _ambarellaStatus.msg_id = 0;
-    _ambarellaStatus.cam_mode = 0;
+    _ambarellaStatus.cam_mode = CAMERA_MODE_UNDEFINED;
     _ambarellaStatus.status.clear();
     _ambarellaStatus.sdfree = 0;
     _ambarellaStatus.sdtotal = 0;
     _ambarellaStatus.record_time = 0;
     _ambarellaStatus.white_balance = 0;
-    _ambarellaStatus.ae_enabled = 0;
+    _ambarellaStatus.ae_enable = AE_MODE_UNDEFINED;
     _ambarellaStatus.iq_type = 0;
     _ambarellaStatus.exposure_value.clear();
     _ambarellaStatus.video_mode.clear();

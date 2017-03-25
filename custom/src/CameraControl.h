@@ -29,7 +29,7 @@ typedef struct {
     uint32_t    sdtotal;
     uint32_t    record_time;
     uint32_t    white_balance;
-    int         ae_enabled;
+    int         ae_enable;
     uint32_t    iq_type;
     QString     exposure_value;
     QString     video_mode;
@@ -141,9 +141,9 @@ public:
     };
 
     //-- Auto Exposure
-    enum AEMode {
-        AE_MODE_AUTO = 0,
-        AE_MODE_MANUAL,
+    enum AEModes {
+        AE_MODE_MANUAL = 0,
+        AE_MODE_AUTO,
         AE_MODE_UNDEFINED
     };
 
@@ -151,13 +151,14 @@ public:
 
     Q_ENUMS(VideoStatus)
     Q_ENUMS(CameraMode)
-    Q_ENUMS(AEMode)
+    Q_ENUMS(AEModes)
 
     Q_PROPERTY(VideoStatus  videoStatus     READ    videoStatus                                 NOTIFY videoStatusChanged)
     Q_PROPERTY(CameraMode   cameraMode      READ    cameraMode      WRITE   setCameraMode       NOTIFY cameraModeChanged)
-    Q_PROPERTY(AEMode       aeMode          READ    aeMode          WRITE   setAeMode           NOTIFY aeModeChanged)
+    Q_PROPERTY(AEModes      aeMode          READ    aeMode          WRITE   setAeMode           NOTIFY aeModeChanged)
     Q_PROPERTY(quint32      recordTime      READ    recordTime                                  NOTIFY recordTimeChanged)
     Q_PROPERTY(quint32      sdFree          READ    sdFree                                      NOTIFY sdFreeChanged)
+    Q_PROPERTY(QString      sdFreeStr       READ    sdFreeStr                                   NOTIFY sdFreeChanged)
     Q_PROPERTY(quint32      sdTotal         READ    sdTotal                                     NOTIFY sdTotalChanged)
     Q_PROPERTY(QString      recordTimeStr   READ    recordTimeStr                               NOTIFY recordTimeChanged)
     Q_PROPERTY(QStringList  videoResList    READ    videoResList                                CONSTANT)
@@ -170,7 +171,7 @@ public:
     Q_PROPERTY(QStringList  evList          READ    evList                                      CONSTANT)
 
     Q_PROPERTY(quint32      currentVideoRes READ    currentVideoRes WRITE setCurrentVideoRes    NOTIFY currentVideoResChanged)
-    Q_PROPERTY(quint32      currentWB       READ    currentWB       WRITE setCurrentWB          NOTIFY currentWbChanged)
+    Q_PROPERTY(quint32      currentWB       READ    currentWB       WRITE setCurrentWB          NOTIFY currentWBChanged)
     Q_PROPERTY(quint32      currentIso      READ    currentIso      WRITE setCurrentIso         NOTIFY currentIsoChanged)
     Q_PROPERTY(quint32      currentShutter  READ    currentShutter  WRITE setCurrentShutter     NOTIFY currentShutterChanged)
     Q_PROPERTY(quint32      currentIQ       READ    currentIQ       WRITE setCurrentIQ          NOTIFY currentIQChanged)
@@ -189,9 +190,10 @@ public:
 
     VideoStatus videoStatus         ();
     CameraMode  cameraMode          ();
-    AEMode      aeMode              ();
+    AEModes     aeMode              ();
     quint32     recordTime          ();
     quint32     sdFree              () { return _ambarellaStatus.sdfree;  }
+    QString     sdFreeStr           ();
     quint32     sdTotal             () { return _ambarellaStatus.sdtotal; }
     QString     recordTimeStr       ();
     QStringList videoResList        ();
@@ -213,7 +215,7 @@ public:
     quint32     currentEV           () { return _currentEV; }
 
     void        setCameraMode       (CameraMode mode);
-    void        setAeMode           (AEMode mode);
+    void        setAeMode           (AEModes mode);
     void        setVehicle          (Vehicle* vehicle);
 
     void        setCurrentVideoRes  (quint32 index);
@@ -239,7 +241,7 @@ signals:
     void    sdFreeChanged           ();
     void    sdTotalChanged          ();
     void    currentVideoResChanged  ();
-    void    currentWbChanged        ();
+    void    currentWBChanged        ();
     void    currentIsoChanged       ();
     void    currentShutterChanged   ();
     void    currentIQChanged        ();
@@ -251,6 +253,8 @@ private:
     void    _updateAspectRatio      ();
     void    _initStreaming          ();
     void    _handleVideoResStatus   ();
+    void    _handleShutterStatus    ();
+    void    _handleISOStatus        ();
     void    _sendAmbRequest         (QNetworkRequest request);
     void    _setCamMode             (const char* mode);
     void    _handleCameraStatus     (int http_code, QByteArray data);

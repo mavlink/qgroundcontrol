@@ -17,6 +17,9 @@ import QGroundControl.Palette               1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Controllers           1.0
+import QGroundControl.CameraControl         1.0
+
+import TyphoonHQuickInterface               1.0
 
 Rectangle {
     id:         toolBar
@@ -24,8 +27,9 @@ Rectangle {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
-    property bool _communicationLost:   _activeVehicle ? _activeVehicle.connectionLost : false
+    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _communicationLost: _activeVehicle ? _activeVehicle.connectionLost : false
+    property var    _camController:     TyphoonHQuickInterface.cameraControl
 
     signal showSettingsView
     signal showSetupView
@@ -225,4 +229,46 @@ Rectangle {
         color:          qgcPal.colorGreen
     }
 
+    //-- Camera Status
+    Rectangle {
+        width:          camRow.width + (ScreenTools.defaultFontPixelWidth * 2)
+        height:         camRow.height * 1.5
+        color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0.15,1,0.15,0.85) : Qt.rgba(0,0.15,0,0.75)
+        visible:        _camController && _camController.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED && homeButton.checked
+        anchors.top:    parent.bottom
+        anchors.topMargin: 2
+        anchors.horizontalCenter: parent.horizontalCenter
+        Row {
+            id: camRow
+            spacing: ScreenTools.defaultFontPixelWidth
+            anchors.centerIn: parent
+            //-- AE
+            QGCLabel { text: qsTr("AE:"); }
+            QGCLabel { text: _camController.aeMode === CameraControl.AE_MODE_AUTO ? qsTr("Auto") : qsTr("Manual"); }
+            //-- EV
+            Rectangle { width: 1; height: camRow.height * 0.75; color: qgcPal.window; anchors.verticalCenter: parent.verticalCenter; visible: _camController.aeMode === CameraControl.AE_MODE_AUTO; }
+            QGCLabel { text: qsTr("EV:"); visible: _camController.aeMode === CameraControl.AE_MODE_AUTO; }
+            QGCLabel { text: _camController.evList[_camController.currentEV]; visible: _camController.aeMode === CameraControl.AE_MODE_AUTO; }
+            //-- ISO
+            Rectangle { width: 1; height: camRow.height * 0.75; color: qgcPal.window; anchors.verticalCenter: parent.verticalCenter; visible: _camController.aeMode !== CameraControl.AE_MODE_AUTO; }
+            QGCLabel { text: qsTr("ISO:"); visible: _camController.aeMode !== CameraControl.AE_MODE_AUTO; }
+            QGCLabel { text: _camController.isoList[_camController.currentIso]; visible: _camController.aeMode !== CameraControl.AE_MODE_AUTO; }
+            //-- Shutter Speed
+            Rectangle { width: 1; height: camRow.height * 0.75; color: qgcPal.window; visible: _camController.aeMode !== CameraControl.AE_MODE_AUTO; anchors.verticalCenter: parent.verticalCenter; }
+            QGCLabel { text: qsTr("Shutter:"); visible: _camController.aeMode !== CameraControl.AE_MODE_AUTO; }
+            QGCLabel { text: _camController.shutterList[_camController.currentShutter]; visible: _camController.aeMode !== CameraControl.AE_MODE_AUTO; }
+            //-- White Balance
+            Rectangle { width: 1; height: camRow.height * 0.75; color: qgcPal.window; anchors.verticalCenter: parent.verticalCenter; }
+            QGCLabel { text: qsTr("WB:"); }
+            QGCLabel { text: _camController.wbList[_camController.currentWB]; }
+            //-- Metering
+            Rectangle { width: 1; height: camRow.height * 0.75; color: qgcPal.window; anchors.verticalCenter: parent.verticalCenter; }
+            QGCLabel { text: qsTr("Metering:"); }
+            QGCLabel { text: _camController.meteringList[_camController.currentMetering]; }
+            //-- SD Card
+            Rectangle { width: 1; height: camRow.height * 0.75; color: qgcPal.window; anchors.verticalCenter: parent.verticalCenter; }
+            QGCLabel { text: qsTr("SD:"); }
+            QGCLabel { text: _camController.sdFreeStr }
+        }
+    }
 }
