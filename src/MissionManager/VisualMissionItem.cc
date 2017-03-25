@@ -26,7 +26,6 @@ VisualMissionItem::VisualMissionItem(Vehicle* vehicle, QObject* parent)
     , _isCurrentItem(false)
     , _dirty(false)
     , _homePositionSpecialCase(false)
-    , _showHomePosition(false)
     , _altDifference(0.0)
     , _altPercent(0.0)
     , _azimuth(0.0)
@@ -43,7 +42,6 @@ VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, QObject* pa
     , _isCurrentItem(false)
     , _dirty(false)
     , _homePositionSpecialCase(false)
-    , _showHomePosition(false)
     , _altDifference(0.0)
     , _altPercent(0.0)
     , _azimuth(0.0)
@@ -59,7 +57,6 @@ const VisualMissionItem& VisualMissionItem::operator=(const VisualMissionItem& o
     setIsCurrentItem(other._isCurrentItem);
     setDirty(other._dirty);
     _homePositionSpecialCase = other._homePositionSpecialCase;
-    setShowHomePosition(other.showHomePosition());
     setAltDifference(other._altDifference);
     setAltPercent(other._altPercent);
     setAzimuth(other._azimuth);
@@ -109,14 +106,6 @@ void VisualMissionItem::setAzimuth(double azimuth)
     if (!qFuzzyCompare(_azimuth, azimuth)) {
         _azimuth = azimuth;
         emit azimuthChanged(_azimuth);
-    }
-}
-
-void VisualMissionItem::setShowHomePosition(bool showHomePosition)
-{
-    if (showHomePosition != _showHomePosition) {
-        _showHomePosition = showHomePosition;
-        emit showHomePositionChanged(_showHomePosition);
     }
 }
 

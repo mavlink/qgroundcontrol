@@ -44,7 +44,6 @@ public:
     const VisualMissionItem& operator=(const VisualMissionItem& other);
 
     Q_PROPERTY(bool             homePosition                        READ homePosition                                                   CONSTANT)                                           ///< true: This item is being used as a home position indicator
-    Q_PROPERTY(bool             showHomePosition                    READ showHomePosition                   WRITE setShowHomePosition   NOTIFY showHomePositionChanged)
     Q_PROPERTY(QGeoCoordinate   coordinate                          READ coordinate                         WRITE setCoordinate         NOTIFY coordinateChanged)                           ///< This is the entry point for a waypoint line into the item. For a simple item it is also the location of the item
     Q_PROPERTY(bool             coordinateHasRelativeAltitude       READ coordinateHasRelativeAltitude                                  NOTIFY coordinateHasRelativeAltitudeChanged)        ///< true: coordinate.latitude is relative to home altitude
     Q_PROPERTY(QGeoCoordinate   exitCoordinate                      READ exitCoordinate                                                 NOTIFY exitCoordinateChanged)                       ///< This is the exit point for a waypoint line coming out of the item.
@@ -80,9 +79,7 @@ public:
     // Property accesors
 
     bool homePosition               (void) const { return _homePositionSpecialCase; }
-    bool showHomePosition           (void) const { return _showHomePosition; }
     void setHomePositionSpecialCase (bool homePositionSpecialCase) { _homePositionSpecialCase = homePositionSpecialCase; }
-    void setShowHomePosition        (bool showHomePosition);
 
     double altDifference    (void) const { return _altDifference; }
     double altPercent       (void) const { return _altPercent; }
@@ -151,7 +148,6 @@ public:
     static const char* jsonTypeComplexItemValue;    ///< Item type is Complex Item
 
 signals:
-    void showHomePositionChanged        (bool showHomePosition);
     void altDifferenceChanged           (double altDifference);
     void altPercentChanged              (double altPercent);
     void azimuthChanged                 (double azimuth);
@@ -183,7 +179,6 @@ protected:
     bool        _isCurrentItem;
     bool        _dirty;
     bool        _homePositionSpecialCase;   ///< true: This item is being used as a ui home position indicator
-    bool        _showHomePosition;
     double      _altDifference;             ///< Difference in altitude from previous waypoint
     double      _altPercent;                ///< Percent of total altitude change in mission
     double      _azimuth;                   ///< Azimuth to previous waypoint

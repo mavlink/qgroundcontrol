@@ -144,7 +144,6 @@ const SimpleMissionItem& SimpleMissionItem::operator=(const SimpleMissionItem& o
     setRawEdit(other._rawEdit);
     setDirty(other._dirty);
     setHomePositionSpecialCase(other._homePositionSpecialCase);
-    setShowHomePosition(other._showHomePosition);
 
     _syncFrameToAltitudeRelativeToHome();
 
