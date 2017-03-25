@@ -94,7 +94,7 @@ void MissionSettingsComplexItem::setSpecifyMissionFlightSpeed(bool specifyMissio
 
 int MissionSettingsComplexItem::lastSequenceNumber(void) const
 {
-    int lastSequenceNumber = _sequenceNumber + 1;   // +1 for planned home position
+    int lastSequenceNumber = _sequenceNumber;
 
     if (_specifyMissionFlightSpeed) {
         lastSequenceNumber++;
