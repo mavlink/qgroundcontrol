@@ -49,6 +49,7 @@ const char* Vehicle::_groundSpeedFactName =         "groundSpeed";
 const char* Vehicle::_climbRateFactName =           "climbRate";
 const char* Vehicle::_altitudeRelativeFactName =    "altitudeRelative";
 const char* Vehicle::_altitudeAMSLFactName =        "altitudeAMSL";
+const char* Vehicle::_flightDistanceFactName =      "flightDistance";
 
 const char* Vehicle::_gpsFactGroupName =        "gps";
 const char* Vehicle::_batteryFactGroupName =    "battery";
@@ -148,6 +149,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _climbRateFact        (0, _climbRateFactName,         FactMetaData::valueTypeDouble)
     , _altitudeRelativeFact (0, _altitudeRelativeFactName,  FactMetaData::valueTypeDouble)
     , _altitudeAMSLFact     (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
+    , _flightDistanceFact   (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
     , _gpsFactGroup(this)
     , _batteryFactGroup(this)
     , _windFactGroup(this)
@@ -348,12 +350,15 @@ void Vehicle::_commonInit(void)
     _addFact(&_climbRateFact,           _climbRateFactName);
     _addFact(&_altitudeRelativeFact,    _altitudeRelativeFactName);
     _addFact(&_altitudeAMSLFact,        _altitudeAMSLFactName);
+    _addFact(&_flightDistanceFact,      _flightDistanceFactName);
 
     _addFactGroup(&_gpsFactGroup,       _gpsFactGroupName);
     _addFactGroup(&_batteryFactGroup,   _batteryFactGroupName);
     _addFactGroup(&_windFactGroup,      _windFactGroupName);
     _addFactGroup(&_vibrationFactGroup, _vibrationFactGroupName);
     _addFactGroup(&_temperatureFactGroup, _temperatureFactGroupName);
+
+    _flightDistanceFact.setRawValue(0);
 }
 
 Vehicle::~Vehicle()
@@ -1637,6 +1642,7 @@ void Vehicle::_addNewMapTrajectoryPoint(void)
             _mapTrajectoryList.removeAt(0)->deleteLater();
         }
         _mapTrajectoryList.append(new CoordinateVector(_mapTrajectoryLastCoordinate, _coordinate, this));
+        _flightDistanceFact.setRawValue(_flightDistanceFact.rawValue().toDouble() + _mapTrajectoryLastCoordinate.distanceTo(_coordinate));
     }
     _mapTrajectoryHaveFirstCoordinate = true;
     _mapTrajectoryLastCoordinate = _coordinate;
@@ -1647,6 +1653,7 @@ void Vehicle::_mapTrajectoryStart(void)
     _mapTrajectoryHaveFirstCoordinate = false;
     _mapTrajectoryList.clear();
     _mapTrajectoryTimer.start();
+    _flightDistanceFact.setRawValue(0);
 }
 
 void Vehicle::_mapTrajectoryStop()

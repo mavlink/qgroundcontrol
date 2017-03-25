@@ -54,5 +54,12 @@
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "m"
+},
+{
+    "name":             "flightDistance",
+    "shortDescription": "Flight Distance",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
 }
 ]
