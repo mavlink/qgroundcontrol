@@ -72,18 +72,6 @@ Map {
 
     ExclusiveGroup { id: mapTypeGroup }
 
-    property bool _initialMapPositionSet: false
-
-    Connections {
-        target: mainWindow
-        onGcsPositionChanged: {
-            if (!_initialMapPositionSet) {
-                _initialMapPositionSet = true
-                center = mainWindow.gcsPosition
-            }
-        }
-    }
-
     function updateActiveMapType() {
         var settings =  QGroundControl.settingsManager.flightMapSettings
         var fullMapName = settings.mapProvider.enumStringValue + " " + settings.mapType.enumStringValue

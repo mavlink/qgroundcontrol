@@ -33,16 +33,18 @@ FlightMap {
     property var    rightPanelWidth
     property var    qgcView             ///< QGCView control which contains this map
 
-    property bool   _followVehicleSetting:          true                                                    ///< User facing setting for follow vehicle
-    property bool   _followVehicle:                 _followVehicleSetting && _activeVehicleCoordinateValid  ///< Control map follow vehicle functionality
     property var    _activeVehicle:                 QGroundControl.multiVehicleManager.activeVehicle
     property bool   _activeVehicleCoordinateValid:  _activeVehicle ? _activeVehicle.coordinateValid : false
     property var    activeVehicleCoordinate:        _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property var    _gotoHereCoordinate:            QtPositioning.coordinate()
     property int    _retaskSequence:                0
     property real   _toolButtonTopMargin:           parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
-    property bool   _firstVehicleCoordinate:        false
-    property bool   _centerUpdateFromTimer:         true
+
+    property bool   _disableVehicleTracking:        false
+    property bool   _keepVehicleCentered:           _mainIsMap ? false : true
+    property bool   _followVehicleSetting:          true                                                    ///< User facing setting for follow vehicle
+    property bool   _followVehicle:                 _followVehicleSetting && _activeVehicleCoordinateValid  ///< Control map follow vehicle functionality
+    property bool   _firstVehiclePosition:          true
 
     Component.onCompleted: {
         QGroundControl.flightMapPosition = center
@@ -51,43 +53,90 @@ FlightMap {
 
     onZoomLevelChanged: QGroundControl.flightMapZoom = zoomLevel
 
-    onCenterChanged: {
-        if (_centerUpdateFromTimer) {
-            _centerUpdateFromTimer = false
-        } else {
-            vehicleCenterTimer.restart()
+    // When the user pans the map we leave things alone until the panRecenterTimer fires
+    Connections {
+        target: gesture
+
+        onPanFinished: {
+            _disableVehicleTracking = true
+            panRecenterTimer.start()
         }
 
-        QGroundControl.flightMapPosition = center
+        onFlickFinished: {
+            _disableVehicleTracking = true
+            panRecenterTimer.start()
+        }
     }
 
-    onActiveVehicleCoordinateChanged: {
-        if (!_firstVehicleCoordinate && _activeVehicleCoordinateValid) {
-            _firstVehicleCoordinate = true
-            updateMapToVehiclePosition()
-        }
+    onCenterChanged: QGroundControl.flightMapPosition = center
+
+    function pointInRect(point, rect) {
+        return point.x > rect.x &&
+                point.x < rect.x + rect.width &&
+                point.y > rect.y &&
+                point.y < rect.y + rect.height;
+    }
+
+    property real _animatedLatitudeStart
+    property real _animatedLatitudeStop
+    property real _animatedLongitudeStart
+    property real _animatedLongitudeStop
+    property real animatedLatitude
+    property real animatedLongitude
+
+    onAnimatedLatitudeChanged: flightMap.center = QtPositioning.coordinate(animatedLatitude, animatedLongitude)
+    onAnimatedLongitudeChanged: flightMap.center = QtPositioning.coordinate(animatedLatitude, animatedLongitude)
+
+    NumberAnimation on animatedLatitude { id: animateLat; from: _animatedLatitudeStart; to: _animatedLatitudeStop; duration: 1000 }
+    NumberAnimation on animatedLongitude { id: animateLong; from: _animatedLongitudeStart; to: _animatedLongitudeStop; duration: 1000 }
+
+    function animatedMapRecenter(fromCoord, toCoord) {
+        _animatedLatitudeStart = fromCoord.latitude
+        _animatedLongitudeStart = fromCoord.longitude
+        _animatedLatitudeStop = toCoord.latitude
+        _animatedLongitudeStop = toCoord.longitude
+        animateLat.start()
+        animateLong.start()
+    }
+
+    function recenterNeeded() {
+        var vehiclePoint = flightMap.fromCoordinate(activeVehicleCoordinate, false /* clipToViewport */)
+        var centerViewport = Qt.rect(0, 0, width, height)
+        return !pointInRect(vehiclePoint, centerViewport)
     }
 
     function updateMapToVehiclePosition() {
-        if (_followVehicle) {
-            _initialMapPositionSet = true
-            _firstVehicleCoordinate = true
-            _centerUpdateFromTimer = true
-            flightMap.center = activeVehicleCoordinate
+        if (_followVehicle && !_disableVehicleTracking) {
+            if (_keepVehicleCentered) {
+                _firstVehiclePosition = true
+                flightMap.center = activeVehicleCoordinate
+            } else {
+                if (_firstVehiclePosition) {
+                    _firstVehiclePosition = false
+                    flightMap.center = activeVehicleCoordinate
+                } else if (recenterNeeded()) {
+                    animatedMapRecenter(flightMap.center, activeVehicleCoordinate)
+                }
+            }
         }
     }
 
     Timer {
-        id:                 vehicleCenterTimer
-        interval:           5000
-        running:            true
-        triggeredOnStart:   true
-        repeat:             true
+        id:         panRecenterTimer
+        interval:   10000
+        running:    false
 
         onTriggered: {
-            triggeredOnStart = false
+            _disableVehicleTracking = false
             updateMapToVehiclePosition()
         }
+    }
+
+    Timer {
+        interval:       500
+        running:        true
+        repeat:         true
+        onTriggered:    updateMapToVehiclePosition()
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
@@ -231,7 +280,7 @@ FlightMap {
             MapPolyline {
             line.width: 3
             line.color: "red"
-            z:          QGroundControl.zOrderMapItems - 1
+            z:          QGroundControl.zOrderMapItems - 2
             path: [
                 object.coordinate1,
                 object.coordinate2,
