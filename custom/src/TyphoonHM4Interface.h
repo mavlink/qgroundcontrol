@@ -34,7 +34,7 @@ public:
     QString m4StateStr              ();
     void    resetBind               ();
 
-    CameraControl* cameraControl    () { return _cameraControl; }
+    CameraControl*          cameraControl       () { return _cameraControl; }
 
     TyphoonHQuickInterface::M4State     m4State             () { return _m4State; }
     const ControllerLocation&           controllerLocation  () { return _controllerLocation; }
@@ -54,7 +54,6 @@ private slots:
     void    _vehicleAdded                       (Vehicle* vehicle);
     void    _vehicleRemoved                     (Vehicle* vehicle);
     void    _vehicleReady                       (bool ready);
-    void    _httpFinished                       ();
     void    _remoteControlRSSIChanged           (uint8_t rssi);
 
 private:
@@ -90,7 +89,6 @@ private:
     void    _switchChanged                      (m4Packet& packet);
     void    _handleMixedChannelData             (m4Packet& packet);
     void    _handControllerFeedback             (m4Packet& packet);
-    void    _initStreaming                      ();
 
 signals:
     void    m4StateChanged                      ();
@@ -140,7 +138,6 @@ private:
     bool                    _bound;
     bool                    _resetBind;
     Vehicle*                _vehicle;
-    QNetworkAccessManager*  _networkManager;
     CameraControl*          _cameraControl;
     TyphoonHQuickInterface::M4State     _m4State;
     QString                 _currentConnection;

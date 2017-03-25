@@ -15,13 +15,52 @@
 
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLog)
 
+class QNetworkRequest;
+class QNetworkAccessManager;
+
+//-----------------------------------------------------------------------------
+// Ambarella Camera Status
+typedef struct {
+    int         rval;
+    int         msg_id;
+    int         cam_mode;
+    QString     status;
+    uint32_t    sdfree;
+    uint32_t    sdtotal;
+    uint32_t    record_time;
+    int         white_balance;
+    bool        ae_enabled;
+    int         iq_type;
+    float       exposure_value;
+    QString     video_mode;
+    int         awb_lock;
+    bool        audio_switch;
+    int         shutter_time;
+    QString     iso_value;
+    QString     photo_format;
+    QString     rtsp_res;
+    int         photo_mode;
+    int         photo_num;
+    int         photo_times;
+    float       ev_step;
+    int         interval_ms;
+    int         cam_scene;
+    bool        audio_enable;
+    int         left_time;
+    int         metering_mode;
+    float       x_ratio;
+    float       y_ratio;
+    int         layers;
+    int         pitch;
+    int         yaw;
+    int         timer_photo_sta;
+} amb_camera_status_t;
+
 //-----------------------------------------------------------------------------
 // Video Resolution Options
 typedef struct {
     const char* description;
-    int         with;
-    int         height;
-    int         fps;
+    const char* video_mode;
     float       aspectRatio;
 } video_res_t;
 
@@ -33,9 +72,31 @@ typedef struct {
 } color_mode_t;
 
 //-----------------------------------------------------------------------------
+// Metering Mode
+typedef struct {
+    const char* description;
+    int         mode;
+} metering_mode_t;
+
+//-----------------------------------------------------------------------------
+// Photo Format
+typedef struct {
+    const char* description;
+    const char* mode;
+} photo_format_t;
+
+//-----------------------------------------------------------------------------
+// White Balance
+typedef struct {
+    const char* description;
+    int         mode;
+} white_balance_t;
+
+//-----------------------------------------------------------------------------
 // ISO Values
 typedef struct {
     const char* description;
+    const char* value;
 } iso_values_t;
 
 //-----------------------------------------------------------------------------
@@ -48,43 +109,8 @@ typedef struct {
 // Shutter Speeds
 typedef struct {
     const char* description;
-    float       speed;
+    const char* value;
 } shutter_speeds_t;
-
-//-----------------------------------------------------------------------------
-// Camera Capture Status
-typedef struct {
-    bool        data_ready;             /*< Data received from camera*/
-    float       image_interval;         /*< Image capture interval in seconds*/
-    float       video_framerate;        /*< Video frame rate in Hz*/
-    uint32_t    recording_time_ms;      /*< Time in milliseconds since recording started*/
-    float       available_capacity;     /*< Available storage capacity in MiB*/
-    uint16_t    image_resolution_h;     /*< Image resolution in pixels horizontal*/
-    uint16_t    image_resolution_v;     /*< Image resolution in pixels vertical*/
-    uint16_t    video_resolution_h;     /*< Video resolution in pixels horizontal*/
-    uint16_t    video_resolution_v;     /*< Video resolution in pixels vertical*/
-    uint8_t     camera_id;              /*< Camera ID if there are multiple*/
-    uint8_t     image_status;           /*< Current status of image capturing (0: not running, 1: interval capture in progress)*/
-    uint8_t     video_status;           /*< Current status of video capturing (0: not running, 1: capture in progress)*/
-} camera_capture_status_t;
-
-//-----------------------------------------------------------------------------
-// Camera Settings
-typedef struct {
-    bool        data_ready;             /*< Data received from camera*/
-    float       aperture;               /*< Aperture is 1/value*/
-    float       shutter_speed;          /*< Shutter speed in s*/
-    float       iso_sensitivity;        /*< ISO sensitivity*/
-    float       white_balance;          /*< Color temperature in K*/
-    uint8_t     camera_id;              /*< Camera ID if there are multiple*/
-    uint8_t     aperture_locked;        /*< Aperture locked (0: auto, 1: locked)*/
-    uint8_t     shutter_speed_locked;   /*< Shutter speed locked (0: auto, 1: locked)*/
-    uint8_t     iso_sensitivity_locked; /*< ISO sensitivity locked (0: auto, 1: locked)*/
-    uint8_t     white_balance_locked;   /*< Color temperature locked (0: auto, 1: locked)*/
-    uint8_t     mode_id;                /*< Reserved for a camera mode ID*/
-    uint8_t     color_mode_id;          /*< Reserved for a color mode ID*/
-    uint8_t     image_format_id;        /*< Reserved for image format ID*/
-} camera_settings_t;
 
 //-----------------------------------------------------------------------------
 class CameraControl : public QObject
@@ -92,7 +118,7 @@ class CameraControl : public QObject
     Q_OBJECT
 public:
     CameraControl(QObject* parent = NULL);
-    ~CameraControl() {}
+    ~CameraControl();
 
     //-- Camera Control
     enum VideoStatus {
@@ -101,6 +127,7 @@ public:
         VIDEO_CAPTURE_STATUS_UNDEFINED
     };
 
+    //-- cam_mode
     enum CameraMode {
         CAMERA_MODE_UNDEFINED = 0,
         CAMERA_MODE_VIDEO,
@@ -145,7 +172,7 @@ public:
     QStringList isoList             ();
     QStringList shutterList         ();
 
-    quint32     currentVideoRes     () { return _currentVideoRes; }
+    quint32     currentVideoRes     () { return _currentVideoResIndex; }
     quint32     currentWb           () { return _currentWb; }
     quint32     currentIso          () { return _currentIso; }
     quint32     currentShutter      () { return _currentShutter; }
@@ -158,12 +185,13 @@ public:
     void        setCurrentIso       (quint32 index);
     void        setCurrentShutter   (quint32 index);
 
+    QNetworkAccessManager*  networkManager  ();
+
 private slots:
-    void    _mavlinkMessageReceived (const mavlink_message_t& message);
-    void    _mavCommandResult       (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
     void    _requestCameraSettings  ();
     void    _requestCaptureStatus   ();
-    void    _updateRecordingTime    ();
+    void    _httpFinished           ();
+    void    _getCameraStatus        ();
 
 signals:
     void    videoStatusChanged      ();
@@ -175,8 +203,6 @@ signals:
     void    currentShutterChanged   ();
 
 private:
-    void    _handleCaptureStatus    (const mavlink_message_t& message);
-    void    _handleCameraSettings   (const mavlink_message_t& message);
     void    _updateAspectRatio      ();
     void    _updateVideoRes         (int w, int h, float f);
     int     _findVideoRes           (int w, int h, float f);
@@ -184,6 +210,12 @@ private:
     void    _updateShutter          (int speed, int locked);
     void    _setSettings_1          (float p1 = DEFAULT_VALUE, float p2 = DEFAULT_VALUE, float p3 = DEFAULT_VALUE, float p4 = DEFAULT_VALUE, float p5 = DEFAULT_VALUE, float p6 = DEFAULT_VALUE, float p7 = DEFAULT_VALUE);
     void    _setSettings_2          (float p1 = DEFAULT_VALUE, float p2 = DEFAULT_VALUE, float p3 = DEFAULT_VALUE, float p4 = DEFAULT_VALUE, float p5 = DEFAULT_VALUE, float p6 = DEFAULT_VALUE);
+    void    _initStreaming          ();
+    void    _handleVideoResStatus   ();
+    void    _sendAmbRequest         (QNetworkRequest request);
+    void    _setCamMode             (const char* mode);
+    void    _handleCameraStatus     (int http_code, QByteArray data);
+    void    _handleTakePhotoStatus  (int http_code, QByteArray data);
 
 private:
     Vehicle*                _vehicle;
@@ -207,11 +239,15 @@ private:
 
     bool                    _waitingShutter;
     int                     _cameraSupported;
-    quint32                 _currentVideoRes;
+    int                     _httpErrorCount;
+    quint32                 _currentVideoResIndex;
+
+
     quint32                 _currentWb;
     quint32                 _currentIso;
     quint32                 _currentShutter;
 
-    //-- This should come from the camera. In the mean time, we keep track of it here.
-    QTime                   _recordTime;
+    //-- Direct Ambarella Interface
+    QNetworkAccessManager*  _networkManager;
+    amb_camera_status_t     _amb_cam_status;
 };
