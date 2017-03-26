@@ -402,10 +402,17 @@ CameraControl::formatCard()
 
 //-----------------------------------------------------------------------------
 void
+CameraControl::resetSettings()
+{
+    _sendAmbRequest(QNetworkRequest(QString("%1RESET_DEFAULT").arg(kAmbCommand)));
+}
+
+//-----------------------------------------------------------------------------
+void
 CameraControl::_handleShutterStatus()
 {
     for(uint32_t i = 0; i < NUM_SHUTTER_VALUES; i++) {
-        if(_ambarellaStatus.video_mode == shutterSpeeds[i].value) {
+        if(_ambarellaStatus.shutter_time == shutterSpeeds[i].value) {
             if(_currentShutter != i) {
                 _currentShutter = i;
                 emit currentShutterChanged();
@@ -421,10 +428,10 @@ CameraControl::_handleISOStatus()
 {
     for(uint32_t i = 0; i < NUM_ISO_VALUES; i++) {
         QString iso = QString("ISO_%1").arg(isoValues[i].description);
-        if(_ambarellaStatus.video_mode == iso) {
-            if(_currentShutter != i) {
-                _currentShutter = i;
-                emit currentShutterChanged();
+        if(_ambarellaStatus.iso_value == iso) {
+            if(_currentIso != i) {
+                _currentIso = i;
+                emit currentIsoChanged();
                 return;
             }
         }
@@ -440,6 +447,7 @@ CameraControl::_handleVideoResStatus()
             if(_currentVideoResIndex != i) {
                 _currentVideoResIndex = i;
                 emit currentVideoResChanged();
+                _updateAspectRatio();
                 return;
             }
         }
@@ -457,7 +465,7 @@ CameraControl::_httpFinished()
         const QNetworkRequest request = reply->request();
         QString url = request.url().toString();
         url.replace(kAmbCommand, "");
-        qCDebug(YuneecLogVerbose) << QString("%1 HTTP Result:").arg(url) << http_code;
+        qCDebug(YuneecCameraLog) << QString("%1 HTTP Result:").arg(url) << http_code;
         if(url.contains("GET_STATUS")) {
             _handleCameraStatus(http_code, data);
         } else if(url.contains("TAKE_PHOTO")) {
@@ -472,7 +480,7 @@ void
 CameraControl::_handleCameraStatus(int http_code, QByteArray data)
 {
     if(http_code == 200) {
-        qCDebug(YuneecLogVerbose) << "GET_STATUS" << data;
+        qCDebug(YuneecCameraLog) << "GET_STATUS" << data;
         _cameraSupported = CAMERA_SUPPORT_YES;
         QJsonParseError jsonParseError;
         QJsonDocument doc = QJsonDocument::fromJson(data, &jsonParseError);
@@ -487,6 +495,7 @@ CameraControl::_handleCameraStatus(int http_code, QByteArray data)
             if(_ambarellaStatus.cam_mode != cam_mode) {
                 _ambarellaStatus.cam_mode = cam_mode;
                 emit cameraModeChanged();
+                _updateAspectRatio();
             }
             //-- Status
             QString status = set.value(QString("status")).toString();
@@ -542,7 +551,6 @@ CameraControl::_handleCameraStatus(int http_code, QByteArray data)
             if(_ambarellaStatus.ae_enable != ae) {
                 _ambarellaStatus.ae_enable = ae;
                 emit aeModeChanged();
-                qDebug() << "AE Mode:" << ae;
                 //-- If AE enabled, lock ISO and Shutter
                 if(ae) {
                     _currentIso = NUM_ISO_VALUES - 1;
@@ -625,7 +633,7 @@ CameraControl::_handleCameraStatus(int http_code, QByteArray data)
             _ambarellaStatus.timer_photo_sta = set.value(QString("timer_photo_sta")).toString().toInt();
             //-- If recording video, we do this more often
             if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
-                _statusTimer.start(500);
+                _statusTimer.start(333);
             } else {
                 _statusTimer.start(5000);
             }
@@ -646,7 +654,7 @@ void
 CameraControl::_handleTakePhotoStatus(int http_code, QByteArray data)
 {
     if(http_code == 200) {
-        qCDebug(YuneecLogVerbose) << "TAKE_PHOTO" << data;
+        qCDebug(YuneecCameraLog) << "TAKE_PHOTO" << data;
         if(data.contains("status\":\"OK")) {
             _cameraSound.setLoopCount(1);
             _cameraSound.play();
@@ -664,6 +672,8 @@ CameraControl::videoStatus()
     if(_cameraSupported == CAMERA_SUPPORT_YES) {
         if(cameraMode() == CAMERA_MODE_VIDEO && _ambarellaStatus.status == "record")
             return VIDEO_CAPTURE_STATUS_RUNNING;
+        else if(cameraMode() == CAMERA_MODE_VIDEO && _ambarellaStatus.status == "capture")
+            return VIDEO_CAPTURE_STATUS_CAPTURE;
         else
             return VIDEO_CAPTURE_STATUS_STOPPED;
     }
@@ -675,7 +685,6 @@ CameraControl::CameraMode
 CameraControl::cameraMode()
 {
     if(_cameraSupported == CAMERA_SUPPORT_YES) {
-        qCDebug(YuneecCameraLog) << "Get cameraMode:" << _ambarellaStatus.cam_mode;
         return (CameraMode)_ambarellaStatus.cam_mode;
     }
     return CAMERA_MODE_UNDEFINED;
@@ -843,20 +852,15 @@ CameraControl::recordTimeStr()
 void
 CameraControl::_updateAspectRatio()
 {
-    /*
-    qCDebug(YuneecCameraLog) << "_updateAspectRatio() Mode:" << _cameraSettings.mode_id;
-    if(_cameraSettings.data_ready) {
-        //-- Photo Mode
-        if(_cameraSettings.mode_id == CAMERA_MODE_PHOTO) {
-            qCDebug(YuneecCameraLog) << "Set 4:3 Aspect Ratio";
-            qgcApp()->toolbox()->settingsManager()->videoSettings()->aspectRatio()->setRawValue(1.333333);
-        //-- Video Mode
-        } else if(_cameraSettings.mode_id == CAMERA_MODE_VIDEO && _currentVideoResIndex < (int)NUM_VIDEO_RES) {
-            qCDebug(YuneecCameraLog) << "Set Video Aspect Ratio" << videoResOptions[_currentVideoResIndex].aspectRatio;
-            qgcApp()->toolbox()->settingsManager()->videoSettings()->aspectRatio()->setRawValue(videoResOptions[_currentVideoResIndex].aspectRatio);
-        }
+    //-- Photo Mode
+    if(_ambarellaStatus.cam_mode == CAMERA_MODE_PHOTO) {
+        qCDebug(YuneecCameraLog) << "Set 4:3 Aspect Ratio";
+        qgcApp()->toolbox()->settingsManager()->videoSettings()->aspectRatio()->setRawValue(1.333333);
+    //-- Video Mode
+    } else if(_ambarellaStatus.cam_mode == CAMERA_MODE_VIDEO && _currentVideoResIndex < NUM_VIDEO_RES) {
+        qCDebug(YuneecCameraLog) << "Set Video Aspect Ratio" << videoResOptions[_currentVideoResIndex].aspectRatio;
+        qgcApp()->toolbox()->settingsManager()->videoSettings()->aspectRatio()->setRawValue(videoResOptions[_currentVideoResIndex].aspectRatio);
     }
-    */
 }
 
 //-----------------------------------------------------------------------------

@@ -17,6 +17,7 @@
 import QtQuick          2.4
 import QtPositioning    5.2
 import QtQuick.Layouts  1.2
+import QtQuick.Dialogs  1.2
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
@@ -423,6 +424,8 @@ Item {
                         rowSpacing:     columnSpacing * 0.5
                         columns:        2
                         anchors.horizontalCenter: parent.horizontalCenter
+                        //-------------------------------------------
+                        //-- Video Recording Resolution
                         Rectangle {
                             color:      qgcPal.button
                             height:     1
@@ -443,6 +446,8 @@ Item {
                             }
                             Layout.preferredWidth:  _editFieldWidth
                         }
+                        //-------------------------------------------
+                        //-- White Balance
                         Rectangle {
                             color:      qgcPal.button
                             height:     1
@@ -463,6 +468,8 @@ Item {
                             }
                             Layout.preferredWidth:  _editFieldWidth
                         }
+                        //-------------------------------------------
+                        //-- AE Mode
                         Rectangle {
                             color:      qgcPal.button
                             height:     1
@@ -479,6 +486,8 @@ Item {
                             Layout.alignment: Qt.AlignRight
                             onClicked:  TyphoonHQuickInterface.cameraControl.aeMode = checked ? CameraControl.AE_MODE_AUTO : CameraControl.AE_MODE_MANUAL
                         }
+                        //-------------------------------------------
+                        //-- EV (auto)
                         Rectangle {
                             color:      qgcPal.button
                             height:     1
@@ -500,6 +509,8 @@ Item {
                             Layout.preferredWidth:  _editFieldWidth
                             enabled:    TyphoonHQuickInterface.cameraControl.aeMode === CameraControl.AE_MODE_AUTO
                         }
+                        //-------------------------------------------
+                        //-- ISO (manual)
                         Rectangle {
                             color:      qgcPal.button
                             height:     1
@@ -521,6 +532,8 @@ Item {
                             Layout.preferredWidth:  _editFieldWidth
                             enabled:    TyphoonHQuickInterface.cameraControl.aeMode !== CameraControl.AE_MODE_AUTO
                         }
+                        //-------------------------------------------
+                        //-- Shutter Speed (manual)
                         Rectangle {
                             color:      qgcPal.button
                             height:     1
@@ -542,6 +555,8 @@ Item {
                             Layout.preferredWidth:  _editFieldWidth
                             enabled:    TyphoonHQuickInterface.cameraControl.aeMode !== CameraControl.AE_MODE_AUTO
                         }
+                        //-------------------------------------------
+                        //-- Color "IQ" Mode
                         Rectangle {
                             color:      qgcPal.button
                             height:     1
@@ -562,6 +577,8 @@ Item {
                             }
                             Layout.preferredWidth:  _editFieldWidth
                         }
+                        //-------------------------------------------
+                        //-- Photo File Format
                         Rectangle {
                             color:      qgcPal.button
                             height:     1
@@ -582,6 +599,8 @@ Item {
                             }
                             Layout.preferredWidth:  _editFieldWidth
                         }
+                        //-------------------------------------------
+                        //-- Metering Mode
                         Rectangle {
                             color:      qgcPal.button
                             height:     1
@@ -602,6 +621,8 @@ Item {
                             }
                             Layout.preferredWidth:  _editFieldWidth
                         }
+                        //-------------------------------------------
+                        //-- Screen Grid
                         Rectangle {
                             color:      qgcPal.button
                             height:     1
@@ -618,6 +639,37 @@ Item {
                             Layout.alignment: Qt.AlignRight
                             onClicked:  QGroundControl.settingsManager.videoSettings.gridLines.rawValue = checked
                         }
+                        //-------------------------------------------
+                        //-- Reset Camera
+                        Rectangle {
+                            color:      qgcPal.button
+                            height:     1
+                            width:      mainWindow.width * 0.4
+                            Layout.columnSpan: 2
+                            Layout.maximumHeight: 2
+                        }
+                        QGCLabel {
+                            text:       "Reset Camera Defaults"
+                            Layout.fillWidth: true
+                        }
+                        QGCButton {
+                            text:       "Reset"
+                            onClicked:  resetPrompt.open()
+                            Layout.preferredWidth:  _editFieldWidth
+                            MessageDialog {
+                                id:                 resetPrompt
+                                title:              qsTr("Reset Camera to Factory Settings")
+                                text:               qsTr("Confirm resetting all settings?")
+                                standardButtons:    StandardButton.Yes | StandardButton.No
+                                onNo: resetPrompt.close()
+                                onYes: {
+                                    TyphoonHQuickInterface.cameraControl.resetSettings()
+                                    resetPrompt.close()
+                                }
+                            }
+                        }
+                        //-------------------------------------------
+                        //-- Format SD Card
                         Rectangle {
                             color:      qgcPal.button
                             height:     1
@@ -631,9 +683,19 @@ Item {
                         }
                         QGCButton {
                             text:       "Format"
-                            //-- Not Yet
-                            enabled:    false
+                            onClicked:  formatPrompt.open()
                             Layout.preferredWidth:  _editFieldWidth
+                            MessageDialog {
+                                id:                 formatPrompt
+                                title:              qsTr("Format MicroSD Card")
+                                text:               qsTr("Confirm erasing all files?")
+                                standardButtons:    StandardButton.Yes | StandardButton.No
+                                onNo: formatPrompt.close()
+                                onYes: {
+                                    TyphoonHQuickInterface.cameraControl.formatCard()
+                                    formatPrompt.close()
+                                }
+                            }
                         }
                         Rectangle {
                             color:      qgcPal.button

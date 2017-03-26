@@ -130,6 +130,7 @@ public:
     enum VideoStatus {
         VIDEO_CAPTURE_STATUS_STOPPED = 0,
         VIDEO_CAPTURE_STATUS_RUNNING,
+        VIDEO_CAPTURE_STATUS_CAPTURE,
         VIDEO_CAPTURE_STATUS_UNDEFINED
     };
 
@@ -186,6 +187,7 @@ public:
     Q_INVOKABLE void takePhoto      ();
     Q_INVOKABLE void toggleMode     ();
     Q_INVOKABLE void toggleVideo    ();
+    Q_INVOKABLE void resetSettings  ();
     Q_INVOKABLE void formatCard     ();
 
     VideoStatus videoStatus         ();
