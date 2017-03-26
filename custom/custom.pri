@@ -60,15 +60,15 @@ HEADERS += \
 INCLUDEPATH += \
     $$PWD/src \
 
-equals(QT_MAJOR_VERSION, 5) {
-    greaterThan(QT_MINOR_VERSION, 5) {
-        ReleaseBuild {
-            QT      += qml-private
-            CONFIG  += qtquickcompiler
-            message("Using Qt Quick Compiler")
-        }
-    }
-}
+#equals(QT_MAJOR_VERSION, 5) {
+#    greaterThan(QT_MINOR_VERSION, 5) {
+#        ReleaseBuild {
+#            QT      += qml-private
+#            CONFIG  += qtquickcompiler
+#            message("Using Qt Quick Compiler")
+#        }
+#    }
+#}
 
 QT += \
     multimedia

@@ -22,6 +22,8 @@
 
 #include "m4serial.h"
 
+#include <QNetworkAccessManager>
+
 //-----------------------------------------------------------------------------
 // RC Channel data provided by Yuneec
 #include "m4channeldata.h"
@@ -87,9 +89,9 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     , _bound(false)
     , _resetBind(false)
     , _vehicle(NULL)
-    , _networkManager(NULL)
     , _cameraControl(NULL)
     , _m4State(TyphoonHQuickInterface::M4_STATE_NONE)
+    , _armed(false)
 {
     Q_ASSERT(pTyphoonHandler == NULL);
     pTyphoonHandler = this;
@@ -112,9 +114,6 @@ TyphoonHM4Interface::~TyphoonHM4Interface()
     emit destroyed();
     if(_commPort) {
         delete _commPort;
-    }
-    if(_networkManager) {
-        delete _networkManager;
     }
     if(_cameraControl) {
         delete _cameraControl;
@@ -211,7 +210,6 @@ TyphoonHM4Interface::_vehicleReady(bool ready)
         if(ready) {
             qCDebug(YuneecLog) << "_vehicleReady( YES )";
             _cameraControl->setVehicle(_vehicle);
-            _initStreaming();
             //-- First boot, not bound
             if(_m4State == TyphoonHQuickInterface::M4_STATE_AWAIT) {
                 enterBindMode();
@@ -236,12 +234,21 @@ TyphoonHM4Interface::_remoteControlRSSIChanged(uint8_t rssi)
 
 //-----------------------------------------------------------------------------
 void
+TyphoonHM4Interface::_armedChanged(bool armed)
+{
+    _armed = armed;
+    emit armedChanged(armed);
+}
+
+//-----------------------------------------------------------------------------
+void
 TyphoonHM4Interface::_vehicleAdded(Vehicle* vehicle)
 {
     if(!_vehicle) {
         qCDebug(YuneecLog) << "_vehicleAdded()";
         _vehicle = vehicle;
         connect(_vehicle, &Vehicle::remoteControlRSSIChanged, this, &TyphoonHM4Interface::_remoteControlRSSIChanged);
+        connect(_vehicle, &Vehicle::armedChanged, this, &TyphoonHM4Interface::_armedChanged);
         //-- There are two defines for the argument to this function. One, in theory sets the
         //   button to turn the screen on/off (BIND_KEY_FUNCTION_PWR). The other is is used
         //   for arming the vehicle (BIND_KEY_FUNCTION_BIND).
@@ -260,35 +267,6 @@ TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
         _vehicle = NULL;
         _bound = false;
         _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHM4Interface::_initStreaming()
-{
-    if(!_networkManager) {
-        _networkManager = new QNetworkAccessManager(this);
-    }
-    //-- Set RTSP resolution to 480P
-    QNetworkRequest request(QString("http://192.168.42.1/cgi-bin/cgi?CMD=SET_RTSP_VID&Reslution=480P"));
-    QNetworkReply* reply = _networkManager->get(request);
-    connect(reply, &QNetworkReply::finished,  this, &TyphoonHM4Interface::_httpFinished);
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHM4Interface::_httpFinished()
-{
-    QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
-    if(reply) {
-#if 0
-        const int http_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        qCDebug(YuneecLogVerbose) << "HTTP Result:" << http_code;
-        QByteArray data = reply->readAll();
-        qCDebug(YuneecLogVerbose) << data;
-#endif
-        reply->deleteLater();
     }
 }
 

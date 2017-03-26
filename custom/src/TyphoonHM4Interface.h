@@ -33,8 +33,9 @@ public:
     void    initM4                  ();
     QString m4StateStr              ();
     void    resetBind               ();
+    bool    armed                   () { return _armed; }
 
-    CameraControl* cameraControl    () { return _cameraControl; }
+    CameraControl*          cameraControl       () { return _cameraControl; }
 
     TyphoonHQuickInterface::M4State     m4State             () { return _m4State; }
     const ControllerLocation&           controllerLocation  () { return _controllerLocation; }
@@ -54,8 +55,8 @@ private slots:
     void    _vehicleAdded                       (Vehicle* vehicle);
     void    _vehicleRemoved                     (Vehicle* vehicle);
     void    _vehicleReady                       (bool ready);
-    void    _httpFinished                       ();
     void    _remoteControlRSSIChanged           (uint8_t rssi);
+    void    _armedChanged                       (bool armed);
 
 private:
     bool    _exitToAwait                        ();
@@ -90,7 +91,6 @@ private:
     void    _switchChanged                      (m4Packet& packet);
     void    _handleMixedChannelData             (m4Packet& packet);
     void    _handControllerFeedback             (m4Packet& packet);
-    void    _initStreaming                      ();
 
 signals:
     void    m4StateChanged                      ();
@@ -98,6 +98,7 @@ signals:
     void    channelDataStatus                   (QByteArray channelData);
     void    controllerLocationChanged           ();
     void    destroyed                           ();
+    void    armedChanged                        (bool armed);
     //-- WIFI
     void    newWifiSSID                         (QString ssid, int rssi);
     void    newWifiRSSI                         ();
@@ -140,8 +141,8 @@ private:
     bool                    _bound;
     bool                    _resetBind;
     Vehicle*                _vehicle;
-    QNetworkAccessManager*  _networkManager;
     CameraControl*          _cameraControl;
     TyphoonHQuickInterface::M4State     _m4State;
     QString                 _currentConnection;
+    bool                    _armed;
 };

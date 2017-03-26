@@ -61,7 +61,10 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(_pHandler, &TyphoonHM4Interface::authenticationError,          this, &TyphoonHQuickInterface::_authenticationError);
         connect(_pHandler, &TyphoonHM4Interface::wifiConnected,                this, &TyphoonHQuickInterface::_wifiConnected);
         connect(_pHandler, &TyphoonHM4Interface::batteryUpdate,                this, &TyphoonHQuickInterface::_batteryUpdate);
+        connect(_pHandler, &TyphoonHM4Interface::armedChanged,                 this, &TyphoonHQuickInterface::_armedChanged);
         connect(&_scanTimer, &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
+        connect(&_flightTimer, &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
+        _flightTimer.setSingleShot(false);
     }
 }
 
@@ -422,4 +425,30 @@ TyphoonHQuickInterface::_bindTimeout()
         emit bindTimeout();
         startScan();
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_armedChanged(bool armed)
+{
+    if(armed) {
+        _flightTime.start();
+        _flightTimer.start(500);
+    } else {
+        _flightTimer.stop();
+    }
+}
+
+//-----------------------------------------------------------------------------
+QString
+TyphoonHQuickInterface::flightTime()
+{
+    return QTime(0, 0).addMSecs(_flightTime.elapsed()).toString("hh:mm:ss");
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_flightUpdate()
+{
+    emit flightTimeChanged();
 }

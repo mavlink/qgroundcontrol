@@ -35,20 +35,21 @@ public:
 
     Q_ENUMS(M4State)
 
-    Q_PROPERTY(M4State          m4State         READ    m4State                             NOTIFY m4StateChanged)
-    Q_PROPERTY(QString          m4StateStr      READ    m4StateStr                          NOTIFY m4StateChanged)
-    Q_PROPERTY(bool             hardwareGPS     READ    hardwareGPS                         CONSTANT)
-    Q_PROPERTY(double           latitude        READ    latitude                            NOTIFY controllerLocationChanged)
-    Q_PROPERTY(double           longitude       READ    longitude                           NOTIFY controllerLocationChanged)
-    Q_PROPERTY(double           altitude        READ    altitude                            NOTIFY controllerLocationChanged)
-    Q_PROPERTY(CameraControl*   cameraControl   READ    cameraControl                       CONSTANT)
-    Q_PROPERTY(QStringList      ssidList        READ    ssidList                            NOTIFY ssidListChanged)
-    Q_PROPERTY(bool             scanningWiFi    READ    scanningWiFi                        NOTIFY scanningWiFiChanged)
-    Q_PROPERTY(bool             bindingWiFi     READ    bindingWiFi                         NOTIFY bindingWiFiChanged)
-    Q_PROPERTY(QString          connectedSSID   READ    connectedSSID                       NOTIFY connectedSSIDChanged)
-    Q_PROPERTY(QString          connectedCamera READ    connectedCamera                     NOTIFY connectedSSIDChanged)
-    Q_PROPERTY(int              rssi            READ    rssi                                NOTIFY rssiChanged)
-    Q_PROPERTY(qreal            rcBattery       READ    rcBattery                           NOTIFY rcBatteryChanged)
+    Q_PROPERTY(M4State          m4State         READ    m4State             NOTIFY m4StateChanged)
+    Q_PROPERTY(QString          m4StateStr      READ    m4StateStr          NOTIFY m4StateChanged)
+    Q_PROPERTY(bool             hardwareGPS     READ    hardwareGPS         CONSTANT)
+    Q_PROPERTY(double           latitude        READ    latitude            NOTIFY controllerLocationChanged)
+    Q_PROPERTY(double           longitude       READ    longitude           NOTIFY controllerLocationChanged)
+    Q_PROPERTY(double           altitude        READ    altitude            NOTIFY controllerLocationChanged)
+    Q_PROPERTY(CameraControl*   cameraControl   READ    cameraControl       CONSTANT)
+    Q_PROPERTY(QStringList      ssidList        READ    ssidList            NOTIFY ssidListChanged)
+    Q_PROPERTY(bool             scanningWiFi    READ    scanningWiFi        NOTIFY scanningWiFiChanged)
+    Q_PROPERTY(bool             bindingWiFi     READ    bindingWiFi         NOTIFY bindingWiFiChanged)
+    Q_PROPERTY(QString          connectedSSID   READ    connectedSSID       NOTIFY connectedSSIDChanged)
+    Q_PROPERTY(QString          connectedCamera READ    connectedCamera     NOTIFY connectedSSIDChanged)
+    Q_PROPERTY(int              rssi            READ    rssi                NOTIFY rssiChanged)
+    Q_PROPERTY(qreal            rcBattery       READ    rcBattery           NOTIFY rcBatteryChanged)
+    Q_PROPERTY(QString          flightTime      READ    flightTime          NOTIFY flightTimeChanged)
 
     Q_INVOKABLE void enterBindMode  ();
     Q_INVOKABLE void initM4         ();
@@ -79,6 +80,7 @@ public:
     bool        bindingWiFi         () { return _bindingWiFi; }
     int         rssi                ();
     qreal       rcBattery           ();
+    QString     flightTime          ();
 
     void        init                (TyphoonHM4Interface* pHandler);
 
@@ -94,6 +96,7 @@ signals:
     void    rssiChanged                 ();
     void    bindTimeout                 ();
     void    rcBatteryChanged            ();
+    void    flightTimeChanged           ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -108,6 +111,8 @@ private slots:
     void    _delayedBind                ();
     void    _bindTimeout                ();
     void    _batteryUpdate              ();
+    void    _armedChanged               (bool armed);
+    void    _flightUpdate               ();
 
 private:
     TyphoonHM4Interface*    _pHandler;
@@ -115,6 +120,8 @@ private:
     QString                 _ssid;
     QString                 _password;
     QTimer                  _scanTimer;
+    QTimer                  _flightTimer;
+    QTime                   _flightTime;
     bool                    _scanEnabled;
     bool                    _scanningWiFi;
     bool                    _bindingWiFi;
