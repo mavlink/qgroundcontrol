@@ -22,9 +22,10 @@
 #include "SimpleMissionItem.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 
 #ifndef __mobile__
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #endif
 
 #include <QJsonDocument>
@@ -135,18 +136,6 @@ void RallyPointController::loadFromFile(const QString& filename)
     _setFirstPointCurrent();
 }
 
-void RallyPointController::loadFromFilePicker(void)
-{
-#ifndef __mobile__
-    QString filename = QGCFileDialog::getOpenFileName(NULL, "Select Rally Point File to load", QString(), "Rally point file (*.rally);;All Files (*.*)");
-
-    if (filename.isEmpty()) {
-        return;
-    }
-    loadFromFile(filename);
-#endif
-}
-
 void RallyPointController::saveToFile(const QString& filename)
 {
     if (filename.isEmpty()) {
@@ -155,7 +144,7 @@ void RallyPointController::saveToFile(const QString& filename)
 
     QString rallyFilename = filename;
     if (!QFileInfo(filename).fileName().contains(".")) {
-        rallyFilename += QString(".%1").arg(QGCApplication::rallyPointFileExtension);
+        rallyFilename += QString(".%1").arg(AppSettings::rallyPointFileExtension);
     }
 
     QFile file(rallyFilename);
@@ -182,18 +171,6 @@ void RallyPointController::saveToFile(const QString& filename)
     }
 
     setDirty(false);
-}
-
-void RallyPointController::saveToFilePicker(void)
-{
-#ifndef __mobile__
-    QString filename = QGCFileDialog::getSaveFileName(NULL, "Select file to save Rally Points to", QString(), "Rally point file (*.rally);;All Files (*.*)");
-
-    if (filename.isEmpty()) {
-        return;
-    }
-    saveToFile(filename);
-#endif
 }
 
 void RallyPointController::removeAll(void)
@@ -259,7 +236,7 @@ void RallyPointController::_loadComplete(const QList<QGeoCoordinate> rgPoints)
 
 QString RallyPointController::fileExtension(void) const
 {
-    return QGCApplication::rallyPointFileExtension;
+    return AppSettings::rallyPointFileExtension;
 }
 
 void RallyPointController::addPoint(QGeoCoordinate point)

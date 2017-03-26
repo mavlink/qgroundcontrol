@@ -111,21 +111,29 @@ QGCView {
                 MenuItem {
                     text:           qsTr("Load from file...")
                     onTriggered: {
-                        if (ScreenTools.isMobile) {
-                            qgcView.showDialog(mobileFilePicker, qsTr("Select Parameter File"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
-                        } else {
-                            controller.loadFromFilePicker()
-                        }
+                        var appSettings = QGroundControl.settingsManager.appSettings
+
+                        fileDialog.qgcView =        qgcView
+                        fileDialog.title =          qsTr("Select Parameter File")
+                        fileDialog.selectExisting = true
+                        fileDialog.folder =         appSettings.parameterSavePath
+                        fileDialog.fileExtension =  appSettings.parameterFileExtension
+                        fileDialog.nameFilters =    [ qsTr("Parameter Files (*.%1)").arg(appSettings.parameterFileExtension) , qsTr("All Files (*.*)") ]
+                        fileDialog.openForLoad()
                     }
                 }
                 MenuItem {
                     text:           qsTr("Save to file...")
                     onTriggered: {
-                        if (ScreenTools.isMobile) {
-                            qgcView.showDialog(mobileFileSaver, qsTr("Save Parameter File"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
-                        } else {
-                            controller.saveToFilePicker()
-                        }
+                        var appSettings = QGroundControl.settingsManager.appSettings
+
+                        fileDialog.qgcView =        qgcView
+                        fileDialog.title =          qsTr("Save Parameters")
+                        fileDialog.selectExisting = false
+                        fileDialog.folder =         appSettings.parameterSavePath
+                        fileDialog.fileExtension =  appSettings.parameterFileExtension
+                        fileDialog.nameFilters =    [ qsTr("Parameter Files (*.%1)").arg(appSettings.parameterFileExtension) , qsTr("All Files (*.*)") ]
+                        fileDialog.openForSave()
                     }
                 }
                 MenuSeparator { visible: _showRCToParam }
@@ -272,30 +280,26 @@ QGCView {
         }
     } // QGCViewPanel
 
+    QGCFileDialog {
+        id: fileDialog
+
+        onAcceptedForSave: {
+            controller.saveToFile(file)
+            close()
+        }
+
+        onAcceptedForLoad: {
+            controller.loadFromFile(file)
+            close()
+        }
+    }
+
     Component {
         id: editorDialogComponent
 
         ParameterEditorDialog {
             fact:           _editorDialogFact
             showRCToParam:  _showRCToParam
-        }
-    }
-
-    Component {
-        id: mobileFilePicker
-
-        QGCMobileFileOpenDialog {
-            fileExtension:      QGroundControl.parameterFileExtension
-            onFilenameReturned: controller.loadFromFile(filename)
-        }
-    }
-
-    Component {
-        id: mobileFileSaver
-
-        QGCMobileFileSaveDialog {
-            fileExtension:      QGroundControl.parameterFileExtension
-            onFilenameReturned: controller.saveToFile(filename)
         }
     }
 

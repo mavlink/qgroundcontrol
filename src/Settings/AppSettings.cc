@@ -13,6 +13,7 @@
 
 #include <QQmlEngine>
 #include <QtQml>
+#include <QStandardPaths>
 
 const char* AppSettings::appSettingsGroupName =                         "App";
 const char* AppSettings::offlineEditingFirmwareTypeSettingsName =       "OfflineEditingFirmwareType";
@@ -21,7 +22,6 @@ const char* AppSettings::offlineEditingCruiseSpeedSettingsName =        "Offline
 const char* AppSettings::offlineEditingHoverSpeedSettingsName =         "OfflineEditingHoverSpeed";
 const char* AppSettings::batteryPercentRemainingAnnounceSettingsName =  "batteryPercentRemainingAnnounce";
 const char* AppSettings::defaultMissionItemAltitudeSettingsName =       "DefaultMissionItemAltitude";
-const char* AppSettings::missionAutoLoadDirSettingsName =               "MissionAutoLoadDir";
 const char* AppSettings::telemetrySaveName =                            "PromptFLightDataSave";
 const char* AppSettings::telemetrySaveNotArmedName =                    "PromptFLightDataSaveNotArmed";
 const char* AppSettings::audioMutedName =                               "AudioMuted";
@@ -29,7 +29,18 @@ const char* AppSettings::virtualJoystickName =                          "Virtual
 const char* AppSettings::appFontPointSizeName =                         "BaseDeviceFontPointSize";
 const char* AppSettings::indoorPaletteName =                            "StyleIsDark";
 const char* AppSettings::showLargeCompassName =                         "ShowLargeCompass";
-const char* AppSettings::telemetrySavePathName =                        "TelemetrySavePath";
+const char* AppSettings::savePathName =                                 "SavePath";
+const char* AppSettings::autoLoadMissionsName =                         "AutoLoadMissions";
+
+const char* AppSettings::parameterFileExtension =   "params";
+const char* AppSettings::missionFileExtension =     "mission";
+const char* AppSettings::fenceFileExtension =       "fence";
+const char* AppSettings::rallyPointFileExtension =  "rally";
+const char* AppSettings::telemetryFileExtension =   "tlog";
+
+const char* AppSettings::parameterDirectory =   "Parameters";
+const char* AppSettings::telemetryDirectory =   "Telemetry";
+const char* AppSettings::missionDirectory =     "Missions";
 
 AppSettings::AppSettings(QObject* parent)
     : SettingsGroup(appSettingsGroupName, QString() /* root settings group */, parent)
@@ -39,7 +50,6 @@ AppSettings::AppSettings(QObject* parent)
     , _offlineEditingHoverSpeedFact(NULL)
     , _batteryPercentRemainingAnnounceFact(NULL)
     , _defaultMissionItemAltitudeFact(NULL)
-    , _missionAutoLoadDirFact(NULL)
     , _telemetrySaveFact(NULL)
     , _telemetrySaveNotArmedFact(NULL)
     , _audioMutedFact(NULL)
@@ -47,11 +57,44 @@ AppSettings::AppSettings(QObject* parent)
     , _appFontPointSizeFact(NULL)
     , _indoorPaletteFact(NULL)
     , _showLargeCompassFact(NULL)
-    , _telemetrySavePathFact(NULL)
+    , _savePathFact(NULL)
+    , _autoLoadMissionsFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");        
+    qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
     QGCPalette::setGlobalTheme(indoorPalette()->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
+
+    // Instantiate savePath so we can check for override and setup default path if needed
+
+    SettingsFact* savePathFact = qobject_cast<SettingsFact*>(savePath());
+    QString appName = qgcApp()->applicationName();
+    if (savePathFact->rawValue().toString().isEmpty() && _nameToMetaDataMap[savePathName]->rawDefaultValue().toString().isEmpty()) {
+#ifdef __mobile__
+        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
+        savePathFact->setVisible(false);
+#else
+        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+#endif
+        savePathFact->setRawValue(rootDir.filePath(appName));
+    }
+
+    connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::savePathsChanged);
+    connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::_checkSavePathDirectories);
+
+    _checkSavePathDirectories();
+}
+
+void AppSettings::_checkSavePathDirectories(void)
+{
+    QDir savePathDir(savePath()->rawValue().toString());
+    if (!savePathDir.exists()) {
+        QDir().mkpath(savePathDir.absolutePath());
+    }
+    if (savePathDir.exists()) {
+        savePathDir.mkdir(parameterDirectory);
+        savePathDir.mkdir(telemetryDirectory);
+        savePathDir.mkdir(missionDirectory);
+    }
 }
 
 Fact* AppSettings::offlineEditingFirmwareType(void)
@@ -104,15 +147,6 @@ Fact* AppSettings::defaultMissionItemAltitude(void)
     }
 
     return _defaultMissionItemAltitudeFact;
-}
-
-Fact* AppSettings::missionAutoLoadDir(void)
-{
-    if (!_missionAutoLoadDirFact) {
-        _missionAutoLoadDirFact = _createSettingsFact(missionAutoLoadDirSettingsName);
-    }
-
-    return _missionAutoLoadDirFact;
 }
 
 Fact* AppSettings::telemetrySave(void)
@@ -185,12 +219,60 @@ Fact* AppSettings::showLargeCompass(void)
     return _showLargeCompassFact;
 }
 
-Fact* AppSettings::telemetrySavePath(void)
+Fact* AppSettings::savePath(void)
 {
-    if (!_telemetrySavePathFact) {
-        _telemetrySavePathFact = _createSettingsFact(telemetrySavePathName);
+    if (!_savePathFact) {
+        _savePathFact = _createSettingsFact(savePathName);
     }
 
-    return _telemetrySavePathFact;
+    return _savePathFact;
+}
+
+QString AppSettings::missionSavePath(void)
+{
+    QString fullPath;
+
+    QString path = savePath()->rawValue().toString();
+    if (!path.isEmpty() && QDir(path).exists()) {
+        QDir dir(path);
+        return dir.filePath(missionDirectory);
+    }
+
+    return fullPath;
+}
+
+QString AppSettings::parameterSavePath(void)
+{
+    QString fullPath;
+
+    QString path = savePath()->rawValue().toString();
+    if (!path.isEmpty() && QDir(path).exists()) {
+        QDir dir(path);
+        return dir.filePath(parameterDirectory);
+    }
+
+    return fullPath;
+}
+
+QString AppSettings::telemetrySavePath(void)
+{
+    QString fullPath;
+
+    QString path = savePath()->rawValue().toString();
+    if (!path.isEmpty() && QDir(path).exists()) {
+        QDir dir(path);
+        return dir.filePath(telemetryDirectory);
+    }
+
+    return fullPath;
+}
+
+Fact* AppSettings::autoLoadMissions(void)
+{
+    if (!_autoLoadMissionsFact) {
+        _autoLoadMissionsFact = _createSettingsFact(autoLoadMissionsName);
+    }
+
+    return _autoLoadMissionsFact;
 }
 
