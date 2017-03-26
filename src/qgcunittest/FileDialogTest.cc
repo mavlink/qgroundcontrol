@@ -9,12 +9,12 @@
 
 
 /// @file
-///     @brief Unit test for QGCFileDialog catching mechanism.
+///     @brief Unit test for QGCQFileDialog catching mechanism.
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "FileDialogTest.h"
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 
 FileDialogTest::FileDialogTest(void)
 {
@@ -28,19 +28,19 @@ void FileDialogTest::_fileDialogExpected_test(void)
     
     for (int i=0; i<response.count(); i++) {
         setExpectedFileDialog(getExistingDirectory, QStringList(response[i]));
-        QCOMPARE(QGCFileDialog::getExistingDirectory(), response[i]);
+        QCOMPARE(QGCQFileDialog::getExistingDirectory(), response[i]);
         checkExpectedFileDialog();
     }
 
     for (int i=0; i<response.count(); i++) {
         setExpectedFileDialog(getOpenFileName, QStringList(response[i]));
-        QCOMPARE(QGCFileDialog::getOpenFileName(), response[i]);
+        QCOMPARE(QGCQFileDialog::getOpenFileName(), response[i]);
         checkExpectedFileDialog();
     }
     
     for (int i=0; i<response.count(); i++) {
         setExpectedFileDialog(getSaveFileName, QStringList(response[i]));
-        QCOMPARE(QGCFileDialog::getSaveFileName(), response[i]);
+        QCOMPARE(QGCQFileDialog::getSaveFileName(), response[i]);
         checkExpectedFileDialog();
     }
     
@@ -54,7 +54,7 @@ void FileDialogTest::_fileDialogExpected_test(void)
 
     for (int i=0; i<responseList.count(); i++) {
         setExpectedFileDialog(getOpenFileNames, responseList[i]);
-        QStringList retResponse = QGCFileDialog::getOpenFileNames();
+        QStringList retResponse = QGCQFileDialog::getOpenFileNames();
         checkExpectedFileDialog();
         QCOMPARE(retResponse.count(), responseList[i].count());
          for (int j=0; j<retResponse.count(); j++) {
@@ -66,14 +66,14 @@ void FileDialogTest::_fileDialogExpected_test(void)
 void FileDialogTest::_fileDialogUnexpected_test(void)
 {
     // This should cause an expected failure in the cleanup method
-    QGCFileDialog::getOpenFileName();
+    QGCQFileDialog::getOpenFileName();
     _expectMissedFileDialog = true;
 }
 
 void FileDialogTest::_previousFileDialog_test(void)
 {
     // This is the previous unexpected file dialog
-    QGCFileDialog::getOpenFileName();
+    QGCQFileDialog::getOpenFileName();
     
     // Setup for an expected message box.
     QEXPECT_FAIL("", "Expecting failure due to previous file dialog", Continue);
@@ -90,7 +90,7 @@ void FileDialogTest::_fileDialogExpectedIncorrect_test(void)
 {
     // Expecting save but get open dialog
     setExpectedFileDialog(getSaveFileName, QStringList());
-    QGCFileDialog::getOpenFileName();
+    QGCQFileDialog::getOpenFileName();
     checkExpectedFileDialog(expectFailWrongFileDialog);
     
     // This is going to fail in cleanup as well since we have a missed file dialog

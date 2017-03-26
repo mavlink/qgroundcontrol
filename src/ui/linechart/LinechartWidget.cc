@@ -37,7 +37,7 @@
 #include "LogCompressor.h"
 #include "QGC.h"
 #include "MG.h"
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #include "QGCMessageBox.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
@@ -433,7 +433,7 @@ void LinechartWidget::startLogging()
     // Let user select the log file name
     // QDate date(QDate::currentDate());
     // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
-    QString fileName = QGCFileDialog::getSaveFileName(this,
+    QString fileName = QGCQFileDialog::getSaveFileName(this,
         tr("Save Log File"),
         QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
         tr("Log Files (*.log)"),
