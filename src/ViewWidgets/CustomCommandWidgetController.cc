@@ -11,7 +11,7 @@
 #include "CustomCommandWidgetController.h"
 #include "MultiVehicleManager.h"
 #include "QGCMAVLink.h"
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #include "UAS.h"
 #include "QGCApplication.h"
 
@@ -53,7 +53,7 @@ void CustomCommandWidgetController::_activeVehicleChanged(Vehicle* activeVehicle
 void CustomCommandWidgetController::selectQmlFile(void)
 {
     QSettings settings;
-    QString qmlFile = QGCFileDialog::getOpenFileName(NULL, "Select custom Qml file", QString(), "Qml files (*.qml)");
+    QString qmlFile = QGCQFileDialog::getOpenFileName(NULL, "Select custom Qml file", QString(), "Qml files (*.qml)");
     if (qmlFile.isEmpty()) {
         _customQmlFile.clear();
         settings.remove(_settingsKey);

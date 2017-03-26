@@ -49,7 +49,7 @@
 #include "CustomCommandWidgetController.h"
 #include "ESP8266ComponentController.h"
 #include "ScreenToolsController.h"
-#include "QGCMobileFileDialogController.h"
+#include "QFileDialogController.h"
 #include "RCChannelMonitorController.h"
 #include "AutoPilotPlugin.h"
 #include "VehicleComponent.h"
@@ -86,7 +86,7 @@
 #endif
 
 #ifndef __mobile__
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #include "QGCMessageBox.h"
 #include "FirmwareUpgradeController.h"
 #include "MainWindow.h"
@@ -107,12 +107,6 @@
 #include "QGCMapEngine.h"
 
 QGCApplication* QGCApplication::_app = NULL;
-
-const char* QGCApplication::parameterFileExtension =    "params";
-const char* QGCApplication::missionFileExtension =      "mission";
-const char* QGCApplication::fenceFileExtension =        "fence";
-const char* QGCApplication::rallyPointFileExtension =   "rally";
-const char* QGCApplication::telemetryFileExtension =     "tlog";
 
 const char* QGCApplication::_deleteAllSettingsKey           = "DeleteAllSettingsNextBoot";
 const char* QGCApplication::_settingsVersionKey             = "SettingsVersion";
@@ -374,7 +368,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<GeoFenceController>                 ("QGroundControl.Controllers", 1, 0, "GeoFenceController");
     qmlRegisterType<RallyPointController>               ("QGroundControl.Controllers", 1, 0, "RallyPointController");
     qmlRegisterType<ValuesWidgetController>             ("QGroundControl.Controllers", 1, 0, "ValuesWidgetController");
-    qmlRegisterType<QGCMobileFileDialogController>      ("QGroundControl.Controllers", 1, 0, "QGCMobileFileDialogController");
+    qmlRegisterType<QFileDialogController>      ("QGroundControl.Controllers", 1, 0, "QFileDialogController");
     qmlRegisterType<RCChannelMonitorController>         ("QGroundControl.Controllers", 1, 0, "RCChannelMonitorController");
     qmlRegisterType<JoystickConfigController>           ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
     qmlRegisterType<LogDownloadController>              ("QGroundControl.Controllers", 1, 0, "LogDownloadController");
@@ -495,7 +489,7 @@ void QGCApplication::saveTelemetryLogOnMainThread(QString tempLogfile)
     // The vehicle is gone now and we are shutting down so we need to use a message box for errors to hold shutdown and show the error
     if (_checkTelemetrySavePath(true /* useMessageBox */)) {
 
-        QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath()->rawValue().toString();
+        QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
         QDir saveDir(saveDirPath);
 
         QString nameFormat("%1%2.tlog");
@@ -527,9 +521,9 @@ bool QGCApplication::_checkTelemetrySavePath(bool useMessageBox)
 {
     QString errorTitle = tr("Telemetry save error");
 
-    QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath()->rawValue().toString();
+    QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
     if (saveDirPath.isEmpty()) {
-        QString error = tr("Unable to save telemetry log. Telemetry save directory is not set.");
+        QString error = tr("Unable to save telemetry log. Application save directory is not set.");
         if (useMessageBox) {
             QGCMessageBox::warning(errorTitle, error);
         } else {

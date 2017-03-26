@@ -77,6 +77,7 @@
         <file alias="QGroundControl/Controls/QGCCheckBox.qml">src/QmlControls/QGCCheckBox.qml</file>
         <file alias="QGroundControl/Controls/QGCColoredImage.qml">src/QmlControls/QGCColoredImage.qml</file>
         <file alias="QGroundControl/Controls/QGCComboBox.qml">src/QmlControls/QGCComboBox.qml</file>
+        <file alias="QGroundControl/Controls/QGCFileDialog.qml">src/QmlControls/QGCFileDialog.qml</file>
         <file alias="QGroundControl/Controls/QGCFlickable.qml">src/QmlControls/QGCFlickable.qml</file>
         <file alias="QGroundControl/Controls/QGCFlickableHorizontalIndicator.qml">src/QmlControls/QGCFlickableHorizontalIndicator.qml</file>
         <file alias="QGroundControl/Controls/QGCFlickableVerticalIndicator.qml">src/QmlControls/QGCFlickableVerticalIndicator.qml</file>
@@ -84,8 +85,6 @@
         <file alias="QGroundControl/Controls/QGCLabel.qml">src/QmlControls/QGCLabel.qml</file>
         <file alias="QGroundControl/Controls/QGCListView.qml">src/QmlControls/QGCListView.qml</file>
         <file alias="QGroundControl/Controls/QGCMapLabel.qml">src/QmlControls/QGCMapLabel.qml</file>
-        <file alias="QGroundControl/Controls/QGCMobileFileOpenDialog.qml">src/QmlControls/QGCMobileFileOpenDialog.qml</file>
-        <file alias="QGroundControl/Controls/QGCMobileFileSaveDialog.qml">src/QmlControls/QGCMobileFileSaveDialog.qml</file>
         <file alias="QGroundControl/Controls/QGCMouseArea.qml">src/QmlControls/QGCMouseArea.qml</file>
         <file alias="QGroundControl/Controls/QGCMovableItem.qml">src/QmlControls/QGCMovableItem.qml</file>
         <file alias="QGroundControl/Controls/QGCPipable.qml">src/QmlControls/QGCPipable.qml</file>
