@@ -112,9 +112,11 @@ public:
     /// Command vehicle to land at current location
     virtual void guidedModeLand(Vehicle* vehicle);
 
-    /// Command vehicle to takeoff from current location
-    ///     @param altitudeRel Relative altitude to takeoff to
-    virtual void guidedModeTakeoff(Vehicle* vehicle, double altitudeRel);
+    /// Command vehicle to takeoff from current location to a firmware specific height.
+    virtual void guidedModeTakeoff(Vehicle* vehicle);
+
+    /// Command the vehicle to start the mission
+    virtual void startMission(Vehicle* vehicle);
 
     /// Command vehicle to orbit given center point
     ///     @param centerCoord Center Coordinates
@@ -125,6 +127,9 @@ public:
 
     /// Command vehicle to change to the specified relatice altitude
     virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel);
+
+
+
 
     /// Returns the flight mode for running missions
     virtual QString missionFlightMode(void);
@@ -272,6 +277,11 @@ public:
 
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const char* px4FollowMeFlightMode;
+
+protected:
+    // Arms the vehicle, waiting for the arm state to change.
+    // @return: true - vehicle armed, false - vehicle failed to arm
+    bool _armVehicle(Vehicle* vehicle);
 
 private:
     QVariantList _toolBarIndicatorList;

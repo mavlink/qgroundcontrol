@@ -247,6 +247,7 @@ QGCView {
             anchors.bottom:     parent.bottom
             qgcView:            root
             useLightColors:     isBackgroundDark
+            missionController:  _flightMap.missionController
             visible:            singleVehicleView.checked
         }
 
