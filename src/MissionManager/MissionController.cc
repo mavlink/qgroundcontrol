@@ -1238,6 +1238,7 @@ void MissionController::_initAllVisualItems(void)
     connect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::_updateContainsItems);
 
     emit visualItemsChanged();
+    emit containsItemsChanged(containsItems());
 
     _visualItems->setDirty(false);
 }
@@ -1503,6 +1504,8 @@ void MissionController::_addMissionSettings(Vehicle* vehicle, QmlObjectListModel
 void MissionController::_currentMissionItemChanged(int sequenceNumber)
 {
     if (!_editMode) {
+        bool prevMissionInProgress = missionInProgress();
+
         if (!_activeVehicle->firmwarePlugin()->sendHomePositionToVehicle()) {
             sequenceNumber++;
         }
@@ -1510,6 +1513,10 @@ void MissionController::_currentMissionItemChanged(int sequenceNumber)
         for (int i=0; i<_visualItems->count(); i++) {
             VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
             item->setIsCurrentItem(item->sequenceNumber() == sequenceNumber);
+        }
+
+        if (prevMissionInProgress != missionInProgress()) {
+            emit missionInProgressChanged();
         }
     }
 }
@@ -1587,4 +1594,9 @@ QStringList MissionController::complexMissionItemNames(void) const
     }
 
     return complexItems;
+}
+
+bool MissionController::missionInProgress(void) const
+{
+    return _visualItems && _visualItems->count() > 1 && (!_visualItems->value<VisualMissionItem*>(0)->isCurrentItem() && !_visualItems->value<VisualMissionItem*>(1)->isCurrentItem());
 }
