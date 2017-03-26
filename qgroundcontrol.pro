@@ -482,7 +482,6 @@ HEADERS += \
     src/QGCGeo.h \
     src/QGCLoggingCategory.h \
     src/QGCMapPalette.h \
-    src/QGCMobileFileDialogController.h \
     src/QGCPalette.h \
     src/QGCQGeoCoordinate.h \
     src/QGCQmlWidgetHolder.h \
@@ -493,6 +492,7 @@ HEADERS += \
     src/QmlControls/CoordinateVector.h \
     src/QmlControls/MavlinkQmlSingleton.h \
     src/QmlControls/ParameterEditorController.h \
+    src/QmlControls/QFileDialogController.h \
     src/QmlControls/QGCImageProvider.h \
     src/QmlControls/QGroundControlQmlGlobal.h \
     src/QmlControls/QmlObjectListModel.h \
@@ -565,7 +565,7 @@ HEADERS += \
     src/GPS/satellite_info.h \
     src/GPS/vehicle_gps_position.h \
     src/Joystick/JoystickSDL.h \
-    src/QGCFileDialog.h \
+    src/QGCQFileDialog.h \
     src/QGCMessageBox.h \
     src/RunGuard.h \
     src/ViewWidgets/CustomCommandWidget.h \
@@ -659,7 +659,6 @@ SOURCES += \
     src/QGCGeo.cc \
     src/QGCLoggingCategory.cc \
     src/QGCMapPalette.cc \
-    src/QGCMobileFileDialogController.cc \
     src/QGCPalette.cc \
     src/QGCQGeoCoordinate.cc \
     src/QGCQmlWidgetHolder.cpp \
@@ -669,6 +668,7 @@ SOURCES += \
     src/QmlControls/AppMessages.cc \
     src/QmlControls/CoordinateVector.cc \
     src/QmlControls/ParameterEditorController.cc \
+    src/QmlControls/QFileDialogController.cc \
     src/QmlControls/QGCImageProvider.cc \
     src/QmlControls/QGroundControlQmlGlobal.cc \
     src/QmlControls/QmlObjectListModel.cc \
@@ -724,7 +724,7 @@ SOURCES += \
     src/GPS/GPSProvider.cc \
     src/GPS/RTCM/RTCMMavlink.cc \
     src/Joystick/JoystickSDL.cc \
-    src/QGCFileDialog.cc \
+    src/QGCQFileDialog.cc \
     src/RunGuard.cc \
     src/ViewWidgets/CustomCommandWidget.cc \
     src/ViewWidgets/CustomCommandWidgetController.cc \

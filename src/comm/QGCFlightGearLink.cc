@@ -30,7 +30,7 @@
 
 #include "QGCFlightGearLink.h"
 #include "QGC.h"
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #include "QGCMessageBox.h"
 #include "QGCApplication.h"
 #include "Vehicle.h"
@@ -744,7 +744,7 @@ bool QGCFlightGearLink::connectSimulation()
         }
 
         // Let the user pick the right directory
-        QString dirPath = QGCFileDialog::getExistingDirectory(MainWindow::instance(), tr("Please select directory of FlightGear application : ") + fgAppName);
+        QString dirPath = QGCQFileDialog::getExistingDirectory(MainWindow::instance(), tr("Please select directory of FlightGear application : ") + fgAppName);
         if (dirPath.isEmpty()) {
             return false;
         }

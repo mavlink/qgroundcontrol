@@ -30,6 +30,9 @@ public:
 
     Q_PROPERTY(bool visible MEMBER _visible CONSTANT)
 
+    // Must be called before any references to fact
+    void setVisible(bool visible) { _visible = visible; }
+
 private slots:
     void _rawValueChanged(QVariant value);
 

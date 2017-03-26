@@ -21,11 +21,12 @@
 #include "ParameterManager.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "MissionSettingsItem.h"
 
 #ifndef __mobile__
 #include "MainWindow.h"
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #endif
 
 QGC_LOGGING_CATEGORY(MissionControllerLog, "MissionControllerLog")
@@ -686,18 +687,6 @@ bool MissionController::loadItemsFromFile(Vehicle* vehicle, const QString& filen
     return true;
 }
 
-void MissionController::loadFromFilePicker(void)
-{
-#ifndef __mobile__
-    QString filename = QGCFileDialog::getOpenFileName(MainWindow::instance(), "Select Mission File to load", QString(), "Mission file (*.mission);;All Files (*.*)");
-
-    if (filename.isEmpty()) {
-        return;
-    }
-    loadFromFile(filename);
-#endif
-}
-
 void MissionController::saveToFile(const QString& filename)
 {
     qDebug() << filename;
@@ -708,7 +697,7 @@ void MissionController::saveToFile(const QString& filename)
 
     QString missionFilename = filename;
     if (!QFileInfo(filename).fileName().contains(".")) {
-        missionFilename += QString(".%1").arg(QGCApplication::missionFileExtension);
+        missionFilename += QString(".%1").arg(AppSettings::missionFileExtension);
     }
 
     QFile file(missionFilename);
@@ -767,18 +756,6 @@ void MissionController::saveToFile(const QString& filename)
     }
 
     _visualItems->setDirty(false);
-}
-
-void MissionController::saveToFilePicker(void)
-{
-#ifndef __mobile__
-    QString filename = QGCFileDialog::getSaveFileName(MainWindow::instance(), "Select file to save mission to", QString(), "Mission file (*.mission);;All Files (*.*)");
-
-    if (filename.isEmpty()) {
-        return;
-    }
-    saveToFile(filename);
-#endif
 }
 
 void MissionController::_calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference)
@@ -1541,7 +1518,7 @@ void MissionController::setDirty(bool dirty)
 
 QString MissionController::fileExtension(void) const
 {
-    return QGCApplication::missionFileExtension;
+    return AppSettings::missionFileExtension;
 }
 
 void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualItems, Vehicle* vehicle)

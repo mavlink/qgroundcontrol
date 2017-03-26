@@ -9,7 +9,7 @@
 
 
 /// @file
-///     @brief Unit test for QGCFileDialog catching mechanism.
+///     @brief Unit test for QGCQFileDialog catching mechanism.
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
