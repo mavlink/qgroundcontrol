@@ -66,7 +66,7 @@ AppSettings::AppSettings(QObject* parent)
 
     // Instantiate savePath so we can check for override and setup default path if needed
 
-    Fact* savePathFact = savePath();
+    SettingsFact* savePathFact = qobject_cast<SettingsFact*>(savePath());
     QString appName = qgcApp()->applicationName();
     if (savePathFact->rawValue().toString().isEmpty() && _nameToMetaDataMap[savePathName]->rawDefaultValue().toString().isEmpty()) {
 #ifdef __mobile__
