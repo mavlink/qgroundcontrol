@@ -315,7 +315,7 @@ QGCView {
         Map {
             id:                 _map
             anchors.fill:       parent
-            center:             QGroundControl.lastKnownHomePosition
+            center:             QGroundControl.flightMapPosition
             visible:            false
             gesture.flickDeceleration:  3000
 

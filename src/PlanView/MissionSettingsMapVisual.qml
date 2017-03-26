@@ -18,9 +18,13 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.FlightMap     1.0
 
-/// Simple Mission Item visuals
+/// Mission Settings map visuals
 Item {
+    id: _root
+
     property var map    ///< Map control to place item in
+
+    signal clicked(int sequenceNumber)
 
     property var    _missionItem:       object
     property var    _itemVisual
@@ -99,12 +103,11 @@ Item {
 
         MissionItemIndicator {
             coordinate:     _missionItem.coordinate
-            visible:        _missionItem.specifiesCoordinate
+            visible:        coordinate.isValid
             z:              QGroundControl.zOrderMapItems
             missionItem:    _missionItem
-            sequenceNumber: _missionItem.sequenceNumber
 
-            onClicked: setCurrentItem(_missionItem.sequenceNumber)
+            onClicked: _root.clicked(_missionItem.sequenceNumber)
 
             // These are the non-coordinate child mission items attached to this item
             Row {
@@ -115,12 +118,12 @@ Item {
                     model: _missionItem.childItems
 
                     delegate: MissionItemIndexLabel {
-                        z:                      2
-                        label:                  object.abbreviation
+                        label:                  object.abbreviation.length === 0 ? object.sequenceNumber : object.abbreviation.charAt(0)
                         checked:                object.isCurrentItem
+                        z:                      2
                         specifiesCoordinate:    false
 
-                        onClicked: setCurrentItem(object.sequenceNumber)
+                        onClicked: _root.Clicked(object.sequenceNumber)
                     }
                 }
             }

@@ -32,6 +32,7 @@ MapQuickItem {
             id:             _label
             checked:        _isCurrentItem
             label:          missionItem ? missionItem.abbreviation : ""
+            index:          missionItem ? missionItem.sequenceNumber : 0
             gimbalYaw:      missionItem.missionGimbalYaw
             vehicleYaw:     missionItem.missionVehicleYaw
             showGimbalYaw:  missionItem.showMissionGimbalYaw

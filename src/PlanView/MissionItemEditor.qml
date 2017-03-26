@@ -51,7 +51,7 @@ Rectangle {
         anchors.verticalCenter: commandPicker.verticalCenter
         anchors.leftMargin:     _margin
         anchors.left:           parent.left
-        text:                   missionItem.abbreviation
+        text:                   missionItem.abbreviation.charAt(0)
         color:                  _outerTextColor
     }
 
