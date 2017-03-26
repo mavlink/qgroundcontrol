@@ -93,6 +93,8 @@ public:
     bool        showSensorCalibrationAccel     () const final;
     bool        showSensorCalibrationLevel     () const final;
     bool        showSensorCalibrationOrient    () const final;
+    bool        guidedBarShowEmergencyStop     () const { return false; }
+    bool        guidedBarShowOrbit             () const { return false; }
 
 private slots:
     void _advancedChanged(bool advanced);
