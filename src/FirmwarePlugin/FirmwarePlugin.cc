@@ -265,11 +265,10 @@ void FirmwarePlugin::guidedModeLand(Vehicle* vehicle)
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
-void FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
+void FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
 {
     // Not supported by generic vehicle
     Q_UNUSED(vehicle);
-    Q_UNUSED(altitudeRel);
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
@@ -292,6 +291,13 @@ void FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeR
     // Not supported by generic vehicle
     Q_UNUSED(vehicle);
     Q_UNUSED(altitudeRel);
+    qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+}
+
+void FirmwarePlugin::startMission(Vehicle* vehicle)
+{
+    // Not supported by generic vehicle
+    Q_UNUSED(vehicle);
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
@@ -435,4 +441,21 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
 bool FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const
 {
     return vehicle->multiRotor() ? false : true;
+}
+
+bool FirmwarePlugin::_armVehicle(Vehicle* vehicle)
+{
+    if (!vehicle->armed()) {
+        vehicle->setArmed(true);
+    }
+
+    // Wait for vehicle to return armed state for 2 seconds
+    for (int i=0; i<20; i++) {
+        if (vehicle->armed()) {
+            break;
+        }
+        QGC::SLEEP::msleep(100);
+        qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+    }
+    return vehicle->armed();
 }

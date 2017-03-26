@@ -50,10 +50,11 @@ public:
         double gimbalYaw;       ///< NaN signals yaw was never changed
     } MissionFlightStatus_t;
 
-    // Mission settings
     Q_PROPERTY(QmlObjectListModel*  visualItems             READ visualItems                NOTIFY visualItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines              NOTIFY waypointLinesChanged)
     Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
+
+    Q_PROPERTY(bool                 missionInProgress       READ missionInProgress          NOTIFY missionInProgressChanged)        ///< true: Mission sequence is beyond first item
 
     Q_PROPERTY(double               missionDistance         READ missionDistance            NOTIFY missionDistanceChanged)
     Q_PROPERTY(double               missionTime             READ missionTime                NOTIFY missionTimeChanged)
@@ -110,6 +111,7 @@ public:
     QmlObjectListModel* visualItems             (void) { return _visualItems; }
     QmlObjectListModel* waypointLines           (void) { return &_waypointLines; }
     QStringList         complexMissionItemNames (void) const;
+    bool                missionInProgress       (void) const;
 
     double  missionDistance         (void) const { return _missionFlightStatus.totalDistance; }
     double  missionTime             (void) const { return _missionFlightStatus.totalTime; }
@@ -131,6 +133,7 @@ signals:
     void missionCruiseTimeChanged(void);
     void missionMaxTelemetryChanged(double missionMaxTelemetry);
     void complexMissionItemNamesChanged(void);
+    bool missionInProgressChanged(void);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
