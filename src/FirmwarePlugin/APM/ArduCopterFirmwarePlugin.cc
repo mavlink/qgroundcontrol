@@ -133,14 +133,22 @@ void ArduCopterFirmwarePlugin::guidedModeLand(Vehicle* vehicle)
     vehicle->setFlightMode("Land");
 }
 
-void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
+#if 0
+// WIP
+void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
 {
+    if (!_armVehicle(vehicle)) {
+        qgcApp()->showMessage(tr("Unable to takeoff: Vehicle failed to arm."));
+        return;
+    }
+
     vehicle->sendMavCommand(vehicle->defaultComponentId(),
                             MAV_CMD_NAV_TAKEOFF,
                             true, // show error
                             0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                            altitudeRel);
+                            2.5);
 }
+#endif
 
 void ArduCopterFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
 {
