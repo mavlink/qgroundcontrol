@@ -422,6 +422,17 @@
       <maintainer>Andreas Antener &lt;andreas@uaventure.com&gt;</maintainer>
       <type>Standard VTOL</type>
     </airframe>
+    <airframe id="13013" maintainer="Sander Smeets &lt;sander@droneslab.com&gt;" name="Vertical Technologies DeltaQuad">
+      <maintainer>Sander Smeets &lt;sander@droneslab.com&gt;</maintainer>
+      <type>Standard VTOL</type>
+      <output name="AUX1">Right elevon</output>
+      <output name="AUX2">Left elevon</output>
+      <output name="AUX3">Motor</output>
+      <output name="MAIN1">Front right motor: CCW</output>
+      <output name="MAIN2">Back left motor: CCW</output>
+      <output name="MAIN3">Front left motor: CW</output>
+      <output name="MAIN4">Back right motor: CW</output>
+    </airframe>
   </airframe_group>
   <airframe_group image="YPlus" name="Tricopter Y+">
     <airframe id="14001" maintainer="Trent Lukaczyk &lt;aerialhedgehog@gmail.com&gt;" name="Generic Tricopter Y+ Geometry">
