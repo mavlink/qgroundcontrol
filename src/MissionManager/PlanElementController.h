@@ -44,9 +44,7 @@ public:
 
     Q_INVOKABLE virtual void loadFromVehicle(void) = 0;
     Q_INVOKABLE virtual void sendToVehicle(void) = 0;
-    Q_INVOKABLE virtual void loadFromFilePicker(void) = 0;
     Q_INVOKABLE virtual void loadFromFile(const QString& filename) = 0;
-    Q_INVOKABLE virtual void saveToFilePicker(void) = 0;
     Q_INVOKABLE virtual void saveToFile(const QString& filename) = 0;
     Q_INVOKABLE virtual void removeAll(void) = 0;                       ///< Removes all from controller only, synce required to remove from vehicle
     Q_INVOKABLE virtual void removeAllFromVehicle(void) = 0;            ///< Removes all from vehicle and controller

@@ -26,18 +26,17 @@ import QGroundControl.Controllers           1.0
 import QGroundControl.SettingsManager       1.0
 
 QGCView {
-    id:                 qgcView
+    id:                 _qgcView
     viewPanel:          panel
     color:              qgcPal.window
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
     property Fact _percentRemainingAnnounce:    QGroundControl.settingsManager.appSettings.batteryPercentRemainingAnnounce
-    property Fact _autoLoadDir:                 QGroundControl.settingsManager.appSettings.missionAutoLoadDir
+    property Fact _savePath:                    QGroundControl.settingsManager.appSettings.savePath
     property Fact _appFontPointSize:            QGroundControl.settingsManager.appSettings.appFontPointSize
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
-    property Fact _telemPath:                   QGroundControl.settingsManager.appSettings.telemetrySavePath
     property Fact _videoPath:                   QGroundControl.settingsManager.videoSettings.videoSavePath
     property Fact _mapProvider:                 QGroundControl.settingsManager.flightMapSettings.mapProvider
     property Fact _mapType:                     QGroundControl.settingsManager.flightMapSettings.mapType
@@ -56,14 +55,14 @@ QGCView {
             contentWidth:       settingsColumn.width
             Column {
                 id:                 settingsColumn
-                width:              qgcView.width
+                width:              _qgcView.width
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
 
                 //-----------------------------------------------------------------
                 //-- Units
                 Item {
-                    width:                      qgcView.width * 0.8
+                    width:                      _qgcView.width * 0.8
                     height:                     unitLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -76,7 +75,7 @@ QGCView {
                 }
                 Rectangle {
                     height:                     unitsCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:                      qgcView.width * 0.8
+                    width:                      _qgcView.width * 0.8
                     color:                      qgcPal.windowShade
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -115,7 +114,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Miscellanous
                 Item {
-                    width:                      qgcView.width * 0.8
+                    width:                      _qgcView.width * 0.8
                     height:                     miscLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -128,7 +127,7 @@ QGCView {
                 }
                 Rectangle {
                     height:                     miscCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:                      qgcView.width * 0.8
+                    width:                      _qgcView.width * 0.8
                     color:                      qgcPal.windowShade
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -233,38 +232,6 @@ QGCView {
                         }
 
                         //-----------------------------------------------------------------
-                        //-- Telemetry save path
-                        Row {
-                            spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    QGroundControl.settingsManager.appSettings.telemetrySavePath.visible
-
-                            QGCLabel {
-                                anchors.baseline:   telemBrowse.baseline
-                                text:               qsTr("Telemetry save path:")
-                                enabled:            promptSaveLog.checked
-                            }
-                            QGCLabel {
-                                anchors.baseline:   telemBrowse.baseline
-                                text:               _telemPath.value == "" ? qsTr("<not set>") : _telemPath.value
-                                enabled:            promptSaveLog.checked
-                            }
-                            QGCButton {
-                                id:         telemBrowse
-                                text:       "Browse"
-                                enabled:    promptSaveLog.checked
-                                onClicked:  telemDialog.visible = true
-
-                                FileDialog {
-                                    id:             telemDialog
-                                    title:          "Choose a location to save telemetry files."
-                                    folder:         "file://" + _telemPath.value
-                                    selectFolder:   true
-                                    onAccepted:     _telemPath.value = QGroundControl.urlToLocalFile(telemDialog.fileUrl)
-                                }
-                            }
-                        }
-
-                        //-----------------------------------------------------------------
                         //-- Clear settings
                         QGCCheckBox {
                             id:         clearCheck
@@ -337,43 +304,45 @@ QGCView {
                                 fact:   QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
                             }
                         }
+
                         //-----------------------------------------------------------------
                         //-- Mission AutoLoad
+                        FactCheckBox {
+                            text:       qsTr("AutoLoad missions")
+                            fact:       _autoLoad
+                            visible:    _autoLoad.visible
+
+                            property Fact _autoLoad: QGroundControl.settingsManager.appSettings.autoLoadMissions
+                        }
+
+                        //-----------------------------------------------------------------
+                        //-- Save path
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    _autoLoadDir.visible
+                            visible:    _savePath.visible
 
-                            QGCCheckBox {
-                                id:                     autoLoadCheckbox
-                                anchors.verticalCenter: parent.verticalCenter
-                                text:                   qsTr("AutoLoad mission directory:")
-                                checked:                _autoLoadDir.valueString
-
-                                onClicked: {
-                                    if (checked) {
-                                        _autoLoadDir.rawValue = QGroundControl.urlToLocalFile(autoloadDirPicker.shortcuts.home)
-                                    } else {
-                                        _autoLoadDir.rawValue = ""
-                                    }
-                                }
+                            QGCLabel {
+                                anchors.baseline:   savePathBrowse.baseline
+                                text:               qsTr("File save path:")
                             }
-                            FactTextField {
-                                id:                     autoLoadDirField
-                                width:                  _editFieldWidth
-                                enabled:                autoLoadCheckbox.checked
-                                anchors.verticalCenter: parent.verticalCenter
-                                fact:                   _autoLoadDir
+                            QGCLabel {
+                                anchors.baseline:   savePathBrowse.baseline
+                                text:               _savePath.rawValue === "" ? qsTr("<not set>") : _savePath.value
                             }
                             QGCButton {
-                                text:       qsTr("Browse")
-                                onClicked:  autoloadDirPicker.visible = true
+                                id:         savePathBrowse
+                                text:       "Browse"
+                                onClicked:  savePathBrowseDialog.openForLoad()
 
-                                FileDialog {
-                                    id:             autoloadDirPicker
-                                    title:          qsTr("Choose the location of mission file.")
-                                    folder:         "file://" + _autoLoadDir.value
+                                QGCFileDialog {
+                                    id:             savePathBrowseDialog
+                                    qgcView:        _qgcView
+                                    title:          qsTr("Choose the location to save files:")
+                                    folder:         _savePath.rawValue
+                                    selectExisting: true
                                     selectFolder:   true
-                                    onAccepted:     _autoLoadDir.rawValue = QGroundControl.urlToLocalFile(autoloadDirPicker.fileUrl)
+
+                                    onAcceptedForLoad: _savePath.rawValue = file
                                 }
                             }
                         }
@@ -430,7 +399,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Autoconnect settings
                 Item {
-                    width:                      qgcView.width * 0.8
+                    width:                      _qgcView.width * 0.8
                     height:                     autoConnectLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -443,7 +412,7 @@ QGCView {
                 }
                 Rectangle {
                     height:                     autoConnectCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:                      qgcView.width * 0.8
+                    width:                      _qgcView.width * 0.8
                     color:                      qgcPal.windowShade
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -482,7 +451,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Video Source
                 Item {
-                    width:                      qgcView.width * 0.8
+                    width:                      _qgcView.width * 0.8
                     height:                     videoLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -495,7 +464,7 @@ QGCView {
                 }
                 Rectangle {
                     height:                     videoCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:                      qgcView.width * 0.8
+                    width:                      _qgcView.width * 0.8
                     color:                      qgcPal.windowShade
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter

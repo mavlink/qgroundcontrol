@@ -12,7 +12,7 @@
 ///     @author Gus Grubba <mavlink@grubba.com>
 
 #if !defined(__mobile__)
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #include "MainWindow.h"
 #endif
 
@@ -407,7 +407,7 @@ QGCMapEngineManager::importSets(QString path) {
         //-- TODO: This has to be something fixed
         dir = QDir(QDir::homePath()).filePath(QString("export_%1.db").arg(QDateTime::currentDateTime().toTime_t()));
 #else
-        dir = QGCFileDialog::getOpenFileName(
+        dir = QGCQFileDialog::getOpenFileName(
             MainWindow::instance(),
             "Export Tile Set",
             QDir::homePath(),
@@ -437,7 +437,7 @@ QGCMapEngineManager::exportSets(QString path) {
 #if defined(__mobile__)
         dir = QDir(QDir::homePath()).filePath(QString("export_%1.db").arg(QDateTime::currentDateTime().toTime_t()));
 #else
-        dir = QGCFileDialog::getSaveFileName(
+        dir = QGCQFileDialog::getSaveFileName(
             MainWindow::instance(),
             "Export Tile Set",
             QDir::homePath(),
