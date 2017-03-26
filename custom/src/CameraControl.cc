@@ -98,8 +98,7 @@ iso_values_t isoValues[] = {
     {"600"},
     {"800"},
     {"1600"},
-    {"3200"},
-    {"Auto"}
+    {"3200"}
 };
 
 #define NUM_ISO_VALUES (sizeof(isoValues) / sizeof(iso_values_t))
@@ -119,8 +118,7 @@ shutter_speeds_t shutterSpeeds[] = {
     { "1/1000", "1000"},
     { "1/2000", "2000"},
     { "1/4000", "4000"},
-    { "1/8000", "8000"},
-    { "Auto", ""}
+    { "1/8000", "8000"}
 };
 
 #define NUM_SHUTTER_VALUES (sizeof(shutterSpeeds) / sizeof(shutter_speeds_t))
@@ -149,8 +147,8 @@ CameraControl::CameraControl(QObject* parent)
     , _httpErrorCount(0)
     , _currentVideoResIndex(0)
     , _currentWB(0)
-    , _currentIso(NUM_ISO_VALUES - 1)
-    , _currentShutter(NUM_SHUTTER_VALUES - 1)
+    , _currentIso(0)
+    , _currentShutter(0)
     , _currentPhotoFmt(1)
     , _networkManager(NULL)
 {
@@ -321,12 +319,7 @@ CameraControl::setCurrentIso(quint32 index)
 {
     if(index < NUM_ISO_VALUES) {
         qCDebug(YuneecCameraLog) << "setCurrentIso:" << isoValues[index].description;
-        //-- If ISO is "locked", set Auto Mode
-        if(index == (NUM_ISO_VALUES - 1)) {
-            setAeMode(AE_MODE_AUTO);
-        } else {
-            _sendAmbRequest(QNetworkRequest(QString("%1SET_SH_TM_ISO&time=%2&value=ISO_%3").arg(kAmbCommand).arg(_ambarellaStatus.shutter_time).arg(isoValues[index].description)));
-        }
+        _sendAmbRequest(QNetworkRequest(QString("%1SET_SH_TM_ISO&time=%2&value=ISO_%3").arg(kAmbCommand).arg(_ambarellaStatus.shutter_time).arg(isoValues[index].description)));
     }
 }
 
@@ -336,12 +329,7 @@ CameraControl::setCurrentShutter(quint32 index)
 {
     if(index < NUM_SHUTTER_VALUES) {
         qCDebug(YuneecCameraLog) << "setCurrentShutter:" << shutterSpeeds[index].description;
-        //-- If Shutter Speed is "locked", set Auto Mode
-        if(index == (NUM_SHUTTER_VALUES - 1)) {
-            setAeMode(AE_MODE_AUTO);
-        } else {
-            _sendAmbRequest(QNetworkRequest(QString("%1SET_SH_TM_ISO&time=%2&value=%3").arg(kAmbCommand).arg(shutterSpeeds[index].value).arg(_ambarellaStatus.iso_value)));
-        }
+        _sendAmbRequest(QNetworkRequest(QString("%1SET_SH_TM_ISO&time=%2&value=%3").arg(kAmbCommand).arg(shutterSpeeds[index].value).arg(_ambarellaStatus.iso_value)));
     }
 }
 
@@ -551,24 +539,16 @@ CameraControl::_handleCameraStatus(int http_code, QByteArray data)
             if(_ambarellaStatus.ae_enable != ae) {
                 _ambarellaStatus.ae_enable = ae;
                 emit aeModeChanged();
-                //-- If AE enabled, lock ISO and Shutter
-                if(ae) {
-                    _currentIso = NUM_ISO_VALUES - 1;
-                    _currentShutter = NUM_SHUTTER_VALUES - 1;
-                    emit currentIsoChanged();
-                    emit currentShutterChanged();
-                } else {
+                if(!ae) {
                     _handleShutterStatus();
                     _handleISOStatus();
                 }
             }
             //-- Shutter and ISO (Manual Mode)
             _ambarellaStatus.shutter_time    = set.value(QString("shutter_time")).toString();
+            _handleShutterStatus();
             _ambarellaStatus.iso_value       = set.value(QString("iso_value")).toString();
-            if(!ae) {
-                _handleShutterStatus();
-                _handleISOStatus();
-            }
+            _handleISOStatus();
             //-- Color IQ
             uint32_t iq = set.value(QString("iq_type")).toString().toUInt();
             if(_ambarellaStatus.iq_type != iq && iq < NUM_IQ_MODES) {
@@ -633,7 +613,7 @@ CameraControl::_handleCameraStatus(int http_code, QByteArray data)
             _ambarellaStatus.timer_photo_sta = set.value(QString("timer_photo_sta")).toString().toInt();
             //-- If recording video, we do this more often
             if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
-                _statusTimer.start(333);
+                _statusTimer.start(500);
             } else {
                 _statusTimer.start(5000);
             }

@@ -91,6 +91,7 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     , _vehicle(NULL)
     , _cameraControl(NULL)
     , _m4State(TyphoonHQuickInterface::M4_STATE_NONE)
+    , _armed(false)
 {
     Q_ASSERT(pTyphoonHandler == NULL);
     pTyphoonHandler = this;
@@ -233,12 +234,21 @@ TyphoonHM4Interface::_remoteControlRSSIChanged(uint8_t rssi)
 
 //-----------------------------------------------------------------------------
 void
+TyphoonHM4Interface::_armedChanged(bool armed)
+{
+    _armed = armed;
+    emit armedChanged(armed);
+}
+
+//-----------------------------------------------------------------------------
+void
 TyphoonHM4Interface::_vehicleAdded(Vehicle* vehicle)
 {
     if(!_vehicle) {
         qCDebug(YuneecLog) << "_vehicleAdded()";
         _vehicle = vehicle;
         connect(_vehicle, &Vehicle::remoteControlRSSIChanged, this, &TyphoonHM4Interface::_remoteControlRSSIChanged);
+        connect(_vehicle, &Vehicle::armedChanged, this, &TyphoonHM4Interface::_armedChanged);
         //-- There are two defines for the argument to this function. One, in theory sets the
         //   button to turn the screen on/off (BIND_KEY_FUNCTION_PWR). The other is is used
         //   for arming the vehicle (BIND_KEY_FUNCTION_BIND).

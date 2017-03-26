@@ -33,6 +33,7 @@ public:
     void    initM4                  ();
     QString m4StateStr              ();
     void    resetBind               ();
+    bool    armed                   () { return _armed; }
 
     CameraControl*          cameraControl       () { return _cameraControl; }
 
@@ -55,6 +56,7 @@ private slots:
     void    _vehicleRemoved                     (Vehicle* vehicle);
     void    _vehicleReady                       (bool ready);
     void    _remoteControlRSSIChanged           (uint8_t rssi);
+    void    _armedChanged                       (bool armed);
 
 private:
     bool    _exitToAwait                        ();
@@ -96,6 +98,7 @@ signals:
     void    channelDataStatus                   (QByteArray channelData);
     void    controllerLocationChanged           ();
     void    destroyed                           ();
+    void    armedChanged                        (bool armed);
     //-- WIFI
     void    newWifiSSID                         (QString ssid, int rssi);
     void    newWifiRSSI                         ();
@@ -141,4 +144,5 @@ private:
     CameraControl*          _cameraControl;
     TyphoonHQuickInterface::M4State     _m4State;
     QString                 _currentConnection;
+    bool                    _armed;
 };

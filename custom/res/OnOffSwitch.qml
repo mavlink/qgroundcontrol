@@ -24,7 +24,7 @@ Rectangle {
     id:     _root
     height: Math.round(ScreenTools.defaultFontPixelHeight * 2)
     width:  ScreenTools.defaultFontPixelWidth  * 10
-    color:  qgcPal.windowShadeDark
+    color:  qgcPal.button
 
     property bool checked: true
 
@@ -34,7 +34,7 @@ Rectangle {
 
     Rectangle {
         width:      parent.width  * 0.5
-        height:     parent.height * 0.95
+        height:     parent.height
         color:      qgcPal.windowShade
         visible:    !checked
         anchors.left: parent.left

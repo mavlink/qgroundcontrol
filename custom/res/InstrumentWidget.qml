@@ -48,6 +48,14 @@ Item {
         }
     }
 
+    QGCLabel {
+        id:             speedText
+        text:           "00.0"
+        font.family:    ScreenTools.demiboldFontFamily
+        font.pointSize: ScreenTools.mediumFontPointSize
+        visible:        false
+    }
+
     //-- Position from System GPS
     PositionSource {
         id:             positionSource
@@ -117,15 +125,7 @@ Item {
                 height:     _spacers
                 width:      1
             }
-            QGCLabel {
-                text:           QGroundControl.settingsManager.unitsSettings.distanceUnits.enumStringValue.toLowerCase();
-                font.pointSize: ScreenTools.smallFontPointSize
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-            Item {
-                height:     _spacers * 0.25
-                width:      1
-            }
+            //-- Altitude and Distance from GCS
             Row {
                 spacing:        ScreenTools.defaultFontPixelHeight * 0.25
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -160,15 +160,78 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
+            //-- Distance Unit
             QGCLabel {
-                text:           activeVehicle ? activeVehicle.groundSpeed.rawValue.toFixed(1) : "--"
-                font.family:    ScreenTools.demiboldFontFamily
-                font.pointSize: ScreenTools.largeFontPointSize
+                text:           QGroundControl.settingsManager.unitsSettings.distanceUnits.enumStringValue.toLowerCase();
+                font.pointSize: ScreenTools.smallFontPointSize
                 anchors.horizontalCenter: parent.horizontalCenter
             }
+            //-- Horizontal and Vertical Speed
+            Rectangle {
+                height:         1
+                width:          parent.width * 0.9
+                color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Row {
+                spacing: ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel {
+                    text:           qsTr("H")
+                    font.pointSize: ScreenTools.smallFontPointSize
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                QGCLabel {
+                    text:           activeVehicle ? activeVehicle.groundSpeed.rawValue.toFixed(1) : "00.0"
+                    width:          speedText.width
+                    font.family:    ScreenTools.demiboldFontFamily
+                    font.pointSize: ScreenTools.mediumFontPointSize
+                    horizontalAlignment: Text.AlignRight
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                QGCLabel {
+                    text:           qsTr("V")
+                    font.pointSize: ScreenTools.smallFontPointSize
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                QGCLabel {
+                    text:           activeVehicle ? activeVehicle.climbRate.rawValue.toFixed(1) : "00.0"
+                    width:          speedText.width
+                    font.family:    ScreenTools.demiboldFontFamily
+                    font.pointSize: ScreenTools.mediumFontPointSize
+                    horizontalAlignment: Text.AlignRight
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+            //-- Speed Unit
             QGCLabel {
                 text:           QGroundControl.settingsManager.unitsSettings.speedUnits.enumStringValue.toLowerCase();
                 font.pointSize: ScreenTools.smallFontPointSize
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            //-- Total Distance and Flight Time
+            Rectangle {
+                height:         1
+                width:          parent.width * 0.9
+                color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Row {
+                spacing: ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel {
+                    text:           activeVehicle ? ('00000'+activeVehicle.flightDistance.rawValue.toFixed(0)).slice(-5) : "00000"
+                    font.pointSize: ScreenTools.smallFontPointSize
+                }
+                QGCLabel {
+                    text:           activeVehicle ? TyphoonHQuickInterface.flightTime : "00:00:00"
+                    font.pointSize: ScreenTools.smallFontPointSize
+                }
+            }
+            Rectangle {
+                height:         1
+                width:          parent.width * 0.9
+                color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Item {
@@ -180,12 +243,6 @@ Item {
                 spacing:        ScreenTools.defaultFontPixelHeight * 0.25
                 visible:        !_hideCamera
                 //-----------------------------------------------------------------
-                Rectangle {
-                    height:         1
-                    width:          parent.width * 0.9
-                    color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
                 QGCLabel {
                     id:         cameraLabel
                     text:       TyphoonHQuickInterface.connectedCamera
@@ -384,7 +441,7 @@ Item {
         Rectangle {
             id:     cameraSettingsRect
             width:  mainWindow.width  * 0.45
-            height: mainWindow.height * 0.75
+            height: mainWindow.height * 0.675
             radius: ScreenTools.defaultFontPixelWidth
             color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.75) : Qt.rgba(0,0,0,0.75)
             anchors.centerIn: parent
