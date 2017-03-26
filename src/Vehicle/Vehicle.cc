@@ -1959,14 +1959,19 @@ void Vehicle::guidedModeLand(void)
     _firmwarePlugin->guidedModeLand(this);
 }
 
-void Vehicle::guidedModeTakeoff(double altitudeRel)
+void Vehicle::guidedModeTakeoff(void)
 {
     if (!guidedModeSupported()) {
         qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
     setGuidedMode(true);
-    _firmwarePlugin->guidedModeTakeoff(this, altitudeRel);
+    _firmwarePlugin->guidedModeTakeoff(this);
+}
+
+void Vehicle::startMission(void)
+{
+    _firmwarePlugin->startMission(this);
 }
 
 void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)
