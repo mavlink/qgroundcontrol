@@ -19,10 +19,11 @@
 #include "ParameterManager.h"
 #include "JsonHelper.h"
 #include "QGCQGeoCoordinate.h"
+#include "AppSettings.h"
 
 #ifndef __mobile__
 #include "MainWindow.h"
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #endif
 
 #include <QJsonDocument>
@@ -238,18 +239,6 @@ void GeoFenceController::loadFromFile(const QString& filename)
     setDirty(true);
 }
 
-void GeoFenceController::loadFromFilePicker(void)
-{
-#ifndef __mobile__
-    QString filename = QGCFileDialog::getOpenFileName(MainWindow::instance(), "Select GeoFence File to load", QString(), "Fence file (*.fence);;All Files (*.*)");
-
-    if (filename.isEmpty()) {
-        return;
-    }
-    loadFromFile(filename);
-#endif
-}
-
 void GeoFenceController::saveToFile(const QString& filename)
 {
     if (filename.isEmpty()) {
@@ -258,7 +247,7 @@ void GeoFenceController::saveToFile(const QString& filename)
 
     QString fenceFilename = filename;
     if (!QFileInfo(filename).fileName().contains(".")) {
-        fenceFilename += QString(".%1").arg(QGCApplication::fenceFileExtension);
+        fenceFilename += QString(".%1").arg(AppSettings::fenceFileExtension);
     }
 
     QFile file(fenceFilename);
@@ -299,18 +288,6 @@ void GeoFenceController::saveToFile(const QString& filename)
     }
 
     setDirty(false);
-}
-
-void GeoFenceController::saveToFilePicker(void)
-{
-#ifndef __mobile__
-    QString filename = QGCFileDialog::getSaveFileName(MainWindow::instance(), "Select file to save GeoFence to", QString(), "Fence file (*.fence);;All Files (*.*)");
-
-    if (filename.isEmpty()) {
-        return;
-    }
-    saveToFile(filename);
-#endif
 }
 
 void GeoFenceController::removeAll(void)
@@ -433,7 +410,7 @@ void GeoFenceController::_loadComplete(const QGeoCoordinate& breachReturn, const
 
 QString GeoFenceController::fileExtension(void) const
 {
-    return QGCApplication::fenceFileExtension;
+    return AppSettings::fenceFileExtension;
 }
 
 bool GeoFenceController::containsItems(void) const

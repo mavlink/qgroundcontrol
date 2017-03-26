@@ -34,7 +34,6 @@ ColumnLayout {
         text:               qsTr("Mission")
         Layout.fillWidth:   true
         visible:            showMission
-        enabled:            !followVehicleCheckBox.checked
 
         onClicked: {
             dropPanel.hide()
@@ -46,7 +45,6 @@ ColumnLayout {
         text:               qsTr("All items")
         Layout.fillWidth:   true
         visible:            showAllItems
-        enabled:            !followVehicleCheckBox.checked
 
         onClicked: {
             dropPanel.hide()
@@ -57,7 +55,6 @@ ColumnLayout {
     QGCButton {
         text:               qsTr("Home")
         Layout.fillWidth:   true
-        enabled:            !followVehicleCheckBox.checked
 
         onClicked: {
             dropPanel.hide()

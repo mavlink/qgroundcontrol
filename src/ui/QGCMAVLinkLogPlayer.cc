@@ -10,7 +10,7 @@
 #include "ui_QGCMAVLinkLogPlayer.h"
 #include "QGCApplication.h"
 #include "LinkManager.h"
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #include "QGCMessageBox.h"
 
 QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(QWidget *parent) :
@@ -69,7 +69,7 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
         return;
     }
 
-    QString logFilename = QGCFileDialog::getOpenFileName(
+    QString logFilename = QGCQFileDialog::getOpenFileName(
         this,
         tr("Load MAVLink Log File"),
         QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),

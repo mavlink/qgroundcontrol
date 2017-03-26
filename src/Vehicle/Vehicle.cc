@@ -1665,17 +1665,19 @@ void Vehicle::_startMissionRequest(void)
     if (!_missionManagerInitialRequestSent && _parameterManager->parametersReady() && _vehicleCapabilitiesKnown) {
         qCDebug(VehicleLog) << "_startMissionRequest";
         _missionManagerInitialRequestSent = true;
-        QString missionAutoLoadDirPath = _settingsManager->appSettings()->missionAutoLoadDir()->rawValue().toString();
-        if (missionAutoLoadDirPath.isEmpty()) {
-            _missionManager->requestMissionItems();
-        } else {
-            QmlObjectListModel* visualItems = NULL;
-            QDir missionAutoLoadDir(missionAutoLoadDirPath);
-            QString autoloadFilename = missionAutoLoadDir.absoluteFilePath(tr("AutoLoad%1.mission").arg(_id));
-            if (MissionController::loadItemsFromFile(this, autoloadFilename, &visualItems)) {
-                MissionController::sendItemsToVehicle(this, visualItems);
+        if (_settingsManager->appSettings()->autoLoadMissions()->rawValue().toBool()) {
+            QString missionAutoLoadDirPath = _settingsManager->appSettings()->missionSavePath();
+            if (!missionAutoLoadDirPath.isEmpty()) {
+                QmlObjectListModel* visualItems = NULL;
+                QDir missionAutoLoadDir(missionAutoLoadDirPath);
+                QString autoloadFilename = missionAutoLoadDir.absoluteFilePath(tr("AutoLoad%1.%2").arg(_id).arg(AppSettings::missionFileExtension));
+                if (MissionController::loadItemsFromFile(this, autoloadFilename, &visualItems)) {
+                    MissionController::sendItemsToVehicle(this, visualItems);
+                    return;
+                }
             }
         }
+        _missionManager->requestMissionItems();
     } else {
         if (!_parameterManager->parametersReady()) {
             qCDebug(VehicleLog) << "Delaying _startMissionRequest due to parameters not ready";

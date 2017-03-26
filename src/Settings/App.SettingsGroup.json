@@ -56,13 +56,6 @@
     "decimalPlaces":    2
 },
 {
-    "name":             "MissionAutoLoadDir",
-    "shortDescription": "Mission auto load directory",
-    "longDescription":  "The directory from which missions will be automatically loaded onto a vehicle when it connects. The mission file must be named AutoLoad#.mission where the # is replaced with the vehicle id.",
-    "type":             "string",
-    "defaultValue":     ""
-},
-{
     "name":             "PromptFLightDataSave",
     "shortDescription": "Save telemetry Log after each flight",
     "longDescription":  "If this option is enabled a telemetry will be saved after each flight completes.",
@@ -87,6 +80,13 @@
     "name":             "VirtualTabletJoystick",
     "shortDescription": "Show virtual joystick",
     "longDescription":  "If this option is enabled the virtual joystick will be shown on the Fly view.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "AutoLoadMissions",
+    "shortDescription": "AutoLoad mission on vehicle connect",
+    "longDescription":  "Automatically load a mission file named AutoLoad#.mission when a vehicle with id # connects.",
     "type":             "bool",
     "defaultValue":     false
 },
@@ -116,9 +116,9 @@
     "defaultValue":     false
 },
 {
-    "name":             "TelemetrySavePath",
-    "shortDescription": "Telemetry log save directory",
-    "longDescription":  "The directory to which telemetry logs are automatically saved to.",
+    "name":             "SavePath",
+    "shortDescription": "Application save directory",
+    "longDescription":  "Directory to which all data files  are saved/loaded from",
     "type":             "string",
     "defaultValue":     ""
 }

@@ -28,7 +28,7 @@
     use to catch these dialogs for unit testing.
     @remark If you need to know what type of file was returned by these functions, you can use something like:
     @code{.cpp}
-    QString filename = QGCFileDialog::getSaveFileName(this, tr("Save File"), "~/", "Foo files (*.foo);;All Files (*.*)", "foo");
+    QString filename = QGCQFileDialog::getSaveFileName(this, tr("Save File"), "~/", "Foo files (*.foo);;All Files (*.*)", "foo");
     if (!filename.isEmpty()) {
         QFileInfo fi(filename);
         QString fileExtension(fi.suffix());
@@ -39,7 +39,7 @@
     @endcode
 */
 
-class QGCFileDialog : public QFileDialog {
+class QGCQFileDialog : public QFileDialog {
     
 public:
 
@@ -119,7 +119,7 @@ public:
         Options options = 0);
 
 private slots:
-    /// @brief The exec slot is private because we only want QGCFileDialog users to use the static methods. Otherwise it will break
+    /// @brief The exec slot is private because we only want QGCQFileDialog users to use the static methods. Otherwise it will break
     ///        unit testing.
     int exec(void) { return QFileDialog::exec(); }
     

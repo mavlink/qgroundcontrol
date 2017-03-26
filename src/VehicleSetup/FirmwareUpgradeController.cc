@@ -14,7 +14,7 @@
 
 #include "FirmwareUpgradeController.h"
 #include "Bootloader.h"
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #include "QGCApplication.h"
 #include "QGCFileDownload.h"
 #include "QGCOptions.h"
@@ -442,7 +442,7 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
     }
     
     if (firmwareId.firmwareType == CustomFirmware) {
-        _firmwareFilename = QGCFileDialog::getOpenFileName(NULL,                                                                // Parent to main window
+        _firmwareFilename = QGCQFileDialog::getOpenFileName(NULL,                                                                // Parent to main window
                                                            "Select Firmware File",                                              // Dialog Caption
                                                            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation), // Initial directory
                                                            "Firmware Files (*.px4 *.bin *.ihx)");                               // File filter

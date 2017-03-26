@@ -39,9 +39,7 @@ public:
 
     void loadFromVehicle        (void) final;
     void sendToVehicle          (void) final;
-    void loadFromFilePicker     (void) final;
     void loadFromFile           (const QString& filename) final;
-    void saveToFilePicker       (void) final;
     void saveToFile             (const QString& filename) final;
     void removeAll              (void) final;
     void removeAllFromVehicle   (void) final;

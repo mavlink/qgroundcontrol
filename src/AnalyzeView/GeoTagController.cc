@@ -9,7 +9,7 @@
 
 #include "GeoTagController.h"
 #include "ExifParser.h"
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #include "QGCLoggingCategory.h"
 #include "MainWindow.h"
 #include <math.h>
@@ -35,7 +35,7 @@ GeoTagController::~GeoTagController()
 
 void GeoTagController::pickLogFile(void)
 {
-    QString filename = QGCFileDialog::getOpenFileName(MainWindow::instance(), "Select log file load", QString(), "PX4 log file (*.px4log);;All Files (*.*)");
+    QString filename = QGCQFileDialog::getOpenFileName(MainWindow::instance(), "Select log file load", QString(), "PX4 log file (*.px4log);;All Files (*.*)");
     if (!filename.isEmpty()) {
         _worker.setLogFile(filename);
         emit logFileChanged(filename);
@@ -44,7 +44,7 @@ void GeoTagController::pickLogFile(void)
 
 void GeoTagController::pickImageDirectory(void)
 {
-    QString dir = QGCFileDialog::getExistingDirectory(MainWindow::instance(), "Select image directory");
+    QString dir = QGCQFileDialog::getExistingDirectory(MainWindow::instance(), "Select image directory");
     if (!dir.isEmpty()) {
         _worker.setImageDirectory(dir);
         emit imageDirectoryChanged(dir);
@@ -53,7 +53,7 @@ void GeoTagController::pickImageDirectory(void)
 
 void GeoTagController::pickSaveDirectory(void)
 {
-    QString dir = QGCFileDialog::getExistingDirectory(MainWindow::instance(), "Select save directory");
+    QString dir = QGCQFileDialog::getExistingDirectory(MainWindow::instance(), "Select save directory");
     if (!dir.isEmpty()) {
         _worker.setSaveDirectory(dir);
         emit saveDirectoryChanged(dir);

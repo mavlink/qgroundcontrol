@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #include "QGCApplication.h"
 #include "MainWindow.h"
 
@@ -20,7 +20,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 
-QString QGCFileDialog::getExistingDirectory(
+QString QGCQFileDialog::getExistingDirectory(
     QWidget* parent,
     const QString& caption,
     const QString& dir,
@@ -38,7 +38,7 @@ QString QGCFileDialog::getExistingDirectory(
     }
 }
 
-QString QGCFileDialog::getOpenFileName(
+QString QGCQFileDialog::getOpenFileName(
     QWidget* parent,
     const QString& caption,
     const QString& dir,
@@ -57,7 +57,7 @@ QString QGCFileDialog::getOpenFileName(
     }
 }
 
-QStringList QGCFileDialog::getOpenFileNames(
+QStringList QGCQFileDialog::getOpenFileNames(
     QWidget* parent,
     const QString& caption,
     const QString& dir,
@@ -76,7 +76,7 @@ QStringList QGCFileDialog::getOpenFileNames(
     }
 }
 
-QString QGCFileDialog::getSaveFileName(
+QString QGCQFileDialog::getSaveFileName(
     QWidget* parent,
     const QString& caption,
     const QString& dir,
@@ -162,7 +162,7 @@ QString QGCFileDialog::getSaveFileName(
 }
 
 /// @brief Make sure filename is using one of the valid extensions defined in the filter
-bool QGCFileDialog::_validateExtension(const QString& filter, const QString& extension) {
+bool QGCQFileDialog::_validateExtension(const QString& filter, const QString& extension) {
     QRegularExpression re("(\\*\\.\\w+)");
     QRegularExpressionMatchIterator i = re.globalMatch(filter);
     while (i.hasNext()) {
@@ -178,7 +178,7 @@ bool QGCFileDialog::_validateExtension(const QString& filter, const QString& ext
 }
 
 /// @brief Returns first extension found in filter
-QString QGCFileDialog::_getFirstExtensionInFilter(const QString& filter) {
+QString QGCQFileDialog::_getFirstExtensionInFilter(const QString& filter) {
     QRegularExpression re("(\\*\\.\\w+)");
     QRegularExpressionMatchIterator i = re.globalMatch(filter);
     while (i.hasNext()) {
@@ -192,14 +192,14 @@ QString QGCFileDialog::_getFirstExtensionInFilter(const QString& filter) {
 }
 
 /// @brief Validates and updates the parameters for the file dialog calls
-void QGCFileDialog::_validate(Options& options)
+void QGCQFileDialog::_validate(Options& options)
 {
     Q_UNUSED(options)
 
-    // You can't use QGCFileDialog if QGCApplication is not created yet.
+    // You can't use QGCQFileDialog if QGCApplication is not created yet.
     Q_ASSERT(qgcApp());
     
-    Q_ASSERT_X(QThread::currentThread() == qgcApp()->thread(), "Threading issue", "QGCFileDialog can only be called from main thread");
+    Q_ASSERT_X(QThread::currentThread() == qgcApp()->thread(), "Threading issue", "QGCQFileDialog can only be called from main thread");
     if (MainWindow::instance()) {
     }
 }
