@@ -80,7 +80,6 @@ Rectangle {
             checked:            false
 
             onClicked: {
-                console.log("Leave plan clicked")
                 checked = false
                 missionController.saveOnSwitch()
                 showFlyView()

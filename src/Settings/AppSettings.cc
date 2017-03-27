@@ -31,6 +31,7 @@ const char* AppSettings::indoorPaletteName =                            "StyleIs
 const char* AppSettings::showLargeCompassName =                         "ShowLargeCompass";
 const char* AppSettings::savePathName =                                 "SavePath";
 const char* AppSettings::autoLoadMissionsName =                         "AutoLoadMissions";
+const char* AppSettings::automaticMissionUploadName =                   "AutomaticMissionUpload";
 
 const char* AppSettings::parameterFileExtension =   "params";
 const char* AppSettings::missionFileExtension =     "mission";
@@ -59,6 +60,7 @@ AppSettings::AppSettings(QObject* parent)
     , _showLargeCompassFact(NULL)
     , _savePathFact(NULL)
     , _autoLoadMissionsFact(NULL)
+    , _automaticMissionUpload(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
@@ -274,5 +276,14 @@ Fact* AppSettings::autoLoadMissions(void)
     }
 
     return _autoLoadMissionsFact;
+}
+
+Fact* AppSettings::automaticMissionUpload(void)
+{
+    if (!_automaticMissionUpload) {
+        _automaticMissionUpload = _createSettingsFact(automaticMissionUploadName);
+    }
+
+    return _automaticMissionUpload;
 }
 
