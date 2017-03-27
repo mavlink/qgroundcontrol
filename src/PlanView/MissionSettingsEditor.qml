@@ -35,6 +35,7 @@ Rectangle {
     property bool   _noMissionName:             missionItem.missionName.valueString === ""
     property bool   _showMissionList:           _noMissionItemsAdded && (_noMissionName || _newMissionAlreadyExists)
     property bool   _existingMissionLoaded:     missionItem.existingMission
+    property var    _appSettings:               QGroundControl.settingsManager.appSettings
 
     readonly property string _firmwareLabel:    qsTr("Firmware")
     readonly property string _vehicleLabel:     qsTr("Vehicle")
@@ -97,10 +98,36 @@ Rectangle {
                         visible:        !_existingMissionLoaded && _newMissionAlreadyExists
                     }
 
-                    QGCButton {
-                        text:       qsTr("Clear mission")
-                        visible:    !_noMissionItemsAdded
-                        onClicked:  missionController.clearMission()
+                    FactCheckBox {
+                        id:     automaticUploadCheckbox
+                        text:   qsTr("Automatically upload on exit")
+                        fact:   _appSettings.automaticMissionUpload
+                    }
+
+                    RowLayout {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+
+                        QGCButton {
+                            text:               qsTr("Clear")
+                            visible:            !_noMissionItemsAdded
+                            Layout.fillWidth:   true
+                            onClicked:          missionController.clearMission()
+                        }
+
+                        QGCButton {
+                            text:               qsTr("Close")
+                            visible:            !_noMissionItemsAdded
+                            Layout.fillWidth:   true
+                            onClicked:          missionController.closeMission()
+                        }
+
+                        QGCButton {
+                            text:               qsTr("Upload")
+                            visible:            !_noMissionItemsAdded && !automaticUploadCheckbox.checked
+                            Layout.fillWidth:   true
+                            onClicked:          missionController.sendToVehicle()
+                        }
                     }
 
                     Loader {
@@ -132,14 +159,36 @@ Rectangle {
                     showSpacer: false
                 }
 
-                QGCButton {
+                RowLayout {
                     anchors.left:   parent.left
                     anchors.right:  parent.right
-                    text:           qsTr("Load from Vehicle")
-                    visible:        !_offlineEditing
 
-                    onClicked: {
-                        missionController.loadFromVehicle()
+                    QGCButton {
+                        text:               qsTr("From Vehicle")
+                        visible:            !_offlineEditing
+                        Layout.fillWidth:   true
+                        onClicked:          missionController.loadFromVehicle()
+                    }
+
+                    QGCButton {
+                        text:               qsTr("Browse")
+                        Layout.fillWidth:   true
+                        onClicked:          fileDialog.openForLoad()
+
+                        QGCFileDialog {
+                            id:             fileDialog
+                            qgcView:        rootQgcView
+                            title:          qsTr("Select mission file")
+                            selectExisting: true
+                            folder:         _appSettings.missionSavePath
+                            fileExtension:  _appSettings.missionFileExtension
+                            nameFilters:    [ qsTr("Mission Files (*.%1)").arg(fileExtension) , qsTr("All Files (*.*)") ]
+
+                            onAcceptedForLoad: {
+                                missionController.loadFromFile(file)
+                                fileDialog.close()
+                            }
+                        }
                     }
                 }
 
@@ -337,5 +386,5 @@ Rectangle {
                 }
             }
         } // Column
-    }
+    } // Deferred loader
 } // Rectangle
