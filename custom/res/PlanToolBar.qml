@@ -72,24 +72,11 @@ Rectangle {
         anchors.leftMargin: 10
         source:             "/typhoonh/Home.svg"
         checked:            false
+
         onClicked: {
             checked = false
-            if (missionController.dirty) {
-                uploadPrompt.visible = true
-            } else {
-                showFlyView()
-            }
-        }
-        MessageDialog {
-            id:                 uploadPrompt
-            title:              _activeVehicle ? qsTr("Unsent changes") : qsTr("Unsaved changes")
-            text:               qsTr("You have %1 changes to your mission. Are you sure you want to leave before you %2?").arg(_activeVehicle ? qsTr("unsent") : qsTr("unsaved")).arg(_activeVehicle ? qsTr("send the missoin to the vehicle") : qsTr("save the mission to a file"))
-            standardButtons:    StandardButton.Yes | StandardButton.No
-            onNo: visible = false
-            onYes: {
-                visible = false
-                showFlyView()
-            }
+            missionController.saveOnSwitch()
+            showFlyView()
         }
     }
 
