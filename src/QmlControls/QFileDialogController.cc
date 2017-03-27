@@ -27,7 +27,7 @@ QStringList QFileDialogController::getFiles(const QString& directoryPath, const 
 
     foreach (const QFileInfo& fileInfo, fileInfoList) {
         qCDebug(QFileDialogControllerLog) << "getFiles found" << fileInfo.baseName();
-        files << fileInfo.baseName() + QStringLiteral(".") + fileExtension;
+        files << fileInfo.baseName();
     }
 
     return files;

@@ -80,26 +80,10 @@ Rectangle {
             checked:            false
 
             onClicked: {
+                console.log("Leave plan clicked")
                 checked = false
-                if (missionController.dirty) {
-                    uploadPrompt.visible = true
-                } else {
-                    showFlyView()
-                }
-            }
-
-            MessageDialog {
-                id:                 uploadPrompt
-                title:              _activeVehicle ? qsTr("Unsent changes") : qsTr("Unsaved changes")
-                text:               qsTr("You have %1 changes to your mission. Are you sure you want to leave before you %2?").arg(_activeVehicle ? qsTr("unsent") : qsTr("unsaved")).arg(_activeVehicle ? qsTr("send the mission to the vehicle") : qsTr("save the mission to a file"))
-                standardButtons:    StandardButton.Yes | StandardButton.No
-
-                onNo: visible = false
-
-                onYes: {
-                    visible = false
-                    showFlyView()
-                }
+                missionController.saveOnSwitch()
+                showFlyView()
             }
         }
 
@@ -178,32 +162,6 @@ Rectangle {
 
             QGCLabel { text: qsTr("Swap waypoint:") }
             QGCLabel { text: "--" }
-        }
-    }
-
-    QGCButton {
-        anchors.rightMargin:    _margins
-        anchors.right:          parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        text:                   _activeVehicle ? qsTr("Upload") : qsTr("Save")
-        visible:                missionDirty
-        primary:                true
-
-        onClicked: {
-            if (_activeVehicle) {
-                missionController.sendToVehicle()
-            } else {
-                missionController.saveToSelectedFile()
-            }
-        }
-
-        NumberAnimation on opacity {
-            id:         opacityAnimation
-            running:    missionDirty
-            from:       0.5
-            to:         1.0
-            loops:      Animation.Infinite
-            duration:   2000
         }
     }
 }
