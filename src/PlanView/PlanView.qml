@@ -673,11 +673,8 @@ QGCView {
                     color:              qgcPal.window
                     title:              qsTr("Plan")
                     z:                  QGroundControl.zOrderWidgets
-                    showAlternateIcon:  [ false, false, false, false, false ]
-                    rotateImage:        [ false, false, false, false, false ]
-                    animateImage:       [ false, false, false, false, false ]
                     buttonEnabled:      [ true, true, true, true, true ]
-                    buttonVisible:      [ true, true, true, true, _showZoom, _showZoom ]
+                    buttonVisible:      [ true, true, true, _showZoom, _showZoom ]
                     maxHeight:          mapScale.y - toolStrip.y
 
                     property bool _showZoom: !ScreenTools.isMobile
