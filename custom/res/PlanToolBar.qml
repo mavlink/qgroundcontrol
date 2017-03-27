@@ -84,7 +84,7 @@ Rectangle {
 
     Row {
         id: mainRow
-        spacing:            25 //-- Hard coded to fit the ST16 Screen
+        spacing:            30
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
         anchors.bottomMargin:       1
@@ -201,27 +201,6 @@ Rectangle {
                 Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 6
                 horizontalAlignment: Text.AlignRight
             }
-        }
-
-        QGCButton {
-            id:         saveButton
-            text:       _activeVehicle ? qsTr("Upload") : qsTr("Save")
-            visible:    missionController ? missionController.dirty : false
-            width:      ScreenTools.defaultFontPixelWidth * 10
-            anchors.verticalCenter: parent.verticalCenter
-            onClicked: {
-                if (_activeVehicle) {
-                    missionController.sendToVehicle()
-                } else {
-                    missionController.saveToSelectedFile()
-                }
-            }
-        }
-
-        Item {
-            height:     1
-            width:      saveButton.width
-            visible:    !saveButton.visible
         }
 
     }
