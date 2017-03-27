@@ -42,7 +42,7 @@ QColor QGCPalette::_text[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
 
 QColor QGCPalette::_warningText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
     { QColor("#cc0808"), QColor("#cc0808") },
-    { QColor("#fd5d13"), QColor("#fd5d13") }
+    { QColor("#f85761"), QColor("#f85761") }
 };
 
 QColor QGCPalette::_button[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
@@ -56,18 +56,18 @@ QColor QGCPalette::_buttonText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] 
 };
 
 QColor QGCPalette::_buttonHighlight[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#e4e4e4"), QColor("#33b5e5") },
-    { QColor(0x58, 0x58, 0x58), QColor(0xed, 0xd4, 0x69) },
+    { QColor("#e4e4e4"), QColor("#946120") },
+    { QColor(0x58, 0x58, 0x58), QColor("#fff291") },
 };
 
 QColor QGCPalette::_buttonHighlightText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor(0x2c, 0x2c, 0x2c), QColor(0, 0, 0) },
+    { QColor(0x2c, 0x2c, 0x2c), QColor("#ffffff") },
     { QColor(0x2c, 0x2c, 0x2c), QColor(0, 0, 0) },
 };
 
 QColor QGCPalette::_primaryButton[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor(0x58, 0x58, 0x58), QColor("#badec5") },
-    { QColor(0x58, 0x58, 0x58), QColor("#badec5") },
+    { QColor(0x58, 0x58, 0x58), QColor("#8cb3be") },
+    { QColor(0x58, 0x58, 0x58), QColor("#8cb3be") },
 };
 
 QColor QGCPalette::_primaryButtonText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
@@ -114,6 +114,27 @@ QColor QGCPalette::_brandingPurple[QGCPalette::_cThemes][QGCPalette::_cColorGrou
 QColor QGCPalette::_brandingBlue[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
     { QColor("#48D6FF"), QColor("#48D6FF") },
     { QColor("#48D6FF"), QColor("#48D6FF") },
+};
+
+QColor QGCPalette::_colorGreen[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor("#009431"), QColor("#009431") },   //-- Light
+    { QColor("#00e04b"), QColor("#00e04b") },   //-- Dark
+};
+QColor QGCPalette::_colorOrange[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor("#b95604"), QColor("#b95604") },
+    { QColor("#de8500"), QColor("#de8500") },
+};
+QColor QGCPalette::_colorRed[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor("#ed3939"), QColor("#ed3939") },
+    { QColor("#f32836"), QColor("#f32836") },
+};
+QColor QGCPalette::_colorGrey[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor("#808080"), QColor("#808080") },
+    { QColor("#bfbfbf"), QColor("#bfbfbf") },
+};
+QColor QGCPalette::_colorBlue[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor("#1a72ff"), QColor("#1a72ff") },
+    { QColor("#536dff"), QColor("#536dff") },
 };
 
 QGCPalette::QGCPalette(QObject* parent) :

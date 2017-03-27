@@ -646,6 +646,21 @@ void MissionController::loadFromFile(const QString& filename)
     MissionController::_scanForAdditionalSettings(_visualItems, _activeVehicle);
 
     _initAllVisualItems();
+
+    QString filenameOnly = filename;
+    int lastSepIndex = filename.lastIndexOf(QStringLiteral("/"));
+    if (lastSepIndex != -1) {
+        filenameOnly = filename.right(filename.length() - lastSepIndex - 1);
+    }
+    QString extension = AppSettings::missionFileExtension;
+    if (filenameOnly.endsWith("." + extension)) {
+        filenameOnly = filenameOnly.left(filenameOnly.length() - extension.length() - 1);
+    }
+
+    _settingsItem->missionName()->setRawValue(filenameOnly);
+    _settingsItem->setExistingMission(true);
+
+    sendToVehicle();
 }
 
 bool MissionController::loadItemsFromFile(Vehicle* vehicle, const QString& filename, QmlObjectListModel** visualItems)
@@ -1576,4 +1591,26 @@ QStringList MissionController::complexMissionItemNames(void) const
 bool MissionController::missionInProgress(void) const
 {
     return _visualItems && _visualItems->count() > 1 && (!_visualItems->value<VisualMissionItem*>(0)->isCurrentItem() && !_visualItems->value<VisualMissionItem*>(1)->isCurrentItem());
+}
+
+void MissionController::save(void)
+{
+    // Save to file if the mission is named
+    QString missionFullPath = _settingsItem->missionFullPath()->rawValue().toString();
+    if (!missionFullPath.isEmpty()) {
+        saveToFile(missionFullPath);
+    }
+
+    // Send to vehicle if we are connected
+    if (!_activeVehicle->isOfflineEditingVehicle()) {
+        sendToVehicle();
+    }
+
+    _settingsItem->setExistingMission(_visualItems->count() > 1 && !missionFullPath.isEmpty());
+}
+
+void MissionController::clearMission(void)
+{
+    removeAll();
+    save();
 }
