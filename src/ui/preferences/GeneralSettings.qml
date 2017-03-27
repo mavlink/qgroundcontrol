@@ -139,7 +139,7 @@ QGCView {
                         //-----------------------------------------------------------------
                         //-- Base UI Font Point Size
                         Row {
-                            visible: _appFontPointSize.visible
+                            visible: _appFontPointSize ? _appFontPointSize.visible : false
                             spacing: ScreenTools.defaultFontPixelWidth
                             QGCLabel {
                                 id:     baseFontLabel
@@ -188,15 +188,56 @@ QGCView {
                             spacing: ScreenTools.defaultFontPixelWidth
                             visible: QGroundControl.settingsManager.appSettings.indoorPalette.visible
                             QGCLabel {
-                                anchors.baseline:   paletteCombo.baseline
-                                text:               qsTr("Color scheme:")
-                                width:              _labelWidth
+                                text:           qsTr("Color scheme:")
+                                width:          _labelWidth
+                                anchors.verticalCenter: parent.verticalCenter
                             }
                             FactComboBox {
-                                id:         paletteCombo
+                                width:          _editFieldWidth
+                                fact:           QGroundControl.settingsManager.appSettings.indoorPalette
+                                indexModel:     false
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        //-----------------------------------------------------------------
+                        //-- Map Provider
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    _mapProvider.visible
+                            QGCLabel {
+                                text:       qsTr("Map Provider:")
+                                width:      _labelWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            FactComboBox {
                                 width:      _editFieldWidth
-                                fact:       QGroundControl.settingsManager.appSettings.indoorPalette
+                                fact:       _mapProvider
                                 indexModel: false
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        //-----------------------------------------------------------------
+                        //-- Map Type
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    _mapType.visible
+                            QGCLabel {
+                                text:               qsTr("Map Type:")
+                                width:              _labelWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            FactComboBox {
+                                id:         mapTypes
+                                width:      _editFieldWidth
+                                fact:       _mapType
+                                indexModel: false
+                                anchors.verticalCenter: parent.verticalCenter
+                                Connections {
+                                    target: QGroundControl.settingsManager.flightMapSettings
+                                    onMapTypeChanged: {
+                                        mapTypes.model = _mapType.enumStrings
+                                    }
+                                }
                             }
                         }
                         //-----------------------------------------------------------------
@@ -205,10 +246,8 @@ QGCView {
                             text:       qsTr("Mute all audio output")
                             fact:       _audioMuted
                             visible:    _audioMuted.visible
-
                             property Fact _audioMuted: QGroundControl.settingsManager.appSettings.audioMuted
                         }
-
                         //-----------------------------------------------------------------
                         //-- Save telemetry log
                         FactCheckBox {
@@ -216,10 +255,8 @@ QGCView {
                             text:       qsTr("Save telemetry log after each flight")
                             fact:       _telemetrySave
                             visible:    !ScreenTools.isMobile && _telemetrySave.visible
-
                             property Fact _telemetrySave: QGroundControl.settingsManager.appSettings.telemetrySave
                         }
-
                         //-----------------------------------------------------------------
                         //-- Save even if not armed
                         FactCheckBox {
@@ -227,10 +264,8 @@ QGCView {
                             fact:       _telemetrySaveNotArmed
                             visible:    !ScreenTools.isMobile && _telemetrySaveNotArmed.visible
                             enabled:    promptSaveLog.checked
-
                             property Fact _telemetrySaveNotArmed: QGroundControl.settingsManager.appSettings.telemetrySaveNotArmed
                         }
-
                         //-----------------------------------------------------------------
                         //-- Clear settings
                         QGCCheckBox {
@@ -263,9 +298,10 @@ QGCView {
                             spacing: ScreenTools.defaultFontPixelWidth
                             QGCCheckBox {
                                 id:                 announcePercentCheckbox
-                                anchors.verticalCenter: parent.verticalCenter
                                 text:               qsTr("Announce battery lower than:")
-                                checked:            _percentRemainingAnnounce.value != 0
+                                checked:            _percentRemainingAnnounce.value !== 0
+                                width:              (_labelWidth + _editFieldWidth) * 0.65
+                                anchors.verticalCenter: parent.verticalCenter
                                 onClicked: {
                                     if (checked) {
                                         _percentRemainingAnnounce.value = _percentRemainingAnnounce.defaultValueString
@@ -277,6 +313,7 @@ QGCView {
                             FactTextField {
                                 id:                 announcePercent
                                 fact:               _percentRemainingAnnounce
+                                width:              (_labelWidth + _editFieldWidth) * 0.35
                                 enabled:            announcePercentCheckbox.checked
                                 anchors.verticalCenter: parent.verticalCenter
                             }
@@ -296,12 +333,15 @@ QGCView {
                             spacing:    ScreenTools.defaultFontPixelWidth
                             visible:    QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude.visible
                             QGCLabel {
-                                anchors.baseline:   defaultItemAltitudeField.baseline
-                                text:               qsTr("Default mission item altitude:")
+                                anchors.verticalCenter: parent.verticalCenter
+                                width:  (_labelWidth + _editFieldWidth) * 0.65
+                                text:   qsTr("Default mission altitude:")
                             }
                             FactTextField {
                                 id:     defaultItemAltitudeField
+                                width:  (_labelWidth + _editFieldWidth) * 0.35
                                 fact:   QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
+                                anchors.verticalCenter: parent.verticalCenter
                             }
                         }
 
@@ -343,53 +383,6 @@ QGCView {
                                     selectFolder:   true
 
                                     onAcceptedForLoad: _savePath.rawValue = file
-                                }
-                            }
-                        }
-
-                        //-----------------------------------------------------------------
-                        //-- Map Provider
-                        Row {
-                            spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    _mapProvider.visible
-
-                            QGCLabel {
-                                anchors.baseline:   mapProviders.baseline
-                                text:               qsTr("Map Provider:")
-                                width:              _labelWidth
-                            }
-
-                            FactComboBox {
-                                id:         mapProviders
-                                width:      _editFieldWidth
-                                fact:       _mapProvider
-                                indexModel: false
-                            }
-                        }
-
-                        //-----------------------------------------------------------------
-                        //-- Map Type
-                        Row {
-                            spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    _mapType.visible
-
-                            QGCLabel {
-                                anchors.baseline:   mapTypes.baseline
-                                text:               qsTr("Map Type:")
-                                width:              _labelWidth
-                            }
-
-                            FactComboBox {
-                                id:         mapTypes
-                                width:      _editFieldWidth
-                                fact:       _mapType
-                                indexModel: false
-
-                                Connections {
-                                    target: QGroundControl.settingsManager.flightMapSettings
-                                    onMapTypeChanged: {
-                                        mapTypes.model = _mapType.enumStrings
-                                    }
                                 }
                             }
                         }
