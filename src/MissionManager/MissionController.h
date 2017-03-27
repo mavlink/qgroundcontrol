@@ -88,6 +88,9 @@ public:
     /// Sends the mission items to the specified vehicle
     static void sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems);
 
+    Q_INVOKABLE void save(void);
+    Q_INVOKABLE void clearMission(void);
+
     // Overrides from PlanElementController
     void start                      (bool editMode) final;
     void startStaticActiveVehicle   (Vehicle* vehicle) final;

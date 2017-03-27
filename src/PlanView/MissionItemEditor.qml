@@ -28,7 +28,7 @@ Rectangle {
 
     property bool   _currentItem:           missionItem.isCurrentItem
     property color  _outerTextColor:        _currentItem ? "black" : qgcPal.text
-    property bool   _noMissionItemsAdded:   ListView.view.model.count == 1
+    property bool   _noMissionItemsAdded:   ListView.view.model.count === 1
     property real   _sectionSpacer:         ScreenTools.defaultFontPixelWidth / 2  // spacing between section headings
 
     readonly property real  _editFieldWidth:    Math.min(width - _margin * 2, ScreenTools.defaultFontPixelWidth * 12)
