@@ -116,6 +116,13 @@
     "defaultValue":     false
 },
 {
+    "name":             "AutomaticMissionUpload",
+    "shortDescription": "Automatic mission upload",
+    "longDescription":  "Automatically upload mission to vehicle after changes",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
     "name":             "SavePath",
     "shortDescription": "Application save directory",
     "longDescription":  "Directory to which all data files  are saved/loaded from",
