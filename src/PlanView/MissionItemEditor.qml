@@ -12,8 +12,7 @@ import QGroundControl.Palette       1.0
 
 /// Mission item edit control
 Rectangle {
-    id: _root
-
+    id:     _root
     height: editorLoader.y + editorLoader.height + (_margin * 2)
     color:  _currentItem ? qgcPal.primaryButton : qgcPal.windowShade
     radius: _radius
@@ -21,6 +20,7 @@ Rectangle {
     property var    map             ///< Map control
     property var    missionItem     ///< MissionItem associated with this editor
     property bool   readOnly        ///< true: read only view, false: full editing view
+    property var    rootQgcView
 
     signal clicked
     signal remove
