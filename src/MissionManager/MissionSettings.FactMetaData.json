@@ -19,8 +19,14 @@
     "name":             "MissionEndAction",
     "shortDescription": "The action to take when the mission completed.",
     "type":             "uint32",
-    "enumStrings":      "No action on mission completion,Loiter after mission completes,RTL after mission completes,Land after mission completes",
-    "enumValues":       "0,1,2,3",
+    "enumStrings":      "No action on mission end,Loiter after mission end,RTL after mission end",
+    "enumValues":       "0,1,2",
     "defaultValue":     0
+},
+{
+    "name":             "MissionName",
+    "shortDescription": "Name for the mission.",
+    "type":             "string",
+    "defaultValue":     ""
 }
 ]

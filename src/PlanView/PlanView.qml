@@ -103,15 +103,16 @@ QGCView {
             setCurrentItem(0)
         }
 
+        // Users is switching away from Plan View
+        function saveOnSwitch() {
+            save()
+        }
+
         function loadFromSelectedFile() {
             fileDialog.title =          qsTr("Select Mission File")
             fileDialog.selectExisting = true
             fileDialog.nameFilters =    missionController.nameFilters
             fileDialog.openForLoad()
-
-            // FIXME: Hmm
-            //mapFitFunctions.fitMapViewportToMissionItems()
-            //_currentMissionItem = _visualItems.get(0)
         }
 
         function saveToSelectedFile() {
@@ -464,13 +465,12 @@ QGCView {
                 // Plan Element selector (Mission/Fence/Rally)
                 Row {
                     id:                 planElementSelectorRow
-                    anchors.topMargin:  parent.height - ScreenTools.availableHeight + _margin
-                    anchors.top:        parent.top
+                    anchors.top:        toolStrip.top
                     anchors.leftMargin: parent.width - _rightPanelWidth
                     anchors.left:       parent.left
                     z:                  QGroundControl.zOrderWidgets
                     spacing:            _horizontalMargin
-                    visible:            QGroundControl.corePlugin.options.enablePlanViewSelector
+                    visible:            false // WIP: Temporarily remove - QGroundControl.corePlugin.options.enablePlanViewSelector
 
                     readonly property real _buttonRadius: ScreenTools.defaultFontPixelHeight * 0.75
 
@@ -531,7 +531,7 @@ QGCView {
                 // Mission Item Editor
                 Item {
                     id:                 missionItemEditor
-                    anchors.topMargin:  _margin
+                    anchors.topMargin:  planElementSelectorRow.visible ? _margin : 0
                     anchors.top:        planElementSelectorRow.visible ? planElementSelectorRow.bottom : planElementSelectorRow.top
                     anchors.bottom:     parent.bottom
                     anchors.right:      parent.right
@@ -673,18 +673,16 @@ QGCView {
                     color:              qgcPal.window
                     title:              qsTr("Plan")
                     z:                  QGroundControl.zOrderWidgets
-                    showAlternateIcon:  [ false, false, _syncDropDownController.dirty, false, false, false ]
-                    rotateImage:        [ false, false, _syncDropDownController.syncInProgress, false, false, false ]
-                    animateImage:       [ false, false, _syncDropDownController.dirty, false, false, false ]
-                    buttonEnabled:      [ true, true, !_syncDropDownController.syncInProgress, true, true, true ]
+                    showAlternateIcon:  [ false, false, false, false, false ]
+                    rotateImage:        [ false, false, false, false, false ]
+                    animateImage:       [ false, false, false, false, false ]
+                    buttonEnabled:      [ true, true, true, true, true ]
                     buttonVisible:      [ true, true, true, true, _showZoom, _showZoom ]
                     maxHeight:          mapScale.y - toolStrip.y
 
                     property bool _showZoom: !ScreenTools.isMobile
 
                     property bool mySingleComplexItem: _singleComplexItem
-
-                    onMySingleComplexItemChanged: console.log(model[1].dropPanelComponent)
 
                     model: [
                         {
@@ -696,12 +694,6 @@ QGCView {
                             name:               "Pattern",
                             iconSource:         "/qmlimages/MapDrawShape.svg",
                             dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
-                        },
-                        {
-                            name:                   "Sync",
-                            iconSource:             "/qmlimages/MapSync.svg",
-                            alternateIconSource:    "/qmlimages/MapSyncChanged.svg",
-                            dropPanelComponent:     syncDropPanel
                         },
                         {
                             name:               "Center",
@@ -728,16 +720,10 @@ QGCView {
                                 addComplexItem(missionController.complexMissionItemNames[0])
                             }
                             break
-                        case 5:
+                        case 3:
                             editorMap.zoomLevel += 0.5
                             break
-                        case 6:
-                            editorMap.zoomLevel -= 0.5
-                            break
-                        case 5:
-                            editorMap.zoomLevel += 0.5
-                            break
-                        case 6:
+                        case 4:
                             editorMap.zoomLevel -= 0.5
                             break
                         }
@@ -834,12 +820,12 @@ QGCView {
                 columnSpacing:      ScreenTools.defaultFontPixelWidth
 
                 QGCButton {
-                    text:               qsTr("Send To Vehicle")
+                    text:               qsTr("Save")
                     Layout.fillWidth:   true
-                    enabled:            _activeVehicle && !_syncDropDownController.syncInProgress
+                    enabled:            !_syncDropDownController.syncInProgress
                     onClicked: {
                         dropPanel.hide()
-                        _syncDropDownController.sendToVehicle()
+                        _syncDropDownController.save()
                     }
                 }
 
