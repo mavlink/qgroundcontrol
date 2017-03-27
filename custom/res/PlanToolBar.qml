@@ -25,15 +25,17 @@ Rectangle {
     property var    missionController
     property var    currentMissionItem          ///< Mission item to display status for
 
-    property var    missionItems:               missionController ? missionController.visualItems : undefined
-    property real   missionDistance:            missionController ? missionController.missionDistance : 0.0
-    property real   missionTime:                missionController ? missionController.missionTime : 0.0
-    property real   missionMaxTelemetry:        missionController ? missionController.missionMaxTelemetry : 0.0
+    property var    missionItems:               _controllerValid ? missionController.visualItems : undefined
+    property real   missionDistance:            _controllerValid ? missionController.missionDistance : NaN
+    property real   missionTime:                _controllerValid ? missionController.missionTime : NaN
+    property real   missionMaxTelemetry:        _controllerValid ? missionController.missionMaxTelemetry : NaN
+    property bool   missionDirty:               _controllerValid ? missionController.dirty : false
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
 
-    property bool   _statusValid:               currentMissionItem !== undefined
-    property bool   _missionValid:              missionItems !== undefined
+    property bool   _statusValid:               currentMissionItem != undefined
+    property bool   _missionValid:              missionItems != undefined
+    property bool   _controllerValid:           missionController != undefined
 
     property real   _distance:                  _statusValid ? currentMissionItem.distance : NaN
     property real   _altDifference:             _statusValid ? currentMissionItem.altDifference : NaN
@@ -82,7 +84,7 @@ Rectangle {
 
     Row {
         id: mainRow
-        spacing:        30 //-- Hard coded to fit the ST16 Screen
+        spacing:            25 //-- Hard coded to fit the ST16 Screen
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
         anchors.bottomMargin:       1
@@ -222,27 +224,6 @@ Rectangle {
             visible:    !saveButton.visible
         }
 
-    }
-
-    Item {
-        id:                 logoItem
-        width:              logoImage.width
-        anchors.top:        parent.top
-        anchors.bottom:     parent.bottom
-        anchors.right:      parent.right
-        anchors.rightMargin: 10
-        anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
-        Image {
-            id:             logoImage
-            height:         parent.height * 0.45
-            fillMode:       Image.PreserveAspectFit
-            source:         _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
-            anchors.verticalCenter: parent.verticalCenter
-            property bool   _outdoorPalette:        qgcPal.globalTheme === QGCPalette.Light
-            property bool   _corePluginBranding:    QGroundControl.corePlugin.brandImageIndoor.length !== 0
-            property string _brandImageIndoor:      _corePluginBranding ? QGroundControl.corePlugin.brandImageIndoor  : (_activeVehicle ? _activeVehicle.brandImageIndoor : "")
-            property string _brandImageOutdoor:     _corePluginBranding ? QGroundControl.corePlugin.brandImageOutdoor : (_activeVehicle ? _activeVehicle.brandImageOutdoor : "")
-        }
     }
 
 }
