@@ -1,6 +1,6 @@
         <file alias="QGroundControl/Controls/MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
         <file alias="QGroundControl/Controls/MainToolBarIndicators.qml">src/ui/toolbar/MainToolBarIndicators.qml</file>
-        <file alias="QGroundControl/Controls/PlanToolBar.qml">src/MissionEditor/PlanToolBar.qml</file>
+        <file alias="QGroundControl/Controls/PlanToolBar.qml">src/PlanView/PlanToolBar.qml</file>
         <file alias="AnalyzeView.qml">src/AnalyzeView/AnalyzeView.qml</file>
         <file alias="BatteryIndicator.qml">src/ui/toolbar/BatteryIndicator.qml</file>
         <file alias="GPSIndicator.qml">src/ui/toolbar/GPSIndicator.qml</file>
