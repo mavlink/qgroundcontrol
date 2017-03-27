@@ -109,24 +109,17 @@ Rectangle {
                         anchors.right:  parent.right
 
                         QGCButton {
-                            text:               qsTr("Clear")
+                            text:               qsTr("Remove All")
                             visible:            !_noMissionItemsAdded
                             Layout.fillWidth:   true
                             onClicked:          missionController.clearMission()
                         }
 
                         QGCButton {
-                            text:               qsTr("Close")
+                            text:               qsTr("New Mission")
                             visible:            !_noMissionItemsAdded
                             Layout.fillWidth:   true
                             onClicked:          missionController.closeMission()
-                        }
-
-                        QGCButton {
-                            text:               qsTr("Upload")
-                            visible:            !_noMissionItemsAdded && !automaticUploadCheckbox.checked
-                            Layout.fillWidth:   true
-                            onClicked:          missionController.sendToVehicle()
                         }
                     }
 
