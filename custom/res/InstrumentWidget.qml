@@ -35,16 +35,22 @@ Item {
     height: mainRect.height
     width:  getPreferredInstrumentWidth() * 0.75
 
-    property real _spacers:         ScreenTools.defaultFontPixelHeight * 0.5
-    property real _distance:        0.0
-    property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 30
-    property bool _hideCamera:      false
+    property real _spacers:                 ScreenTools.defaultFontPixelHeight * 0.5
+    property real _distance:                0.0
+    property real _editFieldWidth:          ScreenTools.defaultFontPixelWidth * 30
+    property bool _hideCamera:              false
+    property var  _activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle
+    property bool _communicationLost:       _activeVehicle ? _activeVehicle.connectionLost : false
+    property bool _cameraVideoMode:         !_communicationLost && (TyphoonHQuickInterface.cameraControl.sdTotal === 0 ? false : TyphoonHQuickInterface.cameraControl.cameraMode  === CameraControl.CAMERA_MODE_VIDEO)
+    property bool _cameraPhotoMode:         !_communicationLost && (TyphoonHQuickInterface.cameraControl.sdTotal === 0 ? false : TyphoonHQuickInterface.cameraControl.cameraMode  === CameraControl.CAMERA_MODE_PHOTO)
+    property bool _videoStatusUndefined:    _communicationLost  || (TyphoonHQuickInterface.cameraControl.sdTotal === 0 ? true  : TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_UNDEFINED)
+    property bool _cameraModeUndefined:     _communicationLost  || (TyphoonHQuickInterface.cameraControl.sdTotal === 0 ? true  : TyphoonHQuickInterface.cameraControl.cameraMode  === CameraControl.CAMERA_MODE_UNDEFINED)
 
     function getGearColor() {
-        if(TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED) {
-            return qgcPal.text
-        } else {
+        if(_cameraModeUndefined) {
             return qgcPal.colorGrey;
+        } else {
+            return qgcPal.text
         }
     }
 
@@ -265,7 +271,7 @@ Item {
                         height:             parent.height
                         width:              parent.width * 0.5
                         radius:             width * 0.5
-                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_PHOTO ? qgcPal.colorGreen : "black"
+                        color:              _cameraPhotoMode ? qgcPal.colorGreen : "black"
                         anchors.left:       parent.left
                         QGCColoredImage {
                             height:             parent.height * 0.75
@@ -273,7 +279,7 @@ Item {
                             sourceSize.width:   width
                             source:             "qrc:/typhoonh/camera.svg"
                             fillMode:           Image.PreserveAspectFit
-                            color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_PHOTO ? "black" : qgcPal.colorGrey
+                            color:              _cameraPhotoMode ? "black" : qgcPal.colorGrey
                             anchors.centerIn:   parent
                         }
                     }
@@ -281,7 +287,7 @@ Item {
                         height:             parent.height
                         width:              parent.width * 0.5
                         radius:             width * 0.5
-                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? qgcPal.colorGreen : "black"
+                        color:              _cameraVideoMode ? qgcPal.colorGreen : "black"
                         anchors.right:      parent.right
                         QGCColoredImage {
                             height:             parent.height * 0.75
@@ -289,13 +295,13 @@ Item {
                             sourceSize.width:   width
                             source:             "qrc:/typhoonh/video.svg"
                             fillMode:           Image.PreserveAspectFit
-                            color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? "black" : qgcPal.colorGrey
+                            color:              _cameraVideoMode ? "black" : qgcPal.colorGrey
                             anchors.centerIn:   parent
                         }
                     }
                     MouseArea {
                         anchors.fill:   parent
-                        enabled:        TyphoonHQuickInterface.cameraControl.videoStatus !== CameraControl.VIDEO_CAPTURE_STATUS_UNDEFINED
+                        enabled:        !_videoStatusUndefined
                         onClicked: {
                             rootLoader.sourceComponent = null
                             TyphoonHQuickInterface.cameraControl.toggleMode()
@@ -321,12 +327,12 @@ Item {
                         sourceSize.width:   width
                         source:             "qrc:/typhoonh/video.svg"
                         fillMode:           Image.PreserveAspectFit
-                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? qgcPal.colorGreen : qgcPal.colorGrey
-                        visible:            TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO && TyphoonHQuickInterface.cameraControl.videoStatus !== CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+                        color:              _cameraVideoMode ? qgcPal.colorGreen : qgcPal.colorGrey
+                        visible:            TyphoonHQuickInterface.cameraControl.videoStatus !== CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
                         anchors.centerIn:   parent
                         MouseArea {
                             anchors.fill:   parent
-                            enabled:        TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_STOPPED
+                            enabled:        _cameraVideoMode && TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_STOPPED
                             onClicked: {
                                 rootLoader.sourceComponent = null
                                 TyphoonHQuickInterface.cameraControl.startVideo()
@@ -337,8 +343,8 @@ Item {
                         id:                 stopVideoButton
                         height:             parent.height * 0.5
                         width:              height
-                        color:              TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO ? qgcPal.colorRed : qgcPal.colorGrey
-                        visible:            TyphoonHQuickInterface.cameraControl.cameraMode === CameraControl.CAMERA_MODE_VIDEO && TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+                        color:              _cameraVideoMode ? qgcPal.colorRed : qgcPal.colorGrey
+                        visible:            _cameraVideoMode && TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
                         anchors.centerIn:   parent
                         MouseArea {
                             anchors.fill:   parent
@@ -355,12 +361,12 @@ Item {
                         sourceSize.width:   width
                         source:             "qrc:/typhoonh/camera.svg"
                         fillMode:           Image.PreserveAspectFit
-                        color:              TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED ? qgcPal.colorGreen : qgcPal.colorGrey
+                        color:              _cameraModeUndefined ? qgcPal.colorGrey : qgcPal.colorGreen
                         visible:            !startVideoButton.visible && !stopVideoButton.visible
                         anchors.centerIn:   parent
                         MouseArea {
                             anchors.fill:   parent
-                            enabled:        TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
+                            enabled:        !_cameraModeUndefined
                             onClicked: {
                                 rootLoader.sourceComponent = null
                                 TyphoonHQuickInterface.cameraControl.takePhoto()
@@ -391,7 +397,7 @@ Item {
                     }
                     MouseArea {
                         anchors.fill:       parent
-                        enabled:            TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
+                        enabled:            !_cameraModeUndefined
                         onClicked: {
                             if(rootLoader.sourceComponent === null) {
                                 rootLoader.sourceComponent = cameraSettingsComponent

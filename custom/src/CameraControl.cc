@@ -184,17 +184,18 @@ CameraControl::networkManager()
 void
 CameraControl::setVehicle(Vehicle* vehicle)
 {
+    _resetCameraValues();
+    _cameraSupported = CAMERA_SUPPORT_UNDEFINED;
+    emit cameraModeChanged();
+    emit videoStatusChanged();
     if(_vehicle) {
         _vehicle = NULL;
         disconnect(&_statusTimer, &QTimer::timeout, this, &CameraControl::_getCameraStatus);
+        _cameraSupported = CAMERA_SUPPORT_UNDEFINED;
     }
     if(vehicle) {
         _vehicle = vehicle;
-        _resetCameraValues();
-        _cameraSupported = CAMERA_SUPPORT_UNDEFINED;
         _httpErrorCount = 0;
-        emit cameraModeChanged();
-        emit videoStatusChanged();
         connect(&_statusTimer, &QTimer::timeout, this, &CameraControl::_getCameraStatus);
         _statusTimer.setSingleShot(true);
         //-- Ambarella Interface
