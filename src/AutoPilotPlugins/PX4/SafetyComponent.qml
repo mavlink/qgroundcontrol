@@ -330,7 +330,7 @@ SetupPage {
                                     id:                 fenceAltMaxCheckBox
                                     anchors.baseline:   fenceAltMaxField.baseline
                                     text:               qsTr("Max altitude:")
-                                    checked:            _fenceAlt.value > 0
+                                    checked:            _fenceAlt ? _fenceAlt.value > 0 : false
                                     onClicked:          _fenceAlt.value = checked ? 100 : 0
                                     width:              _middleRowWidth
                                 }
@@ -408,21 +408,21 @@ SetupPage {
                                     ExclusiveGroup { id: homeLoiterGroup }
                                     QGCRadioButton {
                                         id:             homeLandRadio
-                                        checked:        _rtlLandDelay.value === 0
+                                        checked:        _rtlLandDelay ? _rtlLandDelay.value === 0 : false
                                         exclusiveGroup: homeLoiterGroup
                                         text:           "Land immediately"
                                         onClicked:      _rtlLandDelay.value = 0
                                     }
                                     QGCRadioButton {
                                         id:             homeLoiterNoLandRadio
-                                        checked:        _rtlLandDelay.value < 0
+                                        checked:        _rtlLandDelay ? _rtlLandDelay.value < 0 : false
                                         exclusiveGroup: homeLoiterGroup
                                         text:           "Loiter and do not land"
                                         onClicked:      _rtlLandDelay.value = -1
                                     }
                                     QGCRadioButton {
                                         id:             homeLoiterLandRadio
-                                        checked:        _rtlLandDelay.value > 0
+                                        checked:        _rtlLandDelay ? _rtlLandDelay.value > 0 : false
                                         exclusiveGroup: homeLoiterGroup
                                         text:           qsTr("Loiter and land after specified time")
                                         onClicked:      _rtlLandDelay.value = 60
@@ -504,7 +504,7 @@ SetupPage {
                             spacing:                    _margins * 0.5
                             anchors.verticalCenter:     parent.verticalCenter
                             Row {
-                                visible:                !controller.vehicle.fixedWing && (_landSpeedMC !== -1)
+                                visible:                controller.vehicle ? (!controller.vehicle.fixedWing && (_landSpeedMC !== -1)) : false
                                 QGCLabel {
                                     anchors.baseline:   landVelField.baseline
                                     width:              _middleRowWidth

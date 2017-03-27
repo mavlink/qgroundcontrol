@@ -60,12 +60,11 @@ class QGCPalette : public QObject
     Q_PROPERTY(QColor brandingPurple        READ brandingPurple                                         NOTIFY paletteChanged)
     Q_PROPERTY(QColor brandingBlue          READ brandingBlue                                           NOTIFY paletteChanged)
 
-    Q_PROPERTY(QColor colorGreen            READ colorGreen             CONSTANT)
-    Q_PROPERTY(QColor colorOrange           READ colorOrange            CONSTANT)
-    Q_PROPERTY(QColor colorRed              READ colorRed               CONSTANT)
-    Q_PROPERTY(QColor colorGrey             READ colorGrey              CONSTANT)
-    Q_PROPERTY(QColor colorBlue             READ colorBlue              CONSTANT)
-    Q_PROPERTY(QColor colorWhite            READ colorWhite             CONSTANT)
+    Q_PROPERTY(QColor colorGreen            READ colorGreen             WRITE setColorGreen             NOTIFY paletteChanged)
+    Q_PROPERTY(QColor colorOrange           READ colorOrange            WRITE setColorOrange            NOTIFY paletteChanged)
+    Q_PROPERTY(QColor colorRed              READ colorRed               WRITE setColorRed               NOTIFY paletteChanged)
+    Q_PROPERTY(QColor colorGrey             READ colorGrey              WRITE setColorGrey              NOTIFY paletteChanged)
+    Q_PROPERTY(QColor colorBlue             READ colorBlue              WRITE setColorBlue              NOTIFY paletteChanged)
 
 public:
     enum ColorGroup {
@@ -142,12 +141,12 @@ public:
     /// Blue color from branding guidelines
     QColor brandingBlue(void)           const { return _brandingBlue[_theme][_colorGroupEnabled ? 1 : 0]; }
 
-    QColor colorGreen   () { return QColor("#05f068"); }
-    QColor colorOrange  () { return QColor("#f0ab06"); }
-    QColor colorRed     () { return QColor("#fc4638"); }
-    QColor colorGrey    () { return QColor("#7f7f7f"); }
-    QColor colorBlue    () { return QColor("#636efe"); }
-    QColor colorWhite   () { return QColor("#ffffff"); }
+    /// Arbitrary colors used for UI elements. Usually over _window and _windowShade.
+    QColor colorGreen   ()              const { return _colorGreen[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor colorOrange  ()              const { return _colorOrange[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor colorRed     ()              const { return _colorRed[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor colorGrey    ()              const { return _colorGrey[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor colorBlue    ()              const { return _colorBlue[_theme][_colorGroupEnabled ? 1 : 0]; }
 
     void setWindow(QColor& color)               { _window[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
     void setWindowShade(QColor& color)          { _windowShade[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
@@ -166,6 +165,12 @@ public:
     void setMapButtonHighlight(QColor& color)   { _mapButtonHighlight[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
     void setMapWidgetBorderLight(QColor& color) { _mapWidgetBorderLight[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
     void setMapWidgetBorderDark(QColor& color)  { _mapWidgetBorderDark[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+
+    void setColorGreen  (QColor& color)         { _colorGreen[_theme][_colorGroupEnabled    ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setColorOrange (QColor& color)         { _colorOrange[_theme][_colorGroupEnabled   ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setColorRed    (QColor& color)         { _colorRed[_theme][_colorGroupEnabled      ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setColorGrey   (QColor& color)         { _colorGrey[_theme][_colorGroupEnabled     ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setColorBlue   (QColor& color)         { _colorBlue[_theme][_colorGroupEnabled     ? 1 : 0] = color; _signalPaletteChangeToAll(); }
 
     static Theme globalTheme(void) { return _theme; }
     static void setGlobalTheme(Theme newTheme);
@@ -210,6 +215,12 @@ private:
 
     static QColor _brandingPurple[_cThemes][_cColorGroups];
     static QColor _brandingBlue[_cThemes][_cColorGroups];
+
+    static QColor _colorGreen[_cThemes][_cColorGroups];
+    static QColor _colorOrange[_cThemes][_cColorGroups];
+    static QColor _colorRed[_cThemes][_cColorGroups];
+    static QColor _colorGrey[_cThemes][_cColorGroups];
+    static QColor _colorBlue[_cThemes][_cColorGroups];
 
     void _themeChanged(void);
     

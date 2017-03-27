@@ -1,14 +1,87 @@
 import QtQuick 2.3
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.4
+import QtQuick.Layouts          1.2
 
-import QGroundControl.Palette 1.0
-import QGroundControl.Controls 1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.ScreenTools   1.0
 
 Rectangle {
 
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+
     property var palette: QGCPalette { colorGroupEnabled: true }
     color: "white"
+
+    Component {
+        id: arbBox
+        Rectangle {
+            width:  arbGrid.width  * 1.5
+            height: arbGrid.height * 1.5
+            color:  backgroundColor
+            border.color: qgcPal.text
+            border.width: 1
+            anchors.horizontalCenter: parent.horizontalCenter
+            GridLayout {
+                id: arbGrid
+                columns: 4
+                rowSpacing: 10
+                anchors.centerIn: parent
+                QGCColoredImage {
+                    color:                      qgcPal.colorGreen
+                    width:                      ScreenTools.defaultFontPixelWidth * 2
+                    height:                     width
+                    sourceSize.height:          width
+                    mipmap:                     true
+                    fillMode:                   Image.PreserveAspectFit
+                    source:                     "/qmlimages/Gears.svg"
+                }
+                Label { text: "colorGreen"; color: qgcPal.colorGreen; }
+                QGCColoredImage {
+                    color:                      qgcPal.colorOrange
+                    width:                      ScreenTools.defaultFontPixelWidth * 2
+                    height:                     width
+                    sourceSize.height:          width
+                    mipmap:                     true
+                    fillMode:                   Image.PreserveAspectFit
+                    source:                     "/qmlimages/Gears.svg"
+                }
+                Label { text: "colorOrange"; color: qgcPal.colorOrange; }
+                QGCColoredImage {
+                    color:                      qgcPal.colorRed
+                    width:                      ScreenTools.defaultFontPixelWidth * 2
+                    height:                     width
+                    sourceSize.height:          width
+                    mipmap:                     true
+                    fillMode:                   Image.PreserveAspectFit
+                    source:                     "/qmlimages/Gears.svg"
+                }
+                Label { text: "colorRed"; color: qgcPal.colorRed; }
+                QGCColoredImage {
+                    color:                      qgcPal.colorGrey
+                    width:                      ScreenTools.defaultFontPixelWidth * 2
+                    height:                     width
+                    sourceSize.height:          width
+                    mipmap:                     true
+                    fillMode:                   Image.PreserveAspectFit
+                    source:                     "/qmlimages/Gears.svg"
+                }
+                Label { text: "colorGrey"; color: qgcPal.colorGrey;  }
+                QGCColoredImage {
+                    color:                      qgcPal.colorBlue
+                    width:                      ScreenTools.defaultFontPixelWidth * 2
+                    height:                     width
+                    sourceSize.height:          width
+                    mipmap:                     true
+                    fillMode:                   Image.PreserveAspectFit
+                    source:                     "/qmlimages/Gears.svg"
+                }
+                Label { text: "colorBlue"; color: qgcPal.colorBlue; }
+            }
+        }
+    }
 
     Column {
 
@@ -20,7 +93,6 @@ Rectangle {
                 text: qsTr("Window Color")
                 anchors.left:           parent.left
                 anchors.leftMargin:     20
-                anchors.verticalCenter: parent.horizontalCenter
             }
             Row {
                 id: themeChoice
@@ -512,6 +584,167 @@ Rectangle {
                     property var palette: QGCPalette { colorGroupEnabled: true }
                     text: palette.warningText
                 }
+
+                // colorGreen
+                Loader {
+                    sourceComponent: rowHeader
+                    property var text: "colorGreen"
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    color: palette.colorGreen
+                    onColorSelected: palette.colorGreen = color
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    color: palette.colorGreen
+                    onColorSelected: palette.colorGreen = color
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    text: palette.colorGreen
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    text: palette.colorGreen
+                }
+
+                // colorOrange
+                Loader {
+                    sourceComponent: rowHeader
+                    property var text: "colorOrange"
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    color: palette.colorOrange
+                    onColorSelected: palette.colorOrange = color
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    color: palette.colorOrange
+                    onColorSelected: palette.colorOrange = color
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    text: palette.colorOrange
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    text: palette.colorOrange
+                }
+
+                // colorRed
+                Loader {
+                    sourceComponent: rowHeader
+                    property var text: "colorRed"
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    color: palette.colorRed
+                    onColorSelected: palette.colorRed = color
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    color: palette.colorRed
+                    onColorSelected: palette.colorRed = color
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    text: palette.colorRed
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    text: palette.colorRed
+                }
+
+                // colorGrey
+                Loader {
+                    sourceComponent: rowHeader
+                    property var text: "colorGrey"
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    color: palette.colorGrey
+                    onColorSelected: palette.colorGrey = color
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    color: palette.colorGrey
+                    onColorSelected: palette.colorGrey = color
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    text: palette.colorGrey
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    text: palette.colorGrey
+                }
+
+                // colorBlue
+                Loader {
+                    sourceComponent: rowHeader
+                    property var text: "colorBlue"
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    color: palette.colorBlue
+                    onColorSelected: palette.colorBlue = color
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    color: palette.colorBlue
+                    onColorSelected: palette.colorBlue = color
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    text: palette.colorBlue
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    text: palette.colorBlue
+                }
+
             }
 
             Grid {
@@ -722,5 +955,28 @@ Rectangle {
                 }
             }
         }
+
+        Item{
+            height: 10;
+            width:  1;
+        }
+
+        Row {
+            spacing: 10
+            anchors.horizontalCenter: parent.horizontalCenter
+            Loader {
+                property var backgroundColor: qgcPal.window
+                sourceComponent: arbBox
+            }
+            Loader {
+                property var backgroundColor: qgcPal.windowShade
+                sourceComponent: arbBox
+            }
+            Loader {
+                property var backgroundColor: qgcPal.windowShadeDark
+                sourceComponent: arbBox
+            }
+        }
+
     }
 }
