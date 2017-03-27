@@ -54,17 +54,17 @@ Item {
 
     function getBatteryIcon() {
         if(TyphoonHQuickInterface.rcBattery > 0.95) {
-            return "/typhoonh/battery_100.svg"
+            return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_100Dark.svg" : "/typhoonh/battery_100.svg"
         } else if(TyphoonHQuickInterface.rcBattery > 0.75) {
-            return "/typhoonh/battery_80.svg"
+            return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_80Dark.svg" : "/typhoonh/battery_80.svg"
         } else if(TyphoonHQuickInterface.rcBattery > 0.55) {
-            return "/typhoonh/battery_60.svg"
+            return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_60Dark.svg" : "/typhoonh/battery_60.svg"
         } else if(TyphoonHQuickInterface.rcBattery > 0.35) {
-            return "/typhoonh/battery_40.svg"
+            return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_40Dark.svg" : "/typhoonh/battery_40.svg"
         } else if(TyphoonHQuickInterface.rcBattery > 0.15) {
-            return "/typhoonh/battery_20.svg"
+            return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_20Dark.svg" : "/typhoonh/battery_20.svg"
         }
-        return "/typhoonh/battery_0.svg"
+        return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_0Dark.svg" : "/typhoonh/battery_0.svg"
     }
 
     Component {
@@ -131,13 +131,13 @@ Item {
         Column {
             anchors.verticalCenter: parent.verticalCenter
             SignalStrength {
-                size:                   rcRow.height * 0.5
+                size:                   rcRow.height * 0.4
                 percent:                _activeVehicle ? ((_activeVehicle.rcRSSI > 100) ? 0 : _activeVehicle.rcRSSI) : 0
                 opacity:                _activeVehicle ? 1 : 0.5
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Row {
-                height:                 rcRow.height * 0.5
+                height:                 rcRow.height * 0.6
                 spacing:                ScreenTools.defaultFontPixelWidth
                 Image {
                     anchors.top:        parent.top
@@ -149,7 +149,7 @@ Item {
                 }
                 QGCLabel {
                     text:                   getBatteryPercentageText()
-                    color:                  getBatteryColor()
+                    color:                  qgcPal.buttonText
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }

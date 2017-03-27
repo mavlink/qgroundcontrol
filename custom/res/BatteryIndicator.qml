@@ -57,15 +57,6 @@ Item {
         return "N/A"
     }
 
-    function getBatteryVoltage() {
-        if(_activeVehicle) {
-            if(_activeVehicle.battery.voltage.value > 0) {
-                return _activeVehicle.battery.voltage.valueString + _activeVehicle.battery.voltage.units
-            }
-        }
-        return "N/A"
-    }
-
     Component {
         id: batteryInfo
 
@@ -126,19 +117,11 @@ Item {
             color:              getBatteryColor()
             anchors.verticalCenter: parent.verticalCenter
         }
-        Column {
+        QGCLabel {
+            text:                   getBatteryPercentageText()
+            font.pointSize:         ScreenTools.mediumFontPointSize
+            color:                  qgcPal.buttonText
             anchors.verticalCenter: parent.verticalCenter
-            QGCLabel {
-                text:                   getBatteryPercentageText()
-                font.pointSize:         ScreenTools.mediumFontPointSize
-                color:                  getBatteryColor()
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-            QGCLabel {
-                text:                   getBatteryVoltage()
-                color:                  getBatteryColor()
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
         }
     }
     MouseArea {
