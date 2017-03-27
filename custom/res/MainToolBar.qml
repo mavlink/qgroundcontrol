@@ -120,8 +120,8 @@ Rectangle {
         anchors.bottom:         parent.bottom
         anchors.bottomMargin:   1
         anchors.left:           homeButton.right
-        anchors.leftMargin:     50
-        spacing:                50 //-- Hard coded to fit the ST16 Screen
+        anchors.leftMargin:     43
+        spacing:                43 //-- Hard coded to fit the ST16 Screen
 
         QGCToolBarButton {
             id:                 setupButton
