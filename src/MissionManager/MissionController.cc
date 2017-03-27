@@ -56,6 +56,7 @@ MissionController::MissionController(QObject *parent)
     , _queuedSend(false)
     , _surveyMissionItemName(tr("Survey"))
     , _fwLandingMissionItemName(tr("Fixed Wing Landing"))
+    , _appSettings(qgcApp()->toolbox()->settingsManager()->appSettings())
 {
     _missionFlightStatus.maxTelemetryDistance = 0;
     _missionFlightStatus.totalDistance = 0;
@@ -449,18 +450,18 @@ bool MissionController::_loadJsonMissionFileV2(Vehicle* vehicle, const QJsonObje
 
     // Mission Settings
     QGeoCoordinate homeCoordinate;
-    SettingsManager* settingsManager = qgcApp()->toolbox()->settingsManager();
+    AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
     if (!JsonHelper::loadGeoCoordinate(json[_jsonPlannedHomePositionKey], true /* altitudeRequired */, homeCoordinate, errorString)) {
         return false;
     }
     if (json.contains(_jsonVehicleTypeKey) && vehicle->isOfflineEditingVehicle()) {
-        settingsManager->appSettings()->offlineEditingVehicleType()->setRawValue(json[_jsonVehicleTypeKey].toDouble());
+        appSettings->offlineEditingVehicleType()->setRawValue(json[_jsonVehicleTypeKey].toDouble());
     }
     if (json.contains(_jsonCruiseSpeedKey)) {
-        settingsManager->appSettings()->offlineEditingCruiseSpeed()->setRawValue(json[_jsonCruiseSpeedKey].toDouble());
+        appSettings->offlineEditingCruiseSpeed()->setRawValue(json[_jsonCruiseSpeedKey].toDouble());
     }
     if (json.contains(_jsonHoverSpeedKey)) {
-        settingsManager->appSettings()->offlineEditingHoverSpeed()->setRawValue(json[_jsonHoverSpeedKey].toDouble());
+        appSettings->offlineEditingHoverSpeed()->setRawValue(json[_jsonHoverSpeedKey].toDouble());
     }
 
     MissionSettingsItem* settingsItem = new MissionSettingsItem(vehicle, visualItems);
@@ -647,17 +648,27 @@ void MissionController::loadFromFile(const QString& filename)
 
     _initAllVisualItems();
 
+    // Split the filename into directory and filename
+
     QString filenameOnly = filename;
     int lastSepIndex = filename.lastIndexOf(QStringLiteral("/"));
     if (lastSepIndex != -1) {
         filenameOnly = filename.right(filename.length() - lastSepIndex - 1);
     }
+    QString directoryOnly = filename.left(filename.length() - filenameOnly.length() - 1);
+
     QString extension = AppSettings::missionFileExtension;
     if (filenameOnly.endsWith("." + extension)) {
         filenameOnly = filenameOnly.left(filenameOnly.length() - extension.length() - 1);
     }
 
     _settingsItem->missionName()->setRawValue(filenameOnly);
+    if (directoryOnly == qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath()) {
+        QString emptyString;
+        _settingsItem->setLoadedMissionDirectory(emptyString);
+    } else {
+        _settingsItem->setLoadedMissionDirectory(directoryOnly);
+    }
     _settingsItem->setExistingMission(true);
 
     sendToVehicle();
@@ -704,8 +715,6 @@ bool MissionController::loadItemsFromFile(Vehicle* vehicle, const QString& filen
 
 void MissionController::saveToFile(const QString& filename)
 {
-    qDebug() << filename;
-
     if (filename.isEmpty()) {
         return;
     }
@@ -718,7 +727,7 @@ void MissionController::saveToFile(const QString& filename)
     QFile file(missionFilename);
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qgcApp()->showMessage(file.errorString());
+        qgcApp()->showMessage(tr("Mission save %1 : %2").arg(filename).arg(file.errorString()));
     } else {
         QJsonObject missionFileObject;      // top level json object
 
@@ -1596,9 +1605,17 @@ bool MissionController::missionInProgress(void) const
 void MissionController::save(void)
 {
     // Save to file if the mission is named
-    QString missionFullPath = _settingsItem->missionFullPath()->rawValue().toString();
-    if (!missionFullPath.isEmpty()) {
-        saveToFile(missionFullPath);
+
+    QString missionDir = _settingsItem->loadedMissionDirectory();
+    if (missionDir.isEmpty()) {
+        missionDir = _appSettings->missionSavePath();
+    }
+
+    bool savedToFile = false;
+    QString missionName = _settingsItem->missionName()->rawValue().toString();
+    if (!missionDir.isEmpty() && !missionName.isEmpty()) {
+        savedToFile = true;
+        saveToFile(missionDir + "/" + missionName);
     }
 
     // Send to vehicle if we are connected
@@ -1606,11 +1623,22 @@ void MissionController::save(void)
         sendToVehicle();
     }
 
-    _settingsItem->setExistingMission(_visualItems->count() > 1 && !missionFullPath.isEmpty());
+    _settingsItem->setExistingMission(savedToFile);
 }
 
 void MissionController::clearMission(void)
 {
+    // We need to save the mission information around removeAll all since it delete/recreates settings item
+    QString missionName = _settingsItem->missionName()->rawValue().toString();
+    QString loadedMissionDirectory = _settingsItem->loadedMissionDirectory();
+    bool existingMission = _settingsItem->existingMission();
     removeAll();
-    save();
+    _settingsItem->missionName()->setRawValue(missionName);
+    _settingsItem->setLoadedMissionDirectory(loadedMissionDirectory);
+    _settingsItem->setExistingMission(existingMission);
+}
+
+void MissionController::closeMission(void)
+{
+    removeAll();
 }

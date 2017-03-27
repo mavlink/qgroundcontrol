@@ -23,6 +23,7 @@ class CoordinateVector;
 class VisualMissionItem;
 class MissionItem;
 class MissionSettingsItem;
+class AppSettings;
 
 Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
@@ -88,8 +89,14 @@ public:
     /// Sends the mission items to the specified vehicle
     static void sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems);
 
+    /// Saves the mission to file if any and sends to vehicle
     Q_INVOKABLE void save(void);
+
+    /// Removes all items from the mission saving and sending as needed
     Q_INVOKABLE void clearMission(void);
+
+    /// Closes the mission, saving and sending as needed before closing
+    Q_INVOKABLE void closeMission(void);
 
     // Overrides from PlanElementController
     void start                      (bool editMode) final;
@@ -193,6 +200,7 @@ private:
     MissionFlightStatus_t   _missionFlightStatus;
     QString                 _surveyMissionItemName;
     QString                 _fwLandingMissionItemName;
+    AppSettings*            _appSettings;
 
     static const char*  _settingsGroup;
 

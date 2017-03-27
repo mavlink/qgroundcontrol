@@ -65,11 +65,11 @@ ColumnLayout {
     QGCButton {
         text:               qsTr("Current Location")
         Layout.fillWidth:   true
-        enabled:            mainWindow.gcsPosition.isValid
+        enabled:            _map.gcsPosition.isValid
 
         onClicked: {
             dropPanel.hide()
-            map.center = mainWindow.gcsPosition
+            map.center = _map.gcsPosition
         }
     }
 
