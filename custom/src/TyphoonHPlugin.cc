@@ -344,6 +344,13 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
     } else if (metaData.name() == AppSettings::offlineEditingVehicleTypeSettingsName) {
         metaData.setRawDefaultValue(MAV_TYPE_QUADROTOR);
         return false;
+    } else if (metaData.name() == AppSettings::savePathName) {
+        //-- Ideally, this should be within the MicroSD card in the ST16 but we don't
+        //   yet have permission to access it.
+        QString appName = qgcApp()->applicationName();
+        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
+        metaData.setRawDefaultValue(rootDir.filePath(appName));
+        return false;
     }
     return true;
 }

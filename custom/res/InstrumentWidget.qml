@@ -106,7 +106,7 @@ Item {
         width:          parent.width
         height:         mainCol.height + (compassAttitudeCombo.height * 0.5)
         radius:         ScreenTools.defaultFontPixelWidth * 2
-        color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0.85,0.85,1,0.75) : Qt.rgba(0.15,0.15,0.25,0.75)
+        color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0.85,0.85,1,0.85) : Qt.rgba(0.15,0.15,0.25,0.85)
         anchors.top:parent.top
         border.width:   1
         border.color:   qgcPal.globalTheme === QGCPalette.Light ? "white" : "black"
