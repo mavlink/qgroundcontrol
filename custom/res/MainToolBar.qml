@@ -82,7 +82,7 @@ Rectangle {
 
     Timer {
         id: connectionTimer
-        interval:  5000;
+        interval:  3000;
         running:   false;
         repeat:    false;
         onTriggered: {
@@ -93,7 +93,7 @@ Rectangle {
                     _activeVehicle.disconnectInactiveVehicle()
                     connectionLostDisarmedDialog.open()
                 } else {
-                    //-- Vehicle was armed
+                    //-- Vehicle was armed. Show doom dialog.
                     rootLoader.sourceComponent = connectionLostArmed
                 }
             }
@@ -103,16 +103,18 @@ Rectangle {
     Connections {
         target: QGroundControl.multiVehicleManager.activeVehicle
         onConnectionLostChanged: {
-            //-- Communication regained
             if(!_communicationLost) {
+                //-- Communication regained
                 connectionTimer.stop();
                 rootLoader.sourceComponent = null
             } else {
+                //-- Communication lost
                 connectionTimer.start();
             }
         }
     }
 
+    //-- Handle no MicroSD card loaded in camera
     Connections {
         target: TyphoonHQuickInterface.cameraControl
         onCameraModeChanged: {
@@ -463,7 +465,7 @@ Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     QGCLabel {
-                        text:           qsTr("The vehicle will automatically abort the flight and return to land. Ensure a clear line of sight between transmitter and vehicle. Ensure the takeoff location is clear.")
+                        text:           qsTr("The vehicle will automatically cancel the flight and return to land. Ensure a clear line of sight between transmitter and vehicle. Ensure the takeoff location is clear.")
                         width:          connectionLostArmedRect.width * 0.75
                         wrapMode:       Text.WordWrap
                         color:          "black"

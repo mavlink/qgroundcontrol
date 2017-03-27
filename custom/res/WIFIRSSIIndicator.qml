@@ -79,7 +79,6 @@ Item {
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
         spacing:        ScreenTools.defaultFontPixelWidth
-
         QGCColoredImage {
             width:              height
             anchors.top:        parent.top
