@@ -36,6 +36,12 @@ Rectangle {
     property bool   _statusValid:               currentMissionItem != undefined
     property bool   _missionValid:              missionItems != undefined
     property bool   _controllerValid:           missionController != undefined
+    property bool   _manualUpload:              QGroundControl.settingsManager.appSettings.automaticMissionUpload.rawValue == 0
+
+    Connections {
+        target: QGroundControl.settingsManager.appSettings.automaticMissionUpload
+        onRawValueChanged: console.log("changed", QGroundControl.settingsManager.appSettings.automaticMissionUpload.rawValue)
+    }
 
     property real   _distance:                  _statusValid ? currentMissionItem.distance : NaN
     property real   _altDifference:             _statusValid ? currentMissionItem.altDifference : NaN
@@ -66,9 +72,11 @@ Rectangle {
         onReleased:     { mouse.accepted = true; }
     }
 
-    Row {
+    RowLayout {
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
+        anchors.left:   parent.left
+        anchors.right:  uploadButton.visible ? uploadButton.left : uploadButton.right
         spacing:        ScreenTools.defaultFontPixelWidth * 2
 
         QGCToolBarButton {
@@ -81,8 +89,9 @@ Rectangle {
 
             onClicked: {
                 checked = false
-                missionController.saveOnSwitch()
-                showFlyView()
+                if (missionController.saveOnSwitch()) {
+                    showFlyView()
+                }
             }
         }
 
@@ -162,6 +171,16 @@ Rectangle {
             QGCLabel { text: qsTr("Swap waypoint:") }
             QGCLabel { text: "--" }
         }
+    }
+
+    QGCButton {
+        id:                     uploadButton
+        anchors.rightMargin:    _margins
+        anchors.right:          parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        text:                   qsTr("Upload")
+        visible:                _manualUpload && missionController.dirty
+        onClicked:              missionController.uploadFromToolbar()
     }
 }
 

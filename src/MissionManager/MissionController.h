@@ -89,10 +89,13 @@ public:
     /// Sends the mission items to the specified vehicle
     static void sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems);
 
-    /// Saves the mission to file if any and sends to vehicle
+    /// Saves the mission to file
     Q_INVOKABLE void save(void);
 
-    /// Removes all items from the mission saving and sending as needed
+    /// Save and to file and send to vehicle if possible
+    Q_INVOKABLE void saveAndSend(void);
+
+    /// Removes all items from the mission
     Q_INVOKABLE void clearMission(void);
 
     /// Closes the mission, saving and sending as needed before closing
