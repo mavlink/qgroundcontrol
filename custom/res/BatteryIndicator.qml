@@ -27,21 +27,6 @@ Item {
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
-    function getBatteryColor() {
-        if(_activeVehicle) {
-            if(_activeVehicle.battery.percentRemaining.value > 75) {
-                return qgcPal.colorGreen
-            }
-            if(_activeVehicle.battery.percentRemaining.value > 50) {
-                return qgcPal.colorOrange
-            }
-            if(_activeVehicle.battery.percentRemaining.value > 0.1) {
-                return qgcPal.colorRed
-            }
-        }
-        return qgcPal.text
-    }
-
     function getBatteryPercentageText() {
         if(_activeVehicle) {
             if(_activeVehicle.battery.percentRemaining.value > 98.9) {
@@ -55,6 +40,23 @@ Item {
             }
         }
         return "N/A"
+    }
+
+    function getBatteryIcon() {
+        if(_activeVehicle) {
+            if(_activeVehicle.battery.percentRemaining.value > 95) {
+                return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_100Dark.svg" : "/typhoonh/battery_100.svg"
+            } else if(_activeVehicle.battery.percentRemaining.value > 75) {
+                return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_80Dark.svg" : "/typhoonh/battery_80.svg"
+            } else if(_activeVehicle.battery.percentRemaining.value > 55) {
+                return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_60Dark.svg" : "/typhoonh/battery_60.svg"
+            } else if(_activeVehicle.battery.percentRemaining.value > 35) {
+                return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_40Dark.svg" : "/typhoonh/battery_40.svg"
+            } else if(_activeVehicle.battery.percentRemaining.value > 15) {
+                return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_20Dark.svg" : "/typhoonh/battery_20.svg"
+            }
+        }
+        return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_0Dark.svg" : "/typhoonh/battery_0.svg"
     }
 
     Component {
@@ -108,14 +110,24 @@ Item {
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
         opacity:        (_activeVehicle && _activeVehicle.battery.voltage.value >= 0) ? 1 : 0.5
-        QGCColoredImage {
-            height:             parent.height * 0.75
+        Image {
+            id:                 battIcon
+            height:             parent.height * 0.85
             width:              height
-            sourceSize.width:   width
-            source:             "/qmlimages/Battery.svg"
+            sourceSize.height:  height
+            source:             getBatteryIcon()
             fillMode:           Image.PreserveAspectFit
-            color:              getBatteryColor()
+            smooth:             true
+            mipmap:             true
+            antialiasing:       true
             anchors.verticalCenter: parent.verticalCenter
+            transform: [
+                Rotation {
+                    origin.x: battIcon.width  / 2
+                    origin.y: battIcon.height / 2
+                    angle:    -90
+                    }
+            ]
         }
         QGCLabel {
             text:                   getBatteryPercentageText()
