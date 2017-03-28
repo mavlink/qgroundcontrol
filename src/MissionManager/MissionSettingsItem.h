@@ -32,24 +32,18 @@ public:
     };
     Q_ENUMS(MissionEndAction)
 
-    Q_PROPERTY(Fact*    missionName                 READ missionName                                                        CONSTANT)
-    Q_PROPERTY(QString  loadedMissionDirectory      READ loadedMissionDirectory         WRITE setLoadedMissionDirectory     NOTIFY loadedMissionDirectoryChanged)
-    Q_PROPERTY(bool     existingMission             READ existingMission                WRITE setExistingMission            NOTIFY existingMissionChanged)
     Q_PROPERTY(bool     specifyMissionFlightSpeed   READ specifyMissionFlightSpeed      WRITE setSpecifyMissionFlightSpeed  NOTIFY specifyMissionFlightSpeedChanged)
     Q_PROPERTY(Fact*    missionFlightSpeed          READ missionFlightSpeed                                                 CONSTANT)
     Q_PROPERTY(Fact*    missionEndAction            READ missionEndAction                                                   CONSTANT)
     Q_PROPERTY(Fact*    plannedHomePositionAltitude READ plannedHomePositionAltitude                                        CONSTANT)
     Q_PROPERTY(QObject* cameraSection               READ cameraSection                                                      CONSTANT)
 
-    Fact*   missionName                 (void) { return &_missionNameFact; }
     Fact*   plannedHomePositionAltitude (void) { return &_plannedHomePositionAltitudeFact; }
     Fact*   missionFlightSpeed          (void) { return &_missionFlightSpeedFact; }
     Fact*   missionEndAction            (void) { return &_missionEndActionFact; }
     bool    specifyMissionFlightSpeed   (void) const { return _specifyMissionFlightSpeed; }
-    bool    existingMission             (void) const { return _existingMission; }
 
     void setSpecifyMissionFlightSpeed(bool specifyMissionFlightSpeed);
-    void setExistingMission(bool existingMission);
     QObject* cameraSection(void) { return &_cameraSection; }
 
     /// Scans the loaded items for settings items
@@ -61,10 +55,6 @@ public:
     ///     @param missionItemParent Parent for newly allocated MissionItems
     /// @return true: Mission end action was added
     bool addMissionEndAction(QList<MissionItem*>& items, int seqNum, QObject* missionItemParent);
-
-    // Returns the directory the misiosn was loaded from. Empty string is laoded from normal savePath.
-    QString loadedMissionDirectory(void) const { return _loadedMissionDirectory; }
-    void setLoadedMissionDirectory(QString& loadedMissionDirectory);
 
     // Overrides from ComplexMissionItem
 
@@ -104,8 +94,6 @@ public:
 
 signals:
     void specifyMissionFlightSpeedChanged(bool specifyMissionFlightSpeed);
-    void existingMissionChanged(bool existingMission);
-    void loadedMissionDirectoryChanged(QString& loadedMissionDirectory);
 
 private slots:
     void _setDirtyAndUpdateLastSequenceNumber   (void);
@@ -114,14 +102,11 @@ private slots:
     void _updateAltitudeInCoordinate            (QVariant value);
 
 private:
-    bool            _existingMission;
     bool            _specifyMissionFlightSpeed;
     QGeoCoordinate  _plannedHomePositionCoordinate;     // Does not include altitde
-    Fact            _missionNameFact;
     Fact            _plannedHomePositionAltitudeFact;
     Fact            _missionFlightSpeedFact;
     Fact            _missionEndActionFact;
-    QString         _loadedMissionDirectory;
     CameraSection   _cameraSection;
 
     int     _sequenceNumber;
@@ -129,7 +114,6 @@ private:
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 
-    static const char* _missionNameName;
     static const char* _plannedHomePositionAltitudeName;
     static const char* _missionFlightSpeedName;
     static const char* _missionEndActionName;

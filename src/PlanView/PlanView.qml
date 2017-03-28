@@ -19,6 +19,7 @@ import QGroundControl               1.0
 import QGroundControl.FlightMap     1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
+import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Mavlink       1.0
 import QGroundControl.Controllers   1.0
@@ -28,9 +29,7 @@ import QGroundControl.Controllers   1.0
 QGCView {
     id:         _qgcView
     viewPanel:  panel
-
-    // zOrder comes from the Loader in MainWindow.qml
-    z: QGroundControl.zOrderTopMost
+    z:          QGroundControl.zOrderTopMost
 
     readonly property int       _decimalPlaces:         8
     readonly property real      _horizontalMargin:      ScreenTools.defaultFontPixelWidth  / 2
@@ -50,6 +49,7 @@ QGCView {
     property bool   _singleComplexItem:     missionController.complexMissionItemNames.length === 1
     property real   _toolbarHeight:         _qgcView.height - ScreenTools.availableHeight
     property int    _editingLayer:          _layerMission
+    property bool   _autoSync:               QGroundControl.settingsManager.appSettings.automaticMissionUpload.rawValue != 0
 
     /// The controller which should be called for load/save, send to/from vehicle calls
     property var _syncDropDownController: missionController
@@ -105,30 +105,29 @@ QGCView {
             setCurrentItem(0)
         }
 
+        function _denyUpload() {
+            if (_activeVehicle && _activeVehicle.armed && _activeVehicle.flightMode === _activeVehicle.missionFlightMode) {
+                _qgcView.showMessage(qsTr("Mission Upload"), qsTr("Your vehicle is currently flying a mission. Upload is not allowed."), StandardButton.Ok)
+                return true
+            } else {
+                return false
+            }
+        }
+
         // Users is switching away from Plan View
-        function saveOnSwitch() {
-            if (missionController.dirty) {
-                save()
-                if (_activeVehicle.armed) {
-                    _qgcView.showDialog(confirmSendToActiveVehicleAndSwitchView, qsTr("Mission Upload"), _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
-                    return false
-                } else {
+        function uploadOnSwitch() {
+            if (missionController.dirty && _autoSync) {
+                if (!_denyUpload()) {
                     sendToVehicle()
                 }
             }
             return true
         }
 
-        // User clicked upload button in plan toolbar
-        function uploadFromToolbar() {
-            if (missionController.dirty) {
-                save()
-                if (_activeVehicle.armed) {
-                    _qgcView.showDialog(confirmSendToActiveVehicle, qsTr("Mission Upload"), _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
-                } else {
+        function upload() {
+                if (!_denyUpload()) {
                     sendToVehicle()
                 }
-            }
         }
 
         function loadFromSelectedFile() {
@@ -339,17 +338,11 @@ QGCView {
 
     QGCViewPanel {
         id:             panel
-        height:         ScreenTools.availableHeight
-        anchors.bottom: parent.bottom
-        anchors.left:   parent.left
-        anchors.right:  parent.right
+        anchors.fill:   parent
 
         FlightMap {
             id:             editorMap
-            height:         _qgcView.height
-            anchors.bottom: parent.bottom
-            anchors.left:   parent.left
-            anchors.right:  parent.right//rightPanel.left
+            anchors.fill:   parent
             mapName:        "MissionEditor"
 
             // This is the center rectangle of the map which is not obscured by tools
@@ -528,12 +521,14 @@ QGCView {
                 color:              qgcPal.window
                 title:              qsTr("Plan")
                 z:                  QGroundControl.zOrderWidgets
-                buttonVisible:      [ true, true, true, _showZoom, _showZoom ]
+                showAlternateIcon:  [ false, false, !_autoSync && _syncDropDownController.dirty, false, false, false ]
+                rotateImage:        [ false, false, _syncDropDownController.syncInProgress, false, false, false ]
+                animateImage:       [ false, false, !_autoSync && _syncDropDownController.dirty, false, false, false ]
+                buttonEnabled:      [ true, true, !_syncDropDownController.syncInProgress, true, true, true ]
+                buttonVisible:      [ true, true, true, true, _showZoom, _showZoom ]
                 maxHeight:          mapScale.y - toolStrip.y
 
                 property bool _showZoom: !ScreenTools.isMobile
-
-                property bool mySingleComplexItem: _singleComplexItem
 
                 model: [
                     {
@@ -545,6 +540,12 @@ QGCView {
                         name:               "Pattern",
                         iconSource:         "/qmlimages/MapDrawShape.svg",
                         dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
+                    },
+                    {
+                        name:                   "Sync",
+                        iconSource:             "/qmlimages/MapSync.svg",
+                        alternateIconSource:    "/qmlimages/MapSyncChanged.svg",
+                        dropPanelComponent:     syncDropPanel
                     },
                     {
                         name:               "Center",
@@ -571,10 +572,10 @@ QGCView {
                             addComplexItem(missionController.complexMissionItemNames[0])
                         }
                         break
-                    case 3:
+                    case 5:
                         editorMap.zoomLevel += 0.5
                         break
-                    case 4:
+                    case 6:
                         editorMap.zoomLevel -= 0.5
                         break
                     }
@@ -609,9 +610,9 @@ QGCView {
         // Right pane for mission editing controls
         Rectangle {
             id:                 rightPanel
-            anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             anchors.right:      parent.right
+            height:             ScreenTools.availableHeight
             width:              _rightPanelWidth
             color:              qgcPal.window
             opacity:            0.95
@@ -796,6 +797,19 @@ QGCView {
         }
     }
 
+
+
+    Component {
+        id: geoFenceEditorComponent
+
+        GeoFenceEditor {
+            availableWidth:         _rightPanelWidth
+            availableHeight:        ScreenTools.availableHeight
+            myGeoFenceController:   geoFenceController
+            flightMap:              editorMap
+        }
+    }
+
     //- ToolStrip DropPanel Components
 
     Component {
@@ -832,44 +846,90 @@ QGCView {
     }
 
     Component {
-        id: geoFenceEditorComponent
+        id: syncDropPanel
 
-        GeoFenceEditor {
-            availableWidth:         _rightPanelWidth
-            availableHeight:        ScreenTools.availableHeight
-            myGeoFenceController:   geoFenceController
-            flightMap:              editorMap
-        }
-    }
+        Column {
+            id:         columnHolder
+            spacing:    _margin
 
-    Component {
-        id: confirmSendToActiveVehicleAndSwitchView
+            property string _overwriteText: (_editingLayer == _layerMission) ? qsTr("Mission overwrite") : ((_editingLayer == _layerGeoFence) ? qsTr("GeoFence overwrite") : qsTr("Rally Points overwrite"))
 
-        QGCViewMessage {
-            message: _armedVehicleUploadPrompt
-
-            function accept() {
-                missionController.sendToVehicle()
-                toolbar.showFlyView()
-                hideDialog()
+            QGCLabel {
+                width:      sendSaveGrid.width
+                wrapMode:   Text.WordWrap
+                text:       _syncDropDownController.dirty ?
+                                qsTr("You have unsaved changes. You should upload to your vehicle, or save to a file:") :
+                                qsTr("Sync:")
             }
 
-            function reject() {
-                toolbar.showFlyView()
-                hideDialog()
+            GridLayout {
+                id:                 sendSaveGrid
+                columns:            2
+                anchors.margins:    _margin
+                rowSpacing:         _margin
+                columnSpacing:      ScreenTools.defaultFontPixelWidth
+
+                QGCButton {
+                    text:               qsTr("Upload")
+                    Layout.fillWidth:   true
+                    enabled:            _activeVehicle && !_syncDropDownController.syncInProgress
+                    onClicked: {
+                        dropPanel.hide()
+                        _syncDropDownController.upload()
+                    }
+                }
+
+                QGCButton {
+                    text:               qsTr("Download")
+                    Layout.fillWidth:   true
+                    enabled:            _activeVehicle && !_syncDropDownController.syncInProgress
+                    onClicked: {
+                        dropPanel.hide()
+                        if (_syncDropDownController.dirty) {
+                            _qgcView.showDialog(syncLoadFromVehicleOverwrite, columnHolder._overwriteText, _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                        } else {
+                            _syncDropDownController.loadFromVehicle()
+                        }
+                    }
+                }
+
+                QGCButton {
+                    text:               qsTr("Save To File...")
+                    Layout.fillWidth:   true
+                    enabled:            !_syncDropDownController.syncInProgress
+                    onClicked: {
+                        dropPanel.hide()
+                        _syncDropDownController.saveToSelectedFile()
+                    }
+                }
+
+                QGCButton {
+                    text:               qsTr("Load From File...")
+                    Layout.fillWidth:   true
+                    enabled:            !_syncDropDownController.syncInProgress
+                    onClicked: {
+                        dropPanel.hide()
+                        if (_syncDropDownController.dirty) {
+                            _qgcView.showDialog(syncLoadFromFileOverwrite, columnHolder._overwriteText, _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                        } else {
+                            _syncDropDownController.loadFromSelectedFile()
+                        }
+                    }
+                }
+
+                QGCButton {
+                    text:               qsTr("Remove All")
+                    Layout.fillWidth:   true
+                    onClicked:  {
+                        dropPanel.hide()
+                        _qgcView.showDialog(removeAllPromptDialog, qsTr("Remove all"), _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                    }
+                }
             }
-        }
-    }
 
-    Component {
-        id: confirmSendToActiveVehicle
-
-        QGCViewMessage {
-            message: _armedVehicleUploadPrompt
-
-            function accept() {
-                missionController.sendToVehicle()
-                hideDialog()
+            FactCheckBox {
+                text:   qsTr("Automatic upload to vehicle")
+                fact:   QGroundControl.settingsManager.appSettings.automaticMissionUpload
             }
         }
     }

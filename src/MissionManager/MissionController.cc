@@ -647,30 +647,6 @@ void MissionController::loadFromFile(const QString& filename)
     MissionController::_scanForAdditionalSettings(_visualItems, _activeVehicle);
 
     _initAllVisualItems();
-
-    // Split the filename into directory and filename
-
-    QString filenameOnly = filename;
-    int lastSepIndex = filename.lastIndexOf(QStringLiteral("/"));
-    if (lastSepIndex != -1) {
-        filenameOnly = filename.right(filename.length() - lastSepIndex - 1);
-    }
-    QString directoryOnly = filename.left(filename.length() - filenameOnly.length() - 1);
-
-    QString extension = AppSettings::missionFileExtension;
-    if (filenameOnly.endsWith("." + extension)) {
-        filenameOnly = filenameOnly.left(filenameOnly.length() - extension.length() - 1);
-    }
-
-    _settingsItem->missionName()->setRawValue(filenameOnly);
-    if (directoryOnly == qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath()) {
-        QString emptyString;
-        _settingsItem->setLoadedMissionDirectory(emptyString);
-    } else {
-        _settingsItem->setLoadedMissionDirectory(directoryOnly);
-    }
-    _settingsItem->setExistingMission(true);
-
     sendToVehicle();
 }
 
@@ -1235,7 +1211,7 @@ void MissionController::_initAllVisualItems(void)
 
     _recalcAll();
 
-    connect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::dirtyChanged);
+    connect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::_visualItemsDirtyChanged);
     connect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::_updateContainsItems);
 
     emit visualItemsChanged();
@@ -1250,7 +1226,7 @@ void MissionController::_deinitAllVisualItems(void)
         _deinitVisualItem(qobject_cast<VisualMissionItem*>(_visualItems->get(i)));
     }
 
-    disconnect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::dirtyChanged);
+    disconnect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::_visualItemsDirtyChanged);
     disconnect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::_updateContainsItems);
 }
 
@@ -1605,46 +1581,16 @@ bool MissionController::missionInProgress(void) const
     return _visualItems && _visualItems->count() > 1 && (!_visualItems->value<VisualMissionItem*>(0)->isCurrentItem() && !_visualItems->value<VisualMissionItem*>(1)->isCurrentItem());
 }
 
-void MissionController::save(void)
+void MissionController::_visualItemsDirtyChanged(bool dirty)
 {
-    // Save to file if the mission is named
-
-    QString missionDir = _settingsItem->loadedMissionDirectory();
-    if (missionDir.isEmpty()) {
-        missionDir = _appSettings->missionSavePath();
+    if (dirty) {
+        if (_visualItems->count() > 1) {
+            emit dirtyChanged(true);
+        } else {
+            // This was a change to mission settings with no other mission items added
+            _visualItems->setDirty(false);
+        }
+    } else {
+        emit dirtyChanged(false);
     }
-
-    bool savedToFile = false;
-    QString missionName = _settingsItem->missionName()->rawValue().toString();
-    if (!missionDir.isEmpty() && !missionName.isEmpty()) {
-        savedToFile = true;
-        saveToFile(missionDir + "/" + missionName);
-    }
-
-    _settingsItem->setExistingMission(savedToFile);
-}
-
-void MissionController::saveAndSend(void)
-{
-    // Send to vehicle if we are connected
-    if (!_activeVehicle->isOfflineEditingVehicle()) {
-        sendToVehicle();
-    }
-}
-
-void MissionController::clearMission(void)
-{
-    // We need to save the mission information around removeAll all since it delete/recreates settings item
-    QString missionName = _settingsItem->missionName()->rawValue().toString();
-    QString loadedMissionDirectory = _settingsItem->loadedMissionDirectory();
-    bool existingMission = _settingsItem->existingMission();
-    removeAll();
-    _settingsItem->missionName()->setRawValue(missionName);
-    _settingsItem->setLoadedMissionDirectory(loadedMissionDirectory);
-    _settingsItem->setExistingMission(existingMission);
-}
-
-void MissionController::closeMission(void)
-{
-    removeAll();
 }
