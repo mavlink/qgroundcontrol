@@ -23,7 +23,6 @@ QGC_LOGGING_CATEGORY(MissionSettingsComplexItemLog, "MissionSettingsComplexItemL
 
 const char* MissionSettingsItem::jsonComplexItemTypeValue = "MissionSettings";
 
-const char* MissionSettingsItem::_missionNameName =                 "MissionName";
 const char* MissionSettingsItem::_plannedHomePositionAltitudeName = "PlannedHomePositionAltitude";
 const char* MissionSettingsItem::_missionFlightSpeedName =          "FlightSpeed";
 const char* MissionSettingsItem::_missionEndActionName =            "MissionEndAction";
@@ -32,9 +31,7 @@ QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
 
 MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
     : ComplexMissionItem(vehicle, parent)
-    , _existingMission(false)
     , _specifyMissionFlightSpeed(false)
-    , _missionNameFact                  (0, _missionNameName,                   FactMetaData::valueTypeString)
     , _plannedHomePositionAltitudeFact  (0, _plannedHomePositionAltitudeName,   FactMetaData::valueTypeDouble)
     , _missionFlightSpeedFact           (0, _missionFlightSpeedName,            FactMetaData::valueTypeDouble)
     , _missionEndActionFact             (0, _missionEndActionName,              FactMetaData::valueTypeUint32)
@@ -47,12 +44,10 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
         _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/MissionSettings.FactMetaData.json"), NULL /* metaDataParent */);
     }
 
-    _missionNameFact.setMetaData                    (_metaDataMap[_missionNameName]);
     _plannedHomePositionAltitudeFact.setMetaData    (_metaDataMap[_plannedHomePositionAltitudeName]);
     _missionFlightSpeedFact.setMetaData             (_metaDataMap[_missionFlightSpeedName]);
     _missionEndActionFact.setMetaData               (_metaDataMap[_missionEndActionName]);
 
-    _missionNameFact.setRawValue                    (_missionNameFact.rawDefaultValue());
     _plannedHomePositionAltitudeFact.setRawValue    (_plannedHomePositionAltitudeFact.rawDefaultValue());
     _missionEndActionFact.setRawValue               (_missionEndActionFact.rawDefaultValue());
 
@@ -63,8 +58,8 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
 
     setHomePositionSpecialCase(true);
 
-    connect(this,               &MissionSettingsItem::specifyMissionFlightSpeedChanged,  this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
-    connect(&_cameraSection,    &CameraSection::missionItemCountChanged,                        this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
+    connect(this,               &MissionSettingsItem::specifyMissionFlightSpeedChanged, this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
+    connect(&_cameraSection,    &CameraSection::missionItemCountChanged,                this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
 
     connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged, this, &MissionSettingsItem::_setDirty);
     connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged, this, &MissionSettingsItem::_updateAltitudeInCoordinate);
@@ -409,21 +404,5 @@ void MissionSettingsItem::_updateAltitudeInCoordinate(QVariant value)
         _plannedHomePositionCoordinate.setAltitude(newAltitude);
         emit coordinateChanged(_plannedHomePositionCoordinate);
         emit exitCoordinateChanged(_plannedHomePositionCoordinate);
-    }
-}
-
-void MissionSettingsItem::setExistingMission(bool existingMission)
-{
-    if (existingMission != _existingMission) {
-        _existingMission = existingMission;
-        emit existingMissionChanged(existingMission );
-    }
-}
-
-void MissionSettingsItem::setLoadedMissionDirectory(QString& loadedMissionDirectory)
-{
-    if (_loadedMissionDirectory != loadedMissionDirectory) {
-        _loadedMissionDirectory = loadedMissionDirectory;
-        emit loadedMissionDirectoryChanged(loadedMissionDirectory);
     }
 }
