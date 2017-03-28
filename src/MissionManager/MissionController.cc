@@ -1618,12 +1618,15 @@ void MissionController::save(void)
         saveToFile(missionDir + "/" + missionName);
     }
 
+    _settingsItem->setExistingMission(savedToFile);
+}
+
+void MissionController::saveAndSend(void)
+{
     // Send to vehicle if we are connected
     if (!_activeVehicle->isOfflineEditingVehicle()) {
         sendToVehicle();
     }
-
-    _settingsItem->setExistingMission(savedToFile);
 }
 
 void MissionController::clearMission(void)
