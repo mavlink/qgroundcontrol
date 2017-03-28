@@ -4,12 +4,5 @@
     "version": 1,
 
     "mavCmdInfo": [
-        {
-            "id":                       21,
-            "comment":                  "MAV_CMD_NAV_LAND",
-            "paramRemove":              "1,4",
-            "specifiesCoordinate":      false,
-            "specifiesAltitudeOnly":    true
-        }
     ]
 }
