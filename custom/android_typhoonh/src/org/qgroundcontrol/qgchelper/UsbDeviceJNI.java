@@ -18,6 +18,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiConfiguration.Status;
 
 import android.os.BatteryManager;
 
@@ -147,15 +148,26 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     }
 
     public static void findWifiConfig() {
+        String currentCamera = "";
         List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
         for( WifiConfiguration i : list ) {
             if(i.SSID != null) {
                 Log.i(TAG, "Found config: " + i.SSID + " | " + i.priority);
-                if(i.SSID.startsWith("CGO3P") || i.SSID.startsWith("CGOPRO") || i.SSID.startsWith("CGOET")) {
+                if(i.status == 0) {
                     currentConnection = i.SSID;
+                }
+                if(i.SSID.startsWith("CGO3P") || i.SSID.startsWith("CGOPRO") || i.SSID.startsWith("CGOET")) {
+                    i.priority = 1;
+                    currentCamera = i.SSID;
+                } else {
+                    i.priority = 10;
                 }
             }
         }
+        if(currentConnection == "") {
+            currentConnection = currentCamera;
+        }
+        mainWifi.saveConfiguration();
     }
 
     public static void resetWifi() {
@@ -164,7 +176,8 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
         mainWifi.disconnect();
         for( WifiConfiguration i : list ) {
             if(i.SSID != null) {
-                mainWifi.removeNetwork(i.networkId);
+                mainWifi.disableNetwork(i.networkId);
+                //mainWifi.removeNetwork(i.networkId);
             }
         }
         currentConnection = "";
@@ -179,7 +192,9 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
             mainWifi.disconnect();
             for( WifiConfiguration i : list ) {
                 if(i.SSID != null && !i.SSID.equals("\"" + ssid + "\"")) {
-                    mainWifi.removeNetwork(i.networkId);
+                    i.priority = 10;
+                    mainWifi.disableNetwork(i.networkId);
+                    //mainWifi.removeNetwork(i.networkId);
                 }
             }
             mainWifi.saveConfiguration();
@@ -198,6 +213,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
             WifiConfiguration conf = new WifiConfiguration();
             conf.SSID = "\"" + ssid + "\"";
             conf.preSharedKey = "\"" + passphrase + "\"";
+            conf.priority = 1;
             mainWifi.addNetwork(conf);
             mainWifi.saveConfiguration();
             list = mainWifi.getConfiguredNetworks();
@@ -268,6 +284,10 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
                                     currentWifiRssi = wifiInfo.getRssi();
                                     nativeNewWifiRSSI();
                                 }
+                            } else if (state.compareTo(NetworkInfo.DetailedState.DISCONNECTED) == 0) {
+                                Log.i(TAG, "WIFI Disonnected");
+                                currentWifiRssi = 0;
+                                nativeNewWifiRSSI();
                             }
                         }
                     }

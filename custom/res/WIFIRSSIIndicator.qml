@@ -61,6 +61,8 @@ Item {
                     columns:            2
                     anchors.horizontalCenter: parent.horizontalCenter
 
+                    QGCLabel { text: qsTr("Connected to:"); visible: TyphoonHQuickInterface.connectedSSID !== ""; }
+                    QGCLabel { text: TyphoonHQuickInterface.connectedSSID; visible: TyphoonHQuickInterface.connectedSSID !== ""; }
                     QGCLabel { text: qsTr("RSSI:") }
                     QGCLabel { text: TyphoonHQuickInterface.rssi + "dB" }
                 }
@@ -79,7 +81,6 @@ Item {
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
         spacing:        ScreenTools.defaultFontPixelWidth
-
         QGCColoredImage {
             width:              height
             anchors.top:        parent.top

@@ -248,10 +248,8 @@ TyphoonHM4Interface::_vehicleAdded(Vehicle* vehicle)
         qCDebug(YuneecLog) << "_vehicleAdded()";
         _vehicle = vehicle;
         connect(_vehicle, &Vehicle::remoteControlRSSIChanged, this, &TyphoonHM4Interface::_remoteControlRSSIChanged);
-        connect(_vehicle, &Vehicle::armedChanged, this, &TyphoonHM4Interface::_armedChanged);
-        //-- There are two defines for the argument to this function. One, in theory sets the
-        //   button to turn the screen on/off (BIND_KEY_FUNCTION_PWR). The other is is used
-        //   for arming the vehicle (BIND_KEY_FUNCTION_BIND).
+        connect(_vehicle, &Vehicle::armedChanged,             this, &TyphoonHM4Interface::_armedChanged);
+        //-- Set the "Big Red Button" to bind mode
         _setPowerKey(Yuneec::BIND_KEY_FUNCTION_BIND);
     }
 }
@@ -263,6 +261,7 @@ TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
     if(_vehicle == vehicle) {
         qCDebug(YuneecLog) << "_vehicleRemoved()";
         disconnect(_vehicle, &Vehicle::remoteControlRSSIChanged, this, &TyphoonHM4Interface::_remoteControlRSSIChanged);
+        disconnect(_vehicle, &Vehicle::armedChanged,             this, &TyphoonHM4Interface::_armedChanged);
         _cameraControl->setVehicle(NULL);
         _vehicle = NULL;
         _bound = false;

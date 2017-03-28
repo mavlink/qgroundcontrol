@@ -10,6 +10,7 @@
 import QtQuick              2.3
 import QtQuick.Layouts      1.2
 import QtQuick.Controls     1.2
+import QtQuick.Dialogs      1.2
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -27,6 +28,7 @@ Rectangle {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
+    property bool   _noSdCardMsgShown:  false
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.connectionLost : false
     property var    _camController:     TyphoonHQuickInterface.cameraControl
@@ -34,6 +36,7 @@ Rectangle {
     property bool   _cameraAutoMode:    _camController ? _camController.aeMode === CameraControl.AE_MODE_AUTO : false;
     property bool   _cameraVideoMode:   _camController ? _camController.cameraMode === CameraControl.CAMERA_MODE_VIDEO : false
     property bool   _cameraPresent:     _camController && _camController.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
+    property bool   _noSdCard:          TyphoonHQuickInterface.cameraControl.sdTotal === 0
 
     signal showSettingsView
     signal showSetupView
@@ -67,6 +70,73 @@ Rectangle {
 
     Component.onCompleted: {
         homeButton.checked = true
+    }
+
+    MessageDialog {
+        id:                 connectionLostDisarmedDialog
+        title:              qsTr("Communication Lost")
+        text:               qsTr("Connection to vehicle has been lost and closed.")
+        standardButtons:    StandardButton.Ok
+        onAccepted:         connectionLostDisarmedDialog.close()
+    }
+
+    Timer {
+        id: connectionTimer
+        interval:  3000;
+        running:   false;
+        repeat:    false;
+        onTriggered: {
+            //-- Vehicle is gone
+            if(_activeVehicle) {
+                if(!_activeVehicle.armed) {
+                    //-- Vehicle was not armed. Close connection and tell user.
+                    _activeVehicle.disconnectInactiveVehicle()
+                    connectionLostDisarmedDialog.open()
+                } else {
+                    //-- Vehicle was armed. Show doom dialog.
+                    rootLoader.sourceComponent = connectionLostArmed
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: QGroundControl.multiVehicleManager.activeVehicle
+        onConnectionLostChanged: {
+            if(!_communicationLost) {
+                //-- Communication regained
+                connectionTimer.stop();
+                rootLoader.sourceComponent = null
+            } else {
+                //-- Communication lost
+                connectionTimer.start();
+            }
+        }
+    }
+
+    //-- Handle no MicroSD card loaded in camera
+    Connections {
+        target: TyphoonHQuickInterface.cameraControl
+        onCameraModeChanged: {
+            if(TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED) {
+                if(!_noSdCardMsgShown && _noSdCard) {
+                    rootLoader.sourceComponent = nosdcardComponent
+                    _noSdCardMsgShown = true
+                }
+            }
+        }
+        onSdTotalChanged: {
+            if(_noSdCard) {
+                if(!_noSdCardMsgShown && rootLoader.sourceComponent !== nosdcardComponent) {
+                    rootLoader.sourceComponent = nosdcardComponent
+                    _noSdCardMsgShown = true
+                }
+            } else {
+                if(rootLoader.sourceComponent === nosdcardComponent) {
+                    rootLoader.sourceComponent = null
+                }
+            }
+        }
     }
 
     /// Bottom single pixel divider
@@ -289,8 +359,135 @@ Rectangle {
             //-- SD Card
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; }
             QGCLabel { text: qsTr("SD:"); anchors.verticalCenter: parent.verticalCenter;}
-            QGCLabel { text: _camController ? _camController.sdFreeStr : ""; anchors.verticalCenter: parent.verticalCenter;}
+            QGCLabel { text: _camController ? _camController.sdFreeStr : ""; anchors.verticalCenter: parent.verticalCenter; visible: !_noSdCard}
+            QGCLabel { text: qsTr("NONE"); color: qgcPal.colorOrange; anchors.verticalCenter: parent.verticalCenter; visible: _noSdCard}
         }
     }
 
+    Component {
+        id: nosdcardComponent
+        Item {
+            id:     nosdItem
+            width:  mainWindow.width
+            height: mainWindow.height
+            z:      1000000
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+            Rectangle {
+                id:     nosdRect
+                width:  mainWindow.width   * 0.65
+                height: nosdcardCol.height * 1.5
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  "#eecc44"
+                border.color: "black"
+                border.width: 2
+                anchors.centerIn: parent
+                Column {
+                    id:                 nosdcardCol
+                    width:              nosdRect.width
+                    spacing:            ScreenTools.defaultFontPixelHeight * 3
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           qsTr("No MicroSD Card in Camera")
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        color:          "black"
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           qsTr("No images will be captured or videos recorded.")
+                        color:          "black"
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCButton {
+                        text:           qsTr("Close")
+                        width:          ScreenTools.defaultFontPixelWidth  * 10
+                        height:         ScreenTools.defaultFontPixelHeight * 2
+                        onClicked:      rootLoader.sourceComponent = null
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
+            }
+            Component.onCompleted: {
+                rootLoader.width  = nosdItem.width
+                rootLoader.height = nosdItem.height
+            }
+        }
+    }
+
+    Component {
+        id: connectionLostArmed
+        Item {
+            id:     connectionLostArmedItem
+            width:  mainWindow.width
+            height: mainWindow.height
+            z:      1000000
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+            Rectangle {
+                id:     connectionLostArmedRect
+                width:  mainWindow.width   * 0.65
+                height: connectionLostArmedCol.height * 1.5
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  "#eecc44"
+                border.color: "black"
+                border.width: 2
+                anchors.centerIn: parent
+                Column {
+                    id:                 connectionLostArmedCol
+                    width:              connectionLostArmedRect.width
+                    spacing:            ScreenTools.defaultFontPixelHeight * 3
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           qsTr("Communication Lost")
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        color:          "black"
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           qsTr("Warning: Connection to vehicle lost.")
+                        color:          "black"
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           qsTr("The vehicle will automatically cancel the flight and return to land. Ensure a clear line of sight between transmitter and vehicle. Ensure the takeoff location is clear.")
+                        width:          connectionLostArmedRect.width * 0.75
+                        wrapMode:       Text.WordWrap
+                        color:          "black"
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
+            }
+            Component.onCompleted: {
+                rootLoader.width  = connectionLostArmedItem.width
+                rootLoader.height = connectionLostArmedItem.height
+            }
+        }
+    }
+
+    //-- Entire tool bar area disable when no SD card or Connection Lost messages are shown
+    MouseArea {
+        anchors.fill:   parent
+        enabled:        rootLoader.sourceComponent === nosdcardComponent || rootLoader.sourceComponent === connectionLostArmed
+        onWheel:        { wheel.accepted = true; }
+        onPressed:      { mouse.accepted = true; }
+        onReleased:     { mouse.accepted = true; }
+    }
 }
