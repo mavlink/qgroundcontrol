@@ -89,18 +89,6 @@ public:
     /// Sends the mission items to the specified vehicle
     static void sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems);
 
-    /// Saves the mission to file
-    Q_INVOKABLE void save(void);
-
-    /// Save and to file and send to vehicle if possible
-    Q_INVOKABLE void saveAndSend(void);
-
-    /// Removes all items from the mission
-    Q_INVOKABLE void clearMission(void);
-
-    /// Closes the mission, saving and sending as needed before closing
-    Q_INVOKABLE void closeMission(void);
-
     // Overrides from PlanElementController
     void start                      (bool editMode) final;
     void startStaticActiveVehicle   (Vehicle* vehicle) final;
@@ -155,6 +143,7 @@ private slots:
     void _recalcWaypointLines(void);
     void _recalcMissionFlightStatus(void);
     void _updateContainsItems(void);
+    void _visualItemsDirtyChanged(bool dirty);
 
 private:
     void _init(void);
