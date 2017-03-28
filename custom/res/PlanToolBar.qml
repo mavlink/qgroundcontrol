@@ -77,8 +77,9 @@ Rectangle {
 
         onClicked: {
             checked = false
-            missionController.saveOnSwitch()
-            showFlyView()
+            if (missionController.saveOnSwitch()) {
+                showFlyView()
+            }
         }
     }
 
