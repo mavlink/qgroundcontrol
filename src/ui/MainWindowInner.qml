@@ -429,13 +429,13 @@ Item {
         id:                         criticalMmessageArea
         width:                      mainWindow.width  * 0.55
         height:                     Math.min(criticalMessageText.height + _textMargins * 2, ScreenTools.defaultFontPixelHeight * 6)
-        color:                      "#eecc44"
+        color:                      qgcPal.alertBackground
         visible:                    false
         radius:                     ScreenTools.defaultFontPixelHeight * 0.5
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.top:                parent.top
         anchors.topMargin:          toolBar.height + ScreenTools.defaultFontPixelHeight / 2
-        border.color:               "#808080"
+        border.color:               qgcPal.alertBorder
         border.width:               2
 
         readonly property real _textMargins: ScreenTools.defaultFontPixelHeight
@@ -484,7 +484,7 @@ Item {
                 font.pointSize: ScreenTools.defaultFontPointSize
                 font.family:    ScreenTools.demiboldFontFamily
                 wrapMode:       TextEdit.WordWrap
-                color:          "black"
+                color:          qgcPal.alertText
             }
         }
 
@@ -499,7 +499,7 @@ Item {
             sourceSize.height:  width
             source:             "/res/XDelete.svg"
             fillMode:           Image.PreserveAspectFit
-            color:              "black"
+            color:              qgcPal.alertText
             MouseArea {
                 anchors.fill:       parent
                 anchors.margins:    ScreenTools.isMobile ? -ScreenTools.defaultFontPixelHeight : 0
@@ -520,7 +520,7 @@ Item {
             source:             "/res/ArrowDown.svg"
             fillMode:           Image.PreserveAspectFit
             visible:            criticalMessageText.lineCount > 5
-            color:              "black"
+            color:              qgcPal.alertText
             MouseArea {
                 anchors.fill:   parent
                 onClicked: {
