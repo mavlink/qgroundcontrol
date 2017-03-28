@@ -48,15 +48,16 @@ QGCView {
     property bool   _lightWidgetBorders:    editorMap.isSatelliteMap
     property bool   _addWaypointOnClick:    false
     property bool   _singleComplexItem:     missionController.complexMissionItemNames.length === 1
-    property real   _toolbarHeight:   _qgcView.height - ScreenTools.availableHeight
+    property real   _toolbarHeight:         _qgcView.height - ScreenTools.availableHeight
+    property int    _editingLayer:          _layerMission
 
     /// The controller which should be called for load/save, send to/from vehicle calls
     property var _syncDropDownController: missionController
 
-    readonly property int _layerMission:        1
-    readonly property int _layerGeoFence:       2
-    readonly property int _layerRallyPoints:    3
-    property int _editingLayer: _layerMission
+    readonly property int       _layerMission:              1
+    readonly property int       _layerGeoFence:             2
+    readonly property int       _layerRallyPoints:          3
+    readonly property string    _armedVehicleUploadPrompt:  qsTr("Vehicle is currently armed. Do you want to upload the mission to the vehicle?")
 
     Component.onCompleted: {
         toolbar.missionController =     Qt.binding(function () { return missionController })
@@ -106,7 +107,28 @@ QGCView {
 
         // Users is switching away from Plan View
         function saveOnSwitch() {
-            save()
+            if (missionController.dirty) {
+                save()
+                if (_activeVehicle.armed) {
+                    _qgcView.showDialog(confirmSendToActiveVehicleAndSwitchView, qsTr("Mission Upload"), _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                    return false
+                } else {
+                    sendToVehicle()
+                }
+            }
+            return true
+        }
+
+        // User clicked upload button in plan toolbar
+        function uploadFromToolbar() {
+            if (missionController.dirty) {
+                save()
+                if (_activeVehicle.armed) {
+                    _qgcView.showDialog(confirmSendToActiveVehicle, qsTr("Mission Upload"), _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                } else {
+                    sendToVehicle()
+                }
+            }
         }
 
         function loadFromSelectedFile() {
@@ -506,7 +528,6 @@ QGCView {
                 color:              qgcPal.window
                 title:              qsTr("Plan")
                 z:                  QGroundControl.zOrderWidgets
-                buttonEnabled:      [ true, true, true, true, true ]
                 buttonVisible:      [ true, true, true, _showZoom, _showZoom ]
                 maxHeight:          mapScale.y - toolStrip.y
 
@@ -778,90 +799,6 @@ QGCView {
     //- ToolStrip DropPanel Components
 
     Component {
-        id: syncDropPanel
-
-        Column {
-            id:         columnHolder
-            spacing:    _margin
-
-            property string _overwriteText: (_editingLayer == _layerMission) ? qsTr("Mission overwrite") : ((_editingLayer == _layerGeoFence) ? qsTr("GeoFence overwrite") : qsTr("Rally Points overwrite"))
-
-            QGCLabel {
-                width:      sendSaveGrid.width
-                wrapMode:   Text.WordWrap
-                text:       _syncDropDownController.dirty ?
-                                qsTr("You have unsaved changes. You should send to your vehicle, or save to a file:") :
-                                qsTr("Sync:")
-            }
-
-            GridLayout {
-                id:                 sendSaveGrid
-                columns:            2
-                anchors.margins:    _margin
-                rowSpacing:         _margin
-                columnSpacing:      ScreenTools.defaultFontPixelWidth
-
-                QGCButton {
-                    text:               qsTr("Save")
-                    Layout.fillWidth:   true
-                    enabled:            !_syncDropDownController.syncInProgress
-                    onClicked: {
-                        dropPanel.hide()
-                        _syncDropDownController.save()
-                    }
-                }
-
-                QGCButton {
-                    text:               qsTr("Load From Vehicle")
-                    Layout.fillWidth:   true
-                    enabled:            _activeVehicle && !_syncDropDownController.syncInProgress
-                    onClicked: {
-                        dropPanel.hide()
-                        if (_syncDropDownController.dirty) {
-                            _qgcView.showDialog(syncLoadFromVehicleOverwrite, columnHolder._overwriteText, _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
-                        } else {
-                            _syncDropDownController.loadFromVehicle()
-                        }
-                    }
-                }
-
-                QGCButton {
-                    text:               qsTr("Save To File...")
-                    Layout.fillWidth:   true
-                    enabled:            !_syncDropDownController.syncInProgress
-                    onClicked: {
-                        dropPanel.hide()
-                        _syncDropDownController.saveToSelectedFile()
-                    }
-                }
-
-                QGCButton {
-                    text:               qsTr("Load From File...")
-                    Layout.fillWidth:   true
-                    enabled:            !_syncDropDownController.syncInProgress
-                    onClicked: {
-                        dropPanel.hide()
-                        if (_syncDropDownController.dirty) {
-                            _qgcView.showDialog(syncLoadFromFileOverwrite, columnHolder._overwriteText, _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
-                        } else {
-                            _syncDropDownController.loadFromSelectedFile()
-                        }
-                    }
-                }
-
-                QGCButton {
-                    text:               qsTr("Remove All")
-                    Layout.fillWidth:   true
-                    onClicked:  {
-                        dropPanel.hide()
-                        _qgcView.showDialog(removeAllPromptDialog, qsTr("Remove all"), _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
-                    }
-                }
-            }
-        }
-    }
-
-    Component {
         id: centerMapDropPanel
 
         CenterMapDropPanel {
@@ -902,6 +839,38 @@ QGCView {
             availableHeight:        ScreenTools.availableHeight
             myGeoFenceController:   geoFenceController
             flightMap:              editorMap
+        }
+    }
+
+    Component {
+        id: confirmSendToActiveVehicleAndSwitchView
+
+        QGCViewMessage {
+            message: _armedVehicleUploadPrompt
+
+            function accept() {
+                missionController.sendToVehicle()
+                toolbar.showFlyView()
+                hideDialog()
+            }
+
+            function reject() {
+                toolbar.showFlyView()
+                hideDialog()
+            }
+        }
+    }
+
+    Component {
+        id: confirmSendToActiveVehicle
+
+        QGCViewMessage {
+            message: _armedVehicleUploadPrompt
+
+            function accept() {
+                missionController.sendToVehicle()
+                hideDialog()
+            }
         }
     }
 } // QGCVIew
