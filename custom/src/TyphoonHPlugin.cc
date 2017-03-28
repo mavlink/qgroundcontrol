@@ -345,11 +345,14 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         metaData.setRawDefaultValue(MAV_TYPE_QUADROTOR);
         return false;
     } else if (metaData.name() == AppSettings::savePathName) {
-        //-- Ideally, this should be within the MicroSD card in the ST16 but we don't
-        //   yet have permission to access it.
+#if 1
         QString appName = qgcApp()->applicationName();
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
         metaData.setRawDefaultValue(rootDir.filePath(appName));
+#else
+        // Use the SD Card
+        metaData.setRawDefaultValue(QStringLiteral("/storage/sdcard1"));
+#endif
         return false;
     }
     return true;

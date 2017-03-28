@@ -18,6 +18,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiConfiguration.Status;
 
 import android.os.BatteryManager;
 
@@ -147,17 +148,24 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     }
 
     public static void findWifiConfig() {
+        String currentCamera = "";
         List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
         for( WifiConfiguration i : list ) {
             if(i.SSID != null) {
                 Log.i(TAG, "Found config: " + i.SSID + " | " + i.priority);
+                if(i.status == 0) {
+                    currentConnection = i.SSID;
+                }
                 if(i.SSID.startsWith("CGO3P") || i.SSID.startsWith("CGOPRO") || i.SSID.startsWith("CGOET")) {
                     i.priority = 1;
-                    currentConnection = i.SSID;
+                    currentCamera = i.SSID;
                 } else {
                     i.priority = 10;
                 }
             }
+        }
+        if(currentConnection == "") {
+            currentConnection = currentCamera;
         }
         mainWifi.saveConfiguration();
     }
