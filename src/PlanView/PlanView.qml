@@ -19,6 +19,7 @@ import QGroundControl               1.0
 import QGroundControl.FlightMap     1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
+import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Mavlink       1.0
@@ -615,7 +616,11 @@ QGCView {
             height:             ScreenTools.availableHeight
             width:              _rightPanelWidth
             color:              qgcPal.window
-            opacity:            0.95
+            opacity:            0.2
+        }
+
+        Item {
+            anchors.fill:   rightPanel
 
             // Plan Element selector (Mission/Fence/Rally)
             Row {
@@ -928,8 +933,11 @@ QGCView {
             }
 
             FactCheckBox {
-                text:   qsTr("Automatic upload to vehicle")
-                fact:   QGroundControl.settingsManager.appSettings.automaticMissionUpload
+                text:       qsTr("Automatic upload to vehicle")
+                fact:       autoSyncFact
+                visible:    autoSyncFact.visible
+
+                property Fact autoSyncFact: QGroundControl.settingsManager.appSettings.automaticMissionUpload
             }
         }
     }
