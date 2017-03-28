@@ -556,14 +556,17 @@ QGCView {
                             QGCButton {
                                 id:         videoBrowse
                                 text:       "Browse"
-                                onClicked:  videoDialog.visible = true
+                                onClicked:  videoDialog.openForLoad()
 
-                                FileDialog {
+                                QGCFileDialog {
                                     id:             videoDialog
                                     title:          "Choose a location to save video files."
                                     folder:         "file://" + _videoPath.value
                                     selectFolder:   true
-                                    onAccepted:     _videoPath.value = QGroundControl.urlToLocalFile(videoDialog.fileUrl)
+
+                                    onAcceptedForLoad: {
+                                        _videoPath.value = file
+                                    }
                                 }
                             }
                         }
