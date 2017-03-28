@@ -137,6 +137,21 @@ QColor QGCPalette::_colorBlue[QGCPalette::_cThemes][QGCPalette::_cColorGroups] =
     { QColor("#536dff"), QColor("#536dff") },
 };
 
+QColor QGCPalette::_alertBackground[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor("#eecc44"), QColor("#eecc44") },
+    { QColor("#eecc44"), QColor("#eecc44") },
+};
+
+QColor QGCPalette::_alertBorder[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor("#808080"), QColor("#808080") },
+    { QColor("#808080"), QColor("#808080") },
+};
+
+QColor QGCPalette::_alertText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
+    { QColor(0,0,0), QColor(0,0,0) },
+    { QColor(0,0,0), QColor(0,0,0) },
+};
+
 QGCPalette::QGCPalette(QObject* parent) :
     QObject(parent),
     _colorGroupEnabled(true)

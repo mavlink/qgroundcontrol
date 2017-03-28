@@ -66,6 +66,10 @@ class QGCPalette : public QObject
     Q_PROPERTY(QColor colorGrey             READ colorGrey              WRITE setColorGrey              NOTIFY paletteChanged)
     Q_PROPERTY(QColor colorBlue             READ colorBlue              WRITE setColorBlue              NOTIFY paletteChanged)
 
+    Q_PROPERTY(QColor alertBackground       READ alertBackground        WRITE setAlertBackground        NOTIFY paletteChanged)
+    Q_PROPERTY(QColor alertBorder           READ alertBorder            WRITE setAlertBorder            NOTIFY paletteChanged)
+    Q_PROPERTY(QColor alertText             READ alertText              WRITE setAlertText              NOTIFY paletteChanged)
+
 public:
     enum ColorGroup {
         Disabled = 0,
@@ -148,6 +152,11 @@ public:
     QColor colorGrey    ()              const { return _colorGrey[_theme][_colorGroupEnabled ? 1 : 0]; }
     QColor colorBlue    ()              const { return _colorBlue[_theme][_colorGroupEnabled ? 1 : 0]; }
 
+    /// Alert and important message dialogs
+    QColor alertBackground  ()          const { return _alertBackground[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor alertBorder      ()          const { return _alertBorder[_theme][_colorGroupEnabled ? 1 : 0]; }
+    QColor alertText        ()          const { return _alertText[_theme][_colorGroupEnabled ? 1 : 0]; }
+
     void setWindow(QColor& color)               { _window[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
     void setWindowShade(QColor& color)          { _windowShade[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
     void setWindowShadeDark(QColor& color)      { _windowShadeDark[_theme][_colorGroupEnabled ? 1 : 0] = color; _signalPaletteChangeToAll(); }
@@ -171,6 +180,10 @@ public:
     void setColorRed    (QColor& color)         { _colorRed[_theme][_colorGroupEnabled      ? 1 : 0] = color; _signalPaletteChangeToAll(); }
     void setColorGrey   (QColor& color)         { _colorGrey[_theme][_colorGroupEnabled     ? 1 : 0] = color; _signalPaletteChangeToAll(); }
     void setColorBlue   (QColor& color)         { _colorBlue[_theme][_colorGroupEnabled     ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+
+    void setAlertBackground (QColor& color)     { _alertBackground[_theme][_colorGroupEnabled   ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setAlertBorder     (QColor& color)     { _alertBorder[_theme][_colorGroupEnabled       ? 1 : 0] = color; _signalPaletteChangeToAll(); }
+    void setAlertText       (QColor& color)     { _alertText[_theme][_colorGroupEnabled         ? 1 : 0] = color; _signalPaletteChangeToAll(); }
 
     static Theme globalTheme(void) { return _theme; }
     static void setGlobalTheme(Theme newTheme);
@@ -221,6 +234,10 @@ private:
     static QColor _colorRed[_cThemes][_cColorGroups];
     static QColor _colorGrey[_cThemes][_cColorGroups];
     static QColor _colorBlue[_cThemes][_cColorGroups];
+
+    static QColor _alertBackground[_cThemes][_cColorGroups];
+    static QColor _alertBorder[_cThemes][_cColorGroups];
+    static QColor _alertText[_cThemes][_cColorGroups];
 
     void _themeChanged(void);
     
