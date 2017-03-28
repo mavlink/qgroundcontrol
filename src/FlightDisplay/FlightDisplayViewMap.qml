@@ -248,10 +248,10 @@ FlightMap {
 
         onClicked: {
             switch (index) {
-            case 2:
+            case 1:
                 _flightMap.zoomLevel += 0.5
                 break
-            case 3:
+            case 2:
                 _flightMap.zoomLevel -= 0.5
                 break
             }

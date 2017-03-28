@@ -54,7 +54,7 @@
      <height>22</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuMGround">
+   <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
     </property>
@@ -68,7 +68,7 @@
      <string>Widgets</string>
     </property>
    </widget>
-   <addaction name="menuMGround"/>
+   <addaction name="menuFile"/>
    <addaction name="menuWidgets"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -98,7 +98,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Show Status Bar</string>
+    <string>Replay Flight Data</string>
    </property>
   </action>
  </widget>
