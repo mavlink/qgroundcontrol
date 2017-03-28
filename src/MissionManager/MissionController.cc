@@ -1547,6 +1547,9 @@ QString MissionController::fileExtension(void) const
 
 void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualItems, Vehicle* vehicle)
 {
+    // First we look for a Fixed Wing Landing Pattern which is at the end
+    FixedWingLandingComplexItem::scanForItem(visualItems, vehicle);
+
     int scanIndex = 0;
     while (scanIndex < visualItems->count()) {
         VisualMissionItem* visualItem = visualItems->value<VisualMissionItem*>(scanIndex);
