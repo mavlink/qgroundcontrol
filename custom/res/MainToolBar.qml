@@ -382,8 +382,8 @@ Rectangle {
                 width:  mainWindow.width   * 0.65
                 height: nosdcardCol.height * 1.5
                 radius: ScreenTools.defaultFontPixelWidth
-                color:  "#eecc44"
-                border.color: "black"
+                color:  qgcPal.alertBackground
+                border.color: qgcPal.alertBorder
                 border.width: 2
                 anchors.centerIn: parent
                 Column {
@@ -396,12 +396,12 @@ Rectangle {
                         text:           qsTr("No MicroSD Card in Camera")
                         font.family:    ScreenTools.demiboldFontFamily
                         font.pointSize: ScreenTools.largeFontPointSize
-                        color:          "black"
+                        color:          qgcPal.alertText
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     QGCLabel {
                         text:           qsTr("No images will be captured or videos recorded.")
-                        color:          "black"
+                        color:          qgcPal.alertText
                         font.family:    ScreenTools.demiboldFontFamily
                         font.pointSize: ScreenTools.mediumFontPointSize
                         anchors.horizontalCenter: parent.horizontalCenter
