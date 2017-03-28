@@ -49,6 +49,9 @@ public:
     void setLandingCoordinate       (const QGeoCoordinate& coordinate);
     void setLoiterCoordinate        (const QGeoCoordinate& coordinate);
 
+    /// Scans the loaded items for a landing pattern complex item
+    static bool scanForItem(QmlObjectListModel* visualItems, Vehicle* vehicle);
+
     // Overrides from ComplexMissionItem
 
     double              complexDistance     (void) const final;
