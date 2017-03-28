@@ -49,8 +49,9 @@ QGCView {
     property bool   _tooManyTiles:      QGroundControl.mapEngineManager.tileCount > _maxTilesForDownload
     property var    _settings:          QGroundControl.settingsManager.flightMapSettings
 
-    readonly property real minZoomLevel: 3
-    readonly property real maxZoomLevel: 20
+    readonly property real minZoomLevel:    3
+    readonly property real maxZoomLevel:    20
+    readonly property real sliderTouchArea: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth * 5 : ScreenTools.defaultFontPixelWidth * 3
 
     readonly property int _maxTilesForDownload: 100000
 
@@ -641,6 +642,7 @@ QGCView {
                             anchors.left:       parent.left
                             anchors.right:      parent.right
                             spacing:            ScreenTools.defaultFontPixelHeight * (ScreenTools.isTinyScreen ? 0.25 : 0.5)
+
                             Column {
                                 spacing:            ScreenTools.isTinyScreen ? 0 : ScreenTools.defaultFontPixelHeight * 0.25
                                 anchors.left:       parent.left
@@ -652,6 +654,7 @@ QGCView {
                                     anchors.right:  parent.right
                                 }
                             }
+
                             Column {
                                 spacing:            ScreenTools.isTinyScreen ? 0 : ScreenTools.defaultFontPixelHeight * 0.25
                                 anchors.left:       parent.left
@@ -692,21 +695,23 @@ QGCView {
 
                                 Column {
                                     id:                 zoomColumn
+                                    spacing:            ScreenTools.isTinyScreen ? 0 : ScreenTools.defaultFontPixelHeight * 0.5
                                     anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.25
                                     anchors.top:        parent.top
                                     anchors.left:       parent.left
                                     anchors.right:      parent.right
 
                                     QGCLabel {
-                                        text:           qsTr("Min Zoom: %1").arg(sliderMinZoom.value)
+                                        text:           qsTr("Min/Max Zoom Levels")
                                         font.pointSize: _adjustableFontPointSize
+                                        anchors.horizontalCenter: parent.horizontalCenter
                                     }
 
                                     Slider {
                                         id:                         sliderMinZoom
                                         anchors.left:               parent.left
                                         anchors.right:              parent.right
-                                        height:                     setName.height
+                                        height:                     sliderTouchArea * 1.25
                                         minimumValue:               minZoomLevel
                                         maximumValue:               maxZoomLevel
                                         stepSize:                   1
@@ -719,18 +724,37 @@ QGCView {
                                             }
                                             handleChanges()
                                         }
+                                        style: SliderStyle {
+                                            groove: Rectangle {
+                                                implicitWidth:  sliderMinZoom.width
+                                                implicitHeight: 4
+                                                color:          qgcPal.colorBlue
+                                                radius:         4
+                                            }
+                                            handle: Rectangle {
+                                                anchors.centerIn: parent
+                                                color:          qgcPal.button
+                                                border.color:   qgcPal.buttonText
+                                                border.width:   1
+                                                implicitWidth:  sliderTouchArea
+                                                implicitHeight: sliderTouchArea
+                                                radius:         sliderTouchArea * 0.5
+                                                Label {
+                                                    text:               sliderMinZoom.value
+                                                    anchors.centerIn:   parent
+                                                    font.family:        ScreenTools.normalFontFamily
+                                                    font.pointSize:     ScreenTools.smallFontPointSize
+                                                    color:              qgcPal.buttonText
+                                                }
+                                            }
+                                        }
                                     } // Slider - min zoom
-
-                                    QGCLabel {
-                                        text:                       qsTr("Max Zoom: %1").arg(sliderMaxZoom.value)
-                                        font.pointSize:             _adjustableFontPointSize
-                                    }
 
                                     Slider {
                                         id:                         sliderMaxZoom
                                         anchors.left:               parent.left
                                         anchors.right:              parent.right
-                                        height:                     setName.height
+                                        height:                     sliderTouchArea * 1.25
                                         minimumValue:               minZoomLevel
                                         maximumValue:               maxZoomLevel
                                         stepSize:                   1
@@ -743,13 +767,37 @@ QGCView {
                                             }
                                             handleChanges()
                                         }
+                                        style: SliderStyle {
+                                            groove: Rectangle {
+                                                implicitWidth:  sliderMaxZoom.width
+                                                implicitHeight: 4
+                                                color:          qgcPal.colorBlue
+                                                radius:         4
+                                            }
+                                            handle: Rectangle {
+                                                anchors.centerIn: parent
+                                                color:          qgcPal.button
+                                                border.color:   qgcPal.buttonText
+                                                border.width:   1
+                                                implicitWidth:  sliderTouchArea
+                                                implicitHeight: sliderTouchArea
+                                                radius:         sliderTouchArea * 0.5
+                                                Label {
+                                                    text:               sliderMaxZoom.value
+                                                    anchors.centerIn:   parent
+                                                    font.family:        ScreenTools.normalFontFamily
+                                                    font.pointSize:     ScreenTools.smallFontPointSize
+                                                    color:              qgcPal.buttonText
+                                                }
+                                            }
+                                        }
                                     } // Slider - max zoom
 
                                     GridLayout {
                                         columns:    2
                                         rowSpacing: ScreenTools.isTinyScreen ? 0 : ScreenTools.defaultFontPixelHeight * 0.5
                                         QGCLabel {
-                                            text:           qsTr("Count:")
+                                            text:           qsTr("Tile Count:")
                                             font.pointSize: _adjustableFontPointSize
                                         }
                                         QGCLabel {
@@ -777,11 +825,12 @@ QGCView {
                             }
 
                             Row {
+                                id: addButtonRow
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 QGCButton {
-                                    id:         downloadButton
                                     text:       qsTr("Download")
+                                    width:      (addNewSetColumn.width * 0.5) - (addButtonRow.spacing * 0.5)
                                     enabled:    !_tooManyTiles && setName.text.length > 0
                                     onClicked: {
                                         if(QGroundControl.mapEngineManager.findName(setName.text)) {
@@ -793,8 +842,8 @@ QGCView {
                                     }
                                 }
                                 QGCButton {
-                                    text:   qsTr("Cancel")
-                                    width:  downloadButton.width
+                                    text:       qsTr("Cancel")
+                                    width:      (addNewSetColumn.width * 0.5) - (addButtonRow.spacing * 0.5)
                                     onClicked: {
                                         showList()
                                     }

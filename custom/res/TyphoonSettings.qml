@@ -27,10 +27,11 @@ QGCView {
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
-    property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
-    property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
-    property var  _selectedSSID:                ""
-    property var  _connectText:                 qsTr("Connect")
+    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
+    property real _labelWidth:          ScreenTools.defaultFontPixelWidth * 15
+    property real _editFieldWidth:      ScreenTools.defaultFontPixelWidth * 30
+    property var  _selectedSSID:        ""
+    property var  _connectText:         qsTr("Connect")
 
     ExclusiveGroup  { id: ssidGroup }
     QGCPalette      { id: qgcPal }
@@ -217,8 +218,9 @@ QGCView {
                     }
                 }
                 QGCLabel {
+                    visible: _activeVehicle
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: qsTr("QGroundControl Version: " + QGroundControl.qgcVersion)
+                    text: qsTr("Firmware Version: " + _activeVehicle.firmwareMajorVersion + "." + _activeVehicle.firmwareMinorVersion + "." + _activeVehicle.firmwarePatchVersion + " (" + _activeVehicle.firmwareVersionTypeString + ")")
                 }
             }
         }
