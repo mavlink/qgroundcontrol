@@ -158,6 +158,7 @@ private slots:
     void _closeWindow(void) { close(); }
     void _vehicleAdded(Vehicle* vehicle);
     void _showDockWidgetAction(bool show);
+    void _showAdvancedUIChanged(bool advanced);
 
 #ifdef UNITTEST_BUILD
     void _showQmlTestWidget(void);

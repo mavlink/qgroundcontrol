@@ -89,7 +89,7 @@ Rectangle {
 
             onClicked: {
                 checked = false
-                if (missionController.saveOnSwitch()) {
+                if (missionController.uploadOnSwitch()) {
                     showFlyView()
                 }
             }
@@ -178,9 +178,10 @@ Rectangle {
         anchors.rightMargin:    _margins
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
-        text:                   qsTr("Upload")
-        visible:                _manualUpload && missionController.dirty
-        onClicked:              missionController.uploadFromToolbar()
+        text:                   missionController.dirty ? qsTr("Upload Required") : qsTr("Upload")
+        enabled:                _activeVehicle
+        visible:                _manualUpload
+        onClicked:              missionController.upload()
     }
 }
 
