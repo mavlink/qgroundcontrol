@@ -745,213 +745,327 @@ Rectangle {
                     text: palette.colorBlue
                 }
 
+                // alertBackground
+                Loader {
+                    sourceComponent: rowHeader
+                    property var text: "alertBackground"
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    color: palette.alertBackground
+                    onColorSelected: palette.alertBackground = color
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    color: palette.alertBackground
+                    onColorSelected: palette.alertBackground = color
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    text: palette.alertBackground
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    text: palette.alertBackground
+                }
+
+                // alertBorder
+                Loader {
+                    sourceComponent: rowHeader
+                    property var text: "alertBorder"
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    color: palette.alertBorder
+                    onColorSelected: palette.alertBorder = color
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    color: palette.alertBorder
+                    onColorSelected: palette.alertBorder = color
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    text: palette.alertBorder
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    text: palette.alertBorder
+                }
+
+                // alertText
+                Loader {
+                    sourceComponent: rowHeader
+                    property var text: "alertText"
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    color: palette.alertText
+                    onColorSelected: palette.alertText = color
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    color: palette.alertText
+                    onColorSelected: palette.alertText = color
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    text: palette.alertText
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    text: palette.alertText
+                }
+
             }
 
-            Grid {
-                columns: 3
+            Column {
                 spacing: 10
+                width: leftGrid.width
+                Grid {
+                    id: leftGrid
+                    columns: 3
+                    spacing: 10
 
-                Component {
-                    id: ctlRowHeader
+                    Component {
+                        id: ctlRowHeader
 
+                        Text {
+                            width: 120
+                            height: 20
+                            horizontalAlignment: Text.AlignRight
+                            verticalAlignment: Text.AlignVCenter
+                            color: "black"
+                            text: parent.text
+                        }
+                    }
+
+
+                    // Header row
+                    Loader {
+                        sourceComponent: ctlRowHeader
+                        property var text: ""
+                    }
                     Text {
-                        width: 120
+                        width: 100
                         height: 20
-                        horizontalAlignment: Text.AlignRight
-                        verticalAlignment: Text.AlignVCenter
                         color: "black"
-                        text: parent.text
+                        horizontalAlignment: Text.AlignHCenter
+                        text: qsTr("Enabled")
+                    }
+                    Text {
+                        width: 100
+                        height: 20
+                        color: "black"
+                        horizontalAlignment: Text.AlignHCenter
+                        text: qsTr("Disabled")
+                    }
+
+                    // QGCLabel
+                    Loader {
+                        sourceComponent: ctlRowHeader
+                        property var text: "QGCLabel"
+                    }
+                    QGCLabel {
+                        width: 100
+                        height: 20
+                        text: qsTr("Label")
+                    }
+                    QGCLabel {
+                        width: 100
+                        height: 20
+                        text: qsTr("Label")
+                        enabled: false
+                    }
+
+                    // QGCButton
+                    Loader {
+                        sourceComponent: ctlRowHeader
+                        property var text: "QGCButton"
+                    }
+                    QGCButton {
+                        width: 100
+                        height: 20
+                        text: qsTr("Button")
+                    }
+                    QGCButton {
+                        width: 100
+                        height: 20
+                        text: qsTr("Button")
+                        enabled: false
+                    }
+
+                    // QGCButton - primary
+                    Loader {
+                        sourceComponent: ctlRowHeader
+                        property var text: "QGCButton(primary)"
+                    }
+                    QGCButton {
+                        width: 100
+                        height: 20
+                        primary: true
+                        text: qsTr("Button")
+                    }
+                    QGCButton {
+                        width: 100
+                        height: 20
+                        text: qsTr("Button")
+                        primary: true
+                        enabled: false
+                    }
+
+                    // QGCButton - menu
+                    Loader {
+                        sourceComponent: ctlRowHeader
+                        property var text: "QGCButton(menu)"
+                    }
+                    Menu {
+                        id: buttonMenu
+                        MenuItem {
+                            text: qsTr("Item 1")
+                        }
+                        MenuItem {
+                            text: qsTr("Item 2")
+                        }
+                        MenuItem {
+                            text: qsTr("Item 3")
+                        }
+                    }
+                    QGCButton {
+                        width: 100
+                        height: 20
+                        text: qsTr("Button")
+                        menu: buttonMenu
+                    }
+                    QGCButton {
+                        width: 100
+                        height: 20
+                        text: qsTr("Button")
+                        enabled: false
+                        menu: buttonMenu
+                    }
+
+                    // QGCRadioButton
+                    Loader {
+                        sourceComponent: ctlRowHeader
+                        property var text: "QGCRadioButton"
+                    }
+                    QGCRadioButton {
+                        width: 100
+                        height: 20
+                        text: qsTr("Radio")
+                    }
+                    QGCRadioButton {
+                        width: 100
+                        height: 20
+                        text: qsTr("Radio")
+                        enabled: false
+                    }
+
+                    // QGCCheckBox
+                    Loader {
+                        sourceComponent: ctlRowHeader
+                        property var text: "QGCCheckBox"
+                    }
+                    QGCCheckBox {
+                        width: 100
+                        height: 20
+                        text: qsTr("Check Box")
+                    }
+                    QGCCheckBox {
+                        width: 100
+                        height: 20
+                        text: qsTr("Check Box")
+                        enabled: false
+                    }
+
+                    // QGCTextField
+                    Loader {
+                        sourceComponent: ctlRowHeader
+                        property var text: "QGCTextField"
+                    }
+                    QGCTextField {
+                        width: 100
+                        height: 20
+                        text: "QGCTextField"
+                    }
+                    QGCTextField {
+                        width: 100
+                        height: 20
+                        text: "QGCTextField"
+                        enabled: false
+                    }
+
+                    // QGCComboBox
+                    Loader {
+                        sourceComponent: ctlRowHeader
+                        property var text: "QGCComboBox"
+                    }
+                    QGCComboBox {
+                        width: 100
+                        height: 20
+                        model: [ qsTr("Item 1"), qsTr("Item 2"), qsTr("Item 3") ]
+                    }
+                    QGCComboBox {
+                        width: 100
+                        height: 20
+                        model: [ qsTr("Item 1"), qsTr("Item 2"), qsTr("Item 3") ]
+                        enabled: false
+                    }
+
+                    // SubMenuButton
+                    Loader {
+                        sourceComponent: ctlRowHeader
+                        property var text: "SubMenuButton"
+                    }
+                    SubMenuButton {
+                        width: 100
+                        height: 100
+                        text: qsTr("SUB MENU")
+                    }
+                    SubMenuButton {
+                        width: 100
+                        height: 100
+                        text: qsTr("SUB MENU")
+                        enabled: false
                     }
                 }
-
-
-                // Header row
-                Loader {
-                    sourceComponent: ctlRowHeader
-                    property var text: ""
-                }
-                Text {
-                    width: 100
-                    height: 20
-                    color: "black"
-                    horizontalAlignment: Text.AlignHCenter
-                    text: qsTr("Enabled")
-                }
-                Text {
-                    width: 100
-                    height: 20
-                    color: "black"
-                    horizontalAlignment: Text.AlignHCenter
-                    text: qsTr("Disabled")
-                }
-
-                // QGCLabel
-                Loader {
-                    sourceComponent: ctlRowHeader
-                    property var text: "QGCLabel"
-                }
-                QGCLabel {
-                    width: 100
-                    height: 20
-                    text: qsTr("Label")
-                }
-                QGCLabel {
-                    width: 100
-                    height: 20
-                    text: qsTr("Label")
-                    enabled: false
-                }
-
-                // QGCButton
-                Loader {
-                    sourceComponent: ctlRowHeader
-                    property var text: "QGCButton"
-                }
-                QGCButton {
-                    width: 100
-                    height: 20
-                    text: qsTr("Button")
-                }
-                QGCButton {
-                    width: 100
-                    height: 20
-                    text: qsTr("Button")
-                    enabled: false
-                }
-
-                // QGCButton - primary
-                Loader {
-                    sourceComponent: ctlRowHeader
-                    property var text: "QGCButton(primary)"
-                }
-                QGCButton {
-                    width: 100
-                    height: 20
-                    primary: true
-                    text: qsTr("Button")
-                }
-                QGCButton {
-                    width: 100
-                    height: 20
-                    text: qsTr("Button")
-                    primary: true
-                    enabled: false
-                }
-
-                // QGCButton - menu
-                Loader {
-                    sourceComponent: ctlRowHeader
-                    property var text: "QGCButton(menu)"
-                }
-                Menu {
-                    id: buttonMenu
-                    MenuItem {
-                        text: qsTr("Item 1")
+                Rectangle {
+                    width:  leftGrid.width
+                    height: 60
+                    radius: 3
+                    color:  palette.alertBackground
+                    border.color: palette.alertBorder
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Label {
+                        text: "Alert Message"
+                        color:  palette.alertText
+                        anchors.centerIn: parent
                     }
-                    MenuItem {
-                        text: qsTr("Item 2")
-                    }
-                    MenuItem {
-                        text: qsTr("Item 3")
-                    }
-                }
-                QGCButton {
-                    width: 100
-                    height: 20
-                    text: qsTr("Button")
-                    menu: buttonMenu
-                }
-                QGCButton {
-                    width: 100
-                    height: 20
-                    text: qsTr("Button")
-                    enabled: false
-                    menu: buttonMenu
-                }
-
-                // QGCRadioButton
-                Loader {
-                    sourceComponent: ctlRowHeader
-                    property var text: "QGCRadioButton"
-                }
-                QGCRadioButton {
-                    width: 100
-                    height: 20
-                    text: qsTr("Radio")
-                }
-                QGCRadioButton {
-                    width: 100
-                    height: 20
-                    text: qsTr("Radio")
-                    enabled: false
-                }
-
-                // QGCCheckBox
-                Loader {
-                    sourceComponent: ctlRowHeader
-                    property var text: "QGCCheckBox"
-                }
-                QGCCheckBox {
-                    width: 100
-                    height: 20
-                    text: qsTr("Check Box")
-                }
-                QGCCheckBox {
-                    width: 100
-                    height: 20
-                    text: qsTr("Check Box")
-                    enabled: false
-                }
-
-                // QGCTextField
-                Loader {
-                    sourceComponent: ctlRowHeader
-                    property var text: "QGCTextField"
-                }
-                QGCTextField {
-                    width: 100
-                    height: 20
-                    text: "QGCTextField"
-                }
-                QGCTextField {
-                    width: 100
-                    height: 20
-                    text: "QGCTextField"
-                    enabled: false
-                }
-
-                // QGCComboBox
-                Loader {
-                    sourceComponent: ctlRowHeader
-                    property var text: "QGCComboBox"
-                }
-                QGCComboBox {
-                    width: 100
-                    height: 20
-                    model: [ qsTr("Item 1"), qsTr("Item 2"), qsTr("Item 3") ]
-                }
-                QGCComboBox {
-                    width: 100
-                    height: 20
-                    model: [ qsTr("Item 1"), qsTr("Item 2"), qsTr("Item 3") ]
-                    enabled: false
-                }
-
-                // SubMenuButton
-                Loader {
-                    sourceComponent: ctlRowHeader
-                    property var text: "SubMenuButton"
-                }
-                SubMenuButton {
-                    width: 100
-                    height: 100
-                    text: qsTr("SUB MENU")
-                }
-                SubMenuButton {
-                    width: 100
-                    height: 100
-                    text: qsTr("SUB MENU")
-                    enabled: false
                 }
             }
         }
