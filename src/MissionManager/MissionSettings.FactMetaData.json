@@ -22,11 +22,5 @@
     "enumStrings":      "No action on mission end,Loiter after mission end,RTL after mission end",
     "enumValues":       "0,1,2",
     "defaultValue":     0
-},
-{
-    "name":             "MissionName",
-    "shortDescription": "Name for the mission.",
-    "type":             "string",
-    "defaultValue":     ""
 }
 ]
