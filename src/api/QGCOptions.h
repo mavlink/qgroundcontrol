@@ -33,7 +33,8 @@ public:
     Q_PROPERTY(bool                     showSensorCalibrationAccel      READ showSensorCalibrationAccel     NOTIFY showSensorCalibrationAccelChanged)
     Q_PROPERTY(bool                     showSensorCalibrationLevel      READ showSensorCalibrationLevel     NOTIFY showSensorCalibrationLevelChanged)
     Q_PROPERTY(bool                     showSensorCalibrationAirspeed   READ showSensorCalibrationAirspeed  NOTIFY showSensorCalibrationAirspeedChanged)
-    Q_PROPERTY(bool                     showSensorCalibrationOrient     READ showSensorCalibrationOrient    NOTIFY showSensorCalibrationOrientChanged)
+    Q_PROPERTY(bool                     sensorsHaveFixedOrientation     READ sensorsHaveFixedOrientation    CONSTANT)
+    Q_PROPERTY(bool                     wifiReliableForCalibration      READ wifiReliableForCalibration     CONSTANT)
     Q_PROPERTY(bool                     showFirmwareUpgrade             READ showFirmwareUpgrade            NOTIFY showFirmwareUpgradeChanged)
     Q_PROPERTY(QString                  firmwareUpgradeSingleURL        READ firmwareUpgradeSingleURL       CONSTANT)
     Q_PROPERTY(bool                     guidedBarShowEmergencyStop      READ guidedBarShowEmergencyStop     NOTIFY guidedBarShowEmergencyStopChanged)
@@ -61,7 +62,8 @@ public:
     virtual bool    showSensorCalibrationAccel      () const { return true; }
     virtual bool    showSensorCalibrationLevel      () const { return true; }
     virtual bool    showSensorCalibrationAirspeed   () const { return true; }
-    virtual bool    showSensorCalibrationOrient     () const { return true; }
+    virtual bool    wifiReliableForCalibration      () const { return false; }
+    virtual bool    sensorsHaveFixedOrientation     () const { return false; }
 
     virtual bool    showFirmwareUpgrade             () const { return true; }
 
@@ -79,7 +81,6 @@ signals:
     void showSensorCalibrationAccelChanged      (bool show);
     void showSensorCalibrationLevelChanged      (bool show);
     void showSensorCalibrationAirspeedChanged   (bool show);
-    void showSensorCalibrationOrientChanged     (bool show);
     void showFirmwareUpgradeChanged             (bool show);
     void guidedBarShowEmergencyStopChanged       (bool show);
     void guidedBarShowOrbitChanged              (bool show);
