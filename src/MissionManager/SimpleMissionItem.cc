@@ -51,6 +51,7 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
     : VisualMissionItem(vehicle, parent)
     , _rawEdit(false)
     , _dirty(false)
+    , _ignoreDirtyChangeSignals(false)
     , _cameraSection(NULL)
     , _commandTree(qgcApp()->toolbox()->missionCommandTree())
     , _altitudeRelativeToHomeFact   (0, "Altitude is relative to home", FactMetaData::valueTypeUint32)
@@ -87,6 +88,7 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missio
     , _missionItem(missionItem)
     , _rawEdit(false)
     , _dirty(false)
+    , _ignoreDirtyChangeSignals(false)
     , _cameraSection(NULL)
     , _commandTree(qgcApp()->toolbox()->missionCommandTree())
     , _altitudeRelativeToHomeFact   (0, "Altitude is relative to home", FactMetaData::valueTypeUint32)
@@ -117,6 +119,7 @@ SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, QObject* pa
     , _missionItem(other._vehicle)
     , _rawEdit(false)
     , _dirty(false)
+    , _ignoreDirtyChangeSignals(false)
     , _cameraSection(NULL)
     , _commandTree(qgcApp()->toolbox()->missionCommandTree())
     , _altitudeRelativeToHomeFact   (0, "Altitude is relative to home", FactMetaData::valueTypeUint32)
@@ -390,6 +393,8 @@ QmlObjectListModel* SimpleMissionItem::textFieldFacts(void)
         _missionItem._param7Fact.setMetaData(_defaultParamMetaData);
         model->append(&_missionItem._param7Fact);
     } else {
+        _ignoreDirtyChangeSignals = true;
+
         _clearParamMetaData();
 
         MAV_CMD command;
@@ -425,6 +430,8 @@ QmlObjectListModel* SimpleMissionItem::textFieldFacts(void)
             _missionItem._param7Fact.setMetaData(_altitudeMetaData);
             model->append(&_missionItem._param7Fact);
         }
+
+        _ignoreDirtyChangeSignals = false;
     }
     
     return model;
@@ -524,7 +531,9 @@ void SimpleMissionItem::setDirty(bool dirty)
 
 void SimpleMissionItem::_setDirtyFromSignal(void)
 {
-    setDirty(true);
+    if (!_ignoreDirtyChangeSignals) {
+        setDirty(true);
+    }
 }
 
 void SimpleMissionItem::_sendCoordinateChanged(void)

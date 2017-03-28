@@ -143,6 +143,7 @@ private:
     MissionItem _missionItem;
     bool        _rawEdit;
     bool        _dirty;
+    bool        _ignoreDirtyChangeSignals;
 
     CameraSection* _cameraSection;
 
