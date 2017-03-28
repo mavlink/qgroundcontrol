@@ -92,7 +92,8 @@ public:
     bool        showSensorCalibrationGyro      () const final;
     bool        showSensorCalibrationAccel     () const final;
     bool        showSensorCalibrationLevel     () const final;
-    bool        showSensorCalibrationOrient    () const final;
+    bool        wifiReliableForCalibration     () const { return true; }
+    bool        sensorsHaveFixedOrientation    () const { return true; }
     bool        guidedBarShowEmergencyStop     () const { return false; }
     bool        guidedBarShowOrbit             () const { return false; }
 
@@ -121,7 +122,6 @@ void TyphoonHOptions::_advancedChanged(bool advanced)
     emit showSensorCalibrationGyroChanged(showSensorCalibrationGyro());
     emit showSensorCalibrationAccelChanged(showSensorCalibrationAccel());
     emit showSensorCalibrationLevelChanged(showSensorCalibrationLevel());
-    emit showSensorCalibrationOrientChanged(showSensorCalibrationOrient());
 }
 
 bool TyphoonHOptions::showSensorCalibrationCompass(void) const
@@ -136,17 +136,12 @@ bool TyphoonHOptions::showSensorCalibrationGyro(void) const
 
 bool TyphoonHOptions::showSensorCalibrationAccel(void) const
 {
-    return qgcApp()->toolbox()->corePlugin()->showAdvancedUI();
+    return true;
 }
 
 bool TyphoonHOptions::showSensorCalibrationLevel(void) const
 {
     return qgcApp()->toolbox()->corePlugin()->showAdvancedUI();
-}
-
-bool TyphoonHOptions::showSensorCalibrationOrient(void) const
-{
-    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -323,6 +318,9 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
     } else if (metaData.name() == VideoSettings::videoAspectRatioName) {
         metaData.setRawDefaultValue(1.777777);
         return false;
+    } else if (metaData.name() == AppSettings::automaticMissionUploadName) {
+        metaData.setRawDefaultValue(true);
+        return true;
     } else if (metaData.name() == AppSettings::virtualJoystickName) {
         metaData.setRawDefaultValue(false);
         return false;
