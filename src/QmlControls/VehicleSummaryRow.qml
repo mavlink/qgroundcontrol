@@ -1,8 +1,8 @@
-import QtQuick 2.3
+import QtQuick          2.3
 import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.4
+import QtQuick.Layouts  1.2
 
-Row {
+RowLayout {
     property string labelText: "Label"
     property string valueText: "value"
 
@@ -13,8 +13,9 @@ Row {
         text:   labelText
     }
     QGCLabel {
-        width:  parent.width - label.contentWidth
-        text:   valueText
-        horizontalAlignment: Text.AlignRight;
+        text:                   valueText
+        elide:                  Text.ElideRight
+        horizontalAlignment:    Text.AlignRight
+        Layout.fillWidth:       true
     }
 }
