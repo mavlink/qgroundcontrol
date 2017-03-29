@@ -36,6 +36,14 @@ QGCView {
     ExclusiveGroup  { id: ssidGroup }
     QGCPalette      { id: qgcPal }
 
+    function firmwareVersion() {
+        if(_activeVehicle) {
+            return qsTr("Firmware Version: " + _activeVehicle.firmwareMajorVersion + "." + _activeVehicle.firmwareMinorVersion + "." + _activeVehicle.firmwarePatchVersion + " (" + _activeVehicle.firmwareVersionTypeString + ")")
+        } else {
+            return ""
+        }
+    }
+
     Connections {
         target: TyphoonHQuickInterface
         onAuthenticationError: {
@@ -131,11 +139,13 @@ QGCView {
                     QGCButton {
                         id:             resetButton
                         text:           qsTr("Reset All Links")
+                        //-- Don't allow restting if vehicle is connected and armed
+                        enabled:        _activeVehicle ? !_activeVehicle.armed : true
                         anchors.right:  parent.right
                         onClicked: {
                             QGroundControl.skipSetupPage = true
-                            if(QGroundControl.multiVehicleManager.activeVehicle) {
-                                QGroundControl.multiVehicleManager.activeVehicle.autoDisconnect = true;
+                            if(_activeVehicle) {
+                                _activeVehicle.autoDisconnect = true;
                             }
                             TyphoonHQuickInterface.resetWifi();
                         }
@@ -201,7 +211,7 @@ QGCView {
                                 text:               modelData
                                 source:             "qrc:/typhoonh/checkMark.svg"
                                 showIcon:           TyphoonHQuickInterface.connectedSSID === modelData
-                                enabled:            TyphoonHQuickInterface.connectedSSID !== modelData
+                                enabled:            _activeVehicle ? !_activeVehicle.armed && TyphoonHQuickInterface.connectedSSID !== modelData : TyphoonHQuickInterface.connectedSSID !== modelData
                                 anchors.horizontalCenter:   parent.horizontalCenter
                                 onClicked:  {
                                     if(_selectedSSID === modelData) {
@@ -220,7 +230,7 @@ QGCView {
                 QGCLabel {
                     visible: _activeVehicle
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: qsTr("Firmware Version: " + _activeVehicle.firmwareMajorVersion + "." + _activeVehicle.firmwareMinorVersion + "." + _activeVehicle.firmwarePatchVersion + " (" + _activeVehicle.firmwareVersionTypeString + ")")
+                    text: firmwareVersion()
                 }
             }
         }
