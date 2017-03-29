@@ -64,11 +64,12 @@ void MixersComponentController::_updateMixers(bool dataReady){
 
     if(dataReady) {
         // Pick a default mixer group selection
-        if(_vehicle->mixersManager()->getMixerGroup(0) != nullptr){
-            _selectedGroup = 0;
-        } else if(_vehicle->mixersManager()->getMixerGroup(1) != nullptr) {
+        if(_vehicle->mixersManager()->getMixerGroup(1) != nullptr){
             _selectedGroup = 1;
-        }
+        } else if(_vehicle->mixersManager()->getMixerGroup(2) != nullptr) {
+            _selectedGroup = 2;
+        } else
+            _selectedGroup = 0;
 
         _updateSelectedGroup(_selectedGroup);
     } else {
@@ -87,9 +88,6 @@ void MixersComponentController::_updateMixersManagerStatus(MixersManager::MIXERS
     case MixersManager::MIXERS_MANAGER_DOWNLOADING_MISSING:
          _mixersManagerStatusText->setProperty("text", "DOWNLOADING MISSING");
         break;
-    case MixersManager::MIXERS_MANAGER_DOWNLOADING_MIXER_INFO:
-         _mixersManagerStatusText->setProperty("text", "DOWNLOADING MIXER INFO");
-        break;
     default:
          _mixersManagerStatusText->setProperty("text", "");
         break;
@@ -102,7 +100,7 @@ void MixersComponentController::_updateSelectedGroup(unsigned int group){
 
     MixerGroup *mixerGroup = _vehicle->mixersManager()->getMixerGroup(_selectedGroup);
     if(mixerGroup != nullptr){
-        _mixers->swapObjectList(mixerGroup->mixers());
+        _mixers->swapObjectList(mixerGroup->parameters());
     } else {
         _mixers->clear();
     }

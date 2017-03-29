@@ -345,15 +345,13 @@ HEADERS += \
     src/MixersManager/MixerMetaData.h \
     src/MixersManager/mixer_io.h \
     src/MixersManager/mixer_type_id.h \
-    src/MixersManager/mixer_types.h \
-    src/MixersManager/mixer_parameters.h
+    src/MixersManager/mixer_types.h
 
 SOURCES += \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
     src/api/QGCSettings.cc \
-    src/MixersManager/MixerFacts.cpp \
-    src/MixersManager/MixerMetaData.cpp
+    src/MixersManager/MixerFacts.cpp
 
 #
 # Unit Test specific configuration goes here (requires full debug build with all plugins)

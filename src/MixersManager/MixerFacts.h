@@ -10,88 +10,54 @@
 #ifndef MIXERFACTS_H
 #define MIXERFACTS_H
 
+#include "QGCMAVLink.h"
+//#include "LinkInterface.h"
+
 #include <QObject>
 #include <Fact.h>
 #include <FactMetaData.h>
-#include <MixerMetaData.h>
 #include <QMap>
-#include <QmlObjectListModel.h>
 #include <QMetaType>
 
-class MixerConnection : public QObject
+
+class MixerParameter : public QObject
 {
     Q_OBJECT
-    Q_DISABLE_COPY(MixerConnection)
+    Q_DISABLE_COPY(MixerParameter)
 
-    Q_PROPERTY(int group       READ group         CONSTANT)
-    Q_PROPERTY(int channel     READ channel       CONSTANT)
+    Q_PROPERTY(int      index       READ index      CONSTANT)
+    Q_PROPERTY(int      mixerID       READ mixerID      CONSTANT)
+    Q_PROPERTY(int      submixerID       READ submixerID      CONSTANT)
+    Q_PROPERTY(int      mixerType       READ mixerType      CONSTANT)
+    Q_PROPERTY(int      paramType       READ paramType      CONSTANT)
+    Q_PROPERTY(Fact*    param       READ param      CONSTANT)
+
 
 public:
-    MixerConnection(int connGroup = -1, int connChannel = -1, QObject* parent = NULL);
-    ~MixerConnection();
+    MixerParameter(mavlink_mixer_param_value_t* param_msg, QObject* parent = NULL);
+    MixerParameter(QObject* parent = NULL);
+    ~MixerParameter();
 
-    int group              (void) const { return _connGroup; }
-    int channel            (void) const { return _connChannel; }
-
-    void setGroup(int group) {_connGroup = group;}
-    void setChannel(int channel) {_connChannel = channel;}
-
-protected:
-    int     _connGroup;
-    int     _connChannel;
-};
-
-Q_DECLARE_METATYPE(MixerConnection*)
-
-class Mixer : public QObject
-{
-    Q_OBJECT
-    Q_DISABLE_COPY(Mixer)
-
-public:
-    Mixer(Fact *mixerFact = NULL, QObject* parent = NULL);
-    ~Mixer();
-
-    Q_PROPERTY(QmlObjectListModel*  parameters          READ parameters             CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  submixers           READ submixers              CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  inputConnections    READ inputConnections       CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  outputConnections   READ outputConnections      CONSTANT)
-
-    Q_PROPERTY(Fact*        mixer                READ mixer              CONSTANT)
-
-    // Parameters (Mixer private constants or variables as Fact object)
-    QmlObjectListModel* parameters             (void) { return &_parameters; }
-
-    // Submixers of object type MixerFact
-    QmlObjectListModel* submixers              (void) { return &_submixers; }
-
-    // Input connections
-    QmlObjectListModel* inputConnections       (void) { return &_inputConnections; }
-
-    // Output connections
-    QmlObjectListModel* outputConnections      (void) { return &_outputConnections; }
-
-    // Main mixer Fact describing mixer type
-    Fact *mixer                         (void) const { return _mixer; }
-
-    Mixer*  getSubmixer(int mixerID);
-    Fact*   getParameter(int paramIndex);
-    void appendSubmixer(int mixerID, Mixer *submixer);
-    void appendParamFact(Fact* paramFact);
-    void appendInputConnection(MixerConnection *inputConn);
-    void appendOutputConnection(MixerConnection *outputConn);
-//    void addConnection(unsigned int connType, unsigned int connID, unsigned int connGroup, unsigned int connChannel);
+    // Main mixer Fact describing mixer type    
+    int index(void) {return _index;}
+    int mixerID(void) {return _mixerID;}
+    int submixerID(void) {return _submixerID;}
+    int mixerType(void) {return _mixerType;}
+    int paramType(void) {return _paramType;}
+    Fact* param(void) {return _param;}
 
 protected:
-    QmlObjectListModel    _parameters;
-    QmlObjectListModel    _submixers;
-    QmlObjectListModel    _inputConnections;
-    QmlObjectListModel    _outputConnections;
-    Fact*                 _mixer;
+    int             _index;
+    int             _mixerID;
+    int             _submixerID;
+    int             _parameterID;
+    int             _mixerType;
+    int             _paramType;
+    int             _paramArraySize;
+    Fact*           _param;
 };
 
-
-Q_DECLARE_METATYPE(Mixer*)
+Q_DECLARE_METATYPE(MixerParameter*)
 
 
 class MixerGroup : public QObject
@@ -101,40 +67,17 @@ class MixerGroup : public QObject
 
     Q_PROPERTY(QString          groupName   READ groupName     CONSTANT)
     Q_PROPERTY(unsigned int     groupID     READ groupID       CONSTANT)
-
-    enum {
-        MIXERGROUP_STRUCTURE_CREATED = 0x01,
-        MIXERGROUP_PARAMETERS_CREATED = 0x02,
-        MIXERGROUP_PARAMETER_VALUES_SET = 0x04,
-        MIXERGROUP_CONNECTIONS_CREATED = 0x08,
-        MIXERGROUP_CONNECTION_VALUES_SET = 0x10,
-        MIXERGROUP_CONNECTION_ALIASES_SET = 0x20,
-        MIXERGROUP_DATA_COMPLETE = 0x40,
-
-//        MIXERGROUP_DOWNLOADED_CAPABILITIES = 0x100,
-        MIXERGROUP_DOWNLOADED_STREAM_ALL = 0x200,
-        MIXERGROUP_DOWNLOADED_MISSING = 0x400,
-//        MIXERGROUP_DOWNLOADED_MIXER_SCRIPT = 0x800,
-//        MIXERGROUP_DOWNLOADED_MIXER_DESCRIPTIONS = 0x1000,
-//        MIXERGROUP_DOWNLOADED_CONNECTION_DESCIPTIONS = 0x2000,
-//        MIXERGROUP_DOWNLOADED_DEBUG_DATA = 0x4000
-        MIXERGROUP_GROUP_EXISTS = 0x8000,
-    };
+    Q_PROPERTY(int              paramCount  READ paramCount    CONSTANT)
 
 public:
     MixerGroup(unsigned int groupID=0, QObject* parent = NULL);
     ~MixerGroup();
 
-    // Parameters (Mixer private constants or variables)
-    QObjectList mixers              (void) const { return _mixers; }
-    MixerMetaData* getMixerMetaData(void) {return &_mixerMetaData;}
+    // Parameters (MixerParameter objects)
+    QObjectList parameters              (void) const { return _parameters; }
 
-    Mixer* getMixer(int mixerID);
-    void appendMixer(int mixerID, Mixer *mixer);
-    unsigned int getGroupStatus(void) {return _groupStatus;}
-    void setGroupStatusFlags(unsigned int flags) {_groupStatus |= flags;}
-    void deleteGroupMixers(void);
-    bool dataComplete(void) {return ((_groupStatus & MIXERGROUP_DATA_COMPLETE) != 0);}
+    void appendParameter(MixerParameter *param);
+    void deleteGroupParameters(void);
 
     unsigned int groupID(void) {return _groupID;}
     void setGroupID(unsigned int groupID) {_groupID = groupID;}
@@ -142,12 +85,14 @@ public:
     QString groupName(void) {return _groupName;}
     void setGroupName(QString groupName) {_groupName = groupName;}
 
+    int paramCount(void) {return _paramCount;}
+    void setParamCount(int count) {_paramCount = count;}
+
 private:
-    QObjectList     _mixers ;
-    MixerMetaData   _mixerMetaData;
-    unsigned int    _groupStatus;
+    QObjectList     _parameters ;
     unsigned int    _groupID;
     QString         _groupName;
+    int             _paramCount;
 };
 
 

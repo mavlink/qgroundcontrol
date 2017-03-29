@@ -13,131 +13,69 @@
 #include "MixerFacts.h"
 
 
-MixerConnection::MixerConnection(int connGroup, int connChannel, QObject* parent)
+
+MixerParameter::MixerParameter(mavlink_mixer_param_value_t* param_msg, QObject* parent)
     : QObject(parent)
-    ,_connGroup(connGroup)
-    ,_connChannel(connChannel)
+    , _index(param_msg->index)
+    , _mixerID(-1)
+    , _submixerID(-1)
+    , _parameterID(-1)
+    , _mixerType(-1)
+    , _paramType(-1)
+    , _paramArraySize(-1)
+    , _param(new Fact(-1, param_msg->param_id, FactMetaData::valueTypeFloat, this))
 {
+    _param->setRawValue(param_msg->param_values[0]);
+    _param->setObjectName(param_msg->param_id);
 }
 
-MixerConnection::~MixerConnection(){
-}
-
-////    connect(fact, &Fact::_containerRawValueChanged, this, &ParameterManager::_valueUpdated);
-
-
-
-Mixer::Mixer(Fact *mixerFact, QObject* parent)
+MixerParameter::MixerParameter(QObject* parent)
     : QObject(parent)
-    , _parameters(this)
-    , _submixers(this)
-    , _inputConnections(this)
-    , _outputConnections(this)
-    , _mixer(mixerFact)
+    , _index(-1)
+    , _mixerID(-1)
+    , _submixerID(-1)
+    , _parameterID(-1)
+    , _mixerType(-1)
+    , _paramType(-1)
+    , _paramArraySize(-1)
+    , _param(nullptr)
 {
 }
 
 
 
-Mixer::~Mixer(){
-    //Delete and remove all content
-    _submixers.clearAndDeleteContents();
-    _parameters.clearAndDeleteContents();
-    _inputConnections.clearAndDeleteContents();
-    _outputConnections.clearAndDeleteContents();
+MixerParameter::~MixerParameter(){
+
 }
 
 
-Mixer* Mixer::getSubmixer(int mixerID){
-    if(mixerID > _submixers.count())
-        return nullptr;
-    if(mixerID == 0)
-        return nullptr;
-    return qobject_cast<Mixer *>(_submixers[mixerID-1]);
-}
 
-Fact* Mixer::getParameter(int paramIndex){
-    if(paramIndex >= _parameters.count())
-        return nullptr;
-    return qobject_cast<Fact *>(_parameters[paramIndex]);
-}
-
-
-void Mixer::appendSubmixer(int mixerID, Mixer *submixer){
-    Q_CHECK_PTR(submixer);
-    submixer->setParent(&_submixers);
-    _submixers.append(submixer);
-    Q_ASSERT(mixerID == _submixers.count());
-}
-
-void Mixer::appendParamFact(Fact* paramFact){
-    Q_CHECK_PTR(paramFact);
-    paramFact->setParent(&_parameters);
-    _parameters.append(paramFact);
-}
-
-void Mixer::appendInputConnection(MixerConnection *inputConn)
-{
-    Q_CHECK_PTR(inputConn);
-    inputConn->setParent(&_inputConnections);
-    _inputConnections.append(inputConn);
-}
-
-void Mixer::appendOutputConnection(MixerConnection *outputConn)
-{
-    Q_CHECK_PTR(outputConn);
-    outputConn->setParent(&_outputConnections);
-    _outputConnections.append(outputConn);
-}
-
-
-//void Mixer::addConnection(unsigned int connType, unsigned int connID, unsigned int connGroup, unsigned int connChannel){
-//    if(_mixerConnections.contains(connType))
-//        if(_mixerConnections[connType].contains(connID))
-//        delete _mixerConnections[connType][connID];
-//    _mixerConnections[connType][connID] = new MixerConnection(connGroup , connChannel);
-//}
 
 MixerGroup::MixerGroup(unsigned int groupID, QObject* parent)
     : QObject(parent)
-    , _mixers()
-    , _mixerMetaData()
-    , _groupStatus(0)
+    , _parameters()
     , _groupID(groupID)
     , _groupName("GROUP_DEFAULT_NAME")
+    , _paramCount(-1)
 {
 };
 
 MixerGroup::~MixerGroup(){
-    deleteGroupMixers();
+    deleteGroupParameters();
 };
 
-Mixer* MixerGroup::getMixer(int mixerID){
-    if(mixerID >= _mixers.count())
-        return nullptr;
-    return qobject_cast<Mixer *>(_mixers[mixerID]);
+
+void MixerGroup::appendParameter(MixerParameter *param){
+    param->setParent(this);
+    _parameters.append(param);
 }
 
-void MixerGroup::appendMixer(int mixerID, Mixer *mixer){
-    mixer->setParent(this);
-    _mixers.append(mixer);
-    Q_ASSERT(mixerID == _mixers.count()-1);
-}
-
-void MixerGroup::deleteGroupMixers(void){
+void MixerGroup::deleteGroupParameters(void){
     //Delete and remove all mixers
-    foreach(QObject *mixobj, _mixers){
-        delete qobject_cast<Fact *>(mixobj);
+    foreach(QObject *paramobj, _parameters){
+        delete qobject_cast<MixerParameter *>(paramobj);
     }
-    _mixers.clear();
-
-    _groupStatus &= !(  MIXERGROUP_STRUCTURE_CREATED
-                      | MIXERGROUP_PARAMETERS_CREATED
-                      | MIXERGROUP_PARAMETER_VALUES_SET
-                      | MIXERGROUP_CONNECTIONS_CREATED
-                      | MIXERGROUP_CONNECTION_VALUES_SET
-                      | MIXERGROUP_CONNECTION_ALIASES_SET
-                      | MIXERGROUP_DATA_COMPLETE);
+    _parameters.clear();
 }
 
 

@@ -40,7 +40,6 @@ public:
         MIXERS_MANAGER_IDENTIFYING_SUPPORTED_GROUPS,
         MIXERS_MANAGER_DOWNLOADING_ALL,
         MIXERS_MANAGER_DOWNLOADING_MISSING,
-        MIXERS_MANAGER_DOWNLOADING_MIXER_INFO,
     } MIXERS_MANAGER_STATUS_e;
 
     /// true: Mixer data is ready for use
@@ -79,11 +78,6 @@ private slots:
 private:
     typedef enum {
         AckNone,            ///< State machine is idle
-        AckGroupType,       ///< MIXER_DATA is group type
-        AckMixersCount,     ///< MIXER_DATA mixers count message expected
-        AckSubmixersCount,  ///< MIXER_DATA submixers count message expected
-        AckMixerType,       ///< MIXER_DATA mixer type value message expected
-        AckParameterCount,  ///< MIXER_DATA parameter value message expected
         AckGetParameter,    ///< MIXER_DATA parameter value message expected
         AckSetParameter,    ///< MIXER_DATA parameter value message expected
         AckAll,             ///< ALL mixer data expected
@@ -96,7 +90,7 @@ private:
 
     MixerGroups         _mixerGroupsData;
 
-    QList<mavlink_mixer_data_t*> _mixerDataMessages;
+    QList<mavlink_mixer_param_value_t*> _mixerParameterMessages;
     QTimer*             _ackTimeoutTimer;
     AckType_t           _expectedAck;
     int                 _retryCount;
@@ -114,18 +108,7 @@ private:
 
     bool _requestMixerAll(unsigned int group);
 
-    bool _requestGroupType(unsigned int group);
-    bool _requestMixerCount(unsigned int group);
-    bool _requestSubmixerCount(unsigned int group, unsigned int mixer);
-    bool _requestMixerType(unsigned int group, unsigned int mixer, unsigned int submixer);
-    bool _requestParameterCount(unsigned int group, unsigned int mixer, unsigned int submixer);
-    bool _requestParameter(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int parameter);
-    bool _requestConnectionCount(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType);
-    bool _requestConnection(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned connType, unsigned conn);
-
-
-    //* Return index of matching message,group,mixer,submixer and parameter etc..*/
-    int _getMessageOfKind(const mavlink_mixer_data_t* data);
+    bool _requestParameter(unsigned int group, unsigned int index);
 
     ///* Check for support on each possible mixer group on an AP
     /// When a supported group is found a MixerGroup is created for it*/
@@ -142,7 +125,7 @@ private:
 
     ///* Collect mixer data into a list.  Only one list entry per group, data_type, mixer, submixer etc...
     /// The test against data is dependent on the mixer data type*/
-    bool _collectMixerData(const mavlink_mixer_data_t* data);
+    bool _collectMixerData(const mavlink_mixer_param_value_t* param);
 
     ///* clear all of the recieved mixer messages for a given group */
     void _clearMixerGroupMessages(unsigned int group);
@@ -164,33 +147,6 @@ private:
     ///* Build mixer structure from messages.  This only includes mixers and submixers with type facts
     /// return true if successfull*/
     bool _buildStructureFromMessages(unsigned int group);
-
-    ///* Build parameters from included headers.  TODO: DEPRECIATE AND CHANGE TO FILE INSTEAD OF HEADERS
-    ///  return true if successfull*/
-    bool _buildParametersFromHeaders(unsigned int group);
-
-    ///* Build connections
-    /// return true if successfull*/
-    bool _buildConnections(unsigned int group);
-
-    ///* Set parameter values from mixer data messages
-    /// return true if successfull*/
-    bool _parameterValuesFromMessages(unsigned int group);
-
-    ///* Get mixer connection count from whatever vehicle data source is available*/
-    int _getMixerConnCountFromVehicle(unsigned int group,int mixerType, int connType);
-
-    ///* Set parameter Fact value from whatever vehicle data source is available*/
-    void _setParameterFactFromVehicle(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int param, Fact* paramFact);
-
-    ///* Set parameter Fact value from downloaded message*/
-    void _setParameterFactFromMessage(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int param, Fact* paramFact);
-
-    ///* Set connection values from whatever vehicle data source is available*/
-    void _setMixerConnectionFromVehicle(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int connType, unsigned int connIndex, MixerConnection* conn );
-
-    ///* Set connection values from downloaded message*/
-    void _setMixerConnectionFromMessage(unsigned int group, unsigned int mixer, unsigned int submixer, unsigned int connType, unsigned int connIndex, MixerConnection* conn );
 
 
 //    bool _checkForExpectedAck(AckType_t receivedAck);

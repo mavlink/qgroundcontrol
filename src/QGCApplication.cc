@@ -64,7 +64,6 @@
 #include "MissionManager.h"
 #include "MixersManager.h"
 #include "MixerFacts.h"
-#include "MixerMetaData.h"
 #include "QGroundControlQmlGlobal.h"
 #include "FlightMapSettings.h"
 #include "CoordinateVector.h"
@@ -383,8 +382,7 @@ void QGCApplication::_initCommon(void)
 
     //TOO Move these to vehicle or toolbox?
     qmlRegisterType<MixerGroup>                     ("QGroundControl.Controllers",          1, 0, "MixerGroup");
-    qmlRegisterType<Mixer>                          ("QGroundControl.Controllers",          1, 0, "Mixer");
-    qmlRegisterType<MixerConnection>                ("QGroundControl.Controllers",          1, 0, "MixerConnection");
+    qmlRegisterType<MixerParameter>                 ("QGroundControl.Controllers",          1, 0, "MixerParameter");
 
     qmlRegisterType<MixersComponentController>          ("QGroundControl.Controllers", 1, 0, "MixersComponentController");
 
