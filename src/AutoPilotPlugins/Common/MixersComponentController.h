@@ -44,9 +44,9 @@ public:
     Q_PROPERTY(QQuickItem* mixersManagerStatusText   MEMBER _mixersManagerStatusText      NOTIFY mixersManagerStatusTextChanged)
 
     Q_PROPERTY(QmlObjectListModel*  mixersList          MEMBER _mixers              CONSTANT)
-    Q_PROPERTY(QObject*             selectedParam       MEMBER _selectedParameter   CONSTANT)
+    Q_PROPERTY(Fact*                selectedParam       MEMBER _selectedParameter   CONSTANT)
     Q_PROPERTY(unsigned int         selectedGroup       MEMBER _selectedGroup       NOTIFY selectedGroupChanged)
-    Q_PROPERTY(unsigned int         selectedParamID     MEMBER _selectedParamID       NOTIFY selectedParamChanged)
+    Q_PROPERTY(unsigned int         selectedParamID     MEMBER _selectedParamID     NOTIFY selectedParamChanged)
 
     Q_INVOKABLE void guiUpdated(void);
         
@@ -69,7 +69,7 @@ private:
     QQuickItem* _mixersManagerStatusText;
 
     QmlObjectListModel* _mixers;
-    MixerParameter*     _selectedParameter;
+    Fact*               _selectedParameter;
     unsigned int        _selectedGroup;
     unsigned int        _selectedParamID;
 

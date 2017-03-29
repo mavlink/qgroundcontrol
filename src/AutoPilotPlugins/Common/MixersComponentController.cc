@@ -113,11 +113,16 @@ void MixersComponentController::_updateSelectedGroup(unsigned int groupID){
 void MixersComponentController::_updateSelectedParam(unsigned int paramID){
     Q_UNUSED(paramID)
 
-    MixerGroup *mixerGroup = _vehicle->mixersManager()->getMixerGroup(_selectedParamID);
+    MixerGroup *mixerGroup = _vehicle->mixersManager()->getMixerGroup(_selectedGroup);
     if(mixerGroup == nullptr){
         _selectedParameter = nullptr;
         return;
     }
 
-    _selectedParameter = mixerGroup->getParameter(paramID);
+    MixerParameter* selParam = mixerGroup->getParameter(paramID);
+    if(selParam != nullptr){
+        _selectedParameter = selParam->param();
+    } else {
+        _selectedParameter = nullptr;
+    }
 }

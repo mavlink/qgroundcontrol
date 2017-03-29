@@ -33,7 +33,7 @@ SetupPage {
 
     property int    _rowHeight:         ScreenTools.defaultFontPixelHeight * 2
     property int    _rowWidth:          10      // Dynamic adjusted at runtime
-
+    property Fact   _editorParameterFact: Fact { }
 
     Component {
         id: tuningPageComponent
@@ -160,6 +160,7 @@ SetupPage {
                             acceptedButtons:    Qt.LeftButton
                             onClicked: {
                                 mixers.selectedParamID = factRectangle.mixerParamInfo.index
+                                _editorParameterFact = factRectangle.mixerParamInfo.param
 //                                root.reject()
                             }
                         }
@@ -188,6 +189,7 @@ SetupPage {
                     Layout.fillWidth:   true
                     anchors.top:        parent.top
                     anchors.bottom:     parent.bottom
+                    spacing:            ScreenTools.defaultFontPixelHeight
 
                     Row {
                         id: controlsRow
@@ -243,9 +245,22 @@ SetupPage {
 
                     } // Row
 
+
+                    QGCLabel {
+                        id:     paramValueLabel2
+                        width:  ScreenTools.defaultFontPixelWidth  * 10
+//                        Property MixerParameter mixParam:  mixers.selectedParam
+//                        text:   mixers.selectedParamID
+                        text:  _editorParameterFact.name
+                        horizontalAlignment:    Text.AlignHCenter
+                        verticalAlignment:      Text.AlignVCenter
+                        clip:   true
+                        color:  "white"
+                    }
+
                     Rectangle {
                         Layout.fillWidth:   true
-                        anchors.top:        controlsRow.bottom
+                        anchors.top:        paramValueLabel2.bottom
                         anchors.bottom:     parent.bottom
                         color:              qgcPal.windowShade
                    }
