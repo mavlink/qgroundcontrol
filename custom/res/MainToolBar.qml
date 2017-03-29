@@ -89,9 +89,12 @@ Rectangle {
             //-- Vehicle is gone
             if(_activeVehicle) {
                 if(!_activeVehicle.armed) {
-                    //-- Vehicle was not armed. Close connection and tell user.
-                    _activeVehicle.disconnectInactiveVehicle()
-                    connectionLostDisarmedDialog.open()
+                    //-- If it wasn't already set to auto-disconnect
+                    if(!_activeVehicle.autoDisconnect) {
+                        //-- Vehicle was not armed. Close connection and tell user.
+                        _activeVehicle.disconnectInactiveVehicle()
+                        connectionLostDisarmedDialog.open()
+                    }
                 } else {
                     //-- Vehicle was armed. Show doom dialog.
                     rootLoader.sourceComponent = connectionLostArmed

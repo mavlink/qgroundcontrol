@@ -172,6 +172,8 @@ void
 TyphoonHM4Interface::resetBind() {
     _resetBind = true;
     _rxBindInfoFeedback.clear();
+    _exitRun();
+    _unbind();
     _exitToAwait();
 }
 
