@@ -208,7 +208,7 @@ Rectangle {
         QGCButton {
             id:                     uploadButton
             anchors.verticalCenter: parent.verticalCenter
-            text:                   missionController.dirty ? qsTr("Upload Required") : qsTr("Upload")
+            text:                   missionController ? (missionController.dirty ? qsTr("Upload Required") : qsTr("Upload")) : ""
             enabled:                _activeVehicle
             visible:                _manualUpload
             onClicked:              missionController.upload()
