@@ -72,6 +72,9 @@ Item {
                 var pos = mapFromItem(toolBar, centerX - (width / 2), toolBar.height)
                 x = pos.x
                 y = pos.y + ScreenTools.defaultFontPixelHeight
+                if((x + width) >= toolBar.width) {
+                    x = toolBar.width - width - ScreenTools.defaultFontPixelWidth;
+                }
             }
         }
     }
