@@ -78,6 +78,7 @@ public:
 
     void appendParameter(MixerParameter *param);
     void deleteGroupParameters(void);
+    MixerParameter* getParameter(unsigned int paramID);
 
     unsigned int groupID(void) {return _groupID;}
     void setGroupID(unsigned int groupID) {_groupID = groupID;}

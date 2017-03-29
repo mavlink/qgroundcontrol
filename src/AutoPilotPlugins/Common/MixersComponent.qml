@@ -70,8 +70,10 @@ SetupPage {
 //                    model:              mockList
                     cacheBuffer:        height > 0 ? height * 2 : 0
                     clip:               true
+                    focus:              true
 
                     delegate: Rectangle {
+                        id: factRectangle
                         anchors.left:   parent.left
                         anchors.right:  parent.right
                         height:         30
@@ -86,6 +88,8 @@ SetupPage {
     //                    height: _rowHeight
     //                    width:  _rowWidth
     //                    color:  Qt.rgba(0,0,0,0)
+
+                        property MixerParameter mixerParamInfo: object
 
                         Row {
                             id:     factRow
@@ -151,6 +155,15 @@ SetupPage {
 //                            }
                         } // Row
 
+                        MouseArea {
+                            anchors.fill:       parent
+                            acceptedButtons:    Qt.LeftButton
+                            onClicked: {
+                                mixers.selectedParamID = factRectangle.mixerParamInfo.index
+//                                root.reject()
+                            }
+                        }
+
     //                    Rectangle {
     //                        width:  _rowWidth
     //                        height: 1
@@ -192,12 +205,12 @@ SetupPage {
                                 ListElement { groupName: "LOCAL";       groupID: 1 }
                                 ListElement { groupName: "FAILSAFE";    groupID: 2 }
                             }
-                            currentIndex:       mixers.selectedGroup
+                            currentIndex:       mixers.selectedGroup - 1
                             textRole:           "groupName"
                             focus:              true
 
                             onCurrentIndexChanged: {
-                                    mixers.selectedGroup = currentIndex;
+                                    mixers.selectedGroup = currentIndex + 1
                             }
 //                            onActivated: mixers.selectedGroup = get(index)
                         }
@@ -216,6 +229,16 @@ SetupPage {
                             width:      ScreenTools.defaultFontPixelWidth * 30
                             wrapMode:   Text.WordWrap
                             font.pointSize: ScreenTools.largeFontPointSize
+                        }
+
+                        QGCLabel {
+                            id:     selectedParamIDLabel
+                            width:  ScreenTools.defaultFontPixelWidth  * 10
+                            text:   mixers.selectedParamID
+                            horizontalAlignment:    Text.AlignHCenter
+                            verticalAlignment:      Text.AlignVCenter
+                            clip:   true
+                            color:  "white"
                         }
 
                     } // Row

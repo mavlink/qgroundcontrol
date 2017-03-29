@@ -44,20 +44,24 @@ public:
     Q_PROPERTY(QQuickItem* mixersManagerStatusText   MEMBER _mixersManagerStatusText      NOTIFY mixersManagerStatusTextChanged)
 
     Q_PROPERTY(QmlObjectListModel*  mixersList          MEMBER _mixers              CONSTANT)
+    Q_PROPERTY(QObject*             selectedParam       MEMBER _selectedParameter   CONSTANT)
     Q_PROPERTY(unsigned int         selectedGroup       MEMBER _selectedGroup       NOTIFY selectedGroupChanged)
+    Q_PROPERTY(unsigned int         selectedParamID     MEMBER _selectedParamID       NOTIFY selectedParamChanged)
 
     Q_INVOKABLE void guiUpdated(void);
         
     
 signals:
     void mixersManagerStatusTextChanged(void);
-    void selectedGroupChanged(unsigned int groupValue);
+    void selectedGroupChanged(unsigned int group);
+    void selectedParamChanged(unsigned int param);
     void parameterValueChanged(float paramValue);
         
 private slots:
     void _updateMixers(bool dataReady);
     void _updateMixersManagerStatus(MixersManager::MIXERS_MANAGER_STATUS_e mixerManagerStatus);
-    void _updateSelectedGroup(unsigned int group);
+    void _updateSelectedGroup(unsigned int groupID);
+    void _updateSelectedParam(unsigned int paramID);
 
 private:    
     static const int _updateInterval;   ///< Interval for ui update timer
@@ -65,7 +69,10 @@ private:
     QQuickItem* _mixersManagerStatusText;
 
     QmlObjectListModel* _mixers;
+    MixerParameter*     _selectedParameter;
     unsigned int        _selectedGroup;
+    unsigned int        _selectedParamID;
+
 
 //#ifdef UNITTEST_BUILD
 //    // Nasty hack to expose controller to unit test code

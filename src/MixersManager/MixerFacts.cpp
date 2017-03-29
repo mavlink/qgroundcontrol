@@ -17,12 +17,12 @@
 MixerParameter::MixerParameter(mavlink_mixer_param_value_t* param_msg, QObject* parent)
     : QObject(parent)
     , _index(param_msg->index)
-    , _mixerID(-1)
-    , _submixerID(-1)
-    , _parameterID(-1)
-    , _mixerType(-1)
-    , _paramType(-1)
-    , _paramArraySize(-1)
+    , _mixerID(param_msg->mixer_index)
+    , _submixerID(param_msg->mixer_sub_index)
+    , _parameterID(param_msg->parameter_index)
+    , _mixerType(param_msg->mixer_type)
+    , _paramType(param_msg->param_type)
+    , _paramArraySize(param_msg->param_array_size)
     , _param(new Fact(-1, param_msg->param_id, FactMetaData::valueTypeFloat, this))
 {
     _param->setRawValue(param_msg->param_values[0]);
@@ -76,6 +76,17 @@ void MixerGroup::deleteGroupParameters(void){
         delete qobject_cast<MixerParameter *>(paramobj);
     }
     _parameters.clear();
+}
+
+MixerParameter* MixerGroup::getParameter(unsigned int paramID)
+{
+    MixerParameter *param;
+    foreach(QObject *paramobj, _parameters){
+        param = qobject_cast<MixerParameter *>(paramobj);
+        if(param->index() == paramID)
+            return param;
+    }
+    return nullptr;
 }
 
 
