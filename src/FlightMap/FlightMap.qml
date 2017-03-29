@@ -30,11 +30,19 @@ Map {
     gesture.flickDeceleration:  3000
     plugin:                     Plugin { name: "QGroundControl" }
 
-    property string mapName:            'defaultMap'
-    property bool   isSatelliteMap:     activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
-    property var    gcsPosition:        QtPositioning.coordinate()
+    property string mapName:                        'defaultMap'
+    property bool   isSatelliteMap:                 activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+    property var    gcsPosition:                    QtPositioning.coordinate()
+    property bool   userPanned:                     false   ///< true: the user has manually panned the map
+    property bool   allowGCSLocationCenter:         false   ///< true: map will center/zoom to gcs location one time
+    property bool   allowVehicleLocationCenter:     false   ///< true: map will center/zoom to vehicle location one time
+    property bool   firstGCSPositionReceived:       false   ///< true: first gcs position update was responded to
+    property bool   firstVehiclePositionReceived:   false   ///< true: first vehicle position update was responded to
 
     readonly property real  maxZoomLevel: 20
+
+    property var    _activeVehicle:                 QGroundControl.multiVehicleManager.activeVehicle
+    property var    activeVehicleCoordinate:        _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
 
     function setVisibleRegion(region) {
         // This works around a bug on Qt where if you set a visibleRegion and then the user moves or zooms the map
@@ -42,6 +50,14 @@ Map {
         // is nothing to do.
         _map.visibleRegion = QtPositioning.rectangle(QtPositioning.coordinate(0, 0), QtPositioning.coordinate(0, 0))
         _map.visibleRegion = region
+    }
+
+    function _possiblyCenterToVehiclePosition() {
+        if (!firstVehiclePositionReceived && allowVehicleLocationCenter && activeVehicleCoordinate.isValid) {
+            firstVehiclePositionReceived = true
+            center = activeVehicleCoordinate
+            zoomLevel = QGroundControl.flightMapInitialZoom
+        }
     }
 
     ExclusiveGroup { id: mapTypeGroup }
@@ -53,8 +69,21 @@ Map {
         onLastPositionUpdated: {
             if (valid && lastPosition.latitude && Math.abs(lastPosition.latitude)  > 0.001 && lastPosition.longitude && Math.abs(lastPosition.longitude)  > 0.001) {
                 gcsPosition = QtPositioning.coordinate(lastPosition.latitude,lastPosition.longitude)
+                if (!firstGCSPositionReceived && !firstVehiclePositionReceived && allowGCSLocationCenter) {
+                    firstGCSPositionReceived = true
+                    center = gcsPosition
+                    zoomLevel = QGroundControl.flightMapInitialZoom
+                }
             }
         }
+    }
+
+    // We track whether the user has panned or not to correctly handle automatic map positioning
+    Connections {
+        target: gesture
+
+        onPanFinished:      userPanned = true
+        onFlickFinished:    userPanned = true
     }
 
     function updateActiveMapType() {
@@ -68,7 +97,12 @@ Map {
         }
     }
 
-    Component.onCompleted: updateActiveMapType()
+    onActiveVehicleCoordinateChanged: _possiblyCenterToVehiclePosition()
+
+    Component.onCompleted: {
+        updateActiveMapType()
+        _possiblyCenterToVehiclePosition()
+    }
 
     Connections {
         target:             QGroundControl.settingsManager.flightMapSettings.mapType
