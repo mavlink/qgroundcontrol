@@ -339,13 +339,20 @@ float Joystick::_adjustRange(int value, Calibration_t calibration, bool withDead
         axisLength =  calibration.center - calibration.min;
     }
 
-    if (withDeadbands) {
-        if (valueNormalized>calibration.deadband) valueNormalized-=calibration.deadband;
-        else if (valueNormalized<-calibration.deadband) valueNormalized+=calibration.deadband;
-        else valueNormalized = 0.f;
-    }
+    float axisPercent;
 
-    float axisPercent = valueNormalized / axisLength;
+    if (withDeadbands) {
+        if (valueNormalized>calibration.deadband) {
+            axisPercent = (valueNormalized - calibration.deadband) / (axisLength - calibration.deadband);
+        } else if (valueNormalized<-calibration.deadband) {
+            axisPercent = (valueNormalized + calibration.deadband) / (axisLength - calibration.deadband);
+        } else {
+            axisPercent = 0.f;
+        }
+    }
+    else {
+        axisPercent = valueNormalized / axisLength;
+    }
 
     float correctedValue = axisBasis * axisPercent;
 
