@@ -97,9 +97,12 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
             _tuningComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_tuningComponent));
 
+#if 0
+            // Coming soon
             _mixersComponent = new MixersComponent(_vehicle, this);
             _mixersComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_mixersComponent));
+#endif
 
             //-- Is there support for cameras?
             if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "TRIG_MODE")) {
