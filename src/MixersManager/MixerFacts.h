@@ -49,6 +49,9 @@ public:
     QString  paramName(void) {return _paramName;}
     QmlObjectListModel* values(void) {return _values;}
 
+private slots:
+    void _changedParamValue(QVariant value);
+
 protected:
     int             _index;
     int             _mixerID;

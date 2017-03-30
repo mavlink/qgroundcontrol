@@ -26,13 +26,16 @@ MixerParameter::MixerParameter(mavlink_mixer_param_value_t* param_msg, QObject* 
     , _paramName(param_msg->param_id)
     , _values(new QmlObjectListModel(this))
 {
-    Fact* newParam;
-    QString paramName;
+    Fact* newValue;
+    QString valueName;
     for(int i=0; i<_paramArraySize; i++){
-        paramName = "%1[%2]";
-        newParam = new Fact(-1, paramName.arg(_paramName).arg(i), FactMetaData::valueTypeFloat, _values);
-        newParam->setRawValue(param_msg->param_values[i]);
-        _values->append(newParam);
+        valueName = "%1[%2]";
+        newValue = new Fact(-1, valueName.arg(_paramName).arg(i), FactMetaData::valueTypeFloat, _values);
+        newValue->setRawValue(param_msg->param_values[i]);
+        _values->append(newValue);
+
+        //Do this afer setting initial raw value
+        connect(newValue, &Fact::rawValueChanged, this, &MixerParameter::_changedParamValue);
     }
 }
 
@@ -50,6 +53,12 @@ MixerParameter::MixerParameter(QObject* parent)
 {
 }
 
+void MixerParameter::_changedParamValue(QVariant value){
+
+    if(_values->contains(QObject::sender())){
+        qDebug("Found changed parameter values at index:%u", _values->indexOf(QObject::sender()));
+    }
+}
 
 
 MixerParameter::~MixerParameter(){
