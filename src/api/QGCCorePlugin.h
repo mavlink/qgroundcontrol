@@ -25,6 +25,7 @@ class QGCOptions;
 class QGCSettings;
 class QGCCorePlugin_p;
 class FactMetaData;
+class QGeoPositionInfoSource;
 
 class QGCCorePlugin : public QGCTool
 {
@@ -76,13 +77,16 @@ public:
     virtual QString showAdvancedUIMessage(void) const { return tr("WARNING: You are about to enter Advanced Mode. This may expose features which may cause your vehicle to malfunction. "
                                                                   "You should do so only if instructed by customer support. Are you sure you want to enable Advanced Mode?"); }
 
+    /// @return An instance of an alternate postion source (or NULL if not available)
+    virtual QGeoPositionInfoSource* createPositionSource    (QObject* parent) { Q_UNUSED(parent); return NULL; }
+
     bool showTouchAreas(void) const { return _showTouchAreas; }
     bool showAdvancedUI(void) const { return _showAdvancedUI; }
     void setShowTouchAreas(bool show);
     void setShowAdvancedUI(bool show);
 
     // Override from QGCTool
-    void                            setToolbox          (QGCToolbox *toolbox);
+    void                            setToolbox              (QGCToolbox* toolbox);
 
 signals:
     void settingsPagesChanged   (void);
