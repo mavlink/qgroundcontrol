@@ -29,6 +29,7 @@ public:
     bool                adjustSettingMetaData           (FactMetaData& metaData) final;
     QString             brandImageIndoor                () const final;
     QString             brandImageOutdoor               () const final;
+    QGeoPositionInfoSource* createPositionSource        (QObject* parent);
 
     // Overrides from QGCTool
     void                setToolbox                      (QGCToolbox* toolbox);
