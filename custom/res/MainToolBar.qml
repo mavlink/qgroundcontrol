@@ -117,6 +117,14 @@ Rectangle {
         }
     }
 
+    Connections {
+        target: QGroundControl.multiVehicleManager
+        onVehicleAdded: {
+            //-- Reset No SD Card message.
+            _noSdCardMsgShown = false;
+        }
+    }
+
     //-- Handle no MicroSD card loaded in camera
     Connections {
         target: TyphoonHQuickInterface.cameraControl
