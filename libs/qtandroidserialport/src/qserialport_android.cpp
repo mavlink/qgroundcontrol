@@ -54,7 +54,7 @@ QT_BEGIN_NAMESPACE
 
 #define BAD_PORT 0
 
-static const char kJniClassName[] {"org/qgroundcontrol/qgchelper/UsbDeviceJNI"};
+static const char kJniClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
 static const char kJTag[] {"QGC_QSerialPort"};
 
 static void jniDeviceHasDisconnected(JNIEnv *envA, jobject thizA, jint userDataA)
