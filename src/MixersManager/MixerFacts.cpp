@@ -23,10 +23,17 @@ MixerParameter::MixerParameter(mavlink_mixer_param_value_t* param_msg, QObject* 
     , _mixerType(param_msg->mixer_type)
     , _paramType(param_msg->param_type)
     , _paramArraySize(param_msg->param_array_size)
-    , _param(new Fact(-1, param_msg->param_id, FactMetaData::valueTypeFloat, this))
+    , _paramName(param_msg->param_id)
+    , _values(new QmlObjectListModel(this))
 {
-    _param->setRawValue(param_msg->param_values[0]);
-    _param->setObjectName(param_msg->param_id);
+    Fact* newParam;
+    QString paramName;
+    for(int i=0; i<_paramArraySize; i++){
+        paramName = "%1[%2]";
+        newParam = new Fact(-1, paramName.arg(_paramName).arg(i), FactMetaData::valueTypeFloat, _values);
+        newParam->setRawValue(param_msg->param_values[i]);
+        _values->append(newParam);
+    }
 }
 
 MixerParameter::MixerParameter(QObject* parent)
@@ -38,14 +45,15 @@ MixerParameter::MixerParameter(QObject* parent)
     , _mixerType(-1)
     , _paramType(-1)
     , _paramArraySize(-1)
-    , _param(nullptr)
+    , _paramName("NONE")
+    , _values(nullptr)
 {
 }
 
 
 
 MixerParameter::~MixerParameter(){
-
+    delete _values;
 }
 
 

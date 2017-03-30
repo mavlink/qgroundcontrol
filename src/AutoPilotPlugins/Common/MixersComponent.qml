@@ -34,6 +34,7 @@ SetupPage {
     property int    _rowHeight:         ScreenTools.defaultFontPixelHeight * 2
     property int    _rowWidth:          10      // Dynamic adjusted at runtime
     property MixerParameter   _editorParameter: MixerParameter { }
+    property Fact             _editorParameterValue: Fact { }
 
     Component {
         id: tuningPageComponent
@@ -79,15 +80,6 @@ SetupPage {
                         height:         30
                         color:          "black"
                         border.color:   "dark grey"
-//                        focus: true
-//                        highlight: Rectangle {
-//                            color: "lightblue"
-//                            width: parent.width
-//                        }
-
-    //                    height: _rowHeight
-    //                    width:  _rowWidth
-    //                    color:  Qt.rgba(0,0,0,0)
 
                         property MixerParameter mixerParamInfo: object
 
@@ -111,7 +103,7 @@ SetupPage {
                             QGCLabel {
                                 id:     mixerTypeLabel
                                 width:  ScreenTools.defaultFontPixelWidth  * 10
-                                text:   mixerParamDelegate.mixerParamInfo.Type
+                                text:   mixerParamDelegate.mixerParamInfo.mixerType
                                 horizontalAlignment:    Text.AlignHCenter
                                 verticalAlignment:      Text.AlignVCenter
                                 clip:   true
@@ -131,17 +123,7 @@ SetupPage {
                             QGCLabel {
                                 id:     paramNameLabel
                                 width:  ScreenTools.defaultFontPixelWidth  * 10
-                                text:   mixerParamDelegate.mixerParamInfo.param.name
-                                horizontalAlignment:    Text.AlignHCenter
-                                verticalAlignment:      Text.AlignVCenter
-                                clip:   true
-                                color:  "white"
-                            }
-
-                            QGCLabel {
-                                id:     paramValueLabel
-                                width:  ScreenTools.defaultFontPixelWidth  * 10
-                                text:   mixerParamDelegate.mixerParamInfo.param.valueString
+                                text:   mixerParamDelegate.mixerParamInfo.paramName
                                 horizontalAlignment:    Text.AlignHCenter
                                 verticalAlignment:      Text.AlignVCenter
                                 clip:   true
@@ -171,15 +153,6 @@ SetupPage {
     //                        opacity: 0.15
     //                        anchors.bottom: parent.bottom
     //                        anchors.left:   parent.left
-    //                    }
-
-    //                    MouseArea {
-    //                        anchors.fill:       parent
-    //                        acceptedButtons:    Qt.LeftButton
-    //                        onClicked: {
-    //                            _editorDialogFact = factRow.modelFact
-    ////                            showDialog(editorDialogComponent, qsTr("Mixer Editor"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
-    //                        }
     //                    }
                     } //Rectangle
                 } //QGCListView
@@ -213,16 +186,7 @@ SetupPage {
                             onCurrentIndexChanged: {
                                     mixers.selectedGroup = currentIndex + 1
                             }
-//                            onActivated: mixers.selectedGroup = get(index)
                         }
-
-//                        QGCButton {
-//                            id:refreshGUI
-//                            text: qsTr("REFRESH GUI")
-//                            onClicked: {
-//                                mixers.refreshGUIButtonClicked()
-//                            }
-//                        }
 
                         // Status Text
                         QGCLabel {
@@ -246,20 +210,67 @@ SetupPage {
 
 
                     QGCLabel {
-                        id:     paramValueLabel2
+                        id:     paramNameLabel2
                         width:  ScreenTools.defaultFontPixelWidth  * 10
-//                        Property MixerParameter mixParam:  mixers.selectedParam
-//                        text:   mixers.selectedParamID
-                        text:  _editorParameter.param.name
+                        text:  _editorParameter.paramName
                         horizontalAlignment:    Text.AlignHCenter
                         verticalAlignment:      Text.AlignVCenter
                         clip:   true
                         color:  "white"
                     }
 
+                    QGCListView {
+                        id:                 paramValueListView
+                        anchors.top:        paramNameLabel2.bottom
+                        anchors.bottom:     parent.bottom
+                        width:              ScreenTools.defaultFontPixelWidth  * 40
+                        orientation:        ListView.Vertical
+                        model:              _editorParameter.values
+                        cacheBuffer:        height > 0 ? height * 2 : 0
+                        clip:               true
+                        focus:              true
+
+                        delegate: Rectangle {
+                            id: paramValueDelegate
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            height:         30
+                            color:          "black"
+                            border.color:   "dark grey"
+
+                            property Fact valueFact: object
+
+                            Row {
+                                id:     paramValueRow
+                                spacing: Math.ceil(ScreenTools.defaultFontPixelWidth * 0.5)
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                QGCLabel {
+                                    id:     paramValueIDLabel
+                                    width:  ScreenTools.defaultFontPixelWidth  * 20
+                                    text:   paramValueDelegate.valueFact.name
+                                    horizontalAlignment:    Text.AlignHCenter
+                                    verticalAlignment:      Text.AlignVCenter
+                                    clip:   true
+                                    color:  "white"
+                                }
+
+                                QGCLabel {
+                                    id:     paramValueLabel
+                                    width:  ScreenTools.defaultFontPixelWidth  * 10
+                                    text:   paramValueDelegate.valueFact.valueString
+                                    horizontalAlignment:    Text.AlignHCenter
+                                    verticalAlignment:      Text.AlignVCenter
+                                    clip:   true
+                                    color:  "white"
+                                }
+                            } //Row
+                        } //Rectangle
+                    } //ListView
+
                     Rectangle {
                         Layout.fillWidth:   true
-                        anchors.top:        paramValueLabel2.bottom
+                        anchors.top:        paramValueListView.bottom
                         anchors.bottom:     parent.bottom
                         color:              qgcPal.windowShade
                    }

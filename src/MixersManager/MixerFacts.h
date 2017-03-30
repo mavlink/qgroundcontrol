@@ -18,6 +18,7 @@
 #include <FactMetaData.h>
 #include <QMap>
 #include <QMetaType>
+#include <QmlObjectListModel.h>
 
 
 class MixerParameter : public QObject
@@ -25,12 +26,13 @@ class MixerParameter : public QObject
     Q_OBJECT
     Q_DISABLE_COPY(MixerParameter)
 
-    Q_PROPERTY(int      index       READ index      CONSTANT)
-    Q_PROPERTY(int      mixerID       READ mixerID      CONSTANT)
-    Q_PROPERTY(int      submixerID       READ submixerID      CONSTANT)
+    Q_PROPERTY(int      index           READ index          CONSTANT)
+    Q_PROPERTY(int      mixerID         READ mixerID        CONSTANT)
+    Q_PROPERTY(int      submixerID      READ submixerID     CONSTANT)
     Q_PROPERTY(int      mixerType       READ mixerType      CONSTANT)
     Q_PROPERTY(int      paramType       READ paramType      CONSTANT)
-    Q_PROPERTY(Fact*    param       READ param      CONSTANT)
+    Q_PROPERTY(QString  paramName       READ paramName      CONSTANT)
+    Q_PROPERTY(QmlObjectListModel* values READ values       CONSTANT)
 
 
 public:
@@ -44,7 +46,8 @@ public:
     int submixerID(void) {return _submixerID;}
     int mixerType(void) {return _mixerType;}
     int paramType(void) {return _paramType;}
-    Fact* param(void) {return _param;}
+    QString  paramName(void) {return _paramName;}
+    QmlObjectListModel* values(void) {return _values;}
 
 protected:
     int             _index;
@@ -54,10 +57,12 @@ protected:
     int             _mixerType;
     int             _paramType;
     int             _paramArraySize;
-    Fact*           _param;
+    QString         _paramName;
+    QmlObjectListModel* _values;
 };
 
 Q_DECLARE_METATYPE(MixerParameter*)
+
 
 
 class MixerGroup : public QObject
