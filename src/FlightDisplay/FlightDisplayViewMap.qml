@@ -24,14 +24,16 @@ import QGroundControl.Vehicle       1.0
 import QGroundControl.Controllers   1.0
 
 FlightMap {
-    id:             flightMap
-    anchors.fill:   parent
-    mapName:        _mapName
+    id:                         flightMap
+    anchors.fill:               parent
+    mapName:                    _mapName
+    allowGCSLocationCenter:     !userPanned
+    allowVehicleLocationCenter: !_keepVehicleCentered
 
     property alias  missionController: missionController
     property var    flightWidgets
     property var    rightPanelWidth
-    property var    qgcView             ///< QGCView control which contains this map
+    property var    qgcView                             ///< QGCView control which contains this map
 
     property var    _activeVehicle:                 QGroundControl.multiVehicleManager.activeVehicle
     property var    _activeVehicleCoordinate:       _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
@@ -41,45 +43,16 @@ FlightMap {
 
     property bool   _disableVehicleTracking:        false
     property bool   _keepVehicleCentered:           _mainIsMap ? false : true
-    property bool   _firstVehiclePositionReceived:  false
-    property bool   _userPanned:                    false
 
-    Component.onCompleted: {
-        QGroundControl.flightMapPosition = center
-        QGroundControl.flightMapZoom = zoomLevel
-        possibleCenterToGCSPosition()
-    }
 
-    // Track last known map position and zoom in settings
+    // Track last known map position and zoom from Fly view in settings
     onZoomLevelChanged: QGroundControl.flightMapZoom = zoomLevel
     onCenterChanged:    QGroundControl.flightMapPosition = center
 
-    // We move the map to the gcs position id:
-    //  - We don't have a vehicle position yet
-    //  - The user has not futzed with the map
-    onGcsPositionChanged: possibleCenterToGCSPosition()
-
-    function possibleCenterToGCSPosition() {
-        if (!_firstVehiclePositionReceived && !_userPanned && gcsPosition.isValid) {
-            center = gcsPosition
-        }
-    }
-
     // When the user pans the map we stop responding to vehicle coordinate updates until the panRecenterTimer fires
-    Connections {
-        target: gesture
-
-        onPanFinished: {
-            _userPanned = true
-            _disableVehicleTracking = true
-            panRecenterTimer.start()
-        }
-
-        onFlickFinished: {
-            _userPanned = true
-            _disableVehicleTracking = true
-            panRecenterTimer.start()
-        }
+    onUserPannedChanged: {
+        _disableVehicleTracking = true
+        panRecenterTimer.start()
     }
 
     function pointInRect(point, rect) {
@@ -118,15 +91,12 @@ FlightMap {
     }
 
     function updateMapToVehiclePosition() {
-        if (_activeVehicleCoordinate.isValid && !_disableVehicleTracking) {
+        // We let FlightMap handle first vehicle position
+        if (firstVehiclePositionReceived && _activeVehicleCoordinate.isValid && !_disableVehicleTracking) {
             if (_keepVehicleCentered) {
-                _firstVehiclePositionReceived = true
                 flightMap.center = _activeVehicleCoordinate
             } else {
-                if (!_firstVehiclePositionReceived) {
-                    _firstVehiclePositionReceived = true
-                    flightMap.center = _activeVehicleCoordinate
-                } else if (recenterNeeded()) {
+                if (firstVehiclePositionReceived) {
                     animatedMapRecenter(flightMap.center, _activeVehicleCoordinate)
                 }
             }
@@ -156,7 +126,15 @@ FlightMap {
 
     MissionController {
         id: missionController
+
         Component.onCompleted: start(false /* editMode */)
+
+        onNewItemsFromVehicle: {
+            var visualItem = missionController.visualItems
+            if (visualItems && visualItems.count != 1) {
+                mapFitFunctions.fitMapViewportToMissionItems()
+            }
+        }
     }
 
     GeoFenceController {
@@ -263,7 +241,6 @@ FlightMap {
     MapFitFunctions {
         id:                         mapFitFunctions
         map:                        _flightMap
-        mapFitViewport:             Qt.rect(leftToolWidth, _toolButtonTopMargin, flightMap.width - leftToolWidth - rightPanelWidth, flightMap.height - _toolButtonTopMargin)
         usePlannedHomePosition:     false
         mapMissionController:      missionController
         mapGeoFenceController:     geoFenceController
