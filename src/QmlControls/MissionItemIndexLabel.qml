@@ -25,7 +25,7 @@ Canvas {
     property real   vehicleYaw
     property bool   showGimbalYaw:          false
 
-    property real   _width:             showGimbalYaw ? Math.max(_gimbalWidth, labelControl.visible ? labelControl.width : indicator.width) : (labelControl.visible ? labelControl.width : indicator.width)
+    property real   _width:             showGimbalYaw ? Math.max(_gimbalYawWidth, labelControl.visible ? labelControl.width : indicator.width) : (labelControl.visible ? labelControl.width : indicator.width)
     property real   _height:            showGimbalYaw ? _gimbalYawWidth : (labelControl.visible ? labelControl.height : indicator.height)
     property real   _gimbalYawRadius:   ScreenTools.defaultFontPixelHeight
     property real   _gimbalYawWidth:    _gimbalYawRadius * 2
