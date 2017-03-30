@@ -122,7 +122,7 @@ SetupPage {
 
                             QGCLabel {
                                 id:     paramNameLabel
-                                width:  ScreenTools.defaultFontPixelWidth  * 10
+                                width:  ScreenTools.defaultFontPixelWidth  * 20
                                 text:   mixerParamDelegate.mixerParamInfo.paramName
                                 horizontalAlignment:    Text.AlignHCenter
                                 verticalAlignment:      Text.AlignVCenter
@@ -142,7 +142,7 @@ SetupPage {
                             acceptedButtons:    Qt.LeftButton
                             onClicked: {
                                 _editorParameter = mixerParamDelegate.mixerParamInfo
-//                                root.reject()
+                                _editorParameterValue = _editorParameter.values.get(0)
                             }
                         }
 
@@ -161,7 +161,7 @@ SetupPage {
                     Layout.fillWidth:   true
                     anchors.top:        parent.top
                     anchors.bottom:     parent.bottom
-                    spacing:            ScreenTools.defaultFontPixelHeight
+                    spacing:            ScreenTools.defaultFontPixelHeight * 2
 
                     Row {
                         id: controlsRow
@@ -208,22 +208,47 @@ SetupPage {
 
                     } // Row
 
+                    Row {
+                        id: editParamRow
+                        spacing: ScreenTools.defaultFontPixelWidth * 2
 
-                    QGCLabel {
-                        id:     paramNameLabel2
-                        width:  ScreenTools.defaultFontPixelWidth  * 10
-                        text:  _editorParameter.paramName
-                        horizontalAlignment:    Text.AlignHCenter
-                        verticalAlignment:      Text.AlignVCenter
-                        clip:   true
-                        color:  "white"
-                    }
+                        QGCLabel {
+                            id:     editParamNameLabel
+                            width:  ScreenTools.defaultFontPixelWidth  * 20
+                            text:   _editorParameterValue.name
+                            horizontalAlignment:    Text.AlignHCenter
+                            verticalAlignment:      Text.AlignVCenter
+                            clip:   true
+                            color:  "white"
+                        }
 
-                    QGCListView {
+                        QGCLabel {
+                            id:     editParamValueLabel
+                            width:  ScreenTools.defaultFontPixelWidth  * 10
+                            text:   _editorParameterValue.valueString
+                            horizontalAlignment:    Text.AlignHCenter
+                            verticalAlignment:      Text.AlignVCenter
+                            clip:   true
+                            color:  "white"
+                        }
+
+                    } //Row
+
+                    Rectangle {
+                        id: editParamFillerRectange
+                        Layout.fillWidth:   true
+                        anchors.top:        editParamRow.bottom
+                        anchors.left:       editParamRow.left
+                        anchors.right:      editParamRow.right
+                        height:             ScreenTools.defaultFontPixelHeight * 2
+                        color:              qgcPal.windowShade
+                   }
+
+                   QGCListView {
                         id:                 paramValueListView
-                        anchors.top:        paramNameLabel2.bottom
+                        anchors.top:        editParamFillerRectange.bottom
                         anchors.bottom:     parent.bottom
-                        width:              ScreenTools.defaultFontPixelWidth  * 40
+                        width:              ScreenTools.defaultFontPixelWidth  * 32
                         orientation:        ListView.Vertical
                         model:              _editorParameter.values
                         cacheBuffer:        height > 0 ? height * 2 : 0
@@ -257,7 +282,7 @@ SetupPage {
 
                                 QGCLabel {
                                     id:     paramValueLabel
-                                    width:  ScreenTools.defaultFontPixelWidth  * 10
+                                    width:  ScreenTools.defaultFontPixelWidth  * 12
                                     text:   paramValueDelegate.valueFact.valueString
                                     horizontalAlignment:    Text.AlignHCenter
                                     verticalAlignment:      Text.AlignVCenter
@@ -265,17 +290,21 @@ SetupPage {
                                     color:  "white"
                                 }
                             } //Row
+
+                            MouseArea {
+                                anchors.fill:       parent
+                                acceptedButtons:    Qt.LeftButton
+                                onClicked: {
+                                    _editorParameterValue = paramValueDelegate.valueFact
+                                }
+                            }
+
+                            Component.onCompleted: {
+                                editParamRow.update()
+                            }
                         } //Rectangle
                     } //ListView
-
-                    Rectangle {
-                        Layout.fillWidth:   true
-                        anchors.top:        paramValueListView.bottom
-                        anchors.bottom:     parent.bottom
-                        color:              qgcPal.windowShade
-                   }
                 } //ColumnLayout
-
             } //RowLayout
         } // Item
     } // Component
