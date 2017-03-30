@@ -41,6 +41,9 @@ public:
     Q_PROPERTY(double           latitude        READ    latitude            NOTIFY controllerLocationChanged)
     Q_PROPERTY(double           longitude       READ    longitude           NOTIFY controllerLocationChanged)
     Q_PROPERTY(double           altitude        READ    altitude            NOTIFY controllerLocationChanged)
+    Q_PROPERTY(double           speed           READ    altitude            NOTIFY controllerLocationChanged)
+    Q_PROPERTY(double           gpsCount        READ    gpsCount            NOTIFY controllerLocationChanged)
+    Q_PROPERTY(double           gpsAccuracy     READ    gpsAccuracy         NOTIFY controllerLocationChanged)
     Q_PROPERTY(CameraControl*   cameraControl   READ    cameraControl       CONSTANT)
     Q_PROPERTY(QStringList      ssidList        READ    ssidList            NOTIFY ssidListChanged)
     Q_PROPERTY(bool             scanningWiFi    READ    scanningWiFi        NOTIFY scanningWiFiChanged)
@@ -75,6 +78,9 @@ public:
     double      latitude            ();
     double      longitude           ();
     double      altitude            ();
+    double      speed               ();
+    double      gpsCount            ();
+    double      gpsAccuracy         ();
     QStringList ssidList            () { return _ssidList; }
     bool        scanningWiFi        () { return _scanningWiFi; }
     bool        bindingWiFi         () { return _bindingWiFi; }

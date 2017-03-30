@@ -65,6 +65,12 @@ Item {
                     QGCLabel { text: TyphoonHQuickInterface.connectedSSID; visible: TyphoonHQuickInterface.connectedSSID !== ""; }
                     QGCLabel { text: qsTr("RSSI:") }
                     QGCLabel { text: TyphoonHQuickInterface.rssi + "dB" }
+                    QGCLabel { text: qsTr("RC GPS Sat Count:") }
+                    QGCLabel { text: TyphoonHQuickInterface.gpsCount.toFixed(0) }
+                    QGCLabel { text: qsTr("RC GPS Accuracy:") }
+                    QGCLabel { text: TyphoonHQuickInterface.gpsAccuracy.toFixed(1) }
+                    QGCLabel { text: qsTr("RC Ground Speed:") }
+                    QGCLabel { text: TyphoonHQuickInterface.speed.toFixed(1) }
                 }
             }
 

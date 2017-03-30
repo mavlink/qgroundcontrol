@@ -8,6 +8,9 @@
 
 #include <QtQml>
 #include <QQmlEngine>
+#include <QDateTime>
+#include <QtPositioning/QGeoPositionInfo>
+#include <QtPositioning/QGeoPositionInfoSource>
 
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
@@ -58,6 +61,63 @@ typhoonHQuickInterfaceSingletonFactory(QQmlEngine*, QJSEngine*)
     }
     return pIFace;
 }
+
+
+//-----------------------------------------------------------------------------
+class ST16PositionSource : public QGeoPositionInfoSource
+{
+public:
+
+    ST16PositionSource(TyphoonHM4Interface* pHandler, QObject *parent)
+        : QGeoPositionInfoSource(parent)
+        , _pHandler(pHandler)
+    {
+    }
+
+    QGeoPositionInfo lastKnownPosition(bool fromSatellitePositioningMethodsOnly = false) const { Q_UNUSED(fromSatellitePositioningMethodsOnly); return _lastUpdate; }
+    QGeoPositionInfoSource::PositioningMethods supportedPositioningMethods() const { return QGeoPositionInfoSource::SatellitePositioningMethods; }
+    int minimumUpdateInterval() const { return 1000; }
+    QString sourceName() const { return QString("Yuneec ST16"); }
+    QGeoPositionInfoSource::Error error() const { return QGeoPositionInfoSource::NoError; }
+
+public slots:
+    void startUpdates()
+    {
+        if(_pHandler) {
+            connect(_pHandler, &TyphoonHM4Interface::controllerLocationChanged, this, &ST16PositionSource::_controllerLocationChanged);
+        }
+    }
+
+    void stopUpdates()
+    {
+        if(_pHandler) {
+            disconnect(_pHandler, &TyphoonHM4Interface::controllerLocationChanged, this, &ST16PositionSource::_controllerLocationChanged);
+        }
+    }
+
+    void requestUpdate(int timeout)
+    {
+        Q_UNUSED(timeout);
+        emit positionUpdated(_lastUpdate);
+    }
+
+private slots:
+    void _controllerLocationChanged ()
+    {
+        ControllerLocation loc = _pHandler->controllerLocation();
+        QGeoPositionInfo update(QGeoCoordinate(loc.latitude, loc.longitude, loc.altitude), QDateTime::currentDateTime());
+        //-- Not certain if these are using the same units and/or methods of computation
+        update.setAttribute(QGeoPositionInfo::Direction,    loc.angle);
+        update.setAttribute(QGeoPositionInfo::GroundSpeed,  loc.speed);
+        update.setAttribute(QGeoPositionInfo::HorizontalAccuracy, loc.accuracy);
+        _lastUpdate = update;
+        emit positionUpdated(update);
+    }
+
+private:
+    TyphoonHM4Interface*    _pHandler;
+    QGeoPositionInfo        _lastUpdate;
+};
 
 //-----------------------------------------------------------------------------
 class InstrumentWidgetSrc : public CustomInstrumentWidget
@@ -214,6 +274,13 @@ TyphoonHPlugin::setToolbox(QGCToolbox* toolbox)
     qmlRegisterSingletonType<TyphoonHQuickInterface>("TyphoonHQuickInterface", 1, 0, "TyphoonHQuickInterface", typhoonHQuickInterfaceSingletonFactory);
     qmlRegisterUncreatableType<CameraControl>("QGroundControl.CameraControl", 1, 0, "CameraControl", "Reference only");
     _pHandler->init();
+}
+
+//-----------------------------------------------------------------------------
+QGeoPositionInfoSource*
+TyphoonHPlugin::createPositionSource(QObject* parent)
+{
+    return new ST16PositionSource(_pHandler, parent);
 }
 
 //-----------------------------------------------------------------------------

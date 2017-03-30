@@ -142,6 +142,36 @@ TyphoonHQuickInterface::altitude()
 }
 
 //-----------------------------------------------------------------------------
+double
+TyphoonHQuickInterface::speed()
+{
+    if(_pHandler) {
+        return _pHandler->controllerLocation().speed;
+    }
+    return 0.0;
+}
+
+//-----------------------------------------------------------------------------
+double
+TyphoonHQuickInterface::gpsCount()
+{
+    if(_pHandler) {
+        return _pHandler->controllerLocation().satelliteCount;
+    }
+    return 0.0;
+}
+
+//-----------------------------------------------------------------------------
+double
+TyphoonHQuickInterface::gpsAccuracy()
+{
+    if(_pHandler) {
+        return _pHandler->controllerLocation().accuracy;
+    }
+    return 0.0;
+}
+
+//-----------------------------------------------------------------------------
 QString
 TyphoonHQuickInterface::m4StateStr()
 {
