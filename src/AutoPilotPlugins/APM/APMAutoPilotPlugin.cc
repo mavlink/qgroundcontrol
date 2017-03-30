@@ -74,9 +74,12 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
             }
 
-            _flightModesComponent = new APMFlightModesComponent(_vehicle, this);
-            _flightModesComponent->setupTriggerSignals();
-            _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
+            // No flight modes component for Sub versions 3.5 and up
+            if (!_vehicle->sub() || (_vehicle->firmwareMajorVersion() == 3 && _vehicle->firmwareMinorVersion() <= 4)) {
+                _flightModesComponent = new APMFlightModesComponent(_vehicle, this);
+                _flightModesComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
+            }
 
             _sensorsComponent = new APMSensorsComponent(_vehicle, this);
             _sensorsComponent->setupTriggerSignals();
