@@ -55,7 +55,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines              NOTIFY waypointLinesChanged)
     Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
 
-    Q_PROPERTY(bool                 missionInProgress       READ missionInProgress          NOTIFY missionInProgressChanged)        ///< true: Mission sequence is beyond first item
+    Q_PROPERTY(int                  resumeMissionItem       READ resumeMissionItem          NOTIFY resumeMissionItemChanged)
 
     Q_PROPERTY(double               missionDistance         READ missionDistance            NOTIFY missionDistanceChanged)
     Q_PROPERTY(double               missionTime             READ missionTime                NOTIFY missionTimeChanged)
@@ -78,6 +78,8 @@ public:
     ///     @param i: index to insert at
     /// @return Sequence number for new item
     Q_INVOKABLE int insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int i);
+
+    Q_INVOKABLE void resumeMission(int resumeIndex);
 
     /// Loads the mission items from the specified file
     ///     @param[in] vehicle Vehicle we are loading items for
@@ -110,7 +112,9 @@ public:
     QmlObjectListModel* visualItems             (void) { return _visualItems; }
     QmlObjectListModel* waypointLines           (void) { return &_waypointLines; }
     QStringList         complexMissionItemNames (void) const;
-    bool                missionInProgress       (void) const;
+
+    /// Returns the item index two which a mission should be resumed. -1 indicates resume mission not available.
+    int resumeMissionItem(void) const;
 
     double  missionDistance         (void) const { return _missionFlightStatus.totalDistance; }
     double  missionTime             (void) const { return _missionFlightStatus.totalTime; }
@@ -132,7 +136,8 @@ signals:
     void missionCruiseTimeChanged(void);
     void missionMaxTelemetryChanged(double missionMaxTelemetry);
     void complexMissionItemNamesChanged(void);
-    bool missionInProgressChanged(void);
+    void resumeMissionItemChanged(void);
+    void resumeMissionReady(void);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
@@ -188,7 +193,6 @@ private:
     CoordVectHashTable      _linesTable;
     bool                    _firstItemsFromVehicle;
     bool                    _missionItemsRequested;
-    bool                    _queuedSend;
     MissionFlightStatus_t   _missionFlightStatus;
     QString                 _surveyMissionItemName;
     QString                 _fwLandingMissionItemName;
