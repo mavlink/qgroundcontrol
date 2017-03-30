@@ -38,7 +38,7 @@ Item {
     // Guided bar properties
     property bool _missionAvailable:    missionController.containsItems
     property bool _missionActive:       _activeVehicle ? _activeVehicle.flightMode === _activeVehicle.missionFlightMode : false
-    property bool _missionInProgress:   missionController.missionInProgress
+    property int  _resumeMissionItem:   missionController.resumeMissionItem
     property bool _showEmergenyStop:    QGroundControl.corePlugin.options.guidedBarShowEmergencyStop
     property bool _showOrbit:           QGroundControl.corePlugin.options.guidedBarShowOrbit
 
@@ -90,6 +90,11 @@ Item {
     Connections {
         target:         QGroundControl.settingsManager.appSettings.showLargeCompass
         onValueChanged: _setInstrumentWidget()
+    }
+
+    Connections {
+        target:                 missionController
+        onResumeMissionReady:   _guidedModeBar.confirmAction(_guidedModeBar.confirmResumeMissionReady)
     }
 
     Component.onCompleted: {
@@ -219,19 +224,20 @@ Item {
             }
         }
 
-        readonly property int confirmHome:          1
-        readonly property int confirmLand:          2
-        readonly property int confirmTakeoff:       3
-        readonly property int confirmArm:           4
-        readonly property int confirmDisarm:        5
-        readonly property int confirmEmergencyStop: 6
-        readonly property int confirmChangeAlt:     7
-        readonly property int confirmGoTo:          8
-        readonly property int confirmRetask:        9
-        readonly property int confirmOrbit:         10
-        readonly property int confirmAbort:         11
-        readonly property int confirmStartMission:  12
-        readonly property int confirmResumeMission: 13
+        readonly property int confirmHome:                  1
+        readonly property int confirmLand:                  2
+        readonly property int confirmTakeoff:               3
+        readonly property int confirmArm:                   4
+        readonly property int confirmDisarm:                5
+        readonly property int confirmEmergencyStop:         6
+        readonly property int confirmChangeAlt:             7
+        readonly property int confirmGoTo:                  8
+        readonly property int confirmRetask:                9
+        readonly property int confirmOrbit:                 10
+        readonly property int confirmAbort:                 11
+        readonly property int confirmStartMission:          12
+        readonly property int confirmResumeMission:         13
+        readonly property int confirmResumeMissionReady:    14
 
         property int    confirmActionCode
         property real   _showMargin:    _margins
@@ -250,6 +256,11 @@ Item {
                 _activeVehicle.guidedModeTakeoff()
                 break;
             case confirmResumeMission:
+                missionController.resumeMission(missionController.resumeMissionItem)
+                break;
+            case confirmResumeMissionReady:
+                _activeVehicle.startMission()
+                break;
             case confirmStartMission:
                 _activeVehicle.startMission()
                 break;
@@ -317,6 +328,9 @@ Item {
                 break;
             case confirmResumeMission:
                 guidedModeConfirm.confirmText = qsTr("resume mission")
+                break;
+            case confirmResumeMissionReady:
+                guidedModeConfirm.confirmText = qsTr("resume modified mission after review")
                 break;
             case confirmLand:
                 guidedModeConfirm.confirmText = qsTr("land")
@@ -400,15 +414,15 @@ Item {
 
                 QGCButton {
                     pointSize:  _guidedModeBar._fontPointSize
-                    text:       qsTr("Start Mission")
+                    text:       _resumeMissionItem !== -1 ? qsTr("Restart Mission") : qsTr("Start Mission")
                     visible:    _activeVehicle && !_activeVehicle.flying && _missionAvailable
                     onClicked:  _guidedModeBar.confirmAction(_guidedModeBar.confirmStartMission)
                 }
 
                 QGCButton {
                     pointSize:  _guidedModeBar._fontPointSize
-                    text:       qsTr("Resume Mission")
-                    visible:    _activeVehicle && _activeVehicle.guidedModeSupported && !_activeVehicle.flying && _missionAvailable && _missionInProgress
+                    text:       qsTr("Resume Mission (%1)").arg(_resumeMissionItem)
+                    visible:    _activeVehicle && !_activeVehicle.flying && _missionAvailable && _resumeMissionItem !== -1
                     onClicked:  _guidedModeBar.confirmAction(_guidedModeBar.confirmResumeMission)
                 }
 
@@ -422,14 +436,14 @@ Item {
                 QGCButton {
                     pointSize:  _guidedModeBar._fontPointSize
                     text:       qsTr("Change Altitude")
-                    visible:    (_activeVehicle && _activeVehicle.flying) && _activeVehicle.guidedModeSupported && _activeVehicle.armed
+                    visible:    (_activeVehicle && _activeVehicle.flying) && _activeVehicle.guidedModeSupported && _activeVehicle.armed && !_missionActive
                     onClicked:  _guidedModeBar.confirmAction(_guidedModeBar.confirmChangeAlt)
                 }
 
                 QGCButton {
                     pointSize:  _guidedModeBar._fontPointSize
                     text:       qsTr("Orbit")
-                    visible:    _showOrbit && _activeVehicle && _activeVehicle.flying && _activeVehicle.orbitModeSupported && _activeVehicle.armed
+                    visible:    _showOrbit && _activeVehicle && _activeVehicle.flying && _activeVehicle.orbitModeSupported && _activeVehicle.armed && !_missionActive
                     onClicked:  _guidedModeBar.confirmAction(_guidedModeBar.confirmOrbit)
                 }
 
