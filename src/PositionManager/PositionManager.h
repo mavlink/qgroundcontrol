@@ -34,6 +34,8 @@ public:
 
     int updateInterval() const;
 
+    void setToolbox(QGCToolbox* toolbox);
+
 private slots:
     void positionUpdated(const QGeoPositionInfo &update);
 
