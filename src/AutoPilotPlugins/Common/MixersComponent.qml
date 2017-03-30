@@ -33,7 +33,7 @@ SetupPage {
 
     property int    _rowHeight:         ScreenTools.defaultFontPixelHeight * 2
     property int    _rowWidth:          10      // Dynamic adjusted at runtime
-    property Fact   _editorParameterFact: Fact { }
+    property MixerParameter   _editorParameter: MixerParameter { }
 
     Component {
         id: tuningPageComponent
@@ -73,7 +73,7 @@ SetupPage {
                     focus:              true
 
                     delegate: Rectangle {
-                        id: factRectangle
+                        id: mixerParamDelegate
                         anchors.left:   parent.left
                         anchors.right:  parent.right
                         height:         30
@@ -101,7 +101,7 @@ SetupPage {
                             QGCLabel {
                                 id:     mixerIDLabel
                                 width:  ScreenTools.defaultFontPixelWidth  * 10
-                                text:   factRow.modelFact.index
+                                text:   mixerParamDelegate.mixerParamInfo.index
                                 horizontalAlignment:    Text.AlignHCenter
                                 verticalAlignment:      Text.AlignVCenter
                                 clip:   true
@@ -111,7 +111,7 @@ SetupPage {
                             QGCLabel {
                                 id:     mixerTypeLabel
                                 width:  ScreenTools.defaultFontPixelWidth  * 10
-                                text:   factRow.modelFact.mixerType
+                                text:   mixerParamDelegate.mixerParamInfo.Type
                                 horizontalAlignment:    Text.AlignHCenter
                                 verticalAlignment:      Text.AlignVCenter
                                 clip:   true
@@ -121,7 +121,7 @@ SetupPage {
                             QGCLabel {
                                 id:     submixerIDLabel
                                 width:  ScreenTools.defaultFontPixelWidth  * 10
-                                text:   factRow.modelFact.submixerID
+                                text:   mixerParamDelegate.mixerParamInfo.submixerID
                                 horizontalAlignment:    Text.AlignHCenter
                                 verticalAlignment:      Text.AlignVCenter
                                 clip:   true
@@ -131,7 +131,7 @@ SetupPage {
                             QGCLabel {
                                 id:     paramNameLabel
                                 width:  ScreenTools.defaultFontPixelWidth  * 10
-                                text:   factRow.modelFact.param.name
+                                text:   mixerParamDelegate.mixerParamInfo.param.name
                                 horizontalAlignment:    Text.AlignHCenter
                                 verticalAlignment:      Text.AlignVCenter
                                 clip:   true
@@ -141,7 +141,7 @@ SetupPage {
                             QGCLabel {
                                 id:     paramValueLabel
                                 width:  ScreenTools.defaultFontPixelWidth  * 10
-                                text:   factRow.modelFact.param.valueString
+                                text:   mixerParamDelegate.mixerParamInfo.param.valueString
                                 horizontalAlignment:    Text.AlignHCenter
                                 verticalAlignment:      Text.AlignVCenter
                                 clip:   true
@@ -159,8 +159,7 @@ SetupPage {
                             anchors.fill:       parent
                             acceptedButtons:    Qt.LeftButton
                             onClicked: {
-                                mixers.selectedParamID = factRectangle.mixerParamInfo.index
-                                _editorParameterFact = factRectangle.mixerParamInfo.param
+                                _editorParameter = mixerParamDelegate.mixerParamInfo
 //                                root.reject()
                             }
                         }
@@ -251,7 +250,7 @@ SetupPage {
                         width:  ScreenTools.defaultFontPixelWidth  * 10
 //                        Property MixerParameter mixParam:  mixers.selectedParam
 //                        text:   mixers.selectedParamID
-                        text:  _editorParameterFact.name
+                        text:  _editorParameter.param.name
                         horizontalAlignment:    Text.AlignHCenter
                         verticalAlignment:      Text.AlignVCenter
                         clip:   true

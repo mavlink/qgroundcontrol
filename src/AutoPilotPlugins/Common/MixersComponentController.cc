@@ -31,9 +31,7 @@ const int MixersComponentController::_updateInterval = 150;              ///< In
 MixersComponentController::MixersComponentController(void)
     : _mixersManagerStatusText(NULL)
     , _mixers(new QmlObjectListModel(this))
-    , _selectedParameter(nullptr)
     , _selectedGroup(0)
-    , _selectedParamID(0)
 {
 //    _getMixersCountButton = NULL;
 //#ifdef UNITTEST_BUILD
@@ -45,7 +43,6 @@ MixersComponentController::MixersComponentController(void)
     connect(_vehicle->mixersManager(), &MixersManager::mixerDataReadyChanged, this, &MixersComponentController::_updateMixers);
     connect(_vehicle->mixersManager(), &MixersManager::mixerManagerStatusChanged, this, &MixersComponentController::_updateMixersManagerStatus);
     connect(this, &MixersComponentController::selectedGroupChanged, this, &MixersComponentController::_updateSelectedGroup);
-    connect(this, &MixersComponentController::selectedParamChanged, this, &MixersComponentController::_updateSelectedParam);
 }
 
 
@@ -110,19 +107,3 @@ void MixersComponentController::_updateSelectedGroup(unsigned int groupID){
 }
 
 
-void MixersComponentController::_updateSelectedParam(unsigned int paramID){
-    Q_UNUSED(paramID)
-
-    MixerGroup *mixerGroup = _vehicle->mixersManager()->getMixerGroup(_selectedGroup);
-    if(mixerGroup == nullptr){
-        _selectedParameter = nullptr;
-        return;
-    }
-
-    MixerParameter* selParam = mixerGroup->getParameter(paramID);
-    if(selParam != nullptr){
-        _selectedParameter = selParam->param();
-    } else {
-        _selectedParameter = nullptr;
-    }
-}
