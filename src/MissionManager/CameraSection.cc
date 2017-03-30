@@ -229,36 +229,40 @@ bool CameraSection::scanForCameraSection(QmlObjectListModel* visualItems, int sc
                 cameraAction()->setRawValue(TakePhotosIntervalTime);
                 cameraPhotoIntervalTime()->setRawValue(missionItem.param1());
                 visualItems->removeAt(scanIndex)->deleteLater();
-            } else {
-                stopLooking = true;
             }
+            stopLooking = true;
             break;
 
         case MAV_CMD_DO_SET_CAM_TRIGG_DIST:
             if (!foundCameraAction && missionItem.param1() >= 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
-                // At this point we don't know if we have a stop taking photos pair, or a single distance trigger where the user specified 0
-                // We need to look at the next item to check for the stop taking photos pari
+                // At this point we don't know if we have a stop taking photos pair, or just a distance trigger
 
                 if (missionItem.param1() == 0 && scanIndex < visualItems->count() - 1) {
+                    // Possible stop taking photos pair
                     SimpleMissionItem* nextItem = visualItems->value<SimpleMissionItem*>(scanIndex + 1);
                     if (nextItem) {
-                        missionItem = nextItem->missionItem();
-                        if ((MAV_CMD)item->command() == MAV_CMD_IMAGE_STOP_CAPTURE && missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+                        MissionItem& nextMissionItem = nextItem->missionItem();
+                        if (nextMissionItem.command() == MAV_CMD_IMAGE_STOP_CAPTURE && nextMissionItem.param1() == 0 && nextMissionItem.param2() == 0 && nextMissionItem.param3() == 0 && nextMissionItem.param4() == 0 && nextMissionItem.param5() == 0 && nextMissionItem.param6() == 0 && nextMissionItem.param7() == 0) {
+                            // We found a stop taking photos pair
                             foundCameraAction = true;
                             cameraAction()->setRawValue(StopTakingPhotos);
                             visualItems->removeAt(scanIndex)->deleteLater();
                             visualItems->removeAt(scanIndex)->deleteLater();
+                            stopLooking = true;
                             break;
                         }
                     }
                 }
 
-                // We didn't find a stop taking photos pair, so this is a regular trigger distance item
-                foundCameraAction = true;
-                cameraAction()->setRawValue(TakePhotoIntervalDistance);
-                cameraPhotoIntervalDistance()->setRawValue(missionItem.param1());
-                visualItems->removeAt(scanIndex)->deleteLater();
-                break;
+                // We didn't find a stop taking photos pair, check for trigger distance
+                if (missionItem.param1() > 0) {
+                    foundCameraAction = true;
+                    cameraAction()->setRawValue(TakePhotoIntervalDistance);
+                    cameraPhotoIntervalDistance()->setRawValue(missionItem.param1());
+                    visualItems->removeAt(scanIndex)->deleteLater();
+                    stopLooking = true;
+                    break;
+                }
             }
             stopLooking = true;
             break;
@@ -268,9 +272,8 @@ bool CameraSection::scanForCameraSection(QmlObjectListModel* visualItems, int sc
                 foundCameraAction = true;
                 cameraAction()->setRawValue(TakeVideo);
                 visualItems->removeAt(scanIndex)->deleteLater();
-            } else {
-                stopLooking = true;
             }
+            stopLooking = true;
             break;
 
         case MAV_CMD_VIDEO_STOP_CAPTURE:
@@ -278,9 +281,8 @@ bool CameraSection::scanForCameraSection(QmlObjectListModel* visualItems, int sc
                 foundCameraAction = true;
                 cameraAction()->setRawValue(StopTakingVideo);
                 visualItems->removeAt(scanIndex)->deleteLater();
-            } else {
-                stopLooking = true;
             }
+            stopLooking = true;
             break;
 
         default:

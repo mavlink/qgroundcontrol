@@ -1538,10 +1538,8 @@ void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualIte
         }
 
         SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
-        if (simpleItem && simpleItem->cameraSection()->available()) {
-            scanIndex++;
-            simpleItem->scanForSections(visualItems, scanIndex, vehicle);
-            continue;
+        if (simpleItem) {
+            simpleItem->scanForSections(visualItems, scanIndex + 1, vehicle);
         }
 
         scanIndex++;
