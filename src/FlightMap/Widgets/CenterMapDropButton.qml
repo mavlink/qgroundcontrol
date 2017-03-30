@@ -200,7 +200,7 @@ DropButton {
             QGCButton {
                 text:               qsTr("Current Location")
                 Layout.fillWidth:   true
-                enabled:            mainWindow.gcsPosition.isValid && !followVehicleCheckBox.checked
+                enabled:            mainWindow.gcsPosition && mainWindow.gcsPosition.isValid && !followVehicleCheckBox.checked
 
                 onClicked: {
                     dropButton.hideDropDown()
