@@ -13,7 +13,7 @@
 #include <QtAndroidExtras/QtAndroidExtras>
 #include <QtAndroidExtras/QAndroidJniObject>
 
-static const char* kJniClassName = "org/qgroundcontrol/qgchelper/UsbDeviceJNI";
+static const char* kJniClassName = "org/mavlink/qgroundcontrol/QGCActivity";
 
 void MobileScreenMgr::setKeepScreenOn(bool keepScreenOn)
 {

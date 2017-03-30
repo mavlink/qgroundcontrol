@@ -14,8 +14,8 @@ OTHER_FILES += \
     $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialDriver.java \
     $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialProber.java \
     $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialRuntimeException.java \
-    $$PWD/android/src/org/qgroundcontrol/qgchelper/UsbDeviceJNI.java \
-    $$PWD/android/src/org/qgroundcontrol/qgchelper/UsbIoManager.java
+    $$PWD/android/src/org/mavlink/qgroundcontrol/QGCActivity.java \
+    $$PWD/android/src/org/mavlink/qgroundcontrol/UsbIoManager.java
 
 DISTFILES += \
     $$PWD/android/gradle/wrapper/gradle-wrapper.jar \
