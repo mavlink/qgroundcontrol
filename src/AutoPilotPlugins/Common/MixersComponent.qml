@@ -10,6 +10,7 @@
 import QtQuick              2.5
 import QtQuick.Controls     1.4
 import QtQuick.Layouts      1.2
+import QtQuick.Dialogs      1.2
 
 import QGroundControl               1.0
 import QGroundControl.FactSystem    1.0
@@ -145,15 +146,6 @@ SetupPage {
                                 _editorParameterValue = _editorParameter.values.get(0)
                             }
                         }
-
-    //                    Rectangle {
-    //                        width:  _rowWidth
-    //                        height: 1
-    //                        color:  __qgcPal.text
-    //                        opacity: 0.15
-    //                        anchors.bottom: parent.bottom
-    //                        anchors.left:   parent.left
-    //                    }
                     } //Rectangle
                 } //QGCListView
 
@@ -232,6 +224,12 @@ SetupPage {
                             color:  "white"
                         }
 
+//                        QGCTextField {
+//                            id:                 paramEditField
+//                            text:               _editorParameterValue.valueString
+////                                   Layout.fillWidth:   true
+//                            width:               ScreenTools.defaultFontPixelWidth  * 20
+//                        }
                     } //Row
 
                     Rectangle {
@@ -296,6 +294,7 @@ SetupPage {
                                 acceptedButtons:    Qt.LeftButton
                                 onClicked: {
                                     _editorParameterValue = paramValueDelegate.valueFact
+                                    showDialog(editorDialogComponent, qsTr("Mixer Parameter Value Editor"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
                                 }
                             }
 
@@ -308,6 +307,16 @@ SetupPage {
             } //RowLayout
         } // Item
     } // Component
+
+    Component {
+        id: editorDialogComponent
+
+        ParameterEditorDialog {
+            fact:           _editorParameterValue
+//            showRCToParam:  _showRCToParam
+        }
+    }
+
 } // SetupView
 
 
