@@ -53,7 +53,6 @@ MissionController::MissionController(QObject *parent)
     , _settingsItem(NULL)
     , _firstItemsFromVehicle(false)
     , _missionItemsRequested(false)
-    , _queuedSend(false)
     , _surveyMissionItemName(tr("Survey"))
     , _fwLandingMissionItemName(tr("Fixed Wing Landing"))
     , _appSettings(qgcApp()->toolbox()->settingsManager()->appSettings())
@@ -647,7 +646,6 @@ void MissionController::loadFromFile(const QString& filename)
     MissionController::_scanForAdditionalSettings(_visualItems, _activeVehicle);
 
     _initAllVisualItems();
-    sendToVehicle();
 }
 
 bool MissionController::loadItemsFromFile(Vehicle* vehicle, const QString& filename, QmlObjectListModel** visualItems)
@@ -1280,6 +1278,8 @@ void MissionController::_activeVehicleBeingRemoved(void)
     disconnect(missionManager, &MissionManager::newMissionItemsAvailable,   this, &MissionController::_newMissionItemsAvailableFromVehicle);
     disconnect(missionManager, &MissionManager::inProgressChanged,          this, &MissionController::_inProgressChanged);
     disconnect(missionManager, &MissionManager::currentItemChanged,         this, &MissionController::_currentMissionItemChanged);
+    disconnect(missionManager, &MissionManager::lastCurrentItemChanged,     this, &MissionController::resumeMissionItemChanged);
+    disconnect(missionManager, &MissionManager::resumeMissionReady,         this, &MissionController::resumeMissionReady);
     disconnect(_activeVehicle, &Vehicle::homePositionChanged,               this, &MissionController::_activeVehicleHomePositionChanged);
 
     // We always remove all items on vehicle change. This leaves a user model hole:
@@ -1298,6 +1298,8 @@ void MissionController::_activeVehicleSet(void)
     connect(missionManager, &MissionManager::newMissionItemsAvailable,  this, &MissionController::_newMissionItemsAvailableFromVehicle);
     connect(missionManager, &MissionManager::inProgressChanged,         this, &MissionController::_inProgressChanged);
     connect(missionManager, &MissionManager::currentItemChanged,        this, &MissionController::_currentMissionItemChanged);
+    connect(missionManager, &MissionManager::lastCurrentItemChanged,    this, &MissionController::resumeMissionItemChanged);
+    connect(missionManager, &MissionManager::resumeMissionReady,        this, &MissionController::resumeMissionReady);
     connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
     connect(_activeVehicle, &Vehicle::defaultCruiseSpeedChanged,        this, &MissionController::_recalcMissionFlightStatus);
     connect(_activeVehicle, &Vehicle::defaultHoverSpeedChanged,         this, &MissionController::_recalcMissionFlightStatus);
@@ -1312,6 +1314,7 @@ void MissionController::_activeVehicleSet(void)
     _activeVehicleHomePositionChanged(_activeVehicle->homePosition());
 
     emit complexMissionItemNamesChanged();
+    emit resumeMissionItemChanged();
 }
 
 void MissionController::_activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition)
@@ -1478,11 +1481,29 @@ void MissionController::_addMissionSettings(Vehicle* vehicle, QmlObjectListModel
     }
 }
 
+int MissionController::resumeMissionItem(void) const
+{
+
+    int resumeIndex = -1;
+
+    if (!_editMode) {
+        int firstTrueItemIndex = _activeVehicle->firmwarePlugin()->sendHomePositionToVehicle() ? 1 : 0;
+        resumeIndex = _activeVehicle->missionManager()->lastCurrentItem();
+        if (resumeIndex > firstTrueItemIndex) {
+            if (!_activeVehicle->firmwarePlugin()->sendHomePositionToVehicle()) {
+                resumeIndex++;
+            }
+            // Resume at the item previous to the item we were heading towards
+            resumeIndex--;
+        }
+    }
+
+    return resumeIndex;
+}
+
 void MissionController::_currentMissionItemChanged(int sequenceNumber)
 {
     if (!_editMode) {
-        bool prevMissionInProgress = missionInProgress();
-
         if (!_activeVehicle->firmwarePlugin()->sendHomePositionToVehicle()) {
             sequenceNumber++;
         }
@@ -1490,10 +1511,6 @@ void MissionController::_currentMissionItemChanged(int sequenceNumber)
         for (int i=0; i<_visualItems->count(); i++) {
             VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
             item->setIsCurrentItem(item->sequenceNumber() == sequenceNumber);
-        }
-
-        if (prevMissionInProgress != missionInProgress()) {
-            emit missionInProgressChanged();
         }
     }
 }
@@ -1538,10 +1555,8 @@ void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualIte
         }
 
         SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
-        if (simpleItem && simpleItem->cameraSection()->available()) {
-            scanIndex++;
-            simpleItem->scanForSections(visualItems, scanIndex, vehicle);
-            continue;
+        if (simpleItem) {
+            simpleItem->scanForSections(visualItems, scanIndex + 1, vehicle);
         }
 
         scanIndex++;
@@ -1576,11 +1591,6 @@ QStringList MissionController::complexMissionItemNames(void) const
     return complexItems;
 }
 
-bool MissionController::missionInProgress(void) const
-{
-    return _visualItems && _visualItems->count() > 1 && (!_visualItems->value<VisualMissionItem*>(0)->isCurrentItem() && !_visualItems->value<VisualMissionItem*>(1)->isCurrentItem());
-}
-
 void MissionController::_visualItemsDirtyChanged(bool dirty)
 {
     if (dirty) {
@@ -1593,4 +1603,12 @@ void MissionController::_visualItemsDirtyChanged(bool dirty)
     } else {
         emit dirtyChanged(false);
     }
+}
+
+void MissionController::resumeMission(int resumeIndex)
+{
+    if (!_activeVehicle->firmwarePlugin()->sendHomePositionToVehicle()) {
+        resumeIndex--;
+    }
+    _activeVehicle->missionManager()->generateResumeMission(resumeIndex);
 }
