@@ -12,7 +12,7 @@
     "shortDescription": "Specify the distance between each photo",
     "type":             "double",
     "units":            "m",
-    "min":              0,
+    "min":              0.1,
     "decimalPlaces":    1,
     "defaultValue":     1
 },
