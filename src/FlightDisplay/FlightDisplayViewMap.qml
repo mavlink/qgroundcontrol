@@ -96,7 +96,7 @@ FlightMap {
             if (_keepVehicleCentered) {
                 flightMap.center = _activeVehicleCoordinate
             } else {
-                if (firstVehiclePositionReceived) {
+                if (firstVehiclePositionReceived && recenterNeeded()) {
                     animatedMapRecenter(flightMap.center, _activeVehicleCoordinate)
                 }
             }
