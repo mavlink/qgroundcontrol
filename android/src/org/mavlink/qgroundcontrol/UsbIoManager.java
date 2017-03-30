@@ -1,4 +1,4 @@
-package org.qgroundcontrol.qgchelper;
+package org.mavlink.qgroundcontrol;
 
 /* Copyright 2011 Google Inc.
 *

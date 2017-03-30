@@ -1,11 +1,27 @@
 <?xml version="1.0"?>
-<manifest package="org.mavlink.qgroundcontrol" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="3.0.0-243-gd759437" android:versionCode="300243" android:installLocation="auto">
-    <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="-- %%INSERT_APP_NAME%% --" android:icon="@drawable/icon">
+<manifest 
+    package="org.mavlink.qgroundcontrol" 
+    xmlns:android="http://schemas.android.com/apk/res/android" 
+    android:versionName="3.0.0-243-gd759437" 
+    android:versionCode="300243" android:installLocation="auto">
+    <application 
+        android:hardwareAccelerated="true" 
+        android:name="org.qtproject.qt5.android.bindings.QtApplication" 
+        android:label="-- %%INSERT_APP_NAME%% --" 
+        android:icon="@drawable/icon">
         <!-- Qt Original Activity:  org.qtproject.qt5.android.bindings.QtActivity -->
-        <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|locale|fontScale|keyboard|keyboardHidden|navigation" android:name="org.qgroundcontrol.qgchelper.UsbDeviceJNI" android:label="-- %%INSERT_APP_NAME%% --" android:screenOrientation="sensorLandscape" android:launchMode="singleTask" android:keepScreenOn="true">
+        <activity 
+            android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|locale|fontScale|keyboard|keyboardHidden|navigation" 
+            android:name="org.mavlink.qgroundcontrol.QGCActivity" 
+            android:label="-- %%INSERT_APP_NAME%% --" 
+            android:screenOrientation="sensorLandscape" 
+            android:launchMode="singleInstance" 
+            android:keepScreenOn="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.HOME"/>
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <!-- Rest of Standard Manifest -->
             <meta-data android:name="android.app.lib_name" android:value="-- %%INSERT_APP_LIB_NAME%% --"/>
@@ -43,6 +59,12 @@
             <meta-data android:name="android.app.background_running" android:value="false"/>
             <!-- Background running -->
         </activity>
+        <receiver android:name=".StartQGCAtBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.HOME" />
+            </intent-filter>
+        </receiver>        
     </application>
     <uses-sdk android:minSdkVersion="16" android:targetSdkVersion="22"/>
 
@@ -55,6 +77,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- The following comment will be replaced upon deployment with default features based on the dependencies of the application.
          Remove the comment if you do not require these default features. -->
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />

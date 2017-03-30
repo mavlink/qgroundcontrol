@@ -1,4 +1,4 @@
-package org.qgroundcontrol.qgchelper;
+package org.mavlink.qgroundcontrol;
 
 import android.app.Activity;
 import android.util.Log;
@@ -25,7 +25,7 @@ import android.os.BatteryManager;
 import org.qtproject.qt5.android.bindings.QtActivity;
 import org.qtproject.qt5.android.bindings.QtApplication;
 
-public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListener {
+public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListener {
 
     public enum ReceiverMode {
         DISABLED,
@@ -33,7 +33,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
         BINDING
     }
 
-    private static UsbDeviceJNI m_instance;
+    private static QGCActivity m_instance;
     private static final String TAG = "QGroundControl_JNI";
     private static TextToSpeech  m_tts;
     private static PowerManager.WakeLock m_wl;
@@ -58,7 +58,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     //  Constructor.  Only used once to create the initial instance for the static functions.
     //
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    public UsbDeviceJNI() {
+    public QGCActivity() {
         m_instance = this;
         Log.i(TAG, "Instance created");
     }
