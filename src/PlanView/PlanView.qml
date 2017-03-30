@@ -89,7 +89,6 @@ QGCView {
     MapFitFunctions {
         id:                         mapFitFunctions
         map:                        editorMap
-        mapFitViewport:             editorMap.centerViewport
         usePlannedHomePosition:     true
         mapGeoFenceController:      geoFenceController
         mapMissionController:       missionController
@@ -342,9 +341,11 @@ QGCView {
         anchors.fill:   parent
 
         FlightMap {
-            id:             editorMap
-            anchors.fill:   parent
-            mapName:        "MissionEditor"
+            id:                         editorMap
+            anchors.fill:               parent
+            mapName:                    "MissionEditor"
+            allowGCSLocationCenter:     true
+            allowVehicleLocationCenter: true
 
             // This is the center rectangle of the map which is not obscured by tools
             property rect centerViewport: Qt.rect(_leftToolWidth, _toolbarHeight, editorMap.width - _leftToolWidth - _rightPanelWidth, editorMap.height - _statusHeight - _toolbarHeight)
