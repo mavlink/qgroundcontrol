@@ -49,9 +49,9 @@ QGCView {
     property bool   _tooManyTiles:      QGroundControl.mapEngineManager.tileCount > _maxTilesForDownload
     property var    _settings:          QGroundControl.settingsManager.flightMapSettings
 
-    readonly property real minZoomLevel:    3
+    readonly property real minZoomLevel:    1
     readonly property real maxZoomLevel:    20
-    readonly property real sliderTouchArea: ScreenTools.isMobile ? ScreenTools.defaultFontPixelWidth * 5 : ScreenTools.defaultFontPixelWidth * 3
+    readonly property real sliderTouchArea: ScreenTools.defaultFontPixelWidth * (ScreenTools.isTinyScreen ? 5 : (ScreenTools.isMobile ? 6 : 3))
 
     readonly property int _maxTilesForDownload: 100000
 
@@ -601,260 +601,268 @@ QGCView {
                         }
                     } // Map
                 }
-
-                //-- Add new set dialog
-                Rectangle {
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right:      parent.right
-                    width:              ScreenTools.defaultFontPixelWidth * (ScreenTools.isTinyScreen ? 24 : 28)
-                    height:             Math.min(parent.height - (anchors.margins * 2), addNewSetFlickable.y + addNewSetColumn.height + addNewSetLabel.anchors.margins)
-                    color:              Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.85)
-                    radius:             ScreenTools.defaultFontPixelWidth * 0.5
-
-                    QGCLabel {
-                        id:                 addNewSetLabel
-                        anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-                        anchors.top:        parent.top
-                        anchors.left:       parent.left
-                        anchors.right:      parent.right
-                        wrapMode:           Text.WordWrap
-                        text:               qsTr("Add New Set")
-                        font.pointSize:     _saveRealEstate ? ScreenTools.defaultFontPointSize : ScreenTools.mediumFontPointSize
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-
-                    QGCFlickable {
-                        id:                     addNewSetFlickable
-                        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
-                        anchors.rightMargin:    anchors.leftMargin
-                        anchors.topMargin:      ScreenTools.defaultFontPixelWidth / 3
-                        anchors.bottomMargin:   anchors.topMargin
-                        anchors.top:            addNewSetLabel.bottom
-                        anchors.left:           parent.left
-                        anchors.right:          parent.right
-                        anchors.bottom:         parent.bottom
-                        clip:                   true
-                        contentHeight:          addNewSetColumn.height
-
-                        Column {
-                            id:                 addNewSetColumn
-                            anchors.left:       parent.left
-                            anchors.right:      parent.right
-                            spacing:            ScreenTools.defaultFontPixelHeight * (ScreenTools.isTinyScreen ? 0.25 : 0.5)
-
-                            Column {
-                                spacing:            ScreenTools.isTinyScreen ? 0 : ScreenTools.defaultFontPixelHeight * 0.25
-                                anchors.left:       parent.left
-                                anchors.right:      parent.right
-                                QGCLabel { text: qsTr("Name:") }
-                                QGCTextField {
-                                    id:             setName
-                                    anchors.left:   parent.left
-                                    anchors.right:  parent.right
-                                }
-                            }
-
-                            Column {
-                                spacing:            ScreenTools.isTinyScreen ? 0 : ScreenTools.defaultFontPixelHeight * 0.25
-                                anchors.left:       parent.left
-                                anchors.right:      parent.right
-                                QGCLabel {
-                                    text:       qsTr("Map type:")
-                                    visible:    !_saveRealEstate
-                                }
-                                QGCComboBox {
-                                    id:             mapCombo
-                                    anchors.left:   parent.left
-                                    anchors.right:  parent.right
-                                    model:          QGroundControl.mapEngineManager.mapList
-                                    onActivated: {
-                                        mapType = textAt(index)
-                                        if(_dropButtonsExclusiveGroup.current)
-                                            _dropButtonsExclusiveGroup.current.checked = false
-                                        _dropButtonsExclusiveGroup.current = null
-                                    }
-                                    Component.onCompleted: {
-                                        var index = mapCombo.find(mapType)
-                                        if (index === -1) {
-                                            console.warn("Active map name not in combo", mapType)
-                                        } else {
-                                            mapCombo.currentIndex = index
-                                        }
-                                    }
-                                }
-                            }
-
-                            Rectangle {
-                                anchors.left:   parent.left
-                                anchors.right:  parent.right
-                                height:         zoomColumn.height + ScreenTools.defaultFontPixelHeight * 0.5
-                                color:          qgcPal.window
-                                border.color:   qgcPal.text
-                                radius:         ScreenTools.defaultFontPixelWidth * 0.5
-
-                                Column {
-                                    id:                 zoomColumn
-                                    spacing:            ScreenTools.isTinyScreen ? 0 : ScreenTools.defaultFontPixelHeight * 0.5
-                                    anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.25
-                                    anchors.top:        parent.top
-                                    anchors.left:       parent.left
-                                    anchors.right:      parent.right
-
-                                    QGCLabel {
-                                        text:           qsTr("Min/Max Zoom Levels")
-                                        font.pointSize: _adjustableFontPointSize
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                    }
-
-                                    Slider {
-                                        id:                         sliderMinZoom
-                                        anchors.left:               parent.left
-                                        anchors.right:              parent.right
-                                        height:                     sliderTouchArea * 1.25
-                                        minimumValue:               minZoomLevel
-                                        maximumValue:               maxZoomLevel
-                                        stepSize:                   1
-                                        updateValueWhileDragging:   true
-                                        property real _savedZoom
-                                        Component.onCompleted:      Math.max(sliderMinZoom.value = _map.zoomLevel - 4, 2)
-                                        onValueChanged: {
-                                            if(sliderMinZoom.value > sliderMaxZoom.value) {
-                                                sliderMaxZoom.value = sliderMinZoom.value
-                                            }
-                                            handleChanges()
-                                        }
-                                        style: SliderStyle {
-                                            groove: Rectangle {
-                                                implicitWidth:  sliderMinZoom.width
-                                                implicitHeight: 4
-                                                color:          qgcPal.colorBlue
-                                                radius:         4
-                                            }
-                                            handle: Rectangle {
-                                                anchors.centerIn: parent
-                                                color:          qgcPal.button
-                                                border.color:   qgcPal.buttonText
-                                                border.width:   1
-                                                implicitWidth:  sliderTouchArea
-                                                implicitHeight: sliderTouchArea
-                                                radius:         sliderTouchArea * 0.5
-                                                Label {
-                                                    text:               sliderMinZoom.value
-                                                    anchors.centerIn:   parent
-                                                    font.family:        ScreenTools.normalFontFamily
-                                                    font.pointSize:     ScreenTools.smallFontPointSize
-                                                    color:              qgcPal.buttonText
-                                                }
-                                            }
-                                        }
-                                    } // Slider - min zoom
-
-                                    Slider {
-                                        id:                         sliderMaxZoom
-                                        anchors.left:               parent.left
-                                        anchors.right:              parent.right
-                                        height:                     sliderTouchArea * 1.25
-                                        minimumValue:               minZoomLevel
-                                        maximumValue:               maxZoomLevel
-                                        stepSize:                   1
-                                        updateValueWhileDragging:   true
-                                        property real _savedZoom
-                                        Component.onCompleted:      Math.min(sliderMaxZoom.value = _map.zoomLevel + 2, 20)
-                                        onValueChanged: {
-                                            if(sliderMaxZoom.value < sliderMinZoom.value) {
-                                                sliderMinZoom.value = sliderMaxZoom.value
-                                            }
-                                            handleChanges()
-                                        }
-                                        style: SliderStyle {
-                                            groove: Rectangle {
-                                                implicitWidth:  sliderMaxZoom.width
-                                                implicitHeight: 4
-                                                color:          qgcPal.colorBlue
-                                                radius:         4
-                                            }
-                                            handle: Rectangle {
-                                                anchors.centerIn: parent
-                                                color:          qgcPal.button
-                                                border.color:   qgcPal.buttonText
-                                                border.width:   1
-                                                implicitWidth:  sliderTouchArea
-                                                implicitHeight: sliderTouchArea
-                                                radius:         sliderTouchArea * 0.5
-                                                Label {
-                                                    text:               sliderMaxZoom.value
-                                                    anchors.centerIn:   parent
-                                                    font.family:        ScreenTools.normalFontFamily
-                                                    font.pointSize:     ScreenTools.smallFontPointSize
-                                                    color:              qgcPal.buttonText
-                                                }
-                                            }
-                                        }
-                                    } // Slider - max zoom
-
-                                    GridLayout {
-                                        columns:    2
-                                        rowSpacing: ScreenTools.isTinyScreen ? 0 : ScreenTools.defaultFontPixelHeight * 0.5
-                                        QGCLabel {
-                                            text:           qsTr("Tile Count:")
-                                            font.pointSize: _adjustableFontPointSize
-                                        }
-                                        QGCLabel {
-                                            text:            QGroundControl.mapEngineManager.tileCountStr
-                                            font.pointSize: _adjustableFontPointSize
-                                        }
-
-                                        QGCLabel {
-                                            text:           qsTr("Est Size:")
-                                            font.pointSize: _adjustableFontPointSize
-                                        }
-                                        QGCLabel {
-                                            text:           QGroundControl.mapEngineManager.tileSizeStr
-                                            font.pointSize: _adjustableFontPointSize
-                                        }
-                                    }
-                                } // Column - Zoom info
-                            } // Rectangle - Zoom info
-
-                            QGCLabel {
-                                text:       qsTr("Too many tiles")
-                                visible:    _tooManyTiles
-                                color:      qgcPal.warningText
-                                anchors.horizontalCenter: parent.horizontalCenter
-                            }
-
-                            Row {
-                                id: addButtonRow
-                                spacing: ScreenTools.defaultFontPixelWidth
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                QGCButton {
-                                    text:       qsTr("Download")
-                                    width:      (addNewSetColumn.width * 0.5) - (addButtonRow.spacing * 0.5)
-                                    enabled:    !_tooManyTiles && setName.text.length > 0
-                                    onClicked: {
-                                        if(QGroundControl.mapEngineManager.findName(setName.text)) {
-                                            duplicateName.visible = true
-                                        } else {
-                                            QGroundControl.mapEngineManager.startDownload(setName.text, mapType);
-                                            showList()
-                                        }
-                                    }
-                                }
-                                QGCButton {
-                                    text:       qsTr("Cancel")
-                                    width:      (addNewSetColumn.width * 0.5) - (addButtonRow.spacing * 0.5)
-                                    onClicked: {
-                                        showList()
-                                    }
-                                }
-                            }
-
-                        } // Column
-                    } // QGCFlickable
-                } // Rectangle - Add new set dialog
             } // Item - Add new set view
         } // Map
+
+        //-- Add new set dialog
+        Rectangle {
+            anchors.margins:    ScreenTools.defaultFontPixelWidth
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.right:      parent.right
+            visible:            _map.visible
+            width:              ScreenTools.defaultFontPixelWidth * (ScreenTools.isTinyScreen ? 24 : 28)
+            height:             Math.min(parent.height - (anchors.margins * 2), addNewSetFlickable.y + addNewSetColumn.height + addNewSetLabel.anchors.margins)
+            color:              Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.85)
+            radius:             ScreenTools.defaultFontPixelWidth * 0.5
+
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+
+            QGCLabel {
+                id:                 addNewSetLabel
+                anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+                anchors.top:        parent.top
+                anchors.left:       parent.left
+                anchors.right:      parent.right
+                wrapMode:           Text.WordWrap
+                text:               qsTr("Add New Set")
+                font.pointSize:     _saveRealEstate ? ScreenTools.defaultFontPointSize : ScreenTools.mediumFontPointSize
+                horizontalAlignment: Text.AlignHCenter
+            }
+
+            QGCFlickable {
+                id:                     addNewSetFlickable
+                anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
+                anchors.rightMargin:    anchors.leftMargin
+                anchors.topMargin:      ScreenTools.defaultFontPixelWidth / 3
+                anchors.bottomMargin:   anchors.topMargin
+                anchors.top:            addNewSetLabel.bottom
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                anchors.bottom:         parent.bottom
+                clip:                   true
+                contentHeight:          addNewSetColumn.height
+
+                Column {
+                    id:                 addNewSetColumn
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
+                    spacing:            ScreenTools.defaultFontPixelHeight * (ScreenTools.isTinyScreen ? 0.25 : 0.5)
+
+                    Column {
+                        spacing:            ScreenTools.isTinyScreen ? 0 : ScreenTools.defaultFontPixelHeight * 0.25
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        QGCLabel { text: qsTr("Name:") }
+                        QGCTextField {
+                            id:             setName
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                        }
+                    }
+
+                    Column {
+                        spacing:            ScreenTools.isTinyScreen ? 0 : ScreenTools.defaultFontPixelHeight * 0.25
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        QGCLabel {
+                            text:       qsTr("Map type:")
+                            visible:    !_saveRealEstate
+                        }
+                        QGCComboBox {
+                            id:             mapCombo
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            model:          QGroundControl.mapEngineManager.mapList
+                            onActivated: {
+                                mapType = textAt(index)
+                                if(_dropButtonsExclusiveGroup.current)
+                                    _dropButtonsExclusiveGroup.current.checked = false
+                                _dropButtonsExclusiveGroup.current = null
+                            }
+                            Component.onCompleted: {
+                                var index = mapCombo.find(mapType)
+                                if (index === -1) {
+                                    console.warn("Active map name not in combo", mapType)
+                                } else {
+                                    mapCombo.currentIndex = index
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        height:         zoomColumn.height + ScreenTools.defaultFontPixelHeight * 0.5
+                        color:          qgcPal.window
+                        border.color:   qgcPal.text
+                        radius:         ScreenTools.defaultFontPixelWidth * 0.5
+
+                        Column {
+                            id:                 zoomColumn
+                            spacing:            ScreenTools.isTinyScreen ? 0 : ScreenTools.defaultFontPixelHeight * 0.5
+                            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.25
+                            anchors.top:        parent.top
+                            anchors.left:       parent.left
+                            anchors.right:      parent.right
+
+                            QGCLabel {
+                                text:           qsTr("Min/Max Zoom Levels")
+                                font.pointSize: _adjustableFontPointSize
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+
+                            Slider {
+                                id:                         sliderMinZoom
+                                anchors.left:               parent.left
+                                anchors.right:              parent.right
+                                height:                     sliderTouchArea * 1.25
+                                minimumValue:               minZoomLevel
+                                maximumValue:               maxZoomLevel
+                                stepSize:                   1
+                                updateValueWhileDragging:   true
+                                property real _savedZoom
+                                Component.onCompleted:      Math.max(sliderMinZoom.value = _map.zoomLevel - 4, 2)
+                                onValueChanged: {
+                                    if(sliderMinZoom.value > sliderMaxZoom.value) {
+                                        sliderMaxZoom.value = sliderMinZoom.value
+                                    }
+                                    handleChanges()
+                                }
+                                style: SliderStyle {
+                                    groove: Rectangle {
+                                        implicitWidth:  sliderMinZoom.width
+                                        implicitHeight: 4
+                                        color:          qgcPal.colorBlue
+                                        radius:         4
+                                    }
+                                    handle: Rectangle {
+                                        anchors.centerIn: parent
+                                        color:          qgcPal.button
+                                        border.color:   qgcPal.buttonText
+                                        border.width:   1
+                                        implicitWidth:  sliderTouchArea
+                                        implicitHeight: sliderTouchArea
+                                        radius:         sliderTouchArea * 0.5
+                                        Label {
+                                            text:               sliderMinZoom.value
+                                            anchors.centerIn:   parent
+                                            font.family:        ScreenTools.normalFontFamily
+                                            font.pointSize:     ScreenTools.smallFontPointSize
+                                            color:              qgcPal.buttonText
+                                        }
+                                    }
+                                }
+                            } // Slider - min zoom
+
+                            Slider {
+                                id:                         sliderMaxZoom
+                                anchors.left:               parent.left
+                                anchors.right:              parent.right
+                                height:                     sliderTouchArea * 1.25
+                                minimumValue:               minZoomLevel
+                                maximumValue:               maxZoomLevel
+                                stepSize:                   1
+                                updateValueWhileDragging:   true
+                                property real _savedZoom
+                                Component.onCompleted:      Math.min(sliderMaxZoom.value = _map.zoomLevel + 2, 20)
+                                onValueChanged: {
+                                    if(sliderMaxZoom.value < sliderMinZoom.value) {
+                                        sliderMinZoom.value = sliderMaxZoom.value
+                                    }
+                                    handleChanges()
+                                }
+                                style: SliderStyle {
+                                    groove: Rectangle {
+                                        implicitWidth:  sliderMaxZoom.width
+                                        implicitHeight: 4
+                                        color:          qgcPal.colorBlue
+                                        radius:         4
+                                    }
+                                    handle: Rectangle {
+                                        anchors.centerIn: parent
+                                        color:          qgcPal.button
+                                        border.color:   qgcPal.buttonText
+                                        border.width:   1
+                                        implicitWidth:  sliderTouchArea
+                                        implicitHeight: sliderTouchArea
+                                        radius:         sliderTouchArea * 0.5
+                                        Label {
+                                            text:               sliderMaxZoom.value
+                                            anchors.centerIn:   parent
+                                            font.family:        ScreenTools.normalFontFamily
+                                            font.pointSize:     ScreenTools.smallFontPointSize
+                                            color:              qgcPal.buttonText
+                                        }
+                                    }
+                                }
+                            } // Slider - max zoom
+
+                            GridLayout {
+                                columns:    2
+                                rowSpacing: ScreenTools.isTinyScreen ? 0 : ScreenTools.defaultFontPixelHeight * 0.5
+                                QGCLabel {
+                                    text:           qsTr("Tile Count:")
+                                    font.pointSize: _adjustableFontPointSize
+                                }
+                                QGCLabel {
+                                    text:            QGroundControl.mapEngineManager.tileCountStr
+                                    font.pointSize: _adjustableFontPointSize
+                                }
+
+                                QGCLabel {
+                                    text:           qsTr("Est Size:")
+                                    font.pointSize: _adjustableFontPointSize
+                                }
+                                QGCLabel {
+                                    text:           QGroundControl.mapEngineManager.tileSizeStr
+                                    font.pointSize: _adjustableFontPointSize
+                                }
+                            }
+                        } // Column - Zoom info
+                    } // Rectangle - Zoom info
+
+                    QGCLabel {
+                        text:       qsTr("Too many tiles")
+                        visible:    _tooManyTiles
+                        color:      qgcPal.warningText
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+
+                    Row {
+                        id: addButtonRow
+                        spacing: ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCButton {
+                            text:       qsTr("Download")
+                            width:      (addNewSetColumn.width * 0.5) - (addButtonRow.spacing * 0.5)
+                            enabled:    !_tooManyTiles && setName.text.length > 0
+                            onClicked: {
+                                if(QGroundControl.mapEngineManager.findName(setName.text)) {
+                                    duplicateName.visible = true
+                                } else {
+                                    QGroundControl.mapEngineManager.startDownload(setName.text, mapType);
+                                    showList()
+                                }
+                            }
+                        }
+                        QGCButton {
+                            text:       qsTr("Cancel")
+                            width:      (addNewSetColumn.width * 0.5) - (addButtonRow.spacing * 0.5)
+                            onClicked: {
+                                showList()
+                            }
+                        }
+                    }
+
+                } // Column
+            } // QGCFlickable
+        } // Rectangle - Add new set dialog
 
         QGCFlickable {
             id:                 _tileSetList
