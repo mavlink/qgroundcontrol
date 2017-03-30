@@ -98,10 +98,16 @@ Item {
                     columns:            2
                     anchors.horizontalCenter: parent.horizontalCenter
 
-                    QGCLabel { text: qsTr("RSSI:") }
+                    QGCLabel { text: qsTr("RC RSSI:") }
                     QGCLabel { text: _activeVehicle ? (_activeVehicle.rcRSSI > 100 ? 'N/A' : _activeVehicle.rcRSSI + "%") : 'N/A' }
-                    QGCLabel { text: qsTr("Battery:") }
+                    QGCLabel { text: qsTr("RC Battery:") }
                     QGCLabel { text: getBatteryPercentageText() }
+                    QGCLabel { text: qsTr("RC GPS Sat Count:") }
+                    QGCLabel { text: TyphoonHQuickInterface.gpsCount.toFixed(0) }
+                    QGCLabel { text: qsTr("RC GPS Accuracy:") }
+                    QGCLabel { text: TyphoonHQuickInterface.gpsAccuracy.toFixed(1) }
+                    QGCLabel { text: qsTr("RC Ground Speed:") }
+                    QGCLabel { text: TyphoonHQuickInterface.speed.toFixed(1) }
                 }
             }
 
