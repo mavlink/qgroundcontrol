@@ -1,4 +1,4 @@
-package org.qgroundcontrol.qgchelper;
+package org.mavlink.qgroundcontrol;
 
 /* Copyright 2013 Google Inc.
  *
@@ -23,7 +23,7 @@ package org.qgroundcontrol.qgchelper;
 //  Written by: Mike Goza April 2014
 //
 //  These routines interface with the Android USB Host devices for serial port communication.
-//  The code uses the usb-serial-for-android software library.  The UsbDeviceJNI class is the
+//  The code uses the usb-serial-for-android software library.  The QGCActivity class is the
 //  interface to the C++ routines through jni calls.  Do not change the functions without also
 //  changing the corresponding calls in the C++ routines or you will break the interface.
 //
@@ -52,10 +52,10 @@ import com.hoho.android.usbserial.driver.*;
 import org.qtproject.qt5.android.bindings.QtActivity;
 import org.qtproject.qt5.android.bindings.QtApplication;
 
-public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListener
+public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListener
 {
     public  static int BAD_PORT = 0;
-    private static UsbDeviceJNI m_instance;
+    private static QGCActivity m_instance;
     private static UsbManager m_manager;    //  ANDROID USB HOST CLASS
     private static List<UsbSerialDriver> m_devices; //  LIST OF CURRENT DEVICES
     private static HashMap<Integer, UsbSerialDriver> m_openedDevices;   //  LIST OF OPENED DEVICES
@@ -64,7 +64,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     //  USED TO DETECT WHEN A DEVICE HAS BEEN UNPLUGGED
     private BroadcastReceiver m_UsbReceiver = null;
     private final static ExecutorService m_Executor = Executors.newSingleThreadExecutor();
-    private static final String TAG = "QGC_UsbDeviceJNI";
+    private static final String TAG = "QGC_QGCActivity";
     private static TextToSpeech  m_tts;
     private static PowerManager.WakeLock m_wl;
 
@@ -101,7 +101,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     //  Constructor.  Only used once to create the initial instance for the static functions.
     //
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    public UsbDeviceJNI()
+    public QGCActivity()
     {
         m_instance = this;
         m_openedDevices = new HashMap<Integer, UsbSerialDriver>();
@@ -193,7 +193,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
         //  GET THE LIST OF CURRENT DEVICES
         if (!getCurrentDevices())
         {
-            Log.e(TAG, "UsbDeviceJNI instance not present");
+            Log.e(TAG, "QGCActivity instance not present");
             return null;
         }
 
