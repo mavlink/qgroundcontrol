@@ -655,16 +655,17 @@ double SimpleMissionItem::specifiedGimbalYaw(void)
     return _cameraSection->available() ? _cameraSection->specifiedGimbalYaw() : missionItem().specifiedGimbalYaw();
 }
 
-void SimpleMissionItem::scanForSections(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle)
+bool SimpleMissionItem::scanForSections(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle)
 {
+    bool sectionFound = false;
+
     Q_UNUSED(vehicle);
 
-    qDebug() << "SimpleMissionItem::scanForSections" << scanIndex << _cameraSection->available();
-
     if (_cameraSection->available()) {
-        bool sectionFound = _cameraSection->scanForCameraSection(visualItems, scanIndex);
-        qDebug() << sectionFound;
+        sectionFound = _cameraSection->scanForCameraSection(visualItems, scanIndex);
     }
+
+    return sectionFound;
 }
 
 void SimpleMissionItem::_updateCameraSection(void)
