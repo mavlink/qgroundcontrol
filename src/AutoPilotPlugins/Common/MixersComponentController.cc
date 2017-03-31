@@ -88,6 +88,9 @@ void MixersComponentController::_updateMixersManagerStatus(MixersManager::MIXERS
     case MixersManager::MIXERS_MANAGER_DOWNLOADING_MISSING:
          _mixersManagerStatusText->setProperty("text", "DOWNLOADING MISSING");
         break;
+    case MixersManager::MIXERS_MANAGER_WRITING_PARAM:
+        _mixersManagerStatusText->setProperty("text", "WRITING PARAMETER");
+        break;
     default:
          _mixersManagerStatusText->setProperty("text", "");
         break;

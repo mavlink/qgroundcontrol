@@ -26,32 +26,58 @@ MixersManager::MixersManager(Vehicle* vehicle)
     , _dedicatedLink(NULL)
     , _mixerGroupsData(this)
     , _mixerParameterMessages()
-    , _ackTimeoutTimer(NULL)
+    , _ackTimeoutTimer(this)
+    , _checkWriteParamTimer(this)
     , _expectedAck(AckNone)
     , _status(MIXERS_MANAGER_WAITING)
     , _actionGroup(0)
+    , _groupsIdentified(false)
 {
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &MixersManager::_mavlinkMessageReceived);
     
-    _ackTimeoutTimer = new QTimer(this);
-    _ackTimeoutTimer->setSingleShot(true);
-    _ackTimeoutTimer->setInterval(_ackTimeoutMilliseconds);
+    _ackTimeoutTimer.setSingleShot(true);
+    _ackTimeoutTimer.setInterval(_ackTimeoutMilliseconds);
+    connect(&_ackTimeoutTimer, &QTimer::timeout, this, &MixersManager::_msgTimeout);
+
+    _checkWriteParamTimer.setSingleShot(true);
+    _checkWriteParamTimer.setInterval(100);
+    connect(&_checkWriteParamTimer, &QTimer::timeout, this, &MixersManager::_checkWriteParamTimeout);
     
-    connect(_ackTimeoutTimer, &QTimer::timeout, this, &MixersManager::_msgTimeout);
 }
 
 MixersManager::~MixersManager()
 {
-    _ackTimeoutTimer->stop();
+    _ackTimeoutTimer.stop();
 }
 
 MixerGroup* MixersManager::getMixerGroup(unsigned int groupID){
     return _mixerGroupsData.getGroup(groupID);
 }
 
-void MixersManager::_paramValueUpdated(const QVariant& value){
-    Q_UNUSED(value)
+
+void MixersManager::_changedParamValue(MixerParameter* mixParam, Fact *value, int valueIndex)
+{
+    MixerGroup* mixGroup = qobject_cast<MixerGroup *>(QObject::sender());
+
+    _dataMutex.lock();
+
+    _waitingWriteParamMap[mixGroup->groupID()][mixParam->index()][value] = valueIndex;
+
+    _dataMutex.unlock();
+
+    _checkWriteParamTimer.start();
+
+    //    if(_waitingWriteParamMap.contains(mixGroup)){
+    //        if(_waitingWriteParamMap[mixGroup].contains(mixParam)){
+    //            if(_waitingWriteParamMap[mixGroup][mixParam].contains(value)){
+
+    //            }
+    //        }
+    //    } else {
+
+    //    }
 }
+
 
 void MixersManager::_msgTimeout(void)
 {
@@ -89,15 +115,126 @@ void MixersManager::_msgTimeout(void)
         }
         break;
     }
+    case MIXERS_MANAGER_WRITING_PARAM : {
 
+        break;
+    }
     }
     _expectedAck = AckNone;
+}
+
+
+void MixersManager::_checkWriteParamTimeout(void){
+    switch(int(_status))
+    {
+    case MIXERS_MANAGER_WAITING:
+        _sendPendingWriteParam();
+        break;
+
+    case MIXERS_MANAGER_WRITING_PARAM:
+        _checkWriteParamTimer.start();
+        break;
+    case MIXERS_MANAGER_DOWNLOADING_ALL:
+    case MIXERS_MANAGER_DOWNLOADING_MISSING:
+    case MIXERS_MANAGER_IDENTIFYING_SUPPORTED_GROUPS: {
+        break;
+    }
+    }
+}
+
+void MixersManager::_sendPendingWriteParam(void){
+
+    if(_waitingWriteParamMap.count() > 0){
+//        _dataMutex.lock();
+//        _dataMutex.unlock();
+
+        int mixGroupID = _waitingWriteParamMap.firstKey();
+        int paramIndex = _waitingWriteParamMap.first().firstKey();
+        Fact* value = _waitingWriteParamMap.first().first().firstKey();
+        int valueIndex = _waitingWriteParamMap.first().first().first();
+
+        // TODO: Blend all value changes into one parameter change here
+
+        Q_ASSERT(value);
+
+        mavlink_message_t       messageOut;
+        mavlink_mixer_param_set_t      set;
+
+        _actionGroup = mixGroupID;
+
+        set.mixer_group = _actionGroup;
+        set.index = paramIndex;
+        set.mixer_index = 0;
+        set.mixer_sub_index = 0;
+        set.mixer_type = 0;
+        strcpy(set.param_id, "");
+        set.param_array_index = valueIndex;
+        set.param_type = value->type();
+        memset(set.param_values, 0, sizeof(set.param_values));
+
+        //Set each value in the array accoring to type
+        int i = 0;
+//        foreach(value, param->values()) {
+            mavlink_param_union_t   union_value;
+            switch (set.param_type) {
+            case FactMetaData::valueTypeUint8:
+                union_value.param_uint8 = (uint8_t)value->rawValue().toUInt();
+                break;
+
+            case FactMetaData::valueTypeInt8:
+                union_value.param_int8 = (int8_t)value->rawValue().toInt();
+                break;
+
+            case FactMetaData::valueTypeUint16:
+                union_value.param_uint16 = (uint16_t)value->rawValue().toUInt();
+                break;
+
+            case FactMetaData::valueTypeInt16:
+                union_value.param_int16 = (int16_t)value->rawValue().toInt();
+                break;
+
+            case FactMetaData::valueTypeUint32:
+                union_value.param_uint32 = (uint32_t)value->rawValue().toUInt();
+                break;
+
+            case FactMetaData::valueTypeFloat:
+                union_value.param_float = value->rawValue().toFloat();
+                break;
+
+            case FactMetaData::valueTypeInt32:
+                union_value.param_int32 = (int32_t)value->rawValue().toInt();
+                break;
+            default:
+                qCritical() << "Unsupported fact type" << set.param_type;
+                _setStatus(MIXERS_MANAGER_WAITING);
+                _checkWriteParamTimer.stop();
+                return;
+            }
+            set.param_values[i] = union_value.param_float;
+//        }
+
+        _dedicatedLink = _vehicle->priorityLink();
+        mavlink_msg_mixer_param_set_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                             qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                             _dedicatedLink->mavlinkChannel(),
+                                             &messageOut,
+                                             &set);
+
+        _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+
+
+        _setStatus(MIXERS_MANAGER_WRITING_PARAM);
+    } else {
+        _setStatus(MIXERS_MANAGER_WAITING);
+        _checkWriteParamTimer.stop();
+    }
+
 }
 
 void MixersManager::_startAckTimeout(AckType_t ack)
 {
     _expectedAck = ack;
-    _ackTimeoutTimer->start();
+    _ackTimeoutTimer.start();
 }
 
 void MixersManager::_setStatus(MIXERS_MANAGER_STATUS_e newStatus){
@@ -109,7 +246,7 @@ void MixersManager::_setStatus(MIXERS_MANAGER_STATUS_e newStatus){
 
 
 bool MixersManager::mixerDataReady() {
-    if(!_groupsIndentified)
+    if(!_groupsIdentified)
         return false;
     if(_status != MIXERS_MANAGER_WAITING){
         return false;
@@ -148,6 +285,63 @@ bool MixersManager::_requestParameter(unsigned int group, unsigned int index){
     return true;
 }
 
+
+//void MixersManager::_writeParameterRaw(MixerGroup* mixerGroup, MixerParameter*, Fact* value, int valueIndex)
+//{
+//    mavlink_param_set_t     p;
+//    mavlink_param_union_t   union_value;
+
+//    FactMetaData::ValueType_t factType = getParameter(componentId, paramName)->type();
+//    p.param_type = _factTypeToMavType(factType);
+
+//    switch (factType) {
+//        case FactMetaData::valueTypeUint8:
+//            union_value.param_uint8 = (uint8_t)value.toUInt();
+//            break;
+
+//        case FactMetaData::valueTypeInt8:
+//            union_value.param_int8 = (int8_t)value.toInt();
+//            break;
+
+//        case FactMetaData::valueTypeUint16:
+//            union_value.param_uint16 = (uint16_t)value.toUInt();
+//            break;
+
+//        case FactMetaData::valueTypeInt16:
+//            union_value.param_int16 = (int16_t)value.toInt();
+//            break;
+
+//        case FactMetaData::valueTypeUint32:
+//            union_value.param_uint32 = (uint32_t)value.toUInt();
+//            break;
+
+//        case FactMetaData::valueTypeFloat:
+//            union_value.param_float = value.toFloat();
+//            break;
+
+//        default:
+//            qCritical() << "Unsupported fact type" << factType;
+//            // fall through
+
+//        case FactMetaData::valueTypeInt32:
+//            union_value.param_int32 = (int32_t)value.toInt();
+//            break;
+//    }
+
+//    p.param_value = union_value.param_float;
+//    p.target_system = (uint8_t)_vehicle->id();
+//    p.target_component = (uint8_t)componentId;
+
+//    strncpy(p.param_id, paramName.toStdString().c_str(), sizeof(p.param_id));
+
+//    mavlink_message_t msg;
+//    mavlink_msg_param_set_encode_chan(_mavlink->getSystemId(),
+//                                      _mavlink->getComponentId(),
+//                                      _vehicle->priorityLink()->mavlinkChannel(),
+//                                      &msg,
+//                                      &p);
+//    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+//}
 
 
 bool MixersManager::searchAllMixerGroupsAndDownload(void) {
@@ -340,6 +534,7 @@ MixerGroup* MixersManager::_createMixerGroup(unsigned int group)
     if(mixerGroup == nullptr) {
         mixerGroup = new MixerGroup(group);
         _mixerGroupsData.addGroup(mixerGroup);
+        connect(mixerGroup, &MixerGroup::mixerParamChanged, this, &MixersManager::_changedParamValue);
     }
     return mixerGroup;
 }
@@ -385,9 +580,7 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
         // Add a new mixer group if required
         MixerGroup* mixGroup = _mixerGroupsData.getGroup(param.mixer_group);
         if(mixGroup == nullptr){
-            mixGroup = new MixerGroup(param.mixer_group);
-            Q_ASSERT(mixGroup != nullptr);
-            _mixerGroupsData.addGroup(mixGroup);
+            mixGroup = _createMixerGroup(param.mixer_group);
         }
 
         if(param.count > 0) {
@@ -398,7 +591,7 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
         case MIXERS_MANAGER_DOWNLOADING_ALL:
             //Check if at end of download
             if(param.index < mixGroup->paramCount()){
-                _ackTimeoutTimer->start();
+                _ackTimeoutTimer.start();
                 return;
             } else {
                 _requestMissingData(_actionGroup);
@@ -410,12 +603,16 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
         case MIXERS_MANAGER_DOWNLOADING_MISSING:
             _requestMissingData(_actionGroup);
             break;
+        case MIXERS_MANAGER_WRITING_PARAM:
+            _setStatus(MIXERS_MANAGER_WAITING);
+            _checkWriteParamTimer.stop();
+            break;
         default:
             _expectedAck = AckNone;
             break;
         }
 
-        _ackTimeoutTimer->stop();
+        _ackTimeoutTimer.stop();
 
         break;
     }

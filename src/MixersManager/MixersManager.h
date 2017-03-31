@@ -40,6 +40,7 @@ public:
         MIXERS_MANAGER_IDENTIFYING_SUPPORTED_GROUPS,
         MIXERS_MANAGER_DOWNLOADING_ALL,
         MIXERS_MANAGER_DOWNLOADING_MISSING,
+        MIXERS_MANAGER_WRITING_PARAM,
     } MIXERS_MANAGER_STATUS_e;
 
     /// true: Mixer data is ready for use
@@ -67,13 +68,12 @@ signals:
     void missingMixerDataChanged(bool missingMixerData);
     void mixerManagerStatusChanged(MIXERS_MANAGER_STATUS_e status);
     void mixerGroupStatusChanged(MixerGroup *mixerGroup);
-
-protected:
-    void _paramValueUpdated(const QVariant& value);
     
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
     void _msgTimeout(void);
+    void _checkWriteParamTimeout(void);
+    void _changedParamValue(MixerParameter* mixParam, Fact *value, int valueIndex);
 
 private:
     typedef enum {
@@ -91,14 +91,24 @@ private:
     MixerGroups         _mixerGroupsData;
 
     QList<mavlink_mixer_param_value_t*> _mixerParameterMessages;
-    QTimer*             _ackTimeoutTimer;
+
+    ///* Timer to check for expected AP response timeout*/
+    QTimer              _ackTimeoutTimer;
+
+    ///* Timer to avoid overloading AP with parameter value changes*/
+    QTimer              _checkWriteParamTimer;
+
     AckType_t           _expectedAck;
     int                 _retryCount;
 
     MIXERS_MANAGER_STATUS_e _status;
 
     unsigned int        _actionGroup;       // The group which MixerManager is working with
-    bool                _groupsIndentified; // The mixer groups have been checked and added to _mixerGroupsData
+    bool                _groupsIdentified; // The mixer groups have been checked and added to _mixerGroupsData
+
+    QMap<int, QMap<int, QMap<Fact*, int>>>  _waitingWriteParamMap;  ///< Key:GroupIndex Key:ParameterIndex Key:ValueFact* Value: array index }
+
+    QMutex _dataMutex;
 
     void _startAckTimeout(AckType_t ack);
 
@@ -148,14 +158,16 @@ private:
     /// return true if successfull*/
     bool _buildStructureFromMessages(unsigned int group);
 
+    ///* Look through the pending parameter value changes and send an outstanding request
+    /// return back to waiting if there are not outstanding requests*/
+    void _sendPendingWriteParam(void);
 
-//    bool _checkForExpectedAck(AckType_t receivedAck);
+    //    bool _checkForExpectedAck(AckType_t receivedAck);
 
 //    bool        _readTransactionInProgress;
 //    bool        _writeTransactionInProgress;
 //    QList<int>  _itemIndicesToRead;     ///< List of mission items which still need to be requested from vehicle
     
-//    QMutex _dataMutex;
     
 //    QList<MissionItem*> _missionItems;
 };

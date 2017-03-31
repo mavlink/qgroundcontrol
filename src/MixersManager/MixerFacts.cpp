@@ -54,9 +54,10 @@ MixerParameter::MixerParameter(QObject* parent)
 }
 
 void MixerParameter::_changedParamValue(QVariant value){
-
     if(_values->contains(QObject::sender())){
-        qDebug("Found changed parameter values at index:%u", _values->indexOf(QObject::sender()));
+        int index = _values->indexOf(QObject::sender());
+        Fact* fact = qobject_cast<Fact *>(QObject::sender());
+        emit (mixerParamChanged(fact , index));
     }
 }
 
@@ -85,6 +86,7 @@ MixerGroup::~MixerGroup(){
 void MixerGroup::appendParameter(MixerParameter *param){
     param->setParent(this);
     _parameters.append(param);
+    connect(param, &MixerParameter::mixerParamChanged, this, &MixerGroup::_changedParamValue);
 }
 
 void MixerGroup::deleteGroupParameters(void){
@@ -104,6 +106,15 @@ MixerParameter* MixerGroup::getParameter(unsigned int paramID)
             return param;
     }
     return nullptr;
+}
+
+
+void MixerGroup::_changedParamValue(Fact *value, int valueIndex)
+{
+    if(!_parameters.contains(QObject::sender()))
+        return;
+    MixerParameter *param = qobject_cast<MixerParameter *>(QObject::sender());
+     emit (mixerParamChanged(param, value, valueIndex));
 }
 
 

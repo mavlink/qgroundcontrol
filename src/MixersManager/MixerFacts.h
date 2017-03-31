@@ -49,6 +49,9 @@ public:
     QString  paramName(void) {return _paramName;}
     QmlObjectListModel* values(void) {return _values;}
 
+signals:
+    void mixerParamChanged(Fact* value, int valueIndex);
+
 private slots:
     void _changedParamValue(QVariant value);
 
@@ -96,6 +99,12 @@ public:
 
     int paramCount(void) {return _paramCount;}
     void setParamCount(int count) {_paramCount = count;}
+
+signals:
+    void mixerParamChanged(MixerParameter* param, Fact *value, int valueIndex);
+
+private slots:
+    void _changedParamValue(Fact *value, int valueIndex);
 
 private:
     QObjectList     _parameters ;
