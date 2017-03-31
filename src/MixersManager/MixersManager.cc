@@ -116,7 +116,7 @@ void MixersManager::_msgTimeout(void)
         break;
     }
     case MIXERS_MANAGER_WRITING_PARAM : {
-
+        _sendPendingWriteParam();
         break;
     }
     }
@@ -222,8 +222,8 @@ void MixersManager::_sendPendingWriteParam(void){
 
         _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
 
-
         _setStatus(MIXERS_MANAGER_WRITING_PARAM);
+        _startAckTimeout(AckSetParameter);
     } else {
         _setStatus(MIXERS_MANAGER_WAITING);
         _checkWriteParamTimer.stop();
@@ -603,9 +603,11 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
         case MIXERS_MANAGER_DOWNLOADING_MISSING:
             _requestMissingData(_actionGroup);
             break;
-        case MIXERS_MANAGER_WRITING_PARAM:
+        case MIXERS_MANAGER_WRITING_PARAM:{
+            _updateParamsFromRecievedMessage(&param);
             _setStatus(MIXERS_MANAGER_WAITING);
-            _checkWriteParamTimer.stop();
+            _checkWriteParamTimer.start();
+            }
             break;
         default:
             _expectedAck = AckNone;
@@ -619,5 +621,27 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
     default:
         break;
     }
+}
 
+
+void MixersManager::_updateParamsFromRecievedMessage(mavlink_mixer_param_value_t* msg)
+{
+    _dataMutex.lock();
+    if(_waitingWriteParamMap.contains(msg->mixer_group)){
+        MixerGroup* group = getMixerGroup(msg->mixer_group);
+        if(_waitingWriteParamMap[msg->mixer_group].contains(msg->index)){
+            MixerParameter* param = group->getParameter(msg->index);
+            foreach(Fact* fact, _waitingWriteParamMap[msg->mixer_group][msg->index].keys() ){
+                int arrayIndex = _waitingWriteParamMap[msg->mixer_group][msg->index][fact];
+                fact->setRawValue( QVariant::fromValue(msg->param_values[arrayIndex]));
+            }
+            //Clean up received parameters
+            _waitingWriteParamMap[msg->mixer_group].remove(msg->index);
+            if(_waitingWriteParamMap[msg->mixer_group].empty()){
+                _waitingWriteParamMap.remove(msg->mixer_group);
+            }
+            _setStatus(MIXERS_MANAGER_WAITING);
+        }
+    }
+    _dataMutex.unlock();
 }

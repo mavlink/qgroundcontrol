@@ -120,6 +120,8 @@ private:
 
     bool _requestParameter(unsigned int group, unsigned int index);
 
+    void _updateParamsFromRecievedMessage(mavlink_mixer_param_value_t* msg);
+
     ///* Check for support on each possible mixer group on an AP
     /// When a supported group is found a MixerGroup is created for it*/
     bool _searchSupportedMixerGroup(unsigned int group);
