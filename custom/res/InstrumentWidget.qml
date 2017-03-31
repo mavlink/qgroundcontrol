@@ -333,7 +333,7 @@ Item {
                         source:             "qrc:/typhoonh/video.svg"
                         fillMode:           Image.PreserveAspectFit
                         color:              _cameraVideoMode ? qgcPal.colorGreen : qgcPal.colorGrey
-                        visible:            TyphoonHQuickInterface.cameraControl.videoStatus !== CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+                        visible:            _cameraVideoMode && TyphoonHQuickInterface.cameraControl.videoStatus !== CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
                         anchors.centerIn:   parent
                         MouseArea {
                             anchors.fill:   parent
@@ -366,12 +366,12 @@ Item {
                         sourceSize.width:   width
                         source:             "qrc:/typhoonh/camera.svg"
                         fillMode:           Image.PreserveAspectFit
-                        color:              _cameraModeUndefined ? qgcPal.colorGrey : qgcPal.colorGreen
+                        color:              _cameraPhotoMode ? qgcPal.colorGreen : qgcPal.colorGrey
                         visible:            !startVideoButton.visible && !stopVideoButton.visible
                         anchors.centerIn:   parent
                         MouseArea {
                             anchors.fill:   parent
-                            enabled:        !_cameraModeUndefined
+                            enabled:        _cameraPhotoMode
                             onClicked: {
                                 rootLoader.sourceComponent = null
                                 TyphoonHQuickInterface.cameraControl.takePhoto()
