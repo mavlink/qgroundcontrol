@@ -104,9 +104,10 @@ private:
     MIXERS_MANAGER_STATUS_e _status;
 
     unsigned int        _actionGroup;       // The group which MixerManager is working with
+    unsigned int        _actionParameter;   // The group which MixerManager is working with
     bool                _groupsIdentified; // The mixer groups have been checked and added to _mixerGroupsData
 
-    QMap<int, QMap<int, QMap<Fact*, int>>>  _waitingWriteParamMap;  ///< Key:GroupIndex Key:ParameterIndex Key:ValueFact* Value: array index }
+    QMap<int, QMap<int, int>>  _waitingWriteParamMap;  ///< Key:GroupIndex Key:ParameterIndex Value: retries }
 
     QMutex _dataMutex;
 
@@ -121,6 +122,8 @@ private:
     bool _requestParameter(unsigned int group, unsigned int index);
 
     void _updateParamsFromRecievedMessage(mavlink_mixer_param_value_t* msg);
+
+    void _removeParamFromWaiting(mavlink_mixer_param_value_t* msg);
 
     ///* Check for support on each possible mixer group on an AP
     /// When a supported group is found a MixerGroup is created for it*/
@@ -163,6 +166,9 @@ private:
     ///* Look through the pending parameter value changes and send an outstanding request
     /// return back to waiting if there are not outstanding requests*/
     void _sendPendingWriteParam(void);
+
+    ///* Timed out while setting parameter.  Handle retries*/
+    void _sendPendingWriteTimeout(void);
 
     //    bool _checkForExpectedAck(AckType_t receivedAck);
 

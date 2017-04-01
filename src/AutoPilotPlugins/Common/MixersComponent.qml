@@ -83,6 +83,7 @@ SetupPage {
                         border.color:   "dark grey"
 
                         property MixerParameter mixerParamInfo: object
+                        property Fact fact0: mixerParamInfo.values.get(0)
 
                         Row {
                             id:     factRow
@@ -104,7 +105,7 @@ SetupPage {
                             QGCLabel {
                                 id:     mixerTypeLabel
                                 width:  ScreenTools.defaultFontPixelWidth  * 10
-                                text:   mixerParamDelegate.mixerParamInfo.mixerType
+                                text:   mixerParamDelegate.mixerParamInfo.mixerID
                                 horizontalAlignment:    Text.AlignHCenter
                                 verticalAlignment:      Text.AlignVCenter
                                 clip:   true
@@ -125,6 +126,16 @@ SetupPage {
                                 id:     paramNameLabel
                                 width:  ScreenTools.defaultFontPixelWidth  * 20
                                 text:   mixerParamDelegate.mixerParamInfo.paramName
+                                horizontalAlignment:    Text.AlignHCenter
+                                verticalAlignment:      Text.AlignVCenter
+                                clip:   true
+                                color:  "white"
+                            }
+
+                            QGCLabel {
+                                id:     paramValueLabel
+                                width:  ScreenTools.defaultFontPixelWidth  * 20
+                                text:   "[ " + mixerParamDelegate.mixerParamInfo.valuesString + " ]"
                                 horizontalAlignment:    Text.AlignHCenter
                                 verticalAlignment:      Text.AlignVCenter
                                 clip:   true
@@ -293,8 +304,10 @@ SetupPage {
                                 anchors.fill:       parent
                                 acceptedButtons:    Qt.LeftButton
                                 onClicked: {
-                                    _editorParameterValue = paramValueDelegate.valueFact
-                                    showDialog(editorDialogComponent, qsTr("Mixer Parameter Value Editor"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
+                                    if( _editorParameter.readOnly == false ) {
+                                        _editorParameterValue = paramValueDelegate.valueFact
+                                        showDialog(editorDialogComponent, qsTr("Mixer Parameter Value Editor"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
+                                    }
                                 }
                             }
 

@@ -23,6 +23,7 @@ MixerParameter::MixerParameter(mavlink_mixer_param_value_t* param_msg, QObject* 
     , _mixerType(param_msg->mixer_type)
     , _paramType(param_msg->param_type)
     , _paramArraySize(param_msg->param_array_size)
+    , _flags(param_msg->flags)
     , _paramName(param_msg->param_id)
     , _values(new QmlObjectListModel(this))
 {
@@ -35,7 +36,7 @@ MixerParameter::MixerParameter(mavlink_mixer_param_value_t* param_msg, QObject* 
         _values->append(newValue);
 
         //Do this afer setting initial raw value
-        connect(newValue, &Fact::rawValueChanged, this, &MixerParameter::_changedParamValue);
+        connect(newValue, &Fact::valueChanged, this, &MixerParameter::_changedParamValue);
     }
 }
 
@@ -48,12 +49,18 @@ MixerParameter::MixerParameter(QObject* parent)
     , _mixerType(-1)
     , _paramType(-1)
     , _paramArraySize(-1)
+    , _flags(0)
     , _paramName("NONE")
     , _values(nullptr)
 {
 }
 
+MixerParameter::~MixerParameter(){
+    delete _values;
+}
+
 void MixerParameter::_changedParamValue(QVariant value){
+    Q_UNUSED(value);
     if(_values->contains(QObject::sender())){
         int index = _values->indexOf(QObject::sender());
         Fact* fact = qobject_cast<Fact *>(QObject::sender());
@@ -61,11 +68,18 @@ void MixerParameter::_changedParamValue(QVariant value){
     }
 }
 
-
-MixerParameter::~MixerParameter(){
-    delete _values;
+QString MixerParameter::valuesString(void){
+    if(_paramArraySize <= 0){
+        return _paramName;
+    }
+    Fact* value = qobject_cast<Fact *>(_values->get(0));
+    QString valsStr = value->cookedValueString();
+    for(int i=1; i<_paramArraySize; i++){
+        value = qobject_cast<Fact *>(_values->get(i));
+        valsStr += " , " + value->cookedValueString();
+    }
+    return valsStr;
 }
-
 
 
 
@@ -73,8 +87,9 @@ MixerGroup::MixerGroup(unsigned int groupID, QObject* parent)
     : QObject(parent)
     , _parameters()
     , _groupID(groupID)
+    , _paramCount(0)
     , _groupName("GROUP_DEFAULT_NAME")
-    , _paramCount(-1)
+    , _isComplete(false)
 {
 };
 

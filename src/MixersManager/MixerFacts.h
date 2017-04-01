@@ -32,6 +32,9 @@ class MixerParameter : public QObject
     Q_PROPERTY(int      mixerType       READ mixerType      CONSTANT)
     Q_PROPERTY(int      paramType       READ paramType      CONSTANT)
     Q_PROPERTY(QString  paramName       READ paramName      CONSTANT)
+    Q_PROPERTY(bool     readOnly        READ readOnly       CONSTANT)
+    Q_PROPERTY(int      arraySize       READ arraySize      CONSTANT)
+    Q_PROPERTY(QString  valuesString    READ valuesString   CONSTANT)
     Q_PROPERTY(QmlObjectListModel* values READ values       CONSTANT)
 
 
@@ -46,6 +49,9 @@ public:
     int submixerID(void) {return _submixerID;}
     int mixerType(void) {return _mixerType;}
     int paramType(void) {return _paramType;}
+    int arraySize(void) {return _paramArraySize;}
+    QString valuesString(void);
+    bool readOnly(void) {return _flags!=0;}
     QString  paramName(void) {return _paramName;}
     QmlObjectListModel* values(void) {return _values;}
 
@@ -63,6 +69,7 @@ protected:
     int             _mixerType;
     int             _paramType;
     int             _paramArraySize;
+    int             _flags;
     QString         _paramName;
     QmlObjectListModel* _values;
 };
@@ -79,6 +86,7 @@ class MixerGroup : public QObject
     Q_PROPERTY(QString          groupName   READ groupName     CONSTANT)
     Q_PROPERTY(unsigned int     groupID     READ groupID       CONSTANT)
     Q_PROPERTY(int              paramCount  READ paramCount    CONSTANT)
+    Q_PROPERTY(bool             complete    READ isComplete    CONSTANT)
 
 public:
     MixerGroup(unsigned int groupID=0, QObject* parent = NULL);
@@ -98,7 +106,10 @@ public:
     void setGroupName(QString groupName) {_groupName = groupName;}
 
     int paramCount(void) {return _paramCount;}
-    void setParamCount(int count) {_paramCount = count;}
+    void setParamCount(unsigned int count) {_paramCount = count;}
+
+    bool isComplete(void) {return _isComplete;}
+    void setComplete(void) {_isComplete = true;}
 
 signals:
     void mixerParamChanged(MixerParameter* param, Fact *value, int valueIndex);
@@ -109,8 +120,9 @@ private slots:
 private:
     QObjectList     _parameters ;
     unsigned int    _groupID;
+    unsigned int    _paramCount;
     QString         _groupName;
-    int             _paramCount;
+    bool            _isComplete;
 };
 
 
