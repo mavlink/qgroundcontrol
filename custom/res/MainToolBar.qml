@@ -70,6 +70,10 @@ Rectangle {
 
     Component.onCompleted: {
         homeButton.checked = true
+        if(!ScreenTools.isMobile) {
+            //-- Make desktop version of tool bar a bit taller
+            ScreenTools.toolbarHeight = ScreenTools.toolbarHeight * 1.25
+        }
     }
 
     MessageDialog {
@@ -201,8 +205,8 @@ Rectangle {
         anchors.bottom:         parent.bottom
         anchors.bottomMargin:   1
         anchors.left:           homeButton.right
-        anchors.leftMargin:     43
-        spacing:                43 //-- Hard coded to fit the ST16 Screen
+        anchors.leftMargin:     ScreenTools.isMobile ? 43 : ScreenTools.defaultFontPixelWidth * 4
+        spacing:                ScreenTools.isMobile ? 43 : ScreenTools.defaultFontPixelWidth * 4
 
         QGCToolBarButton {
             id:                 setupButton
@@ -263,6 +267,7 @@ Rectangle {
             width:              1
             color:              qgcPal.text
             opacity:            0.5
+            visible:            ScreenTools.isMobile
             anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -270,6 +275,7 @@ Rectangle {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+            visible:            ScreenTools.isMobile
             source:             "/typhoonh/RCIndicator.qml"
         }
 
@@ -277,9 +283,21 @@ Rectangle {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+            visible:            ScreenTools.isMobile
             source:             "/typhoonh/WIFIRSSIIndicator.qml"
         }
 
+    }
+
+    Image {
+        source:             qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/YuneecBrandImageBlack.svg" : "/typhoonh/YuneecBrandImage.svg"
+        visible:            !ScreenTools.isMobile
+        height:             parent.height * 0.35
+        sourceSize.height:  height
+        fillMode:           Image.PreserveAspectFit
+        anchors.right:      parent.right
+        anchors.rightMargin: 10
+        anchors.verticalCenter: parent.verticalCenter
     }
 
     // Progress bar

@@ -316,12 +316,14 @@ TyphoonHPlugin::settingsPages()
             }
             _settingsList.append(QVariant::fromValue((QGCSettings*)_pMAVLink));
         }
+#if defined(__mobile__)
         if(!_pTyphoonSettings) {
             _pTyphoonSettings = new QGCSettings(tr("Typhoon H"),
                 QUrl::fromUserInput("qrc:/typhoonh/TyphoonSettings.qml"),
                 QUrl::fromUserInput("qrc:/typhoonh/logoWhite.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pTyphoonSettings));
+#endif
         if (_showAdvancedUI) {
             if(!_pLogDownload) {
                 _pLogDownload = new QGCSettings(tr("Log Download"),
