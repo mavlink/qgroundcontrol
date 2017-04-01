@@ -1985,13 +1985,13 @@ void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)
     _firmwarePlugin->guidedModeGotoLocation(this, gotoCoord);
 }
 
-void Vehicle::guidedModeChangeAltitude(double altitudeRel)
+void Vehicle::guidedModeChangeAltitude(double altitudeChange)
 {
     if (!guidedModeSupported()) {
         qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
-    _firmwarePlugin->guidedModeChangeAltitude(this, altitudeRel);
+    _firmwarePlugin->guidedModeChangeAltitude(this, altitudeChange);
 }
 
 void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double velocity, double altitude)
@@ -2397,9 +2397,19 @@ QString Vehicle::missionFlightMode(void) const
     return _firmwarePlugin->missionFlightMode();
 }
 
+QString Vehicle::pauseFlightMode(void) const
+{
+    return _firmwarePlugin->pauseFlightMode();
+}
+
 QString Vehicle::rtlFlightMode(void) const
 {
     return _firmwarePlugin->rtlFlightMode();
+}
+
+QString Vehicle::landFlightMode(void) const
+{
+    return _firmwarePlugin->landFlightMode();
 }
 
 QString Vehicle::takeControlFlightMode(void) const

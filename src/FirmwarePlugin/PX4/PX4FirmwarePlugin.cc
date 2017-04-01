@@ -399,7 +399,7 @@ void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
                             vehicle->altitudeAMSL()->rawValue().toFloat());
 }
 
-void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel)
+void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange)
 {
     if (!vehicle->homePositionAvailable()) {
         qgcApp()->showMessage(tr("Unable to change altitude, home position unknown."));
@@ -410,6 +410,17 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
         return;
     }
 
+    // Don't allow altitude to fall below 3 meters above home
+    double currentAltRel = vehicle->altitudeRelative()->rawValue().toDouble();
+    double newAltRel = currentAltRel;
+    if (altitudeChange <= 0 && currentAltRel <= 3) {
+        return;
+    }
+    if (currentAltRel + altitudeChange < 3) {
+        altitudeChange = 3 - currentAltRel;
+    }
+    newAltRel = currentAltRel + altitudeChange;
+
     vehicle->sendMavCommand(vehicle->defaultComponentId(),
                             MAV_CMD_DO_REPOSITION,
                             true,   // show error is fails
@@ -419,7 +430,7 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
                             NAN,
                             NAN,
                             NAN,
-                            vehicle->homePosition().altitude() + altitudeRel);
+                            vehicle->homePosition().altitude() + newAltRel);
 }
 
 void PX4FirmwarePlugin::startMission(Vehicle* vehicle)
@@ -502,21 +513,6 @@ void PX4FirmwarePlugin::_handleAutopilotVersion(Vehicle* vehicle, mavlink_messag
             qgcApp()->showMessage(QString("QGroundControl supports PX4 Pro firmware Version %1.%2.%3 and above. You are using a version prior to that which will lead to unpredictable results. Please upgrade your firmware.").arg(supportedMajorVersion).arg(supportedMinorVersion).arg(supportedPatchVersion));
         }
     }
-}
-
-QString PX4FirmwarePlugin::missionFlightMode(void)
-{
-    return QString(_missionFlightMode);
-}
-
-QString PX4FirmwarePlugin::rtlFlightMode(void)
-{
-    return QString(_rtlFlightMode);
-}
-
-QString PX4FirmwarePlugin::takeControlFlightMode(void)
-{
-    return QString(_manualFlightMode);
 }
 
 bool PX4FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const
