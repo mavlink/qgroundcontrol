@@ -1,26 +1,33 @@
 message("Adding Yuneec Typhoon H plugin")
 
 linux : android-g++ {
-    CONFIG += DISABLE_BUILTIN_ANDROID
+    DEFINES += NO_SERIAL_LINK
+    CONFIG  += DISABLE_BUILTIN_ANDROID
+    CONFIG  += MobileBuild
+    CONFIG  += NoSerialBuild
     equals(ANDROID_TARGET_ARCH, x86)  {
         message("Using Typhoon specific Android interfaces")
     } else {
         message("Unsuported Android toolchain, limited functionality for development only")
     }
 } else {
-    message("Non suported Platform, limited functionality for development only")
-    DEFINES += __mobile__
+    SimulatedMobile {
+        message("Simulated mobile build")
+        DEFINES += __mobile__
+        DEFINES += NO_SERIAL_LINK
+        CONFIG  += MobileBuild
+        CONFIG  += NoSerialBuild
+    } else {
+        message("Desktop build")
+    }
 }
 
 DEFINES += CUSTOMHEADER=\"\\\"TyphoonHPlugin.h\\\"\"
 DEFINES += CUSTOMCLASS=TyphoonHPlugin
 
-CONFIG  += NoSerialBuild
-CONFIG  += MobileBuild
 CONFIG  += QGC_DISABLE_APM_PLUGIN QGC_DISABLE_APM_PLUGIN_FACTORY QGC_DISABLE_PX4_PLUGIN_FACTORY
 CONFIG  += DISABLE_VIDEORECORDING
 
-DEFINES += NO_SERIAL_LINK
 DEFINES += NO_UDP_VIDEO
 DEFINES += QGC_DISABLE_BLUETOOTH
 DEFINES += QGC_DISABLE_UVC

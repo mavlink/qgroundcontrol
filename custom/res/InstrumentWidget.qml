@@ -33,11 +33,12 @@ import TyphoonHQuickInterface.Widgets   1.0
 Item {
     id:     instrumentWidget
     height: mainRect.height
-    width:  getPreferredInstrumentWidth() * 0.75
+    width:  ScreenTools.isMobile ? _computedWidth : (_computedWidth < 120 ? _computedWidth : 120)
 
     property real _spacers:                 ScreenTools.defaultFontPixelHeight * 0.5
     property real _distance:                0.0
     property real _editFieldWidth:          ScreenTools.defaultFontPixelWidth * 30
+    property real _computedWidth:           getPreferredInstrumentWidth() * 0.75
     property bool _hideCamera:              false
     property var  _activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle
     property bool _communicationLost:       _activeVehicle ? _activeVehicle.connectionLost : false
