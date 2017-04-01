@@ -398,6 +398,24 @@ bool MixersManager::_requestMissingData(unsigned int group){
     _actionGroup = group;
     _retryCount = 0;
 
+    MixerGroup* mixerGroup = getMixerGroup(group);
+    //Check if group exists yet.  If not just stop.
+    if(mixerGroup==nullptr){
+        _setStatus(MIXERS_MANAGER_WAITING);
+        return false;
+    }
+    bool found;
+    for(int i=0; i<mixerGroup->paramCount(); i++ ){
+        found = false;
+        foreach(mavlink_mixer_param_value_t* msg, _mixerParameterMessages){
+            if(msg->index == i) {
+                found = true;
+                break;
+            }
+        }
+        if(!found)
+            return _requestParameter(_actionGroup, i);
+    }
 
     _mixerDataDownloadComplete(group);
     _downloadNextMixerGroup();
@@ -415,13 +433,20 @@ bool MixersManager::_buildStructureFromMessages(unsigned int group){
     //Delete existing mixer group mixer data - not metadata
     mixer_group->deleteGroupParameters();
 
-    // TODO THIS IS WRONG! FAIL FOR MORE THAN ONE GROUP OR DISORDERED MESSAGES
-    int param_count = _mixerParameterMessages.count();
-    for(int index=0; index<param_count; index++) {
-        if(_mixerParameterMessages[index]->mixer_group == group)
-        {
-            mixer_group->appendParameter(new MixerParameter(_mixerParameterMessages[index]) );
+    int param_count = mixer_group->paramCount();
+    int check = 0;
+    int scanIndex = 0;
+    while(scanIndex < param_count)
+    {
+        foreach(mavlink_mixer_param_value_t* msg ,_mixerParameterMessages){
+            if( (msg->mixer_group == group) && (msg->index == scanIndex)){
+                mixer_group->appendParameter(new MixerParameter(msg));
+                scanIndex++;
+            }
         }
+        check++;
+        if(check>param_count)
+            return false;
     }
 
     mixer_group->setComplete();
@@ -485,6 +510,14 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
             return;
         }
 
+        // Test case to miss some data on purpose
+//        if(_status != MIXERS_MANAGER_DOWNLOADING_ALL){
+//            _collectMixerData(&param);
+//        } else {
+//            if(param.index%4 != 1){
+//                _collectMixerData(&param);
+//            }
+//        }
         _collectMixerData(&param);
 
         // Add a new mixer group if required
@@ -567,7 +600,6 @@ void MixersManager::_removeParamFromWaiting(mavlink_mixer_param_value_t* msg){
     //Clean up received parameters
     _dataMutex.lock();
     if(_waitingWriteParamMap.contains(msg->mixer_group)){
-        MixerGroup* group = getMixerGroup(msg->mixer_group);
         _waitingWriteParamMap[msg->mixer_group].remove(msg->index);
         if(_waitingWriteParamMap[msg->mixer_group].empty()){
             _waitingWriteParamMap.remove(msg->mixer_group);
