@@ -7,9 +7,11 @@
 #include "m4serial.h"
 #include "m4util.h"
 
+#if defined(__androidx86__)
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#endif
 
 //-----------------------------------------------------------------------------
 M4SerialComm::M4SerialComm(QObject* parent)
@@ -41,7 +43,7 @@ M4SerialComm::init(QString port, int baud)
 bool
 M4SerialComm::open()
 {
-#if defined(__android__)
+#if defined(__androidx86__)
     if(_status != SERIAL_PORT_CLOSED || _fd >= 0) {
         return false;
     }
@@ -66,7 +68,7 @@ M4SerialComm::open()
 void
 M4SerialComm::close()
 {
-#if defined(__android__)
+#if defined(__androidx86__)
     _status = SERIAL_PORT_CLOSED;
     if(_fd >= 0) {
         tcsetattr(_fd, TCSANOW, &_savedtio);
@@ -98,6 +100,7 @@ bool M4SerialComm::write(void* data, int length)
 void
 M4SerialComm::run()
 {
+#if defined(__androidx86__)
     while(_status == SERIAL_PORT_OPEN) {
         uint8_t b;
         if(::read(_fd, &b, 1) == 1) {
@@ -122,12 +125,14 @@ M4SerialComm::run()
         }
     }
     qCDebug(YuneecLog) << "SERIAL: Exiting thread";
+#endif
 }
 
 //-----------------------------------------------------------------------------
 void
 M4SerialComm::_readPacket(uint8_t length)
 {
+#if defined(__androidx86__)
     if(length > 1) {
         length--; //-- Skip CRC from count
         uint8_t buffer[260];
@@ -145,23 +150,32 @@ M4SerialComm::_readPacket(uint8_t length)
             }
         }
     }
+#else
+    Q_UNUSED(length);
+#endif
 }
 
 //-----------------------------------------------------------------------------
 int
 M4SerialComm::_openPort(const char* port)
 {
+#if defined(__androidx86__)
     int fd = ::open(port, O_RDWR | O_NOCTTY | O_NDELAY);
     if(fd >= 0) {
         fcntl(fd, F_SETFL, 0);
     }
     return fd;
+#else
+    Q_UNUSED(port);
+    return 0;
+#endif
 }
 
 //-----------------------------------------------------------------------------
 bool
 M4SerialComm::_setupPort(int baud)
 {
+#if defined(__androidx86__)
     struct termios config;
     bzero(&config, sizeof(config));
     config.c_cflag |= (CS8 | CLOCAL | CREAD);
@@ -203,13 +217,17 @@ M4SerialComm::_setupPort(int baud)
         return false;
     }
     return true;
+#else
+    Q_UNUSED(baud)
+    return true;
+#endif
 }
 
 //-----------------------------------------------------------------------------
 int
 M4SerialComm::_writePort(void* buffer, int len)
 {
-#if defined(__android__)
+#if defined(__androidx86__)
     int written = ::write(_fd, buffer, len);
     if(written != len && written >= 0) {
         qCWarning(YuneecLog) << QString("SERIAL: Wrote only %1 bytes out of %2 bytes").arg(written).arg(len);

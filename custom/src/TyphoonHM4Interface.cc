@@ -35,7 +35,9 @@ QGC_LOGGING_CATEGORY(YuneecLogVerbose, "YuneecLogVerbose")
 
 TyphoonHM4Interface* TyphoonHM4Interface::pTyphoonHandler = NULL;
 
+#if defined(__androidx86__)
 static const char* kUartName        = "/dev/ttyMFD0";
+#endif
 static const char* kRxInfoGroup     = "YuneecM4RxInfo";
 static const char* kmode            = "mode";
 static const char* kpanId           = "panId";
@@ -151,12 +153,14 @@ TyphoonHM4Interface::init(bool skipConnections)
     }
     settings.endGroup();
     qCDebug(YuneecLog) << "Init M4 Handler";
+#if defined(__androidx86__)
     if(!_commPort || !_commPort->init(kUartName, 230400) || !_commPort->open()) {
         //-- TODO: If this ever happens, we need to do something about it
         qCWarning(YuneecLog) << "Could not start serial communication with M4";
     } else {
         connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonHM4Interface::_bytesReady);
     }
+#endif
     _sendRxInfoEnd = false;
     if(!skipConnections) {
         connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &TyphoonHM4Interface::_vehicleAdded);
@@ -301,6 +305,7 @@ TyphoonHM4Interface::enterBindMode()
 void
 TyphoonHM4Interface::softReboot()
 {
+#if defined(__androidx86__)
     qCDebug(YuneecLog) << "softReboot()";
     if(_bound && !_resetBind) {
         qCDebug(YuneecLog) << "softReboot() -> Already bound. Skipping it...";
@@ -323,6 +328,7 @@ TyphoonHM4Interface::softReboot()
         _commPort = new M4SerialComm(this);
         init(true);
     }
+#endif
 }
 
 //-----------------------------------------------------------------------------
