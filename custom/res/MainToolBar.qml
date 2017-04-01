@@ -334,7 +334,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter;
             }
             QGCLabel {
-                text: _camController ? _camController.evList[_camController.currentEV] : "";
+                text: _camController ? ( _camController.evList.length < _camController.currentEV ? _camController.evList[_camController.currentEV] : "") : ""
                 visible: _cameraAutoMode;
                 anchors.verticalCenter: parent.verticalCenter;
             }

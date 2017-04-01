@@ -397,14 +397,15 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         metaData.setRawDefaultValue(25);
         return true;
     } else if (metaData.name() == AppSettings::appFontPointSizeName) {
-        int defaultFontPointSize;
-#if !defined(__macos__)
-        defaultFontPointSize = 16;
-#else
-        defaultFontPointSize = 10;
-#endif
+#if defined(__androidx86__)
+        int defaultFontPointSize = 16;
         metaData.setRawDefaultValue(defaultFontPointSize);
         return false;
+#elif defined(__mobile__)
+        int defaultFontPointSize = 10;
+        metaData.setRawDefaultValue(defaultFontPointSize);
+        return false;
+#endif
     } else if (metaData.name() == AppSettings::offlineEditingFirmwareTypeSettingsName) {
         metaData.setRawDefaultValue(MAV_AUTOPILOT_PX4);
         return false;
