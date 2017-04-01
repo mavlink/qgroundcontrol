@@ -59,6 +59,9 @@ void MixersComponentController::guiUpdated(void)
     _vehicle->mixersManager()->searchAllMixerGroupsAndDownload();
 }
 
+void MixersComponentController::storeSelectedGroup(void){
+    _vehicle->mixersManager()->requestStoreParams(_selectedGroup);
+}
 
 void MixersComponentController::_updateMixers(bool dataReady){
 

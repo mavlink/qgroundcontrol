@@ -41,6 +41,7 @@ public:
         MIXERS_MANAGER_DOWNLOADING_ALL,
         MIXERS_MANAGER_DOWNLOADING_MISSING,
         MIXERS_MANAGER_WRITING_PARAM,
+        MIXERS_MANAGER_STORING_PARAMS,
     } MIXERS_MANAGER_STATUS_e;
 
     /// true: Mixer data is ready for use
@@ -55,6 +56,9 @@ public:
 
     ///* Search for all supported groups and download missing groups*/
     bool searchAllMixerGroupsAndDownload(void);
+
+    ///* Request to store mixer configuration and parameters for a particular group*/
+    bool requestStoreParams(unsigned int group);
 
     MixerGroup* getMixerGroup(unsigned int groupID);
     MixerGroups* getMixerGroups(void) {return &_mixerGroupsData;}
@@ -81,6 +85,7 @@ private:
         AckGetParameter,    ///< MIXER_DATA parameter value message expected
         AckSetParameter,    ///< MIXER_DATA parameter value message expected
         AckAll,             ///< ALL mixer data expected
+        AckStore,           ///< Store mixer
     } AckType_t;
 
 

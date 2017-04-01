@@ -209,6 +209,14 @@ SetupPage {
                             color:  "white"
                         }
 
+                        QGCButton {
+                            id:         storeButton
+                            text:       qsTr("STORE PARAMETERS")
+                            onClicked: {
+                                mixers.storeSelectedGroup();
+                            }
+                        }
+
                     } // Row
 
                     Row {

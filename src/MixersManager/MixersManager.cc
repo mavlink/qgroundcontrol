@@ -113,6 +113,11 @@ void MixersManager::_msgTimeout(void)
         _sendPendingWriteTimeout();
         break;
     }
+    case MIXERS_MANAGER_STORING_PARAMS : {
+        _setStatus(MIXERS_MANAGER_WAITING);
+        _expectedAck = AckNone;
+        break;
+    }
     }
     _expectedAck = AckNone;
 }
@@ -274,6 +279,32 @@ bool MixersManager::searchAllMixerGroupsAndDownload(void) {
     return true;
 }
 
+bool MixersManager::requestStoreParams(unsigned int group){
+    if(_status != MIXERS_MANAGER_WAITING)
+        return false;
+
+    mavlink_message_t       messageOut;
+    mavlink_command_long_t  command;
+
+    _actionGroup = group;
+    _retryCount = 0;
+
+    command.command = MAV_CMD_SAVE_MIXER_PARAMS;
+    command.param1 = group; //Group
+
+    _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_command_long_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                         _dedicatedLink->mavlinkChannel(),
+                                         &messageOut,
+                                         &command);
+
+    _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+    _setStatus(MIXERS_MANAGER_STORING_PARAMS);
+    _startAckTimeout(AckStore);
+    return true;
+}
+
 bool MixersManager::_searchMixerGroup()
 {
     return _requestParameter(_actionGroup, 0);
@@ -366,7 +397,6 @@ bool MixersManager::_requestMissingData(unsigned int group){
     _setStatus(MIXERS_MANAGER_DOWNLOADING_MISSING);
     _actionGroup = group;
     _retryCount = 0;
-
 
 
     _mixerDataDownloadComplete(group);

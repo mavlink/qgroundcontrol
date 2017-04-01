@@ -47,7 +47,8 @@ public:
     Q_PROPERTY(unsigned int         selectedGroup       MEMBER _selectedGroup       NOTIFY selectedGroupChanged)
 
     Q_INVOKABLE void guiUpdated(void);
-        
+    Q_INVOKABLE void storeSelectedGroup(void);
+
     
 signals:
     void mixersManagerStatusTextChanged(void);
