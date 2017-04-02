@@ -56,7 +56,7 @@ Rectangle {
     property string _missionMaxTelemetryText:   isNaN(_missionMaxTelemetry) ? "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_missionMaxTelemetry).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
 
     readonly property real _margins:            ScreenTools.defaultFontPixelWidth
-    readonly property real _fontSize:           ScreenTools.isMobile ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
+    readonly property real _fontSize:           ScreenTools.smallFontPointSize
 
     QGCPalette { id: qgcPal }
 

@@ -402,6 +402,7 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         metaData.setRawDefaultValue(defaultFontPointSize);
         return false;
 #elif defined(__mobile__)
+        //-- This is for when using Mac OS to simulate the ST16 (Development only)
         int defaultFontPointSize = 10;
         metaData.setRawDefaultValue(defaultFontPointSize);
         return false;

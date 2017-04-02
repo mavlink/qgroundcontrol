@@ -70,10 +70,6 @@ Rectangle {
 
     Component.onCompleted: {
         homeButton.checked = true
-        if(!ScreenTools.isMobile) {
-            //-- Make desktop version of tool bar a bit taller
-            ScreenTools.toolbarHeight = ScreenTools.toolbarHeight * 1.25
-        }
     }
 
     MessageDialog {
