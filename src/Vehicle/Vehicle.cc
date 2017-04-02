@@ -57,8 +57,6 @@ const char* Vehicle::_windFactGroupName =       "wind";
 const char* Vehicle::_vibrationFactGroupName =  "vibration";
 const char* Vehicle::_temperatureFactGroupName = "temperature";
 
-const int Vehicle::_lowBatteryAnnounceRepeatMSecs = 30 * 1000;
-
 Vehicle::Vehicle(LinkInterface*             link,
                  int                        vehicleId,
                  int                        defaultComponentId,
@@ -82,9 +80,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _joystickMode(JoystickModeRC)
     , _joystickEnabled(false)
     , _uas(NULL)
-    , _coordinate(37.803784, -122.462276)
-    , _coordinateValid(false)
-    , _homePositionAvailable(false)
     , _mav(NULL)
     , _currentMessageCount(0)
     , _messageCount(0)
@@ -141,6 +136,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _firmwareMinorVersion(versionNotSetValue)
     , _firmwarePatchVersion(versionNotSetValue)
     , _firmwareVersionType(FIRMWARE_VERSION_TYPE_OFFICIAL)
+    , _lastAnnouncedLowBatteryPercent(100)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
     , _headingFact          (0, _headingFactName,           FactMetaData::valueTypeDouble)
@@ -220,9 +216,6 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     _mapTrajectoryTimer.setInterval(_mapTrajectoryMsecsBetweenPoints);
     connect(&_mapTrajectoryTimer, &QTimer::timeout, this, &Vehicle::_addNewMapTrajectoryPoint);
-
-    // Invalidate the timer to signal first announce
-    _lowBatteryAnnounceTimer.invalidate();
 }
 
 // Disconnected Vehicle for offline editing
@@ -246,9 +239,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _joystickMode(JoystickModeRC)
     , _joystickEnabled(false)
     , _uas(NULL)
-    , _coordinate(37.803784, -122.462276)
-    , _coordinateValid(false)
-    , _homePositionAvailable(false)
     , _mav(NULL)
     , _currentMessageCount(0)
     , _messageCount(0)
@@ -298,6 +288,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _firmwareMinorVersion(versionNotSetValue)
     , _firmwarePatchVersion(versionNotSetValue)
     , _gitHash(versionNotSetValue)
+    , _lastAnnouncedLowBatteryPercent(100)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
     , _headingFact          (0, _headingFactName,           FactMetaData::valueTypeDouble)
@@ -636,10 +627,6 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
     _gpsFactGroup.vdop()->setRawValue(gpsRawInt.epv == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.epv / 100.0);
     _gpsFactGroup.courseOverGround()->setRawValue(gpsRawInt.cog == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.cog / 100.0);
     _gpsFactGroup.lock()->setRawValue(gpsRawInt.fix_type);
-
-    if (gpsRawInt.fix_type >= GPS_FIX_TYPE_3D_FIX) {
-        _setCoordinateValid(true);
-    }
 }
 
 void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
@@ -854,11 +841,11 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
     }
     _batteryFactGroup.percentRemaining()->setRawValue(sysStatus.battery_remaining);
 
-    if (sysStatus.battery_remaining > 0 && sysStatus.battery_remaining < _settingsManager->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toInt()) {
-        if (!_lowBatteryAnnounceTimer.isValid() || _lowBatteryAnnounceTimer.elapsed() > _lowBatteryAnnounceRepeatMSecs) {
-            _lowBatteryAnnounceTimer.restart();
-            _say(QString("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
-        }
+    if (sysStatus.battery_remaining > 0 &&
+            sysStatus.battery_remaining < _settingsManager->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toInt() &&
+            sysStatus.battery_remaining < _lastAnnouncedLowBatteryPercent) {
+        _lastAnnouncedLowBatteryPercent = sysStatus.battery_remaining;
+        _say(QString("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
     }
 
     _onboardControlSensorsPresent = sysStatus.onboard_control_sensors_present;
@@ -903,9 +890,6 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
 
 void Vehicle::_handleHomePosition(mavlink_message_t& message)
 {
-    bool emitHomePositionChanged =          false;
-    bool emitHomePositionAvailableChanged = false;
-
     mavlink_home_position_t homePos;
 
     mavlink_msg_home_position_decode(&message, &homePos);
@@ -913,22 +897,9 @@ void Vehicle::_handleHomePosition(mavlink_message_t& message)
     QGeoCoordinate newHomePosition (homePos.latitude / 10000000.0,
                                     homePos.longitude / 10000000.0,
                                     homePos.altitude / 1000.0);
-    if (!_homePositionAvailable || newHomePosition != _homePosition) {
-        emitHomePositionChanged = true;
+    if (newHomePosition != _homePosition) {
         _homePosition = newHomePosition;
-    }
-
-    if (!_homePositionAvailable) {
-        emitHomePositionAvailableChanged = true;
-        _homePositionAvailable = true;
-    }
-
-    if (emitHomePositionChanged) {
-        qCDebug(VehicleLog) << "New home position" << newHomePosition;
         emit homePositionChanged(_homePosition);
-    }
-    if (emitHomePositionAvailableChanged) {
-        emit homePositionAvailableChanged(true);
     }
 }
 
@@ -1171,22 +1142,6 @@ void Vehicle::_updatePriorityLink(void)
     if (newPriorityLink) {
         _priorityLink = qgcApp()->toolbox()->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
     }
-}
-
-void Vehicle::setLatitude(double latitude)
-{
-    _coordinate.setLatitude(latitude);
-    emit coordinateChanged(_coordinate);
-}
-
-void Vehicle::setLongitude(double longitude){
-    _coordinate.setLongitude(longitude);
-    emit coordinateChanged(_coordinate);
-}
-
-void Vehicle::setAltitude(double altitude){
-    _coordinate.setAltitude(altitude);
-    emit coordinateChanged(_coordinate);
 }
 
 void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double yaw, quint64)
@@ -1476,13 +1431,9 @@ void Vehicle::setActive(bool active)
     _startJoystick(_active);
 }
 
-bool Vehicle::homePositionAvailable(void)
-{
-    return _homePositionAvailable;
-}
-
 QGeoCoordinate Vehicle::homePosition(void)
 {
+    qDebug() << "Vehicle::homePosition" << _homePosition.isValid();
     return _homePosition;
 }
 
@@ -1850,14 +1801,6 @@ bool Vehicle::supportsCalibratePressure(void) const
 bool Vehicle::supportsMotorInterference(void) const
 {
     return _firmwarePlugin->supportsMotorInterference();
-}
-
-void Vehicle::_setCoordinateValid(bool coordinateValid)
-{
-    if (coordinateValid != _coordinateValid) {
-        _coordinateValid = coordinateValid;
-        emit coordinateValidChanged(_coordinateValid);
-    }
 }
 
 QString Vehicle::vehicleTypeName() const {

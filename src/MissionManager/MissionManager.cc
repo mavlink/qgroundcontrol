@@ -412,8 +412,8 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message, bool m
         mavlink_msg_mission_item_int_decode(&message, &missionItem);
 
         command =       (MAV_CMD)missionItem.command,
-                frame =         (MAV_FRAME)missionItem.frame,
-                param1 =        missionItem.param1;
+        frame =         (MAV_FRAME)missionItem.frame,
+        param1 =        missionItem.param1;
         param2 =        missionItem.param2;
         param3 =        missionItem.param3;
         param4 =        missionItem.param4;
@@ -428,8 +428,8 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message, bool m
         mavlink_msg_mission_item_decode(&message, &missionItem);
 
         command =       (MAV_CMD)missionItem.command,
-                frame =         (MAV_FRAME)missionItem.frame,
-                param1 =        missionItem.param1;
+        frame =         (MAV_FRAME)missionItem.frame,
+        param1 =        missionItem.param1;
         param2 =        missionItem.param2;
         param3 =        missionItem.param3;
         param4 =        missionItem.param4;
@@ -439,6 +439,13 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message, bool m
         autoContinue =  missionItem.autocontinue;
         isCurrentItem = missionItem.current;
         seq =           missionItem.seq;
+    }
+
+    // We don't support editing ALT_INT frames so change on the way in.
+    if (frame == MAV_FRAME_GLOBAL_INT) {
+        frame = MAV_FRAME_GLOBAL;
+    } else if (frame == MAV_FRAME_GLOBAL_RELATIVE_ALT_INT) {
+        frame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
     }
     
     qCDebug(MissionManagerLog) << "_handleMissionItem sequenceNumber:" << seq << command;

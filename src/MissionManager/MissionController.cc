@@ -139,7 +139,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         _visualItems = newControllerMissionItems;
 
         if (!_activeVehicle->firmwarePlugin()->sendHomePositionToVehicle() || _visualItems->count() == 0) {
-            _addMissionSettings(_activeVehicle, _visualItems, _visualItems->count() > 0 /* addToCenter */);
+            _addMissionSettings(_activeVehicle, _visualItems, _editMode && _visualItems->count() > 0 /* addToCenter */);
         }
 
         _missionItemsRequested = false;
@@ -753,7 +753,10 @@ void MissionController::saveToFile(const QString& filename)
         file.write(saveDoc.toJson());
     }
 
-    _visualItems->setDirty(false);
+    // If we are connected to a real vehicle, don't clear dirty bit on saving to file since vehicle is still out of date
+    if (_activeVehicle->isOfflineEditingVehicle()) {
+        _visualItems->setDirty(false);
+    }
 }
 
 void MissionController::_calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference)
@@ -764,10 +767,6 @@ void MissionController::_calcPrevWaypointValues(double homeAlt, VisualMissionIte
 
     // Convert to fixed altitudes
 
-    qCDebug(MissionControllerLog) << homeAlt
-                                  << currentItem->coordinateHasRelativeAltitude() << currentItem->coordinate().altitude()
-                                  << prevItem->exitCoordinateHasRelativeAltitude() << prevItem->exitCoordinate().altitude();
-
     distanceOk = true;
     if (currentItem->coordinateHasRelativeAltitude()) {
         currentCoord.setAltitude(homeAlt + currentCoord.altitude());
@@ -775,8 +774,6 @@ void MissionController::_calcPrevWaypointValues(double homeAlt, VisualMissionIte
     if (prevItem->exitCoordinateHasRelativeAltitude()) {
         prevCoord.setAltitude(homeAlt + prevCoord.altitude());
     }
-
-    qCDebug(MissionControllerLog) << "distanceOk" << distanceOk;
 
     if (distanceOk) {
         *altDifference = currentCoord.altitude() - prevCoord.altitude();
@@ -797,8 +794,6 @@ double MissionController::_calcDistanceToHome(VisualMissionItem* currentItem, Vi
 
     distanceOk = true;
 
-    qCDebug(MissionControllerLog) << "distanceOk" << distanceOk;
-
     return distanceOk ? homeCoord.distanceTo(currentCoord) : 0.0;
 }
 
@@ -809,7 +804,7 @@ void MissionController::_recalcWaypointLines(void)
 
     bool showHomePosition = _settingsItem->coordinate().isValid();
 
-    qCDebug(MissionControllerLog) << "_recalcWaypointLines";
+    qCDebug(MissionControllerLog) << "_recalcWaypointLines showHomePosition" << showHomePosition;
 
     CoordVectHashTable old_table = _linesTable;
     _linesTable.clear();
@@ -1178,7 +1173,9 @@ void MissionController::_setPlannedHomePositionFromFirstCoordinate(void)
 
 void MissionController::_recalcAll(void)
 {
-    _setPlannedHomePositionFromFirstCoordinate();
+    if (_editMode) {
+        _setPlannedHomePositionFromFirstCoordinate();
+    }
     _recalcSequence();
     _recalcChildItems();
     _recalcWaypointLines();

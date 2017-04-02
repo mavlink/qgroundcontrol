@@ -401,7 +401,7 @@ void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
 
 void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange)
 {
-    if (!vehicle->homePositionAvailable()) {
+    if (!vehicle->homePosition().isValid()) {
         qgcApp()->showMessage(tr("Unable to change altitude, home position unknown."));
         return;
     }
