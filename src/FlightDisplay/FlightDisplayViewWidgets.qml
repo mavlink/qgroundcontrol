@@ -112,7 +112,7 @@ Item {
 
         QGCLabel {
             anchors.horizontalCenter:   parent.horizontalCenter
-            visible:                    _activeVehicle && !_activeVehicle.coordinateValid && _mainIsMap
+            visible:                    _activeVehicle && !_activeVehicle.coordinate.isValid && _mainIsMap
             z:                          QGroundControl.zOrderTopMost
             color:                      mapPal.text
             font.pointSize:             ScreenTools.largeFontPointSize
