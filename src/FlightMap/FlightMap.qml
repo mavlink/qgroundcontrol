@@ -54,6 +54,7 @@ Map {
 
     function _possiblyCenterToVehiclePosition() {
         if (!firstVehiclePositionReceived && allowVehicleLocationCenter && activeVehicleCoordinate.isValid) {
+            console.log("Moving to initial vehicle position", QGroundControl.flightMapInitialZoom)
             firstVehiclePositionReceived = true
             center = activeVehicleCoordinate
             zoomLevel = QGroundControl.flightMapInitialZoom

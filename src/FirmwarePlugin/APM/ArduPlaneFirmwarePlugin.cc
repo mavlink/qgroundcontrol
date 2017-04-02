@@ -86,8 +86,3 @@ int ArduPlaneFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVer
     // Remapping supports up to 3.8
     return majorVersionNumber == 3 ? 8 : Vehicle::versionNotSetValue;
 }
-
-QString ArduPlaneFirmwarePlugin::takeControlFlightMode(void)
-{
-    return QStringLiteral("Manual");
-}

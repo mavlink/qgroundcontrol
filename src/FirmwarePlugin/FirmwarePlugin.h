@@ -93,14 +93,26 @@ public:
     ///     @param[out] custom_mode Custom mode for SET_MODE mavlink message
     virtual bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
 
+    /// Returns The flight mode which indicates the vehicle is paused
+    virtual QString pauseFlightMode(void) const { return QString(); }
+
+    /// Returns the flight mode for running missions
+    virtual QString missionFlightMode(void) const { return QString(); }
+
+    /// Returns the flight mode for RTL
+    virtual QString rtlFlightMode(void) const { return QString(); }
+
+    /// Returns the flight mode for Land
+    virtual QString landFlightMode(void) const { return QString(); }
+
+    /// Returns the flight mode to use when the operator wants to take back control from autonomouse flight.
+    virtual QString takeControlFlightMode(void) const { return QString(); }
+
     /// Returns whether the vehicle is in guided mode or not.
     virtual bool isGuidedMode(const Vehicle* vehicle) const;
 
     /// Set guided flight mode
     virtual void setGuidedMode(Vehicle* vehicle, bool guidedMode);
-
-    /// Returns whether the vehicle is paused or not.
-    virtual bool isPaused(const Vehicle* vehicle) const;
 
     /// Causes the vehicle to stop at current position. If guide mode is supported, vehicle will be let in guide mode.
     /// If not, vehicle will be left in Loiter.
@@ -125,20 +137,9 @@ public:
     /// Command vehicle to move to specified location (altitude is included and relative)
     virtual void guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord);
 
-    /// Command vehicle to change to the specified relatice altitude
-    virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel);
-
-
-
-
-    /// Returns the flight mode for running missions
-    virtual QString missionFlightMode(void);
-
-    /// Returns the flight mode for RTL
-    virtual QString rtlFlightMode(void);
-
-    /// Returns the flight mode to use when the operator wants to take back control from autonomouse flight.
-    virtual QString takeControlFlightMode(void);
+    /// Command vehicle to change altitude
+    ///     @param altitudeChange If > 0, go up by amount specified, if < 0, go down by amount specified
+    virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange);
 
     /// FIXME: This isn't quite correct being here. All code for Joystick suvehicleTypepport is currently firmware specific
     /// not just this. I'm going to try to change that. If not, this will need to be removed.
