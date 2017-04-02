@@ -30,8 +30,11 @@ const int MixersComponentController::_updateInterval = 150;              ///< In
 
 MixersComponentController::MixersComponentController(void)
     : _mixersManagerStatusText(NULL)
+    , _percentDownloadedText(NULL)
+    , _guiUpdateTimer(this)
     , _mixers(new QmlObjectListModel(this))
     , _selectedGroup(0)
+    , _percentDownloaded(0.0)
 {
 //    _getMixersCountButton = NULL;
 //#ifdef UNITTEST_BUILD
@@ -39,9 +42,15 @@ MixersComponentController::MixersComponentController(void)
 //    _unitTestController = this;
 //#endif
 
+    _guiUpdateTimer.setTimerType(Qt::CoarseTimer);
+    _guiUpdateTimer.setSingleShot(false);
+    _guiUpdateTimer.setInterval(_updateInterval);
+    connect(&_guiUpdateTimer, &QTimer::timeout, this, &MixersComponentController::_guiUpdate);
+
     // Connect external connections
     connect(_vehicle->mixersManager(), &MixersManager::mixerDataReadyChanged, this, &MixersComponentController::_updateMixers);
     connect(_vehicle->mixersManager(), &MixersManager::mixerManagerStatusChanged, this, &MixersComponentController::_updateMixersManagerStatus);
+    connect(_vehicle->mixersManager(), &MixersManager::downloadPercentChanged, this, &MixersComponentController::_updatePercentDownloaded);
     connect(this, &MixersComponentController::selectedGroupChanged, this, &MixersComponentController::_updateSelectedGroup);
 }
 
@@ -49,14 +58,26 @@ MixersComponentController::MixersComponentController(void)
 
 MixersComponentController::~MixersComponentController()
 {
+    _guiUpdateTimer.stop();
     delete _mixers;
 }
 
+void MixersComponentController::_guiUpdate(void)
+{
+    QString text;
+    if(_percentDownloaded < 100.0)
+        text.sprintf("%.1f% DOWNLOADED", _percentDownloaded);
+    else
+        text = "DOWNLOAD DONE";
+
+    _percentDownloadedText->setProperty("text", text);
+}
 
 void MixersComponentController::guiUpdated(void)
 {
     _updateMixersManagerStatus(_vehicle->mixersManager()->mixerManagerStatus());
     _vehicle->mixersManager()->searchAllMixerGroupsAndDownload();
+    _guiUpdateTimer.start();
 }
 
 void MixersComponentController::storeSelectedGroup(void){
@@ -112,4 +133,8 @@ void MixersComponentController::_updateSelectedGroup(unsigned int groupID){
     }
 }
 
+void MixersComponentController::_updatePercentDownloaded(float percent)
+{
+    _percentDownloaded = percent;
+}
 

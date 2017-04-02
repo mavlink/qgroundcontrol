@@ -47,7 +47,6 @@ public:
     /// true: Mixer data is ready for use
     Q_PROPERTY(bool mixerDataReady READ mixerDataReady NOTIFY mixerDataReadyChanged)
     Q_PROPERTY(MIXERS_MANAGER_STATUS_e mixerManagerStatus READ mixerManagerStatus NOTIFY mixerManagerStatusChanged)
-    Q_PROPERTY(MixerGroup* mixerGroupStatus READ mixerGroupStatus NOTIFY mixerGroupStatusChanged)
 
     bool mixerDataReady(void);
     MixerGroup* mixerGroupStatus(void);
@@ -71,7 +70,7 @@ signals:
     void mixerDataReadyChanged(bool mixerDataReady);
     void missingMixerDataChanged(bool missingMixerData);
     void mixerManagerStatusChanged(MIXERS_MANAGER_STATUS_e status);
-    void mixerGroupStatusChanged(MixerGroup *mixerGroup);
+    void downloadPercentChanged(float percent);
     
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);

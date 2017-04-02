@@ -50,6 +50,7 @@ SetupPage {
                 id:         mixers
                 factPanel:  tuningPage.viewPanel
                 mixersManagerStatusText:     mixersManagerStatusText
+                percentDownloadedText:       percentDownloadedText
             }
 
             Component.onCompleted: {
@@ -197,20 +198,18 @@ SetupPage {
                         // Status Text
                         QGCLabel {
                             id:         mixersManagerStatusText
-                            width:      ScreenTools.defaultFontPixelWidth * 30
+                            width:      ScreenTools.defaultFontPixelWidth * 25
                             wrapMode:   Text.WordWrap
                             font.pointSize: ScreenTools.largeFontPointSize
                         }
 
-//                        QGCLabel {
-//                            id:     selectedParamIDLabel
-//                            width:  ScreenTools.defaultFontPixelWidth  * 10
-//                            text:   mixers.
-//                            horizontalAlignment:    Text.AlignHCenter
-//                            verticalAlignment:      Text.AlignVCenter
-//                            clip:   true
-//                            color:  "white"
-//                        }
+                        // Percent Downloaded Text
+                        QGCLabel {
+                            id:           percentDownloadedText
+                            width:        ScreenTools.defaultFontPixelWidth * 25
+//                            wrapMode:       Text.WordWrap
+                            font.pointSize: ScreenTools.largeFontPointSize
+                        }
 
                         QGCButton {
                             id:         storeButton
@@ -301,7 +300,7 @@ SetupPage {
                                 }
 
                                 QGCLabel {
-                                    id:     paramValueLabel
+                                    id:     paramValueLabel2
                                     width:  ScreenTools.defaultFontPixelWidth  * 12
                                     text:   paramValueDelegate.valueFact.valueString
                                     horizontalAlignment:    Text.AlignHCenter

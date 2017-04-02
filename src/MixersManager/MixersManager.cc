@@ -477,7 +477,8 @@ bool MixersManager::_collectMixerData(const mavlink_mixer_param_value_t* param){
     int dataIndex = -1;
     int count = _mixerParameterMessages.count();
     for(int i=0; i<count; i++){
-        if(_mixerParameterMessages[i]->index == param->index){
+        if( (_mixerParameterMessages[i]->index == param->index) &&
+            (_mixerParameterMessages[i]->mixer_group == param->mixer_group) ) {
             dataIndex = i;
         }
     }
@@ -489,6 +490,18 @@ bool MixersManager::_collectMixerData(const mavlink_mixer_param_value_t* param){
     } else {
         memcpy(_mixerParameterMessages[dataIndex], param, sizeof(mavlink_mixer_param_value_t));
     }
+    //Update percentage done
+    int total_params = 0;
+    foreach(MixerGroup* group, getMixerGroups()->getMixerGroups()->values()){
+        total_params += group->paramCount();
+    }
+    if(total_params <= 0){
+        emit downloadPercentChanged(0.0);
+    } else {
+        float percent = 100.0 * (float) _mixerParameterMessages.count() / (float) total_params;
+        emit downloadPercentChanged(percent);
+    }
+
     return true;
 }
 

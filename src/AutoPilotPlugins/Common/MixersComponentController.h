@@ -41,17 +41,22 @@ public:
     MixersComponentController(void);
     ~MixersComponentController();
 
-    Q_PROPERTY(QQuickItem* mixersManagerStatusText   MEMBER _mixersManagerStatusText      NOTIFY mixersManagerStatusTextChanged)
+    Q_PROPERTY(QQuickItem* mixersManagerStatusText  MEMBER _mixersManagerStatusText     NOTIFY mixersManagerStatusTextChanged)
+    Q_PROPERTY(QQuickItem* percentDownloadedText    MEMBER _percentDownloadedText       NOTIFY percentDownloadedTextChanged)
 
     Q_PROPERTY(QmlObjectListModel*  mixersList          MEMBER _mixers              CONSTANT)
     Q_PROPERTY(unsigned int         selectedGroup       MEMBER _selectedGroup       NOTIFY selectedGroupChanged)
+//    Q_PROPERTY(float                percentDownloaded   READ percentDownloaded      CONSTANT)
 
     Q_INVOKABLE void guiUpdated(void);
     Q_INVOKABLE void storeSelectedGroup(void);
 
+//    float percentDownloaded(void) {return _percentDownloaded;}
+
     
 signals:
     void mixersManagerStatusTextChanged(void);
+    void percentDownloadedTextChanged(void);
     void selectedGroupChanged(unsigned int group);
     void parameterValueChanged(float paramValue);
         
@@ -59,14 +64,21 @@ private slots:
     void _updateMixers(bool dataReady);
     void _updateMixersManagerStatus(MixersManager::MIXERS_MANAGER_STATUS_e mixerManagerStatus);
     void _updateSelectedGroup(unsigned int groupID);
+    void _updatePercentDownloaded(float percent);
+    void  _guiUpdate(void);
 
 private:    
     static const int _updateInterval;   ///< Interval for ui update timer
 
+    ///* Timer to avoid overloading AP with parameter value changes*/
+    QTimer              _guiUpdateTimer;
+
     QQuickItem* _mixersManagerStatusText;
+    QQuickItem* _percentDownloadedText;
 
     QmlObjectListModel* _mixers;
     unsigned int        _selectedGroup;
+    float               _percentDownloaded;
 
 
 //#ifdef UNITTEST_BUILD
