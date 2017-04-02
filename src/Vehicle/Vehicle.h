@@ -238,8 +238,6 @@ public:
     Q_PROPERTY(int                  id                      READ id                                                     CONSTANT)
     Q_PROPERTY(AutoPilotPlugin*     autopilot               MEMBER _autopilotPlugin                                     CONSTANT)
     Q_PROPERTY(QGeoCoordinate       coordinate              READ coordinate                                             NOTIFY coordinateChanged)
-    Q_PROPERTY(bool                 coordinateValid         READ coordinateValid                                        NOTIFY coordinateValidChanged)
-    Q_PROPERTY(bool                 homePositionAvailable   READ homePositionAvailable                                  NOTIFY homePositionAvailableChanged)
     Q_PROPERTY(QGeoCoordinate       homePosition            READ homePosition                                           NOTIFY homePositionChanged)
     Q_PROPERTY(bool                 armed                   READ armed                  WRITE setArmed                  NOTIFY armedChanged)
     Q_PROPERTY(bool                 flightModeSetAvailable  READ flightModeSetAvailable                                 CONSTANT)
@@ -436,8 +434,6 @@ public:
     // Property accessors
 
     QGeoCoordinate coordinate(void) { return _coordinate; }
-    bool coordinateValid(void)      { return _coordinateValid; }
-    void _setCoordinateValid(bool coordinateValid);
 
     typedef enum {
         JoystickModeRC,         ///< Joystick emulates an RC Transmitter
@@ -494,7 +490,6 @@ public:
     GeoFenceManager*    geoFenceManager(void)   { return _geoFenceManager; }
     RallyPointManager*  rallyPointManager(void) { return _rallyPointManager; }
 
-    bool homePositionAvailable(void);
     QGeoCoordinate homePosition(void);
 
     bool armed(void) { return _armed; }
@@ -672,22 +667,13 @@ public:
     /// @true: When flying a mission the vehicle is always facing towards the next waypoint
     bool vehicleYawsToNextWaypointInMission(void) const;
 
-public slots:
-    /// Sets the firmware plugin instance data associated with this Vehicle. This object will be parented to the Vehicle
-    /// and destroyed when the vehicle goes away.
-    void setLatitude    (double latitude);
-    void setLongitude   (double longitude);
-    void setAltitude    (double altitude);
-
 signals:
     void allLinksInactive(Vehicle* vehicle);
     void coordinateChanged(QGeoCoordinate coordinate);
-    void coordinateValidChanged(bool coordinateValid);
     void joystickModeChanged(int mode);
     void joystickEnabledChanged(bool enabled);
     void activeChanged(bool active);
     void mavlinkMessageReceived(const mavlink_message_t& message);
-    void homePositionAvailableChanged(bool homePositionAvailable);
     void homePositionChanged(const QGeoCoordinate& homePosition);
     void armedChanged(bool armed);
     void flightModeChanged(const QString& flightMode);
@@ -859,9 +845,6 @@ private:
     UAS* _uas;
 
     QGeoCoordinate  _coordinate;
-    bool            _coordinateValid;       ///< true: vehicle has 3d lock and therefore valid location
-
-    bool            _homePositionAvailable;
     QGeoCoordinate  _homePosition;
 
     UASInterface*   _mav;
@@ -976,8 +959,7 @@ private:
 
     QString _gitHash;
 
-    static const int    _lowBatteryAnnounceRepeatMSecs; // Amount of time in between each low battery announcement
-    QElapsedTimer       _lowBatteryAnnounceTimer;
+    int _lastAnnouncedLowBatteryPercent;
 
     SharedLinkInterfacePointer _priorityLink;  // We always keep a reference to the priority link to manage shutdown ordering
 

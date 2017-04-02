@@ -502,11 +502,6 @@ bool SimpleMissionItem::friendlyEditAllowed(void) const
             switch (frame) {
             case MAV_FRAME_GLOBAL:
             case MAV_FRAME_GLOBAL_RELATIVE_ALT:
-#if 0
-            Coming soon
-            case MAV_FRAME_GLOBAL_INT:
-            case MAV_FRAME_GLOBAL_RELATIVE_ALT_INT:
-#endif
                 return true;
                 break;
 

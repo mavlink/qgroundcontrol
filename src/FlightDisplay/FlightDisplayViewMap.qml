@@ -133,6 +133,7 @@ FlightMap {
             var visualItem = missionController.visualItems
             if (visualItems && visualItems.count != 1) {
                 mapFitFunctions.fitMapViewportToMissionItems()
+                firstVehiclePositionReceived = true
             }
         }
     }
@@ -309,7 +310,7 @@ FlightMap {
         map:                    flightMap
         myGeoFenceController:   geoFenceController
         interactive:            false
-        homePosition:           _activeVehicle && _activeVehicle.homePositionAvailable ? _activeVehicle.homePosition : undefined
+        homePosition:           _activeVehicle && _activeVehicle.homePosition.isValid ? _activeVehicle.homePosition : undefined
     }
 
     // Rally points on map
