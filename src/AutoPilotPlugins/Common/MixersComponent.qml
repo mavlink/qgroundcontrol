@@ -83,7 +83,6 @@ SetupPage {
                         border.color:   "dark grey"
 
                         property MixerParameter mixerParamInfo: object
-                        property Fact fact0: mixerParamInfo.values.get(0)
 
                         Row {
                             id:     factRow
@@ -154,7 +153,11 @@ SetupPage {
                             acceptedButtons:    Qt.LeftButton
                             onClicked: {
                                 _editorParameter = mixerParamDelegate.mixerParamInfo
-                                _editorParameterValue = _editorParameter.values.get(0)
+                                if(_editorParameter.values.count > 0) {
+                                    _editorParameterValue = _editorParameter.values.get(0)
+                                } else {
+                                   _editorParameterValue = {}
+                                }
                             }
                         }
                     } //Rectangle
@@ -199,15 +202,15 @@ SetupPage {
                             font.pointSize: ScreenTools.largeFontPointSize
                         }
 
-                        QGCLabel {
-                            id:     selectedParamIDLabel
-                            width:  ScreenTools.defaultFontPixelWidth  * 10
-                            text:   mixers.selectedParamID
-                            horizontalAlignment:    Text.AlignHCenter
-                            verticalAlignment:      Text.AlignVCenter
-                            clip:   true
-                            color:  "white"
-                        }
+//                        QGCLabel {
+//                            id:     selectedParamIDLabel
+//                            width:  ScreenTools.defaultFontPixelWidth  * 10
+//                            text:   mixers.
+//                            horizontalAlignment:    Text.AlignHCenter
+//                            verticalAlignment:      Text.AlignVCenter
+//                            clip:   true
+//                            color:  "white"
+//                        }
 
                         QGCButton {
                             id:         storeButton

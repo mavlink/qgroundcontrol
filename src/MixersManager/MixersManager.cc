@@ -314,8 +314,8 @@ bool MixersManager::_searchNextMixerGroup()
 {
     _retryCount = 0;
     _actionGroup++;
-    if(_actionGroup > 1){
-        _actionGroup = 0;
+    if(_actionGroup > 2){
+        _actionGroup = 1;
         return _downloadMixerGroup();
     }
     return _searchMixerGroup();
@@ -335,7 +335,7 @@ bool MixersManager::_downloadNextMixerGroup()
 {
     _retryCount = 0;
     _actionGroup++;
-    if(_actionGroup > 1) {
+    if(_actionGroup > 2) {
             _setStatus(MIXERS_MANAGER_WAITING);
             emit mixerDataReadyChanged(true);
         return false;
@@ -445,7 +445,7 @@ bool MixersManager::_buildStructureFromMessages(unsigned int group){
             }
         }
         check++;
-        if(check>param_count)
+        if(check > _mixerParameterMessages.count())
             return false;
     }
 
