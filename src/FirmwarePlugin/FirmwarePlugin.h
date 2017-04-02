@@ -276,6 +276,12 @@ public:
     /// @true: When flying a mission the vehicle is always facing towards the next waypoint
     virtual bool vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const;
 
+    /// Returns the data needed to do battery consumption calculations
+    ///     @param[out] mAhBattery Battery milliamp-hours rating (0 for no battery data available)
+    ///     @param[out] hoverAmps Current draw in amps during hover
+    ///     @param[out] cruiseAmps Current draw in amps during cruise
+    virtual void batteryConsumptionData(Vehicle* vehicle, int& mAhBattery, int& hoverAmps, int& cruiseAmps) const;
+
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const char* px4FollowMeFlightMode;
 
