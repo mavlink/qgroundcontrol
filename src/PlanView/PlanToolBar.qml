@@ -43,6 +43,9 @@ Rectangle {
         onRawValueChanged: console.log("changed", QGroundControl.settingsManager.appSettings.automaticMissionUpload.rawValue)
     }
 
+    property real   _largeValueWidth:           ScreenTools.defaultFontPixelWidth * 8
+    property real   _smallValueWidth:           ScreenTools.defaultFontPixelWidth * 4
+    property real   _labelToValueSpacing:       ScreenTools.defaultFontPixelWidth
     property real   _distance:                  _statusValid ? currentMissionItem.distance : NaN
     property real   _altDifference:             _statusValid ? currentMissionItem.altDifference : NaN
     property real   _gradient:                  _statusValid && currentMissionItem.distance > 0 ? Math.atan(currentMissionItem.altDifference / currentMissionItem.distance) : NaN
@@ -58,9 +61,9 @@ Rectangle {
     property string _altDifferenceText:         isNaN(_altDifference) ?         "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
     property string _gradientText:              isNaN(_gradient) ?              "-.-" : _gradientPercent.toFixed(0) + "%"
     property string _azimuthText:               isNaN(_azimuth) ?               "-.-" : Math.round(_azimuth)
-    property string _missionDistanceText:       isNaN(_missionDistance) ?       "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_missionDistance).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
-    property string _missionTimeText:           isNaN(_missionTime) ?           "-.-" : Number(_missionTime / 60).toFixed(1) + " min"
-    property string _missionMaxTelemetryText:   isNaN(_missionMaxTelemetry) ?   "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_missionMaxTelemetry).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
+    property string _missionDistanceText:       isNaN(_missionDistance) ?       "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_missionDistance).toFixed(0) + " " + QGroundControl.appSettingsDistanceUnitsString
+    property string _missionTimeText:           isNaN(_missionTime) ?           "-.-" : Number(_missionTime / 60).toFixed(0) + " min"
+    property string _missionMaxTelemetryText:   isNaN(_missionMaxTelemetry) ?   "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_missionMaxTelemetry).toFixed(0) + " " + QGroundControl.appSettingsDistanceUnitsString
     property string _batteryChangePointText:    _batteryChangePoint < 0 ?       "N/A" : _batteryChangePoint
     property string _batteriesRequiredText:     _batteriesRequired < 0 ?        "N/A" : _batteriesRequired
 
@@ -100,11 +103,10 @@ Rectangle {
         }
 
         GridLayout {
-            anchors.top:    parent.top
-            anchors.bottom: parent.bottom
-            columns:        5
-            rowSpacing:     0
-            columnSpacing:  _margins / 4
+            anchors.verticalCenter: parent.verticalCenter
+            columns:                5
+            rowSpacing:             0
+            columnSpacing:          _labelToValueSpacing
 
             QGCLabel {
                 text:               qsTr("Selected waypoint")
@@ -113,28 +115,43 @@ Rectangle {
             }
 
             QGCLabel { text: qsTr("Distance:") }
-            QGCLabel { text: _distanceText }
+            QGCLabel {
+                text:                   _distanceText
+                Layout.minimumWidth:    _largeValueWidth
+                horizontalAlignment:    Text.AlignRight
+            }
 
             Item { width: 1; height: 1 }
 
             QGCLabel { text: qsTr("Gradient:") }
-            QGCLabel { text: _gradientText }
+            QGCLabel {
+                text:                   _gradientText
+                Layout.minimumWidth:    _smallValueWidth
+                horizontalAlignment:    Text.AlignRight
+            }
 
             QGCLabel { text: qsTr("Alt diff:") }
-            QGCLabel { text: _altDifferenceText }
+            QGCLabel {
+                text:                   _altDifferenceText
+                Layout.minimumWidth:    _largeValueWidth
+                horizontalAlignment:    Text.AlignRight
+            }
 
             Item { width: 1; height: 1 }
 
             QGCLabel { text: qsTr("Azimuth:") }
-            QGCLabel { text: _azimuthText }
+            QGCLabel {
+                text:                   _azimuthText
+                Layout.minimumWidth:    _smallValueWidth
+                horizontalAlignment:    Text.AlignRight
+            }
         }
 
         GridLayout {
-            anchors.top:    parent.top
-            anchors.bottom: parent.bottom
-            columns:        5
-            rowSpacing:     0
-            columnSpacing:  _margins / 4
+            anchors.verticalCenter: parent.verticalCenter
+            columns:                5
+            rowSpacing:             0
+            columnSpacing:          _labelToValueSpacing
 
             QGCLabel {
                 text:               qsTr("Total mission")
@@ -143,23 +160,34 @@ Rectangle {
             }
 
             QGCLabel { text: qsTr("Distance:") }
-            QGCLabel { text: _missionDistanceText }
+            QGCLabel {
+                text:                   _missionDistanceText
+                Layout.minimumWidth:    _largeValueWidth
+                horizontalAlignment:    Text.AlignRight
+            }
 
             Item { width: 1; height: 1 }
 
             QGCLabel { text: qsTr("Max telem dist:") }
-            QGCLabel { text: _missionMaxTelemetryText }
+            QGCLabel {
+                text:                   _missionMaxTelemetryText
+                Layout.minimumWidth:    _largeValueWidth
+                horizontalAlignment:    Text.AlignRight
+            }
 
             QGCLabel { text: qsTr("Time:") }
-            QGCLabel { text: _missionTimeText }
+            QGCLabel {
+                text:                   _missionTimeText
+                Layout.minimumWidth:    _largeValueWidth
+                horizontalAlignment:    Text.AlignRight
+            }
         }
 
         GridLayout {
-            anchors.top:    parent.top
-            anchors.bottom: parent.bottom
-            columns:        3
-            rowSpacing:     0
-            columnSpacing:  _margins / 4
+            anchors.verticalCenter: parent.verticalCenter
+            columns:                3
+            rowSpacing:             0
+            columnSpacing:          _labelToValueSpacing
 
             QGCLabel {
                 text:               qsTr("Battery")
@@ -168,12 +196,20 @@ Rectangle {
             }
 
             QGCLabel { text: qsTr("Batteries required:") }
-            QGCLabel { text: _batteriesRequiredText }
+            QGCLabel {
+                text:                   _batteriesRequiredText
+                horizontalAlignment:    Text.AlignRight
+                Layout.minimumWidth:    _smallValueWidth
+            }
 
             Item { width: 1; height: 1 }
 
             QGCLabel { text: qsTr("Swap waypoint:") }
-            QGCLabel { text: _batteryChangePointText }
+            QGCLabel {
+                text:                   _batteryChangePointText
+                horizontalAlignment:    Text.AlignRight
+                Layout.minimumWidth:    _smallValueWidth
+            }
         }
     }
 
