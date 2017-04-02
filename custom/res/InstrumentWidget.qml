@@ -14,10 +14,10 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick          2.4
-import QtPositioning    5.2
-import QtQuick.Layouts  1.2
-import QtQuick.Dialogs  1.2
+import QtQuick              2.4
+import QtPositioning        5.2
+import QtQuick.Layouts      1.2
+import QtQuick.Dialogs      1.2
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
@@ -33,7 +33,7 @@ import TyphoonHQuickInterface.Widgets   1.0
 Item {
     id:     instrumentWidget
     height: mainRect.height
-    width:  ScreenTools.isMobile ? _computedWidth : (_computedWidth < 120 ? _computedWidth : 120)
+    width:  ScreenTools.isMobile ? _computedWidth : ScreenTools.defaultFontPixelWidth * 16
 
     property real _spacers:                 ScreenTools.defaultFontPixelHeight * 0.5
     property real _distance:                0.0
