@@ -97,7 +97,6 @@
         <file alias="Gps.svg">../src/ui/toolbar/Images/Gps.svg</file>
         <file alias="Hamburger.svg">../src/ui/toolbar/Images/Hamburger.svg</file>
         <file alias="Megaphone.svg">../src/ui/toolbar/Images/Megaphone.svg</file>
-        <file alias="PaperPlane.svg">../src/ui/toolbar/Images/PaperPlane.svg</file>
         <file alias="Plan.svg">../src/ui/toolbar/Images/Plan.svg</file>
         <file alias="Quad.svg">../src/ui/toolbar/Images/Quad.svg</file>
         <file alias="RC.svg">../src/ui/toolbar/Images/RC.svg</file>

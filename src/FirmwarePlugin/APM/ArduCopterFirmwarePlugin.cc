@@ -162,11 +162,20 @@ void ArduCopterFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QG
     vehicle->missionManager()->writeArduPilotGuidedMissionItem(coordWithAltitude, false /* altChangeOnly */);
 }
 
-void ArduCopterFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel)
+void ArduCopterFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange)
 {
     if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
         qgcApp()->showMessage(QStringLiteral("Unable to change altitude, vehicle altitude not known."));
         return;
+    }
+
+    // Don't allow altitude to fall below 3 meters above home
+    double currentAltRel = vehicle->altitudeRelative()->rawValue().toDouble();
+    if (altitudeChange <= 0 && currentAltRel <= 3) {
+        return;
+    }
+    if (currentAltRel + altitudeChange < 3) {
+        altitudeChange = 3 - currentAltRel;
     }
 
     mavlink_message_t msg;
@@ -180,7 +189,7 @@ void ArduCopterFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double
     cmd.type_mask = 0xFFF8; // Only x/y/z valid
     cmd.x = 0.0f;
     cmd.y = 0.0f;
-    cmd.z = -(altitudeRel - vehicle->altitudeRelative()->rawValue().toDouble());
+    cmd.z = -(altitudeChange);
 
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_msg_set_position_target_local_ned_encode_chan(mavlink->getSystemId(),
@@ -190,11 +199,6 @@ void ArduCopterFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double
                                                           &cmd);
 
     vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
-}
-
-bool ArduCopterFirmwarePlugin::isPaused(const Vehicle* vehicle) const
-{
-    return vehicle->flightMode() == "Brake";
 }
 
 void ArduCopterFirmwarePlugin::pauseVehicle(Vehicle* vehicle)
@@ -227,12 +231,6 @@ QString ArduCopterFirmwarePlugin::geoFenceRadiusParam(Vehicle* vehicle)
     Q_UNUSED(vehicle);
     return QStringLiteral("FENCE_RADIUS");
 }
-
-QString ArduCopterFirmwarePlugin::takeControlFlightMode(void)
-{
-    return QStringLiteral("Stabilize");
-}
-
 
 bool ArduCopterFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const
 {

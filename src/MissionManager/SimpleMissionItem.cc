@@ -498,7 +498,16 @@ bool SimpleMissionItem::friendlyEditAllowed(void) const
         }
 
         if (specifiesCoordinate() || specifiesAltitudeOnly()) {
-            return _missionItem.frame() == MAV_FRAME_GLOBAL || _missionItem.frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT;
+            MAV_FRAME frame = _missionItem.frame();
+            switch (frame) {
+            case MAV_FRAME_GLOBAL:
+            case MAV_FRAME_GLOBAL_RELATIVE_ALT:
+                return true;
+                break;
+
+            default:
+                return false;
+            }
         }
 
         return true;

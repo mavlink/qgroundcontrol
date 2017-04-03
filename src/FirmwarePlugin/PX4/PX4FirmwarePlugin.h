@@ -37,6 +37,11 @@ public:
     QString             flightMode                      (uint8_t base_mode, uint32_t custom_mode) const override;
     bool                setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) override;
     void                setGuidedMode                   (Vehicle* vehicle, bool guidedMode) override;
+    QString             pauseFlightMode                 (void) const override { return _holdFlightMode; }
+    QString             missionFlightMode               (void) const override { return _missionFlightMode; }
+    QString             rtlFlightMode                   (void) const override { return _rtlFlightMode; }
+    QString             landFlightMode                  (void) const override { return _landingFlightMode; }
+    QString             takeControlFlightMode           (void) const override { return _manualFlightMode; }
     void                pauseVehicle                    (Vehicle* vehicle) override;
     void                guidedModeRTL                   (Vehicle* vehicle) override;
     void                guidedModeLand                  (Vehicle* vehicle) override;
@@ -61,9 +66,6 @@ public:
     QString             offlineEditingParamFile(Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/PX4/PX4.OfflineEditing.params"); }
     QString             brandImageIndoor                (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/PX4/BrandImage"); }
     QString             brandImageOutdoor               (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/PX4/BrandImage"); }
-    QString             missionFlightMode               (void) override;
-    QString             rtlFlightMode                   (void) override;
-    QString             takeControlFlightMode           (void) override;
     bool                vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const override;
 
 protected:

@@ -244,8 +244,9 @@ Rectangle {
             }
 
             FactCheckBox {
-                text:   qsTr("Hover and capture image")
-                fact:   missionItem.hoverAndCapture
+                text:       qsTr("Hover and capture image")
+                fact:       missionItem.hoverAndCapture
+                visible:    missionItem.hoverAndCaptureAllowed
             }
         }
 
