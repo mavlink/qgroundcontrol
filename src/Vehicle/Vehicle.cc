@@ -1433,7 +1433,6 @@ void Vehicle::setActive(bool active)
 
 QGeoCoordinate Vehicle::homePosition(void)
 {
-    qDebug() << "Vehicle::homePosition" << _homePosition.isValid();
     return _homePosition;
 }
 

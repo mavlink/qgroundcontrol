@@ -126,6 +126,7 @@
         <file alias="QGroundControl/FlightDisplay/FlightDisplayViewMap.qml">src/FlightDisplay/FlightDisplayViewMap.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml">src/FlightDisplay/FlightDisplayViewVideo.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlightDisplayViewWidgets.qml">src/FlightDisplay/FlightDisplayViewWidgets.qml</file>
+        <file alias="QGroundControl/FlightDisplay/GuidedActionsController.qml">src/FlightDisplay/GuidedActionsController.qml</file>
         <file alias="QGroundControl/FlightDisplay/MultiVehicleList.qml">src/FlightDisplay/MultiVehicleList.qml</file>
         <file alias="QGroundControl/FlightDisplay/qmldir">src/FlightDisplay/qmldir</file>
         <file alias="QGroundControl/FlightMap/CenterMapDropButton.qml">src/FlightMap/Widgets/CenterMapDropButton.qml</file>
