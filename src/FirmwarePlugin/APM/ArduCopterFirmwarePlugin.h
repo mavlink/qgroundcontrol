@@ -54,7 +54,6 @@ public:
 
     // Overrides from FirmwarePlugin
     bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) final;
-    bool isPaused(const Vehicle* vehicle) const final;
     void setGuidedMode(Vehicle* vehicle, bool guidedMode) final;
     void pauseVehicle(Vehicle* vehicle) final;
     void guidedModeRTL(Vehicle* vehicle) final;
@@ -64,14 +63,18 @@ public:
     void guidedModeTakeoff(Vehicle* vehicle) final;
 #endif
     void guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord) final;
-    void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel) final;
+    void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange) final;
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
     int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
     bool multiRotorCoaxialMotors(Vehicle* vehicle) final;
     bool multiRotorXConfig(Vehicle* vehicle) final;
     QString geoFenceRadiusParam(Vehicle* vehicle) final;
     QString offlineEditingParamFile(Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Copter.OfflineEditing.params"); }
-    QString takeControlFlightMode(void) final;
+    QString pauseFlightMode(void) const override { return QString("Brake"); }
+    QString missionFlightMode(void) const override { return QString("Auto"); }
+    QString rtlFlightMode(void) const override { return QString("RTL"); }
+    QString landFlightMode(void) const override { return QString("Land"); }
+    QString takeControlFlightMode(void) const override { return QString("Stablize"); }
     bool vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const final;
 
 private:

@@ -97,8 +97,6 @@ public:
     RallyPointManager*  newRallyPointManager            (Vehicle* vehicle) { return new APMRallyPointManager(vehicle); }
     QString             brandImageIndoor                (const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
     QString             brandImageOutdoor               (const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
-    QString             missionFlightMode               (void) final;
-    QString             rtlFlightMode                   (void) final;
 
 protected:
     /// All access to singleton is through stack specific implementation

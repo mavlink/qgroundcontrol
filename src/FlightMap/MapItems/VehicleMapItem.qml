@@ -26,7 +26,7 @@ MapQuickItem {
 
     anchorPoint.x:  vehicleIcon.width  / 2
     anchorPoint.y:  vehicleIcon.height / 2
-    visible:        vehicle && vehicle.coordinateValid
+    visible:        vehicle && vehicle.coordinate.isValid
 
     sourceItem: Image {
         id:                 vehicleIcon

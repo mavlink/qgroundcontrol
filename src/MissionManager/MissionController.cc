@@ -57,21 +57,46 @@ MissionController::MissionController(QObject *parent)
     , _fwLandingMissionItemName(tr("Fixed Wing Landing"))
     , _appSettings(qgcApp()->toolbox()->settingsManager()->appSettings())
 {
-    _missionFlightStatus.maxTelemetryDistance = 0;
-    _missionFlightStatus.totalDistance = 0;
-    _missionFlightStatus.totalTime = 0;
-    _missionFlightStatus.hoverDistance = 0;
-    _missionFlightStatus.hoverTime = 0;
-    _missionFlightStatus.cruiseDistance = 0;
-    _missionFlightStatus.cruiseTime = 0;
-    _missionFlightStatus.cruiseSpeed = 0;
-    _missionFlightStatus.hoverSpeed = 0;
-    _missionFlightStatus.gimbalYaw = 0;
+    _resetMissionFlightStatus();
 }
 
 MissionController::~MissionController()
 {
 
+}
+
+void MissionController::_resetMissionFlightStatus(void)
+{
+    _missionFlightStatus.totalDistance =        0.0;
+    _missionFlightStatus.maxTelemetryDistance = 0.0;
+    _missionFlightStatus.totalTime =            0.0;
+    _missionFlightStatus.hoverTime =            0.0;
+    _missionFlightStatus.cruiseTime =           0.0;
+    _missionFlightStatus.hoverDistance =        0.0;
+    _missionFlightStatus.cruiseDistance =       0.0;
+    _missionFlightStatus.cruiseSpeed =          _activeVehicle ? _activeVehicle->defaultCruiseSpeed() : std::numeric_limits<double>::quiet_NaN();
+    _missionFlightStatus.hoverSpeed =           _activeVehicle ? _activeVehicle->defaultHoverSpeed() : std::numeric_limits<double>::quiet_NaN();
+    _missionFlightStatus.vehicleSpeed =         _activeVehicle ? (_activeVehicle->multiRotor() || _activeVehicle->vtol() ? _missionFlightStatus.hoverSpeed : _missionFlightStatus.cruiseSpeed) : std::numeric_limits<double>::quiet_NaN();
+    _missionFlightStatus.gimbalYaw =            std::numeric_limits<double>::quiet_NaN();
+
+    // Battery information
+
+    _missionFlightStatus.mAhBattery =           0;
+    _missionFlightStatus.hoverAmps =            0;
+    _missionFlightStatus.cruiseAmps =           0;
+    _missionFlightStatus.ampMinutesAvailable =  0;
+    _missionFlightStatus.hoverAmpsTotal =       0;
+    _missionFlightStatus.cruiseAmpsTotal =      0;
+    _missionFlightStatus.batteryChangePoint =   -1;
+    _missionFlightStatus.batteriesRequired =    -1;
+
+    if (_activeVehicle) {
+        _activeVehicle->firmwarePlugin()->batteryConsumptionData(_activeVehicle, _missionFlightStatus.mAhBattery, _missionFlightStatus.hoverAmps, _missionFlightStatus.cruiseAmps);
+        if (_missionFlightStatus.mAhBattery != 0) {
+            double batteryPercentRemainingAnnounce = qgcApp()->toolbox()->settingsManager()->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toDouble();
+            _missionFlightStatus.ampMinutesAvailable = (double)_missionFlightStatus.mAhBattery / 1000.0 * 60.0 * ((100.0 - batteryPercentRemainingAnnounce) / 100.0);
+        }
+    }
 }
 
 void MissionController::start(bool editMode)
@@ -139,7 +164,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         _visualItems = newControllerMissionItems;
 
         if (!_activeVehicle->firmwarePlugin()->sendHomePositionToVehicle() || _visualItems->count() == 0) {
-            _addMissionSettings(_activeVehicle, _visualItems, _visualItems->count() > 0 /* addToCenter */);
+            _addMissionSettings(_activeVehicle, _visualItems, _editMode && _visualItems->count() > 0 /* addToCenter */);
         }
 
         _missionItemsRequested = false;
@@ -753,7 +778,10 @@ void MissionController::saveToFile(const QString& filename)
         file.write(saveDoc.toJson());
     }
 
-    _visualItems->setDirty(false);
+    // If we are connected to a real vehicle, don't clear dirty bit on saving to file since vehicle is still out of date
+    if (_activeVehicle->isOfflineEditingVehicle()) {
+        _visualItems->setDirty(false);
+    }
 }
 
 void MissionController::_calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference)
@@ -764,10 +792,6 @@ void MissionController::_calcPrevWaypointValues(double homeAlt, VisualMissionIte
 
     // Convert to fixed altitudes
 
-    qCDebug(MissionControllerLog) << homeAlt
-                                  << currentItem->coordinateHasRelativeAltitude() << currentItem->coordinate().altitude()
-                                  << prevItem->exitCoordinateHasRelativeAltitude() << prevItem->exitCoordinate().altitude();
-
     distanceOk = true;
     if (currentItem->coordinateHasRelativeAltitude()) {
         currentCoord.setAltitude(homeAlt + currentCoord.altitude());
@@ -775,8 +799,6 @@ void MissionController::_calcPrevWaypointValues(double homeAlt, VisualMissionIte
     if (prevItem->exitCoordinateHasRelativeAltitude()) {
         prevCoord.setAltitude(homeAlt + prevCoord.altitude());
     }
-
-    qCDebug(MissionControllerLog) << "distanceOk" << distanceOk;
 
     if (distanceOk) {
         *altDifference = currentCoord.altitude() - prevCoord.altitude();
@@ -797,8 +819,6 @@ double MissionController::_calcDistanceToHome(VisualMissionItem* currentItem, Vi
 
     distanceOk = true;
 
-    qCDebug(MissionControllerLog) << "distanceOk" << distanceOk;
-
     return distanceOk ? homeCoord.distanceTo(currentCoord) : 0.0;
 }
 
@@ -809,7 +829,7 @@ void MissionController::_recalcWaypointLines(void)
 
     bool showHomePosition = _settingsItem->coordinate().isValid();
 
-    qCDebug(MissionControllerLog) << "_recalcWaypointLines";
+    qCDebug(MissionControllerLog) << "_recalcWaypointLines showHomePosition" << showHomePosition;
 
     CoordVectHashTable old_table = _linesTable;
     _linesTable.clear();
@@ -876,6 +896,36 @@ void MissionController::_recalcWaypointLines(void)
     emit waypointLinesChanged();
 }
 
+void MissionController::_updateBatteryInfo(int waypointIndex)
+{
+    if (_missionFlightStatus.mAhBattery != 0) {
+        _missionFlightStatus.hoverAmpsTotal = (_missionFlightStatus.hoverTime / 60.0) * _missionFlightStatus.hoverAmps;
+        _missionFlightStatus.cruiseAmpsTotal = (_missionFlightStatus.cruiseTime / 60.0) * _missionFlightStatus.cruiseAmps;
+        _missionFlightStatus.batteriesRequired = ceil((_missionFlightStatus.hoverAmpsTotal + _missionFlightStatus.cruiseAmpsTotal) / _missionFlightStatus.ampMinutesAvailable);
+        if (_missionFlightStatus.batteriesRequired == 2 && _missionFlightStatus.batteryChangePoint == -1) {
+            _missionFlightStatus.batteryChangePoint = waypointIndex - 1;
+        }
+    }
+}
+
+void MissionController::_addHoverTime(double hoverTime, double hoverDistance, int waypointIndex)
+{
+    _missionFlightStatus.totalTime += hoverTime;
+    _missionFlightStatus.hoverTime += hoverTime;
+    _missionFlightStatus.hoverDistance += hoverDistance;
+    _missionFlightStatus.totalDistance += hoverDistance;
+    _updateBatteryInfo(waypointIndex);
+}
+
+void MissionController::_addCruiseTime(double cruiseTime, double cruiseDistance, int waypointIndex)
+{
+    _missionFlightStatus.totalTime += cruiseTime;
+    _missionFlightStatus.cruiseTime += cruiseTime;
+    _missionFlightStatus.cruiseDistance += cruiseDistance;
+    _missionFlightStatus.totalDistance += cruiseDistance;
+    _updateBatteryInfo(waypointIndex);
+}
+
 void MissionController::_recalcMissionFlightStatus()
 {
     if (!_visualItems->count()) {
@@ -905,17 +955,7 @@ void MissionController::_recalcMissionFlightStatus()
 
     double lastVehicleYaw = 0;
 
-    _missionFlightStatus.totalDistance =        0.0;
-    _missionFlightStatus.maxTelemetryDistance = 0.0;
-    _missionFlightStatus.totalTime =            0.0;
-    _missionFlightStatus.hoverTime =            0.0;
-    _missionFlightStatus.cruiseTime =           0.0;
-    _missionFlightStatus.hoverDistance =        0.0;
-    _missionFlightStatus.cruiseDistance =       0.0;
-    _missionFlightStatus.cruiseSpeed =          _activeVehicle->defaultCruiseSpeed();
-    _missionFlightStatus.hoverSpeed =           _activeVehicle->defaultHoverSpeed();
-    _missionFlightStatus.vehicleSpeed =         _activeVehicle->multiRotor() || _activeVehicle->vtol() ? _missionFlightStatus.hoverSpeed : _missionFlightStatus.cruiseSpeed;
-    _missionFlightStatus.gimbalYaw =            std::numeric_limits<double>::quiet_NaN();
+    _resetMissionFlightStatus();
 
     bool vtolInHover = true;
     bool linkBackToHome = false;
@@ -1027,7 +1067,6 @@ void MissionController::_recalcMissionFlightStatus()
                     item->setAzimuth(azimuth);
                     item->setDistance(distance);
 
-                    _missionFlightStatus.totalDistance += distance;
                     _missionFlightStatus.maxTelemetryDistance = qMax(_missionFlightStatus.maxTelemetryDistance, _calcDistanceToHome(item, _settingsItem));
 
                     // Calculate time/distance
@@ -1035,24 +1074,15 @@ void MissionController::_recalcMissionFlightStatus()
                     double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
                     if (_activeVehicle->vtol()) {
                         if (vtolInHover) {
-                            _missionFlightStatus.totalTime += hoverTime;
-                            _missionFlightStatus.hoverTime += hoverTime;
-                            _missionFlightStatus.hoverDistance += distance;
+                            _addHoverTime(hoverTime, distance, item->sequenceNumber());
                         } else {
-                            _missionFlightStatus.totalTime += cruiseTime;
-                            _missionFlightStatus.cruiseTime += cruiseTime;
-                            _missionFlightStatus.cruiseDistance += distance;
+                            _addCruiseTime(cruiseTime, distance, item->sequenceNumber());
                         }
                     } else {
                         if (_activeVehicle->multiRotor()) {
-                            _missionFlightStatus.totalTime += hoverTime;
-                            _missionFlightStatus.hoverTime += hoverTime;
-                            _missionFlightStatus.hoverDistance += distance;
+                            _addHoverTime(hoverTime, distance, item->sequenceNumber());
                         } else {
-                            _missionFlightStatus.totalTime += cruiseTime;
-                            _missionFlightStatus.cruiseTime += cruiseTime;
-                            _missionFlightStatus.cruiseDistance += distance;
-
+                            _addCruiseTime(cruiseTime, distance, item->sequenceNumber());
                         }
                     }
                 }
@@ -1060,31 +1090,21 @@ void MissionController::_recalcMissionFlightStatus()
                 if (complexItem) {
                     // Add in distance/time inside complex items as well
                     double distance = complexItem->complexDistance();
-                    _missionFlightStatus.totalDistance += distance;
                     _missionFlightStatus.maxTelemetryDistance = qMax(_missionFlightStatus.maxTelemetryDistance, complexItem->greatestDistanceTo(complexItem->exitCoordinate()));
 
-                    double hoverTime = _missionFlightStatus.totalDistance / _missionFlightStatus.hoverSpeed;
-                    double cruiseTime = _missionFlightStatus.totalDistance / _missionFlightStatus.cruiseSpeed;
+                    double hoverTime = distance / _missionFlightStatus.hoverSpeed;
+                    double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
                     if (_activeVehicle->vtol()) {
                         if (vtolInHover) {
-                            _missionFlightStatus.totalTime += hoverTime;
-                            _missionFlightStatus.hoverTime += hoverTime;
-                            _missionFlightStatus.hoverDistance += distance;
+                            _addHoverTime(hoverTime, distance, item->sequenceNumber());
                         } else {
-                            _missionFlightStatus.totalTime += cruiseTime;
-                            _missionFlightStatus.cruiseTime += cruiseTime;
-                            _missionFlightStatus.cruiseDistance += distance;
+                            _addCruiseTime(cruiseTime, distance, item->sequenceNumber());
                         }
                     } else {
                         if (_activeVehicle->multiRotor()) {
-                            _missionFlightStatus.totalTime += hoverTime;
-                            _missionFlightStatus.hoverTime += hoverTime;
-                            _missionFlightStatus.hoverDistance += distance;
+                            _addHoverTime(hoverTime, distance, item->sequenceNumber());
                         } else {
-                            _missionFlightStatus.totalTime += cruiseTime;
-                            _missionFlightStatus.cruiseTime += cruiseTime;
-                            _missionFlightStatus.cruiseDistance += distance;
-
+                            _addCruiseTime(cruiseTime, distance, item->sequenceNumber());
                         }
                     }
                 }
@@ -1097,6 +1117,9 @@ void MissionController::_recalcMissionFlightStatus()
     }
     lastCoordinateItem->setMissionVehicleYaw(lastVehicleYaw);
 
+    if (_missionFlightStatus.mAhBattery != 0 && _missionFlightStatus.batteryChangePoint == -1) {
+        _missionFlightStatus.batteryChangePoint = 0;
+    }
 
     emit missionMaxTelemetryChanged(_missionFlightStatus.maxTelemetryDistance);
     emit missionDistanceChanged(_missionFlightStatus.totalDistance);
@@ -1105,6 +1128,8 @@ void MissionController::_recalcMissionFlightStatus()
     emit missionTimeChanged();
     emit missionHoverTimeChanged();
     emit missionCruiseTimeChanged();
+    emit batteryChangePointChanged(_missionFlightStatus.batteryChangePoint);
+    emit batteriesRequiredChanged(_missionFlightStatus.batteriesRequired);
 
     // Walk the list again calculating altitude percentages
     double altRange = maxAltSeen - minAltSeen;
@@ -1178,7 +1203,9 @@ void MissionController::_setPlannedHomePositionFromFirstCoordinate(void)
 
 void MissionController::_recalcAll(void)
 {
-    _setPlannedHomePositionFromFirstCoordinate();
+    if (_editMode) {
+        _setPlannedHomePositionFromFirstCoordinate();
+    }
     _recalcSequence();
     _recalcChildItems();
     _recalcWaypointLines();
@@ -1326,62 +1353,6 @@ void MissionController::_activeVehicleHomePositionChanged(const QGeoCoordinate& 
         } else {
             qWarning() << "First item is not MissionSettingsItem";
         }
-    }
-}
-
-void MissionController::_setMissionMaxTelemetry(double missionMaxTelemetry)
-{
-    if (!qFuzzyCompare(_missionFlightStatus.maxTelemetryDistance, missionMaxTelemetry)) {
-        _missionFlightStatus.maxTelemetryDistance = missionMaxTelemetry;
-        emit missionMaxTelemetryChanged(missionMaxTelemetry);
-    }
-}
-
-void MissionController::_setMissionDistance(double missionDistance)
-{
-    if (!qFuzzyCompare(_missionFlightStatus.totalDistance, missionDistance)) {
-        _missionFlightStatus.totalDistance = missionDistance;
-        emit missionDistanceChanged(missionDistance);
-    }
-}
-
-void MissionController::_setMissionTime(double missionTime)
-{
-    if (!qFuzzyCompare(_missionFlightStatus.totalTime, missionTime)) {
-        _missionFlightStatus.totalTime = missionTime;
-        emit missionTimeChanged();
-    }
-}
-
-void MissionController::_setMissionHoverTime(double missionHoverTime)
-{
-    if (!qFuzzyCompare(_missionFlightStatus.hoverTime, missionHoverTime)) {
-        _missionFlightStatus.hoverTime = missionHoverTime;
-        emit missionHoverTimeChanged();
-    }
-}
-
-void MissionController::_setMissionHoverDistance(double missionHoverDistance)
-{
-    if (!qFuzzyCompare(_missionFlightStatus.hoverDistance, missionHoverDistance)) {
-        _missionFlightStatus.hoverDistance = missionHoverDistance;
-        emit missionHoverDistanceChanged(missionHoverDistance);
-    }
-}
-
-void MissionController::_setMissionCruiseTime(double missionCruiseTime)
-{
-    if (!qFuzzyCompare(_missionFlightStatus.cruiseTime, missionCruiseTime)) {
-        _missionFlightStatus.cruiseTime = missionCruiseTime;
-        emit missionCruiseTimeChanged();
-    }
-}
-
-void MissionController::_setMissionCruiseDistance(double missionCruiseDistance)
-{
-    if (!qFuzzyCompare(_missionFlightStatus.cruiseDistance, missionCruiseDistance)) {
-        _missionFlightStatus.cruiseDistance = missionCruiseDistance;
-        emit missionCruiseDistanceChanged(missionCruiseDistance);
     }
 }
 

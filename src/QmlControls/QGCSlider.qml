@@ -10,47 +10,63 @@
 import QtQuick                  2.3
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.4
+import QtQuick.Controls.Private 1.0
 
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
-import QtQuick.Controls.Private     1.0
 
 Slider {
-    property var _qgcPal: QGCPalette { colorGroupEnabled: enabled }
+    id:             _root
+    implicitHeight: ScreenTools.implicitSliderHeight
+
+    // Value indicator starts display from center instead of min value
+    property bool indicatorCentered: false
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     style: SliderStyle {
         groove: Item {
-            property color fillColor: "#49d"
             anchors.verticalCenter: parent.verticalCenter
-            implicitWidth: Math.round(TextSingleton.implicitHeight * 4.5)
-            implicitHeight: Math.max(6, Math.round(TextSingleton.implicitHeight * 0.3))
+            implicitWidth:  Math.round(ScreenTools.defaultFontPixelHeight * 4.5)
+            implicitHeight: Math.round(ScreenTools.defaultFontPixelHeight * 0.3)
 
             Rectangle {
-                radius: height/2
-                anchors.fill: parent
-                border.width: 1
-                border.color: "#888"
-                gradient: Gradient {
-                    GradientStop { color: "#bbb" ; position: 0 }
-                    GradientStop { color: "#ccc" ; position: 0.6 }
-                    GradientStop { color: "#ccc" ; position: 1 }
-                }
+                radius:         height / 2
+                anchors.fill:   parent
+                color:          qgcPal.button
+                border.width:   1
+                border.color:   qgcPal.buttonText
             }
 
             Item {
-                clip: true
-                width: styleData.handlePosition
+                clip:   true
+                x:      _root.indicatorCentered ? indicatorCenteredIndicatorStart : 0
+                width:  _root.indicatorCentered ? centerIndicatorWidth : styleData.handlePosition
                 height: parent.height
+
+                property real indicatorCenteredIndicatorStart:   Math.min(styleData.handlePosition, parent.width / 2)
+                property real indicatorCenteredIndicatorStop:    Math.max(styleData.handlePosition, parent.width / 2)
+                property real centerIndicatorWidth:     indicatorCenteredIndicatorStop - indicatorCenteredIndicatorStart
+
                 Rectangle {
-                    anchors.fill: parent
-                    border.color: Qt.darker(fillColor, 1.2)
-                    radius: height/2
-                    gradient: Gradient {
-                        GradientStop {color: Qt.lighter(fillColor, 1.3)  ; position: 0}
-                        GradientStop {color: fillColor ; position: 1.4}
-                    }
+                    anchors.fill:   parent
+                    color:          qgcPal.colorBlue
+                    border.color:   Qt.darker(color, 1.2)
+                    radius:         height/2
                 }
             }
+        }
+
+        handle: Rectangle {
+            anchors.centerIn: parent
+            color:          qgcPal.button
+            border.color:   qgcPal.buttonText
+            border.width:   1
+            implicitWidth:  _radius * 2
+            implicitHeight: _radius * 2
+            radius:         _radius
+
+            property real _radius: Math.round(ScreenTools.defaultFontPixelHeight * 0.75)
         }
     }
 }

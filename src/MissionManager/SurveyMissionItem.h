@@ -48,6 +48,7 @@ public:
     Q_PROPERTY(Fact*                camera                      READ camera                         CONSTANT)
 
     Q_PROPERTY(bool                 cameraOrientationFixed      MEMBER _cameraOrientationFixed      NOTIFY cameraOrientationFixedChanged)
+    Q_PROPERTY(bool                 hoverAndCaptureAllowed      READ hoverAndCaptureAllowed         CONSTANT)
 
     Q_PROPERTY(double               timeBetweenShots            READ timeBetweenShots               NOTIFY timeBetweenShotsChanged)
     Q_PROPERTY(QVariantList         polygonPath                 READ polygonPath                    NOTIFY polygonPathChanged)
@@ -97,6 +98,7 @@ public:
     int     cameraShots(void) const;
     double  coveredArea(void) const { return _coveredArea; }
     double  timeBetweenShots(void) const;
+    bool    hoverAndCaptureAllowed(void) const;
 
     // Overrides from ComplexMissionItem
 
@@ -171,14 +173,14 @@ signals:
     void cameraOrientationFixedChanged  (bool cameraOrientationFixed);
 
 private slots:
-    void _cameraTriggerChanged(void);
     void _setDirty(void);
 
 private:
     enum CameraTriggerCode {
         CameraTriggerNone,
         CameraTriggerOn,
-        CameraTriggerOff
+        CameraTriggerOff,
+        CameraTriggerHoverAndCapture
     };
 
     void _clear(void);
@@ -186,7 +188,7 @@ private:
     void _clearGrid(void);
     void _generateGrid(void);
     void _updateCoordinateAltitude(void);
-    void _gridGenerator(const QList<QPointF>& polygonPoints, QList<QPointF>& simpleGridPoints, QList<QList<QPointF>>& gridSegments);
+    void _gridGenerator(const QList<QPointF>& polygonPoints, QList<QPointF>& simpleGridPoints, QList<QList<QPointF>>& transectSegments);
     QPointF _rotatePoint(const QPointF& point, const QPointF& origin, double angle);
     void _intersectLinesWithRect(const QList<QLineF>& lineList, const QRectF& boundRect, QList<QLineF>& resultLines);
     void _intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines);
@@ -196,16 +198,24 @@ private:
     void _setCoveredArea(double coveredArea);
     void _cameraValueChanged(void);
     int _appendWaypointToMission(QList<MissionItem*>& items, int seqNum, QGeoCoordinate& coord, CameraTriggerCode cameraTrigger, QObject* missionItemParent);
+    bool _nextTransectCoord(const QList<QGeoCoordinate>& transectPoints, int pointIndex, QGeoCoordinate& coord);
+    double _triggerDistance(void) const;
+    bool _triggerCamera(void) const;
+    bool _imagesEverywhere(void) const;
+    bool _hoverAndCaptureEnabled(void) const;
+    bool _hasTurnaround(void) const;
+    double _turnaroundDistance(void) const;
 
     int                             _sequenceNumber;
     bool                            _dirty;
     QVariantList                    _polygonPath;
     QmlObjectListModel              _polygonModel;
     QVariantList                    _simpleGridPoints;      ///< Grid points for drawing simple grid visuals
-    QList<QList<QGeoCoordinate>>    _gridSegments;          ///< Internal grid line segments including grid exit and turnaround point
+    QList<QList<QGeoCoordinate>>    _transectSegments;      ///< Internal transect segments including grid exit, turnaround and internal camera points
     QGeoCoordinate                  _coordinate;
     QGeoCoordinate                  _exitCoordinate;
     bool                            _cameraOrientationFixed;
+    int                             _missionCommandCount;
 
     double          _surveyDistance;
     int             _cameraShots;

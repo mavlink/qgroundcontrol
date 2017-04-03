@@ -237,13 +237,6 @@ void FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
-bool FirmwarePlugin::isPaused(const Vehicle* vehicle) const
-{
-    // Not supported by generic vehicle
-    Q_UNUSED(vehicle);
-    return false;
-}
-
 void FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
 {
     // Not supported by generic vehicle
@@ -312,21 +305,6 @@ int FirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumbe
 {
     Q_UNUSED(majorVersionNumber);
     return 0;
-}
-
-QString FirmwarePlugin::missionFlightMode(void)
-{
-    return QString();
-}
-
-QString FirmwarePlugin::rtlFlightMode(void)
-{
-    return QString();
-}
-
-QString FirmwarePlugin::takeControlFlightMode(void)
-{
-    return QString();
 }
 
 QString FirmwarePlugin::vehicleImageOpaque(const Vehicle* vehicle) const
@@ -458,4 +436,12 @@ bool FirmwarePlugin::_armVehicle(Vehicle* vehicle)
         qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
     }
     return vehicle->armed();
+}
+
+void FirmwarePlugin::batteryConsumptionData(Vehicle* vehicle, int& mAhBattery, int& hoverAmps, int& cruiseAmps) const
+{
+    Q_UNUSED(vehicle);
+    mAhBattery = 0;
+    hoverAmps = 0;
+    cruiseAmps = 0;
 }
