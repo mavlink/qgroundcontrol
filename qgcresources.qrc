@@ -56,6 +56,7 @@
         <file alias="GeoFence.svg">src/AutoPilotPlugins/PX4/Images/GeoFence.svg</file>
         <file alias="GeoFenceLight.svg">src/AutoPilotPlugins/PX4/Images/GeoFenceLight.svg</file>
         <file alias="GeoTagIcon">src/AnalyzeView/GeoTagIcon.svg</file>
+        <file alias="MavlinkConsoleIcon">src/AnalyzeView/MavlinkConsoleIcon.svg</file>
         <file alias="LandMode.svg">src/AutoPilotPlugins/PX4/Images/LandMode.svg</file>
         <file alias="LandModeCopter.svg">src/AutoPilotPlugins/PX4/Images/LandModeCopter.svg</file>
         <file alias="LightsComponentIcon.png">src/AutoPilotPlugins/APM/Images/LightsComponentIcon.png</file>
