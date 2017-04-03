@@ -36,6 +36,14 @@ Rectangle {
     readonly property real  _verticalMargin:        _defaultTextHeight / 2
     readonly property real  _buttonWidth:           _defaultTextWidth * 18
 
+    GeoTagController {
+        id: geoController
+    }
+
+    LogDownloadController {
+        id: logController
+	}
+
     MavlinkConsoleController {
         id: conController
     }

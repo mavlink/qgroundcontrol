@@ -27,10 +27,6 @@ AnalyzePage {
 
     property real _margin: ScreenTools.defaultFontPixelWidth * 2
 
-    GeoTagController {
-        id: controller
-    }
-
     Component {
         id:                 pageComponent
 
@@ -46,18 +42,18 @@ AnalyzePage {
                     id:             progressBar
                     width:          qgcView.width -_margin * 5
                     maximumValue:   100
-                    value:          controller.progress
+                    value:          geoController.progress
                 }
 
                 BusyIndicator {
-                    running:        controller.progress > 0 && controller.progress < 100 && controller.errorMessage === ""
+                    running:        geoController.progress > 0 && geoController.progress < 100 && geoController.errorMessage === ""
                     width:          progressBar.height
                     height:         progressBar.height
                 }
             }
 
             QGCLabel {
-                text:           controller.errorMessage
+                text:           geoController.errorMessage
                 font.bold:      true
                 font.pointSize: ScreenTools.largeFontPointSize
                 color:          "red"
@@ -77,12 +73,12 @@ AnalyzePage {
                 QGCButton {
                     text:       qsTr("Select log file")
                     width:      ScreenTools.defaultFontPixelWidth * 30
-                    onClicked:  controller.pickLogFile()
+                    onClicked:  geoController.pickLogFile()
                     anchors.verticalCenter:   parent.verticalCenter
                 }
 
                 QGCLabel {
-                    text: controller.logFile
+                    text: geoController.logFile
                     anchors.verticalCenter:   parent.verticalCenter
                 }
             }
@@ -93,12 +89,12 @@ AnalyzePage {
                 QGCButton {
                     text:       qsTr("Select image directory")
                     width:      ScreenTools.defaultFontPixelWidth * 30
-                    onClicked:  controller.pickImageDirectory()
+                    onClicked:  geoController.pickImageDirectory()
                     anchors.verticalCenter:   parent.verticalCenter
                 }
 
                 QGCLabel {
-                    text: controller.imageDirectory
+                    text: geoController.imageDirectory
                     anchors.verticalCenter:   parent.verticalCenter
                 }
             }
@@ -109,12 +105,12 @@ AnalyzePage {
                 QGCButton {
                     text:       qsTr("(Optionally) Select save directory")
                     width:      ScreenTools.defaultFontPixelWidth * 30
-                    onClicked:  controller.pickSaveDirectory()
+                    onClicked:  geoController.pickSaveDirectory()
                     anchors.verticalCenter:   parent.verticalCenter
                 }
 
                 QGCLabel {
-                    text: controller.saveDirectory != "" ? controller.saveDirectory : "/TAGGED folder in your image folder"
+                    text: geoController.saveDirectory != "" ? geoController.saveDirectory : "/TAGGED folder in your image folder"
                     anchors.verticalCenter:   parent.verticalCenter
                 }
             }
@@ -128,13 +124,13 @@ AnalyzePage {
             }
 
             QGCButton {
-                text: controller.inProgress ? qsTr("Cancel Tagging") : qsTr("Start Tagging")
+                text: geoController.inProgress ? qsTr("Cancel Tagging") : qsTr("Start Tagging")
                 width:      ScreenTools.defaultFontPixelWidth * 30
                 onClicked: {
-                    if (controller.inProgress) {
-                        controller.cancelTagging()
+                    if (geoController.inProgress) {
+                        geoController.cancelTagging()
                     } else {
-                        controller.startTagging()
+                        geoController.startTagging()
                     }
                 }
             }
