@@ -30,19 +30,19 @@ FlightMap {
     allowGCSLocationCenter:     !userPanned
     allowVehicleLocationCenter: !_keepVehicleCentered
 
-    property alias  missionController: missionController
+    property var    missionController
+    property var    guidedActionsController
     property var    flightWidgets
     property var    rightPanelWidth
     property var    qgcView                             ///< QGCView control which contains this map
 
-    property var    _activeVehicle:                 QGroundControl.multiVehicleManager.activeVehicle
-    property var    _activeVehicleCoordinate:       _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
-    property var    _gotoHereCoordinate:            QtPositioning.coordinate()
-    property int    _retaskSequence:                0
-    property real   _toolButtonTopMargin:           parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
+    property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
+    property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
+    property var    _gotoHereCoordinate:        QtPositioning.coordinate()
+    property real   _toolButtonTopMargin:       parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
 
-    property bool   _disableVehicleTracking:        false
-    property bool   _keepVehicleCentered:           _mainIsMap ? false : true
+    property bool   _disableVehicleTracking:    false
+    property bool   _keepVehicleCentered:       _mainIsMap ? false : true
 
 
     // Track last known map position and zoom from Fly view in settings
@@ -124,13 +124,11 @@ FlightMap {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
     QGCMapPalette { id: mapPal; lightColors: isSatelliteMap }
 
-    MissionController {
-        id: missionController
-
-        Component.onCompleted: start(false /* editMode */)
+    Connections {
+        target: missionController
 
         onNewItemsFromVehicle: {
-            var visualItem = missionController.visualItems
+            var visualItems = missionController.visualItems
             if (visualItems && visualItems.count != 1) {
                 mapFitFunctions.fitMapViewportToMissionItems()
                 firstVehiclePositionReceived = true
@@ -195,50 +193,6 @@ FlightMap {
         id: _mapTypeButtonsExclusiveGroup
     }
 
-    ToolStrip {
-        id:                 toolStrip
-        anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-        anchors.left:       parent.left
-        anchors.topMargin:  _toolButtonTopMargin
-        anchors.top:        parent.top
-        color:              qgcPal.window
-        title:              qsTr("Fly")
-        z:                  QGroundControl.zOrderWidgets
-        buttonVisible:      [ true, _showZoom, _showZoom ]
-        maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y   // Massive reach across hack
-
-        property bool _showZoom: !ScreenTools.isMobile
-
-        model: [
-            {
-                name:               "Center",
-                iconSource:         "/qmlimages/MapCenter.svg",
-                dropPanelComponent: centerMapDropPanel
-            },
-            {
-                name:               "In",
-                iconSource:         "/qmlimages/ZoomPlus.svg"
-            },
-            {
-                name:               "Out",
-                iconSource:         "/qmlimages/ZoomMinus.svg"
-            }
-        ]
-
-        onClicked: {
-            switch (index) {
-            case 1:
-                _flightMap.zoomLevel += 0.5
-                break
-            case 2:
-                _flightMap.zoomLevel -= 0.5
-                break
-            }
-        }
-    }
-
-    // Toolstrip drop panel compomnents
-
     MapFitFunctions {
         id:                         mapFitFunctions
         map:                        _flightMap
@@ -248,15 +202,6 @@ FlightMap {
         mapRallyPointController:   rallyPointController
 
         property real leftToolWidth:    toolStrip.x + toolStrip.width
-    }
-
-    Component {
-        id: centerMapDropPanel
-
-        CenterMapDropPanel {
-            map:                _flightMap
-            fitFunctions:       mapFitFunctions
-        }
     }
 
     // Add trajectory points to the map
@@ -293,11 +238,7 @@ FlightMap {
 
         delegate: MissionItemMapVisual {
             map:        flightMap
-
-            onClicked: {
-                _retaskSequence = object.sequenceNumber
-                flightWidgets.guidedModeBar.confirmAction(parent.flightWidgets.guidedModeBar.confirmRetask)
-            }
+            onClicked:  guidedActionsController.confirmAction(guidedActionsController.actionSetWaypoint, object.sequenceNumber)
         }
     }
 
@@ -345,6 +286,18 @@ FlightMap {
         }
     }    
 
+    // Handle guided mode clicks
+    MouseArea {
+        anchors.fill: parent
+
+        onClicked: {
+            if (guidedActionsController.showGotoLocation) {
+                _gotoHereCoordinate = flightMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
+                guidedActionsController.confirmAction(guidedActionsController.actionGoto, _gotoHereCoordinate)
+            }
+        }
+    }
+
     MapScale {
         anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * (0.66)
         anchors.rightMargin:    ScreenTools.defaultFontPixelHeight * (0.33)
@@ -352,23 +305,5 @@ FlightMap {
         anchors.right:          parent.right
         mapControl:             flightMap
         visible:                !ScreenTools.isTinyScreen
-    }
-
-    // Handle guided mode clicks
-    MouseArea {
-        anchors.fill: parent
-
-        onClicked: {
-            if (_activeVehicle) {
-                if (flightWidgets.guidedModeBar.state != "Shown") {
-                    flightWidgets.guidedModeBar.state = "Shown"
-                } else {
-                    if (flightWidgets.gotoEnabled) {
-                        _gotoHereCoordinate = flightMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
-                        flightWidgets.guidedModeBar.confirmAction(flightWidgets.guidedModeBar.confirmGoTo)
-                    }
-                }
-            }
-        }
     }
 }
