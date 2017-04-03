@@ -405,7 +405,7 @@ bool MixersManager::_requestMissingData(unsigned int group){
         return false;
     }
     bool found;
-    for(int i=0; i<mixerGroup->paramCount(); i++ ){
+    for(unsigned int i=0; i<mixerGroup->paramCount(); i++ ){
         found = false;
         foreach(mavlink_mixer_param_value_t* msg, _mixerParameterMessages){
             if(msg->index == i) {

@@ -26,16 +26,16 @@ class MixerParameter : public QObject
     Q_OBJECT
     Q_DISABLE_COPY(MixerParameter)
 
-    Q_PROPERTY(int      index           READ index          CONSTANT)
-    Q_PROPERTY(int      mixerID         READ mixerID        CONSTANT)
-    Q_PROPERTY(int      submixerID      READ submixerID     CONSTANT)
-    Q_PROPERTY(int      mixerType       READ mixerType      CONSTANT)
-    Q_PROPERTY(int      paramType       READ paramType      CONSTANT)
-    Q_PROPERTY(QString  paramName       READ paramName      CONSTANT)
-    Q_PROPERTY(bool     readOnly        READ readOnly       CONSTANT)
-    Q_PROPERTY(int      arraySize       READ arraySize      CONSTANT)
-    Q_PROPERTY(QString  valuesString    READ valuesString   CONSTANT)
-    Q_PROPERTY(QmlObjectListModel* values READ values       CONSTANT)
+    Q_PROPERTY(unsigned int         index           READ index          CONSTANT)
+    Q_PROPERTY(unsigned int         mixerID         READ mixerID        CONSTANT)
+    Q_PROPERTY(unsigned int         submixerID      READ submixerID     CONSTANT)
+    Q_PROPERTY(unsigned int         mixerType       READ mixerType      CONSTANT)
+    Q_PROPERTY(unsigned int         paramType       READ paramType      CONSTANT)
+    Q_PROPERTY(QString              paramName       READ paramName      CONSTANT)
+    Q_PROPERTY(bool                 readOnly        READ readOnly       CONSTANT)
+    Q_PROPERTY(unsigned int         arraySize       READ arraySize      CONSTANT)
+    Q_PROPERTY(QString              valuesString    READ valuesString   CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  values          READ values         CONSTANT)
 
 
 public:
@@ -44,12 +44,12 @@ public:
     ~MixerParameter();
 
     // Main mixer Fact describing mixer type    
-    int index(void) {return _index;}
-    int mixerID(void) {return _mixerID;}
-    int submixerID(void) {return _submixerID;}
-    int mixerType(void) {return _mixerType;}
-    int paramType(void) {return _paramType;}
-    int arraySize(void) {return _paramArraySize;}
+    unsigned int index(void) {return _index;}
+    unsigned int mixerID(void) {return _mixerID;}
+    unsigned int submixerID(void) {return _submixerID;}
+    unsigned int mixerType(void) {return _mixerType;}
+    unsigned int paramType(void) {return _paramType;}
+    unsigned int arraySize(void) {return _paramArraySize;}
     QString valuesString(void);
     bool readOnly(void) {return _flags!=0;}
     QString  paramName(void) {return _paramName;}
@@ -62,14 +62,14 @@ private slots:
     void _changedParamValue(QVariant value);
 
 protected:
-    int             _index;
-    int             _mixerID;
-    int             _submixerID;
-    int             _parameterID;
-    int             _mixerType;
-    int             _paramType;
-    int             _paramArraySize;
-    int             _flags;
+    unsigned int    _index;
+    unsigned int    _mixerID;
+    unsigned int    _submixerID;
+    unsigned int    _parameterID;
+    unsigned int    _mixerType;
+    unsigned int    _paramType;
+    unsigned int    _paramArraySize;
+    unsigned int    _flags;
     QString         _paramName;
     QmlObjectListModel* _values;
 };
@@ -85,7 +85,7 @@ class MixerGroup : public QObject
 
     Q_PROPERTY(QString          groupName   READ groupName     CONSTANT)
     Q_PROPERTY(unsigned int     groupID     READ groupID       CONSTANT)
-    Q_PROPERTY(int              paramCount  READ paramCount    CONSTANT)
+    Q_PROPERTY(unsigned int     paramCount  READ paramCount    CONSTANT)
     Q_PROPERTY(bool             complete    READ isComplete    CONSTANT)
 
 public:
@@ -97,7 +97,7 @@ public:
 
     void appendParameter(MixerParameter *param);
     void deleteGroupParameters(void);
-    MixerParameter* getParameter(unsigned int paramID);
+    MixerParameter* getParameter(unsigned int index);
 
     unsigned int groupID(void) {return _groupID;}
     void setGroupID(unsigned int groupID) {_groupID = groupID;}
@@ -105,7 +105,7 @@ public:
     QString groupName(void) {return _groupName;}
     void setGroupName(QString groupName) {_groupName = groupName;}
 
-    int paramCount(void) {return _paramCount;}
+    unsigned int paramCount(void) {return _paramCount;}
     void setParamCount(unsigned int count) {_paramCount = count;}
 
     bool isComplete(void) {return _isComplete;}

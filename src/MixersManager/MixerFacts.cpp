@@ -29,7 +29,7 @@ MixerParameter::MixerParameter(mavlink_mixer_param_value_t* param_msg, QObject* 
 {
     Fact* newValue;
     QString valueName;
-    for(int i=0; i<_paramArraySize; i++){
+    for(unsigned int i=0; i<_paramArraySize; i++){
         valueName = "%1[%2]";
         newValue = new Fact(-1, valueName.arg(_paramName).arg(i), FactMetaData::valueTypeFloat, _values);
         newValue->setRawValue(param_msg->param_values[i]);
@@ -42,13 +42,13 @@ MixerParameter::MixerParameter(mavlink_mixer_param_value_t* param_msg, QObject* 
 
 MixerParameter::MixerParameter(QObject* parent)
     : QObject(parent)
-    , _index(-1)
-    , _mixerID(-1)
-    , _submixerID(-1)
-    , _parameterID(-1)
-    , _mixerType(-1)
-    , _paramType(-1)
-    , _paramArraySize(-1)
+    , _index(0)
+    , _mixerID(0)
+    , _submixerID(0)
+    , _parameterID(0)
+    , _mixerType(0)
+    , _paramType(0)
+    , _paramArraySize(0)
     , _flags(0)
     , _paramName("NONE")
     , _values(nullptr)
@@ -74,7 +74,7 @@ QString MixerParameter::valuesString(void){
     }
     Fact* value = qobject_cast<Fact *>(_values->get(0));
     QString valsStr = value->cookedValueString();
-    for(int i=1; i<_paramArraySize; i++){
+    for(unsigned int i=1; i<_paramArraySize; i++){
         value = qobject_cast<Fact *>(_values->get(i));
         valsStr += " , " + value->cookedValueString();
     }
@@ -112,12 +112,12 @@ void MixerGroup::deleteGroupParameters(void){
     _parameters.clear();
 }
 
-MixerParameter* MixerGroup::getParameter(unsigned int paramID)
+MixerParameter* MixerGroup::getParameter(unsigned int index)
 {
     MixerParameter *param;
     foreach(QObject *paramobj, _parameters){
         param = qobject_cast<MixerParameter *>(paramobj);
-        if(param->index() == paramID)
+        if(param->index() == index)
             return param;
     }
     return nullptr;

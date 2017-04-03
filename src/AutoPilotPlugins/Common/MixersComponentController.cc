@@ -29,9 +29,9 @@ QGC_LOGGING_CATEGORY(MixersComponentControllerVerboseLog, "MixersComponentContro
 const int MixersComponentController::_updateInterval = 150;              ///< Interval for timer which updates radio channel widgets
 
 MixersComponentController::MixersComponentController(void)
-    : _mixersManagerStatusText(NULL)
+    : _guiUpdateTimer(this)
+    , _mixersManagerStatusText(NULL)
     , _percentDownloadedText(NULL)
-    , _guiUpdateTimer(this)
     , _mixers(new QmlObjectListModel(this))
     , _selectedGroup(0)
     , _percentDownloaded(0.0)
@@ -66,7 +66,7 @@ void MixersComponentController::_guiUpdate(void)
 {
     QString text;
     if(_percentDownloaded < 100.0)
-        text.sprintf("%.1f% DOWNLOADED", _percentDownloaded);
+        text.sprintf("%.1f%% DOWNLOADED", _percentDownloaded);
     else
         text = "DOWNLOAD DONE";
 

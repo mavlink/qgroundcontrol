@@ -342,10 +342,6 @@ HEADERS += \
     src/api/QGCOptions.h \
     src/api/QGCSettings.h \
     src/MixersManager/MixerFacts.h \
-    src/MixersManager/MixerMetaData.h \
-    src/MixersManager/mixer_io.h \
-    src/MixersManager/mixer_type_id.h \
-    src/MixersManager/mixer_types.h
 
 SOURCES += \
     src/api/QGCCorePlugin.cc \
