@@ -11,7 +11,7 @@ Rectangle {
     implicitWidth:  label.contentWidth + (_diameter * 2.5) + (_border * 4)
     implicitHeight: Math.max(ScreenTools.isMobile ? ScreenTools.minTouchPixels : 0, label.height * 2.5)
     radius:         height /2
-    color:          qgcPal.window
+    color:          qgcPal.text
 
     signal accept   ///< Action confirmed
     signal reject   ///< Action rejected
@@ -29,6 +29,7 @@ Rectangle {
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.verticalCenter:     parent.verticalCenter
         text:                       confirmText
+        color:                      qgcPal.window
     }
 
     Rectangle {
