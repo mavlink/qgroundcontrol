@@ -7,14 +7,9 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Abstract interface, represents one unmanned aerial vehicle
- *
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
+// NO NEW CODE HERE
+// UASInterface, UAS.h/cc are deprecated. All new functionality should go into Vehicle.h/cc
+//
 
 #ifndef _UASINTERFACE_H_
 #define _UASINTERFACE_H_
