@@ -1228,6 +1228,7 @@ void MissionController::_initAllVisualItems(void)
     }
 
     connect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::_recalcAll);
+    connect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::plannedHomePositionChanged);
 
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
@@ -1241,12 +1242,16 @@ void MissionController::_initAllVisualItems(void)
 
     emit visualItemsChanged();
     emit containsItemsChanged(containsItems());
+    emit plannedHomePositionChanged(plannedHomePosition());
 
     _visualItems->setDirty(false);
 }
 
 void MissionController::_deinitAllVisualItems(void)
 {
+    disconnect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::_recalcAll);
+    disconnect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::plannedHomePositionChanged);
+
     for (int i=0; i<_visualItems->count(); i++) {
         _deinitVisualItem(qobject_cast<VisualMissionItem*>(_visualItems->get(i)));
     }
@@ -1582,4 +1587,13 @@ void MissionController::resumeMission(int resumeIndex)
         resumeIndex--;
     }
     _activeVehicle->missionManager()->generateResumeMission(resumeIndex);
+}
+
+QGeoCoordinate MissionController::plannedHomePosition(void) const
+{
+    if (_settingsItem) {
+        return _settingsItem->coordinate();
+    } else {
+        return QGeoCoordinate();
+    }
 }
