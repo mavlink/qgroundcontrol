@@ -12,8 +12,8 @@
 #include <QQmlEngine>
 #include <QtQml>
 
-SettingsManager::SettingsManager(QGCApplication* app)
-    : QGCTool(app)
+SettingsManager::SettingsManager(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
     , _appSettings(NULL)
     , _unitsSettings(NULL)
     , _autoConnectSettings(NULL)

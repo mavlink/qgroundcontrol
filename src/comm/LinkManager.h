@@ -58,7 +58,7 @@ class LinkManager : public QGCTool
     friend class LinkManagerTest;
 
 public:
-    LinkManager(QGCApplication* app);
+    LinkManager(QGCApplication* app, QGCToolbox* toolbox);
     ~LinkManager();
 
     Q_PROPERTY(bool isBluetoothAvailable                READ isBluetoothAvailable                                               CONSTANT)

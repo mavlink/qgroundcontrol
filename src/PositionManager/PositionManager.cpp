@@ -11,10 +11,10 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 
-QGCPositionManager::QGCPositionManager(QGCApplication* app) :
-    QGCTool(app),
-    _updateInterval(0),
-    _currentSource(nullptr)
+QGCPositionManager::QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
+    , _updateInterval(0)
+    , _currentSource(nullptr)
 {
 
 }

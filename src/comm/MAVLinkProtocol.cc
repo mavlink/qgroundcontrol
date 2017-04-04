@@ -50,8 +50,8 @@ const char* MAVLinkProtocol::_logFileExtension = "mavlink";             ///< Ext
  * The default constructor will create a new MAVLink object sending heartbeats at
  * the MAVLINK_HEARTBEAT_DEFAULT_RATE to all connected links.
  */
-MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app)
-    : QGCTool(app)
+MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
     , m_enable_version_check(true)
     , versionMismatchIgnore(false)
     , systemId(255)
