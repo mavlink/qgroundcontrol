@@ -43,7 +43,6 @@ MixersManager::MixersManager(Vehicle* vehicle)
     _checkWriteParamTimer.setSingleShot(true);
     _checkWriteParamTimer.setInterval(100);
     connect(&_checkWriteParamTimer, &QTimer::timeout, this, &MixersManager::_checkWriteParamTimeout);
-    
 }
 
 MixersManager::~MixersManager()
@@ -543,6 +542,8 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
             mixGroup->setParamCount(param.count);
         }
 
+        _ackTimeoutTimer.stop();
+
         switch(_status){
         case MIXERS_MANAGER_DOWNLOADING_ALL:
             //Check if at end of download
@@ -569,8 +570,6 @@ void MixersManager::_mavlinkMessageReceived(const mavlink_message_t& message)
             _expectedAck = AckNone;
             break;
         }
-
-        _ackTimeoutTimer.stop();
 
         break;
     }

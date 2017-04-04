@@ -115,6 +115,9 @@ void MixersComponentController::_updateMixersManagerStatus(MixersManager::MIXERS
     case MixersManager::MIXERS_MANAGER_WRITING_PARAM:
         _mixersManagerStatusText->setProperty("text", "WRITING PARAMETER");
         break;
+    case MixersManager::MIXERS_MANAGER_IDENTIFYING_SUPPORTED_GROUPS:
+        _mixersManagerStatusText->setProperty("text", "SEARCHING FOR MIXERS");
+        break;
     default:
          _mixersManagerStatusText->setProperty("text", "");
         break;
