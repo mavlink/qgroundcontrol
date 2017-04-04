@@ -62,6 +62,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  visualItems             READ visualItems                NOTIFY visualItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines              NOTIFY waypointLinesChanged)
     Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
+    Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition        NOTIFY plannedHomePositionChanged)
 
     Q_PROPERTY(int                  resumeMissionItem       READ resumeMissionItem          NOTIFY resumeMissionItemChanged)
 
@@ -123,6 +124,7 @@ public:
     QmlObjectListModel* visualItems             (void) { return _visualItems; }
     QmlObjectListModel* waypointLines           (void) { return &_waypointLines; }
     QStringList         complexMissionItemNames (void) const;
+    QGeoCoordinate      plannedHomePosition     (void) const;
 
     /// Returns the item index two which a mission should be resumed. -1 indicates resume mission not available.
     int resumeMissionItem(void) const;
@@ -154,6 +156,7 @@ signals:
     void resumeMissionReady(void);
     void batteryChangePointChanged(int batteryChangePoint);
     void batteriesRequiredChanged(int batteriesRequired);
+    void plannedHomePositionChanged(QGeoCoordinate plannedHomePosition);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
