@@ -43,7 +43,7 @@ class MAVLinkProtocol : public QGCTool
     Q_OBJECT
 
 public:
-    MAVLinkProtocol(QGCApplication* app);
+    MAVLinkProtocol(QGCApplication* app, QGCToolbox* toolbox);
     ~MAVLinkProtocol();
 
     /** @brief Get the human-friendly name of this protocol */

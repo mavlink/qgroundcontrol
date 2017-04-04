@@ -21,8 +21,8 @@
 
 #include <QQmlEngine>
 
-MissionCommandTree::MissionCommandTree(QGCApplication* app, bool unitTest)
-    : QGCTool(app)
+MissionCommandTree::MissionCommandTree(QGCApplication* app, QGCToolbox* toolbox, bool unitTest)
+    : QGCTool(app, toolbox)
     , _allCommandsCategory(tr("All commands"))
     , _settingsManager(NULL)
     , _unitTest(unitTest)

@@ -28,7 +28,7 @@ class SettingsManager : public QGCTool
     Q_OBJECT
     
 public:
-    SettingsManager(QGCApplication* app);
+    SettingsManager(QGCApplication* app, QGCToolbox* toolbox);
 
     Q_PROPERTY(QObject* appSettings         READ appSettings            CONSTANT)
     Q_PROPERTY(QObject* unitsSettings       READ unitsSettings          CONSTANT)

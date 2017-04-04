@@ -30,8 +30,8 @@ QGC_LOGGING_CATEGORY(QGCMapEngineManagerLog, "QGCMapEngineManagerLog")
 static const char* kQmlOfflineMapKeyName = "QGCOfflineMap";
 
 //-----------------------------------------------------------------------------
-QGCMapEngineManager::QGCMapEngineManager(QGCApplication* app)
-    : QGCTool(app)
+QGCMapEngineManager::QGCMapEngineManager(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
     , _topleftLat(0.0)
     , _topleftLon(0.0)
     , _bottomRightLat(0.0)
