@@ -62,7 +62,7 @@ public:
     int                 lastSequenceNumber  (void) const final;
     bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     double              greatestDistanceTo  (const QGeoCoordinate &other) const final;
-    QString             mapVisualQML        (void) const final { return QStringLiteral("MissionSettingsMapVisual.qml"); }
+    QString             mapVisualQML        (void) const final { return QStringLiteral("SimpleItemMapVisual.qml"); }
 
     // Overrides from VisualMissionItem
 
@@ -80,6 +80,7 @@ public:
     double          specifiedFlightSpeed    (void) final;
     double          specifiedGimbalYaw      (void) final;
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
+    void            applyNewAltitude        (double newAltitude) final { Q_UNUSED(newAltitude); /* no action */ }
 
     bool coordinateHasRelativeAltitude      (void) const final { return true; }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return true; }

@@ -1597,3 +1597,13 @@ QGeoCoordinate MissionController::plannedHomePosition(void) const
         return QGeoCoordinate();
     }
 }
+
+void MissionController::applyDefaultMissionAltitude(void)
+{
+    double defaultAltitude = _appSettings->defaultMissionItemAltitude()->rawValue().toDouble();
+
+    for (int i=1; i<_visualItems->count(); i++) {
+        VisualMissionItem* item = _visualItems->value<VisualMissionItem*>(i);
+        item->applyNewAltitude(defaultAltitude);
+    }
+}
