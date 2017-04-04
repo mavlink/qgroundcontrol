@@ -46,13 +46,10 @@ public:
 
     Q_PROPERTY(QmlObjectListModel*  mixersList          MEMBER _mixers              CONSTANT)
     Q_PROPERTY(unsigned int         selectedGroup       MEMBER _selectedGroup       NOTIFY selectedGroupChanged)
-//    Q_PROPERTY(float                percentDownloaded   READ percentDownloaded      CONSTANT)
 
     Q_INVOKABLE void guiUpdated(void);
     Q_INVOKABLE void storeSelectedGroup(void);
-
-//    float percentDownloaded(void) {return _percentDownloaded;}
-
+    Q_INVOKABLE QString getMixerTypeAlias(unsigned int typeID);
     
 signals:
     void mixersManagerStatusTextChanged(void);
@@ -79,6 +76,7 @@ private:
     QmlObjectListModel* _mixers;
     unsigned int        _selectedGroup;
     float               _percentDownloaded;
+    QStringList         _mixerTypeAliases;
 
 
 //#ifdef UNITTEST_BUILD
