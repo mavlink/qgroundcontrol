@@ -23,7 +23,7 @@ QString MixersComponent::name(void) const
 
 QString MixersComponent::description(void) const
 {
-    return tr("Mixers tuning is used to blah, blah, blah... [WIP]");
+    return tr("Mixers tuning is used to modify mixer parameters... [WIP]");
 }
 
 QString MixersComponent::iconResource(void) const

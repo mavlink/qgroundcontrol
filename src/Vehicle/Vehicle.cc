@@ -16,6 +16,7 @@
 #include "UAS.h"
 #include "JoystickManager.h"
 #include "MissionManager.h"
+#include "MixersManager.h"
 #include "MissionController.h"
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
@@ -265,6 +266,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _connectionLostEnabled(true)
     , _missionManager(NULL)
     , _missionManagerInitialRequestSent(false)
+    , _mixersManager(NULL)
+    , _mixersManagerInitialRequestSent(false)
     , _geoFenceManager(NULL)
     , _geoFenceManagerInitialRequestSent(false)
     , _rallyPointManager(NULL)
@@ -313,6 +316,9 @@ void Vehicle::_commonInit(void)
     _missionManager = new MissionManager(this);
     connect(_missionManager, &MissionManager::error,                    this, &Vehicle::_missionManagerError);
     connect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_newMissionItemsAvailable);
+
+    _mixersManager = new MixersManager(this);
+//    connect(_missionManager, &MixersManager::error, this, &Vehicle::_missionManagerError);
 
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
