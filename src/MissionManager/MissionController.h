@@ -93,6 +93,9 @@ public:
 
     Q_INVOKABLE void resumeMission(int resumeIndex);
 
+    /// Updates the altitudes of the items in the current mission to the new default altitude
+    Q_INVOKABLE void applyDefaultMissionAltitude(void);
+
     /// Loads the mission items from the specified file
     ///     @param[in] vehicle Vehicle we are loading items for
     ///     @param[in] filename File to load from

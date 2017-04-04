@@ -138,6 +138,9 @@ public:
     ///     @param missionItemParent Parent object for newly created MissionItems
     virtual void appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent) = 0;
 
+    /// Adjust the altitude of the item if appropriate to the new altitude.
+    virtual void applyNewAltitude(double newAltitude) = 0;
+
     double  missionGimbalYaw    (void) const { return _missionGimbalYaw; }
     double  missionVehicleYaw   (void) const { return _missionVehicleYaw; }
     bool    showMissionGimbalYaw(void) const { return !qIsNaN(_missionGimbalYaw); }
