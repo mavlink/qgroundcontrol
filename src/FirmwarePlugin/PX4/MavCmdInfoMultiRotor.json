@@ -21,6 +21,11 @@
             "comment":      "MAV_CMD_NAV_LOITER_TIME",
             "description":  "Travel to a position and Loiter for an amount of time.",
             "paramRemove":  "3,4"
+        },
+        {
+            "id":           22,
+            "comment":      "MAV_CMD_NAV_TAKEOFF",
+            "paramRemove":  "1"
         }
     ]
 }

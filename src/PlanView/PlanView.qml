@@ -95,6 +95,29 @@ QGCView {
         mapRallyPointController:    rallyPointController
     }
 
+    Connections {
+        target: QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
+
+        onRawValueChanged: {
+            if (_visualItems.count > 1) {
+                _qgcView.showDialog(applyNewAltitude, qsTr("Apply new alititude"), showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+            }
+        }
+    }
+
+    Component {
+        id: applyNewAltitude
+
+        QGCViewMessage {
+            message:    qsTr("You have changed the default altitude for mission items. Would you like to apply that altitude to all the items in the current mission?")
+
+            function accept() {
+                hideDialog()
+                missionController.applyDefaultMissionAltitude()
+            }
+        }
+    }
+
     MissionController {
         id: missionController
 

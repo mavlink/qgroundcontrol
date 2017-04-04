@@ -66,7 +66,6 @@
         <file alias="QGroundControl/Controls/MissionItemIndexLabel.qml">src/QmlControls/MissionItemIndexLabel.qml</file>
         <file alias="QGroundControl/Controls/MissionItemMapVisual.qml">src/PlanView/MissionItemMapVisual.qml</file>
         <file alias="QGroundControl/Controls/MissionItemStatus.qml">src/PlanView/MissionItemStatus.qml</file>
-        <file alias="QGroundControl/Controls/MissionSettingsMapVisual.qml">src/PlanView/MissionSettingsMapVisual.qml</file>
         <file alias="QGroundControl/Controls/ModeSwitchDisplay.qml">src/QmlControls/ModeSwitchDisplay.qml</file>
         <file alias="QGroundControl/Controls/MultiRotorMotorDisplay.qml">src/QmlControls/MultiRotorMotorDisplay.qml</file>
         <file alias="QGroundControl/Controls/OfflineMapButton.qml">src/QmlControls/OfflineMapButton.qml</file>

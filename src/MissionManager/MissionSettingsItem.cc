@@ -146,7 +146,7 @@ double MissionSettingsItem::greatestDistanceTo(const QGeoCoordinate &other) cons
 
 bool MissionSettingsItem::specifiesCoordinate(void) const
 {
-    return false;
+    return true;
 }
 
 void MissionSettingsItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)

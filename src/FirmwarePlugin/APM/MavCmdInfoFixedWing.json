@@ -15,12 +15,6 @@
             "paramRemove":  "4"
         },
         {
-            "id":                       22,
-            "comment":                  "MAV_CMD_NAV_TAKEOFF",
-            "specifiesCoordinate":      false,
-            "specifiesAltitudeOnly":    true
-        },
-        {
             "id":           82,
             "comment":      "MAV_CMD_NAV_SPLINE_WAYPOINT",
             "paramRemove":  "1"
