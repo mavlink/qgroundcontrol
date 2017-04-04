@@ -43,7 +43,9 @@ Rectangle {
 
     Component.onCompleted: recalcShowOptionalElements()
 
-    onMaxHeightChanged: recalcShowOptionalElements()
+    onMaxHeightChanged:     recalcShowOptionalElements()
+    onModelChanged:         recalcShowOptionalElements()
+    onButtonVisibleChanged: recalcShowOptionalElements()
 
     Connections {
         target: ScreenTools
