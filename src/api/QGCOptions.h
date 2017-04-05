@@ -74,7 +74,7 @@ public:
     virtual bool    guidedBarShowEmergencyStop      () const { return true; }
     virtual bool    guidedBarShowOrbit              () const { return true; }
 
-    virtual bool    missionWaypointsOnly            () const { return true; }   ///< true: Only allow waypoints and complex items in Plan
+    virtual bool    missionWaypointsOnly            () const { return false; }  ///< true: Only allow waypoints and complex items in Plan
 
     /// If returned QString in non-empty it means that firmware upgrade will run in a mode which only
     /// supports downloading a single firmware file from the URL. It also supports custom install through
