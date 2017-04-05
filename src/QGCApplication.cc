@@ -91,6 +91,7 @@
 #include "FirmwareUpgradeController.h"
 #include "MainWindow.h"
 #include "GeoTagController.h"
+#include "MavlinkConsoleController.h"
 #endif
 
 #ifdef QGC_RTLAB_ENABLED
@@ -377,6 +378,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
     qmlRegisterType<FirmwareUpgradeController>      ("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
     qmlRegisterType<GeoTagController>               ("QGroundControl.Controllers", 1, 0, "GeoTagController");
+    qmlRegisterType<MavlinkConsoleController>       ("QGroundControl.Controllers", 1, 0, "MavlinkConsoleController");
 #endif
 
     // Register Qml Singletons
