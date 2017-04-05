@@ -345,17 +345,6 @@ QGCView {
                 anchors.fill: parent
             }
 
-            CenterMapDropButton {
-                anchors.margins:    _margins
-                anchors.left:       parent.left
-                anchors.top:        parent.top
-                map:                _map
-                z:                  QGroundControl.zOrderTopMost
-                showMission:        false
-                showAllItems:       false
-                visible:            addNewSetView.visible
-            }
-
             MapScale {
                 anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
                 anchors.bottomMargin:   anchors.leftMargin
@@ -602,6 +591,17 @@ QGCView {
                     } // Map
                 }
             } // Item - Add new set view
+
+            CenterMapDropButton {
+                topMargin:          0
+                anchors.margins:    _margins
+                anchors.left:       map.left
+                anchors.top:        map.top
+                map:                _map
+                showMission:        false
+                showAllItems:       false
+                visible:            addNewSetView.visible
+            }
         } // Map
 
         //-- Add new set dialog
