@@ -195,8 +195,8 @@ TyphoonHOptions::instrumentWidget()
 }
 
 //-----------------------------------------------------------------------------
-TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app)
-    : QGCCorePlugin(app)
+TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app, QGCToolbox* toolbox)
+    : QGCCorePlugin(app, toolbox)
     , _pOptions(NULL)
     , _pTyphoonSettings(NULL)
     , _pGeneral(NULL)
