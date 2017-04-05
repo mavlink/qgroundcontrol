@@ -80,7 +80,7 @@ Rectangle {
     MouseArea {
         anchors.fill: parent
         onClicked: {
-            console.log("easter egg click", ++_clickCount)
+            //console.log("easter egg click", ++_clickCount)
             eggTimer.restart()
             if (_clickCount == 5) {
                 QGroundControl.corePlugin.showAdvancedUI = !QGroundControl.corePlugin.showAdvancedUI

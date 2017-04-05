@@ -41,7 +41,7 @@ Item {
             // Add new items
             for (var i = 0; i < _activeVehicle.flightModes.length; i++) {
                 _flightModes.push(_activeVehicle.flightModes[i]);
-                console.log(_activeVehicle.flightModes[i])
+                //console.log(_activeVehicle.flightModes[i])
             }
             _flightModes.sort();
         }
