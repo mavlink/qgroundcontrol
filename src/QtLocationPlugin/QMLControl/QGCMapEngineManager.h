@@ -26,7 +26,7 @@ class QGCMapEngineManager : public QGCTool
 {
     Q_OBJECT
 public:
-    QGCMapEngineManager(QGCApplication* app);
+    QGCMapEngineManager(QGCApplication* app, QGCToolbox* toolbox);
     ~QGCMapEngineManager();
 
     enum ImportAction {

@@ -29,7 +29,7 @@ class VideoManager : public QGCTool
     Q_OBJECT
 
 public:
-    VideoManager    (QGCApplication* app);
+    VideoManager    (QGCApplication* app, QGCToolbox* toolbox);
     ~VideoManager   ();
 
     Q_PROPERTY(bool             hasVideo            READ    hasVideo                                    NOTIFY hasVideoChanged)

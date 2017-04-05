@@ -25,7 +25,7 @@ class JoystickManager : public QGCTool
     Q_OBJECT
     
 public:
-    JoystickManager(QGCApplication* app);
+    JoystickManager(QGCApplication* app, QGCToolbox* toolbox);
     ~JoystickManager();
 
     /// List of available joysticks

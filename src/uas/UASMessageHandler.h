@@ -72,7 +72,7 @@ class UASMessageHandler : public QGCTool
     Q_OBJECT
 
 public:
-    explicit UASMessageHandler(QGCApplication* app);
+    explicit UASMessageHandler(QGCApplication* app, QGCToolbox* toolbox);
     ~UASMessageHandler();
 
     /**

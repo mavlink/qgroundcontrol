@@ -31,7 +31,7 @@ class QGCCorePlugin : public QGCTool
 {
     Q_OBJECT
 public:
-    QGCCorePlugin(QGCApplication* app);
+    QGCCorePlugin(QGCApplication* app, QGCToolbox* toolbox);
     ~QGCCorePlugin();
 
     Q_PROPERTY(QVariantList settingsPages       READ settingsPages      NOTIFY settingsPagesChanged)
