@@ -11,8 +11,8 @@
 #include "GPSManager.h"
 #include <QDebug>
 
-GPSManager::GPSManager(QGCApplication* app)
-    : QGCTool(app)
+GPSManager::GPSManager(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
 {
     qRegisterMetaType<GPSPositionMessage>();
     qRegisterMetaType<GPSSatelliteMessage>();
