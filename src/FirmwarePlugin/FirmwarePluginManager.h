@@ -29,7 +29,7 @@ class FirmwarePluginManager : public QGCTool
     Q_OBJECT
 
 public:
-    FirmwarePluginManager(QGCApplication* app);
+    FirmwarePluginManager(QGCApplication* app, QGCToolbox* toolbox);
     ~FirmwarePluginManager();
 
     /// Returns list of firmwares which are supported by the system

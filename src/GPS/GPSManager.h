@@ -25,7 +25,7 @@ class GPSManager : public QGCTool
 {
     Q_OBJECT
 public:
-    GPSManager(QGCApplication* app);
+    GPSManager(QGCApplication* app, QGCToolbox* toolbox);
     ~GPSManager();
 
     void connectGPS(const QString& device);

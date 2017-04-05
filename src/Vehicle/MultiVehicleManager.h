@@ -33,7 +33,7 @@ class MultiVehicleManager : public QGCTool
     Q_OBJECT
 
 public:
-    MultiVehicleManager(QGCApplication* app);
+    MultiVehicleManager(QGCApplication* app, QGCToolbox* toolbox);
 
     Q_INVOKABLE void        saveSetting (const QString &key, const QString& value);
     Q_INVOKABLE QString     loadSetting (const QString &key, const QString& defaultValue);

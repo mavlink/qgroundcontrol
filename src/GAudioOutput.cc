@@ -30,8 +30,8 @@
 #include <QtAndroidExtras/QAndroidJniObject>
 #endif
 
-GAudioOutput::GAudioOutput(QGCApplication* app)
-    : QGCTool(app)
+GAudioOutput::GAudioOutput(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
 #ifndef __android__
     , thread(new QThread())
     , worker(new QGCAudioWorker())
