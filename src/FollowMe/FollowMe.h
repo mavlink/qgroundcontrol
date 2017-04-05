@@ -27,8 +27,7 @@ class FollowMe : public QGCTool
     Q_OBJECT
 
 public:
-    FollowMe(QGCApplication* app);
-    ~FollowMe();
+    FollowMe(QGCApplication* app, QGCToolbox* toolbox);
 
 public slots:
     void followMeHandleManager(const QString&);
