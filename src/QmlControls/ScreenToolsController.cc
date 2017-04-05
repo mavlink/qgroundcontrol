@@ -12,7 +12,9 @@
 /// @author Gus Grubba <mavlink@grubba.com>
 
 #include "ScreenToolsController.h"
+#include <QFontDatabase>
 #include <QScreen>
+
 #if defined(__ios__)
 #include <sys/utsname.h>
 #endif
@@ -23,7 +25,7 @@ ScreenToolsController::ScreenToolsController()
 }
 
 QString
-ScreenToolsController::iOSDevice()
+ScreenToolsController::iOSDevice() const
 {
 #if defined(__ios__)
     struct utsname systemInfo;
@@ -32,4 +34,10 @@ ScreenToolsController::iOSDevice()
 #else
     return QString();
 #endif
+}
+
+QString
+ScreenToolsController::fixedFontFamily() const
+{
+    return QFontDatabase::systemFont(QFontDatabase::FixedFont).family();
 }
