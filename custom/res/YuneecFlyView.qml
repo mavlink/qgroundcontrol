@@ -256,6 +256,8 @@ Item {
         width:  vehicleStatusRow.width  + (ScreenTools.defaultFontPixelWidth * 4)
         height: vehicleStatusRow.height * 1.5
         color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.8) : Qt.rgba(0,0,0,0.75)
+        border.color: qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
+        border.width: 1
         anchors.bottom: parent.bottom
         anchors.right:  parent.right
         anchors.rightMargin:  _indicatorDiameter * 0.5
@@ -344,11 +346,10 @@ Item {
                 text:           _activeVehicle ? ('00000' + _activeVehicle.flightDistance.rawValue.toFixed(0)).slice(-5) : "00000"  + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "m")
                 anchors.verticalCenter: parent.verticalCenter
             }
-            Rectangle {
+            Item {
                 id:             vehicleStatusExtRect
                 width:          _indicatorDiameter * 0.5
-                height:         vehicleStatusRow.height
-                color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.8) : Qt.rgba(0,0,0,0.75)
+                height:         1
             }
         }
     }

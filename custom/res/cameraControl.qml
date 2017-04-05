@@ -41,6 +41,8 @@ Rectangle {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
+    readonly property string _commLostStr: qsTr("NO CAMERA")
+
     property real _spacers:                 ScreenTools.defaultFontPixelHeight * 0.5
     property real _editFieldWidth:          ScreenTools.defaultFontPixelWidth  * 30
     property var  _activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle
@@ -83,7 +85,7 @@ Rectangle {
         //-----------------------------------------------------------------
         QGCLabel {
             id:         cameraLabel
-            text:       TyphoonHQuickInterface.connectedCamera === "" ? qsTr("NO CAMERA") : TyphoonHQuickInterface.connectedCamera
+            text:       _activeVehicle ? (TyphoonHQuickInterface.connectedCamera !== "" ? TyphoonHQuickInterface.connectedCamera : _commLostSrt) : _commLostStr
             font.pointSize: ScreenTools.smallFontPointSize
             anchors.horizontalCenter: parent.horizontalCenter
         }
