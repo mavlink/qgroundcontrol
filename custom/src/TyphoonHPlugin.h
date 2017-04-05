@@ -17,7 +17,7 @@ class TyphoonHPlugin : public QGCCorePlugin
 {
     Q_OBJECT
 public:
-    TyphoonHPlugin(QGCApplication* app);
+    TyphoonHPlugin(QGCApplication* app, QGCToolbox *toolbox);
     ~TyphoonHPlugin();
 
     TyphoonHM4Interface*   handler                      () { return _pHandler; }

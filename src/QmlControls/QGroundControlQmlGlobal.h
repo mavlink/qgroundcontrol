@@ -34,7 +34,7 @@ class QGroundControlQmlGlobal : public QGCTool
     Q_OBJECT
 
 public:
-    QGroundControlQmlGlobal(QGCApplication* app);
+    QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox* toolbox);
     ~QGroundControlQmlGlobal();
 
     Q_PROPERTY(QString              appName             READ appName                CONSTANT)

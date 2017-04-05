@@ -42,8 +42,8 @@ const int LinkManager::_autoconnectConnectDelayMSecs =  6000;
 const int LinkManager::_autoconnectConnectDelayMSecs =  1000;
 #endif
 
-LinkManager::LinkManager(QGCApplication* app)
-    : QGCTool(app)    
+LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
     , _configUpdateSuspended(false)
     , _configurationsLoaded(false)
     , _connectionsSuspended(false)

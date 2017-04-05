@@ -85,7 +85,7 @@ Rectangle {
         //-----------------------------------------------------------------
         QGCLabel {
             id:         cameraLabel
-            text:       _activeVehicle ? (TyphoonHQuickInterface.connectedCamera !== "" ? TyphoonHQuickInterface.connectedCamera : _commLostSrt) : _commLostStr
+            text:       _activeVehicle ? (TyphoonHQuickInterface.connectedCamera !== "" ? TyphoonHQuickInterface.connectedCamera : _commLostStr) : _commLostStr
             font.pointSize: ScreenTools.smallFontPointSize
             anchors.horizontalCenter: parent.horizontalCenter
         }

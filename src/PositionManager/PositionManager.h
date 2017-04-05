@@ -21,7 +21,7 @@ class QGCPositionManager : public QGCTool {
 
 public:
 
-    QGCPositionManager(QGCApplication* app);
+    QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox);
     ~QGCPositionManager();
 
     enum QGCPositionSource {

@@ -24,8 +24,8 @@ const char* QGroundControlQmlGlobal::_flightMapPositionLatitudeSettingsKey =    
 const char* QGroundControlQmlGlobal::_flightMapPositionLongitudeSettingsKey =   "Longitude";
 const char* QGroundControlQmlGlobal::_flightMapZoomSettingsKey =                "FlightMapZoom";
 
-QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
-    : QGCTool(app)
+QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
     , _flightMapInitialZoom(14.7)   // About 500 meter scale
     , _linkManager(NULL)
     , _multiVehicleManager(NULL)

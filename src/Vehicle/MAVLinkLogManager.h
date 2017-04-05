@@ -106,7 +106,7 @@ class MAVLinkLogManager : public QGCTool
     Q_OBJECT
 
 public:
-    MAVLinkLogManager    (QGCApplication* app);
+    MAVLinkLogManager    (QGCApplication* app, QGCToolbox* toolbox);
     ~MAVLinkLogManager   ();
 
     Q_PROPERTY(QString              emailAddress        READ    emailAddress        WRITE setEmailAddress       NOTIFY emailAddressChanged)
