@@ -68,7 +68,10 @@ Button {
         }
     }
 
-    onClicked: popup.toggleShow()
+    onClicked: {
+        combo.focus = true
+        popup.toggleShow()
+    }
 
     Component.onCompleted: {
         if (currentIndex === -1) {

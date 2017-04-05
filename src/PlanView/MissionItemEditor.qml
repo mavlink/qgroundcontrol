@@ -45,9 +45,17 @@ Rectangle {
         colorGroupEnabled: enabled
     }
 
-    MouseArea {
+    FocusScope {
+        id:             currentItemScope
         anchors.fill:   parent
-        onClicked:      _root.clicked()
+
+        MouseArea {
+            anchors.fill:   parent
+            onClicked: {
+                currentItemScope.focus = true
+                _root.clicked()
+            }
+        }
     }
 
     QGCLabel {
@@ -76,7 +84,14 @@ Rectangle {
     QGCMouseArea {
         fillItem:   hamburger
         visible:    hamburger.visible
-        onClicked:  _waypointsOnlyMode ? waypointsOnlyMenu.popup() : normalMenu.popup()
+        onClicked: {
+            currentItemScope.focus = true
+            if (_waypointsOnlyMode) {
+                waypointsOnlyMenu.popup()
+            } else {
+                normalMenu.popup()
+            }
+        }
 
         Menu {
             id: normalMenu
