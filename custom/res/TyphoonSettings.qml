@@ -131,12 +131,17 @@ QGCView {
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
                 //-----------------------------------------------------------------
                 //-- WIFI AP Connection
-                QGCLabel {
-                    anchors.left:   parent.left
-                    text:           "Experimental"
-                    font.family:    ScreenTools.demiboldFontFamily
-                    width:          qgcView.width * 0.8
+                Item {
+                    width:              qgcView.width * 0.8
+                    height:             expButton.height
+                    anchors.margins:    ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
+                    QGCLabel {
+                        id:             expButton
+                        text:           "Experimental"
+                        font.family:    ScreenTools.demiboldFontFamily
+                        anchors.left:   parent.left
+                    }
                 }
                 Rectangle {
                     height:         expCol.height + (ScreenTools.defaultFontPixelHeight * 2)
