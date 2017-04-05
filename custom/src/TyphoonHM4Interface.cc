@@ -216,11 +216,16 @@ TyphoonHM4Interface::_vehicleReady(bool ready)
         if(ready) {
             qCDebug(YuneecLog) << "_vehicleReady( YES )";
             _cameraControl->setVehicle(_vehicle);
-            //-- First boot, not bound
-            if(_m4State == TyphoonHQuickInterface::M4_STATE_AWAIT) {
-                enterBindMode();
-            } else if(_m4State == TyphoonHQuickInterface::M4_STATE_RUN && (!_bound || _resetBind)) {
-                enterBindMode();
+            //-- If for some reason vehicle is armed, do nothing
+            if(_vehicle->armed()) {
+                qCWarning(YuneecLog) << "Booted with an armed vehicle!";
+            } else {
+                //-- First boot, not bound
+                if(_m4State == TyphoonHQuickInterface::M4_STATE_AWAIT) {
+                    enterBindMode();
+                } else if(_m4State == TyphoonHQuickInterface::M4_STATE_RUN && (!_bound || _resetBind)) {
+                    enterBindMode();
+                }
             }
         } else {
             qCDebug(YuneecLog) << "_vehicleReady( NOT )";

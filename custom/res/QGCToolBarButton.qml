@@ -18,7 +18,6 @@ import QGroundControl.ScreenTools   1.0
 Item {
     id:     _root
     width:  height
-    state:  "HelpShown"
     clip:   true
 
     property alias          source:         icon.source
@@ -48,7 +47,7 @@ Item {
         anchors.bottom:         parent.bottom
         sourceSize.height:      parent.height
         fillMode:               Image.PreserveAspectFit
-        color:                  logo ? "white" : (checked ? qgcPal.buttonHighlight : qgcPal.buttonText)
+        color:                  qgcPal.buttonText
     }
 
     MouseArea {

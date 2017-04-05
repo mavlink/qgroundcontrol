@@ -23,7 +23,7 @@ import TyphoonHQuickInterface               1.0
 //-------------------------------------------------------------------------
 //-- WIFI RSSI Indicator
 Item {
-    width:          Math.max(wifiRSSIRow.width, wifiLabel.width)
+    width:          ScreenTools.defaultFontPixelWidth * 8
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
@@ -79,12 +79,11 @@ Item {
             }
         }
     }
-
     Row {
-        id:             wifiRSSIRow
+        spacing:        ScreenTools.defaultFontPixelWidth
         anchors.top:    parent.top
         anchors.bottom: _isAP ? wifiLabel.top : parent.bottom
-        spacing:        ScreenTools.defaultFontPixelWidth
+        anchors.horizontalCenter: parent.horizontalCenter
         QGCColoredImage {
             width:              height
             anchors.top:        parent.top
@@ -110,7 +109,6 @@ Item {
             }
         }
     }
-
     QGCLabel {
         id:         wifiLabel
         text:       "AP WIFI"

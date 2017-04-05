@@ -55,13 +55,14 @@ public:
     Q_PROPERTY(qreal            rcBattery       READ    rcBattery           NOTIFY rcBatteryChanged)
     Q_PROPERTY(QString          flightTime      READ    flightTime          NOTIFY flightTimeChanged)
 
-    Q_INVOKABLE void enterBindMode  ();
-    Q_INVOKABLE void initM4         ();
-    Q_INVOKABLE void startScan      (int delay = 0);
-    Q_INVOKABLE void stopScan       ();
-    Q_INVOKABLE void bindWIFI       (QString ssid, QString password);
-    Q_INVOKABLE bool isWIFIConnected();
-    Q_INVOKABLE void resetWifi      ();
+    Q_INVOKABLE void enterBindMode      ();
+    Q_INVOKABLE void initM4             ();
+    Q_INVOKABLE void startScan          (int delay = 0);
+    Q_INVOKABLE void stopScan           ();
+    Q_INVOKABLE void bindWIFI           (QString ssid, QString password);
+    Q_INVOKABLE bool isWIFIConnected    ();
+    Q_INVOKABLE void resetWifi          ();
+    Q_INVOKABLE bool isWifiConfigured   (QString ssid);
 
     M4State     m4State             ();
     QString     m4StateStr          ();
@@ -123,7 +124,12 @@ private slots:
     void    _flightUpdate               ();
 
 private:
+    void    _saveWifiConfigurations     ();
+    void    _loadWifiConfigurations     ();
+
+private:
     TyphoonHM4Interface*    _pHandler;
+    QMap<QString, QString>  _configurations;
     QStringList             _ssidList;
     QString                 _ssid;
     QString                 _password;

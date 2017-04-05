@@ -30,13 +30,14 @@ Item {
     Column {
         spacing: 0
         Rectangle {
-            width:  _root.width  * 0.35
+            width:  _root.width  * 0.45
             height: _root.height * 0.125
             color:  qgcPal.buttonText
             antialiasing: true
             anchors.horizontalCenter: parent.horizontalCenter
         }
         Rectangle {
+            id:     batteryShell
             width:  _root.width
             height: _root.height * 0.75
             radius: 2
@@ -46,12 +47,12 @@ Item {
             border.color:  qgcPal.buttonText
             anchors.horizontalCenter: parent.horizontalCenter
             Rectangle {
-                width:  parent.width * 0.6
-                height: parent.height * batteryLevel * 0.75
-                color:  _batteryColor
-                antialiasing: true
+                z:              batteryShell.z - 1
+                width:          parent.width
+                height:         parent.height * batteryLevel
+                color:          _batteryColor
+                antialiasing:   true
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 2
                 anchors.horizontalCenter: parent.horizontalCenter
             }
         }

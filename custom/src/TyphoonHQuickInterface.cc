@@ -17,6 +17,8 @@
 extern const char* jniClassName;
 #endif
 
+static const char* kWifiConfig = "WifiConfig";
+
 #if defined __android__
 void
 reset_jni()
@@ -65,6 +67,7 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(&_scanTimer, &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
         connect(&_flightTimer, &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
         _flightTimer.setSingleShot(false);
+        _loadWifiConfigurations();
     }
 }
 
@@ -281,6 +284,13 @@ TyphoonHQuickInterface::resetWifi()
 }
 
 //-----------------------------------------------------------------------------
+bool
+TyphoonHQuickInterface::isWifiConfigured(QString ssid)
+{
+    return _configurations.contains(ssid);
+}
+
+//-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::bindWIFI(QString ssid, QString password)
 {
@@ -291,6 +301,11 @@ TyphoonHQuickInterface::bindWIFI(QString ssid, QString password)
     emit bindingWiFiChanged();
     _ssid = ssid;
     _password = password;
+    if(password.isEmpty()) {
+        if(_configurations.contains(ssid)) {
+            _password = _configurations[ssid];
+        }
+    }
 #if defined __android__
     if(_pHandler) {
         _pHandler->resetBind();
@@ -434,6 +449,11 @@ void
 TyphoonHQuickInterface::_authenticationError()
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface::_authenticationError()";
+    //-- Remove configuration if we had it
+    if(_configurations.contains(_ssid)) {
+        _configurations.remove(_ssid);
+        _saveWifiConfigurations();
+    }
     _bindingWiFi = false;
     emit bindingWiFiChanged();
     emit connectedSSIDChanged();
@@ -446,6 +466,9 @@ void
 TyphoonHQuickInterface::_wifiConnected()
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface::_wifiConnected()";
+    //-- Save configuration
+    _configurations[_ssid] = _password;
+    _saveWifiConfigurations();
     _bindingWiFi = false;
     emit bindingWiFiChanged();
     emit connectedSSIDChanged();
@@ -495,4 +518,34 @@ void
 TyphoonHQuickInterface::_flightUpdate()
 {
     emit flightTimeChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_loadWifiConfigurations()
+{
+    qCDebug(YuneecLog) << "Loading WIFI Configurations";
+    QSettings settings;
+    settings.beginGroup(kWifiConfig);
+    QStringList keys = settings.childKeys();
+    foreach (QString key, keys) {
+         _configurations[key] = settings.value(key).toString();
+         qCDebug(YuneecLog) << key << _configurations[key];
+    }
+    settings.endGroup();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_saveWifiConfigurations()
+{
+    QSettings settings;
+    settings.beginGroup(kWifiConfig);
+    settings.remove("");
+    QMap<QString, QString>::const_iterator i = _configurations.constBegin();
+    while (i != _configurations.constEnd()) {
+         settings.setValue(i.key(), i.value());
+         i++;
+     }
+    settings.endGroup();
 }

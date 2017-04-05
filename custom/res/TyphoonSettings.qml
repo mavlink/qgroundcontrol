@@ -44,6 +44,18 @@ QGCView {
         }
     }
 
+    function connectWifi(password) {
+        QGroundControl.skipSetupPage = true
+        //-- If we were connected to something, let it go away when it disconnects.
+        if(QGroundControl.multiVehicleManager.activeVehicle) {
+            QGroundControl.multiVehicleManager.activeVehicle.autoDisconnect = true;
+        }
+        TyphoonHQuickInterface.bindWIFI(_selectedSSID, password)
+        _selectedSSID = ""
+        passwordField.text = ""
+        passwordDialog.visible = false
+    }
+
     Connections {
         target: TyphoonHQuickInterface
         onAuthenticationError: {
@@ -220,7 +232,12 @@ QGCView {
                                     } else {
                                         _selectedSSID = modelData
                                         checked = true
-                                        passwordDialog.visible = true
+                                        //-- If we have the config, use it (don't ask for password)
+                                        if(TyphoonHQuickInterface.isWifiConfigured(_selectedSSID)) {
+                                            connectWifi("")
+                                        } else {
+                                            passwordDialog.visible = true
+                                        }
                                     }
                                 }
                             }
@@ -337,15 +354,7 @@ QGCView {
                     enabled:    passwordField.text.length > 7
                     onClicked:  {
                         Qt.inputMethod.hide();
-                        QGroundControl.skipSetupPage = true
-                        //-- If we were connected to something, let it go away when it disconnects.
-                        if(QGroundControl.multiVehicleManager.activeVehicle) {
-                            QGroundControl.multiVehicleManager.activeVehicle.autoDisconnect = true;
-                        }
-                        TyphoonHQuickInterface.bindWIFI(_selectedSSID, passwordField.text)
-                        _selectedSSID = ""
-                        passwordField.text = ""
-                        passwordDialog.visible = false
+                        connectWifi(passwordField.text)
                     }
                 }
                 QGCButton {

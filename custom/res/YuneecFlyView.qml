@@ -42,8 +42,8 @@ Item {
     property bool   _cameraVideoMode:   _camController ? _camController.cameraMode === CameraControl.CAMERA_MODE_VIDEO : false
     property bool   _cameraPresent:     _camController && _camController.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
     property bool   _noSdCard:          TyphoonHQuickInterface.cameraControl.sdTotal === 0
-    property string _altitude:          _activeVehicle ? (isNaN(_activeVehicle.altitudeRelative.rawValue) ? "000.0m" : _activeVehicle.altitudeRelative.rawValue.toFixed(1)) + _activeVehicle.altitudeRelative.units : "000.0m"
-    property string _distanceStr:       isNaN(_distance) ? "0000m" : _distance.toFixed(0) + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "m")
+    property string _altitude:          _activeVehicle ? (isNaN(_activeVehicle.altitudeRelative.rawValue) ? "0.0" : _activeVehicle.altitudeRelative.rawValue.toFixed(1)) + _activeVehicle.altitudeRelative.units : "0.0m"
+    property string _distanceStr:       isNaN(_distance) ? "0m" : _distance.toFixed(0) + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "m")
 
     QGCLabel {
         id:             altitudeLabel
@@ -310,7 +310,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
             }
             QGCLabel {
-                text:           _activeVehicle ? _activeVehicle.groundSpeed.rawValue.toFixed(1) + _activeVehicle.groundSpeed.units : "00.0"
+                text:           _activeVehicle ? _activeVehicle.groundSpeed.rawValue.toFixed(1) + _activeVehicle.groundSpeed.units : "0.0"
                 width:          speedText.width
                 font.family:    ScreenTools.demiboldFontFamily
                 font.pointSize: ScreenTools.mediumFontPointSize
@@ -322,7 +322,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
             }
             QGCLabel {
-                text:           _activeVehicle ? _activeVehicle.climbRate.rawValue.toFixed(1) + _activeVehicle.climbRate.units : "00.0"
+                text:           _activeVehicle ? _activeVehicle.climbRate.rawValue.toFixed(1) + _activeVehicle.climbRate.units : "0.0"
                 width:          speedText.width
                 font.family:    ScreenTools.demiboldFontFamily
                 font.pointSize: ScreenTools.mediumFontPointSize
