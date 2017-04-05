@@ -18,6 +18,7 @@ import QtQuick.Controls 1.2
 import QGroundControl               1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
+import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
 Rectangle {
@@ -34,6 +35,10 @@ Rectangle {
     readonly property real  _horizontalMargin:      _defaultTextWidth / 2
     readonly property real  _verticalMargin:        _defaultTextHeight / 2
     readonly property real  _buttonWidth:           _defaultTextWidth * 18
+
+    MavlinkConsoleController {
+        id: conController
+    }
 
     QGCFlickable {
         id:                 buttonScroll
@@ -94,6 +99,11 @@ Rectangle {
                         buttonImage:        "/qmlimages/GeoTagIcon"
                         buttonText:         qsTr("GeoTag Images")
                         pageSource:         "GeoTagPage.qml"
+                    }
+                    ListElement {
+                        buttonImage:        "/qmlimages/MavlinkConsoleIcon"
+                        buttonText:         qsTr("Mavlink Console")
+                        pageSource:         "MavlinkConsolePage.qml"
                     }
                 }
 

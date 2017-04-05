@@ -582,6 +582,13 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _handleScaledPressure3(message);
         break;
 
+    case MAVLINK_MSG_ID_SERIAL_CONTROL:
+    {
+        mavlink_serial_control_t ser;
+        mavlink_msg_serial_control_decode(&message, &ser);
+        emit mavlinkSerialControl(ser.device, ser.flags, ser.timeout, ser.baudrate, QByteArray(reinterpret_cast<const char*>(ser.data), ser.count));
+    }
+        break;
     // Following are ArduPilot dialect messages
 
     case MAVLINK_MSG_ID_WIND:
