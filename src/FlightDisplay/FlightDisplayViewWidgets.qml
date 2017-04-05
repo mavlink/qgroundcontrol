@@ -47,29 +47,33 @@ Item {
     }
 
     function _setInstrumentWidget() {
-        if(QGroundControl.corePlugin.options.instrumentWidget.source.toString().length) {
-            instrumentsLoader.source = QGroundControl.corePlugin.options.instrumentWidget.source
-            switch(QGroundControl.corePlugin.options.instrumentWidget.widgetPosition) {
-            case CustomInstrumentWidget.POS_TOP_RIGHT:
-                instrumentsLoader.state  = "topMode"
-                break;
-            case CustomInstrumentWidget.POS_BOTTOM_RIGHT:
-                instrumentsLoader.state  = "bottomMode"
-                break;
-            case CustomInstrumentWidget.POS_CENTER_RIGHT:
-            default:
-                instrumentsLoader.state  = "centerMode"
-                break;
+        if(QGroundControl.corePlugin.options.instrumentWidget) {
+            if(QGroundControl.corePlugin.options.instrumentWidget.source.toString().length) {
+                instrumentsLoader.source = QGroundControl.corePlugin.options.instrumentWidget.source
+                switch(QGroundControl.corePlugin.options.instrumentWidget.widgetPosition) {
+                case CustomInstrumentWidget.POS_TOP_RIGHT:
+                    instrumentsLoader.state  = "topMode"
+                    break;
+                case CustomInstrumentWidget.POS_BOTTOM_RIGHT:
+                    instrumentsLoader.state  = "bottomMode"
+                    break;
+                case CustomInstrumentWidget.POS_CENTER_RIGHT:
+                default:
+                    instrumentsLoader.state  = "centerMode"
+                    break;
+                }
+            } else {
+                var useAlternateInstruments = QGroundControl.settingsManager.appSettings.virtualJoystick.value || ScreenTools.isTinyScreen
+                if(useAlternateInstruments) {
+                    instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
+                    instrumentsLoader.state  = "topMode"
+                } else {
+                    instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidget.qml"
+                    instrumentsLoader.state  = QGroundControl.settingsManager.appSettings.showLargeCompass.value == 1 ? "centerMode" : "topMode"
+                }
             }
         } else {
-            var useAlternateInstruments = QGroundControl.settingsManager.appSettings.virtualJoystick.value || ScreenTools.isTinyScreen
-            if(useAlternateInstruments) {
-                instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
-                instrumentsLoader.state  = "topMode"
-            } else {
-                instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidget.qml"
-                instrumentsLoader.state  = QGroundControl.settingsManager.appSettings.showLargeCompass.value == 1 ? "centerMode" : "topMode"
-            }
+            instrumentsLoader.source = ""
         }
     }
 

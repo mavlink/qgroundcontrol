@@ -114,6 +114,9 @@ QGCView {
     Component.onCompleted: {
         setStates()
         px4JoystickCheck()
+        if(QGroundControl.corePlugin.options.flyViewOverlay.toString().length) {
+            flyViewOverlay.source = QGroundControl.corePlugin.options.flyViewOverlay
+        }
     }
 
     QGCMapPalette { id: mapPal; lightColors: _mainIsMap ? _flightMap.isSatelliteMap : true }
@@ -157,6 +160,7 @@ QGCView {
                 flightWidgets:          flightDisplayViewWidgets
                 rightPanelWidth:        ScreenTools.defaultFontPixelHeight * 9
                 qgcView:                root
+                scaleState:             (_mainIsMap && flyViewOverlay.item) ? (flyViewOverlay.item.scaleState ? flyViewOverlay.item.scaleState : "bottomMode") : "bottomMode"
             }
         }
 
@@ -257,6 +261,17 @@ QGCView {
             useLightColors:     isBackgroundDark
             missionController:  _flightMap.missionController
             visible:            singleVehicleView.checked
+        }
+
+        //-------------------------------------------------------------------------
+        //-- Loader helper for plugins to overlay elements over the fly view
+        Loader {
+            id:                 flyViewOverlay
+            z:                  flightDisplayViewWidgets.z + 1
+            height:             ScreenTools.availableHeight
+            anchors.left:       parent.left
+            anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
+            anchors.bottom:     parent.bottom
         }
 
         // Button to start/stop video recording

@@ -28,6 +28,7 @@ public:
     Q_PROPERTY(double                   toolbarHeightMultiplier         READ toolbarHeightMultiplier        CONSTANT)
     Q_PROPERTY(bool                     enablePlanViewSelector          READ enablePlanViewSelector         CONSTANT)
     Q_PROPERTY(CustomInstrumentWidget*  instrumentWidget                READ instrumentWidget               CONSTANT)
+    Q_PROPERTY(QUrl                     flyViewOverlay                  READ flyViewOverlay                 CONSTANT)
     Q_PROPERTY(bool                     showSensorCalibrationCompass    READ showSensorCalibrationCompass   NOTIFY showSensorCalibrationCompassChanged)
     Q_PROPERTY(bool                     showSensorCalibrationGyro       READ showSensorCalibrationGyro      NOTIFY showSensorCalibrationGyroChanged)
     Q_PROPERTY(bool                     showSensorCalibrationAccel      READ showSensorCalibrationAccel     NOTIFY showSensorCalibrationAccelChanged)
@@ -56,6 +57,8 @@ public:
     /// @return An alternate widget (see QGCInstrumentWidget.qml, the default widget)
     virtual CustomInstrumentWidget* instrumentWidget();
 
+    /// Allows access to the full fly view window
+    virtual QUrl    flyViewOverlay                  () const { return QUrl(); }
     /// By returning false you can hide the following sensor calibration pages
     virtual bool    showSensorCalibrationCompass    () const { return true; }
     virtual bool    showSensorCalibrationGyro       () const { return true; }
@@ -82,7 +85,7 @@ signals:
     void showSensorCalibrationLevelChanged      (bool show);
     void showSensorCalibrationAirspeedChanged   (bool show);
     void showFirmwareUpgradeChanged             (bool show);
-    void guidedBarShowEmergencyStopChanged       (bool show);
+    void guidedBarShowEmergencyStopChanged      (bool show);
     void guidedBarShowOrbitChanged              (bool show);
 
 private:

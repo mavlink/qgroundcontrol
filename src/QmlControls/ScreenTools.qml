@@ -70,7 +70,7 @@ Item {
     property real implicitTextFieldHeight:  Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxHeight:   Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxWidth:    Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
-    property real implicitSliderHeight:     isMobile ? Math.Max(defaultFontPixelHeight, minTouchPixels) : defaultFontPixelHeight
+    property real implicitSliderHeight:     isMobile ? Math.max(defaultFontPixelHeight, minTouchPixels) : defaultFontPixelHeight
 
     readonly property string normalFontFamily:      "opensans"
     readonly property string demiboldFontFamily:    "opensans-demibold"
