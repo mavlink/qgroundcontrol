@@ -46,7 +46,6 @@ FlightMap {
     property bool   _disableVehicleTracking:    false
     property bool   _keepVehicleCentered:       _mainIsMap ? false : true
 
-
     // Track last known map position and zoom from Fly view in settings
     onZoomLevelChanged: QGroundControl.flightMapZoom = zoomLevel
     onCenterChanged:    QGroundControl.flightMapPosition = center
@@ -209,11 +208,11 @@ FlightMap {
     // Add trajectory points to the map
     MapItemView {
         model: _mainIsMap ? _activeVehicle ? _activeVehicle.trajectoryPoints : 0 : 0
-        delegate:
-            MapPolyline {
+
+        delegate: MapPolyline {
             line.width: 3
             line.color: "red"
-            z:          QGroundControl.zOrderMapItems - 2
+            z:          QGroundControl.zOrderTrajectoryLines
             path: [
                 object.coordinate1,
                 object.coordinate2,
@@ -224,13 +223,13 @@ FlightMap {
     // Add the vehicles to the map
     MapItemView {
         model: QGroundControl.multiVehicleManager.vehicles
-        delegate:
-            VehicleMapItem {
+
+        delegate: VehicleMapItem {
             vehicle:        object
             coordinate:     object.coordinate
             isSatellite:    flightMap.isSatelliteMap
             size:           _mainIsMap ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight
-            z:              QGroundControl.zOrderMapItems - 1
+            z:              QGroundControl.zOrderVehicles
         }
     }
 
@@ -246,7 +245,7 @@ FlightMap {
 
     // Add lines between waypoints
     MissionLineView {
-        model: _mainIsMap ? missionController.waypointLines : 0
+        model:  _mainIsMap ? missionController.waypointLines : 0
     }
 
     GeoFenceMapVisuals {
