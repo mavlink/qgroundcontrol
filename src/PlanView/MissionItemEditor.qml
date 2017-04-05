@@ -2,7 +2,9 @@ import QtQuick                  2.3
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.4
 import QtQuick.Dialogs          1.2
+import QtQml                    2.2
 
+import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
 import QGroundControl.Controls      1.0
@@ -24,7 +26,8 @@ Rectangle {
 
     signal clicked
     signal remove
-    signal insert
+    signal insertWaypoint
+    signal insertComplexItem(string complexItemName)
 
     property bool   _currentItem:               missionItem.isCurrentItem
     property color  _outerTextColor:            _currentItem ? qgcPal.primaryButtonText : qgcPal.text
@@ -35,6 +38,7 @@ Rectangle {
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _hamburgerSize:     commandPicker.height * 0.75
+    readonly property bool  _waypointsOnlyMode: QGroundControl.corePlugin.options.missionWaypointsOnly
 
     QGCPalette {
         id: qgcPal
@@ -72,13 +76,13 @@ Rectangle {
     QGCMouseArea {
         fillItem:   hamburger
         visible:    hamburger.visible
-        onClicked:  hamburgerMenu.popup()
+        onClicked:  _waypointsOnlyMode ? waypointsOnlyMenu.popup() : normalMenu.popup()
 
         Menu {
-            id: hamburgerMenu
+            id: normalMenu
 
             MenuItem {
-                text:           qsTr("Insert")
+                text:           qsTr("Insert waypoint")
                 onTriggered:    insert()
             }
 
@@ -87,8 +91,25 @@ Rectangle {
                 onTriggered:    remove()
             }
 
+            Menu {
+                id:     normalPatternMenu
+                title:  qsTr("Insert pattern")
+
+                Instantiator {
+                    model: missionController.complexMissionItemNames
+
+                    onObjectAdded:      normalPatternMenu.insertItem(index, object)
+                    onObjectRemoved:    normalPatternMenu.removeItem(object)
+
+                    MenuItem {
+                        text:           modelData
+                        onTriggered:    insertComplexItem(modelData)
+                    }
+                }
+            }
+
             MenuItem {
-                text:           "Change command..."
+                text:           qsTr("Change command...")
                 onTriggered:    commandPicker.clicked()
             }
 
@@ -116,6 +137,38 @@ Rectangle {
                 }
             }
         }
+
+        Menu {
+            id: waypointsOnlyMenu
+
+            MenuItem {
+                text:           qsTr("Insert waypoint")
+                onTriggered:    insertWaypoint()
+            }
+
+            MenuItem {
+                text:           qsTr("Delete")
+                onTriggered:    remove()
+            }
+
+            Menu {
+                id:     waypointsOnlyPatternMenu
+                title:  qsTr("Insert pattern")
+
+                Instantiator {
+                    model: missionController.complexMissionItemNames
+
+                    onObjectAdded:      waypointsOnlyPatternMenu.insertItem(index, object)
+                    onObjectRemoved:    waypointsOnlyPatternMenu.removeItem(object)
+
+                    MenuItem {
+                        text:           modelData
+                        onTriggered:    insertComplexItem(modelData)
+                    }
+                }
+            }
+
+        }
     }
 
     QGCButton {
@@ -125,7 +178,7 @@ Rectangle {
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.left:           label.right
         anchors.top:            parent.top
-        visible:                missionItem.isCurrentItem && !missionItem.rawEdit && missionItem.isSimpleItem
+        visible:                !commandLabel.visible
         text:                   missionItem.commandName
 
         Component {
@@ -140,8 +193,9 @@ Rectangle {
     }
 
     QGCLabel {
+        id:                 commandLabel
         anchors.fill:       commandPicker
-        visible:            !missionItem.isCurrentItem || !missionItem.isSimpleItem
+        visible:            !missionItem.isCurrentItem || !missionItem.isSimpleItem || _waypointsOnlyMode
         verticalAlignment:  Text.AlignVCenter
         text:               missionItem.commandName
         color:              _outerTextColor
