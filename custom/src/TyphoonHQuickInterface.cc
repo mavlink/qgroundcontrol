@@ -292,6 +292,24 @@ TyphoonHQuickInterface::isWifiConfigured(QString ssid)
 
 //-----------------------------------------------------------------------------
 void
+TyphoonHQuickInterface::calibrateGimbalM4()
+{
+    if(_pHandler) {
+        _pHandler->calibrateGimbal();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::calibrateGimbalMV()
+{
+    if(_pHandler && _pHandler->vehicle()) {
+        _pHandler->vehicle()->sendMavCommand(0, MAV_CMD_PREFLIGHT_CALIBRATION, true, 0,0,0,0,0,0,4);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 TyphoonHQuickInterface::bindWIFI(QString ssid, QString password)
 {
     stopScan();

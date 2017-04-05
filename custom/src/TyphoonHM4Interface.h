@@ -34,7 +34,9 @@ public:
     QString m4StateStr              ();
     void    resetBind               ();
     bool    armed                   () { return _armed; }
+    void    calibrateGimbal         ();
 
+    Vehicle* vehicle                () { return _vehicle; }
     CameraControl*          cameraControl       () { return _cameraControl; }
 
     TyphoonHQuickInterface::M4State     m4State             () { return _m4State; }

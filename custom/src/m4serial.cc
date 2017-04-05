@@ -132,6 +132,7 @@ M4SerialComm::run()
 bool
 M4SerialComm::_readData(void *buffer, int len)
 {
+#if defined(__androidx86__)
     int tries = 0;
     int left  = len;
     uint8_t* ptr = (uint8_t*)buffer;
@@ -147,6 +148,11 @@ M4SerialComm::_readData(void *buffer, int len)
         }
     }
     return true;
+#else
+    Q_UNUSED(buffer);
+    Q_UNUSED(len);
+    return false;
+#endif
 }
 
 //-----------------------------------------------------------------------------

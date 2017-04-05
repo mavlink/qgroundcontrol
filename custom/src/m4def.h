@@ -289,6 +289,7 @@ enum {
         CMD_RX_FEEDBACK_DATA            = 0x88,
         CMD_TX_SWITCH_CHANGED           = 0x89,
         COMMAND_M4_SEND_GPS_DATA_TO_PA  = 0xB6,
+        CMD_SET_TTB_STATE               = 0x92,
         ACTION_TYPE_RESPONSE            = 1,
         ACTION_TYPE_FEEDBACK            = 3,
         ACTION_TYPE_ONEKEY_TAKEOFF      = 6,
