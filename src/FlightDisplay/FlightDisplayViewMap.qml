@@ -30,6 +30,8 @@ FlightMap {
     allowGCSLocationCenter:     !userPanned
     allowVehicleLocationCenter: !_keepVehicleCentered
 
+    property alias  scaleState: mapScale.state
+
     property var    missionController
     property var    guidedActionsController
     property var    flightWidgets
@@ -299,11 +301,31 @@ FlightMap {
     }
 
     MapScale {
-        anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * (0.66)
-        anchors.rightMargin:    ScreenTools.defaultFontPixelHeight * (0.33)
-        anchors.bottom:         parent.bottom
+        id:                     mapScale
         anchors.right:          parent.right
+        anchors.margins:        ScreenTools.defaultFontPixelHeight * (0.33)
+        anchors.topMargin:      ScreenTools.defaultFontPixelHeight * (0.33) + state === "bottomMode" ? 0 : ScreenTools.toolbarHeight
+        anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * (0.33)
         mapControl:             flightMap
         visible:                !ScreenTools.isTinyScreen
+        state:                  "bottomMode"
+        states: [
+            State {
+                name:   "topMode"
+                AnchorChanges {
+                    target:                 mapScale
+                    anchors.top:            parent.top
+                    anchors.bottom:         undefined
+                }
+            },
+            State {
+                name:   "bottomMode"
+                AnchorChanges {
+                    target:                 mapScale
+                    anchors.top:            undefined
+                    anchors.bottom:         parent.bottom
+                }
+            }
+        ]
     }
 }

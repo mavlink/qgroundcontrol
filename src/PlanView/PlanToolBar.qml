@@ -19,6 +19,7 @@ Rectangle {
     z:                  toolBar.z + 1
     color:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.8) : Qt.rgba(0,0,0,0.75)
     visible:            false
+    anchors.bottomMargin: 1
 
     signal showFlyView
 
@@ -79,13 +80,11 @@ Rectangle {
         onReleased:     { mouse.accepted = true; }
     }
 
-    RowLayout {
-        anchors.top:    parent.top
-        anchors.bottom: parent.bottom
-        anchors.left:   parent.left
-        anchors.right:  uploadButton.visible ? uploadButton.left : uploadButton.right
-        spacing:        ScreenTools.defaultFontPixelWidth * 2
-
+    Row {
+        anchors.bottomMargin:   1
+        anchors.left:           parent.left
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
         QGCToolBarButton {
             id:                 settingsButton
             anchors.top:        parent.top
@@ -93,7 +92,6 @@ Rectangle {
             source:             "/qmlimages/PaperPlane.svg"
             logo:               true
             checked:            false
-
             onClicked: {
                 checked = false
                 if (missionController.uploadOnSwitch()) {
@@ -101,6 +99,14 @@ Rectangle {
                 }
             }
         }
+    }
+
+
+    Row {
+        anchors.top:        parent.top
+        anchors.bottom:     parent.bottom
+        spacing:            _margins * 2
+        anchors.horizontalCenter: parent.horizontalCenter
 
         GridLayout {
             anchors.verticalCenter: parent.verticalCenter
