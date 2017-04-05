@@ -175,19 +175,22 @@
         <file alias="gear-white.svg">resources/gear-white.svg</file>
         <file alias="JoystickBezel.png">resources/JoystickBezel.png</file>
         <file alias="JoystickBezelLight.png">resources/JoystickBezelLight.png</file>
+        <file alias="land.svg">resources/land.svg</file>
         <file alias="notile.png">resources/notile.png</file>
-        <file alias="Pause">resources/Pause.svg</file>
+        <file alias="Pause.svg">resources/Pause.svg</file>
         <file alias="Play">resources/Play.svg</file>
         <file alias="PowerButton">resources/PowerButton.svg</file>
-        <file alias="QGCLogoWhite">resources/QGCLogoWhite.svg</file>
         <file alias="QGCLogoBlack">resources/QGCLogoBlack.svg</file>
+        <file alias="QGCLogoWhite">resources/QGCLogoWhite.svg</file>
         <file alias="QGroundControlConnect">resources/QGroundControlConnect.svg</file>
+        <file alias="rtl.svg">resources/rtl.svg</file>
         <file alias="SplashScreen">resources/SplashScreen.png</file>
         <file alias="Stop">resources/Stop.svg</file>
+        <file alias="takeoff.svg">resources/takeoff.svg</file>
         <file alias="TrashDelete.svg">resources/TrashDelete.svg</file>
+        <file alias="waves.svg">resources/waves.svg</file>
         <file alias="XDelete.svg">resources/XDelete.svg</file>
         <file alias="XDeleteBlack.svg">resources/XDeleteBlack.svg</file>
-        <file alias="waves.svg">resources/waves.svg</file>
         <file>resources/icons/qgroundcontrol.ico</file>
     </qresource>
     <qresource prefix="/res/firmware">

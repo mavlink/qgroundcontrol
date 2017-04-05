@@ -391,22 +391,22 @@ QGCView {
             model: [
                 {
                     name:       guidedController.takeoffTitle,
-                    iconSource: "/qmlimages/MapCenter.svg",
+                    iconSource: "/res/takeoff.svg",
                     action:     guidedController.actionTakeoff
                 },
                 {
                     name:       guidedController.landTitle,
-                    iconSource: "/qmlimages/MapCenter.svg",
+                    iconSource: "/res/land.svg",
                     action:     guidedController.actionLand
                 },
                 {
                     name:       guidedController.rtlTitle,
-                    iconSource: "/qmlimages/MapCenter.svg",
+                    iconSource: "/res/rtl.svg",
                     action:     guidedController.actionRTL
                 },
                 {
                     name:       guidedController.pauseTitle,
-                    iconSource: "/qmlimages/MapCenter.svg",
+                    iconSource: "/res/Pause.svg",
                     action:     guidedController.actionPause
                 },
                 {
@@ -461,11 +461,14 @@ QGCView {
             id:                         guidedActionConfirm
             anchors.margins:            _margins
             anchors.bottom:             parent.bottom
+            anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 4
             anchors.horizontalCenter:   parent.horizontalCenter
-            width:                      confirmColumn.width + (_margins * 2)
-            height:                     confirmColumn.height + (_margins * 2)
+            border.color:               qgcPal.alertBorder
+            border.width:               1
+            width:                      confirmColumn.width  + (_margins * 4)
+            height:                     confirmColumn.height + (_margins * 4)
             radius:                     ScreenTools.defaultFontPixelHeight / 2
-            color:                      qgcPal.window
+            color:                      qgcPal.alertBackground
             opacity:                    0.9
             z:                          guidedController.z
             visible:                    false
@@ -480,12 +483,12 @@ QGCView {
             Column {
                 id:                 confirmColumn
                 anchors.margins:    _margins
-                anchors.top:        parent.top
-                anchors.left:       parent.left
+                anchors.centerIn:   parent
                 spacing:            _margins
 
                 QGCLabel {
                     id:                     titleText
+                    color:                  qgcPal.alertText
                     anchors.left:           slider.left
                     anchors.right:          slider.right
                     horizontalAlignment:    Text.AlignHCenter
@@ -493,6 +496,7 @@ QGCView {
 
                 QGCLabel {
                     id:                     messageText
+                    color:                  qgcPal.alertText
                     anchors.left:           slider.left
                     anchors.right:          slider.right
                     horizontalAlignment:    Text.AlignHCenter
@@ -530,8 +534,7 @@ QGCView {
                 sourceSize.height:  width
                 source:             "/res/XDelete.svg"
                 fillMode:           Image.PreserveAspectFit
-                color:              qgcPal.text
-
+                color:              qgcPal.alertText
                 QGCMouseArea {
                     fillItem:   parent
                     onClicked: {
@@ -546,9 +549,10 @@ QGCView {
             id:                         guidedActionList
             anchors.margins:            _margins
             anchors.bottom:             parent.bottom
+            anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 4
             anchors.horizontalCenter:   parent.horizontalCenter
-            width:                      actionColumn.width + (_margins * 2)
-            height:                     actionColumn.height + (_margins * 2)
+            width:                      actionColumn.width  + (_margins * 4)
+            height:                     actionColumn.height + (_margins * 4)
             radius:                     _margins / 2
             color:                      qgcPal.window
             opacity:                    0.9
@@ -562,8 +566,7 @@ QGCView {
             ColumnLayout {
                 id:                 actionColumn
                 anchors.margins:    guidedActionList._margins
-                anchors.top:        parent.top
-                anchors.left:       parent.left
+                anchors.centerIn:   parent
                 spacing:            _margins
 
                 QGCLabel {
