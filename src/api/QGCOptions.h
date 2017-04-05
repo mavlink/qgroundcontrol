@@ -40,6 +40,7 @@ public:
     Q_PROPERTY(QString                  firmwareUpgradeSingleURL        READ firmwareUpgradeSingleURL       CONSTANT)
     Q_PROPERTY(bool                     guidedBarShowEmergencyStop      READ guidedBarShowEmergencyStop     NOTIFY guidedBarShowEmergencyStopChanged)
     Q_PROPERTY(bool                     guidedBarShowOrbit              READ guidedBarShowOrbit             NOTIFY guidedBarShowOrbitChanged)
+    Q_PROPERTY(bool                     missionWaypointsOnly            READ missionWaypointsOnly           NOTIFY missionWaypointsOnlyChanged)
 
     /// Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /// @return true if QGC should consolidate both menus into one.
@@ -73,6 +74,8 @@ public:
     virtual bool    guidedBarShowEmergencyStop      () const { return true; }
     virtual bool    guidedBarShowOrbit              () const { return true; }
 
+    virtual bool    missionWaypointsOnly            () const { return true; }   ///< true: Only allow waypoints and complex items in Plan
+
     /// If returned QString in non-empty it means that firmware upgrade will run in a mode which only
     /// supports downloading a single firmware file from the URL. It also supports custom install through
     /// the Advanced options.
@@ -87,6 +90,7 @@ signals:
     void showFirmwareUpgradeChanged             (bool show);
     void guidedBarShowEmergencyStopChanged      (bool show);
     void guidedBarShowOrbitChanged              (bool show);
+    void missionWaypointsOnlyChanged            (bool missionWaypointsOnly);
 
 private:
     CustomInstrumentWidget* _defaultInstrumentWidget;
