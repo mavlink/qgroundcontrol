@@ -23,11 +23,12 @@ import TyphoonHQuickInterface               1.0
 //-------------------------------------------------------------------------
 //-- WIFI RSSI Indicator
 Item {
-    width:          wifiRSSIRow.width
+    width:          Math.max(wifiRSSIRow.width, wifiLabel.width)
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
-    property bool _hasWifi: TyphoonHQuickInterface.rssi > -100 && TyphoonHQuickInterface.rssi < 0
+    property bool _hasWifi:     TyphoonHQuickInterface.rssi > -100 && TyphoonHQuickInterface.rssi < 0
+    property bool _isAP:        _hasWifi && !TyphoonHQuickInterface.isTyphoon
 
     Component {
         id: wifiRSSIInfo
@@ -82,14 +83,14 @@ Item {
     Row {
         id:             wifiRSSIRow
         anchors.top:    parent.top
-        anchors.bottom: parent.bottom
+        anchors.bottom: _isAP ? wifiLabel.top : parent.bottom
         spacing:        ScreenTools.defaultFontPixelWidth
         QGCColoredImage {
             width:              height
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             sourceSize.height:  height
-            source:             "/typhoonh/wifi.svg"
+            source:             "/typhoonh/img/wifi.svg"
             fillMode:           Image.PreserveAspectFit
             opacity:            _hasWifi ? 1 : 0.5
             color:              qgcPal.text
@@ -110,6 +111,14 @@ Item {
         }
     }
 
+    QGCLabel {
+        id:         wifiLabel
+        text:       "AP WIFI"
+        visible:    _isAP
+        color:      qgcPal.colorOrange
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+    }
     MouseArea {
         anchors.fill:   parent
         onClicked: {

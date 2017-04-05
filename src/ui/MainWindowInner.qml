@@ -47,6 +47,14 @@ Item {
         }
     }
 
+    function disableToolbar() {
+        toolbarBlocker.enabled = true
+    }
+
+    function enableToolbar() {
+        toolbarBlocker.enabled = false
+    }
+
     function hideAllViews() {
         for (var i=0; i<_viewList.length; i++) {
             _viewList[i].visible = false
@@ -55,6 +63,7 @@ Item {
     }
 
     function showSettingsView() {
+        rootLoader.sourceComponent = null
         if(currentPopUp) {
             currentPopUp.close()
         }
@@ -69,6 +78,7 @@ Item {
     }
 
     function showSetupView() {
+        rootLoader.sourceComponent = null
         if(currentPopUp) {
             currentPopUp.close()
         }
@@ -83,6 +93,7 @@ Item {
     }
 
     function showPlanView() {
+        rootLoader.sourceComponent = null
         if(currentPopUp) {
             currentPopUp.close()
         }
@@ -96,6 +107,7 @@ Item {
     }
 
     function showFlyView() {
+        rootLoader.sourceComponent = null
         if(currentPopUp) {
             currentPopUp.close()
         }
@@ -106,6 +118,7 @@ Item {
     }
 
     function showAnalyzeView() {
+        rootLoader.sourceComponent = null
         if(currentPopUp) {
             currentPopUp.close()
         }
@@ -206,30 +219,40 @@ Item {
     }
 
     function showMessageArea() {
+        rootLoader.sourceComponent = null
+        var currentlyVisible = messageArea.visible
         if(currentPopUp) {
             currentPopUp.close()
         }
-        if(QGroundControl.multiVehicleManager.activeVehicleAvailable) {
-            messageText.text = formatMessage(activeVehicle.formatedMessages)
-            //-- Hack to scroll to last message
-            for (var i = 0; i < activeVehicle.messageCount; i++)
-                messageFlick.flick(0,-5000)
-            activeVehicle.resetMessages()
-        } else {
-            messageText.text = qsTr("No Messages")
+        if(!currentlyVisible) {
+            if(QGroundControl.multiVehicleManager.activeVehicleAvailable) {
+                messageText.text = formatMessage(activeVehicle.formatedMessages)
+                //-- Hack to scroll to last message
+                for (var i = 0; i < activeVehicle.messageCount; i++)
+                    messageFlick.flick(0,-5000)
+                activeVehicle.resetMessages()
+            } else {
+                messageText.text = qsTr("No Messages")
+            }
+            currentPopUp = messageArea
+            messageArea.visible = true
         }
-        currentPopUp = messageArea
-        messageArea.visible = true
     }
 
     function showPopUp(dropItem, centerX) {
+        rootLoader.sourceComponent = null
+        var oldIndicator = indicatorDropdown.sourceComponent
         if(currentPopUp) {
             currentPopUp.close()
         }
-        indicatorDropdown.centerX = centerX
-        indicatorDropdown.sourceComponent = dropItem
-        indicatorDropdown.visible = true
-        currentPopUp = indicatorDropdown
+        if(oldIndicator !== dropItem) {
+            console.log(oldIndicator)
+            console.log(dropItem)
+            indicatorDropdown.centerX = centerX
+            indicatorDropdown.sourceComponent = dropItem
+            indicatorDropdown.visible = true
+            currentPopUp = indicatorDropdown
+        }
     }
 
     //-- Main UI
@@ -242,13 +265,21 @@ Item {
         anchors.top:        parent.top
         opacity:            planToolBar.visible ? 0 : 1
         z:                  QGroundControl.zOrderTopMost
-
         Component.onCompleted:  ScreenTools.availableHeight = parent.height - toolBar.height
         onShowSettingsView:     mainWindow.showSettingsView()
         onShowSetupView:        mainWindow.showSetupView()
         onShowPlanView:         mainWindow.showPlanView()
         onShowFlyView:          mainWindow.showFlyView()
         onShowAnalyzeView:      mainWindow.showAnalyzeView()
+        //-- Entire tool bar area disable on cammand
+        MouseArea {
+            id:             toolbarBlocker
+            anchors.fill:   parent
+            enabled:        false
+            onWheel:        { wheel.accepted = true; }
+            onPressed:      { mouse.accepted = true; }
+            onReleased:     { mouse.accepted = true; }
+        }
     }
 
     PlanToolBar {

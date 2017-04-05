@@ -1108,3 +1108,8 @@ double SurveyMissionItem::_turnaroundDistance(void) const
 {
     return _turnaroundDistFact.rawValue().toDouble();
 }
+
+void SurveyMissionItem::applyNewAltitude(double newAltitude)
+{
+    _gridAltitudeFact.setRawValue(newAltitude);
+}

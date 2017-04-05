@@ -146,7 +146,7 @@ double MissionSettingsItem::greatestDistanceTo(const QGeoCoordinate &other) cons
 
 bool MissionSettingsItem::specifiesCoordinate(void) const
 {
-    return false;
+    return true;
 }
 
 void MissionSettingsItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
@@ -364,9 +364,6 @@ void MissionSettingsItem::_setDirty(void)
 
 void MissionSettingsItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
-    if (coordinate.isValid()) {
-    qDebug() << "MissionSettingsItem::setCoordinate" << coordinate.isValid();
-    }
     if (_plannedHomePositionCoordinate != coordinate) {
         _plannedHomePositionCoordinate = coordinate;
         emit coordinateChanged(coordinate);

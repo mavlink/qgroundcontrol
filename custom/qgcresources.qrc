@@ -19,6 +19,7 @@
         <file alias="GeoFence.svg">../src/AutoPilotPlugins/PX4/Images/GeoFence.svg</file>
         <file alias="GeoFenceLight.svg">../src/AutoPilotPlugins/PX4/Images/GeoFenceLight.svg</file>
         <file alias="GeoTagIcon">../src/AnalyzeView/GeoTagIcon.svg</file>
+        <file alias="MavlinkConsoleIcon">../src/AnalyzeView/MavlinkConsoleIcon.svg</file>
         <file alias="LandMode.svg">../src/AutoPilotPlugins/PX4/Images/LandMode.svg</file>
         <file alias="LandModeCopter.svg">../src/AutoPilotPlugins/PX4/Images/LandModeCopter.svg</file>
         <file alias="LightsComponentIcon.png">../src/AutoPilotPlugins/APM/Images/LightsComponentIcon.png</file>
@@ -96,7 +97,6 @@
         <file alias="Analyze.svg">../src/ui/toolbar/Images/Analyze.svg</file>
         <file alias="Gps.svg">../src/ui/toolbar/Images/Gps.svg</file>
         <file alias="Hamburger.svg">../src/ui/toolbar/Images/Hamburger.svg</file>
-        <file alias="Megaphone.svg">../src/ui/toolbar/Images/Megaphone.svg</file>
         <file alias="Plan.svg">../src/ui/toolbar/Images/Plan.svg</file>
         <file alias="Quad.svg">../src/ui/toolbar/Images/Quad.svg</file>
         <file alias="RC.svg">../src/ui/toolbar/Images/RC.svg</file>

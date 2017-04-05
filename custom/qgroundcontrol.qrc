@@ -16,6 +16,7 @@
         <file alias="FlightModesComponentSummary.qml">../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
         <file alias="GeneralSettings.qml">../src/ui/preferences/GeneralSettings.qml</file>
         <file alias="GeoTagPage.qml">../src/AnalyzeView/GeoTagPage.qml</file>
+        <file alias="MavlinkConsolePage.qml">../src/AnalyzeView/MavlinkConsolePage.qml</file>
         <file alias="MainWindowHybrid.qml">../src/ui/MainWindowHybrid.qml</file>
         <file alias="MainWindowInner.qml">../src/ui/MainWindowInner.qml</file>
         <file alias="MainWindowNative.qml">../src/ui/MainWindowNative.qml</file>
@@ -47,7 +48,6 @@
         <file alias="QGroundControl/Controls/MissionItemIndexLabel.qml">../src/QmlControls/MissionItemIndexLabel.qml</file>
         <file alias="QGroundControl/Controls/MissionItemMapVisual.qml">../src/PlanView/MissionItemMapVisual.qml</file>
         <file alias="QGroundControl/Controls/MissionItemStatus.qml">../src/PlanView/MissionItemStatus.qml</file>
-        <file alias="QGroundControl/Controls/MissionSettingsMapVisual.qml">../src/PlanView/MissionSettingsMapVisual.qml</file>
         <file alias="QGroundControl/Controls/ModeSwitchDisplay.qml">../src/QmlControls/ModeSwitchDisplay.qml</file>
         <file alias="QGroundControl/Controls/MultiRotorMotorDisplay.qml">../src/QmlControls/MultiRotorMotorDisplay.qml</file>
         <file alias="QGroundControl/Controls/OfflineMapButton.qml">../src/QmlControls/OfflineMapButton.qml</file>
@@ -72,7 +72,6 @@
         <file alias="QGroundControl/Controls/QGCRadioButton.qml">../src/QmlControls/QGCRadioButton.qml</file>
         <file alias="QGroundControl/Controls/QGCSlider.qml">../src/QmlControls/QGCSlider.qml</file>
         <file alias="QGroundControl/Controls/QGCTextField.qml">../src/QmlControls/QGCTextField.qml</file>
-        <file alias="QGroundControl/Controls/QGCToolBarButton.qml">../src/QmlControls/QGCToolBarButton.qml</file>
         <file alias="QGroundControl/Controls/QGCView.qml">../src/QmlControls/QGCView.qml</file>
         <file alias="QGroundControl/Controls/QGCViewDialog.qml">../src/QmlControls/QGCViewDialog.qml</file>
         <file alias="QGroundControl/Controls/QGCViewMessage.qml">../src/QmlControls/QGCViewMessage.qml</file>
@@ -107,6 +106,7 @@
         <file alias="QGroundControl/FlightDisplay/FlightDisplayViewMap.qml">../src/FlightDisplay/FlightDisplayViewMap.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml">../src/FlightDisplay/FlightDisplayViewVideo.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlightDisplayViewWidgets.qml">../src/FlightDisplay/FlightDisplayViewWidgets.qml</file>
+        <file alias="QGroundControl/FlightDisplay/GuidedActionsController.qml">../src/FlightDisplay/GuidedActionsController.qml</file>
         <file alias="QGroundControl/FlightDisplay/MultiVehicleList.qml">../src/FlightDisplay/MultiVehicleList.qml</file>
         <file alias="QGroundControl/FlightDisplay/qmldir">../src/FlightDisplay/qmldir</file>
         <file alias="QGroundControl/FlightMap/CenterMapDropButton.qml">../src/FlightMap/Widgets/CenterMapDropButton.qml</file>

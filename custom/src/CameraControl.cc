@@ -153,12 +153,12 @@ CameraControl::CameraControl(QObject* parent)
     , _networkManager(NULL)
 {
     _resetCameraValues();
-    _cameraSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/camera.wav"));
+    _cameraSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/wav/camera.wav"));
     _cameraSound.setLoopCount(1);
     _cameraSound.setVolume(0.9);
-    _videoSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/beep.wav"));
+    _videoSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/wav/beep.wav"));
     _videoSound.setVolume(0.9);
-    _errorSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/boop.wav"));
+    _errorSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/wav/boop.wav"));
     _errorSound.setVolume(0.9);
 }
 
