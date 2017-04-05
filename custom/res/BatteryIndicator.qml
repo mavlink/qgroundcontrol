@@ -18,45 +18,36 @@ import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 
+import TyphoonHQuickInterface.Widgets       1.0
+
 //-------------------------------------------------------------------------
 //-- Battery Indicator
 Item {
+    id:             _root
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    width:          batteryIndicatorRow.width
+    width:          batRow.width
 
-    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property real   _batteryLevel:  _activeVehicle ? _activeVehicle.battery.percentRemaining.value / 100.0 : 0.0
 
     function getBatteryPercentageText() {
         if(_activeVehicle) {
-            if(_activeVehicle.battery.percentRemaining.value > 98.9) {
+            if(_batteryLevel > 0.989) {
                 return "100%"
             }
-            if(_activeVehicle.battery.percentRemaining.value > 0.1) {
+            if(_batteryLevel > 0.01) {
                 return _activeVehicle.battery.percentRemaining.valueString + _activeVehicle.battery.percentRemaining.units
-            }
-            if(_activeVehicle.battery.voltage.value >= 0) {
-                return _activeVehicle.battery.voltage.valueString + _activeVehicle.battery.voltage.units
             }
         }
         return "N/A"
     }
 
-    function getBatteryIcon() {
-        if(_activeVehicle) {
-            if(_activeVehicle.battery.percentRemaining.value > 95) {
-                return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_100Dark.svg" : "/typhoonh/battery_100.svg"
-            } else if(_activeVehicle.battery.percentRemaining.value > 75) {
-                return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_80Dark.svg" : "/typhoonh/battery_80.svg"
-            } else if(_activeVehicle.battery.percentRemaining.value > 55) {
-                return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_60Dark.svg" : "/typhoonh/battery_60.svg"
-            } else if(_activeVehicle.battery.percentRemaining.value > 35) {
-                return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_40Dark.svg" : "/typhoonh/battery_40.svg"
-            } else if(_activeVehicle.battery.percentRemaining.value > 15) {
-                return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_20Dark.svg" : "/typhoonh/battery_20.svg"
-            }
-        }
-        return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_0Dark.svg" : "/typhoonh/battery_0.svg"
+    QGCLabel {
+        id:                     percentLabel
+        text:                   "100%"
+        font.pointSize:         ScreenTools.mediumFontPointSize
+        visible:                false
     }
 
     Component {
@@ -106,33 +97,22 @@ Item {
     }
 
     Row {
-        id:             batteryIndicatorRow
+        id:             batRow
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
-        opacity:        (_activeVehicle && _activeVehicle.battery.voltage.value >= 0) ? 1 : 0.5
-        Image {
-            id:                 battIcon
-            height:             parent.height * 0.85
-            width:              height
-            sourceSize.height:  height
-            source:             getBatteryIcon()
-            fillMode:           Image.PreserveAspectFit
-            smooth:             true
-            mipmap:             true
-            antialiasing:       true
+        spacing:        ScreenTools.defaultFontPixelWidth
+        BatteryLevel {
+            size:       parent.height
+            opacity:    _batteryLevel >= 0 ? 1 : 0.5
+            batteryLevel: _batteryLevel
             anchors.verticalCenter: parent.verticalCenter
-            transform: [
-                Rotation {
-                    origin.x: battIcon.width  / 2
-                    origin.y: battIcon.height / 2
-                    angle:    -90
-                    }
-            ]
         }
         QGCLabel {
-            text:                   getBatteryPercentageText()
-            font.pointSize:         ScreenTools.mediumFontPointSize
-            color:                  qgcPal.buttonText
+            text:       getBatteryPercentageText()
+            width:      percentLabel.width
+            color:      qgcPal.buttonText
+            font.pointSize: ScreenTools.mediumFontPointSize
+            horizontalAlignment:    Text.AlignLeft
             anchors.verticalCenter: parent.verticalCenter
         }
     }

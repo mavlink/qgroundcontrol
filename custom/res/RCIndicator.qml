@@ -19,6 +19,7 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 
 import TyphoonHQuickInterface               1.0
+import TyphoonHQuickInterface.Widgets       1.0
 
 //-------------------------------------------------------------------------
 //-- RC Wignal/Battery Indicator
@@ -27,44 +28,17 @@ Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
-    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
-    function getBatteryColor() {
-        if(TyphoonHQuickInterface.rcBattery > 0.75) {
-            return qgcPal.colorGreen
-        }
-        if(TyphoonHQuickInterface.rcBattery > 0.5) {
-            return qgcPal.colorOrange
-        }
-        if(TyphoonHQuickInterface.rcBattery > 0.1) {
-            return qgcPal.colorRed
-        }
-        return qgcPal.text
-    }
+    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property real   _batteryLevel:  TyphoonHQuickInterface.rcBattery
 
     function getBatteryPercentageText() {
-        if(TyphoonHQuickInterface.rcBattery > 0.98) {
+        if(_batteryLevel > 0.98) {
             return "100%"
         }
-        if(TyphoonHQuickInterface.rcBattery > 0.1) {
-            return (TyphoonHQuickInterface.rcBattery * 100).toFixed(0) + '%'
+        if(_batteryLevel > 0.1) {
+            return (_batteryLevel * 100).toFixed(0) + '%'
         }
         return "N/A"
-    }
-
-    function getBatteryIcon() {
-        if(TyphoonHQuickInterface.rcBattery > 0.95) {
-            return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_100Dark.svg" : "/typhoonh/battery_100.svg"
-        } else if(TyphoonHQuickInterface.rcBattery > 0.75) {
-            return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_80Dark.svg" : "/typhoonh/battery_80.svg"
-        } else if(TyphoonHQuickInterface.rcBattery > 0.55) {
-            return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_60Dark.svg" : "/typhoonh/battery_60.svg"
-        } else if(TyphoonHQuickInterface.rcBattery > 0.35) {
-            return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_40Dark.svg" : "/typhoonh/battery_40.svg"
-        } else if(TyphoonHQuickInterface.rcBattery > 0.15) {
-            return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_20Dark.svg" : "/typhoonh/battery_20.svg"
-        }
-        return qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/battery_0Dark.svg" : "/typhoonh/battery_0.svg"
     }
 
     Component {
@@ -143,15 +117,14 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Row {
-                height:                 rcRow.height * 0.6
-                spacing:                ScreenTools.defaultFontPixelWidth
-                Image {
-                    anchors.top:        parent.top
-                    anchors.bottom:     parent.bottom
-                    width:              height
-                    sourceSize.width:   width
-                    source:             getBatteryIcon()
-                    fillMode:           Image.PreserveAspectFit
+                height:             rcRow.height * 0.6
+                spacing:            ScreenTools.defaultFontPixelWidth
+                BatteryLevel {
+                    size:           parent.height
+                    opacity:        _batteryLevel >= 0 ? 1 : 0.5
+                    batteryLevel:   _batteryLevel
+                    horizontal:     true
+                    anchors.verticalCenter: parent.verticalCenter
                 }
                 QGCLabel {
                     text:                   getBatteryPercentageText()

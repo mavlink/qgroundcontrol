@@ -120,22 +120,6 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-class InstrumentWidgetSrc : public CustomInstrumentWidget
-{
-public:
-    InstrumentWidgetSrc(QObject* parent = NULL);
-    QUrl        source                      ();
-    Pos         widgetPosition              () { return POS_TOP_RIGHT; }
-};
-
-//-----------------------------------------------------------------------------
-QUrl
-InstrumentWidgetSrc::source()
-{
-    return QUrl::fromUserInput("qrc:/typhoonh/InstrumentWidget.qml");
-}
-
-//-----------------------------------------------------------------------------
 class TyphoonHOptions : public QGCOptions
 {
 public:
@@ -148,6 +132,7 @@ public:
 #endif
     bool        enablePlanViewSelector      () { return false; }
     CustomInstrumentWidget* instrumentWidget();
+    QUrl        flyViewOverlay                 () const { return QUrl::fromUserInput("qrc:/typhoonh/YuneecFlyView.qml"); }
     bool        showSensorCalibrationCompass   () const final;
     bool        showSensorCalibrationGyro      () const final;
     bool        showSensorCalibrationAccel     () const final;
@@ -161,14 +146,12 @@ private slots:
     void _advancedChanged(bool advanced);
 
 private:
-    InstrumentWidgetSrc*    _instrumentWidgetSrc;
     TyphoonHPlugin*         _plugin;
 };
 
 //-----------------------------------------------------------------------------
 TyphoonHOptions::TyphoonHOptions(TyphoonHPlugin* plugin, QObject* parent)
     : QGCOptions(parent)
-    , _instrumentWidgetSrc(NULL)
     , _plugin(plugin)
 {
     connect(_plugin, &QGCCorePlugin::showAdvancedUIChanged, this, &TyphoonHOptions::_advancedChanged);
@@ -205,19 +188,10 @@ bool TyphoonHOptions::showSensorCalibrationLevel(void) const
 }
 
 //-----------------------------------------------------------------------------
-InstrumentWidgetSrc::InstrumentWidgetSrc(QObject* parent)
-    : CustomInstrumentWidget(parent)
-{
-}
-
-//-----------------------------------------------------------------------------
 CustomInstrumentWidget*
 TyphoonHOptions::instrumentWidget()
 {
-    if(!_instrumentWidgetSrc) {
-        _instrumentWidgetSrc = new InstrumentWidgetSrc(this);
-    }
-    return _instrumentWidgetSrc;
+    return NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -305,7 +279,7 @@ TyphoonHPlugin::settingsPages()
         if(!_pOfflineMaps) {
             _pOfflineMaps = new QGCSettings(tr("Offline Maps"),
                 QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"),
-                QUrl::fromUserInput("qrc:/typhoonh/mapIcon.svg"));
+                QUrl::fromUserInput("qrc:/typhoonh/img/mapIcon.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pOfflineMaps));
         if (_showAdvancedUI) {
@@ -320,7 +294,7 @@ TyphoonHPlugin::settingsPages()
         if(!_pTyphoonSettings) {
             _pTyphoonSettings = new QGCSettings(tr("Typhoon H"),
                 QUrl::fromUserInput("qrc:/typhoonh/TyphoonSettings.qml"),
-                QUrl::fromUserInput("qrc:/typhoonh/logoWhite.svg"));
+                QUrl::fromUserInput("qrc:/typhoonh/img/logoWhite.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pTyphoonSettings));
 #endif
@@ -430,12 +404,12 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
 QString
 TyphoonHPlugin::brandImageIndoor(void) const
 {
-    return QStringLiteral("/typhoonh/YuneecBrandImage.svg");
+    return QStringLiteral("/typhoonh/img/YuneecBrandImage.svg");
 }
 
 QString
 TyphoonHPlugin::brandImageOutdoor(void) const
 {
-    return QStringLiteral("/typhoonh/YuneecBrandImageBlack.svg");
+    return QStringLiteral("/typhoonh/img/YuneecBrandImageBlack.svg");
 }
 

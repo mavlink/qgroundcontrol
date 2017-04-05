@@ -49,19 +49,19 @@ AutoPilotPlugin* YuneecFirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
 QString YuneecFirmwarePlugin::vehicleImageOpaque(const Vehicle* vehicle) const
 {
     Q_UNUSED(vehicle);
-    return QStringLiteral("/typhoonh/VehicleIndicator.svg");
+    return QStringLiteral("/typhoonh/img/VehicleIndicator.svg");
 }
 
 QString YuneecFirmwarePlugin::vehicleImageOutline(const Vehicle* vehicle) const
 {
     Q_UNUSED(vehicle);
-    return QStringLiteral("/typhoonh/VehicleIndicator.svg");
+    return QStringLiteral("/typhoonh/img/VehicleIndicator.svg");
 }
 
 QString YuneecFirmwarePlugin::vehicleImageCompass(const Vehicle* vehicle) const
 {
     Q_UNUSED(vehicle);
-    return QStringLiteral("/typhoonh/CompassIndicator.svg");
+    return QStringLiteral("/typhoonh/img/CompassIndicator.svg");
 }
 
 const QVariantList& YuneecFirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)

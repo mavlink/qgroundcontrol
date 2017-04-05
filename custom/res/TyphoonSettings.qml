@@ -209,7 +209,7 @@ QGCView {
                             SSIDButton {
                                 exclusiveGroup:     ssidGroup
                                 text:               modelData
-                                source:             "qrc:/typhoonh/checkMark.svg"
+                                source:             "qrc:/typhoonh/img/checkMark.svg"
                                 showIcon:           TyphoonHQuickInterface.connectedSSID === modelData
                                 enabled:            _activeVehicle ? !_activeVehicle.armed && TyphoonHQuickInterface.connectedSSID !== modelData : TyphoonHQuickInterface.connectedSSID !== modelData
                                 anchors.horizontalCenter:   parent.horizontalCenter

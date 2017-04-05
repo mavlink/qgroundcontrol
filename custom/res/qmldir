@@ -2,3 +2,4 @@ Module TyphoonHQuickInterface.Widgets
 
 OnOffSwitch                 1.0     OnOffSwitch.qml
 SSIDButton                  1.0     SSIDButton.qml
+BatteryLevel                1.0     BatteryLevel.qml

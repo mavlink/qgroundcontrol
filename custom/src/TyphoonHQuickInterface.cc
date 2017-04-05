@@ -379,6 +379,17 @@ TyphoonHQuickInterface::connectedCamera()
 }
 
 //-----------------------------------------------------------------------------
+bool
+TyphoonHQuickInterface::isTyphoon()
+{
+    QString ssid = connectedSSID();
+    if(ssid.startsWith("CGO3P") || ssid.startsWith("CGOET") || ssid.startsWith("CGOPRO")) {
+        return true;
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::_newSSID(QString ssid, int rssi)
 {

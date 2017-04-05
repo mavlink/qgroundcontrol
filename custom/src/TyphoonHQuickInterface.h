@@ -48,6 +48,7 @@ public:
     Q_PROPERTY(QStringList      ssidList        READ    ssidList            NOTIFY ssidListChanged)
     Q_PROPERTY(bool             scanningWiFi    READ    scanningWiFi        NOTIFY scanningWiFiChanged)
     Q_PROPERTY(bool             bindingWiFi     READ    bindingWiFi         NOTIFY bindingWiFiChanged)
+    Q_PROPERTY(bool             isTyphoon       READ    isTyphoon           NOTIFY wifiConnected)
     Q_PROPERTY(QString          connectedSSID   READ    connectedSSID       NOTIFY connectedSSIDChanged)
     Q_PROPERTY(QString          connectedCamera READ    connectedCamera     NOTIFY connectedSSIDChanged)
     Q_PROPERTY(int              rssi            READ    rssi                NOTIFY rssiChanged)
@@ -84,6 +85,7 @@ public:
     QStringList ssidList            () { return _ssidList; }
     bool        scanningWiFi        () { return _scanningWiFi; }
     bool        bindingWiFi         () { return _bindingWiFi; }
+    bool        isTyphoon           ();
     int         rssi                ();
     qreal       rcBattery           ();
     QString     flightTime          ();
