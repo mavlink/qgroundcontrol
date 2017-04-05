@@ -28,6 +28,7 @@ private:
     int         _writePort      (void *buffer, int len);
     bool        _setupPort      (int baud);
     void        _readPacket     (uint8_t length);
+    bool        _readData       (void *buffer, int len);
 signals:
     void        bytesReady      (QByteArray data);
 private:

@@ -276,6 +276,11 @@ void
 CameraControl::setVideoMode()
 {
     qCDebug(YuneecCameraLog) << "setVideoMode()";
+    if(_cameraSupported == CAMERA_SUPPORT_YES) {
+        //-- Force UI to update.
+        _ambarellaStatus.cam_mode = CAMERA_MODE_VIDEO;
+        emit cameraModeChanged();
+    }
     _setCamMode("video");
 }
 
@@ -284,6 +289,11 @@ void
 CameraControl::setPhotoMode()
 {
     qCDebug(YuneecCameraLog) << "setPhotoMode()";
+    if(_cameraSupported == CAMERA_SUPPORT_YES) {
+        //-- Force UI to update.
+        _ambarellaStatus.cam_mode = CAMERA_MODE_PHOTO;
+        emit cameraModeChanged();
+    }
     _setCamMode("photo");
 }
 

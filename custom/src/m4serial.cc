@@ -75,7 +75,7 @@ M4SerialComm::close()
         ::close(_fd);
         _fd = -1;
     }
-    if(!wait(500)) {
+    if(!wait(750)) {
         qCDebug(YuneecLog) << "SERIAL: Timeout waiting for thread to end";
     }
 #endif
@@ -129,6 +129,27 @@ M4SerialComm::run()
 }
 
 //-----------------------------------------------------------------------------
+bool
+M4SerialComm::_readData(void *buffer, int len)
+{
+    int tries = 0;
+    int left  = len;
+    uint8_t* ptr = (uint8_t*)buffer;
+    while(left > 0) {
+        int count = ::read(_fd, ptr, left);
+        if(count < 0 || _status != SERIAL_PORT_OPEN || _fd < 0) {
+            return false;
+        }
+        left -= count;
+        ptr  += count;
+        if(++tries > 5) {
+            return false;
+        }
+    }
+    return true;
+}
+
+//-----------------------------------------------------------------------------
 void
 M4SerialComm::_readPacket(uint8_t length)
 {
@@ -136,7 +157,7 @@ M4SerialComm::_readPacket(uint8_t length)
     if(length > 1) {
         length--; //-- Skip CRC from count
         uint8_t buffer[260];
-        if(::read(_fd, buffer, length) == length) {
+        if(_readData(buffer, length)) {
             //-- CRC is appended to end of data block
             uint8_t iCRC;
             if(::read(_fd, &iCRC, 1) == 1) {
@@ -147,7 +168,11 @@ M4SerialComm::_readPacket(uint8_t length)
                 } else {
                     qCDebug(YuneecLog) << "Bad CRC" << length << iCRC << oCRC;
                 }
+            } else {
+                qCDebug(YuneecLog) << "Missed CRC";
             }
+        } else {
+            qCDebug(YuneecLog) << "Missed message payload";
         }
     }
 #else

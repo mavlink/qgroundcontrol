@@ -544,8 +544,10 @@ TyphoonHQuickInterface::_saveWifiConfigurations()
     settings.remove("");
     QMap<QString, QString>::const_iterator i = _configurations.constBegin();
     while (i != _configurations.constEnd()) {
-         settings.setValue(i.key(), i.value());
-         i++;
+        if(!i.key().isEmpty()) {
+            settings.setValue(i.key(), i.value());
+        }
+        i++;
      }
     settings.endGroup();
 }

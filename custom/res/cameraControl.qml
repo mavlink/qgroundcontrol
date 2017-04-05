@@ -200,7 +200,6 @@ Rectangle {
                 anchors.fill:   parent
                 enabled:        !_cameraModeUndefined
                 onClicked: {
-                    console.log('mainWindow ' + mainWindow.width + ' ' + mainWindow.height)
                     if(rootLoader.sourceComponent === null) {
                         rootLoader.sourceComponent = cameraSettingsComponent
                     } else {
