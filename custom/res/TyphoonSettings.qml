@@ -8,6 +8,7 @@ import QtQuick                  2.5
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.2
 import QtQuick.Dialogs          1.2
+import QtQuick.Layouts          1.2
 
 import QGroundControl                       1.0
 import QGroundControl.FactSystem            1.0
@@ -128,6 +129,53 @@ QGCView {
                 width:              qgcView.width
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
+                //-----------------------------------------------------------------
+                //-- WIFI AP Connection
+                QGCLabel {
+                    anchors.left:   parent.left
+                    text:           "Experimental"
+                    font.family:    ScreenTools.demiboldFontFamily
+                    width:          qgcView.width * 0.8
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                Rectangle {
+                    height:         expCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:          qgcView.width * 0.8
+                    color:          qgcPal.windowShade
+                    anchors.margins: ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Column {
+                        id:         expCol
+                        spacing:    ScreenTools.defaultFontPixelHeight * 0.25
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        Item {
+                            width:  1
+                            height: ScreenTools.defaultFontPixelHeight
+                        }
+                        GridLayout {
+                            anchors.margins:    ScreenTools.defaultFontPixelHeight
+                            columnSpacing:      ScreenTools.defaultFontPixelWidth
+                            columns:            2
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            QGCLabel {
+                                text:   "Gimbal calibration using the M4"
+                            }
+                            QGCButton {
+                                text:       "Issue Command"
+                                enabled:    _activeVehicle
+                                onClicked:  TyphoonHQuickInterface.calibrateGimbalM4()
+                            }
+                            QGCLabel {
+                                text:   "Gimbal calibration using MAVLink"
+                            }
+                            QGCButton {
+                                text:       "Issue Command"
+                                enabled:    _activeVehicle
+                                onClicked:  TyphoonHQuickInterface.calibrateGimbalMV()
+                            }
+                        }
+                    }
+                }
                 //-----------------------------------------------------------------
                 //-- WIFI AP Connection
                 Item {

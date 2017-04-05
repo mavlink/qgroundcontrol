@@ -63,6 +63,8 @@ public:
     Q_INVOKABLE bool isWIFIConnected    ();
     Q_INVOKABLE void resetWifi          ();
     Q_INVOKABLE bool isWifiConfigured   (QString ssid);
+    Q_INVOKABLE void calibrateGimbalM4  ();
+    Q_INVOKABLE void calibrateGimbalMV  ();
 
     M4State     m4State             ();
     QString     m4StateStr          ();

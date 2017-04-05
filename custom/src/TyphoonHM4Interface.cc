@@ -182,6 +182,21 @@ TyphoonHM4Interface::resetBind() {
 }
 
 //-----------------------------------------------------------------------------
+void
+TyphoonHM4Interface::calibrateGimbal()
+{
+    qCDebug(YuneecLogVerbose) << "Sending: CMD_SET_TTB_STATE";
+    m4Command setPowerKeyCmd(Yuneec::CMD_SET_TTB_STATE);
+    QByteArray payload;
+    payload.resize(2);
+    payload[0] = 6; // Gimbal Calibration
+    payload[1] = 0; // Just Zero
+    QByteArray cmd = setPowerKeyCmd.pack(payload);
+    _commPort->write(cmd, DEBUG_DATA_DUMP);
+}
+
+
+//-----------------------------------------------------------------------------
 QString
 TyphoonHM4Interface::m4StateStr()
 {
