@@ -76,6 +76,7 @@ public:
     double          specifiedFlightSpeed    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
     double          specifiedGimbalYaw      (void) final { return std::numeric_limits<double>::quiet_NaN(); }
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
+    void            applyNewAltitude        (double newAltitude) final;
 
     bool coordinateHasRelativeAltitude      (void) const final { return true; }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return true; }

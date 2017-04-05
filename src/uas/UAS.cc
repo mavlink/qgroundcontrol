@@ -7,7 +7,9 @@
  *
  ****************************************************************************/
 
-// THIS CLASS IS DEPRECATED. ALL NEW FUNCTIONALITY SHOULD GO INTO Vehicle class
+// NO NEW CODE HERE
+// UASInterface, UAS.h/cc are deprecated. All new functionality should go into Vehicle.h/cc
+//
 
 #include <QList>
 #include <QTimer>

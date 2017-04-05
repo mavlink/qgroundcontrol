@@ -99,6 +99,7 @@ public:
     double          specifiedGimbalYaw      (void) final;
     QString         mapVisualQML            (void) const final { return QStringLiteral("SimpleItemMapVisual.qml"); }
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
+    void            applyNewAltitude        (double newAltitude) final;
 
     bool coordinateHasRelativeAltitude      (void) const final { return _missionItem.relativeAltitude(); }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return coordinateHasRelativeAltitude(); }

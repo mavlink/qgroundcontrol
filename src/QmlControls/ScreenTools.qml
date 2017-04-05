@@ -74,7 +74,7 @@ Item {
 
     readonly property string normalFontFamily:      "opensans"
     readonly property string demiboldFontFamily:    "opensans-demibold"
-
+    readonly property string fixedFontFamily:       ScreenToolsController.fixedFontFamily
     /* This mostly works but for some reason, reflowWidths() in SetupView doesn't change size.
        I've disabled (in release builds) until I figure out why. Changes require a restart for now.
     */

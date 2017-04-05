@@ -728,3 +728,21 @@ void SimpleMissionItem::appendMissionItems(QList<MissionItem*>& items, QObject* 
 
     _cameraSection->appendMissionItems(items, missionItemParent, seqNum);
 }
+
+void SimpleMissionItem::applyNewAltitude(double newAltitude)
+{
+    MAV_CMD command = (MAV_CMD)this->command();
+    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, command);
+
+    if (uiInfo->specifiesCoordinate() || uiInfo->specifiesAltitudeOnly()) {
+        switch ((MAV_CMD)this->command()) {
+        case MAV_CMD_NAV_LAND:
+        case MAV_CMD_NAV_VTOL_LAND:
+            // Leave alone
+            break;
+        default:
+            _missionItem.setParam7(newAltitude);
+            break;
+        }
+    }
+}
