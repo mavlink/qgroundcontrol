@@ -1043,8 +1043,8 @@ QGCView {
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     BusyIndicator {
-                        visible:        QGroundControl.mapEngineManager.exporting
-                        running:        QGroundControl.mapEngineManager.exporting
+                        visible:        QGroundControl.mapEngineManager ? QGroundControl.mapEngineManager.exporting : false
+                        running:        QGroundControl.mapEngineManager ? QGroundControl.mapEngineManager.exporting : false
                         width:          exportCloseButton.height
                         height:         exportCloseButton.height
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -1072,7 +1072,7 @@ QGCView {
             color:      "black"
             anchors.centerIn: parent
             Rectangle {
-                width:  parent.width  * 0.45
+                width:  parent.width  * 0.5
                 height: importCol.height * 1.5
                 radius: ScreenTools.defaultFontPixelWidth
                 color:  qgcPal.windowShadeDark
