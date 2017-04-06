@@ -189,7 +189,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter;
             }
             QGCLabel {
-                text: _camController ? ( _camController.evList.length < _camController.currentEV ? _camController.evList[_camController.currentEV] : "") : ""
+                text: _camController ? ( _camController.currentEV < _camController.evList.length ? _camController.evList[_camController.currentEV] : "0") : "0"
                 visible: _cameraAutoMode;
                 anchors.verticalCenter: parent.verticalCenter;
             }
@@ -222,11 +222,11 @@ Item {
             QGCLabel { text: qsTr("WB:"); anchors.verticalCenter: parent.verticalCenter;}
             QGCLabel { text: _camController ? _camController.wbList[_camController.currentWB] : ""; anchors.verticalCenter: parent.verticalCenter; }
             //-- Metering
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; }
-            QGCLabel { text: qsTr("Metering:"); anchors.verticalCenter: parent.verticalCenter;}
-            QGCLabel { text: _camController ? _camController.meteringList[_camController.currentMetering] : ""; anchors.verticalCenter: parent.verticalCenter;}
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; }
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
+            QGCLabel { text: qsTr("Metering:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
+            QGCLabel { text: _camController ? _camController.meteringList[_camController.currentMetering] : ""; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
             //-- Video Res
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode; }
             QGCLabel {
                 text: _camController ? _camController.videoResList[_camController.currentVideoRes] : "";
                 visible: _cameraVideoMode;
