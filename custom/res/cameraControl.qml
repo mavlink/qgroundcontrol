@@ -50,6 +50,7 @@ Rectangle {
     property bool _cameraVideoMode:         !_communicationLost && (TyphoonHQuickInterface.cameraControl.sdTotal === 0 ? false : TyphoonHQuickInterface.cameraControl.cameraMode  === CameraControl.CAMERA_MODE_VIDEO)
     property bool _cameraPhotoMode:         !_communicationLost && (TyphoonHQuickInterface.cameraControl.sdTotal === 0 ? false : TyphoonHQuickInterface.cameraControl.cameraMode  === CameraControl.CAMERA_MODE_PHOTO)
     property bool _cameraModeUndefined:     _communicationLost  || (TyphoonHQuickInterface.cameraControl.sdTotal === 0 ? true  : TyphoonHQuickInterface.cameraControl.cameraMode  === CameraControl.CAMERA_MODE_UNDEFINED)
+    property bool _cameraAutoMode:          TyphoonHQuickInterface.cameraControl ? TyphoonHQuickInterface.cameraControl.aeMode === CameraControl.AE_MODE_AUTO : false;
 
     /*
     Connections {
@@ -317,7 +318,7 @@ Rectangle {
                             Layout.fillWidth: true
                         }
                         OnOffSwitch {
-                            checked:     TyphoonHQuickInterface.cameraControl.aeMode === CameraControl.AE_MODE_AUTO
+                            checked:     _cameraAutoMode
                             Layout.alignment: Qt.AlignRight
                             onClicked:  TyphoonHQuickInterface.cameraControl.aeMode = checked ? CameraControl.AE_MODE_AUTO : CameraControl.AE_MODE_MANUAL
                         }
@@ -342,7 +343,7 @@ Rectangle {
                                 TyphoonHQuickInterface.cameraControl.currentEV = index
                             }
                             Layout.preferredWidth:  _editFieldWidth
-                            enabled:    TyphoonHQuickInterface.cameraControl.aeMode === CameraControl.AE_MODE_AUTO
+                            enabled:    _cameraAutoMode
                         }
                         //-------------------------------------------
                         //-- ISO (manual)
@@ -365,7 +366,7 @@ Rectangle {
                                 TyphoonHQuickInterface.cameraControl.currentIso = index
                             }
                             Layout.preferredWidth:  _editFieldWidth
-                            enabled:    TyphoonHQuickInterface.cameraControl.aeMode !== CameraControl.AE_MODE_AUTO
+                            enabled:    !_cameraAutoMode
                         }
                         //-------------------------------------------
                         //-- Shutter Speed (manual)
@@ -388,7 +389,7 @@ Rectangle {
                                 TyphoonHQuickInterface.cameraControl.currentShutter = index
                             }
                             Layout.preferredWidth:  _editFieldWidth
-                            enabled:    TyphoonHQuickInterface.cameraControl.aeMode !== CameraControl.AE_MODE_AUTO
+                            enabled:    !_cameraAutoMode
                         }
                         //-------------------------------------------
                         //-- Color "IQ" Mode
@@ -450,6 +451,7 @@ Rectangle {
                         QGCComboBox {
                             width:       _editFieldWidth
                             model:       TyphoonHQuickInterface.cameraControl.meteringList
+                            enabled:     _cameraAutoMode
                             currentIndex:TyphoonHQuickInterface.cameraControl.currentMetering
                             onActivated: {
                                 TyphoonHQuickInterface.cameraControl.currentMetering = index
