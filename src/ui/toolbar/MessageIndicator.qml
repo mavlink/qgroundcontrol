@@ -43,7 +43,7 @@ Item {
             return "purple";
         }
         //-- It can only get here when closing (vehicle gone while window active)
-        return "white";
+        return qgcPal.colorGrey
     }
 
     Image {
