@@ -402,6 +402,13 @@ Rectangle {
                     Layout.fillWidth:       true
                 }
 
+                QGCCheckBox {
+                    text:       qsTr("Refly at 90 degree offset")
+                    checked:    missionItem.refly90Degrees
+                    onClicked:  missionItem.refly90Degrees = checked
+                    Layout.columnSpan: 2
+                }
+
                 QGCLabel {
                     wrapMode:       Text.WordWrap
                     font.pointSize: ScreenTools.smallFontPointSize
@@ -460,6 +467,12 @@ Rectangle {
                 rowSpacing:     _margin
                 factList:       [ missionItem.gridAngle, missionItem.gridSpacing, missionItem.gridAltitude, missionItem.turnaroundDist ]
                 factLabels:     [ qsTr("Angle"), qsTr("Spacing"), qsTr("Altitude"), qsTr("Turnaround dist")]
+            }
+
+            QGCCheckBox {
+                text:       qsTr("Refly at 90 degree offset")
+                checked:    missionItem.refly90Degrees
+                onClicked:  missionItem.refly90Degrees = checked
             }
 
             FactCheckBox {
