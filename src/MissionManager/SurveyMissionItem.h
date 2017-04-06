@@ -49,6 +49,7 @@ public:
 
     Q_PROPERTY(bool                 cameraOrientationFixed      MEMBER _cameraOrientationFixed      NOTIFY cameraOrientationFixedChanged)
     Q_PROPERTY(bool                 hoverAndCaptureAllowed      READ hoverAndCaptureAllowed         CONSTANT)
+    Q_PROPERTY(bool                 refly90Degrees              READ refly90Degrees WRITE setRefly90Degrees NOTIFY refly90DegreesChanged)
 
     Q_PROPERTY(double               timeBetweenShots            READ timeBetweenShots               NOTIFY timeBetweenShotsChanged)
     Q_PROPERTY(QVariantList         polygonPath                 READ polygonPath                    NOTIFY polygonPathChanged)
@@ -95,10 +96,13 @@ public:
     Fact* fixedValueIsAltitude      (void) { return &_fixedValueIsAltitudeFact; }
     Fact* camera                    (void) { return &_cameraFact; }
 
-    int     cameraShots(void) const;
-    double  coveredArea(void) const { return _coveredArea; }
-    double  timeBetweenShots(void) const;
-    bool    hoverAndCaptureAllowed(void) const;
+    int     cameraShots             (void) const;
+    double  coveredArea             (void) const { return _coveredArea; }
+    double  timeBetweenShots        (void) const;
+    bool    hoverAndCaptureAllowed  (void) const;
+    bool    refly90Degrees          (void) const { return _refly90Degrees; }
+
+    void setRefly90Degrees(bool refly90Degrees);
 
     // Overrides from ComplexMissionItem
 
@@ -107,7 +111,6 @@ public:
     bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     double              greatestDistanceTo  (const QGeoCoordinate &other) const final;
     QString             mapVisualQML        (void) const final { return QStringLiteral("SurveyMapVisual.qml"); }
-
 
     // Overrides from VisualMissionItem
 
@@ -172,6 +175,7 @@ signals:
     void gridTypeChanged                (QString gridType);
     void timeBetweenShotsChanged        (void);
     void cameraOrientationFixedChanged  (bool cameraOrientationFixed);
+    void refly90DegreesChanged          (bool refly90Degrees);
 
 private slots:
     void _setDirty(void);
@@ -189,7 +193,7 @@ private:
     void _clearGrid(void);
     void _generateGrid(void);
     void _updateCoordinateAltitude(void);
-    void _gridGenerator(const QList<QPointF>& polygonPoints, QList<QPointF>& simpleGridPoints, QList<QList<QPointF>>& transectSegments);
+    int _gridGenerator(const QList<QPointF>& polygonPoints, QList<QPointF>& simpleGridPoints, QList<QList<QPointF>>& transectSegments, bool refly);
     QPointF _rotatePoint(const QPointF& point, const QPointF& origin, double angle);
     void _intersectLinesWithRect(const QList<QLineF>& lineList, const QRectF& boundRect, QList<QLineF>& resultLines);
     void _intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines);
@@ -206,6 +210,9 @@ private:
     bool _hoverAndCaptureEnabled(void) const;
     bool _hasTurnaround(void) const;
     double _turnaroundDistance(void) const;
+    void _convertTransectToGeo(const QList<QList<QPointF>>& transectSegmentsNED, const QGeoCoordinate& tangentOrigin, QList<QList<QGeoCoordinate>>& transectSegmentsGeo);
+    void _convertPointsToGeo(const QList<QPointF>& pointsNED, const QGeoCoordinate& tangentOrigin, QVariantList& pointsGeo);
+    bool _appendMissionItemsWorker(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, bool hasRefly, bool buildRefly);
 
     int                             _sequenceNumber;
     bool                            _dirty;
@@ -213,10 +220,12 @@ private:
     QmlObjectListModel              _polygonModel;
     QVariantList                    _simpleGridPoints;      ///< Grid points for drawing simple grid visuals
     QList<QList<QGeoCoordinate>>    _transectSegments;      ///< Internal transect segments including grid exit, turnaround and internal camera points
+    QList<QList<QGeoCoordinate>>    _reflyTransectSegments; ///< Refly segments
     QGeoCoordinate                  _coordinate;
     QGeoCoordinate                  _exitCoordinate;
     bool                            _cameraOrientationFixed;
     int                             _missionCommandCount;
+    bool                            _refly90Degrees;
 
     double          _surveyDistance;
     int             _cameraShots;
@@ -272,6 +281,7 @@ private:
     static const char* _jsonCameraNameKey;
     static const char* _jsonCameraOrientationLandscapeKey;
     static const char* _jsonFixedValueIsAltitudeKey;
+    static const char* _jsonRefly90DegreesKey;
 };
 
 #endif
