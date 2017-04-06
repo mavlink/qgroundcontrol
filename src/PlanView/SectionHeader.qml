@@ -6,12 +6,11 @@ import QtGraphicalEffects 1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
 
-QGCMouseArea {
+FocusScope {
     id:             _root
     anchors.left:   parent.left
     anchors.right:  parent.right
     height:         column.height
-    onClicked:      checked = !checked
 
     property alias          text:           label.text
     property bool           checked:        true
@@ -27,38 +26,47 @@ QGCMouseArea {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    ColumnLayout {
-        id:             column
-        anchors.left:   parent.left
-        anchors.right:  parent.right
+    QGCMouseArea {
+        anchors.fill: parent
 
-        Item {
-            height:     _sectionSpacer
-            width:      1
-            visible:    showSpacer
+        onClicked: {
+            _root.focus = true
+            checked = !checked
         }
 
-        QGCLabel {
-            id:                 label
-            Layout.fillWidth:   true
-
-            QGCColoredImage {
-                id:                     image
-                width:                  label.height / 2
-                height:                 width
-                anchors.right:          parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                source:                 "/qmlimages/arrow-down.png"
-                color:                  qgcPal.text
-                visible:                !_root.checked
-            }
-        }
-
-        Rectangle {
+        ColumnLayout {
+            id:             column
             anchors.left:   parent.left
             anchors.right:  parent.right
-            height:         1
-            color:          qgcPal.text
+
+            Item {
+                height:     _sectionSpacer
+                width:      1
+                visible:    showSpacer
+            }
+
+            QGCLabel {
+                id:                 label
+                Layout.fillWidth:   true
+
+                QGCColoredImage {
+                    id:                     image
+                    width:                  label.height / 2
+                    height:                 width
+                    anchors.right:          parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    source:                 "/qmlimages/arrow-down.png"
+                    color:                  qgcPal.text
+                    visible:                !_root.checked
+                }
+            }
+
+            Rectangle {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                height:         1
+                color:          qgcPal.text
+            }
         }
     }
 }
