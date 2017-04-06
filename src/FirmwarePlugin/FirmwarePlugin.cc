@@ -438,7 +438,7 @@ bool FirmwarePlugin::_armVehicle(Vehicle* vehicle)
     return vehicle->armed();
 }
 
-void FirmwarePlugin::batteryConsumptionData(Vehicle* vehicle, int& mAhBattery, int& hoverAmps, int& cruiseAmps) const
+void FirmwarePlugin::batteryConsumptionData(Vehicle* vehicle, int& mAhBattery, double& hoverAmps, double& cruiseAmps) const
 {
     Q_UNUSED(vehicle);
     mAhBattery = 0;
