@@ -718,6 +718,7 @@ QGCView {
             // Mission Item Editor
             Item {
                 id:                 missionItemEditor
+                anchors.topMargin:  ScreenTools.defaultFontPixelHeight / 2
                 anchors.top:        planElementSelectorRow.visible ? planElementSelectorRow.bottom : planElementSelectorRow.top
                 anchors.left:       parent.left
                 anchors.right:      parent.right
