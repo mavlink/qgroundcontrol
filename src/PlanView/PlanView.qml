@@ -70,7 +70,7 @@ QGCView {
         coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
         coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
         coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
-        insertComplexItem(complexItemName, coordinate, missionController.visualItems.count)
+        insertComplexMissionItem(complexItemName, coordinate, missionController.visualItems.count)
     }
 
     function insertComplexMissionItem(complexItemName, coordinate, index) {
