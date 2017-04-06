@@ -52,6 +52,15 @@ MixersComponentController::MixersComponentController(void)
     connect(_vehicle->mixersManager(), &MixersManager::mixerManagerStatusChanged, this, &MixersComponentController::_updateMixersManagerStatus);
     connect(_vehicle->mixersManager(), &MixersManager::downloadPercentChanged, this, &MixersComponentController::_updatePercentDownloaded);
     connect(this, &MixersComponentController::selectedGroupChanged, this, &MixersComponentController::_updateSelectedGroup);
+
+    //TODO These values to be mixer/AP specific
+    _mixerTypeAliases.append("MIXER_NONE");
+    _mixerTypeAliases.append("MIXER_NULL");
+    _mixerTypeAliases.append("MIXER_SIMPLE");
+    _mixerTypeAliases.append("MIXER_MULTIROTOR");
+    _mixerTypeAliases.append("MIXER_HELICOPTER");
+    _mixerTypeAliases.append("MIXER_SIMPLE_INPUT");
+    _mixerTypeAliases.append("MIXER_MULTIROTOR_MOTOR");
 }
 
 
@@ -82,6 +91,33 @@ void MixersComponentController::guiUpdated(void)
 
 void MixersComponentController::storeSelectedGroup(void){
     _vehicle->mixersManager()->requestStoreParams(_selectedGroup);
+}
+
+QString MixersComponentController::getMixerTypeAlias(unsigned int typeID)
+{
+    if(typeID >= (unsigned int) _mixerTypeAliases.count()) {
+        return QString("Unknown Type");
+    }
+
+    return _mixerTypeAliases[typeID];
+}
+
+QString MixersComponentController::getValuesString(QObject* paramObj){
+    MixerParameter* param = qobject_cast<MixerParameter *>(paramObj);
+
+    if(param == nullptr) return "null parameter";
+    QString valStr;
+    if(param->arraySize() == 0){
+        return param->paramName();
+    }
+    Fact* value = qobject_cast<Fact *>(param->values()->get(0));
+    QString valsStr = value->cookedValueString();
+
+    for(unsigned int i=1; i<param->arraySize(); i++){
+        value = qobject_cast<Fact *>(param->values()->get(i));
+        valsStr += " , " + value->cookedValueString();
+    }
+    return valsStr;
 }
 
 void MixersComponentController::_updateMixers(bool dataReady){

@@ -24,7 +24,6 @@ import QGroundControl.Controllers   1.0
 //import QGroundControl.Mixer         1.0
 
 
-
 // Mixer Tuning setup page
 SetupPage {
     id:             tuningPage
@@ -70,7 +69,6 @@ SetupPage {
                     width:              ScreenTools.defaultFontPixelWidth  * 100
                     orientation:        ListView.Vertical
                     model:              mixers.mixersList
-//                    model:              mockList
                     cacheBuffer:        height > 0 ? height * 2 : 0
                     clip:               true
                     focus:              true
@@ -94,7 +92,7 @@ SetupPage {
 
                             QGCLabel {
                                 id:     mixerIDLabel
-                                width:  ScreenTools.defaultFontPixelWidth  * 10
+                                width:  ScreenTools.defaultFontPixelWidth  * 5
                                 text:   mixerParamDelegate.mixerParamInfo.index
                                 horizontalAlignment:    Text.AlignHCenter
                                 verticalAlignment:      Text.AlignVCenter
@@ -104,9 +102,9 @@ SetupPage {
 
                             QGCLabel {
                                 id:     mixerTypeLabel
-                                width:  ScreenTools.defaultFontPixelWidth  * 10
-                                text:   mixerParamDelegate.mixerParamInfo.mixerID
-                                horizontalAlignment:    Text.AlignHCenter
+                                width:  ScreenTools.defaultFontPixelWidth  * 25
+                                text:   mixers.getMixerTypeAlias(mixerParamDelegate.mixerParamInfo.mixerType)
+                                horizontalAlignment:    Text.AlignLeft
                                 verticalAlignment:      Text.AlignVCenter
                                 clip:   true
                                 color:  "white"
@@ -126,7 +124,7 @@ SetupPage {
                                 id:     paramNameLabel
                                 width:  ScreenTools.defaultFontPixelWidth  * 20
                                 text:   mixerParamDelegate.mixerParamInfo.paramName
-                                horizontalAlignment:    Text.AlignHCenter
+                                horizontalAlignment:    Text.AlignLeft
                                 verticalAlignment:      Text.AlignVCenter
                                 clip:   true
                                 color:  "white"
@@ -135,8 +133,8 @@ SetupPage {
                             QGCLabel {
                                 id:     paramValueLabel
                                 width:  ScreenTools.defaultFontPixelWidth  * 20
-                                text:   "[ " + mixerParamDelegate.mixerParamInfo.valuesString + " ]"
-                                horizontalAlignment:    Text.AlignHCenter
+                                text:   "[ " + mixers.getValuesString(factRow.modelFact) + " ]"
+                                horizontalAlignment:    Text.AlignLeft
                                 verticalAlignment:      Text.AlignVCenter
                                 clip:   true
                                 color:  "white"

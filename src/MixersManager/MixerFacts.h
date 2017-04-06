@@ -34,7 +34,6 @@ class MixerParameter : public QObject
     Q_PROPERTY(QString              paramName       READ paramName      CONSTANT)
     Q_PROPERTY(bool                 readOnly        READ readOnly       CONSTANT)
     Q_PROPERTY(unsigned int         arraySize       READ arraySize      CONSTANT)
-    Q_PROPERTY(QString              valuesString    READ valuesString   CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  values          READ values         CONSTANT)
 
 

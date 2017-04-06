@@ -50,6 +50,7 @@ public:
     Q_INVOKABLE void guiUpdated(void);
     Q_INVOKABLE void storeSelectedGroup(void);
     Q_INVOKABLE QString getMixerTypeAlias(unsigned int typeID);
+    Q_INVOKABLE QString getValuesString(QObject* paramObj);
     
 signals:
     void mixersManagerStatusTextChanged(void);

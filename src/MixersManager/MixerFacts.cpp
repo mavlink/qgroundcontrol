@@ -68,21 +68,6 @@ void MixerParameter::_changedParamValue(QVariant value){
     }
 }
 
-QString MixerParameter::valuesString(void){
-    if(_paramArraySize <= 0){
-        return _paramName;
-    }
-    Fact* value = qobject_cast<Fact *>(_values->get(0));
-    QString valsStr = value->cookedValueString();
-    for(unsigned int i=1; i<_paramArraySize; i++){
-        value = qobject_cast<Fact *>(_values->get(i));
-        valsStr += " , " + value->cookedValueString();
-    }
-    return valsStr;
-}
-
-
-
 MixerGroup::MixerGroup(unsigned int groupID, QObject* parent)
     : QObject(parent)
     , _parameters()
