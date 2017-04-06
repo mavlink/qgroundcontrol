@@ -39,9 +39,11 @@ Rectangle {
     property bool   _controllerValid:           missionController != undefined
     property bool   _manualUpload:              QGroundControl.settingsManager.appSettings.automaticMissionUpload.rawValue == 0
 
+    property real   _dataFontSize:              ScreenTools.isMobile ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
     property real   _largeValueWidth:           ScreenTools.defaultFontPixelWidth * 8
     property real   _smallValueWidth:           ScreenTools.defaultFontPixelWidth * 4
     property real   _labelToValueSpacing:       ScreenTools.defaultFontPixelWidth
+    property real   _rowSpacing:                ScreenTools.isMobile ? 1 : 0
     property real   _distance:                  _statusValid ? currentMissionItem.distance : NaN
     property real   _altDifference:             _statusValid ? currentMissionItem.altDifference : NaN
     property real   _gradient:                  _statusValid && currentMissionItem.distance > 0 ? Math.atan(currentMissionItem.altDifference / currentMissionItem.distance) : NaN
@@ -58,7 +60,6 @@ Rectangle {
     property string _gradientText:              isNaN(_gradient) ?              "-.-" : _gradientPercent.toFixed(0) + "%"
     property string _azimuthText:               isNaN(_azimuth) ?               "-.-" : Math.round(_azimuth)
     property string _missionDistanceText:       isNaN(_missionDistance) ?       "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_missionDistance).toFixed(0) + " " + QGroundControl.appSettingsDistanceUnitsString
-    property string _missionTimeText:           isNaN(_missionTime) ?           "-.-" : Number(_missionTime / 60).toFixed(0) + " min"
     property string _missionMaxTelemetryText:   isNaN(_missionMaxTelemetry) ?   "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_missionMaxTelemetry).toFixed(0) + " " + QGroundControl.appSettingsDistanceUnitsString
     property string _batteryChangePointText:    _batteryChangePoint < 0 ?       "N/A" : _batteryChangePoint
     property string _batteriesRequiredText:     _batteriesRequired < 0 ?        "N/A" : _batteriesRequired
@@ -66,6 +67,14 @@ Rectangle {
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
     QGCPalette { id: qgcPal }
+
+    function getMissionTime() {
+        if(isNaN(_missionTime)) {
+            return "00:00:00"
+        }
+        var t = new Date(0, 0, 0, 0, 0, Number(_missionTime))
+        return Qt.formatTime(t, 'hh:mm:ss')
+    }
 
     //-- Eat mouse events, preventing them from reaching toolbar, which is underneath us.
     MouseArea {
@@ -75,6 +84,8 @@ Rectangle {
         onReleased:     { mouse.accepted = true; }
     }
 
+    //-- The reason for this Row to be here is so the Logo (Home) button is in the same
+    //   location as the one in the main toolbar.
     Row {
         anchors.bottomMargin:   1
         anchors.left:           parent.left
@@ -100,49 +111,53 @@ Rectangle {
     Row {
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
-        spacing:            _margins * 2
+        spacing:            _margins * 8
         anchors.horizontalCenter: parent.horizontalCenter
 
         GridLayout {
             anchors.verticalCenter: parent.verticalCenter
             columns:                5
-            rowSpacing:             0
+            rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
 
             QGCLabel {
-                text:               qsTr("Selected waypoint")
+                text:               qsTr("Selected Waypoint")
                 Layout.columnSpan:  5
                 font.pointSize:     ScreenTools.smallFontPointSize
             }
 
-            QGCLabel { text: qsTr("Distance:") }
+            QGCLabel { text: qsTr("Distance:"); font.pointSize: _dataFontSize; }
             QGCLabel {
                 text:                   _distanceText
+                font.pointSize:         _dataFontSize
                 Layout.minimumWidth:    _largeValueWidth
                 horizontalAlignment:    Text.AlignRight
             }
 
             Item { width: 1; height: 1 }
 
-            QGCLabel { text: qsTr("Gradient:") }
+            QGCLabel { text: qsTr("Gradient:"); font.pointSize: _dataFontSize; }
             QGCLabel {
                 text:                   _gradientText
+                font.pointSize:         _dataFontSize
                 Layout.minimumWidth:    _smallValueWidth
                 horizontalAlignment:    Text.AlignRight
             }
 
-            QGCLabel { text: qsTr("Alt diff:") }
+            QGCLabel { text: qsTr("Alt diff:"); font.pointSize: _dataFontSize; }
             QGCLabel {
                 text:                   _altDifferenceText
+                font.pointSize:         _dataFontSize
                 Layout.minimumWidth:    _largeValueWidth
                 horizontalAlignment:    Text.AlignRight
             }
 
             Item { width: 1; height: 1 }
 
-            QGCLabel { text: qsTr("Azimuth:") }
+            QGCLabel { text: qsTr("Azimuth:"); font.pointSize: _dataFontSize; }
             QGCLabel {
                 text:                   _azimuthText
+                font.pointSize:         _dataFontSize
                 Layout.minimumWidth:    _smallValueWidth
                 horizontalAlignment:    Text.AlignRight
             }
@@ -151,34 +166,37 @@ Rectangle {
         GridLayout {
             anchors.verticalCenter: parent.verticalCenter
             columns:                5
-            rowSpacing:             0
+            rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
 
             QGCLabel {
-                text:               qsTr("Total mission")
+                text:               qsTr("Total Mission")
                 Layout.columnSpan:  5
                 font.pointSize:     ScreenTools.smallFontPointSize
             }
 
-            QGCLabel { text: qsTr("Distance:") }
+            QGCLabel { text: qsTr("Distance:"); font.pointSize: _dataFontSize; }
             QGCLabel {
                 text:                   _missionDistanceText
+                font.pointSize:         _dataFontSize
                 Layout.minimumWidth:    _largeValueWidth
                 horizontalAlignment:    Text.AlignRight
             }
 
             Item { width: 1; height: 1 }
 
-            QGCLabel { text: qsTr("Max telem dist:") }
+            QGCLabel { text: qsTr("Max telem dist:"); font.pointSize: _dataFontSize; }
             QGCLabel {
                 text:                   _missionMaxTelemetryText
+                font.pointSize:         _dataFontSize
                 Layout.minimumWidth:    _largeValueWidth
                 horizontalAlignment:    Text.AlignRight
             }
 
-            QGCLabel { text: qsTr("Time:") }
+            QGCLabel { text: qsTr("Time:"); font.pointSize: _dataFontSize; }
             QGCLabel {
-                text:                   _missionTimeText
+                text:                   getMissionTime()
+                font.pointSize:         _dataFontSize
                 Layout.minimumWidth:    _largeValueWidth
                 horizontalAlignment:    Text.AlignRight
             }
@@ -187,7 +205,7 @@ Rectangle {
         GridLayout {
             anchors.verticalCenter: parent.verticalCenter
             columns:                3
-            rowSpacing:             0
+            rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
 
             QGCLabel {
@@ -196,18 +214,20 @@ Rectangle {
                 font.pointSize:     ScreenTools.smallFontPointSize
             }
 
-            QGCLabel { text: qsTr("Batteries required:") }
+            QGCLabel { text: qsTr("Batteries required:"); font.pointSize: _dataFontSize; }
             QGCLabel {
                 text:                   _batteriesRequiredText
+                font.pointSize:         _dataFontSize
                 horizontalAlignment:    Text.AlignRight
                 Layout.minimumWidth:    _smallValueWidth
             }
 
             Item { width: 1; height: 1 }
 
-            QGCLabel { text: qsTr("Swap waypoint:") }
+            QGCLabel { text: qsTr("Swap waypoint:"); font.pointSize: _dataFontSize; }
             QGCLabel {
                 text:                   _batteryChangePointText
+                font.pointSize:         _dataFontSize
                 horizontalAlignment:    Text.AlignRight
                 Layout.minimumWidth:    _smallValueWidth
             }
