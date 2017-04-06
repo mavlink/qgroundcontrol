@@ -247,6 +247,16 @@ Rectangle {
         enabled:                _activeVehicle
         visible:                _manualUpload
         onClicked:              missionController.upload()
+
+        PropertyAnimation on opacity {
+            easing.type:    Easing.OutQuart
+            from:           0.5
+            to:             1
+            loops:          Animation.Infinite
+            running:        missionController ? missionController.dirty : false
+            alwaysRunToEnd: true
+            duration:       2000
+        }
     }
 }
 
