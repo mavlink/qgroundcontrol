@@ -87,6 +87,7 @@ Rectangle {
     //-- The reason for this Row to be here is so the Logo (Home) button is in the same
     //   location as the one in the main toolbar.
     Row {
+        id:                     logoRow
         anchors.bottomMargin:   1
         anchors.left:           parent.left
         anchors.top:            parent.top
@@ -108,11 +109,14 @@ Rectangle {
     }
 
 
-    Row {
-        anchors.top:        parent.top
-        anchors.bottom:     parent.bottom
-        spacing:            _margins * 8
-        anchors.horizontalCenter: parent.horizontalCenter
+    RowLayout {
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
+        spacing:                _margins * 2
+        anchors.left:           logoRow.right
+        anchors.leftMargin:     _margins * 4
+        anchors.right:          uploadButton.visible ? uploadButton.left : parent.right
+        anchors.rightMargin:    _margins
 
         GridLayout {
             anchors.verticalCenter: parent.verticalCenter
