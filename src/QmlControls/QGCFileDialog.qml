@@ -56,7 +56,7 @@ Item {
     FileDialog {
         id:             fullFileDialog
         folder:         "file://" + _root.folder
-        nameFilters:    _root.nameFilters
+        nameFilters:    _root.nameFilters ? _root.nameFilters : []
         title:          _root.title
         selectExisting: _root.selectExisting
         selectMultiple: false
