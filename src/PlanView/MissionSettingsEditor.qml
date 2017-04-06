@@ -75,9 +75,9 @@ Rectangle {
 
         Column {
             id:             valuesColumn
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            anchors.top:    parent.top
+            anchors.left:   parent ? parent.left  : undefined
+            anchors.right:  parent ? parent.right : undefined
+            anchors.top:    parent ? parent.top   : undefined
             spacing:        _margin
 
             SectionHeader {
