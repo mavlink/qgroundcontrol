@@ -39,27 +39,25 @@ Rectangle {
     signal showAnalyzeView
 
     function checkSettingsButton() {
-        rootLoader.sourceComponent = null
         settingsButton.checked = true
     }
 
     function checkSetupButton() {
-        rootLoader.sourceComponent = null
         setupButton.checked = true
     }
 
     function checkPlanButton() {
-        rootLoader.sourceComponent = null
+        TyphoonHQuickInterface.stopScan();
         planButton.checked = true
     }
 
     function checkFlyButton() {
-        rootLoader.sourceComponent = null
+        TyphoonHQuickInterface.stopScan();
         homeButton.checked = true
     }
 
     function checkAnalyzeButton() {
-
+        TyphoonHQuickInterface.stopScan();
     }
 
     Component.onCompleted: {
