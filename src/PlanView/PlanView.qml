@@ -70,7 +70,11 @@ QGCView {
         coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
         coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
         coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
-        var sequenceNumber = missionController.insertComplexMissionItem(complexItemName, coordinate, missionController.visualItems.count)
+        insertComplexItem(complexItemName, coordinate, missionController.visualItems.count)
+    }
+
+    function insertComplexMissionItem(complexItemName, coordinate, index) {
+        var sequenceNumber = missionController.insertComplexMissionItem(complexItemName, coordinate, index)
         setCurrentItem(sequenceNumber)
     }
 
@@ -714,6 +718,7 @@ QGCView {
             // Mission Item Editor
             Item {
                 id:                 missionItemEditor
+                anchors.topMargin:  ScreenTools.defaultFontPixelHeight / 2
                 anchors.top:        planElementSelectorRow.visible ? planElementSelectorRow.bottom : planElementSelectorRow.top
                 anchors.left:       parent.left
                 anchors.right:      parent.right
@@ -747,10 +752,12 @@ QGCView {
                             if (removeIndex >= missionController.visualItems.count) {
                                 removeIndex--
                             }
-                            setCurrentItem(removeIndex)
+                            _currentMissionIndex = -1
+                            rootQgcView.setCurrentItem(removeIndex)
                         }
 
-                        onInsert: insertSimpleMissionItem(editorMap.center, index)
+                        onInsertWaypoint:       insertSimpleMissionItem(editorMap.center, index)
+                        onInsertComplexItem:    insertComplexMissionItem(complexItemName, editorMap.center, index)
                     }
                 } // QGCListView
             } // Item - Mission Item editor

@@ -39,11 +39,6 @@ Rectangle {
     property bool   _controllerValid:           missionController != undefined
     property bool   _manualUpload:              QGroundControl.settingsManager.appSettings.automaticMissionUpload.rawValue == 0
 
-    Connections {
-        target: QGroundControl.settingsManager.appSettings.automaticMissionUpload
-        onRawValueChanged: console.log("changed", QGroundControl.settingsManager.appSettings.automaticMissionUpload.rawValue)
-    }
-
     property real   _largeValueWidth:           ScreenTools.defaultFontPixelWidth * 8
     property real   _smallValueWidth:           ScreenTools.defaultFontPixelWidth * 4
     property real   _labelToValueSpacing:       ScreenTools.defaultFontPixelWidth

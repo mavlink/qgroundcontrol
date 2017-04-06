@@ -51,9 +51,13 @@ public:
 
     Q_PROPERTY(int      supportedFirmwareCount          READ supportedFirmwareCount CONSTANT)
 
-    Q_PROPERTY(qreal                zOrderTopMost       READ zOrderTopMost          CONSTANT) ///< z order for top most items, toolbar, main window sub view
-    Q_PROPERTY(qreal                zOrderWidgets       READ zOrderWidgets          CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
-    Q_PROPERTY(qreal                zOrderMapItems      READ zOrderMapItems         CONSTANT) ///< z order value for map items, for example: mission item indicators
+    Q_PROPERTY(qreal zOrderTopMost              READ zOrderTopMost              CONSTANT) ///< z order for top most items, toolbar, main window sub view
+    Q_PROPERTY(qreal zOrderWidgets              READ zOrderWidgets              CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
+    Q_PROPERTY(qreal zOrderMapItems             READ zOrderMapItems             CONSTANT)
+    Q_PROPERTY(qreal zOrderVehicles             READ zOrderVehicles             CONSTANT)
+    Q_PROPERTY(qreal zOrderWaypointIndicators   READ zOrderWaypointIndicators   CONSTANT)
+    Q_PROPERTY(qreal zOrderTrajectoryLines      READ zOrderTrajectoryLines      CONSTANT)
+    Q_PROPERTY(qreal zOrderWaypointLines        READ zOrderWaypointLines        CONSTANT)
 
     //-------------------------------------------------------------------------
     // MavLink Protocol
@@ -135,9 +139,13 @@ public:
     static QGeoCoordinate   flightMapPosition   ();
     static double           flightMapZoom       ();
 
-    qreal                   zOrderTopMost       ()  { return 1000; }
-    qreal                   zOrderWidgets       ()  { return 100; }
-    qreal                   zOrderMapItems      ()  { return 50; }
+    qreal zOrderTopMost             () { return 1000; }
+    qreal zOrderWidgets             () { return 100; }
+    qreal zOrderMapItems            () { return 50; }
+    qreal zOrderWaypointIndicators  () { return 50; }
+    qreal zOrderVehicles            () { return 49; }
+    qreal zOrderTrajectoryLines     () { return 48; }
+    qreal zOrderWaypointLines       () { return 47; }
 
     bool    isVersionCheckEnabled   () { return _toolbox->mavlinkProtocol()->versionCheckEnabled(); }
     int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
