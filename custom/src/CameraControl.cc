@@ -862,9 +862,9 @@ CameraControl::_resetCameraValues()
     _ambarellaStatus.msg_id = 0;
     _ambarellaStatus.cam_mode = CAMERA_MODE_UNDEFINED;
     _ambarellaStatus.status.clear();
-    _ambarellaStatus.sdfree = 0;
-    _ambarellaStatus.sdtotal = 0;
-    _ambarellaStatus.record_time = 0;
+    _ambarellaStatus.sdfree  = 0xFFFFFFFF;
+    _ambarellaStatus.sdtotal = 0xFFFFFFFF;
+    _ambarellaStatus.record_time   = 0;
     _ambarellaStatus.white_balance = 0;
     _ambarellaStatus.ae_enable = AE_MODE_UNDEFINED;
     _ambarellaStatus.iq_type = 0;
