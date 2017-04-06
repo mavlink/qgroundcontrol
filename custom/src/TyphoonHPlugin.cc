@@ -141,6 +141,7 @@ public:
     bool        sensorsHaveFixedOrientation    () const { return true; }
     bool        guidedBarShowEmergencyStop     () const { return false; }
     bool        guidedBarShowOrbit             () const { return false; }
+    bool        missionWaypointsOnly           () const { return true; }
 
 private slots:
     void _advancedChanged(bool advanced);
