@@ -8,15 +8,15 @@
  ****************************************************************************/
 
 
-#include "ComplexMissionItemTest.h"
+#include "SurveyMissionItemTest.h"
 
-ComplexMissionItemTest::ComplexMissionItemTest(void)
+SurveyMissionItemTest::SurveyMissionItemTest(void)
 {    
     _polyPoints << QGeoCoordinate(47.633550640000003, -122.08982199) << QGeoCoordinate(47.634129020000003, -122.08887249) <<
                   QGeoCoordinate(47.633619320000001, -122.08811074) << QGeoCoordinate(47.633189139999999, -122.08900124);
 }
 
-void ComplexMissionItemTest::init(void)
+void SurveyMissionItemTest::init(void)
 {
     _rgComplexMissionItemSignals[polygonPathChangedIndex] =         SIGNAL(polygonPathChanged());
     _rgComplexMissionItemSignals[lastSequenceNumberChangedIndex] =  SIGNAL(lastSequenceNumberChanged(int));
@@ -45,7 +45,8 @@ void ComplexMissionItemTest::init(void)
     _rgComplexMissionItemSignals[exitCoordinateHasRelativeAltitudeChangedIndex] =   SIGNAL(exitCoordinateHasRelativeAltitudeChanged(bool));
     _rgComplexMissionItemSignals[exitCoordinateSameAsEntryChangedIndex] =           SIGNAL(exitCoordinateSameAsEntryChanged(bool));
 
-    _complexItem = new SurveyMissionItem(NULL /* Vehicle */, this);
+    _surveyItem = new SurveyMissionItem(NULL /* Vehicle */, this);
+    _mapPolygon = _surveyItem->mapPolygon();
 
     // It's important to check that the right signals are emitted at the right time since that drives ui change.
     // It's also important to check that things are not being over-signalled when they should not be, since that can lead
@@ -53,66 +54,66 @@ void ComplexMissionItemTest::init(void)
 
     _multiSpy = new MultiSignalSpy();
     Q_CHECK_PTR(_multiSpy);
-    QCOMPARE(_multiSpy->init(_complexItem, _rgComplexMissionItemSignals, _cComplexMissionItemSignals), true);
+    QCOMPARE(_multiSpy->init(_surveyItem, _rgComplexMissionItemSignals, _cComplexMissionItemSignals), true);
 }
 
-void ComplexMissionItemTest::cleanup(void)
+void SurveyMissionItemTest::cleanup(void)
 {
-    delete _complexItem;
+    delete _surveyItem;
     delete _multiSpy;
 }
 
-void ComplexMissionItemTest::_testDirty(void)
+void SurveyMissionItemTest::_testDirty(void)
 {
-    QVERIFY(!_complexItem->dirty());
-    _complexItem->setDirty(false);
-    QVERIFY(!_complexItem->dirty());
+    QVERIFY(!_surveyItem->dirty());
+    _surveyItem->setDirty(false);
+    QVERIFY(!_surveyItem->dirty());
     QVERIFY(_multiSpy->checkNoSignals());
-    _complexItem->setDirty(true);
-    QVERIFY(_complexItem->dirty());
+    _surveyItem->setDirty(true);
+    QVERIFY(_surveyItem->dirty());
     QVERIFY(_multiSpy->checkOnlySignalByMask(dirtyChangedMask));
     QVERIFY(_multiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
     _multiSpy->clearAllSignals();
-    _complexItem->setDirty(false);
-    QVERIFY(!_complexItem->dirty());
+    _surveyItem->setDirty(false);
+    QVERIFY(!_surveyItem->dirty());
     QVERIFY(_multiSpy->checkOnlySignalByMask(dirtyChangedMask));
     QVERIFY(!_multiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
 }
 
-void ComplexMissionItemTest::_testAddPolygonCoordinate(void)
+void SurveyMissionItemTest::_testAddPolygonCoordinate(void)
 {
-    QCOMPARE(_complexItem->polygonPath().count(), 0);
+    QCOMPARE(_mapPolygon->count(), 0);
 
     // First call to addPolygonCoordinate should trigger:
     //      polygonPathChanged
     //      dirtyChanged
 
-    _complexItem->addPolygonCoordinate(_polyPoints[0]);
+    _mapPolygon->appendVertex(_polyPoints[0]);
     QVERIFY(_multiSpy->checkOnlySignalByMask(polygonPathChangedMask | dirtyChangedMask));
 
     // Validate object data
-    QVariantList polyList = _complexItem->polygonPath();
+    QVariantList polyList = _mapPolygon->path();
     QCOMPARE(polyList.count(), 1);
     QCOMPARE(polyList[0].value<QGeoCoordinate>(), _polyPoints[0]);
 
     // Reset
-    _complexItem->setDirty(false);
+    _surveyItem->setDirty(false);
     _multiSpy->clearAllSignals();
 
     // Second call to addPolygonCoordinate should only trigger:
     //      polygonPathChanged
     //      dirtyChanged
 
-    _complexItem->addPolygonCoordinate(_polyPoints[1]);
+    _mapPolygon->appendVertex(_polyPoints[1]);
     QVERIFY(_multiSpy->checkOnlySignalByMask(polygonPathChangedMask | dirtyChangedMask));
 
-    polyList = _complexItem->polygonPath();
+    polyList = _mapPolygon->path();
     QCOMPARE(polyList.count(), 2);
     for (int i=0; i<polyList.count(); i++) {
         QCOMPARE(polyList[i].value<QGeoCoordinate>(), _polyPoints[i]);
     }
 
-    _complexItem->setDirty(false);
+    _surveyItem->setDirty(false);
     _multiSpy->clearAllSignals();
 
     // Third call to addPolygonCoordinate should trigger:
@@ -126,33 +127,33 @@ void ComplexMissionItemTest::_testAddPolygonCoordinate(void)
     //      lastSequenceNumberChanged -  number of internal mission items changes
     //      gridPointsChanged - grid points show up for the first time
 
-    _complexItem->addPolygonCoordinate(_polyPoints[2]);
+    _mapPolygon->appendVertex(_polyPoints[2]);
     QVERIFY(_multiSpy->checkOnlySignalByMask(polygonPathChangedMask | lastSequenceNumberChangedMask | gridPointsChangedMask | coordinateChangedMask |
                                             exitCoordinateChangedMask | specifiesCoordinateChangedMask | dirtyChangedMask));
     int seqNum = _multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex);
     QVERIFY(seqNum > 0);
 
-    polyList = _complexItem->polygonPath();
+    polyList = _mapPolygon->path();
     QCOMPARE(polyList.count(), 3);
     for (int i=0; i<polyList.count(); i++) {
         QCOMPARE(polyList[i].value<QGeoCoordinate>(), _polyPoints[i]);
     }
 
     // Test that number of waypoints is doubled when using turnaround waypoints
-    _complexItem->setTurnaroundDist(60.0);
-    QVariantList gridPoints = _complexItem->gridPoints();
-    _complexItem->setTurnaroundDist(0.0);
-    QVariantList gridPointsNoT = _complexItem->gridPoints();
+    _surveyItem->setTurnaroundDist(60.0);
+    QVariantList gridPoints = _surveyItem->gridPoints();
+    _surveyItem->setTurnaroundDist(0.0);
+    QVariantList gridPointsNoT = _surveyItem->gridPoints();
     QCOMPARE(gridPoints.count(), 2 * gridPointsNoT.count());
 
 }
 
-void ComplexMissionItemTest::_testClearPolygon(void)
+void SurveyMissionItemTest::_testClearPolygon(void)
 {
     for (int i=0; i<3; i++) {
-        _complexItem->addPolygonCoordinate(_polyPoints[i]);
+        _mapPolygon->appendVertex(_polyPoints[i]);
     }
-    _complexItem->setDirty(false);
+    _surveyItem->setDirty(false);
     _multiSpy->clearAllSignals();
 
     // Call to clearPolygon should trigger:
@@ -163,49 +164,49 @@ void ComplexMissionItemTest::_testClearPolygon(void)
     //      dirtyChangedMask
     //      specifiesCoordinateChangedMask
 
-    _complexItem->clearPolygon();
+    _mapPolygon->clear();
     QVERIFY(_multiSpy->checkOnlySignalByMask(polygonPathChangedMask | lastSequenceNumberChangedMask | gridPointsChangedMask | dirtyChangedMask |
                                              specifiesCoordinateChangedMask));
     QVERIFY(!_multiSpy->pullBoolFromSignalIndex(specifiesCoordinateChangedIndex));
     QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), 0);
 
-    QCOMPARE(_complexItem->polygonPath().count(), 0);
-    QCOMPARE(_complexItem->gridPoints().count(), 0);
+    QCOMPARE(_mapPolygon->path().count(), 0);
+    QCOMPARE(_surveyItem->gridPoints().count(), 0);
 
-    _complexItem->setDirty(false);
+    _surveyItem->setDirty(false);
     _multiSpy->clearAllSignals();
 }
 
-void ComplexMissionItemTest::_testCameraTrigger(void)
+void SurveyMissionItemTest::_testCameraTrigger(void)
 {
-    QCOMPARE(_complexItem->property("cameraTrigger").toBool(), true);
+    QCOMPARE(_surveyItem->property("cameraTrigger").toBool(), true);
 
     // Set up a grid
 
     for (int i=0; i<3; i++) {
-        _complexItem->addPolygonCoordinate(_polyPoints[i]);
+        _mapPolygon->appendVertex(_polyPoints[i]);
     }
 
-    _complexItem->setDirty(false);
+    _surveyItem->setDirty(false);
     _multiSpy->clearAllSignals();
 
-    int lastSeq = _complexItem->lastSequenceNumber();
+    int lastSeq = _surveyItem->lastSequenceNumber();
     QVERIFY(lastSeq > 0);
 
     // Turning off camera triggering should remove two camera trigger mission items, this should trigger:
     //      lastSequenceNumberChanged
     //      dirtyChanged
 
-    _complexItem->setProperty("cameraTrigger", false);
+    _surveyItem->setProperty("cameraTrigger", false);
     QVERIFY(_multiSpy->checkOnlySignalByMask(lastSequenceNumberChangedMask | dirtyChangedMask | cameraTriggerChangedMask));
     QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), lastSeq - 2);
 
-    _complexItem->setDirty(false);
+    _surveyItem->setDirty(false);
     _multiSpy->clearAllSignals();
 
     // Turn on camera triggering and make sure things go back to previous count
 
-    _complexItem->setProperty("cameraTrigger", true);
+    _surveyItem->setProperty("cameraTrigger", true);
     QVERIFY(_multiSpy->checkOnlySignalByMask(lastSequenceNumberChangedMask | dirtyChangedMask | cameraTriggerChangedMask));
     QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), lastSeq);
 }

@@ -85,6 +85,7 @@
         <file alias="QGroundControl/Controls/QGCLabel.qml">src/QmlControls/QGCLabel.qml</file>
         <file alias="QGroundControl/Controls/QGCListView.qml">src/QmlControls/QGCListView.qml</file>
         <file alias="QGroundControl/Controls/QGCMapLabel.qml">src/QmlControls/QGCMapLabel.qml</file>
+        <file alias="QGroundControl/Controls/QGCMapPolygonVisuals.qml">src/MissionManager/QGCMapPolygonVisuals.qml</file>
         <file alias="QGroundControl/Controls/QGCMouseArea.qml">src/QmlControls/QGCMouseArea.qml</file>
         <file alias="QGroundControl/Controls/QGCMovableItem.qml">src/QmlControls/QGCMovableItem.qml</file>
         <file alias="QGroundControl/Controls/QGCPipable.qml">src/QmlControls/QGCPipable.qml</file>
