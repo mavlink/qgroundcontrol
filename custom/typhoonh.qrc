@@ -34,6 +34,8 @@
         <file alias="Y-Logo.svg">res/images/Y-Logo.svg</file>
         <file alias="YuneecBrandImage.svg">src/FirmwarePlugin/YuneecBrandImage.svg</file>
         <file alias="YuneecBrandImageBlack.svg">src/FirmwarePlugin/YuneecBrandImageBlack.svg</file>
+        <file alias="smartMode.svg">res/images/smartMode.svg</file>
+        <file alias="switch.svg">res/images/switch.svg</file>
     </qresource>
     <qresource prefix="/typhoonh/wav">
         <file alias="beep.wav">res/audio/beep.wav</file>
@@ -46,6 +48,8 @@
         <file alias="LogDownload.qml">res/LogDownload.qml</file>
         <file alias="ModeIndicator.qml">res/ModeIndicator.qml</file>
         <file alias="RCIndicator.qml">res/RCIndicator.qml</file>
+        <file alias="SwitchComponent.qml">src/AutoPilotPlugin/SwitchComponent.qml</file>
+        <file alias="SwitchComponentSummary.qml">src/AutoPilotPlugin/SwitchComponentSummary.qml</file>
         <file alias="TyphoonSettings.qml">res/TyphoonSettings.qml</file>
         <file alias="WIFIRSSIIndicator.qml">res/WIFIRSSIIndicator.qml</file>
         <file alias="YGPSIndicator.qml">res/YGPSIndicator.qml</file>
