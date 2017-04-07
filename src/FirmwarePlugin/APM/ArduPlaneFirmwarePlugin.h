@@ -59,7 +59,6 @@ public:
     QString offlineEditingParamFile(Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Plane.OfflineEditing.params"); }
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
     int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
-    bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) final;
 
 private:
     static bool _remapParamNameIntialized;
