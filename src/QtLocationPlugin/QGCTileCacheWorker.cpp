@@ -1039,6 +1039,7 @@ QGCCacheWorker::_testInternet()
     QTcpSocket socket;
     socket.connectToHost("8.8.8.8", 53);
     if (socket.waitForConnected(2500)) {
+        qCDebug(QGCTileCacheLog) << "Yes Internet Access";
         emit internetStatus(true);
         return;
     }
