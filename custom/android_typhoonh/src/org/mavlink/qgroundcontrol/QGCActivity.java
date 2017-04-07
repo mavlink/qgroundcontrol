@@ -285,7 +285,7 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
                                 }
                             }
                         } else if (state.compareTo(NetworkInfo.DetailedState.DISCONNECTED) == 0) {
-                            Log.i(TAG, "WIFI Disonnected");
+                            Log.i(TAG, "WIFI Disconnected");
                             currentWifiRssi = 0;
                             currentConnection = "";
                             nativeNewWifiRSSI();
