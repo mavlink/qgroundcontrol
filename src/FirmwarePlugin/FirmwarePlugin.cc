@@ -336,6 +336,7 @@ const QVariantList &FirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")));
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")));
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")));
+        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ArmedIndicator.qml")));
     }
     return _toolBarIndicatorList;
 }
@@ -444,4 +445,10 @@ void FirmwarePlugin::batteryConsumptionData(Vehicle* vehicle, int& mAhBattery, d
     mAhBattery = 0;
     hoverAmps = 0;
     cruiseAmps = 0;
+}
+
+QString FirmwarePlugin::autoDisarmParameter(Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+    return QString();
 }

@@ -46,8 +46,8 @@ Item {
     readonly property string setWaypointTitle:      qsTr("Set Waypoint")
     readonly property string gotoTitle:             qsTr("Goto Location")
 
-    readonly property string armMessage:                qsTr("arm")
-    readonly property string disarmMessage:             qsTr("disarm")
+    readonly property string armMessage:                qsTr("Arm the vehicle.")
+    readonly property string disarmMessage:             qsTr("Disarm the vehicle")
     readonly property string emergencyStopMessage:      qsTr("WARNING: This still stop all motors. If vehicle is currently in air it will crash.")
     readonly property string takeoffMessage:            qsTr("Takeoff from ground and hold position.")
     readonly property string startMissionMessage:       qsTr("Start the mission which is currently displayed above. If the vehicle is on the ground it will takeoff.")
@@ -109,10 +109,16 @@ Item {
         _actionData = actionData
         switch (actionCode) {
         case actionArm:
+            if (_activeVehicle.flying) {
+                return
+            }
             title = armTitle
             message = armMessage
             break;
         case actionDisarm:
+            if (_activeVehicle.flying) {
+                return
+            }
             title = disarmTitle
             message = disarmMessage
             break;

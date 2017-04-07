@@ -265,12 +265,16 @@ Item {
         anchors.top:        parent.top
         opacity:            planToolBar.visible ? 0 : 1
         z:                  QGroundControl.zOrderTopMost
+
         Component.onCompleted:  ScreenTools.availableHeight = parent.height - toolBar.height
         onShowSettingsView:     mainWindow.showSettingsView()
         onShowSetupView:        mainWindow.showSetupView()
         onShowPlanView:         mainWindow.showPlanView()
         onShowFlyView:          mainWindow.showFlyView()
         onShowAnalyzeView:      mainWindow.showAnalyzeView()
+        onArmVehicle:           flightView.guidedController.confirmAction(flightView.guidedController.actionArm)
+        onDisarmVehicle:        flightView.guidedController.confirmAction(flightView.guidedController.actionDisarm)
+
         //-- Entire tool bar area disable on cammand
         MouseArea {
             id:             toolbarBlocker
