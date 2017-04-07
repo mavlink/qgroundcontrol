@@ -86,3 +86,12 @@ int ArduPlaneFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVer
     // Remapping supports up to 3.8
     return majorVersionNumber == 3 ? 8 : Vehicle::versionNotSetValue;
 }
+
+bool ArduPlaneFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities)
+{
+    Q_UNUSED(vehicle);
+
+    uint32_t vehicleCapabilities = SetFlightModeCapability | GuidedModeCapability | PauseVehicleCapability;
+
+    return (capabilities & vehicleCapabilities) == capabilities;
+}
