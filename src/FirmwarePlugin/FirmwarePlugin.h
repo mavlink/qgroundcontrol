@@ -282,6 +282,9 @@ public:
     ///     @param[out] cruiseAmps Current draw in amps during cruise
     virtual void batteryConsumptionData(Vehicle* vehicle, int& mAhBattery, double& hoverAmps, double& cruiseAmps) const;
 
+    // Returns the parameter which control auto-dismar. Assume == 0 means no auto disarm
+    virtual QString autoDisarmParameter(Vehicle* vehicle);
+
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const char* px4FollowMeFlightMode;
 
