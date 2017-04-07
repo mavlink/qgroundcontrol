@@ -292,15 +292,6 @@ TyphoonHQuickInterface::isWifiConfigured(QString ssid)
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::calibrateGimbalM4()
-{
-    if(_pHandler) {
-        _pHandler->calibrateGimbal();
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
 TyphoonHQuickInterface::calibrateGimbalMV()
 {
     if(_pHandler && _pHandler->vehicle()) {

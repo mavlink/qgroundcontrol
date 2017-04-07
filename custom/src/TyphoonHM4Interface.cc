@@ -182,21 +182,6 @@ TyphoonHM4Interface::resetBind() {
 }
 
 //-----------------------------------------------------------------------------
-void
-TyphoonHM4Interface::calibrateGimbal()
-{
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_SET_TTB_STATE";
-    m4Command setPowerKeyCmd(Yuneec::CMD_SET_TTB_STATE);
-    QByteArray payload;
-    payload.resize(2);
-    payload[0] = 6; // Gimbal Calibration
-    payload[1] = 0; // Just Zero
-    QByteArray cmd = setPowerKeyCmd.pack(payload);
-    _commPort->write(cmd, DEBUG_DATA_DUMP);
-}
-
-
-//-----------------------------------------------------------------------------
 QString
 TyphoonHM4Interface::m4StateStr()
 {
@@ -299,7 +284,7 @@ TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
 void
 TyphoonHM4Interface::enterBindMode()
 {
-    qCDebug(YuneecLog) << "enterBindMode()";
+    qCDebug(YuneecLog) << "enterBindMode() Current Mode: " << _m4State;
     //-- Send MAVLink command telling vehicle to enter bind mode
     if(_vehicle) {
         qCDebug(YuneecLog) << "pairRX()";
