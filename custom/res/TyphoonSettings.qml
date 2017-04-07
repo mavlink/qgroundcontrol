@@ -63,10 +63,12 @@ QGCView {
             QGroundControl.skipSetupPage = false
             authErrorDialog.visible = true
         }
-        onWifiConnected: {
-            QGroundControl.skipSetupPage = false
-            TyphoonHQuickInterface.stopScan();
-            mainWindow.showFlyView()
+        onWifiConnectedChanged: {
+            if(TyphoonHQuickInterface.connected) {
+                QGroundControl.skipSetupPage = false
+                TyphoonHQuickInterface.stopScan();
+                mainWindow.showFlyView()
+            }
         }
         onScanningWiFiChanged: {
             if(TyphoonHQuickInterface.scanningWiFi) {

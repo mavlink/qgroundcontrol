@@ -87,6 +87,16 @@ jniWifiConnected(JNIEnv *envA, jobject thizA)
 
 //-----------------------------------------------------------------------------
 static void
+jniWifiDisconnected(JNIEnv *envA, jobject thizA)
+{
+    jniSetup(envA, thizA);
+    if(TyphoonHM4Interface::pTyphoonHandler) {
+        emit TyphoonHM4Interface::pTyphoonHandler->wifiDisconnected();
+    }
+}
+
+//-----------------------------------------------------------------------------
+static void
 jniBatteryUpdate(JNIEnv *envA, jobject thizA)
 {
     jniSetup(envA, thizA);
@@ -100,12 +110,13 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/)
 {
     //-- Register C++ functions exposed to Android
     static JNINativeMethod javaMethods[] {
-        {"nativeNewWifiItem",  "(Ljava/lang/String;I)V", reinterpret_cast<void *>(jniNewWifiItem)},
-        {"nativeNewWifiRSSI",  "()V", reinterpret_cast<void *>(jniNewWifiRSSI)},
-        {"nativeScanComplete", "()V", reinterpret_cast<void *>(jniScanComplete)},
-        {"nativeAuthError",    "()V", reinterpret_cast<void *>(jniAuthError)},
-        {"nativeWifiConnected","()V", reinterpret_cast<void *>(jniWifiConnected)},
-        {"nativeBatteryUpdate","()V", reinterpret_cast<void *>(jniBatteryUpdate)}
+        {"nativeNewWifiItem",       "(Ljava/lang/String;I)V", reinterpret_cast<void *>(jniNewWifiItem)},
+        {"nativeNewWifiRSSI",       "()V", reinterpret_cast<void *>(jniNewWifiRSSI)},
+        {"nativeScanComplete",      "()V", reinterpret_cast<void *>(jniScanComplete)},
+        {"nativeAuthError",         "()V", reinterpret_cast<void *>(jniAuthError)},
+        {"nativeWifiConnected",     "()V", reinterpret_cast<void *>(jniWifiConnected)},
+        {"nativeWifiDisconnected",  "()V", reinterpret_cast<void *>(jniWifiDisconnected)},
+        {"nativeBatteryUpdate",     "()V", reinterpret_cast<void *>(jniBatteryUpdate)}
     };
     JNIEnv* env;
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {

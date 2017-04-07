@@ -106,6 +106,7 @@ signals:
     void    scanComplete                        ();
     void    authenticationError                 ();
     void    wifiConnected                       ();
+    void    wifiDisconnected                    ();
     void    batteryUpdate                       ();
 
 private:

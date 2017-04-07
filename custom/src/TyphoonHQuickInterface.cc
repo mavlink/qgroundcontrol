@@ -62,6 +62,7 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(_pHandler, &TyphoonHM4Interface::scanComplete,                 this, &TyphoonHQuickInterface::_scanComplete);
         connect(_pHandler, &TyphoonHM4Interface::authenticationError,          this, &TyphoonHQuickInterface::_authenticationError);
         connect(_pHandler, &TyphoonHM4Interface::wifiConnected,                this, &TyphoonHQuickInterface::_wifiConnected);
+        connect(_pHandler, &TyphoonHM4Interface::wifiDisconnected,             this, &TyphoonHQuickInterface::_wifiDisconnected);
         connect(_pHandler, &TyphoonHM4Interface::batteryUpdate,                this, &TyphoonHQuickInterface::_batteryUpdate);
         connect(_pHandler, &TyphoonHM4Interface::armedChanged,                 this, &TyphoonHQuickInterface::_armedChanged);
         connect(&_scanTimer, &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
@@ -252,14 +253,9 @@ TyphoonHQuickInterface::_scanWifi()
 
 //-----------------------------------------------------------------------------
 bool
-TyphoonHQuickInterface::isWIFIConnected()
+TyphoonHQuickInterface::connected()
 {
-    bool res = false;
-#if defined __android__
-    reset_jni();
-    res = (bool)QAndroidJniObject::callStaticMethod<jboolean>(jniClassName, "isWIFIConnected", "()B");
-#endif
-    return res;
+    return rssi() < 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -481,7 +477,15 @@ TyphoonHQuickInterface::_wifiConnected()
     _bindingWiFi = false;
     emit bindingWiFiChanged();
     emit connectedSSIDChanged();
-    emit wifiConnected();
+    emit wifiConnectedChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_wifiDisconnected()
+{
+    emit connectedSSIDChanged();
+    emit wifiConnectedChanged();
 }
 
 //-----------------------------------------------------------------------------

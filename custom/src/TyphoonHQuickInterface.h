@@ -48,7 +48,8 @@ public:
     Q_PROPERTY(QStringList      ssidList        READ    ssidList            NOTIFY ssidListChanged)
     Q_PROPERTY(bool             scanningWiFi    READ    scanningWiFi        NOTIFY scanningWiFiChanged)
     Q_PROPERTY(bool             bindingWiFi     READ    bindingWiFi         NOTIFY bindingWiFiChanged)
-    Q_PROPERTY(bool             isTyphoon       READ    isTyphoon           NOTIFY wifiConnected)
+    Q_PROPERTY(bool             isTyphoon       READ    isTyphoon           NOTIFY wifiConnectedChanged)
+    Q_PROPERTY(bool             connected       READ    connected           NOTIFY wifiConnectedChanged)
     Q_PROPERTY(QString          connectedSSID   READ    connectedSSID       NOTIFY connectedSSIDChanged)
     Q_PROPERTY(QString          connectedCamera READ    connectedCamera     NOTIFY connectedSSIDChanged)
     Q_PROPERTY(int              rssi            READ    rssi                NOTIFY rssiChanged)
@@ -60,7 +61,6 @@ public:
     Q_INVOKABLE void startScan          (int delay = 0);
     Q_INVOKABLE void stopScan           ();
     Q_INVOKABLE void bindWIFI           (QString ssid, QString password);
-    Q_INVOKABLE bool isWIFIConnected    ();
     Q_INVOKABLE void resetWifi          ();
     Q_INVOKABLE bool isWifiConfigured   (QString ssid);
     Q_INVOKABLE void calibrateGimbalMV  ();
@@ -88,6 +88,7 @@ public:
     bool        scanningWiFi        () { return _scanningWiFi; }
     bool        bindingWiFi         () { return _bindingWiFi; }
     bool        isTyphoon           ();
+    bool        connected           ();
     int         rssi                ();
     qreal       rcBattery           ();
     QString     flightTime          ();
@@ -100,7 +101,7 @@ signals:
     void    ssidListChanged             ();
     void    scanningWiFiChanged         ();
     void    authenticationError         ();
-    void    wifiConnected               ();
+    void    wifiConnectedChanged        ();
     void    connectedSSIDChanged        ();
     void    bindingWiFiChanged          ();
     void    rssiChanged                 ();
@@ -117,6 +118,7 @@ private slots:
     void    _scanComplete               ();
     void    _authenticationError        ();
     void    _wifiConnected              ();
+    void    _wifiDisconnected           ();
     void    _scanWifi                   ();
     void    _delayedBind                ();
     void    _bindTimeout                ();
