@@ -18,6 +18,8 @@ import QGroundControl.FactControls  1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 
+import TyphoonHQuickInterface.Widgets   1.0
+
 SetupPage {
     id:             switchPage
     pageComponent:  pageComponent
@@ -53,44 +55,54 @@ SetupPage {
                 QGCGroupBox {
                     id:     batteryGroup
                     title:  qsTr("Flight Mode Options")
-                    Row {
-                        id:             modeGrid
-                        spacing:        ScreenTools.defaultFontPixelWidth * 4
-                        Column {
-                            spacing:        ScreenTools.defaultFontPixelHeight
-                            QGCRadioButton {
-                                id:                 smartModeButton
-                                checked:            _customMode.value === 13
-                                exclusiveGroup:     homeLoiterGroup
-                                text:               qsTr("Smart Mode")
-                                onClicked:          _customMode.value = 13
-                            }
-                            QGCRadioButton {
-                                id:                 manualModeButton
-                                checked:            _customMode.value === 1
-                                exclusiveGroup:     homeLoiterGroup
-                                text:               qsTr("Manual Mode")
-                                onClicked:          _customMode.value = 1
-                            }
-                            Item {
-                                width:  1
-                                height: ScreenTools.defaultFontPixelHeight
-                            }
+                    Column {
+                        spacing:        ScreenTools.defaultFontPixelHeight
+                        QGCRadioButton {
+                            id:                 smartModeButton
+                            checked:            _customMode.value === 13
+                            exclusiveGroup:     homeLoiterGroup
+                            text:               qsTr("Smart Mode")
+                            onClicked:          _customMode.value = 13
+                        }
+                        QGCRadioButton {
+                            id:                 manualModeButton
+                            checked:            _customMode.value === 1
+                            exclusiveGroup:     homeLoiterGroup
+                            text:               qsTr("Manual Mode")
+                            onClicked:          _customMode.value = 1
+                        }
+                        Item {
+                            width:  1
+                            height: 1
+                        }
+                        Rectangle {
+                            width:  batteryGroup.width * 0.75
+                            height: 1
+                            color:  qgcPal.colorGrey
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        Item {
+                            width:  1
+                            height: 1
+                        }
+                        Row {
+                            spacing:                    ScreenTools.defaultFontPixelWidth * 10
                             QGCLabel {
                                 text:                   getExplanationText()
                                 width:                  ScreenTools.defaultFontPixelWidth * 50
                                 wrapMode:               Text.WordWrap
+                                anchors.verticalCenter: parent.verticalCenter
                             }
-                        }
-                        QGCColoredImage {
-                            color:                  qgcPal.text
-                            height:                 ScreenTools.defaultFontPixelWidth * 20
-                            width:                  ScreenTools.defaultFontPixelWidth * 20
-                            sourceSize.height:      height
-                            mipmap:                 true
-                            fillMode:               Image.PreserveAspectFit
-                            source:                 "/typhoonh/img/smartMode.svg"
-                            anchors.verticalCenter: parent.verticalCenter
+                            QGCColoredImage {
+                                color:                  qgcPal.text
+                                height:                 ScreenTools.defaultFontPixelWidth * 20
+                                width:                  ScreenTools.defaultFontPixelWidth * 20
+                                sourceSize.height:      height
+                                mipmap:                 true
+                                fillMode:               Image.PreserveAspectFit
+                                source:                 "/typhoonh/img/smartMode.svg"
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
                         }
                     }
                 }
