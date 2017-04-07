@@ -12,8 +12,6 @@
 #include "PX4AutoPilotPlugin.h"
 #include "Vehicle.h"
 
-class SwitchComponent;
-
 /// Yuneec overrides from standard PX4AutoPilotPlugin implementation
 class YuneecAutoPilotPlugin : public PX4AutoPilotPlugin
 {
@@ -26,6 +24,5 @@ public:
     const QVariantList& vehicleComponents(void) final;
 
 private:
-    SwitchComponent*        _switchComponent;
     QVariantList            _components;
 };

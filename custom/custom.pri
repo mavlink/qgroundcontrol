@@ -89,13 +89,11 @@ INCLUDEPATH += \
 
 HEADERS+= \
     $$PWD/src/AutoPilotPlugin/YuneecAutoPilotPlugin.h \
-    $$PWD/src/AutoPilotPlugin/SwitchComponent.h \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePlugin.h \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePluginFactory.h
 
 SOURCES += \
     $$PWD/src/AutoPilotPlugin/YuneecAutoPilotPlugin.cc \
-    $$PWD/src/AutoPilotPlugin/SwitchComponent.cc \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePlugin.cc \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePluginFactory.cc
 
