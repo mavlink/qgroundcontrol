@@ -62,7 +62,15 @@ QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager
     , _networkManager(networkManager)
 {
     if(_request.url().isEmpty()) {
-        _returnBadTile();
+        if(!_badMapBox.size()) {
+            QFile b(":/res/notile.png");
+            if(b.open(QFile::ReadOnly))
+                _badMapBox = b.readAll();
+        }
+        setMapImageData(_badMapBox);
+        setMapImageFormat("png");
+        setFinished(true);
+        setCached(false);
     } else {
         QGCFetchTileTask* task = getQGCMapEngine()->createFetchTileTask((UrlFactory::MapType)spec.mapId(), spec.x(), spec.y(), spec.zoom());
         connect(task, &QGCFetchTileTask::tileFetched, this, &QGeoTiledMapReplyQGC::cacheReply);
@@ -87,21 +95,6 @@ QGeoTiledMapReplyQGC::_clearReply()
         _reply = 0;
         _requestCount--;
     }
-}
-
-//-----------------------------------------------------------------------------
-void
-QGeoTiledMapReplyQGC::_returnBadTile()
-{
-    if(!_badMapBox.size()) {
-        QFile b(":/res/notile.png");
-        if(b.open(QFile::ReadOnly))
-            _badMapBox = b.readAll();
-    }
-    setMapImageData(_badMapBox);
-    setMapImageFormat("png");
-    setFinished(true);
-    setCached(false);
 }
 
 //-----------------------------------------------------------------------------
@@ -145,8 +138,9 @@ QGeoTiledMapReplyQGC::networkReplyError(QNetworkReply::NetworkError error)
     }
     if (error != QNetworkReply::OperationCanceledError) {
         qWarning() << "Fetch tile error:" << _reply->errorString();
+        setError(QGeoTiledMapReply::CommunicationError, _reply->errorString());
     }
-    _returnBadTile();
+    setFinished(true);
     _clearReply();
 }
 
@@ -154,8 +148,9 @@ QGeoTiledMapReplyQGC::networkReplyError(QNetworkReply::NetworkError error)
 void
 QGeoTiledMapReplyQGC::cacheError(QGCMapTask::TaskType type, QString /*errorString*/)
 {
-    if(_networkManager->networkAccessible() < QNetworkAccessManager::Accessible || !getQGCMapEngine()->isInternetActive()) {
-        _returnBadTile();
+    if(!getQGCMapEngine()->isInternetActive()) {
+        setError(QGeoTiledMapReply::CommunicationError, "Network not available");
+        setFinished(true);
     } else {
         if(type != QGCMapTask::taskFetchTile) {
             qWarning() << "QGeoTiledMapReplyQGC::cacheError() for wrong task";
