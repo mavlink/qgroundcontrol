@@ -8,8 +8,8 @@
  ****************************************************************************/
 
 
-#ifndef ComplexMissionItemTest_H
-#define ComplexMissionItemTest_H
+#ifndef SurveyMissionItemTest_H
+#define SurveyMissionItemTest_H
 
 #include "UnitTest.h"
 #include "TCPLink.h"
@@ -19,12 +19,12 @@
 #include <QGeoCoordinate>
 
 /// Unit test for SimpleMissionItem
-class ComplexMissionItemTest : public UnitTest
+class SurveyMissionItemTest : public UnitTest
 {
     Q_OBJECT
     
 public:
-    ComplexMissionItemTest(void);
+    SurveyMissionItemTest(void);
 
 protected:
     void init(void) final;
@@ -95,7 +95,8 @@ private:
     const char*         _rgComplexMissionItemSignals[_cComplexMissionItemSignals];
 
     MultiSignalSpy*         _multiSpy;
-    SurveyMissionItem*     _complexItem;
+    SurveyMissionItem*      _surveyItem;
+    QGCMapPolygon*          _mapPolygon;
     QList<QGeoCoordinate>   _polyPoints;
 };
 
