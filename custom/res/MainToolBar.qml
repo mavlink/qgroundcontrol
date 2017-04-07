@@ -74,28 +74,6 @@ Rectangle {
         visible:        qgcPal.globalTheme === QGCPalette.Light
     }
 
-    // Easter egg mechanism
-    MouseArea {
-        anchors.fill: parent
-        onClicked: {
-            //console.log("easter egg click", ++_clickCount)
-            eggTimer.restart()
-            if (_clickCount == 5) {
-                QGroundControl.corePlugin.showAdvancedUI = !QGroundControl.corePlugin.showAdvancedUI
-            } else if (_clickCount == 7) {
-                QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
-            }
-        }
-
-        property int _clickCount: 0
-
-        Timer {
-            id:             eggTimer
-            interval:       250
-            onTriggered:    parent._clickCount = 0
-        }
-    }
-
     ExclusiveGroup { id: mainActionGroup }
 
     //---------------------------------------------
@@ -131,7 +109,38 @@ Rectangle {
             anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
             source:             "/typhoonh/img/hamburger.svg"
-            onClicked:          toolBar.showSetupView()
+
+            onClicked: {
+                toolBar.showSetupView()
+                // Easter egg mechanism
+                _clickCount++
+                eggTimer.restart()
+                if (_clickCount == 5 && !QGroundControl.corePlugin.showAdvancedUI) {
+                    advancedModeConfirmation.visible = true
+                } else if (_clickCount == 7) {
+                    QGroundControl.corePlugin.showTouchAreas = true
+                }
+            }
+
+            property int _clickCount: 0
+
+            Timer {
+                id:             eggTimer
+                interval:       1000
+                onTriggered:    parent._clickCount = 0
+            }
+
+            MessageDialog {
+                id:                 advancedModeConfirmation
+                title:              qsTr("Advanced Mode")
+                text:               QGroundControl.corePlugin.showAdvancedUIMessage
+                standardButtons:    StandardButton.Yes | StandardButton.No
+
+                onYes: {
+                    QGroundControl.corePlugin.showAdvancedUI = true
+                    visible = false
+                }
+            }
         }
 
         Loader {
