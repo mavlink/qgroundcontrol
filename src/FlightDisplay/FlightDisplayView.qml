@@ -34,6 +34,8 @@ QGCView {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
+    property alias guidedController: guidedActionsController
+
     property bool activeVehicleJoystickEnabled: _activeVehicle ? _activeVehicle.joystickEnabled : false
 
     property var _activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
@@ -444,7 +446,7 @@ QGCView {
         }
 
         GuidedActionsController {
-            id:                 guidedController
+            id:                 guidedActionsController
             missionController:  flyMissionController
             z:                  _flightVideoPipControl.z + 1
 
