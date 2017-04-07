@@ -75,7 +75,7 @@ M4SerialComm::close()
         ::close(_fd);
         _fd = -1;
     }
-    if(!wait(750)) {
+    if(!wait(1000)) {
         qCDebug(YuneecLog) << "SERIAL: Timeout waiting for thread to end";
     }
 #endif

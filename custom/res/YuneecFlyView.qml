@@ -96,7 +96,7 @@ Item {
 
     Timer {
         id: connectionTimer
-        interval:  3000;
+        interval:  5000
         running:   false;
         repeat:    false;
         onTriggered: {
@@ -127,8 +127,10 @@ Item {
                 rootLoader.sourceComponent = null
                 mainWindow.enableToolbar()
             } else {
-                //-- Communication lost
-                connectionTimer.start();
+                if(_activeVehicle && !_activeVehicle.autoDisconnect) {
+                    //-- Communication lost
+                    connectionTimer.start();
+                }
             }
         }
     }

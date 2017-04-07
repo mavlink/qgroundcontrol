@@ -34,7 +34,6 @@ public:
     QString m4StateStr              ();
     void    resetBind               ();
     bool    armed                   () { return _armed; }
-    void    calibrateGimbal         ();
 
     Vehicle* vehicle                () { return _vehicle; }
     CameraControl*          cameraControl       () { return _cameraControl; }
@@ -107,6 +106,7 @@ signals:
     void    scanComplete                        ();
     void    authenticationError                 ();
     void    wifiConnected                       ();
+    void    wifiDisconnected                    ();
     void    batteryUpdate                       ();
 
 private:

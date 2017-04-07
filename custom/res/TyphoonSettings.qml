@@ -63,10 +63,12 @@ QGCView {
             QGroundControl.skipSetupPage = false
             authErrorDialog.visible = true
         }
-        onWifiConnected: {
-            QGroundControl.skipSetupPage = false
-            TyphoonHQuickInterface.stopScan();
-            mainWindow.showFlyView()
+        onWifiConnectedChanged: {
+            if(TyphoonHQuickInterface.connected) {
+                QGroundControl.skipSetupPage = false
+                TyphoonHQuickInterface.stopScan();
+                mainWindow.showFlyView()
+            }
         }
         onScanningWiFiChanged: {
             if(TyphoonHQuickInterface.scanningWiFi) {
@@ -163,15 +165,7 @@ QGCView {
                             columns:            2
                             anchors.horizontalCenter: parent.horizontalCenter
                             QGCLabel {
-                                text:   "Gimbal calibration using the M4"
-                            }
-                            QGCButton {
-                                text:       "Issue Command"
-                                enabled:    _activeVehicle
-                                onClicked:  TyphoonHQuickInterface.calibrateGimbalM4()
-                            }
-                            QGCLabel {
-                                text:   "Gimbal calibration using MAVLink"
+                                text:   "Gimbal calibration"
                             }
                             QGCButton {
                                 text:       "Issue Command"

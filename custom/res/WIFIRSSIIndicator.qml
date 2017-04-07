@@ -91,10 +91,11 @@ Item {
             sourceSize.height:  height
             source:             "/typhoonh/img/wifi.svg"
             fillMode:           Image.PreserveAspectFit
-            opacity:            _hasWifi ? 1 : 0.5
+            opacity:            _hasWifi ? 1 : 0.25
             color:              qgcPal.text
         }
         SignalStrength {
+            opacity:                _hasWifi ? 1 : 0.25
             anchors.verticalCenter: parent.verticalCenter
             size:                   parent.height * 0.5
             percent: {

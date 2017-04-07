@@ -51,6 +51,7 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
     private static native void nativeScanComplete();
     private static native void nativeAuthError();
     private static native void nativeWifiConnected();
+    private static native void nativeWifiDisconnected();
     private static native void nativeBatteryUpdate();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,6 +172,7 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
     }
 
     public static void resetWifi() {
+        Log.i(TAG, "resetWifi()");
         List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
         //-- Disable everything
         mainWifi.disconnect();
@@ -182,6 +184,9 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
         }
         currentConnection = "";
         mainWifi.saveConfiguration();
+        currentWifiRssi = 0;
+        nativeNewWifiRSSI();
+        nativeWifiDisconnected();
     }
 
     public static void bindSSID(String ssid, String passphrase) {
@@ -229,12 +234,6 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
         }
     }
 
-    public static boolean isWIFIConnected() {
-        ConnectivityManager connManager = (ConnectivityManager) m_instance.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        return mWifi.isConnected();
-    }
-
     public static void startWifiScan() {
         Log.i(TAG, "Start WiFi Scan");
         receiverMode = ReceiverMode.SCANNING;
@@ -280,15 +279,17 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
                                     if(receiverMode == ReceiverMode.BINDING) {
                                         receiverMode = ReceiverMode.DISABLED;
                                     }
-                                    nativeWifiConnected();
                                     currentWifiRssi = wifiInfo.getRssi();
                                     nativeNewWifiRSSI();
+                                    nativeWifiConnected();
                                 }
-                            } else if (state.compareTo(NetworkInfo.DetailedState.DISCONNECTED) == 0) {
-                                Log.i(TAG, "WIFI Disonnected");
-                                currentWifiRssi = 0;
-                                nativeNewWifiRSSI();
                             }
+                        } else if (state.compareTo(NetworkInfo.DetailedState.DISCONNECTED) == 0) {
+                            Log.i(TAG, "WIFI Disonnected");
+                            currentWifiRssi = 0;
+                            currentConnection = "";
+                            nativeNewWifiRSSI();
+                            nativeWifiDisconnected();
                         }
                     }
                 } else if (intent.getAction().equals(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION)) {
