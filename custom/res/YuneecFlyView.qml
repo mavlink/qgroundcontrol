@@ -96,7 +96,7 @@ Item {
 
     Timer {
         id: connectionTimer
-        interval:  3000;
+        interval:  5000
         running:   false;
         repeat:    false;
         onTriggered: {
