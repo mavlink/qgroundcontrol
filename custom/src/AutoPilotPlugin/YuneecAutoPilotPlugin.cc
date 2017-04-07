@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "YuneecAutoPilotPlugin.h"
+#include "SwitchComponent.h"
 
 YuneecAutoPilotPlugin::YuneecAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : PX4AutoPilotPlugin(vehicle, parent)
@@ -19,6 +20,7 @@ const QVariantList& YuneecAutoPilotPlugin::vehicleComponents(void)
 {
     if (_components.count() == 0 && !_incorrectParameterVersion) {
         if (_vehicle->parameterManager()->parametersReady()) {
+
             _sensorsComponent = new SensorsComponent(_vehicle, this);
             _sensorsComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
@@ -26,6 +28,11 @@ const QVariantList& YuneecAutoPilotPlugin::vehicleComponents(void)
             _safetyComponent = new SafetyComponent(_vehicle, this);
             _safetyComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
+
+            _switchComponent = new SwitchComponent(_vehicle, this);
+            _switchComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_switchComponent));
+
         } else {
             qWarning() << "Call to vehicleComponents prior to parametersReady";
         }
