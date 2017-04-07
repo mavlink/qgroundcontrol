@@ -127,8 +127,10 @@ Item {
                 rootLoader.sourceComponent = null
                 mainWindow.enableToolbar()
             } else {
-                //-- Communication lost
-                connectionTimer.start();
+                if(_activeVehicle && !_activeVehicle.autoDisconnect) {
+                    //-- Communication lost
+                    connectionTimer.start();
+                }
             }
         }
     }
