@@ -406,12 +406,12 @@ QGCView {
                 },
                 {
                     name:       guidedController.pauseTitle,
-                    iconSource: "/res/Pause.svg",
+                    iconSource: "/res/pause-mission.svg",
                     action:     guidedController.actionPause
                 },
                 {
                     name:       qsTr("Action"),
-                    iconSource: "/qmlimages/MapCenter.svg",
+                    iconSource: "/res/action.svg",
                     action:     -1
                 },
                 /*
