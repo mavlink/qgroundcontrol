@@ -342,6 +342,7 @@ QGCView {
         }
 
         ToolStrip {
+            visible:            _activeVehicle ? _activeVehicle.guidedModeSupported : false
             id:                 toolStrip
             anchors.leftMargin: ScreenTools.defaultFontPixelWidth
             anchors.left:       _panel.left
