@@ -53,7 +53,7 @@ M4SerialComm::open()
         qCDebug(YuneecLog) << "SERIAL: Could not open port" << _uart_name;
         return false;
     }
-    tcgetattr(_fd , &_savedtio);
+  //tcgetattr(_fd , &_savedtio);
     if(!_setupPort(_baudrate)) {
         return false;
     }
@@ -71,13 +71,13 @@ M4SerialComm::close()
 #if defined(__androidx86__)
     _status = SERIAL_PORT_CLOSED;
     if(_fd >= 0) {
-        tcsetattr(_fd, TCSANOW, &_savedtio);
+      //tcsetattr(_fd, TCSANOW, &_savedtio);
         ::close(_fd);
-        _fd = -1;
     }
     if(!wait(1000)) {
         qCDebug(YuneecLog) << "SERIAL: Timeout waiting for thread to end";
     }
+    _fd = -1;
 #endif
 }
 
