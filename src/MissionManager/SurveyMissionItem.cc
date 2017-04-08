@@ -926,12 +926,13 @@ int SurveyMissionItem::_appendWaypointToMission(QList<MissionItem*>& items, int 
                                         MAV_CMD_NAV_WAYPOINT,
                                         altitudeRelative ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,
                                         cameraTrigger == CameraTriggerHoverAndCapture ? 1 : 0,  // Hold time (1 second for hover and capture to settle vehicle before image is taken)
-                                        0.0, 0.0, 0.0,                                          // param 2-4 unused
+                                        0.0, 0.0,
+                                        std::numeric_limits<double>::quiet_NaN(),   // Yaw unchanged
                                         coord.latitude(),
                                         coord.longitude(),
                                         altitude,
-                                        true,                                                   // autoContinue
-                                        false,                                                  // isCurrentItem
+                                        true,                                       // autoContinue
+                                        false,                                      // isCurrentItem
                                         missionItemParent);
     items.append(item);
 

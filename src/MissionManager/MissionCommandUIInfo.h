@@ -31,10 +31,11 @@ class MissionCommandTreeTest;
 /// Key             Type    Default     Description
 /// label           string  required    Label for text field
 /// units           string              Units for value, should use FactMetaData units strings in order to get automatic translation
-/// default         double  0.0         Default value for param
+/// default         double  0.0/NaN     Default value for param. If no default value specified and nanUnchanged == true, then defaultVlue is NaN.
 /// decimalPlaces   int     7           Number of decimal places to show for value
 /// enumStrings     string              Strings to show in combo box for selection
 /// enumValues      string              Values assocaited with each enum string
+/// nanUnchanged    bool    false       True: value can be set to NaN to signal unchanged
 ///
 class MissionCmdParamInfo : public QObject {
 
@@ -53,6 +54,7 @@ public:
     Q_PROPERTY(QString      label           READ label          CONSTANT)
     Q_PROPERTY(int          param           READ param          CONSTANT)
     Q_PROPERTY(QString      units           READ units          CONSTANT)
+    Q_PROPERTY(bool         nanUnchanged    READ nanUnchanged   CONSTANT)
 
     int             decimalPlaces   (void) const { return _decimalPlaces; }
     double          defaultValue    (void) const { return _defaultValue; }
@@ -61,6 +63,7 @@ public:
     QString         label           (void) const { return _label; }
     int             param           (void) const { return _param; }
     QString         units           (void) const { return _units; }
+    bool            nanUnchanged    (void) const { return _nanUnchanged; }
 
 private:
     int             _decimalPlaces;
@@ -70,6 +73,7 @@ private:
     QString         _label;
     int             _param;
     QString         _units;
+    bool            _nanUnchanged;
 
     friend class MissionCommandTree;
     friend class MissionCommandUIInfo;
@@ -167,6 +171,7 @@ private:
     static const char* _descriptionJsonKey;
     static const char* _enumStringsJsonKey;
     static const char* _enumValuesJsonKey;
+    static const char* _nanUnchangedJsonKey;
     static const char* _friendlyNameJsonKey;
     static const char* _friendlyEditJsonKey;
     static const char* _idJsonKey;
