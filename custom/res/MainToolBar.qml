@@ -37,6 +37,8 @@ Rectangle {
     signal showPlanView
     signal showFlyView
     signal showAnalyzeView
+    signal armVehicle
+    signal disarmVehicle
 
     function checkSettingsButton() {
         settingsButton.checked = true
