@@ -75,6 +75,7 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
     _updateCameraSection();
 
     setDefaultsForCommand();
+    _rebuildFacts();
 
     connect(&_missionItem, &MissionItem::specifiedFlightSpeedChanged, this, &SimpleMissionItem::specifiedFlightSpeedChanged);
 
@@ -110,8 +111,8 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missio
     _setupMetaData();
     _connectSignals();
     _updateCameraSection();
-
     _syncFrameToAltitudeRelativeToHome();
+    _rebuildFacts();
 }
 
 SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, QObject* parent)
@@ -138,6 +139,8 @@ SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, QObject* pa
     _updateCameraSection();
 
     *this = other;
+
+    _rebuildFacts();
 }
 
 const SimpleMissionItem& SimpleMissionItem::operator=(const SimpleMissionItem& other)
@@ -147,8 +150,8 @@ const SimpleMissionItem& SimpleMissionItem::operator=(const SimpleMissionItem& o
     setRawEdit(other._rawEdit);
     setDirty(other._dirty);
     setHomePositionSpecialCase(other._homePositionSpecialCase);
-
     _syncFrameToAltitudeRelativeToHome();
+    _rebuildFacts();
 
     return *this;
 }
@@ -191,8 +194,8 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::isStandaloneCoordinateChanged);
 
     // Whenever these properties change the ui model changes as well
-    connect(this, &SimpleMissionItem::commandChanged, this, &SimpleMissionItem::_sendUiModelChanged);
-    connect(this, &SimpleMissionItem::rawEditChanged, this, &SimpleMissionItem::_sendUiModelChanged);
+    connect(this, &SimpleMissionItem::commandChanged, this, &SimpleMissionItem::_rebuildFacts);
+    connect(this, &SimpleMissionItem::rawEditChanged, this, &SimpleMissionItem::_rebuildFacts);
 
     // These fact signals must alway signal out through SimpleMissionItem signals
     connect(&_missionItem._commandFact,     &Fact::valueChanged, this, &SimpleMissionItem::_sendCommandChanged);
@@ -350,52 +353,34 @@ QString SimpleMissionItem::abbreviation() const
     }
 }
 
-void SimpleMissionItem::_clearParamMetaData(void)
+void SimpleMissionItem::_rebuildTextFieldFacts(void)
 {
-    _param1MetaData.setRawUnits("");
-    _param1MetaData.setDecimalPlaces(FactMetaData::unknownDecimalPlaces);
-    _param1MetaData.setBuiltInTranslator();
-    _param2MetaData.setRawUnits("");
-    _param2MetaData.setDecimalPlaces(FactMetaData::unknownDecimalPlaces);
-    _param2MetaData.setBuiltInTranslator();
-    _param3MetaData.setRawUnits("");
-    _param3MetaData.setDecimalPlaces(FactMetaData::unknownDecimalPlaces);
-    _param3MetaData.setBuiltInTranslator();
-    _param4MetaData.setRawUnits("");
-    _param4MetaData.setDecimalPlaces(FactMetaData::unknownDecimalPlaces);
-    _param4MetaData.setBuiltInTranslator();
-}
-
-QmlObjectListModel* SimpleMissionItem::textFieldFacts(void)
-{
-    QmlObjectListModel* model = new QmlObjectListModel(this);
+    _textFieldFacts.clear();
     
     if (rawEdit()) {
         _missionItem._param1Fact._setName("Param1");
         _missionItem._param1Fact.setMetaData(_defaultParamMetaData);
-        model->append(&_missionItem._param1Fact);
+        _textFieldFacts.append(&_missionItem._param1Fact);
         _missionItem._param2Fact._setName("Param2");
         _missionItem._param2Fact.setMetaData(_defaultParamMetaData);
-        model->append(&_missionItem._param2Fact);
+        _textFieldFacts.append(&_missionItem._param2Fact);
         _missionItem._param3Fact._setName("Param3");
         _missionItem._param3Fact.setMetaData(_defaultParamMetaData);
-        model->append(&_missionItem._param3Fact);
+        _textFieldFacts.append(&_missionItem._param3Fact);
         _missionItem._param4Fact._setName("Param4");
         _missionItem._param4Fact.setMetaData(_defaultParamMetaData);
-        model->append(&_missionItem._param4Fact);
+        _textFieldFacts.append(&_missionItem._param4Fact);
         _missionItem._param5Fact._setName("Lat/X");
         _missionItem._param5Fact.setMetaData(_defaultParamMetaData);
-        model->append(&_missionItem._param5Fact);
+        _textFieldFacts.append(&_missionItem._param5Fact);
         _missionItem._param6Fact._setName("Lon/Y");
         _missionItem._param6Fact.setMetaData(_defaultParamMetaData);
-        model->append(&_missionItem._param6Fact);
+        _textFieldFacts.append(&_missionItem._param6Fact);
         _missionItem._param7Fact._setName("Alt/Z");
         _missionItem._param7Fact.setMetaData(_defaultParamMetaData);
-        model->append(&_missionItem._param7Fact);
+        _textFieldFacts.append(&_missionItem._param7Fact);
     } else {
         _ignoreDirtyChangeSignals = true;
-
-        _clearParamMetaData();
 
         MAV_CMD command;
         if (_homePositionSpecialCase) {
@@ -412,52 +397,84 @@ QmlObjectListModel* SimpleMissionItem::textFieldFacts(void)
         for (int i=1; i<=7; i++) {
             const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i);
 
-            if (paramInfo && paramInfo->enumStrings().count() == 0) {
+            if (paramInfo && paramInfo->enumStrings().count() == 0 && !paramInfo->nanUnchanged()) {
                 Fact*               paramFact =     rgParamFacts[i-1];
                 FactMetaData*       paramMetaData = rgParamMetaData[i-1];
 
                 paramFact->_setName(paramInfo->label());
                 paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
-                paramMetaData->setEnumInfo(paramInfo->enumStrings(), paramInfo->enumValues());
                 paramMetaData->setRawUnits(paramInfo->units());
                 paramFact->setMetaData(paramMetaData);
-                model->append(paramFact);
+                _textFieldFacts.append(paramFact);
             }
         }
 
         if (uiInfo->specifiesCoordinate() || uiInfo->specifiesAltitudeOnly()) {
             _missionItem._param7Fact._setName("Altitude");
             _missionItem._param7Fact.setMetaData(_altitudeMetaData);
-            model->append(&_missionItem._param7Fact);
+            _textFieldFacts.append(&_missionItem._param7Fact);
         }
 
         _ignoreDirtyChangeSignals = false;
     }
-    
-    return model;
 }
 
-QmlObjectListModel* SimpleMissionItem::checkboxFacts(void)
+void SimpleMissionItem::_rebuildNaNFacts(void)
 {
-    QmlObjectListModel* model = new QmlObjectListModel(this);
-    
+    _nanFacts.clear();
 
-    if (rawEdit()) {
-        model->append(&_missionItem._autoContinueFact);
-    } else if ((specifiesCoordinate() || specifiesAltitudeOnly()) && !_homePositionSpecialCase) {
-        model->append(&_altitudeRelativeToHomeFact);
+    if (!rawEdit()) {
+        _ignoreDirtyChangeSignals = true;
+
+        MAV_CMD command;
+        if (_homePositionSpecialCase) {
+            command = MAV_CMD_NAV_LAST;
+        } else {
+            command = _missionItem.command();
+        }
+
+        Fact*           rgParamFacts[7] =       { &_missionItem._param1Fact, &_missionItem._param2Fact, &_missionItem._param3Fact, &_missionItem._param4Fact, &_missionItem._param5Fact, &_missionItem._param6Fact, &_missionItem._param7Fact };
+        FactMetaData*   rgParamMetaData[7] =    { &_param1MetaData, &_param2MetaData, &_param3MetaData, &_param4MetaData, &_param5MetaData, &_param6MetaData, &_param7MetaData };
+
+        const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, command);
+
+        for (int i=1; i<=7; i++) {
+            const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i);
+
+            if (paramInfo && paramInfo->nanUnchanged()) {
+                Fact*               paramFact =     rgParamFacts[i-1];
+                FactMetaData*       paramMetaData = rgParamMetaData[i-1];
+
+                paramFact->_setName(paramInfo->label());
+                paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
+                paramMetaData->setRawUnits(paramInfo->units());
+                paramFact->setMetaData(paramMetaData);
+                _nanFacts.append(paramFact);
+            }
+        }
+
+        _ignoreDirtyChangeSignals = false;
     }
-
-    return model;
 }
 
-QmlObjectListModel* SimpleMissionItem::comboboxFacts(void)
+void SimpleMissionItem::_rebuildCheckboxFacts(void)
 {
-    QmlObjectListModel* model = new QmlObjectListModel(this);
+    _checkboxFacts.clear();
 
     if (rawEdit()) {
-        model->append(&_missionItem._commandFact);
-        model->append(&_missionItem._frameFact);
+        _checkboxFacts.append(&_missionItem._autoContinueFact);
+    } else if ((specifiesCoordinate() || specifiesAltitudeOnly()) && !_homePositionSpecialCase) {
+        _checkboxFacts.append(&_altitudeRelativeToHomeFact);
+    }
+}
+
+void SimpleMissionItem::_rebuildComboBoxFacts(void)
+{
+    _comboboxFacts.clear();
+
+    if (rawEdit()) {
+        _comboboxFacts.append(&_missionItem._commandFact);
+        _comboboxFacts.append(&_missionItem._frameFact);
     } else {
         Fact*           rgParamFacts[7] =       { &_missionItem._param1Fact, &_missionItem._param2Fact, &_missionItem._param3Fact, &_missionItem._param4Fact, &_missionItem._param5Fact, &_missionItem._param6Fact, &_missionItem._param7Fact };
         FactMetaData*   rgParamMetaData[7] =    { &_param1MetaData, &_param2MetaData, &_param3MetaData, &_param4MetaData, &_param5MetaData, &_param6MetaData, &_param7MetaData };
@@ -481,12 +498,18 @@ QmlObjectListModel* SimpleMissionItem::comboboxFacts(void)
                 paramMetaData->setEnumInfo(paramInfo->enumStrings(), paramInfo->enumValues());
                 paramMetaData->setRawUnits(paramInfo->units());
                 paramFact->setMetaData(paramMetaData);
-                model->append(paramFact);
+                _comboboxFacts.append(paramFact);
             }
         }
     }
+}
 
-    return model;
+void SimpleMissionItem::_rebuildFacts(void)
+{
+    _rebuildTextFieldFacts();
+    _rebuildNaNFacts();
+    _rebuildCheckboxFacts();
+    _rebuildComboBoxFacts();
 }
 
 bool SimpleMissionItem::friendlyEditAllowed(void) const
@@ -602,11 +625,6 @@ void SimpleMissionItem::setDefaultsForCommand(void)
     _missionItem.setAutoContinue(true);
     _missionItem.setFrame((specifiesCoordinate() || specifiesAltitudeOnly()) ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_MISSION);
     setRawEdit(false);
-}
-
-void SimpleMissionItem::_sendUiModelChanged(void)
-{
-    emit uiModelChanged();
 }
 
 void SimpleMissionItem::_sendFrameChanged(void)

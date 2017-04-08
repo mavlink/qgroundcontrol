@@ -107,6 +107,37 @@ Rectangle {
                         }
                     }
 
+                    GridLayout {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        columns:        2
+
+                        Repeater {
+                            model: missionItem.nanFacts
+
+                            QGCCheckBox {
+                                text:           object.name
+                                Layout.column:  0
+                                Layout.row:     index
+                                checked:        isNaN(object.rawValue)
+                                onClicked:      object.rawValue = checked ? NaN : 0
+                            }
+                        }
+
+                        Repeater {
+                            model: missionItem.nanFacts
+
+                            FactTextField {
+                                showUnits:          true
+                                fact:               object
+                                Layout.column:      1
+                                Layout.row:         index
+                                Layout.fillWidth:   true
+                                enabled:            !isNaN(object.rawValue)
+                            }
+                        }
+                    }
+
                     Repeater {
                         model: missionItem.checkboxFacts
 
