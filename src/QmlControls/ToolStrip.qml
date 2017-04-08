@@ -39,7 +39,7 @@ Rectangle {
     // whether to show or hide the optional elements on the fly.
 
     property bool _showOptionalElements:    true
-    property bool _needRecalc:              true
+    property bool _needRecalc:              false
 
     Component.onCompleted: recalcShowOptionalElements()
 
@@ -54,7 +54,6 @@ Rectangle {
         onDefaultFontPixelHeightChanged:    recalcShowOptionalElements()
     }
 
-    /*
     onHeightChanged: {
         if (_needRecalc) {
             _needRecalc = false
@@ -63,18 +62,13 @@ Rectangle {
             }
         }
     }
-    */
 
     function recalcShowOptionalElements() {
-        if (_showOptionalElements) {
-            if (maxHeight && height > maxHeight) {
-                _showOptionalElements = false
-            }
-        } else {
+        if (maxHeight > 0) {
+            _needRecalc = false
+            _showOptionalElements =  height <= maxHeight
             _needRecalc = true
-            _showOptionalElements = true
         }
-
     }
 
     QGCPalette { id: qgcPal }

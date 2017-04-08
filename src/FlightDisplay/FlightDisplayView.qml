@@ -34,6 +34,8 @@ QGCView {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
+    property alias guidedController: guidedActionsController
+
     property bool activeVehicleJoystickEnabled: _activeVehicle ? _activeVehicle.joystickEnabled : false
 
     property var _activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
@@ -348,7 +350,7 @@ QGCView {
             z:                  _panel.z + 4
             title:              qsTr("Fly")
             maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
-            buttonVisible:      [ guidedController.showTakeoff || !guidedController.showLand, guidedController.showLand, true, true, true, guidedController.smartShotsAvailable ]
+            buttonVisible:      [ guidedController.showTakeoff || !guidedController.showLand, guidedController.showLand && !guidedController.showTakeoff, true, true, true, guidedController.smartShotsAvailable ]
             buttonEnabled:      [ guidedController.showTakeoff, guidedController.showLand, guidedController.showRTL, guidedController.showPause, _anyActionAvailable, _anySmartShotAvailable ]
 
             property bool _anyActionAvailable: guidedController.showEmergenyStop || guidedController.showStartMission || guidedController.showResumeMission || guidedController.showChangeAlt || guidedController.showLandAbort
@@ -406,12 +408,12 @@ QGCView {
                 },
                 {
                     name:       guidedController.pauseTitle,
-                    iconSource: "/res/Pause.svg",
+                    iconSource: "/res/pause-mission.svg",
                     action:     guidedController.actionPause
                 },
                 {
                     name:       qsTr("Action"),
-                    iconSource: "/qmlimages/MapCenter.svg",
+                    iconSource: "/res/action.svg",
                     action:     -1
                 },
                 /*
@@ -444,7 +446,7 @@ QGCView {
         }
 
         GuidedActionsController {
-            id:                 guidedController
+            id:                 guidedActionsController
             missionController:  flyMissionController
             z:                  _flightVideoPipControl.z + 1
 
