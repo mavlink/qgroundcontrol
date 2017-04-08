@@ -116,6 +116,7 @@
         <file alias="ArrowCCW.svg">../src/AutoPilotPlugins/Common/Images/ArrowCCW.svg</file>
     </qresource>
     <qresource prefix="/res">
+        <file alias="action.svg">../resources/action.svg</file>
         <file alias="AntennaRC">../resources/Antenna_RC.svg</file>
         <file alias="AntennaT">../resources/Antenna_T.svg</file>
         <file alias="ArrowDown.svg">../resources/ArrowDown.svg</file>
@@ -130,6 +131,7 @@
         <file alias="land.svg">../resources/land.svg</file>
         <file alias="notile.png">../resources/notile.png</file>
         <file alias="Pause.svg">../resources/Pause.svg</file>
+        <file alias="pause-mission.svg">../resources/pause-mission.svg</file>
         <file alias="Play">../resources/Play.svg</file>
         <file alias="PowerButton">../resources/PowerButton.svg</file>
         <file alias="QGCLogoBlack">../resources/QGCLogoBlack.svg</file>

@@ -431,16 +431,14 @@ SetupPage {
 
                     QGCLabel {
                         id:                 landVelocityLabel
-                        text:               qsTr("Landing Velocity:")
+                        text:               qsTr("Landing Descent Rate:")
                         Layout.fillWidth:   true
                         visible:            controller.vehicle && !controller.vehicle.fixedWing
                     }
-                    FactComboBox {
+                    FactTextField {
                         fact:                   _landSpeedMC
-                        indexModel:             false
                         Layout.minimumWidth:    _editFieldWidth
                         visible:                controller.vehicle && !controller.vehicle.fixedWing
-                        enabled:                _landSpeedMC === -1
                     }
 
                     QGCCheckBox {

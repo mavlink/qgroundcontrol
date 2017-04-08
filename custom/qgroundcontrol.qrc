@@ -3,6 +3,7 @@
         <file alias="FactSystemTest.qml">../src/FactSystem/FactSystemTest.qml</file>
     </qresource>
     <qresource prefix="/toolbar">
+        <file alias="ArmedIndicator.qml">../src/ui/toolbar/ArmedIndicator.qml</file>
         <file alias="MessageIndicator.qml">../src/ui/toolbar/MessageIndicator.qml</file>
     </qresource>
     <qresource prefix="/qml">
