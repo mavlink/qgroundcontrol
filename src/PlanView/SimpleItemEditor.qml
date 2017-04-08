@@ -119,8 +119,8 @@ Rectangle {
                                 text:           object.name
                                 Layout.column:  0
                                 Layout.row:     index
-                                checked:        isNaN(object.rawValue)
-                                onClicked:      object.rawValue = checked ? NaN : 0
+                                checked:        !isNaN(object.rawValue)
+                                onClicked:      object.rawValue = checked ? 0 : NaN
                             }
                         }
 
