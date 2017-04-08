@@ -20,7 +20,7 @@
 #include "MessageBoxTest.h"
 #include "MissionItemTest.h"
 #include "SimpleMissionItemTest.h"
-#include "ComplexMissionItemTest.h"
+#include "SurveyMissionItemTest.h"
 #include "MissionControllerTest.h"
 #include "MissionManagerTest.h"
 #include "RadioConfigTest.h"
@@ -61,5 +61,5 @@ UT_REGISTER_TEST(SendMavCommandTest)
 //UT_REGISTER_TEST(FileManagerTest)
 
 // Needs to be update for latest changes
-//UT_REGISTER_TEST(ComplexMissionItemTest)
+//UT_REGISTER_TEST(SurveyMissionItemTest)
 //UT_REGISTER_TEST(MavlinkLogTest)
