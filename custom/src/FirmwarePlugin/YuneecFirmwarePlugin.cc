@@ -13,32 +13,26 @@ QVariantList YuneecFirmwarePlugin::_cameraList;
 
 YuneecFirmwarePlugin::YuneecFirmwarePlugin(void)
 {
-    //  The following flight modes are renamed:
-    //      Simple -> Smart
-    //      Position -> Angle
-    //      Return -> RTL
-
-    _posCtlFlightMode = tr("Angle");
-    _rtlFlightMode = tr("RTL");
-    _simpleFlightMode = tr("Smart");
-
-    // Only the following flight modes are user selectable:
-    //      Simple
-    //      Position
-    //      Return
-    //      Mission
-
     for (int i=0; i<_flightModeInfoList.count(); i++) {
         FlightModeInfo_t& info = _flightModeInfoList[i];
 
+        // Only the following px4 flight modes are user selectable:
         if (info.name != _simpleFlightMode &&
                 info.name != _posCtlFlightMode &&
+                info.name != _altCtlFlightMode &&
                 info.name != _rtlFlightMode &&
                 info.name != _missionFlightMode) {
             // No other flight modes can be set
             info.canBeSet = false;
         }
+        qDebug() << *info.name << info.canBeSet;
     }
+
+    //  The following flight modes are renamed:
+    _posCtlFlightMode = tr("Angle");
+    _rtlFlightMode = tr("RTL");
+    _simpleFlightMode = tr("Smart");
+    _altCtlFlightMode = tr("Manual");
 }
 
 AutoPilotPlugin* YuneecFirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
