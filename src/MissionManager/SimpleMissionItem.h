@@ -40,9 +40,10 @@ public:
     Q_PROPERTY(QObject*         cameraSection           READ cameraSection                                      NOTIFY cameraSectionChanged)
 
     // These properties are used to display the editing ui
-    Q_PROPERTY(QmlObjectListModel*  checkboxFacts   READ checkboxFacts  NOTIFY uiModelChanged)
-    Q_PROPERTY(QmlObjectListModel*  comboboxFacts   READ comboboxFacts  NOTIFY uiModelChanged)
-    Q_PROPERTY(QmlObjectListModel*  textFieldFacts  READ textFieldFacts NOTIFY uiModelChanged)
+    Q_PROPERTY(QmlObjectListModel*  checkboxFacts   READ checkboxFacts  CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  comboboxFacts   READ comboboxFacts  CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  textFieldFacts  READ textFieldFacts CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  nanFacts        READ nanFacts       CONSTANT)
 
     /// Scans the loaded items for additional section settings
     ///     @param visualItems List of all visual items
@@ -59,9 +60,10 @@ public:
     bool            rawEdit             (void) const;
     CameraSection*  cameraSection       (void) { return _cameraSection; }
 
-    QmlObjectListModel* textFieldFacts  (void);
-    QmlObjectListModel* checkboxFacts   (void);
-    QmlObjectListModel* comboboxFacts   (void);
+    QmlObjectListModel* textFieldFacts  (void) { return &_textFieldFacts; }
+    QmlObjectListModel* nanFacts        (void) { return &_nanFacts; }
+    QmlObjectListModel* checkboxFacts   (void) { return &_checkboxFacts; }
+    QmlObjectListModel* comboboxFacts   (void) { return &_comboboxFacts; }
 
     void setRawEdit(bool rawEdit);
     
@@ -120,28 +122,29 @@ signals:
     void friendlyEditAllowedChanged (bool friendlyEditAllowed);
     void headingDegreesChanged      (double heading);
     void rawEditChanged             (bool rawEdit);
-    void uiModelChanged             (void);
     void cameraSectionChanged       (QObject* cameraSection);
 
 private slots:
-    void _setDirtyFromSignal(void);
-    void _cameraSectionDirtyChanged(bool dirty);
-    void _sendCommandChanged(void);
-    void _sendCoordinateChanged(void);
-    void _sendFrameChanged(void);
-    void _sendFriendlyEditAllowedChanged(void);
-    void _sendUiModelChanged(void);
-    void _syncAltitudeRelativeToHomeToFrame(const QVariant& value);
-    void _syncFrameToAltitudeRelativeToHome(void);
-    void _updateLastSequenceNumber(void);
+    void _setDirtyFromSignal            (void);
+    void _cameraSectionDirtyChanged         (bool dirty);
+    void _sendCommandChanged                (void);
+    void _sendCoordinateChanged             (void);
+    void _sendFrameChanged                  (void);
+    void _sendFriendlyEditAllowedChanged    (void);
+    void _syncAltitudeRelativeToHomeToFrame (const QVariant& value);
+    void _syncFrameToAltitudeRelativeToHome (void);
+    void _updateLastSequenceNumber          (void);
+    void _rebuildFacts                      (void);
 
 private:
-    void _clearParamMetaData(void);
-    void _connectSignals(void);
-    void _setupMetaData(void);
-    void _updateCameraSection(void);
+    void _connectSignals        (void);
+    void _setupMetaData         (void);
+    void _updateCameraSection   (void);
+    void _rebuildTextFieldFacts (void);
+    void _rebuildNaNFacts       (void);
+    void _rebuildCheckboxFacts  (void);
+    void _rebuildComboBoxFacts  (void);
 
-private:
     MissionItem _missionItem;
     bool        _rawEdit;
     bool        _dirty;
@@ -153,6 +156,11 @@ private:
 
     Fact    _altitudeRelativeToHomeFact;
     Fact    _supportedCommandFact;
+
+    QmlObjectListModel  _textFieldFacts;
+    QmlObjectListModel  _nanFacts;
+    QmlObjectListModel  _checkboxFacts;
+    QmlObjectListModel  _comboboxFacts;
     
     static FactMetaData*    _altitudeMetaData;
     static FactMetaData*    _commandMetaData;
