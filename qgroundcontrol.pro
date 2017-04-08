@@ -384,7 +384,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
         src/FactSystem/FactSystemTestGeneric.h \
         src/FactSystem/FactSystemTestPX4.h \
         src/FactSystem/ParameterManagerTest.h \
-        src/MissionManager/ComplexMissionItemTest.h \
+        src/MissionManager/SurveyMissionItemTest.h \
         src/MissionManager/MissionCommandTreeTest.h \
         src/MissionManager/MissionControllerManagerTest.h \
         src/MissionManager/MissionControllerTest.h \
@@ -412,7 +412,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
         src/FactSystem/FactSystemTestGeneric.cc \
         src/FactSystem/FactSystemTestPX4.cc \
         src/FactSystem/ParameterManagerTest.cc \
-        src/MissionManager/ComplexMissionItemTest.cc \
+        src/MissionManager/SurveyMissionItemTest.cc \
         src/MissionManager/MissionCommandTreeTest.cc \
         src/MissionManager/MissionControllerManagerTest.cc \
         src/MissionManager/MissionControllerTest.cc \
