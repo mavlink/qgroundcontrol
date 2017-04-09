@@ -221,6 +221,10 @@ QString QGCAudioWorker::fixTextMessageForAudio(const QString& string) {
     if(result.contains(" id ", Qt::CaseInsensitive)) {
         result.replace(" id ", " eye dee ", Qt::CaseInsensitive);
     }
+    if(result.contains(" ADSB ", Qt::CaseInsensitive)) {
+        result.replace(" ADSB ", " Hey Dee Ess Bee ", Qt::CaseInsensitive);
+    }
+
     int number;
     if(_getMillisecondString(string, match, number) && number > 1000) {
         if(number < 60000) {
