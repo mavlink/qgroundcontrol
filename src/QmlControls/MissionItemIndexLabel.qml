@@ -78,7 +78,7 @@ Canvas {
         color:              "white"
         opacity:            0.5
         radius:             _labelRadius
-        visible:            _label.length !== 0
+        visible:            _label.length !== 0 && !small
     }
 
     QGCLabel {
@@ -94,6 +94,7 @@ Canvas {
         font.pointSize:         ScreenTools.defaultFontPointSize
         fontSizeMode:           Text.HorizontalFit
         text:                   _label
+        visible:                labelControl.visible
     }
 
     Rectangle {

@@ -138,6 +138,26 @@ Rectangle {
                         }
                     }
 
+                    RowLayout {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        spacing:        ScreenTools.defaultFontPixelWidth
+                        visible:        missionItem.speedSection.available
+
+                        QGCCheckBox {
+                            id:         flightSpeedCheckbox
+                            text:       qsTr("Flight Speed")
+                            checked:    missionItem.speedSection.specifyFlightSpeed
+                            onClicked:  missionItem.speedSection.specifyFlightSpeed = checked
+                        }
+
+                        FactTextField {
+                            fact:               missionItem.speedSection.flightSpeed
+                            Layout.fillWidth:   true
+                            enabled:            flightSpeedCheckbox.checked
+                        }
+                    }
+
                     Repeater {
                         model: missionItem.checkboxFacts
 
