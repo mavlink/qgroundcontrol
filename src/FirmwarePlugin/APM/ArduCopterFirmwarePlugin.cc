@@ -133,8 +133,6 @@ void ArduCopterFirmwarePlugin::guidedModeLand(Vehicle* vehicle)
     vehicle->setFlightMode("Land");
 }
 
-#if 0
-// WIP
 void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
 {
     if (!_armVehicle(vehicle)) {
@@ -148,7 +146,6 @@ void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
                             0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
                             2.5);
 }
-#endif
 
 void ArduCopterFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
 {
