@@ -25,21 +25,22 @@ APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
     QMap<uint32_t,QString> enumToString;
     enumToString.insert(STABILIZE, "Stabilize");
     enumToString.insert(ACRO,      "Acro");
-    enumToString.insert(ALT_HOLD,  "Alt Hold");
+    enumToString.insert(ALT_HOLD,  "Altitude Hold");
     enumToString.insert(AUTO,      "Auto");
     enumToString.insert(GUIDED,    "Guided");
     enumToString.insert(LOITER,    "Loiter");
     enumToString.insert(RTL,       "RTL");
     enumToString.insert(CIRCLE,    "Circle");
-    enumToString.insert(POSITION,  "Position");
     enumToString.insert(LAND,      "Land");
-    enumToString.insert(OF_LOITER, "OF Loiter");
     enumToString.insert(DRIFT,     "Drift");
     enumToString.insert(SPORT,     "Sport");
     enumToString.insert(FLIP,      "Flip");
     enumToString.insert(AUTOTUNE,  "Autotune");
-    enumToString.insert(POS_HOLD,  "Pos Hold");
+    enumToString.insert(POS_HOLD,  "Position Hold");
     enumToString.insert(BRAKE,     "Brake");
+    enumToString.insert(THROW,     "Throw");
+    enumToString.insert(AVOID_ADSB,"Avoid ADSB");
+    enumToString.insert(GUIDED_NOGPS,"Guided No GPS");
 
     setEnumToStringMapping(enumToString);
 }
@@ -55,15 +56,18 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
     supportedFlightModes << APMCopterMode(APMCopterMode::LOITER    ,true);
     supportedFlightModes << APMCopterMode(APMCopterMode::RTL       ,true);
     supportedFlightModes << APMCopterMode(APMCopterMode::CIRCLE    ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::POSITION  ,true);
     supportedFlightModes << APMCopterMode(APMCopterMode::LAND      ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::OF_LOITER ,true);
     supportedFlightModes << APMCopterMode(APMCopterMode::DRIFT     ,true);
     supportedFlightModes << APMCopterMode(APMCopterMode::SPORT     ,true);
     supportedFlightModes << APMCopterMode(APMCopterMode::FLIP      ,true);
     supportedFlightModes << APMCopterMode(APMCopterMode::AUTOTUNE  ,true);
     supportedFlightModes << APMCopterMode(APMCopterMode::POS_HOLD  ,true);
     supportedFlightModes << APMCopterMode(APMCopterMode::BRAKE     ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::THROW     ,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::AVOID_ADSB,true);
+    supportedFlightModes << APMCopterMode(APMCopterMode::GUIDED_NOGPS,true);
+
+
     setSupportedModes(supportedFlightModes);
 
     if (!_remapParamNameIntialized) {
