@@ -81,7 +81,6 @@ Canvas {
         visible:            _label.length !== 0
     }
 
-
     QGCLabel {
         id:                     labelControlLabel
         anchors.leftMargin:     indicator.width + _labelMargin
