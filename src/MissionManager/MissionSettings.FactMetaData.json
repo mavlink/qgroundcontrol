@@ -8,14 +8,6 @@
     "defaultValue":     0
 },
 {
-    "name":             "FlightSpeed",
-    "shortDescription": "Flight speed for mission.",
-    "type":             "double",
-    "units":            "m/s",
-    "min":              0,
-    "decimalPlaces":    1
-},
-{
     "name":             "MissionEndAction",
     "shortDescription": "The action to take when the mission completed.",
     "type":             "uint32",
