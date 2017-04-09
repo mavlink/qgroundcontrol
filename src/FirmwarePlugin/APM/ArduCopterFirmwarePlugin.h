@@ -58,10 +58,7 @@ public:
     void pauseVehicle(Vehicle* vehicle) final;
     void guidedModeRTL(Vehicle* vehicle) final;
     void guidedModeLand(Vehicle* vehicle) final;
-#if 0
-    // WIP
     void guidedModeTakeoff(Vehicle* vehicle) final;
-#endif
     void guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord) final;
     void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange) final;
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
