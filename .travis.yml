@@ -189,10 +189,9 @@ after_success:
 
   # master development builds to beta track
   # tagged releases first to beta track then manually move to production
+  - GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrolbeta
   - if [ "${TRAVIS_TAG}" ]; then
-        GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrol
-    else
-        GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrolbeta
+        GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrol;
     fi
   - if [[ "${SPEC}" = "android-g++" && "${TRAVIS_PULL_REQUEST}" = "false" && "${TRAVIS_BRANCH}" = "master" ]]; then
         pip install --user google-api-python-client PyOpenSSL &&
