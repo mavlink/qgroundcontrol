@@ -123,7 +123,7 @@ SetupPage {
                         sourceSize.height:  height
                         mipmap:             true
                         fillMode:           Image.PreserveAspectFit
-                        source:             qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/LowBatteryLight.svg" : "/qmlimages/LowBattery.svg"
+                        source:             "/qmlimages/check.png"///qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/LowBatteryLight.svg" : "/qmlimages/LowBattery.svg"
                         Layout.rowSpan:     3
                         Layout.minimumWidth:    _imageWidth
                     }
@@ -177,7 +177,7 @@ SetupPage {
                         sourceSize.height:  height
                         mipmap:             true
                         fillMode:           Image.PreserveAspectFit
-                        source:             qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/RCLossLight.svg" : "/qmlimages/RCLoss.svg"
+                        //source:             qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/RCLossLight.svg" : "/qmlimages/RCLoss.svg"
                         Layout.rowSpan:     3
                         Layout.minimumWidth:    _imageWidth
                     }
@@ -222,7 +222,7 @@ SetupPage {
                         sourceSize.height:  height
                         mipmap:             true
                         fillMode:           Image.PreserveAspectFit
-                        source:             qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/DatalinkLossLight.svg" : "/qmlimages/DatalinkLoss.svg"
+                        //source:             qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/DatalinkLossLight.svg" : "/qmlimages/DatalinkLoss.svg"
                         Layout.rowSpan:     3
                         Layout.minimumWidth:    _imageWidth
                     }
@@ -267,7 +267,7 @@ SetupPage {
                         sourceSize.height:  height
                         mipmap:             true
                         fillMode:           Image.PreserveAspectFit
-                        source:             qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/GeoFenceLight.svg" : "/qmlimages/GeoFence.svg"
+                        //source:             qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/GeoFenceLight.svg" : "/qmlimages/GeoFence.svg"
                         Layout.rowSpan:     3
                         Layout.minimumWidth:    _imageWidth
                     }
@@ -330,7 +330,7 @@ SetupPage {
                         sourceSize.height:      height
                         mipmap:                 true
                         fillMode:               Image.PreserveAspectFit
-                        source:                 controller.vehicle.fixedWing ? "/qmlimages/ReturnToHomeAltitude.svg" : "/qmlimages/ReturnToHomeAltitudeCopter.svg"
+                        //source:                 controller.vehicle.fixedWing ? "/qmlimages/ReturnToHomeAltitude.svg" : "/qmlimages/ReturnToHomeAltitudeCopter.svg"
                         Layout.rowSpan:         7
                         Layout.minimumWidth:    _imageWidth
                     }
@@ -424,7 +424,7 @@ SetupPage {
                         sourceSize.height:      height
                         mipmap:                 true
                         fillMode:               Image.PreserveAspectFit
-                        source:                 controller.vehicle.fixedWing ? "/qmlimages/LandMode.svg" : "/qmlimages/LandModeCopter.svg"
+                        //source:                 controller.vehicle.fixedWing ? "/qmlimages/LandMode.svg" : "/qmlimages/LandModeCopter.svg"
                         Layout.rowSpan:         landVelocityLabel.visible ? 2 : 1
                         Layout.minimumWidth:    _imageWidth
                     }
