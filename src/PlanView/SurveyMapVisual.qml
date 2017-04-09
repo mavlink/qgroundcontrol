@@ -52,20 +52,29 @@ Item {
         if (_mapPolygon.count < 3) {
             // Initial polygon is inset to take 2/3rds space
             var rect = Qt.rect(map.centerViewport.x, map.centerViewport.y, map.centerViewport.width, map.centerViewport.height)
-            console.log(map.centerViewport)
             rect.x += (rect.width * 0.25) / 2
             rect.y += (rect.height * 0.25) / 2
             rect.width *= 0.75
             rect.height *= 0.75
-            console.log(map.centerViewport)
-            var topLeft = Qt.point(rect.x, rect.y)
-            var topRight = Qt.point(rect.x + rect.width, rect.y)
-            var bottomLeft = Qt.point(rect.x, rect.y + rect.height)
-            var bottomRight = Qt.point(rect.x + rect.width, rect.y + rect.height)
-            _mapPolygon.appendVertex(map.toCoordinate(topLeft, false /* clipToViewPort */))
-            _mapPolygon.appendVertex(map.toCoordinate(topRight, false /* clipToViewPort */))
-            _mapPolygon.appendVertex(map.toCoordinate(bottomRight, false /* clipToViewPort */))
-            _mapPolygon.appendVertex(map.toCoordinate(bottomLeft, false /* clipToViewPort */))
+
+            var centerCoord =       map.toCoordinate(Qt.point(rect.x + (rect.width / 2), rect.y + (rect.height / 2)),   false /* clipToViewPort */)
+            var topLeftCoord =      map.toCoordinate(Qt.point(rect.x, rect.y),                                          false /* clipToViewPort */)
+            var topRightCoord =     map.toCoordinate(Qt.point(rect.x + rect.width, rect.y),                             false /* clipToViewPort */)
+            var bottomLeftCoord =   map.toCoordinate(Qt.point(rect.x, rect.y + rect.height),                            false /* clipToViewPort */)
+            var bottomRightCoord =  map.toCoordinate(Qt.point(rect.x + rect.width, rect.y + rect.height),               false /* clipToViewPort */)
+
+            // Initial polygon has max width and height of 3000 meters
+            var halfWidthMeters =   Math.min(topLeftCoord.distanceTo(topRightCoord), 3000) / 2
+            var halfHeightMeters =  Math.min(topLeftCoord.distanceTo(bottomLeftCoord), 3000) / 2
+            topLeftCoord =      centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 0)
+            topRightCoord =     centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 0)
+            bottomLeftCoord =   centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 180)
+            bottomRightCoord =  centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 180)
+
+            _mapPolygon.appendVertex(topLeftCoord)
+            _mapPolygon.appendVertex(topRightCoord)
+            _mapPolygon.appendVertex(bottomRightCoord)
+            _mapPolygon.appendVertex(bottomLeftCoord)
         }
     }
 
