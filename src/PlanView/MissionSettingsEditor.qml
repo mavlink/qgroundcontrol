@@ -31,7 +31,8 @@ Rectangle {
     property bool   _mobile:                    ScreenTools.isMobile
     property var    _savePath:                  QGroundControl.settingsManager.appSettings.missionSavePath
     property var    _fileExtension:             QGroundControl.settingsManager.appSettings.missionFileExtension
-    property var    _appSettings:               QGroundControl.settingsManager.appSettings
+    property var    _appSettings:               QGroundControl.settingsManager.appSettings    
+    property bool   _waypointsOnlyMode:          QGroundControl.corePlugin.options.missionWaypointsOnly
 
     readonly property string _firmwareLabel:    qsTr("Firmware")
     readonly property string _vehicleLabel:     qsTr("Vehicle")
@@ -112,12 +113,12 @@ Rectangle {
                         id:         flightSpeedCheckBox
                         text:       qsTr("Flight speed")
                         visible:    !_missionVehicle.vtol
-                        checked:    missionItem.specifyMissionFlightSpeed
-                        onClicked:  missionItem.specifyMissionFlightSpeed = checked
+                        checked:    missionItem.speedSection.specifyFlightSpeed
+                        onClicked:   missionItem.speedSection.specifyFlightSpeed = checked
                     }
                     FactTextField {
                         Layout.fillWidth:   true
-                        fact:               missionItem.missionFlightSpeed
+                        fact:               missionItem.speedSection.flightSpeed
                         visible:            flightSpeedCheckBox.visible
                         enabled:            flightSpeedCheckBox.checked
                     }
@@ -138,7 +139,7 @@ Rectangle {
             SectionHeader {
                 id:         vehicleInfoSectionHeader
                 text:       qsTr("Vehicle Info")
-                visible:    _offlineEditing
+                visible:    _offlineEditing && !_waypointsOnlyMode
                 checked:    false
             }
 

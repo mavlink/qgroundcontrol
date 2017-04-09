@@ -11,6 +11,8 @@
 #include "QGCApplication.h"
 #include "Generic/GenericAutoPilotPlugin.h"
 #include "CameraMetaData.h"
+#include "SettingsManager.h"
+#include "AppSettings.h"
 
 #include <QDebug>
 
@@ -451,4 +453,14 @@ QString FirmwarePlugin::autoDisarmParameter(Vehicle* vehicle)
 {
     Q_UNUSED(vehicle);
     return QString();
+}
+
+void FirmwarePlugin::missionFlightSpeedInfo(Vehicle* vehicle, double& hoverSpeed, double& cruiseSpeed)
+{
+    Q_UNUSED(vehicle);
+
+    // Best we can do is use settings
+    AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+    hoverSpeed = appSettings->offlineEditingHoverSpeed()->rawValue().toDouble();
+    cruiseSpeed = appSettings->offlineEditingCruiseSpeed()->rawValue().toDouble();
 }
