@@ -610,30 +610,6 @@ QGCView {
                     }
                 }
             }
-
-            MapScale {
-                id:                 mapScale
-                anchors.margins:    ScreenTools.defaultFontPixelHeight * (0.66)
-                anchors.bottom:     waypointValuesDisplay.visible ? waypointValuesDisplay.top : parent.bottom
-                anchors.left:       parent.left
-                mapControl:         editorMap
-                visible:            !ScreenTools.isTinyScreen
-            }
-
-            MissionItemStatus {
-                id:                     waypointValuesDisplay
-                anchors.margins:        ScreenTools.defaultFontPixelWidth
-                anchors.left:           parent.left
-                anchors.bottom:         parent.bottom
-                z:                      QGroundControl.zOrderTopMost
-                currentMissionItem:     _currentMissionItem
-                missionItems:           missionController.visualItems
-                expandedWidth:          missionItemEditor.x - (ScreenTools.defaultFontPixelWidth * 2)
-                missionDistance:        missionController.missionDistance
-                missionTime:            missionController.missionTime
-                missionMaxTelemetry:    missionController.missionMaxTelemetry
-                visible:                _editingLayer == _layerMission && !ScreenTools.isShortScreen
-            }
         } // FlightMap
 
         // Right pane for mission editing controls
@@ -795,6 +771,25 @@ QGCView {
                 controller:         rallyPointController
             }
         } // Right panel
+
+        MapScale {
+            id:                 mapScale
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * (0.66)
+            anchors.bottom:     waypointValuesDisplay.visible ? waypointValuesDisplay.top : parent.bottom
+            anchors.left:       parent.left
+            mapControl:         editorMap
+            visible:            !ScreenTools.isTinyScreen
+        }
+
+        MissionItemStatus {
+            id:                 waypointValuesDisplay
+            anchors.margins:    ScreenTools.defaultFontPixelWidth
+            anchors.left:       parent.left
+            anchors.right:      rightPanel.left
+            anchors.bottom:     parent.bottom
+            missionItems:       missionController.visualItems
+            //visible:            _editingLayer === _layerMission && !ScreenTools.isShortScreen
+        }
     } // QGCViewPanel
 
     Component {
