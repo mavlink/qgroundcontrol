@@ -28,19 +28,21 @@ public:
         LOITER      = 5,   // Hold a single location
         RTL         = 6,   // AUTO control
         CIRCLE      = 7,   // AUTO control
-        POSITION    = 8,   // AUTO control
+        POSITION    = 8,   // Deprecated
         LAND        = 9,   // AUTO control
-        OF_LOITER   = 10,  // Hold a single location using optical flow
-                           // sensor
+        OF_LOITER   = 10,  // Deprecated
         DRIFT       = 11,  // Drift 'Car Like' mode
         RESERVED_12 = 12,  // RESERVED FOR FUTURE USE
-        SPORT       = 13,  // [TODO] Verify this is correct.
+        SPORT       = 13,
         FLIP        = 14,
         AUTOTUNE    = 15,
         POS_HOLD    = 16, // HYBRID LOITER.
-        BRAKE       = 17
+        BRAKE       = 17,
+        THROW       = 18,
+        AVOID_ADSB  = 19,
+        GUIDED_NOGPS= 20,
     };
-    static const int modeCount = 18;
+    static const int modeCount = 21;
 
     APMCopterMode(uint32_t mode, bool settable);
 };
