@@ -197,6 +197,7 @@
         <file alias="FWLandingPattern.FactMetaData.json">src/MissionManager/FWLandingPattern.FactMetaData.json</file>
         <file alias="USBBoardInfo.json">src/comm/USBBoardInfo.json</file>
         <file alias="CameraSection.FactMetaData.json">src/MissionManager/CameraSection.FactMetaData.json</file>
+        <file alias="SpeedSection.FactMetaData.json">src/MissionManager/SpeedSection.FactMetaData.json</file>
         <file alias="MissionSettings.FactMetaData.json">src/MissionManager/MissionSettings.FactMetaData.json</file>
         <file alias="Vehicle/VehicleFact.json">src/Vehicle/VehicleFact.json</file>
         <file alias="Vehicle/BatteryFact.json">src/Vehicle/BatteryFact.json</file>

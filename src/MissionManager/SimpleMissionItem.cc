@@ -52,6 +52,7 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
     , _rawEdit(false)
     , _dirty(false)
     , _ignoreDirtyChangeSignals(false)
+    , _speedSection(NULL)
     , _cameraSection(NULL)
     , _commandTree(qgcApp()->toolbox()->missionCommandTree())
     , _altitudeRelativeToHomeFact   (0, "Altitude is relative to home", FactMetaData::valueTypeUint32)
@@ -72,7 +73,7 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
 
     _setupMetaData();
     _connectSignals();
-    _updateCameraSection();
+    _updateOptionalSections();
 
     setDefaultsForCommand();
     _rebuildFacts();
@@ -90,6 +91,7 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missio
     , _rawEdit(false)
     , _dirty(false)
     , _ignoreDirtyChangeSignals(false)
+    , _speedSection(NULL)
     , _cameraSection(NULL)
     , _commandTree(qgcApp()->toolbox()->missionCommandTree())
     , _altitudeRelativeToHomeFact   (0, "Altitude is relative to home", FactMetaData::valueTypeUint32)
@@ -110,7 +112,7 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missio
 
     _setupMetaData();
     _connectSignals();
-    _updateCameraSection();
+    _updateOptionalSections();
     _syncFrameToAltitudeRelativeToHome();
     _rebuildFacts();
 }
@@ -121,6 +123,7 @@ SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, QObject* pa
     , _rawEdit(false)
     , _dirty(false)
     , _ignoreDirtyChangeSignals(false)
+    , _speedSection(NULL)
     , _cameraSection(NULL)
     , _commandTree(qgcApp()->toolbox()->missionCommandTree())
     , _altitudeRelativeToHomeFact   (0, "Altitude is relative to home", FactMetaData::valueTypeUint32)
@@ -136,7 +139,7 @@ SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, QObject* pa
 
     _setupMetaData();
     _connectSignals();
-    _updateCameraSection();
+    _updateOptionalSections();
 
     *this = other;
 
@@ -651,7 +654,7 @@ void SimpleMissionItem::setCommand(MavlinkQmlSingleton::Qml_MAV_CMD command)
 {
     if ((MAV_CMD)command != _missionItem.command()) {
         _missionItem.setCommand((MAV_CMD)command);
-        _updateCameraSection();
+        _updateOptionalSections();
     }
 }
 
@@ -674,7 +677,11 @@ void SimpleMissionItem::setSequenceNumber(int sequenceNumber)
 
 double SimpleMissionItem::specifiedFlightSpeed(void)
 {
-    return missionItem().specifiedFlightSpeed();
+    if (_speedSection->specifyFlightSpeed()) {
+        return _speedSection->flightSpeed()->rawValue().toDouble();
+    } else {
+        return missionItem().specifiedFlightSpeed();
+    }
 }
 
 double SimpleMissionItem::specifiedGimbalYaw(void)
@@ -682,47 +689,59 @@ double SimpleMissionItem::specifiedGimbalYaw(void)
     return _cameraSection->available() ? _cameraSection->specifiedGimbalYaw() : missionItem().specifiedGimbalYaw();
 }
 
-bool SimpleMissionItem::scanForSections(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle)
+bool SimpleMissionItem::scanForSections(QmlObjectListModel* visualItems, int& scanIndex, Vehicle* vehicle)
 {
     bool sectionFound = false;
 
     Q_UNUSED(vehicle);
 
     if (_cameraSection->available()) {
-        sectionFound = _cameraSection->scanForCameraSection(visualItems, scanIndex);
+        sectionFound |= _cameraSection->scanForSection(visualItems, scanIndex);
+    }
+    if (_speedSection->available()) {
+        sectionFound |= _speedSection->scanForSection(visualItems, scanIndex);
     }
 
     return sectionFound;
 }
 
-void SimpleMissionItem::_updateCameraSection(void)
+void SimpleMissionItem::_updateOptionalSections(void)
 {
+    // Remove previous sections
     if (_cameraSection) {
-        // Remove previous section
         _cameraSection->deleteLater();
         _cameraSection = NULL;
     }
-
-    // Add new section
-    _cameraSection = new CameraSection(this);
-    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, (MAV_CMD)command());
-    if (uiInfo && uiInfo->cameraSection()) {
-        _cameraSection->setAvailable(true);
+    if (_speedSection) {
+        _speedSection->deleteLater();
+        _speedSection = NULL;
     }
 
-    connect(_cameraSection, &CameraSection::dirtyChanged,               this, &SimpleMissionItem::_cameraSectionDirtyChanged);
-    connect(_cameraSection, &CameraSection::availableChanged,           this, &SimpleMissionItem::_updateLastSequenceNumber);
-    connect(_cameraSection, &CameraSection::missionItemCountChanged,    this, &SimpleMissionItem::_updateLastSequenceNumber);    
+    // Add new sections
+
+    _cameraSection = new CameraSection(_vehicle, this);
+    _speedSection = new SpeedSection(_vehicle, this);
+    if ((MAV_CMD)command() == MAV_CMD_NAV_WAYPOINT) {
+        _cameraSection->setAvailable(true);
+        _speedSection->setAvailable(true);
+    }
+
+    connect(_cameraSection, &CameraSection::dirtyChanged,               this, &SimpleMissionItem::_sectionDirtyChanged);
+    connect(_cameraSection, &CameraSection::itemCountChanged,           this, &SimpleMissionItem::_updateLastSequenceNumber);
     connect(_cameraSection, &CameraSection::availableChanged,           this, &SimpleMissionItem::specifiedGimbalYawChanged);
     connect(_cameraSection, &CameraSection::specifyGimbalChanged,       this, &SimpleMissionItem::specifiedGimbalYawChanged);
     connect(_cameraSection, &CameraSection::specifiedGimbalYawChanged,  this, &SimpleMissionItem::specifiedGimbalYawChanged);
 
+    connect(_speedSection, &CameraSection::dirtyChanged,                this, &SimpleMissionItem::_sectionDirtyChanged);
+    connect(_speedSection, &CameraSection::itemCountChanged,            this, &SimpleMissionItem::_updateLastSequenceNumber);
+
     emit cameraSectionChanged(_cameraSection);
+    emit speedSectionChanged(_speedSection);
 }
 
 int SimpleMissionItem::lastSequenceNumber(void) const
 {
-    return sequenceNumber() + (_cameraSection ? _cameraSection->missionItemCount() : 0);
+    return sequenceNumber() + (_cameraSection ? _cameraSection->itemCount() : 0) + (_speedSection ? _speedSection->itemCount() : 0);
 }
 
 void SimpleMissionItem::_updateLastSequenceNumber(void)
@@ -730,7 +749,7 @@ void SimpleMissionItem::_updateLastSequenceNumber(void)
     emit lastSequenceNumberChanged(lastSequenceNumber());
 }
 
-void SimpleMissionItem::_cameraSectionDirtyChanged(bool dirty)
+void SimpleMissionItem::_sectionDirtyChanged(bool dirty)
 {
     if (dirty) {
         setDirty(true);
@@ -744,7 +763,8 @@ void SimpleMissionItem::appendMissionItems(QList<MissionItem*>& items, QObject* 
     items.append(new MissionItem(missionItem(), missionItemParent));
     seqNum++;
 
-    _cameraSection->appendMissionItems(items, missionItemParent, seqNum);
+    _cameraSection->appendSectionItems(items, missionItemParent, seqNum);
+    _speedSection->appendSectionItems(items, missionItemParent, seqNum);
 }
 
 void SimpleMissionItem::applyNewAltitude(double newAltitude)
