@@ -22,6 +22,7 @@ QGCMapPolygon::QGCMapPolygon(QObject* newCoordParent, QObject* parent)
     : QObject(parent)
     , _newCoordParent(newCoordParent)
     , _dirty(false)
+    , _centerDrag(false)
     , _ignoreCenterUpdates(false)
 {
     connect(&_polygonModel, &QmlObjectListModel::dirtyChanged, this, &QGCMapPolygon::_polygonModelDirtyChanged);
@@ -53,7 +54,10 @@ void QGCMapPolygon::clear(void)
 void QGCMapPolygon::adjustVertex(int vertexIndex, const QGeoCoordinate coordinate)
 {
     _polygonPath[vertexIndex] = QVariant::fromValue(coordinate);
-    emit pathChanged();
+    if (!_centerDrag) {
+        // When dragging center we don't signal path changed until add vertices are updated
+        emit pathChanged();
+    }
 
     _polygonModel.value<QGCQGeoCoordinate*>(vertexIndex)->setCoordinate(coordinate);
 
@@ -278,7 +282,22 @@ void QGCMapPolygon::setCenter(QGeoCoordinate newCenter)
             adjustVertex(i, newVertex);
         }
 
+        if (_centerDrag) {
+            // When center dragging signals are delayed until all vertices are updated
+            emit pathChanged();
+        }
+
         _ignoreCenterUpdates = false;
-        _updateCenter();
+
+        _center = newCenter;
+        emit centerChanged(newCenter);
+    }
+}
+
+void QGCMapPolygon::setCenterDrag(bool centerDrag)
+{
+    if (centerDrag != _centerDrag) {
+        _centerDrag = centerDrag;
+        emit centerDragChanged(centerDrag);
     }
 }
