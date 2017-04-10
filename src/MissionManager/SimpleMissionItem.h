@@ -15,6 +15,7 @@
 #include "MissionItem.h"
 #include "MissionCommandTree.h"
 #include "CameraSection.h"
+#include "SpeedSection.h"
 
 /// A SimpleMissionItem is used to represent a single MissionItem to the ui.
 class SimpleMissionItem : public VisualMissionItem
@@ -31,25 +32,27 @@ public:
     const SimpleMissionItem& operator=(const SimpleMissionItem& other);
     
     Q_PROPERTY(QString          category                READ category                                           NOTIFY commandChanged)
-    Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command                WRITE setCommand            NOTIFY commandChanged)
     Q_PROPERTY(bool             friendlyEditAllowed     READ friendlyEditAllowed                                NOTIFY friendlyEditAllowedChanged)
     Q_PROPERTY(bool             rawEdit                 READ rawEdit                WRITE setRawEdit            NOTIFY rawEditChanged)              ///< true: raw item editing with all params
     Q_PROPERTY(bool             relativeAltitude        READ relativeAltitude                                   NOTIFY frameChanged)
+    Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command                WRITE setCommand            NOTIFY commandChanged)
 
     /// Optional sections
+    Q_PROPERTY(QObject*         speedSection            READ speedSection                                       NOTIFY speedSectionChanged)
     Q_PROPERTY(QObject*         cameraSection           READ cameraSection                                      NOTIFY cameraSectionChanged)
 
     // These properties are used to display the editing ui
-    Q_PROPERTY(QmlObjectListModel*  checkboxFacts   READ checkboxFacts  NOTIFY uiModelChanged)
-    Q_PROPERTY(QmlObjectListModel*  comboboxFacts   READ comboboxFacts  NOTIFY uiModelChanged)
-    Q_PROPERTY(QmlObjectListModel*  textFieldFacts  READ textFieldFacts NOTIFY uiModelChanged)
+    Q_PROPERTY(QmlObjectListModel*  checkboxFacts   READ checkboxFacts  CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  comboboxFacts   READ comboboxFacts  CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  textFieldFacts  READ textFieldFacts CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  nanFacts        READ nanFacts       CONSTANT)
 
     /// Scans the loaded items for additional section settings
     ///     @param visualItems List of all visual items
     ///     @param scanIndex Index to start scanning from
     ///     @param vehicle Vehicle associated with this mission
-    /// @return true: section found
-    bool scanForSections(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle);
+    /// @return true: section found, scanIndex updated
+    bool scanForSections(QmlObjectListModel* visualItems, int& scanIndex, Vehicle* vehicle);
 
     // Property accesors
     
@@ -58,10 +61,12 @@ public:
     bool            friendlyEditAllowed (void) const;
     bool            rawEdit             (void) const;
     CameraSection*  cameraSection       (void) { return _cameraSection; }
+    SpeedSection*   speedSection        (void) { return _speedSection; }
 
-    QmlObjectListModel* textFieldFacts  (void);
-    QmlObjectListModel* checkboxFacts   (void);
-    QmlObjectListModel* comboboxFacts   (void);
+    QmlObjectListModel* textFieldFacts  (void) { return &_textFieldFacts; }
+    QmlObjectListModel* nanFacts        (void) { return &_nanFacts; }
+    QmlObjectListModel* checkboxFacts   (void) { return &_checkboxFacts; }
+    QmlObjectListModel* comboboxFacts   (void) { return &_comboboxFacts; }
 
     void setRawEdit(bool rawEdit);
     
@@ -120,39 +125,47 @@ signals:
     void friendlyEditAllowedChanged (bool friendlyEditAllowed);
     void headingDegreesChanged      (double heading);
     void rawEditChanged             (bool rawEdit);
-    void uiModelChanged             (void);
     void cameraSectionChanged       (QObject* cameraSection);
+    void speedSectionChanged        (QObject* cameraSection);
 
 private slots:
-    void _setDirtyFromSignal(void);
-    void _cameraSectionDirtyChanged(bool dirty);
-    void _sendCommandChanged(void);
-    void _sendCoordinateChanged(void);
-    void _sendFrameChanged(void);
-    void _sendFriendlyEditAllowedChanged(void);
-    void _sendUiModelChanged(void);
-    void _syncAltitudeRelativeToHomeToFrame(const QVariant& value);
-    void _syncFrameToAltitudeRelativeToHome(void);
-    void _updateLastSequenceNumber(void);
+    void _setDirtyFromSignal                (void);
+    void _sectionDirtyChanged               (bool dirty);
+    void _sendCommandChanged                (void);
+    void _sendCoordinateChanged             (void);
+    void _sendFrameChanged                  (void);
+    void _sendFriendlyEditAllowedChanged    (void);
+    void _syncAltitudeRelativeToHomeToFrame (const QVariant& value);
+    void _syncFrameToAltitudeRelativeToHome (void);
+    void _updateLastSequenceNumber          (void);
+    void _rebuildFacts                      (void);
 
 private:
-    void _clearParamMetaData(void);
-    void _connectSignals(void);
-    void _setupMetaData(void);
-    void _updateCameraSection(void);
+    void _connectSignals        (void);
+    void _setupMetaData         (void);
+    void _updateOptionalSections(void);
+    void _rebuildTextFieldFacts (void);
+    void _rebuildNaNFacts       (void);
+    void _rebuildCheckboxFacts  (void);
+    void _rebuildComboBoxFacts  (void);
 
-private:
     MissionItem _missionItem;
     bool        _rawEdit;
     bool        _dirty;
     bool        _ignoreDirtyChangeSignals;
 
+    SpeedSection*   _speedSection;
     CameraSection* _cameraSection;
 
     MissionCommandTree* _commandTree;
 
     Fact    _altitudeRelativeToHomeFact;
     Fact    _supportedCommandFact;
+
+    QmlObjectListModel  _textFieldFacts;
+    QmlObjectListModel  _nanFacts;
+    QmlObjectListModel  _checkboxFacts;
+    QmlObjectListModel  _comboboxFacts;
     
     static FactMetaData*    _altitudeMetaData;
     static FactMetaData*    _commandMetaData;

@@ -1526,16 +1526,18 @@ void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualIte
         qCDebug(MissionControllerLog) << "MissionController::_scanForAdditionalSettings count:scanIndex" << visualItems->count() << scanIndex;
 
         MissionSettingsItem* settingsItem = qobject_cast<MissionSettingsItem*>(visualItem);
-        if (settingsItem && settingsItem->scanForMissionSettings(visualItems, scanIndex, vehicle)) {
+        if (settingsItem && settingsItem->scanForMissionSettings(visualItems, scanIndex)) {
             continue;
         }
 
         SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
         if (simpleItem) {
-            simpleItem->scanForSections(visualItems, scanIndex + 1, vehicle);
+            scanIndex++;
+            simpleItem->scanForSections(visualItems, scanIndex, vehicle);
+        } else {
+            // Complex item, can't have sections
+            scanIndex++;
         }
-
-        scanIndex++;
     }
 }
 
