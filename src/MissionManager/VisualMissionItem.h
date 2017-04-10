@@ -71,10 +71,10 @@ public:
 
     // The following properties are calculated/set by the MissionController recalc methods
 
-    Q_PROPERTY(double altDifference READ altDifference  WRITE setAltDifference  NOTIFY altDifferenceChanged)    ///< Change in altitude from previous waypoint
-    Q_PROPERTY(double altPercent    READ altPercent     WRITE setAltPercent     NOTIFY altPercentChanged)       ///< Percent of total altitude change in mission altitude
-    Q_PROPERTY(double azimuth       READ azimuth        WRITE setAzimuth        NOTIFY azimuthChanged)          ///< Azimuth to previous waypoint
-    Q_PROPERTY(double distance      READ distance       WRITE setDistance       NOTIFY distanceChanged)         ///< Distance to previous waypoint
+    Q_PROPERTY(double altDifference     READ altDifference      WRITE setAltDifference      NOTIFY altDifferenceChanged)        ///< Change in altitude from previous waypoint
+    Q_PROPERTY(double altPercent        READ altPercent         WRITE setAltPercent         NOTIFY altPercentChanged)           ///< Percent of total altitude change in mission altitude
+    Q_PROPERTY(double azimuth           READ azimuth            WRITE setAzimuth            NOTIFY azimuthChanged)              ///< Azimuth to previous waypoint
+    Q_PROPERTY(double distance          READ distance           WRITE setDistance           NOTIFY distanceChanged)             ///< Distance to previous waypoint
 
     // Property accesors
 
