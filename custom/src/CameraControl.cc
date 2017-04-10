@@ -17,6 +17,7 @@
 #include <QJsonArray>
 
 QGC_LOGGING_CATEGORY(YuneecCameraLog, "YuneecCameraLog")
+QGC_LOGGING_CATEGORY(YuneecCameraLogVerbose, "YuneecCameraLogVerbose")
 
 static const char* kAmbCommand = "http://192.168.42.1/cgi-bin/cgi?CMD=";
 
@@ -145,6 +146,7 @@ CameraControl::CameraControl(QObject* parent)
     , _vehicle(NULL)
     , _cameraSupported(CAMERA_SUPPORT_UNDEFINED)
     , _httpErrorCount(0)
+    , _true_cam_mode(CAMERA_MODE_UNDEFINED)
     , _currentVideoResIndex(0)
     , _currentWB(0)
     , _currentIso(0)
@@ -277,7 +279,10 @@ CameraControl::setVideoMode()
 {
     qCDebug(YuneecCameraLog) << "setVideoMode()";
     if(_cameraSupported == CAMERA_SUPPORT_YES) {
-        //-- Force UI to update.
+        //-- Force UI to update. We keep the real camera mode elsewhere so we
+        //   track when the camera actually changed modes, which is quite some
+        //   time later.
+        _true_cam_mode = _ambarellaStatus.cam_mode;
         _ambarellaStatus.cam_mode = CAMERA_MODE_VIDEO;
         emit cameraModeChanged();
     }
@@ -290,7 +295,10 @@ CameraControl::setPhotoMode()
 {
     qCDebug(YuneecCameraLog) << "setPhotoMode()";
     if(_cameraSupported == CAMERA_SUPPORT_YES) {
-        //-- Force UI to update.
+        //-- Force UI to update. We keep the real camera mode elsewhere so we
+        //   track when the camera actually changed modes, which is quite some
+        //   time later.
+        _true_cam_mode = _ambarellaStatus.cam_mode;
         _ambarellaStatus.cam_mode = CAMERA_MODE_PHOTO;
         emit cameraModeChanged();
     }
@@ -479,7 +487,7 @@ void
 CameraControl::_handleCameraStatus(int http_code, QByteArray data)
 {
     if(http_code == 200) {
-        qCDebug(YuneecCameraLog) << "GET_STATUS" << data;
+        qCDebug(YuneecCameraLogVerbose()) << "GET_STATUS" << data;
         _cameraSupported = CAMERA_SUPPORT_YES;
         QJsonParseError jsonParseError;
         QJsonDocument doc = QJsonDocument::fromJson(data, &jsonParseError);
@@ -491,7 +499,11 @@ CameraControl::_handleCameraStatus(int http_code, QByteArray data)
             _ambarellaStatus.msg_id          = set.value(QString("msg_id")).toInt();
             //-- Camera Mode
             int cam_mode = set.value(QString("cam_mode")).toString().toInt();
-            if(_ambarellaStatus.cam_mode != cam_mode) {
+            //-- Camera mode switch takes too long so we switch the UI right
+            //   after the user presses the switch. Internally however, we only
+            //   truly find out the mode once we get an answer from the camera.
+            if(_true_cam_mode != cam_mode) {
+                _true_cam_mode = cam_mode;
                 _ambarellaStatus.cam_mode = cam_mode;
                 emit cameraModeChanged();
                 _updateAspectRatio();
@@ -858,6 +870,8 @@ CameraControl::_updateAspectRatio()
 void
 CameraControl::_resetCameraValues()
 {
+    _true_cam_mode = CAMERA_MODE_UNDEFINED;
+
     _ambarellaStatus.rval = 0;
     _ambarellaStatus.msg_id = 0;
     _ambarellaStatus.cam_mode = CAMERA_MODE_UNDEFINED;
