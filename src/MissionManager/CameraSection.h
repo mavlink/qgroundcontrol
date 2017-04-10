@@ -7,21 +7,19 @@
  *
  ****************************************************************************/
 
-#ifndef CameraSection_H
-#define CameraSection_H
+#pragma once
 
+#include "Section.h"
 #include "ComplexMissionItem.h"
 #include "MissionItem.h"
 #include "Fact.h"
 
-Q_DECLARE_LOGGING_CATEGORY(CameraSectionLog)
-
-class CameraSection : public QObject
+class CameraSection : public Section
 {
     Q_OBJECT
 
 public:
-    CameraSection(QObject* parent = NULL);
+    CameraSection(Vehicle* vehicle, QObject* parent = NULL);
 
     // These nume values must match the json meta data
     enum CameraAction {
@@ -34,8 +32,6 @@ public:
     };
     Q_ENUMS(CameraAction)
 
-    Q_PROPERTY(bool     available                       READ available                      WRITE setAvailable                  NOTIFY availableChanged)
-    Q_PROPERTY(bool     settingsSpecified               MEMBER _settingsSpecified                                               NOTIFY settingsSpecifiedChanged)
     Q_PROPERTY(bool     specifyGimbal                   READ specifyGimbal                  WRITE setSpecifyGimbal              NOTIFY specifyGimbalChanged)
     Q_PROPERTY(Fact*    gimbalPitch                     READ gimbalPitch                                                        CONSTANT)
     Q_PROPERTY(Fact*    gimbalYaw                       READ gimbalYaw                                                          CONSTANT)
@@ -43,8 +39,6 @@ public:
     Q_PROPERTY(Fact*    cameraPhotoIntervalTime         READ cameraPhotoIntervalTime                                            CONSTANT)
     Q_PROPERTY(Fact*    cameraPhotoIntervalDistance     READ cameraPhotoIntervalDistance                                        CONSTANT)
 
-    bool    available                   (void) const { return _available; }
-    void    setAvailable                (bool available);
     bool    specifyGimbal               (void) const { return _specifyGimbal; }
     Fact*   gimbalYaw                   (void) { return &_gimbalYawFact; }
     Fact*   gimbalPitch                 (void) { return &_gimbalPitchFact; }
@@ -52,40 +46,28 @@ public:
     Fact*   cameraPhotoIntervalTime     (void) { return &_cameraPhotoIntervalTimeFact; }
     Fact*   cameraPhotoIntervalDistance (void) { return &_cameraPhotoIntervalDistanceFact; }
 
+    void setSpecifyGimbal   (bool specifyGimbal);
+
     ///< @return The gimbal yaw specified by this item, NaN if not specified
     double specifiedGimbalYaw(void) const;
 
-    /// Scans the loaded items for the section items
-    ///     @param visualItems Item list
-    ///     @param scanIndex Index to start scanning from
-    /// @return true: camera section found
-    bool scanForCameraSection(QmlObjectListModel* visualItems, int scanIndex);
-
-    /// Appends the mission items associated with this section
-    ///     @param items List to append to
-    ///     @param missionItemParent QObject parent for created MissionItems
-    ///     @param nextSequenceNumber Sequence number for first item
-    void appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent, int nextSequenceNumber);
-
-    void setSpecifyGimbal   (bool specifyGimbal);
-    bool dirty              (void) const { return _dirty; }
-    void setDirty           (bool dirty);
-
-    /// Returns the number of mission items represented by this section.
-    ///     Signals: missionItemCountChanged on change
-    int missionItemCount(void) const;
+    // Overrides from Section
+    bool available          (void) const override { return _available; }
+    bool dirty              (void) const override { return _dirty; }
+    void setAvailable       (bool available) override;
+    void setDirty           (bool dirty) override;
+    bool scanForSection     (QmlObjectListModel* visualItems, int& scanIndex) override;
+    void appendSectionItems (QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum) override;
+    int  itemCount          (void) const override;
+    bool settingsSpecified  (void) const override {return _settingsSpecified; }
 
 signals:
-    void availableChanged           (bool available);
-    void settingsSpecifiedChanged   (bool settingsSpecified);
-    void dirtyChanged               (bool dirty);
     bool specifyGimbalChanged       (bool specifyGimbal);
-    void missionItemCountChanged    (int missionItemCount);
     void specifiedGimbalYawChanged  (double gimbalYaw);
 
 private slots:
     void _setDirty(void);
-    void _setDirtyAndUpdateMissionItemCount(void);
+    void _setDirtyAndUpdateItemCount(void);
     void _updateSpecifiedGimbalYaw(void);
 
 private:
@@ -107,5 +89,3 @@ private:
     static const char* _cameraPhotoIntervalDistanceName;
     static const char* _cameraPhotoIntervalTimeName;
 };
-
-#endif

@@ -67,6 +67,7 @@
         <file alias="QGroundControl/Controls/QGCLabel.qml">../src/QmlControls/QGCLabel.qml</file>
         <file alias="QGroundControl/Controls/QGCListView.qml">../src/QmlControls/QGCListView.qml</file>
         <file alias="QGroundControl/Controls/QGCMapLabel.qml">../src/QmlControls/QGCMapLabel.qml</file>
+        <file alias="QGroundControl/Controls/QGCMapPolygonVisuals.qml">../src/MissionManager/QGCMapPolygonVisuals.qml</file>
         <file alias="QGroundControl/Controls/QGCMouseArea.qml">../src/QmlControls/QGCMouseArea.qml</file>
         <file alias="QGroundControl/Controls/QGCMovableItem.qml">../src/QmlControls/QGCMovableItem.qml</file>
         <file alias="QGroundControl/Controls/QGCPipable.qml">../src/QmlControls/QGCPipable.qml</file>
@@ -171,6 +172,7 @@
         <file alias="FWLandingPattern.FactMetaData.json">../src/MissionManager/FWLandingPattern.FactMetaData.json</file>
         <file alias="USBBoardInfo.json">../src/comm/USBBoardInfo.json</file>
         <file alias="CameraSection.FactMetaData.json">../src/MissionManager/CameraSection.FactMetaData.json</file>
+        <file alias="SpeedSection.FactMetaData.json">../src/MissionManager/SpeedSection.FactMetaData.json</file>
         <file alias="MissionSettings.FactMetaData.json">../src/MissionManager/MissionSettings.FactMetaData.json</file>
         <file alias="Vehicle/VehicleFact.json">../src/Vehicle/VehicleFact.json</file>
         <file alias="Vehicle/BatteryFact.json">../src/Vehicle/BatteryFact.json</file>

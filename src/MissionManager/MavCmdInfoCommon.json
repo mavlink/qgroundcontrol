@@ -32,7 +32,6 @@
             "specifiesCoordinate":  true,
             "friendlyEdit":         true,
             "category":             "Basic",
-            "cameraSection":        true,
             "param1": {
                 "label":            "Hold",
                 "units":            "secs",
@@ -54,7 +53,7 @@
             "param4": {
                 "label":            "Heading",
                 "units":            "radians",
-                "default":          0.0,
+                "nanUnchanged":     true,
                 "decimalPlaces":    2
             }
         },
@@ -70,6 +69,12 @@
                 "label":            "Radius",
                 "units":            "m",
                 "default":          50.0,
+                "decimalPlaces":    2
+            },
+            "param4": {
+                "label":            "Heading",
+                "units":            "radians",
+                "nanUnchanged":     true,
                 "decimalPlaces":    2
             }
         },
@@ -93,11 +98,10 @@
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "Exit loiter from",
-                "enumStrings":      "Center,Tangent",
-                "enumValues":       "0,1",
-                "default":          1,
-                "decimalPlaces":    0
+                "label":            "Heading",
+                "units":            "radians",
+                "nanUnchanged":     true,
+                "decimalPlaces":    2
             }
         },
         {
@@ -121,11 +125,10 @@
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "Exit loiter from",
-                "enumStrings":      "Center,Tangent",
-                "enumValues":       "0,1",
-                "default":          1,
-                "decimalPlaces":    0
+                "label":            "Heading",
+                "units":            "radians",
+                "nanUnchanged":     true,
+                "decimalPlaces":    2
             }
         },
         {
@@ -153,7 +156,7 @@
             "param4": {
                 "label":            "Heading",
                 "units":            "radians",
-                "default":          0.0,
+                "nanUnchanged":     true,
                 "decimalPlaces":    2
             }
         },
@@ -174,7 +177,7 @@
             "param4": {
                 "label":            "Heading",
                 "units":            "radians",
-                "default":          0.0,
+                "nanUnchanged":     true,
                 "decimalPlaces":    2
             }
         },
@@ -312,7 +315,7 @@
             "param4": {
                 "label":            "Heading",
                 "units":            "deg",
-                "default":          0.0,
+                "nanUnchanged":     true,
                 "decimalPlaces":    2
             }
         },
@@ -327,7 +330,7 @@
             "param4": {
                 "label":            "Heading",
                 "units":            "deg",
-                "default":          0.0,
+                "nanUnchanged":     true,
                 "decimalPlaces":    2
             }
         },
