@@ -9,6 +9,7 @@
 
 
 #include "GPSProvider.h"
+#include "QGCLoggingCategory.h"
 
 #define GPS_RECEIVE_TIMEOUT 1200
 
@@ -96,7 +97,7 @@ void GPSProvider::run()
             }
         }
     }
-    qDebug() << "Exiting GPS thread";
+    qCDebug(RTKGPSLog) << "Exiting GPS thread";
 }
 
 GPSProvider::GPSProvider(const QString& device, bool enableSatInfo, const std::atomic_bool& requestStop)
@@ -165,8 +166,7 @@ int GPSProvider::callback(GPSCallbackType type, void *data1, int data2)
         case GPSCallbackType::surveyInStatus:
         {
             SurveyInStatus* status = (SurveyInStatus*)data1;
-            qInfo("Survey-in status: %is cur accuracy: %imm valid: %i active: %i",
-                status->duration, status->mean_accuracy, (int)(status->flags & 1), (int)((status->flags>>1) & 1));
+            qCDebug(RTKGPSLog) << QString("Survey-in status: %1s cur accuracy: %2mm valid: %3 active: %4").arg(status->duration).arg(status->mean_accuracy).arg((int)(status->flags & 1)).arg((int)((status->flags>>1) & 1));
         }
             break;
 
