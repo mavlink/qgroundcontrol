@@ -41,11 +41,8 @@ Rectangle {
     property bool _showOptionalElements:    true
     property bool _needRecalc:              false
 
-    Component.onCompleted: recalcShowOptionalElements()
-
+    Component.onCompleted:  recalcShowOptionalElements()
     onMaxHeightChanged:     recalcShowOptionalElements()
-    onModelChanged:         recalcShowOptionalElements()
-    onButtonVisibleChanged: recalcShowOptionalElements()
 
     Connections {
         target: ScreenTools
