@@ -988,7 +988,18 @@
                 "decimalPlaces":    0
             }
         },
-        { "id": 2001, "rawName": "MAV_CMD_IMAGE_STOP_CAPTURE", "friendlyName": "Stop image capture" },
+        {
+            "id": 2001,
+            "rawName": "MAV_CMD_IMAGE_STOP_CAPTURE",
+            "friendlyName": "Stop image capture",
+            "description":  "Stop taking photos.",
+            "category":     "Camera",
+            "param1": {
+                "label":            "Camera id",
+                "default":          0,
+                "decimalPlaces":    0
+            }
+        },
         { "id": 2003, "rawName": "MAV_CMD_DO_TRIGGER_CONTROL", "friendlyName": "Trigger control" },
         {
             "id":           2500,
