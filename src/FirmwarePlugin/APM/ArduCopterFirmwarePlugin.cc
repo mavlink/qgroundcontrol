@@ -252,6 +252,6 @@ void ArduCopterFirmwarePlugin::missionFlightSpeedInfo(Vehicle* vehicle, double& 
     cruiseSpeed = 0;
     if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, hoverSpeedParam)) {
         Fact* speed = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, hoverSpeedParam);
-        hoverSpeed = speed->rawValue().toDouble();
+        hoverSpeed = speed->rawValue().toDouble() / 100; // cm/s -> m/s
     }
 }
