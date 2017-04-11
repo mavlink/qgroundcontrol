@@ -90,8 +90,9 @@ QGCView {
     }
 
     MissionController {
-        id: flyMissionController
-        Component.onCompleted: start(false /* editMode */)
+        id:                     flyMissionController
+        Component.onCompleted:  start(false /* editMode */)
+        onResumeMissionReady:   guidedActionsController.confirmAction(guidedActionsController.actionResumeMissionReady)
     }
 
     MessageDialog {

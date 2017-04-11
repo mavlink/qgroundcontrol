@@ -38,10 +38,10 @@ public:
     const QList<MissionItem*>& missionItems(void) { return _missionItems; }
 
     /// Current mission item as reported by MISSION_CURRENT
-    int currentItem(void) const { return _currentMissionItem; }
+    int currentIndex(void) const { return _currentMissionIndex; }
 
     /// Last current mission item reported while in Mission flight mode
-    int lastCurrentItem(void) const { return _lastCurrentItem; }
+    int lastCurrentIndex(void) const { return _lastCurrentIndex; }
     
     void requestMissionItems(void);
     
@@ -81,8 +81,8 @@ signals:
     void newMissionItemsAvailable(bool removeAllRequested);
     void inProgressChanged(bool inProgress);
     void error(int errorCode, const QString& errorMsg);
-    void currentItemChanged(int currentItem);
-    void lastCurrentItemChanged(int lastCurrentMissionItem);
+    void currentIndexChanged(int currentIndex);
+    void lastCurrentIndexChanged(int lastCurrentIndex);
     void resumeMissionReady(void);
 
 private slots:
@@ -134,8 +134,8 @@ private:
     QMutex _dataMutex;
     
     QList<MissionItem*> _missionItems;
-    int                 _currentMissionItem;
-    int                 _lastCurrentItem;
+    int                 _currentMissionIndex;
+    int                 _lastCurrentIndex;
 };
 
 #endif

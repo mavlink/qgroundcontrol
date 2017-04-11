@@ -65,7 +65,7 @@ public:
     Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
     Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition        NOTIFY plannedHomePositionChanged)
 
-    Q_PROPERTY(int                  resumeMissionItem       READ resumeMissionItem          NOTIFY resumeMissionItemChanged)
+    Q_PROPERTY(int                  resumeMissionIndex      READ resumeMissionIndex         NOTIFY resumeMissionIndexChanged)
 
     Q_PROPERTY(double               missionDistance         READ missionDistance            NOTIFY missionDistanceChanged)
     Q_PROPERTY(double               missionTime             READ missionTime                NOTIFY missionTimeChanged)
@@ -131,7 +131,7 @@ public:
     QGeoCoordinate      plannedHomePosition     (void) const;
 
     /// Returns the item index two which a mission should be resumed. -1 indicates resume mission not available.
-    int resumeMissionItem(void) const;
+    int resumeMissionIndex(void) const;
 
     double  missionDistance         (void) const { return _missionFlightStatus.totalDistance; }
     double  missionTime             (void) const { return _missionFlightStatus.totalTime; }
@@ -156,7 +156,7 @@ signals:
     void missionCruiseTimeChanged(void);
     void missionMaxTelemetryChanged(double missionMaxTelemetry);
     void complexMissionItemNamesChanged(void);
-    void resumeMissionItemChanged(void);
+    void resumeMissionIndexChanged(void);
     void resumeMissionReady(void);
     void batteryChangePointChanged(int batteryChangePoint);
     void batteriesRequiredChanged(int batteriesRequired);
@@ -167,7 +167,7 @@ private slots:
     void _itemCommandChanged(void);
     void _activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition);
     void _inProgressChanged(bool inProgress);
-    void _currentMissionItemChanged(int sequenceNumber);
+    void _currentMissionIndexChanged(int sequenceNumber);
     void _recalcWaypointLines(void);
     void _recalcMissionFlightStatus(void);
     void _updateContainsItems(void);
