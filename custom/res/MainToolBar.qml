@@ -179,7 +179,7 @@ Rectangle {
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * 2
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        spacing:                ScreenTools.defaultFontPixelWidth * 3
+        spacing:                ScreenTools.defaultFontPixelWidth * 2
 
         Rectangle {
             height:             parent.height * 0.75

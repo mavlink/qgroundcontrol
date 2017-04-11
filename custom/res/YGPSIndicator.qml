@@ -110,7 +110,7 @@ Item {
         width:              height
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
-        source:             "/qmlimages/Gps.svg"
+        source:             "/typhoonh/img/gps.svg"
         fillMode:           Image.PreserveAspectFit
         sourceSize.height:  height
         opacity:            (activeVehicle && activeVehicle.gps.count.value >= 0) ? 1 : 0.5

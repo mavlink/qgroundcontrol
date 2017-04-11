@@ -33,9 +33,9 @@ import TyphoonHQuickInterface.Widgets   1.0
 Rectangle {
     id:     mainRect
     height: mainCol.height
-    width:  ScreenTools.defaultFontPixelWidth * 12
-    radius: ScreenTools.defaultFontPixelWidth
-    color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0.85,0.85,1,0.85) : Qt.rgba(0.15,0.15,0.25,0.85)
+    width:  _indicatorDiameter
+    radius: ScreenTools.defaultFontPixelWidth * 0.5
+    color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.65) : Qt.rgba(0,0,0,0.75)
     border.width:   1
     border.color:   qgcPal.globalTheme === QGCPalette.Light ? "white" : "black"
 
@@ -91,46 +91,23 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
         }
         //-- Camera Mode
-        Rectangle {
-            width:  cameraModeRow.width
-            height: ScreenTools.defaultFontPixelHeight * 2
-            radius: width * 0.5
-            color:  "black"
+        Item {
+            width:  ScreenTools.defaultFontPixelHeight * 4
+            height: ScreenTools.defaultFontPixelHeight * 4
             anchors.horizontalCenter: parent.horizontalCenter
-            Row {
-                id:     cameraModeRow
-                spacing: ScreenTools.defaultFontPixelWidth * 1.5
-                //-- Camera
-                Rectangle {
-                    height:                 ScreenTools.defaultFontPixelHeight * 1.95
-                    width:                  height
-                    radius:                 width * 0.5
-                    color:                  _cameraPhotoMode ? qgcPal.colorGreen : "black"
-                    QGCColoredImage {
-                        height:             parent.height * 0.65
-                        width:              height
-                        sourceSize.width:   width
-                        source:             "qrc:/typhoonh/img/camera.svg"
-                        fillMode:           Image.PreserveAspectFit
-                        color:              _cameraPhotoMode ? "black" : qgcPal.colorGrey
-                        anchors.centerIn:   parent
-                    }
-                }
-                //-- Video
-                Rectangle {
-                    height:                 ScreenTools.defaultFontPixelHeight * 1.95
-                    width:                  height
-                    radius:                 width * 0.5
-                    color:                  _cameraVideoMode ? qgcPal.colorGreen : "black"
-                    QGCColoredImage {
-                        height:             parent.height * 0.65
-                        width:              height
-                        sourceSize.width:   width
-                        source:             "qrc:/typhoonh/img/video.svg"
-                        fillMode:           Image.PreserveAspectFit
-                        color:              _cameraVideoMode ? "black" : qgcPal.colorGrey
-                        anchors.centerIn:   parent
-                    }
+            opacity: _cameraModeUndefined ? 0.5 : 1
+            QGCColoredImage {
+                anchors.fill:       parent
+                source:             (_cameraModeUndefined || _cameraVideoMode) ? "/typhoonh/img/camera_switch_video.svg" : "/typhoonh/img/camera_switch_photo.svg"
+                fillMode:           Image.PreserveAspectFit
+                sourceSize.height:  height
+                color:              qgcPal.text
+                QGCColoredImage {
+                    anchors.fill:       parent
+                    source:             (_cameraModeUndefined || _cameraVideoMode) ? "/typhoonh/img/camera_switch_video_mode.svg" : "/typhoonh/img/camera_switch_photo_mode.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    sourceSize.height:  height
+                    color:              _cameraModeUndefined ? qgcPal.text : qgcPal.colorGreen
                 }
             }
             MouseArea {
@@ -145,7 +122,7 @@ Rectangle {
         //-- Shutter
         Rectangle {
             color:      Qt.rgba(0,0,0,0)
-            width:      parent.width * 0.75
+            width:      parent.width * 0.5
             height:     width
             radius:     width * 0.5
             border.color: qgcPal.buttonText
@@ -189,8 +166,15 @@ Rectangle {
             text: (_cameraVideoMode && TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? TyphoonHQuickInterface.cameraControl.recordTimeStr : "00:00:00"
             anchors.horizontalCenter: parent.horizontalCenter
         }
+        Rectangle {
+            height: 1
+            width:  parent.width * 0.85
+            color:  qgcPal.globalTheme === QGCPalette.Dark ? Qt.rgba(1,1,1,0.25) : Qt.rgba(0,0,0,0.25)
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
+        //-- Settings
         QGCColoredImage {
-            width:              parent.width * 0.45
+            width:              ScreenTools.defaultFontPixelHeight * 2.5
             height:             width
             sourceSize.width:   width
             source:             "qrc:/typhoonh/img/sliders.svg"
@@ -210,7 +194,7 @@ Rectangle {
             }
         }
         Item {
-            height:     _spacers
+            height:     ScreenTools.defaultFontPixelHeight + (_indicatorDiameter * 0.5)
             width:      1
         }
     }
