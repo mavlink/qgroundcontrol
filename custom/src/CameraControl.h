@@ -14,6 +14,7 @@
 #include "Vehicle.h"
 
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLog)
+Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLogVerbose)
 
 class QNetworkRequest;
 class QNetworkAccessManager;
@@ -286,6 +287,7 @@ private:
 
     int                     _cameraSupported;
     int                     _httpErrorCount;
+    int                     _true_cam_mode;
     quint32                 _currentVideoResIndex;
     quint32                 _currentWB;
     quint32                 _currentIso;

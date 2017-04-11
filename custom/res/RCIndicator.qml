@@ -30,6 +30,7 @@ Item {
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property real   _batteryLevel:  TyphoonHQuickInterface.rcBattery
+    property color  _batteryColor:  _batteryLevel > 0.0 ? Qt.hsva(0.333333 * _batteryLevel, 1, 1, 1) : qgcPal.buttonText
 
     function getBatteryPercentageText() {
         if(_batteryLevel > 0.98) {
@@ -39,6 +40,27 @@ Item {
             return (_batteryLevel * 100).toFixed(0) + '%'
         }
         return "N/A"
+    }
+
+    function getBatteryImage() {
+        if(_activeVehicle) {
+            if(_batteryLevel > 0.8) {
+                return "/typhoonh/img/rc_battery_charge_100.svg"
+            }
+            if(_batteryLevel > 0.6) {
+                return "/typhoonh/img/rc_battery_charge_80.svg"
+            }
+            if(_batteryLevel > 0.4) {
+                return "/typhoonh/img/rc_battery_charge_60.svg"
+            }
+            if(_batteryLevel > 0.2) {
+                return "/typhoonh/img/rc_battery_charge_40.svg"
+            }
+            if(_batteryLevel > 0.01) {
+                return "/typhoonh/img/rc_battery_charge_20.svg"
+            }
+        }
+        return ""
     }
 
     Component {
@@ -100,10 +122,10 @@ Item {
         spacing:        ScreenTools.defaultFontPixelWidth
         QGCColoredImage {
             anchors.top:        parent.top
-            width:              height
             anchors.bottom:     parent.bottom
+            width:              height
             sourceSize.height:  height
-            source:             "/qmlimages/RC.svg"
+            source:             "/typhoonh/img/rc.svg"
             fillMode:           Image.PreserveAspectFit
             opacity:            _activeVehicle ? 1 : 0.5
             color:              qgcPal.buttonText
@@ -119,12 +141,23 @@ Item {
             Row {
                 height:             rcRow.height * 0.6
                 spacing:            ScreenTools.defaultFontPixelWidth
-                BatteryLevel {
-                    size:           parent.height
-                    opacity:        _batteryLevel >= 0 ? 1 : 0.5
-                    batteryLevel:   _batteryLevel
-                    horizontal:     true
-                    anchors.verticalCenter: parent.verticalCenter
+                QGCColoredImage {
+                    anchors.top:        parent.top
+                    anchors.bottom:     parent.bottom
+                    source:             "/typhoonh/img/rc_battery_back.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    width:              parent.height
+                    height:             parent.height
+                    sourceSize.height:  height
+                    opacity:            (activeVehicle && activeVehicle.gps.count.value >= 0) ? 1 : 0.5
+                    color:              qgcPal.text
+                    QGCColoredImage {
+                        anchors.fill:       parent
+                        source:             getBatteryImage()
+                        fillMode:           Image.PreserveAspectFit
+                        sourceSize.width:   width
+                        color:              _batteryColor
+                    }
                 }
                 QGCLabel {
                     text:                   getBatteryPercentageText()
