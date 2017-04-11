@@ -9,7 +9,7 @@
 
 
 #include "GPSManager.h"
-#include <QDebug>
+#include "QGCLoggingCategory.h"
 
 GPSManager::GPSManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
@@ -35,26 +35,21 @@ void GPSManager::connectGPS(const QString& device)
     //create RTCM device
     _rtcmMavlink = new RTCMMavlink(*_toolbox);
 
-    connect(_gpsProvider, SIGNAL(RTCMDataUpdate(QByteArray)), _rtcmMavlink,
-            SLOT(RTCMDataUpdate(QByteArray)));
+    connect(_gpsProvider, &GPSProvider::RTCMDataUpdate, _rtcmMavlink, &RTCMMavlink::RTCMDataUpdate);
 
     //test: connect to position update
-    connect(_gpsProvider, SIGNAL(positionUpdate(GPSPositionMessage)), this,
-            SLOT(GPSPositionUpdate(GPSPositionMessage)));
-    connect(_gpsProvider, SIGNAL(satelliteInfoUpdate(GPSSatelliteMessage)), this,
-            SLOT(GPSSatelliteUpdate(GPSSatelliteMessage)));
+    connect(_gpsProvider, &GPSProvider::positionUpdate, this, &GPSManager::GPSPositionUpdate);
+    connect(_gpsProvider, &GPSProvider::satelliteInfoUpdate, this, &GPSManager::GPSSatelliteUpdate);
 
 }
 
 void GPSManager::GPSPositionUpdate(GPSPositionMessage msg)
 {
-    qDebug("GPS: got position update: alt=%i, long=%i, lat=%i",
-            msg.position_data.alt, msg.position_data.lon,
-            msg.position_data.lat);
+    qCDebug(RTKGPSLog) << QString("GPS: got position update: alt=%1, long=%2, lat=%3").arg(msg.position_data.alt).arg(msg.position_data.lon).arg(msg.position_data.lat);
 }
 void GPSManager::GPSSatelliteUpdate(GPSSatelliteMessage msg)
 {
-    qDebug("GPS: got satellite info update, %i satellites", (int)msg.satellite_data.count);
+    qCDebug(RTKGPSLog) << QString("GPS: got satellite info update, %1 satellites").arg((int)msg.satellite_data.count);
 }
 
 void GPSManager::cleanup()
