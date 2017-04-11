@@ -109,6 +109,7 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missio
     _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
 
     _altitudeRelativeToHomeFact.setRawValue(true);
+    _isCurrentItem = missionItem.isCurrentItem();
 
     _setupMetaData();
     _connectSignals();

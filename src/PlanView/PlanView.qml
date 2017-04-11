@@ -83,13 +83,6 @@ QGCView {
     property bool _firstRallyLoadComplete:      false
     property bool _firstLoadComplete:           false
 
-    function checkFirstLoadComplete() {
-        if (!_firstLoadComplete && _firstMissionLoadComplete && _firstRallyLoadComplete && _firstFenceLoadComplete) {
-            _firstLoadComplete = true
-            mapFitFunctions.fitMapViewportToAllItems()
-        }
-    }
-
     MapFitFunctions {
         id:                         mapFitFunctions
         map:                        editorMap
@@ -182,8 +175,6 @@ QGCView {
                 mapFitFunctions.fitMapViewportToMissionItems()
             }
             setCurrentItem(0)
-            _firstMissionLoadComplete = true
-            checkFirstLoadComplete()
         }
     }
 
@@ -211,18 +202,6 @@ QGCView {
 
         function fitViewportToItems() {
             mapFitFunctions.fitMapViewportToFenceItems()
-        }
-
-        onLoadComplete: {
-            _firstFenceLoadComplete = true
-            switch (_syncDropDownController) {
-            case geoFenceController:
-                mapFitFunctions.fitMapViewportToFenceItems()
-                break
-            case missionController:
-                checkFirstLoadComplete()
-                break
-            }
         }
     }
 
@@ -258,18 +237,6 @@ QGCView {
 
         function fitViewportToItems() {
             mapFitFunctions.fitMapViewportToRallyItems()
-        }
-
-        onLoadComplete: {
-            _firstRallyLoadComplete = true
-            switch (_syncDropDownController) {
-            case rallyPointController:
-                mapFitFunctions.fitMapViewportToRallyItems()
-                break
-            case missionController:
-                checkFirstLoadComplete()
-                break
-            }
         }
     }
 
