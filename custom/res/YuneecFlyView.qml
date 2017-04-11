@@ -150,7 +150,7 @@ Item {
     Rectangle {
         width:          camRow.width + (ScreenTools.defaultFontPixelWidth * 2)
         height:         camRow.height * (_cameraVideoMode ? 1.25 : 1.5)
-        color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0.15,1,0.15,0.85) : Qt.rgba(0,0.15,0,0.85)
+        color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.65) : Qt.rgba(0,0,0,0.75)
         visible:        !_mainIsMap && _cameraPresent && indicatorDropdown.sourceComponent === null && !messageArea.visible && !criticalMmessageArea.visible
         radius:         3
         anchors.top:    parent.top
