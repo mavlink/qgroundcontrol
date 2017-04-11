@@ -10,6 +10,9 @@
 
 #include "GPSManager.h"
 #include "QGCLoggingCategory.h"
+#include "QGCApplication.h"
+#include "SettingsManager.h"
+#include "RTKSettings.h"
 
 GPSManager::GPSManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
@@ -27,9 +30,11 @@ void GPSManager::connectGPS(const QString& device)
 {
     Q_ASSERT(_toolbox);
 
+    RTKSettings* rtkSettings = qgcApp()->toolbox()->settingsManager()->rtkSettings();
+
     cleanup();
     _requestGpsStop = false;
-    _gpsProvider = new GPSProvider(device, true, _requestGpsStop);
+    _gpsProvider = new GPSProvider(device, true, rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(), rtkSettings->surveyInMinObservationDuration()->rawValue().toInt(), _requestGpsStop);
     _gpsProvider->start();
 
     //create RTCM device
