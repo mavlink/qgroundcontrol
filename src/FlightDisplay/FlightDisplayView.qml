@@ -34,16 +34,17 @@ QGCView {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
-    property alias guidedController: guidedActionsController
-
     property bool activeVehicleJoystickEnabled: _activeVehicle ? _activeVehicle.joystickEnabled : false
 
-    property var _activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
-    property bool _mainIsMap:           QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
-    property bool _isPipVisible:        QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
-    property real _savedZoomLevel:      0
-    property real _margins:             ScreenTools.defaultFontPixelWidth / 2
-    property real _pipSize:             mainWindow.width * 0.2
+    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _mainIsMap:         QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
+    property bool   _isPipVisible:      QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
+    property real   _savedZoomLevel:    0
+    property real   _margins:           ScreenTools.defaultFontPixelWidth / 2
+    property real   _pipSize:           mainWindow.width * 0.2
+    property alias  _guidedController:  guidedActionsController
+    property alias  _altitudeSlider:    altitudeSlider
+
 
     readonly property bool      isBackgroundDark:       _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
     readonly property real      _defaultRoll:           0
@@ -159,7 +160,7 @@ QGCView {
                 id:                     _flightMap
                 anchors.fill:           parent
                 missionController:      flyMissionController
-                guidedActionsController: guidedController
+                guidedActionsController: _guidedController
                 flightWidgets:          flightDisplayViewWidgets
                 rightPanelWidth:        ScreenTools.defaultFontPixelHeight * 9
                 qgcView:                root
@@ -352,66 +353,66 @@ QGCView {
             z:                  _panel.z + 4
             title:              qsTr("Fly")
             maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
-            buttonVisible:      [ guidedController.showTakeoff || !guidedController.showLand, guidedController.showLand && !guidedController.showTakeoff, true, true, true, guidedController.smartShotsAvailable ]
-            buttonEnabled:      [ guidedController.showTakeoff, guidedController.showLand, guidedController.showRTL, guidedController.showPause, _anyActionAvailable, _anySmartShotAvailable ]
+            buttonVisible:      [ _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true, _guidedController.smartShotsAvailable ]
+            buttonEnabled:      [ _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable, _anySmartShotAvailable ]
 
-            property bool _anyActionAvailable: guidedController.showEmergenyStop || guidedController.showStartMission || guidedController.showResumeMission || guidedController.showChangeAlt || guidedController.showLandAbort
-            property bool _anySmartShotAvailable: guidedController.showOrbit
+            property bool _anyActionAvailable: _guidedController.showEmergenyStop || _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
+            property bool _anySmartShotAvailable: _guidedController.showOrbit
             property var _actionModel: [
                 {
-                    title:      guidedController.startMissionTitle,
-                    text:       guidedController.startMissionMessage,
-                    action:     guidedController.actionStartMission,
-                    visible:    guidedController.showStartMission
+                    title:      _guidedController.startMissionTitle,
+                    text:       _guidedController.startMissionMessage,
+                    action:     _guidedController.actionStartMission,
+                    visible:    _guidedController.showStartMission
                 },
                 {
-                    title:      guidedController.resumeMissionTitle,
-                    text:       guidedController.resumeMissionMessage,
-                    action:     guidedController.actionResumeMission,
-                    visible:    guidedController.showResumeMission
+                    title:      _guidedController.resumeMissionTitle,
+                    text:       _guidedController.resumeMissionMessage,
+                    action:     _guidedController.actionResumeMission,
+                    visible:    _guidedController.showResumeMission
                 },
                 {
-                    title:      guidedController.changeAltTitle,
-                    text:       guidedController.changeAltMessage,
-                    action:     guidedController.actionChangeAlt,
-                    visible:    guidedController.showChangeAlt
+                    title:      _guidedController.changeAltTitle,
+                    text:       _guidedController.changeAltMessage,
+                    action:     _guidedController.actionChangeAlt,
+                    visible:    _guidedController.showChangeAlt
                 },
                 {
-                    title:      guidedController.landAbortTitle,
-                    text:       guidedController.landAbortMessage,
-                    action:     guidedController.actionLandAbort,
-                    visible:    guidedController.showLandAbort
+                    title:      _guidedController.landAbortTitle,
+                    text:       _guidedController.landAbortMessage,
+                    action:     _guidedController.actionLandAbort,
+                    visible:    _guidedController.showLandAbort
                 }
             ]
             property var _smartShotModel: [
                 {
-                    title:      guidedController.orbitTitle,
-                    text:       guidedController.orbitMessage,
-                    action:     guidedController.actionOrbit,
-                    visible:    guidedController.showOrbit
+                    title:      _guidedController.orbitTitle,
+                    text:       _guidedController.orbitMessage,
+                    action:     _guidedController.actionOrbit,
+                    visible:    _guidedController.showOrbit
                 }
             ]
 
             model: [
                 {
-                    name:       guidedController.takeoffTitle,
+                    name:       _guidedController.takeoffTitle,
                     iconSource: "/res/takeoff.svg",
-                    action:     guidedController.actionTakeoff
+                    action:     _guidedController.actionTakeoff
                 },
                 {
-                    name:       guidedController.landTitle,
+                    name:       _guidedController.landTitle,
                     iconSource: "/res/land.svg",
-                    action:     guidedController.actionLand
+                    action:     _guidedController.actionLand
                 },
                 {
-                    name:       guidedController.rtlTitle,
+                    name:       _guidedController.rtlTitle,
                     iconSource: "/res/rtl.svg",
-                    action:     guidedController.actionRTL
+                    action:     _guidedController.actionRTL
                 },
                 {
-                    name:       guidedController.pauseTitle,
+                    name:       _guidedController.pauseTitle,
                     iconSource: "/res/pause-mission.svg",
-                    action:     guidedController.actionPause
+                    action:     _guidedController.actionPause
                 },
                 {
                     name:       qsTr("Action"),
@@ -442,7 +443,7 @@ QGCView {
                         guidedActionList.visible = true
                     }
                 } else {
-                    guidedController.confirmAction(action)
+                    _guidedController.confirmAction(action)
                 }
             }
         }
@@ -451,6 +452,18 @@ QGCView {
             id:                 guidedActionsController
             missionController:  flyMissionController
             z:                  _flightVideoPipControl.z + 1
+
+            onShowStartMissionChanged: {
+                if (showStartMission) {
+                    confirmAction(actionStartMission)
+                }
+            }
+
+            onShowResumeMissionChanged: {
+                if (showResumeMission) {
+                    confirmAction(actionResumeMission)
+                }
+            }
 
             onShowConfirmAction: {
                 guidedActionConfirm.title =         title
@@ -461,193 +474,22 @@ QGCView {
             }
         }
 
-        Rectangle {
+        GuidedActionConfirm {
             id:                         guidedActionConfirm
             anchors.margins:            _margins
             anchors.bottom:             parent.bottom
-            anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 4
             anchors.horizontalCenter:   parent.horizontalCenter
-            border.color:               qgcPal.alertBorder
-            border.width:               1
-            width:                      confirmColumn.width  + (_margins * 4)
-            height:                     confirmColumn.height + (_margins * 4)
-            radius:                     ScreenTools.defaultFontPixelHeight / 2
-            color:                      qgcPal.alertBackground
-            opacity:                    0.9
-            z:                          guidedController.z
-            visible:                    false
-
-            property alias  title:      titleText.text
-            property alias  message:    messageText.text
-            property int    action
-            property var    actionData
-
-            property real _margins: ScreenTools.defaultFontPixelWidth
-
-            Column {
-                id:                 confirmColumn
-                anchors.margins:    _margins
-                anchors.centerIn:   parent
-                spacing:            _margins
-
-                QGCLabel {
-                    id:                     titleText
-                    color:                  qgcPal.alertText
-                    anchors.left:           slider.left
-                    anchors.right:          slider.right
-                    horizontalAlignment:    Text.AlignHCenter
-                }
-
-                QGCLabel {
-                    id:                     messageText
-                    color:                  qgcPal.alertText
-                    anchors.left:           slider.left
-                    anchors.right:          slider.right
-                    horizontalAlignment:    Text.AlignHCenter
-                    wrapMode:               Text.WordWrap
-                }
-
-                // Action confirmation control
-                SliderSwitch {
-                    id:             slider
-                    confirmText:    qsTr("Slide to confirm")
-                    width:          Math.max(implicitWidth, ScreenTools.defaultFontPixelWidth * 30)
-
-                    onAccept: {
-                        guidedActionConfirm.visible = false
-                        if (altitudeSlider.visible) {
-                            guidedActionConfirm.actionData = altitudeSlider.getValue()
-                            altitudeSlider.visible = false
-                        }
-                        guidedController.executeAction(guidedActionConfirm.action, guidedActionConfirm.actionData)
-                    }
-
-                    onReject: {
-                        altitudeSlider.visible = false
-                        guidedActionConfirm.visible = false
-                    }
-                }
-            }
-
-            QGCColoredImage {
-                anchors.margins:    _margins
-                anchors.top:        parent.top
-                anchors.right:      parent.right
-                width:              ScreenTools.defaultFontPixelHeight
-                height:             width
-                sourceSize.height:  width
-                source:             "/res/XDelete.svg"
-                fillMode:           Image.PreserveAspectFit
-                color:              qgcPal.alertText
-                QGCMouseArea {
-                    fillItem:   parent
-                    onClicked: {
-                        altitudeSlider.visible = false
-                        guidedActionConfirm.visible = false
-                    }
-                }
-            }
+            guidedController:           _guidedController
+            altitudeSlider:             _altitudeSlider
         }
 
-        Rectangle {
+        GuidedActionList {
             id:                         guidedActionList
             anchors.margins:            _margins
             anchors.bottom:             parent.bottom
-            anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 4
             anchors.horizontalCenter:   parent.horizontalCenter
-            width:                      actionColumn.width  + (_margins * 4)
-            height:                     actionColumn.height + (_margins * 4)
-            radius:                     _margins / 2
-            color:                      qgcPal.window
-            opacity:                    0.9
-            z:                          guidedController.z
-            visible:                    false
-
-            property alias model: actionRepeater.model
-
-            property real _margins: Math.round(ScreenTools.defaultFontPixelHeight * 0.66)
-
-            ColumnLayout {
-                id:                 actionColumn
-                anchors.margins:    guidedActionList._margins
-                anchors.centerIn:   parent
-                spacing:            _margins
-
-                QGCLabel {
-                    text:               qsTr("Select Action")
-                    Layout.alignment:   Qt.AlignHCenter
-                }
-
-                QGCFlickable {
-                    contentWidth:           actionRow.width
-                    contentHeight:          actionRow.height
-                    Layout.minimumHeight:   actionRow.height
-                    Layout.maximumHeight:   actionRow.height
-                    Layout.minimumWidth:    _width
-                    Layout.maximumWidth:    _width
-
-                    property real _width: Math.min(root.width * 0.8, actionRow.width)
-
-                    RowLayout {
-                        id:         actionRow
-                        spacing:    ScreenTools.defaultFontPixelHeight * 2
-
-                        Repeater {
-                            id: actionRepeater
-
-                            ColumnLayout {
-                                spacing:            ScreenTools.defaultFontPixelHeight / 2
-                                visible:            modelData.visible
-                                Layout.fillHeight:  true
-
-                                QGCLabel {
-                                    id:                     actionMessage
-                                    text:                   modelData.text
-                                    horizontalAlignment:    Text.AlignHCenter
-                                    wrapMode:               Text.WordWrap
-                                    Layout.minimumWidth:    _width
-                                    Layout.maximumWidth:    _width
-                                    Layout.fillHeight:      true
-
-                                    property real _width: ScreenTools.defaultFontPixelWidth * 25
-                                }
-
-                                QGCButton {
-                                    id:                         actionButton
-                                    anchors.horizontalCenter:   parent.horizontalCenter
-                                    text:                       modelData.title
-
-                                    onClicked: {
-                                        if (modelData.action === guidedController.actionChangeAlt) {
-                                            altitudeSlider.reset()
-                                            altitudeSlider.visible = true
-                                        }
-                                        guidedActionList.visible = false
-                                        guidedController.confirmAction(modelData.action)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            QGCColoredImage {
-                anchors.margins:    _margins
-                anchors.top:        parent.top
-                anchors.right:      parent.right
-                width:              ScreenTools.defaultFontPixelHeight
-                height:             width
-                sourceSize.height:  width
-                source:             "/res/XDelete.svg"
-                fillMode:           Image.PreserveAspectFit
-                color:              qgcPal.text
-
-                QGCMouseArea {
-                    fillItem:   parent
-                    onClicked:  guidedActionList.visible = false
-                }
-            }
+            guidedController:           _guidedController
+            altitudeSlider:             _altitudeSlider
         }
 
         //-- Altitude slider
@@ -658,7 +500,7 @@ QGCView {
             anchors.topMargin:  ScreenTools.toolbarHeight + _margins
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
-            z:                  guidedController.z
+            z:                  _guidedController.z
             radius:             ScreenTools.defaultFontPixelWidth / 2
             width:              ScreenTools.defaultFontPixelWidth * 10
             color:              qgcPal.window
