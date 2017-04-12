@@ -853,8 +853,6 @@ int SurveyMissionItem::_appendWaypointToMission(QList<MissionItem*>& items, int 
                                false,              // isCurrentItem
                                missionItemParent);
         items.append(item);
-#if 0
-        // Not yet supported by firmware
         item = new MissionItem(seqNum++,
                                MAV_CMD_NAV_DELAY,
                                MAV_FRAME_MISSION,
@@ -865,7 +863,6 @@ int SurveyMissionItem::_appendWaypointToMission(QList<MissionItem*>& items, int 
                                false,              // isCurrentItem
                                missionItemParent);
         items.append(item);
-#endif
     default:
         break;
     }
