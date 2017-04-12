@@ -77,6 +77,7 @@ void MissionController::_resetMissionFlightStatus(void)
     _missionFlightStatus.cruiseSpeed =          _activeVehicle ? _activeVehicle->defaultCruiseSpeed() : std::numeric_limits<double>::quiet_NaN();
     _missionFlightStatus.hoverSpeed =           _activeVehicle ? _activeVehicle->defaultHoverSpeed() : std::numeric_limits<double>::quiet_NaN();
     _missionFlightStatus.vehicleSpeed =         _activeVehicle ? (_activeVehicle->multiRotor() || _activeVehicle->vtol() ? _missionFlightStatus.hoverSpeed : _missionFlightStatus.cruiseSpeed) : std::numeric_limits<double>::quiet_NaN();
+    _missionFlightStatus.vehicleYaw =           0.0;
     _missionFlightStatus.gimbalYaw =            std::numeric_limits<double>::quiet_NaN();
 
     // Battery information
@@ -97,6 +98,17 @@ void MissionController::_resetMissionFlightStatus(void)
             _missionFlightStatus.ampMinutesAvailable = (double)_missionFlightStatus.mAhBattery / 1000.0 * 60.0 * ((100.0 - batteryPercentRemainingAnnounce) / 100.0);
         }
     }
+
+    emit missionDistanceChanged(_missionFlightStatus.totalDistance);
+    emit missionTimeChanged();
+    emit missionHoverDistanceChanged(_missionFlightStatus.hoverDistance);
+    emit missionCruiseDistanceChanged(_missionFlightStatus.cruiseDistance);
+    emit missionHoverTimeChanged();
+    emit missionCruiseTimeChanged();
+    emit missionMaxTelemetryChanged(_missionFlightStatus.maxTelemetryDistance);
+    emit batteryChangePointChanged(_missionFlightStatus.batteryChangePoint);
+    emit batteriesRequiredChanged(_missionFlightStatus.batteriesRequired);
+
 }
 
 void MissionController::start(bool editMode)
@@ -322,6 +334,7 @@ void MissionController::removeAll(void)
         _addMissionSettings(_activeVehicle, _visualItems, false /* addToCenter */);
         _initAllVisualItems();
         _visualItems->setDirty(true);
+       _resetMissionFlightStatus();
     }
 }
 
@@ -671,6 +684,11 @@ void MissionController::loadFromFile(const QString& filename)
     MissionController::_scanForAdditionalSettings(_visualItems, _activeVehicle);
 
     _initAllVisualItems();
+
+    if (!_activeVehicle->isOfflineEditingVehicle()) {
+        // Needs a sync to vehicle
+        setDirty(true);
+    }
 }
 
 bool MissionController::loadItemsFromFile(Vehicle* vehicle, const QString& filename, QmlObjectListModel** visualItems)
@@ -953,8 +971,6 @@ void MissionController::_recalcMissionFlightStatus()
     const double homePositionAltitude = _settingsItem->coordinate().altitude();
     minAltSeen = maxAltSeen = _settingsItem->coordinate().altitude();
 
-    double lastVehicleYaw = 0;
-
     _resetMissionFlightStatus();
 
     bool vtolInHover = true;
@@ -1034,8 +1050,8 @@ void MissionController::_recalcMissionFlightStatus()
         if (item->specifiesCoordinate()) {
             // Update vehicle yaw assuming direction to next waypoint
             if (item != lastCoordinateItem) {
-                lastVehicleYaw = lastCoordinateItem->exitCoordinate().azimuthTo(item->coordinate());
-                lastCoordinateItem->setMissionVehicleYaw(lastVehicleYaw);
+                _missionFlightStatus.vehicleYaw = lastCoordinateItem->exitCoordinate().azimuthTo(item->coordinate());
+                lastCoordinateItem->setMissionVehicleYaw(_missionFlightStatus.vehicleYaw);
             }
 
             // Keep track of the min/max altitude for all waypoints so we can show altitudes as a percentage
@@ -1115,7 +1131,7 @@ void MissionController::_recalcMissionFlightStatus()
             lastCoordinateItem = item;
         }
     }
-    lastCoordinateItem->setMissionVehicleYaw(lastVehicleYaw);
+    lastCoordinateItem->setMissionVehicleYaw(_missionFlightStatus.vehicleYaw);
 
     if (_missionFlightStatus.mAhBattery != 0 && _missionFlightStatus.batteryChangePoint == -1) {
         _missionFlightStatus.batteryChangePoint = 0;
@@ -1221,7 +1237,9 @@ void MissionController::_initAllVisualItems(void)
         qWarning() << "First item not MissionSettingsItem";
         return;
     }
-    _settingsItem->setIsCurrentItem(true);
+    if (_editMode) {
+        _settingsItem->setIsCurrentItem(true);
+    }
 
     if (!_editMode && _activeVehicle) {
         _settingsItem->setCoordinate(_activeVehicle->homePosition());
@@ -1309,8 +1327,8 @@ void MissionController::_activeVehicleBeingRemoved(void)
 
     disconnect(missionManager, &MissionManager::newMissionItemsAvailable,   this, &MissionController::_newMissionItemsAvailableFromVehicle);
     disconnect(missionManager, &MissionManager::inProgressChanged,          this, &MissionController::_inProgressChanged);
-    disconnect(missionManager, &MissionManager::currentItemChanged,         this, &MissionController::_currentMissionItemChanged);
-    disconnect(missionManager, &MissionManager::lastCurrentItemChanged,     this, &MissionController::resumeMissionItemChanged);
+    disconnect(missionManager, &MissionManager::currentIndexChanged,        this, &MissionController::_currentMissionIndexChanged);
+    disconnect(missionManager, &MissionManager::lastCurrentIndexChanged,    this, &MissionController::resumeMissionIndexChanged);
     disconnect(missionManager, &MissionManager::resumeMissionReady,         this, &MissionController::resumeMissionReady);
     disconnect(_activeVehicle, &Vehicle::homePositionChanged,               this, &MissionController::_activeVehicleHomePositionChanged);
 
@@ -1329,8 +1347,8 @@ void MissionController::_activeVehicleSet(void)
 
     connect(missionManager, &MissionManager::newMissionItemsAvailable,  this, &MissionController::_newMissionItemsAvailableFromVehicle);
     connect(missionManager, &MissionManager::inProgressChanged,         this, &MissionController::_inProgressChanged);
-    connect(missionManager, &MissionManager::currentItemChanged,        this, &MissionController::_currentMissionItemChanged);
-    connect(missionManager, &MissionManager::lastCurrentItemChanged,    this, &MissionController::resumeMissionItemChanged);
+    connect(missionManager, &MissionManager::currentIndexChanged,       this, &MissionController::_currentMissionIndexChanged);
+    connect(missionManager, &MissionManager::lastCurrentIndexChanged,   this, &MissionController::resumeMissionIndexChanged);
     connect(missionManager, &MissionManager::resumeMissionReady,        this, &MissionController::resumeMissionReady);
     connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
     connect(_activeVehicle, &Vehicle::defaultCruiseSpeedChanged,        this, &MissionController::_recalcMissionFlightStatus);
@@ -1346,7 +1364,7 @@ void MissionController::_activeVehicleSet(void)
     _activeVehicleHomePositionChanged(_activeVehicle->homePosition());
 
     emit complexMissionItemNamesChanged();
-    emit resumeMissionItemChanged();
+    emit resumeMissionIndexChanged();
 }
 
 void MissionController::_activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition)
@@ -1457,27 +1475,26 @@ void MissionController::_addMissionSettings(Vehicle* vehicle, QmlObjectListModel
     }
 }
 
-int MissionController::resumeMissionItem(void) const
+int MissionController::resumeMissionIndex(void) const
 {
 
-    int resumeIndex = -1;
+    int resumeIndex = 0;
 
     if (!_editMode) {
-        int firstTrueItemIndex = _activeVehicle->firmwarePlugin()->sendHomePositionToVehicle() ? 1 : 0;
-        resumeIndex = _activeVehicle->missionManager()->lastCurrentItem();
-        if (resumeIndex > firstTrueItemIndex) {
-            if (!_activeVehicle->firmwarePlugin()->sendHomePositionToVehicle()) {
-                resumeIndex++;
-            }
+        resumeIndex = _activeVehicle->missionManager()->lastCurrentIndex() + (_activeVehicle->firmwarePlugin()->sendHomePositionToVehicle() ? 0 : 1);
+        if (resumeIndex > 1) {
             // Resume at the item previous to the item we were heading towards
             resumeIndex--;
+        } else {
+            resumeIndex = 0;
         }
     }
 
+    qDebug() << "resumeIndex" << resumeIndex;
     return resumeIndex;
 }
 
-void MissionController::_currentMissionItemChanged(int sequenceNumber)
+void MissionController::_currentMissionIndexChanged(int sequenceNumber)
 {
     if (!_editMode) {
         if (!_activeVehicle->firmwarePlugin()->sendHomePositionToVehicle()) {

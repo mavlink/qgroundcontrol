@@ -120,6 +120,8 @@ Item {
         onVehicleAdded: {
             //-- Reset No SD Card message.
             _noSdCardMsgShown = false;
+            //-- And comm lost dialog if open
+            connectionLostDisarmedDialog.close()
         }
     }
 
