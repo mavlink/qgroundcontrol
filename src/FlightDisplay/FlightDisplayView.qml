@@ -619,6 +619,7 @@ QGCView {
 
                                     onClicked: {
                                         if (modelData.action === guidedController.actionChangeAlt) {
+                                            altitudeSlider.reset()
                                             altitudeSlider.visible = true
                                         }
                                         guidedActionList.visible = false
@@ -650,7 +651,7 @@ QGCView {
         }
 
         //-- Altitude slider
-        Rectangle {
+        GuidedAltitudeSlider {
             id:                 altitudeSlider
             anchors.margins:    _margins
             anchors.right:      parent.right
@@ -662,54 +663,6 @@ QGCView {
             width:              ScreenTools.defaultFontPixelWidth * 10
             color:              qgcPal.window
             visible:            false
-
-            function setValue(value) {
-                altSlider.value = value
-            }
-
-            function getValue() {
-                return altSlider.value
-            }
-
-            Column {
-                id:                 headerColumn
-                anchors.margins:    _margins
-                anchors.top:        parent.top
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-
-                QGCLabel {
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    text:                       altSlider.value >=0 ? qsTr("Up") : qsTr("Down")
-                }
-
-                QGCLabel {
-                    id:                         altField
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    text:                       Math.abs(altSlider.value.toFixed(1)) + " " + QGroundControl.appSettingsDistanceUnitsString
-                }
-            }
-
-            QGCSlider {
-                id:                 altSlider
-                anchors.margins:    _margins
-                anchors.top:        headerColumn.bottom
-                anchors.bottom:     parent.bottom
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                orientation:        Qt.Vertical
-                minimumValue:       QGroundControl.metersToAppSettingsDistanceUnits(-10)
-                maximumValue:       QGroundControl.metersToAppSettingsDistanceUnits(10)
-                indicatorCentered:  true
-                rotation:           180
-
-                // We want slide up to be positive values
-                transform: Rotation {
-                    origin.x:   altSlider.width / 2
-                    origin.y:   altSlider.height / 2
-                    angle:      180
-                }
-            }
         }
     }
 }
