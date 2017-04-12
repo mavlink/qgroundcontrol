@@ -19,8 +19,8 @@ Slider {
     id:             _root
     implicitHeight: ScreenTools.implicitSliderHeight
 
-    // Value indicator starts display from center instead of min value
-    property bool indicatorCentered: false
+    // Value indicator starts display from zero instead of min value
+    property bool zeroCentered: false
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -39,14 +39,16 @@ Slider {
             }
 
             Item {
+                id:     indicatorBar
                 clip:   true
-                x:      _root.indicatorCentered ? indicatorCenteredIndicatorStart : 0
-                width:  _root.indicatorCentered ? centerIndicatorWidth : styleData.handlePosition
+                x:      _root.zeroCentered ? zeroCenteredIndicatorStart : 0
+                width:  _root.zeroCentered ? centerIndicatorWidth : styleData.handlePosition
                 height: parent.height
 
-                property real indicatorCenteredIndicatorStart:   Math.min(styleData.handlePosition, parent.width / 2)
-                property real indicatorCenteredIndicatorStop:    Math.max(styleData.handlePosition, parent.width / 2)
-                property real centerIndicatorWidth:     indicatorCenteredIndicatorStop - indicatorCenteredIndicatorStart
+                property real zeroValuePosition:            (Math.abs(control.minimumValue) / (control.maximumValue - control.minimumValue)) * parent.width
+                property real zeroCenteredIndicatorStart:   Math.min(styleData.handlePosition, zeroValuePosition)
+                property real zeroCenteredIndicatorStop:    Math.max(styleData.handlePosition, zeroValuePosition)
+                property real centerIndicatorWidth:         zeroCenteredIndicatorStop - zeroCenteredIndicatorStart
 
                 Rectangle {
                     anchors.fill:   parent
