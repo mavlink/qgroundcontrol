@@ -32,6 +32,7 @@ YuneecFirmwarePlugin::YuneecFirmwarePlugin(void)
     _posCtlFlightMode = tr("Angle");
     _rtlFlightMode = tr("RTL");
     _simpleFlightMode = tr("Smart");
+    _manualFlightMode = tr("Manual (No GPS)");
     _altCtlFlightMode = tr("Manual");
 }
 
