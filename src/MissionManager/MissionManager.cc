@@ -27,8 +27,8 @@ MissionManager::MissionManager(Vehicle* vehicle)
     , _readTransactionInProgress(false)
     , _writeTransactionInProgress(false)
     , _resumeMission(false)
-    , _currentMissionItem(-1)
-    , _lastCurrentItem(-1)
+    , _currentMissionIndex(-1)
+    , _lastCurrentIndex(-1)
 {
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &MissionManager::_mavlinkMessageReceived);
     
@@ -60,10 +60,10 @@ void MissionManager::_writeMissionItemsWorker(void)
     emit inProgressChanged(true);
     _writeMissionCount();
 
-    _currentMissionItem = -1;
-    _lastCurrentItem = -1;
-    emit currentItemChanged(-1);
-    emit lastCurrentItemChanged(-1);
+    _currentMissionIndex = -1;
+    _lastCurrentIndex = -1;
+    emit currentIndexChanged(-1);
+    emit lastCurrentIndexChanged(-1);
 }
 
 
@@ -412,8 +412,8 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message, bool m
         mavlink_msg_mission_item_int_decode(&message, &missionItem);
 
         command =       (MAV_CMD)missionItem.command,
-        frame =         (MAV_FRAME)missionItem.frame,
-        param1 =        missionItem.param1;
+                frame =         (MAV_FRAME)missionItem.frame,
+                param1 =        missionItem.param1;
         param2 =        missionItem.param2;
         param3 =        missionItem.param3;
         param4 =        missionItem.param4;
@@ -428,8 +428,8 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message, bool m
         mavlink_msg_mission_item_decode(&message, &missionItem);
 
         command =       (MAV_CMD)missionItem.command,
-        frame =         (MAV_FRAME)missionItem.frame,
-        param1 =        missionItem.param1;
+                frame =         (MAV_FRAME)missionItem.frame,
+                param1 =        missionItem.param1;
         param2 =        missionItem.param2;
         param3 =        missionItem.param3;
         param4 =        missionItem.param4;
@@ -448,7 +448,7 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message, bool m
         frame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
     }
     
-    qCDebug(MissionManagerLog) << "_handleMissionItem sequenceNumber:" << seq << command;
+    qCDebug(MissionManagerLog) << "_handleMissionItem seq:command:current" << seq << command << isCurrentItem;
     
     if (_itemIndicesToRead.contains(seq)) {
         _itemIndicesToRead.removeOne(seq);
@@ -787,15 +787,16 @@ void MissionManager::_handleMissionCurrent(const mavlink_message_t& message)
 
     mavlink_msg_mission_current_decode(&message, &missionCurrent);
 
-    if (missionCurrent.seq != _currentMissionItem) {
-        qCDebug(MissionManagerLog) << "_handleMissionCurrent seq:" << missionCurrent.seq;
-        _currentMissionItem = missionCurrent.seq;
-        emit currentItemChanged(_currentMissionItem);
+    if (missionCurrent.seq != _currentMissionIndex) {
+        qCDebug(MissionManagerLog) << "_handleMissionCurrent currentIndex:" << missionCurrent.seq;
+        _currentMissionIndex = missionCurrent.seq;
+        emit currentIndexChanged(_currentMissionIndex);
     }
 
-    if (_vehicle->flightMode() == _vehicle->missionFlightMode() && _currentMissionItem != _lastCurrentItem) {
-        _lastCurrentItem = _currentMissionItem;
-        emit lastCurrentItemChanged(_lastCurrentItem);
+    if (_vehicle->flightMode() == _vehicle->missionFlightMode() && _currentMissionIndex != _lastCurrentIndex) {
+        qCDebug(MissionManagerLog) << "_handleMissionCurrent lastCurrentIndex:" << _currentMissionIndex;
+        _lastCurrentIndex = _currentMissionIndex;
+        emit lastCurrentIndexChanged(_lastCurrentIndex);
     }
 }
 
@@ -815,6 +816,14 @@ void MissionManager::generateResumeMission(int resumeIndex)
     if (inProgress()) {
         qCDebug(MissionManagerLog) << "generateResumeMission called while transaction in progress";
         return;
+    }
+
+    for (int i=0; i<_missionItems.count(); i++) {
+        MissionItem* item = _missionItems[i];
+        if (item->command() == MAV_CMD_DO_JUMP) {
+            qgcApp()->showMessage(tr("Unable to generate resume mission due to MAV_CMD_DO_JUMP command."));
+            return;
+        }
     }
 
     int seqNum = 0;
@@ -839,9 +848,13 @@ void MissionManager::generateResumeMission(int resumeIndex)
     bool addHomePosition = _vehicle->firmwarePlugin()->sendHomePositionToVehicle();
     int setCurrentIndex = addHomePosition ? 1 : 0;
 
+    int resumeCommandCount = 0;
     for (int i=0; i<_missionItems.count(); i++) {
         MissionItem* oldItem = _missionItems[i];
         if ((i == 0 && addHomePosition) || i >= resumeIndex || includedResumeCommands.contains(oldItem->command())) {
+            if (i < resumeIndex) {
+                resumeCommandCount++;
+            }
             MissionItem* newItem = new MissionItem(*oldItem, this);
             newItem->setIsCurrentItem( i == setCurrentIndex);
             newItem->setSequenceNumber(seqNum++);
@@ -849,7 +862,91 @@ void MissionManager::generateResumeMission(int resumeIndex)
         }
     }
 
-    // Handle DO_JUMP seq num update
+    // De-dup and remove no-ops from the commands which were added to the front of the mission
+    bool foundROI = false;
+    bool foundCamTrigDist = false;
+    QList<int> imageStartCameraIds;
+    QList<int> imageStopCameraIds;
+    QList<int> videoStartCameraIds;
+    QList<int> videoStopCameraIds;
+    while (resumeIndex >= 0) {
+        MissionItem* resumeItem = resumeMission[resumeIndex];
+        switch (resumeItem->command()) {
+        case MAV_CMD_DO_SET_ROI:
+            // Only keep the last one
+            if (foundROI) {
+                resumeMission.removeAt(resumeIndex);
+            }
+            foundROI = true;
+            break;
+        case MAV_CMD_DO_SET_CAM_TRIGG_DIST:
+            // Only keep the last one
+            if (foundCamTrigDist) {
+                resumeMission.removeAt(resumeIndex);
+            }
+            foundCamTrigDist = true;
+            break;
+        case MAV_CMD_IMAGE_START_CAPTURE:
+        {
+            // FIXME: Handle single image capture
+            int cameraId = resumeItem->param6();
+
+            if (resumeItem->param1() == 0) {
+                // This is an individual image capture command, remove it
+                resumeMission.removeAt(resumeIndex);
+                break;
+            }
+            // If we already found an image stop, then all image start/stop commands are useless
+            // De-dup repeated image start commands
+            // Otherwise keep only the last image start
+            if (imageStopCameraIds.contains(cameraId) || imageStartCameraIds.contains(cameraId)) {
+                resumeMission.removeAt(resumeIndex);
+            }
+            if (!imageStopCameraIds.contains(cameraId)) {
+                imageStopCameraIds.append(cameraId);
+            }
+        }
+            break;
+        case MAV_CMD_IMAGE_STOP_CAPTURE:
+        {
+            int cameraId = resumeItem->param1();
+            // Image stop only matters to kill all previous image starts
+            if (!imageStopCameraIds.contains(cameraId)) {
+                imageStopCameraIds.append(cameraId);
+            }
+            resumeMission.removeAt(resumeIndex);
+        }
+            break;
+        case MAV_CMD_VIDEO_START_CAPTURE:
+        {
+            int cameraId = resumeItem->param1();
+            // If we already found an video stop, then all video start/stop commands are useless
+            // De-dup repeated video start commands
+            // Otherwise keep only the last video start
+            if (videoStopCameraIds.contains(cameraId) || videoStopCameraIds.contains(cameraId)) {
+                resumeMission.removeAt(resumeIndex);
+            }
+            if (!videoStopCameraIds.contains(cameraId)) {
+                videoStopCameraIds.append(cameraId);
+            }
+        }
+            break;
+        case MAV_CMD_VIDEO_STOP_CAPTURE:
+        {
+            int cameraId = resumeItem->param1();
+            // Video stop only matters to kill all previous video starts
+            if (!videoStopCameraIds.contains(cameraId)) {
+                videoStopCameraIds.append(cameraId);
+            }
+            resumeMission.removeAt(resumeIndex);
+        }
+            break;
+        default:
+            break;
+        }
+
+        resumeIndex--;
+    }
 
     // Send to vehicle
     _clearAndDeleteMissionItems();

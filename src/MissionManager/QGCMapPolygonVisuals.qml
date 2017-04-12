@@ -222,7 +222,9 @@ Item {
         id: centerDragAreaComponent
 
         MissionItemIndicatorDrag {
-            onItemCoordinateChanged: mapPolygon.center = itemCoordinate
+            onItemCoordinateChanged:    mapPolygon.center = itemCoordinate
+            onDragStart:                mapPolygon.centerDrag = true
+            onDragStop:                 mapPolygon.centerDrag = false
         }
     }
 
