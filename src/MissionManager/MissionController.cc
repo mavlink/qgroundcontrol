@@ -1482,7 +1482,7 @@ int MissionController::resumeMissionIndex(void) const
 
     if (!_editMode) {
         resumeIndex = _activeVehicle->missionManager()->lastCurrentIndex() + (_activeVehicle->firmwarePlugin()->sendHomePositionToVehicle() ? 0 : 1);
-        if (resumeIndex > 1) {
+        if (resumeIndex > 1 && resumeIndex != _visualItems->value<VisualMissionItem*>(_visualItems->count() - 1)->sequenceNumber()) {
             // Resume at the item previous to the item we were heading towards
             resumeIndex--;
         } else {
