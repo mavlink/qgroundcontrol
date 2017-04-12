@@ -348,7 +348,7 @@
             }
         },
         {
-            "id":           94,
+            "id":           93,
             "rawName":      "MAV_CMD_NAV_DELAY",
             "friendlyName": "Delay until",
             "description":  "Delay unti the specified time is reached.",
