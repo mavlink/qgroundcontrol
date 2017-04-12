@@ -86,15 +86,11 @@ Rectangle {
         visible:    hamburger.visible
         onClicked: {
             currentItemScope.focus = true
-            if (_waypointsOnlyMode) {
-                waypointsOnlyMenu.popup()
-            } else {
-                normalMenu.popup()
-            }
+            hamburgerMenu.popup()
         }
 
         Menu {
-            id: normalMenu
+            id: hamburgerMenu
 
             MenuItem {
                 text:           qsTr("Insert waypoint")
