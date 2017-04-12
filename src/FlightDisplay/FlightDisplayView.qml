@@ -96,6 +96,16 @@ QGCView {
         onResumeMissionReady:   guidedActionsController.confirmAction(guidedActionsController.actionResumeMissionReady)
     }
 
+    GeoFenceController {
+        id: flyGeoFenceController
+        Component.onCompleted: start(false /* editMode */)
+    }
+
+    RallyPointController {
+        id: flyRallyPointController
+        Component.onCompleted: start(false /* editMode */)
+    }
+
     MessageDialog {
         id:     px4JoystickSupport
         text:   qsTr("Joystick support requires MAVLink MANUAL_CONTROL support. ") +
@@ -120,6 +130,49 @@ QGCView {
         px4JoystickCheck()
         if(QGroundControl.corePlugin.options.flyViewOverlay.toString().length) {
             flyViewOverlay.source = QGroundControl.corePlugin.options.flyViewOverlay
+        }
+    }
+
+    // The following code is used to track vehicle states such that we prompt to remove mission from vehicle when mission completes
+
+    property bool vehicleArmed:                 _activeVehicle ? _activeVehicle.armed : true // true here prevents pop up from showing during shutdown
+    property bool vehicleWasArmed:              false
+    property bool vehicleInMissionFlightMode:   _activeVehicle ? (_activeVehicle.flightMode === _activeVehicle.missionFlightMode) : false
+    property bool promptForMissionRemove:       false
+
+    onVehicleArmedChanged: {
+        if (vehicleArmed) {
+            if (!promptForMissionRemove) {
+                promptForMissionRemove = vehicleInMissionFlightMode
+                vehicleWasArmed = true
+            }
+        } else {
+            if (promptForMissionRemove && (flyMissionController.containsItems || flyGeoFenceController.containsItems || flyRallyPointController.containsItems)) {
+                root.showDialog(removeMissionDialogComponent, qsTr("Flight complete"), showDialogDefaultWidth, StandardButton.No | StandardButton.Yes)
+            }
+            promptForMissionRemove = false
+        }
+    }
+
+    onVehicleInMissionFlightModeChanged: {
+        if (!promptForMissionRemove && vehicleArmed) {
+            promptForMissionRemove = true
+        }
+    }
+
+    Component {
+        id: removeMissionDialogComponent
+
+        QGCViewMessage {
+            message: qsTr("Do you want to remove the mission from the vehicle?")
+
+            function accept() {
+                flyMissionController.removeAllFromVehicle()
+                flyGeoFenceController.removeAllFromVehicle()
+                flyRallyPointController.removeAllFromVehicle()
+                hideDialog()
+
+            }
         }
     }
 
@@ -157,14 +210,16 @@ QGCView {
                 }
             ]
             FlightDisplayViewMap {
-                id:                     _flightMap
-                anchors.fill:           parent
-                missionController:      flyMissionController
-                guidedActionsController: _guidedController
-                flightWidgets:          flightDisplayViewWidgets
-                rightPanelWidth:        ScreenTools.defaultFontPixelHeight * 9
-                qgcView:                root
-                scaleState:             (_mainIsMap && flyViewOverlay.item) ? (flyViewOverlay.item.scaleState ? flyViewOverlay.item.scaleState : "bottomMode") : "bottomMode"
+                id:                         _flightMap
+                anchors.fill:               parent
+                missionController:          flyMissionController
+                geoFenceController:         flyGeoFenceController
+                rallyPointController:       flyRallyPointController
+                guidedActionsController:    _guidedController
+                flightWidgets:              flightDisplayViewWidgets
+                rightPanelWidth:            ScreenTools.defaultFontPixelHeight * 9
+                qgcView:                    root
+                scaleState:                 (_mainIsMap && flyViewOverlay.item) ? (flyViewOverlay.item.scaleState ? flyViewOverlay.item.scaleState : "bottomMode") : "bottomMode"
             }
         }
 
@@ -356,7 +411,7 @@ QGCView {
             buttonVisible:      [ _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true, _guidedController.smartShotsAvailable ]
             buttonEnabled:      [ _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable, _anySmartShotAvailable ]
 
-            property bool _anyActionAvailable: _guidedController.showEmergenyStop || _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
+            property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
             property bool _anySmartShotAvailable: _guidedController.showOrbit
             property var _actionModel: [
                 {
