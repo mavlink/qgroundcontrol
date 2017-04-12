@@ -1255,7 +1255,7 @@ void MissionController::_initAllVisualItems(void)
 
     _recalcAll();
 
-    connect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::_visualItemsDirtyChanged);
+    connect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::dirtyChanged);
     connect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::_updateContainsItems);
 
     emit visualItemsChanged();
@@ -1274,7 +1274,7 @@ void MissionController::_deinitAllVisualItems(void)
         _deinitVisualItem(qobject_cast<VisualMissionItem*>(_visualItems->get(i)));
     }
 
-    disconnect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::_visualItemsDirtyChanged);
+    disconnect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::dirtyChanged);
     disconnect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::_updateContainsItems);
 }
 
@@ -1584,20 +1584,6 @@ QStringList MissionController::complexMissionItemNames(void) const
     }
 
     return complexItems;
-}
-
-void MissionController::_visualItemsDirtyChanged(bool dirty)
-{
-    if (dirty) {
-        if (_visualItems->count() > 1) {
-            emit dirtyChanged(true);
-        } else {
-            // This was a change to mission settings with no other mission items added
-            _visualItems->setDirty(false);
-        }
-    } else {
-        emit dirtyChanged(false);
-    }
 }
 
 void MissionController::resumeMission(int resumeIndex)

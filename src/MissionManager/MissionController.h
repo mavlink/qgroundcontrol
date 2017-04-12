@@ -171,7 +171,6 @@ private slots:
     void _recalcWaypointLines(void);
     void _recalcMissionFlightStatus(void);
     void _updateContainsItems(void);
-    void _visualItemsDirtyChanged(bool dirty);
 
 private:
     void _init(void);
