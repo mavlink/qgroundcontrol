@@ -33,6 +33,8 @@ FlightMap {
     property alias  scaleState: mapScale.state
 
     property var    missionController
+    property var    geoFenceController
+    property var    rallyPointController
     property var    guidedActionsController
     property var    flightWidgets
     property var    rightPanelWidth
@@ -137,59 +139,6 @@ FlightMap {
         }
     }
 
-    GeoFenceController {
-        id: geoFenceController
-        Component.onCompleted: start(false /* editMode */)
-    }
-
-    RallyPointController {
-        id: rallyPointController
-        Component.onCompleted: start(false /* editMode */)
-    }
-
-    // The following code is used to track vehicle states such that we prompt to remove mission from vehicle when mission completes
-
-    property bool vehicleArmed:                 _activeVehicle ? _activeVehicle.armed : false
-    property bool vehicleWasArmed:              false
-    property bool vehicleInMissionFlightMode:   _activeVehicle ? (_activeVehicle.flightMode === _activeVehicle.missionFlightMode) : false
-    property bool promptForMissionRemove:       false
-
-    onVehicleArmedChanged: {
-        if (vehicleArmed) {
-            if (!promptForMissionRemove) {
-                promptForMissionRemove = vehicleInMissionFlightMode
-                vehicleWasArmed = true
-            }
-        } else {
-            if (promptForMissionRemove && (missionController.containsItems || geoFenceController.containsItems || rallyPointController.containsItems)) {
-                qgcView.showDialog(removeMissionDialogComponent, qsTr("Flight complete"), showDialogDefaultWidth, StandardButton.No | StandardButton.Yes)
-            }
-            promptForMissionRemove = false
-        }
-    }
-
-    onVehicleInMissionFlightModeChanged: {
-        if (!promptForMissionRemove && vehicleArmed) {
-            promptForMissionRemove = true
-        }
-    }
-
-    Component {
-        id: removeMissionDialogComponent
-
-        QGCViewMessage {
-            message: qsTr("Do you want to remove the mission from the vehicle?")
-
-            function accept() {
-                missionController.removeAllFromVehicle()
-                geoFenceController.removeAllFromVehicle()
-                rallyPointController.removeAllFromVehicle()
-                hideDialog()
-
-            }
-        }
-    }
-
     ExclusiveGroup {
         id: _mapTypeButtonsExclusiveGroup
     }
@@ -239,7 +188,7 @@ FlightMap {
 
         delegate: MissionItemMapVisual {
             map:        flightMap
-            onClicked:  guidedActionsController.confirmAction(guidedActionsController.actionSetWaypoint, object.sequenceNumber)
+            onClicked:  guidedActionsController.confirmAction(guidedActionsController.actionSetWaypoint, Math.max(object.sequenceNumber, 1))
         }
     }
 

@@ -194,357 +194,363 @@ Rectangle {
             }
         }
         Item {
-            height:     ScreenTools.defaultFontPixelHeight + (_indicatorDiameter * 0.5)
+            height:     ScreenTools.defaultFontPixelHeight
             width:      1
         }
     }
 
     Component {
         id: cameraSettingsComponent
-        Rectangle {
+        Item {
             id:     cameraSettingsRect
-            width:  mainWindow.width  * 0.45
-            height: mainWindow.height * 0.675
-            radius: ScreenTools.defaultFontPixelWidth
-            color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.75) : Qt.rgba(0,0,0,0.75)
+            z:      100000
+            width:  mainWindow.width
+            height: mainWindow.height
             anchors.centerIn: parent
             MouseArea {
-                anchors.fill:   parent
-                onWheel:        { wheel.accepted = true; }
-                onPressed:      { mouse.accepted = true; }
-                onReleased:     { mouse.accepted = true; }
+                anchors.fill: parent
+                onClicked: {
+                    rootLoader.sourceComponent = null
+                }
             }
-            QGCLabel {
-                id:                 cameraSettingsLabel
-                text:               "Camera Settings"
-                font.family:        ScreenTools.demiboldFontFamily
-                font.pointSize:     ScreenTools.mediumFontPointSize
-                anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
-                anchors.top:        parent.top
-                anchors.left:       parent.left
-            }
-            QGCFlickable {
-                clip:               true
-                anchors.top:        cameraSettingsLabel.bottom
-                anchors.bottom:     parent.bottom
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                contentHeight:      cameraSettingsCol.height
-                contentWidth:       cameraSettingsCol.width
-                anchors.margins:    ScreenTools.defaultFontPixelHeight
-                Column {
-                    id:                 cameraSettingsCol
-                    spacing:            ScreenTools.defaultFontPixelHeight * 0.15
-                    width:              cameraGrid.width
+            Rectangle {
+                width:  mainWindow.width  * 0.45
+                height: mainWindow.height * 0.675
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.75) : Qt.rgba(0,0,0,0.75)
+                anchors.centerIn: parent
+                QGCLabel {
+                    id:                 cameraSettingsLabel
+                    text:               "Camera Settings"
+                    font.family:        ScreenTools.demiboldFontFamily
+                    font.pointSize:     ScreenTools.mediumFontPointSize
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
+                    anchors.top:        parent.top
+                    anchors.left:       parent.left
+                }
+                QGCFlickable {
+                    clip:               true
+                    anchors.top:        cameraSettingsLabel.bottom
+                    anchors.bottom:     parent.bottom
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
+                    contentHeight:      cameraSettingsCol.height
+                    contentWidth:       cameraSettingsCol.width
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    GridLayout {
-                        id:             cameraGrid
-                        columnSpacing:  ScreenTools.defaultFontPixelWidth
-                        rowSpacing:     columnSpacing * 0.5
-                        columns:        2
+                    Column {
+                        id:                 cameraSettingsCol
+                        spacing:            ScreenTools.defaultFontPixelHeight * 0.15
+                        width:              cameraGrid.width
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight
                         anchors.horizontalCenter: parent.horizontalCenter
-                        //-------------------------------------------
-                        //-- Video Recording Resolution
-                        Rectangle {
-                            color:      qgcPal.button
-                            height:     1
-                            width:      mainWindow.width * 0.4
-                            Layout.columnSpan: 2
-                            Layout.maximumHeight: 2
-                        }
-                        QGCLabel {
-                            text:       "Video Resolution"
-                            Layout.fillWidth: true
-                        }
-                        QGCComboBox {
-                            width:       _editFieldWidth
-                            model:       TyphoonHQuickInterface.cameraControl.videoResList
-                            currentIndex:TyphoonHQuickInterface.cameraControl.currentVideoRes
-                            onActivated: {
-                                TyphoonHQuickInterface.cameraControl.currentVideoRes = index
+                        GridLayout {
+                            id:             cameraGrid
+                            columnSpacing:  ScreenTools.defaultFontPixelWidth
+                            rowSpacing:     columnSpacing * 0.5
+                            columns:        2
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            //-------------------------------------------
+                            //-- Video Recording Resolution
+                            Rectangle {
+                                color:      qgcPal.button
+                                height:     1
+                                width:      mainWindow.width * 0.4
+                                Layout.columnSpan: 2
+                                Layout.maximumHeight: 2
                             }
-                            Layout.preferredWidth:  _editFieldWidth
-                        }
-                        //-------------------------------------------
-                        //-- White Balance
-                        Rectangle {
-                            color:      qgcPal.button
-                            height:     1
-                            width:      mainWindow.width * 0.4
-                            Layout.columnSpan: 2
-                            Layout.maximumHeight: 2
-                        }
-                        QGCLabel {
-                            text:       "White Balance"
-                            Layout.fillWidth: true
-                        }
-                        QGCComboBox {
-                            width:       _editFieldWidth
-                            model:       TyphoonHQuickInterface.cameraControl.wbList
-                            currentIndex:TyphoonHQuickInterface.cameraControl.currentWB
-                            onActivated: {
-                                TyphoonHQuickInterface.cameraControl.currentWB = index
+                            QGCLabel {
+                                text:       "Video Resolution"
+                                Layout.fillWidth: true
                             }
-                            Layout.preferredWidth:  _editFieldWidth
-                        }
-                        //-------------------------------------------
-                        //-- AE Mode
-                        Rectangle {
-                            color:      qgcPal.button
-                            height:     1
-                            width:      mainWindow.width * 0.4
-                            Layout.columnSpan: 2
-                            Layout.maximumHeight: 2
-                        }
-                        QGCLabel {
-                            text:       "Auto Exposure"
-                            Layout.fillWidth: true
-                        }
-                        OnOffSwitch {
-                            checked:     _cameraAutoMode
-                            Layout.alignment: Qt.AlignRight
-                            onClicked:  TyphoonHQuickInterface.cameraControl.aeMode = checked ? CameraControl.AE_MODE_AUTO : CameraControl.AE_MODE_MANUAL
-                        }
-                        //-------------------------------------------
-                        //-- EV (auto)
-                        Rectangle {
-                            color:      qgcPal.button
-                            height:     1
-                            width:      mainWindow.width * 0.4
-                            Layout.columnSpan: 2
-                            Layout.maximumHeight: 2
-                        }
-                        QGCLabel {
-                            text:       "EV Compensation"
-                            Layout.fillWidth: true
-                        }
-                        QGCComboBox {
-                            width:       _editFieldWidth
-                            model:       TyphoonHQuickInterface.cameraControl.evList
-                            currentIndex:TyphoonHQuickInterface.cameraControl.currentEV
-                            onActivated: {
-                                TyphoonHQuickInterface.cameraControl.currentEV = index
+                            QGCComboBox {
+                                width:       _editFieldWidth
+                                model:       TyphoonHQuickInterface.cameraControl.videoResList
+                                currentIndex:TyphoonHQuickInterface.cameraControl.currentVideoRes
+                                onActivated: {
+                                    TyphoonHQuickInterface.cameraControl.currentVideoRes = index
+                                }
+                                Layout.preferredWidth:  _editFieldWidth
                             }
-                            Layout.preferredWidth:  _editFieldWidth
-                            enabled:    _cameraAutoMode
-                        }
-                        //-------------------------------------------
-                        //-- ISO (manual)
-                        Rectangle {
-                            color:      qgcPal.button
-                            height:     1
-                            width:      mainWindow.width * 0.4
-                            Layout.columnSpan: 2
-                            Layout.maximumHeight: 2
-                        }
-                        QGCLabel {
-                            text:       "ISO"
-                            Layout.fillWidth: true
-                        }
-                        QGCComboBox {
-                            width:       _editFieldWidth
-                            model:       TyphoonHQuickInterface.cameraControl.isoList
-                            currentIndex:TyphoonHQuickInterface.cameraControl.currentIso
-                            onActivated: {
-                                TyphoonHQuickInterface.cameraControl.currentIso = index
+                            //-------------------------------------------
+                            //-- White Balance
+                            Rectangle {
+                                color:      qgcPal.button
+                                height:     1
+                                width:      mainWindow.width * 0.4
+                                Layout.columnSpan: 2
+                                Layout.maximumHeight: 2
                             }
-                            Layout.preferredWidth:  _editFieldWidth
-                            enabled:    !_cameraAutoMode
-                        }
-                        //-------------------------------------------
-                        //-- Shutter Speed (manual)
-                        Rectangle {
-                            color:      qgcPal.button
-                            height:     1
-                            width:      mainWindow.width * 0.4
-                            Layout.columnSpan: 2
-                            Layout.maximumHeight: 2
-                        }
-                        QGCLabel {
-                            text:       "Shutter Speed"
-                            Layout.fillWidth: true
-                        }
-                        QGCComboBox {
-                            width:       _editFieldWidth
-                            model:       TyphoonHQuickInterface.cameraControl.shutterList
-                            currentIndex:TyphoonHQuickInterface.cameraControl.currentShutter
-                            onActivated: {
-                                TyphoonHQuickInterface.cameraControl.currentShutter = index
+                            QGCLabel {
+                                text:       "White Balance"
+                                Layout.fillWidth: true
                             }
-                            Layout.preferredWidth:  _editFieldWidth
-                            enabled:    !_cameraAutoMode
-                        }
-                        //-------------------------------------------
-                        //-- Color "IQ" Mode
-                        Rectangle {
-                            color:      qgcPal.button
-                            height:     1
-                            width:      mainWindow.width * 0.4
-                            Layout.columnSpan: 2
-                            Layout.maximumHeight: 2
-                        }
-                        QGCLabel {
-                            text:       "Color Mode"
-                            Layout.fillWidth: true
-                        }
-                        QGCComboBox {
-                            width:       _editFieldWidth
-                            model:       TyphoonHQuickInterface.cameraControl.iqModeList
-                            currentIndex:TyphoonHQuickInterface.cameraControl.currentIQ
-                            onActivated: {
-                                TyphoonHQuickInterface.cameraControl.currentIQ = index
+                            QGCComboBox {
+                                width:       _editFieldWidth
+                                model:       TyphoonHQuickInterface.cameraControl.wbList
+                                currentIndex:TyphoonHQuickInterface.cameraControl.currentWB
+                                onActivated: {
+                                    TyphoonHQuickInterface.cameraControl.currentWB = index
+                                }
+                                Layout.preferredWidth:  _editFieldWidth
                             }
-                            Layout.preferredWidth:  _editFieldWidth
-                        }
-                        //-------------------------------------------
-                        //-- Photo File Format
-                        Rectangle {
-                            color:      qgcPal.button
-                            height:     1
-                            width:      mainWindow.width * 0.4
-                            Layout.columnSpan: 2
-                            Layout.maximumHeight: 2
-                        }
-                        QGCLabel {
-                            text:       "Photo Format"
-                            Layout.fillWidth: true
-                        }
-                        QGCComboBox {
-                            width:       _editFieldWidth
-                            model:       TyphoonHQuickInterface.cameraControl.photoFormatList
-                            currentIndex:TyphoonHQuickInterface.cameraControl.currentPhotoFmt
-                            onActivated: {
-                                TyphoonHQuickInterface.cameraControl.currentPhotoFmt = index
+                            //-------------------------------------------
+                            //-- AE Mode
+                            Rectangle {
+                                color:      qgcPal.button
+                                height:     1
+                                width:      mainWindow.width * 0.4
+                                Layout.columnSpan: 2
+                                Layout.maximumHeight: 2
                             }
-                            Layout.preferredWidth:  _editFieldWidth
-                        }
-                        //-------------------------------------------
-                        //-- Metering Mode
-                        Rectangle {
-                            color:      qgcPal.button
-                            height:     1
-                            width:      mainWindow.width * 0.4
-                            Layout.columnSpan: 2
-                            Layout.maximumHeight: 2
-                        }
-                        QGCLabel {
-                            text:       "Metering Mode"
-                            Layout.fillWidth: true
-                        }
-                        QGCComboBox {
-                            width:       _editFieldWidth
-                            model:       TyphoonHQuickInterface.cameraControl.meteringList
-                            enabled:     _cameraAutoMode
-                            currentIndex:TyphoonHQuickInterface.cameraControl.currentMetering
-                            onActivated: {
-                                TyphoonHQuickInterface.cameraControl.currentMetering = index
+                            QGCLabel {
+                                text:       "Auto Exposure"
+                                Layout.fillWidth: true
                             }
-                            Layout.preferredWidth:  _editFieldWidth
-                        }
-                        //-------------------------------------------
-                        //-- Screen Grid
-                        Rectangle {
-                            color:      qgcPal.button
-                            height:     1
-                            width:      mainWindow.width * 0.4
-                            Layout.columnSpan: 2
-                            Layout.maximumHeight: 2
-                        }
-                        QGCLabel {
-                            text:       "Screen Grid"
-                            Layout.fillWidth: true
-                        }
-                        OnOffSwitch {
-                            checked:     QGroundControl.settingsManager.videoSettings.gridLines.rawValue
-                            Layout.alignment: Qt.AlignRight
-                            onClicked:  QGroundControl.settingsManager.videoSettings.gridLines.rawValue = checked
-                        }
-                        //-------------------------------------------
-                        //-- Reset Camera
-                        Rectangle {
-                            color:      qgcPal.button
-                            height:     1
-                            width:      mainWindow.width * 0.4
-                            Layout.columnSpan: 2
-                            Layout.maximumHeight: 2
-                        }
-                        QGCLabel {
-                            text:       "Reset Camera Defaults"
-                            Layout.fillWidth: true
-                        }
-                        QGCButton {
-                            text:       "Reset"
-                            onClicked:  resetPrompt.open()
-                            Layout.preferredWidth:  _editFieldWidth
-                            MessageDialog {
-                                id:                 resetPrompt
-                                title:              qsTr("Reset Camera to Factory Settings")
-                                text:               qsTr("Confirm resetting all settings?")
-                                standardButtons:    StandardButton.Yes | StandardButton.No
-                                onNo: resetPrompt.close()
-                                onYes: {
-                                    TyphoonHQuickInterface.cameraControl.resetSettings()
-                                    resetPrompt.close()
+                            OnOffSwitch {
+                                checked:     _cameraAutoMode
+                                Layout.alignment: Qt.AlignRight
+                                onClicked:  TyphoonHQuickInterface.cameraControl.aeMode = checked ? CameraControl.AE_MODE_AUTO : CameraControl.AE_MODE_MANUAL
+                            }
+                            //-------------------------------------------
+                            //-- EV (auto)
+                            Rectangle {
+                                color:      qgcPal.button
+                                height:     1
+                                width:      mainWindow.width * 0.4
+                                Layout.columnSpan: 2
+                                Layout.maximumHeight: 2
+                            }
+                            QGCLabel {
+                                text:       "EV Compensation"
+                                Layout.fillWidth: true
+                            }
+                            QGCComboBox {
+                                width:       _editFieldWidth
+                                model:       TyphoonHQuickInterface.cameraControl.evList
+                                currentIndex:TyphoonHQuickInterface.cameraControl.currentEV
+                                onActivated: {
+                                    TyphoonHQuickInterface.cameraControl.currentEV = index
+                                }
+                                Layout.preferredWidth:  _editFieldWidth
+                                enabled:    _cameraAutoMode
+                            }
+                            //-------------------------------------------
+                            //-- ISO (manual)
+                            Rectangle {
+                                color:      qgcPal.button
+                                height:     1
+                                width:      mainWindow.width * 0.4
+                                Layout.columnSpan: 2
+                                Layout.maximumHeight: 2
+                            }
+                            QGCLabel {
+                                text:       "ISO"
+                                Layout.fillWidth: true
+                            }
+                            QGCComboBox {
+                                width:       _editFieldWidth
+                                model:       TyphoonHQuickInterface.cameraControl.isoList
+                                currentIndex:TyphoonHQuickInterface.cameraControl.currentIso
+                                onActivated: {
+                                    TyphoonHQuickInterface.cameraControl.currentIso = index
+                                }
+                                Layout.preferredWidth:  _editFieldWidth
+                                enabled:    !_cameraAutoMode
+                            }
+                            //-------------------------------------------
+                            //-- Shutter Speed (manual)
+                            Rectangle {
+                                color:      qgcPal.button
+                                height:     1
+                                width:      mainWindow.width * 0.4
+                                Layout.columnSpan: 2
+                                Layout.maximumHeight: 2
+                            }
+                            QGCLabel {
+                                text:       "Shutter Speed"
+                                Layout.fillWidth: true
+                            }
+                            QGCComboBox {
+                                width:       _editFieldWidth
+                                model:       TyphoonHQuickInterface.cameraControl.shutterList
+                                currentIndex:TyphoonHQuickInterface.cameraControl.currentShutter
+                                onActivated: {
+                                    TyphoonHQuickInterface.cameraControl.currentShutter = index
+                                }
+                                Layout.preferredWidth:  _editFieldWidth
+                                enabled:    !_cameraAutoMode
+                            }
+                            //-------------------------------------------
+                            //-- Color "IQ" Mode
+                            Rectangle {
+                                color:      qgcPal.button
+                                height:     1
+                                width:      mainWindow.width * 0.4
+                                Layout.columnSpan: 2
+                                Layout.maximumHeight: 2
+                            }
+                            QGCLabel {
+                                text:       "Color Mode"
+                                Layout.fillWidth: true
+                            }
+                            QGCComboBox {
+                                width:       _editFieldWidth
+                                model:       TyphoonHQuickInterface.cameraControl.iqModeList
+                                currentIndex:TyphoonHQuickInterface.cameraControl.currentIQ
+                                onActivated: {
+                                    TyphoonHQuickInterface.cameraControl.currentIQ = index
+                                }
+                                Layout.preferredWidth:  _editFieldWidth
+                            }
+                            //-------------------------------------------
+                            //-- Photo File Format
+                            Rectangle {
+                                color:      qgcPal.button
+                                height:     1
+                                width:      mainWindow.width * 0.4
+                                Layout.columnSpan: 2
+                                Layout.maximumHeight: 2
+                            }
+                            QGCLabel {
+                                text:       "Photo Format"
+                                Layout.fillWidth: true
+                            }
+                            QGCComboBox {
+                                width:       _editFieldWidth
+                                model:       TyphoonHQuickInterface.cameraControl.photoFormatList
+                                currentIndex:TyphoonHQuickInterface.cameraControl.currentPhotoFmt
+                                onActivated: {
+                                    TyphoonHQuickInterface.cameraControl.currentPhotoFmt = index
+                                }
+                                Layout.preferredWidth:  _editFieldWidth
+                            }
+                            //-------------------------------------------
+                            //-- Metering Mode
+                            Rectangle {
+                                color:      qgcPal.button
+                                height:     1
+                                width:      mainWindow.width * 0.4
+                                Layout.columnSpan: 2
+                                Layout.maximumHeight: 2
+                            }
+                            QGCLabel {
+                                text:       "Metering Mode"
+                                Layout.fillWidth: true
+                            }
+                            QGCComboBox {
+                                width:       _editFieldWidth
+                                model:       TyphoonHQuickInterface.cameraControl.meteringList
+                                enabled:     _cameraAutoMode
+                                currentIndex:TyphoonHQuickInterface.cameraControl.currentMetering
+                                onActivated: {
+                                    TyphoonHQuickInterface.cameraControl.currentMetering = index
+                                }
+                                Layout.preferredWidth:  _editFieldWidth
+                            }
+                            //-------------------------------------------
+                            //-- Screen Grid
+                            Rectangle {
+                                color:      qgcPal.button
+                                height:     1
+                                width:      mainWindow.width * 0.4
+                                Layout.columnSpan: 2
+                                Layout.maximumHeight: 2
+                            }
+                            QGCLabel {
+                                text:       "Screen Grid"
+                                Layout.fillWidth: true
+                            }
+                            OnOffSwitch {
+                                checked:     QGroundControl.settingsManager.videoSettings.gridLines.rawValue
+                                Layout.alignment: Qt.AlignRight
+                                onClicked:  QGroundControl.settingsManager.videoSettings.gridLines.rawValue = checked
+                            }
+                            //-------------------------------------------
+                            //-- Reset Camera
+                            Rectangle {
+                                color:      qgcPal.button
+                                height:     1
+                                width:      mainWindow.width * 0.4
+                                Layout.columnSpan: 2
+                                Layout.maximumHeight: 2
+                            }
+                            QGCLabel {
+                                text:       "Reset Camera Defaults"
+                                Layout.fillWidth: true
+                            }
+                            QGCButton {
+                                text:       "Reset"
+                                onClicked:  resetPrompt.open()
+                                Layout.preferredWidth:  _editFieldWidth
+                                MessageDialog {
+                                    id:                 resetPrompt
+                                    title:              qsTr("Reset Camera to Factory Settings")
+                                    text:               qsTr("Confirm resetting all settings?")
+                                    standardButtons:    StandardButton.Yes | StandardButton.No
+                                    onNo: resetPrompt.close()
+                                    onYes: {
+                                        TyphoonHQuickInterface.cameraControl.resetSettings()
+                                        resetPrompt.close()
+                                    }
                                 }
                             }
-                        }
-                        //-------------------------------------------
-                        //-- Format SD Card
-                        Rectangle {
-                            color:      qgcPal.button
-                            height:     1
-                            width:      mainWindow.width * 0.4
-                            Layout.columnSpan: 2
-                            Layout.maximumHeight: 2
-                        }
-                        QGCLabel {
-                            text:       "Micro SD Card"
-                            Layout.fillWidth: true
-                        }
-                        QGCButton {
-                            text:       "Format"
-                            onClicked:  formatPrompt.open()
-                            Layout.preferredWidth:  _editFieldWidth
-                            MessageDialog {
-                                id:                 formatPrompt
-                                title:              qsTr("Format MicroSD Card")
-                                text:               qsTr("Confirm erasing all files?")
-                                standardButtons:    StandardButton.Yes | StandardButton.No
-                                onNo: formatPrompt.close()
-                                onYes: {
-                                    TyphoonHQuickInterface.cameraControl.formatCard()
-                                    formatPrompt.close()
+                            //-------------------------------------------
+                            //-- Format SD Card
+                            Rectangle {
+                                color:      qgcPal.button
+                                height:     1
+                                width:      mainWindow.width * 0.4
+                                Layout.columnSpan: 2
+                                Layout.maximumHeight: 2
+                            }
+                            QGCLabel {
+                                text:       "Micro SD Card"
+                                Layout.fillWidth: true
+                            }
+                            QGCButton {
+                                text:       "Format"
+                                onClicked:  formatPrompt.open()
+                                Layout.preferredWidth:  _editFieldWidth
+                                MessageDialog {
+                                    id:                 formatPrompt
+                                    title:              qsTr("Format MicroSD Card")
+                                    text:               qsTr("Confirm erasing all files?")
+                                    standardButtons:    StandardButton.Yes | StandardButton.No
+                                    onNo: formatPrompt.close()
+                                    onYes: {
+                                        TyphoonHQuickInterface.cameraControl.formatCard()
+                                        formatPrompt.close()
+                                    }
                                 }
                             }
-                        }
-                        Rectangle {
-                            color:      qgcPal.button
-                            height:     1
-                            width:      mainWindow.width * 0.4
-                            Layout.columnSpan: 2
-                            Layout.maximumHeight: 2
+                            Rectangle {
+                                color:      qgcPal.button
+                                height:     1
+                                width:      mainWindow.width * 0.4
+                                Layout.columnSpan: 2
+                                Layout.maximumHeight: 2
+                            }
                         }
                     }
                 }
-            }
 
-            //-- Dismiss Window
-            Image {
-                anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
-                anchors.top:        parent.top
-                anchors.right:      parent.right
-                width:              ScreenTools.defaultFontPixelHeight * 1.5
-                height:             width
-                sourceSize.height:  width
-                source:             "/res/XDelete.svg"
-                fillMode:           Image.PreserveAspectFit
-                mipmap:             true
-                smooth:             true
-                MouseArea {
-                    anchors.fill:   parent
-                    onClicked: {
-                        rootLoader.sourceComponent = null
+                //-- Dismiss Window
+                Image {
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
+                    anchors.top:        parent.top
+                    anchors.right:      parent.right
+                    width:              ScreenTools.defaultFontPixelHeight * 1.5
+                    height:             width
+                    sourceSize.height:  width
+                    source:             "/res/XDelete.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    mipmap:             true
+                    smooth:             true
+                    MouseArea {
+                        anchors.fill:   parent
+                        onClicked: {
+                            rootLoader.sourceComponent = null
+                        }
                     }
                 }
             }
