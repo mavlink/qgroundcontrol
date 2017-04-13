@@ -110,6 +110,7 @@ void MissionManager::_writeMissionCount(void)
     mavlink_message_t       message;
     mavlink_mission_count_t missionCount;
 
+    memset(&missionCount, 0, sizeof(missionCount));
     missionCount.target_system = _vehicle->id();
     missionCount.target_component = MAV_COMP_ID_MISSIONPLANNER;
     missionCount.count = _missionItems.count();
@@ -137,6 +138,7 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
     mavlink_message_t       messageOut;
     mavlink_mission_item_t  missionItem;
 
+    memset(&missionItem, 8, sizeof(missionItem));
     missionItem.target_system =     _vehicle->id();
     missionItem.target_component =  _vehicle->defaultComponentId();
     missionItem.seq =               0;
@@ -190,6 +192,8 @@ void MissionManager::_requestList(void)
 
     mavlink_message_t               message;
     mavlink_mission_request_list_t  request;
+
+    memset(&request, 0, sizeof(request));
 
     _itemIndicesToRead.clear();
     _clearMissionItems();
@@ -306,6 +310,8 @@ void MissionManager::_readTransactionComplete(void)
     
     mavlink_message_t       message;
     mavlink_mission_ack_t   missionAck;
+
+    memset(&missionAck, 0, sizeof(missionAck));
     
     missionAck.target_system =      _vehicle->id();
     missionAck.target_component =   MAV_COMP_ID_MISSIONPLANNER;
@@ -360,6 +366,7 @@ void MissionManager::_requestNextMissionItem(void)
     if (_vehicle->supportsMissionItemInt()) {
         mavlink_mission_request_int_t missionRequest;
 
+        memset(&missionRequest, 0, sizeof(missionRequest));
         missionRequest.target_system =      _vehicle->id();
         missionRequest.target_component =   MAV_COMP_ID_MISSIONPLANNER;
         missionRequest.seq =                _itemIndicesToRead[0];
@@ -372,6 +379,7 @@ void MissionManager::_requestNextMissionItem(void)
     } else {
         mavlink_mission_request_t missionRequest;
 
+        memset(&missionRequest, 0, sizeof(missionRequest));
         missionRequest.target_system =      _vehicle->id();
         missionRequest.target_component =   MAV_COMP_ID_MISSIONPLANNER;
         missionRequest.seq =                _itemIndicesToRead[0];
@@ -523,7 +531,7 @@ void MissionManager::_handleMissionRequest(const mavlink_message_t& message, boo
     if (missionItemInt) {
         mavlink_mission_item_int_t missionItem;
 
-
+        memset(&missionItem, 0, sizeof(missionItem));
         missionItem.target_system =     _vehicle->id();
         missionItem.target_component =  MAV_COMP_ID_MISSIONPLANNER;
         missionItem.seq =               missionRequest.seq;
@@ -547,6 +555,7 @@ void MissionManager::_handleMissionRequest(const mavlink_message_t& message, boo
     } else {
         mavlink_mission_item_t missionItem;
 
+        memset(&missionItem, 0, sizeof(missionItem));
         missionItem.target_system =     _vehicle->id();
         missionItem.target_component =  MAV_COMP_ID_MISSIONPLANNER;
         missionItem.seq =               missionRequest.seq;
