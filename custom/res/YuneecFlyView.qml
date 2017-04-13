@@ -242,6 +242,7 @@ Item {
         height: vehicleStatusGrid.height + ScreenTools.defaultFontPixelHeight * 0.5
         radius: ScreenTools.defaultFontPixelWidth * 0.5
         color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.65) : Qt.rgba(0,0,0,0.75)
+        visible: true
         anchors.bottom: parent.bottom
         anchors.right:  parent.right
         anchors.rightMargin:  _indicatorDiameter * 0.5
@@ -387,6 +388,12 @@ Item {
                 fontSizeMode:   Text.HorizontalFit
                 horizontalAlignment: Text.AlignHCenter
                 anchors.horizontalCenter: parent.horizontalCenter
+            }
+        }
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                vehicleStatus.visible = !vehicleStatus.visible
             }
         }
     }
