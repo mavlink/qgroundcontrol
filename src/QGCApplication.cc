@@ -606,7 +606,7 @@ void QGCApplication::_missingParamsDisplay(void)
     }
     _missingParams.clear();
 
-    showMessage(QString("Parameters missing from firmware: %1. You may be running an older version of firmware QGC does not work correctly with or your firmware has a bug in it.").arg(params));
+    showMessage(QString("Parameters are missing from firmware. You may be running a version of firmware QGC does not work correctly with or your firmware has a bug in it. Missing params: %1").arg(params));
 }
 
 QObject* QGCApplication::_rootQmlObject()
