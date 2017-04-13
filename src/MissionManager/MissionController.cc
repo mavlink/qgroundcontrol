@@ -270,7 +270,7 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
     newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT);
     _initVisualItem(newItem);
     if (_visualItems->count() == 1) {
-        newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF);
+        newItem->setCommand(_activeVehicle->vtol() ? MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF : MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF);
     }
     newItem->setDefaultsForCommand();
     if ((MAV_CMD)newItem->command() == MAV_CMD_NAV_WAYPOINT) {
