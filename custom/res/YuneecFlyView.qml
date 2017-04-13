@@ -42,8 +42,9 @@ Item {
     property bool   _cameraVideoMode:   _camController ? _camController.cameraMode === CameraControl.CAMERA_MODE_VIDEO : false
     property bool   _cameraPresent:     _camController && _camController.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
     property bool   _noSdCard:          TyphoonHQuickInterface.cameraControl.sdTotal === 0
-    property string _altitude:          _activeVehicle ? (isNaN(_activeVehicle.altitudeRelative.rawValue) ? "0.0" : _activeVehicle.altitudeRelative.rawValue.toFixed(1)) + _activeVehicle.altitudeRelative.units : "0.0m"
-    property string _distanceStr:       isNaN(_distance) ? "0m" : _distance.toFixed(0) + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "m")
+    property string _altitude:          _activeVehicle ? (isNaN(_activeVehicle.altitudeRelative.rawValue) ? "0.0" : _activeVehicle.altitudeRelative.rawValue.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0 m"
+    property string _distanceStr:       isNaN(_distance) ? "0 m" : _distance.toFixed(0) + ' ' + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "m")
+    property real   _heading:           _activeVehicle ? _activeVehicle.heading.rawValue : 0
 
     //-- Position from Controller GPS (M4)
     Connections {
@@ -226,18 +227,19 @@ Item {
 
     //-- Camera Control
     Loader {
-        visible:        !_mainIsMap
-        source:         _mainIsMap ? "" : "/typhoonh/cameraControl.qml"
-        anchors.bottom: compassAttitudeCombo.bottom
-        anchors.bottomMargin: _indicatorDiameter * 0.5
-        anchors.horizontalCenter: compassAttitudeCombo.horizontalCenter
+        visible:                !_mainIsMap
+        source:                 _mainIsMap ? "" : "/typhoonh/cameraControl.qml"
+        anchors.right:          parent.right
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+        anchors.top:            parent.top
+        anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 2
     }
 
     //-- Vehicle Status
     Rectangle {
         id:     vehicleStatus
         width:  vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth * 4)
-        height: vehicleStatusGrid.height + ScreenTools.defaultFontPixelHeight
+        height: vehicleStatusGrid.height + ScreenTools.defaultFontPixelHeight * 0.5
         radius: ScreenTools.defaultFontPixelWidth * 0.5
         color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.65) : Qt.rgba(0,0,0,0.75)
         anchors.bottom: parent.bottom
@@ -246,7 +248,7 @@ Item {
         anchors.bottomMargin: ScreenTools.defaultFontPixelHeight
         GridLayout {
             id:                 vehicleStatusGrid
-            columnSpacing:      ScreenTools.defaultFontPixelWidth  * 3
+            columnSpacing:      ScreenTools.defaultFontPixelWidth  * 1.5
             rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
             columns:            5
             anchors.centerIn:   parent
@@ -260,7 +262,7 @@ Item {
                 color:              qgcPal.colorBlue
             }
             QGCLabel {
-                text:   _activeVehicle ? ('00000' + _activeVehicle.flightDistance.rawValue.toFixed(0)).slice(-5) : "00000"
+                text:   _activeVehicle ? ('00000' + _activeVehicle.flightDistance.rawValue.toFixed(0)).slice(-5) + ' m': "00000 m"
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignRight
             }
@@ -287,25 +289,6 @@ Item {
                 Layout.fillWidth:  true
                 Layout.columnSpan: 5
             }
-            //-- Altitude
-            QGCLabel {
-                text:   qsTr("H:")
-            }
-            QGCLabel {
-                text:   _altitude
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignRight
-            }
-            //-- Ground Speed
-            QGCLabel {
-                text:   qsTr("H.S:")
-            }
-            QGCLabel {
-                text:   _activeVehicle ? _activeVehicle.groundSpeed.rawValue.toFixed(1) + ' ' + _activeVehicle.groundSpeed.units : "0.0 m/s"
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignRight
-            }
-            Item { width: 1; height: 1; }
             //-- Distance
             QGCLabel {
                 text:   qsTr("D:")
@@ -338,6 +321,29 @@ Item {
         }
     }
 
+    //-- Heading
+    Rectangle {
+        width:   headingCol.width  * 1.5
+        height:  headingCol.height * 1.25
+        radius:  ScreenTools.defaultFontPixelWidth * 0.5
+        color:   "black"
+        anchors.bottom: compassAttitudeCombo.top
+        anchors.bottomMargin: -ScreenTools.defaultFontPixelHeight
+        anchors.horizontalCenter: compassAttitudeCombo.horizontalCenter
+        Column {
+            id: headingCol
+            anchors.centerIn: parent
+            QGCLabel {
+                text:           ('000' + _heading.toFixed(0)).slice(-3)
+                color:          "white"
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Item {
+                width:  1
+                height: ScreenTools.defaultFontPixelHeight
+            }
+        }
+    }
     //-- Indicator thingy
     Item {
         id:             compassAttitudeCombo
@@ -352,12 +358,36 @@ Item {
             vehicle:            _activeVehicle
             anchors.horizontalCenter: parent.horizontalCenter
         }
-        QGCAttitudeWidget {
-            id:                 attitudeWidget
-            size:               parent.width * 0.85
-            vehicle:            _activeVehicle
+        Rectangle {
+            width:  outerCompass.width
+            height: width
+            radius: width * 0.5
+            color:  Qt.rgba(0,0,0,0)
+            border.color: Qt.rgba(1,1,1,0.35)
+            border.width: 1
             anchors.centerIn:   outerCompass
-            showHeading:        true
+        }
+        Column {
+            spacing: ScreenTools.defaultFontPixelHeight * 0.5
+            anchors.centerIn:   outerCompass
+            Label {
+                text:           _activeVehicle ? _activeVehicle.groundSpeed.rawValue.toFixed(0) + ' ' + _activeVehicle.groundSpeed.units : "0 m/s"
+                color:          "white"
+                width:          compassAttitudeCombo.width * 0.8
+                font.family:    ScreenTools.demiboldFontFamily
+                fontSizeMode:   Text.HorizontalFit
+                horizontalAlignment: Text.AlignHCenter
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Label {
+                text:           _altitude
+                color:          "white"
+                width:          compassAttitudeCombo.width * 0.8
+                font.family:    ScreenTools.demiboldFontFamily
+                fontSizeMode:   Text.HorizontalFit
+                horizontalAlignment: Text.AlignHCenter
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
         }
     }
 

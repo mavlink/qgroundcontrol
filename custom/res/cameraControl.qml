@@ -194,7 +194,7 @@ Rectangle {
             }
         }
         Item {
-            height:     ScreenTools.defaultFontPixelHeight + (_indicatorDiameter * 0.5)
+            height:     ScreenTools.defaultFontPixelHeight
             width:      1
         }
     }
