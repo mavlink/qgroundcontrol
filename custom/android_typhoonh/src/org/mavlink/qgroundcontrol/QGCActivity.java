@@ -1,11 +1,15 @@
 package org.mavlink.qgroundcontrol;
 
 import android.app.Activity;
-import android.util.Log;
-import android.os.PowerManager;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.view.WindowManager;
 
 import java.util.List;
@@ -101,6 +105,21 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
         filter.addAction(WifiManager.RSSI_CHANGED_ACTION);
         registerReceiver(receiverWifi, filter);
         findWifiConfig();
+        //-- Don't allow to run if the Yuneec app is running
+        if(isYuneecInstalled()) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Incompatible Application Error");
+            builder
+                .setCancelable(false)
+                .setMessage("Flymode is installed.\nPlease remove it before running QGroundControl")
+                .setPositiveButton("Close", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog,int id) {
+                        QGCActivity.this.finish();
+                    }
+                });
+            AlertDialog alertDialog = builder.create();
+            alertDialog.show();
+        }
     }
 
     @Override
@@ -130,6 +149,16 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
     }
 
     public static void restoreScreenOn() {
+    }
+
+    private boolean isYuneecInstalled() {
+        try {
+            PackageManager pm = m_instance.getPackageManager();
+            pm.getPackageInfo("com.yuneec.flightmode", 0);
+            return true;
+        } catch (NameNotFoundException e) {
+            return false;
+        }
     }
 
     public static void disconnectWifi() {
