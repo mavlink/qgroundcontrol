@@ -152,8 +152,21 @@ AnalyzePage {
                             var o = logController.model.get(rowIndex)
                             if (o) o.selected = true
                         })
-                        //-- Download them
-                        logController.download()
+                        fileDialog.qgcView =        logDownloadPage
+                        fileDialog.title =          qsTr("Select save directory")
+                        fileDialog.selectExisting = true
+                        fileDialog.folder =         QGroundControl.settingsManager.appSettings.telemetrySavePath
+                        fileDialog.selectFolder =   true
+                        fileDialog.openForLoad()
+                    }
+
+                    QGCFileDialog {
+                        id: fileDialog
+
+                        onAcceptedForLoad: {
+                            logController.download(file)
+                            close()
+                        }
                     }
                 }
 
