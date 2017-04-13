@@ -78,29 +78,41 @@ Item {
     readonly property int actionResumeMissionReady: 14
     readonly property int actionPause:              15
 
-    property bool showEmergenyStop:     !_hideEmergenyStop && _activeVehicle && _activeVehicle.armed && _activeVehicle.flying
-    property bool showDisarm:           _activeVehicle && _activeVehicle.armed && !_activeVehicle.flying
-    property bool showRTL:              _activeVehicle && _activeVehicle.armed && _activeVehicle.guidedModeSupported && _activeVehicle.flying && !_vehicleInRTLMode
+    property bool showEmergenyStop:     !_hideEmergenyStop && _activeVehicle && _vehicleArmed && _activeVehicle.flying
+    property bool showDisarm:           _activeVehicle && _vehicleArmed && !_activeVehicle.flying
+    property bool showRTL:              _activeVehicle && _vehicleArmed && _activeVehicle.guidedModeSupported && _activeVehicle.flying && !_vehicleInRTLMode
     property bool showTakeoff:          _activeVehicle && _activeVehicle.guidedModeSupported && !_activeVehicle.flying  && !_activeVehicle.fixedWing
-    property bool showLand:             _activeVehicle && _activeVehicle.guidedModeSupported && _activeVehicle.armed && !_activeVehicle.fixedWing && !_vehicleInLandMode
+    property bool showLand:             _activeVehicle && _activeVehicle.guidedModeSupported && _vehicleArmed && !_activeVehicle.fixedWing && !_vehicleInLandMode
     property bool showStartMission:     _activeVehicle && _missionAvailable && !_missionActive
     property bool showResumeMission:    _activeVehicle && !_activeVehicle.flying && _missionAvailable && _resumeMissionIndex > 0
-    property bool showPause:            _activeVehicle && _activeVehicle.armed && _activeVehicle.pauseVehicleSupported && _activeVehicle.flying && !_vehiclePaused
-    property bool showChangeAlt:        (_activeVehicle && _activeVehicle.flying) && _activeVehicle.guidedModeSupported && _activeVehicle.armed && !_missionActive
-    property bool showOrbit:            !_hideOrbit && _activeVehicle && _activeVehicle.flying && _activeVehicle.orbitModeSupported && _activeVehicle.armed && !_missionActive
+    property bool showPause:            _activeVehicle && _vehicleArmed && _activeVehicle.pauseVehicleSupported && _activeVehicle.flying && !_vehiclePaused
+    property bool showChangeAlt:        (_activeVehicle && _activeVehicle.flying) && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
+    property bool showOrbit:            !_hideOrbit && _activeVehicle && _activeVehicle.flying && _activeVehicle.orbitModeSupported && _vehicleArmed && !_missionActive
     property bool showLandAbort:        _activeVehicle && _activeVehicle.flying && _activeVehicle.fixedWing
     property bool showGotoLocation:     _activeVehicle && _activeVehicle.guidedMode && _activeVehicle.flying
 
-    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
-    property bool _missionAvailable:    missionController.containsItems
-    property bool _missionActive:       _activeVehicle ? _activeVehicle.flightMode === _activeVehicle.missionFlightMode : false
-    property bool _vehiclePaused:       _activeVehicle ? _activeVehicle.flightMode === _activeVehicle.pauseFlightMode : false
-    property bool _vehicleInRTLMode:    _activeVehicle ? _activeVehicle.flightMode === _activeVehicle.rtlFlightMode : false
-    property bool _vehicleInLandMode:   _activeVehicle ? _activeVehicle.flightMode === _activeVehicle.landFlightMode : false
-    property int  _resumeMissionIndex:   missionController.resumeMissionIndex
-    property bool _hideEmergenyStop:    !QGroundControl.corePlugin.options.guidedBarShowEmergencyStop
-    property bool _hideOrbit:           !QGroundControl.corePlugin.options.guidedBarShowOrbit
-    property var  _actionData
+    onShowStartMissionChanged: console.log(showStartMission, _activeVehicle, _missionAvailable, _missionActive, _vehicleArmed, _vehicleInLandMode, _vehicleInRTLMode)
+
+    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
+    property string _flightMode:            _activeVehicle ? _activeVehicle.flightMode : ""
+    property bool   _missionAvailable:      missionController.containsItems
+    property bool   _missionActive:         _activeVehicle ? _vehicleArmed && (_vehicleInLandMode || _vehicleInRTLMode || _vehicleInMissionMode) : false
+    property bool   _vehicleArmed:          _activeVehicle ? _activeVehicle.armed  : false
+    property bool   _vehiclePaused:         false
+    property bool   _vehicleInMissionMode:  false
+    property bool   _vehicleInRTLMode:      false
+    property bool   _vehicleInLandMode:     false
+    property int    _resumeMissionIndex:    missionController.resumeMissionIndex
+    property bool   _hideEmergenyStop:      !QGroundControl.corePlugin.options.guidedBarShowEmergencyStop
+    property bool   _hideOrbit:             !QGroundControl.corePlugin.options.guidedBarShowOrbit
+    property var    _actionData
+
+    on_FlightModeChanged: {
+        _vehiclePaused =        _flightMode === _activeVehicle.pauseFlightMode
+        _vehicleInRTLMode =     _flightMode === _activeVehicle.rtlFlightMode
+        _vehicleInLandMode =    _flightMode === _activeVehicle.landFlightMode
+        _vehicleInMissionMode = _flightMode === _activeVehicle.missionFlightMode // Must be last to get correct signalling for showStartMission popups
+    }
 
     // Called when an action is about to be executed in order to confirm
     function confirmAction(actionCode, actionData) {
@@ -203,10 +215,10 @@ Item {
             _activeVehicle.startMission()
             break
         case actionArm:
-            _activeVehicle.armed = true
+            _vehicleArmed = true
             break
         case actionDisarm:
-            _activeVehicle.armed = false
+            _vehicleArmed = false
             break
         case actionEmergencyStop:
             _activeVehicle.emergencyStop()
