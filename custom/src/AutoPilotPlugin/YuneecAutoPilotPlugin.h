@@ -12,6 +12,8 @@
 #include "PX4AutoPilotPlugin.h"
 #include "Vehicle.h"
 
+class GimbalComponent;
+
 /// Yuneec overrides from standard PX4AutoPilotPlugin implementation
 class YuneecAutoPilotPlugin : public PX4AutoPilotPlugin
 {
@@ -24,5 +26,6 @@ public:
     const QVariantList& vehicleComponents(void) final;
 
 private:
+    GimbalComponent*        _gimbalComponent;
     QVariantList            _components;
 };

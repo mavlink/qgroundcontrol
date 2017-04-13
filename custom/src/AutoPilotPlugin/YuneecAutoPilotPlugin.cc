@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "YuneecAutoPilotPlugin.h"
+#include "GimbalComponent.h"
 
 YuneecAutoPilotPlugin::YuneecAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : PX4AutoPilotPlugin(vehicle, parent)
@@ -27,6 +28,10 @@ const QVariantList& YuneecAutoPilotPlugin::vehicleComponents(void)
             _safetyComponent = new SafetyComponent(_vehicle, this);
             _safetyComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
+
+            _gimbalComponent = new GimbalComponent(_vehicle, this);
+            _gimbalComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_gimbalComponent));
 
         } else {
             qWarning() << "Call to vehicleComponents prior to parametersReady";

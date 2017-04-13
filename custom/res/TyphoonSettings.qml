@@ -135,50 +135,6 @@ QGCView {
                 //-- WIFI AP Connection
                 Item {
                     width:              qgcView.width * 0.8
-                    height:             expButton.height
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    QGCLabel {
-                        id:             expButton
-                        text:           "Experimental"
-                        font.family:    ScreenTools.demiboldFontFamily
-                        anchors.left:   parent.left
-                    }
-                }
-                Rectangle {
-                    height:         expCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:          qgcView.width * 0.8
-                    color:          qgcPal.windowShade
-                    anchors.margins: ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    Column {
-                        id:         expCol
-                        spacing:    ScreenTools.defaultFontPixelHeight * 0.25
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        Item {
-                            width:  1
-                            height: ScreenTools.defaultFontPixelHeight
-                        }
-                        GridLayout {
-                            anchors.margins:    ScreenTools.defaultFontPixelHeight
-                            columnSpacing:      ScreenTools.defaultFontPixelWidth
-                            columns:            2
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            QGCLabel {
-                                text:   "Gimbal calibration"
-                            }
-                            QGCButton {
-                                text:       "Issue Command"
-                                enabled:    _activeVehicle
-                                onClicked:  TyphoonHQuickInterface.calibrateGimbalMV()
-                            }
-                        }
-                    }
-                }
-                //-----------------------------------------------------------------
-                //-- WIFI AP Connection
-                Item {
-                    width:              qgcView.width * 0.8
                     height:             resetButton.height
                     anchors.margins:    ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
