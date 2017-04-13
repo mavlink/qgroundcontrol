@@ -119,7 +119,7 @@ void FollowMe::_sendGCSMotionReport(void)
     MAVLinkProtocol* mavlinkProtocol = _toolbox->mavlinkProtocol();
     mavlink_follow_target_t follow_target;
 
-    memset(&follow_target, 0, sizeof(mavlink_follow_target_t));
+    memset(&follow_target, 0, sizeof(follow_target));
 
     follow_target.timestamp = runTime.nsecsElapsed()*1e-6;
     follow_target.est_capabilities = estimatation_capabilities;

@@ -184,7 +184,7 @@ void ArduCopterFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double
     mavlink_message_t msg;
     mavlink_set_position_target_local_ned_t cmd;
 
-    memset(&cmd, 0, sizeof(mavlink_set_position_target_local_ned_t));
+    memset(&cmd, 0, sizeof(cmd));
 
     cmd.target_system = vehicle->id();
     cmd.target_component = vehicle->defaultComponentId();

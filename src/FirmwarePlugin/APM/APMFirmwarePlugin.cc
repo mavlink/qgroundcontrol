@@ -228,6 +228,8 @@ void APMFirmwarePlugin::_handleIncomingParamValue(Vehicle* vehicle, mavlink_mess
     mavlink_param_value_t paramValue;
     mavlink_param_union_t paramUnion;
 
+    memset(&paramValue, 0, sizeof(paramValue));
+
     // APM stack passes all parameter values in mavlink_param_union_t.param_float no matter what
     // type they are. Fix that up to correct usage.
 
@@ -277,6 +279,8 @@ void APMFirmwarePlugin::_handleOutgoingParamSet(Vehicle* vehicle, LinkInterface*
 
     mavlink_param_set_t     paramSet;
     mavlink_param_union_t   paramUnion;
+
+    memset(&paramSet, 0, sizeof(paramSet));
 
     // APM stack passes all parameter values in mavlink_param_union_t.param_float no matter what
     // type they are. Fix it back to the wrong way on the way out.
