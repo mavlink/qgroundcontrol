@@ -42,7 +42,7 @@ Item {
     property bool   _cameraVideoMode:   _camController ? _camController.cameraMode === CameraControl.CAMERA_MODE_VIDEO : false
     property bool   _cameraPresent:     _camController && _camController.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
     property bool   _noSdCard:          TyphoonHQuickInterface.cameraControl.sdTotal === 0
-    property string _altitude:          _activeVehicle ? (isNaN(_activeVehicle.altitudeRelative.rawValue) ? "0.0" : _activeVehicle.altitudeRelative.rawValue.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0 m"
+    property string _altitude:          _activeVehicle ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0 m"
     property string _distanceStr:       isNaN(_distance) ? "0 m" : _distance.toFixed(0) + ' ' + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "m")
     property real   _heading:           _activeVehicle ? _activeVehicle.heading.rawValue : 0
 
@@ -263,7 +263,7 @@ Item {
                 color:              qgcPal.colorBlue
             }
             QGCLabel {
-                text:   _activeVehicle ? ('00000' + _activeVehicle.flightDistance.rawValue.toFixed(0)).slice(-5) + ' ' + _activeVehicle.flightDistance.units : "00000 m"
+                text:   _activeVehicle ? ('00000' + _activeVehicle.flightDistance.value.toFixed(0)).slice(-5) + ' ' + _activeVehicle.flightDistance.units : "00000 m"
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignRight
             }
@@ -304,7 +304,7 @@ Item {
                 text:   qsTr("V.S:")
             }
             QGCLabel {
-                text:           _activeVehicle ? _activeVehicle.climbRate.rawValue.toFixed(1) + ' ' + _activeVehicle.climbRate.units : "0.0 m/s"
+                text:           _activeVehicle ? _activeVehicle.climbRate.value.toFixed(1) + ' ' + _activeVehicle.climbRate.units : "0.0 m/s"
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignRight
             }
@@ -372,7 +372,7 @@ Item {
             spacing: ScreenTools.defaultFontPixelHeight * 0.5
             anchors.centerIn:   outerCompass
             Label {
-                text:           _activeVehicle ? _activeVehicle.groundSpeed.rawValue.toFixed(0) + ' ' + _activeVehicle.groundSpeed.units : "0 m/s"
+                text:           _activeVehicle ? _activeVehicle.groundSpeed.value.toFixed(0) + ' ' + _activeVehicle.groundSpeed.units : "0 m/s"
                 color:          "white"
                 width:          compassAttitudeCombo.width * 0.8
                 font.family:    ScreenTools.demiboldFontFamily
