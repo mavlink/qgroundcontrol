@@ -263,7 +263,7 @@ Item {
                 color:              qgcPal.colorBlue
             }
             QGCLabel {
-                text:   _activeVehicle ? ('00000' + _activeVehicle.flightDistance.rawValue.toFixed(0)).slice(-5) + ' m': "00000 m"
+                text:   _activeVehicle ? ('00000' + _activeVehicle.flightDistance.rawValue.toFixed(0)).slice(-5) + ' ' + _activeVehicle.flightDistance.units : "00000 m"
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignRight
             }
