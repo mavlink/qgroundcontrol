@@ -88,7 +88,7 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     , _rxLocalIndex(0)
     , _sendRxInfoEnd(false)
     , _binding(false)
-    , _bound(false)
+    , _receivedRCRSSI(false)
     , _resetBind(false)
     , _vehicle(NULL)
     , _cameraControl(NULL)
@@ -214,17 +214,18 @@ TyphoonHM4Interface::_vehicleReady(bool ready)
 {
     if(_vehicle) {
         if(ready) {
-            qCDebug(YuneecLog) << "_vehicleReady( YES )";
-            _cameraControl->setVehicle(_vehicle);
             //-- If for some reason vehicle is armed, do nothing
             if(_vehicle->armed()) {
                 qCWarning(YuneecLog) << "Booted with an armed vehicle!";
             } else {
-                //-- First boot, not bound
-                if(_m4State == TyphoonHQuickInterface::M4_STATE_AWAIT) {
-                    enterBindMode();
-                } else if(_m4State == TyphoonHQuickInterface::M4_STATE_RUN && (!_bound || _resetBind)) {
-                    enterBindMode();
+                qCDebug(YuneecLog) << "_vehicleReady( YES )";
+                _cameraControl->setVehicle(_vehicle);
+                //-- If we have not received RSSI yet and the M4 is running, wait a bit longer
+                if(_m4State != TyphoonHQuickInterface::M4_STATE_AWAIT && !_receivedRCRSSI && !_resetBind) {
+                    QTimer::singleShot(2000, this, &TyphoonHM4Interface::_initAndCheckBinding);
+                } else {
+                    //-- We're either not bound or the M4 is not initialized
+                    _initAndCheckBinding();
                 }
             }
         } else {
@@ -235,11 +236,24 @@ TyphoonHM4Interface::_vehicleReady(bool ready)
 
 //-----------------------------------------------------------------------------
 void
+TyphoonHM4Interface::_initAndCheckBinding()
+{
+    //-- First boot, not bound
+    if(_m4State == TyphoonHQuickInterface::M4_STATE_AWAIT) {
+        enterBindMode();
+    //-- RC is bound to something. Is it bound to whoever we are connected (or are we resetting)?
+    } else if(_m4State == TyphoonHQuickInterface::M4_STATE_RUN && (!_receivedRCRSSI || _resetBind)) {
+        enterBindMode();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 TyphoonHM4Interface::_remoteControlRSSIChanged(uint8_t rssi)
 {
-    if(rssi > 0 && !_bound) {
+    if(rssi > 0 && !_receivedRCRSSI) {
         qCDebug(YuneecLog) << "Received RSSI, RC is bound.";
-        _bound = true;
+        _receivedRCRSSI = true;
     }
 }
 
@@ -275,7 +289,7 @@ TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
         disconnect(_vehicle, &Vehicle::armedChanged,             this, &TyphoonHM4Interface::_armedChanged);
         _cameraControl->setVehicle(NULL);
         _vehicle = NULL;
-        _bound = false;
+        _receivedRCRSSI = false;
         _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
     }
 }
@@ -312,7 +326,7 @@ TyphoonHM4Interface::softReboot()
 {
 #if defined(__androidx86__)
     qCDebug(YuneecLog) << "softReboot()";
-    if(_bound && !_resetBind) {
+    if(_receivedRCRSSI && !_resetBind) {
         qCDebug(YuneecLog) << "softReboot() -> Already bound. Skipping it...";
     } else {
         _resetBind = false;
@@ -1170,7 +1184,7 @@ void
 TyphoonHM4Interface::_handleQueryBindResponse(QByteArray data)
 {
     int nodeID = (data[10] & 0xff) | (data[11] << 8 & 0xff00);
-    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_QUERY_BIND_STATE" << nodeID;
+    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_QUERY_BIND_STATE" << nodeID << " -- " << _rxBindInfoFeedback.getName();
     if(_state == STATE_QUERY_BIND) {
         if(nodeID == _rxBindInfoFeedback.nodeId) {
             _timer.stop();

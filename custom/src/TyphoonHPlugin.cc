@@ -42,8 +42,8 @@ myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString
     }
     QString message;
   //message.sprintf("(%s:%u, %s) %s", context.file, context.line, context.function, msg.toLatin1().data());
-    message.sprintf("(%u) %s", context.line, msg.toLatin1().data());
-    __android_log_write(prio, "QGCLog", message.toLatin1().data());
+    message.sprintf("(%s) %s", context.category, msg.toLatin1().data());
+    __android_log_write(prio, "QGroundControlLog", message.toLatin1().data());
 }
 #endif
 

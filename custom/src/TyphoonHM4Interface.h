@@ -58,6 +58,7 @@ private slots:
     void    _vehicleReady                       (bool ready);
     void    _remoteControlRSSIChanged           (uint8_t rssi);
     void    _armedChanged                       (bool armed);
+    void    _initAndCheckBinding                ();
 
 private:
     bool    _exitToAwait                        ();
@@ -140,7 +141,7 @@ private:
     QTimer                  _timer;
     ControllerLocation      _controllerLocation;
     bool                    _binding;
-    bool                    _bound;
+    bool                    _receivedRCRSSI;
     bool                    _resetBind;
     Vehicle*                _vehicle;
     CameraControl*          _cameraControl;
