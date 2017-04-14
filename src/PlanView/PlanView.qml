@@ -791,7 +791,7 @@ QGCView {
             anchors.right:      rightPanel.left
             anchors.bottom:     parent.bottom
             missionItems:       missionController.visualItems
-            //visible:            _editingLayer === _layerMission && !ScreenTools.isShortScreen
+            visible:            _editingLayer === _layerMission && !ScreenTools.isShortScreen
         }
     } // QGCViewPanel
 
