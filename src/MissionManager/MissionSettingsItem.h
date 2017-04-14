@@ -26,20 +26,12 @@ class MissionSettingsItem : public ComplexMissionItem
 public:
     MissionSettingsItem(Vehicle* vehicle, QObject* parent = NULL);
 
-    enum MissionEndAction {
-        MissionEndNoAction,
-        MissionEndLoiter,
-        MissionEndRTL
-    };
-    Q_ENUMS(MissionEndAction)
-
-    Q_PROPERTY(Fact*    missionEndAction            READ missionEndAction                                                   CONSTANT)
     Q_PROPERTY(Fact*    plannedHomePositionAltitude READ plannedHomePositionAltitude                                        CONSTANT)
+    Q_PROPERTY(bool     missionEndRTL               MEMBER _missionEndRTL                                                   NOTIFY missionEndRTLChanged)
     Q_PROPERTY(QObject* cameraSection               READ cameraSection                                                      CONSTANT)
     Q_PROPERTY(QObject* speedSection                READ speedSection                                                       CONSTANT)
 
     Fact*   plannedHomePositionAltitude (void) { return &_plannedHomePositionAltitudeFact; }
-    Fact*   missionEndAction            (void) { return &_missionEndActionFact; }
 
     QObject* cameraSection(void) { return &_cameraSection; }
     QObject* speedSection(void) { return &_speedSection; }
@@ -92,7 +84,8 @@ public:
     static const char* jsonComplexItemTypeValue;
 
 signals:
-    void specifyMissionFlightSpeedChanged(bool specifyMissionFlightSpeed);
+    void specifyMissionFlightSpeedChanged   (bool specifyMissionFlightSpeed);
+    void missionEndRTLChanged               (bool missionEndRTL);
 
 private slots:
     void _setDirtyAndUpdateLastSequenceNumber   (void);
@@ -101,9 +94,9 @@ private slots:
     void _updateAltitudeInCoordinate            (QVariant value);
 
 private:
-    QGeoCoordinate  _plannedHomePositionCoordinate;     // Does not include altitde
+    QGeoCoordinate  _plannedHomePositionCoordinate;     // Does not include altitude
     Fact            _plannedHomePositionAltitudeFact;
-    Fact            _missionEndActionFact;
+    bool            _missionEndRTL;
     CameraSection   _cameraSection;
     SpeedSection    _speedSection;
 
@@ -113,7 +106,6 @@ private:
     static QMap<QString, FactMetaData*> _metaDataMap;
 
     static const char* _plannedHomePositionAltitudeName;
-    static const char* _missionEndActionName;
 };
 
 #endif
