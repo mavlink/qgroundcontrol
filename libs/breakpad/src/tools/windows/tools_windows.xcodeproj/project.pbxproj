@@ -1,0 +1,356 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXAggregateTarget section */
+		ADA28659D0CBEC0AA668B5CE /* build_all */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 8B46A16AD2B7E4F75C23DDBA /* Build configuration list for PBXAggregateTarget "build_all" */;
+			buildPhases = (
+			);
+			dependencies = (
+				63CDF6240633ED37879C2942 /* PBXTargetDependency */,
+				15D6D511916B0D73B781D5A8 /* PBXTargetDependency */,
+				0926DC94B865C01CB66A0B9E /* PBXTargetDependency */,
+				658B66AA37457BE13D4EFC1B /* PBXTargetDependency */,
+			);
+			name = build_all;
+			productName = build_all;
+		};
+/* End PBXAggregateTarget section */
+
+/* Begin PBXContainerItemProxy section */
+		16EB4AF72C96826ED7ACB48D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1E5C67D9C8513B0A5E6B36C /* dump_syms.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = A34304F8226D10296105FABA;
+			remoteInfo = dump_syms_unittest;
+		};
+		45F0D0117134FFEB68412924 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D9C63697DBF9BEEE4800DED /* ms_symbol_server_converter.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 7FC3C364F844897E06663BEA;
+			remoteInfo = ms_symbol_server_converter;
+		};
+		4C61956932CA8A071D1C00B9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8B4BE8E2A8CE7D34E11B222B /* symupload.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = CAF858B08DFE376EBDD4BF4E;
+			remoteInfo = symupload;
+		};
+		6940FFA53D843DE231C000FC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1E5C67D9C8513B0A5E6B36C /* dump_syms.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = AA53C58C1565F42BDE54154E;
+			remoteInfo = dump_syms_unittest;
+		};
+		6BC2518549B7DB251B589180 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8B4BE8E2A8CE7D34E11B222B /* symupload.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = B60A0238003FCB96E5886064;
+			remoteInfo = symupload;
+		};
+		8E0C75F60D25B976F1F04EE2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1E5C67D9C8513B0A5E6B36C /* dump_syms.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 85BBCB68EFE3C3912EE72640;
+			remoteInfo = dump_syms;
+		};
+		8EBC41A6CF5ECE0FBD28C50A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1E5C67D9C8513B0A5E6B36C /* dump_syms.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 0C8B068DCFB61BE1FEC3B6B9;
+			remoteInfo = dump_syms;
+		};
+		AB1F5FE77763C3F14FC14441 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D9C63697DBF9BEEE4800DED /* ms_symbol_server_converter.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = D5B3EC08BED4AE2E7252B94D;
+			remoteInfo = ms_symbol_server_converter;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		2D9C63697DBF9BEEE4800DED /* ms_symbol_server_converter.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ms_symbol_server_converter.xcodeproj; path = converter/ms_symbol_server_converter.xcodeproj; sourceTree = SOURCE_ROOT; };
+		68E4CA693E144287F430F551 /* tools_windows.gyp */ = {isa = PBXFileReference; explicitFileType = sourcecode; path = tools_windows.gyp; sourceTree = "<group>"; };
+		8B4BE8E2A8CE7D34E11B222B /* symupload.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = symupload.xcodeproj; path = symupload/symupload.xcodeproj; sourceTree = SOURCE_ROOT; };
+		96F373BB45420FBF0D8311BC /* filename_rules.gypi */ = {isa = PBXFileReference; explicitFileType = sourcecode; name = filename_rules.gypi; path = ../../build/filename_rules.gypi; sourceTree = "<group>"; };
+		A1E5C67D9C8513B0A5E6B36C /* dump_syms.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = dump_syms.xcodeproj; path = dump_syms/dump_syms.xcodeproj; sourceTree = SOURCE_ROOT; };
+		D02486EF1F16910E1AA153F5 /* common.gypi */ = {isa = PBXFileReference; explicitFileType = sourcecode; name = common.gypi; path = ../../build/common.gypi; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		533949BE3475AC3675BC925D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C295D1268ADC3C79802E76DE /* dump_syms */,
+				1F1C84BC31E212D60AA68906 /* dump_syms_unittest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		65E3D66C3ADA8874E5BE2920 /* Build */ = {
+			isa = PBXGroup;
+			children = (
+				D02486EF1F16910E1AA153F5 /* common.gypi */,
+				96F373BB45420FBF0D8311BC /* filename_rules.gypi */,
+				68E4CA693E144287F430F551 /* tools_windows.gyp */,
+			);
+			name = Build;
+			sourceTree = "<group>";
+		};
+		B2009C02DBF54B610ED5C7EB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7FE7CEDC64F07833934F4388 /* symupload */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B52FD96674B50A2B3E0A47C0 = {
+			isa = PBXGroup;
+			children = (
+				DE08117BBBF20DBD0BA03DBC /* Projects */,
+				65E3D66C3ADA8874E5BE2920 /* Build */,
+			);
+			sourceTree = "<group>";
+		};
+		C5F22A1DD90518F754B93242 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				826C5EE4510B9AECED6844A8 /* libms_symbol_server_converter.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DE08117BBBF20DBD0BA03DBC /* Projects */ = {
+			isa = PBXGroup;
+			children = (
+				A1E5C67D9C8513B0A5E6B36C /* dump_syms.xcodeproj */,
+				2D9C63697DBF9BEEE4800DED /* ms_symbol_server_converter.xcodeproj */,
+				8B4BE8E2A8CE7D34E11B222B /* symupload.xcodeproj */,
+			);
+			name = Projects;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXProject section */
+		72852DCFA55EB1C48493F016 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+			};
+			buildConfigurationList = 644C757A5E37441EAA779EC7 /* Build configuration list for PBXProject "tools_windows" */;
+			compatibilityVersion = "Xcode 3.2";
+			hasScannedForEncodings = 1;
+			mainGroup = B52FD96674B50A2B3E0A47C0;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 533949BE3475AC3675BC925D /* Products */;
+					ProjectRef = A1E5C67D9C8513B0A5E6B36C /* dump_syms.xcodeproj */;
+				},
+				{
+					ProductGroup = C5F22A1DD90518F754B93242 /* Products */;
+					ProjectRef = 2D9C63697DBF9BEEE4800DED /* ms_symbol_server_converter.xcodeproj */;
+				},
+				{
+					ProductGroup = B2009C02DBF54B610ED5C7EB /* Products */;
+					ProjectRef = 8B4BE8E2A8CE7D34E11B222B /* symupload.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				ADA28659D0CBEC0AA668B5CE /* build_all */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		1F1C84BC31E212D60AA68906 /* dump_syms_unittest */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = dump_syms_unittest;
+			remoteRef = 6940FFA53D843DE231C000FC /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		7FE7CEDC64F07833934F4388 /* symupload */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = symupload;
+			remoteRef = 6BC2518549B7DB251B589180 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		826C5EE4510B9AECED6844A8 /* libms_symbol_server_converter.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libms_symbol_server_converter.a;
+			remoteRef = 45F0D0117134FFEB68412924 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		C295D1268ADC3C79802E76DE /* dump_syms */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = dump_syms;
+			remoteRef = 8EBC41A6CF5ECE0FBD28C50A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXTargetDependency section */
+		0926DC94B865C01CB66A0B9E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = dump_syms_unittest;
+			targetProxy = 16EB4AF72C96826ED7ACB48D /* PBXContainerItemProxy */;
+		};
+		15D6D511916B0D73B781D5A8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = dump_syms;
+			targetProxy = 8E0C75F60D25B976F1F04EE2 /* PBXContainerItemProxy */;
+		};
+		63CDF6240633ED37879C2942 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = ms_symbol_server_converter;
+			targetProxy = AB1F5FE77763C3F14FC14441 /* PBXContainerItemProxy */;
+		};
+		658B66AA37457BE13D4EFC1B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = symupload;
+			targetProxy = 4C61956932CA8A071D1C00B9 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		3891483E04033547681B6FC8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEAD_CODE_STRIPPING = YES;
+				GCC_CW_ASM_SYNTAX = NO;
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_ENABLE_PASCAL_STRINGS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
+				GCC_OBJC_CALL_CXX_CDTORS = YES;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					NDEBUG,
+					NVALGRIND,
+					OFFICIAL_BUILD,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
+				GCC_THREADSAFE_STATICS = NO;
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
+				GCC_VERSION = 4.2;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				HEADER_SEARCH_PATHS = (
+					../..,
+					"$(VSInstallDir)/DIA SDK/include",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "-Wl,-search_paths_first";
+				PREBINDING = NO;
+				PRODUCT_NAME = build_all;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = "-Wendif-labels";
+				WARNING_CFLAGS_excluded = "-Wall";
+			};
+			name = Release;
+		};
+		3A555407D01BF3AC663786A8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INTERMEDIATE_DIR = "$(PROJECT_DERIVED_FILE_DIR)/$(CONFIGURATION)";
+				SDKROOT = macosx10.5;
+				SHARED_INTERMEDIATE_DIR = "$(SYMROOT)/DerivedSources/$(CONFIGURATION)";
+				SYMROOT = ../../xcodebuild;
+			};
+			name = Release;
+		};
+		99FF84F26B396D38E15A9D28 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INTERMEDIATE_DIR = "$(PROJECT_DERIVED_FILE_DIR)/$(CONFIGURATION)";
+				SDKROOT = macosx10.5;
+				SHARED_INTERMEDIATE_DIR = "$(SYMROOT)/DerivedSources/$(CONFIGURATION)";
+				SYMROOT = ../../xcodebuild;
+			};
+			name = Debug;
+		};
+		FA550A50252BF2F5440E50B8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_CW_ASM_SYNTAX = NO;
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_ENABLE_PASCAL_STRINGS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
+				GCC_OBJC_CALL_CXX_CDTORS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
+				GCC_THREADSAFE_STATICS = NO;
+				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
+				GCC_VERSION = 4.2;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				HEADER_SEARCH_PATHS = (
+					../..,
+					"$(VSInstallDir)/DIA SDK/include",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "-Wl,-search_paths_first";
+				PREBINDING = NO;
+				PRODUCT_NAME = build_all;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = "-Wendif-labels";
+				WARNING_CFLAGS_excluded = "-Wall";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		644C757A5E37441EAA779EC7 /* Build configuration list for PBXProject "tools_windows" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				99FF84F26B396D38E15A9D28 /* Debug */,
+				3A555407D01BF3AC663786A8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 1;
+			defaultConfigurationName = Debug;
+		};
+		8B46A16AD2B7E4F75C23DDBA /* Build configuration list for PBXAggregateTarget "build_all" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FA550A50252BF2F5440E50B8 /* Debug */,
+				3891483E04033547681B6FC8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 1;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 72852DCFA55EB1C48493F016 /* Project object */;
+}
