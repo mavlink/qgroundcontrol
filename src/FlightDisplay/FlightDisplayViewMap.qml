@@ -29,9 +29,11 @@ FlightMap {
     mapName:                    _mapName
     allowGCSLocationCenter:     !userPanned
     allowVehicleLocationCenter: !_keepVehicleCentered
+    planView:                   false
 
     property alias  scaleState: mapScale.state
 
+    // The following properties must be set by the consumer
     property var    missionController
     property var    geoFenceController
     property var    rallyPointController

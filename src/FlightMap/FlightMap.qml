@@ -38,6 +38,7 @@ Map {
     property bool   allowVehicleLocationCenter:     false   ///< true: map will center/zoom to vehicle location one time
     property bool   firstGCSPositionReceived:       false   ///< true: first gcs position update was responded to
     property bool   firstVehiclePositionReceived:   false   ///< true: first vehicle position update was responded to
+    property bool   planView:                       false   ///< true: map being using for Plan view, items should be draggable
 
     readonly property real  maxZoomLevel: 20
 
