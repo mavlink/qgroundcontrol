@@ -215,10 +215,10 @@ Item {
             _activeVehicle.startMission()
             break
         case actionArm:
-            _vehicleArmed = true
+            _activeVehicle.armed = true
             break
         case actionDisarm:
-            _vehicleArmed = false
+            _activeVehicle.armed = false
             break
         case actionEmergencyStop:
             _activeVehicle.emergencyStop()
