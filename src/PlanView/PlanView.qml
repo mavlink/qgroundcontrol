@@ -568,10 +568,10 @@ QGCView {
                             addComplexItem(missionController.complexMissionItemNames[0])
                         }
                         break
-                    case 5:
+                    case 4:
                         editorMap.zoomLevel += 0.5
                         break
-                    case 6:
+                    case 5:
                         editorMap.zoomLevel -= 0.5
                         break
                     }

@@ -140,6 +140,18 @@ static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
     return qmlGlobal;
 }
 
+#ifdef __android__
+// breakpad support
+#include "client/linux/handler/exception_handler.h"
+
+static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded)
+{
+  qDebug() << "dumpCallback" << succeeded << descriptor.path();
+  return succeeded;
+}
+#endif
+
+
 /**
  * @brief Constructor for the main application.
  *
@@ -313,6 +325,13 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
+
+#ifdef __android__
+    std::string pathAsStr = toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString().toStdString();
+    qDebug() << "dump location" << QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    google_breakpad::MinidumpDescriptor descriptor(pathAsStr);
+    google_breakpad::ExceptionHandler eh(descriptor, NULL, dumpCallback, NULL, true, -1);
+#endif
 }
 
 void QGCApplication::_shutdown(void)
@@ -606,7 +625,7 @@ void QGCApplication::_missingParamsDisplay(void)
     }
     _missingParams.clear();
 
-    showMessage(QString("Parameters missing from firmware: %1. You may be running an older version of firmware QGC does not work correctly with or your firmware has a bug in it.").arg(params));
+    showMessage(QString("Parameters are missing from firmware. You may be running a version of firmware QGC does not work correctly with or your firmware has a bug in it. Missing params: %1").arg(params));
 }
 
 QObject* QGCApplication::_rootQmlObject()
