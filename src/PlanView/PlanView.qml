@@ -42,15 +42,16 @@ QGCView {
     readonly property real      _toolButtonTopMargin:   parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
     readonly property var       _defaultVehicleCoordinate:   QtPositioning.coordinate(37.803784, -122.462276)
 
-    property var    _visualItems:           missionController.visualItems
+    property var    _visualItems:               missionController.visualItems
     property var    _currentMissionItem
-    property int    _currentMissionIndex:   0
-    property bool   _lightWidgetBorders:    editorMap.isSatelliteMap
-    property bool   _addWaypointOnClick:    false
-    property bool   _singleComplexItem:     missionController.complexMissionItemNames.length === 1
-    property real   _toolbarHeight:         _qgcView.height - ScreenTools.availableHeight
-    property int    _editingLayer:          _layerMission
-    property bool   _autoSync:               QGroundControl.settingsManager.appSettings.automaticMissionUpload.rawValue != 0
+    property int    _currentMissionIndex:       0
+    property bool   _lightWidgetBorders:        editorMap.isSatelliteMap
+    property bool   _addWaypointOnClick:        false
+    property bool   _singleComplexItem:         missionController.complexMissionItemNames.length === 1
+    property real   _toolbarHeight:             _qgcView.height - ScreenTools.availableHeight
+    property int    _editingLayer:              _layerMission
+    property bool   _autoSync:                  QGroundControl.settingsManager.appSettings.automaticMissionUpload.rawValue != 0
+    property bool   _switchToFlyAfterUpload:    false
 
     /// The controller which should be called for load/save, send to/from vehicle calls
     property var _syncDropDownController: missionController
@@ -141,8 +142,19 @@ QGCView {
                     onClicked: {
                         _activeVehicle.flightMode = _activeVehicle.pauseFlightMode
                         missionController.sendToVehicle()
-                        toolbar.showFlyView()
                         hideDialog()
+                        if (_switchToFlyAfterUpload) {
+                            toolbar.showFlyView()
+                        }
+                    }
+                }
+
+                QGCButton {
+                    text:       qsTr("Exit planning (no upload)")
+                    visible:    _switchToFlyAfterUpload
+                    onClicked: {
+                        hideDialog()
+                        toolbar.showFlyView()
                     }
                 }
             }
@@ -159,8 +171,9 @@ QGCView {
             setCurrentItem(0)
         }
 
-        function _denyUpload() {
+        function _denyUpload(switchToFly) {
             if (_activeVehicle && _activeVehicle.armed && _activeVehicle.flightMode === _activeVehicle.missionFlightMode) {
+                _switchToFlyAfterUpload = switchToFly
                 _qgcView.showDialog(activeMissionUploadDialogComponent, qsTr("Mission Upload"), _qgcView.showDialogDefaultWidth, StandardButton.Cancel)
                 return true
             } else {
@@ -171,7 +184,7 @@ QGCView {
         // Users is switching away from Plan View
         function uploadOnSwitch() {
             if (missionController.dirty && _autoSync) {
-                if (_denyUpload()) {
+                if (_denyUpload(true /* switchToFly */)) {
                     return false
                 } else {
                     sendToVehicle()
@@ -181,7 +194,7 @@ QGCView {
         }
 
         function upload() {
-            if (!_denyUpload()) {
+            if (!_denyUpload(false /* switchToFly */)) {
                 sendToVehicle()
             }
         }
@@ -376,6 +389,7 @@ QGCView {
             mapName:                    "MissionEditor"
             allowGCSLocationCenter:     true
             allowVehicleLocationCenter: true
+            planView:                   true
 
             // This is the center rectangle of the map which is not obscured by tools
             property rect centerViewport: Qt.rect(_leftToolWidth, _toolbarHeight, editorMap.width - _leftToolWidth - _rightPanelWidth, editorMap.height - _statusHeight - _toolbarHeight)
