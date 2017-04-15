@@ -4,6 +4,8 @@ import QtQuick.Controls 1.2
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
 
 QGCFlickable {
     id:             root
@@ -45,31 +47,74 @@ QGCFlickable {
             anchors.left:       parent.left
             anchors.right:      parent.right
             anchors.top:        geoFenceLabel.bottom
-            height:             editorLoader.y + editorLoader.height + (_margin * 2)
+            height:             fenceColumn.y + fenceColumn.height + (_margin * 2)
             color:              qgcPal.windowShadeDark
             radius:             _radius
 
-            QGCLabel {
-                id:                 geoLabel
+            Column {
+                id:                 fenceColumn
                 anchors.margins:    _margin
-                anchors.top:        parent.top
                 anchors.left:       parent.left
                 anchors.right:      parent.right
-                wrapMode:           Text.WordWrap
-                font.pointSize:     ScreenTools.smallFontPointSize
-                text:               qsTr("GeoFencing allows you to set a virtual ‘fence’ around the area you want to fly in.")
-            }
+                spacing:            ScreenTools.defaultFontPixelHeight / 2
 
-            Loader {
-                id:                 editorLoader
-                anchors.margins:    _margin
-                anchors.top:        geoLabel.bottom
-                anchors.left:       parent.left
-                source:             myGeoFenceController.editorQml
+                QGCLabel {
+                    id:                 geoLabel
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
+                    wrapMode:           Text.WordWrap
+                    font.pointSize:     ScreenTools.smallFontPointSize
+                    text:               qsTr("GeoFencing allows you to set a virtual ‘fence’ around the area you want to fly in.")
+                }
 
-                property real   availableWidth:     parent.width - (_margin * 2)
-                property var    geoFenceController: myGeoFenceController
-                property var    myFlightMap:        flightMap
+                Repeater {
+                    model: myGeoFenceController.params
+
+                    Item {
+                        width:  fenceColumn.width
+                        height: textField.height
+
+                        property bool showCombo: modelData.enumStrings.length > 0
+
+                        QGCLabel {
+                            id:                 textFieldLabel
+                            anchors.baseline:   textField.baseline
+                            text:               myGeoFenceController.paramLabels[index]
+                        }
+
+                        FactTextField {
+                            id:             textField
+                            anchors.right:  parent.right
+                            width:          _editFieldWidth
+                            showUnits:      true
+                            fact:           modelData
+                            visible:        !parent.showCombo
+                        }
+
+                        FactComboBox {
+                            id:             comboField
+                            anchors.right:  parent.right
+                            width:          _editFieldWidth
+                            indexModel:     false
+                            fact:           showCombo ? modelData : _nullFact
+                            visible:        parent.showCombo
+
+                            property var _nullFact: Fact { }
+                        }
+                    }
+                }
+
+                QGCButton {
+                    text:       qsTr("Add fence polygon")
+                    visible:    myGeoFenceController.polygonSupported && myGeoFenceController.mapPolygon.count === 0
+                    onClicked:  myGeoFenceController.addPolygon()
+                }
+
+                QGCButton {
+                    text:       qsTr("Remove fence polygon")
+                    visible:    myGeoFenceController.polygonSupported && myGeoFenceController.mapPolygon.count > 0
+                    onClicked:  myGeoFenceController.removePolygon()
+                }
             }
         }
     }
