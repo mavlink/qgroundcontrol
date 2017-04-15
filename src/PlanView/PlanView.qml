@@ -239,6 +239,10 @@ QGCView {
         function fitViewportToItems() {
             mapFitFunctions.fitMapViewportToFenceItems()
         }
+
+        function upload() {
+            sendToVehicle()
+        }
     }
 
     RallyPointController {
@@ -273,6 +277,10 @@ QGCView {
 
         function fitViewportToItems() {
             mapFitFunctions.fitMapViewportToRallyItems()
+        }
+
+        function upload() {
+            sendToVehicle()
         }
     }
 
@@ -505,6 +513,7 @@ QGCView {
                     z:              QGroundControl.zOrderMapItems - 1
                 }
             }
+
             GeoFenceMapVisuals {
                 map:                    editorMap
                 myGeoFenceController:   geoFenceController
@@ -513,35 +522,11 @@ QGCView {
                 planView:               true
             }
 
-            // Rally points on map
-
-            MapItemView {
-                model: rallyPointController.points
-
-                delegate: MapQuickItem {
-                    id:             itemIndicator
-                    anchorPoint.x:  sourceItem.anchorPointX
-                    anchorPoint.y:  sourceItem.anchorPointY
-                    coordinate:     object.coordinate
-                    z:              QGroundControl.zOrderMapItems
-
-                    sourceItem: MissionItemIndexLabel {
-                        id:         itemIndexLabel
-                        label:      qsTr("R", "rally point map item label")
-                        checked:    _editingLayer == _layerRallyPoints ? object == rallyPointController.currentRallyPoint : false
-
-                        onClicked: rallyPointController.currentRallyPoint = object
-
-                        onCheckedChanged: {
-                            if (checked) {
-                                // Setup our drag item
-                                itemDragger.visible = true
-                                itemDragger.coordinateItem = Qt.binding(function() { return object })
-                                itemDragger.mapCoordinateIndicator = Qt.binding(function() { return itemIndicator })
-                            }
-                        }
-                    }
-                }
+            RallyPointMapVisuals {
+                map:                    editorMap
+                myRallyPointController: rallyPointController
+                interactive:            _editingLayer == _layerRallyPoints
+                planView:               true
             }
 
             ToolStrip {
@@ -632,11 +617,12 @@ QGCView {
             // Plan Element selector (Mission/Fence/Rally)
             Row {
                 id:                 planElementSelectorRow
+                anchors.topMargin:  Math.round(ScreenTools.defaultFontPixelHeight / 3)
                 anchors.top:        parent.top
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 spacing:            _horizontalMargin
-                visible:            false // WIP: Temporarily remove - QGroundControl.corePlugin.options.enablePlanViewSelector
+                visible:            QGroundControl.corePlugin.options.enablePlanViewSelector
 
                 readonly property real _buttonRadius: ScreenTools.defaultFontPixelHeight * 0.75
 
@@ -657,7 +643,6 @@ QGCView {
                             _syncDropDownController = rallyPointController
                             break
                         }
-                        _syncDropDownController.fitViewportToItems()
                     }
                 }
 
@@ -742,22 +727,23 @@ QGCView {
             } // Item - Mission Item editor
 
             // GeoFence Editor
-            Loader {
-                anchors.top:        planElementSelectorRow.visible ? planElementSelectorRow.bottom : planElementSelectorRow.top
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                sourceComponent:    _editingLayer == _layerGeoFence ? geoFenceEditorComponent : undefined
-
-                property real   availableWidth:         _rightPanelWidth
-                property real   availableHeight:        ScreenTools.availableHeight
-                property var    myGeoFenceController:   geoFenceController
+            GeoFenceEditor {
+                anchors.topMargin:      ScreenTools.defaultFontPixelHeight / 2
+                anchors.top:            planElementSelectorRow.bottom
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                availableHeight:        ScreenTools.availableHeight
+                myGeoFenceController:   geoFenceController
+                flightMap:              editorMap
+                visible:                _editingLayer == _layerGeoFence
             }
 
             // Rally Point Editor
 
             RallyPointEditorHeader {
                 id:                 rallyPointHeader
-                anchors.top:        planElementSelectorRow.visible ? planElementSelectorRow.bottom : planElementSelectorRow.top
+                anchors.topMargin:  ScreenTools.defaultFontPixelHeight / 2
+                anchors.top:        planElementSelectorRow.bottom
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 visible:            _editingLayer == _layerRallyPoints
@@ -766,7 +752,8 @@ QGCView {
 
             RallyPointItemEditor {
                 id:                 rallyPointEditor
-                anchors.top:        planElementSelectorRow.visible ? planElementSelectorRow.bottom : planElementSelectorRow.top
+                anchors.topMargin:  ScreenTools.defaultFontPixelHeight / 2
+                anchors.top:        rallyPointHeader.bottom
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 visible:            _editingLayer == _layerRallyPoints && rallyPointController.points.count
@@ -828,19 +815,6 @@ QGCView {
                 _syncDropDownController.removeAll()
                 hideDialog()
             }
-        }
-    }
-
-
-
-    Component {
-        id: geoFenceEditorComponent
-
-        GeoFenceEditor {
-            availableWidth:         _rightPanelWidth
-            availableHeight:        ScreenTools.availableHeight
-            myGeoFenceController:   geoFenceController
-            flightMap:              editorMap
         }
     }
 

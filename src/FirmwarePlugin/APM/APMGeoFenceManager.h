@@ -25,33 +25,35 @@ public:
     ~APMGeoFenceManager();
 
     // Overrides from GeoFenceManager
-    bool            inProgress          (void) const final;
-    void            loadFromVehicle     (void) final;
-    void            sendToVehicle       (const QGeoCoordinate& breachReturn, QmlObjectListModel& polygon) final;
-    bool            circleEnabled       (void) const final { return _circleEnabled; }
-    bool            polygonEnabled      (void) const final { return _polygonEnabled; }
-    bool            breachReturnEnabled (void) const final { return _breachReturnEnabled; }
-    float           circleRadius        (void) const final;
-    QVariantList    params              (void) const final { return _params; }
-    QStringList     paramLabels         (void) const final { return _paramLabels; }
-    QString         editorQml           (void) const final;
-    void            removeAll           (void) final;
+    bool            inProgress              (void) const final;
+    void            loadFromVehicle         (void) final;
+    void            sendToVehicle           (const QGeoCoordinate& breachReturn, QmlObjectListModel& polygon) final;
+    bool            polygonSupported        (void) const final { return _polygonSupported; }
+    bool            polygonEnabled          (void) const final { return _polygonEnabled; }
+    bool            breachReturnSupported   (void) const final { return _breachReturnSupported; }
+    bool            circleEnabled           (void) const { return _circleEnabled; }
+    Fact*           circleRadiusFact        (void) const { return _circleRadiusFact; }
+    QVariantList    params                  (void) const final { return _params; }
+    QStringList     paramLabels             (void) const final { return _paramLabels; }
+    void            removeAll               (void) final;
 
 private slots:
-    void _mavlinkMessageReceived(const mavlink_message_t& message);
-    void _updateEnabledFlags(void);
-    void _circleRadiusRawValueChanged(QVariant value);
-    void _parametersReady(void);
+    void _mavlinkMessageReceived    (const mavlink_message_t& message);
+    void _parametersReady           (void);
     
 private:
-    void _requestFencePoint(uint8_t pointIndex);
-    void _sendFencePoint(uint8_t pointIndex);
+    void _requestFencePoint (uint8_t pointIndex);
+    void _sendFencePoint    (uint8_t pointIndex);
+    void _updateEnabledFlags(void);
+    void _setCircleEnabled  (bool circleEnabled);
+    void _setPolygonEnabled (bool polygonEnabled);
 
 private:
     bool _fenceSupported;
-    bool _breachReturnEnabled;
     bool _circleEnabled;
+    bool _polygonSupported;
     bool _polygonEnabled;
+    bool _breachReturnSupported;
     bool _firstParamLoadComplete;
 
     QVariantList    _params;

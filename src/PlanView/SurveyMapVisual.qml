@@ -88,28 +88,14 @@ Item {
     }
 
     QGCMapPolygonVisuals {
-        id:         mapPolygonVisuals
-        mapControl: map
-        mapPolygon: _mapPolygon
-
-        Component.onCompleted: {
-            mapPolygonVisuals.addVisuals()
-            if (_missionItem.isCurrentItem) {
-                mapPolygonVisuals.addHandles()
-            }
-        }
-
-        Connections {
-            target: _missionItem
-
-            onIsCurrentItemChanged: {
-                if (_missionItem.isCurrentItem) {
-                    mapPolygonVisuals.addHandles()
-                } else {
-                    mapPolygonVisuals.removeHandles()
-                }
-            }
-        }
+        id:                 mapPolygonVisuals
+        mapControl:         map
+        mapPolygon:         _mapPolygon
+        interactive:        _missionItem.isCurrentItem
+        borderWidth:        1
+        borderColor:        "black"
+        interiorColor:      "green"
+        interiorOpacity:    0.5
     }
 
     // Survey grid lines
