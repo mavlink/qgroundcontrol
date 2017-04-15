@@ -161,26 +161,6 @@ bool MissionSettingsItem::addMissionEndAction(QList<MissionItem*>& items, int se
 
     // IMPORTANT NOTE: If anything changes here you must also change MissionSettingsItem::scanForMissionSettings
 
-    // Find last waypoint coordinate information so we have a lat/lon/alt to use
-    QGeoCoordinate  lastWaypointCoord;
-    MAV_FRAME       lastWaypointFrame;
-
-    bool found = false;
-    for (int i=items.count()-1; i>0; i--) {
-        MissionItem* missionItem = items[i];
-
-        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_vehicle, (MAV_CMD)missionItem->command());
-        if (uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
-            lastWaypointCoord = missionItem->coordinate();
-            lastWaypointFrame = missionItem->frame();
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
-        return false;
-    }
-
     if (_missionEndRTL) {
         qCDebug(MissionSettingsComplexItemLog) << "Appending end action RTL seqNum" << seqNum;
         item = new MissionItem(seqNum,
