@@ -162,8 +162,6 @@ before_script:
 
 script:
   # run qmake
-  - echo ${TRAVIS_BRANCH}
-  - echo ${CONFIG}
   - mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR}
   - qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}
 
@@ -176,14 +174,12 @@ script:
   #- ccache -s
 
   # unit tests linux/osx
-  - if [ "${TRAVIS_BRANCH}" != "master" ]; then
-        if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
-            mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
+  - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
+    	mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
             ./debug/QGroundControl --unittest;
-        elif [[ "${SPEC}" = "macx-clang" && "${CONFIG}" = "debug" ]]; then
-            mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/ &&
+    elif [[ "${SPEC}" = "macx-clang" && "${CONFIG}" = "debug" ]]; then
+        mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/ &&
             ./debug/qgroundcontrol.app/Contents/MacOS/QGroundControl --unittest;
-        fi
     fi
 
 after_success:
