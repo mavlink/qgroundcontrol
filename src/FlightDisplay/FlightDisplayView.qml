@@ -487,16 +487,18 @@ QGCView {
             ]
 
             onClicked: {
+                //-- Dismiss any other dialog
+                rootLoader.sourceComponent  = null
                 guidedActionConfirm.visible = false
-                guidedActionList.visible = false
-                altitudeSlider.visible = false
+                guidedActionList.visible    = false
+                altitudeSlider.visible      = false
                 var action = model[index].action
                 if (action === -1) {
                     if (index == 4) {
-                        guidedActionList.model = _actionModel
+                        guidedActionList.model   = _actionModel
                         guidedActionList.visible = true
                     } else if (index == 5) {
-                        guidedActionList.model = _smartShotModel
+                        guidedActionList.model   = _smartShotModel
                         guidedActionList.visible = true
                     }
                 } else {
