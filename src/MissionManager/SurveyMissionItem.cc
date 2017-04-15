@@ -27,7 +27,6 @@ const char* SurveyMissionItem::_jsonGridAltitudeRelativeKey =       "relativeAlt
 const char* SurveyMissionItem::_jsonGridAngleKey =                  "angle";
 const char* SurveyMissionItem::_jsonGridSpacingKey =                "spacing";
 const char* SurveyMissionItem::_jsonTurnaroundDistKey =             "turnAroundDistance";
-const char* SurveyMissionItem::_jsonCameraTriggerKey =              "cameraTrigger";
 const char* SurveyMissionItem::_jsonCameraTriggerDistanceKey =      "cameraTriggerDistance";
 const char* SurveyMissionItem::_jsonCameraTriggerInTurnaroundKey =  "cameraTriggerInTurnaround";
 const char* SurveyMissionItem::_jsonHoverAndCaptureKey =            "hoverAndCapture";
@@ -77,6 +76,7 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     , _cameraOrientationFixed(false)
     , _missionCommandCount(0)
     , _refly90Degrees(false)
+    , _ignoreRecalc(false)
     , _surveyDistance(0.0)
     , _cameraShots(0)
     , _coveredArea(0.0)
@@ -88,7 +88,6 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     , _gridAngleFact                    (settingsGroup, _metaDataMap[gridAngleName])
     , _gridSpacingFact                  (settingsGroup, _metaDataMap[gridSpacingName])
     , _turnaroundDistFact               (settingsGroup, _metaDataMap[turnaroundDistName])
-    , _cameraTriggerFact                (settingsGroup, _metaDataMap[cameraTriggerName])
     , _cameraTriggerDistanceFact        (settingsGroup, _metaDataMap[cameraTriggerDistanceName])
     , _cameraTriggerInTurnaroundFact    (settingsGroup, _metaDataMap[cameraTriggerInTurnaroundName])
     , _hoverAndCaptureFact              (settingsGroup, _metaDataMap[hoverAndCaptureName])
@@ -117,7 +116,6 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     connect(&_cameraTriggerDistanceFact,        &Fact::valueChanged,                        this, &SurveyMissionItem::_generateGrid);
     connect(&_cameraTriggerInTurnaroundFact,    &Fact::valueChanged,                        this, &SurveyMissionItem::_generateGrid);
     connect(&_hoverAndCaptureFact,              &Fact::valueChanged,                        this, &SurveyMissionItem::_generateGrid);
-    connect(&_cameraTriggerFact,                &Fact::valueChanged,                        this, &SurveyMissionItem::_generateGrid);
     connect(this,                               &SurveyMissionItem::refly90DegreesChanged,  this, &SurveyMissionItem::_generateGrid);
 
     connect(&_gridAltitudeFact,             &Fact::valueChanged, this, &SurveyMissionItem::_updateCoordinateAltitude);
@@ -209,15 +207,11 @@ void SurveyMissionItem::save(QJsonArray&  missionItems)
     saveObject[JsonHelper::jsonVersionKey] =                    3;
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
-    saveObject[_jsonCameraTriggerKey] =                         _cameraTriggerFact.rawValue().toBool();
     saveObject[_jsonManualGridKey] =                            _manualGridFact.rawValue().toBool();
     saveObject[_jsonFixedValueIsAltitudeKey] =                  _fixedValueIsAltitudeFact.rawValue().toBool();
     saveObject[_jsonHoverAndCaptureKey] =                       _hoverAndCaptureFact.rawValue().toBool();
     saveObject[_jsonRefly90DegreesKey] =                        _refly90Degrees;
-
-    if (_cameraTriggerFact.rawValue().toBool()) {
-        saveObject[_jsonCameraTriggerDistanceKey] = _cameraTriggerDistanceFact.rawValue().toDouble();
-    }
+    saveObject[_jsonCameraTriggerDistanceKey] =                 _cameraTriggerDistanceFact.rawValue().toDouble();
 
     QJsonObject gridObject;
     gridObject[_jsonGridAltitudeKey] =          _gridAltitudeFact.rawValue().toDouble();
@@ -291,8 +285,7 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumbe
         { QGCMapPolygon::jsonPolygonKey,                QJsonValue::Array,  true },
         { _jsonGridObjectKey,                           QJsonValue::Object, true },
         { _jsonCameraObjectKey,                         QJsonValue::Object, false },
-        { _jsonCameraTriggerKey,                        QJsonValue::Bool,   true },
-        { _jsonCameraTriggerDistanceKey,                QJsonValue::Double, false },
+        { _jsonCameraTriggerDistanceKey,                QJsonValue::Double, true },
         { _jsonManualGridKey,                           QJsonValue::Bool,   true },
         { _jsonFixedValueIsAltitudeKey,                 QJsonValue::Bool,   true },
         { _jsonHoverAndCaptureKey,                      QJsonValue::Bool,   false },
@@ -309,12 +302,13 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumbe
         return false;
     }
 
+    _ignoreRecalc = true;
+
     _mapPolygon.clear();
 
     setSequenceNumber(sequenceNumber);
 
     _manualGridFact.setRawValue             (v2Object[_jsonManualGridKey].toBool(true));
-    _cameraTriggerFact.setRawValue          (v2Object[_jsonCameraTriggerKey].toBool(false));
     _fixedValueIsAltitudeFact.setRawValue   (v2Object[_jsonFixedValueIsAltitudeKey].toBool(true));
     _gridAltitudeRelativeFact.setRawValue   (v2Object[_jsonGridAltitudeRelativeKey].toBool(true));
     _hoverAndCaptureFact.setRawValue        (v2Object[_jsonHoverAndCaptureKey].toBool(false));
@@ -332,18 +326,11 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumbe
     if (!JsonHelper::validateKeys(gridObject, gridKeyInfoList, errorString)) {
         return false;
     }
-    _gridAltitudeFact.setRawValue   (gridObject[_jsonGridAltitudeKey].toDouble());
-    _gridAngleFact.setRawValue      (gridObject[_jsonGridAngleKey].toDouble());
-    _gridSpacingFact.setRawValue    (gridObject[_jsonGridSpacingKey].toDouble());
-    _turnaroundDistFact.setRawValue (gridObject[_jsonTurnaroundDistKey].toDouble());
-
-    if (_cameraTriggerFact.rawValue().toBool()) {
-        if (!v2Object.contains(_jsonCameraTriggerDistanceKey)) {
-            errorString = tr("%1 but %2 is missing").arg("cameraTrigger = true").arg("cameraTriggerDistance");
-            return false;
-        }
-        _cameraTriggerDistanceFact.setRawValue(v2Object[_jsonCameraTriggerDistanceKey].toDouble());
-    }
+    _gridAltitudeFact.setRawValue           (gridObject[_jsonGridAltitudeKey].toDouble());
+    _gridAngleFact.setRawValue              (gridObject[_jsonGridAngleKey].toDouble());
+    _gridSpacingFact.setRawValue            (gridObject[_jsonGridSpacingKey].toDouble());
+    _turnaroundDistFact.setRawValue         (gridObject[_jsonTurnaroundDistKey].toDouble());
+    _cameraTriggerDistanceFact.setRawValue  (v2Object[_jsonCameraTriggerDistanceKey].toDouble());
 
     if (!_manualGridFact.rawValue().toBool()) {
         if (!v2Object.contains(_jsonCameraObjectKey)) {
@@ -399,6 +386,9 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumbe
         _mapPolygon.clear();
         return false;
     }
+
+    _ignoreRecalc = false;
+    _generateGrid();
 
     return true;
 }
@@ -467,6 +457,10 @@ void SurveyMissionItem::_convertPointsToGeo(const QList<QPointF>& pointsNED, con
 
 void SurveyMissionItem::_generateGrid(void)
 {
+    if (_ignoreRecalc) {
+        return;
+    }
+
     if (_mapPolygon.count() < 3 || _gridSpacingFact.rawValue().toDouble() <= 0) {
         _clearInternal();
         return;
@@ -1029,7 +1023,7 @@ double SurveyMissionItem::_triggerDistance(void) const {
 
 bool SurveyMissionItem::_triggerCamera(void) const
 {
-    return _cameraTriggerFact.rawValue().toBool() && _triggerDistance() > 0;
+    return _triggerDistance() > 0;
 }
 
 bool SurveyMissionItem::_imagesEverywhere(void) const
