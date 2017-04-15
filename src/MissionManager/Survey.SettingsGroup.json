@@ -116,17 +116,11 @@
     "defaultValue":     4.5
 },
 {
-    "name":             "CameraTrigger",
-    "shortDescription": "Trigger the camera based on distance.",
-    "type":             "bool",
-    "defaultValue":     0
-},
-{
     "name":             "CameraTriggerDistance",
-    "shortDescription": "Distance between each triggering of the camera.",
+    "shortDescription": "Distance between each triggering of the camera. 0 specifies not camera trigger.",
     "type":             "double",
     "decimalPlaces":    2,
-    "min":              0.1,
+    "min":              0,
     "units":            "m",
     "defaultValue":     25
 },
