@@ -180,35 +180,38 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
     public static void findWifiConfig() {
         String currentCamera = "";
         List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
-        for( WifiConfiguration i : list ) {
-            if(i.SSID != null) {
-                Log.i(TAG, "Found config: " + i.SSID + " | " + i.priority);
-                if(i.status == 0) {
-                    currentConnection = i.SSID;
-                }
-                if(i.SSID.startsWith("CGO3P") || i.SSID.startsWith("CGOPRO") || i.SSID.startsWith("CGOET")) {
-                    i.priority = 1;
-                    currentCamera = i.SSID;
-                } else {
-                    i.priority = 10;
+        if(list != null) {
+            for( WifiConfiguration i : list ) {
+                if(i.SSID != null) {
+                    Log.i(TAG, "Found config: " + i.SSID + " | " + i.priority);
+                    if(i.status == 0) {
+                        currentConnection = i.SSID;
+                    }
+                    if(i.SSID.startsWith("CGO3P") || i.SSID.startsWith("CGOPRO") || i.SSID.startsWith("CGOET")) {
+                        i.priority = 1;
+                        currentCamera = i.SSID;
+                    } else {
+                        i.priority = 10;
+                    }
                 }
             }
+            if(currentConnection == "") {
+                currentConnection = currentCamera;
+            }
+            mainWifi.saveConfiguration();
         }
-        if(currentConnection == "") {
-            currentConnection = currentCamera;
-        }
-        mainWifi.saveConfiguration();
     }
 
     public static void resetWifi() {
         Log.i(TAG, "resetWifi()");
         List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
-        //-- Disable everything
-        mainWifi.disconnect();
-        for( WifiConfiguration i : list ) {
-            if(i.SSID != null) {
-                mainWifi.disableNetwork(i.networkId);
-                //mainWifi.removeNetwork(i.networkId);
+        if(list != null) {
+            //-- Disable everything
+            mainWifi.disconnect();
+            for( WifiConfiguration i : list ) {
+                if(i.SSID != null) {
+                    mainWifi.disableNetwork(i.networkId);
+                }
             }
         }
         currentConnection = "";
@@ -228,7 +231,6 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
                 if(i.SSID != null && !i.SSID.equals("\"" + ssid + "\"")) {
                     i.priority = 10;
                     mainWifi.disableNetwork(i.networkId);
-                    //mainWifi.removeNetwork(i.networkId);
                 }
             }
             mainWifi.saveConfiguration();
