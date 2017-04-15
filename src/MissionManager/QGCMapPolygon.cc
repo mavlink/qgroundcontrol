@@ -174,6 +174,11 @@ bool QGCMapPolygon::loadFromJson(const QJsonObject& json, bool required, QString
     if (!JsonHelper::loadGeoCoordinateArray(json[jsonPolygonKey], false /* altitudeRequired */, _polygonPath, errorString)) {
         return false;
     }
+
+    for (int i=0; i<_polygonPath.count(); i++) {
+        _polygonModel.append(new QGCQGeoCoordinate(_polygonPath[i].value<QGeoCoordinate>(), _newCoordParent));
+    }
+
     setDirty(false);
     emit pathChanged();
 
