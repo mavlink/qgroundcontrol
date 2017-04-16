@@ -229,17 +229,25 @@ Rectangle {
                 spacing:        _margin
                 visible:        missionItem.manualGrid.value == true
 
-                FactCheckBox {
+                QGCCheckBox {
+                    id:                 cameraTriggerDistanceCheckBox
                     anchors.baseline:   cameraTriggerDistanceField.baseline
                     text:               qsTr("Trigger Distance")
-                    fact:               missionItem.cameraTrigger
+                    checked:            missionItem.cameraTriggerDistance.rawValue > 0
+                    onClicked: {
+                        if (checked) {
+                            missionItem.cameraTriggerDistance.value = missionItem.cameraTriggerDistance.defaultValue
+                        } else {
+                            missionItem.cameraTriggerDistance.value = 0
+                        }
+                    }
                 }
 
                 FactTextField {
                     id:                 cameraTriggerDistanceField
                     Layout.fillWidth:   true
                     fact:               missionItem.cameraTriggerDistance
-                    enabled:            missionItem.cameraTrigger.value
+                    enabled:            cameraTriggerDistanceCheckBox.checked
                 }
             }
 
