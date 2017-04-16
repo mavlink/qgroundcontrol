@@ -13,6 +13,7 @@
 #include "MultiVehicleManager.h"
 #include "MissionItem.h"
 #include "SimpleMissionItem.h"
+#include "QGCApplication.h"
 
 #if 0
 const MissionItemTest::TestCase_t MissionItemTest::_rgTestCases[] = {
@@ -27,8 +28,24 @@ const size_t MissionItemTest::_cTestCases = sizeof(_rgTestCases)/sizeof(_rgTestC
 #endif
 
 MissionItemTest::MissionItemTest(void)
+    : _offlineVehicle(NULL)
 {
-    
+}
+
+void MissionItemTest::init(void)
+{
+    UnitTest::init();
+    _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4,
+                                  MAV_TYPE_QUADROTOR,
+                                  qgcApp()->toolbox()->firmwarePluginManager(),
+                                  this);
+
+}
+
+void MissionItemTest::cleanup(void)
+{
+    delete _offlineVehicle;
+    UnitTest::cleanup();
 }
 
 // Test property get/set
@@ -255,7 +272,7 @@ void MissionItemTest::_testSimpleLoadFromStream(void)
 {
     // We specifically test SimpleMissionItem loading as well since it has additional
     // signalling which can affect values.
-    SimpleMissionItem simpleMissionItem(NULL);
+    SimpleMissionItem simpleMissionItem(_offlineVehicle);
 
     QString testString("10\t0\t3\t80\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n");
     QTextStream testStream(&testString, QIODevice::ReadOnly);
@@ -395,7 +412,7 @@ void MissionItemTest::_testSimpleLoadFromJson(void)
     // We specifically test SimpleMissionItem loading as well since it has additional
     // signalling which can affect values.
 
-    SimpleMissionItem simpleMissionItem(NULL);
+    SimpleMissionItem simpleMissionItem(_offlineVehicle);
     QString     errorString;
     QJsonArray  coordinateArray;
     QJsonObject jsonObject;
