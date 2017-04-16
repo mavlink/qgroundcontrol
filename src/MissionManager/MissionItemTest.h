@@ -14,6 +14,7 @@
 #include "UnitTest.h"
 #include "MultiSignalSpy.h"
 #include "MissionItem.h"
+#include "Vehicle.h"
 
 /// Unit test for the MissionItem Object
 class MissionItemTest : public UnitTest
@@ -23,6 +24,9 @@ class MissionItemTest : public UnitTest
 public:
     MissionItemTest(void);
     
+    void init(void) override;
+    void cleanup(void) override;
+
 private slots:
     void _testSetGet(void);
     void _testSignals(void);
@@ -37,7 +41,8 @@ private slots:
 private:
     void _checkExpectedMissionItem(const MissionItem& missionItem);
 
-    int _seq = 10;
+    int         _seq = 10;
+    Vehicle*    _offlineVehicle;
 };
 
 #endif
