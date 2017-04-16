@@ -27,7 +27,7 @@ QGCFlickable {
             anchors.margins:    _margin
             anchors.left:       parent.left
             anchors.top:        parent.top
-            text:               qsTr("Rally Points (WIP careful!)")
+            text:               qsTr("Rally Points")
             color:              "black"
         }
 
@@ -37,7 +37,7 @@ QGCFlickable {
             anchors.left:       parent.left
             anchors.right:      parent.right
             anchors.top:        editorLabel.bottom
-            height:             infoLabel.height + helpLabel.height + (_margin * 2)
+            height:             helpLabel.height + helpLabel.height + (_margin * 2)
             color:              qgcPal.windowShadeDark
             radius:             _radius
 

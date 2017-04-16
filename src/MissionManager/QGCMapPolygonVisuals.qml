@@ -22,8 +22,13 @@ import QGroundControl.FlightMap     1.0
 Item {
     id: _root
 
-    property var mapControl     ///< Map control to place item in
-    property var mapPolygon     ///< QGCMapPolygon object
+    property var    mapControl                          ///< Map control to place item in
+    property var    mapPolygon                          ///< QGCMapPolygon object
+    property bool   interactive:        true            /// true: user can manipulate polygon
+    property color  interiorColor:      "transparent"
+    property real   interiorOpacity:    1
+    property int    borderWidth:        0
+    property color  borderColor:        "black"
 
     property var _polygonComponent
     property var _dragHandlesComponent
@@ -40,9 +45,11 @@ Item {
     }
 
     function addHandles() {
-        _dragHandlesComponent = dragHandlesComponent.createObject(mapControl)
-        _splitHandlesComponent = splitHandlesComponent.createObject(mapControl)
-        _centerDragHandleComponent = centerDragHandleComponent.createObject(mapControl)
+        if (!_dragHandlesComponent) {
+            _dragHandlesComponent = dragHandlesComponent.createObject(mapControl)
+            _splitHandlesComponent = splitHandlesComponent.createObject(mapControl)
+            _centerDragHandleComponent = centerDragHandleComponent.createObject(mapControl)
+        }
     }
 
     function removeHandles() {
@@ -60,6 +67,52 @@ Item {
         }
     }
 
+    /// Add an initial 4 sided polygon
+    function addInitialPolygon() {
+        if (mapPolygon.count < 3) {
+            // Initial polygon is inset to take 2/3rds space
+            var rect = Qt.rect(map.centerViewport.x, map.centerViewport.y, map.centerViewport.width, map.centerViewport.height)
+            rect.x += (rect.width * 0.25) / 2
+            rect.y += (rect.height * 0.25) / 2
+            rect.width *= 0.75
+            rect.height *= 0.75
+
+            var centerCoord =       map.toCoordinate(Qt.point(rect.x + (rect.width / 2), rect.y + (rect.height / 2)),   false /* clipToViewPort */)
+            var topLeftCoord =      map.toCoordinate(Qt.point(rect.x, rect.y),                                          false /* clipToViewPort */)
+            var topRightCoord =     map.toCoordinate(Qt.point(rect.x + rect.width, rect.y),                             false /* clipToViewPort */)
+            var bottomLeftCoord =   map.toCoordinate(Qt.point(rect.x, rect.y + rect.height),                            false /* clipToViewPort */)
+            var bottomRightCoord =  map.toCoordinate(Qt.point(rect.x + rect.width, rect.y + rect.height),               false /* clipToViewPort */)
+
+            // Initial polygon has max width and height of 3000 meters
+            var halfWidthMeters =   Math.min(topLeftCoord.distanceTo(topRightCoord), 3000) / 2
+            var halfHeightMeters =  Math.min(topLeftCoord.distanceTo(bottomLeftCoord), 3000) / 2
+            topLeftCoord =      centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 0)
+            topRightCoord =     centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 0)
+            bottomLeftCoord =   centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 180)
+            bottomRightCoord =  centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 180)
+
+            mapPolygon.appendVertex(topLeftCoord)
+            mapPolygon.appendVertex(topRightCoord)
+            mapPolygon.appendVertex(bottomRightCoord)
+            mapPolygon.appendVertex(bottomLeftCoord)
+        }
+    }
+
+    onInteractiveChanged: {
+        if (interactive) {
+            addHandles()
+        } else {
+            removeHandles()
+        }
+    }
+
+    Component.onCompleted: {
+        mapPolygonVisuals.addVisuals()
+        if (interactive) {
+            addHandles()
+        }
+    }
+
     Component.onDestruction: {
         removeVisuals()
         removeHandles()
@@ -69,9 +122,11 @@ Item {
         id: polygonComponent
 
         MapPolygon {
-            color: "green"
-            opacity:    0.5
-            path:       mapPolygon.path
+            color:          interiorColor
+            opacity:        interiorOpacity
+            border.color:   borderColor
+            border.width:   borderWidth
+            path:           mapPolygon.path
         }
     }
 
@@ -249,5 +304,4 @@ Item {
         }
     }
 }
-
 

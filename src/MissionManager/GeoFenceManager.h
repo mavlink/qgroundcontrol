@@ -14,6 +14,7 @@
 #include <QGeoCoordinate>
 
 #include "QGCLoggingCategory.h"
+#include "FactSystem.h"
 
 class Vehicle;
 class QmlObjectListModel;
@@ -39,20 +40,39 @@ public:
     /// Send the current settings to the vehicle
     virtual void sendToVehicle(const QGeoCoordinate& breachReturn, QmlObjectListModel& polygon);
 
-    virtual void removeAll(void) { };
+    /// Remove all fence related items from vehicle (does not affect paramters)
+    virtual void removeAll(void) { }
 
-    virtual bool circleEnabled          (void) const { return false; }
-    virtual bool polygonEnabled         (void) const { return false; }
-    virtual bool breachReturnEnabled    (void) const { return false; }
+    /// Returns true if this vehicle support polygon fence
+    ///     Signal: polygonSupportedChanged
+    virtual bool polygonSupported(void) const { return false; }
 
-    virtual float           circleRadius        (void) const { return 0.0; }
+    /// Returns true if polygon fence is currently enabled on this vehicle
+    ///     Signal: polygonEnabledChanged
+    virtual bool polygonEnabled(void) const { return false; }
+
+    /// Returns true if breach return is supported by this vehicle
+    ///     Signal: breachReturnSupportedChanged
+    virtual bool breachReturnSupported(void) const { return false; }
+
+    /// Returns a list of parameter facts that relate to geofence support for the vehicle
+    ///     Signal: paramsChanged
+    virtual QVariantList params(void) const { return QVariantList(); }
+
+    /// Returns the user visible labels for the paremeters returned by params method
+    ///     Signal: paramLabelsChanged
+    virtual QStringList paramLabels(void) const { return QStringList(); }
+
+    /// Returns true if circular fence is currently enabled on vehicle
+    ///     Signal: circleEnabledChanged
+    virtual bool circleEnabled(void) const { return false; }
+
+    /// Returns the fact which controls the fence circle radius. NULL if not supported
+    ///     Signal: circleRadiusFactChanged
+    virtual Fact* circleRadiusFact(void) const { return NULL; }
+
     QList<QGeoCoordinate>   polygon             (void) const { return _polygon; }
     QGeoCoordinate          breachReturnPoint   (void) const { return _breachReturnPoint; }
-
-    virtual QVariantList    params      (void) const { return QVariantList(); }
-    virtual QStringList     paramLabels (void) const { return QStringList(); }
-
-    virtual QString editorQml(void) const { return QStringLiteral("qrc:/FirmwarePlugin/NoGeoFenceEditor.qml"); }
 
     /// Error codes returned in error signal
     typedef enum {
@@ -63,16 +83,17 @@ public:
     } ErrorCode_t;
     
 signals:
-    void loadComplete               (const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
-    void circleEnabledChanged       (bool circleEnabled);
-    void polygonEnabledChanged      (bool polygonEnabled);
-    void breachReturnEnabledChanged (bool fenceEnabled);
-    void circleRadiusChanged        (float circleRadius);
-    void inProgressChanged          (bool inProgress);
-    void error                      (int errorCode, const QString& errorMsg);
-    void paramsChanged              (QVariantList params);
-    void paramLabelsChanged         (QStringList paramLabels);
-    
+    void loadComplete                   (const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
+    void inProgressChanged              (bool inProgress);
+    void error                          (int errorCode, const QString& errorMsg);
+    void paramsChanged                  (QVariantList params);
+    void paramLabelsChanged             (QStringList paramLabels);
+    void circleEnabledChanged           (bool circleEnabled);
+    void circleRadiusFactChanged        (Fact* circleRadiusFact);
+    void polygonSupportedChanged        (bool polygonSupported);
+    void polygonEnabledChanged          (bool polygonEnabled);
+    void breachReturnSupportedChanged   (bool breachReturnSupported);
+
 protected:
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
 
