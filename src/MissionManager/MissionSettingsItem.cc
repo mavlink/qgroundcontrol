@@ -24,18 +24,17 @@ QGC_LOGGING_CATEGORY(MissionSettingsComplexItemLog, "MissionSettingsComplexItemL
 const char* MissionSettingsItem::jsonComplexItemTypeValue = "MissionSettings";
 
 const char* MissionSettingsItem::_plannedHomePositionAltitudeName = "PlannedHomePositionAltitude";
-const char* MissionSettingsItem::_missionEndActionName =            "MissionEndAction";
 
 QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
 
 MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
-    : ComplexMissionItem(vehicle, parent)
+    : ComplexMissionItem                (vehicle, parent)
     , _plannedHomePositionAltitudeFact  (0, _plannedHomePositionAltitudeName,   FactMetaData::valueTypeDouble)
-    , _missionEndActionFact             (0, _missionEndActionName,              FactMetaData::valueTypeUint32)
-    , _cameraSection(vehicle)
-    , _speedSection(vehicle)
-    , _sequenceNumber(0)
-    , _dirty(false)
+    , _missionEndRTL                    (false)
+    , _cameraSection                    (vehicle)
+    , _speedSection                     (vehicle)
+    , _sequenceNumber                   (0)
+    , _dirty                            (false)
 {
     _editorQml = "qrc:/qml/MissionSettingsEditor.qml";
 
@@ -44,27 +43,25 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
     }
 
     _plannedHomePositionAltitudeFact.setMetaData    (_metaDataMap[_plannedHomePositionAltitudeName]);
-    _missionEndActionFact.setMetaData               (_metaDataMap[_missionEndActionName]);
 
     _plannedHomePositionAltitudeFact.setRawValue    (_plannedHomePositionAltitudeFact.rawDefaultValue());
-    _missionEndActionFact.setRawValue               (_missionEndActionFact.rawDefaultValue());
 
     setHomePositionSpecialCase(true);
 
     connect(this,               &MissionSettingsItem::specifyMissionFlightSpeedChanged, this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
+    connect(this,               &MissionSettingsItem::missionEndRTLChanged,             this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
     connect(&_cameraSection,    &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
     connect(&_speedSection,     &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
 
-    connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged, this, &MissionSettingsItem::_setDirty);
-    connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged, this, &MissionSettingsItem::_updateAltitudeInCoordinate);
+    connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged,                        this, &MissionSettingsItem::_setDirty);
 
-    connect(&_missionEndActionFact,             &Fact::valueChanged, this, &MissionSettingsItem::_setDirty);
+    connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged, this, &MissionSettingsItem::_updateAltitudeInCoordinate);
 
     connect(&_cameraSection,    &CameraSection::dirtyChanged,   this, &MissionSettingsItem::_sectionDirtyChanged);
     connect(&_speedSection,     &SpeedSection::dirtyChanged,    this, &MissionSettingsItem::_sectionDirtyChanged);
 
-    connect(&_cameraSection,            &CameraSection::specifyGimbalChanged,       this, &MissionSettingsItem::specifiedGimbalYawChanged);
-    connect(&_cameraSection,            &CameraSection::specifiedGimbalYawChanged,  this, &MissionSettingsItem::specifiedGimbalYawChanged);
+    connect(&_cameraSection,    &CameraSection::specifyGimbalChanged,       this, &MissionSettingsItem::specifiedGimbalYawChanged);
+    connect(&_cameraSection,    &CameraSection::specifiedGimbalYawChanged,  this, &MissionSettingsItem::specifiedGimbalYawChanged);
 }
 
 
@@ -164,43 +161,7 @@ bool MissionSettingsItem::addMissionEndAction(QList<MissionItem*>& items, int se
 
     // IMPORTANT NOTE: If anything changes here you must also change MissionSettingsItem::scanForMissionSettings
 
-    // Find last waypoint coordinate information so we have a lat/lon/alt to use
-    QGeoCoordinate  lastWaypointCoord;
-    MAV_FRAME       lastWaypointFrame;
-
-    bool found = false;
-    for (int i=items.count()-1; i>0; i--) {
-        MissionItem* missionItem = items[i];
-
-        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_vehicle, (MAV_CMD)missionItem->command());
-        if (uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
-            lastWaypointCoord = missionItem->coordinate();
-            lastWaypointFrame = missionItem->frame();
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
-        return false;
-    }
-
-    switch(_missionEndActionFact.rawValue().toInt()) {
-    case MissionEndLoiter:
-        qCDebug(MissionSettingsComplexItemLog) << "Appending end action Loiter seqNum" << seqNum;
-        item = new MissionItem(seqNum,
-                               MAV_CMD_NAV_LOITER_UNLIM,
-                               lastWaypointFrame,
-                               0, 0,                        // param 1-2 unused
-                               0,                           // use default loiter radius
-                               0,                           // param 4 not used
-                               lastWaypointCoord.latitude(),
-                               lastWaypointCoord.longitude(),
-                               lastWaypointCoord.altitude(),
-                               true,                        // autoContinue
-                               false,                       // isCurrentItem
-                               missionItemParent);
-        break;
-    case MissionEndRTL:
+    if (_missionEndRTL) {
         qCDebug(MissionSettingsComplexItemLog) << "Appending end action RTL seqNum" << seqNum;
         item = new MissionItem(seqNum,
                                MAV_CMD_NAV_RETURN_TO_LAUNCH,
@@ -209,12 +170,6 @@ bool MissionSettingsItem::addMissionEndAction(QList<MissionItem*>& items, int se
                                true,                       // autoContinue
                                false,                      // isCurrentItem
                                missionItemParent);
-        break;
-    default:
-        break;
-    }
-
-    if (item) {
         items.append(item);
         return true;
     } else {
@@ -248,25 +203,11 @@ bool MissionSettingsItem::scanForMissionSettings(QmlObjectListModel* visualItems
     if (item) {
         MissionItem& missionItem = item->missionItem();
 
-        switch ((MAV_CMD)item->command()) {
-        case MAV_CMD_NAV_LOITER_UNLIM:
-            if (missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0) {
-                qCDebug(MissionSettingsComplexItemLog) << "Scan: Found end action Loiter";
-                settingsItem->missionEndAction()->setRawValue(MissionEndLoiter);
-                visualItems->removeAt(lastIndex)->deleteLater();
-            }
-            break;
-
-        case MAV_CMD_NAV_RETURN_TO_LAUNCH:
-            if (missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
-                qCDebug(MissionSettingsComplexItemLog) << "Scan: Found end action RTL";
-                settingsItem->missionEndAction()->setRawValue(MissionEndRTL);
-                visualItems->removeAt(lastIndex)->deleteLater();
-            }
-            break;
-
-        default:
-            break;
+        if (missionItem.command() == MAV_CMD_NAV_RETURN_TO_LAUNCH &&
+                missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+            qCDebug(MissionSettingsComplexItemLog) << "Scan: Found end action RTL";
+            settingsItem->_missionEndRTL = true;
+            visualItems->removeAt(lastIndex)->deleteLater();
         }
     }
 

@@ -510,6 +510,7 @@ QGCView {
         GuidedActionsController {
             id:                 guidedActionsController
             missionController:  flyMissionController
+            confirmDialog:      guidedActionConfirm
             z:                  _flightVideoPipControl.z + 1
 
             onShowStartMissionChanged: {
@@ -522,14 +523,6 @@ QGCView {
                 if (showResumeMission) {
                     confirmAction(actionResumeMission)
                 }
-            }
-
-            onShowConfirmAction: {
-                guidedActionConfirm.title =         title
-                guidedActionConfirm.message =       message
-                guidedActionConfirm.action =        action
-                guidedActionConfirm.actionData =    actionData
-                guidedActionConfirm.visible =       true
             }
         }
 
