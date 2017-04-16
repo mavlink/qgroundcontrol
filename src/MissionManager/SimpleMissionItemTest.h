@@ -24,7 +24,10 @@ class SimpleMissionItemTest : public UnitTest
     
 public:
     SimpleMissionItemTest(void);
-    
+
+    void init(void) override;
+    void cleanup(void) override;
+
 private slots:
     void _testSignals(void);
     void _testEditorFacts(void);
@@ -47,6 +50,8 @@ private:
         const FactValue_t*  rgFactValues;
         bool                relativeAltCheckbox;
     } ItemExpected_t;
+
+    Vehicle*    _offlineVehicle;
 
     static const ItemInfo_t     _rgItemInfo[];
     static const ItemExpected_t _rgItemExpected[];
