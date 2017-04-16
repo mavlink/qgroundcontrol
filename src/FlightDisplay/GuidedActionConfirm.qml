@@ -51,6 +51,7 @@ Rectangle {
             anchors.left:           slider.left
             anchors.right:          slider.right
             horizontalAlignment:    Text.AlignHCenter
+            font.pointSize:         ScreenTools.largeFontPointSize
         }
 
         QGCLabel {

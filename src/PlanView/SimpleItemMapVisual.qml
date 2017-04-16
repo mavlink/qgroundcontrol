@@ -62,7 +62,7 @@ Item {
 
     Component.onCompleted: {
         showItemVisuals()
-        if (_missionItem.isCurrentItem) {
+        if (_missionItem.isCurrentItem && map.planView) {
             showDragArea()
         }
     }
