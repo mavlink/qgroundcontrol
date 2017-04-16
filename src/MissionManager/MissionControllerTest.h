@@ -43,18 +43,18 @@ private:
     void _testEmptyVehicleWorker(MAV_AUTOPILOT firmwareType);
     void _testAddWaypointWorker(MAV_AUTOPILOT firmwareType);
     void _testOfflineToOnlineWorker(MAV_AUTOPILOT firmwareType);
-    void _setupMissionItemSignals(SimpleMissionItem* item);
+    void _setupVisualItemSignals(VisualMissionItem* visualItem);
 
     // MissiomItems signals
 
     enum {
         coordinateChangedSignalIndex = 0,
-        missionItemMaxSignalIndex
+        visualItemMaxSignalIndex
     };
 
     enum {
-        coordinateChangedSignalMask =           1 << coordinateChangedSignalIndex,
-        missionItemMaxSignalMask =              1 << missionItemMaxSignalIndex,
+        coordinateChangedSignalMask =   1 << coordinateChangedSignalIndex,
+        visualItemMaxSignalMask =       1 << visualItemMaxSignalIndex,
     };
 
     // MissionController signals
@@ -75,8 +75,8 @@ private:
     const char*         _rgMissionControllerSignals[_cMissionControllerSignals];
 
     MultiSignalSpy*     _multiSpyMissionItem;
-    static const size_t _cMissionItemSignals = missionItemMaxSignalIndex;
-    const char*         _rgMissionItemSignals[_cMissionItemSignals];
+    static const size_t _cVisualItemSignals = visualItemMaxSignalIndex;
+    const char*         _rgVisualItemSignals[_cVisualItemSignals];
 
     MissionController*  _missionController;
 };

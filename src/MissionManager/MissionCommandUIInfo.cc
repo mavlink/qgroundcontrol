@@ -358,9 +358,9 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             paramInfo->_nanUnchanged =  paramObject.value(_nanUnchangedJsonKey).toBool(false);
 
             if (paramObject.contains(_defaultJsonKey)) {
-                paramInfo->_defaultValue =  paramObject.value(_defaultJsonKey).toDouble(0.0);
+                paramInfo->_defaultValue = paramObject.value(_defaultJsonKey).toDouble(0.0);
             } else {
-                paramInfo->_defaultValue = _nanUnchangedJsonKey ? std::numeric_limits<double>::quiet_NaN() : 0;
+                paramInfo->_defaultValue = paramInfo->_nanUnchanged ? std::numeric_limits<double>::quiet_NaN() : 0;
             }
 
             QStringList enumValues = paramObject.value(_enumValuesJsonKey).toString().split(",", QString::SkipEmptyParts);

@@ -31,7 +31,7 @@ class MissionCommandTreeTest;
 /// Key             Type    Default     Description
 /// label           string  required    Label for text field
 /// units           string              Units for value, should use FactMetaData units strings in order to get automatic translation
-/// default         double  0.0/NaN     Default value for param. If no default value specified and nanUnchanged == true, then defaultVlue is NaN.
+/// default         double  0.0/NaN     Default value for param. If no default value specified and nanUnchanged == true, then defaultValue is NaN.
 /// decimalPlaces   int     7           Number of decimal places to show for value
 /// enumStrings     string              Strings to show in combo box for selection
 /// enumValues      string              Values assocaited with each enum string
