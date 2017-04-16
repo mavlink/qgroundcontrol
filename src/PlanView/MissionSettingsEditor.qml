@@ -124,11 +124,10 @@ Rectangle {
                     }
                 } // GridLayout
 
-                FactComboBox {
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    fact:           missionItem.missionEndAction
-                    indexModel:     false
+                QGCCheckBox {
+                    text:       qsTr("RTL after mission end")
+                    checked:    missionItem.missionEndRTL
+                    onClicked:  missionItem.missionEndRTL = checked
                 }
             }
 
