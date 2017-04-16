@@ -40,6 +40,8 @@ FlightMap {
     property var    rightPanelWidth
     property var    qgcView                             ///< QGCView control which contains this map
 
+    property rect   centerViewport:             Qt.rect(0, 0, width, height)
+
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property var    _gotoHereCoordinate:        QtPositioning.coordinate()
@@ -201,6 +203,7 @@ FlightMap {
         map:                    flightMap
         myGeoFenceController:   geoFenceController
         interactive:            false
+        planView:               false
         homePosition:           _activeVehicle && _activeVehicle.homePosition.isValid ? _activeVehicle.homePosition : undefined
     }
 

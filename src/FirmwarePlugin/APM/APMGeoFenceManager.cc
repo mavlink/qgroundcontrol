@@ -23,9 +23,10 @@ const char* APMGeoFenceManager::_fenceEnableParam = "FENCE_ENABLE";
 APMGeoFenceManager::APMGeoFenceManager(Vehicle* vehicle)
     : GeoFenceManager(vehicle)
     , _fenceSupported(false)
-    , _breachReturnEnabled(vehicle->fixedWing())
     , _circleEnabled(false)
+    , _polygonSupported(false)
     , _polygonEnabled(false)
+    , _breachReturnSupported(vehicle->fixedWing())
     , _firstParamLoadComplete(false)
     , _readTransactionInProgress(false)
     , _writeTransactionInProgress(false)
@@ -223,27 +224,43 @@ bool APMGeoFenceManager::inProgress(void) const
     return _readTransactionInProgress || _writeTransactionInProgress;
 }
 
+void APMGeoFenceManager::_setCircleEnabled(bool circleEnabled)
+{
+    if (circleEnabled != _circleEnabled) {
+        _circleEnabled = circleEnabled;
+        emit circleEnabledChanged(circleEnabled);
+    }
+}
+
+void APMGeoFenceManager::_setPolygonEnabled(bool polygonEnabled)
+{
+    if (polygonEnabled != _polygonEnabled) {
+        _polygonEnabled = polygonEnabled;
+        emit polygonEnabledChanged(polygonEnabled);
+    }
+}
+
 void APMGeoFenceManager::_updateEnabledFlags(void)
 {
-    bool fenceEnabled;
-    if (_fenceEnableFact) {
-        fenceEnabled = _fenceEnableFact->rawValue().toBool();
+    bool fenceEnabled = false;
+
+    if (_fenceSupported) {
+        if (_fenceEnableFact) {
+            fenceEnabled = _fenceEnableFact->rawValue().toBool();
+        } else {
+            fenceEnabled = true;
+        }
+
+        bool newCircleEnabled = fenceEnabled && _fenceTypeFact && (_fenceTypeFact->rawValue().toInt() & 2);
+        _setCircleEnabled(newCircleEnabled);
+
+        bool newPolygonEnabled = _fenceSupported && fenceEnabled &&
+                ((_vehicle->multiRotor() && _fenceTypeFact && (_fenceTypeFact->rawValue().toInt() & 4)) ||
+                 _vehicle->fixedWing());
+        _setPolygonEnabled(newPolygonEnabled);
     } else {
-        fenceEnabled = true;
-    }
-
-    bool newCircleEnabled = _fenceSupported && fenceEnabled && _fenceTypeFact && (_fenceTypeFact->rawValue().toInt() & 2);
-    if (newCircleEnabled != _circleEnabled) {
-        _circleEnabled = newCircleEnabled;
-        emit circleEnabledChanged(newCircleEnabled);
-    }
-
-    bool newPolygonEnabled = _fenceSupported && fenceEnabled &&
-            ((_vehicle->multiRotor() && _fenceTypeFact && (_fenceTypeFact->rawValue().toInt() & 4)) ||
-             _vehicle->fixedWing());
-    if (newPolygonEnabled != _polygonEnabled) {
-        _polygonEnabled = newPolygonEnabled;
-        emit polygonEnabledChanged(newPolygonEnabled);
+        _setCircleEnabled(false);
+        _setPolygonEnabled(false);
     }
 }
 
@@ -260,24 +277,26 @@ void APMGeoFenceManager::_parametersReady(void)
             QStringList paramNames;
             QStringList paramLabels;
 
+            _polygonSupported = true;
+
             if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, _fenceEnableParam)) {
                 _fenceEnableFact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _fenceEnableParam);
                 connect(_fenceEnableFact, &Fact::rawValueChanged, this, &APMGeoFenceManager::_updateEnabledFlags);
             }
 
             if (_vehicle->multiRotor()) {
+                _breachReturnSupported = false;
                 _fenceTypeFact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("FENCE_TYPE"));
                 connect(_fenceTypeFact, &Fact::rawValueChanged, this, &APMGeoFenceManager::_updateEnabledFlags);
 
                 _circleRadiusFact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("FENCE_RADIUS"));
-                connect(_circleRadiusFact, &Fact::rawValueChanged, this, &APMGeoFenceManager::_circleRadiusRawValueChanged);
-                emit circleRadiusChanged(circleRadius());
 
                 paramNames << QStringLiteral("FENCE_ENABLE") << QStringLiteral("FENCE_TYPE") << QStringLiteral("FENCE_ACTION") << QStringLiteral("FENCE_ALT_MAX")
                            << QStringLiteral("FENCE_RADIUS") << QStringLiteral("FENCE_MARGIN");
                 paramLabels << QStringLiteral("Enabled:") << QStringLiteral("Type:") << QStringLiteral("Breach Action:") << QStringLiteral("Max Altitude:")
                             << QStringLiteral("Radius:") << QStringLiteral("Margin:");
             } if (_vehicle->fixedWing()) {
+                _breachReturnSupported = true;
                 paramNames << QStringLiteral("FENCE_ACTION") << QStringLiteral("FENCE_MINALT") << QStringLiteral("FENCE_MAXALT") << QStringLiteral("FENCE_RETALT")
                            << QStringLiteral("FENCE_AUTOENABLE") << QStringLiteral("FENCE_RET_RALLY");
                 paramLabels << QStringLiteral("Breach Action:") << QStringLiteral("Min Altitude:") << QStringLiteral("Max Altitude:") << QStringLiteral("Return Altitude:")
@@ -297,36 +316,11 @@ void APMGeoFenceManager::_parametersReady(void)
             emit paramsChanged(_params);
             emit paramLabelsChanged(_paramLabels);
 
-            _updateEnabledFlags();
+            emit breachReturnSupportedChanged(_breachReturnSupported);
+            emit polygonSupportedChanged(_polygonSupported);
         }
 
-        qCDebug(GeoFenceManagerLog) << "fenceSupported:circleEnabled:polygonEnabled:breachReturnEnabled" <<
-                                       _fenceSupported << _circleEnabled << _polygonEnabled << _breachReturnEnabled;
-    }
-}
-
-float APMGeoFenceManager::circleRadius(void) const
-{
-    if (_circleRadiusFact) {
-        return _circleRadiusFact->rawValue().toFloat();
-    } else {
-        return 0.0;
-    }
-}
-
-void APMGeoFenceManager::_circleRadiusRawValueChanged(QVariant value)
-{
-    emit circleRadiusChanged(value.toFloat());
-}
-
-QString APMGeoFenceManager::editorQml(void) const
-{
-    if (_fenceSupported) {
-        return _vehicle->multiRotor() ?
-                    QStringLiteral("qrc:/FirmwarePlugin/APM/CopterGeoFenceEditor.qml") :
-                    QStringLiteral("qrc:/FirmwarePlugin/APM/PlaneGeoFenceEditor.qml");
-    } else {
-        return QStringLiteral("qrc:/FirmwarePlugin/NoGeoFenceEditor.qml");
+        _updateEnabledFlags();
     }
 }
 

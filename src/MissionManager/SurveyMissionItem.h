@@ -31,7 +31,6 @@ public:
     Q_PROPERTY(Fact*                gridAngle                   READ gridAngle                      CONSTANT)
     Q_PROPERTY(Fact*                gridSpacing                 READ gridSpacing                    CONSTANT)
     Q_PROPERTY(Fact*                turnaroundDist              READ turnaroundDist                 CONSTANT)
-    Q_PROPERTY(Fact*                cameraTrigger               READ cameraTrigger                  CONSTANT)
     Q_PROPERTY(Fact*                cameraTriggerDistance       READ cameraTriggerDistance          CONSTANT)
     Q_PROPERTY(Fact*                cameraTriggerInTurnaround   READ cameraTriggerInTurnaround      CONSTANT)
     Q_PROPERTY(Fact*                hoverAndCapture             READ hoverAndCapture                CONSTANT)
@@ -74,7 +73,6 @@ public:
     Fact* gridAngle                 (void) { return &_gridAngleFact; }
     Fact* gridSpacing               (void) { return &_gridSpacingFact; }
     Fact* turnaroundDist            (void) { return &_turnaroundDistFact; }
-    Fact* cameraTrigger             (void) { return &_cameraTriggerFact; }
     Fact* cameraTriggerDistance     (void) { return &_cameraTriggerDistanceFact; }
     Fact* cameraTriggerInTurnaround (void) { return &_cameraTriggerInTurnaroundFact; }
     Fact* hoverAndCapture           (void) { return &_hoverAndCaptureFact; }
@@ -221,6 +219,7 @@ private:
     int                             _missionCommandCount;
     bool                            _refly90Degrees;
 
+    bool            _ignoreRecalc;
     double          _surveyDistance;
     int             _cameraShots;
     double          _coveredArea;
@@ -235,7 +234,6 @@ private:
     SettingsFact    _gridAngleFact;
     SettingsFact    _gridSpacingFact;
     SettingsFact    _turnaroundDistFact;
-    SettingsFact    _cameraTriggerFact;
     SettingsFact    _cameraTriggerDistanceFact;
     SettingsFact    _cameraTriggerInTurnaroundFact;
     SettingsFact    _hoverAndCaptureFact;
@@ -257,7 +255,6 @@ private:
     static const char* _jsonGridAngleKey;
     static const char* _jsonGridSpacingKey;
     static const char* _jsonTurnaroundDistKey;
-    static const char* _jsonCameraTriggerKey;
     static const char* _jsonCameraTriggerDistanceKey;
     static const char* _jsonCameraTriggerInTurnaroundKey;
     static const char* _jsonHoverAndCaptureKey;
