@@ -203,7 +203,7 @@ bool MissionSettingsItem::scanForMissionSettings(QmlObjectListModel* visualItems
     if (item) {
         MissionItem& missionItem = item->missionItem();
 
-        if (item->command() == MAV_CMD_NAV_RETURN_TO_LAUNCH &&
+        if (missionItem.command() == MAV_CMD_NAV_RETURN_TO_LAUNCH &&
                 missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
             qCDebug(MissionSettingsComplexItemLog) << "Scan: Found end action RTL";
             settingsItem->_missionEndRTL = true;
