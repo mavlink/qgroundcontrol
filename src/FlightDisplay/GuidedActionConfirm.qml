@@ -34,8 +34,17 @@ Rectangle {
     property alias  message:            messageText.text
     property int    action
     property var    actionData
+    property bool   hideTrigger:        false
 
     property real _margins: ScreenTools.defaultFontPixelWidth
+
+    onHideTriggerChanged: {
+        if (hideTrigger) {
+            hideTrigger = false
+            altitudeSlider.visible = false
+            visible = false
+        }
+    }
 
     QGCPalette { id: qgcPal }
 
@@ -75,12 +84,14 @@ Rectangle {
                     _root.actionData = altitudeSlider.getValue()
                     altitudeSlider.visible = false
                 }
+                hideTrigger = false
                 guidedController.executeAction(_root.action, _root.actionData)
             }
 
             onReject: {
                 altitudeSlider.visible = false
                 _root.visible = false
+                hideTrigger = false
             }
         }
     }
