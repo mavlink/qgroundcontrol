@@ -383,6 +383,17 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
 
+        metaData = new CameraMetaData(tr("Canon G9 X PowerShot"),
+                                      13.2,
+                                      8.8,
+                                      5488,
+                                      3680,
+                                      10.2,
+                                      true,
+                                      false,
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
+
         metaData = new CameraMetaData(tr("Canon SX260 HS PowerShot"),
                                       6.17,
                                       4.55,
