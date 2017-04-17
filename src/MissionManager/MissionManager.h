@@ -116,6 +116,7 @@ private:
     void _writeMissionCount(void);
     void _writeMissionItemsWorker(void);
     void _clearAndDeleteMissionItems(void);
+    QString _lastMissionReqestString(MAV_MISSION_RESULT result);
 
 private:
     Vehicle*            _vehicle;
@@ -130,6 +131,7 @@ private:
     bool        _resumeMission;
     QList<int>  _itemIndicesToWrite;    ///< List of mission items which still need to be written to vehicle
     QList<int>  _itemIndicesToRead;     ///< List of mission items which still need to be requested from vehicle
+    int         _lastMissionRequest;    ///< Index of item last requested by MISSION_REQUEST
     
     QMutex _dataMutex;
     

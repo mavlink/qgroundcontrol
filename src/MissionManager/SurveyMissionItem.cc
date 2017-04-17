@@ -118,7 +118,9 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     connect(&_hoverAndCaptureFact,              &Fact::valueChanged,                        this, &SurveyMissionItem::_generateGrid);
     connect(this,                               &SurveyMissionItem::refly90DegreesChanged,  this, &SurveyMissionItem::_generateGrid);
 
-    connect(&_gridAltitudeFact,             &Fact::valueChanged, this, &SurveyMissionItem::_updateCoordinateAltitude);
+    connect(&_gridAltitudeFact,                 &Fact::valueChanged, this, &SurveyMissionItem::_updateCoordinateAltitude);
+
+    connect(&_gridAltitudeRelativeFact,         &Fact::valueChanged, this, &SurveyMissionItem::_setDirty);
 
     // Signal to Qml when camera value changes so it can recalc
     connect(&_groundResolutionFact,             &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
@@ -562,6 +564,7 @@ void SurveyMissionItem::_updateCoordinateAltitude(void)
     _exitCoordinate.setAltitude(_gridAltitudeFact.rawValue().toDouble());
     emit coordinateChanged(_coordinate);
     emit exitCoordinateChanged(_exitCoordinate);
+    setDirty(true);
 }
 
 QPointF SurveyMissionItem::_rotatePoint(const QPointF& point, const QPointF& origin, double angle)

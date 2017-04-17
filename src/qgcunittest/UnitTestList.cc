@@ -50,6 +50,7 @@ UT_REGISTER_TEST(ParameterManagerTest)
 UT_REGISTER_TEST(MissionCommandTreeTest)
 UT_REGISTER_TEST(LogDownloadTest)
 UT_REGISTER_TEST(SendMavCommandTest)
+UT_REGISTER_TEST(SurveyMissionItemTest)
 
 // List of unit test which are currently disabled.
 // If disabling a new test, include reason in comment.
@@ -61,5 +62,4 @@ UT_REGISTER_TEST(SendMavCommandTest)
 //UT_REGISTER_TEST(FileManagerTest)
 
 // Needs to be update for latest changes
-//UT_REGISTER_TEST(SurveyMissionItemTest)
 //UT_REGISTER_TEST(MavlinkLogTest)
