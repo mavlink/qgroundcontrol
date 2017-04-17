@@ -56,7 +56,7 @@ public:
     bool dirty              (void) const override { return _dirty; }
     void setAvailable       (bool available) override;
     void setDirty           (bool dirty) override;
-    bool scanForSection     (QmlObjectListModel* visualItems, int& scanIndex) override;
+    bool scanForSection     (QmlObjectListModel* visualItems, int scanIndex) override;
     void appendSectionItems (QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum) override;
     int  itemCount          (void) const override;
     bool settingsSpecified  (void) const override {return _settingsSpecified; }
@@ -69,6 +69,9 @@ private slots:
     void _setDirty(void);
     void _setDirtyAndUpdateItemCount(void);
     void _updateSpecifiedGimbalYaw(void);
+    void _specifyGimbalChanged(bool specifyGimbal);
+    void _updateSettingsSpecified(void);
+    void _cameraActionChanged(void);
 
 private:
     bool    _available;
