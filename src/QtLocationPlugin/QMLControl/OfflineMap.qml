@@ -609,7 +609,7 @@ QGCView {
             anchors.margins:    ScreenTools.defaultFontPixelWidth
             anchors.verticalCenter: parent.verticalCenter
             anchors.right:      parent.right
-            visible:            _map.visible
+            visible:            addNewSetView.visible
             width:              ScreenTools.defaultFontPixelWidth * (ScreenTools.isTinyScreen ? 24 : 28)
             height:             Math.min(parent.height - (anchors.margins * 2), addNewSetFlickable.y + addNewSetColumn.height + addNewSetLabel.anchors.margins)
             color:              Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.85)
