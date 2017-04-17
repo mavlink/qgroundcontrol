@@ -28,12 +28,6 @@
 <value code=" 252"> AP Planner 2</value>
 </values>
 </param>
-<param humanName="CLI Enable" name="ArduSub:CLI_ENABLED" documentation="This enables/disables the checking for three carriage returns on telemetry links on startup to enter the diagnostics command line interface" user="Advanced">
-<values>
-<value code="0">Disabled</value>
-<value code="1">Enabled</value>
-</values>
-</param>
 <param humanName="Throttle filter cutoff" name="ArduSub:PILOT_THR_FILT" documentation="Throttle filter cutoff (Hz) - active whenever altitude control is inactive - 0 to disable" user="Advanced">
 <field name="Range">0 10</field>
 <field name="Increment">.5</field>
@@ -55,6 +49,9 @@
 <param humanName="Battery Failsafe Enable" name="ArduSub:FS_BATT_ENABLE" documentation="Controls whether failsafe will be invoked when battery voltage or current runs low" user="Standard">
 <values>
 <value code="0">Disabled</value>
+<value code="1">Warn only</value>
+<value code="2">Disarm</value>
+<value code="3">Enter surface mode</value>
 </values>
 </param>
 <param humanName="Failsafe battery voltage" name="ArduSub:FS_BATT_VOLTAGE" documentation="Battery voltage to trigger failsafe. Set to 0 to disable battery voltage failsafe." user="Standard">
@@ -106,11 +103,15 @@
 <value code=" 2">Surface</value>
 </values>
 </param>
+<param humanName="Pilot input failsafe action" name="ArduSub:FS_PILOT_INPUT" documentation="Controls what action to take if no pilot input has been received after the timeout period specified by the FS_PILOT_TIMEOUT parameter" user="Standard">
+<values>
+<value code="0">Disabled</value>
+<value code=" 1">Warn Only</value>
+<value code=" 2">Disarm</value>
+</values>
+</param>
 <param humanName="Crosstrack correction angle limit" name="ArduSub:XTRACK_ANG_LIM" documentation="Maximum allowed angle (in degrees) between current track and desired heading during waypoint navigation" user="Standard">
 <field name="Range">10 90</field>
-</param>
-<param humanName="GPS Hdop Good" name="ArduSub:GPS_HDOP_GOOD" documentation="GPS Hdop value at or below this value represent a good position.  Used for pre-arm checks" user="Advanced">
-<field name="Range">100 900</field>
 </param>
 <param humanName="Compass enable/disable" name="ArduSub:MAG_ENABLE" documentation="Setting this to Enabled(1) will enable the compass. Setting this to Disabled(0) will disable the compass" user="Standard">
 <values>
@@ -141,48 +142,6 @@
 <field name="Increment">1</field>
 <field name="Units">pwm</field>
 </param>
-<param humanName="Flight Mode 1" name="ArduSub:FLTMODE1" documentation="Flight mode when Channel 5 pwm is &lt;= 1230" user="Standard">
-<values>
-<value code="0">Stabilize</value>
-<value code="2">DepthHold</value>
-<value code="19">Manual</value>
-</values>
-</param>
-<param humanName="Flight Mode 2" name="ArduSub:FLTMODE2" documentation="Flight mode when Channel 5 pwm is &gt;1230, &lt;= 1360" user="Standard">
-<values>
-<value code="0">Stabilize</value>
-<value code="2">DepthHold</value>
-<value code="19">Manual</value>
-</values>
-</param>
-<param humanName="Flight Mode 3" name="ArduSub:FLTMODE3" documentation="Flight mode when Channel 5 pwm is &gt;1360, &lt;= 1490" user="Standard">
-<values>
-<value code="0">Stabilize</value>
-<value code="2">DepthHold</value>
-<value code="19">Manual</value>
-</values>
-</param>
-<param humanName="Flight Mode 4" name="ArduSub:FLTMODE4" documentation="Flight mode when Channel 5 pwm is &gt;1490, &lt;= 1620" user="Standard">
-<values>
-<value code="0">Stabilize</value>
-<value code="2">DepthHold</value>
-<value code="19">Manual</value>
-</values>
-</param>
-<param humanName="Flight Mode 5" name="ArduSub:FLTMODE5" documentation="Flight mode when Channel 5 pwm is &gt;1620, &lt;= 1749" user="Standard">
-<values>
-<value code="0">Stabilize</value>
-<value code="2">DepthHold</value>
-<value code="19">Manual</value>
-</values>
-</param>
-<param humanName="Flight Mode 6" name="ArduSub:FLTMODE6" documentation="Flight mode when Channel 5 pwm is &gt;=1750" user="Standard">
-<values>
-<value code="0">Stabilize</value>
-<value code="2">DepthHold</value>
-<value code="19">Manual</value>
-</values>
-</param>
 <param humanName="Log bitmask" name="ArduSub:LOG_BITMASK" documentation="4 byte bitmap of log types to enable" user="Standard">
 <field name="Bitmask">0:ATTITUDE_FAST,1:ATTITUDE_MED,2:GPS,3:PM,4:CTUN,5:NTUN,6:RCIN,7:IMU,8:CMD,9:CURRENT,10:RCOUT,11:OPTFLOW,12:PID,13:COMPASS,14:INAV,15:CAMERA,17:MOTBATT,18:IMU_FAST,19:IMU_RAW</field>
 <values>
@@ -199,300 +158,6 @@
 <value code="655358">All+FullIMU</value>
 <value code="0">Disabled</value>
 </values>
-</param>
-<param humanName="ESC Calibration" name="ArduSub:ESC_CALIBRATION" documentation="Controls whether ArduSub will enter ESC calibration on the next restart.  Do not adjust this parameter manually." user="Advanced">
-<values>
-<value code="0">Normal Start-up</value>
-<value code=" 1">Start-up in ESC Calibration mode if throttle high</value>
-<value code=" 2">Start-up in ESC Calibration mode regardless of throttle</value>
-<value code=" 9">Disabled</value>
-</values>
-</param>
-<param humanName="Channel 6 Tuning" name="ArduSub:TUNE" documentation="Controls which parameters (normally PID gains) are being tuned with transmitter's channel 6 knob" user="Standard">
-<values>
-<value code="0">None</value>
-<value code="1">Stab Roll/Pitch kP</value>
-<value code="4">Rate Roll/Pitch kP</value>
-<value code="5">Rate Roll/Pitch kI</value>
-<value code="21">Rate Roll/Pitch kD</value>
-<value code="3">Stab Yaw kP</value>
-<value code="6">Rate Yaw kP</value>
-<value code="26">Rate Yaw kD</value>
-<value code="14">Altitude Hold kP</value>
-<value code="7">Throttle Rate kP</value>
-<value code="34">Throttle Accel kP</value>
-<value code="35">Throttle Accel kI</value>
-<value code="36">Throttle Accel kD</value>
-<value code="42">Loiter Speed</value>
-<value code="12">Loiter Pos kP</value>
-<value code="22">Velocity XY kP</value>
-<value code="28">Velocity XY kI</value>
-<value code="10">WP Speed</value>
-<value code="25">Acro RollPitch kP</value>
-<value code="40">Acro Yaw kP</value>
-<value code="13">Heli Ext Gyro</value>
-<value code="17">OF Loiter kP</value>
-<value code="18">OF Loiter kI</value>
-<value code="19">OF Loiter kD</value>
-<value code="38">Declination</value>
-<value code="39">Circle Rate</value>
-<value code="41">RangeFinder Gain</value>
-<value code="46">Rate Pitch kP</value>
-<value code="47">Rate Pitch kI</value>
-<value code="48">Rate Pitch kD</value>
-<value code="49">Rate Roll kP</value>
-<value code="50">Rate Roll kI</value>
-<value code="51">Rate Roll kD</value>
-<value code="52">Rate Pitch FF</value>
-<value code="53">Rate Roll FF</value>
-<value code="54">Rate Yaw FF</value>
-</values>
-</param>
-<param humanName="Tuning minimum" name="ArduSub:TUNE_LOW" documentation="The minimum value that will be applied to the parameter currently being tuned with the transmitter's channel 6 knob" user="Standard">
-<field name="Range">0 32767</field>
-</param>
-<param humanName="Tuning maximum" name="ArduSub:TUNE_HIGH" documentation="The maximum value that will be applied to the parameter currently being tuned with the transmitter's channel 6 knob" user="Standard">
-<field name="Range">0 32767</field>
-</param>
-<param humanName="Channel 7 option" name="ArduSub:CH7_OPT" documentation="Select which function if performed when CH7 is above 1800 pwm" user="Standard">
-<values>
-<value code="0">Do Nothing</value>
-<value code=" 2">Flip</value>
-<value code=" 3">Simple Mode</value>
-<value code=" 4">RTL</value>
-<value code=" 5">Save Trim</value>
-<value code=" 7">Save WP</value>
-<value code=" 9">Camera Trigger</value>
-<value code=" 10">RangeFinder</value>
-<value code=" 11">Fence</value>
-<value code=" 12">ResetToArmedYaw</value>
-<value code=" 13">Super Simple Mode</value>
-<value code=" 14">Acro Trainer</value>
-<value code=" 16">Auto</value>
-<value code=" 17">AutoTune</value>
-<value code=" 18">Land</value>
-<value code=" 19">Gripper</value>
-<value code=" 21">Parachute Enable</value>
-<value code=" 22">Parachute Release</value>
-<value code=" 23">Parachute 3pos</value>
-<value code=" 24">Auto Mission Reset</value>
-<value code=" 25">AttCon Feed Forward</value>
-<value code=" 26">AttCon Accel Limits</value>
-<value code=" 27">Retract Mount</value>
-<value code=" 28">Relay On/Off</value>
-<value code=" 34">Relay2 On/Off</value>
-<value code=" 35">Relay3 On/Off</value>
-<value code=" 36">Relay4 On/Off</value>
-<value code=" 29">Landing Gear</value>
-<value code=" 30">Lost vehicle Sound</value>
-<value code=" 31">Motor Emergency Stop</value>
-<value code=" 32">Motor Interlock</value>
-<value code=" 33">Brake</value>
-<value code=" 37">Throw</value>
-</values>
-</param>
-<param humanName="Channel 8 option" name="ArduSub:CH8_OPT" documentation="Select which function if performed when CH8 is above 1800 pwm" user="Standard">
-<values>
-<value code="0">Do Nothing</value>
-<value code=" 2">Flip</value>
-<value code=" 3">Simple Mode</value>
-<value code=" 4">RTL</value>
-<value code=" 5">Save Trim</value>
-<value code=" 7">Save WP</value>
-<value code=" 9">Camera Trigger</value>
-<value code=" 10">RangeFinder</value>
-<value code=" 11">Fence</value>
-<value code=" 12">ResetToArmedYaw</value>
-<value code=" 13">Super Simple Mode</value>
-<value code=" 14">Acro Trainer</value>
-<value code=" 16">Auto</value>
-<value code=" 17">AutoTune</value>
-<value code=" 18">Land</value>
-<value code=" 19">Gripper</value>
-<value code=" 21">Parachute Enable</value>
-<value code=" 22">Parachute Release</value>
-<value code=" 23">Parachute 3pos</value>
-<value code=" 24">Auto Mission Reset</value>
-<value code=" 25">AttCon Feed Forward</value>
-<value code=" 26">AttCon Accel Limits</value>
-<value code=" 27">Retract Mount</value>
-<value code=" 28">Relay On/Off</value>
-<value code=" 34">Relay2 On/Off</value>
-<value code=" 35">Relay3 On/Off</value>
-<value code=" 36">Relay4 On/Off</value>
-<value code=" 29">Landing Gear</value>
-<value code=" 30">Lost vehicle Sound</value>
-<value code=" 31">Motor Emergency Stop</value>
-<value code=" 32">Motor Interlock</value>
-<value code=" 33">Brake</value>
-<value code=" 37">Throw</value>
-</values>
-</param>
-<param humanName="Channel 9 option" name="ArduSub:CH9_OPT" documentation="Select which function if performed when CH9 is above 1800 pwm" user="Standard">
-<values>
-<value code="0">Do Nothing</value>
-<value code=" 2">Flip</value>
-<value code=" 3">Simple Mode</value>
-<value code=" 4">RTL</value>
-<value code=" 5">Save Trim</value>
-<value code=" 7">Save WP</value>
-<value code=" 9">Camera Trigger</value>
-<value code=" 10">RangeFinder</value>
-<value code=" 11">Fence</value>
-<value code=" 12">ResetToArmedYaw</value>
-<value code=" 13">Super Simple Mode</value>
-<value code=" 14">Acro Trainer</value>
-<value code=" 16">Auto</value>
-<value code=" 17">AutoTune</value>
-<value code=" 18">Land</value>
-<value code=" 19">Gripper</value>
-<value code=" 21">Parachute Enable</value>
-<value code=" 22">Parachute Release</value>
-<value code=" 23">Parachute 3pos</value>
-<value code=" 24">Auto Mission Reset</value>
-<value code=" 25">AttCon Feed Forward</value>
-<value code=" 26">AttCon Accel Limits</value>
-<value code=" 27">Retract Mount</value>
-<value code=" 28">Relay On/Off</value>
-<value code=" 34">Relay2 On/Off</value>
-<value code=" 35">Relay3 On/Off</value>
-<value code=" 36">Relay4 On/Off</value>
-<value code=" 29">Landing Gear</value>
-<value code=" 30">Lost vehicle Sound</value>
-<value code=" 31">Motor Emergency Stop</value>
-<value code=" 32">Motor Interlock</value>
-<value code=" 33">Brake</value>
-<value code=" 37">Throw</value>
-</values>
-</param>
-<param humanName="Channel 10 option" name="ArduSub:CH10_OPT" documentation="Select which function if performed when CH10 is above 1800 pwm" user="Standard">
-<values>
-<value code="0">Do Nothing</value>
-<value code=" 2">Flip</value>
-<value code=" 3">Simple Mode</value>
-<value code=" 4">RTL</value>
-<value code=" 5">Save Trim</value>
-<value code=" 7">Save WP</value>
-<value code=" 9">Camera Trigger</value>
-<value code=" 10">RangeFinder</value>
-<value code=" 11">Fence</value>
-<value code=" 12">ResetToArmedYaw</value>
-<value code=" 13">Super Simple Mode</value>
-<value code=" 14">Acro Trainer</value>
-<value code=" 16">Auto</value>
-<value code=" 17">AutoTune</value>
-<value code=" 18">Land</value>
-<value code=" 19">Gripper</value>
-<value code=" 21">Parachute Enable</value>
-<value code=" 22">Parachute Release</value>
-<value code=" 23">Parachute 3pos</value>
-<value code=" 24">Auto Mission Reset</value>
-<value code=" 25">AttCon Feed Forward</value>
-<value code=" 26">AttCon Accel Limits</value>
-<value code=" 27">Retract Mount</value>
-<value code=" 28">Relay On/Off</value>
-<value code=" 34">Relay2 On/Off</value>
-<value code=" 35">Relay3 On/Off</value>
-<value code=" 36">Relay4 On/Off</value>
-<value code=" 29">Landing Gear</value>
-<value code=" 30">Lost vehicle Sound</value>
-<value code=" 31">Motor Emergency Stop</value>
-<value code=" 32">Motor Interlock</value>
-<value code=" 33">Brake</value>
-<value code=" 37">Throw</value>
-</values>
-</param>
-<param humanName="Channel 11 option" name="ArduSub:CH11_OPT" documentation="Select which function if performed when CH11 is above 1800 pwm" user="Standard">
-<values>
-<value code="0">Do Nothing</value>
-<value code=" 2">Flip</value>
-<value code=" 3">Simple Mode</value>
-<value code=" 4">RTL</value>
-<value code=" 5">Save Trim</value>
-<value code=" 7">Save WP</value>
-<value code=" 9">Camera Trigger</value>
-<value code=" 10">RangeFinder</value>
-<value code=" 11">Fence</value>
-<value code=" 12">ResetToArmedYaw</value>
-<value code=" 13">Super Simple Mode</value>
-<value code=" 14">Acro Trainer</value>
-<value code=" 16">Auto</value>
-<value code=" 17">AutoTune</value>
-<value code=" 18">Land</value>
-<value code=" 19">Gripper</value>
-<value code=" 21">Parachute Enable</value>
-<value code=" 22">Parachute Release</value>
-<value code=" 23">Parachute 3pos</value>
-<value code=" 24">Auto Mission Reset</value>
-<value code=" 25">AttCon Feed Forward</value>
-<value code=" 26">AttCon Accel Limits</value>
-<value code=" 27">Retract Mount</value>
-<value code=" 28">Relay On/Off</value>
-<value code=" 34">Relay2 On/Off</value>
-<value code=" 35">Relay3 On/Off</value>
-<value code=" 36">Relay4 On/Off</value>
-<value code=" 29">Landing Gear</value>
-<value code=" 30">Lost vehicle Sound</value>
-<value code=" 31">Motor Emergency Stop</value>
-<value code=" 32">Motor Interlock</value>
-<value code=" 33">Brake</value>
-<value code=" 37">Throw</value>
-</values>
-</param>
-<param humanName="Channel 12 option" name="ArduSub:CH12_OPT" documentation="Select which function if performed when CH12 is above 1800 pwm" user="Standard">
-<values>
-<value code="0">Do Nothing</value>
-<value code=" 2">Flip</value>
-<value code=" 3">Simple Mode</value>
-<value code=" 4">RTL</value>
-<value code=" 5">Save Trim</value>
-<value code=" 7">Save WP</value>
-<value code=" 9">Camera Trigger</value>
-<value code=" 10">RangeFinder</value>
-<value code=" 11">Fence</value>
-<value code=" 12">ResetToArmedYaw</value>
-<value code=" 13">Super Simple Mode</value>
-<value code=" 14">Acro Trainer</value>
-<value code=" 16">Auto</value>
-<value code=" 17">AutoTune</value>
-<value code=" 18">Land</value>
-<value code=" 19">Gripper</value>
-<value code=" 21">Parachute Enable</value>
-<value code=" 22">Parachute Release</value>
-<value code=" 23">Parachute 3pos</value>
-<value code=" 24">Auto Mission Reset</value>
-<value code=" 25">AttCon Feed Forward</value>
-<value code=" 26">AttCon Accel Limits</value>
-<value code=" 27">Retract Mount</value>
-<value code=" 28">Relay On/Off</value>
-<value code=" 34">Relay2 On/Off</value>
-<value code=" 35">Relay3 On/Off</value>
-<value code=" 36">Relay4 On/Off</value>
-<value code=" 29">Landing Gear</value>
-<value code=" 30">Lost vehicle Sound</value>
-<value code=" 31">Motor Emergency Stop</value>
-<value code=" 32">Motor Interlock</value>
-<value code=" 33">Brake</value>
-<value code=" 37">Throw</value>
-</values>
-</param>
-<param humanName="Arming check" name="ArduSub:ARMING_CHECK" documentation="Allows enabling or disabling of pre-arming checks of receiver, accelerometer, barometer, compass and GPS" user="Standard">
-<field name="Bitmask">0:All,1:Baro,2:Compass,3:GPS,4:INS,5:Parameters+Rangefinder,6:RC,7:Voltage</field>
-<values>
-<value code="0">Disabled</value>
-<value code=" 1">Enabled</value>
-<value code=" -3">Skip Baro</value>
-<value code=" -5">Skip Compass</value>
-<value code=" -9">Skip GPS</value>
-<value code=" -17">Skip INS</value>
-<value code=" -33">Skip Params/Rangefinder</value>
-<value code=" -65">Skip RC</value>
-<value code=" 127">Skip Voltage</value>
-</values>
-</param>
-<param humanName="Disarm delay" name="ArduSub:DISARM_DELAY" documentation="Delay before automatic disarm in seconds. A value of zero disables auto disarm." user="Advanced">
-<field name="Range">0 127</field>
-<field name="Units">Seconds</field>
 </param>
 <param humanName="Angle Max" name="ArduSub:ANGLE_MAX" documentation="Maximum lean angle in all flight modes" user="Advanced">
 <field name="Range">1000 8000</field>
@@ -520,6 +185,8 @@
 <param humanName="Crash check enable" name="ArduSub:FS_CRASH_CHECK" documentation="This enables automatic crash checking. When enabled the motors will disarm if a crash is detected." user="Advanced">
 <values>
 <value code="0">Disabled</value>
+<value code="1">Warn only</value>
+<value code="2">Disarm</value>
 </values>
 </param>
 <param humanName="Default gain at boot" name="ArduSub:JS_GAIN_DEFAULT" documentation="Default gain at boot, must be in range [JS_GAIN_MIN , JS_GAIN_MAX]" user="Standard">
@@ -640,32 +307,11 @@
 <param humanName="Position (horizonal) controller P gain" name="ArduSub:POS_XY_P" documentation="Loiter position controller P gain.  Converts the distance (in the latitude direction) to the target location into a desired speed which is then passed to the loiter latitude rate controller" user="Standard">
 <field name="Range">0.500 2.000</field>
 </param>
-<param humanName="Autotune axis bitmask" name="ArduSub:AUTOTUNE_AXES" documentation="1-byte bitmap of axes to autotune" user="Standard">
-<field name="Bitmask">0:Roll,1:Pitch,2:Yaw</field>
+<param humanName="Terrain Following use control" name="ArduSub:TERRAIN_FOLLOW" documentation="This enables terrain following for RTL and SURFACE flight modes. To use this option TERRAIN_ENABLE must be 1 and the GCS must  support sending terrain data to the aircraft.  In RTL the RTL_ALT will be considered a height above the terrain.  In LAND mode the vehicle will slow to LAND_SPEED 10m above terrain (instead of 10m above home).  This parameter does not affect AUTO and Guided which use a per-command flag to determine if the height is above-home, absolute or above-terrain." user="Standard">
 <values>
-<value code="7">All</value>
-<value code="1">Roll Only</value>
-<value code="2">Pitch Only</value>
-<value code="4">Yaw Only</value>
-<value code="3">Roll and Pitch</value>
-<value code="5">Roll and Yaw</value>
-<value code="6">Pitch and Yaw</value>
+<value code="0">Do Not Use in RTL and SURFACE</value>
+<value code="1">Use in RTL and SURFACE</value>
 </values>
-</param>
-<param humanName="Autotune aggressiveness" name="ArduSub:AUTOTUNE_AGGR" documentation="Autotune aggressiveness. Defines the bounce back used to detect size of the D term." user="Standard">
-<field name="Range">0.05 0.10</field>
-</param>
-<param humanName="AutoTune minimum D" name="ArduSub:AUTOTUNE_MIN_D" documentation="Defines the minimum D gain" user="Standard">
-<field name="Range">0.001 0.006</field>
-</param>
-<param humanName="Terrain Following use control" name="ArduSub:TERRAIN_FOLLOW" documentation="This enables terrain following for RTL and LAND flight modes. To use this option TERRAIN_ENABLE must be 1 and the GCS must  support sending terrain data to the aircraft.  In RTL the RTL_ALT will be considered a height above the terrain.  In LAND mode the vehicle will slow to LAND_SPEED 10m above terrain (instead of 10m above home).  This parameter does not affect AUTO and Guided which use a per-command flag to determine if the height is above-home, absolute or above-terrain." user="Standard">
-<values>
-<value code="0">Do Not Use in RTL and Land</value>
-<value code="1">Use in RTL and Land</value>
-</values>
-</param>
-<param humanName="Minimum navigation altitude" name="ArduSub:WP_NAVALT_MIN" documentation="This is the altitude in meters above which for navigation can begin. This applies in auto takeoff and auto landing." user="Standard">
-<field name="Range">0 5</field>
 </param>
 </parameters>
 </vehicles><libraries><parameters name="AHRS_">
@@ -765,6 +411,46 @@
 </values>
 </param>
 </parameters>
+<parameters name="ARMING_">
+<param humanName="Require Arming Motors " name="ARMING_REQUIRE" documentation="Arming disabled until some requirements are met. If 0, there are no requirements (arm immediately).  If 1, require rudder stick or GCS arming before arming motors and sends the minimum throttle PWM value to the throttle channel when disarmed.  If 2, require rudder stick or GCS arming and send 0 PWM to throttle channel when disarmed. See the ARMING_CHECK_* parameters to see what checks are done before arming. Note, if setting this parameter to 0 a reboot is required to arm the plane.  Also note, even with this parameter at 0, if ARMING_CHECK parameter is not also zero the plane may fail to arm throttle at boot due to a pre-arm check failure. This parameter is relevant for ArduPlane only." user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code="1">THR_MIN PWM when disarmed</value>
+<value code="2">0 PWM when disarmed</value>
+</values>
+</param>
+<param humanName="Arm Checks to Peform (bitmask)" name="ARMING_CHECK" documentation="Checks prior to arming motor. This is a bitmask of checks that will be performed befor allowing arming. The default is no checks, allowing arming at any time. You can select whatever checks you prefer by adding together the values of each check type to set this parameter. For example, to only allow arming when you have GPS lock and no RC failsafe you would set ARMING_CHECK to 72. For most users it is recommended that you set this to 1 to enable all checks." user="Standard">
+<field name="Bitmask">0:All,1:Barometer,2:Compass,3:GPS lock,4:INS,5:Parameters,6:RC,7:Board voltage,8:Battery Level,9:Airspeed,10:Logging Available,11:Hardware safety switch,12:GPS Configuration</field>
+<values>
+<value code="0">None</value>
+<value code="1">All</value>
+<value code="2">Barometer</value>
+<value code="4">Compass</value>
+<value code="8">GPS Lock</value>
+<value code="16">INS(INertial Sensors - accels &amp; gyros)</value>
+<value code="32">Parameters(unused)</value>
+<value code="64">RC Failsafe</value>
+<value code="128">Board voltage</value>
+<value code="256">Battery Level</value>
+<value code="512">Airspeed</value>
+<value code="1024">LoggingAvailable</value>
+<value code="2048">Hardware safety switch</value>
+<value code="4096">GPS configuration</value>
+</values>
+</param>
+<param humanName="Accelerometer error threshold" name="ARMING_ACCTHRESH" documentation="Accelerometer error threshold used to determine inconsistent accelerometers. Compares this error range to other accelerometers to detect a hardware or calibration error. Lower value means tighter check and harder to pass arming check. Not all accelerometers are created equal." user="Advanced">
+<field name="Range">0.25 3.0</field>
+<field name="Units">m/s/s</field>
+</param>
+<param humanName="Minimum arming voltage on the first battery" name="ARMING_MIN_VOLT" documentation="The minimum voltage on the first battery to arm, 0 disables the check.  This parameter is relevant for ArduPlane only." user="Standard">
+<field name="Increment">0.1 </field>
+<field name="Units">Volts</field>
+</param>
+<param humanName="Minimum arming voltage on the second battery" name="ARMING_MIN_VOLT2" documentation="The minimum voltage on the first battery to arm, 0 disables the check. This parameter is relevant for ArduPlane only." user="Standard">
+<field name="Increment">0.1 </field>
+<field name="Units">Volts</field>
+</param>
+</parameters>
 <parameters name="ATC_">
 <param humanName="Yaw target slew rate" name="ATC_SLEW_YAW" documentation="Maximum rate the yaw target can be updated in Loiter, RTL, Auto flight modes" user="Advanced">
 <field name="Range">500 18000</field>
@@ -845,6 +531,10 @@
 <field name="Range">0.0 0.02</field>
 <field name="Increment">0.001</field>
 </param>
+<param humanName="Roll axis rate controller feed forward" name="ATC_RAT_RLL_FF" documentation="Roll axis rate controller feed forward" user="Standard">
+<field name="Range">0 0.5</field>
+<field name="Increment">0.001</field>
+</param>
 <param humanName="Roll axis rate controller input frequency in Hz" name="ATC_RAT_RLL_FILT" documentation="Roll axis rate controller input frequency in Hz" user="Standard">
 <field name="Range">1 100</field>
 <field name="Increment">1</field>
@@ -867,6 +557,10 @@
 <field name="Range">0.0 0.02</field>
 <field name="Increment">0.001</field>
 </param>
+<param humanName="Pitch axis rate controller feed forward" name="ATC_RAT_PIT_FF" documentation="Pitch axis rate controller feed forward" user="Standard">
+<field name="Range">0 0.5</field>
+<field name="Increment">0.001</field>
+</param>
 <param humanName="Pitch axis rate controller input frequency in Hz" name="ATC_RAT_PIT_FILT" documentation="Pitch axis rate controller input frequency in Hz" user="Standard">
 <field name="Range">1 100</field>
 <field name="Increment">1</field>
@@ -887,6 +581,10 @@
 </param>
 <param humanName="Yaw axis rate controller D gain" name="ATC_RAT_YAW_D" documentation="Yaw axis rate controller D gain.  Compensates for short-term change in desired yaw rate vs actual yaw rate" user="Standard">
 <field name="Range">0.000 0.02</field>
+<field name="Increment">0.001</field>
+</param>
+<param humanName="Yaw axis rate controller feed forward" name="ATC_RAT_YAW_FF" documentation="Yaw axis rate controller feed forward" user="Standard">
+<field name="Range">0 0.5</field>
 <field name="Increment">0.001</field>
 </param>
 <param humanName="Yaw axis rate controller input frequency in Hz" name="ATC_RAT_YAW_FILT" documentation="Yaw axis rate controller input frequency in Hz" user="Standard">
@@ -914,7 +612,7 @@
 <value code="3">All</value>
 </values>
 </param>
-<param humanName="Avoidance max lean angle in non-GPS flight modes" name="AVOID_ANGLE" documentation="Max lean angle used to avoid obstacles while in non-GPS modes" user="Standard">
+<param humanName="Avoidance max lean angle in non-GPS flight modes" name="AVOID_ANGLE_MAX" documentation="Max lean angle used to avoid obstacles while in non-GPS modes" user="Standard">
 <field name="Range">0 4500</field>
 </param>
 <param humanName="Avoidance distance maximum in non-GPS flight modes" name="AVOID_DIST_MAX" documentation="Distance from object at which obstacle avoidance will begin in non-GPS modes" user="Standard">
@@ -933,24 +631,27 @@
 <value code="7">SMBus-Maxell</value>
 </values>
 </param>
-<param humanName="Battery Voltage sensing pin" name="BATT_VOLT_PIN" documentation="Setting this to 0 ~ 13 will enable battery voltage sensing on pins A0 ~ A13. For the 3DR power brick on APM2.5 it should be set to 13. On the PX4 it should be set to 100. On the Pixhawk powered from the PM connector it should be set to 2." user="Standard">
+<param humanName="Battery Voltage sensing pin" name="BATT_VOLT_PIN" documentation="Setting this to 0 ~ 13 will enable battery voltage sensing on pins A0 ~ A13. For APM2.x power brick it should be set to 13. On the PX4-v1 it should be set to 100. On the Pixhawk, Pixracer and NAVIO board's PM connector it should be set to 2, Pixhawk2 Power2 is 13." user="Standard">
 <values>
 <value code="-1">Disabled</value>
 <value code=" 0">A0</value>
 <value code=" 1">A1</value>
-<value code=" 2">Pixhawk</value>
-<value code=" 13">A13</value>
-<value code=" 100">PX4</value>
+<value code=" 2">Pixhawk/Pixracer/Navio2</value>
+<value code=" 5">A5</value>
+<value code=" 10">A10</value>
+<value code=" 13">A13/Pixhawk2_PM2</value>
+<value code=" 100">PX4-v1</value>
 </values>
 </param>
-<param humanName="Battery Current sensing pin" name="BATT_CURR_PIN" documentation="Setting this to 0 ~ 13 will enable battery current sensing on pins A0 ~ A13. For the 3DR power brick on APM2.5 it should be set to 12. On the PX4 it should be set to 101. On the Pixhawk powered from the PM connector it should be set to 3." user="Standard">
+<param humanName="Battery Current sensing pin" name="BATT_CURR_PIN" documentation="Setting this to 0 ~ 13 will enable battery current sensing on pins A0 ~ A13. For the 3DR power brick on APM2.5 it should be set to 12. On the PX4 it should be set to 101. On the Pixhawk powered from the PM connector it should be set to 3, Pixhawk2 Power2 is 12." user="Standard">
 <values>
 <value code="-1">Disabled</value>
 <value code=" 1">A1</value>
 <value code=" 2">A2</value>
-<value code=" 3">Pixhawk</value>
-<value code=" 12">A12</value>
-<value code=" 101">PX4</value>
+<value code=" 3">Pixhawk/Pixracer/Navio2</value>
+<value code=" 11">A11</value>
+<value code=" 12">A12/Pixhawk2_PM2</value>
+<value code=" 101">PX4-v1</value>
 </values>
 </param>
 <param humanName="Voltage Multiplier" name="BATT_VOLT_MULT" documentation="Used to convert the voltage of the voltage sensing pin (BATT_VOLT_PIN) to the actual battery's voltage (pin_voltage * VOLT_MULT). For the 3DR Power brick on APM2 or Pixhawk, this should be set to 10.1. For the Pixhawk with the 3DR 4in1 ESC this should be 12.02. For the PX4 using the PX4IO power supply this should be set to 1." user="Advanced">
@@ -979,24 +680,27 @@
 <value code="7">SMBus-Maxell</value>
 </values>
 </param>
-<param humanName="Battery Voltage sensing pin" name="BATT2_VOLT_PIN" documentation="Setting this to 0 ~ 13 will enable battery voltage sensing on pins A0 ~ A13. For the 3DR power brick on APM2.5 it should be set to 13. On the PX4 it should be set to 100. On the Pixhawk powered from the PM connector it should be set to 2." user="Standard">
+<param humanName="Battery Voltage sensing pin" name="BATT2_VOLT_PIN" documentation="Setting this to 0 ~ 13 will enable battery voltage sensing on pins A0 ~ A13. For APM2.x power brick it should be set to 13. On the PX4-v1 it should be set to 100. On the Pixhawk, Pixracer and NAVIO board's PM connector it should be set to 2, Pixhawk2 Power2 is 13." user="Standard">
 <values>
 <value code="-1">Disabled</value>
 <value code=" 0">A0</value>
 <value code=" 1">A1</value>
-<value code=" 2">Pixhawk</value>
-<value code=" 13">A13</value>
-<value code=" 100">PX4</value>
+<value code=" 2">Pixhawk/Pixracer/Navio2</value>
+<value code=" 5">A5</value>
+<value code=" 10">A10</value>
+<value code=" 13">A13/Pixhawk2_PM2</value>
+<value code=" 100">PX4-v1</value>
 </values>
 </param>
-<param humanName="Battery Current sensing pin" name="BATT2_CURR_PIN" documentation="Setting this to 0 ~ 13 will enable battery current sensing on pins A0 ~ A13. For the 3DR power brick on APM2.5 it should be set to 12. On the PX4 it should be set to 101. On the Pixhawk powered from the PM connector it should be set to 3." user="Standard">
+<param humanName="Battery Current sensing pin" name="BATT2_CURR_PIN" documentation="Setting this to 0 ~ 13 will enable battery current sensing on pins A0 ~ A13. For the 3DR power brick on APM2.5 it should be set to 12. On the PX4 it should be set to 101. On the Pixhawk powered from the PM connector it should be set to 3, Pixhawk2 Power2 is 12." user="Standard">
 <values>
 <value code="-1">Disabled</value>
 <value code=" 1">A1</value>
 <value code=" 2">A2</value>
-<value code=" 3">Pixhawk</value>
-<value code=" 12">A12</value>
-<value code=" 101">PX4</value>
+<value code=" 3">Pixhawk/Pixracer/Navio2</value>
+<value code=" 11">A11</value>
+<value code=" 12">A12/Pixhawk2_PM2</value>
+<value code=" 101">PX4-v1</value>
 </values>
 </param>
 <param humanName="Voltage Multiplier" name="BATT2_VOLT_MULT" documentation="Used to convert the voltage of the voltage sensing pin (BATT_VOLT_PIN) to the actual battery's voltage (pin_voltage * VOLT_MULT). For the 3DR Power brick on APM2 or Pixhawk, this should be set to 10.1. For the Pixhawk with the 3DR 4in1 ESC this should be 12.02. For the PX4 using the PX4IO power supply this should be set to 1." user="Advanced">
@@ -1064,14 +768,7 @@
 <field name="RebootRequired">True</field>
 </param>
 <param humanName="User-defined serial number" name="BRD_SERIAL_NUM" documentation="User-defined serial number of this vehicle, it can be any arbitrary number you want and has no effect on the autopilot" user="Standard">
-<field name="Range">-32767 32768</field>
-</param>
-<param humanName=" Enable use of UAVCAN devices" name="BRD_CAN_ENABLE" documentation="Enabling this option on a Pixhawk enables UAVCAN devices. Note that this uses about 25k of memory" user="Advanced">
-<values>
-<value code="0">Disabled</value>
-<value code="1">Enabled</value>
-<value code="2">Dynamic ID/Update</value>
-</values>
+<field name="Range">-32768 32767</field>
 </param>
 <param humanName="Channels to which ignore the safety switch state" name="BRD_SAFETY_MASK" documentation="A bitmask which controls what channels can move while the safety switch has not been pressed" user="Advanced">
 <field name="Bitmask">0:Ch1,1:Ch2,2:Ch3,3:Ch4,4:Ch5,5:Ch6,6:Ch7,7:Ch8,8:Ch9,9:Ch10,10:Ch11,11:Ch12,12:Ch13,13:Ch14</field>
@@ -1100,8 +797,47 @@
 <value code="10">VR Micro Brain 5.2</value>
 <value code="11">VRBrain Core 1.0</value>
 <value code="12">VRBrain 5.4</value>
+<value code="13">Intel Aero FC</value>
+<value code="20">AUAV2.1</value>
 </values>
 <field name="RebootRequired">True</field>
+</param>
+<param humanName="Enable IO co-processor" name="BRD_BRD_IO_ENABLE" documentation="This allows for the IO co-processor on FMUv1 and FMUv2 to be disabled" user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
+<field name="RebootRequired">True</field>
+</param>
+</parameters>
+<parameters name="BRD_CAN_">
+<param humanName=" Enable use of CAN buses" name="BRD_CAN_ENABLE" documentation="Enabling this option enables use of CAN buses." user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled first channel</value>
+<value code="2">Enabled both channels</value>
+</values>
+</param>
+<param humanName=" Bitrate of CAN interface" name="BRD_CAN_BITRATE" documentation="Bit rate can be set up to from 10000 to 1000000" user="Advanced">
+<field name="Range">10000 1000000</field>
+</param>
+<param humanName=" Level of debug for CAN devices" name="BRD_CAN_DEBUG" documentation="Enabling this option will provide debug messages" user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Major messages</value>
+<value code="2">All messages</value>
+</values>
+</param>
+<param humanName=" Enable use of UAVCAN devices" name="BRD_CAN_UC_EN" documentation="Enabling this option starts UAVCAN protocol." user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
+</param>
+</parameters>
+<parameters name="BRD_CAN_UC_">
+<param humanName="UAVCAN node that is used for Ardupilot" name="BRD_CAN_UC_NODE" documentation="UAVCAN node should be set implicitly" user="Advanced">
+<field name="Range">1 250</field>
 </param>
 </parameters>
 <parameters name="BTN0_">
@@ -1112,13 +848,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1140,12 +877,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1161,13 +914,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1189,12 +943,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1212,13 +982,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1240,12 +1011,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1261,13 +1048,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1289,12 +1077,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1312,13 +1116,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1340,12 +1145,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1361,13 +1182,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1389,12 +1211,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1412,13 +1250,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1440,12 +1279,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1461,13 +1316,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1489,12 +1345,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1512,13 +1384,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1540,12 +1413,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1561,13 +1450,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1589,12 +1479,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1612,13 +1518,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1640,12 +1547,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1661,13 +1584,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1689,12 +1613,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1712,13 +1652,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1740,12 +1681,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1761,13 +1718,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1789,12 +1747,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1812,13 +1786,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1840,12 +1815,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1861,13 +1852,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1889,12 +1881,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1912,13 +1920,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1940,12 +1949,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -1961,13 +1986,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -1989,12 +2015,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -2012,13 +2054,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -2040,12 +2083,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -2061,13 +2120,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -2089,12 +2149,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -2112,13 +2188,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -2140,12 +2217,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -2161,13 +2254,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -2189,12 +2283,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -2212,13 +2322,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -2240,12 +2351,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -2261,13 +2388,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -2289,12 +2417,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -2312,13 +2456,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -2340,12 +2485,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -2361,13 +2522,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -2389,12 +2551,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -2412,13 +2590,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -2440,12 +2619,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -2461,13 +2656,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -2489,12 +2685,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -2512,13 +2724,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -2540,12 +2753,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -2561,13 +2790,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -2589,12 +2819,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -2612,13 +2858,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -2640,12 +2887,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -2661,13 +2924,14 @@
 <value code="2">arm_toggle</value>
 <value code="3">arm</value>
 <value code="4">disarm</value>
-<value code="5">mode_toggle</value>
-<value code="6">enter_mode_1</value>
-<value code="7">enter_mode_2</value>
-<value code="8">enter_mode_3</value>
-<value code="9">enter_mode_4</value>
-<value code="10">enter_mode_5</value>
-<value code="11">enter_mode_6</value>
+<value code="5">mode_manual</value>
+<value code="6">mode_stabilize</value>
+<value code="7">mode_depth_hold</value>
+<value code="8">mode_poshold</value>
+<value code="9">mode_auto</value>
+<value code="10">mode_circle</value>
+<value code="11">mode_guided</value>
+<value code="12">mode_acro</value>
 <value code="21">mount_center</value>
 <value code="22">mount_tilt_up</value>
 <value code="23">mount_tilt_down</value>
@@ -2689,12 +2953,28 @@
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
 <value code="48">input_hold_toggle</value>
+<value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
 <value code="53">relay_1_toggle</value>
 <value code="54">relay_2_on</value>
 <value code="55">relay_2_off</value>
 <value code="56">relay_2_toggle</value>
+<value code="61">servo_1_inc</value>
+<value code="62">servo_1_dec</value>
+<value code="63">servo_1_min</value>
+<value code="64">servo_1_max</value>
+<value code="65">servo_1_center</value>
+<value code="66">servo_2_inc</value>
+<value code="67">servo_2_dec</value>
+<value code="68">servo_2_min</value>
+<value code="69">servo_2_max</value>
+<value code="70">servo_2_center</value>
+<value code="71">servo_3_inc</value>
+<value code="72">servo_3_dec</value>
+<value code="73">servo_3_min</value>
+<value code="74">servo_3_max</value>
+<value code="75">servo_3_center</value>
 <value code="91">custom_1</value>
 <value code="92">custom_2</value>
 <value code="93">custom_3</value>
@@ -3114,6 +3394,10 @@
 </values>
 <field name="Increment">0.1</field>
 </param>
+<param humanName="Compass maximum offset" name="COMPASS_OFFS_MAX" documentation="This sets the maximum allowed compass offset in calibration and arming checks" user="Advanced">
+<field name="Range">500 3000</field>
+<field name="Increment">1</field>
+</param>
 </parameters>
 <parameters name="EK2_">
 <param humanName="Enable EKF2" name="EK2_ENABLE" documentation="This enables EKF2. Enabling EKF2 only makes the maths run, it does not mean it will be used for flight control. To use it for flight control set AHRS_EKF_TYPE=2. A reboot or restart will need to be performed after changing the value of EK2_ENABLE for it to take effect." user="Advanced">
@@ -3236,7 +3520,7 @@
 <field name="Increment">25</field>
 </param>
 <param humanName="Optical Flow measurement delay (msec)" name="EK2_FLOW_DELAY" documentation="This is the number of msec that the optical flow measurements lag behind the inertial measurements. It is the time from the end of the optical flow averaging period and does not include the time delay due to the 100msec of averaging within the flow sensor." user="Advanced">
-<field name="Range">0 250</field>
+<field name="Range">0 127</field>
 <field name="Increment">10</field>
 <field name="Units">milliseconds</field>
 </param>
@@ -3272,7 +3556,7 @@
 <field name="Increment">0.1</field>
 </param>
 <param humanName="GPS preflight check" name="EK2_GPS_CHECK" documentation="This is a 1 byte bitmap controlling which GPS preflight checks are performed. Set to 0 to bypass all checks. Set to 255 perform all checks. Set to 3 to check just the number of satellites and HDoP. Set to 31 for the most rigorous checks that will still allow checks to pass when the copter is moving, eg launch from a boat." user="Advanced">
-<field name="Bitmask">0:NSats,1:HDoP,2:speed error,3:horiz pos error,4:yaw error,5:pos drift,6:vert speed,7:horiz speed</field>
+<field name="Bitmask">0:NSats,1:HDoP,2:speed error,3:position error,4:yaw error,5:pos drift,6:vert speed,7:horiz speed</field>
 </param>
 <param humanName="Bitmask of active IMUs" name="EK2_IMU_MASK" documentation="1 byte bitmap of IMUs to use in EKF2. A separate instance of EKF2 will be started for each IMU selected. Set to 1 to use the first IMU only (default), set to 2 to use the second IMU only, set to 3 to use the first and second IMU. Additional IMU's can be used up to a maximum of 6 if memory and processing resources permit. There may be insufficient memory and processing resources to run multiple instances. If this occurs EKF2 will fail to start." user="Advanced">
 <field name="Bitmask">0:FirstIMU,1:SecondIMU,2:ThirdIMU,3:FourthIMU,4:FifthIMU,5:SixthIMU</field>
@@ -3329,7 +3613,7 @@
 <field name="Increment">25</field>
 </param>
 <param humanName="Range beacon measurement delay (msec)" name="EK2_BCN_DELAY" documentation="This is the number of msec that the range beacon measurements lag behind the inertial measurements. It is the time from the end of the optical flow averaging period and does not include the time delay due to the 100msec of averaging within the flow sensor." user="Advanced">
-<field name="Range">0 250</field>
+<field name="Range">0 127</field>
 <field name="Increment">10</field>
 <field name="Units">milliseconds</field>
 </param>
@@ -3492,7 +3776,7 @@
 <field name="Increment">0.1</field>
 </param>
 <param humanName="GPS preflight check" name="EK3_GPS_CHECK" documentation="This is a 1 byte bitmap controlling which GPS preflight checks are performed. Set to 0 to bypass all checks. Set to 255 perform all checks. Set to 3 to check just the number of satellites and HDoP. Set to 31 for the most rigorous checks that will still allow checks to pass when the copter is moving, eg launch from a boat." user="Advanced">
-<field name="Bitmask">0:NSats,1:HDoP,2:speed error,3:horiz pos error,4:yaw error,5:pos drift,6:vert speed,7:horiz speed</field>
+<field name="Bitmask">0:NSats,1:HDoP,2:speed error,3:position error,4:yaw error,5:pos drift,6:vert speed,7:horiz speed</field>
 </param>
 <param humanName="Bitmask of active IMUs" name="EK3_IMU_MASK" documentation="1 byte bitmap of IMUs to use in EKF3. A separate instance of EKF3 will be started for each IMU selected. Set to 1 to use the first IMU only (default), set to 2 to use the second IMU only, set to 3 to use the first and second IMU. Additional IMU's can be used up to a maximum of 6 if memory and processing resources permit. There may be insufficient memory and processing resources to run multiple instances. If this occurs EKF3 will fail to start." user="Advanced">
 <field name="Bitmask">0:FirstIMU,1:SecondIMU,2:ThirdIMU,3:FourthIMU,4:FifthIMU,5:SixthIMU</field>
@@ -3645,7 +3929,7 @@
 <field name="Units">m</field>
 </param>
 <param humanName="ID on the bus" name="FLOW_BUS_ID" documentation="This is used to select between multiple possible bus IDs for some sensor types. For PX4Flow you can choose 0 to 7 for the 8 possible addresses on the I2C bus." user="Advanced">
-<field name="Range">0 255</field>
+<field name="Range">0 127</field>
 </param>
 </parameters>
 <parameters name="GND_">
@@ -3687,23 +3971,11 @@
 <field name="Increment">1</field>
 <field name="Units">pascals</field>
 </param>
-<param humanName="ground temperature" name="GND_TEMP2" documentation="calibrated ground temperature in degrees Celsius" user="Advanced">
-<field name="ReadOnly">True</field>
-<field name="Volatile">True</field>
-<field name="Increment">1</field>
-<field name="Units">degrees celsius</field>
-</param>
 <param humanName="Absolute Pressure" name="GND_ABS_PRESS3" documentation="calibrated ground pressure in Pascals" user="Advanced">
 <field name="ReadOnly">True</field>
 <field name="Volatile">True</field>
 <field name="Increment">1</field>
 <field name="Units">pascals</field>
-</param>
-<param humanName="ground temperature" name="GND_TEMP3" documentation="calibrated ground temperature in degrees Celsius" user="Advanced">
-<field name="ReadOnly">True</field>
-<field name="Volatile">True</field>
-<field name="Increment">1</field>
-<field name="Units">degrees celsius</field>
 </param>
 </parameters>
 <parameters name="GPS_">
@@ -3718,7 +3990,7 @@
 <value code="6">SiRF</value>
 <value code="7">HIL</value>
 <value code="8">SwiftNav</value>
-<value code="9">PX4-UAVCAN</value>
+<value code="9">UAVCAN</value>
 <value code="10">SBF</value>
 <value code="11">GSOF</value>
 <value code="12">QURT</value>
@@ -3739,7 +4011,7 @@
 <value code="6">SiRF</value>
 <value code="7">HIL</value>
 <value code="8">SwiftNav</value>
-<value code="9">PX4-UAVCAN</value>
+<value code="9">UAVCAN</value>
 <value code="10">SBF</value>
 <value code="11">GSOF</value>
 <value code="12">QURT</value>
@@ -3764,7 +4036,8 @@
 <param humanName="Automatic Switchover Setting" name="GPS_AUTO_SWITCH" documentation="Automatic switchover to GPS reporting best lock" user="Advanced">
 <values>
 <value code="0">Disabled</value>
-<value code="1">Enabled</value>
+<value code="1">UseBest</value>
+<value code="2">Blend</value>
 </values>
 </param>
 <param humanName="Minimum Lock Type Accepted for DGPS" name="GPS_MIN_DGPS" documentation="Sets the minimum type of differential GPS corrections required before allowing to switch into DGPS mode." user="Advanced">
@@ -3795,9 +4068,9 @@
 </param>
 <param humanName="Swift Binary Protocol Logging Mask" name="GPS_SBP_LOGMASK" documentation="Masked with the SBP msg_type field to determine whether SBR1/SBR2 data is logged" user="Advanced">
 <values>
-<value code="0x0000">None</value>
-<value code=" 0xFFFF">All</value>
-<value code=" 0xFF00">External only</value>
+<value code="0">None (0x0000)</value>
+<value code="-1">All (0xFFFF)</value>
+<value code="-256">External only (0xFF00)</value>
 </values>
 </param>
 <param humanName="Raw data logging" name="GPS_RAW_DATA" documentation="Enable logging of RXM raw data from uBlox which includes carrier phase and pseudo range information. This allows for post processing of dataflash logs for more precise positioning. Note that this requires a raw capable uBlox such as the 6P or 6T." user="Advanced">
@@ -3852,6 +4125,7 @@
 </values>
 </param>
 <param humanName="GPS update rate in milliseconds" name="GPS_RATE_MS" documentation="Controls how often the GPS should provide a position update. Lowering below 5Hz is not allowed" user="Advanced">
+<field name="Range">50 200</field>
 <values>
 <value code="100">10Hz</value>
 <value code="125">8Hz</value>
@@ -3860,6 +4134,7 @@
 <field name="Units">milliseconds</field>
 </param>
 <param humanName="GPS 2 update rate in milliseconds" name="GPS_RATE_MS2" documentation="Controls how often the GPS should provide a position update. Lowering below 5Hz is not allowed" user="Advanced">
+<field name="Range">50 200</field>
 <values>
 <value code="100">10Hz</value>
 <value code="125">8Hz</value>
@@ -3892,6 +4167,13 @@
 <param humanName="GPS 2 delay in milliseconds" name="GPS_DELAY_MS2" documentation="Controls the amount of GPS  measurement delay that the autopilot compensates for. Set to zero to use the default delay for the detected GPS type." user="Advanced">
 <field name="Range">0 250</field>
 <field name="Units">milliseconds</field>
+</param>
+<param humanName="Multi GPS Blending Mask" name="GPS_BLEND_MASK" documentation="Determines which of the accuracy measures Horizontal position, Vertical Position and Speed are used to calculate the weighting on each GPS receiver when soft switching has been selected by setting GPS_AUTO_SWITCH to 2" user="Advanced">
+<field name="Bitmask">0:Horiz Pos,1:Vert Pos,2:Speed</field>
+</param>
+<param humanName="Blending time constant" name="GPS_BLEND_TC" documentation="Controls the slowest time constant applied to the calculation of GPS position and height offsets used to adjust different GPS receivers for steady state position differences." user="Advanced">
+<field name="Range">5.0 30.0</field>
+<field name="Units">seconds</field>
 </param>
 </parameters>
 <parameters name="GRIP_">
@@ -4684,6 +4966,7 @@
 <value code="1">LightWareSF40C</value>
 <value code="2">MAVLink</value>
 <value code="3">TeraRangerTower</value>
+<value code="4">RangeFinder</value>
 </values>
 </param>
 <param humanName="Proximity sensor orientation" name="PRX_ORIENT" documentation="Proximity sensor orientation" user="Standard">
@@ -4708,7 +4991,7 @@
 <field name="Range">0 360</field>
 <field name="Units">degrees</field>
 </param>
-<param humanName="Proximity sensor ignore width 2" name="PRX_IGN_WID1" documentation="Proximity sensor ignore width 2" user="Standard">
+<param humanName="Proximity sensor ignore width 2" name="PRX_IGN_WID2" documentation="Proximity sensor ignore width 2" user="Standard">
 <field name="Range">0 45</field>
 <field name="Units">degrees</field>
 </param>
@@ -4749,6 +5032,8 @@
 <value code="0">None</value>
 <value code="1">LightWareSF40C</value>
 <value code="2">MAVLink</value>
+<value code="3">TeraRangerTower</value>
+<value code="4">RangeFinder</value>
 </values>
 </param>
 <param humanName="Second Proximity sensor orientation" name="PRX2_ORIENT" documentation="Second Proximity sensor orientation" user="Standard">
@@ -5338,7 +5623,7 @@
 <value code="0">None</value>
 <value code="1">Analog</value>
 <value code="2">MaxbotixI2C</value>
-<value code="3">PulsedLightI2C</value>
+<value code="3">LidarLiteV2-I2C</value>
 <value code="5">PX4-PWM</value>
 <value code="6">BBB-PRU</value>
 <value code="7">LightWareI2C</value>
@@ -5349,6 +5634,7 @@
 <value code="12">LeddarOne</value>
 <value code="13">MaxbotixSerial</value>
 <value code="14">TrOneI2C</value>
+<value code="15">LidarLiteV3-I2C</value>
 </values>
 </param>
 <param humanName="Rangefinder pin" name="RNGFND_PIN" documentation="Analog pin that rangefinder is connected to. Set this to 0..9 for the APM2 analog pins. Set to 64 on an APM1 for the dedicated 'airspeed' port on the end of the board. Set to 11 on PX4 for the analog 'airspeed' port. Set to 15 on the Pixhawk for the analog 'airspeed' port." user="Standard">
@@ -5441,12 +5727,26 @@
 <param humanName="Z position offset" name="RNGFND_POS_Z" documentation="Z position of the first rangefinder in body frame. Positive Z is down from the origin. Use the zero range datum point if supplied." user="Advanced">
 <field name="Units">m</field>
 </param>
+<param humanName="Rangefinder orientation" name="RNGFND_ORIENT" documentation="Orientation of rangefinder" user="Advanced">
+<values>
+<value code="0">Forward</value>
+<value code=" 1">Forward-Right</value>
+<value code=" 2">Right</value>
+<value code=" 3">Back-Right</value>
+<value code=" 4">Back</value>
+<value code=" 5">Back-Left</value>
+<value code=" 6">Left</value>
+<value code=" 7">Forward-Left</value>
+<value code=" 24">Up</value>
+<value code=" 25">Down</value>
+</values>
+</param>
 <param humanName="Second Rangefinder type" name="RNGFND2_TYPE" documentation="What type of rangefinder device that is connected" user="Advanced">
 <values>
 <value code="0">None</value>
 <value code="1">Analog</value>
 <value code="2">MaxbotixI2C</value>
-<value code="3">PulsedLightI2C</value>
+<value code="3">LidarLiteV2-I2C</value>
 <value code="5">PX4-PWM</value>
 <value code="6">BBB-PRU</value>
 <value code="7">LightWareI2C</value>
@@ -5457,6 +5757,7 @@
 <value code="12">LeddarOne</value>
 <value code="13">MaxbotixSerial</value>
 <value code="14">TrOneI2C</value>
+<value code="15">LidarLiteV3-I2C</value>
 </values>
 </param>
 <param humanName="Rangefinder pin" name="RNGFND2_PIN" documentation="Analog pin that rangefinder is connected to. Set this to 0..9 for the APM2 analog pins. Set to 64 on an APM1 for the dedicated 'airspeed' port on the end of the board. Set to 11 on PX4 for the analog 'airspeed' port. Set to 15 on the Pixhawk for the analog 'airspeed' port." user="Advanced">
@@ -5545,12 +5846,26 @@
 <param humanName="Z position offset" name="RNGFND2_POS_Z" documentation="Z position of the second rangefinder in body frame. Positive Z is down from the origin. Use the zero range datum point if supplied." user="Advanced">
 <field name="Units">m</field>
 </param>
+<param humanName="Rangefinder 2 orientation" name="RNGFND2_ORIENT" documentation="Orientation of 2nd rangefinder" user="Advanced">
+<values>
+<value code="0">Forward</value>
+<value code=" 1">Forward-Right</value>
+<value code=" 2">Right</value>
+<value code=" 3">Back-Right</value>
+<value code=" 4">Back</value>
+<value code=" 5">Back-Left</value>
+<value code=" 6">Left</value>
+<value code=" 7">Forward-Left</value>
+<value code=" 24">Up</value>
+<value code=" 25">Down</value>
+</values>
+</param>
 <param humanName="Third Rangefinder type" name="RNGFND3_TYPE" documentation="What type of rangefinder device that is connected" user="Advanced">
 <values>
 <value code="0">None</value>
 <value code="1">Analog</value>
-<value code="2">APM2-MaxbotixI2C</value>
-<value code="3">APM2-PulsedLightI2C</value>
+<value code="2">MaxbotixI2C</value>
+<value code="3">LidarLiteV2-I2C</value>
 <value code="5">PX4-PWM</value>
 <value code="6">BBB-PRU</value>
 <value code="7">LightWareI2C</value>
@@ -5560,6 +5875,8 @@
 <value code="11">uLanding</value>
 <value code="12">LeddarOne</value>
 <value code="13">MaxbotixSerial</value>
+<value code="14">TrOneI2C</value>
+<value code="15">LidarLiteV3-I2C</value>
 </values>
 </param>
 <param humanName="Rangefinder pin" name="RNGFND3_PIN" documentation="Analog pin that rangefinder is connected to. Set this to 0..9 for the APM2 analog pins. Set to 64 on an APM1 for the dedicated 'airspeed' port on the end of the board. Set to 11 on PX4 for the analog 'airspeed' port. Set to 15 on the Pixhawk for the analog 'airspeed' port." user="Advanced">
@@ -5648,12 +5965,26 @@
 <param humanName="Z position offset" name="RNGFND3_POS_Z" documentation="Z position of the third rangefinder in body frame. Positive Z is down from the origin. Use the zero range datum point if supplied." user="Advanced">
 <field name="Units">m</field>
 </param>
+<param humanName="Rangefinder 3 orientation" name="RNGFND3_ORIENT" documentation="Orientation of 3rd rangefinder" user="Advanced">
+<values>
+<value code="0">Forward</value>
+<value code=" 1">Forward-Right</value>
+<value code=" 2">Right</value>
+<value code=" 3">Back-Right</value>
+<value code=" 4">Back</value>
+<value code=" 5">Back-Left</value>
+<value code=" 6">Left</value>
+<value code=" 7">Forward-Left</value>
+<value code=" 24">Up</value>
+<value code=" 25">Down</value>
+</values>
+</param>
 <param humanName="Fourth Rangefinder type" name="RNGFND4_TYPE" documentation="What type of rangefinder device that is connected" user="Advanced">
 <values>
 <value code="0">None</value>
 <value code="1">Analog</value>
-<value code="2">APM2-MaxbotixI2C</value>
-<value code="3">APM2-PulsedLightI2C</value>
+<value code="2">MaxbotixI2C</value>
+<value code="3">LidarLiteV2-I2C</value>
 <value code="5">PX4-PWM</value>
 <value code="6">BBB-PRU</value>
 <value code="7">LightWareI2C</value>
@@ -5663,6 +5994,8 @@
 <value code="11">uLanding</value>
 <value code="12">LeddarOne</value>
 <value code="13">MaxbotixSerial</value>
+<value code="14">TrOneI2C</value>
+<value code="15">LidarLiteV3-I2C</value>
 </values>
 </param>
 <param humanName="Rangefinder pin" name="RNGFND4_PIN" documentation="Analog pin that rangefinder is connected to. Set this to 0..9 for the APM2 analog pins. Set to 64 on an APM1 for the dedicated 'airspeed' port on the end of the board. Set to 11 on PX4 for the analog 'airspeed' port. Set to 15 on the Pixhawk for the analog 'airspeed' port." user="Advanced">
@@ -5751,12 +6084,27 @@
 <param humanName="Z position offset" name="RNGFND4_POS_Z" documentation="Z position of the fourth rangefinder in body frame. Use the zero range datum point if supplied." user="Advanced">
 <field name="Units">m</field>
 </param>
+<param humanName="Rangefinder 4 orientation" name="RNGFND4_ORIENT" documentation="Orientation of 4th range finder" user="Advanced">
+<values>
+<value code="0">Forward</value>
+<value code=" 1">Forward-Right</value>
+<value code=" 2">Right</value>
+<value code=" 3">Back-Right</value>
+<value code=" 4">Back</value>
+<value code=" 5">Back-Left</value>
+<value code=" 6">Left</value>
+<value code=" 7">Forward-Left</value>
+<value code=" 24">Up</value>
+<value code=" 25">Down</value>
+</values>
+</param>
 </parameters>
 <parameters name="RPM">
 <param humanName="RPM type" name="RPM_TYPE" documentation="What type of RPM sensor is connected" user="Standard">
 <values>
 <value code="0">None</value>
 <value code="1">PX4-PWM</value>
+<value code="2">AUXPIN</value>
 </values>
 </param>
 <param humanName="RPM scaling" name="RPM_SCALING" documentation="Scaling factor between sensor reading and RPM." user="Standard">
@@ -5771,14 +6119,37 @@
 <param humanName="Minimum Quality" name="RPM_MIN_QUAL" documentation="Minimum data quality to be used" user="Advanced">
 <field name="Increment">0.1</field>
 </param>
+<param humanName="Input pin number" name="RPM_PIN" documentation="Which pin to use" user="Standard">
+<values>
+<value code="-1">Disabled</value>
+<value code="50">PixhawkAUX1</value>
+<value code="51">PixhawkAUX2</value>
+<value code="52">PixhawkAUX3</value>
+<value code="53">PixhawkAUX4</value>
+<value code="54">PixhawkAUX5</value>
+<value code="55">PixhawkAUX6</value>
+</values>
+</param>
 <param humanName="Second RPM type" name="RPM2_TYPE" documentation="What type of RPM sensor is connected" user="Advanced">
 <values>
 <value code="0">None</value>
 <value code="1">PX4-PWM</value>
+<value code="2">AUXPIN</value>
 </values>
 </param>
 <param humanName="RPM scaling" name="RPM2_SCALING" documentation="Scaling factor between sensor reading and RPM." user="Advanced">
 <field name="Increment">0.001</field>
+</param>
+<param humanName="RPM2 input pin number" name="RPM2_PIN" documentation="Which pin to use" user="Standard">
+<values>
+<value code="-1">Disabled</value>
+<value code="50">PixhawkAUX1</value>
+<value code="51">PixhawkAUX2</value>
+<value code="52">PixhawkAUX3</value>
+<value code="53">PixhawkAUX4</value>
+<value code="54">PixhawkAUX5</value>
+<value code="55">PixhawkAUX6</value>
+</values>
 </param>
 </parameters>
 <parameters name="SCHED_">
@@ -5813,6 +6184,7 @@
 <value code="57">57600</value>
 <value code="111">111100</value>
 <value code="115">115200</value>
+<value code="460">460800</value>
 <value code="500">500000</value>
 <value code="921">921600</value>
 <value code="1500">1500000</value>
@@ -5997,6 +6369,12 @@
 <value code="1">Enable</value>
 </values>
 </param>
+<param humanName="RC Out channels to be transmitted as servo over CAN bus" name="SERVO_CANSRV_BM" documentation="Bitmask with one set for channel to be transmitted as a servo command over CAN bus" user="Standard">
+<field name="Bitmask">0: Servo 1, 1: Servo 2, 2: Servo 3, 3: Servo 4, 4: Servo 5, 5: Servo 6, 6: Servo 7, 7: Servo 8, 8: Servo 9, 9: Servo 10, 10: Servo 11, 11: Servo 12, 12: Servo 13, 13: Servo 14, 14: Servo 15</field>
+</param>
+<param humanName="RC Out channels to be transmitted as ESC over CAN bus" name="SERVO_CANESC_BM" documentation="Bitmask with one set for channel to be transmitted as a ESC command over CAN bus" user="Standard">
+<field name="Bitmask">0: ESC 1, 1: ESC 2, 2: ESC 3, 3: ESC 4, 4: ESC 5, 5: ESC 6, 6: ESC 7, 7: ESC 8, 8: ESC 9, 9: ESC 10, 10: ESC 11, 11: ESC 12, 12: ESC 13, 13: ESC 14, 14: ESC 15, 15: ESC 16</field>
+</param>
 </parameters>
 <parameters name="SERVO10_">
 <param humanName="Minimum PWM" name="SERVO10_MIN" documentation="minimum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Standard">
@@ -6060,6 +6438,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -6149,6 +6528,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -6238,6 +6618,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -6327,6 +6708,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -6416,6 +6798,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -6505,6 +6888,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -6594,6 +6978,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -6683,6 +7068,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -6772,6 +7158,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -6861,6 +7248,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -6950,6 +7338,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -7039,6 +7428,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -7128,6 +7518,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -7217,6 +7608,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -7306,6 +7698,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -7395,6 +7788,7 @@
 <value code="38">Motor6</value>
 <value code="39">Motor7</value>
 <value code="40">Motor8</value>
+<value code="41">MotorTilt</value>
 <value code="51">RCIN1</value>
 <value code="52">RCIN2</value>
 <value code="53">RCIN3</value>
@@ -7434,11 +7828,6 @@
 <field name="Units">Hz</field>
 </param>
 <param humanName="RC Channel stream rate to ground station" name="SR0_RC_CHAN" documentation="Stream rate of SERVO_OUTPUT_RAW and RC_CHANNELS_RAW to ground station" user="Advanced">
-<field name="Range">0 10</field>
-<field name="Increment">1</field>
-<field name="Units">Hz</field>
-</param>
-<param humanName="Raw Control stream rate to ground station" name="SR0_RAW_CTRL" documentation="Stream rate of RC_CHANNELS_SCALED (HIL only) to ground station" user="Advanced">
 <field name="Range">0 10</field>
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
@@ -7485,11 +7874,6 @@
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
 </param>
-<param humanName="Raw Control stream rate to ground station" name="SR1_RAW_CTRL" documentation="Stream rate of RC_CHANNELS_SCALED (HIL only) to ground station" user="Advanced">
-<field name="Range">0 10</field>
-<field name="Increment">1</field>
-<field name="Units">Hz</field>
-</param>
 <param humanName="Position stream rate to ground station" name="SR1_POSITION" documentation="Stream rate of GLOBAL_POSITION_INT to ground station" user="Advanced">
 <field name="Range">0 10</field>
 <field name="Increment">1</field>
@@ -7532,11 +7916,6 @@
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
 </param>
-<param humanName="Raw Control stream rate to ground station" name="SR2_RAW_CTRL" documentation="Stream rate of RC_CHANNELS_SCALED (HIL only) to ground station" user="Advanced">
-<field name="Range">0 10</field>
-<field name="Increment">1</field>
-<field name="Units">Hz</field>
-</param>
 <param humanName="Position stream rate to ground station" name="SR2_POSITION" documentation="Stream rate of GLOBAL_POSITION_INT to ground station" user="Advanced">
 <field name="Range">0 10</field>
 <field name="Increment">1</field>
@@ -7575,11 +7954,6 @@
 <field name="Units">Hz</field>
 </param>
 <param humanName="RC Channel stream rate to ground station" name="SR3_RC_CHAN" documentation="Stream rate of SERVO_OUTPUT_RAW and RC_CHANNELS_RAW to ground station" user="Advanced">
-<field name="Range">0 10</field>
-<field name="Increment">1</field>
-<field name="Units">Hz</field>
-</param>
-<param humanName="Raw Control stream rate to ground station" name="SR3_RAW_CTRL" documentation="Stream rate of RC_CHANNELS_SCALED (HIL only) to ground station" user="Advanced">
 <field name="Range">0 10</field>
 <field name="Increment">1</field>
 <field name="Units">Hz</field>
@@ -7634,17 +8008,17 @@
 <field name="Units">cm</field>
 </param>
 <param humanName="Waypoint Climb Speed Target" name="WPNAV_SPEED_UP" documentation="Defines the speed in cm/s which the aircraft will attempt to maintain while climbing during a WP mission" user="Standard">
-<field name="Range">0 1000</field>
+<field name="Range">10 1000</field>
 <field name="Increment">50</field>
 <field name="Units">cm/s</field>
 </param>
 <param humanName="Waypoint Descent Speed Target" name="WPNAV_SPEED_DN" documentation="Defines the speed in cm/s which the aircraft will attempt to maintain while descending during a WP mission" user="Standard">
-<field name="Range">0 500</field>
+<field name="Range">10 500</field>
 <field name="Increment">10</field>
 <field name="Units">cm/s</field>
 </param>
 <param humanName="Loiter Horizontal Maximum Speed" name="WPNAV_LOIT_SPEED" documentation="Defines the maximum speed in cm/s which the aircraft will travel horizontally while in loiter mode" user="Standard">
-<field name="Range">0 2000</field>
+<field name="Range">20 2000</field>
 <field name="Increment">50</field>
 <field name="Units">cm/s</field>
 </param>
