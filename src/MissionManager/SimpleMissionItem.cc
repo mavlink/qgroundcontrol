@@ -560,7 +560,10 @@ void SimpleMissionItem::setDirty(bool dirty)
 {
     if (!_homePositionSpecialCase || (_dirty != dirty)) {
         _dirty = dirty;
-        _cameraSection->setDirty(false);
+        if (!dirty) {
+            _cameraSection->setDirty(false);
+            _speedSection->setDirty(false);
+        }
         emit dirtyChanged(dirty);
     }
 }
@@ -690,7 +693,7 @@ double SimpleMissionItem::specifiedGimbalYaw(void)
     return _cameraSection->available() ? _cameraSection->specifiedGimbalYaw() : missionItem().specifiedGimbalYaw();
 }
 
-bool SimpleMissionItem::scanForSections(QmlObjectListModel* visualItems, int& scanIndex, Vehicle* vehicle)
+bool SimpleMissionItem::scanForSections(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle)
 {
     bool sectionFound = false;
 
