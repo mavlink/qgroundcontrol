@@ -18,7 +18,7 @@
 
 #include <QGeoCoordinate>
 
-/// Unit test for SimpleMissionItem
+/// Unit test for SurveyMissionItem
 class SurveyMissionItemTest : public UnitTest
 {
     Q_OBJECT
@@ -32,68 +32,43 @@ protected:
     
 private slots:
     void _testDirty(void);
+    void _testCameraValueChanged(void);
+#if 0
     void _testAddPolygonCoordinate(void);
     void _testClearPolygon(void);
     void _testCameraTrigger(void);
+#endif
 
 private:
     enum {
-        polygonPathChangedIndex = 0,
-        lastSequenceNumberChangedIndex,
-        altitudeChangedIndex,
-        gridAngleChangedIndex,
-        gridPointsChangedIndex,
-        cameraTriggerChangedIndex,
-        altDifferenceChangedIndex,
-        altPercentChangedIndex,
-        azimuthChangedIndex,
-        commandDescriptionChangedIndex,
-        commandNameChangedIndex,
-        abbreviationChangedIndex,
-        coordinateChangedIndex,
-        exitCoordinateChangedIndex,
+        gridPointsChangedIndex = 0,
+        cameraShotsChangedIndex,
+        coveredAreaChangedIndex,
+        cameraValueChangedIndex,
+        gridTypeChangedIndex,
+        timeBetweenShotsChangedIndex,
+        cameraOrientationFixedChangedIndex,
+        refly90DegreesChangedIndex,
         dirtyChangedIndex,
-        distanceChangedIndex,
-        isCurrentItemChangedIndex,
-        sequenceNumberChangedIndex,
-        isSimpleItemChangedIndex,
-        specifiesCoordinateChangedIndex,
-        isStandaloneCoordinateChangedIndex,
-        coordinateHasRelativeAltitudeChangedIndex,
-        exitCoordinateHasRelativeAltitudeChangedIndex,
-        exitCoordinateSameAsEntryChangedIndex,
         maxSignalIndex
     };
 
     enum {
-        polygonPathChangedMask =                        1 << polygonPathChangedIndex,
-        lastSequenceNumberChangedMask =                 1 << lastSequenceNumberChangedIndex,
-        altitudeChangedMask =                           1 << altitudeChangedIndex,
-        gridAngleChangedMask =                          1 << gridAngleChangedIndex,
-        gridPointsChangedMask =                         1 << gridPointsChangedIndex,
-        cameraTriggerChangedMask =                      1 << cameraTriggerChangedIndex,
-        altDifferenceChangedMask =                      1 << altDifferenceChangedIndex,
-        altPercentChangedMask =                         1 << altPercentChangedIndex,
-        azimuthChangedMask =                            1 << azimuthChangedIndex,
-        commandDescriptionChangedMask =                 1 << commandDescriptionChangedIndex,
-        commandNameChangedMask =                        1 << commandNameChangedIndex,
-        coordinateChangedMask =                         1 << coordinateChangedIndex,
-        exitCoordinateChangedMask =                     1 << exitCoordinateChangedIndex,
-        dirtyChangedMask =                              1 << dirtyChangedIndex,
-        distanceChangedMask =                           1 << distanceChangedIndex,
-        isCurrentItemChangedMask =                      1 << isCurrentItemChangedIndex,
-        sequenceNumberChangedMask =                     1 << sequenceNumberChangedIndex,
-        isSimpleItemChangedMask =                       1 << isSimpleItemChangedIndex,
-        specifiesCoordinateChangedMask =                1 << specifiesCoordinateChangedIndex,
-        isStandaloneCoordinateChangedMask =             1 << isStandaloneCoordinateChangedIndex,
-        coordinateHasRelativeAltitudeChangedMask =      1 << coordinateHasRelativeAltitudeChangedIndex,
-        exitCoordinateHasRelativeAltitudeChangedMask =  1 << exitCoordinateHasRelativeAltitudeChangedIndex,
-        exitCoordinateSameAsEntryChangedMask =          1 << exitCoordinateSameAsEntryChangedIndex,
+        gridPointsChangedMask =             1 << gridPointsChangedIndex,
+        cameraShotsChangedMask =            1 << cameraShotsChangedIndex,
+        coveredAreaChangedMask =            1 << coveredAreaChangedIndex,
+        cameraValueChangedMask =            1 << cameraValueChangedIndex,
+        gridTypeChangedMask =               1 << gridTypeChangedIndex,
+        timeBetweenShotsChangedMask =       1 << timeBetweenShotsChangedIndex,
+        cameraOrientationFixedChangedMask = 1 << cameraOrientationFixedChangedIndex,
+        refly90DegreesChangedMask =         1 << refly90DegreesChangedIndex,
+        dirtyChangedMask =                  1 << dirtyChangedIndex
     };
 
-    static const size_t _cComplexMissionItemSignals = maxSignalIndex;
-    const char*         _rgComplexMissionItemSignals[_cComplexMissionItemSignals];
+    static const size_t _cSurveySignals = maxSignalIndex;
+    const char*         _rgSurveySignals[_cSurveySignals];
 
+    Vehicle*                _offlineVehicle;
     MultiSignalSpy*         _multiSpy;
     SurveyMissionItem*      _surveyItem;
     QGCMapPolygon*          _mapPolygon;
