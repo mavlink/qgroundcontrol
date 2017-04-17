@@ -199,6 +199,10 @@ MacBuild | LinuxBuild {
     MacBuild {
         # Latest clang version has a buggy check for this which cause Qt headers to throw warnings on qmap.h
         QMAKE_CXXFLAGS_WARN_ON += -Wno-return-stack-address
+        # Xcode 8.3 has issues on how MAVLink accesses (packed) message structure members.
+        # Note that this will fail when Xcode version reaches 10.x.x
+        XCODE_VERSION = $$system($$PWD/tools/get_xcode_version.sh)
+        greaterThan(XCODE_VERSION, 8.2.0): QMAKE_CXXFLAGS_WARN_ON += -Wno-address-of-packed-member
     }
 }
 

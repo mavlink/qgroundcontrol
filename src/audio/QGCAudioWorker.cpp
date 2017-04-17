@@ -193,9 +193,9 @@ QString QGCAudioWorker::fixTextMessageForAudio(const QString& string) {
         result.replace("ALTCTL", "Altitude Control", Qt::CaseInsensitive);
     }
     if(result.contains("AUTO_RTL", Qt::CaseInsensitive)) {
-        result.replace("AUTO_RTL", "auto Return To Land", Qt::CaseInsensitive);
+        result.replace("AUTO_RTL", "auto Return To Launch", Qt::CaseInsensitive);
     } else if(result.contains("RTL", Qt::CaseInsensitive)) {
-        result.replace("RTL", "Return To Land", Qt::CaseInsensitive);
+        result.replace("RTL", "Return To Launch", Qt::CaseInsensitive);
     }
     if(result.contains("ACCEL ", Qt::CaseInsensitive)) {
         result.replace("ACCEL ", "accelerometer ", Qt::CaseInsensitive);
