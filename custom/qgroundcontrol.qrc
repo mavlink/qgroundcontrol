@@ -81,6 +81,7 @@
         <file alias="QGroundControl/Controls/qmldir">../src/QmlControls/QGroundControl.Controls.qmldir</file>
         <file alias="QGroundControl/Controls/RallyPointEditorHeader.qml">../src/PlanView/RallyPointEditorHeader.qml</file>
         <file alias="QGroundControl/Controls/RallyPointItemEditor.qml">../src/PlanView/RallyPointItemEditor.qml</file>
+		<file alias="QGroundControl/Controls/RallyPointMapVisuals.qml">../src/PlanView/RallyPointMapVisuals.qml</file>
         <file alias="QGroundControl/Controls/RCChannelMonitor.qml">../src/QmlControls/RCChannelMonitor.qml</file>
         <file alias="QGroundControl/Controls/RoundButton.qml">../src/QmlControls/RoundButton.qml</file>
         <file alias="QGroundControl/Controls/SectionHeader.qml">../src/PlanView/SectionHeader.qml</file>
@@ -130,7 +131,6 @@
         <file alias="QGroundControl/FlightMap/QGCAttitudeHUD.qml">../src/FlightMap/Widgets/QGCAttitudeHUD.qml</file>
         <file alias="QGroundControl/FlightMap/QGCAttitudeWidget.qml">../src/FlightMap/Widgets/QGCAttitudeWidget.qml</file>
         <file alias="QGroundControl/FlightMap/QGCCompassWidget.qml">../src/FlightMap/Widgets/QGCCompassWidget.qml</file>
-        <file alias="QGroundControl/FlightMap/QGCMapPolygonControls.qml">../src/PlanView/QGCMapPolygonControls.qml</file>
         <file alias="QGroundControl/FlightMap/QGCPitchIndicator.qml">../src/FlightMap/Widgets/QGCPitchIndicator.qml</file>
         <file alias="QGroundControl/FlightMap/QGCVideoBackground.qml">../src/FlightMap/QGCVideoBackground.qml</file>
         <file alias="QGroundControl/FlightMap/qmldir">../src/FlightMap/qmldir</file>
@@ -186,8 +186,5 @@
     </qresource>
     <qresource prefix="/MockLink">
         <file alias="PX4MockLink.params">../src/comm/PX4MockLink.params</file>
-    </qresource>
-    <qresource prefix="/FirmwarePlugin">
-        <file alias="NoGeoFenceEditor.qml">../src/FirmwarePlugin/NoGeoFenceEditor.qml</file>
     </qresource>
 </RCC>
