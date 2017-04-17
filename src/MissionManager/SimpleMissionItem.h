@@ -52,7 +52,7 @@ public:
     ///     @param scanIndex Index to start scanning from
     ///     @param vehicle Vehicle associated with this mission
     /// @return true: section found, scanIndex updated
-    bool scanForSections(QmlObjectListModel* visualItems, int& scanIndex, Vehicle* vehicle);
+    bool scanForSections(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle);
 
     // Property accesors
     

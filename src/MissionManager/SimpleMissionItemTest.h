@@ -7,18 +7,13 @@
  *
  ****************************************************************************/
 
+#pragma once
 
-#ifndef SimpleMissionItemTest_H
-#define SimpleMissionItemTest_H
-
-#include "UnitTest.h"
-#include "TCPLink.h"
-#include "MultiSignalSpy.h"
-
-#include <QGeoCoordinate>
+#include "VisualMissionItemTest.h"
+#include "SimpleMissionItem.h"
 
 /// Unit test for SimpleMissionItem
-class SimpleMissionItemTest : public UnitTest
+class SimpleMissionItemTest : public VisualMissionItemTest
 {
     Q_OBJECT
     
@@ -30,10 +25,34 @@ public:
 
 private slots:
     void _testSignals(void);
+    void _testCameraSectionSignals(void);
     void _testEditorFacts(void);
     void _testDefaultValues(void);
     
 private:
+    enum {
+        commandChangedIndex = 0,
+        frameChangedIndex,
+        friendlyEditAllowedChangedIndex,
+        headingDegreesChangedIndex,
+        rawEditChangedIndex,
+        cameraSectionChangedIndex,
+        speedSectionChangedIndex,
+        maxSignalIndex,
+    };
+
+    enum {
+        commandChangedMask =                1 << commandChangedIndex,
+        frameChangedMask =                  1 << frameChangedIndex,
+        friendlyEditAllowedChangedMask =    1 << friendlyEditAllowedChangedIndex,
+        headingDegreesChangedMask =         1 << headingDegreesChangedIndex,
+        rawEditChangedMask =                1 << rawEditChangedIndex,
+        cameraSectionChangedMask =          1 << cameraSectionChangedIndex,
+        speedSectionChangedMask =           1 << speedSectionChangedIndex
+    };
+
+    static const size_t cSimpleItemSignals = maxSignalIndex;
+    const char*         rgSimpleItemSignals[cSimpleItemSignals];
 
     typedef struct {
         MAV_CMD        command;
@@ -51,7 +70,9 @@ private:
         bool                relativeAltCheckbox;
     } ItemExpected_t;
 
-    Vehicle*    _offlineVehicle;
+    SimpleMissionItem*  _simpleItem;
+    MultiSignalSpy*     _spySimpleItem;
+    MultiSignalSpy*     _spyVisualItem;
 
     static const ItemInfo_t     _rgItemInfo[];
     static const ItemExpected_t _rgItemExpected[];
@@ -64,5 +85,3 @@ private:
     static const FactValue_t    _rgFactValuesConditionDelay[];
     static const FactValue_t    _rgFactValuesDoJump[];
 };
-
-#endif
