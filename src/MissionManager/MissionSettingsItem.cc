@@ -43,10 +43,11 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
     }
 
     _plannedHomePositionAltitudeFact.setMetaData    (_metaDataMap[_plannedHomePositionAltitudeName]);
-
     _plannedHomePositionAltitudeFact.setRawValue    (_plannedHomePositionAltitudeFact.rawDefaultValue());
-
     setHomePositionSpecialCase(true);
+
+    _cameraSection.setAvailable(true);
+    _speedSection.setAvailable(true);
 
     connect(this,               &MissionSettingsItem::specifyMissionFlightSpeedChanged, this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
     connect(this,               &MissionSettingsItem::missionEndRTLChanged,             this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
@@ -184,17 +185,9 @@ bool MissionSettingsItem::scanForMissionSettings(QmlObjectListModel* visualItems
 
     qCDebug(MissionSettingsComplexItemLog) << "MissionSettingsItem::scanForMissionSettings count:scanIndex" << visualItems->count() << scanIndex;
 
-    MissionSettingsItem* settingsItem = visualItems->value<MissionSettingsItem*>(scanIndex);
-    if (!settingsItem) {
-        qWarning() << "Item specified by scanIndex not MissionSettingsItem";
-        return false;
-    }
-
     // Scan through the initial mission items for possible mission settings
-
-    scanIndex++;
-    foundCameraSection = settingsItem->_cameraSection.scanForSection(visualItems, scanIndex);
-    foundSpeedSection = settingsItem->_speedSection.scanForSection(visualItems, scanIndex);
+    foundCameraSection = _cameraSection.scanForSection(visualItems, scanIndex);
+    foundSpeedSection = _speedSection.scanForSection(visualItems, scanIndex);
 
     // Look at the end of the mission for end actions
 
@@ -206,7 +199,7 @@ bool MissionSettingsItem::scanForMissionSettings(QmlObjectListModel* visualItems
         if (missionItem.command() == MAV_CMD_NAV_RETURN_TO_LAUNCH &&
                 missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
             qCDebug(MissionSettingsComplexItemLog) << "Scan: Found end action RTL";
-            settingsItem->_missionEndRTL = true;
+            _missionEndRTL = true;
             visualItems->removeAt(lastIndex)->deleteLater();
         }
     }

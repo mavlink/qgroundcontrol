@@ -48,13 +48,14 @@ CameraSection::CameraSection(Vehicle* vehicle, QObject* parent)
     _cameraPhotoIntervalDistanceFact.setRawValue    (_cameraPhotoIntervalDistanceFact.rawDefaultValue());
     _cameraPhotoIntervalTimeFact.setRawValue        (_cameraPhotoIntervalTimeFact.rawDefaultValue());
 
-    connect(this,               &CameraSection::specifyGimbalChanged,   this, &CameraSection::_setDirtyAndUpdateItemCount);
-    connect(&_cameraActionFact, &Fact::valueChanged,                    this, &CameraSection::_setDirtyAndUpdateItemCount);
+    connect(this,               &CameraSection::specifyGimbalChanged,   this, &CameraSection::_specifyGimbalChanged);
+    connect(&_cameraActionFact, &Fact::valueChanged,                    this, &CameraSection::_cameraActionChanged);
 
-    connect(&_gimbalPitchFact,                  &Fact::valueChanged, this, &CameraSection::_setDirty);
-    connect(&_gimbalYawFact,                    &Fact::valueChanged, this, &CameraSection::_setDirty);
-    connect(&_cameraPhotoIntervalDistanceFact,  &Fact::valueChanged, this, &CameraSection::_setDirty);
-    connect(&_cameraPhotoIntervalTimeFact,      &Fact::valueChanged, this, &CameraSection::_setDirty);
+    connect(&_gimbalPitchFact,                  &Fact::valueChanged,                    this, &CameraSection::_setDirty);
+    connect(&_gimbalYawFact,                    &Fact::valueChanged,                    this, &CameraSection::_setDirty);
+    connect(&_cameraPhotoIntervalDistanceFact,  &Fact::valueChanged,                    this, &CameraSection::_setDirty);
+    connect(&_cameraPhotoIntervalTimeFact,      &Fact::valueChanged,                    this, &CameraSection::_setDirty);
+    connect(this,                               &CameraSection::specifyGimbalChanged,   this, &CameraSection::_setDirty);
 
     connect(&_gimbalYawFact,                    &Fact::valueChanged, this, &CameraSection::_updateSpecifiedGimbalYaw);
 }
@@ -188,7 +189,7 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
     }
 }
 
-bool CameraSection::scanForSection(QmlObjectListModel* visualItems, int& scanIndex)
+bool CameraSection::scanForSection(QmlObjectListModel* visualItems, int scanIndex)
 {
     bool foundGimbal = false;
     bool foundCameraAction = false;
@@ -218,7 +219,6 @@ bool CameraSection::scanForSection(QmlObjectListModel* visualItems, int& scanInd
         case MAV_CMD_DO_MOUNT_CONTROL:
             if (!foundGimbal && missionItem.param2() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == MAV_MOUNT_MODE_MAVLINK_TARGETING) {
                 foundGimbal = true;
-                scanIndex++;
                 setSpecifyGimbal(true);
                 gimbalPitch()->setRawValue(missionItem.param1());
                 gimbalYaw()->setRawValue(missionItem.param3());
@@ -231,7 +231,6 @@ bool CameraSection::scanForSection(QmlObjectListModel* visualItems, int& scanInd
         case MAV_CMD_IMAGE_START_CAPTURE:
             if (!foundCameraAction && missionItem.param1() != 0 && missionItem.param2() == 0 && missionItem.param3() == -1 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
                 foundCameraAction = true;
-                scanIndex++;
                 cameraAction()->setRawValue(TakePhotosIntervalTime);
                 cameraPhotoIntervalTime()->setRawValue(missionItem.param1());
                 visualItems->removeAt(scanIndex)->deleteLater();
@@ -251,7 +250,6 @@ bool CameraSection::scanForSection(QmlObjectListModel* visualItems, int& scanInd
                         if (nextMissionItem.command() == MAV_CMD_IMAGE_STOP_CAPTURE && nextMissionItem.param1() == 0 && nextMissionItem.param2() == 0 && nextMissionItem.param3() == 0 && nextMissionItem.param4() == 0 && nextMissionItem.param5() == 0 && nextMissionItem.param6() == 0 && nextMissionItem.param7() == 0) {
                             // We found a stop taking photos pair
                             foundCameraAction = true;
-                            scanIndex += 2;
                             cameraAction()->setRawValue(StopTakingPhotos);
                             visualItems->removeAt(scanIndex)->deleteLater();
                             visualItems->removeAt(scanIndex)->deleteLater();
@@ -264,7 +262,6 @@ bool CameraSection::scanForSection(QmlObjectListModel* visualItems, int& scanInd
                 // We didn't find a stop taking photos pair, check for trigger distance
                 if (missionItem.param1() > 0) {
                     foundCameraAction = true;
-                    scanIndex++;
                     cameraAction()->setRawValue(TakePhotoIntervalDistance);
                     cameraPhotoIntervalDistance()->setRawValue(missionItem.param1());
                     visualItems->removeAt(scanIndex)->deleteLater();
@@ -278,7 +275,6 @@ bool CameraSection::scanForSection(QmlObjectListModel* visualItems, int& scanInd
         case MAV_CMD_VIDEO_START_CAPTURE:
             if (!foundCameraAction && missionItem.param1() == 0 && missionItem.param2() == -1 && missionItem.param3() == -1 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
                 foundCameraAction = true;
-                scanIndex++;
                 cameraAction()->setRawValue(TakeVideo);
                 visualItems->removeAt(scanIndex)->deleteLater();
             }
@@ -288,7 +284,6 @@ bool CameraSection::scanForSection(QmlObjectListModel* visualItems, int& scanInd
         case MAV_CMD_VIDEO_STOP_CAPTURE:
             if (!foundCameraAction && missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
                 foundCameraAction = true;
-                scanIndex++;
                 cameraAction()->setRawValue(StopTakingVideo);
                 visualItems->removeAt(scanIndex)->deleteLater();
             }
@@ -336,4 +331,26 @@ double CameraSection::specifiedGimbalYaw(void) const
 void CameraSection::_updateSpecifiedGimbalYaw(void)
 {
     emit specifiedGimbalYawChanged(specifiedGimbalYaw());
+}
+
+void CameraSection::_updateSettingsSpecified(void)
+{
+    bool newSettingsSpecified = _specifyGimbal || _cameraActionFact.rawValue().toInt() != CameraActionNone;
+    if (newSettingsSpecified != _settingsSpecified) {
+        _settingsSpecified = newSettingsSpecified;
+        emit settingsSpecifiedChanged(newSettingsSpecified);
+    }
+}
+
+void CameraSection::_specifyGimbalChanged(bool specifyGimbal)
+{
+    Q_UNUSED(specifyGimbal);
+    _setDirtyAndUpdateItemCount();
+    _updateSettingsSpecified();
+}
+
+void CameraSection::_cameraActionChanged(void)
+{
+    _setDirtyAndUpdateItemCount();
+    _updateSettingsSpecified();
 }

@@ -37,7 +37,7 @@ public:
     QObject* speedSection(void) { return &_speedSection; }
 
     /// Scans the loaded items for settings items
-    static bool scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex);
+    bool scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex);
 
     /// Adds the optional mission end action to the list
     ///     @param items Mission items list to append to

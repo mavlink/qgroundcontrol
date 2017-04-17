@@ -41,9 +41,9 @@ public:
 
     /// Scans the loaded items for the section items
     ///     @param visualItems Item list
-    ///     @param scanIndex[in,out] Index to start scanning from
+    ///     @param scanIndex Index to start scanning from
     /// @return true: section found, items added, scanIndex updated
-    virtual bool scanForSection(QmlObjectListModel* visualItems, int& scanIndex) = 0;
+    virtual bool scanForSection(QmlObjectListModel* visualItems, int scanIndex) = 0;
 
     /// Appends the mission items associated with this section
     ///     @param items List to append to
