@@ -28,8 +28,9 @@ const qreal FactMetaData::UnitConsts_s::secondsPerHour = 3600.0;
 const qreal FactMetaData::UnitConsts_s::knotsToKPH = 1.852; // exact, hence weird base for knotsToMetersPerSecond
 
 // Length
-const qreal FactMetaData::UnitConsts_s::milesToMeters = 1609.344;
-const qreal FactMetaData::UnitConsts_s::feetToMeters = 0.3048;
+const qreal FactMetaData::UnitConsts_s::milesToMeters =         1609.344;
+const qreal FactMetaData::UnitConsts_s::feetToMeters =          0.3048;
+const qreal FactMetaData::UnitConsts_s::inchesToCentimeters =   2.54;
 
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
@@ -42,10 +43,12 @@ const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] 
 const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTranslations[] = {
     { "m",      "m",        false,  UnitsSettings::DistanceUnitsMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "meters", "meters",   false,  UnitsSettings::DistanceUnitsMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "cm/px",  "cm/px",    false,  UnitsSettings::DistanceUnitsMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "m/s",    "m/s",      true,   UnitsSettings::SpeedUnitsMetersPerSecond,   FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "m^2",    "m^2",      false,  UnitsSettings::AreaUnitsSquareMeters,       FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "m",      "ft",       false,  UnitsSettings::DistanceUnitsFeet,           FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "meters", "ft",       false,  UnitsSettings::DistanceUnitsFeet,           FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
+    { "cm/px",  "in/px",    false,  UnitsSettings::DistanceUnitsFeet,           FactMetaData::_centimetersToInches,                 FactMetaData::_inchesToCentimeters },
     { "m^2",    "km^2",     false,  UnitsSettings::AreaUnitsSquareKilometers,   FactMetaData::_squareMetersToSquareKilometers,      FactMetaData::_squareKilometersToSquareMeters },
     { "m^2",    "ha",       false,  UnitsSettings::AreaUnitsHectares,           FactMetaData::_squareMetersToHectares,              FactMetaData::_hectaresToSquareMeters },
     { "m^2",    "ft^2",     false,  UnitsSettings::AreaUnitsSquareFeet,         FactMetaData::_squareMetersToSquareFeet,            FactMetaData::_squareFeetToSquareMeters },
@@ -550,6 +553,16 @@ QVariant FactMetaData::_percentToNorm(const QVariant& percent)
 QVariant FactMetaData::_normToPercent(const QVariant& normalized)
 {
     return QVariant(normalized.toDouble() * 100.0);
+}
+
+QVariant FactMetaData::_centimetersToInches(const QVariant& centimeters)
+{
+    return QVariant(centimeters.toDouble() * 1.0/constants.inchesToCentimeters);
+}
+
+QVariant FactMetaData::_inchesToCentimeters(const QVariant& inches)
+{
+    return QVariant(inches.toDouble() * constants.inchesToCentimeters);
 }
 
 void FactMetaData::setRawUnits(const QString& rawUnits)

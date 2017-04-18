@@ -519,6 +519,12 @@ QGCView {
                 }
             }
 
+            onShowContinueMissionChanged: {
+                if (showContinueMission) {
+                    confirmAction(actionContinueMission)
+                }
+            }
+
             onShowResumeMissionChanged: {
                 if (showResumeMission) {
                     confirmAction(actionResumeMission)

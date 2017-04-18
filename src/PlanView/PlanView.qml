@@ -822,10 +822,10 @@ QGCView {
     Component {
         id: removeAllPromptDialog
         QGCViewMessage {
-            message: qsTr("Are you sure you want to remove all items?")
+            message: qsTr("Are you sure you want to remove all items? This will also remove all items from the vehicle.")
             function accept() {
                 itemDragger.clearItem()
-                _syncDropDownController.removeAll()
+                _syncDropDownController.removeAllFromVehicle()
                 hideDialog()
             }
         }

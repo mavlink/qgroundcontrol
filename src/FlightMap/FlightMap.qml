@@ -122,7 +122,7 @@ Map {
         visible:        gcsPosition.isValid
         coordinate:     gcsPosition
         sourceItem:     MissionItemIndexLabel {
-        label:          "Q"
+        label:          QGroundControl.appName.charAt(0)
         }
     }
 } // Map
