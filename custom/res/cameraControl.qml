@@ -132,7 +132,7 @@ Rectangle {
                 width:      parent.width * 0.75
                 height:     width
                 radius:     width * 0.5
-                color:      _cameraModeUndefined ? qgcPal.colorGrey : qgcPal.colorRed
+                color:      _cameraModeUndefined ? qgcPal.colorGrey : ( _cameraVideoMode ? qgcPal.colorRed : "white" )
                 visible:    !pauseVideo.visible
                 anchors.centerIn:   parent
             }

@@ -1,4 +1,4 @@
-message("Adding Yuneec Typhoon H plugin")
+message("Adding Yuneec Typhoon H520 plugin")
 
 linux : android-g++ {
     DEFINES += NO_SERIAL_LINK
@@ -6,7 +6,7 @@ linux : android-g++ {
     CONFIG  += MobileBuild
     CONFIG  += NoSerialBuild
     equals(ANDROID_TARGET_ARCH, x86)  {
-        message("Using Typhoon specific Android interfaces")
+        message("Using ST16 specific Android interface")
     } else {
         message("Unsuported Android toolchain, limited functionality for development only")
     }
