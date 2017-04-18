@@ -67,6 +67,53 @@ Item {
         }
     }
 
+    Component {
+        id: connectionLostBatteryResume
+
+        QGCViewDialog {
+            function reject() {
+                _activeVehicle.disconnectInactiveVehicle()
+                hideDialog()
+            }
+
+            Connections {
+                target: QGroundControl.multiVehicleManager.activeVehicle
+                onConnectionLostChanged: {
+                    if (!connectionLost) {
+                        hideDialog()
+                    }
+                }
+            }
+
+            Column {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        ScreenTools.defaultFontPixelHeight / 2
+
+                QGCLabel {
+                    text:           qsTr("Connection to the vehicle has been lost.")
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
+                }
+
+                QGCLabel {
+                    text:           qsTr("If you are in the process of switching batteries to continue the mission, this dialog will go away automatically once the vehicle restarts.")
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
+                }
+
+                QGCLabel {
+                    text:           qsTr("Otherwise you can click Close to disconnect from the vehicle.")
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
+                }
+            }
+        }
+    }
+
     MessageDialog {
         id:                 connectionLostDisarmedDialog
         title:              qsTr("Communication Lost")
@@ -86,12 +133,16 @@ Item {
                 if(!_activeVehicle.armed) {
                     //-- If it wasn't already set to auto-disconnect
                     if(!_activeVehicle.autoDisconnect) {
-                        //-- Vehicle was not armed. Close connection and tell user.
-                        _activeVehicle.disconnectInactiveVehicle()
-                        connectionLostDisarmedDialog.open()
+                        if (guidedController.showResumeMission) {
+                            qgcView.showDialog(connectionLostBatteryResume, qsTr("Connection lost"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+                        } else {
+                            //-- Vehicle is not armed. Close connection and tell user.
+                            _activeVehicle.disconnectInactiveVehicle()
+                            connectionLostDisarmedDialog.open()
+                        }
                     }
                 } else {
-                    //-- Vehicle was armed. Show doom dialog.
+                    //-- Vehicle is armed. Show doom dialog.
                     rootLoader.sourceComponent = connectionLostArmed
                     mainWindow.disableToolbar()
                 }
