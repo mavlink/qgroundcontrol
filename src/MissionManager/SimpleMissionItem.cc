@@ -80,9 +80,9 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
 
     connect(&_missionItem, &MissionItem::specifiedFlightSpeedChanged, this, &SimpleMissionItem::specifiedFlightSpeedChanged);
 
-    connect(this, &SimpleMissionItem::sequenceNumberChanged,    this, &SimpleMissionItem::lastSequenceNumberChanged);
-    connect(this, &SimpleMissionItem::cameraSectionChanged,     this, &SimpleMissionItem::_setDirtyFromSignal);
-    connect(this, &SimpleMissionItem::cameraSectionChanged,     this, &SimpleMissionItem::_updateLastSequenceNumber);
+    connect(this, &SimpleMissionItem::sequenceNumberChanged,        this, &SimpleMissionItem::lastSequenceNumberChanged);
+    connect(this, &SimpleMissionItem::cameraSectionChanged,         this, &SimpleMissionItem::_setDirtyFromSignal);
+    connect(this, &SimpleMissionItem::cameraSectionChanged,         this, &SimpleMissionItem::_updateLastSequenceNumber);
 }
 
 SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missionItem, QObject* parent)
@@ -736,8 +736,10 @@ void SimpleMissionItem::_updateOptionalSections(void)
     connect(_cameraSection, &CameraSection::specifyGimbalChanged,       this, &SimpleMissionItem::specifiedGimbalYawChanged);
     connect(_cameraSection, &CameraSection::specifiedGimbalYawChanged,  this, &SimpleMissionItem::specifiedGimbalYawChanged);
 
-    connect(_speedSection, &CameraSection::dirtyChanged,                this, &SimpleMissionItem::_sectionDirtyChanged);
-    connect(_speedSection, &CameraSection::itemCountChanged,            this, &SimpleMissionItem::_updateLastSequenceNumber);
+    connect(_speedSection,                  &SpeedSection::dirtyChanged,                this, &SimpleMissionItem::_sectionDirtyChanged);
+    connect(_speedSection,                  &SpeedSection::itemCountChanged,            this, &SimpleMissionItem::_updateLastSequenceNumber);
+    connect(_speedSection,                  &SpeedSection::specifyFlightSpeedChanged,   this, &SimpleMissionItem::specifiedFlightSpeedChanged);
+    connect(_speedSection->flightSpeed(),   &Fact::rawValueChanged,                     this, &SimpleMissionItem::specifiedFlightSpeedChanged);
 
     emit cameraSectionChanged(_cameraSection);
     emit speedSectionChanged(_speedSection);
