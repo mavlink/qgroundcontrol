@@ -1,6 +1,8 @@
 import QtQuick          2.3
 import QtQuick.Controls 1.2
+import QtQuick.Controls.Styles 1.4
 import QtQuick.Dialogs  1.2
+import QtQuick.Extras   1.4
 import QtQuick.Layouts  1.2
 
 import QGroundControl               1.0
@@ -398,10 +400,38 @@ Rectangle {
                 columns:        2
                 visible:        gridHeader.checked
 
-                QGCLabel { text: qsTr("Angle") }
+                GridLayout {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    columnSpacing:  _margin
+                    rowSpacing:     _margin
+                    columns:        3
+                    visible:        gridHeader.checked
+
+                    QGCLabel {
+                        id:         angleText
+                        text:       qsTr("Angle")
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    ToolButton {
+                        id:                     windRoseButton
+                        anchors.verticalCenter: angleText.verticalCenter
+                        iconSource:             "/res/wind-rose.svg"
+
+                        onClicked: {
+                            var cords = windRoseButton.mapToItem(_root, 0, 0)
+                            windRose.popup(cords.x + windRoseButton.width/2, cords.y + windRoseButton.height/2);
+                        }
+                    }
+                }
+
                 FactTextField {
+                    id:                 gridAngleText
                     fact:               missionItem.gridAngle
                     Layout.fillWidth:   true
+                    Layout.columnSpan:  1
                 }
 
                 QGCLabel { text: qsTr("Turnaround dist") }
@@ -515,5 +545,85 @@ Rectangle {
                 }
             }
         }
+    }
+
+
+    PieMenu {
+        id:          windRose
+        triggerMode: TriggerMode.TriggerOnPress
+        height:      2.75*windRoseButton.height
+        width:       2.75*windRoseButton.width
+
+        onVisibleChanged: {
+            windRoseSvg.visible = visible
+        }
+
+        style: PieMenuStyle {
+            cancelRadius: windRoseButton.height*0.5
+            shadowRadius: 0
+            startAngle:   -22.5
+            endAngle:     337.5
+        }
+
+
+        MenuItem {
+            onTriggered: {
+                gridAngleText.text = "-90";
+                gridAngleText.editingFinished();
+            }
+        }
+        MenuItem {
+            onTriggered: {
+                gridAngleText.text = "-45";
+                gridAngleText.editingFinished();
+            }
+        }
+        MenuItem {
+            onTriggered: {
+                gridAngleText.text = "0";
+                gridAngleText.editingFinished();
+            }
+        }
+        MenuItem {
+            onTriggered: {
+                gridAngleText.text = "45";
+                gridAngleText.editingFinished();
+            }
+        }
+        MenuItem {
+            onTriggered: {
+                gridAngleText.text = "90";
+                gridAngleText.editingFinished();
+            }
+        }
+        MenuItem {
+            onTriggered: {
+                gridAngleText.text = "135";
+                gridAngleText.editingFinished();
+            }
+        }
+        MenuItem {
+            onTriggered: {
+                gridAngleText.text = "180";
+                gridAngleText.editingFinished();
+            }
+        }
+        MenuItem {
+            onTriggered: {
+                gridAngleText.text = "-135";
+                gridAngleText.editingFinished();
+            }
+        }
+    }
+
+    Image {
+        id:      windRoseSvg
+        source:  "/res/wind-rose-arrows.svg"
+        visible: false
+        width:   windRose.width
+        height:  windRose.height
+        x:       windRose.x;
+        y:       windRose.y;
+        z:       windRose.z;
     }
 }
