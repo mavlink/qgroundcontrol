@@ -650,7 +650,7 @@ velocity</short_desc>
       <values>
         <value code="1">Return to land</value>
         <value code="0">Warning</value>
-        <value code="3">Return to land at critically low level, land at current position if reaching dangerously low levels</value>
+        <value code="3">RTL, land immediately if battery too low</value>
         <value code="2">Land at current position</value>
       </values>
     </parameter>
