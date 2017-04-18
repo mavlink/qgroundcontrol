@@ -76,7 +76,7 @@ QGCView {
 
     function insertComplexMissionItem(complexItemName, coordinate, index) {
         var sequenceNumber = missionController.insertComplexMissionItem(complexItemName, coordinate, index)
-        setCurrentItem(sequenceNumber)
+        setCurrentItem(sequenceNumber, true)
     }
 
     property bool _firstMissionLoadComplete:    false
@@ -168,7 +168,7 @@ QGCView {
 
         Component.onCompleted: {
             start(true /* editMode */)
-            setCurrentItem(0)
+            setCurrentItem(0, true)
         }
 
         function _denyUpload(switchToFly) {
@@ -223,7 +223,7 @@ QGCView {
             if (_visualItems && _visualItems.count != 1) {
                 mapFitFunctions.fitMapViewportToMissionItems()
             }
-            setCurrentItem(0)
+            setCurrentItem(0, true)
         }
     }
 
@@ -305,8 +305,8 @@ QGCView {
 
     /// Sets a new current mission item
     ///     @param sequenceNumber - index for new item, -1 to clear current item
-    function setCurrentItem(sequenceNumber) {
-        if (sequenceNumber !== _currentMissionIndex) {
+    function setCurrentItem(sequenceNumber, force) {
+        if (force || sequenceNumber !== _currentMissionIndex) {
             _currentMissionItem = undefined
             _currentMissionIndex = -1
             for (var i=0; i<_visualItems.count; i++) {
@@ -326,9 +326,8 @@ QGCView {
     ///     @param coordinate Location to insert item
     ///     @param index Insert item at this index
     function insertSimpleMissionItem(coordinate, index) {
-        setCurrentItem(-1)
         var sequenceNumber = missionController.insertSimpleMissionItem(coordinate, index)
-        setCurrentItem(sequenceNumber)
+        setCurrentItem(sequenceNumber, true)
     }
 
     property int _moveDialogMissionItemIndex
@@ -347,7 +346,7 @@ QGCView {
         onAcceptedForLoad: {
             _syncDropDownController.loadFromFile(file)
             _syncDropDownController.fitViewportToItems()
-            _currentMissionItem = _visualItems.get(0)
+            setCurrentItem(0, true)
             close()
         }
     }
@@ -506,7 +505,7 @@ QGCView {
 
                 delegate: MissionItemMapVisual {
                     map:        editorMap
-                    onClicked:  setCurrentItem(sequenceNumber)
+                    onClicked:  setCurrentItem(sequenceNumber, false)
                 }
             }
 
@@ -568,7 +567,7 @@ QGCView {
                         toggle:     true
                     },
                     {
-                        name:               "Pattern",
+                        name:               _singleComplexItem ? missionController.complexMissionItemNames[0] : "Pattern",
                         iconSource:         "/qmlimages/MapDrawShape.svg",
                         dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
                     },
@@ -721,7 +720,7 @@ QGCView {
                         readOnly:       false
                         rootQgcView:    _qgcView
 
-                        onClicked:  setCurrentItem(object.sequenceNumber)
+                        onClicked:  setCurrentItem(object.sequenceNumber, false)
 
                         onRemove: {
                             var removeIndex = index
@@ -731,7 +730,7 @@ QGCView {
                                 removeIndex--
                             }
                             _currentMissionIndex = -1
-                            rootQgcView.setCurrentItem(removeIndex)
+                            rootQgcView.setCurrentItem(removeIndex, true)
                         }
 
                         onInsertWaypoint:       insertSimpleMissionItem(editorMap.center, index)
