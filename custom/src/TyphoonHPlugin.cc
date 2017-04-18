@@ -293,7 +293,7 @@ TyphoonHPlugin::settingsPages()
         }
 #if defined(__mobile__)
         if(!_pTyphoonSettings) {
-            _pTyphoonSettings = new QGCSettings(tr("Typhoon H"),
+            _pTyphoonSettings = new QGCSettings(tr("Vehicle"),
                 QUrl::fromUserInput("qrc:/typhoonh/TyphoonSettings.qml"),
                 QUrl::fromUserInput("qrc:/typhoonh/img/logoWhite.svg"));
         }

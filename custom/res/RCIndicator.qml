@@ -36,7 +36,7 @@ Item {
         if(_batteryLevel > 0.98) {
             return "100%"
         }
-        if(_batteryLevel > 0.1) {
+        if(_batteryLevel > 0.01) {
             return (_batteryLevel * 100).toFixed(0) + '%'
         }
         return "N/A"

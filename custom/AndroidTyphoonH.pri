@@ -1,4 +1,4 @@
-message("Adding Android Support for Typhoon H")
+message("Adding Android Support for ST16")
 QT += androidextras
 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android_typhoonh
 OTHER_FILES += \
