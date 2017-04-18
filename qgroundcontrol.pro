@@ -384,13 +384,17 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
         src/FactSystem/FactSystemTestGeneric.h \
         src/FactSystem/FactSystemTestPX4.h \
         src/FactSystem/ParameterManagerTest.h \
-        src/MissionManager/SurveyMissionItemTest.h \
+        src/MissionManager/CameraSectionTest.h \
         src/MissionManager/MissionCommandTreeTest.h \
         src/MissionManager/MissionControllerManagerTest.h \
         src/MissionManager/MissionControllerTest.h \
         src/MissionManager/MissionItemTest.h \
         src/MissionManager/MissionManagerTest.h \
+        src/MissionManager/SectionTest.h \
         src/MissionManager/SimpleMissionItemTest.h \
+        src/MissionManager/SpeedSectionTest.h \
+        src/MissionManager/SurveyMissionItemTest.h \
+        src/MissionManager/VisualMissionItemTest.h \
         src/qgcunittest/FileDialogTest.h \
         src/qgcunittest/FileManagerTest.h \
         src/qgcunittest/FlightGearTest.h \
@@ -412,13 +416,17 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
         src/FactSystem/FactSystemTestGeneric.cc \
         src/FactSystem/FactSystemTestPX4.cc \
         src/FactSystem/ParameterManagerTest.cc \
-        src/MissionManager/SurveyMissionItemTest.cc \
+        src/MissionManager/CameraSectionTest.cc \
         src/MissionManager/MissionCommandTreeTest.cc \
         src/MissionManager/MissionControllerManagerTest.cc \
         src/MissionManager/MissionControllerTest.cc \
         src/MissionManager/MissionItemTest.cc \
         src/MissionManager/MissionManagerTest.cc \
+        src/MissionManager/SectionTest.cc \
         src/MissionManager/SimpleMissionItemTest.cc \
+        src/MissionManager/SpeedSectionTest.cc \
+        src/MissionManager/SurveyMissionItemTest.cc \
+        src/MissionManager/VisualMissionItemTest.cc \
         src/qgcunittest/FileDialogTest.cc \
         src/qgcunittest/FileManagerTest.cc \
         src/qgcunittest/FlightGearTest.cc \

@@ -31,6 +31,9 @@ public:
 private slots:
     void cleanup(void);
 
+    void _testGimbalRecalc(void);
+
+private:
     void _testEmptyVehicleAPM(void);
     void _testEmptyVehiclePX4(void);
     void _testAddWayppointAPM(void);
