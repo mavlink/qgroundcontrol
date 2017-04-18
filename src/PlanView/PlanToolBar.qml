@@ -111,7 +111,6 @@ Rectangle {
         }
     }
 
-
     RowLayout {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
@@ -247,7 +246,7 @@ Rectangle {
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
         text:                   missionController ? (missionController.dirty ? qsTr("Upload Required") : qsTr("Upload")) : ""
-        enabled:                _activeVehicle
+        enabled:                _activeVehicle && !missionController.syncInProgress
         visible:                _activeVehicle && _manualUpload
         onClicked:              missionController.upload()
 
