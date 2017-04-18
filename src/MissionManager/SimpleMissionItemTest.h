@@ -25,10 +25,11 @@ public:
 
 private slots:
     void _testSignals(void);
-    void _testCameraSectionSignals(void);
     void _testEditorFacts(void);
     void _testDefaultValues(void);
-    
+    void _testCameraSection(void);
+    void _testSpeedSection(void);
+
 private:
     enum {
         commandChangedIndex = 0,

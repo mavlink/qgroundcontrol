@@ -200,3 +200,27 @@ void MissionControllerTest::_setupVisualItemSignals(VisualMissionItem* visualIte
     Q_CHECK_PTR(_multiSpyMissionItem);
     QCOMPARE(_multiSpyMissionItem->init(visualItem, _rgVisualItemSignals, _cVisualItemSignals), true);
 }
+
+void MissionControllerTest::_testGimbalRecalc(void)
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+    _missionController->insertSimpleMissionItem(QGeoCoordinate(0, 0), 1);
+    _missionController->insertSimpleMissionItem(QGeoCoordinate(0, 0), 2);
+    _missionController->insertSimpleMissionItem(QGeoCoordinate(0, 0), 3);
+    _missionController->insertSimpleMissionItem(QGeoCoordinate(0, 0), 4);
+
+    // No specific gimbal yaw set yet
+    for (int i=1; i<_missionController->visualItems()->count(); i++) {
+        VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
+        QVERIFY(qIsNaN(visualItem->missionGimbalYaw()));
+    }
+
+    // Specify gimbal yaw on settings item should generate yaw on all items
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    settingsItem->cameraSection()->setSpecifyGimbal(true);
+    settingsItem->cameraSection()->gimbalYaw()->setRawValue(0.0);
+    for (int i=1; i<_missionController->visualItems()->count(); i++) {
+        VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
+        QCOMPARE(visualItem->missionGimbalYaw(), 0.0);
+    }
+}

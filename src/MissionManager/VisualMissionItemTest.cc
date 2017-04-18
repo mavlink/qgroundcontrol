@@ -56,3 +56,11 @@ void VisualMissionItemTest::cleanup(void)
     delete _offlineVehicle;
     UnitTest::cleanup();
 }
+
+void VisualMissionItemTest::_createSpy(SimpleMissionItem* simpleItem, MultiSignalSpy** visualSpy)
+{
+    *visualSpy = NULL;
+    MultiSignalSpy* spy = new MultiSignalSpy();
+    QCOMPARE(spy->init(simpleItem, rgVisualItemSignals, cVisualItemSignals), true);
+    *visualSpy = spy;
+}
