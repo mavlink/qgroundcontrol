@@ -35,7 +35,7 @@ MapQuickItem {
             index:          missionItem ? missionItem.sequenceNumber : 0
             gimbalYaw:      missionItem.missionGimbalYaw
             vehicleYaw:     missionItem.missionVehicleYaw
-            showGimbalYaw:  missionItem.showMissionGimbalYaw
+            showGimbalYaw:  !isNaN(missionItem.missionGimbalYaw)
             onClicked:      _item.clicked()
 
             property bool _isCurrentItem:   missionItem ? missionItem.isCurrentItem : false
