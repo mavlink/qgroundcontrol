@@ -107,8 +107,7 @@ void SimpleMissionItemTest::init(void)
 
     _spySimpleItem = new MultiSignalSpy();
     QCOMPARE(_spySimpleItem->init(_simpleItem, rgSimpleItemSignals, cSimpleItemSignals), true);
-    _spyVisualItem = new MultiSignalSpy();
-    QCOMPARE(_spyVisualItem->init(_simpleItem, rgVisualItemSignals, cVisualItemSignals), true);
+    VisualMissionItemTest::_createSpy(_simpleItem, &_spyVisualItem);
 }
 
 void SimpleMissionItemTest::cleanup(void)
@@ -257,7 +256,33 @@ void SimpleMissionItemTest::_testSignals(void)
     QVERIFY(_spyVisualItem->checkSignalsByMask(commandNameChangedMask | dirtyChangedMask | coordinateChangedMask));
 }
 
-void SimpleMissionItemTest::_testCameraSectionSignals(void)
+void SimpleMissionItemTest::_testCameraSection(void)
 {
+    // No gimbal yaw to start with
+    QVERIFY(qIsNaN(_simpleItem->specifiedGimbalYaw()));
+    QVERIFY(qIsNaN(_simpleItem->missionGimbalYaw()));
+    QCOMPARE(_simpleItem->dirty(), false);
 
+    double gimbalYaw = 10.1234;
+    _simpleItem->cameraSection()->setSpecifyGimbal(true);
+    _simpleItem->cameraSection()->gimbalYaw()->setRawValue(gimbalYaw);
+    QCOMPARE(_simpleItem->specifiedGimbalYaw(), gimbalYaw);
+    QVERIFY(qIsNaN(_simpleItem->missionGimbalYaw()));
+    QCOMPARE(_spyVisualItem->checkSignalsByMask(specifiedGimbalYawChangedMask), true);
+    QCOMPARE(_simpleItem->dirty(), true);
+}
+
+
+void SimpleMissionItemTest::_testSpeedSection(void)
+{
+    // No flight speed
+    QVERIFY(qIsNaN(_simpleItem->specifiedFlightSpeed()));
+    QCOMPARE(_simpleItem->dirty(), false);
+
+    double flightSpeed = 10.1234;
+    _simpleItem->speedSection()->setSpecifyFlightSpeed(true);
+    _simpleItem->speedSection()->flightSpeed()->setRawValue(flightSpeed);
+    QCOMPARE(_simpleItem->specifiedFlightSpeed(), flightSpeed);
+    QCOMPARE(_spyVisualItem->checkSignalsByMask(specifiedFlightSpeedChangedMask), true);
+    QCOMPARE(_simpleItem->dirty(), true);
 }

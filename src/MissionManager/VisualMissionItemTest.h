@@ -12,6 +12,7 @@
 #include "UnitTest.h"
 #include "TCPLink.h"
 #include "MultiSignalSpy.h"
+#include "SimpleMissionItem.h"
 
 #include <QGeoCoordinate>
 
@@ -27,6 +28,8 @@ public:
     void cleanup(void) override;
 
 protected:
+    void _createSpy(SimpleMissionItem* simpleItem, MultiSignalSpy** visualSpy);
+
     enum {
         altDifferenceChangedIndex = 0,
         altPercentChangedIndex,
