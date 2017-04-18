@@ -518,11 +518,11 @@ void PX4FirmwarePlugin::_handleAutopilotVersion(Vehicle* vehicle, mavlink_messag
 
 bool PX4FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const
 {
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("MIS_YAWMODE"))) {
+    if (!vehicle->isOfflineEditingVehicle() && vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("MIS_YAWMODE"))) {
         Fact* yawMode = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("MIS_YAWMODE"));
         return yawMode && yawMode->rawValue().toInt() == 1;
     }
-    return false;
+    return true;
 }
 
 void PX4FirmwarePlugin::missionFlightSpeedInfo(Vehicle* vehicle, double& hoverSpeed, double& cruiseSpeed)

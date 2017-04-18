@@ -1543,7 +1543,9 @@ void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualIte
         qCDebug(MissionControllerLog) << "MissionController::_scanForAdditionalSettings count:scanIndex" << visualItems->count() << scanIndex;
 
         MissionSettingsItem* settingsItem = qobject_cast<MissionSettingsItem*>(visualItem);
-        if (settingsItem && settingsItem->scanForMissionSettings(visualItems, scanIndex)) {
+        if (settingsItem) {
+            scanIndex++;
+            settingsItem->scanForMissionSettings(visualItems, scanIndex);
             continue;
         }
 

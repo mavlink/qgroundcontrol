@@ -32,7 +32,7 @@ public:
     bool dirty              (void) const override { return _dirty; }
     void setAvailable       (bool available) override;
     void setDirty           (bool dirty) override;
-    bool scanForSection     (QmlObjectListModel* visualItems, int& scanIndex) override;
+    bool scanForSection     (QmlObjectListModel* visualItems, int scanIndex) override;
     void appendSectionItems (QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum) override;
     int  itemCount          (void) const override;
     bool settingsSpecified  (void) const override;
@@ -42,13 +42,12 @@ signals:
 
 private slots:
     void _setDirty(void);
-    void _setDirtyAndUpdateItemCount(void);
 
 private:
-    bool        _available;
-    bool        _dirty;
-    bool        _specifyFlightSpeed;
-    Fact        _flightSpeedFact;
+    bool    _available;
+    bool    _dirty;
+    bool    _specifyFlightSpeed;
+    Fact    _flightSpeedFact;
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 

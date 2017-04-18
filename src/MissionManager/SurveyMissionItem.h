@@ -58,13 +58,6 @@ public:
 
     Q_PROPERTY(QGCMapPolygon*       mapPolygon                  READ mapPolygon                     CONSTANT)
 
-#if 0
-    // The polygon vertices are also exposed as a list mode since MapItemView will only work with a QAbstractItemModel as
-    // opposed to polygonPath which is a QVariantList.
-    Q_PROPERTY(QmlObjectListModel*  polygonModel                READ polygonModel                   CONSTANT)
-    Q_PROPERTY(QVariantList         polygonPath                 READ polygonPath                    NOTIFY polygonPathChanged)
-#endif
-
     QVariantList gridPoints (void) { return _simpleGridPoints; }
 
     Fact* manualGrid                (void) { return &_manualGridFact; }
@@ -160,7 +153,6 @@ public:
     static const char* cameraName;
 
 signals:
-    void polygonPathChanged             (void);
     void gridPointsChanged              (void);
     void cameraShotsChanged             (int cameraShots);
     void coveredAreaChanged             (double coveredArea);
