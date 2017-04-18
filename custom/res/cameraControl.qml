@@ -47,9 +47,10 @@ Rectangle {
     property real _editFieldWidth:          ScreenTools.defaultFontPixelWidth  * 30
     property var  _activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle
     property bool _communicationLost:       _activeVehicle ? _activeVehicle.connectionLost : false
-    property bool _cameraVideoMode:         !_communicationLost && (TyphoonHQuickInterface.cameraControl.sdTotal === 0 ? false : TyphoonHQuickInterface.cameraControl.cameraMode  === CameraControl.CAMERA_MODE_VIDEO)
-    property bool _cameraPhotoMode:         !_communicationLost && (TyphoonHQuickInterface.cameraControl.sdTotal === 0 ? false : TyphoonHQuickInterface.cameraControl.cameraMode  === CameraControl.CAMERA_MODE_PHOTO)
-    property bool _cameraModeUndefined:     _communicationLost  || (TyphoonHQuickInterface.cameraControl.sdTotal === 0 ? true  : TyphoonHQuickInterface.cameraControl.cameraMode  === CameraControl.CAMERA_MODE_UNDEFINED)
+    property bool _emptySD:                 TyphoonHQuickInterface.cameraControl.sdTotal === 0
+    property bool _cameraVideoMode:         !_communicationLost && (_emptySD ? false : TyphoonHQuickInterface.cameraControl.cameraMode  === CameraControl.CAMERA_MODE_VIDEO)
+    property bool _cameraPhotoMode:         !_communicationLost && (_emptySD ? false : TyphoonHQuickInterface.cameraControl.cameraMode  === CameraControl.CAMERA_MODE_PHOTO)
+    property bool _cameraModeUndefined:     _communicationLost  || (_emptySD ? true  : TyphoonHQuickInterface.cameraControl.cameraMode  === CameraControl.CAMERA_MODE_UNDEFINED)
     property bool _cameraAutoMode:          TyphoonHQuickInterface.cameraControl ? TyphoonHQuickInterface.cameraControl.aeMode === CameraControl.AE_MODE_AUTO : false;
 
     /*
@@ -183,7 +184,7 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             MouseArea {
                 anchors.fill:   parent
-                enabled:        !_cameraModeUndefined
+                enabled:        !_communicationLost && TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
                 onClicked: {
                     if(rootLoader.sourceComponent === null) {
                         rootLoader.sourceComponent = cameraSettingsComponent
@@ -264,6 +265,7 @@ Rectangle {
                             }
                             QGCComboBox {
                                 width:       _editFieldWidth
+                                enabled:     !_emptySD
                                 model:       TyphoonHQuickInterface.cameraControl.videoResList
                                 currentIndex:TyphoonHQuickInterface.cameraControl.currentVideoRes
                                 onActivated: {
@@ -417,6 +419,7 @@ Rectangle {
                             }
                             QGCComboBox {
                                 width:       _editFieldWidth
+                                enabled:     !_emptySD
                                 model:       TyphoonHQuickInterface.cameraControl.photoFormatList
                                 currentIndex:TyphoonHQuickInterface.cameraControl.currentPhotoFmt
                                 onActivated: {
@@ -509,6 +512,7 @@ Rectangle {
                             }
                             QGCButton {
                                 text:       "Format"
+                                enabled:     !_emptySD
                                 onClicked:  formatPrompt.open()
                                 Layout.preferredWidth:  _editFieldWidth
                                 MessageDialog {
