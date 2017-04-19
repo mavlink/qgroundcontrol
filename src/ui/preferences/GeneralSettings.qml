@@ -390,6 +390,50 @@ QGCView {
                 }
 
                 //-----------------------------------------------------------------
+                //-- RTK GPS
+                Item {
+                    width:                      _qgcView.width * 0.8
+                    height:                     unitLabel.height
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.rtkSettings.visible
+                    QGCLabel {
+                        id:             rtkLabel
+                        text:           qsTr("RTK GPS (Requires Restart)")
+                        font.family:    ScreenTools.demiboldFontFamily
+                    }
+                }
+                Rectangle {
+                    height:                     rtkGrid.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:                      _qgcView.width * 0.8
+                    color:                      qgcPal.windowShade
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.rtkSettings.visible
+                    GridLayout {
+                        id:                 rtkGrid
+                        anchors.centerIn:   parent
+                        columns:            2
+                        rowSpacing:         ScreenTools.defaultFontPixelWidth
+                        columnSpacing:      ScreenTools.defaultFontPixelWidth
+
+                        QGCLabel {
+                            text:               qsTr("Survey in accuracy:")
+                        }
+                        FactTextField {
+                            fact:               QGroundControl.settingsManager.rtkSettings.surveyInAccuracyLimit
+                        }
+
+                        QGCLabel {
+                            text:               qsTr("Minumum observation duration:")
+                        }
+                        FactTextField {
+                            fact:               QGroundControl.settingsManager.rtkSettings.surveyInMinObservationDuration
+                        }
+                    }
+                }
+
+                //-----------------------------------------------------------------
                 //-- Autoconnect settings
                 Item {
                     width:                      _qgcView.width * 0.8

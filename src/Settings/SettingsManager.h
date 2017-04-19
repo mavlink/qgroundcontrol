@@ -19,6 +19,7 @@
 #include "AutoConnectSettings.h"
 #include "VideoSettings.h"
 #include "FlightMapSettings.h"
+#include "RTKSettings.h"
 
 #include <QVariantList>
 
@@ -35,6 +36,7 @@ public:
     Q_PROPERTY(QObject* autoConnectSettings READ autoConnectSettings    CONSTANT)
     Q_PROPERTY(QObject* videoSettings       READ videoSettings          CONSTANT)
     Q_PROPERTY(QObject* flightMapSettings   READ flightMapSettings      CONSTANT)
+    Q_PROPERTY(QObject* rtkSettings         READ rtkSettings      CONSTANT)
 
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
@@ -44,6 +46,7 @@ public:
     AutoConnectSettings*    autoConnectSettings (void) { return _autoConnectSettings; }
     VideoSettings*          videoSettings       (void) { return _videoSettings; }
     FlightMapSettings*      flightMapSettings   (void) { return _flightMapSettings; }
+    RTKSettings*            rtkSettings         (void) { return _rtkSettings; }
 
 private:
     AppSettings*            _appSettings;
@@ -51,6 +54,7 @@ private:
     AutoConnectSettings*    _autoConnectSettings;
     VideoSettings*          _videoSettings;
     FlightMapSettings*      _flightMapSettings;
+    RTKSettings*            _rtkSettings;
 };
 
 #endif
