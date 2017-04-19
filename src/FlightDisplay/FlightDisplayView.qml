@@ -333,6 +333,8 @@ QGCView {
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
             anchors.bottom:     parent.bottom
+
+            property var qgcView: root
         }
 
         // Button to start/stop video recording
@@ -514,7 +516,7 @@ QGCView {
             z:                  _flightVideoPipControl.z + 1
 
             onShowStartMissionChanged: {
-                if (showStartMission) {
+                if (showStartMission && !showResumeMission) {
                     confirmAction(actionStartMission)
                 }
             }
