@@ -19,9 +19,7 @@ YuneecFirmwarePlugin::YuneecFirmwarePlugin(void)
         // Only the following px4 flight modes are user selectable:
         if (info.name != _simpleFlightMode &&
                 info.name != _posCtlFlightMode &&
-                info.name != _altCtlFlightMode &&
-                info.name != _rtlFlightMode &&
-                info.name != _missionFlightMode) {
+                info.name != _altCtlFlightMode) {
             // No other flight modes can be set
             info.canBeSet = false;
         }
