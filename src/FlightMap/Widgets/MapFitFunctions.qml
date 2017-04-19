@@ -48,7 +48,10 @@ Item {
     function fitMapViewportToAllCoordinates(coordList) {
         var mapFitViewport = Qt.rect(0, 0, map.width, map.height)
         if (coordList.length == 0) {
-            map.center = fitHomePosition()
+            var homeCoord = fitHomePosition()
+            if (homeCoord.isValid) {
+                map.center = homeCoord
+            }
             return
         }
 
