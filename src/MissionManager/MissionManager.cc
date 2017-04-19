@@ -24,8 +24,7 @@ MissionManager::MissionManager(Vehicle* vehicle)
     , _dedicatedLink(NULL)
     , _ackTimeoutTimer(NULL)
     , _expectedAck(AckNone)
-    , _readTransactionInProgress(false)
-    , _writeTransactionInProgress(false)
+    , _transactionInProgress(TransactionNone)
     , _resumeMission(false)
     , _lastMissionRequest(-1)
     , _currentMissionIndex(-1)
@@ -58,7 +57,7 @@ void MissionManager::_writeMissionItemsWorker(void)
         _itemIndicesToWrite << i;
     }
 
-    _writeTransactionInProgress = true;
+    _transactionInProgress = TransactionWrite;
     _retryCount = 0;
     emit inProgressChanged(true);
     _writeMissionCount();
@@ -136,7 +135,7 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
         return;
     }
 
-    _writeTransactionInProgress = true;
+    _transactionInProgress = TransactionWrite;
 
     mavlink_message_t       messageOut;
     mavlink_mission_item_t  missionItem;
@@ -183,7 +182,7 @@ void MissionManager::requestMissionItems(void)
     }
 
     _retryCount = 0;
-    _readTransactionInProgress = true;
+    _transactionInProgress = TransactionRead;
     emit inProgressChanged(true);
     _requestList();
 }
@@ -269,6 +268,17 @@ void MissionManager::_ackTimeout(void)
             _sendError(AckTimeoutError, QString("Vehicle did not request all items from ground station: %1").arg(_ackTypeToString(_expectedAck)));
             _expectedAck = AckNone;
             _finishTransaction(false);
+        }
+        break;
+    case AckMissionClearAll:
+        // MISSION_ACK expected
+        if (_retryCount > _maxRetryCount) {
+            _sendError(VehicleError, QStringLiteral("Mission remove all, maximum retries exceeded."));
+            _finishTransaction(false);
+        } else {
+            _retryCount++;
+            qCDebug(MissionManagerLog) << "Retrying MISSION_CLEAR_ALL retry Count" << _retryCount;
+            _removeAllWorker();
         }
         break;
     case AckGuidedItem:
@@ -514,16 +524,17 @@ void MissionManager::_handleMissionRequest(const mavlink_message_t& message, boo
     }
     
     mavlink_msg_mission_request_decode(&message, &missionRequest);
+    qCDebug(MissionManagerLog) << "_handleMissionRequest sequenceNumber" << missionRequest.seq;
+
+    if (missionRequest.seq > _missionItems.count() - 1) {
+        _sendError(RequestRangeError, QString("Vehicle requested item outside range, count:request %1:%2. Send to Vehicle failed.").arg(_missionItems.count()).arg(missionRequest.seq));
+        _finishTransaction(false);
+        return;
+    }
 
     _lastMissionRequest = missionRequest.seq;
     if (!_itemIndicesToWrite.contains(missionRequest.seq)) {
-        if (missionRequest.seq > _missionItems.count()) {
-            _sendError(RequestRangeError, QString("Vehicle requested item outside range, count:request %1:%2. Send to Vehicle failed.").arg(_missionItems.count()).arg(missionRequest.seq));
-            _finishTransaction(false);
-            return;
-        } else {
-            qCDebug(MissionManagerLog) << "_handleMissionRequest sequence number requested which has already been sent, sending again:" << missionRequest.seq;
-        }
+        qCDebug(MissionManagerLog) << "_handleMissionRequest sequence number requested which has already been sent, sending again:" << missionRequest.seq;
     } else {
         _itemIndicesToWrite.removeOne(missionRequest.seq);
     }
@@ -634,6 +645,13 @@ void MissionManager::_handleMissionAck(const mavlink_message_t& message)
             _sendError(VehicleError, QString("Vehicle returned error: %1. Vehicle only has partial list of mission items.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
             _finishTransaction(false);
         }
+        break;
+    case AckMissionClearAll:
+        // MISSION_ACK expected
+        if (missionAck.type != MAV_MISSION_ACCEPTED) {
+            _sendError(VehicleError, QString("Vehicle returned error: %1. Vehicle remove all failed.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
+        }
+        _finishTransaction(missionAck.type == MAV_MISSION_ACCEPTED);
         break;
     case AckGuidedItem:
         // MISSION_REQUEST is expected, or MISSION_ACK to end sequence
@@ -807,7 +825,7 @@ QString MissionManager::_missionResultToString(MAV_MISSION_RESULT result)
 
 void MissionManager::_finishTransaction(bool success)
 {
-    if (!success && _readTransactionInProgress) {
+    if (!success && _transactionInProgress == TransactionRead) {
         // Read from vehicle failed, clear partial list
         _clearAndDeleteMissionItems();
         emit newMissionItemsAvailable(false);
@@ -816,9 +834,8 @@ void MissionManager::_finishTransaction(bool success)
     _itemIndicesToRead.clear();
     _itemIndicesToWrite.clear();
 
-    if (_readTransactionInProgress || _writeTransactionInProgress) {
-        _readTransactionInProgress = false;
-        _writeTransactionInProgress = false;
+    if (_transactionInProgress != TransactionNone) {
+        _transactionInProgress = TransactionNone;
         emit inProgressChanged(false);
     }
 
@@ -830,7 +847,7 @@ void MissionManager::_finishTransaction(bool success)
 
 bool MissionManager::inProgress(void)
 {
-    return _readTransactionInProgress || _writeTransactionInProgress;
+    return _transactionInProgress != TransactionNone;
 }
 
 void MissionManager::_handleMissionCurrent(const mavlink_message_t& message)
@@ -852,11 +869,45 @@ void MissionManager::_handleMissionCurrent(const mavlink_message_t& message)
     }
 }
 
+void MissionManager::_removeAllWorker(void)
+{
+    mavlink_message_t message;
+
+    qCDebug(MissionManagerLog) << "_removeAllWorker";
+
+    _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_mission_clear_all_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                            _dedicatedLink->mavlinkChannel(),
+                                            &message,
+                                            _vehicle->id(),
+                                            MAV_COMP_ID_MISSIONPLANNER,
+                                            MAV_MISSION_TYPE_MISSION);
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
+    _startAckTimeout(AckMissionClearAll);
+}
+
 void MissionManager::removeAll(void)
 {
-    QList<MissionItem*> emptyList;
+    if (inProgress()) {
+        return;
+    }
 
-    writeMissionItems(emptyList);
+    qCDebug(MissionManagerLog) << "removeAll";
+
+    _clearAndDeleteMissionItems();
+
+    _currentMissionIndex = -1;
+    _lastCurrentIndex = -1;
+    emit currentIndexChanged(-1);
+    emit lastCurrentIndexChanged(-1);
+    emit newMissionItemsAvailable(true /* removeAllRequested */);
+
+    _transactionInProgress = TransactionClearAll;
+    _retryCount = 0;
+    emit inProgressChanged(true);
+
+    _removeAllWorker();
 }
 
 void MissionManager::generateResumeMission(int resumeIndex)
