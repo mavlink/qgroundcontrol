@@ -84,6 +84,7 @@ signals:
     void currentIndexChanged(int currentIndex);
     void lastCurrentIndexChanged(int lastCurrentIndex);
     void resumeMissionReady(void);
+    void cameraFeedback(QGeoCoordinate imageCoordinate, int index);
 
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
@@ -114,6 +115,8 @@ private:
     void _handleMissionRequest(const mavlink_message_t& message, bool missionItemInt);
     void _handleMissionAck(const mavlink_message_t& message);
     void _handleMissionCurrent(const mavlink_message_t& message);
+    void _handleCameraFeedback(const mavlink_message_t& message);
+    void _handleCameraImageCaptured(const mavlink_message_t& message);
     void _requestNextMissionItem(void);
     void _clearMissionItems(void);
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
