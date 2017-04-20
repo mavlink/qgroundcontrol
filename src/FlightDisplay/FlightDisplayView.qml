@@ -407,7 +407,7 @@ QGCView {
             id:                 toolStrip
             anchors.leftMargin: ScreenTools.defaultFontPixelWidth
             anchors.left:       _panel.left
-            anchors.topMargin:  ScreenTools.toolbarHeight + _margins
+            anchors.topMargin:  ScreenTools.toolbarHeight + (_margins * 2)
             anchors.top:        _panel.top
             z:                  _panel.z + 4
             title:              qsTr("Fly")

@@ -19,6 +19,8 @@ Rectangle {
     width:      ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 6
     height:     buttonStripColumn.height + (buttonStripColumn.anchors.margins * 2)
     radius:     _radius
+    border.width:   1
+    border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
 
     property string title:              "Title"
     property alias  model:              repeater.model

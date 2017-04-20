@@ -35,9 +35,9 @@ Rectangle {
     height: mainCol.height
     width:  _indicatorDiameter
     radius: ScreenTools.defaultFontPixelWidth * 0.5
-    color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.65) : Qt.rgba(0,0,0,0.75)
+    color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
     border.width:   1
-    border.color:   qgcPal.globalTheme === QGCPalette.Light ? "white" : "black"
+    border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -184,7 +184,7 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             MouseArea {
                 anchors.fill:   parent
-                enabled:        !_communicationLost && TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
+                //enabled:        !_communicationLost && TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
                 onClicked: {
                     if(rootLoader.sourceComponent === null) {
                         rootLoader.sourceComponent = cameraSettingsComponent
@@ -216,9 +216,11 @@ Rectangle {
             }
             Rectangle {
                 width:  mainWindow.width  * 0.45
-                height: mainWindow.height * 0.675
+                height: mainWindow.height * 0.65
                 radius: ScreenTools.defaultFontPixelWidth
-                color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.75) : Qt.rgba(0,0,0,0.75)
+                color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
+                border.width:   1
+                border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
                 anchors.centerIn: parent
                 QGCLabel {
                     id:                 cameraSettingsLabel
