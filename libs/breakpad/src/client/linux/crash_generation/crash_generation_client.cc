@@ -58,7 +58,8 @@ class CrashGenerationClientImpl : public CrashGenerationClient {
     iov.iov_base = const_cast<void*>(blob);
     iov.iov_len = blob_size;
 
-    struct kernel_msghdr msg = { 0 };
+    struct kernel_msghdr msg;
+    memset(&msg, 0, sizeof(kernel_msghdr));
     msg.msg_iov = &iov;
     msg.msg_iovlen = 1;
     char cmsg[kControlMsgSize] = "";
