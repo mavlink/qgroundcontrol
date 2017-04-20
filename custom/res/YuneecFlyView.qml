@@ -220,13 +220,15 @@ Item {
 
     //-- Camera Status
     Rectangle {
-        width:          camRow.width + (ScreenTools.defaultFontPixelWidth * 2)
-        height:         camRow.height * (_cameraVideoMode ? 1.25 : 1.5)
-        color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.65) : Qt.rgba(0,0,0,0.75)
+        width:          camRow.width + (ScreenTools.defaultFontPixelWidth * 3)
+        height:         camRow.height * 2
+        color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
         visible:        !_mainIsMap && _cameraPresent && indicatorDropdown.sourceComponent === null && !messageArea.visible && !criticalMmessageArea.visible
         radius:         3
+        border.width:   1
+        border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
         anchors.top:    parent.top
-        anchors.topMargin: 2
+        anchors.topMargin: ScreenTools.defaultFontPixelHeight * 0.5
         anchors.horizontalCenter: parent.horizontalCenter
         Row {
             id: camRow
@@ -310,7 +312,9 @@ Item {
         width:  vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth * 4)
         height: vehicleStatusGrid.height + ScreenTools.defaultFontPixelHeight * 0.5
         radius: ScreenTools.defaultFontPixelWidth * 0.5
-        color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.65) : Qt.rgba(0,0,0,0.75)
+        color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
+        border.width:   1
+        border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
         visible: true
         anchors.bottom: parent.bottom
         anchors.right:  parent.right

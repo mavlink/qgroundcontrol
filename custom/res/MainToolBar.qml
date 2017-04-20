@@ -26,7 +26,7 @@ import TyphoonHQuickInterface               1.0
 
 Rectangle {
     id:         toolBar
-    color:      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.8) : Qt.rgba(0,0,0,0.75)
+    color:      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -72,8 +72,7 @@ Rectangle {
         anchors.right:  parent.right
         anchors.bottom: parent.bottom
         height:         1
-        color:          "black"
-        visible:        qgcPal.globalTheme === QGCPalette.Light
+        color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
     }
 
     ExclusiveGroup { id: mainActionGroup }
