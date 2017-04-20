@@ -28,32 +28,9 @@ PlanElementController::~PlanElementController()
 void PlanElementController::start(bool editMode)
 {
     _editMode = editMode;
-    connect(_multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &PlanElementController::_activeVehicleChanged);
-    _activeVehicleChanged(_multiVehicleMgr->activeVehicle());
 }
 
 void PlanElementController::startStaticActiveVehicle(Vehicle* vehicle)
 {
     _editMode = false;
-    _activeVehicleChanged(vehicle);
-}
-
-void PlanElementController::_activeVehicleChanged(Vehicle* activeVehicle)
-{
-    if (_activeVehicle) {
-        _activeVehicleBeingRemoved();
-        _activeVehicle = NULL;
-    }
-
-    if (activeVehicle) {
-        _activeVehicle = activeVehicle;
-    } else {
-        _activeVehicle = _multiVehicleMgr->offlineEditingVehicle();
-    }
-    _activeVehicleSet();
-
-    // Whenever vehicle changes we need to update syncInProgress
-    emit syncInProgressChanged(syncInProgress());
-
-    emit vehicleChanged(_activeVehicle);
 }

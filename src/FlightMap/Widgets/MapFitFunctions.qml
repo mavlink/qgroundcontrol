@@ -16,9 +16,11 @@ import QGroundControl 1.0
 Item {
     property var    map
     property bool   usePlannedHomePosition      ///< true: planned home position used for calculations, false: vehicle home position use for calculations
-    property var    mapGeoFenceController
-    property var    mapMissionController
-    property var    mapRallyPointController
+    property var    planMasterController
+
+    property var    _missionController:     planMasterController.missionController
+    property var    _geoFenceController:    planMasterController.geoFenceController
+    property var    _rallyPointController:  planMasterController.rallyPointController
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
@@ -26,7 +28,7 @@ Item {
         var homePosition = QtPositioning.coordinate()
         var activeVehicle = QGroundControl.multiVehicleManager.activeVehicle
         if (usePlannedHomePosition) {
-            homePosition = mapMissionController.visualItems.get(0).coordinate
+            homePosition = _missionController.visualItems.get(0).coordinate
         } else if (activeVehicle) {
             homePosition = activeVehicle.homePosition
         }
@@ -92,8 +94,8 @@ Item {
         if (homePosition.isValid) {
             coordList.push(homePosition)
         }
-        for (var i=1; i<mapMissionController.visualItems.count; i++) {
-            var missionItem = mapMissionController.visualItems.get(i)
+        for (var i=1; i<_missionController.visualItems.count; i++) {
+            var missionItem = _missionController.visualItems.get(i)
             if (missionItem.specifiesCoordinate && !missionItem.isStandaloneCoordinate) {
                 coordList.push(missionItem.coordinate)
             }
@@ -101,7 +103,7 @@ Item {
     }
 
     function fitMapViewportToMissionItems() {
-        if (!mapMissionController.visualItems) {
+        if (!_missionController.visualItems) {
             // Being called prior to controller.start
             return
         }
@@ -112,16 +114,16 @@ Item {
 
     function addFenceItemCoordsForFit(coordList) {
         var homePosition = fitHomePosition()
-        if (homePosition.isValid && mapGeoFenceController.circleEnabled) {
+        if (homePosition.isValid && _geoFenceController.circleEnabled) {
             var azimuthList = [ 0, 180, 90, 270 ]
             for (var i=0; i<azimuthList.length; i++) {
-                var edgeCoordinate = homePosition.atDistanceAndAzimuth(mapGeoFenceController.circleRadius, azimuthList[i])
+                var edgeCoordinate = homePosition.atDistanceAndAzimuth(_geoFenceController.circleRadius, azimuthList[i])
                 coordList.push(edgeCoordinate)
             }
         }
-        if (mapGeoFenceController.polygonEnabled && mapGeoFenceController.mapPolygon.path.count > 2) {
-            for (var i=0; i<mapGeoFenceController.mapPolygon.path.count; i++) {
-                coordList.push(mapGeoFenceController.mapPolygon.path[i])
+        if (_geoFenceController.polygonEnabled && _geoFenceController.mapPolygon.path.count > 2) {
+            for (var i=0; i<_geoFenceController.mapPolygon.path.count; i++) {
+                coordList.push(_geoFenceController.mapPolygon.path[i])
             }
         }
     }
@@ -133,8 +135,8 @@ Item {
     }
 
     function addRallyItemCoordsForFit(coordList) {
-        for (var i=0; i<mapRallyPointController.points.count; i++) {
-            coordList.push(mapRallyPointController.points.get(i).coordinate)
+        for (var i=0; i<_rallyPointController.points.count; i++) {
+            coordList.push(_rallyPointController.points.get(i).coordinate)
         }
     }
 
@@ -145,7 +147,7 @@ Item {
     }
 
     function fitMapViewportToAllItems() {
-        if (!mapMissionController.visualItems) {
+        if (!_missionController.visualItems) {
             // Being called prior to controller.start
             return
         }
