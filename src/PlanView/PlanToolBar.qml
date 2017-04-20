@@ -56,6 +56,9 @@ Rectangle {
     property real   _missionTime:               _missionValid ? missionTime : NaN
     property int    _batteryChangePoint:        _controllerValid ? missionController.batteryChangePoint : -1
     property int    _batteriesRequired:         _controllerValid ? missionController.batteriesRequired : -1
+    property bool   _controllerDirty:           _controllerValid ? missionController.dirty : false
+    property real   _controllerProgressPct:     _controllerValid ? missionController.progressPct : 0
+    property bool   _syncInProgress:            _controllerValid ? missionController.syncInProgress : false
 
     property string _distanceText:              isNaN(_distance) ?              "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
     property string _altDifferenceText:         isNaN(_altDifference) ?         "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
@@ -109,6 +112,32 @@ Rectangle {
                 }
             }
         }
+    }
+
+    // Progress bar
+
+    on_ControllerProgressPctChanged: {
+        if (_controllerProgressPct === 1) {
+            resetProgressTimer.start()
+        } else if (_controllerProgressPct > 0) {
+            progressBar.visible = true
+        }
+    }
+
+    Timer {
+        id:             resetProgressTimer
+        interval:       1000
+        onTriggered:    progressBar.visible = false
+    }
+
+    Rectangle {
+        id:             progressBar
+        anchors.left:   parent.left
+        anchors.bottom: parent.bottom
+        height:         2
+        width:          _controllerProgressPct * parent.width
+        color:          qgcPal.colorGreen
+        visible:        false
     }
 
     RowLayout {
@@ -245,8 +274,8 @@ Rectangle {
         anchors.rightMargin:    _margins
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
-        text:                   missionController ? (missionController.dirty ? qsTr("Upload Required") : qsTr("Upload")) : ""
-        enabled:                _activeVehicle && !missionController.syncInProgress
+        text:                   qsTr("Upload")
+        enabled:                _activeVehicle && !_syncInProgress
         visible:                _activeVehicle && _manualUpload
         onClicked:              missionController.upload()
 
@@ -255,7 +284,7 @@ Rectangle {
             from:           0.5
             to:             1
             loops:          Animation.Infinite
-            running:        missionController ? missionController.dirty : false
+            running:        _controllerDirty
             alwaysRunToEnd: true
             duration:       2000
         }
