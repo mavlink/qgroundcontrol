@@ -46,9 +46,19 @@ Item {
     property string _distanceStr:       isNaN(_distance) ? "0 m" : _distance.toFixed(0) + ' ' + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "m")
     property real   _heading:           _activeVehicle ? _activeVehicle.heading.rawValue : 0
 
-    //-- Position from Controller GPS (M4)
+    Timer {
+        id: ssidChanged
+        interval:  5000
+        running:   false;
+        repeat:    false;
+        onTriggered: {
+            rootLoader.sourceComponent = connectedToAP
+        }
+    }
+
     Connections {
         target: TyphoonHQuickInterface
+        //-- Position from Controller GPS (M4)
         onControllerLocationChanged: {
             if(_activeVehicle) {
                 if(TyphoonHQuickInterface.latitude == 0.0 && TyphoonHQuickInterface.longitude == 0.0) {
@@ -63,6 +73,14 @@ Item {
                     if(_distance < 0)
                         _distance = 0;
                 }
+            }
+        }
+        //-- Who are we connected to
+        onConnectedSSIDChanged: {
+            if(TyphoonHQuickInterface.connectedCamera === "" && TyphoonHQuickInterface.connectedSSID !== "") {
+                ssidChanged.start()
+            } else {
+                ssidChanged.stop()
             }
         }
     }
@@ -504,6 +522,65 @@ Item {
             Component.onCompleted: {
                 rootLoader.width  = nosdcardComponentItem.width
                 rootLoader.height = nosdcardComponentItem.height
+            }
+        }
+    }
+
+    //-- Connected to some AP and not a Typhoon
+    Component {
+        id:             connectedToAP
+        Item {
+            id:         connectedToAPItem
+            width:      mainWindow.width
+            height:     mainWindow.height
+            z:          1000000
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+            Rectangle {
+                id:     nosdRect
+                width:  mainWindow.width   * 0.65
+                height: nosdcardCol.height * 1.5
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  qgcPal.alertBackground
+                border.color: qgcPal.alertBorder
+                border.width: 2
+                anchors.centerIn: parent
+                Column {
+                    id:                 nosdcardCol
+                    width:              nosdRect.width
+                    spacing:            ScreenTools.defaultFontPixelHeight * 3
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           qsTr("Connected to Standard Wi-Fi")
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        color:          qgcPal.alertText
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           qsTr("The ST16 is connected to a standard Wi-Fi and not a vehicle.")
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCButton {
+                        text:           qsTr("Close")
+                        width:          ScreenTools.defaultFontPixelWidth  * 10
+                        height:         ScreenTools.defaultFontPixelHeight * 2
+                        onClicked:      rootLoader.sourceComponent = null
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
+            }
+            Component.onCompleted: {
+                rootLoader.width  = connectedToAPItem.width
+                rootLoader.height = connectedToAPItem.height
             }
         }
     }

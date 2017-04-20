@@ -112,7 +112,7 @@ Item {
     }
     QGCLabel {
         id:         wifiLabel
-        text:       "AP WIFI"
+        text:       "AP Wi-Fi"
         visible:    _isAP
         color:      qgcPal.colorOrange
         anchors.bottom: parent.bottom
