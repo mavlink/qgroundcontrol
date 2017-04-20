@@ -874,7 +874,8 @@ bool LinuxDumper::HandleDeletedFileInMapping(char* path) const {
   char exe_link[NAME_MAX];
   if (!BuildProcPath(exe_link, pid_, "exe"))
     return false;
-  MappingInfo new_mapping = {0};
+  MappingInfo new_mapping;
+  memset(&new_mapping, 0, sizeof(MappingInfo));
   if (!SafeReadLink(exe_link, new_mapping.name))
     return false;
   char new_path[PATH_MAX];
