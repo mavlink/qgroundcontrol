@@ -20,16 +20,18 @@ import QGroundControl.Palette               1.0
 
 //-------------------------------------------------------------------------
 //-- Telemetry RSSI
-QGCColoredImage {
-    anchors.top:        parent.top
-    anchors.bottom:     parent.bottom
-    sourceSize.height:  height
-    source:             "/qmlimages/TelemRSSI.svg"
-    fillMode:           Image.PreserveAspectFit
-    color:              qgcPal.buttonText
-    visible:            _activeVehicle ? (_activeVehicle.telemetryLRSSI < 0) : false
+Item {
+    anchors.top:    parent.top
+    anchors.bottom: parent.bottom
+    width:          _hasTelemetry ? telemIcon.width * 1.1 : 0
+    visible:        _hasTelemetry
 
-    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    //-- SiK Radio: -120 to < 0
+    //-- Others:    > 0 - 100
+
+    property var  _activeVehicle:   QGroundControl.multiVehicleManager.activeVehicle
+    property bool _isSiKRadio:      _activeVehicle ? _activeVehicle.telemetryLRSSI < 0 : false
+    property bool _hasTelemetry:    _activeVehicle ? _activeVehicle.telemetryLRSSI !== 0 : false
 
     Component {
         id: telemRSSIInfo
@@ -58,9 +60,9 @@ QGCColoredImage {
                     columns:            2
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel { text: qsTr("Local RSSI:") }
-                    QGCLabel { text: _activeVehicle.telemetryLRSSI + " dBm" }
+                    QGCLabel { text: _activeVehicle.telemetryLRSSI + _isSiKRadio ? " dBm" : ""}
                     QGCLabel { text: qsTr("Remote RSSI:") }
-                    QGCLabel { text: _activeVehicle.telemetryRRSSI + " dBm" }
+                    QGCLabel { text: _activeVehicle.telemetryRRSSI + _isSiKRadio ? " dBm" : ""}
                     QGCLabel { text: qsTr("RX Errors:") }
                     QGCLabel { text: _activeVehicle.telemetryRXErrors }
                     QGCLabel { text: qsTr("Errors Fixed:") }
@@ -79,6 +81,16 @@ QGCColoredImage {
                 y = pos.y + ScreenTools.defaultFontPixelHeight
             }
         }
+    }
+    QGCColoredImage {
+        id:                 telemIcon
+        anchors.top:        parent.top
+        anchors.bottom:     parent.bottom
+        width:              height
+        sourceSize.height:  height
+        source:             "/qmlimages/TelemRSSI.svg"
+        fillMode:           Image.PreserveAspectFit
+        color:              qgcPal.buttonText
     }
     MouseArea {
         anchors.fill: parent
