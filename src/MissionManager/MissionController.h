@@ -66,6 +66,8 @@ public:
     Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
     Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition        NOTIFY plannedHomePositionChanged)
 
+    Q_PROPERTY(double               progressPct             READ progressPct                NOTIFY progressPctChanged)
+
     Q_PROPERTY(int                  resumeMissionIndex      READ resumeMissionIndex         NOTIFY resumeMissionIndexChanged)
 
     Q_PROPERTY(double               missionDistance         READ missionDistance            NOTIFY missionDistanceChanged)
@@ -129,6 +131,7 @@ public:
     QmlObjectListModel* cameraPoints            (void) { return &_cameraPoints; }
     QStringList         complexMissionItemNames (void) const;
     QGeoCoordinate      plannedHomePosition     (void) const;
+    double              progressPct             (void) const { return _progressPct; }
 
     /// Returns the item index two which a mission should be resumed. -1 indicates resume mission not available.
     int resumeMissionIndex(void) const;
@@ -161,6 +164,7 @@ signals:
     void batteryChangePointChanged(int batteryChangePoint);
     void batteriesRequiredChanged(int batteriesRequired);
     void plannedHomePositionChanged(QGeoCoordinate plannedHomePosition);
+    void progressPctChanged(double progressPct);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
@@ -172,6 +176,7 @@ private slots:
     void _recalcMissionFlightStatus(void);
     void _updateContainsItems(void);
     void _cameraFeedback(QGeoCoordinate imageCoordinate, int index);
+    void _progressPctChanged(double progressPct);
 
 private:
     void _init(void);
@@ -215,6 +220,7 @@ private:
     QString                 _surveyMissionItemName;
     QString                 _fwLandingMissionItemName;
     AppSettings*            _appSettings;
+    double                  _progressPct;
 
     static const char*  _settingsGroup;
 
