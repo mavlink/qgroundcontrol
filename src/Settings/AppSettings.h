@@ -40,6 +40,7 @@ public:
     Q_PROPERTY(QString parameterSavePath    READ parameterSavePath  NOTIFY savePathsChanged)
     Q_PROPERTY(QString telemetrySavePath    READ telemetrySavePath  NOTIFY savePathsChanged)
 
+    Q_PROPERTY(QString planFileExtension        MEMBER planFileExtension     CONSTANT)
     Q_PROPERTY(QString missionFileExtension     MEMBER missionFileExtension     CONSTANT)
     Q_PROPERTY(QString parameterFileExtension   MEMBER parameterFileExtension   CONSTANT)
     Q_PROPERTY(QString telemetryFileExtension   MEMBER telemetryFileExtension   CONSTANT)
@@ -86,6 +87,7 @@ public:
 
     // Application wide file extensions
     static const char* parameterFileExtension;
+    static const char* planFileExtension;
     static const char* missionFileExtension;
     static const char* fenceFileExtension;
     static const char* rallyPointFileExtension;

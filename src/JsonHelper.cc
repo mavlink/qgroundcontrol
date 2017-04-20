@@ -125,7 +125,7 @@ bool JsonHelper::parseEnum(const QJsonObject& jsonObject, QStringList& enumStrin
     return true;
 }
 
-bool JsonHelper::isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc)
+bool JsonHelper::isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorString)
 {
     QJsonParseError error;
 
@@ -190,6 +190,15 @@ bool JsonHelper::validateQGCJsonFile(const QJsonObject& jsonObject,
     }
 
     return true;
+}
+
+void JsonHelper::saveQGCJsonFileHeader(QJsonObject&     jsonObject,
+                                       const QString&   fileType,
+                                       int              version)
+{
+    jsonObject[jsonGroundStationKey] = jsonGroundStationValue;
+    jsonObject[jsonFileTypeKey] = fileType;
+    jsonObject[jsonVersionKey] = version;
 }
 
 bool JsonHelper::loadGeoCoordinateArray(const QJsonValue&   jsonValue,

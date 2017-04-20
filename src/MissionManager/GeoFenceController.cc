@@ -89,13 +89,15 @@ void GeoFenceController::_signalAll(void)
     emit dirtyChanged(dirty());
 }
 
-void GeoFenceController::_activeVehicleBeingRemoved(void)
+void GeoFenceController::activeVehicleBeingRemoved(void)
 {
     _activeVehicle->geoFenceManager()->disconnect(this);
+    _activeVehicle = NULL;
 }
 
-void GeoFenceController::_activeVehicleSet(void)
+void GeoFenceController::activeVehicleSet(Vehicle* vehicle)
 {
+    _activeVehicle = vehicle;
     GeoFenceManager* geoFenceManager = _activeVehicle->geoFenceManager();
     connect(geoFenceManager, &GeoFenceManager::breachReturnSupportedChanged,    this, &GeoFenceController::breachReturnSupportedChanged);
     connect(geoFenceManager, &GeoFenceManager::circleEnabledChanged,            this, &GeoFenceController::circleEnabledChanged);
@@ -112,97 +114,40 @@ void GeoFenceController::_activeVehicleSet(void)
     _signalAll();
 }
 
-bool GeoFenceController::_loadJsonFile(QJsonDocument& jsonDoc, QString& errorString)
+bool GeoFenceController::load(const QJsonObject& json, QString& errorString)
 {
-    QJsonObject json = jsonDoc.object();
+    QString errorStr;
+    QString errorMessage = tr("GeoFence: %1");
 
-    int fileVersion;
-    if (!JsonHelper::validateQGCJsonFile(json,
-                                         _jsonFileTypeValue,    // expected file type
-                                         1,                     // minimum supported version
-                                         1,                     // maximum supported version
-                                         fileVersion,
-                                         errorString)) {
+    if (json.contains(_jsonBreachReturnKey) &&
+            !JsonHelper::loadGeoCoordinate(json[_jsonBreachReturnKey], false /* altitudeRequired */, _breachReturnPoint, errorStr)) {
+        errorString = errorMessage.arg(errorStr);
         return false;
     }
 
-    if (!_activeVehicle->parameterManager()->loadFromJson(json, false /* required */, errorString)) {
-        return false;
-    }
-
-    if (json.contains(_jsonBreachReturnKey)
-            && !JsonHelper::loadGeoCoordinate(json[_jsonBreachReturnKey], false /* altitudeRequired */, _breachReturnPoint, errorString)) {
-        return false;
-    }
-
-    if (!_mapPolygon.loadFromJson(json, true, errorString)) {
+    if (!_mapPolygon.loadFromJson(json, true, errorStr)) {
+        errorString = errorMessage.arg(errorStr);
         return false;
     }
     _mapPolygon.setDirty(false);
+    setDirty(false);
+
+    _signalAll();
 
     return true;
 }
 
-void GeoFenceController::loadFromFile(const QString& filename)
+void  GeoFenceController::save(QJsonObject& json)
 {
-    QString errorString;
+    json[JsonHelper::jsonVersionKey] = 1;
 
-    if (filename.isEmpty()) {
-        return;
-    }
-
-    QFile file(filename);
-
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        errorString = file.errorString() + QStringLiteral(" ") + filename;
-    } else {
-        QJsonDocument   jsonDoc;
-        QByteArray      bytes = file.readAll();
-
-        _loadJsonFile(jsonDoc, errorString);
-    }
-
-    if (!errorString.isEmpty()) {
-        qgcApp()->showMessage(errorString);
-    }
-
-    _signalAll();
-    setDirty(true);
-}
-
-void GeoFenceController::saveToFile(const QString& filename)
-{
-    if (filename.isEmpty()) {
-        return;
-    }
-
-    QString fenceFilename = filename;
-    if (!QFileInfo(filename).fileName().contains(".")) {
-        fenceFilename += QString(".%1").arg(AppSettings::fenceFileExtension);
-    }
-
-    QFile file(fenceFilename);
-
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qgcApp()->showMessage(file.errorString());
-    } else {
-        QJsonObject fenceFileObject;    // top level json object
-
-        fenceFileObject[JsonHelper::jsonFileTypeKey] =      _jsonFileTypeValue;
-        fenceFileObject[JsonHelper::jsonVersionKey] =       1;
-        fenceFileObject[JsonHelper::jsonGroundStationKey] = JsonHelper::jsonGroundStationValue;
-
+    if (_breachReturnPoint.isValid()) {
         QJsonValue jsonBreachReturn;
         JsonHelper::saveGeoCoordinate(_breachReturnPoint, false /* writeAltitude */, jsonBreachReturn);
-        fenceFileObject[_jsonBreachReturnKey] = jsonBreachReturn;
-
-        _mapPolygon.saveToJson(fenceFileObject);
-
-        QJsonDocument saveDoc(fenceFileObject);
-        file.write(saveDoc.toJson());
+        json[_jsonBreachReturnKey] = jsonBreachReturn;
     }
 
-    setDirty(false);
+    _mapPolygon.saveToJson(json);
 }
 
 void GeoFenceController::removeAll(void)
@@ -321,11 +266,6 @@ void GeoFenceController::_loadComplete(const QGeoCoordinate& breachReturn, const
     _setPolygonFromManager(polygon);
     setDirty(false);
     emit loadComplete();
-}
-
-QString GeoFenceController::fileExtension(void) const
-{
-    return AppSettings::fenceFileExtension;
 }
 
 bool GeoFenceController::containsItems(void) const
