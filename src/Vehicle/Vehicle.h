@@ -757,7 +757,6 @@ signals:
 
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
-    void _telemetryChanged(LinkInterface* link, unsigned rxerrors, unsigned fixed, int rssi, int remrssi, unsigned txbuf, unsigned noise, unsigned remnoise);
     void _linkInactiveOrDeleted(LinkInterface* link);
     void _sendMessageOnLink(LinkInterface* link, mavlink_message_t message);
     void _sendMessageMultipleNext(void);
@@ -795,6 +794,7 @@ private:
     void _startJoystick(bool start);
     void _handleHomePosition(mavlink_message_t& message);
     void _handleHeartbeat(mavlink_message_t& message);
+    void _handleRadioStatus(mavlink_message_t& message);
     void _handleRCChannels(mavlink_message_t& message);
     void _handleRCChannelsRaw(mavlink_message_t& message);
     void _handleBatteryStatus(mavlink_message_t& message);

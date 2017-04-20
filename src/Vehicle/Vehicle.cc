@@ -159,7 +159,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     _mavlink = qgcApp()->toolbox()->mavlinkProtocol();
 
     connect(_mavlink, &MAVLinkProtocol::messageReceived,     this, &Vehicle::_mavlinkMessageReceived);
-    connect(_mavlink, &MAVLinkProtocol::radioStatusChanged,  this, &Vehicle::_telemetryChanged);
 
     connect(this, &Vehicle::_sendMessageOnLinkOnThread, this, &Vehicle::_sendMessageOnLink, Qt::QueuedConnection);
     connect(this, &Vehicle::flightModeChanged,          this, &Vehicle::_handleFlightModeChanged);
@@ -428,37 +427,6 @@ void Vehicle::resetCounters()
     _heardFrom          = false;
 }
 
-void Vehicle::_telemetryChanged(LinkInterface*, unsigned rxerrors, unsigned fixed, int rssi, int remrssi, unsigned txbuf, unsigned noise, unsigned remnoise)
-{
-    if(_telemetryLRSSI != rssi) {
-        _telemetryLRSSI = rssi;
-        emit telemetryLRSSIChanged(_telemetryLRSSI);
-    }
-    if(_telemetryRRSSI != remrssi) {
-        _telemetryRRSSI = remrssi;
-        emit telemetryRRSSIChanged(_telemetryRRSSI);
-    }
-    if(_telemetryRXErrors != rxerrors) {
-        _telemetryRXErrors = rxerrors;
-        emit telemetryRXErrorsChanged(_telemetryRXErrors);
-    }
-    if(_telemetryFixed != fixed) {
-        _telemetryFixed = fixed;
-        emit telemetryFixedChanged(_telemetryFixed);
-    }
-    if(_telemetryTXBuffer != txbuf) {
-        _telemetryTXBuffer = txbuf;
-        emit telemetryTXBufferChanged(_telemetryTXBuffer);
-    }
-    if(_telemetryLNoise != noise) {
-        _telemetryLNoise = noise;
-        emit telemetryLNoiseChanged(_telemetryLNoise);
-    }
-    if(_telemetryRNoise != remnoise) {
-        _telemetryRNoise = remnoise;
-        emit telemetryRNoiseChanged(_telemetryRNoise);
-    }
-}
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
 
@@ -511,6 +479,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_HEARTBEAT:
         _handleHeartbeat(message);
+        break;
+    case MAVLINK_MSG_ID_RADIO_STATUS:
+        _handleRadioStatus(message);
         break;
     case MAVLINK_MSG_ID_RC_CHANNELS:
         _handleRCChannels(message);
@@ -938,6 +909,59 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
         _base_mode = heartbeat.base_mode;
         _custom_mode = heartbeat.custom_mode;
         emit flightModeChanged(flightMode());
+    }
+}
+
+void Vehicle::_handleRadioStatus(mavlink_message_t& message)
+{
+    //-- Process telemetry status message
+    mavlink_radio_status_t rstatus;
+    mavlink_msg_radio_status_decode(&message, &rstatus);
+    int rssi    = rstatus.rssi;
+    int remrssi = rstatus.remrssi;
+    //-- 3DR Si1k radio needs rssi fields to be converted to dBm
+    if (message.sysid == '3' && message.compid == 'D') {
+        /* Per the Si1K datasheet figure 23.25 and SI AN474 code
+         * samples the relationship between the RSSI register
+         * and received power is as follows:
+         *
+         *                       10
+         * inputPower = rssi * ------ 127
+         *                       19
+         *
+         * Additionally limit to the only realistic range [-120,0] dBm
+         */
+        rssi    = qMin(qMax(qRound(static_cast<qreal>(rssi)    / 1.9 - 127.0), - 120), 0);
+        remrssi = qMin(qMax(qRound(static_cast<qreal>(remrssi) / 1.9 - 127.0), - 120), 0);
+    }
+    //-- Check for changes
+    if(_telemetryLRSSI != rssi) {
+        _telemetryLRSSI = rssi;
+        emit telemetryLRSSIChanged(_telemetryLRSSI);
+    }
+    if(_telemetryRRSSI != remrssi) {
+        _telemetryRRSSI = remrssi;
+        emit telemetryRRSSIChanged(_telemetryRRSSI);
+    }
+    if(_telemetryRXErrors != rstatus.rxerrors) {
+        _telemetryRXErrors = rstatus.rxerrors;
+        emit telemetryRXErrorsChanged(_telemetryRXErrors);
+    }
+    if(_telemetryFixed != rstatus.fixed) {
+        _telemetryFixed = rstatus.fixed;
+        emit telemetryFixedChanged(_telemetryFixed);
+    }
+    if(_telemetryTXBuffer != rstatus.txbuf) {
+        _telemetryTXBuffer = rstatus.txbuf;
+        emit telemetryTXBufferChanged(_telemetryTXBuffer);
+    }
+    if(_telemetryLNoise != rstatus.noise) {
+        _telemetryLNoise = rstatus.noise;
+        emit telemetryLNoiseChanged(_telemetryLNoise);
+    }
+    if(_telemetryRNoise != rstatus.remnoise) {
+        _telemetryRNoise = rstatus.remnoise;
+        emit telemetryRNoiseChanged(_telemetryRNoise);
     }
 }
 
