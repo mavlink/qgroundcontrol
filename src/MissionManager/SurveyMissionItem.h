@@ -178,7 +178,7 @@ private:
     void _setExitCoordinate(const QGeoCoordinate& coordinate);
     void _generateGrid(void);
     void _updateCoordinateAltitude(void);
-    int _gridGenerator(const QList<QPointF>& polygonPoints, QList<QPointF>& simpleGridPoints, QList<QList<QPointF>>& transectSegments, bool refly);
+    int _gridGenerator(const QList<QPointF>& polygonPoints, QList<QList<QPointF>>& transectSegments, bool refly);
     QPointF _rotatePoint(const QPointF& point, const QPointF& origin, double angle);
     void _intersectLinesWithRect(const QList<QLineF>& lineList, const QRectF& boundRect, QList<QLineF>& resultLines);
     void _intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines);
@@ -196,8 +196,9 @@ private:
     bool _hasTurnaround(void) const;
     double _turnaroundDistance(void) const;
     void _convertTransectToGeo(const QList<QList<QPointF>>& transectSegmentsNED, const QGeoCoordinate& tangentOrigin, QList<QList<QGeoCoordinate>>& transectSegmentsGeo);
-    void _convertPointsToGeo(const QList<QPointF>& pointsNED, const QGeoCoordinate& tangentOrigin, QVariantList& pointsGeo);
     bool _appendMissionItemsWorker(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, bool hasRefly, bool buildRefly);
+    void _optimizeReflySegments(void);
+    void _appendGridPointsFromTransects(QList<QList<QGeoCoordinate>>& rgTransectSegments);
 
     int                             _sequenceNumber;
     bool                            _dirty;

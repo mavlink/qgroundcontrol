@@ -22,6 +22,7 @@ VehicleHealthWidget     1.0 VehicleHealthWidget.qml
 VibrationWidget         1.0 VibrationWidget.qml
 
 # Map items
+CameraTriggerIndicator      1.0 CameraTriggerIndicator.qml
 MissionItemIndicator        1.0 MissionItemIndicator.qml
 MissionItemIndicatorDrag    1.0 MissionItemIndicatorDrag.qml
 MissionItemView             1.0 MissionItemView.qml
