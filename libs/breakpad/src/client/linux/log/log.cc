@@ -75,9 +75,10 @@ int writeToCrashLog(const char* buf) {
 
 int write(const char* buf, size_t nbytes) {
 #if defined(__ANDROID__)
-  return __android_log_write(ANDROID_LOG_WARN, kAndroidLogTag, buf);
+    (void)nbytes;
+    return __android_log_write(ANDROID_LOG_WARN, kAndroidLogTag, buf);
 #else
-  return sys_write(2, buf, nbytes);
+    return sys_write(2, buf, nbytes);
 #endif
 }
 
