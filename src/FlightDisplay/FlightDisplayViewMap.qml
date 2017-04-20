@@ -241,6 +241,16 @@ FlightMap {
         }
     }    
 
+    // Camera points
+    MapItemView {
+        model: missionController.cameraPoints
+
+        delegate: CameraTriggerIndicator {
+            coordinate:     object.coordinate
+            z:              QGroundControl.zOrderTopMost
+        }
+    }
+
     // Handle guided mode clicks
     MouseArea {
         anchors.fill: parent

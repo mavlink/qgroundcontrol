@@ -43,7 +43,7 @@ Item {
     }
 
     function getBatteryImage() {
-        if(_activeVehicle) {
+        if(_batteryLevel > 0.0) {
             if(_batteryLevel > 0.8) {
                 return "/typhoonh/img/rc_battery_charge_100.svg"
             }

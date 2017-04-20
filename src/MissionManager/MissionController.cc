@@ -23,6 +23,7 @@
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "MissionSettingsItem.h"
+#include "QGCQGeoCoordinate.h"
 
 #ifndef __mobile__
 #include "MainWindow.h"
@@ -1330,6 +1331,7 @@ void MissionController::_activeVehicleBeingRemoved(void)
     disconnect(missionManager, &MissionManager::currentIndexChanged,        this, &MissionController::_currentMissionIndexChanged);
     disconnect(missionManager, &MissionManager::lastCurrentIndexChanged,    this, &MissionController::resumeMissionIndexChanged);
     disconnect(missionManager, &MissionManager::resumeMissionReady,         this, &MissionController::resumeMissionReady);
+    disconnect(missionManager, &MissionManager::cameraFeedback,             this, &MissionController::_cameraFeedback);
     disconnect(_activeVehicle, &Vehicle::homePositionChanged,               this, &MissionController::_activeVehicleHomePositionChanged);
 
     // We always remove all items on vehicle change. This leaves a user model hole:
@@ -1350,6 +1352,7 @@ void MissionController::_activeVehicleSet(void)
     connect(missionManager, &MissionManager::currentIndexChanged,       this, &MissionController::_currentMissionIndexChanged);
     connect(missionManager, &MissionManager::lastCurrentIndexChanged,   this, &MissionController::resumeMissionIndexChanged);
     connect(missionManager, &MissionManager::resumeMissionReady,        this, &MissionController::resumeMissionReady);
+    connect(missionManager, &MissionManager::cameraFeedback,            this, &MissionController::_cameraFeedback);
     connect(_activeVehicle, &Vehicle::homePositionChanged,              this, &MissionController::_activeVehicleHomePositionChanged);
     connect(_activeVehicle, &Vehicle::defaultCruiseSpeedChanged,        this, &MissionController::_recalcMissionFlightStatus);
     connect(_activeVehicle, &Vehicle::defaultHoverSpeedChanged,         this, &MissionController::_recalcMissionFlightStatus);
@@ -1613,4 +1616,17 @@ void MissionController::applyDefaultMissionAltitude(void)
         VisualMissionItem* item = _visualItems->value<VisualMissionItem*>(i);
         item->applyNewAltitude(defaultAltitude);
     }
+}
+
+void MissionController::_cameraFeedback(QGeoCoordinate imageCoordinate, int index)
+{
+    Q_UNUSED(index);
+    if (!_editMode) {
+        _cameraPoints.append(new QGCQGeoCoordinate(imageCoordinate, this));
+    }
+}
+
+void MissionController::clearCameraPoints(void)
+{
+    _cameraPoints.clearAndDeleteContents();
 }

@@ -29,7 +29,7 @@ class GPSProvider : public QThread
 {
     Q_OBJECT
 public:
-    GPSProvider(const QString& device, bool enableSatInfo, const std::atomic_bool& requestStop);
+    GPSProvider(const QString& device, bool enableSatInfo, double surveyInAccMeters, int surveryInDurationSecs, const std::atomic_bool& requestStop);
     ~GPSProvider();
 
     /**
@@ -57,6 +57,8 @@ private:
 
     QString _device;
     const std::atomic_bool& _requestStop;
+    double  _surveyInAccMeters;
+    int     _surveryInDurationSecs;
 
 	struct vehicle_gps_position_s	_reportGpsPos;
 	struct satellite_info_s		*_pReportSatInfo = nullptr;
