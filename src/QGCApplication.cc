@@ -144,10 +144,10 @@ static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
 // breakpad support
 #include "client/linux/handler/exception_handler.h"
 
-static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded)
+static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* /*context*/, bool succeeded)
 {
-  qDebug() << "dumpCallback" << succeeded << descriptor.path();
-  return succeeded;
+    qDebug() << "dumpCallback" << succeeded << descriptor.path();
+    return succeeded;
 }
 #endif
 
