@@ -127,19 +127,16 @@ bool JsonHelper::parseEnum(const QJsonObject& jsonObject, QStringList& enumStrin
 
 bool JsonHelper::isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorString)
 {
-    QJsonParseError error;
+    QJsonParseError parseError;
 
-    jsonDoc = QJsonDocument::fromJson(bytes, &error);
+    jsonDoc = QJsonDocument::fromJson(bytes, &parseError);
 
-    if (error.error == QJsonParseError::NoError) {
+    if (parseError.error == QJsonParseError::NoError) {
         return true;
-    }
-
-    if (error.error == QJsonParseError::MissingObject && error.offset == 0) {
+    } else {
+        errorString = parseError.errorString();
         return false;
     }
-
-    return true;
 }
 
 bool JsonHelper::validateQGCJsonFile(const QJsonObject& jsonObject,
