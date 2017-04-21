@@ -52,9 +52,9 @@ stQGeoTileCacheQGCMapTypes kMapTypes[] = {
     {"Bing Satellite Map",      UrlFactory::BingSatellite},
     {"Bing Hybrid Map",         UrlFactory::BingHybrid},
     {"Statkart Topo2",          UrlFactory::StatkartTopo},
+    /*
     {"MapQuest Street Map",     UrlFactory::MapQuestMap},
     {"MapQuest Satellite Map",  UrlFactory::MapQuestSat}
-    /*
     {"Open Street Map",         UrlFactory::OpenStreetMap}
      */
 };
@@ -80,7 +80,16 @@ stQGeoTileCacheQGCMapTypes kMapBoxTypes[] = {
 
 #define NUM_MAPBOXMAPS (sizeof(kMapBoxTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
 
+stQGeoTileCacheQGCMapTypes kEsriTypes[] = {
+    {"Esri Street Map",       UrlFactory::EsriWorldStreet},
+    {"Esri Satellite Map",    UrlFactory::EsriWorldSatellite},
+    {"Esri Terrain Map",      UrlFactory::EsriTerrain}
+};
+
+#define NUM_ESRIMAPS (sizeof(kEsriTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
+
 static const char* kMapBoxTokenKey  = "MapBoxToken";
+static const char* kEsriTokenKey    = "EsriToken";
 static const char* kMaxDiskCacheKey = "MaxDiskCache";
 static const char* kMaxMemCacheKey  = "MaxMemoryCache";
 
@@ -322,6 +331,10 @@ QGCMapEngine::getTypeFromName(const QString& name)
         if(name.compare(kMapBoxTypes[i].name, Qt::CaseInsensitive) == 0)
             return kMapBoxTypes[i].type;
     }
+    for(i = 0; i < NUM_ESRIMAPS; i++) {
+        if(name.compare(kEsriTypes[i].name, Qt::CaseInsensitive) == 0)
+            return kEsriTypes[i].type;
+    }
     return UrlFactory::Invalid;
 }
 
@@ -338,6 +351,11 @@ QGCMapEngine::getMapNameList()
             mapList << kMapBoxTypes[i].name;
         }
     }
+    if(!getEsriToken().isEmpty()) {
+        for(size_t i = 0; i < NUM_ESRIMAPS; i++) {
+            mapList << kEsriTypes[i].name;
+        }
+    }
     return mapList;
 }
 
@@ -351,6 +369,15 @@ QGCMapEngine::setMapBoxToken(const QString& token)
 }
 
 //-----------------------------------------------------------------------------
+void
+QGCMapEngine::setEsriToken(const QString& token)
+{
+    QSettings settings;
+    settings.setValue(kEsriTokenKey, token);
+    _esriToken = token;
+}
+
+//-----------------------------------------------------------------------------
 QString
 QGCMapEngine::getMapBoxToken()
 {
@@ -359,6 +386,17 @@ QGCMapEngine::getMapBoxToken()
         _mapBoxToken = settings.value(kMapBoxTokenKey).toString();
     }
     return _mapBoxToken;
+}
+
+//-----------------------------------------------------------------------------
+QString
+QGCMapEngine::getEsriToken()
+{
+    if(_esriToken.isEmpty()) {
+        QSettings settings;
+        _esriToken = settings.value(kEsriTokenKey).toString();
+    }
+    return _esriToken;
 }
 
 //-----------------------------------------------------------------------------
@@ -467,10 +505,15 @@ QGCMapEngine::concurrentDownloads(UrlFactory::MapType type)
     case UrlFactory::BingSatellite:
     case UrlFactory::BingHybrid:
     case UrlFactory::StatkartTopo:
+    case UrlFactory::EsriWorldStreet:
+    case UrlFactory::EsriWorldSatellite:
+    case UrlFactory::EsriTerrain:
         return 12;
+    /*
     case UrlFactory::MapQuestMap:
     case UrlFactory::MapQuestSat:
         return 8;
+    */
     default:
         break;
     }

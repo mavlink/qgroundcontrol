@@ -210,6 +210,20 @@ QGCMapEngineManager::setMapboxToken(QString token)
 }
 
 //-----------------------------------------------------------------------------
+QString
+QGCMapEngineManager::esriToken()
+{
+    return getQGCMapEngine()->getEsriToken();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMapEngineManager::setEsriToken(QString token)
+{
+    getQGCMapEngine()->setEsriToken(token);
+}
+
+//-----------------------------------------------------------------------------
 quint32
 QGCMapEngineManager::maxMemCache()
 {
