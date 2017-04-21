@@ -57,6 +57,7 @@ MissionController::MissionController(QObject *parent)
     , _surveyMissionItemName(tr("Survey"))
     , _fwLandingMissionItemName(tr("Fixed Wing Landing"))
     , _appSettings(qgcApp()->toolbox()->settingsManager()->appSettings())
+    , _progressPct(0)
 {
     _resetMissionFlightStatus();
 }
@@ -1261,6 +1262,7 @@ void MissionController::activeVehicleBeingRemoved(void)
 
     disconnect(missionManager, &MissionManager::newMissionItemsAvailable,   this, &MissionController::_newMissionItemsAvailableFromVehicle);
     disconnect(missionManager, &MissionManager::inProgressChanged,          this, &MissionController::_inProgressChanged);
+    disconnect(missionManager, &MissionManager::progressPct,                this, &MissionController::_progressPctChanged);
     disconnect(missionManager, &MissionManager::currentIndexChanged,        this, &MissionController::_currentMissionIndexChanged);
     disconnect(missionManager, &MissionManager::lastCurrentIndexChanged,    this, &MissionController::resumeMissionIndexChanged);
     disconnect(missionManager, &MissionManager::resumeMissionReady,         this, &MissionController::resumeMissionReady);
@@ -1286,6 +1288,7 @@ void MissionController::activeVehicleSet(Vehicle* activeVehicle)
 
     connect(missionManager, &MissionManager::newMissionItemsAvailable,  this, &MissionController::_newMissionItemsAvailableFromVehicle);
     connect(missionManager, &MissionManager::inProgressChanged,         this, &MissionController::_inProgressChanged);
+    connect(missionManager, &MissionManager::progressPct,               this, &MissionController::_progressPctChanged);
     connect(missionManager, &MissionManager::currentIndexChanged,       this, &MissionController::_currentMissionIndexChanged);
     connect(missionManager, &MissionManager::lastCurrentIndexChanged,   this, &MissionController::resumeMissionIndexChanged);
     connect(missionManager, &MissionManager::resumeMissionReady,        this, &MissionController::resumeMissionReady);
@@ -1561,4 +1564,12 @@ void MissionController::_cameraFeedback(QGeoCoordinate imageCoordinate, int inde
 void MissionController::clearCameraPoints(void)
 {
     _cameraPoints.clearAndDeleteContents();
+}
+
+void MissionController::_progressPctChanged(double progressPct)
+{
+    if (!qFuzzyCompare(progressPct, _progressPct)) {
+        _progressPct = progressPct;
+        emit progressPctChanged(progressPct);
+    }
 }
