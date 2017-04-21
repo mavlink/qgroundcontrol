@@ -57,6 +57,8 @@ Rectangle {
     property real   _missionTime:               _missionValid ? missionTime : NaN
     property int    _batteryChangePoint:        _controllerValid ? planMasterController.missionController.batteryChangePoint : -1
     property int    _batteriesRequired:         _controllerValid ? planMasterController.missionController.batteriesRequired : -1
+    property real   _controllerProgressPct:     _controllerValid ? planMasterController.missionController.progressPct : 0
+    property bool   _syncInProgress:            _controllerValid ? planMasterController.missionController.syncInProgress : false
 
     property string _distanceText:              isNaN(_distance) ?              "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
     property string _altDifferenceText:         isNaN(_altDifference) ?         "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
@@ -108,6 +110,32 @@ Rectangle {
                 showFlyView()
             }
         }
+    }
+
+    // Progress bar
+
+    on_ControllerProgressPctChanged: {
+        if (_controllerProgressPct === 1) {
+            resetProgressTimer.start()
+        } else if (_controllerProgressPct > 0) {
+            progressBar.visible = true
+        }
+    }
+
+    Timer {
+        id:             resetProgressTimer
+        interval:       1000
+        onTriggered:    progressBar.visible = false
+    }
+
+    Rectangle {
+        id:             progressBar
+        anchors.left:   parent.left
+        anchors.bottom: parent.bottom
+        height:         2
+        width:          _controllerProgressPct * parent.width
+        color:          qgcPal.colorGreen
+        visible:        false
     }
 
     RowLayout {
