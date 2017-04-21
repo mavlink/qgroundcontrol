@@ -557,7 +557,7 @@ QGCView {
 
                     delegate: MissionItemEditor {
                         map:                editorMap
-                        missionController:  _missionController
+                        masterController:  _planMasterController
                         missionItem:        object
                         width:              parent.width
                         readOnly:           false
@@ -734,7 +734,7 @@ QGCView {
                 QGCButton {
                     text:               qsTr("Upload")
                     Layout.fillWidth:   true
-                    enabled:            _activeVehicle && !masterController.syncInProgress
+                    enabled:            !masterController.offline && !masterController.syncInProgress
                     onClicked: {
                         dropPanel.hide()
                         masterController.upload()
@@ -744,7 +744,7 @@ QGCView {
                 QGCButton {
                     text:               qsTr("Download")
                     Layout.fillWidth:   true
-                    enabled:            _activeVehicle && !masterController.syncInProgress
+                    enabled:            !masterController.offline && !masterController.syncInProgress
                     onClicked: {
                         dropPanel.hide()
                         if (masterController.dirty) {

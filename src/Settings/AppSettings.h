@@ -11,6 +11,7 @@
 #define AppSettings_H
 
 #include "SettingsGroup.h"
+#include "QGCMAVLink.h"
 
 class AppSettings : public SettingsGroup
 {
@@ -66,6 +67,9 @@ public:
     QString missionSavePath     (void);
     QString parameterSavePath   (void);
     QString telemetrySavePath   (void);
+
+    static MAV_AUTOPILOT offlineEditingFirmwareTypeFromFirmwareType(MAV_AUTOPILOT firmwareType);
+    static MAV_TYPE offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleType);
 
     static const char* appSettingsGroupName;
 
