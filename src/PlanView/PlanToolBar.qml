@@ -23,21 +23,22 @@ Rectangle {
 
     signal showFlyView
 
-    property var    missionController
+    property var    planMasterController
     property var    currentMissionItem          ///< Mission item to display status for
 
-    property var    missionItems:               _controllerValid ? missionController.visualItems : undefined
-    property real   missionDistance:            _controllerValid ? missionController.missionDistance : NaN
-    property real   missionTime:                _controllerValid ? missionController.missionTime : NaN
-    property real   missionMaxTelemetry:        _controllerValid ? missionController.missionMaxTelemetry : NaN
-    property bool   missionDirty:               _controllerValid ? missionController.dirty : false
+    property var    missionItems:               _controllerValid ? planMasterController.missionController.visualItems : undefined
+    property real   missionDistance:            _controllerValid ? planMasterController.missionController.missionDistance : NaN
+    property real   missionTime:                _controllerValid ? planMasterController.missionController.missionTime : NaN
+    property real   missionMaxTelemetry:        _controllerValid ? planMasterController.missionController.missionMaxTelemetry : NaN
+    property bool   missionDirty:               _controllerValid ? planMasterController.missionController.dirty : false
 
+    property bool   _controllerValid:           planMasterController != undefined
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
+    property var    _controllerDirty:           planMasterController ? planMasterController.dirty : false
+    property var    _controllerSyncInProgress:  planMasterController ? planMasterController.syncInProgress : false
 
     property bool   _statusValid:               currentMissionItem != undefined
     property bool   _missionValid:              missionItems != undefined
-    property bool   _controllerValid:           missionController != undefined
-    property bool   _manualUpload:              QGroundControl.settingsManager.appSettings.automaticMissionUpload.rawValue == 0
 
     property real   _dataFontSize:              ScreenTools.defaultFontPointSize
     property real   _largeValueWidth:           ScreenTools.defaultFontPixelWidth * 8
@@ -54,8 +55,8 @@ Rectangle {
     property real   _missionDistance:           _missionValid ? missionDistance : NaN
     property real   _missionMaxTelemetry:       _missionValid ? missionMaxTelemetry : NaN
     property real   _missionTime:               _missionValid ? missionTime : NaN
-    property int    _batteryChangePoint:        _controllerValid ? missionController.batteryChangePoint : -1
-    property int    _batteriesRequired:         _controllerValid ? missionController.batteriesRequired : -1
+    property int    _batteryChangePoint:        _controllerValid ? planMasterController.missionController.batteryChangePoint : -1
+    property int    _batteriesRequired:         _controllerValid ? planMasterController.missionController.batteriesRequired : -1
 
     property string _distanceText:              isNaN(_distance) ?              "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
     property string _altDifferenceText:         isNaN(_altDifference) ?         "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
@@ -104,9 +105,7 @@ Rectangle {
             checked:            false
             onClicked: {
                 checked = false
-                if (missionController.uploadOnSwitch()) {
-                    showFlyView()
-                }
+                showFlyView()
             }
         }
     }
@@ -245,17 +244,17 @@ Rectangle {
         anchors.rightMargin:    _margins
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
-        text:                   missionController ? (missionController.dirty ? qsTr("Upload Required") : qsTr("Upload")) : ""
-        enabled:                _activeVehicle && !missionController.syncInProgress
-        visible:                _activeVehicle && _manualUpload
-        onClicked:              missionController.upload()
+        text:                   _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
+        enabled:                _activeVehicle && !_controllerSyncInProgress
+        visible:                _activeVehicle
+        onClicked:              planMasterController.upload()
 
         PropertyAnimation on opacity {
             easing.type:    Easing.OutQuart
             from:           0.5
             to:             1
             loops:          Animation.Infinite
-            running:        missionController ? missionController.dirty : false
+            running:        _controllerDirty
             alwaysRunToEnd: true
             duration:       2000
         }

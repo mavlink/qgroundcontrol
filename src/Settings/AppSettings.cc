@@ -34,6 +34,7 @@ const char* AppSettings::autoLoadMissionsName =                         "AutoLoa
 const char* AppSettings::automaticMissionUploadName =                   "AutomaticMissionUpload";
 
 const char* AppSettings::parameterFileExtension =   "params";
+const char* AppSettings::planFileExtension =        "plan";
 const char* AppSettings::missionFileExtension =     "mission";
 const char* AppSettings::fenceFileExtension =       "fence";
 const char* AppSettings::rallyPointFileExtension =  "rally";

@@ -19,9 +19,10 @@ Rectangle {
     color:  _currentItem ? qgcPal.primaryButton : qgcPal.windowShade
     radius: _radius
 
-    property var    map             ///< Map control
-    property var    missionItem     ///< MissionItem associated with this editor
-    property bool   readOnly        ///< true: read only view, false: full editing view
+    property var    map                 ///< Map control
+    property var    missionController
+    property var    missionItem         ///< MissionItem associated with this editor
+    property bool   readOnly            ///< true: read only view, false: full editing view
     property var    rootQgcView
 
     signal clicked
