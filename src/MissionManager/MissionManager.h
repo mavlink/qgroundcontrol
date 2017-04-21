@@ -85,6 +85,7 @@ signals:
     void lastCurrentIndexChanged(int lastCurrentIndex);
     void resumeMissionReady(void);
     void cameraFeedback(QGeoCoordinate imageCoordinate, int index);
+    void progressPct(double progressPercentPct);
 
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
