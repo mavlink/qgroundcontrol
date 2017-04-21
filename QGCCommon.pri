@@ -238,6 +238,8 @@ ReleaseBuild {
         CONFIG += ltcg              # Turn on link time code generation
     }
 
+    CONFIG += qtquickcompiler
+
     WindowsBuild {
         # Enable function level linking and enhanced optimized debugging
         QMAKE_CFLAGS_RELEASE   += /Gy /Zo
