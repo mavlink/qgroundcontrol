@@ -20,9 +20,15 @@ class JsonHelper
 {
 public:
     /// Determines is the specified data is a json file
-    ///     @param jsonDoc Returned json document if json file
     /// @return true: file is json, false: file is not json
-    static bool isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc);
+    static bool isJsonFile(const QByteArray&    bytes,          ///< json bytes
+                           QJsonDocument&       jsonDoc,        ///< returned json document
+                           QString&             errorString);   ///< error on parse failure
+
+    /// Saves the standard file header the json object
+    static void saveQGCJsonFileHeader(QJsonObject&      jsonObject, ///< root json object
+                                      const QString&    fileType,   ///< file type for file
+                                      int               version);   ///< version number for file
 
     /// Validates the standard parts of a QGC json file:
     ///     jsonFileTypeKey - Required and checked to be equal to expectedFileType

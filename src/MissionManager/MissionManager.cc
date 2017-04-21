@@ -49,6 +49,7 @@ void MissionManager::_writeMissionItemsWorker(void)
     _lastMissionRequest = -1;
 
     emit newMissionItemsAvailable(_missionItems.count() == 0);
+    emit progressPct(0);
 
     qCDebug(MissionManagerLog) << "writeMissionItems count:" << _missionItems.count();
 
@@ -500,6 +501,8 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message, bool m
         _startAckTimeout(AckMissionItem);
         return;
     }
+
+    emit progressPct((double)seq / (double)_missionItems.count());
     
     _retryCount = 0;
     if (_itemIndicesToRead.count() == 0) {
@@ -531,6 +534,8 @@ void MissionManager::_handleMissionRequest(const mavlink_message_t& message, boo
         _finishTransaction(false);
         return;
     }
+
+    emit progressPct((double)missionRequest.seq / (double)_missionItems.count());
 
     _lastMissionRequest = missionRequest.seq;
     if (!_itemIndicesToWrite.contains(missionRequest.seq)) {
@@ -857,6 +862,8 @@ QString MissionManager::_missionResultToString(MAV_MISSION_RESULT result)
 
 void MissionManager::_finishTransaction(bool success)
 {
+    emit progressPct(1);
+
     if (!success && _transactionInProgress == TransactionRead) {
         // Read from vehicle failed, clear partial list
         _clearAndDeleteMissionItems();
@@ -906,6 +913,8 @@ void MissionManager::_removeAllWorker(void)
     mavlink_message_t message;
 
     qCDebug(MissionManagerLog) << "_removeAllWorker";
+
+    emit progressPct(0);
 
     _dedicatedLink = _vehicle->priorityLink();
     mavlink_msg_mission_clear_all_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
