@@ -17,6 +17,7 @@
 #include "JoystickManager.h"
 #include "MissionManager.h"
 #include "MissionController.h"
+#include "PlanMasterController.h"
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
 #include "CoordinateVector.h"
@@ -1627,11 +1628,10 @@ void Vehicle::_startMissionRequest(void)
         if (_settingsManager->appSettings()->autoLoadMissions()->rawValue().toBool()) {
             QString missionAutoLoadDirPath = _settingsManager->appSettings()->missionSavePath();
             if (!missionAutoLoadDirPath.isEmpty()) {
-                QmlObjectListModel* visualItems = NULL;
                 QDir missionAutoLoadDir(missionAutoLoadDirPath);
-                QString autoloadFilename = missionAutoLoadDir.absoluteFilePath(tr("AutoLoad%1.%2").arg(_id).arg(AppSettings::missionFileExtension));
-                if (MissionController::loadItemsFromFile(this, autoloadFilename, &visualItems)) {
-                    MissionController::sendItemsToVehicle(this, visualItems);
+                QString autoloadFilename = missionAutoLoadDir.absoluteFilePath(tr("AutoLoad%1.%2").arg(_id).arg(AppSettings::planFileExtension));
+                if (QFile(autoloadFilename).exists()) {
+                    PlanMasterController::sendPlanToVehicle(this, autoloadFilename);
                     return;
                 }
             }
