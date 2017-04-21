@@ -32,5 +32,6 @@ void PlanElementController::start(bool editMode)
 
 void PlanElementController::startStaticActiveVehicle(Vehicle* vehicle)
 {
+    Q_UNUSED(vehicle);
     _editMode = false;
 }
