@@ -250,7 +250,6 @@ bool PlanMasterController::syncInProgress(void) const
 
 bool PlanMasterController::dirty(void) const
 {
-    qDebug() << _editMode << _missionController.dirty() << _geoFenceController.dirty() << _rallyPointController.dirty();
     return _missionController.dirty() || _geoFenceController.dirty() || _rallyPointController.dirty();
 }
 
