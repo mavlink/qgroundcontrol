@@ -14,6 +14,7 @@
 #include "JsonHelper.h"
 
 #include <QJsonDocument>
+#include <QFileInfo>
 
 const int   PlanMasterController::_planFileVersion =            1;
 const char* PlanMasterController::_planFileType =               "Plan";
