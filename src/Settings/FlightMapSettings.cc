@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "FlightMapSettings.h"
+#include "QGCMapEngine.h"
 
 #include <QQmlEngine>
 #include <QtQml>
@@ -27,17 +28,18 @@ FlightMapSettings::FlightMapSettings(QObject* parent)
 
     // Save the original version since we modify based on map provider
     _savedMapTypeStrings = _nameToMetaDataMap[mapTypeSettingsName]->enumStrings();
-    _savedMapTypeValues = _nameToMetaDataMap[mapTypeSettingsName]->enumValues();
+    _savedMapTypeValues  = _nameToMetaDataMap[mapTypeSettingsName]->enumValues();
 
 #ifdef QGC_NO_GOOGLE_MAPS
-    // Find google in the list and remove it
-    FactMetaData* metaData = _nameToMetaDataMap[mapProviderSettingsName];
-    QVariantList enumValues = metaData->enumValues();
-    QStringList enumStrings = metaData->enumStrings();
-    _removeEnumValue(mapProviderGoogle, enumStrings, enumValues);
-    metaData->setEnumInfo(enumStrings, enumValues);
+    //-- Remove Google
+    _excludeProvider(mapProviderGoogle);
 #endif
-
+    if(getQGCMapEngine()->getMapBoxToken().isEmpty()) {
+        _excludeProvider(mapProviderMapBox);
+    }
+    if(getQGCMapEngine()->getEsriToken().isEmpty()) {
+        _excludeProvider(mapProviderEsri);
+    }
     _newMapProvider(mapProvider()->rawValue());
 }
 
@@ -58,6 +60,15 @@ Fact* FlightMapSettings::mapType(void)
     }
 
     return _mapTypeFact;
+}
+
+void FlightMapSettings::_excludeProvider(MapProvider_t provider)
+{
+    FactMetaData* metaData = _nameToMetaDataMap[mapProviderSettingsName];
+    QVariantList enumValues = metaData->enumValues();
+    QStringList enumStrings = metaData->enumStrings();
+    _removeEnumValue(provider, enumStrings, enumValues);
+    metaData->setEnumInfo(enumStrings, enumValues);
 }
 
 void FlightMapSettings::_removeEnumValue(int value, QStringList& enumStrings, QVariantList& enumValues)
