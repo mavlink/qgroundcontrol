@@ -49,14 +49,16 @@ RallyPointController::~RallyPointController()
 
 }
 
-void RallyPointController::_activeVehicleBeingRemoved(void)
+void RallyPointController::activeVehicleBeingRemoved(void)
 {
     _activeVehicle->rallyPointManager()->disconnect(this);
     _points.clearAndDeleteContents();
+    _activeVehicle = NULL;
 }
 
-void RallyPointController::_activeVehicleSet(void)
+void RallyPointController::activeVehicleSet(Vehicle* activeVehicle)
 {
+    _activeVehicle = activeVehicle;
     RallyPointManager* rallyPointManager = _activeVehicle->rallyPointManager();
     connect(rallyPointManager, &RallyPointManager::loadComplete,        this, &RallyPointController::_loadComplete);
     connect(rallyPointManager, &RallyPointManager::inProgressChanged,   this, &RallyPointController::syncInProgressChanged);
@@ -67,32 +69,23 @@ void RallyPointController::_activeVehicleSet(void)
     emit rallyPointsSupportedChanged(rallyPointsSupported());
 }
 
-bool RallyPointController::_loadJsonFile(QJsonDocument& jsonDoc, QString& errorString)
+bool RallyPointController::load(const QJsonObject& json, QString& errorString)
 {
-    QJsonObject json = jsonDoc.object();
-
-    int fileVersion;
-    if (!JsonHelper::validateQGCJsonFile(json,
-                                         _jsonFileTypeValue,    // expected file type
-                                         1,                     // minimum supported version
-                                         1,                     // maximum supported version
-                                         fileVersion,
-                                         errorString)) {
-        return false;
-    }
+    QString errorStr;
+    QString errorMessage = tr("Rally: %1");
 
     // Check for required keys
     QStringList requiredKeys = { _jsonPointsKey };
-    if (!JsonHelper::validateRequiredKeys(json, requiredKeys, errorString)) {
+    if (!JsonHelper::validateRequiredKeys(json, requiredKeys, errorStr)) {
+        errorString = errorMessage.arg(errorStr);
         return false;
     }
 
-    // Load points
-
     QList<QGeoCoordinate> rgPoints;
-    if (!JsonHelper::loadGeoCoordinateArray(json[_jsonPointsKey], true /* altitudeRequired */, rgPoints, errorString)) {
+    if (!JsonHelper::loadGeoCoordinateArray(json[_jsonPointsKey], true /* altitudeRequired */, rgPoints, errorStr)) {
+        errorString = errorMessage.arg(errorStr);
         return false;
-    }    
+    }
     _points.clearAndDeleteContents();
     QObjectList pointList;
     for (int i=0; i<rgPoints.count(); i++) {
@@ -100,77 +93,23 @@ bool RallyPointController::_loadJsonFile(QJsonDocument& jsonDoc, QString& errorS
     }
     _points.swapObjectList(pointList);
 
+    setDirty(false);
+    _setFirstPointCurrent();
+
     return true;
 }
 
-void RallyPointController::loadFromFile(const QString& filename)
+void RallyPointController::save(QJsonObject& json)
 {
-    QString errorString;
+    json[JsonHelper::jsonVersionKey] = 1;
 
-    if (filename.isEmpty()) {
-        return;
+    QJsonArray rgPoints;
+    QJsonValue jsonPoint;
+    for (int i=0; i<_points.count(); i++) {
+        JsonHelper::saveGeoCoordinate(qobject_cast<RallyPoint*>(_points[i])->coordinate(), true /* writeAltitude */, jsonPoint);
+        rgPoints.append(jsonPoint);
     }
-
-    QFile file(filename);
-
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        errorString = file.errorString() + QStringLiteral(" ") + filename;
-    } else {
-        QJsonDocument   jsonDoc;
-        QByteArray      bytes = file.readAll();
-
-        if (JsonHelper::isJsonFile(bytes, jsonDoc)) {
-            _loadJsonFile(jsonDoc, errorString);
-        } else {
-            // FIXME: No MP file format support
-            qgcApp()->showMessage("Rall Point file is in incorrect format.");
-            return;
-        }
-    }
-
-    if (!errorString.isEmpty()) {
-        qgcApp()->showMessage(errorString);
-    }
-
-    setDirty(true);
-    _setFirstPointCurrent();
-}
-
-void RallyPointController::saveToFile(const QString& filename)
-{
-    if (filename.isEmpty()) {
-        return;
-    }
-
-    QString rallyFilename = filename;
-    if (!QFileInfo(filename).fileName().contains(".")) {
-        rallyFilename += QString(".%1").arg(AppSettings::rallyPointFileExtension);
-    }
-
-    QFile file(rallyFilename);
-
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qgcApp()->showMessage(file.errorString());
-    } else {
-        QJsonObject jsonObject;
-
-        jsonObject[JsonHelper::jsonFileTypeKey] =       _jsonFileTypeValue;
-        jsonObject[JsonHelper::jsonVersionKey] =        1;
-        jsonObject[JsonHelper::jsonGroundStationKey] =  JsonHelper::jsonGroundStationValue;
-
-        QJsonArray rgPoints;
-        QJsonValue jsonPoint;
-        for (int i=0; i<_points.count(); i++) {
-            JsonHelper::saveGeoCoordinate(qobject_cast<RallyPoint*>(_points[i])->coordinate(), true /* writeAltitude */, jsonPoint);
-            rgPoints.append(jsonPoint);
-        }
-        jsonObject[_jsonPointsKey] = QJsonValue(rgPoints);
-
-        QJsonDocument saveDoc(jsonObject);
-        file.write(saveDoc.toJson());
-    }
-
-    setDirty(false);
+    json[_jsonPointsKey] = QJsonValue(rgPoints);
 }
 
 void RallyPointController::removeAll(void)
@@ -232,11 +171,6 @@ void RallyPointController::_loadComplete(const QList<QGeoCoordinate> rgPoints)
     setDirty(false);
     _setFirstPointCurrent();
     emit loadComplete();
-}
-
-QString RallyPointController::fileExtension(void) const
-{
-    return AppSettings::rallyPointFileExtension;
 }
 
 void RallyPointController::addPoint(QGeoCoordinate point)

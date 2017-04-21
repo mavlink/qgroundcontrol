@@ -158,7 +158,6 @@ public slots:
 #ifdef __ios__
     void    serviceDiscovered       (const QBluetoothServiceInfo &info);
     void    discoveryFinished       ();
-    void    discoveryError          (QBluetoothServiceDiscoveryAgent::Error error);
 #endif
 
 protected:

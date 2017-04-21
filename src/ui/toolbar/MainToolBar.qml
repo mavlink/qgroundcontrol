@@ -211,5 +211,4 @@ Rectangle {
         width:          _activeVehicle ? _activeVehicle.parameterManager.loadProgress * parent.width : 0
         color:          qgcPal.colorGreen
     }
-
 }

@@ -66,6 +66,8 @@ public:
     Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
     Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition        NOTIFY plannedHomePositionChanged)
 
+    Q_PROPERTY(double               progressPct             READ progressPct                NOTIFY progressPctChanged)
+
     Q_PROPERTY(int                  resumeMissionIndex      READ resumeMissionIndex         NOTIFY resumeMissionIndexChanged)
 
     Q_PROPERTY(double               missionDistance         READ missionDistance            NOTIFY missionDistanceChanged)
@@ -98,33 +100,29 @@ public:
     /// Updates the altitudes of the items in the current mission to the new default altitude
     Q_INVOKABLE void applyDefaultMissionAltitude(void);
 
-    /// Loads the mission items from the specified file
-    ///     @param[in] vehicle Vehicle we are loading items for
-    ///     @param[in] filename File to load from
-    ///     @param[out] visualItems Visual items loaded, returns NULL if error
-    /// @return success/fail
-    static bool loadItemsFromFile(Vehicle* vehicle, const QString& filename, QmlObjectListModel** visualItems);
-
     /// Sends the mission items to the specified vehicle
     static void sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems);
 
     Q_INVOKABLE void clearCameraPoints(void);
 
+    bool loadJsonFile(QFile& file, QString& errorString);
+    bool loadTextFile(QFile& file, QString& errorString);
+
     // Overrides from PlanElementController
     void start                      (bool editMode) final;
     void startStaticActiveVehicle   (Vehicle* vehicle) final;
+    void save                       (QJsonObject& json) final;
+    bool load                       (const QJsonObject& json, QString& errorString) final;
     void loadFromVehicle            (void) final;
     void sendToVehicle              (void) final;
-    void loadFromFile               (const QString& filename) final;
-    void saveToFile                 (const QString& filename) final;
     void removeAll                  (void) final;
     void removeAllFromVehicle       (void) final;
     bool syncInProgress             (void) const final;
     bool dirty                      (void) const final;
     void setDirty                   (bool dirty) final;
     bool containsItems              (void) const final;
-
-    QString fileExtension(void) const final;
+    void activeVehicleBeingRemoved  (void) final;
+    void activeVehicleSet           (Vehicle* vehicle) final;
 
     // Property accessors
 
@@ -133,6 +131,7 @@ public:
     QmlObjectListModel* cameraPoints            (void) { return &_cameraPoints; }
     QStringList         complexMissionItemNames (void) const;
     QGeoCoordinate      plannedHomePosition     (void) const;
+    double              progressPct             (void) const { return _progressPct; }
 
     /// Returns the item index two which a mission should be resumed. -1 indicates resume mission not available.
     int resumeMissionIndex(void) const;
@@ -165,6 +164,7 @@ signals:
     void batteryChangePointChanged(int batteryChangePoint);
     void batteriesRequiredChanged(int batteriesRequired);
     void plannedHomePositionChanged(QGeoCoordinate plannedHomePosition);
+    void progressPctChanged(double progressPct);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
@@ -176,6 +176,7 @@ private slots:
     void _recalcMissionFlightStatus(void);
     void _updateContainsItems(void);
     void _cameraFeedback(QGeoCoordinate imageCoordinate, int index);
+    void _progressPctChanged(double progressPct);
 
 private:
     void _init(void);
@@ -205,10 +206,8 @@ private:
     void _addHoverTime(double hoverTime, double hoverDistance, int waypointIndex);
     void _addCruiseTime(double cruiseTime, double cruiseDistance, int wayPointIndex);
     void _updateBatteryInfo(int waypointIndex);
-
-    // Overrides from PlanElementController
-    void _activeVehicleBeingRemoved(void) final;
-    void _activeVehicleSet(void) final;
+    bool _loadItemsFromJson(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
+    void _initLoadedVisualItems(QmlObjectListModel* loadedVisualItems);
 
 private:
     QmlObjectListModel*     _visualItems;
@@ -222,6 +221,7 @@ private:
     QString                 _surveyMissionItemName;
     QString                 _fwLandingMissionItemName;
     AppSettings*            _appSettings;
+    double                  _progressPct;
 
     static const char*  _settingsGroup;
 

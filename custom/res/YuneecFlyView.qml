@@ -85,6 +85,12 @@ Item {
         }
     }
 
+    Component.onCompleted: {
+        if(TyphoonHQuickInterface.connectedCamera === "" && TyphoonHQuickInterface.connectedSSID !== "") {
+            ssidChanged.start()
+        }
+    }
+
     Component {
         id: connectionLostBatteryResume
 
