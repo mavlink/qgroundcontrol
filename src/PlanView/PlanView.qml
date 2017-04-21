@@ -396,9 +396,9 @@ QGCView {
                 color:              qgcPal.window
                 title:              qsTr("Plan")
                 z:                  QGroundControl.zOrderWidgets
-                showAlternateIcon:  [ false, false, !_autoSync && masterController.dirty, false, false, false ]
+                showAlternateIcon:  [ false, false, masterController.dirty, false, false, false ]
                 rotateImage:        [ false, false, masterController.syncInProgress, false, false, false ]
-                animateImage:       [ false, false, !_autoSync && masterController.dirty, false, false, false ]
+                animateImage:       [ false, false, masterController.dirty, false, false, false ]
                 buttonEnabled:      [ true, true, !masterController.syncInProgress, true, true, true ]
                 buttonVisible:      [ true, true, true, true, _showZoom, _showZoom ]
                 maxHeight:          mapScale.y - toolStrip.y

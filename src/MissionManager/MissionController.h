@@ -103,6 +103,9 @@ public:
 
     Q_INVOKABLE void clearCameraPoints(void);
 
+    bool loadJsonFile(QFile& file, QString& errorString);
+    bool loadTextFile(QFile& file, QString& errorString);
+
     // Overrides from PlanElementController
     void start                      (bool editMode) final;
     void startStaticActiveVehicle   (Vehicle* vehicle) final;
@@ -110,9 +113,6 @@ public:
     bool load                       (const QJsonObject& json, QString& errorString) final;
     void loadFromVehicle            (void) final;
     void sendToVehicle              (void) final;
-#if 0
-    void loadFromFile               (const QString& filename) final;
-#endif
     void removeAll                  (void) final;
     void removeAllFromVehicle       (void) final;
     bool syncInProgress             (void) const final;
@@ -202,6 +202,7 @@ private:
     void _addCruiseTime(double cruiseTime, double cruiseDistance, int wayPointIndex);
     void _updateBatteryInfo(int waypointIndex);
     bool _loadItemsFromJson(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
+    void _initLoadedVisualItems(QmlObjectListModel* loadedVisualItems);
 
 private:
     QmlObjectListModel*     _visualItems;
