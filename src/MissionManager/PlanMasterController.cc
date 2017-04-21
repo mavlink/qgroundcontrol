@@ -10,6 +10,7 @@
 #include "PlanMasterController.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
+#include "SettingsManager.h"
 #include "AppSettings.h"
 #include "JsonHelper.h"
 
@@ -25,8 +26,13 @@ const char* PlanMasterController::_jsonRallyPointsObjectKey =   "rallyPoints";
 PlanMasterController::PlanMasterController(QObject* parent)
     : QObject(parent)
     , _multiVehicleMgr(qgcApp()->toolbox()->multiVehicleManager())
-    , _activeVehicle(_multiVehicleMgr->offlineEditingVehicle())
+    , _controllerVehicle(new Vehicle((MAV_AUTOPILOT)qgcApp()->toolbox()->settingsManager()->appSettings()->offlineEditingFirmwareType()->rawValue().toInt(), (MAV_TYPE)qgcApp()->toolbox()->settingsManager()->appSettings()->offlineEditingVehicleType()->rawValue().toInt(), qgcApp()->toolbox()->firmwarePluginManager()))
+    , _managerVehicle(_controllerVehicle)
     , _editMode(false)
+    , _offline(true)
+    , _missionController(this)
+    , _geoFenceController(this)
+    , _rallyPointController(this)
 {
     connect(&_missionController,    &MissionController::dirtyChanged,       this, &PlanMasterController::dirtyChanged);
     connect(&_geoFenceController,   &GeoFenceController::dirtyChanged,      this, &PlanMasterController::dirtyChanged);
@@ -60,34 +66,42 @@ void PlanMasterController::start(bool editMode)
 void PlanMasterController::startStaticActiveVehicle(Vehicle* vehicle)
 {
     _editMode = false;
-    _missionController.startStaticActiveVehicle(vehicle);
-    _geoFenceController.startStaticActiveVehicle(vehicle);
-    _rallyPointController.startStaticActiveVehicle(vehicle);
     _activeVehicleChanged(vehicle);
 }
 
 void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
 {
-    if (_activeVehicle) {
-        _missionController.activeVehicleBeingRemoved();
-        _geoFenceController.activeVehicleBeingRemoved();
-        _rallyPointController.activeVehicleBeingRemoved();
-        _activeVehicle = NULL;
+    if (_managerVehicle == activeVehicle) {
+        // We are already setup for this vehicle
+        return;
     }
 
-    if (activeVehicle) {
-        _activeVehicle = activeVehicle;
+    bool newOffline = false;
+    if (activeVehicle == NULL) {
+        // Since there is no longer an active vehicle we use the offline controller vehicle as the manager vehicle
+        _managerVehicle = _controllerVehicle;
+        newOffline = true;
     } else {
-        _activeVehicle = _multiVehicleMgr->offlineEditingVehicle();
+        // FIXME: Check for vehicle compatibility. (edit mode only)
+        _managerVehicle = activeVehicle;
+        newOffline = false;
     }
-    _missionController.activeVehicleSet(_activeVehicle);
-    _geoFenceController.activeVehicleSet(_activeVehicle);
-    _rallyPointController.activeVehicleSet(_activeVehicle);
+    if (newOffline != _offline) {
+        _offline = newOffline;
+        emit offlineEditingChanged(newOffline);
+    }
 
-    // Whenever vehicle changes we need to update syncInProgress
+    _missionController.managerVehicleChanged(_managerVehicle);
+    _geoFenceController.managerVehicleChanged(_managerVehicle);
+    _rallyPointController.managerVehicleChanged(_managerVehicle);
+
+    if (!_editMode && _offline) {
+        // Fly view has changed to a new active vehicle
+        loadFromVehicle();
+    }
+
+    // Whenever manager changes we need to update syncInProgress
     emit syncInProgressChanged(syncInProgress());
-
-    emit vehicleChanged(_activeVehicle);
 }
 
 void PlanMasterController::loadFromVehicle(void)
@@ -96,6 +110,7 @@ void PlanMasterController::loadFromVehicle(void)
     _missionController.loadFromVehicle();
     _geoFenceController.loadFromVehicle();
     _rallyPointController.loadFromVehicle();
+    setDirty(false);
 }
 
 void PlanMasterController::sendToVehicle(void)
@@ -104,6 +119,7 @@ void PlanMasterController::sendToVehicle(void)
     _missionController.sendToVehicle();
     _geoFenceController.sendToVehicle();
     _rallyPointController.sendToVehicle();
+    setDirty(false);
 }
 
 
@@ -166,7 +182,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
         }
     }
 
-    if (!_activeVehicle->isOfflineEditingVehicle()) {
+    if (!offline()) {
         setDirty(true);
     }
 }
@@ -204,8 +220,8 @@ void PlanMasterController::saveToFile(const QString& filename)
         file.write(saveDoc.toJson());
     }
 
-    // If we are connected to a real vehicle, don't clear dirty bit on saving to file since vehicle is still out of date
-    if (_activeVehicle->isOfflineEditingVehicle()) {
+    // Only clear dirty bit if we are offline
+    if (offline()) {
         setDirty(false);
     }
 }
@@ -234,6 +250,7 @@ bool PlanMasterController::syncInProgress(void) const
 
 bool PlanMasterController::dirty(void) const
 {
+    qDebug() << _editMode << _missionController.dirty() << _geoFenceController.dirty() << _rallyPointController.dirty();
     return _missionController.dirty() || _geoFenceController.dirty() || _rallyPointController.dirty();
 }
 

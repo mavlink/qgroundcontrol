@@ -24,17 +24,19 @@ class VisualMissionItem;
 class MissionItem;
 class MissionSettingsItem;
 class AppSettings;
+class MissionManager;
 
 Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
 typedef QPair<VisualMissionItem*,VisualMissionItem*> VisualItemPair;
 typedef QHash<VisualItemPair, CoordinateVector*> CoordVectHashTable;
+
 class MissionController : public PlanElementController
 {
     Q_OBJECT
 
 public:
-    MissionController(QObject* parent = NULL);
+    MissionController(PlanMasterController* masterController, QObject* parent = NULL);
     ~MissionController();
 
     typedef struct {
@@ -110,7 +112,6 @@ public:
 
     // Overrides from PlanElementController
     void start                      (bool editMode) final;
-    void startStaticActiveVehicle   (Vehicle* vehicle) final;
     void save                       (QJsonObject& json) final;
     bool load                       (const QJsonObject& json, QString& errorString) final;
     void loadFromVehicle            (void) final;
@@ -121,8 +122,7 @@ public:
     bool dirty                      (void) const final;
     void setDirty                   (bool dirty) final;
     bool containsItems              (void) const final;
-    void activeVehicleBeingRemoved  (void) final;
-    void activeVehicleSet           (Vehicle* vehicle) final;
+    void managerVehicleChanged      (Vehicle* managerVehicle) final;
 
     // Property accessors
 
@@ -169,7 +169,7 @@ signals:
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
     void _itemCommandChanged(void);
-    void _activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition);
+    void _managerVehicleHomePositionChanged(const QGeoCoordinate& homePosition);
     void _inProgressChanged(bool inProgress);
     void _currentMissionIndexChanged(int sequenceNumber);
     void _recalcWaypointLines(void);
@@ -177,6 +177,7 @@ private slots:
     void _updateContainsItems(void);
     void _cameraFeedback(QGeoCoordinate imageCoordinate, int index);
     void _progressPctChanged(double progressPct);
+    void _visualItemsDirtyChanged(bool dirty);
 
 private:
     void _init(void);
@@ -194,10 +195,10 @@ private:
     static double _normalizeLat(double lat);
     static double _normalizeLon(double lon);
     static void _addMissionSettings(Vehicle* vehicle, QmlObjectListModel* visualItems, bool addToCenter);
-    static bool _loadJsonMissionFile(Vehicle* vehicle, const QByteArray& bytes, QmlObjectListModel* visualItems, QString& errorString);
-    static bool _loadJsonMissionFileV1(Vehicle* vehicle, const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
-    static bool _loadJsonMissionFileV2(Vehicle* vehicle, const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
-    static bool _loadTextMissionFile(Vehicle* vehicle, QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString);
+    bool _loadJsonMissionFile(const QByteArray& bytes, QmlObjectListModel* visualItems, QString& errorString);
+    bool _loadJsonMissionFileV1(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
+    bool _loadJsonMissionFileV2(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
+    bool _loadTextMissionFile(QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString);
     int _nextSequenceNumber(void);
     static void _scanForAdditionalSettings(QmlObjectListModel* visualItems, Vehicle* vehicle);
     static bool _convertToMissionItems(QmlObjectListModel* visualMissionItems, QList<MissionItem*>& rgMissionItems, QObject* missionItemParent);
@@ -210,6 +211,7 @@ private:
     void _initLoadedVisualItems(QmlObjectListModel* loadedVisualItems);
 
 private:
+    MissionManager*         _missionManager;
     QmlObjectListModel*     _visualItems;
     MissionSettingsItem*    _settingsItem;
     QmlObjectListModel      _waypointLines;

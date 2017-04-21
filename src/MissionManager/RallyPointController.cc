@@ -36,12 +36,15 @@ QGC_LOGGING_CATEGORY(RallyPointControllerLog, "RallyPointControllerLog")
 const char* RallyPointController::_jsonFileTypeValue =  "RallyPoints";
 const char* RallyPointController::_jsonPointsKey =      "points";
 
-RallyPointController::RallyPointController(QObject* parent)
-    : PlanElementController(parent)
+RallyPointController::RallyPointController(PlanMasterController* masterController, QObject* parent)
+    : PlanElementController(masterController, parent)
+    , _rallyPointManager(_managerVehicle->rallyPointManager())
     , _dirty(false)
     , _currentRallyPoint(NULL)
 {
     connect(&_points, &QmlObjectListModel::countChanged, this, &RallyPointController::_updateContainsItems);
+
+    managerVehicleChanged(_managerVehicle);
 }
 
 RallyPointController::~RallyPointController()
@@ -49,22 +52,26 @@ RallyPointController::~RallyPointController()
 
 }
 
-void RallyPointController::activeVehicleBeingRemoved(void)
+void RallyPointController::managerVehicleChanged(Vehicle* managerVehicle)
 {
-    _activeVehicle->rallyPointManager()->disconnect(this);
-    _points.clearAndDeleteContents();
-    _activeVehicle = NULL;
-}
+    if (_managerVehicle) {
+        _rallyPointManager->disconnect(this);
+        _managerVehicle = NULL;
+        _rallyPointManager = NULL;
+    }
 
-void RallyPointController::activeVehicleSet(Vehicle* activeVehicle)
-{
-    _activeVehicle = activeVehicle;
-    RallyPointManager* rallyPointManager = _activeVehicle->rallyPointManager();
-    connect(rallyPointManager, &RallyPointManager::loadComplete,        this, &RallyPointController::_loadComplete);
-    connect(rallyPointManager, &RallyPointManager::inProgressChanged,   this, &RallyPointController::syncInProgressChanged);
+    _managerVehicle = managerVehicle;
+    if (!_managerVehicle) {
+        qWarning() << "RallyPointController::managerVehicleChanged managerVehicle=NULL";
+        return;
+    }
 
-    if (!rallyPointManager->inProgress()) {
-        _loadComplete(rallyPointManager->points());
+    _rallyPointManager = _managerVehicle->rallyPointManager();
+    connect(_rallyPointManager, &RallyPointManager::loadComplete,       this, &RallyPointController::_loadComplete);
+    connect(_rallyPointManager, &RallyPointManager::inProgressChanged,  this, &RallyPointController::syncInProgressChanged);
+
+    if (!syncInProgress()) {
+        _loadComplete(_rallyPointManager->points());
     }
     emit rallyPointsSupportedChanged(rallyPointsSupported());
 }
@@ -121,10 +128,10 @@ void RallyPointController::removeAll(void)
 
 void RallyPointController::loadFromVehicle(void)
 {
-    if (_activeVehicle->parameterManager()->parametersReady() && !syncInProgress()) {
-        _activeVehicle->rallyPointManager()->loadFromVehicle();
+    if (!syncInProgress()) {
+        _rallyPointManager->loadFromVehicle();
     } else {
-        qCWarning(RallyPointControllerLog) << "RallyPointController::loadFromVehicle call at wrong time" << _activeVehicle->parameterManager()->parametersReady() << syncInProgress();
+        qCWarning(RallyPointControllerLog) << "RallyPointController::loadFromVehicle call while syncInProgress";
     }
 }
 
@@ -136,15 +143,15 @@ void RallyPointController::sendToVehicle(void)
         for (int i=0; i<_points.count(); i++) {
             rgPoints.append(qobject_cast<RallyPoint*>(_points[i])->coordinate());
         }
-        _activeVehicle->rallyPointManager()->sendToVehicle(rgPoints);
+        _rallyPointManager->sendToVehicle(rgPoints);
     } else {
-        qCWarning(RallyPointControllerLog) << "RallyPointController::loadFromVehicle call at wrong time" << _activeVehicle->parameterManager()->parametersReady() << syncInProgress();
+        qCWarning(RallyPointControllerLog) << "RallyPointController::loadFromVehicle while syncInProgress";
     }
 }
 
 bool RallyPointController::syncInProgress(void) const
 {
-    return _activeVehicle->rallyPointManager()->inProgress();
+    return _rallyPointManager->inProgress();
 }
 
 void RallyPointController::setDirty(bool dirty)
@@ -157,7 +164,7 @@ void RallyPointController::setDirty(bool dirty)
 
 QString RallyPointController::editorQml(void) const
 {
-    return _activeVehicle->rallyPointManager()->editorQml();
+    return _rallyPointManager->editorQml();
 }
 
 void RallyPointController::_loadComplete(const QList<QGeoCoordinate> rgPoints)
@@ -190,7 +197,7 @@ void RallyPointController::addPoint(QGeoCoordinate point)
 
 bool RallyPointController::rallyPointsSupported(void) const
 {
-    return _activeVehicle->rallyPointManager()->rallyPointsSupported();
+    return _rallyPointManager->rallyPointsSupported();
 }
 
 void RallyPointController::removePoint(QObject* rallyPoint)
@@ -237,5 +244,5 @@ void RallyPointController::_updateContainsItems(void)
 
 void RallyPointController::removeAllFromVehicle(void)
 {
-    _activeVehicle->rallyPointManager()->removeAll();
+    _rallyPointManager->removeAll();
 }
