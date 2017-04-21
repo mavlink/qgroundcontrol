@@ -123,38 +123,52 @@ void PlanMasterController::loadFromFile(const QString& filename)
         return;
     }
 
-    QJsonDocument   jsonDoc;
-    QByteArray      bytes = file.readAll();
+    QString fileExtension(".%1");
+    if (filename.endsWith(fileExtension.arg(AppSettings::planFileExtension))) {
+        QJsonDocument   jsonDoc;
+        QByteArray      bytes = file.readAll();
 
-    if (!JsonHelper::isJsonFile(bytes, jsonDoc, errorString)) {
-        qgcApp()->showMessage(errorMessage.arg(errorString));
-        return;
+        if (!JsonHelper::isJsonFile(bytes, jsonDoc, errorString)) {
+            qgcApp()->showMessage(errorMessage.arg(errorString));
+            return;
+        }
+
+        int version;
+        QJsonObject json = jsonDoc.object();
+        if (!JsonHelper::validateQGCJsonFile(json, _planFileType, _planFileVersion, _planFileVersion, version, errorString)) {
+            qgcApp()->showMessage(errorMessage.arg(errorString));
+            return;
+        }
+
+        QList<JsonHelper::KeyValidateInfo> rgKeyInfo = {
+            { _jsonMissionObjectKey,        QJsonValue::Object, true },
+            { _jsonGeoFenceObjectKey,       QJsonValue::Object, true },
+            { _jsonRallyPointsObjectKey,    QJsonValue::Object, true },
+        };
+        if (!JsonHelper::validateKeys(json, rgKeyInfo, errorString)) {
+            qgcApp()->showMessage(errorMessage.arg(errorString));
+            return;
+        }
+
+        if (!_missionController.load(json[_jsonMissionObjectKey].toObject(), errorString) ||
+                !_geoFenceController.load(json[_jsonGeoFenceObjectKey].toObject(), errorString) ||
+                !_rallyPointController.load(json[_jsonRallyPointsObjectKey].toObject(), errorString)) {
+            qgcApp()->showMessage(errorMessage.arg(errorString));
+        }
+    } else if (filename.endsWith(fileExtension.arg(AppSettings::missionFileExtension))) {
+        if (!_missionController.loadJsonFile(file, errorString)) {
+            qgcApp()->showMessage(errorMessage.arg(errorString));
+        }
+    } else if (filename.endsWith(fileExtension.arg(AppSettings::waypointsFileExtension)) ||
+               filename.endsWith(fileExtension.arg(QStringLiteral("txt")))) {
+        if (!_missionController.loadTextFile(file, errorString)) {
+            qgcApp()->showMessage(errorMessage.arg(errorString));
+        }
     }
 
-    int version;
-    QJsonObject json = jsonDoc.object();
-    if (!JsonHelper::validateQGCJsonFile(json, _planFileType, _planFileVersion, _planFileVersion, version, errorString)) {
-        qgcApp()->showMessage(errorMessage.arg(errorString));
-        return;
+    if (!_activeVehicle->isOfflineEditingVehicle()) {
+        setDirty(true);
     }
-
-    QList<JsonHelper::KeyValidateInfo> rgKeyInfo = {
-        { _jsonMissionObjectKey,        QJsonValue::Object, true },
-        { _jsonGeoFenceObjectKey,       QJsonValue::Object, true },
-        { _jsonRallyPointsObjectKey,    QJsonValue::Object, true },
-    };
-    if (!JsonHelper::validateKeys(json, rgKeyInfo, errorString)) {
-        qgcApp()->showMessage(errorMessage.arg(errorString));
-        return;
-    }
-
-    if (!_missionController.load(json[_jsonMissionObjectKey].toObject(), errorString) ||
-            !_geoFenceController.load(json[_jsonGeoFenceObjectKey].toObject(), errorString) ||
-            !_rallyPointController.load(json[_jsonRallyPointsObjectKey].toObject(), errorString)) {
-        qgcApp()->showMessage(errorMessage.arg(errorString));
-        return;
-    }
-    setDirty(true);
 }
 
 void PlanMasterController::saveToFile(const QString& filename)
@@ -239,9 +253,7 @@ QStringList PlanMasterController::loadNameFilters(void) const
 {
     QStringList filters;
 
-    filters << tr("Plan Files (*.%1)").arg(AppSettings::planFileExtension) <<
-               tr("Mission Files (*.%1)").arg(AppSettings::missionFileExtension) <<
-               tr("Waypoint Files (*.waypoints)") <<
+    filters << tr("Supported types (*.%1 *.%2 *.%3 *.%4)").arg(AppSettings::planFileExtension).arg(AppSettings::missionFileExtension).arg(AppSettings::waypointsFileExtension).arg("*.txt") <<
                tr("All Files (*.*)");
     return filters;
 }

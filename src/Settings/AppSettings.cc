@@ -36,6 +36,7 @@ const char* AppSettings::automaticMissionUploadName =                   "Automat
 const char* AppSettings::parameterFileExtension =   "params";
 const char* AppSettings::planFileExtension =        "plan";
 const char* AppSettings::missionFileExtension =     "mission";
+const char* AppSettings::waypointsFileExtension =   "waypoints";
 const char* AppSettings::fenceFileExtension =       "fence";
 const char* AppSettings::rallyPointFileExtension =  "rally";
 const char* AppSettings::telemetryFileExtension =   "tlog";
