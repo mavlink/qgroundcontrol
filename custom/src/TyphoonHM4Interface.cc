@@ -249,12 +249,15 @@ TyphoonHM4Interface::_initAndCheckBinding()
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHM4Interface::_remoteControlRSSIChanged(uint8_t rssi)
+TyphoonHM4Interface::_remoteControlRSSIChanged(uint8_t /*rssi*/)
 {
+    //-- This is not working. I'm getting RSSI even with no bound RX (or even with no ST16 powered on)
+    /*
     if(rssi > 0 && !_receivedRCRSSI) {
         qCDebug(YuneecLog) << "Received RSSI, RC is bound.";
         _receivedRCRSSI = true;
     }
+    */
 }
 
 //-----------------------------------------------------------------------------
