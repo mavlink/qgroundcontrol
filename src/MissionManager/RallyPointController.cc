@@ -70,9 +70,6 @@ void RallyPointController::managerVehicleChanged(Vehicle* managerVehicle)
     connect(_rallyPointManager, &RallyPointManager::loadComplete,       this, &RallyPointController::_loadComplete);
     connect(_rallyPointManager, &RallyPointManager::inProgressChanged,  this, &RallyPointController::syncInProgressChanged);
 
-    if (!syncInProgress()) {
-        _loadComplete(_rallyPointManager->points());
-    }
     emit rallyPointsSupportedChanged(rallyPointsSupported());
 }
 

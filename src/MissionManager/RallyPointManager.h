@@ -58,7 +58,7 @@ signals:
     void loadComplete       (const QList<QGeoCoordinate> rgPoints);
     void inProgressChanged  (bool inProgress);
     void error              (int errorCode, const QString& errorMsg);
-    
+
 protected:
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
 
