@@ -27,6 +27,7 @@ Item {
     property bool           checked:        false
     property bool           showIcon:       false
     property bool           rotateImage:    false
+    property real           rssi:           0
 
     property ExclusiveGroup exclusiveGroup:  null
 
@@ -45,12 +46,30 @@ Item {
         height:     parent.height
         width:      parent.width
         color:      checked ? qgcPal.buttonHighlight : qgcPal.button
-        QGCLabel {
-            id:                 ssidLabel
-            color:              checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+        Row {
+            spacing:        ScreenTools.defaultFontPixelWidth
             anchors.left:       parent.left
             anchors.leftMargin: ScreenTools.defaultFontPixelWidth
             anchors.verticalCenter: parent.verticalCenter
+            SignalStrength {
+                anchors.verticalCenter: parent.verticalCenter
+                size:                   ssidRect.height * 0.5
+                percent: {
+                    if(rssi < 0) {
+                        if(rssi >= -50)
+                            return 100;
+                        if(rssi <= -100)
+                            return 0;
+                        return 2 * (rssi + 100);
+                    }
+                    return 0;
+                }
+            }
+            QGCLabel {
+                id:                 ssidLabel
+                color:              checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                anchors.verticalCenter: parent.verticalCenter
+            }
         }
         QGCColoredImage {
             id:                 icon

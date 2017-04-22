@@ -46,6 +46,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
 TyphoonHQuickInterface::~TyphoonHQuickInterface()
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Destroyed";
+    _clearSSids();
 }
 
 //-----------------------------------------------------------------------------
@@ -207,7 +208,7 @@ TyphoonHQuickInterface::enterBindMode()
 void
 TyphoonHQuickInterface::startScan(int delay)
 {
-    _ssidList.clear();
+    _clearSSids();
     _scanEnabled  = true;
     emit ssidListChanged();
 #if defined __android__
@@ -265,7 +266,7 @@ TyphoonHQuickInterface::resetWifi()
 #if defined __android__
     //-- Stop scanning and clear list
     stopScan();
-    _ssidList.clear();
+    _clearSSids();
     emit ssidListChanged();
     //-- Reset all wifi configurations
     if(_pHandler) {
@@ -300,7 +301,7 @@ void
 TyphoonHQuickInterface::bindWIFI(QString ssid, QString password)
 {
     stopScan();
-    _ssidList.clear();
+    _clearSSids();
     emit ssidListChanged();
     _bindingWiFi = true;
     emit bindingWiFiChanged();
@@ -410,24 +411,55 @@ TyphoonHQuickInterface::isTyphoon()
 }
 
 //-----------------------------------------------------------------------------
+static bool
+compareRSSI(const QVariant &v1, const QVariant &v2)
+{
+    TyphoonSSIDItem* s1 = qobject_cast<TyphoonSSIDItem*>(qvariant_cast<QObject*>(v1));
+    TyphoonSSIDItem* s2 = qobject_cast<TyphoonSSIDItem*>(qvariant_cast<QObject*>(v2));
+    qDebug() << "Sort" << s1->rssi() << s2->rssi();
+     return s1->rssi() > s2->rssi();
+}
+
+//-----------------------------------------------------------------------------
+TyphoonSSIDItem*
+TyphoonHQuickInterface::_findSsid(QString ssid, int rssi)
+{
+    for(QVariantList::const_iterator it = _ssidList.begin(); it != _ssidList.end(); ++it) {
+        TyphoonSSIDItem* s = qobject_cast<TyphoonSSIDItem*>(qvariant_cast<QObject*>(*it));
+        if(s->ssid() == ssid) {
+            s->setRssi(rssi);
+            return s;
+        }
+    }
+    return NULL;
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_clearSSids()
+{
+    for(QVariantList::const_iterator it = _ssidList.begin(); it != _ssidList.end(); ++it) {
+        TyphoonSSIDItem* s = qobject_cast<TyphoonSSIDItem*>(qvariant_cast<QObject*>(*it));
+        if(s) {
+           delete s;
+        }
+    }
+    _ssidList.clear();
+}
+
+//-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::_newSSID(QString ssid, int rssi)
 {
-    Q_UNUSED(rssi)
-#if 0 // defined(QT_DEBUG)
-    if(_scanningWiFi && !_ssidList.contains(ssid)) {
-        _ssidList << ssid;
-        _ssidList.sort(Qt::CaseInsensitive);
-        emit ssidListChanged();
-    }
-#else
+    qDebug() << "New SSID" << ssid << rssi;
     if(ssid.startsWith("CGO3P") || ssid.startsWith("CGOPRO") || ssid.startsWith("CGOET")) {
-        if(!_ssidList.contains(ssid)) {
-            _ssidList << ssid;
+        if(!_findSsid(ssid, rssi)) {
+            TyphoonSSIDItem* ssidInfo = new TyphoonSSIDItem(ssid, rssi);
+            _ssidList.append(QVariant::fromValue((TyphoonSSIDItem*)ssidInfo));
+            qSort(_ssidList.begin(), _ssidList.end(), compareRSSI);
             emit ssidListChanged();
         }
     }
-#endif
 }
 
 //-----------------------------------------------------------------------------
