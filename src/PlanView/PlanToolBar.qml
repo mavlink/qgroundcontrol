@@ -273,8 +273,8 @@ Rectangle {
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
         text:                   _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
-        enabled:                _activeVehicle && !_controllerSyncInProgress
-        visible:                _activeVehicle
+        enabled:                !_controllerSyncInProgress
+        visible:                !planMasterController.offline
         onClicked:              planMasterController.upload()
 
         PropertyAnimation on opacity {

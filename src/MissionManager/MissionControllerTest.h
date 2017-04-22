@@ -16,6 +16,7 @@
 #include "MissionManager.h"
 #include "MultiSignalSpy.h"
 #include "MissionControllerManagerTest.h"
+#include "PlanMasterController.h"
 #include "MissionController.h"
 #include "SimpleMissionItem.h"
 
@@ -38,14 +39,18 @@ private:
     void _testEmptyVehiclePX4(void);
     void _testAddWayppointAPM(void);
     void _testAddWayppointPX4(void);
+#if 0
     void _testOfflineToOnlineAPM(void);
     void _testOfflineToOnlinePX4(void);
+#endif
 
 private:
     void _initForFirmwareType(MAV_AUTOPILOT firmwareType);
     void _testEmptyVehicleWorker(MAV_AUTOPILOT firmwareType);
     void _testAddWaypointWorker(MAV_AUTOPILOT firmwareType);
+#if 0
     void _testOfflineToOnlineWorker(MAV_AUTOPILOT firmwareType);
+#endif
     void _setupVisualItemSignals(VisualMissionItem* visualItem);
 
     // MissiomItems signals
@@ -81,7 +86,8 @@ private:
     static const size_t _cVisualItemSignals = visualItemMaxSignalIndex;
     const char*         _rgVisualItemSignals[_cVisualItemSignals];
 
-    MissionController*  _missionController;
+    PlanMasterController*   _masterController;
+    MissionController*      _missionController;
 };
 
 #endif
