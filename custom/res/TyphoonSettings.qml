@@ -223,17 +223,18 @@ QGCView {
                             delegate:
                             SSIDButton {
                                 exclusiveGroup:     ssidGroup
-                                text:               modelData
+                                text:               modelData.ssid
+                                rssi:               modelData.rssi
                                 source:             "qrc:/typhoonh/img/checkMark.svg"
-                                showIcon:           TyphoonHQuickInterface.connectedSSID === modelData
-                                enabled:            _activeVehicle ? !_activeVehicle.armed && TyphoonHQuickInterface.connectedSSID !== modelData : TyphoonHQuickInterface.connectedSSID !== modelData
+                                showIcon:           TyphoonHQuickInterface.connectedSSID === modelData.ssid
+                                enabled:            _activeVehicle ? !_activeVehicle.armed && TyphoonHQuickInterface.connectedSSID !== modelData.ssid : TyphoonHQuickInterface.connectedSSID !== modelData.ssid
                                 anchors.horizontalCenter:   parent.horizontalCenter
                                 onClicked:  {
-                                    if(_selectedSSID === modelData) {
+                                    if(_selectedSSID === modelData.ssid) {
                                         _selectedSSID = ""
                                         checked = false
                                     } else {
-                                        _selectedSSID = modelData
+                                        _selectedSSID = modelData.ssid
                                         checked = true
                                         //-- If we have the config, use it (don't ask for password)
                                         if(TyphoonHQuickInterface.isWifiConfigured(_selectedSSID)) {

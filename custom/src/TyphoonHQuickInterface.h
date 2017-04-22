@@ -13,6 +13,34 @@ class TyphoonHM4Interface;
 class CameraControl;
 
 //-----------------------------------------------------------------------------
+// Vehicle List
+class TyphoonSSIDItem : public QObject
+{
+    Q_OBJECT
+public:
+    TyphoonSSIDItem(QString ssid, int rssi)
+        : _ssid(ssid)
+        , _rssi(rssi)
+    {
+    }
+
+    Q_PROPERTY(QString  ssid    READ ssid                   CONSTANT)
+    Q_PROPERTY(int      rssi    READ rssi   WRITE setRssi   NOTIFY rssiChanged)
+
+    QString     ssid        () { return _ssid; }
+    int         rssi        () { return _rssi; }
+
+    void        setRssi     (int rssi) { _rssi = rssi; emit rssiChanged(); }
+
+signals:
+    void rssiChanged ();
+
+protected:
+    QString _ssid;
+    int     _rssi;
+};
+
+//-----------------------------------------------------------------------------
 // QtQuick Interface (UI)
 class TyphoonHQuickInterface : public QObject
 {
@@ -45,7 +73,7 @@ public:
     Q_PROPERTY(double           gpsCount        READ    gpsCount            NOTIFY controllerLocationChanged)
     Q_PROPERTY(double           gpsAccuracy     READ    gpsAccuracy         NOTIFY controllerLocationChanged)
     Q_PROPERTY(CameraControl*   cameraControl   READ    cameraControl       CONSTANT)
-    Q_PROPERTY(QStringList      ssidList        READ    ssidList            NOTIFY ssidListChanged)
+    Q_PROPERTY(QVariantList     ssidList        READ    ssidList            NOTIFY ssidListChanged)
     Q_PROPERTY(bool             scanningWiFi    READ    scanningWiFi        NOTIFY scanningWiFiChanged)
     Q_PROPERTY(bool             bindingWiFi     READ    bindingWiFi         NOTIFY bindingWiFiChanged)
     Q_PROPERTY(bool             isTyphoon       READ    isTyphoon           NOTIFY wifiConnectedChanged)
@@ -84,7 +112,7 @@ public:
     double      speed               ();
     double      gpsCount            ();
     double      gpsAccuracy         ();
-    QStringList ssidList            () { return _ssidList; }
+    QVariantList& ssidList          () { return _ssidList; }
     bool        scanningWiFi        () { return _scanningWiFi; }
     bool        bindingWiFi         () { return _bindingWiFi; }
     bool        isTyphoon           ();
@@ -131,9 +159,13 @@ private:
     void    _loadWifiConfigurations     ();
 
 private:
+    TyphoonSSIDItem*        _findSsid   (QString ssid, int rssi);
+    void                    _clearSSids ();
+
+private:
     TyphoonHM4Interface*    _pHandler;
     QMap<QString, QString>  _configurations;
-    QStringList             _ssidList;
+    QVariantList            _ssidList;
     QString                 _ssid;
     QString                 _password;
     QTimer                  _scanTimer;
