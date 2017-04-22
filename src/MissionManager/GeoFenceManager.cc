@@ -40,8 +40,8 @@ void GeoFenceManager::loadFromVehicle(void)
 
 void GeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlObjectListModel& polygon)
 {
+    // No geofence support in unknown vehicle
     Q_UNUSED(breachReturn);
     Q_UNUSED(polygon);
-
-    // No geofence support in unknown vehicle
+    emit loadComplete(QGeoCoordinate(), QList<QGeoCoordinate>());
 }

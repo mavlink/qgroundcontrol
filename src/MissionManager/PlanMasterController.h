@@ -83,6 +83,8 @@ signals:
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
+    void _loadSendMissionComplete(void);
+    void _loadSendGeoFenceCompelte(void);
 
 private:
     MultiVehicleManager*    _multiVehicleMgr;
@@ -93,6 +95,10 @@ private:
     MissionController       _missionController;
     GeoFenceController      _geoFenceController;
     RallyPointController    _rallyPointController;
+    bool                    _loadGeoFence;
+    bool                    _loadRallyPoints;
+    bool                    _sendGeoFence;
+    bool                    _sendRallyPoints;
 
     static const int    _planFileVersion;
     static const char*  _planFileType;

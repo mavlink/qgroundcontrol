@@ -13,6 +13,7 @@
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "JsonHelper.h"
+#include "MissionManager.h"
 
 #include <QJsonDocument>
 #include <QFileInfo>
@@ -33,6 +34,10 @@ PlanMasterController::PlanMasterController(QObject* parent)
     , _missionController(this)
     , _geoFenceController(this)
     , _rallyPointController(this)
+    , _loadGeoFence(false)
+    , _loadRallyPoints(false)
+    , _sendGeoFence(false)
+    , _sendRallyPoints(false)
 {
     connect(&_missionController,    &MissionController::dirtyChanged,       this, &PlanMasterController::dirtyChanged);
     connect(&_geoFenceController,   &GeoFenceController::dirtyChanged,      this, &PlanMasterController::dirtyChanged);
@@ -82,9 +87,17 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         _managerVehicle = _controllerVehicle;
         newOffline = true;
     } else {
-        // FIXME: Check for vehicle compatibility. (edit mode only)
-        _managerVehicle = activeVehicle;
         newOffline = false;
+        _managerVehicle = activeVehicle;
+
+        // Update controllerVehicle to the currently connected vehicle
+        AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+        appSettings->offlineEditingFirmwareType()->setRawValue(AppSettings::offlineEditingFirmwareTypeFromFirmwareType(_managerVehicle->firmwareType()));
+        appSettings->offlineEditingVehicleType()->setRawValue(AppSettings::offlineEditingVehicleTypeFromVehicleType(_managerVehicle->vehicleType()));
+
+        // We use these signals to sequence upload and download to the multiple controller/managers
+        connect(_managerVehicle->missionManager(),  &MissionManager::newMissionItemsAvailable,  this, &PlanMasterController::_loadSendMissionComplete);
+        connect(_managerVehicle->geoFenceManager(), &GeoFenceManager::loadComplete,             this, &PlanMasterController::_loadSendGeoFenceCompelte);
     }
     if (newOffline != _offline) {
         _offline = newOffline;
@@ -106,22 +119,45 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
 
 void PlanMasterController::loadFromVehicle(void)
 {
-    // FIXME: Hack implementation
+    _loadGeoFence = true;
     _missionController.loadFromVehicle();
-    _geoFenceController.loadFromVehicle();
-    _rallyPointController.loadFromVehicle();
     setDirty(false);
+}
+
+
+void PlanMasterController::_loadSendMissionComplete(void)
+{
+    if (_loadGeoFence) {
+        _loadGeoFence = false;
+        _loadRallyPoints = true;
+        _geoFenceController.loadFromVehicle();
+        setDirty(false);
+    } else if (_sendGeoFence) {
+        _sendGeoFence = false;
+        _sendRallyPoints = true;
+        _geoFenceController.sendToVehicle();
+        setDirty(false);
+    }
+}
+
+void PlanMasterController::_loadSendGeoFenceCompelte(void)
+{
+    if (_loadRallyPoints) {
+        _loadRallyPoints = false;
+        _rallyPointController.loadFromVehicle();
+        setDirty(false);
+    } else if (_sendRallyPoints) {
+        _sendRallyPoints = false;
+        _rallyPointController.sendToVehicle();
+    }
 }
 
 void PlanMasterController::sendToVehicle(void)
 {
-    // FIXME: Hack implementation
+    _sendGeoFence = true;
     _missionController.sendToVehicle();
-    _geoFenceController.sendToVehicle();
-    _rallyPointController.sendToVehicle();
     setDirty(false);
 }
-
 
 void PlanMasterController::loadFromFile(const QString& filename)
 {
@@ -291,4 +327,3 @@ void PlanMasterController::sendPlanToVehicle(Vehicle* vehicle, const QString& fi
     controller->loadFromFile(filename);
     delete controller;
 }
-
