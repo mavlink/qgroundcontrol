@@ -13,6 +13,9 @@
 #include "MultiVehicleManager.h"
 #include "SimpleMissionItem.h"
 #include "MissionSettingsItem.h"
+#include "QGCApplication.h"
+#include "SettingsManager.h"
+#include "AppSettings.h"
 
 MissionControllerTest::MissionControllerTest(void)
     : _multiSpyMissionController(NULL)
@@ -24,8 +27,8 @@ MissionControllerTest::MissionControllerTest(void)
 
 void MissionControllerTest::cleanup(void)
 {
-    delete _missionController;
-    _missionController = NULL;
+    delete _masterController;
+    _masterController = NULL;
 
     delete _multiSpyMissionController;
     _multiSpyMissionController = NULL;
@@ -38,8 +41,6 @@ void MissionControllerTest::cleanup(void)
 
 void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
 {
-    bool startController = false;
-
     MissionControllerManagerTest::_initForFirmwareType(firmwareType);
 
     // VisualMissionItem signals
@@ -49,19 +50,16 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     _rgMissionControllerSignals[visualItemsChangedSignalIndex] =    SIGNAL(visualItemsChanged());
     _rgMissionControllerSignals[waypointLinesChangedSignalIndex] =  SIGNAL(waypointLinesChanged());
 
-    if (!_missionController) {
-        startController = true;
-        _missionController = new MissionController();
-        Q_CHECK_PTR(_missionController);
-    }
+    // Master controller pulls offline vehicle info from settings
+    qgcApp()->toolbox()->settingsManager()->appSettings()->offlineEditingFirmwareType()->setRawValue(firmwareType);
+    _masterController = new PlanMasterController(this);
+    _missionController = _masterController->missionController();
 
     _multiSpyMissionController = new MultiSignalSpy();
     Q_CHECK_PTR(_multiSpyMissionController);
     QCOMPARE(_multiSpyMissionController->init(_missionController, _rgMissionControllerSignals, _cMissionControllerSignals), true);
 
-    if (startController) {
-        _missionController->start(true /* editMode */);
-    }
+    _masterController->start(true /* editMode */);
 
     // All signals should some through on start
     QCOMPARE(_multiSpyMissionController->checkOnlySignalsByMask(visualItemsChangedSignalMask | waypointLinesChangedSignalMask), true);
@@ -162,6 +160,7 @@ void MissionControllerTest::_testAddWayppointPX4(void)
     _testAddWaypointWorker(MAV_AUTOPILOT_PX4);
 }
 
+#if 0
 void MissionControllerTest::_testOfflineToOnlineWorker(MAV_AUTOPILOT firmwareType)
 {
     // Start offline and add item
@@ -191,6 +190,7 @@ void MissionControllerTest::_testOfflineToOnlinePX4(void)
 {
     _testOfflineToOnlineWorker(MAV_AUTOPILOT_PX4);
 }
+#endif
 
 void MissionControllerTest::_setupVisualItemSignals(VisualMissionItem* visualItem)
 {

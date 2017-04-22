@@ -26,7 +26,7 @@ class RallyPointController : public PlanElementController
     Q_OBJECT
     
 public:
-    RallyPointController(QObject* parent = NULL);
+    RallyPointController(PlanMasterController* masterController, QObject* parent = NULL);
     ~RallyPointController();
     
     Q_PROPERTY(bool                 rallyPointsSupported    READ rallyPointsSupported                               NOTIFY rallyPointsSupportedChanged)
@@ -47,8 +47,7 @@ public:
     bool dirty                  (void) const final { return _dirty; }
     void setDirty               (bool dirty) final;
     bool containsItems          (void) const final;
-    void activeVehicleBeingRemoved  (void) final;
-    void activeVehicleSet           (Vehicle* vehicle) final;
+    void managerVehicleChanged  (Vehicle* managerVehicle) final;
 
     bool                rallyPointsSupported    (void) const;
     QmlObjectListModel* points                  (void) { return &_points; }
@@ -68,6 +67,7 @@ private slots:
     void _updateContainsItems(void);
 
 private:
+    RallyPointManager*  _rallyPointManager;
     bool                _dirty;
     QmlObjectListModel  _points;
     QObject*            _currentRallyPoint;
