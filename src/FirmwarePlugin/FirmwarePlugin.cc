@@ -475,3 +475,12 @@ void FirmwarePlugin::missionFlightSpeedInfo(Vehicle* vehicle, double& hoverSpeed
     hoverSpeed = appSettings->offlineEditingHoverSpeed()->rawValue().toDouble();
     cruiseSpeed = appSettings->offlineEditingCruiseSpeed()->rawValue().toDouble();
 }
+
+bool FirmwarePlugin::hasGimbal(Vehicle* vehicle, bool& rollSupported, bool& pitchSupported, bool& yawSupported)
+{
+    Q_UNUSED(vehicle);
+    rollSupported = false;
+    pitchSupported = false;
+    yawSupported = false;
+    return false;
+}

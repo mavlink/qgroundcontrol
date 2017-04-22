@@ -119,9 +119,13 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
 
 void PlanMasterController::loadFromVehicle(void)
 {
-    _loadGeoFence = true;
-    _missionController.loadFromVehicle();
-    setDirty(false);
+    if (!offline()) {
+        _loadGeoFence = true;
+        _missionController.loadFromVehicle();
+        setDirty(false);
+    } else {
+        qWarning() << "PlanMasterController::sendToVehicle called while offline";
+    }
 }
 
 
@@ -154,9 +158,13 @@ void PlanMasterController::_loadSendGeoFenceCompelte(void)
 
 void PlanMasterController::sendToVehicle(void)
 {
-    _sendGeoFence = true;
-    _missionController.sendToVehicle();
-    setDirty(false);
+    if (!offline()) {
+        _sendGeoFence = true;
+        _missionController.sendToVehicle();
+        setDirty(false);
+    } else {
+        qWarning() << "PlanMasterController::sendToVehicle called while offline";
+    }
 }
 
 void PlanMasterController::loadFromFile(const QString& filename)
@@ -264,14 +272,20 @@ void PlanMasterController::saveToFile(const QString& filename)
 
 void PlanMasterController::removeAll(void)
 {
-
+    _missionController.removeAll();
+    _geoFenceController.removeAll();
+    _rallyPointController.removeAll();
 }
 
 void PlanMasterController::removeAllFromVehicle(void)
 {
-    _missionController.removeAllFromVehicle();
-    _geoFenceController.removeAllFromVehicle();
-    _rallyPointController.removeAllFromVehicle();
+    if (!offline()) {
+        _missionController.removeAllFromVehicle();
+        _geoFenceController.removeAllFromVehicle();
+        _rallyPointController.removeAllFromVehicle();
+    } else {
+        qWarning() << "PlanMasterController::removeAllFromVehicle called while offline";
+    }
 }
 
 bool PlanMasterController::containsItems(void) const
