@@ -292,7 +292,7 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
         bool rollSupported = false;
         bool pitchSupported = false;
         bool yawSupported = false;
-        if (_controllerVehicle->firmwarePlugin()->hasGimbal(_controllerVehicle, rollSupported, pitchSupported, yawSupported) && yawSupported) {
+        if (_controllerVehicle->firmwarePlugin()->hasGimbal(_controllerVehicle, rollSupported, pitchSupported, yawSupported) && pitchSupported) {
             MissionSettingsItem* settingsItem = _visualItems->value<MissionSettingsItem*>(0);
             // If the user already specified a gimbal angle leave it alone
             CameraSection* cameraSection = settingsItem->cameraSection();
@@ -345,7 +345,7 @@ void MissionController::removeMissionItem(int index)
             bool rollSupported = false;
             bool pitchSupported = false;
             bool yawSupported = false;
-            if (_controllerVehicle->firmwarePlugin()->hasGimbal(_controllerVehicle, rollSupported, pitchSupported, yawSupported) && yawSupported) {
+            if (_controllerVehicle->firmwarePlugin()->hasGimbal(_controllerVehicle, rollSupported, pitchSupported, yawSupported) && pitchSupported) {
                 MissionSettingsItem* settingsItem = _visualItems->value<MissionSettingsItem*>(0);
                 CameraSection* cameraSection = settingsItem->cameraSection();
                 if (cameraSection->specifyGimbal() && cameraSection->gimbalYaw()->rawValue().toDouble() == -90.0 && cameraSection->gimbalPitch()->rawValue().toDouble() == 0.0) {
