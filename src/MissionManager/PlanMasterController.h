@@ -30,13 +30,14 @@ public:
     Q_PROPERTY(GeoFenceController*      geoFenceController      READ geoFenceController     CONSTANT)
     Q_PROPERTY(RallyPointController*    rallyPointController    READ rallyPointController   CONSTANT)
 
-    Q_PROPERTY(bool         containsItems   READ containsItems                  NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
-    Q_PROPERTY(bool         syncInProgress  READ syncInProgress                 NOTIFY syncInProgressChanged)   ///< true: Information is currently being saved/sent, false: no active save/send in progress
-    Q_PROPERTY(bool         dirty           READ dirty          WRITE setDirty  NOTIFY dirtyChanged)            ///< true: Unsaved/sent changes are present, false: no changes since last save/send
-    Q_PROPERTY(Vehicle*     vehicle         READ vehicle                        NOTIFY vehicleChanged)
-    Q_PROPERTY(QString      fileExtension   READ fileExtension                  CONSTANT)                       ///< File extention for missions
-    Q_PROPERTY(QStringList  loadNameFilters READ loadNameFilters                CONSTANT)                       ///< File filter list loading plan files
-    Q_PROPERTY(QStringList  saveNameFilters READ saveNameFilters                CONSTANT)                       ///< File filter list saving plan files
+    Q_PROPERTY(Vehicle*     controllerVehicle   MEMBER _controllerVehicle               CONSTANT)
+    Q_PROPERTY(bool         offline             READ offline                            NOTIFY offlineEditingChanged)   ///< true: controller is not connected to an active vehicle
+    Q_PROPERTY(bool         containsItems       READ containsItems                      NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
+    Q_PROPERTY(bool         syncInProgress      READ syncInProgress                     NOTIFY syncInProgressChanged)   ///< true: Information is currently being saved/sent, false: no active save/send in progress
+    Q_PROPERTY(bool         dirty               READ dirty              WRITE setDirty  NOTIFY dirtyChanged)            ///< true: Unsaved/sent changes are present, false: no changes since last save/send
+    Q_PROPERTY(QString      fileExtension       READ fileExtension                      CONSTANT)                       ///< File extention for missions
+    Q_PROPERTY(QStringList  loadNameFilters     READ loadNameFilters                    CONSTANT)                       ///< File filter list loading plan files
+    Q_PROPERTY(QStringList  saveNameFilters     READ saveNameFilters                    CONSTANT)                       ///< File filter list saving plan files
 
     /// Should be called immediately upon Component.onCompleted.
     ///     @param editMode true: controller being used in Plan view, false: controller being used in Fly view
@@ -61,6 +62,7 @@ public:
     GeoFenceController*     geoFenceController(void)    { return &_geoFenceController; }
     RallyPointController*   rallyPointController(void)  { return &_rallyPointController; }
 
+    bool        offline         (void) const { return _offline; }
     bool        containsItems   (void) const;
     bool        syncInProgress  (void) const;
     bool        dirty           (void) const;
@@ -69,21 +71,25 @@ public:
     QStringList loadNameFilters (void) const;
     QStringList saveNameFilters (void) const;
 
-    Vehicle* vehicle(void) { return _activeVehicle; }
+    Vehicle* controllerVehicle(void) { return _controllerVehicle; }
+    Vehicle* managerVehicle(void) { return _managerVehicle; }
 
 signals:
     void containsItemsChanged   (bool containsItems);
     void syncInProgressChanged  (bool syncInProgress);
     void dirtyChanged           (bool dirty);
     void vehicleChanged         (Vehicle* vehicle);
+    void offlineEditingChanged  (bool offlineEditing);
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
 
 private:
     MultiVehicleManager*    _multiVehicleMgr;
-    Vehicle*                _activeVehicle;     ///< Currently active vehicle, can be disconnected offline editing vehicle
+    Vehicle*                _controllerVehicle;
+    Vehicle*                _managerVehicle;
     bool                    _editMode;
+    bool                    _offline;
     MissionController       _missionController;
     GeoFenceController      _geoFenceController;
     RallyPointController    _rallyPointController;
