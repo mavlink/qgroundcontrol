@@ -287,8 +287,15 @@ public:
     ///     @param[out] cruiseSpeed Flight speed for vehicle flying in fixed wing forward flight mode. 0 for none, or not available.
     virtual void missionFlightSpeedInfo(Vehicle* vehicle, double& hoverSpeed, double& cruiseSpeed);
 
-    // Returns the parameter which control auto-dismar. Assume == 0 means no auto disarm
+    // Returns the parameter which control auto-disarm. Assume == 0 means no auto disarm
     virtual QString autoDisarmParameter(Vehicle* vehicle);
+
+    /// Used to determine whether a vehicle has a gimbal.
+    ///     @param[out] rollSupported Gimbal supports roll
+    ///     @param[out] pitchSupported Gimbal supports pitch
+    ///     @param[out] yawSupported Gimbal supports yaw
+    /// @return true: vehicle has gimbal, false: gimbal support unknown
+    virtual bool hasGimbal(Vehicle* vehicle, bool& rollSupported, bool& pitchSupported, bool& yawSupported);
 
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const char* px4FollowMeFlightMode;
