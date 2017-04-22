@@ -15,6 +15,8 @@
 #include "Vehicle.h"
 #include "MultiVehicleManager.h"
 
+class PlanMasterController;
+
 /// This is the abstract base clas for Plan Element controllers.
 /// Examples of plan elements are: missions (MissionController), geofence (GeoFenceController)
 class PlanElementController : public QObject
@@ -22,20 +24,16 @@ class PlanElementController : public QObject
     Q_OBJECT
     
 public:
-    PlanElementController(QObject* parent = NULL);
+    PlanElementController(PlanMasterController* masterController, QObject* parent = NULL);
     ~PlanElementController();
     
-    Q_PROPERTY(bool         containsItems   READ containsItems                  NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
-    Q_PROPERTY(bool         syncInProgress  READ syncInProgress                 NOTIFY syncInProgressChanged)   ///< true: information is currently being saved/sent, false: no active save/send in progress
-    Q_PROPERTY(bool         dirty           READ dirty          WRITE setDirty  NOTIFY dirtyChanged)            ///< true: unsaved/sent changes are present, false: no changes since last save/send
-    Q_PROPERTY(Vehicle*     vehicle         READ vehicle                        NOTIFY vehicleChanged)
+    Q_PROPERTY(bool containsItems   READ containsItems                  NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
+    Q_PROPERTY(bool syncInProgress  READ syncInProgress                 NOTIFY syncInProgressChanged)   ///< true: information is currently being saved/sent, false: no active save/send in progress
+    Q_PROPERTY(bool dirty           READ dirty          WRITE setDirty  NOTIFY dirtyChanged)            ///< true: unsaved/sent changes are present, false: no changes since last save/send
 
     /// Should be called immediately upon Component.onCompleted.
     ///     @param editMode true: controller being used in Plan view, false: controller being used in Fly view
     virtual void start(bool editMode);
-
-    /// Starts the controller using a single static active vehicle. Will not track global active vehicle changes.
-    virtual void startStaticActiveVehicle(Vehicle* vehicle);
 
     virtual void save(QJsonObject& json) = 0;
     virtual bool load(const QJsonObject& json, QString& errorString) = 0;
@@ -49,13 +47,8 @@ public:
     virtual bool    dirty          (void) const = 0;
     virtual void    setDirty       (bool dirty) = 0;
 
-    /// Called when the current active vehicle is about to be removed. Derived classes should override to implement custom behavior.
-    virtual void activeVehicleBeingRemoved(void) = 0;
-
-    /// Called when a new active vehicle has been set. Derived classes should override to implement custom behavior.
-    virtual void activeVehicleSet(Vehicle* activeVehicle) = 0;
-
-    Vehicle* vehicle(void) { return _activeVehicle; }
+    /// Called when a new manager vehicle has been set. Derived classes should override to implement custom behavior.
+    virtual void managerVehicleChanged(Vehicle* managerVehicle) = 0;
 
 signals:
     void containsItemsChanged   (bool containsItems);
@@ -64,8 +57,9 @@ signals:
     void vehicleChanged         (Vehicle* vehicle);
 
 protected:
-    MultiVehicleManager*    _multiVehicleMgr;
-    Vehicle*                _activeVehicle;     ///< Currently active vehicle, can be disconnected offline editing vehicle
+    PlanMasterController*   _masterController;
+    Vehicle*                _controllerVehicle;
+    Vehicle*                _managerVehicle;
     bool                    _editMode;
 };
 

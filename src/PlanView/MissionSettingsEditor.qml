@@ -20,7 +20,9 @@ Rectangle {
     visible:            missionItem.isCurrentItem
     radius:             _radius
 
-    property var    _missionVehicle:            missionController.vehicle
+    property var    _masterControler:           masterController
+    property var    _missionController:         _masterControler.missionController
+    property var    _missionVehicle:            _masterControler.controllerVehicle
     property bool   _vehicleHasHomePosition:    _missionVehicle.homePosition.isValid
     property bool   _offlineEditing:            _missionVehicle.isOfflineEditingVehicle
     property bool   _showOfflineVehicleCombos:  _offlineEditing && _multipleFirmware && _noMissionItemsAdded
@@ -32,7 +34,7 @@ Rectangle {
     property var    _savePath:                  QGroundControl.settingsManager.appSettings.missionSavePath
     property var    _fileExtension:             QGroundControl.settingsManager.appSettings.missionFileExtension
     property var    _appSettings:               QGroundControl.settingsManager.appSettings    
-    property bool   _waypointsOnlyMode:          QGroundControl.corePlugin.options.missionWaypointsOnly
+    property bool   _waypointsOnlyMode:         QGroundControl.corePlugin.options.missionWaypointsOnly
 
     readonly property string _firmwareLabel:    qsTr("Firmware")
     readonly property string _vehicleLabel:     qsTr("Vehicle")

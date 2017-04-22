@@ -8,13 +8,17 @@
  ****************************************************************************/
 
 #include "PlanElementController.h"
+#include "PlanMasterController.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
+#include "SettingsManager.h"
+#include "AppSettings.h"
 
-PlanElementController::PlanElementController(QObject* parent)
+PlanElementController::PlanElementController(PlanMasterController* masterController, QObject* parent)
     : QObject(parent)
-    , _multiVehicleMgr(qgcApp()->toolbox()->multiVehicleManager())
-    , _activeVehicle(_multiVehicleMgr->offlineEditingVehicle())
+    , _masterController(masterController)
+    , _controllerVehicle(masterController->controllerVehicle())
+    , _managerVehicle(masterController->managerVehicle())
     , _editMode(false)
 {
 
@@ -28,10 +32,4 @@ PlanElementController::~PlanElementController()
 void PlanElementController::start(bool editMode)
 {
     _editMode = editMode;
-}
-
-void PlanElementController::startStaticActiveVehicle(Vehicle* vehicle)
-{
-    Q_UNUSED(vehicle);
-    _editMode = false;
 }
