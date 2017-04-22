@@ -77,7 +77,7 @@ Item {
         }
         //-- Who are we connected to
         onConnectedSSIDChanged: {
-            if(TyphoonHQuickInterface.connectedCamera === "" && TyphoonHQuickInterface.connectedSSID !== "") {
+            if(ScreenTools.isAndroid && TyphoonHQuickInterface.connectedCamera === "" && TyphoonHQuickInterface.connectedSSID !== "") {
                 ssidChanged.start()
             } else {
                 ssidChanged.stop()
@@ -86,7 +86,7 @@ Item {
     }
 
     Component.onCompleted: {
-        if(TyphoonHQuickInterface.connectedCamera === "" && TyphoonHQuickInterface.connectedSSID !== "") {
+        if(ScreenTools.isAndroid && TyphoonHQuickInterface.connectedCamera === "" && TyphoonHQuickInterface.connectedSSID !== "") {
             ssidChanged.start()
         }
     }
