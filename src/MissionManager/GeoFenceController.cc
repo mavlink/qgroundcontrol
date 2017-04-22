@@ -107,10 +107,6 @@ void GeoFenceController::managerVehicleChanged(Vehicle* managerVehicle)
     connect(_geoFenceManager, &GeoFenceManager::loadComplete,                   this, &GeoFenceController::_loadComplete);
     connect(_geoFenceManager, &GeoFenceManager::inProgressChanged,              this, &GeoFenceController::syncInProgressChanged);
 
-    if (!_geoFenceManager->inProgress()) {
-        _loadComplete(_geoFenceManager->breachReturnPoint(), _geoFenceManager->polygon());
-    }
-
     _signalAll();
 }
 

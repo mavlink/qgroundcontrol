@@ -48,7 +48,6 @@ void MissionManager::_writeMissionItemsWorker(void)
 {
     _lastMissionRequest = -1;
 
-    emit newMissionItemsAvailable(_missionItems.count() == 0);
     emit progressPct(0);
 
     qCDebug(MissionManagerLog) << "writeMissionItems count:" << _missionItems.count();
@@ -868,6 +867,10 @@ void MissionManager::_finishTransaction(bool success)
         // Read from vehicle failed, clear partial list
         _clearAndDeleteMissionItems();
         emit newMissionItemsAvailable(false);
+    }
+
+    if (_transactionInProgress == TransactionWrite) {
+        emit newMissionItemsAvailable(_missionItems.count() == 0);
     }
 
     _itemIndicesToRead.clear();
