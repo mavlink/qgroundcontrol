@@ -288,6 +288,19 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
     if (itemName == _surveyMissionItemName) {
         newItem = new SurveyMissionItem(_controllerVehicle, _visualItems);
         newItem->setCoordinate(mapCenterCoordinate);
+        // If the vehicle is known to have a gimbal then we automatically point the gimbal straight down if not already set
+        bool rollSupported = false;
+        bool pitchSupported = false;
+        bool yawSupported = false;
+        if (_controllerVehicle->firmwarePlugin()->hasGimbal(_controllerVehicle, rollSupported, pitchSupported, yawSupported) && pitchSupported) {
+            MissionSettingsItem* settingsItem = _visualItems->value<MissionSettingsItem*>(0);
+            // If the user already specified a gimbal angle leave it alone
+            CameraSection* cameraSection = settingsItem->cameraSection();
+            if (!cameraSection->specifyGimbal()) {
+                cameraSection->setSpecifyGimbal(true);
+                cameraSection->gimbalYaw()->setRawValue(-90.0);
+            }
+        }
     } else if (itemName == _fwLandingMissionItemName) {
         newItem = new FixedWingLandingComplexItem(_controllerVehicle, _visualItems);
     } else {
@@ -306,10 +319,41 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
 
 void MissionController::removeMissionItem(int index)
 {
+    if (index <= 0 || index >= _visualItems->count()) {
+        qWarning() << "MissionController::removeMissionItem called with bad index - count:index" << _visualItems->count() << index;
+        return;
+    }
+
+    bool surveyRemoved = _visualItems->value<SurveyMissionItem*>(index);
     VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->removeAt(index));
 
     _deinitVisualItem(item);
     item->deleteLater();
+
+    if (surveyRemoved) {
+        // Determine if the mission still has another survey in it
+        bool foundSurvey = false;
+        for (int i=1; i<_visualItems->count(); i++) {
+            if (_visualItems->value<SurveyMissionItem*>(i)) {
+                foundSurvey = true;
+                break;
+            }
+        }
+
+        // If there is no longer a survey item in the mission remove the gimbal pitch command
+        if (!foundSurvey) {
+            bool rollSupported = false;
+            bool pitchSupported = false;
+            bool yawSupported = false;
+            if (_controllerVehicle->firmwarePlugin()->hasGimbal(_controllerVehicle, rollSupported, pitchSupported, yawSupported) && pitchSupported) {
+                MissionSettingsItem* settingsItem = _visualItems->value<MissionSettingsItem*>(0);
+                CameraSection* cameraSection = settingsItem->cameraSection();
+                if (cameraSection->specifyGimbal() && cameraSection->gimbalYaw()->rawValue().toDouble() == -90.0 && cameraSection->gimbalPitch()->rawValue().toDouble() == 0.0) {
+                    cameraSection->setSpecifyGimbal(false);
+                }
+            }
+        }
+    }
 
     _recalcAll();
     setDirty(true);

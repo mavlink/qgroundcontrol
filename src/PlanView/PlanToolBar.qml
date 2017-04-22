@@ -33,9 +33,9 @@ Rectangle {
     property bool   missionDirty:               _controllerValid ? planMasterController.missionController.dirty : false
 
     property bool   _controllerValid:           planMasterController != undefined
-    property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
-    property var    _controllerDirty:           planMasterController ? planMasterController.dirty : false
-    property var    _controllerSyncInProgress:  planMasterController ? planMasterController.syncInProgress : false
+    property bool   _controllerOffline:         _controllerValid ? planMasterController.offline : true
+    property var    _controllerDirty:           _controllerValid ? planMasterController.dirty : false
+    property var    _controllerSyncInProgress:  _controllerValid ? planMasterController.syncInProgress : false
 
     property bool   _statusValid:               currentMissionItem != undefined
     property bool   _missionValid:              missionItems != undefined
@@ -274,7 +274,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         text:                   _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
         enabled:                !_controllerSyncInProgress
-        visible:                !planMasterController.offline
+        visible:                !_controllerOffline
         onClicked:              planMasterController.upload()
 
         PropertyAnimation on opacity {
