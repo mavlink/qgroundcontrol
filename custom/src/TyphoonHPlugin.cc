@@ -334,15 +334,19 @@ TyphoonHPlugin::settingsPages()
     return _settingsList;
 }
 
+//-----------------------------------------------------------------------------
 bool
 TyphoonHPlugin::overrideSettingsGroupVisibility(QString name)
 {
-    if (name == VideoSettings::videoSettingsGroupName || name == AutoConnectSettings::autoConnectSettingsGroupName) {
+    if (name == VideoSettings::videoSettingsGroupName ||
+        name == AutoConnectSettings::autoConnectSettingsGroupName ||
+        name == RTKSettings::RTKSettingsGroupName) {
         return false;
     }
     return true;
 }
 
+//-----------------------------------------------------------------------------
 void
 TyphoonHPlugin::_showAdvancedPages(void)
 {
@@ -350,6 +354,7 @@ TyphoonHPlugin::_showAdvancedPages(void)
     emit settingsPagesChanged();
 }
 
+//-----------------------------------------------------------------------------
 bool
 TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
 {
@@ -389,25 +394,30 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         metaData.setRawDefaultValue(MAV_TYPE_QUADROTOR);
         return false;
     } else if (metaData.name() == AppSettings::savePathName) {
-#if 1
+#if defined(__androidx86__)
         QString appName = qgcApp()->applicationName();
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
         metaData.setRawDefaultValue(rootDir.filePath(appName));
-#else
         // Use the SD Card
-        metaData.setRawDefaultValue(QStringLiteral("/storage/sdcard1"));
+        //metaData.setRawDefaultValue(QStringLiteral("/storage/sdcard1"));
+#else
+        QString appName = qgcApp()->applicationName();
+        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        metaData.setRawDefaultValue(rootDir.filePath(appName));
 #endif
         return false;
     }
     return true;
 }
 
+//-----------------------------------------------------------------------------
 QString
 TyphoonHPlugin::brandImageIndoor(void) const
 {
     return QStringLiteral("/typhoonh/img/YuneecBrandImage.svg");
 }
 
+//-----------------------------------------------------------------------------
 QString
 TyphoonHPlugin::brandImageOutdoor(void) const
 {
