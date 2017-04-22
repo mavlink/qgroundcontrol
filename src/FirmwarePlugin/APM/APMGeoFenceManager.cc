@@ -132,7 +132,7 @@ void APMGeoFenceManager::loadFromVehicle(void)
     _requestFencePoint(_currentFencePoint);
 }
 
-/// Called when a new mavlink message for out vehicle is received
+/// Called when a new mavlink message for our vehicle is received
 void APMGeoFenceManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
     if (message.msgid == MAVLINK_MSG_ID_FENCE_POINT) {

@@ -446,8 +446,11 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
     // Mission Settings
     AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
 
-    appSettings->offlineEditingFirmwareType()->setRawValue(AppSettings::offlineEditingFirmwareTypeFromFirmwareType((MAV_AUTOPILOT)json[_jsonVehicleTypeKey].toInt()));
-    appSettings->offlineEditingVehicleType()->setRawValue(AppSettings::offlineEditingVehicleTypeFromVehicleType((MAV_TYPE)json[_jsonVehicleTypeKey].toInt()));
+    if (_masterController->offline()) {
+        // We only update if offline since if we are online we use the online vehicle settings
+        appSettings->offlineEditingFirmwareType()->setRawValue(AppSettings::offlineEditingFirmwareTypeFromFirmwareType((MAV_AUTOPILOT)json[_jsonVehicleTypeKey].toInt()));
+        appSettings->offlineEditingVehicleType()->setRawValue(AppSettings::offlineEditingVehicleTypeFromVehicleType((MAV_TYPE)json[_jsonVehicleTypeKey].toInt()));
+    }
     if (json.contains(_jsonCruiseSpeedKey)) {
         appSettings->offlineEditingCruiseSpeed()->setRawValue(json[_jsonCruiseSpeedKey].toDouble());
     }
