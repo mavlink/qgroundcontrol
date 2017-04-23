@@ -20,6 +20,7 @@
 #include "JsonHelper.h"
 #include "QGCQGeoCoordinate.h"
 #include "AppSettings.h"
+#include "PlanMasterController.h"
 
 #ifndef __mobile__
 #include "MainWindow.h"
@@ -39,6 +40,7 @@ GeoFenceController::GeoFenceController(PlanMasterController* masterController, Q
     , _geoFenceManager(_managerVehicle->geoFenceManager())
     , _dirty(false)
     , _mapPolygon(this)
+    , _itemsRequested(false)
 {
     connect(_mapPolygon.qmlPathModel(), &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
     connect(_mapPolygon.qmlPathModel(), &QmlObjectListModel::dirtyChanged, this, &GeoFenceController::_polygonDirtyChanged);
@@ -104,7 +106,9 @@ void GeoFenceController::managerVehicleChanged(Vehicle* managerVehicle)
     connect(_geoFenceManager, &GeoFenceManager::circleRadiusFactChanged,        this, &GeoFenceController::circleRadiusFactChanged);
     connect(_geoFenceManager, &GeoFenceManager::polygonEnabledChanged,          this, &GeoFenceController::polygonEnabledChanged);
     connect(_geoFenceManager, &GeoFenceManager::polygonSupportedChanged,        this, &GeoFenceController::polygonSupportedChanged);
-    connect(_geoFenceManager, &GeoFenceManager::loadComplete,                   this, &GeoFenceController::_loadComplete);
+    connect(_geoFenceManager, &GeoFenceManager::loadComplete,                   this, &GeoFenceController::_managerLoadComplete);
+    connect(_geoFenceManager, &GeoFenceManager::sendComplete,                   this, &GeoFenceController::_managerSendComplete);
+    connect(_geoFenceManager, &GeoFenceManager::removeAllComplete,              this, &GeoFenceController::_managerRemoveAllComplete);
     connect(_geoFenceManager, &GeoFenceManager::inProgressChanged,              this, &GeoFenceController::syncInProgressChanged);
 
     _signalAll();
@@ -152,20 +156,40 @@ void GeoFenceController::removeAll(void)
     _mapPolygon.clear();
 }
 
+void GeoFenceController::removeAllFromVehicle(void)
+{
+    if (_masterController->offline()) {
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while offline";
+    } else if (syncInProgress()) {
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while syncInProgress";
+    } else {
+        _geoFenceManager->removeAll();
+    }
+}
+
 void GeoFenceController::loadFromVehicle(void)
 {
-    if (!syncInProgress()) {
-        _geoFenceManager->loadFromVehicle();
+    if (_masterController->offline()) {
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while offline";
+    } else if (syncInProgress()) {
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while syncInProgress";
     } else {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle call while syncInProgress";
+        _itemsRequested = true;
+        _geoFenceManager->loadFromVehicle();
     }
 }
 
 void GeoFenceController::sendToVehicle(void)
 {
-    _geoFenceManager->sendToVehicle(_breachReturnPoint, _mapPolygon.pathModel());
-    _mapPolygon.setDirty(false);
-    setDirty(false);
+    if (_masterController->offline()) {
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while offline";
+    } else if (syncInProgress()) {
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while syncInProgress";
+    } else {
+        _geoFenceManager->sendToVehicle(_breachReturnPoint, _mapPolygon.pathModel());
+        _mapPolygon.setDirty(false);
+        setDirty(false);
+    }
 }
 
 bool GeoFenceController::syncInProgress(void) const
@@ -252,12 +276,32 @@ void GeoFenceController::_setReturnPointFromManager(QGeoCoordinate breachReturnP
     emit breachReturnPointChanged(_breachReturnPoint);
 }
 
-void GeoFenceController::_loadComplete(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon)
+void GeoFenceController::_managerLoadComplete(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon)
 {
-    _setReturnPointFromManager(breachReturn);
-    _setPolygonFromManager(polygon);
-    setDirty(false);
-    emit loadComplete();
+    // Fly view always reloads on _loadComplete
+    // Plan view only reloads on _loadComplete if specifically requested
+    if (!_editMode || _itemsRequested) {
+        _setReturnPointFromManager(breachReturn);
+        _setPolygonFromManager(polygon);
+        setDirty(false);
+        _signalAll();
+        emit loadComplete();
+    }
+    _itemsRequested = false;
+}
+
+void GeoFenceController::_managerSendComplete(void)
+{
+    // Fly view always reloads on manager sendComplete
+    if (!_editMode) {
+        showPlanFromManagerVehicle();
+    }
+}
+
+void GeoFenceController::_managerRemoveAllComplete(void)
+{
+    // Remove all from vehicle so we always update
+    showPlanFromManagerVehicle();
 }
 
 bool GeoFenceController::containsItems(void) const
@@ -270,7 +314,28 @@ void GeoFenceController::_updateContainsItems(void)
     emit containsItemsChanged(containsItems());
 }
 
-void GeoFenceController::removeAllFromVehicle(void)
+bool GeoFenceController::showPlanFromManagerVehicle(void)
 {
-    _geoFenceManager->removeAll();
+    qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle";
+    if (_masterController->offline()) {
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::showPlanFromManagerVehicle called while offline";
+        return true;    // stops further propogation of showPlanFromManagerVehicle due to error
+    } else {
+        _itemsRequested = true;
+        if (!_managerVehicle->initialPlanRequestComplete()) {
+            // The vehicle hasn't completed initial load, we can just wait for newMissionItemsAvailable to be signalled automatically
+            qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle: !initialPlanRequestComplete, wait for signal";
+            return true;
+        } else if (syncInProgress()) {
+            // If the sync is already in progress, _loadComplete will be called automatically when it is done. So no need to do anything.
+            qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle: syncInProgress wait for signal";
+            return true;
+        } else {
+            // Fake a _loadComplete with the current items
+            qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle: sync complete simulate signal";
+            _itemsRequested = true;
+            _managerLoadComplete(_geoFenceManager->breachReturnPoint(), _geoFenceManager->polygon());
+            return false;
+        }
+    }
 }

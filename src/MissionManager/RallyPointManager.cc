@@ -41,5 +41,11 @@ void RallyPointManager::sendToVehicle(const QList<QGeoCoordinate>& rgPoints)
 {
     // No support in generic vehicle
     Q_UNUSED(rgPoints);
-    emit loadComplete(QList<QGeoCoordinate>());
+    emit sendComplete();
+}
+
+void RallyPointManager::removeAll(void)
+{
+    // No support in generic vehicle
+    emit removeAllComplete();
 }
