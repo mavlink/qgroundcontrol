@@ -45,6 +45,7 @@ Item {
     property string _altitude:          _activeVehicle ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0 m"
     property string _distanceStr:       isNaN(_distance) ? "0 m" : _distance.toFixed(0) + ' ' + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "m")
     property real   _heading:           _activeVehicle ? _activeVehicle.heading.rawValue : 0
+    property bool   _showAttitude:      false
 
     Timer {
         id: ssidChanged
@@ -369,6 +370,29 @@ Item {
                 Layout.fillWidth:  true
                 Layout.columnSpan: 5
             }
+            //-- Altitude
+            QGCLabel {
+                text:       qsTr("H:")
+                visible:    _showAttitude
+            }
+            QGCLabel {
+                text:       _altitude
+                visible:    _showAttitude
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignRight
+            }
+            //-- Ground Speed
+            QGCLabel {
+                text:       qsTr("H.S:")
+                visible:    _showAttitude
+            }
+            QGCLabel {
+                text:       _activeVehicle ? _activeVehicle.groundSpeed.rawValue.toFixed(1) + ' ' + _activeVehicle.groundSpeed.units : "0.0 m/s"
+                visible:    _showAttitude
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignRight
+            }
+            Item { width: 1; height: 1; visible: _showAttitude; }
             //-- Distance
             QGCLabel {
                 text:   qsTr("D:")
@@ -407,6 +431,7 @@ Item {
         height:  headingCol.height * 1.25
         radius:  ScreenTools.defaultFontPixelWidth * 0.5
         color:   "black"
+        visible: !_showAttitude
         anchors.bottom: compassAttitudeCombo.top
         anchors.bottomMargin: -ScreenTools.defaultFontPixelHeight
         anchors.horizontalCenter: compassAttitudeCombo.horizontalCenter
@@ -426,9 +451,43 @@ Item {
     }
     //-- Indicator thingy
     Item {
+        id:             compassAttitudeComboAlt
+        width:          _indicatorDiameter
+        height:         outerCompassAlt.height
+        visible:        _showAttitude
+        anchors.bottom: vehicleStatus.bottom
+        anchors.right:  parent.right
+        anchors.rightMargin:  ScreenTools.defaultFontPixelWidth
+        CompassRing {
+            id:             outerCompassAlt
+            size:           parent.width * 1.05
+            vehicle:        _activeVehicle
+            anchors.horizontalCenter: parent.horizontalCenter
+            QGCAttitudeWidget {
+                id:                 attitudeWidget
+                size:               parent.width * 0.85
+                vehicle:            _activeVehicle
+                showHeading:        true
+                anchors.centerIn:   outerCompassAlt
+            }
+        }
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                vehicleStatus.visible = !vehicleStatus.visible
+            }
+            onDoubleClicked: {
+                vehicleStatus.visible = true
+                _showAttitude = !_showAttitude
+            }
+        }
+    }
+
+    Item {
         id:             compassAttitudeCombo
         width:          _indicatorDiameter
         height:         outerCompass.height
+        visible:        !_showAttitude
         anchors.bottom: vehicleStatus.bottom
         anchors.right:  parent.right
         anchors.rightMargin:  ScreenTools.defaultFontPixelWidth
@@ -473,6 +532,10 @@ Item {
             anchors.fill: parent
             onClicked: {
                 vehicleStatus.visible = !vehicleStatus.visible
+            }
+            onDoubleClicked: {
+                vehicleStatus.visible = true
+                _showAttitude = !_showAttitude
             }
         }
     }
