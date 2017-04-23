@@ -165,13 +165,23 @@ Rectangle {
         //-- Recording Time
         QGCLabel {
             text: (_cameraVideoMode && TyphoonHQuickInterface.cameraControl.videoStatus === CameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? TyphoonHQuickInterface.cameraControl.recordTimeStr : "00:00:00"
+            visible: _cameraVideoMode
             anchors.horizontalCenter: parent.horizontalCenter
+        }
+        Item {
+            width:  1
+            height: ScreenTools.defaultFontPixelHeight * 0.15
+            visible: !_cameraVideoMode
         }
         Rectangle {
             height: 1
             width:  parent.width * 0.85
             color:  qgcPal.globalTheme === QGCPalette.Dark ? Qt.rgba(1,1,1,0.25) : Qt.rgba(0,0,0,0.25)
             anchors.horizontalCenter: parent.horizontalCenter
+        }
+        Item {
+            width:  1
+            height: ScreenTools.defaultFontPixelHeight * 0.15
         }
         //-- Settings
         QGCColoredImage {
