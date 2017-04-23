@@ -669,6 +669,10 @@ public:
     /// @true: When flying a mission the vehicle is always facing towards the next waypoint
     bool vehicleYawsToNextWaypointInMission(void) const;
 
+    /// The vehicle is responsible for making the initial request for the Plan.
+    /// @return: true: initial request is complete, false: initial request is still in progress;
+    bool initialPlanRequestComplete(void) const { return _initialPlanRequestComplete; }
+
 signals:
     void allLinksInactive(Vehicle* vehicle);
     void coordinateChanged(QGeoCoordinate coordinate);
@@ -781,8 +785,9 @@ private slots:
     void _imageReady                        (UASInterface* uas);
     void _connectionLostTimeout(void);
     void _prearmErrorTimeout(void);
-    void _newMissionItemsAvailable(void);
-    void _newGeoFenceAvailable(void);
+    void _missionLoadComplete(void);
+    void _geoFenceLoadComplete(void);
+    void _rallyPointLoadComplete(void);
     void _sendMavCommandAgain(void);
 
     void _activeJoystickChanged(void);
@@ -827,7 +832,7 @@ private:
     void _sendNextQueuedMavCommand(void);
     void _updatePriorityLink(void);
     void _commonInit(void);
-    void _startMissionRequest(void);
+    void _startPlanRequest(void);
     void _setupAutoDisarmSignalling(void);
 
     int     _id;                    ///< Mavlink system id
@@ -908,6 +913,8 @@ private:
     bool                _connectionLostEnabled;
     static const int    _connectionLostTimeoutMSecs = 3500;  // Signal connection lost after 3.5 seconds of missed heartbeat
     QTimer              _connectionLostTimer;
+
+    bool                _initialPlanRequestComplete;
 
     MissionManager*     _missionManager;
     bool                _missionManagerInitialRequestSent;

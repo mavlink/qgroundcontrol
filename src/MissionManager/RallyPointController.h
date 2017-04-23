@@ -37,17 +37,18 @@ public:
     Q_INVOKABLE void addPoint(QGeoCoordinate point);
     Q_INVOKABLE void removePoint(QObject* rallyPoint);
 
-    void save                   (QJsonObject& json) final;
-    bool load                   (const QJsonObject& json, QString& errorString) final;
-    void loadFromVehicle        (void) final;
-    void sendToVehicle          (void) final;
-    void removeAll              (void) final;
-    void removeAllFromVehicle   (void) final;
-    bool syncInProgress         (void) const final;
-    bool dirty                  (void) const final { return _dirty; }
-    void setDirty               (bool dirty) final;
-    bool containsItems          (void) const final;
-    void managerVehicleChanged  (Vehicle* managerVehicle) final;
+    void save                       (QJsonObject& json) final;
+    bool load                       (const QJsonObject& json, QString& errorString) final;
+    void loadFromVehicle            (void) final;
+    void sendToVehicle              (void) final;
+    void removeAll                  (void) final;
+    void removeAllFromVehicle       (void) final;
+    bool syncInProgress             (void) const final;
+    bool dirty                      (void) const final { return _dirty; }
+    void setDirty                   (bool dirty) final;
+    bool containsItems              (void) const final;
+    void managerVehicleChanged      (Vehicle* managerVehicle) final;
+    bool showPlanFromManagerVehicle (void) final;
 
     bool                rallyPointsSupported    (void) const;
     QmlObjectListModel* points                  (void) { return &_points; }
@@ -62,7 +63,9 @@ signals:
     void loadComplete(void);
 
 private slots:
-    void _loadComplete(const QList<QGeoCoordinate> rgPoints);
+    void _managerLoadComplete(const QList<QGeoCoordinate> rgPoints);
+    void _managerSendComplete(void);
+    void _managerRemoveAllComplete(void);
     void _setFirstPointCurrent(void);
     void _updateContainsItems(void);
 
@@ -71,6 +74,7 @@ private:
     bool                _dirty;
     QmlObjectListModel  _points;
     QObject*            _currentRallyPoint;
+    bool                _itemsRequested;
 
     static const char* _jsonFileTypeValue;
     static const char* _jsonPointsKey;
