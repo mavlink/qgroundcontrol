@@ -194,7 +194,7 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             MouseArea {
                 anchors.fill:   parent
-                //enabled:        !_communicationLost && TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
+                enabled:        !_communicationLost && TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
                 onClicked: {
                     if(rootLoader.sourceComponent === null) {
                         rootLoader.sourceComponent = cameraSettingsComponent
@@ -277,7 +277,7 @@ Rectangle {
                             }
                             QGCComboBox {
                                 width:       _editFieldWidth
-                                enabled:     !_emptySD
+                                enabled:     _cameraVideoMode
                                 model:       TyphoonHQuickInterface.cameraControl.videoResList
                                 currentIndex:TyphoonHQuickInterface.cameraControl.currentVideoRes
                                 onActivated: {
@@ -431,7 +431,7 @@ Rectangle {
                             }
                             QGCComboBox {
                                 width:       _editFieldWidth
-                                enabled:     !_emptySD
+                                enabled:     _cameraPhotoMode
                                 model:       TyphoonHQuickInterface.cameraControl.photoFormatList
                                 currentIndex:TyphoonHQuickInterface.cameraControl.currentPhotoFmt
                                 onActivated: {
@@ -549,7 +549,6 @@ Rectangle {
                         }
                     }
                 }
-
                 //-- Dismiss Window
                 Image {
                     anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
