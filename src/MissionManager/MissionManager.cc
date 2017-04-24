@@ -868,8 +868,9 @@ void MissionManager::_finishTransaction(bool success)
     // First thing we do is clear the transaction. This way inProgesss is off when we signal transaction complete.
     TransactionType_t currentTransactionType = _transactionInProgress;
     _transactionInProgress = TransactionNone;
-    if (_transactionInProgress != TransactionNone) {
+    if (currentTransactionType != TransactionNone) {
         _transactionInProgress = TransactionNone;
+        qDebug() << "inProgressChanged";
         emit inProgressChanged(false);
     }
 
