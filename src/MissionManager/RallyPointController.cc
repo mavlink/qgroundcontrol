@@ -23,6 +23,7 @@
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
+#include "PlanMasterController.h"
 
 #ifndef __mobile__
 #include "QGCQFileDialog.h"
@@ -41,6 +42,7 @@ RallyPointController::RallyPointController(PlanMasterController* masterControlle
     , _rallyPointManager(_managerVehicle->rallyPointManager())
     , _dirty(false)
     , _currentRallyPoint(NULL)
+    , _itemsRequested(false)
 {
     connect(&_points, &QmlObjectListModel::countChanged, this, &RallyPointController::_updateContainsItems);
 
@@ -67,7 +69,9 @@ void RallyPointController::managerVehicleChanged(Vehicle* managerVehicle)
     }
 
     _rallyPointManager = _managerVehicle->rallyPointManager();
-    connect(_rallyPointManager, &RallyPointManager::loadComplete,       this, &RallyPointController::_loadComplete);
+    connect(_rallyPointManager, &RallyPointManager::loadComplete,       this, &RallyPointController::_managerLoadComplete);
+    connect(_rallyPointManager, &RallyPointManager::sendComplete,       this, &RallyPointController::_managerSendComplete);
+    connect(_rallyPointManager, &RallyPointManager::removeAllComplete,  this, &RallyPointController::_managerRemoveAllComplete);
     connect(_rallyPointManager, &RallyPointManager::inProgressChanged,  this, &RallyPointController::syncInProgressChanged);
 
     emit rallyPointsSupportedChanged(rallyPointsSupported());
@@ -123,26 +127,42 @@ void RallyPointController::removeAll(void)
     setCurrentRallyPoint(NULL);
 }
 
+void RallyPointController::removeAllFromVehicle(void)
+{
+    if (_masterController->offline()) {
+        qCWarning(RallyPointControllerLog) << "RallyPointController::removeAllFromVehicle called while offline";
+    } else if (syncInProgress()) {
+        qCWarning(RallyPointControllerLog) << "RallyPointController::removeAllFromVehicle called while syncInProgress";
+    } else {
+        _rallyPointManager->removeAll();
+    }
+}
+
 void RallyPointController::loadFromVehicle(void)
 {
-    if (!syncInProgress()) {
-        _rallyPointManager->loadFromVehicle();
+    if (_masterController->offline()) {
+        qCWarning(RallyPointControllerLog) << "RallyPointController::loadFromVehicle called while offline";
+    } else if (syncInProgress()) {
+        qCWarning(RallyPointControllerLog) << "RallyPointController::loadFromVehicle called while syncInProgress";
     } else {
-        qCWarning(RallyPointControllerLog) << "RallyPointController::loadFromVehicle call while syncInProgress";
+        _itemsRequested = true;
+        _rallyPointManager->loadFromVehicle();
     }
 }
 
 void RallyPointController::sendToVehicle(void)
 {
-    if (!syncInProgress()) {
+    if (_masterController->offline()) {
+        qCWarning(RallyPointControllerLog) << "RallyPointController::sendToVehicle called while offline";
+    } else if (syncInProgress()) {
+        qCWarning(RallyPointControllerLog) << "RallyPointController::sendToVehicle called while syncInProgress";
+    } else {
         setDirty(false);
         QList<QGeoCoordinate> rgPoints;
         for (int i=0; i<_points.count(); i++) {
             rgPoints.append(qobject_cast<RallyPoint*>(_points[i])->coordinate());
         }
         _rallyPointManager->sendToVehicle(rgPoints);
-    } else {
-        qCWarning(RallyPointControllerLog) << "RallyPointController::loadFromVehicle while syncInProgress";
     }
 }
 
@@ -164,17 +184,36 @@ QString RallyPointController::editorQml(void) const
     return _rallyPointManager->editorQml();
 }
 
-void RallyPointController::_loadComplete(const QList<QGeoCoordinate> rgPoints)
+void RallyPointController::_managerLoadComplete(const QList<QGeoCoordinate> rgPoints)
 {
-    _points.clearAndDeleteContents();
-    QObjectList pointList;
-    for (int i=0; i<rgPoints.count(); i++) {
-        pointList.append(new RallyPoint(rgPoints[i], this));
+    // Fly view always reloads on _loadComplete
+    // Plan view only reloads on _loadComplete if specifically requested
+    if (!_editMode || _itemsRequested) {
+        _points.clearAndDeleteContents();
+        QObjectList pointList;
+        for (int i=0; i<rgPoints.count(); i++) {
+            pointList.append(new RallyPoint(rgPoints[i], this));
+        }
+        _points.swapObjectList(pointList);
+        setDirty(false);
+        _setFirstPointCurrent();
+        emit loadComplete();
     }
-    _points.swapObjectList(pointList);
-    setDirty(false);
-    _setFirstPointCurrent();
-    emit loadComplete();
+    _itemsRequested = false;
+}
+
+void RallyPointController::_managerSendComplete(void)
+{
+    // Fly view always reloads after send
+    if (_editMode) {
+        showPlanFromManagerVehicle();
+    }
+}
+
+void RallyPointController::_managerRemoveAllComplete(void)
+{
+    // Remove all from vehicle so we always update
+    showPlanFromManagerVehicle();
 }
 
 void RallyPointController::addPoint(QGeoCoordinate point)
@@ -239,7 +278,27 @@ void RallyPointController::_updateContainsItems(void)
     emit containsItemsChanged(containsItems());
 }
 
-void RallyPointController::removeAllFromVehicle(void)
+bool RallyPointController::showPlanFromManagerVehicle (void)
 {
-    _rallyPointManager->removeAll();
+    qCDebug(RallyPointControllerLog) << "showPlanFromManagerVehicle";
+    if (_masterController->offline()) {
+        qCWarning(RallyPointControllerLog) << "RallyPointController::showPlanFromManagerVehicle called while offline";
+        return true;    // stops further propogation of showPlanFromManagerVehicle due to error
+    } else {
+        if (!_managerVehicle->initialPlanRequestComplete()) {
+            // The vehicle hasn't completed initial load, we can just wait for newMissionItemsAvailable to be signalled automatically
+            qCDebug(RallyPointControllerLog) << "showPlanFromManagerVehicle: !initialPlanRequestComplete, wait for signal";
+            return true;
+        } else if (syncInProgress()) {
+            // If the sync is already in progress, _loadComplete will be called automatically when it is done. So no need to do anything.
+            qCDebug(RallyPointControllerLog) << "showPlanFromManagerVehicle: syncInProgress wait for signal";
+            return true;
+        } else {
+            // Fake a _loadComplete with the current items
+            qCDebug(RallyPointControllerLog) << "showPlanFromManagerVehicle: sync complete simulate signal";
+            _itemsRequested = true;
+            _managerLoadComplete(_rallyPointManager->points());
+            return false;
+        }
+    }
 }

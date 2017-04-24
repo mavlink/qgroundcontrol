@@ -56,6 +56,7 @@ public:
     void setDirty                   (bool dirty) final;
     bool containsItems              (void) const final;
     void managerVehicleChanged      (Vehicle* managerVehicle) final;
+    bool showPlanFromManagerVehicle (void) final;
 
     bool            circleEnabled           (void) const;
     Fact*           circleRadiusFact        (void) const;
@@ -87,8 +88,10 @@ private slots:
     void _setDirty(void);
     void _setPolygonFromManager(const QList<QGeoCoordinate>& polygon);
     void _setReturnPointFromManager(QGeoCoordinate breachReturnPoint);
-    void _loadComplete(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
+    void _managerLoadComplete(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
     void _updateContainsItems(void);
+    void _managerSendComplete(void);
+    void _managerRemoveAllComplete(void);
 
 private:
     void _init(void);
@@ -98,6 +101,7 @@ private:
     bool                _dirty;
     QGCMapPolygon       _mapPolygon;
     QGeoCoordinate      _breachReturnPoint;
+    bool                _itemsRequested;
 
     static const char* _jsonFileTypeValue;
     static const char* _jsonBreachReturnKey;

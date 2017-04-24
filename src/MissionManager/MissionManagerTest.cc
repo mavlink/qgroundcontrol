@@ -120,7 +120,7 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
     _mockLink->setMissionItemFailureMode(failureMode);
 
     // Read the items back from the vehicle
-    _missionManager->requestMissionItems();
+    _missionManager->loadFromVehicle();
     
     // requestMissionItems should emit inProgressChanged signal before returning so no need to wait for it
     QVERIFY(_missionManager->inProgress());

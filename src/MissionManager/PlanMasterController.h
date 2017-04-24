@@ -16,6 +16,9 @@
 #include "RallyPointController.h"
 #include "Vehicle.h"
 #include "MultiVehicleManager.h"
+#include "QGCLoggingCategory.h"
+
+Q_DECLARE_LOGGING_CATEGORY(PlanMasterControllerLog)
 
 /// Master controller for mission, fence, rally
 class PlanMasterController : public QObject
@@ -64,7 +67,7 @@ public:
 
     bool        offline         (void) const { return _offline; }
     bool        containsItems   (void) const;
-    bool        syncInProgress  (void) const;
+    bool        syncInProgress  (void) const { return _syncInProgress; }
     bool        dirty           (void) const;
     void        setDirty        (bool dirty);
     QString     fileExtension   (void) const;
@@ -83,10 +86,16 @@ signals:
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
-    void _loadSendMissionComplete(void);
-    void _loadSendGeoFenceCompelte(void);
+    void _loadMissionComplete(void);
+    void _loadGeoFenceComplete(void);
+    void _loadRallyPointsComplete(void);
+    void _sendMissionComplete(void);
+    void _sendGeoFenceComplete(void);
+    void _sendRallyPointsComplete(void);
 
 private:
+    void _showPlanFromManagerVehicle(void);
+
     MultiVehicleManager*    _multiVehicleMgr;
     Vehicle*                _controllerVehicle;
     Vehicle*                _managerVehicle;
@@ -99,6 +108,7 @@ private:
     bool                    _loadRallyPoints;
     bool                    _sendGeoFence;
     bool                    _sendRallyPoints;
+    bool                    _syncInProgress;
 
     static const int    _planFileVersion;
     static const char*  _planFileType;

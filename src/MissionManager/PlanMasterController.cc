@@ -18,6 +18,8 @@
 #include <QJsonDocument>
 #include <QFileInfo>
 
+QGC_LOGGING_CATEGORY(PlanMasterControllerLog, "PlanMasterControllerLog")
+
 const int   PlanMasterController::_planFileVersion =            1;
 const char* PlanMasterController::_planFileType =               "Plan";
 const char* PlanMasterController::_jsonMissionObjectKey =       "mission";
@@ -38,6 +40,7 @@ PlanMasterController::PlanMasterController(QObject* parent)
     , _loadRallyPoints(false)
     , _sendGeoFence(false)
     , _sendRallyPoints(false)
+    , _syncInProgress(false)
 {
     connect(&_missionController,    &MissionController::dirtyChanged,       this, &PlanMasterController::dirtyChanged);
     connect(&_geoFenceController,   &GeoFenceController::dirtyChanged,      this, &PlanMasterController::dirtyChanged);
@@ -81,6 +84,8 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         return;
     }
 
+    qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged" << activeVehicle;
+
     bool newOffline = false;
     if (activeVehicle == NULL) {
         // Since there is no longer an active vehicle we use the offline controller vehicle as the manager vehicle
@@ -96,8 +101,12 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         appSettings->offlineEditingVehicleType()->setRawValue(AppSettings::offlineEditingVehicleTypeFromVehicleType(_managerVehicle->vehicleType()));
 
         // We use these signals to sequence upload and download to the multiple controller/managers
-        connect(_managerVehicle->missionManager(),  &MissionManager::newMissionItemsAvailable,  this, &PlanMasterController::_loadSendMissionComplete);
-        connect(_managerVehicle->geoFenceManager(), &GeoFenceManager::loadComplete,             this, &PlanMasterController::_loadSendGeoFenceCompelte);
+        connect(_managerVehicle->missionManager(),      &MissionManager::newMissionItemsAvailable,  this, &PlanMasterController::_loadMissionComplete);
+        connect(_managerVehicle->geoFenceManager(),     &GeoFenceManager::loadComplete,             this, &PlanMasterController::_loadGeoFenceComplete);
+        connect(_managerVehicle->rallyPointManager(),   &RallyPointManager::loadComplete,           this, &PlanMasterController::_loadRallyPointsComplete);
+        connect(_managerVehicle->missionManager(),      &MissionManager::sendComplete,              this, &PlanMasterController::_sendMissionComplete);
+        connect(_managerVehicle->geoFenceManager(),     &GeoFenceManager::sendComplete,             this, &PlanMasterController::_sendGeoFenceComplete);
+        connect(_managerVehicle->rallyPointManager(),   &RallyPointManager::sendComplete,           this, &PlanMasterController::_sendRallyPointsComplete);
     }
     if (newOffline != _offline) {
         _offline = newOffline;
@@ -108,35 +117,77 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
     _geoFenceController.managerVehicleChanged(_managerVehicle);
     _rallyPointController.managerVehicleChanged(_managerVehicle);
 
-    if (!_editMode && _offline) {
-        // Fly view has changed to a new active vehicle
-        loadFromVehicle();
+    if (_editMode) {
+        if (!offline()) {
+            // We are in Plan view and we have a newly connected vehicle:
+            //  - If there is no plan available in Plan view show the one from the vehicle
+            //  - Otherwise leave the current plan alone
+            if (!containsItems()) {
+                qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan view is empty so loading from manager";
+                _showPlanFromManagerVehicle();
+            }
+        }
+    } else {
+        if (offline()) {
+            // No more active vehicle, clear mission
+            qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Fly view is offline clearing plan";
+            removeAll();
+        } else {
+            // Fly view has changed to a new active vehicle, update to show correct mission
+            qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Fly view is online so loading from manager";
+            _showPlanFromManagerVehicle();
+        }
     }
-
-    // Whenever manager changes we need to update syncInProgress
-    emit syncInProgressChanged(syncInProgress());
 }
 
 void PlanMasterController::loadFromVehicle(void)
 {
-    if (!offline()) {
+    if (offline()) {
+        qCWarning(PlanMasterControllerLog) << "PlanMasterController::loadFromVehicle called while offline";
+    } else if (!_editMode) {
+        qCWarning(PlanMasterControllerLog) << "PlanMasterController::loadFromVehicle called from Fly view";
+    } else if (syncInProgress()) {
+        qCWarning(PlanMasterControllerLog) << "PlanMasterController::loadFromVehicle called while syncInProgress";
+    } else {
         _loadGeoFence = true;
+        _syncInProgress = true;
         _missionController.loadFromVehicle();
         setDirty(false);
-    } else {
-        qWarning() << "PlanMasterController::sendToVehicle called while offline";
     }
 }
 
 
-void PlanMasterController::_loadSendMissionComplete(void)
+void PlanMasterController::_loadMissionComplete(void)
 {
-    if (_loadGeoFence) {
+    if (_editMode && _loadGeoFence) {
         _loadGeoFence = false;
         _loadRallyPoints = true;
         _geoFenceController.loadFromVehicle();
         setDirty(false);
-    } else if (_sendGeoFence) {
+    }
+}
+
+void PlanMasterController::_loadGeoFenceComplete(void)
+{
+    if (_editMode && _loadRallyPoints) {
+        _loadRallyPoints = false;
+        _rallyPointController.loadFromVehicle();
+        setDirty(false);
+    }
+}
+
+void PlanMasterController::_loadRallyPointsComplete(void)
+{
+    if (_editMode) {
+        _syncInProgress = false;
+        emit syncInProgressChanged(false);
+    }
+}
+
+void PlanMasterController::_sendMissionComplete(void)
+{
+    if (_editMode && _sendGeoFence) {
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start fence sendToVehicle";
         _sendGeoFence = false;
         _sendRallyPoints = true;
         _geoFenceController.sendToVehicle();
@@ -144,26 +195,37 @@ void PlanMasterController::_loadSendMissionComplete(void)
     }
 }
 
-void PlanMasterController::_loadSendGeoFenceCompelte(void)
+void PlanMasterController::_sendGeoFenceComplete(void)
 {
-    if (_loadRallyPoints) {
-        _loadRallyPoints = false;
-        _rallyPointController.loadFromVehicle();
-        setDirty(false);
-    } else if (_sendRallyPoints) {
+    if (_editMode && _sendRallyPoints) {
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start rally sendToVehicle";
         _sendRallyPoints = false;
         _rallyPointController.sendToVehicle();
     }
 }
 
+void PlanMasterController::_sendRallyPointsComplete(void)
+{
+    if (_editMode && _syncInProgress) {
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle rally point send complete";
+        _syncInProgress = false;
+        emit syncInProgressChanged(false);
+    }
+}
+
 void PlanMasterController::sendToVehicle(void)
 {
-    if (!offline()) {
+    if (offline()) {
+        qCWarning(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called while offline";
+    } else if (!_editMode) {
+        qCWarning(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called from Fly view";
+    } else if (syncInProgress()) {
+        qCWarning(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called while syncInProgress";
+    } else {
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start mission sendToVehicle";
         _sendGeoFence = true;
         _missionController.sendToVehicle();
         setDirty(false);
-    } else {
-        qWarning() << "PlanMasterController::sendToVehicle called while offline";
     }
 }
 
@@ -293,11 +355,6 @@ bool PlanMasterController::containsItems(void) const
     return _missionController.containsItems() || _geoFenceController.containsItems() || _rallyPointController.containsItems();
 }
 
-bool PlanMasterController::syncInProgress(void) const
-{
-    return _missionController.syncInProgress() || _geoFenceController.syncInProgress() || _rallyPointController.syncInProgress();
-}
-
 bool PlanMasterController::dirty(void) const
 {
     return _missionController.dirty() || _geoFenceController.dirty() || _rallyPointController.dirty();
@@ -340,4 +397,14 @@ void PlanMasterController::sendPlanToVehicle(Vehicle* vehicle, const QString& fi
     controller->startStaticActiveVehicle(vehicle);
     controller->loadFromFile(filename);
     delete controller;
+}
+
+void PlanMasterController::_showPlanFromManagerVehicle(void)
+{
+    // The crazy if structure is to handle the load propogating by itself through the system
+    if (!_missionController.showPlanFromManagerVehicle()) {
+        if (!_geoFenceController.showPlanFromManagerVehicle()) {
+            _rallyPointController.showPlanFromManagerVehicle();
+        }
+    }
 }
