@@ -35,9 +35,10 @@ void MissionControllerManagerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareTy
     _missionManager = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->missionManager();
     QVERIFY(_missionManager);
     
-    _rgMissionManagerSignals[newMissionItemsAvailableSignalIndex] =   SIGNAL(newMissionItemsAvailable(bool));
-    _rgMissionManagerSignals[inProgressChangedSignalIndex] =          SIGNAL(inProgressChanged(bool));
-    _rgMissionManagerSignals[errorSignalIndex] =                      SIGNAL(error(int, const QString&));
+    _rgMissionManagerSignals[newMissionItemsAvailableSignalIndex] = SIGNAL(newMissionItemsAvailable(bool));
+    _rgMissionManagerSignals[sendCompleteSignalIndex] =             SIGNAL(sendComplete(void));
+    _rgMissionManagerSignals[inProgressChangedSignalIndex] =        SIGNAL(inProgressChanged(bool));
+    _rgMissionManagerSignals[errorSignalIndex] =                    SIGNAL(error(int, const QString&));
 
     _multiSpyMissionManager = new MultiSignalSpy();
     Q_CHECK_PTR(_multiSpyMissionManager);
