@@ -103,3 +103,12 @@ bool YuneecFirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
         return PX4FirmwarePlugin::isGuidedMode(vehicle);
     }
 }
+
+bool YuneecFirmwarePlugin::hasGimbal(Vehicle* vehicle, bool& rollSupported, bool& pitchSupported, bool& yawSupported)
+{
+    Q_UNUSED(vehicle);
+    rollSupported = false;
+    pitchSupported = true;
+    yawSupported = true;
+    return true;
+}

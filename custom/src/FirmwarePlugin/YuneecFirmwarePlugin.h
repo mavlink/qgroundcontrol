@@ -26,6 +26,7 @@ public:
     const QVariantList& toolBarIndicators   (const Vehicle* vehicle) final;
     const QVariantList& cameraList          (const Vehicle* vehicle) final;
     bool                isGuidedMode        (const Vehicle* vehicle) const final;
+    bool                hasGimbal           (Vehicle* vehicle, bool& rollSupported, bool& pitchSupported, bool& yawSupported) final;
 
 private:
     QVariantList        _toolBarIndicators;
