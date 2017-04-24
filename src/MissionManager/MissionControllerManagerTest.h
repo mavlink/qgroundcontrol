@@ -55,6 +55,7 @@ protected:
 
     typedef enum {
         newMissionItemsAvailableSignalIndex = 0,
+        sendCompleteSignalIndex,
         inProgressChangedSignalIndex,
         errorSignalIndex,
         maxSignalIndex
@@ -62,6 +63,7 @@ protected:
 
     typedef enum {
         newMissionItemsAvailableSignalMask =    1 << newMissionItemsAvailableSignalIndex,
+        sendCompleteSignalMask =                1 << sendCompleteSignalIndex,
         inProgressChangedSignalMask =           1 << inProgressChangedSignalIndex,
         errorSignalMask =                       1 << errorSignalIndex,
     } MissionManagerSignalMask_t;
