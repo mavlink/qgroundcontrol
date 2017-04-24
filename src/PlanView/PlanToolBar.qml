@@ -132,7 +132,7 @@ Rectangle {
         id:             progressBar
         anchors.left:   parent.left
         anchors.bottom: parent.bottom
-        height:         2
+        height:         4
         width:          _controllerProgressPct * parent.width
         color:          qgcPal.colorGreen
         visible:        false
