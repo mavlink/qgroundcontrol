@@ -35,19 +35,26 @@ public:
     ///     @param editMode true: controller being used in Plan view, false: controller being used in Fly view
     virtual void start(bool editMode);
 
-    virtual void save(QJsonObject& json) = 0;
-    virtual bool load(const QJsonObject& json, QString& errorString) = 0;
-    virtual void loadFromVehicle(void) = 0;
-    virtual void sendToVehicle(void) = 0;
-    virtual void removeAll(void) = 0;                       ///< Removes all from controller only, synce required to remove from vehicle
-    virtual void removeAllFromVehicle(void) = 0;            ///< Removes all from vehicle and controller
+    virtual void save                       (QJsonObject& json) = 0;
+    virtual bool load                       (const QJsonObject& json, QString& errorString) = 0;
+    virtual void loadFromVehicle            (void) = 0;
+    virtual void removeAll                  (void) = 0;     ///< Removes all from controller only
+    virtual bool showPlanFromManagerVehicle (void) = 0;     /// true: controller is waiting for the current load to complete
 
     virtual bool    containsItems  (void) const = 0;
     virtual bool    syncInProgress (void) const = 0;
     virtual bool    dirty          (void) const = 0;
     virtual void    setDirty       (bool dirty) = 0;
 
-    /// Called when a new manager vehicle has been set. Derived classes should override to implement custom behavior.
+    /// Sends the current plan element to the vehicle
+    ///     Signals sendComplete when done
+    virtual void sendToVehicle(void) = 0;
+
+    /// Removes all from vehicle and controller
+    ///     Signals removeAllComplete when done
+    virtual void removeAllFromVehicle(void) = 0;
+
+    /// Called when a new manager vehicle has been set.
     virtual void managerVehicleChanged(Vehicle* managerVehicle) = 0;
 
 signals:
@@ -55,6 +62,8 @@ signals:
     void syncInProgressChanged  (bool syncInProgress);
     void dirtyChanged           (bool dirty);
     void vehicleChanged         (Vehicle* vehicle);
+    void sendComplete           (void);
+    void removeAllComplete      (void);
 
 protected:
     PlanMasterController*   _masterController;

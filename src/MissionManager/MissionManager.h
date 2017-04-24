@@ -43,10 +43,13 @@ public:
     /// Last current mission item reported while in Mission flight mode
     int lastCurrentIndex(void) const { return _lastCurrentIndex; }
     
-    void requestMissionItems(void);
+    /// Load the mission items from the vehicle
+    ///     Signals newMissionItemsAvailable when done
+    void loadFromVehicle(void);
     
     /// Writes the specified set of mission items to the vehicle
     ///     @param missionItems Items to send to vehicle
+    ///     Signals sendComplete when done
     void writeMissionItems(const QList<MissionItem*>& missionItems);
     
     /// Writes the specified set mission items to the vehicle as an ArduPilot guided mode mission item.
@@ -55,6 +58,7 @@ public:
     void writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoCoord, bool altChangeOnly);
 
     /// Removes all mission items from vehicle
+    ///     Signals removeAllComplete when done
     void removeAll(void);
 
     /// Generates a new mission which starts from the specified index. It will include all the CMD_DO items
@@ -86,6 +90,8 @@ signals:
     void resumeMissionReady(void);
     void cameraFeedback(QGeoCoordinate imageCoordinate, int index);
     void progressPct(double progressPercentPct);
+    void removeAllComplete              (void);
+    void sendComplete                   (void);
 
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
@@ -105,7 +111,7 @@ private:
         TransactionNone,
         TransactionRead,
         TransactionWrite,
-        TransactionClearAll
+        TransactionRemoveAll
     } TransactionType_t;
 
     void _startAckTimeout(AckType_t ack);

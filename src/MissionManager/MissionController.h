@@ -123,6 +123,7 @@ public:
     void setDirty                   (bool dirty) final;
     bool containsItems              (void) const final;
     void managerVehicleChanged      (Vehicle* managerVehicle) final;
+    bool showPlanFromManagerVehicle (void) final;
 
     // Property accessors
 
@@ -178,6 +179,8 @@ private slots:
     void _cameraFeedback(QGeoCoordinate imageCoordinate, int index);
     void _progressPctChanged(double progressPct);
     void _visualItemsDirtyChanged(bool dirty);
+    void _managerSendComplete(void);
+    void _managerRemoveAllComplete(void);
 
 private:
     void _init(void);
@@ -194,7 +197,7 @@ private:
     bool _findPreviousAltitude(int newIndex, double* prevAltitude, MAV_FRAME* prevFrame);
     static double _normalizeLat(double lat);
     static double _normalizeLon(double lon);
-    static void _addMissionSettings(Vehicle* vehicle, QmlObjectListModel* visualItems, bool addToCenter);
+    void _addMissionSettings(QmlObjectListModel* visualItems, bool addToCenter);
     bool _loadJsonMissionFile(const QByteArray& bytes, QmlObjectListModel* visualItems, QString& errorString);
     bool _loadJsonMissionFileV1(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
     bool _loadJsonMissionFileV2(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
@@ -218,7 +221,7 @@ private:
     QmlObjectListModel      _cameraPoints;
     CoordVectHashTable      _linesTable;
     bool                    _firstItemsFromVehicle;
-    bool                    _missionItemsRequested;
+    bool                    _itemsRequested;
     MissionFlightStatus_t   _missionFlightStatus;
     QString                 _surveyMissionItemName;
     QString                 _fwLandingMissionItemName;

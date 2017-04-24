@@ -82,6 +82,7 @@ void APMGeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlOb
 
     // Total point count, +1 polygon close in last index, +1 for breach in index 0
     _cWriteFencePoints = validatedPolygonCount ? validatedPolygonCount + 1 + 1 : 0;
+    qCDebug(GeoFenceManagerLog) << "APMGeoFenceManager::sendToVehicle validatedPolygonCount:_cWriteFencePoints" << validatedPolygonCount << _cWriteFencePoints;
     _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _fenceTotalParam)->setRawValue(_cWriteFencePoints);
 
     // FIXME: No validation of correct fence received
@@ -89,7 +90,7 @@ void APMGeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlOb
         _sendFencePoint(index);
     }
 
-    emit loadComplete(_breachReturnPoint, _polygon);
+    emit sendComplete();
 }
 
 void APMGeoFenceManager::loadFromVehicle(void)
@@ -326,7 +327,10 @@ void APMGeoFenceManager::_parametersReady(void)
 
 void APMGeoFenceManager::removeAll(void)
 {
+    qCDebug(GeoFenceManagerLog) << "APMGeoFenceManager::removeAll";
+
     QmlObjectListModel emptyPolygon;
 
     sendToVehicle(_breachReturnPoint, emptyPolygon);
+    emit removeAllComplete();
 }
