@@ -177,7 +177,7 @@ script:
   - if [ "${TRAVIS_BRANCH}" != "master" ]; then
         if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
             mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
-            ./debug/QGroundControl --unittest;
+            ./debug/qgroundcontrol-start.sh --unittest;
         elif [[ "${SPEC}" = "macx-clang" && "${CONFIG}" = "debug" ]]; then
             mkdir -p ~/Library/Preferences/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/Library/Preferences/QtProject/ &&
             ./debug/qgroundcontrol.app/Contents/MacOS/QGroundControl --unittest;
