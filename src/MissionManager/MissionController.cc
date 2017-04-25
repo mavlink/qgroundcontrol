@@ -205,6 +205,7 @@ void MissionController::sendToVehicle(void)
     } else if (syncInProgress()) {
         qCWarning(MissionControllerLog) << "MissionControllerLog::sendToVehicle called while syncInProgress";
     } else {
+        qCDebug(MissionControllerLog) << "MissionControllerLog::sendToVehicle";
         if (_visualItems->count() == 1) {
             // This prevents us from sending a possibly bogus home position to the vehicle
             QmlObjectListModel emptyModel;
@@ -1678,7 +1679,7 @@ void MissionController::_visualItemsDirtyChanged(bool dirty)
 
 bool MissionController::showPlanFromManagerVehicle (void)
 {
-    qCDebug(MissionControllerLog) << "showPlanFromManagerVehicle";
+    qCDebug(MissionControllerLog) << "showPlanFromManagerVehicle" << _editMode;
     if (_masterController->offline()) {
         qCWarning(MissionControllerLog) << "MissionController::showPlanFromManagerVehicle called while offline";
         return true;    // stops further propogation of showPlanFromManagerVehicle due to error
