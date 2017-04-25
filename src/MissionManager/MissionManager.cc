@@ -983,6 +983,8 @@ void MissionManager::generateResumeMission(int resumeIndex)
         }
     }
 
+    resumeIndex = qMin(resumeIndex, _missionItems.count() - 1);
+
     int seqNum = 0;
     QList<MissionItem*> resumeMission;
 
@@ -1001,6 +1003,9 @@ void MissionManager::generateResumeMission(int resumeIndex)
                            << MAV_CMD_IMAGE_STOP_CAPTURE
                            << MAV_CMD_VIDEO_START_CAPTURE
                            << MAV_CMD_VIDEO_STOP_CAPTURE;
+    if (_vehicle->fixedWing() && _vehicle->px4Firmware()) {
+        includedResumeCommands << MAV_CMD_NAV_TAKEOFF;
+    }
 
     bool addHomePosition = _vehicle->firmwarePlugin()->sendHomePositionToVehicle();
     int setCurrentIndex = addHomePosition ? 1 : 0;
