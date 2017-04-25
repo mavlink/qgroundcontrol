@@ -16,7 +16,7 @@ import QGroundControl.Palette       1.0
 Rectangle {
     id:     _root
     height: editorLoader.y + editorLoader.height + (_margin * 2)
-    color:  _currentItem ? qgcPal.primaryButton : qgcPal.windowShade
+    color:  _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
     radius: _radius
 
     property var    map                 ///< Map control
