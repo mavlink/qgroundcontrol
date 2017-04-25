@@ -15,6 +15,12 @@ Vagrant.configure(2) do |config|
     vb.customize ["modifyvm", :id, "--memory", "4096"]
     vb.customize ["modifyvm", :id, "--cpus", "1"]
   end
+  ["vmware_fusion", "vmware_workstation"].each do |p|
+    config.vm.provider p do |v|
+      v.vmx["memsize"] = "4096"
+      v.vmx["numvcpus"] = "1"
+    end
+  end
 
   # the "dev configuration puts the build products and a suitable
   # environment into the /vagrant directory.  This allows you to run
