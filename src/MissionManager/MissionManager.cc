@@ -48,7 +48,6 @@ void MissionManager::_writeMissionItemsWorker(void)
 {
     _lastMissionRequest = -1;
 
-    emit newMissionItemsAvailable(_missionItems.count() == 0);
     emit progressPct(0);
 
     qCDebug(MissionManagerLog) << "writeMissionItems count:" << _missionItems.count();
@@ -169,16 +168,16 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
     emit inProgressChanged(true);
 }
 
-void MissionManager::requestMissionItems(void)
+void MissionManager::loadFromVehicle(void)
 {
     if (_vehicle->isOfflineEditingVehicle()) {
         return;
     }
 
-    qCDebug(MissionManagerLog) << "requestMissionItems read sequence";
+    qCDebug(MissionManagerLog) << "loadFromVehicle read sequence";
 
     if (inProgress()) {
-        qCDebug(MissionManagerLog) << "requestMissionItems called while transaction in progress";
+        qCDebug(MissionManagerLog) << "loadFromVehicle called while transaction in progress";
         return;
     }
 
@@ -340,7 +339,6 @@ void MissionManager::_readTransactionComplete(void)
     _vehicle->sendMessageOnLink(_dedicatedLink, message);
 
     _finishTransaction(true);
-    emit newMissionItemsAvailable(false);
 }
 
 void MissionManager::_handleMissionCount(const mavlink_message_t& message)
@@ -864,18 +862,34 @@ void MissionManager::_finishTransaction(bool success)
 {
     emit progressPct(1);
 
-    if (!success && _transactionInProgress == TransactionRead) {
-        // Read from vehicle failed, clear partial list
-        _clearAndDeleteMissionItems();
-        emit newMissionItemsAvailable(false);
-    }
-
     _itemIndicesToRead.clear();
     _itemIndicesToWrite.clear();
 
-    if (_transactionInProgress != TransactionNone) {
+    // First thing we do is clear the transaction. This way inProgesss is off when we signal transaction complete.
+    TransactionType_t currentTransactionType = _transactionInProgress;
+    _transactionInProgress = TransactionNone;
+    if (currentTransactionType != TransactionNone) {
         _transactionInProgress = TransactionNone;
+        qDebug() << "inProgressChanged";
         emit inProgressChanged(false);
+    }
+
+    switch (currentTransactionType) {
+    case TransactionRead:
+        if (!success) {
+            // Read from vehicle failed, clear partial list
+            _clearAndDeleteMissionItems();
+        }
+        emit newMissionItemsAvailable(false);
+        break;
+    case TransactionWrite:
+        emit sendComplete();
+        break;
+    case TransactionRemoveAll:
+        emit removeAllComplete();
+        break;
+    default:
+        break;
     }
 
     if (_resumeMission) {
@@ -942,9 +956,8 @@ void MissionManager::removeAll(void)
     _lastCurrentIndex = -1;
     emit currentIndexChanged(-1);
     emit lastCurrentIndexChanged(-1);
-    emit newMissionItemsAvailable(true /* removeAllRequested */);
 
-    _transactionInProgress = TransactionClearAll;
+    _transactionInProgress = TransactionRemoveAll;
     _retryCount = 0;
     emit inProgressChanged(true);
 

@@ -55,7 +55,7 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
     , _visualItems(NULL)
     , _settingsItem(NULL)
     , _firstItemsFromVehicle(false)
-    , _missionItemsRequested(false)
+    , _itemsRequested(false)
     , _surveyMissionItemName(tr("Survey"))
     , _fwLandingMissionItemName(tr("Fixed Wing Landing"))
     , _appSettings(qgcApp()->toolbox()->settingsManager()->appSettings())
@@ -126,7 +126,7 @@ void MissionController::_init(void)
 {
     // We start with an empty mission
     _visualItems = new QmlObjectListModel(this);
-    _addMissionSettings(_controllerVehicle, _visualItems, false /* addToCenter */);
+    _addMissionSettings(_visualItems, false /* addToCenter */);
     _initAllVisualItems();
 }
 
@@ -135,7 +135,9 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
 {
     qCDebug(MissionControllerLog) << "_newMissionItemsAvailableFromVehicle";
 
-    if (!_editMode || removeAllRequested || _missionItemsRequested || _visualItems->count() == 1) {
+    // Fly view always reloads on _loadComplete
+    // Plan view only reloads on _loadComplete if specifically requested
+    if (!_editMode || removeAllRequested || _itemsRequested) {
         // Fly Mode (accept if):
         //      - Always accepts new items from the vehicle so Fly view is kept up to date
         // Edit Mode (accept if):
@@ -150,7 +152,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         int i = 0;
         if (_controllerVehicle->firmwarePlugin()->sendHomePositionToVehicle() && newMissionItems.count() != 0) {
             // First item is fake home position
-            _addMissionSettings(_controllerVehicle, newControllerMissionItems, false /* addToCenter */);
+            _addMissionSettings(newControllerMissionItems, false /* addToCenter */);
             MissionSettingsItem* settingsItem = newControllerMissionItems->value<MissionSettingsItem*>(0);
             if (!settingsItem) {
                 qWarning() << "First item is not settings item";
@@ -171,10 +173,8 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         _visualItems = newControllerMissionItems;
 
         if (!_controllerVehicle->firmwarePlugin()->sendHomePositionToVehicle() || _visualItems->count() == 0) {
-            _addMissionSettings(_controllerVehicle, _visualItems, _editMode && _visualItems->count() > 0 /* addToCenter */);
+            _addMissionSettings(_visualItems, _editMode && _visualItems->count() > 0 /* addToCenter */);
         }
-
-        _missionItemsRequested = false;
 
         if (_editMode) {
             MissionController::_scanForAdditionalSettings(_visualItems, _controllerVehicle);
@@ -183,18 +183,37 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         _initAllVisualItems();
         emit newItemsFromVehicle();
     }
+    _itemsRequested = false;
 }
 
 void MissionController::loadFromVehicle(void)
 {
-    _missionItemsRequested = true;
-    _managerVehicle->missionManager()->requestMissionItems();
+    if (_masterController->offline()) {
+        qCWarning(MissionControllerLog) << "MissionControllerLog::loadFromVehicle called while offline";
+    } else if (syncInProgress()) {
+        qCWarning(MissionControllerLog) << "MissionControllerLog::loadFromVehicle called while syncInProgress";
+    } else {
+        _itemsRequested = true;
+        _managerVehicle->missionManager()->loadFromVehicle();
+    }
 }
 
 void MissionController::sendToVehicle(void)
 {
-    sendItemsToVehicle(_managerVehicle, _visualItems);
-    setDirty(false);
+    if (_masterController->offline()) {
+        qCWarning(MissionControllerLog) << "MissionControllerLog::sendToVehicle called while offline";
+    } else if (syncInProgress()) {
+        qCWarning(MissionControllerLog) << "MissionControllerLog::sendToVehicle called while syncInProgress";
+    } else {
+        if (_visualItems->count() == 1) {
+            // This prevents us from sending a possibly bogus home position to the vehicle
+            QmlObjectListModel emptyModel;
+            sendItemsToVehicle(_managerVehicle, &emptyModel);
+        } else {
+            sendItemsToVehicle(_managerVehicle, _visualItems);
+        }
+        setDirty(false);
+    }
 }
 
 /// Converts from visual items to MissionItems
@@ -202,6 +221,10 @@ void MissionController::sendToVehicle(void)
 /// @return true: Mission end action was added to end of list
 bool MissionController::_convertToMissionItems(QmlObjectListModel* visualMissionItems, QList<MissionItem*>& rgMissionItems, QObject* missionItemParent)
 {
+    if (visualMissionItems->count() == 0) {
+        return false;
+    }
+
     bool endActionSet = false;
     int lastSeqNum = 0;
 
@@ -288,6 +311,19 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
     if (itemName == _surveyMissionItemName) {
         newItem = new SurveyMissionItem(_controllerVehicle, _visualItems);
         newItem->setCoordinate(mapCenterCoordinate);
+        // If the vehicle is known to have a gimbal then we automatically point the gimbal straight down if not already set
+        bool rollSupported = false;
+        bool pitchSupported = false;
+        bool yawSupported = false;
+        if (_controllerVehicle->firmwarePlugin()->hasGimbal(_controllerVehicle, rollSupported, pitchSupported, yawSupported) && pitchSupported) {
+            MissionSettingsItem* settingsItem = _visualItems->value<MissionSettingsItem*>(0);
+            // If the user already specified a gimbal angle leave it alone
+            CameraSection* cameraSection = settingsItem->cameraSection();
+            if (!cameraSection->specifyGimbal()) {
+                cameraSection->setSpecifyGimbal(true);
+                cameraSection->gimbalPitch()->setRawValue(-90.0);
+            }
+        }
     } else if (itemName == _fwLandingMissionItemName) {
         newItem = new FixedWingLandingComplexItem(_controllerVehicle, _visualItems);
     } else {
@@ -306,10 +342,41 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
 
 void MissionController::removeMissionItem(int index)
 {
+    if (index <= 0 || index >= _visualItems->count()) {
+        qWarning() << "MissionController::removeMissionItem called with bad index - count:index" << _visualItems->count() << index;
+        return;
+    }
+
+    bool surveyRemoved = _visualItems->value<SurveyMissionItem*>(index);
     VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->removeAt(index));
 
     _deinitVisualItem(item);
     item->deleteLater();
+
+    if (surveyRemoved) {
+        // Determine if the mission still has another survey in it
+        bool foundSurvey = false;
+        for (int i=1; i<_visualItems->count(); i++) {
+            if (_visualItems->value<SurveyMissionItem*>(i)) {
+                foundSurvey = true;
+                break;
+            }
+        }
+
+        // If there is no longer a survey item in the mission remove the gimbal pitch command
+        if (!foundSurvey) {
+            bool rollSupported = false;
+            bool pitchSupported = false;
+            bool yawSupported = false;
+            if (_controllerVehicle->firmwarePlugin()->hasGimbal(_controllerVehicle, rollSupported, pitchSupported, yawSupported) && pitchSupported) {
+                MissionSettingsItem* settingsItem = _visualItems->value<MissionSettingsItem*>(0);
+                CameraSection* cameraSection = settingsItem->cameraSection();
+                if (cameraSection->specifyGimbal() && cameraSection->gimbalPitch()->rawValue().toDouble() == -90.0 && cameraSection->gimbalYaw()->rawValue().toDouble() == 0.0) {
+                    cameraSection->setSpecifyGimbal(false);
+                }
+            }
+        }
+    }
 
     _recalcAll();
     setDirty(true);
@@ -322,7 +389,7 @@ void MissionController::removeAll(void)
         _visualItems->deleteLater();
         _settingsItem = NULL;
         _visualItems = new QmlObjectListModel(this);
-        _addMissionSettings(_controllerVehicle, _visualItems, false /* addToCenter */);
+        _addMissionSettings(_visualItems, false /* addToCenter */);
         _initAllVisualItems();
         setDirty(true);
         _resetMissionFlightStatus();
@@ -420,7 +487,7 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
             return false;
         }
     } else {
-        _addMissionSettings(_controllerVehicle, visualItems, true /* addToCenter */);
+        _addMissionSettings(visualItems, true /* addToCenter */);
     }
 
     return true;
@@ -446,8 +513,11 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
     // Mission Settings
     AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
 
-    appSettings->offlineEditingFirmwareType()->setRawValue(AppSettings::offlineEditingFirmwareTypeFromFirmwareType((MAV_AUTOPILOT)json[_jsonVehicleTypeKey].toInt()));
-    appSettings->offlineEditingVehicleType()->setRawValue(AppSettings::offlineEditingVehicleTypeFromVehicleType((MAV_TYPE)json[_jsonVehicleTypeKey].toInt()));
+    if (_masterController->offline()) {
+        // We only update if offline since if we are online we use the online vehicle settings
+        appSettings->offlineEditingFirmwareType()->setRawValue(AppSettings::offlineEditingFirmwareTypeFromFirmwareType((MAV_AUTOPILOT)json[_jsonVehicleTypeKey].toInt()));
+        appSettings->offlineEditingVehicleType()->setRawValue(AppSettings::offlineEditingVehicleTypeFromVehicleType((MAV_TYPE)json[_jsonVehicleTypeKey].toInt()));
+    }
     if (json.contains(_jsonCruiseSpeedKey)) {
         appSettings->offlineEditingCruiseSpeed()->setRawValue(json[_jsonCruiseSpeedKey].toDouble());
     }
@@ -614,7 +684,7 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
 
     if (versionOk) {
         // Start with planned home in center
-        _addMissionSettings(_controllerVehicle, visualItems, true /* addToCenter */);
+        _addMissionSettings(visualItems, true /* addToCenter */);
         MissionSettingsItem* settingsItem = visualItems->value<MissionSettingsItem*>(0);
 
         while (!stream.atEnd()) {
@@ -661,7 +731,7 @@ void MissionController::_initLoadedVisualItems(QmlObjectListModel* loadedVisualI
     _visualItems = loadedVisualItems;
 
     if (_visualItems->count() == 0) {
-        _addMissionSettings(_controllerVehicle, _visualItems, true /* addToCenter */);
+        _addMissionSettings(_visualItems, true /* addToCenter */);
     }
 
     MissionController::_scanForAdditionalSettings(_visualItems, _controllerVehicle);
@@ -1306,6 +1376,8 @@ void MissionController::managerVehicleChanged(Vehicle* managerVehicle)
 
     _missionManager = _managerVehicle->missionManager();
     connect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &MissionController::_newMissionItemsAvailableFromVehicle);
+    connect(_missionManager, &MissionManager::sendComplete,             this, &MissionController::_managerSendComplete);
+    connect(_missionManager, &MissionManager::removeAllComplete,        this, &MissionController::_managerRemoveAllComplete);
     connect(_missionManager, &MissionManager::inProgressChanged,        this, &MissionController::_inProgressChanged);
     connect(_missionManager, &MissionManager::progressPct,              this, &MissionController::_progressPctChanged);
     connect(_missionManager, &MissionManager::currentIndexChanged,      this, &MissionController::_currentMissionIndexChanged);
@@ -1394,9 +1466,9 @@ double MissionController::_normalizeLon(double lon)
 }
 
 /// Add the Mission Settings complex item to the front of the items
-void MissionController::_addMissionSettings(Vehicle* vehicle, QmlObjectListModel* visualItems, bool addToCenter)
+void MissionController::_addMissionSettings(QmlObjectListModel* visualItems, bool addToCenter)
 {
-    MissionSettingsItem* settingsItem = new MissionSettingsItem(vehicle, visualItems);
+    MissionSettingsItem* settingsItem = new MissionSettingsItem(_controllerVehicle, visualItems);
 
     visualItems->insert(0, settingsItem);
 
@@ -1433,7 +1505,7 @@ void MissionController::_addMissionSettings(Vehicle* vehicle, QmlObjectListModel
             }
         }
     } else {
-        settingsItem->setCoordinate(vehicle->homePosition());
+        settingsItem->setCoordinate(_controllerVehicle->homePosition());
     }
 }
 
@@ -1528,8 +1600,14 @@ bool MissionController::containsItems(void) const
 
 void MissionController::removeAllFromVehicle(void)
 {
-    _missionItemsRequested = true;
-    _missionManager->removeAll();
+    if (_masterController->offline()) {
+        qCWarning(MissionControllerLog) << "MissionControllerLog::removeAllFromVehicle called while offline";
+    } else if (syncInProgress()) {
+        qCWarning(MissionControllerLog) << "MissionControllerLog::removeAllFromVehicle called while syncInProgress";
+    } else {
+        _itemsRequested = true;
+        _missionManager->removeAll();
+    }
 }
 
 QStringList MissionController::complexMissionItemNames(void) const
@@ -1596,4 +1674,43 @@ void MissionController::_visualItemsDirtyChanged(bool dirty)
 {
     // We could connect signal to signal and not need this but this is handy for setting a breakpoint on
     emit dirtyChanged(dirty);
+}
+
+bool MissionController::showPlanFromManagerVehicle (void)
+{
+    qCDebug(MissionControllerLog) << "showPlanFromManagerVehicle";
+    if (_masterController->offline()) {
+        qCWarning(MissionControllerLog) << "MissionController::showPlanFromManagerVehicle called while offline";
+        return true;    // stops further propogation of showPlanFromManagerVehicle due to error
+    } else {
+        if (!_managerVehicle->initialPlanRequestComplete()) {
+            // The vehicle hasn't completed initial load, we can just wait for newMissionItemsAvailable to be signalled automatically
+            qCDebug(MissionControllerLog) << "showPlanFromManagerVehicle: !initialPlanRequestComplete, wait for signal";
+            return true;
+        } else if (syncInProgress()) {
+            // If the sync is already in progress, newMissionItemsAvailable will be signalled automatically when it is done. So no need to do anything.
+            qCDebug(MissionControllerLog) << "showPlanFromManagerVehicle: syncInProgress wait for signal";
+            return true;
+        } else {
+            // Fake a _newMissionItemsAvailable with the current items
+            qCDebug(MissionControllerLog) << "showPlanFromManagerVehicle: sync complete simulate signal";
+            _itemsRequested = true;
+            _newMissionItemsAvailableFromVehicle(false /* removeAllRequested */);
+            return false;
+        }
+    }
+}
+
+void MissionController::_managerSendComplete(void)
+{
+    // FLy view always reloads on send complete
+    if (!_editMode) {
+        showPlanFromManagerVehicle();
+    }
+}
+
+void MissionController::_managerRemoveAllComplete(void)
+{
+    // Remove all from vehicle so we always update
+    showPlanFromManagerVehicle();
 }

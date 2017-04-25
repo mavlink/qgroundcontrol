@@ -66,5 +66,5 @@ UT_REGISTER_TEST(SpeedSectionTest)
 // Onboard file support has been removed until it can be make to work correctly
 //UT_REGISTER_TEST(FileManagerTest)
 
-// Needs to be update for latest changes
+// Needs to be update for latest updates
 //UT_REGISTER_TEST(MavlinkLogTest)

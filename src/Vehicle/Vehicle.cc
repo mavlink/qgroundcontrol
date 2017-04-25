@@ -112,6 +112,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _supportsMissionItemInt(false)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
+    , _initialPlanRequestComplete(false)
     , _missionManager(NULL)
     , _missionManagerInitialRequestSent(false)
     , _geoFenceManager(NULL)
@@ -264,6 +265,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _supportsMissionItemInt(false)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
+    , _initialPlanRequestComplete(false)
     , _missionManager(NULL)
     , _missionManagerInitialRequestSent(false)
     , _geoFenceManager(NULL)
@@ -313,7 +315,7 @@ void Vehicle::_commonInit(void)
 
     _missionManager = new MissionManager(this);
     connect(_missionManager, &MissionManager::error,                    this, &Vehicle::_missionManagerError);
-    connect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_newMissionItemsAvailable);
+    connect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_missionLoadComplete);
 
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
@@ -321,10 +323,11 @@ void Vehicle::_commonInit(void)
     // GeoFenceManager needs to access ParameterManager so make sure to create after
     _geoFenceManager = _firmwarePlugin->newGeoFenceManager(this);
     connect(_geoFenceManager, &GeoFenceManager::error,          this, &Vehicle::_geoFenceManagerError);
-    connect(_geoFenceManager, &GeoFenceManager::loadComplete,   this, &Vehicle::_newGeoFenceAvailable);
+    connect(_geoFenceManager, &GeoFenceManager::loadComplete,   this, &Vehicle::_geoFenceLoadComplete);
 
     _rallyPointManager = _firmwarePlugin->newRallyPointManager(this);
-    connect(_rallyPointManager, &RallyPointManager::error, this, &Vehicle::_rallyPointManagerError);
+    connect(_rallyPointManager, &RallyPointManager::error,          this, &Vehicle::_rallyPointManagerError);
+    connect(_rallyPointManager, &RallyPointManager::loadComplete,   this, &Vehicle::_rallyPointLoadComplete);
 
     // Offline editing vehicle tracks settings changes for offline editing settings
     connect(_settingsManager->appSettings()->offlineEditingFirmwareType(),  &Fact::rawValueChanged, this, &Vehicle::_offlineFirmwareTypeSettingChanged);
@@ -704,7 +707,7 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
         qCDebug(VehicleLog) << "Vehicle supports MISSION_ITEM_INT";
         _supportsMissionItemInt = true;
         _vehicleCapabilitiesKnown = true;
-        _startMissionRequest();
+        _startPlanRequest();
     }
 }
 
@@ -742,7 +745,7 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     if (ack.command == MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES && ack.result != MAV_RESULT_ACCEPTED) {
         // We aren't going to get a response back for capabilities, so stop waiting for it before we ask for mission items
         qCDebug(VehicleLog) << "Vehicle failed to responded to MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES with error. Starting mission request.";
-        _startMissionRequest();
+        _startPlanRequest();
     }
 
     if (_mavCommandQueue.count() && ack.command == _mavCommandQueue[0].command) {
@@ -1620,10 +1623,10 @@ void Vehicle::_mapTrajectoryStop()
     _mapTrajectoryTimer.stop();
 }
 
-void Vehicle::_startMissionRequest(void)
+void Vehicle::_startPlanRequest(void)
 {
     if (!_missionManagerInitialRequestSent && _parameterManager->parametersReady() && _vehicleCapabilitiesKnown) {
-        qCDebug(VehicleLog) << "_startMissionRequest";
+        qCDebug(VehicleLog) << "_startPlanRequest";
         _missionManagerInitialRequestSent = true;
         if (_settingsManager->appSettings()->autoLoadMissions()->rawValue().toBool()) {
             QString missionAutoLoadDirPath = _settingsManager->appSettings()->missionSavePath();
@@ -1636,21 +1639,45 @@ void Vehicle::_startMissionRequest(void)
                 }
             }
         }
-        _missionManager->requestMissionItems();
+        _missionManager->loadFromVehicle();
     } else {
         if (!_parameterManager->parametersReady()) {
-            qCDebug(VehicleLog) << "Delaying _startMissionRequest due to parameters not ready";
+            qCDebug(VehicleLog) << "Delaying _startPlanRequest due to parameters not ready";
         } else if (!_vehicleCapabilitiesKnown) {
-            qCDebug(VehicleLog) << "Delaying _startMissionRequest due to vehicle capabilities not know";
+            qCDebug(VehicleLog) << "Delaying _startPlanRequest due to vehicle capabilities not know";
         }
     }
+}
+
+void Vehicle::_missionLoadComplete(void)
+{
+    // After the initial mission request completes we ask for the geofence
+    if (!_geoFenceManagerInitialRequestSent) {
+        _geoFenceManagerInitialRequestSent = true;
+        _geoFenceManager->loadFromVehicle();
+    }
+}
+
+void Vehicle::_geoFenceLoadComplete(void)
+{
+    // After geofence request completes we ask for the rally points
+    if (!_rallyPointManagerInitialRequestSent) {
+        _rallyPointManagerInitialRequestSent = true;
+        _rallyPointManager->loadFromVehicle();
+    }
+}
+
+
+void Vehicle::_rallyPointLoadComplete(void)
+{
+    _initialPlanRequestComplete = true;
 }
 
 void Vehicle::_parametersReady(bool parametersReady)
 {
     if (parametersReady) {
         _setupAutoDisarmSignalling();
-        _startMissionRequest();
+        _startPlanRequest();
         setJoystickEnabled(_joystickEnabled);
     }
 }
@@ -2040,7 +2067,7 @@ void Vehicle::_sendMavCommandAgain(void)
     if (_mavCommandRetryCount++ > _mavCommandMaxRetryCount) {
         if (queuedCommand.command == MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES) {
             // We aren't going to get a response back for capabilities, so stop waiting for it before we ask for mission items
-            _startMissionRequest();
+            _startPlanRequest();
         }
 
         emit mavCommandResult(_id, queuedCommand.component, queuedCommand.command, MAV_RESULT_FAILED, true /* noResponsefromVehicle */);
@@ -2175,24 +2202,6 @@ void Vehicle::motorTest(int motor, int percent, int timeoutSecs)
 }
 #endif
 
-void Vehicle::_newMissionItemsAvailable(void)
-{
-    // After the initial mission request completes we ask for the geofence
-    if (!_geoFenceManagerInitialRequestSent) {
-        _geoFenceManagerInitialRequestSent = true;
-        _geoFenceManager->loadFromVehicle();
-    }
-}
-
-void Vehicle::_newGeoFenceAvailable(void)
-{
-    // After geofence request completes we ask for the rally points
-    if (!_rallyPointManagerInitialRequestSent) {
-        _rallyPointManagerInitialRequestSent = true;
-        _rallyPointManager->loadFromVehicle();
-    }
-}
-
 QString Vehicle::brandImageIndoor(void) const
 {
     return _firmwarePlugin->brandImageIndoor(this);
@@ -2261,7 +2270,7 @@ void Vehicle::setOfflineEditingDefaultComponentId(int defaultComponentId)
 
 void Vehicle::triggerCamera(void)
 {
-    sendMavCommand(FactSystem::defaultComponentId,
+    sendMavCommand(_defaultComponentId,
                    MAV_CMD_DO_DIGICAM_CONTROL,
                    true,                            // show errors
                    0.0, 0.0, 0.0, 0.0,              // param 1-4 unused

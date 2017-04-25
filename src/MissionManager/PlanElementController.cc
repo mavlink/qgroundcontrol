@@ -33,3 +33,8 @@ void PlanElementController::start(bool editMode)
 {
     _editMode = editMode;
 }
+
+void PlanElementController::managerVehicleChanged(Vehicle* managerVehicle)
+{
+    _managerVehicle = managerVehicle;
+}

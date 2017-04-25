@@ -664,9 +664,14 @@ QGCView {
     Component {
         id: removeAllPromptDialog
         QGCViewMessage {
-            message: qsTr("Are you sure you want to remove all items? This will also remove all items from the vehicle.")
+            message: qsTr("Are you sure you want to remove all items? ") +
+                     (_planMasterController.offline ? "" : qsTr("This will also remove all items from the vehicle."))
             function accept() {
-                masterController.removeAllFromVehicle()
+                if (_planMasterController.offline) {
+                    masterController.removeAll()
+                } else {
+                    masterController.removeAllFromVehicle()
+                }
                 hideDialog()
             }
         }
