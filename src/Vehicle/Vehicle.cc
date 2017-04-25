@@ -669,6 +669,16 @@ void Vehicle::_handleAltitude(mavlink_message_t& message)
     }
 }
 
+void Vehicle::_setCapabilities(uint64_t capabilityBits)
+{
+    if (capabilityBits & MAV_PROTOCOL_CAPABILITY_MISSION_INT) {
+        _supportsMissionItemInt = true;
+    }
+    _vehicleCapabilitiesKnown = true;
+
+    qCDebug(VehicleLog) << QString("Vehicle %1 MISSION_ITEM_INT").arg(_supportsMissionItemInt ? QStringLiteral("supports") : QStringLiteral("does not support"));
+}
+
 void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& message)
 {
     Q_UNUSED(link);
@@ -703,12 +713,8 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
         emit gitHashChanged(_gitHash);
     }
 
-    if (autopilotVersion.capabilities & MAV_PROTOCOL_CAPABILITY_MISSION_INT) {
-        qCDebug(VehicleLog) << "Vehicle supports MISSION_ITEM_INT";
-        _supportsMissionItemInt = true;
-        _vehicleCapabilitiesKnown = true;
-        _startPlanRequest();
-    }
+    _setCapabilities(autopilotVersion.capabilities);
+    _startPlanRequest();
 }
 
 void Vehicle::_handleHilActuatorControls(mavlink_message_t &message)
@@ -745,6 +751,7 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     if (ack.command == MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES && ack.result != MAV_RESULT_ACCEPTED) {
         // We aren't going to get a response back for capabilities, so stop waiting for it before we ask for mission items
         qCDebug(VehicleLog) << "Vehicle failed to responded to MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES with error. Starting mission request.";
+        _setCapabilities(0);
         _startPlanRequest();
     }
 
@@ -899,6 +906,14 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
     _batteryFactGroup.cellCount()->setRawValue(cellCount);
 }
 
+void Vehicle::_setHomePosition(QGeoCoordinate& homeCoord)
+{
+    if (homeCoord != _homePosition) {
+        _homePosition = homeCoord;
+        emit homePositionChanged(_homePosition);
+    }
+}
+
 void Vehicle::_handleHomePosition(mavlink_message_t& message)
 {
     mavlink_home_position_t homePos;
@@ -908,10 +923,7 @@ void Vehicle::_handleHomePosition(mavlink_message_t& message)
     QGeoCoordinate newHomePosition (homePos.latitude / 10000000.0,
                                     homePos.longitude / 10000000.0,
                                     homePos.altitude / 1000.0);
-    if (newHomePosition != _homePosition) {
-        _homePosition = newHomePosition;
-        emit homePositionChanged(_homePosition);
-    }
+    _setHomePosition(newHomePosition);
 }
 
 void Vehicle::_handleHeartbeat(mavlink_message_t& message)
@@ -1625,7 +1637,11 @@ void Vehicle::_mapTrajectoryStop()
 
 void Vehicle::_startPlanRequest(void)
 {
-    if (!_missionManagerInitialRequestSent && _parameterManager->parametersReady() && _vehicleCapabilitiesKnown) {
+    if (_missionManagerInitialRequestSent) {
+        return;
+    }
+
+    if (_parameterManager->parametersReady() && _vehicleCapabilitiesKnown) {
         qCDebug(VehicleLog) << "_startPlanRequest";
         _missionManagerInitialRequestSent = true;
         if (_settingsManager->appSettings()->autoLoadMissions()->rawValue().toBool()) {
@@ -1644,7 +1660,7 @@ void Vehicle::_startPlanRequest(void)
         if (!_parameterManager->parametersReady()) {
             qCDebug(VehicleLog) << "Delaying _startPlanRequest due to parameters not ready";
         } else if (!_vehicleCapabilitiesKnown) {
-            qCDebug(VehicleLog) << "Delaying _startPlanRequest due to vehicle capabilities not know";
+            qCDebug(VehicleLog) << "Delaying _startPlanRequest due to vehicle capabilities not known";
         }
     }
 }
@@ -2067,6 +2083,7 @@ void Vehicle::_sendMavCommandAgain(void)
     if (_mavCommandRetryCount++ > _mavCommandMaxRetryCount) {
         if (queuedCommand.command == MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES) {
             // We aren't going to get a response back for capabilities, so stop waiting for it before we ask for mission items
+            _setCapabilities(0);
             _startPlanRequest();
         }
 
@@ -2100,7 +2117,7 @@ void Vehicle::_sendMavCommandAgain(void)
                 }
             }
         }
-        qDebug() << "Vehicle::_sendMavCommandAgain retrying command:_mavCommandRetryCount" << queuedCommand.command << _mavCommandRetryCount;
+        qCDebug(VehicleLog) << "Vehicle::_sendMavCommandAgain retrying command:_mavCommandRetryCount" << queuedCommand.command << _mavCommandRetryCount;
     }
 
     _mavCommandAckTimer.start();
