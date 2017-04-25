@@ -48,7 +48,7 @@ void APMRallyPointManager::sendToVehicle(const QList<QGeoCoordinate>& rgPoints)
         _sendRallyPoint(index);
     }
 
-    emit loadComplete(_rgPoints);
+    emit sendComplete();
 }
 
 void APMRallyPointManager::loadFromVehicle(void)
@@ -60,7 +60,7 @@ void APMRallyPointManager::loadFromVehicle(void)
     _rgPoints.clear();
 
     _cReadRallyPoints = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _rallyTotalParam)->rawValue().toInt();
-    qCDebug(GeoFenceManagerLog) << "APMGeoFenceManager::loadFromVehicle" << _cReadRallyPoints;
+    qCDebug(RallyPointManagerLog) << "APMRallyPointManager::loadFromVehicle - point count" << _cReadRallyPoints;
     if (_cReadRallyPoints == 0) {
         emit loadComplete(_rgPoints);
         return;
@@ -148,4 +148,14 @@ bool APMRallyPointManager::inProgress(void) const
 bool APMRallyPointManager::rallyPointsSupported(void) const
 {
     return _vehicle->parameterManager()->parameterExists(_vehicle->defaultComponentId(), _rallyTotalParam);
+}
+
+void APMRallyPointManager::removeAll(void)
+{
+    qCDebug(RallyPointManagerLog) << "APMRallyPointManager::removeAll";
+
+    QList<QGeoCoordinate> noRallyPoints;
+
+    sendToVehicle(noRallyPoints);
+    emit removeAllComplete();
 }

@@ -29,7 +29,7 @@
 class QGCImageProvider : public QGCTool, public QQuickImageProvider
 {
 public:
-    QGCImageProvider        (QGCApplication* app);
+    QGCImageProvider        (QGCApplication* app, QGCToolbox* toolbox);
     ~QGCImageProvider       ();
     QImage  requestImage    (const QString & id, QSize * size, const QSize & requestedSize);
     void    setImage        (QImage* pImage, int id = 0);

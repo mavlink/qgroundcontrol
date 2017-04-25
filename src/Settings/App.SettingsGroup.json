@@ -38,7 +38,7 @@
 {
     "name":             "batteryPercentRemainingAnnounce",
     "shortDescription": "Announce battery remaining percent",
-    "longDescription":  "QGroundControl will announce the remaining battery percent when it falls below the specified percentage.",
+    "longDescription":  "Announce the remaining battery percent when it falls below the specified percentage.",
     "type":             "uint32",
     "defaultValue":     30,
     "units":            "%",
@@ -56,23 +56,16 @@
     "decimalPlaces":    2
 },
 {
-    "name":             "MissionAutoLoadDir",
-    "shortDescription": "Mission auto load directory",
-    "longDescription":  "The directory from which missions will be automatically loaded onto a vehicle when it connects. The mission file must be named AutoLoad#.mission where the # is replaced with the vehicle id.",
-    "type":             "string",
-    "defaultValue":     ""
-},
-{
     "name":             "PromptFLightDataSave",
-    "shortDescription": "Prompt to save Flight Data Log after each flight",
-    "longDescription":  "If this option is enabled you will be prompted to save Flight Data Log after each flight completes.",
+    "shortDescription": "Save telemetry Log after each flight",
+    "longDescription":  "If this option is enabled a telemetry will be saved after each flight completes.",
     "type":             "bool",
     "defaultValue":     true
 },
 {
     "name":             "PromptFLightDataSaveNotArmed",
-    "shortDescription": "Prompt to save Flight Data Log even if vehicle was not armed",
-    "longDescription":  "If this option is enabled you will be prompted to save Flight Data Log even if vehicle was never armed.",
+    "shortDescription": "Save telemetry log even if vehicle was not armed",
+    "longDescription":  "If this option is enabled a telemtry log will be saved even if vehicle was never armed.",
     "type":             "bool",
     "defaultValue":     false
 },
@@ -91,9 +84,16 @@
     "defaultValue":     false
 },
 {
+    "name":             "AutoLoadMissions",
+    "shortDescription": "AutoLoad mission on vehicle connect",
+    "longDescription":  "Automatically load a mission file named AutoLoad#.mission when a vehicle with id # connects.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
     "name":             "BaseDeviceFontPointSize",
-    "shortDescription": "QGroundControl font size",
-    "longDescription":  "The point size for the default font used in QGroundControl.",
+    "shortDescription": "Application font size",
+    "longDescription":  "The point size for the default font used.",
     "type":             "uint32",
     "units":            "pt",
     "min":              6,
@@ -102,11 +102,12 @@
 },
 {
     "name":             "StyleIsDark",
-    "shortDescription": "QGroundControl color scheme",
-    "longDescription":  "The color scheme for the QGroundControl user interface.",
+    "shortDescription": "Application color scheme",
+    "longDescription":  "The color scheme for the user interface.",
     "type":             "uint32",
     "enumStrings":      "Indoor,Outdoor",
-    "enumValues":       "1,0"
+    "enumValues":       "1,0",
+    "defaultValue":     0
 },
 {
     "name":             "ShowLargeCompass",
@@ -114,5 +115,19 @@
     "longDescription":  "Show large compass on instrument panel",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "AutomaticMissionUpload",
+    "shortDescription": "Automatic mission upload",
+    "longDescription":  "Automatically upload mission to vehicle after changes",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
+    "name":             "SavePath",
+    "shortDescription": "Application save directory",
+    "longDescription":  "Directory to which all data files  are saved/loaded from",
+    "type":             "string",
+    "defaultValue":     ""
 }
 ]

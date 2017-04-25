@@ -42,8 +42,8 @@ const int LinkManager::_autoconnectConnectDelayMSecs =  6000;
 const int LinkManager::_autoconnectConnectDelayMSecs =  1000;
 #endif
 
-LinkManager::LinkManager(QGCApplication* app)
-    : QGCTool(app)    
+LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
     , _configUpdateSuspended(false)
     , _configurationsLoaded(false)
     , _connectionsSuspended(false)
@@ -867,8 +867,8 @@ void LinkManager::_activeLinkCheck(void)
         }
 
         qgcApp()->showMessage(foundNSHPrompt ?
-                                  QStringLiteral("Please check to make sure you have an SD Card inserted in your Vehicle and try again.") :
-                                  QStringLiteral("Your Vehicle is not responding. If this continues shutdown QGroundControl, restart the Vehicle letting it boot completely, then start QGroundControl."));
+                                  tr("Please check to make sure you have an SD Card inserted in your Vehicle and try again.") :
+                                  tr("Your Vehicle is not responding. If this continues, shutdown %1, restart the Vehicle letting it boot completely, then start %1.").arg(qgcApp()->applicationName()));
     }
 }
 #endif

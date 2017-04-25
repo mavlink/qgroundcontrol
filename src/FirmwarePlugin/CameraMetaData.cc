@@ -15,6 +15,8 @@ CameraMetaData::CameraMetaData(const QString&   name,
                                double           imageWidth,
                                double           imageHeight,
                                double           focalLength,
+                               bool             landscape,
+                               bool             fixedOrientation,
                                QObject*         parent)
     : QObject(parent)
     , _name(name)
@@ -23,6 +25,8 @@ CameraMetaData::CameraMetaData(const QString&   name,
     , _imageWidth(imageWidth)
     , _imageHeight(imageHeight)
     , _focalLength(focalLength)
+    , _landscape(landscape)
+    , _fixedOrientation(fixedOrientation)
 {
 
 }

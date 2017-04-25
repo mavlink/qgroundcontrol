@@ -16,6 +16,7 @@
 #include "MissionManager.h"
 #include "MultiSignalSpy.h"
 #include "MissionControllerManagerTest.h"
+#include "PlanMasterController.h"
 #include "MissionController.h"
 #include "SimpleMissionItem.h"
 
@@ -31,30 +32,37 @@ public:
 private slots:
     void cleanup(void);
 
+    void _testGimbalRecalc(void);
+
+private:
     void _testEmptyVehicleAPM(void);
     void _testEmptyVehiclePX4(void);
     void _testAddWayppointAPM(void);
     void _testAddWayppointPX4(void);
+#if 0
     void _testOfflineToOnlineAPM(void);
     void _testOfflineToOnlinePX4(void);
+#endif
 
 private:
     void _initForFirmwareType(MAV_AUTOPILOT firmwareType);
     void _testEmptyVehicleWorker(MAV_AUTOPILOT firmwareType);
     void _testAddWaypointWorker(MAV_AUTOPILOT firmwareType);
+#if 0
     void _testOfflineToOnlineWorker(MAV_AUTOPILOT firmwareType);
-    void _setupMissionItemSignals(SimpleMissionItem* item);
+#endif
+    void _setupVisualItemSignals(VisualMissionItem* visualItem);
 
     // MissiomItems signals
 
     enum {
         coordinateChangedSignalIndex = 0,
-        missionItemMaxSignalIndex
+        visualItemMaxSignalIndex
     };
 
     enum {
-        coordinateChangedSignalMask =           1 << coordinateChangedSignalIndex,
-        missionItemMaxSignalMask =              1 << missionItemMaxSignalIndex,
+        coordinateChangedSignalMask =   1 << coordinateChangedSignalIndex,
+        visualItemMaxSignalMask =       1 << visualItemMaxSignalIndex,
     };
 
     // MissionController signals
@@ -75,10 +83,11 @@ private:
     const char*         _rgMissionControllerSignals[_cMissionControllerSignals];
 
     MultiSignalSpy*     _multiSpyMissionItem;
-    static const size_t _cMissionItemSignals = missionItemMaxSignalIndex;
-    const char*         _rgMissionItemSignals[_cMissionItemSignals];
+    static const size_t _cVisualItemSignals = visualItemMaxSignalIndex;
+    const char*         _rgVisualItemSignals[_cVisualItemSignals];
 
-    MissionController*  _missionController;
+    PlanMasterController*   _masterController;
+    MissionController*      _missionController;
 };
 
 #endif

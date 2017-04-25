@@ -74,9 +74,12 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
             }
 
-            _flightModesComponent = new APMFlightModesComponent(_vehicle, this);
-            _flightModesComponent->setupTriggerSignals();
-            _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
+            // No flight modes component for Sub versions 3.5 and up
+            if (!_vehicle->sub() || (_vehicle->firmwareMajorVersion() == 3 && _vehicle->firmwareMinorVersion() <= 4)) {
+                _flightModesComponent = new APMFlightModesComponent(_vehicle, this);
+                _flightModesComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
+            }
 
             _sensorsComponent = new APMSensorsComponent(_vehicle, this);
             _sensorsComponent->setupTriggerSignals();
@@ -136,4 +139,39 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
     }
 
     return _components;
+}
+
+QString APMAutoPilotPlugin::prerequisiteSetup(VehicleComponent* component) const
+{
+    bool requiresAirframeCheck = false;
+
+    if (qobject_cast<const APMFlightModesComponent*>(component)) {
+        if (_airframeComponent && !_airframeComponent->setupComplete()) {
+            return _airframeComponent->name();
+        }
+        if (_radioComponent && !_radioComponent->setupComplete()) {
+            return _radioComponent->name();
+        }
+        requiresAirframeCheck = true;
+    } else if (qobject_cast<const APMRadioComponent*>(component)) {
+        requiresAirframeCheck = true;
+    } else if (qobject_cast<const APMCameraComponent*>(component)) {
+        requiresAirframeCheck = true;
+    } else if (qobject_cast<const APMPowerComponent*>(component)) {
+        requiresAirframeCheck = true;
+    } else if (qobject_cast<const APMSafetyComponent*>(component)) {
+        requiresAirframeCheck = true;
+    } else if (qobject_cast<const APMTuningComponent*>(component)) {
+        requiresAirframeCheck = true;
+    } else if (qobject_cast<const APMSensorsComponent*>(component)) {
+        requiresAirframeCheck = true;
+    }
+
+    if (requiresAirframeCheck) {
+        if (_airframeComponent && !_airframeComponent->setupComplete()) {
+            return _airframeComponent->name();
+        }
+    }
+
+    return QString();
 }

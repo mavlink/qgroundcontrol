@@ -110,10 +110,11 @@ void MockLinkMissionItemHandler::_handleMissionRequestList(const mavlink_message
         mavlink_msg_mission_count_pack_chan(_mockLink->vehicleId(),
                                             MAV_COMP_ID_MISSIONPLANNER,
                                             _mockLink->mavlinkChannel(),
-                                            &responseMsg,            // Outgoing message
-                                            msg.sysid,               // Target is original sender
-                                            msg.compid,              // Target is original sender
-                                            itemCount);              // Number of mission items
+                                            &responseMsg,               // Outgoing message
+                                            msg.sysid,                  // Target is original sender
+                                            msg.compid,                 // Target is original sender
+                                            itemCount,                  // Number of mission items
+                                            MAV_MISSION_TYPE_MISSION);
         _mockLink->respondWithMavlinkMessage(responseMsg);
     }
 }
@@ -175,7 +176,8 @@ void MockLinkMissionItemHandler::_handleMissionRequest(const mavlink_message_t& 
                                                item.current,
                                                item.autocontinue,
                                                item.param1, item.param2, item.param3, item.param4,
-                                               item.x, item.y, item.z);
+                                               item.x, item.y, item.z,
+                                               MAV_MISSION_TYPE_MISSION);
             _mockLink->respondWithMavlinkMessage(responseMsg);
         }
     }
@@ -238,6 +240,7 @@ void MockLinkMissionItemHandler::_requestNextMissionItem(int sequenceNumber)
             mavlink_message_t           message;
             mavlink_mission_request_t   missionRequest;
             
+            memset(&missionRequest, 0, sizeof(missionRequest));
             missionRequest.target_system =      _mavlinkProtocol->getSystemId();
             missionRequest.target_component =   _mavlinkProtocol->getComponentId();
             missionRequest.seq =                sequenceNumber;
@@ -262,6 +265,7 @@ void MockLinkMissionItemHandler::_sendAck(MAV_MISSION_RESULT ackType)
     mavlink_message_t       message;
     mavlink_mission_ack_t   missionAck;
     
+    memset(&missionAck, 0, sizeof(missionAck));
     missionAck.target_system =      _mavlinkProtocol->getSystemId();
     missionAck.target_component =   _mavlinkProtocol->getComponentId();
     missionAck.type =               ackType;

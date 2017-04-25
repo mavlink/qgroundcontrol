@@ -22,6 +22,7 @@ QGC_LOGGING_CATEGORY(MissionCommandsLog,        "MissionCommandsLog")
 QGC_LOGGING_CATEGORY(MissionItemLog,            "MissionItemLog")
 QGC_LOGGING_CATEGORY(ParameterManagerLog,       "ParameterManagerLog")
 QGC_LOGGING_CATEGORY(GeotaggingLog,             "GeotaggingLog")
+QGC_LOGGING_CATEGORY(RTKGPSLog,                 "RTKGPSLog")
 
 QGCLoggingCategoryRegister* _instance = NULL;
 const char* QGCLoggingCategoryRegister::_filterRulesSettingsGroup = "LoggingFilters";

@@ -25,8 +25,6 @@ ColumnLayout {
     property var    fitFunctions
     property bool   showMission:          true
     property bool   showAllItems:         true
-    property bool   showFollowVehicle:    false
-    property bool   followVehicle:        false
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
@@ -36,7 +34,6 @@ ColumnLayout {
         text:               qsTr("Mission")
         Layout.fillWidth:   true
         visible:            showMission
-        enabled:            !followVehicleCheckBox.checked
 
         onClicked: {
             dropPanel.hide()
@@ -48,7 +45,6 @@ ColumnLayout {
         text:               qsTr("All items")
         Layout.fillWidth:   true
         visible:            showAllItems
-        enabled:            !followVehicleCheckBox.checked
 
         onClicked: {
             dropPanel.hide()
@@ -59,7 +55,6 @@ ColumnLayout {
     QGCButton {
         text:               qsTr("Home")
         Layout.fillWidth:   true
-        enabled:            !followVehicleCheckBox.checked
 
         onClicked: {
             dropPanel.hide()
@@ -70,34 +65,22 @@ ColumnLayout {
     QGCButton {
         text:               qsTr("Current Location")
         Layout.fillWidth:   true
-        enabled:            mainWindow.gcsPosition.isValid && !followVehicleCheckBox.checked
+        enabled:            map.gcsPosition.isValid
 
         onClicked: {
             dropPanel.hide()
-            map.center = mainWindow.gcsPosition
+            map.center = map.gcsPosition
         }
     }
 
     QGCButton {
         text:               qsTr("Vehicle")
         Layout.fillWidth:   true
-        enabled:            _activeVehicle && _activeVehicle.latitude != 0 && _activeVehicle.longitude != 0 && !followVehicleCheckBox.checked
+        enabled:            _activeVehicle && _activeVehicle.coordinate.isValid
 
         onClicked: {
             dropPanel.hide()
             map.center = activeVehicle.coordinate
-        }
-    }
-
-    QGCCheckBox {
-        id:         followVehicleCheckBox
-        text:       qsTr("Follow Vehicle")
-        checked:    followVehicle
-        visible:    showFollowVehicle
-
-        onClicked:  {
-            dropPanel.hide()
-            root.followVehicle = checked
         }
     }
 } // Column

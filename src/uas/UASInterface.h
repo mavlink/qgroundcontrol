@@ -7,14 +7,9 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Abstract interface, represents one unmanned aerial vehicle
- *
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
+// NO NEW CODE HERE
+// UASInterface, UAS.h/cc are deprecated. All new functionality should go into Vehicle.h/cc
+//
 
 #ifndef _UASINTERFACE_H_
 #define _UASINTERFACE_H_
@@ -138,10 +133,6 @@ public:
 public slots:
     /** @brief Order the robot to pair its receiver **/
     virtual void pairRX(int rxType, int rxSubType) = 0;
-    /** @brief Order the robot to take a picture **/
-    virtual void takePhoto() {}
-    /** @brief Order the robot to toggle video recording **/
-    virtual void toggleVideo() {}
 
     /** @brief Send the full HIL state to the MAV */
 #ifndef __mobile__

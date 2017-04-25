@@ -20,7 +20,7 @@ MissionCommandTreeTest::MissionCommandTreeTest(void)
 
 void MissionCommandTreeTest::init(void)
 {
-    _commandTree = new MissionCommandTree(qgcApp(), true /* unitTest */);
+    _commandTree = new MissionCommandTree(qgcApp(), qgcApp()->toolbox(), true /* unitTest */);
     _commandTree->setToolbox(qgcApp()->toolbox());
 }
 

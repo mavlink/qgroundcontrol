@@ -7,13 +7,6 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief QGC Map Background
- *   @author Gus Grubba <mavlink@grubba.com>
- */
-
 import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtLocation       5.3
@@ -27,60 +20,30 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Vehicle               1.0
 import QGroundControl.Mavlink               1.0
+import QGroundControl.QGCPositionManager    1.0
 
 Map {
     id: _map
 
-    property string mapName:            'defaultMap'
-    property bool   isSatelliteMap:     activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+    zoomLevel:                  QGroundControl.flightMapZoom
+    center:                     QGroundControl.flightMapPosition
+    gesture.flickDeceleration:  3000
+    plugin:                     Plugin { name: "QGroundControl" }
+
+    property string mapName:                        'defaultMap'
+    property bool   isSatelliteMap:                 activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+    property var    gcsPosition:                    QtPositioning.coordinate()
+    property bool   userPanned:                     false   ///< true: the user has manually panned the map
+    property bool   allowGCSLocationCenter:         false   ///< true: map will center/zoom to gcs location one time
+    property bool   allowVehicleLocationCenter:     false   ///< true: map will center/zoom to vehicle location one time
+    property bool   firstGCSPositionReceived:       false   ///< true: first gcs position update was responded to
+    property bool   firstVehiclePositionReceived:   false   ///< true: first vehicle position update was responded to
+    property bool   planView:                       false   ///< true: map being using for Plan view, items should be draggable
 
     readonly property real  maxZoomLevel: 20
-    property variant        scaleLengths: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
 
-    function formatDistance(meters)
-    {
-        var dist = Math.round(meters)
-        if (dist > 1000 ){
-            if (dist > 100000){
-                dist = Math.round(dist / 1000)
-            }
-            else{
-                dist = Math.round(dist / 100)
-                dist = dist / 10
-            }
-            dist = dist + " km"
-        }
-        else{
-            dist = dist + " m"
-        }
-        return dist
-    }
-
-    function calculateScale() {
-        var coord1, coord2, dist, text, f
-        f = 0
-        coord1 = _map.toCoordinate(Qt.point(0, scale.y))
-        coord2 = _map.toCoordinate(Qt.point(0 + scaleImage.sourceSize.width, scale.y))
-        dist = Math.round(coord1.distanceTo(coord2))
-        if (dist === 0) {
-            // not visible
-        } else {
-            for (var i = 0; i < scaleLengths.length - 1; i++) {
-                if (dist < (scaleLengths[i] + scaleLengths[i+1]) / 2 ) {
-                    f = scaleLengths[i] / dist
-                    dist = scaleLengths[i]
-                    break;
-                }
-            }
-            if (f === 0) {
-                f = dist / scaleLengths[i]
-                dist = scaleLengths[i]
-            }
-        }
-        text = formatDistance(dist)
-        scaleImage.width = (scaleImage.sourceSize.width * f) - 2 * scaleImageLeft.sourceSize.width
-        scaleText.text = text
-    }
+    property var    _activeVehicle:                 QGroundControl.multiVehicleManager.activeVehicle
+    property var    activeVehicleCoordinate:        _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
 
     function setVisibleRegion(region) {
         // This works around a bug on Qt where if you set a visibleRegion and then the user moves or zooms the map
@@ -90,28 +53,43 @@ Map {
         _map.visibleRegion = region
     }
 
-    zoomLevel:                  18
-    center:                     QGroundControl.lastKnownHomePosition
-    gesture.flickDeceleration:  3000
-
-    plugin: Plugin { name: "QGroundControl" }
+    function _possiblyCenterToVehiclePosition() {
+        if (!firstVehiclePositionReceived && allowVehicleLocationCenter && activeVehicleCoordinate.isValid) {
+            firstVehiclePositionReceived = true
+            center = activeVehicleCoordinate
+            zoomLevel = QGroundControl.flightMapInitialZoom
+        }
+    }
 
     ExclusiveGroup { id: mapTypeGroup }
 
-    property bool _initialMapPositionSet: false
-
+    // Update ground station position
     Connections {
-        target: mainWindow
-        onGcsPositionChanged: {
-            if (!_initialMapPositionSet) {
-                _initialMapPositionSet = true
-                center = mainWindow.gcsPosition
+        target: QGroundControl.qgcPositionManger
+
+        onLastPositionUpdated: {
+            if (valid && lastPosition.latitude && Math.abs(lastPosition.latitude)  > 0.001 && lastPosition.longitude && Math.abs(lastPosition.longitude)  > 0.001) {
+                gcsPosition = QtPositioning.coordinate(lastPosition.latitude,lastPosition.longitude)
+                if (!firstGCSPositionReceived && !firstVehiclePositionReceived && allowGCSLocationCenter) {
+                    firstGCSPositionReceived = true
+                    center = gcsPosition
+                    zoomLevel = QGroundControl.flightMapInitialZoom
+                }
             }
         }
     }
 
+    // We track whether the user has panned or not to correctly handle automatic map positioning
+    Connections {
+        target: gesture
+
+        onPanFinished:      userPanned = true
+        onFlickFinished:    userPanned = true
+    }
+
     function updateActiveMapType() {
-        var fullMapName = QGroundControl.flightMapSettings.mapProvider + " " + QGroundControl.flightMapSettings.mapType
+        var settings =  QGroundControl.settingsManager.flightMapSettings
+        var fullMapName = settings.mapProvider.enumStringValue + " " + settings.mapType.enumStringValue
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
             if (fullMapName === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]
@@ -120,21 +98,31 @@ Map {
         }
     }
 
-    Component.onCompleted: updateActiveMapType()
+    onActiveVehicleCoordinateChanged: _possiblyCenterToVehiclePosition()
+
+    Component.onCompleted: {
+        updateActiveMapType()
+        _possiblyCenterToVehiclePosition()
+    }
 
     Connections {
-        target:             QGroundControl.flightMapSettings
-        onMapTypeChanged:   updateActiveMapType()
+        target:             QGroundControl.settingsManager.flightMapSettings.mapType
+        onRawValueChanged:  updateActiveMapType()
+    }
+
+    Connections {
+        target:             QGroundControl.settingsManager.flightMapSettings.mapProvider
+        onRawValueChanged:  updateActiveMapType()
     }
 
     /// Ground Station location
     MapQuickItem {
         anchorPoint.x:  sourceItem.anchorPointX
         anchorPoint.y:  sourceItem.anchorPointY
-        visible:        mainWindow.gcsPosition.isValid
-        coordinate:     mainWindow.gcsPosition
+        visible:        gcsPosition.isValid
+        coordinate:     gcsPosition
         sourceItem:     MissionItemIndexLabel {
-            label: "Q"
+        label:          QGroundControl.appName.charAt(0)
         }
     }
 } // Map

@@ -110,7 +110,7 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
 
     // ArduPilot has this strange behavior of streaming parameters that we didn't ask for. This even happens before it responds to the
     // PARAM_REQUEST_LIST. We disregard any of this until the initial request is responded to.
-    if (parameterId == 65535 && _initialRequestTimeoutTimer.isActive()) {
+    if (parameterId == 65535 && parameterName != "_HASH_CHECK" && _initialRequestTimeoutTimer.isActive()) {
         qCDebug(ParameterManagerVerbose1Log) << "Disregarding unrequested param prior to intial list response" << parameterName;
         return;
     }
@@ -666,6 +666,8 @@ void ParameterManager::_writeParameterRaw(int componentId, const QString& paramN
     mavlink_param_set_t     p;
     mavlink_param_union_t   union_value;
 
+    memset(&p, 0, sizeof(p));
+
     FactMetaData::ValueType_t factType = getParameter(componentId, paramName)->type();
     p.param_type = _factTypeToMavType(factType);
 
@@ -786,6 +788,7 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
         // Return the hash value to notify we don't want any more updates
         mavlink_param_set_t     p;
         mavlink_param_union_t   union_value;
+        memset(&p, 0, sizeof(p));
         p.param_type = MAV_PARAM_TYPE_UINT32;
         strncpy(p.param_id, "_HASH_CHECK", sizeof(p.param_id));
         union_value.param_uint32 = crc32_value;
@@ -1038,10 +1041,10 @@ void ParameterManager::_checkInitialLoadComplete(void)
     _missingParameters = false;
     if (initialLoadFailures) {
         _missingParameters = true;
-        QString errorMsg = tr("QGroundControl was unable to retrieve the full set of parameters from vehicle %1. "
-                              "This will cause QGroundControl to be unable to display its full user interface. "
+        QString errorMsg = tr("%1 was unable to retrieve the full set of parameters from vehicle %2. "
+                              "This will cause %1 to be unable to display its full user interface. "
                               "If you are using modified firmware, you may need to resolve any vehicle startup errors to resolve the issue. "
-                              "If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.").arg(_vehicle->id());
+                              "If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.").arg(qgcApp()->applicationName()).arg(_vehicle->id());
         qCDebug(ParameterManagerLog) << errorMsg;
         qgcApp()->showMessage(errorMsg);
         if (!qgcApp()->runningUnitTests()) {
@@ -1065,7 +1068,7 @@ void ParameterManager::_initialRequestTimeout(void)
     } else {
         if (!_vehicle->genericFirmware()) {
             QString errorMsg = tr("Vehicle %1 did not respond to request for parameters. "
-                                  "This will cause QGroundControl to be unable to display its full user interface.").arg(_vehicle->id());
+                                  "This will cause %2 to be unable to display its full user interface.").arg(_vehicle->id()).arg(qgcApp()->applicationName());
             qCDebug(ParameterManagerLog) << errorMsg;
             qgcApp()->showMessage(errorMsg);
         }

@@ -1,4 +1,4 @@
- /****************************************************************************
+/****************************************************************************
  *
  *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
@@ -49,7 +49,7 @@
 #include "CustomCommandWidgetController.h"
 #include "ESP8266ComponentController.h"
 #include "ScreenToolsController.h"
-#include "QGCMobileFileDialogController.h"
+#include "QFileDialogController.h"
 #include "RCChannelMonitorController.h"
 #include "AutoPilotPlugin.h"
 #include "VehicleComponent.h"
@@ -64,9 +64,7 @@
 #include "QGroundControlQmlGlobal.h"
 #include "FlightMapSettings.h"
 #include "CoordinateVector.h"
-#include "MissionController.h"
-#include "GeoFenceController.h"
-#include "RallyPointController.h"
+#include "PlanMasterController.h"
 #include "VideoManager.h"
 #include "VideoSurface.h"
 #include "VideoReceiver.h"
@@ -82,19 +80,20 @@
 #include "SettingsManager.h"
 
 #ifndef NO_SERIAL_LINK
-    #include "SerialLink.h"
+#include "SerialLink.h"
 #endif
 
 #ifndef __mobile__
-    #include "QGCFileDialog.h"
-    #include "QGCMessageBox.h"
-    #include "FirmwareUpgradeController.h"
-    #include "MainWindow.h"
-    #include "GeoTagController.h"
+#include "QGCQFileDialog.h"
+#include "QGCMessageBox.h"
+#include "FirmwareUpgradeController.h"
+#include "MainWindow.h"
+#include "GeoTagController.h"
+#include "MavlinkConsoleController.h"
 #endif
 
 #ifdef QGC_RTLAB_ENABLED
-    #include "OpalLink.h"
+#include "OpalLink.h"
 #endif
 
 #ifdef Q_OS_LINUX
@@ -108,17 +107,8 @@
 
 QGCApplication* QGCApplication::_app = NULL;
 
-const char* QGCApplication::parameterFileExtension =    "params";
-const char* QGCApplication::missionFileExtension =      "mission";
-const char* QGCApplication::fenceFileExtension =        "fence";
-const char* QGCApplication::rallyPointFileExtension =   "rally";
-const char* QGCApplication::telemetryFileExtension =     "tlog";
-
 const char* QGCApplication::_deleteAllSettingsKey           = "DeleteAllSettingsNextBoot";
 const char* QGCApplication::_settingsVersionKey             = "SettingsVersion";
-const char* QGCApplication::_lastKnownHomePositionLatKey    = "LastKnownHomePositionLat";
-const char* QGCApplication::_lastKnownHomePositionLonKey    = "LastKnownHomePositionLon";
-const char* QGCApplication::_lastKnownHomePositionAltKey    = "LastKnownHomePositionAlt";
 
 const char* QGCApplication::_darkStyleFile          = ":/res/styles/style-dark.css";
 const char* QGCApplication::_lightStyleFile         = ":/res/styles/style-light.css";
@@ -142,11 +132,23 @@ static QObject* mavlinkQmlSingletonFactory(QQmlEngine*, QJSEngine*)
 static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
 {
     // We create this object as a QGCTool even though it isn't in the toolbox
-    QGroundControlQmlGlobal* qmlGlobal = new QGroundControlQmlGlobal(qgcApp());
+    QGroundControlQmlGlobal* qmlGlobal = new QGroundControlQmlGlobal(qgcApp(), qgcApp()->toolbox());
     qmlGlobal->setToolbox(qgcApp()->toolbox());
 
     return qmlGlobal;
 }
+
+#ifdef __android__
+// breakpad support
+#include "client/linux/handler/exception_handler.h"
+
+static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* /*context*/, bool succeeded)
+{
+    qDebug() << "dumpCallback" << succeeded << descriptor.path();
+    return succeeded;
+}
+#endif
+
 
 /**
  * @brief Constructor for the main application.
@@ -162,18 +164,17 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #ifdef __mobile__
     : QGuiApplication(argc, argv)
     , _qmlAppEngine(NULL)
-#else
+    #else
     : QApplication(argc, argv)
-#endif
+    #endif
     , _runningUnitTests(unitTesting)
     , _fakeMobile(false)
     , _settingsUpgraded(false)
-#ifdef QT_DEBUG
+    #ifdef QT_DEBUG
     , _testHighDPI(false)
-#endif
+    #endif
     , _toolbox(NULL)
     , _bluetoothAvailable(false)
-    , _lastKnownHomePosition(37.803784, -122.462276, 0.0)
 {
     Q_ASSERT(_app == NULL);
     _app = this;
@@ -191,12 +192,12 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     if (!_runningUnitTests) {
         if (getuid() == 0) {
             QMessageBox msgBox;
-            msgBox.setInformativeText("You are running QGroundControl as root. "
-                                      "You should not do this since it will cause other issues with QGroundControl. "
-                                      "QGroundControl will now exit. "
+            msgBox.setInformativeText(tr("You are running %1 as root. "
+                                      "You should not do this since it will cause other issues with %1. "
+                                      "%1 will now exit. "
                                       "If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:\n"
                                       "sudo usermod -a -G dialout $USER\n"
-                                      "sudo apt-get remove modemmanager");
+                                      "sudo apt-get remove modemmanager").arg(qgcApp()->applicationName()));
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.setDefaultButton(QMessageBox::Ok);
             msgBox.exec();
@@ -237,9 +238,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         { "--clear-settings",   &fClearSettingsOptions, NULL },
         { "--logging",          &logging,               &loggingOptions },
         { "--fake-mobile",      &_fakeMobile,           NULL },
-#ifdef QT_DEBUG
+    #ifdef QT_DEBUG
         { "--test-high-dpi",    &_testHighDPI,          NULL },
-#endif
+    #endif
         // Add additional command line option flags here
     };
 
@@ -308,10 +309,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     // Set up our logging filters
     QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(loggingOptions);
 
-    _lastKnownHomePosition.setLatitude(settings.value(_lastKnownHomePositionLatKey, 37.803784).toDouble());
-    _lastKnownHomePosition.setLongitude(settings.value(_lastKnownHomePositionLonKey, -122.462276).toDouble());
-    _lastKnownHomePosition.setAltitude(settings.value(_lastKnownHomePositionAltKey, 0.0).toDouble());
-
     // Initialize Bluetooth
 #ifdef QGC_ENABLE_BLUETOOTH
     QBluetoothLocalDevice localDevice;
@@ -326,6 +323,13 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
+
+#ifdef __android__
+    std::string pathAsStr = toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString().toStdString();
+    qDebug() << "dump location" << QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    google_breakpad::MinidumpDescriptor descriptor(pathAsStr);
+    google_breakpad::ExceptionHandler eh(descriptor, NULL, dumpCallback, NULL, true, -1);
+#endif
 }
 
 void QGCApplication::_shutdown(void)
@@ -374,23 +378,25 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",      1, 0, "Joystick",               "Reference only");
     qmlRegisterUncreatableType<QGCPositionManager>  ("QGroundControl.QGCPositionManager",   1, 0, "QGCPositionManager",     "Reference only");
     qmlRegisterUncreatableType<QGCMapPolygon>       ("QGroundControl.FlightMap",            1, 0, "QGCMapPolygon",          "Reference only");
+    qmlRegisterUncreatableType<MissionController>   ("QGroundControl.Controllers",          1, 0, "MissionController",      "Reference only");
+    qmlRegisterUncreatableType<GeoFenceController>  ("QGroundControl.Controllers",          1, 0, "GeoFenceController",     "Reference only");
+    qmlRegisterUncreatableType<RallyPointController>("QGroundControl.Controllers",          1, 0, "RallyPointController",    "Reference only");
 
     qmlRegisterType<ParameterEditorController>          ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
     qmlRegisterType<ESP8266ComponentController>         ("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
     qmlRegisterType<ScreenToolsController>              ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
-    qmlRegisterType<MissionController>                  ("QGroundControl.Controllers", 1, 0, "MissionController");
-    qmlRegisterType<GeoFenceController>                 ("QGroundControl.Controllers", 1, 0, "GeoFenceController");
-    qmlRegisterType<RallyPointController>               ("QGroundControl.Controllers", 1, 0, "RallyPointController");
+    qmlRegisterType<PlanMasterController>        ("QGroundControl.Controllers", 1, 0, "PlanElemementMasterController");
     qmlRegisterType<ValuesWidgetController>             ("QGroundControl.Controllers", 1, 0, "ValuesWidgetController");
-    qmlRegisterType<QGCMobileFileDialogController>      ("QGroundControl.Controllers", 1, 0, "QGCMobileFileDialogController");
+    qmlRegisterType<QFileDialogController>      ("QGroundControl.Controllers", 1, 0, "QFileDialogController");
     qmlRegisterType<RCChannelMonitorController>         ("QGroundControl.Controllers", 1, 0, "RCChannelMonitorController");
     qmlRegisterType<JoystickConfigController>           ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
+    qmlRegisterType<LogDownloadController>              ("QGroundControl.Controllers", 1, 0, "LogDownloadController");
 #ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
     qmlRegisterType<FirmwareUpgradeController>      ("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
-    qmlRegisterType<LogDownloadController>          ("QGroundControl.Controllers", 1, 0, "LogDownloadController");
     qmlRegisterType<GeoTagController>               ("QGroundControl.Controllers", 1, 0, "GeoTagController");
+    qmlRegisterType<MavlinkConsoleController>       ("QGroundControl.Controllers", 1, 0, "MavlinkConsoleController");
 #endif
 
     // Register Qml Singletons
@@ -498,32 +504,66 @@ void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const 
 }
 
 #ifndef __mobile__
-void QGCApplication::saveTempFlightDataLogOnMainThread(QString tempLogfile)
+void QGCApplication::saveTelemetryLogOnMainThread(QString tempLogfile)
 {
-    bool saveError;
-    do{
-        saveError = false;
-        QString saveFilename = QGCFileDialog::getSaveFileName(
-            MainWindow::instance(),
-            tr("Save Flight Data Log"),
-            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
-            tr("Flight Data Log Files (*.mavlink)"),
-            "mavlink");
+    // The vehicle is gone now and we are shutting down so we need to use a message box for errors to hold shutdown and show the error
+    if (_checkTelemetrySavePath(true /* useMessageBox */)) {
 
-        if (!saveFilename.isEmpty()) {
-            // if file exsits already, try to remove it first to overwrite it
-            if(QFile::exists(saveFilename) && !QFile::remove(saveFilename)){
-                // if the file cannot be removed, prompt user and ask new path
-                saveError = true;
-                QGCMessageBox::warning("File Error","Could not overwrite existing file.\nPlease provide a different file name to save to.");
-            } else if(!QFile::copy(tempLogfile, saveFilename)) {
-                // if file could not be copied, prompt user and ask new path
-                saveError = true;
-                QGCMessageBox::warning("File Error","Could not create file.\nPlease provide a different file name to save to.");
-            }
+        QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
+        QDir saveDir(saveDirPath);
+
+        QString nameFormat("%1%2.tlog");
+        QString dtFormat("yyyy-MM-dd hh-mm-ss");
+
+        int tryIndex = 1;
+        QString saveFileName = nameFormat.arg(QDateTime::currentDateTime().toString(dtFormat)).arg("");
+        while (saveDir.exists(saveFileName)) {
+            saveFileName = nameFormat.arg(QDateTime::currentDateTime().toString(dtFormat)).arg(QStringLiteral(".%1").arg(tryIndex++));
         }
-    } while(saveError); // if the file could not be overwritten, ask for new file
+        QString saveFilePath = saveDir.absoluteFilePath(saveFileName);
+
+        QFile tempFile(tempLogfile);
+        if (!tempFile.copy(saveFilePath)) {
+            QGCMessageBox::warning(tr("Telemetry save error"), tr("Unable to save telemetry log. Error copying telemetry to '%1': '%2'.").arg(saveFilePath).arg(tempFile.errorString()));
+        }
+    }
+
     QFile::remove(tempLogfile);
+}
+
+void QGCApplication::checkTelemetrySavePathOnMainThread(void)
+{
+    // This is called with an active vehicle so don't pop message boxes which holds ui thread
+    _checkTelemetrySavePath(false /* useMessageBox */);
+}
+
+bool QGCApplication::_checkTelemetrySavePath(bool useMessageBox)
+{
+    QString errorTitle = tr("Telemetry save error");
+
+    QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
+    if (saveDirPath.isEmpty()) {
+        QString error = tr("Unable to save telemetry log. Application save directory is not set.");
+        if (useMessageBox) {
+            QGCMessageBox::warning(errorTitle, error);
+        } else {
+            showMessage(error);
+        }
+        return false;
+    }
+
+    QDir saveDir(saveDirPath);
+    if (!saveDir.exists()) {
+        QString error = tr("Unable to save telemetry log. Telemetry save directory \"%1\" does not exist.").arg(saveDirPath);
+        if (useMessageBox) {
+            QGCMessageBox::warning(errorTitle, error);
+        } else {
+            showMessage(error);
+        }
+        return false;
+    }
+
+    return true;
 }
 #endif
 
@@ -584,7 +624,7 @@ void QGCApplication::_missingParamsDisplay(void)
     }
     _missingParams.clear();
 
-    showMessage(QString("Parameters missing from firmware: %1. You may be running an older version of firmware QGC does not work correctly with or your firmware has a bug in it.").arg(params));
+    showMessage(QString("Parameters are missing from firmware. You may be running a version of firmware QGC does not work correctly with or your firmware has a bug in it. Missing params: %1").arg(params));
 }
 
 QObject* QGCApplication::_rootQmlObject()
@@ -638,15 +678,4 @@ void QGCApplication::showSetupView(void)
 void QGCApplication::qmlAttemptWindowClose(void)
 {
     QMetaObject::invokeMethod(_rootQmlObject(), "attemptWindowClose");
-}
-
-
-void QGCApplication::setLastKnownHomePosition(QGeoCoordinate& lastKnownHomePosition)
-{
-    QSettings settings;
-
-    settings.setValue(_lastKnownHomePositionLatKey, lastKnownHomePosition.latitude());
-    settings.setValue(_lastKnownHomePositionLonKey, lastKnownHomePosition.longitude());
-    settings.setValue(_lastKnownHomePositionAltKey, lastKnownHomePosition.altitude());
-    _lastKnownHomePosition = lastKnownHomePosition;
 }

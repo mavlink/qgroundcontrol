@@ -39,7 +39,7 @@ import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.qgroundcontrol.qgchelper.UsbDeviceJNI;
+import org.mavlink.qgroundcontrol.QGCActivity;
 
 /**
  * A {@link CommonUsbSerialDriver} implementation for a variety of FTDI devices
@@ -231,35 +231,35 @@ public class FtdiSerialDriver extends CommonUsbSerialDriver {
     public void open() throws IOException {
         D2xxManager ftD2xx = null;
         try {
-            ftD2xx = D2xxManager.getInstance(UsbDeviceJNI.m_context);
+            ftD2xx = D2xxManager.getInstance(QGCActivity.m_context);
         } catch (D2xxManager.D2xxException ex) {
-            UsbDeviceJNI.qgcLogDebug("D2xxManager.getInstance threw exception: " + ex.getMessage());
+            QGCActivity.qgcLogDebug("D2xxManager.getInstance threw exception: " + ex.getMessage());
         }
 
         if (ftD2xx == null) {
             String errMsg = "Unable to retrieve D2xxManager instance.";
-            UsbDeviceJNI.qgcLogWarning(errMsg);
+            QGCActivity.qgcLogWarning(errMsg);
             throw new IOException(errMsg);
         }
-        UsbDeviceJNI.qgcLogDebug("Opened D2xxManager");
+        QGCActivity.qgcLogDebug("Opened D2xxManager");
 
-        int DevCount = ftD2xx.createDeviceInfoList(UsbDeviceJNI.m_context);
-        UsbDeviceJNI.qgcLogDebug("Found " + DevCount + " ftdi devices.");
+        int DevCount = ftD2xx.createDeviceInfoList(QGCActivity.m_context);
+        QGCActivity.qgcLogDebug("Found " + DevCount + " ftdi devices.");
         if (DevCount < 1) {
             throw new IOException("No FTDI Devices found");
         }
 
         m_ftDev = null;
         try {
-            m_ftDev = ftD2xx.openByIndex(UsbDeviceJNI.m_context, 0);
+            m_ftDev = ftD2xx.openByIndex(QGCActivity.m_context, 0);
         } catch (NullPointerException e) {
-            UsbDeviceJNI.qgcLogDebug("ftD2xx.openByIndex exception: " + e.getMessage());
+            QGCActivity.qgcLogDebug("ftD2xx.openByIndex exception: " + e.getMessage());
         } finally {
             if (m_ftDev == null) {
                 throw new IOException("No FTDI Devices found");
             }
         }
-        UsbDeviceJNI.qgcLogDebug("Opened FTDI device.");
+        QGCActivity.qgcLogDebug("Opened FTDI device.");
     }
 
     @Override
@@ -268,7 +268,7 @@ public class FtdiSerialDriver extends CommonUsbSerialDriver {
             try {
                 m_ftDev.close();
             } catch (Exception e) {
-                UsbDeviceJNI.qgcLogWarning("close exception: " + e.getMessage());
+                QGCActivity.qgcLogWarning("close exception: " + e.getMessage());
             }
             m_ftDev = null;
         }
@@ -285,7 +285,7 @@ public class FtdiSerialDriver extends CommonUsbSerialDriver {
                 totalBytesRead = m_ftDev.read(dest, bytesAvailable, timeoutMillis);
             } catch (NullPointerException e) {
                 final String errorMsg = "Error reading: " + e.getMessage();
-                UsbDeviceJNI.qgcLogWarning(errorMsg);
+                QGCActivity.qgcLogWarning(errorMsg);
                 throw new IOException(errorMsg, e);
             }
         }
@@ -299,7 +299,7 @@ public class FtdiSerialDriver extends CommonUsbSerialDriver {
             m_ftDev.write(src);
             return src.length;
         } catch (Exception e) {
-            UsbDeviceJNI.qgcLogWarning("Error writing: " + e.getMessage());
+            QGCActivity.qgcLogWarning("Error writing: " + e.getMessage());
         }
         return 0;
     }
@@ -309,7 +309,7 @@ public class FtdiSerialDriver extends CommonUsbSerialDriver {
             m_ftDev.setBaudRate(baudRate);
             return baudRate;
         } catch (Exception e) {
-            UsbDeviceJNI.qgcLogWarning("Error setting baud rate: " + e.getMessage());
+            QGCActivity.qgcLogWarning("Error setting baud rate: " + e.getMessage());
         }
         return 0;
     }
@@ -360,7 +360,7 @@ public class FtdiSerialDriver extends CommonUsbSerialDriver {
         try {
             m_ftDev.setDataCharacteristics((byte)dataBits, (byte)stopBits, (byte)parity);
         } catch (Exception e) {
-            UsbDeviceJNI.qgcLogWarning("Error setDataCharacteristics: " + e.getMessage());
+            QGCActivity.qgcLogWarning("Error setDataCharacteristics: " + e.getMessage());
         }
     }
     @Override
@@ -408,7 +408,7 @@ public class FtdiSerialDriver extends CommonUsbSerialDriver {
                 m_ftDev.purge(D2xxManager.FT_PURGE_RX);
             } catch (Exception e) {
                 String errMsg = "Error purgeHwBuffers(RX): "+ e.getMessage();
-                UsbDeviceJNI.qgcLogWarning(errMsg);
+                QGCActivity.qgcLogWarning(errMsg);
                 throw new IOException(errMsg);
             }
         }
@@ -418,7 +418,7 @@ public class FtdiSerialDriver extends CommonUsbSerialDriver {
                 m_ftDev.purge(D2xxManager.FT_PURGE_TX);
             } catch (Exception e) {
                 String errMsg = "Error purgeHwBuffers(TX): " + e.getMessage();
-                UsbDeviceJNI.qgcLogWarning(errMsg);
+                QGCActivity.qgcLogWarning(errMsg);
                 throw new IOException(errMsg);
             }
         }

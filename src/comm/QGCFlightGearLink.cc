@@ -30,11 +30,12 @@
 
 #include "QGCFlightGearLink.h"
 #include "QGC.h"
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #include "QGCMessageBox.h"
 #include "QGCApplication.h"
 #include "Vehicle.h"
 #include "UAS.h"
+#include "QGroundControlQmlGlobal.h"
 
 // FlightGear _fgProcess start and connection is quite fragile. Uncomment the define below to get higher level of debug output
 // for tracking down problems.
@@ -288,7 +289,7 @@ void QGCFlightGearLink::readBytes()
         qDebug() << "RETURN LENGTH MISMATCHING EXPECTED" << nValues << "BUT GOT" << values.size();
         qDebug() << state;
         emit showCriticalMessageFromThread(tr("FlightGear HIL"),
-                                           tr("Flight Gear protocol file '%1' is out of date. Quit QGroundControl. Delete the file and restart QGroundControl to fix.").arg(_fgProtocolFileFullyQualified));
+                                           tr("Flight Gear protocol file '%1' is out of date. Quit %2. Delete the file and restart %2 to fix.").arg(_fgProtocolFileFullyQualified).arg(qgcApp()->applicationName()));
         disconnectSimulation();
         return;
     }
@@ -743,7 +744,7 @@ bool QGCFlightGearLink::connectSimulation()
         }
 
         // Let the user pick the right directory
-        QString dirPath = QGCFileDialog::getExistingDirectory(MainWindow::instance(), tr("Please select directory of FlightGear application : ") + fgAppName);
+        QString dirPath = QGCQFileDialog::getExistingDirectory(MainWindow::instance(), tr("Please select directory of FlightGear application : ") + fgAppName);
         if (dirPath.isEmpty()) {
             return false;
         }
@@ -820,7 +821,7 @@ bool QGCFlightGearLink::connectSimulation()
     // Setup and verify directory which contains QGC provided aircraft files
     QString qgcAircraftDir(QApplication::applicationDirPath() + "/flightgear/Aircraft");
     if (!QFileInfo(qgcAircraftDir).isDir()) {
-        QGCMessageBox::critical(tr("FlightGear HIL"), tr("Incorrect QGroundControl installation. Aircraft directory is missing: '%1'.").arg(qgcAircraftDir));
+        QGCMessageBox::critical(tr("FlightGear HIL"), tr("Incorrect %1 installation. Aircraft directory is missing: '%2'.").arg(qgcApp()->applicationName()).arg(qgcAircraftDir));
         return false;
     }
     _fgArgList += "--fg-aircraft=" + qgcAircraftDir;
@@ -841,7 +842,7 @@ bool QGCFlightGearLink::connectSimulation()
     // Verify directory which contains QGC provided FlightGear communication protocol files
     QDir qgcProtocolDir(QApplication::applicationDirPath() + "/flightgear/Protocol/");
     if (!qgcProtocolDir.isReadable()) {
-        QGCMessageBox::critical(tr("FlightGear HIL"), tr("Incorrect QGroundControl installation. Protocol directory is missing (%1).").arg(qgcProtocolDir.path()));
+        QGCMessageBox::critical(tr("FlightGear HIL"), tr("Incorrect installation. Protocol directory is missing (%1).").arg(qgcProtocolDir.path()));
         return false;
     }
 
@@ -849,7 +850,7 @@ bool QGCFlightGearLink::connectSimulation()
     QString fgProtocolXmlFile = fgProtocol + ".xml";
     QString qgcProtocolFileFullyQualified = qgcProtocolDir.absoluteFilePath(fgProtocolXmlFile);
     if (!QFileInfo(qgcProtocolFileFullyQualified).exists()) {
-        QGCMessageBox::critical(tr("FlightGear HIL"), tr("Incorrect QGroundControl installation. FlightGear protocol file missing: %1").arg(qgcProtocolFileFullyQualified));
+        QGCMessageBox::critical(tr("FlightGear HIL"), tr("Incorrect installation. FlightGear protocol file missing: %1").arg(qgcProtocolFileFullyQualified));
         return false;
     }
 
@@ -868,7 +869,7 @@ bool QGCFlightGearLink::connectSimulation()
             !qgcFile.open(QIODevice::ReadOnly)) {
             QGCMessageBox::warning(tr("FlightGear HIL"), tr("Unable to verify that protocol file %1 is current. "
                                                             "If file is out of date, you may experience problems. "
-                                                            "Safest approach is to delete the file manually and allow QGroundControl install the latest file.").arg(_fgProtocolFileFullyQualified));
+                                                            "Safest approach is to delete the file manually and allow %2 install the latest file.").arg(qgcApp()->applicationName()).arg(_fgProtocolFileFullyQualified));
         }
 
         QByteArray fgBytes = fgFile.readAll();
@@ -878,7 +879,7 @@ bool QGCFlightGearLink::connectSimulation()
         qgcFile.close();
 
         if (fgBytes != qgcBytes) {
-            QGCMessageBox::warning(tr("FlightGear HIL"), tr("FlightGear protocol file %1 is out of date. It will be deleted, which will cause QGroundControl to install the latest version of the file.").arg(_fgProtocolFileFullyQualified));
+            QGCMessageBox::warning(tr("FlightGear HIL"), tr("FlightGear protocol file %1 is out of date. It will be deleted, which will cause %2 to install the latest version of the file.").arg(_fgProtocolFileFullyQualified).arg(qgcApp()->applicationName()));
             if (!QFile::remove(_fgProtocolFileFullyQualified)) {
                 QGCMessageBox::warning(tr("FlightGear HIL"), tr("Delete of protocol file failed. You will have to manually delete the file."));
                 return false;
@@ -889,7 +890,7 @@ bool QGCFlightGearLink::connectSimulation()
     if (!QFileInfo(_fgProtocolFileFullyQualified).exists()) {
         QMessageBox msgBox(QMessageBox::Critical,
                            tr("FlightGear Failed to Start"),
-                           tr("FlightGear Failed to Start. QGroundControl protocol (%1) not installed to FlightGear Protocol directory (%2)").arg(fgProtocolXmlFile).arg(fgProtocolDir.path()),
+                           tr("FlightGear Failed to Start. %1 protocol (%2) not installed to FlightGear Protocol directory (%3)").arg(qgcApp()->applicationName()).arg(fgProtocolXmlFile).arg(fgProtocolDir.path()),
                            QMessageBox::Cancel,
                            MainWindow::instance());
         msgBox.setWindowModality(Qt::ApplicationModal);
@@ -938,7 +939,7 @@ bool QGCFlightGearLink::connectSimulation()
     }
 
     // We start out at our home position
-    QGeoCoordinate homePosition = qgcApp()->lastKnownHomePosition();
+    QGeoCoordinate homePosition = QGroundControlQmlGlobal::flightMapPosition();
     _fgArgList << QString("--lat=%1").arg(homePosition.latitude());
     _fgArgList << QString("--lon=%1").arg(homePosition.longitude());
     // The altitude is not set because an altitude not equal to the ground altitude leads to a non-zero default throttle in flightgear

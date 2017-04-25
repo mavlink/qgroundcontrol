@@ -39,8 +39,8 @@ bool UASMessage::severityIsError()
     }
 }
 
-UASMessageHandler::UASMessageHandler(QGCApplication* app)
-    : QGCTool(app)
+UASMessageHandler::UASMessageHandler(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
     , _activeVehicle(NULL)
     , _activeComponent(-1)
     , _multiComp(false)

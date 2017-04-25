@@ -46,6 +46,7 @@
         <file alias="Airframe/HelicopterCoaxial">src/AutoPilotPlugins/Common/Images/HelicopterCoaxial.svg</file>
         <file alias="wifi.svg">src/AutoPilotPlugins/Common/Images/wifi.svg</file>
         <file alias="arrow-down.png">src/QmlControls/arrow-down.png</file>
+		<file alias="camera.svg">resources/camera.svg</file>
         <file alias="check.png">src/QmlControls/check.png</file>
         <file alias="FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
         <file alias="FlightModesComponentIcon.png">src/AutoPilotPlugins/PX4/Images/FlightModesComponentIcon.png</file>
@@ -56,6 +57,7 @@
         <file alias="GeoFence.svg">src/AutoPilotPlugins/PX4/Images/GeoFence.svg</file>
         <file alias="GeoFenceLight.svg">src/AutoPilotPlugins/PX4/Images/GeoFenceLight.svg</file>
         <file alias="GeoTagIcon">src/AnalyzeView/GeoTagIcon.svg</file>
+        <file alias="MavlinkConsoleIcon">src/AnalyzeView/MavlinkConsoleIcon.svg</file>
         <file alias="LandMode.svg">src/AutoPilotPlugins/PX4/Images/LandMode.svg</file>
         <file alias="LandModeCopter.svg">src/AutoPilotPlugins/PX4/Images/LandModeCopter.svg</file>
         <file alias="LightsComponentIcon.png">src/AutoPilotPlugins/APM/Images/LightsComponentIcon.png</file>
@@ -163,6 +165,7 @@
         <file alias="PX4/BrandImage">src/FirmwarePlugin/PX4/PX4BrandImage.png</file>
     </qresource>
     <qresource prefix="/res">
+        <file alias="action.svg">resources/action.svg</file>
         <file alias="AntennaRC">resources/Antenna_RC.svg</file>
         <file alias="AntennaT">resources/Antenna_T.svg</file>
         <file alias="ArrowDown.svg">resources/ArrowDown.svg</file>
@@ -174,19 +177,23 @@
         <file alias="gear-white.svg">resources/gear-white.svg</file>
         <file alias="JoystickBezel.png">resources/JoystickBezel.png</file>
         <file alias="JoystickBezelLight.png">resources/JoystickBezelLight.png</file>
+        <file alias="land.svg">resources/land.svg</file>
         <file alias="notile.png">resources/notile.png</file>
-        <file alias="Pause">resources/Pause.svg</file>
+        <file alias="Pause.svg">resources/Pause.svg</file>
+        <file alias="pause-mission.svg">resources/pause-mission.svg</file>
         <file alias="Play">resources/Play.svg</file>
         <file alias="PowerButton">resources/PowerButton.svg</file>
-        <file alias="QGCLogoWhite">resources/QGCLogoWhite.svg</file>
         <file alias="QGCLogoBlack">resources/QGCLogoBlack.svg</file>
+        <file alias="QGCLogoWhite">resources/QGCLogoWhite.svg</file>
         <file alias="QGroundControlConnect">resources/QGroundControlConnect.svg</file>
+        <file alias="rtl.svg">resources/rtl.svg</file>
         <file alias="SplashScreen">resources/SplashScreen.png</file>
         <file alias="Stop">resources/Stop.svg</file>
+        <file alias="takeoff.svg">resources/takeoff.svg</file>
         <file alias="TrashDelete.svg">resources/TrashDelete.svg</file>
+        <file alias="waves.svg">resources/waves.svg</file>
         <file alias="XDelete.svg">resources/XDelete.svg</file>
         <file alias="XDeleteBlack.svg">resources/XDeleteBlack.svg</file>
-        <file alias="waves.svg">resources/waves.svg</file>
         <file>resources/icons/qgroundcontrol.ico</file>
     </qresource>
     <qresource prefix="/res/firmware">

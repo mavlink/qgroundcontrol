@@ -12,6 +12,7 @@
 #include "MissionController.h"
 #include "QGCGeo.h"
 #include "QGroundControlQmlGlobal.h"
+#include "SimpleMissionItem.h"
 
 #include <QPolygonF>
 
@@ -40,11 +41,11 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, QObje
     , _dirty(false)
     , _landingCoordSet(false)
     , _ignoreRecalcSignals(false)
-    , _loiterToLandDistanceFact (0, _loiterToLandDistanceName,  FactMetaData::valueTypeDouble)
-    , _loiterAltitudeFact       (0, _loiterAltitudeName,        FactMetaData::valueTypeDouble)
-    , _loiterRadiusFact         (0, _loiterRadiusName,          FactMetaData::valueTypeDouble)
-    , _landingHeadingFact       (0, _landingHeadingName,        FactMetaData::valueTypeDouble)
-    , _landingAltitudeFact      (0, _landingAltitudeName,       FactMetaData::valueTypeDouble)
+    , _landingDistanceFact  (0, _loiterToLandDistanceName,  FactMetaData::valueTypeDouble)
+    , _loiterAltitudeFact   (0, _loiterAltitudeName,        FactMetaData::valueTypeDouble)
+    , _loiterRadiusFact     (0, _loiterRadiusName,          FactMetaData::valueTypeDouble)
+    , _landingHeadingFact   (0, _landingHeadingName,        FactMetaData::valueTypeDouble)
+    , _landingAltitudeFact  (0, _landingAltitudeName,       FactMetaData::valueTypeDouble)
     , _loiterClockwise(true)
     , _loiterAltitudeRelative(true)
     , _landingAltitudeRelative(true)
@@ -55,24 +56,40 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, QObje
         _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/FWLandingPattern.FactMetaData.json"), NULL /* metaDataParent */);
     }
 
-    _loiterToLandDistanceFact.setMetaData   (_metaDataMap[_loiterToLandDistanceName]);
-    _loiterAltitudeFact.setMetaData         (_metaDataMap[_loiterAltitudeName]);
-    _loiterRadiusFact.setMetaData           (_metaDataMap[_loiterRadiusName]);
-    _landingHeadingFact.setMetaData         (_metaDataMap[_landingHeadingName]);
-    _landingAltitudeFact.setMetaData        (_metaDataMap[_landingAltitudeName]);
+    _landingDistanceFact.setMetaData    (_metaDataMap[_loiterToLandDistanceName]);
+    _loiterAltitudeFact.setMetaData     (_metaDataMap[_loiterAltitudeName]);
+    _loiterRadiusFact.setMetaData       (_metaDataMap[_loiterRadiusName]);
+    _landingHeadingFact.setMetaData     (_metaDataMap[_landingHeadingName]);
+    _landingAltitudeFact.setMetaData    (_metaDataMap[_landingAltitudeName]);
 
-    _loiterToLandDistanceFact.setRawValue   (_loiterToLandDistanceFact.rawDefaultValue());
-    _loiterAltitudeFact.setRawValue         (_loiterAltitudeFact.rawDefaultValue());
-    _loiterRadiusFact.setRawValue           (_loiterRadiusFact.rawDefaultValue());
-    _landingHeadingFact.setRawValue         (_landingHeadingFact.rawDefaultValue());
-    _landingAltitudeFact.setRawValue        (_landingAltitudeFact.rawDefaultValue());
+    _landingDistanceFact.setRawValue    (_landingDistanceFact.rawDefaultValue());
+    _loiterAltitudeFact.setRawValue     (_loiterAltitudeFact.rawDefaultValue());
+    _loiterRadiusFact.setRawValue       (_loiterRadiusFact.rawDefaultValue());
+    _landingHeadingFact.setRawValue     (_landingHeadingFact.rawDefaultValue());
+    _landingAltitudeFact.setRawValue    (_landingAltitudeFact.rawDefaultValue());
 
     connect(&_loiterAltitudeFact,       &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_updateLoiterCoodinateAltitudeFromFact);
-    connect(&_landingAltitudeFact,       &Fact::valueChanged,                                   this, &FixedWingLandingComplexItem::_updateLandingCoodinateAltitudeFromFact);
-    connect(&_loiterToLandDistanceFact, &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_recalcLoiterCoordFromFacts);
-    connect(&_landingHeadingFact,       &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_recalcLoiterCoordFromFacts);
-    connect(this,                       &FixedWingLandingComplexItem::loiterCoordinateChanged,  this, &FixedWingLandingComplexItem::_recalcFactsFromCoords);
-    connect(this,                       &FixedWingLandingComplexItem::landingCoordinateChanged, this, &FixedWingLandingComplexItem::_recalcFactsFromCoords);
+    connect(&_landingAltitudeFact,      &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_updateLandingCoodinateAltitudeFromFact);
+
+    connect(&_landingDistanceFact,      &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_recalcFromHeadingAndDistanceChange);
+    connect(&_landingHeadingFact,       &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_recalcFromHeadingAndDistanceChange);
+
+    connect(&_loiterRadiusFact,         &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_recalcFromRadiusChange);
+    connect(this,                       &FixedWingLandingComplexItem::loiterClockwiseChanged,   this, &FixedWingLandingComplexItem::_recalcFromRadiusChange);
+
+    connect(this,                       &FixedWingLandingComplexItem::loiterCoordinateChanged,  this, &FixedWingLandingComplexItem::_recalcFromCoordinateChange);
+    connect(this,                       &FixedWingLandingComplexItem::landingCoordinateChanged, this, &FixedWingLandingComplexItem::_recalcFromCoordinateChange);
+
+    connect(&_loiterAltitudeFact,       &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
+    connect(&_landingAltitudeFact,      &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
+    connect(&_landingDistanceFact,      &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
+    connect(&_landingHeadingFact,       &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
+    connect(&_loiterRadiusFact,         &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
+    connect(this,                       &FixedWingLandingComplexItem::loiterCoordinateChanged,          this, &FixedWingLandingComplexItem::_setDirty);
+    connect(this,                       &FixedWingLandingComplexItem::landingCoordinateChanged,         this, &FixedWingLandingComplexItem::_setDirty);
+    connect(this,                       &FixedWingLandingComplexItem::loiterClockwiseChanged,           this, &FixedWingLandingComplexItem::_setDirty);
+    connect(this,                       &FixedWingLandingComplexItem::loiterAltitudeRelativeChanged,    this, &FixedWingLandingComplexItem::_setDirty);
+    connect(this,                       &FixedWingLandingComplexItem::landingAltitudeRelativeChanged,   this, &FixedWingLandingComplexItem::_setDirty);
 }
 
 int FixedWingLandingComplexItem::lastSequenceNumber(void) const
@@ -89,8 +106,10 @@ void FixedWingLandingComplexItem::setDirty(bool dirty)
     }
 }
 
-void FixedWingLandingComplexItem::save(QJsonObject& saveObject) const
+void FixedWingLandingComplexItem::save(QJsonArray&  missionItems)
 {
+    QJsonObject saveObject;
+
     saveObject[JsonHelper::jsonVersionKey] =                    1;
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
@@ -112,6 +131,8 @@ void FixedWingLandingComplexItem::save(QJsonObject& saveObject) const
     saveObject[_jsonLoiterClockwiseKey] =           _loiterClockwise;
     saveObject[_jsonLoiterAltitudeRelativeKey] =    _loiterAltitudeRelative;
     saveObject[_jsonLandingAltitudeRelativeKey] =   _landingAltitudeRelative;
+
+    missionItems.append(saveObject);
 }
 
 void FixedWingLandingComplexItem::setSequenceNumber(int sequenceNumber)
@@ -143,11 +164,13 @@ bool FixedWingLandingComplexItem::load(const QJsonObject& complexObject, int seq
     QString itemType = complexObject[VisualMissionItem::jsonTypeKey].toString();
     QString complexType = complexObject[ComplexMissionItem::jsonComplexItemTypeKey].toString();
     if (itemType != VisualMissionItem::jsonTypeComplexItemValue || complexType != jsonComplexItemTypeValue) {
-        errorString = tr("QGroundControl does not support loading this complex mission item type: %1:2").arg(itemType).arg(complexType);
+        errorString = tr("%1 does not support loading this complex mission item type: %2:%3").arg(qgcApp()->applicationName()).arg(itemType).arg(complexType);
         return false;
     }
 
     setSequenceNumber(sequenceNumber);
+
+    _ignoreRecalcSignals = true;
 
     QGeoCoordinate coordinate;
     if (!JsonHelper::loadGeoCoordinate(complexObject[_jsonLoiterCoordinateKey], true /* altitudeRequired */, coordinate, errorString)) {
@@ -168,7 +191,9 @@ bool FixedWingLandingComplexItem::load(const QJsonObject& complexObject, int seq
     _landingAltitudeRelative = complexObject[_jsonLandingAltitudeRelativeKey].toBool();
 
     _landingCoordSet = true;
-    _recalcFactsFromCoords();
+
+    _ignoreRecalcSignals = false;
+    _recalcFromCoordinateChange();
 
     return true;
 }
@@ -183,11 +208,11 @@ bool FixedWingLandingComplexItem::specifiesCoordinate(void) const
     return true;
 }
 
-QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
+void FixedWingLandingComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
 {
-    QmlObjectListModel* pMissionItems = new QmlObjectListModel;
-
     int seqNum = _sequenceNumber;
+
+    // IMPORTANT NOTE: Any changes here must also be taken into account in scanForItem
 
     MissionItem* item = new MissionItem(seqNum++,                           // sequence number
                                         MAV_CMD_DO_LAND_START,              // MAV_CMD
@@ -195,8 +220,8 @@ QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
                                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  // param 1-7
                                         true,                               // autoContinue
                                         false,                              // isCurrentItem
-                                        pMissionItems);                     // parent - allow delete on pMissionItems to delete everthing
-    pMissionItems->append(item);
+                                        missionItemParent);
+    items.append(item);
 
     float loiterRadius = _loiterRadiusFact.rawValue().toDouble() * (_loiterClockwise ? 1.0 : -1.0);
     item = new MissionItem(seqNum++,
@@ -211,8 +236,8 @@ QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
                            _loiterAltitudeFact.rawValue().toDouble(),
                            true,                            // autoContinue
                            false,                           // isCurrentItem
-                           pMissionItems);                  // parent - allow delete on pMissionItems to delete everthing
-    pMissionItems->append(item);
+                           missionItemParent);
+    items.append(item);
 
     item = new MissionItem(seqNum++,
                            MAV_CMD_NAV_LAND,
@@ -220,24 +245,92 @@ QmlObjectListModel* FixedWingLandingComplexItem::getMissionItems(void) const
                            0.0, 0.0, 0.0, 0.0,                 // param 1-4
                            _landingCoordinate.latitude(),
                            _landingCoordinate.longitude(),
-                           0.0,                                // altitude
+                           _landingAltitudeFact.rawValue().toDouble(),
                            true,                               // autoContinue
                            false,                              // isCurrentItem
-                           pMissionItems);                     // parent - allow delete on pMissionItems to delete everthing
-    pMissionItems->append(item);
+                           missionItemParent);
+    items.append(item);
+}
 
-    return pMissionItems;
+bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, Vehicle* vehicle)
+{
+    qCDebug(FixedWingLandingComplexItemLog) << "FixedWingLandingComplexItem::scanForItem count" << visualItems->count();
+
+    if (visualItems->count() < 4) {
+        return false;
+    }
+
+    int lastItem = visualItems->count() - 1;
+
+    SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(lastItem--);
+    if (!item) {
+        return false;
+    }
+    MissionItem& missionItemLand = item->missionItem();
+    if (missionItemLand.command() != MAV_CMD_NAV_LAND ||
+            !(missionItemLand.frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT || missionItemLand.frame() == MAV_FRAME_GLOBAL) ||
+            missionItemLand.param1() != 0 || missionItemLand.param2() != 0 || missionItemLand.param3() != 0 || missionItemLand.param4() == 1.0) {
+        return false;
+    }
+
+    item = visualItems->value<SimpleMissionItem*>(lastItem--);
+    if (!item) {
+        return false;
+    }
+    MissionItem& missionItemLoiter = item->missionItem();
+    if (missionItemLoiter.command() != MAV_CMD_NAV_LOITER_TO_ALT ||
+            !(missionItemLoiter.frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT || missionItemLoiter.frame() == MAV_FRAME_GLOBAL) ||
+            missionItemLoiter.param1() != 1.0 || missionItemLoiter.param3() != 0 || missionItemLoiter.param4() != 1.0) {
+        return false;
+    }
+
+    item = visualItems->value<SimpleMissionItem*>(lastItem--);
+    if (!item) {
+        return false;
+    }
+    MissionItem& missionItemDoLandStart = item->missionItem();
+    if (missionItemDoLandStart.command() != MAV_CMD_DO_LAND_START ||
+            missionItemDoLandStart.param1() != 0 || missionItemDoLandStart.param2() != 0 || missionItemDoLandStart.param3() != 0 || missionItemDoLandStart.param4() != 0|| missionItemDoLandStart.param5() != 0|| missionItemDoLandStart.param6() != 0|| missionItemDoLandStart.param6() != 0) {
+        return false;
+    }
+
+    // We made it this far so we do have a Fixed Wing Landing Pattern item at the end of the mission
+
+    FixedWingLandingComplexItem* complexItem = new FixedWingLandingComplexItem(vehicle, visualItems);
+
+    complexItem->_ignoreRecalcSignals = true;
+
+    complexItem->_loiterAltitudeRelative = missionItemLoiter.frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT;
+    complexItem->_loiterRadiusFact.setRawValue(qAbs(missionItemLoiter.param2()));
+    complexItem->_loiterClockwise = missionItemLoiter.param2() > 0;
+    complexItem->_loiterCoordinate.setLatitude(missionItemLoiter.param5());
+    complexItem->_loiterCoordinate.setLongitude(missionItemLoiter.param6());
+    complexItem->_loiterAltitudeFact.setRawValue(missionItemLoiter.param7());
+
+    complexItem->_landingAltitudeRelative = missionItemLand.frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT;
+    complexItem->_landingCoordinate.setLatitude(missionItemLand.param5());
+    complexItem->_landingCoordinate.setLongitude(missionItemLand.param6());
+    complexItem->_landingAltitudeFact.setRawValue(missionItemLand.param7());
+
+    complexItem->_landingCoordSet = true;
+
+    complexItem->_ignoreRecalcSignals = false;
+    complexItem->_recalcFromCoordinateChange();
+    complexItem->setDirty(false);
+
+    lastItem = visualItems->count() - 1;
+    visualItems->removeAt(lastItem--)->deleteLater();
+    visualItems->removeAt(lastItem--)->deleteLater();
+    visualItems->removeAt(lastItem--)->deleteLater();
+
+    visualItems->append(complexItem);
+
+    return true;
 }
 
 double FixedWingLandingComplexItem::complexDistance(void) const
 {
     return _loiterCoordinate.distanceTo(_landingCoordinate);
-}
-
-void FixedWingLandingComplexItem::setCruiseSpeed(double cruiseSpeed)
-{
-    // We don't care about cruise speed
-    Q_UNUSED(cruiseSpeed);
 }
 
 void FixedWingLandingComplexItem::setLandingCoordinate(const QGeoCoordinate& coordinate)
@@ -253,7 +346,7 @@ void FixedWingLandingComplexItem::setLandingCoordinate(const QGeoCoordinate& coo
             emit landingCoordinateChanged(coordinate);
             _ignoreRecalcSignals = false;
             _landingCoordSet = true;
-            _recalcLoiterCoordFromFacts();
+            _recalcFromHeadingAndDistanceChange();
             emit landingCoordSetChanged(true);
         }
     }
@@ -268,27 +361,94 @@ void FixedWingLandingComplexItem::setLoiterCoordinate(const QGeoCoordinate& coor
     }
 }
 
-void FixedWingLandingComplexItem::_recalcLoiterCoordFromFacts(void)
+double FixedWingLandingComplexItem::_mathematicAngleToHeading(double angle)
 {
-    if (!_ignoreRecalcSignals && _landingCoordSet) {
-        double          north, east, down;
-        QGeoCoordinate  tangentOrigin = _landingCoordinate;
+    double heading = (angle - 90) * -1;
+    if (heading < 0) {
+        heading += 360;
+    }
 
-        convertGeoToNed(_landingCoordinate, tangentOrigin, &north, &east, &down);
+    return heading;
+}
 
-        // Heading is from loiter to land, so we need to rotate angle 180 degrees and go the opposite direction
+double FixedWingLandingComplexItem::_headingToMathematicAngle(double heading)
+{
+    return heading - 90 * -1;
+}
+
+void FixedWingLandingComplexItem::_recalcFromRadiusChange(void)
+{
+    // Fixed:
+    //      land
+    //      loiter tangent
+    //      distance
+    //      radius
+    //      heading
+    // Adjusted:
+    //      loiter
+
+    if (!_ignoreRecalcSignals) {
+        // These are our known values
+        double radius  = _loiterRadiusFact.rawValue().toDouble();
+        double landToTangentDistance = _landingDistanceFact.rawValue().toDouble();
         double heading = _landingHeadingFact.rawValue().toDouble();
-        heading += 180.0;
-        heading *= -1.0;
 
-        QPointF originPoint(east, north);
-        north += _loiterToLandDistanceFact.rawValue().toDouble();
-        QPointF loiterPoint(east, north);
-        QPointF rotatedLoiterPoint = _rotatePoint(loiterPoint, originPoint, heading);
+        double landToLoiterDistance = _landingCoordinate.distanceTo(_loiterCoordinate);
+        if (landToLoiterDistance < radius) {
+            // Degnenerate case: Move tangent to loiter point
+            _loiterTangentCoordinate = _loiterCoordinate;
 
-        convertNedToGeo(rotatedLoiterPoint.y(), rotatedLoiterPoint.x(), down, tangentOrigin, &_loiterCoordinate);
+            double heading = _landingCoordinate.azimuthTo(_loiterTangentCoordinate);
+
+            _ignoreRecalcSignals = true;
+            _landingHeadingFact.setRawValue(heading);
+            emit loiterTangentCoordinateChanged(_loiterTangentCoordinate);
+            _ignoreRecalcSignals = false;
+        } else {
+            double landToLoiterDistance = qSqrt(qPow(radius, 2) + qPow(landToTangentDistance, 2));
+            double angleLoiterToTangent = qRadiansToDegrees(qAsin(radius/landToLoiterDistance)) * (_loiterClockwise ? -1 : 1);
+
+            _loiterCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToLoiterDistance, heading + 180 + angleLoiterToTangent);
+
+            _ignoreRecalcSignals = true;
+            emit loiterCoordinateChanged(_loiterCoordinate);
+            emit coordinateChanged(_loiterCoordinate);
+            _ignoreRecalcSignals = false;
+        }
+    }
+}
+
+void FixedWingLandingComplexItem::_recalcFromHeadingAndDistanceChange(void)
+{
+    // Fixed:
+    //      land
+    //      heading
+    //      distance
+    //      radius
+    // Adjusted:
+    //      loiter
+    //      loiter tangent
+
+    if (!_ignoreRecalcSignals && _landingCoordSet) {
+        // These are our known values
+        double radius = _loiterRadiusFact.rawValue().toDouble();
+        double landToTangentDistance = _landingDistanceFact.rawValue().toDouble();
+        double heading = _landingHeadingFact.rawValue().toDouble();
+
+        // Calculate loiter tangent coordinate
+        _loiterTangentCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToTangentDistance, heading + 180);
+
+        // Calculate the distance and angle to the loiter coordinate
+        QGeoCoordinate tangent = _landingCoordinate.atDistanceAndAzimuth(landToTangentDistance, 0);
+        QGeoCoordinate loiter = tangent.atDistanceAndAzimuth(radius, 90);
+        double loiterDistance = _landingCoordinate.distanceTo(loiter);
+        double loiterAzimuth = _landingCoordinate.azimuthTo(loiter) * (_loiterClockwise ? -1 : 1);
+
+        // Use those values to get the new loiter point which takes heading into acount
+        _loiterCoordinate = _landingCoordinate.atDistanceAndAzimuth(loiterDistance, heading + 180 + loiterAzimuth);
 
         _ignoreRecalcSignals = true;
+        emit loiterTangentCoordinateChanged(_loiterTangentCoordinate);
         emit loiterCoordinateChanged(_loiterCoordinate);
         emit coordinateChanged(_loiterCoordinate);
         _ignoreRecalcSignals = false;
@@ -306,42 +466,42 @@ QPointF FixedWingLandingComplexItem::_rotatePoint(const QPointF& point, const QP
     return rotated;
 }
 
-void FixedWingLandingComplexItem::_recalcFactsFromCoords(void)
+void FixedWingLandingComplexItem::_recalcFromCoordinateChange(void)
 {
+    // Fixed:
+    //      land
+    //      loiter
+    //      radius
+    // Adjusted:
+    //      loiter tangent
+    //      heading
+    //      distance
+
     if (!_ignoreRecalcSignals && _landingCoordSet) {
+        // These are our known values
+        double radius = _loiterRadiusFact.rawValue().toDouble();
+        double landToLoiterDistance = _landingCoordinate.distanceTo(_loiterCoordinate);
+        double landToLoiterHeading = _landingCoordinate.azimuthTo(_loiterCoordinate);
 
-        // Prevent signal recursion
-        _ignoreRecalcSignals = true;
+        double landToTangentDistance;
+        if (landToLoiterDistance < radius) {
+            // Degenerate case, set tangent to loiter coordinate
+            _loiterTangentCoordinate = _loiterCoordinate;
+            landToTangentDistance = _landingCoordinate.distanceTo(_loiterTangentCoordinate);
+        } else {
+            double loiterToTangentAngle = qRadiansToDegrees(qAsin(radius/landToLoiterDistance)) * (_loiterClockwise ? 1 : -1);
+            landToTangentDistance = qSqrt(qPow(landToLoiterDistance, 2) - qPow(radius, 2));
 
-        // Calc new distance
+            _loiterTangentCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToTangentDistance, landToLoiterHeading + loiterToTangentAngle);
 
-        double          northLand, eastLand, down;
-        double          northLoiter, eastLoiter;
-        QGeoCoordinate  tangentOrigin = _landingCoordinate;
-
-        convertGeoToNed(_landingCoordinate, tangentOrigin, &northLand, &eastLand, &down);
-        convertGeoToNed(_loiterCoordinate, tangentOrigin, &northLoiter, &eastLoiter, &down);
-
-        double newDistance = sqrt(pow(eastLoiter - eastLand, 2.0) + pow(northLoiter - northLand, 2.0));
-        _loiterToLandDistanceFact.setRawValue(newDistance);
-
-        // Calc new heading
-
-        QPointF vector(eastLand - eastLoiter, northLand - northLoiter);
-        double radians = atan2(vector.y(), vector.x());
-        double degrees = qRadiansToDegrees(radians);
-        // Change angle to north up = 0 degrees
-        degrees -= 90;
-        // Reverse the angle direction to go from mathematic angle (counter-clockwise) to compass heading (clockwise)
-        degrees *= -1.0;
-        // Bring with 0-360 range
-        if (degrees < 0.0) {
-            degrees += 360.0;
-        } else if (degrees > 360.0) {
-            degrees -= 360.0;
         }
-        _landingHeadingFact.setRawValue(degrees);
 
+        double heading = _loiterTangentCoordinate.azimuthTo(_landingCoordinate);
+
+        _ignoreRecalcSignals = true;
+        _landingHeadingFact.setRawValue(heading);
+        _landingDistanceFact.setRawValue(landToTangentDistance);
+        emit loiterTangentCoordinateChanged(_loiterTangentCoordinate);
         _ignoreRecalcSignals = false;
     }
 }
@@ -354,4 +514,14 @@ void FixedWingLandingComplexItem::_updateLoiterCoodinateAltitudeFromFact(void)
 void FixedWingLandingComplexItem::_updateLandingCoodinateAltitudeFromFact(void)
 {
     _landingCoordinate.setAltitude(_landingAltitudeFact.rawValue().toDouble());
+}
+
+void FixedWingLandingComplexItem::_setDirty(void)
+{
+    setDirty(true);
+}
+
+void FixedWingLandingComplexItem::applyNewAltitude(double newAltitude)
+{
+    _loiterAltitudeFact.setRawValue(newAltitude);
 }

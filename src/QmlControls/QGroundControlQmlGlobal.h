@@ -17,11 +17,11 @@
 #include "QGCToolbox.h"
 #include "QGCApplication.h"
 #include "LinkManager.h"
-#include "FlightMapSettings.h"
 #include "SettingsFact.h"
 #include "FactMetaData.h"
 #include "SimulatedPosition.h"
 #include "QGCLoggingCategory.h"
+#include "AppSettings.h"
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -34,10 +34,11 @@ class QGroundControlQmlGlobal : public QGCTool
     Q_OBJECT
 
 public:
-    QGroundControlQmlGlobal(QGCApplication* app);
+    QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox* toolbox);
     ~QGroundControlQmlGlobal();
 
-    Q_PROPERTY(FlightMapSettings*   flightMapSettings   READ flightMapSettings      CONSTANT)
+    Q_PROPERTY(QString              appName             READ appName                CONSTANT)
+
     Q_PROPERTY(LinkManager*         linkManager         READ linkManager            CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager READ multiVehicleManager    CONSTANT)
     Q_PROPERTY(QGCMapEngineManager* mapEngineManager    READ mapEngineManager       CONSTANT)
@@ -48,20 +49,24 @@ public:
     Q_PROPERTY(QGCCorePlugin*       corePlugin          READ corePlugin             CONSTANT)
     Q_PROPERTY(SettingsManager*     settingsManager     READ settingsManager        CONSTANT)
 
-    Q_PROPERTY(int      supportedFirmwareCount          READ supportedFirmwareCount             CONSTANT)
+    Q_PROPERTY(int      supportedFirmwareCount          READ supportedFirmwareCount CONSTANT)
 
-    Q_PROPERTY(qreal                zOrderTopMost       READ zOrderTopMost          CONSTANT) ///< z order for top most items, toolbar, main window sub view
-    Q_PROPERTY(qreal                zOrderWidgets       READ zOrderWidgets          CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
-    Q_PROPERTY(qreal                zOrderMapItems      READ zOrderMapItems         CONSTANT) ///< z order value for map items, for example: mission item indicators
+    Q_PROPERTY(qreal zOrderTopMost              READ zOrderTopMost              CONSTANT) ///< z order for top most items, toolbar, main window sub view
+    Q_PROPERTY(qreal zOrderWidgets              READ zOrderWidgets              CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
+    Q_PROPERTY(qreal zOrderMapItems             READ zOrderMapItems             CONSTANT)
+    Q_PROPERTY(qreal zOrderVehicles             READ zOrderVehicles             CONSTANT)
+    Q_PROPERTY(qreal zOrderWaypointIndicators   READ zOrderWaypointIndicators   CONSTANT)
+    Q_PROPERTY(qreal zOrderTrajectoryLines      READ zOrderTrajectoryLines      CONSTANT)
+    Q_PROPERTY(qreal zOrderWaypointLines        READ zOrderWaypointLines        CONSTANT)
 
     //-------------------------------------------------------------------------
     // MavLink Protocol
     Q_PROPERTY(bool     isVersionCheckEnabled   READ isVersionCheckEnabled      WRITE setIsVersionCheckEnabled      NOTIFY isVersionCheckEnabledChanged)
     Q_PROPERTY(int      mavlinkSystemID         READ mavlinkSystemID            WRITE setMavlinkSystemID            NOTIFY mavlinkSystemIDChanged)
 
-    Q_PROPERTY(QGeoCoordinate lastKnownHomePosition READ lastKnownHomePosition  CONSTANT)
-    Q_PROPERTY(QGeoCoordinate flightMapPosition     MEMBER _flightMapPosition   NOTIFY flightMapPositionChanged)
-    Q_PROPERTY(double         flightMapZoom         MEMBER _flightMapZoom       NOTIFY flightMapZoomChanged)
+    Q_PROPERTY(QGeoCoordinate flightMapPosition     READ flightMapPosition      WRITE setFlightMapPosition          NOTIFY flightMapPositionChanged)
+    Q_PROPERTY(double         flightMapZoom         READ flightMapZoom          WRITE setFlightMapZoom              NOTIFY flightMapZoomChanged)
+    Q_PROPERTY(double         flightMapInitialZoom  MEMBER _flightMapInitialZoom                                    CONSTANT)                               ///< Zoom level to use when either gcs or vehicle shows up for first time
 
     Q_PROPERTY(QString  parameterFileExtension  READ parameterFileExtension CONSTANT)
     Q_PROPERTY(QString  missionFileExtension    READ missionFileExtension   CONSTANT)
@@ -71,10 +76,8 @@ public:
     Q_PROPERTY(QString appSettingsDistanceUnitsString READ appSettingsDistanceUnitsString CONSTANT)
     Q_PROPERTY(QString appSettingsAreaUnitsString READ appSettingsAreaUnitsString CONSTANT)
 
-    Q_PROPERTY(QString qgcVersion READ qgcVersion CONSTANT)
-
-    Q_PROPERTY(bool showTouchAreas MEMBER _showTouchAreas NOTIFY showTouchAreasChanged)
-    Q_PROPERTY(bool showAdvancedUI MEMBER _showAdvancedUI NOTIFY showAdvancedUIChanged)
+    Q_PROPERTY(QString qgcVersion       READ qgcVersion         CONSTANT)
+    Q_PROPERTY(bool    skipSetupPage    READ skipSetupPage      WRITE setSkipSetupPage NOTIFY skipSetupPageChanged)
 
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
@@ -121,11 +124,9 @@ public:
 
     Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
 
-    Q_INVOKABLE QString urlToLocalFile(QUrl url) { return url.toLocalFile(); }
-
     // Property accesors
 
-    FlightMapSettings*      flightMapSettings   ()  { return _flightMapSettings; }
+    QString                 appName             ()  { return qgcApp()->applicationName(); }
     LinkManager*            linkManager         ()  { return _linkManager; }
     MultiVehicleManager*    multiVehicleManager ()  { return _multiVehicleManager; }
     QGCMapEngineManager*    mapEngineManager    ()  { return _mapEngineManager; }
@@ -135,29 +136,35 @@ public:
     MAVLinkLogManager*      mavlinkLogManager   ()  { return _mavlinkLogManager; }
     QGCCorePlugin*          corePlugin          ()  { return _corePlugin; }
     SettingsManager*        settingsManager     ()  { return _settingsManager; }
+    static QGeoCoordinate   flightMapPosition   ();
+    static double           flightMapZoom       ();
 
-    qreal                   zOrderTopMost       ()  { return 1000; }
-    qreal                   zOrderWidgets       ()  { return 100; }
-    qreal                   zOrderMapItems      ()  { return 50; }
+    qreal zOrderTopMost             () { return 1000; }
+    qreal zOrderWidgets             () { return 100; }
+    qreal zOrderMapItems            () { return 50; }
+    qreal zOrderWaypointIndicators  () { return 50; }
+    qreal zOrderVehicles            () { return 49; }
+    qreal zOrderTrajectoryLines     () { return 48; }
+    qreal zOrderWaypointLines       () { return 47; }
 
     bool    isVersionCheckEnabled   () { return _toolbox->mavlinkProtocol()->versionCheckEnabled(); }
     int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
 
-    QGeoCoordinate lastKnownHomePosition() { return qgcApp()->lastKnownHomePosition(); }
-
-    int     supportedFirmwareCount      ();
+    int     supportedFirmwareCount  ();
+    bool    skipSetupPage           () { return _skipSetupPage; }
+    void    setSkipSetupPage        (bool skip);
 
     void    setIsVersionCheckEnabled    (bool enable);
     void    setMavlinkSystemID          (int  id);
+    void    setFlightMapPosition        (QGeoCoordinate& coordinate);
+    void    setFlightMapZoom            (double zoom);
 
-    QString parameterFileExtension(void) const  { return QGCApplication::parameterFileExtension; }
-    QString missionFileExtension(void) const    { return QGCApplication::missionFileExtension; }
-    QString telemetryFileExtension(void) const  { return QGCApplication::telemetryFileExtension; }
+    QString parameterFileExtension(void) const  { return AppSettings::parameterFileExtension; }
+    QString missionFileExtension(void) const    { return AppSettings::missionFileExtension; }
+    QString telemetryFileExtension(void) const  { return AppSettings::telemetryFileExtension; }
 
     QString qgcVersion(void) const { return qgcApp()->applicationVersion(); }
 
-    bool showTouchAreas(void) const { return _showTouchAreas; } ///< Show visible extents of touch areas
-    bool showAdvancedUI(void) const { return _showAdvancedUI; } ///< Show hidden advanced UI
 
     // Overrides from QGCTool
     virtual void setToolbox(QGCToolbox* toolbox);
@@ -168,11 +175,10 @@ signals:
     void mavlinkSystemIDChanged         (int id);
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
     void flightMapZoomChanged           (double flightMapZoom);
-    void showTouchAreasChanged          (bool showTouchAreas);
-    void showAdvancedUIChanged          (bool showAdvancedUI);
+    void skipSetupPageChanged           ();
 
 private:
-    FlightMapSettings*      _flightMapSettings;
+    double                  _flightMapInitialZoom;
     LinkManager*            _linkManager;
     MultiVehicleManager*    _multiVehicleManager;
     QGCMapEngineManager*    _mapEngineManager;
@@ -184,11 +190,12 @@ private:
     FirmwarePluginManager*  _firmwarePluginManager;
     SettingsManager*        _settingsManager;
 
-    QGeoCoordinate          _flightMapPosition;
-    double                  _flightMapZoom;
+    bool                    _skipSetupPage;
 
-    bool                    _showTouchAreas;
-    bool                    _showAdvancedUI;
+    static const char* _flightMapPositionSettingsGroup;
+    static const char* _flightMapPositionLatitudeSettingsKey;
+    static const char* _flightMapPositionLongitudeSettingsKey;
+    static const char* _flightMapZoomSettingsKey;
 };
 
 #endif

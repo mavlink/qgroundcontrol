@@ -29,14 +29,15 @@ class ScreenToolsController : public QQuickItem
 public:
     ScreenToolsController();
 
-    Q_PROPERTY(bool     isAndroid           READ isAndroid      CONSTANT)
-    Q_PROPERTY(bool     isiOS               READ isiOS          CONSTANT)
-    Q_PROPERTY(bool     isMobile            READ isMobile       CONSTANT)
-    Q_PROPERTY(bool     testHighDPI         READ testHighDPI    CONSTANT)
-    Q_PROPERTY(bool     isDebug             READ isDebug        CONSTANT)
-    Q_PROPERTY(bool     isMacOS             READ isMacOS        CONSTANT)
-    Q_PROPERTY(bool     isLinux             READ isLinux        CONSTANT)
-    Q_PROPERTY(QString  iOSDevice           READ iOSDevice      CONSTANT)
+    Q_PROPERTY(bool     isAndroid           READ isAndroid       CONSTANT)
+    Q_PROPERTY(bool     isiOS               READ isiOS           CONSTANT)
+    Q_PROPERTY(bool     isMobile            READ isMobile        CONSTANT)
+    Q_PROPERTY(bool     testHighDPI         READ testHighDPI     CONSTANT)
+    Q_PROPERTY(bool     isDebug             READ isDebug         CONSTANT)
+    Q_PROPERTY(bool     isMacOS             READ isMacOS         CONSTANT)
+    Q_PROPERTY(bool     isLinux             READ isLinux         CONSTANT)
+    Q_PROPERTY(QString  iOSDevice           READ iOSDevice       CONSTANT)
+    Q_PROPERTY(QString  fixedFontFamily     READ fixedFontFamily CONSTANT)
 
     // Returns current mouse position
     Q_INVOKABLE int mouseX(void) { return QCursor::pos().x(); }
@@ -83,7 +84,8 @@ public:
     bool testHighDPI            () { return false; }
 #endif
 
-    QString  iOSDevice          ();
+    QString  iOSDevice          () const;
+    QString  fixedFontFamily    () const;
 
 };
 

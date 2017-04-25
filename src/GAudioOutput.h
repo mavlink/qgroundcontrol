@@ -39,7 +39,7 @@ class GAudioOutput : public QGCTool
     Q_OBJECT
 
 public:
-    GAudioOutput(QGCApplication* app);
+    GAudioOutput(QGCApplication* app, QGCToolbox* toolbox);
     ~GAudioOutput();
 
     /** @brief List available voices */

@@ -33,7 +33,7 @@ public:
     
     int count(void) const;
     
-    bool dirty(void) { return _dirty; }
+    bool dirty(void) const { return _dirty; }
     void setDirty(bool dirty);
     
     void append(QObject* object);
@@ -51,7 +51,7 @@ public:
     /// Calls deleteLater on all items and this itself.
     void deleteListAndContents(void);
 
-    /// Clears the list and calls delete on each entry
+    /// Clears the list and calls deleteLater on each entry
     void clearAndDeleteContents(void);
 
 signals:

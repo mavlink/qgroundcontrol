@@ -31,7 +31,7 @@ class FactSystem : public QGCTool
     
 public:
     /// All access to FactSystem is through FactSystem::instance, so constructor is private
-    FactSystem(QGCApplication* app);
+    FactSystem(QGCApplication* app, QGCToolbox* toolbox);
 
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);

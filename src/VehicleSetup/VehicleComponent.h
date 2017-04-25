@@ -34,9 +34,8 @@ class VehicleComponent : public QObject
     Q_PROPERTY(bool     requiresSetup           READ requiresSetup          CONSTANT)
     Q_PROPERTY(bool     setupComplete           READ setupComplete          STORED false NOTIFY setupCompleteChanged)
     Q_PROPERTY(QString  iconResource            READ iconResource           CONSTANT)
-    Q_PROPERTY(QUrl     setupSource             READ setupSource            CONSTANT)
+    Q_PROPERTY(QUrl     setupSource             READ setupSource            NOTIFY setupSourceChanged)
     Q_PROPERTY(QUrl     summaryQmlSource        READ summaryQmlSource       CONSTANT)
-    Q_PROPERTY(QString  prerequisiteSetup       READ prerequisiteSetup      CONSTANT)
     Q_PROPERTY(bool     allowSetupWhileArmed    READ allowSetupWhileArmed   CONSTANT)
     
 public:
@@ -50,7 +49,6 @@ public:
     virtual bool setupComplete(void) const = 0;
     virtual QUrl setupSource(void) const = 0;
     virtual QUrl summaryQmlSource(void) const = 0;
-    virtual QString prerequisiteSetup(void) const = 0;
 
     // @return true: Setup panel can be shown while vehicle is armed
     virtual bool allowSetupWhileArmed(void) const;
@@ -67,6 +65,7 @@ public:
 
 signals:
     void setupCompleteChanged(bool setupComplete);
+    void setupSourceChanged(void);
 
 protected slots:
     void _triggerUpdated(QVariant value);

@@ -14,8 +14,8 @@
 #include "FirmwarePluginManager.h"
 #include "FirmwarePlugin.h"
 
-FirmwarePluginManager::FirmwarePluginManager(QGCApplication* app)
-    : QGCTool(app)
+FirmwarePluginManager::FirmwarePluginManager(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
     , _genericFirmwarePlugin(NULL)
 {
 

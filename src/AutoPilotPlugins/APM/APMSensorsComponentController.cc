@@ -24,7 +24,8 @@ QGC_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog, "APMSensorsCompone
 const char* APMSensorsComponentController::_compassCalFitnessParam = "COMPASS_CAL_FIT";
 
 APMSensorsComponentController::APMSensorsComponentController(void)
-    : _statusLog(NULL)
+    : _sensorsComponent(NULL)
+    , _statusLog(NULL)
     , _progressBar(NULL)
     , _compassButton(NULL)
     , _accelButton(NULL)
@@ -68,8 +69,19 @@ APMSensorsComponentController::APMSensorsComponentController(void)
 
     APMAutoPilotPlugin * apmPlugin = qobject_cast<APMAutoPilotPlugin*>(_vehicle->autopilotPlugin());
 
-    _sensorsComponent = apmPlugin->sensorsComponent();
-    connect(_sensorsComponent, &VehicleComponent::setupCompleteChanged, this, &APMSensorsComponentController::setupNeededChanged);
+    // Find the sensors component
+    foreach (const QVariant& varVehicleComponent, apmPlugin->vehicleComponents()) {
+        _sensorsComponent = qobject_cast<APMSensorsComponent*>(varVehicleComponent.value<VehicleComponent*>());
+        if (_sensorsComponent) {
+            break;
+        }
+    }
+
+    if (_sensorsComponent) {
+        connect(_sensorsComponent, &VehicleComponent::setupCompleteChanged, this, &APMSensorsComponentController::setupNeededChanged);
+    } else {
+        qWarning() << "Sensors component is missing";
+    }
 
     connect(qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
 }
@@ -590,15 +602,12 @@ void APMSensorsComponentController::cancelCalibration(void)
 void APMSensorsComponentController::nextClicked(void)
 {
     mavlink_message_t       msg;
-    mavlink_command_ack_t   ack;
-
-    ack.command = 0;
-    ack.result = 1;
-    mavlink_msg_command_ack_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                        qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                        _vehicle->priorityLink()->mavlinkChannel(),
-                                        &msg,
-                                        &ack);
+    mavlink_msg_command_ack_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                      qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                      _vehicle->priorityLink()->mavlinkChannel(),
+                                      &msg,
+                                      0,    // command
+                                      1);   // result
 
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 

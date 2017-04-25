@@ -295,8 +295,8 @@ MAVLinkLogProcessor::processStreamData(uint16_t sequence, uint8_t first_message,
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-MAVLinkLogManager::MAVLinkLogManager(QGCApplication* app)
-    : QGCTool(app)
+MAVLinkLogManager::MAVLinkLogManager(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
     , _enableAutoUpload(true)
     , _enableAutoStart(false)
     , _nam(NULL)
