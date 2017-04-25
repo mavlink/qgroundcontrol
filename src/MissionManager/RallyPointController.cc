@@ -157,6 +157,7 @@ void RallyPointController::sendToVehicle(void)
     } else if (syncInProgress()) {
         qCWarning(RallyPointControllerLog) << "RallyPointController::sendToVehicle called while syncInProgress";
     } else {
+        qCDebug(RallyPointControllerLog) << "RallyPointController::sendToVehicle";
         setDirty(false);
         QList<QGeoCoordinate> rgPoints;
         for (int i=0; i<_points.count(); i++) {
@@ -280,13 +281,13 @@ void RallyPointController::_updateContainsItems(void)
 
 bool RallyPointController::showPlanFromManagerVehicle (void)
 {
-    qCDebug(RallyPointControllerLog) << "showPlanFromManagerVehicle";
+    qCDebug(RallyPointControllerLog) << "showPlanFromManagerVehicle _editMode" << _editMode;
     if (_masterController->offline()) {
         qCWarning(RallyPointControllerLog) << "RallyPointController::showPlanFromManagerVehicle called while offline";
         return true;    // stops further propogation of showPlanFromManagerVehicle due to error
     } else {
         if (!_managerVehicle->initialPlanRequestComplete()) {
-            // The vehicle hasn't completed initial load, we can just wait for newMissionItemsAvailable to be signalled automatically
+            // The vehicle hasn't completed initial load, we can just wait for loadComplete to be signalled automatically
             qCDebug(RallyPointControllerLog) << "showPlanFromManagerVehicle: !initialPlanRequestComplete, wait for signal";
             return true;
         } else if (syncInProgress()) {

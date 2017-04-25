@@ -186,6 +186,7 @@ void GeoFenceController::sendToVehicle(void)
     } else if (syncInProgress()) {
         qCWarning(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while syncInProgress";
     } else {
+        qCDebug(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle";
         _geoFenceManager->sendToVehicle(_breachReturnPoint, _mapPolygon.pathModel());
         _mapPolygon.setDirty(false);
         setDirty(false);
@@ -316,14 +317,14 @@ void GeoFenceController::_updateContainsItems(void)
 
 bool GeoFenceController::showPlanFromManagerVehicle(void)
 {
-    qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle";
+    qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle" << _editMode;
     if (_masterController->offline()) {
         qCWarning(GeoFenceControllerLog) << "GeoFenceController::showPlanFromManagerVehicle called while offline";
         return true;    // stops further propogation of showPlanFromManagerVehicle due to error
     } else {
         _itemsRequested = true;
         if (!_managerVehicle->initialPlanRequestComplete()) {
-            // The vehicle hasn't completed initial load, we can just wait for newMissionItemsAvailable to be signalled automatically
+            // The vehicle hasn't completed initial load, we can just wait for loadComplete to be signalled automatically
             qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle: !initialPlanRequestComplete, wait for signal";
             return true;
         } else if (syncInProgress()) {
