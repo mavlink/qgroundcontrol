@@ -167,11 +167,8 @@ QGCView {
             message: qsTr("Do you want to remove the mission from the vehicle?")
 
             function accept() {
-                _missionController.removeAllFromVehicle()
-                _geoFenceController.removeAllFromVehicle()
-                _rallyPointController.removeAllFromVehicle()
+                _planMasterController.removeAllFromVehicle()
                 hideDialog()
-
             }
         }
     }

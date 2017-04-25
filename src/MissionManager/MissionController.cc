@@ -321,7 +321,7 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
             CameraSection* cameraSection = settingsItem->cameraSection();
             if (!cameraSection->specifyGimbal()) {
                 cameraSection->setSpecifyGimbal(true);
-                cameraSection->gimbalYaw()->setRawValue(-90.0);
+                cameraSection->gimbalPitch()->setRawValue(-90.0);
             }
         }
     } else if (itemName == _fwLandingMissionItemName) {
@@ -371,7 +371,7 @@ void MissionController::removeMissionItem(int index)
             if (_controllerVehicle->firmwarePlugin()->hasGimbal(_controllerVehicle, rollSupported, pitchSupported, yawSupported) && pitchSupported) {
                 MissionSettingsItem* settingsItem = _visualItems->value<MissionSettingsItem*>(0);
                 CameraSection* cameraSection = settingsItem->cameraSection();
-                if (cameraSection->specifyGimbal() && cameraSection->gimbalYaw()->rawValue().toDouble() == -90.0 && cameraSection->gimbalPitch()->rawValue().toDouble() == 0.0) {
+                if (cameraSection->specifyGimbal() && cameraSection->gimbalPitch()->rawValue().toDouble() == -90.0 && cameraSection->gimbalYaw()->rawValue().toDouble() == 0.0) {
                     cameraSection->setSpecifyGimbal(false);
                 }
             }
