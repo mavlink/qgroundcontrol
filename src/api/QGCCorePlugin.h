@@ -10,6 +10,7 @@
 #pragma once
 
 #include "QGCToolbox.h"
+#include "QGCPalette.h"
 
 #include <QObject>
 #include <QVariantList>
@@ -78,7 +79,10 @@ public:
                                                                   "You should do so only if instructed by customer support. Are you sure you want to enable Advanced Mode?"); }
 
     /// @return An instance of an alternate postion source (or NULL if not available)
-    virtual QGeoPositionInfoSource* createPositionSource    (QObject* parent) { Q_UNUSED(parent); return NULL; }
+    virtual QGeoPositionInfoSource* createPositionSource(QObject* parent) { Q_UNUSED(parent); return NULL; }
+
+    /// Allows a plugin to override the specified color name from the palette
+    virtual void paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo);
 
     bool showTouchAreas(void) const { return _showTouchAreas; }
     bool showAdvancedUI(void) const { return _showAdvancedUI; }
