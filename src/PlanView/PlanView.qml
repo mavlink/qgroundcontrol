@@ -138,7 +138,7 @@ QGCView {
                     text:       qsTr("Pause and Upload")
                     onClicked: {
                         _activeVehicle.flightMode = _activeVehicle.pauseFlightMode
-                        _missionController.sendToVehicle()
+                        _planMasterController.sendToVehicle()
                         hideDialog()
                     }
                 }

@@ -129,7 +129,7 @@ Rectangle {
                 anchors.bottom:     parent.bottom
                 exclusiveGroup:     mainActionGroup
                 source:             "/qmlimages/Analyze.svg"
-                visible:            !ScreenTools.isMobile
+                visible:            !ScreenTools.isMobile && QGroundControl.corePlugin.showAdvancedUI
                 onClicked:          toolBar.showAnalyzeView()
             }
 
