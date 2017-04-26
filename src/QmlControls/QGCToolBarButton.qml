@@ -26,9 +26,9 @@ Item {
     property bool           logo:           false
     property ExclusiveGroup exclusiveGroup:  null
 
-    readonly property real _topBottomMargins: ScreenTools.defaultFontPixelHeight / 2
-
     signal clicked()
+
+    readonly property real _topBottomMargins: ScreenTools.defaultFontPixelHeight / 2
 
     onExclusiveGroupChanged: {
         if (exclusiveGroup) {
@@ -41,7 +41,7 @@ Item {
     Rectangle {
         anchors.fill:   parent
         visible:        logo
-        color:          "#4A2C6D"
+        color:          qgcPal.brandingPurple
     }
 
     QGCColoredImage {
