@@ -35,8 +35,9 @@ public:
     void    resetBind               ();
     bool    armed                   () { return _armed; }
 
-    Vehicle* vehicle                () { return _vehicle; }
-    CameraControl*          cameraControl       () { return _cameraControl; }
+    Vehicle*            vehicle         () { return _vehicle; }
+    CameraControl*      cameraControl   () { return _cameraControl; }
+    QList<uint16_t>     rawChannels     () { return _rawChannels; }
 
     TyphoonHQuickInterface::M4State     m4State             () { return _m4State; }
     const ControllerLocation&           controllerLocation  () { return _controllerLocation; }
@@ -92,6 +93,7 @@ private:
     bool    _handleCommand                      (m4Packet& packet);
     void    _switchChanged                      (m4Packet& packet);
     void    _handleMixedChannelData             (m4Packet& packet);
+    void    _handleRawChannelData               (m4Packet& packet);
     void    _handControllerFeedback             (m4Packet& packet);
 
 signals:
@@ -109,6 +111,7 @@ signals:
     void    wifiConnected                       ();
     void    wifiDisconnected                    ();
     void    batteryUpdate                       ();
+    void    rawChannelsChanged                  ();
 
 private:
     M4SerialComm* _commPort;
@@ -148,4 +151,5 @@ private:
     TyphoonHQuickInterface::M4State     _m4State;
     QString                 _currentConnection;
     bool                    _armed;
+    QList<uint16_t>         _rawChannels;
 };

@@ -1334,7 +1334,7 @@ TyphoonHM4Interface::_handleChannel(m4Packet& packet)
     Q_UNUSED(packet);
     switch(packet.commandID()) {
         case Yuneec::CMD_RX_FEEDBACK_DATA:
-            qCDebug(YuneecLogVerbose) << "Received TYPE_CHN: CMD_RX_FEEDBACK_DATA";
+            qCDebug(YuneecLog) << "Received TYPE_CHN: CMD_RX_FEEDBACK_DATA";
             /* From original Java code
              *
              * We're not going to ever receive this unless the Typhoon is running
@@ -1347,10 +1347,13 @@ TyphoonHM4Interface::_handleChannel(m4Packet& packet)
             */
             break;
         case Yuneec::CMD_TX_CHANNEL_DATA_MIXED:
+            //qCDebug(YuneecLogVerbose) << "CMD_TX_CHANNEL_DATA_MIXED";
             _handleMixedChannelData(packet);
             break;
         case Yuneec::CMD_TX_CHANNEL_DATA_RAW:
             //-- We don't yet use this
+            //qCDebug(YuneecLogVerbose) << "CMD_TX_CHANNEL_DATA_RAW";
+            _handleRawChannelData(packet);
             break;
         case 0x82:
             //-- COMMAND_M4_SEND_COMPRESS_TRIM_TO_PAD
@@ -1412,6 +1415,38 @@ TyphoonHM4Interface::_switchChanged(m4Packet& packet)
                 break;
         }
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHM4Interface::_handleRawChannelData(m4Packet& packet)
+{
+    QByteArray values = packet.commandValues();
+    int analogChannelCount = _rxBindInfoFeedback.aNum  ? _rxBindInfoFeedback.aNum  : 10;
+    int val1, val2, startIndex;
+    _rawChannels.clear();
+    for(int i = 0; i < analogChannelCount; i++) {
+        uint16_t value = 0;
+        startIndex = (int)floor(i * 1.5);
+        val1 = values[startIndex] & 0xff;
+        val2 = values[startIndex + 1] & 0xff;
+        if(i % 2 == 0) {
+            value = val1 << 4 | val2 >> 4;
+        } else {
+            value = (val1 & 0x0f) << 8 | val2;
+        }
+        _rawChannels.append(value);
+    }
+    emit rawChannelsChanged();
+    /*
+    QString resp = QString("Raw channels (%1): ").arg(analogChannelCount);
+    QString temp;
+    for(int i = 0; i < channels.size(); i++) {
+        temp.sprintf(" %05u, ", channels[i]);
+        resp += temp;
+    }
+    qDebug() << resp;
+    */
 }
 
 //-----------------------------------------------------------------------------
