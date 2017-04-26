@@ -1528,6 +1528,19 @@ int MissionController::resumeMissionIndex(void) const
     return resumeIndex;
 }
 
+int MissionController::currentMissionIndex(void) const
+{
+    if (_editMode) {
+        return -1;
+    } else {
+        int currentIndex = _missionManager->currentIndex();
+        if (!_controllerVehicle->firmwarePlugin()->sendHomePositionToVehicle()) {
+            currentIndex++;
+        }
+        return currentIndex;
+    }
+}
+
 void MissionController::_currentMissionIndexChanged(int sequenceNumber)
 {
     if (!_editMode) {
@@ -1539,6 +1552,7 @@ void MissionController::_currentMissionIndexChanged(int sequenceNumber)
             VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
             item->setIsCurrentItem(item->sequenceNumber() == sequenceNumber);
         }
+        emit currentMissionIndexChanged(currentMissionIndex());
     }
 }
 
