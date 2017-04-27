@@ -43,7 +43,7 @@ class MAVLinkProtocol : public QGCTool
     Q_OBJECT
 
 public:
-    MAVLinkProtocol(QGCApplication* app);
+    MAVLinkProtocol(QGCApplication* app, QGCToolbox* toolbox);
     ~MAVLinkProtocol();
 
     /** @brief Get the human-friendly name of this protocol */
@@ -130,7 +130,7 @@ protected:
 
 signals:
     /// Heartbeat received on link
-    void vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType);
+    void vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType);
 
     /** @brief Message received and directly copied via signal */
     void messageReceived(LinkInterface* link, mavlink_message_t message);
@@ -158,8 +158,11 @@ signals:
     void radioStatusChanged(LinkInterface* link, unsigned rxerrors, unsigned fixed, int rssi, int remrssi,
     unsigned txbuf, unsigned noise, unsigned remnoise);
     
-    /// @brief Emitted when a temporary log file is ready for saving
-    void saveTempFlightDataLog(QString tempLogfile);
+    /// Emitted when a temporary telemetry log file is ready for saving
+    void saveTelemetryLog(QString tempLogfile);
+
+    /// Emitted when a telemetry log is started to save.
+    void checkTelemetrySavePath(void);
 
 private slots:
     void _vehicleCountChanged(int count);

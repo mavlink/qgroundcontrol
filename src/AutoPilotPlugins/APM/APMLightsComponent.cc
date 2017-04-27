@@ -62,8 +62,3 @@ QUrl APMLightsComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMLightsComponentSummary.qml"));
 }
-
-QString APMLightsComponent::prerequisiteSetup(void) const
-{
-    return QString();
-}

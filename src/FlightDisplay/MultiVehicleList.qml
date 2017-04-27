@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.4
-import QtQuick.Controls 1.3
+import QtQuick          2.3
+import QtQuick.Controls 1.2
 import QtQuick.Layouts  1.2
 
 import QGroundControl               1.0
@@ -52,15 +52,12 @@ QGCListView {
 
             QGCCompassWidget {
                 size:       _widgetHeight
-                heading:    _vehicle.heading.rawValue
                 vehicle:    _vehicle
             }
 
             QGCAttitudeWidget {
                 size:       _widgetHeight
-                active:     true
-                rollAngle:  _vehicle.roll.rawValue
-                pitchAngle: _vehicle.pitch.rawValue
+                vehicle:    _vehicle
             }
         }
 

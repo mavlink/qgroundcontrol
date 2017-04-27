@@ -37,7 +37,9 @@ public:
         valueTypeUint32,
         valueTypeInt32,
         valueTypeFloat,
-        valueTypeDouble
+        valueTypeDouble,
+        valueTypeString,
+        valueTypeBool
     } ValueType_t;
 
     typedef QVariant (*Translator)(const QVariant& from);
@@ -173,6 +175,8 @@ private:
     static QVariant _knotsToMetersPerSecond(const QVariant& knots);
     static QVariant _percentToNorm(const QVariant& percent);
     static QVariant _normToPercent(const QVariant& normalized);
+    static QVariant _centimetersToInches(const QVariant& centimeters);
+    static QVariant _inchesToCentimeters(const QVariant& inches);
 
     struct AppSettingsTranslation_s {
         const char* rawUnits;
@@ -216,6 +220,7 @@ private:
         static const qreal knotsToKPH;
         static const qreal milesToMeters;
         static const qreal feetToMeters;
+        static const qreal inchesToCentimeters;
     } constants;
 
     struct BuiltInTranslation_s {

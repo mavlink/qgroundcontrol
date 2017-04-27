@@ -40,6 +40,7 @@
 #include "LogCompressor.h"
 #include "UAS.h"
 #include "QGCImageProvider.h"
+#include "QGCCorePlugin.h"
 
 #ifndef __mobile__
 #include "Linecharts.h"
@@ -174,6 +175,9 @@ MainWindow::MainWindow()
     connect(qmlTestAction, &QAction::triggered, this, &MainWindow::_showQmlTestWidget);
     _ui.menuWidgets->addAction(qmlTestAction);
 #endif
+
+    connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &MainWindow::_showAdvancedUIChanged);
+    _showAdvancedUIChanged(qgcApp()->toolbox()->corePlugin()->showAdvancedUI());
 
     // Status Bar
     setStatusBar(new QStatusBar(this));
@@ -463,11 +467,6 @@ void MainWindow::configureWindowName()
 **/
 void MainWindow::connectCommonActions()
 {
-    // Audio output
-    _ui.actionMuteAudioOutput->setChecked(qgcApp()->toolbox()->audioOutput()->isMuted());
-    connect(qgcApp()->toolbox()->audioOutput(), &GAudioOutput::mutedChanged, _ui.actionMuteAudioOutput, &QAction::setChecked);
-    connect(_ui.actionMuteAudioOutput, &QAction::triggered, qgcApp()->toolbox()->audioOutput(), &GAudioOutput::mute);
-
     // Connect internal actions
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &MainWindow::_vehicleAdded);
 }
@@ -562,4 +561,14 @@ void MainWindow::_storeVisibleWidgetsSettings(void)
 QObject* MainWindow::rootQmlObject(void)
 {
     return _mainQmlWidgetHolder->getRootObject();
+}
+
+void MainWindow::_showAdvancedUIChanged(bool advanced)
+{
+    if (advanced) {
+        menuBar()->addMenu(_ui.menuFile);
+        menuBar()->addMenu(_ui.menuWidgets);
+    } else {
+        menuBar()->clear();
+    }
 }

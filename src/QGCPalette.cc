@@ -12,6 +12,8 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "QGCPalette.h"
+#include "QGCApplication.h"
+#include "QGCCorePlugin.h"
 
 #include <QApplication>
 #include <QPalette>
@@ -20,106 +22,16 @@ QList<QGCPalette*>   QGCPalette::_paletteObjects;
 
 QGCPalette::Theme QGCPalette::_theme = QGCPalette::Dark;
 
-QColor QGCPalette::_window[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#ffffff"), QColor("#ffffff") },
-    { QColor(0x22, 0x22, 0x22), QColor(0x22, 0x22, 0x22) }
-};
-
-QColor QGCPalette::_windowShade[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#d9d9d9"), QColor("#d9d9d9") },
-    { QColor(51, 51, 51), QColor(51, 51, 51) }
-};
-
-QColor QGCPalette::_windowShadeDark[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#bdbdbd"), QColor("#bdbdbd") },
-    { QColor(40, 40, 40), QColor(40, 40, 40) }
-};
-
-QColor QGCPalette::_text[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#9d9d9d"), QColor("#000000") },
-    { QColor(0x58, 0x58, 0x58), QColor(0xFF, 0xFF, 0xFF) }
-};
-
-QColor QGCPalette::_warningText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#cc0808"), QColor("#cc0808") },
-    { QColor("#fd5d13"), QColor("#fd5d13") }
-};
-
-QColor QGCPalette::_button[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#ffffff"),  QColor("#ffffff") },
-    { QColor(0x58, 0x58, 0x58), QColor(98, 98, 100) },
-};
-
-QColor QGCPalette::_buttonText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#9d9d9d"), QColor("#000000") },
-    { QColor(0x2c, 0x2c, 0x2c), QColor(0xFF, 0xFF, 0xFF) },
-};
-
-QColor QGCPalette::_buttonHighlight[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#e4e4e4"), QColor("#33b5e5") },
-    { QColor(0x58, 0x58, 0x58), QColor(0xed, 0xd4, 0x69) },
-};
-
-QColor QGCPalette::_buttonHighlightText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor(0x2c, 0x2c, 0x2c), QColor(0, 0, 0) },
-    { QColor(0x2c, 0x2c, 0x2c), QColor(0, 0, 0) },
-};
-
-QColor QGCPalette::_primaryButton[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor(0x58, 0x58, 0x58), QColor("#badec5") },
-    { QColor(0x58, 0x58, 0x58), QColor("#badec5") },
-};
-
-QColor QGCPalette::_primaryButtonText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor(0x2c, 0x2c, 0x2c), QColor(0, 0, 0) },
-    { QColor(0x2c, 0x2c, 0x2c), QColor(0, 0, 0) },
-};
-
-QColor QGCPalette::_textField[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#ffffff"), QColor("#ffffff") },
-    { QColor(0x58, 0x58, 0x58), QColor(255, 255, 255) },
-};
-
-QColor QGCPalette::_textFieldText[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#dedede"), QColor("#000000") },
-    { QColor(0x2c, 0x2c, 0x2c), QColor(0, 0, 0) },
-};
-
-QColor QGCPalette::_mapButton[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor(0x58, 0x58, 0x58), QColor(0, 0, 0) },
-    { QColor(0x58, 0x58, 0x58), QColor(0, 0, 0) },
-};
-
-QColor QGCPalette::_mapButtonHighlight[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor(0x58, 0x58, 0x58), QColor(190, 120, 28) },
-    { QColor(0x58, 0x58, 0x58), QColor(190, 120, 28) },
-};
-
-// Map widget colors are not affecting by theming
-QColor QGCPalette::_mapWidgetBorderLight[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor(255, 255, 255), QColor(255, 255, 255) },
-    { QColor(255, 255, 255), QColor(255, 255, 255) },
-};
-
-QColor QGCPalette::_mapWidgetBorderDark[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor(0, 0, 0), QColor(0, 0, 0) },
-    { QColor(0, 0, 0), QColor(0, 0, 0) },
-};
-
-QColor QGCPalette::_brandingPurple[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#4A2C6D"), QColor("#4A2C6D") },
-    { QColor("#4A2C6D"), QColor("#4A2C6D") },
-};
-
-QColor QGCPalette::_brandingBlue[QGCPalette::_cThemes][QGCPalette::_cColorGroups] = {
-    { QColor("#48D6FF"), QColor("#48D6FF") },
-    { QColor("#48D6FF"), QColor("#48D6FF") },
-};
+QMap<int, QMap<int, QMap<QString, QColor>>> QGCPalette::_colorInfoMap;
 
 QGCPalette::QGCPalette(QObject* parent) :
     QObject(parent),
     _colorGroupEnabled(true)
 {
+    if (_colorInfoMap.isEmpty()) {
+        _buildMap();
+    }
+
     // We have to keep track of all QGCPalette objects in the system so we can signal theme change to all of them
     _paletteObjects += this;
 }
@@ -129,6 +41,42 @@ QGCPalette::~QGCPalette()
     bool fSuccess = _paletteObjects.removeOne(this);
     Q_ASSERT(fSuccess);
     Q_UNUSED(fSuccess);
+}
+
+void QGCPalette::_buildMap(void)
+{
+    //                                      Light                 Dark
+    //                                      Disabled   Enabled    Disabled   Enabled
+    DECLARE_QGC_COLOR(window,               "#ffffff", "#ffffff", "#222222", "#222222")
+    DECLARE_QGC_COLOR(windowShade,          "#d9d9d9", "#d9d9d9", "#333333", "#333333")
+    DECLARE_QGC_COLOR(windowShadeDark,      "#bdbdbd", "#bdbdbd", "#282828", "#282828")
+    DECLARE_QGC_COLOR(text,                 "#9d9d9d", "#000000", "#a0a0a0", "#ffffff")
+    DECLARE_QGC_COLOR(warningText,          "#cc0808", "#cc0808", "#f85761", "#f85761")
+    DECLARE_QGC_COLOR(button,               "#ffffff", "#ffffff", "#707070", "#626270")
+    DECLARE_QGC_COLOR(buttonText,           "#9d9d9d", "#000000", "#202020", "#ffffff")
+    DECLARE_QGC_COLOR(buttonHighlight,      "#e4e4e4", "#946120", "#3a3a3a", "#fff291")
+    DECLARE_QGC_COLOR(buttonHighlightText,  "#2c2c2c", "#ffffff", "#2c2c2c", "#000000")
+    DECLARE_QGC_COLOR(primaryButton,        "#585858", "#8cb3be", "#585858", "#8cb3be")
+    DECLARE_QGC_COLOR(primaryButtonText,    "#2c2c2c", "#000000", "#2c2c2c", "#000000")
+    DECLARE_QGC_COLOR(textField,            "#ffffff", "#ffffff", "#585858", "#ffffff")
+    DECLARE_QGC_COLOR(textFieldText,        "#dedede", "#000000", "#2c2c2c", "#000000")
+    DECLARE_QGC_COLOR(mapButton,            "#585858", "#000000", "#585858", "#000000")
+    DECLARE_QGC_COLOR(mapButtonHighlight,   "#585858", "#be781c", "#585858", "#be781c")
+    DECLARE_QGC_COLOR(colorGreen,           "#009431", "#009431", "#00e04b", "#00e04b")
+    DECLARE_QGC_COLOR(colorOrange,          "#b95604", "#b95604", "#de8500", "#de8500")
+    DECLARE_QGC_COLOR(colorRed,             "#ed3939", "#ed3939", "#f32836", "#f32836")
+    DECLARE_QGC_COLOR(colorGrey,            "#808080", "#808080", "#bfbfbf", "#bfbfbf")
+    DECLARE_QGC_COLOR(colorBlue,            "#1a72ff", "#1a72ff", "#536dff", "#536dff")
+    DECLARE_QGC_COLOR(alertBackground,      "#eecc44", "#eecc44", "#eecc44", "#eecc44")
+    DECLARE_QGC_COLOR(alertBorder,          "#808080", "#808080", "#808080", "#808080")
+    DECLARE_QGC_COLOR(alertText,            "#000000", "#000000", "#000000", "#000000")
+    DECLARE_QGC_COLOR(missionItemEditor,    "#585858", "#8cb3be", "#585858", "#8cb3be")
+
+    // Colors are not affecting by theming
+    DECLARE_QGC_COLOR(mapWidgetBorderLight, "#ffffff", "#ffffff", "#ffffff", "#ffffff")
+    DECLARE_QGC_COLOR(mapWidgetBorderDark,  "#000000", "#000000", "#000000", "#000000")
+    DECLARE_QGC_COLOR(brandingPurple,       "#4A2C6D", "#4A2C6D", "#4A2C6D", "#4A2C6D")
+    DECLARE_QGC_COLOR(brandingBlue,         "#48D6FF", "#48D6FF", "#48D6FF", "#48D6FF")
 }
 
 void QGCPalette::setColorGroupEnabled(bool enabled)
@@ -146,7 +94,7 @@ void QGCPalette::setGlobalTheme(Theme newTheme)
     }
 }
 
-void QGCPalette::_signalPaletteChangeToAll(void)
+void QGCPalette::_signalPaletteChangeToAll()
 {
     // Notify all objects of the new theme
     foreach (QGCPalette* palette, _paletteObjects) {
@@ -154,8 +102,7 @@ void QGCPalette::_signalPaletteChangeToAll(void)
     }
 }
 
-
-void QGCPalette::_signalPaletteChanged(void)
+void QGCPalette::_signalPaletteChanged()
 {
     emit paletteChanged();
 }

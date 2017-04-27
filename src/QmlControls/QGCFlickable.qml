@@ -1,4 +1,4 @@
-import QtQuick 2.5
+import QtQuick 2.3
 
 import QGroundControl.Palette 1.0
 
@@ -6,6 +6,7 @@ import QGroundControl.Palette 1.0
 Flickable {
     id:             root
     boundsBehavior: Flickable.StopAtBounds
+    clip:           true
 
     property color indicatorColor: qgcPal.text
 

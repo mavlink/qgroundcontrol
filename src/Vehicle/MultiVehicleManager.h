@@ -33,7 +33,7 @@ class MultiVehicleManager : public QGCTool
     Q_OBJECT
 
 public:
-    MultiVehicleManager(QGCApplication* app);
+    MultiVehicleManager(QGCApplication* app, QGCToolbox* toolbox);
 
     Q_INVOKABLE void        saveSetting (const QString &key, const QString& value);
     Q_INVOKABLE QString     loadSetting (const QString &key, const QString& defaultValue);
@@ -94,7 +94,7 @@ private slots:
     void _setActiveVehiclePhase2(void);
     void _vehicleParametersReadyChanged(bool parametersReady);
     void _sendGCSHeartbeat(void);
-    void _vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType);
+    void _vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType);
 
 private:
     bool _vehicleExists(int vehicleId);

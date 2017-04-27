@@ -19,25 +19,14 @@
 
 static const char* kQmlGlobalKeyName = "QGCQml";
 
-SettingsFact* QGroundControlQmlGlobal::_distanceUnitsFact =                         NULL;
-FactMetaData* QGroundControlQmlGlobal::_distanceUnitsMetaData =                     NULL;
-SettingsFact* QGroundControlQmlGlobal::_areaUnitsFact =                             NULL;
-FactMetaData* QGroundControlQmlGlobal::_areaUnitsMetaData =                         NULL;
-SettingsFact* QGroundControlQmlGlobal::_speedUnitsFact =                            NULL;
-FactMetaData* QGroundControlQmlGlobal::_speedUnitsMetaData =                        NULL;
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingFirmwareTypeFact =            NULL;
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingVehicleTypeFact =             NULL;
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingCruiseSpeedFact =             NULL;
-SettingsFact* QGroundControlQmlGlobal::_offlineEditingHoverSpeedFact =              NULL;
-SettingsFact* QGroundControlQmlGlobal::_batteryPercentRemainingAnnounceFact =       NULL;
+const char* QGroundControlQmlGlobal::_flightMapPositionSettingsGroup =          "FlightMapPosition";
+const char* QGroundControlQmlGlobal::_flightMapPositionLatitudeSettingsKey =    "Latitude";
+const char* QGroundControlQmlGlobal::_flightMapPositionLongitudeSettingsKey =   "Longitude";
+const char* QGroundControlQmlGlobal::_flightMapZoomSettingsKey =                "FlightMapZoom";
 
-const char* QGroundControlQmlGlobal::_virtualTabletJoystickKey  = "VirtualTabletJoystick";
-const char* QGroundControlQmlGlobal::_baseFontPointSizeKey      = "BaseDeviceFontPointSize";
-const char* QGroundControlQmlGlobal::_missionAutoLoadDirKey     = "MissionAutoLoadDir";
-
-QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
-    : QGCTool(app)
-    , _flightMapSettings(NULL)
+QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
+    , _flightMapInitialZoom(14.7)   // About 500 meter scale
     , _linkManager(NULL)
     , _multiVehicleManager(NULL)
     , _mapEngineManager(NULL)
@@ -47,13 +36,9 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
     , _mavlinkLogManager(NULL)
     , _corePlugin(NULL)
     , _firmwarePluginManager(NULL)
-    , _virtualTabletJoystick(false)
-    , _baseFontPointSize(0.0)
+    , _settingsManager(NULL)
+    , _skipSetupPage(false)
 {
-    QSettings settings;
-    _virtualTabletJoystick  = settings.value(_virtualTabletJoystickKey, false).toBool();
-    _baseFontPointSize      = settings.value(_baseFontPointSizeKey, 0.0).toDouble();
-
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     setParent(NULL);
 }
@@ -66,7 +51,7 @@ QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
 void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
-    _flightMapSettings      = toolbox->flightMapSettings();
+
     _linkManager            = toolbox->linkManager();
     _multiVehicleManager    = toolbox->multiVehicleManager();
     _mapEngineManager       = toolbox->mapEngineManager();
@@ -76,6 +61,7 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _mavlinkLogManager      = toolbox->mavlinkLogManager();
     _corePlugin             = toolbox->corePlugin();
     _firmwarePluginManager  = toolbox->firmwarePluginManager();
+    _settingsManager        = toolbox->settingsManager();
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
@@ -167,30 +153,6 @@ void QGroundControlQmlGlobal::stopAllMockLinks(void)
 #endif
 }
 
-void QGroundControlQmlGlobal::setIsDarkStyle(bool dark)
-{
-    qgcApp()->setStyle(dark);
-    emit isDarkStyleChanged(dark);
-}
-
-void QGroundControlQmlGlobal::setIsAudioMuted(bool muted)
-{
-    qgcApp()->toolbox()->audioOutput()->mute(muted);
-    emit isAudioMutedChanged(muted);
-}
-
-void QGroundControlQmlGlobal::setIsSaveLogPrompt(bool prompt)
-{
-    qgcApp()->setPromptFlightDataSave(prompt);
-    emit isSaveLogPromptChanged(prompt);
-}
-
-void QGroundControlQmlGlobal::setIsSaveLogPromptNotArmed(bool prompt)
-{
-    qgcApp()->setPromptFlightDataSaveNotArmed(prompt);
-    emit isSaveLogPromptNotArmedChanged(prompt);
-}
-
 void QGroundControlQmlGlobal::setIsVersionCheckEnabled(bool enable)
 {
     qgcApp()->toolbox()->mavlinkProtocol()->enableVersionCheck(enable);
@@ -203,145 +165,9 @@ void QGroundControlQmlGlobal::setMavlinkSystemID(int id)
     emit mavlinkSystemIDChanged(id);
 }
 
-void QGroundControlQmlGlobal::setVirtualTabletJoystick(bool enabled)
-{
-    if (_virtualTabletJoystick != enabled) {
-        QSettings settings;
-        settings.setValue(_virtualTabletJoystickKey, enabled);
-        _virtualTabletJoystick = enabled;
-        emit virtualTabletJoystickChanged(enabled);
-    }
-}
-
-void QGroundControlQmlGlobal::setBaseFontPointSize(qreal size)
-{
-    if (size >= 6.0 && size <= 48.0) {
-        QSettings settings;
-        settings.setValue(_baseFontPointSizeKey, size);
-        _baseFontPointSize = size;
-        emit baseFontPointSizeChanged(size);
-    }
-}
-
-SettingsFact* QGroundControlQmlGlobal::_createSettingsFact(const QString& name)
-{
-    SettingsFact*   fact;
-    FactMetaData*   metaData = nameToMetaDataMap()[name];
-
-    fact = new SettingsFact(QString(), name, metaData->type(), metaData->rawDefaultValue());
-    fact->setMetaData(metaData);
-
-    return fact;
-}
-
-Fact* QGroundControlQmlGlobal::offlineEditingFirmwareType(void)
-{
-    if (!_offlineEditingFirmwareTypeFact) {
-        _offlineEditingFirmwareTypeFact = _createSettingsFact(QStringLiteral("OfflineEditingFirmwareType"));
-    }
-
-    return _offlineEditingFirmwareTypeFact;
-}
-
-Fact* QGroundControlQmlGlobal::offlineEditingVehicleType(void)
-{
-    if (!_offlineEditingVehicleTypeFact) {
-        _offlineEditingVehicleTypeFact = _createSettingsFact(QStringLiteral("OfflineEditingVehicleType"));
-    }
-
-    return _offlineEditingVehicleTypeFact;
-}
-
-Fact* QGroundControlQmlGlobal::offlineEditingCruiseSpeed(void)
-{
-    if (!_offlineEditingCruiseSpeedFact) {
-        _offlineEditingCruiseSpeedFact = _createSettingsFact(QStringLiteral("OfflineEditingCruiseSpeed"));
-    }
-    return _offlineEditingCruiseSpeedFact;
-}
-
-Fact* QGroundControlQmlGlobal::offlineEditingHoverSpeed(void)
-{
-    if (!_offlineEditingHoverSpeedFact) {
-        _offlineEditingHoverSpeedFact = _createSettingsFact(QStringLiteral("OfflineEditingHoverSpeed"));
-    }
-    return _offlineEditingHoverSpeedFact;
-}
-
-Fact* QGroundControlQmlGlobal::distanceUnits(void)
-{
-    if (!_distanceUnitsFact) {
-        // Distance/Area/Speed units settings can't be loaded from json since it creates an infinite loop of meta data loading.
-        QStringList     enumStrings;
-        QVariantList    enumValues;
-
-        _distanceUnitsFact = new SettingsFact(QString(), "DistanceUnits", FactMetaData::valueTypeUint32, DistanceUnitsMeters);
-        _distanceUnitsMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
-
-        enumStrings << "Feet" << "Meters";
-        enumValues << QVariant::fromValue((uint32_t)DistanceUnitsFeet) << QVariant::fromValue((uint32_t)DistanceUnitsMeters);
-
-        _distanceUnitsMetaData->setEnumInfo(enumStrings, enumValues);
-        _distanceUnitsFact->setMetaData(_distanceUnitsMetaData);
-    }
-
-    return _distanceUnitsFact;
-
-}
-
-Fact* QGroundControlQmlGlobal::areaUnits(void)
-{
-    if (!_areaUnitsFact) {
-        // Distance/Area/Speed units settings can't be loaded from json since it creates an infinite loop of meta data loading.
-        QStringList     enumStrings;
-        QVariantList    enumValues;
-
-        _areaUnitsFact = new SettingsFact(QString(), "AreaUnits", FactMetaData::valueTypeUint32, AreaUnitsSquareMeters);
-        _areaUnitsMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
-
-        enumStrings << "SquareFeet" << "SquareMeters" << "SquareKilometers" << "Hectares" << "Acres" << "SquareMiles";
-        enumValues << QVariant::fromValue((uint32_t)AreaUnitsSquareFeet) << QVariant::fromValue((uint32_t)AreaUnitsSquareMeters) << QVariant::fromValue((uint32_t)AreaUnitsSquareKilometers) << QVariant::fromValue((uint32_t)AreaUnitsHectares) << QVariant::fromValue((uint32_t)AreaUnitsAcres) << QVariant::fromValue((uint32_t)AreaUnitsSquareMiles);
-
-        _areaUnitsMetaData->setEnumInfo(enumStrings, enumValues);
-        _areaUnitsFact->setMetaData(_areaUnitsMetaData);
-    }
-
-    return _areaUnitsFact;
-
-}
-
-Fact* QGroundControlQmlGlobal::speedUnits(void)
-{
-    if (!_speedUnitsFact) {
-        // Distance/Area/Speed units settings can't be loaded from json since it creates an infinite loop of meta data loading.
-        QStringList     enumStrings;
-        QVariantList    enumValues;
-
-        _speedUnitsFact = new SettingsFact(QString(), "SpeedUnits", FactMetaData::valueTypeUint32, SpeedUnitsMetersPerSecond);
-        _speedUnitsMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
-
-        enumStrings << "Feet/second" << "Meters/second" << "Miles/hour" << "Kilometers/hour" << "Knots";
-        enumValues << QVariant::fromValue((uint32_t)SpeedUnitsFeetPerSecond) << QVariant::fromValue((uint32_t)SpeedUnitsMetersPerSecond) << QVariant::fromValue((uint32_t)SpeedUnitsMilesPerHour) << QVariant::fromValue((uint32_t)SpeedUnitsKilometersPerHour) << QVariant::fromValue((uint32_t)SpeedUnitsKnots);
-
-        _speedUnitsMetaData->setEnumInfo(enumStrings, enumValues);
-        _speedUnitsFact->setMetaData(_speedUnitsMetaData);
-    }
-
-    return _speedUnitsFact;
-}
-
-Fact* QGroundControlQmlGlobal::batteryPercentRemainingAnnounce(void)
-{
-    if (!_batteryPercentRemainingAnnounceFact) {
-        _batteryPercentRemainingAnnounceFact = _createSettingsFact(QStringLiteral("batteryPercentRemainingAnnounce"));
-    }
-
-    return _batteryPercentRemainingAnnounceFact;
-}
-
 int QGroundControlQmlGlobal::supportedFirmwareCount()
 {
-    return _firmwarePluginManager->knownFirmwareTypes().count();
+    return _firmwarePluginManager->supportedFirmwareTypes().count();
 }
 
 
@@ -353,24 +179,53 @@ bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPo
             intersectPoint != line1A && intersectPoint != line1B;
 }
 
-QMap<QString, FactMetaData*>& QGroundControlQmlGlobal::nameToMetaDataMap(void) {
-    static QMap<QString, FactMetaData*> map;
-
-    if (map.isEmpty()) {
-        map = FactMetaData::createMapFromJsonFile(":/json/QGroundControlQmlGlobal.json", NULL);
+void QGroundControlQmlGlobal::setSkipSetupPage(bool skip)
+{
+    if(_skipSetupPage != skip) {
+        _skipSetupPage = skip;
+        emit skipSetupPageChanged();
     }
-
-    return map;
 }
 
-QString QGroundControlQmlGlobal::missionAutoLoadDir(void)
+QGeoCoordinate QGroundControlQmlGlobal::flightMapPosition(void)
 {
-    QSettings settings;
-    return settings.value(_missionAutoLoadDirKey).toString();
+    QSettings       settings;
+    QGeoCoordinate  coord;
+
+    settings.beginGroup(_flightMapPositionSettingsGroup);
+    coord.setLatitude(settings.value(_flightMapPositionLatitudeSettingsKey, 0).toDouble());
+    coord.setLongitude(settings.value(_flightMapPositionLongitudeSettingsKey, 0).toDouble());
+
+    return coord;
 }
 
-void QGroundControlQmlGlobal::setMissionAutoLoadDir(const QString& missionAutoLoadDir)
+double QGroundControlQmlGlobal::flightMapZoom(void)
 {
     QSettings settings;
-    settings.setValue(_missionAutoLoadDirKey, missionAutoLoadDir);
+
+    settings.beginGroup(_flightMapPositionSettingsGroup);
+    return settings.value(_flightMapZoomSettingsKey, 2).toDouble();
+}
+
+void QGroundControlQmlGlobal::setFlightMapPosition(QGeoCoordinate& coordinate)
+{
+    if (coordinate != flightMapPosition()) {
+        QSettings settings;
+
+        settings.beginGroup(_flightMapPositionSettingsGroup);
+        settings.setValue(_flightMapPositionLatitudeSettingsKey, coordinate.latitude());
+        settings.setValue(_flightMapPositionLongitudeSettingsKey, coordinate.longitude());
+        emit flightMapPositionChanged(coordinate);
+    }
+}
+
+void QGroundControlQmlGlobal::setFlightMapZoom(double zoom)
+{
+    if (zoom != flightMapZoom()) {
+        QSettings settings;
+
+        settings.beginGroup(_flightMapPositionSettingsGroup);
+        settings.setValue(_flightMapZoomSettingsKey, zoom);
+        emit flightMapZoomChanged(zoom);
+    }
 }

@@ -70,7 +70,6 @@ private slots:
 
 private:
     void _clearReply            ();
-    void _returnBadTile         ();
 
 private:
     QNetworkReply*          _reply;

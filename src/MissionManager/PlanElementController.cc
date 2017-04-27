@@ -8,13 +8,17 @@
  ****************************************************************************/
 
 #include "PlanElementController.h"
+#include "PlanMasterController.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
+#include "SettingsManager.h"
+#include "AppSettings.h"
 
-PlanElementController::PlanElementController(QObject* parent)
+PlanElementController::PlanElementController(PlanMasterController* masterController, QObject* parent)
     : QObject(parent)
-    , _multiVehicleMgr(qgcApp()->toolbox()->multiVehicleManager())
-    , _activeVehicle(_multiVehicleMgr->offlineEditingVehicle())
+    , _masterController(masterController)
+    , _controllerVehicle(masterController->controllerVehicle())
+    , _managerVehicle(masterController->managerVehicle())
     , _editMode(false)
 {
 
@@ -28,32 +32,9 @@ PlanElementController::~PlanElementController()
 void PlanElementController::start(bool editMode)
 {
     _editMode = editMode;
-    connect(_multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &PlanElementController::_activeVehicleChanged);
-    _activeVehicleChanged(_multiVehicleMgr->activeVehicle());
 }
 
-void PlanElementController::startStaticActiveVehicle(Vehicle* vehicle)
+void PlanElementController::managerVehicleChanged(Vehicle* managerVehicle)
 {
-    _editMode = false;
-    _activeVehicleChanged(vehicle);
-}
-
-void PlanElementController::_activeVehicleChanged(Vehicle* activeVehicle)
-{
-    if (_activeVehicle) {
-        _activeVehicleBeingRemoved();
-        _activeVehicle = NULL;
-    }
-
-    if (activeVehicle) {
-        _activeVehicle = activeVehicle;
-    } else {
-        _activeVehicle = _multiVehicleMgr->offlineEditingVehicle();
-    }
-    _activeVehicleSet();
-
-    // Whenever vehicle changes we need to update syncInProgress
-    emit syncInProgressChanged(syncInProgress());
-
-    emit vehicleChanged(_activeVehicle);
+    _managerVehicle = managerVehicle;
 }

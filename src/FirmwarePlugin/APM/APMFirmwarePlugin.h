@@ -88,7 +88,6 @@ public:
     void                initializeVehicle               (Vehicle* vehicle) final;
     bool                sendHomePositionToVehicle       (void) final;
     void                addMetaDataToFact               (QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) final;
-    QString             getDefaultComponentIdParam      (void) const final { return QString("SYSID_SW_TYPE"); }
     QString             missionCommandOverrides         (MAV_TYPE vehicleType) const;
     QString             getVersionParam                 (void) final { return QStringLiteral("SYSID_SW_MREV"); }
     QString             internalParameterMetaDataFile   (Vehicle* vehicle) final;
@@ -96,16 +95,15 @@ public:
     QObject*            loadParameterMetaData           (const QString& metaDataFile);
     GeoFenceManager*    newGeoFenceManager              (Vehicle* vehicle) { return new APMGeoFenceManager(vehicle); }
     RallyPointManager*  newRallyPointManager            (Vehicle* vehicle) { return new APMRallyPointManager(vehicle); }
-    QString             brandImage                      (const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
-    QString             missionFlightMode               (void) final;
-    QString             rtlFlightMode                   (void) final;
+    QString             brandImageIndoor                (const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
+    QString             brandImageOutdoor               (const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
 
 protected:
     /// All access to singleton is through stack specific implementation
     APMFirmwarePlugin(void);
     void setSupportedModes(QList<APMCustomMode> supportedModes);
 
-    bool _coaxialMotors;
+    bool                _coaxialMotors;
 
 private slots:
     void _artooSocketError(QAbstractSocket::SocketError socketError);
@@ -126,8 +124,8 @@ private:
     QList<APMCustomMode>    _supportedModes;
     QMap<QString, QTime>    _noisyPrearmMap;
 
-    static const char*  _artooIP;
-    static const int    _artooVideoHandshakePort;
+    static const char*      _artooIP;
+    static const int        _artooVideoHandshakePort;
 
 };
 

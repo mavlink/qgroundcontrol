@@ -12,7 +12,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 import QtQuick 2.3
-import QtQuick.Controls 1.3
+import QtQuick.Controls 1.2
 
 import QGroundControl.FactSystem 1.0
 import QGroundControl.Controls 1.0

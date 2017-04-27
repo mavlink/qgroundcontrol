@@ -28,7 +28,7 @@
 #define UT_REGISTER_TEST(className) static UnitTestWrapper<className> className(#className);
 
 class QGCMessageBox;
-class QGCFileDialog;
+class QGCQFileDialog;
 class LinkManager;
 class MockLink;
 class MainWindow;
@@ -58,7 +58,7 @@ public:
         getSaveFileName
     };
     
-    /// @brief Sets up for an expected QGCFileDialog
+    /// @brief Sets up for an expected QGCQFileDialog
     ///     @param type Type of expected file dialog
     ///     @param response Files to return from call. Multiple files only supported by getOpenFileNames
     void setExpectedFileDialog(enum FileDialogType type, QStringList response);
@@ -67,7 +67,7 @@ public:
         expectFailNoFailure =           1 << 0, ///< not expecting any failures
         expectFailNoDialog =            1 << 1, ///< expecting a failure due to no dialog displayed
         expectFailBadResponseButton =   1 << 2, ///< expecting a failure due to bad button response (QGCMessageBox only)
-        expectFailWrongFileDialog =     1 << 3  ///< expecting one dialog type, got the wrong type (QGCFileDialog ony)
+        expectFailWrongFileDialog =     1 << 3  ///< expecting one dialog type, got the wrong type (QGCQFileDialog ony)
     };
     
     /// @brief Check whether a message box was displayed and correctly responded to
@@ -134,7 +134,7 @@ private:
     // This allows the private call to _messageBox
     friend class QGCMessageBox;
     
-    // When the app is running in unit test mode the QGCFileDialog methods are re-routed here.
+    // When the app is running in unit test mode the QGCQFileDialog methods are re-routed here.
     
     static QString _getExistingDirectory(
         QWidget* parent,
@@ -167,7 +167,7 @@ private:
     static QString _fileDialogResponseSingle(enum FileDialogType type);
 
     // This allows the private calls to the file dialog methods
-    friend class QGCFileDialog;
+    friend class QGCQFileDialog;
 
     void _unitTestCalled(void);
 	static QList<QObject*>& _testList(void);
@@ -178,7 +178,7 @@ private:
     static QMessageBox::StandardButton  _messageBoxResponseButton;  ///< Response to next message box
     static int                          _missedMessageBoxCount;     ///< Count of message box not checked with call to messageBoxWasDisplayed
     
-    // Catch QGCFileDialog calls
+    // Catch QGCQFileDialog calls
     static bool         _fileDialogRespondedTo;         ///< File dialog was responded to
     static bool         _fileDialogResponseSet;         ///< true: _fileDialogResponse was set by a call to UnitTest::setExpectedFileDialog
     static QStringList  _fileDialogResponse;            ///< Response to next file dialog

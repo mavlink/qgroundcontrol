@@ -7,12 +7,13 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.4
-import QtQuick.Controls 1.3
+import QtQuick          2.3
+import QtQuick.Controls 1.2
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl                   1.0
+import QGroundControl.Controls          1.0
+import QGroundControl.ScreenTools       1.0
+import QGroundControl.SettingsManager   1.0
 
 /// Map scale control
 Item {
@@ -110,11 +111,11 @@ Item {
 
     function calculateScale() {
         var scaleLinePixelLength = 100
-        var leftCoord = mapControl.toCoordinate(Qt.point(0, scale.y))
-        var rightCoord = mapControl.toCoordinate(Qt.point(scaleLinePixelLength, scale.y))
+        var leftCoord = mapControl.toCoordinate(Qt.point(0, scale.y), false /* clipToViewPort */)
+        var rightCoord = mapControl.toCoordinate(Qt.point(scaleLinePixelLength, scale.y), false /* clipToViewPort */)
         var scaleLineMeters = Math.round(leftCoord.distanceTo(rightCoord))
 
-        if (QGroundControl.distanceUnits.value == QGroundControl.DistanceUnitsFeet) {
+        if (QGroundControl.settingsManager.unitsSettings.distanceUnits.value == UnitsSettings.DistanceUnitsFeet) {
             calculateFeetRatio(scaleLineMeters, scaleLinePixelLength)
         } else {
             calculateMetersRatio(scaleLineMeters, scaleLinePixelLength)

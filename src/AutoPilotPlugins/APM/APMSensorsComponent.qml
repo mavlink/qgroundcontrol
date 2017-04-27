@@ -8,12 +8,13 @@
  ****************************************************************************/
 
 
-import QtQuick                  2.2
+import QtQuick                  2.3
 import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.2
+import QtQuick.Controls.Styles  1.4
 import QtQuick.Dialogs          1.2
 import QtQuick.Layouts          1.2
 
+import QGroundControl               1.0
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
@@ -120,6 +121,7 @@ SetupPage {
                 accelButton:                accelButton
                 compassMotButton:           motorInterferenceButton
                 levelButton:                levelHorizonButton
+                calibratePressureButton:    calibratePressureButton
                 nextButton:                 nextButton
                 cancelButton:               cancelButton
                 setOrientationsButton:      setOrientationsButton
@@ -445,6 +447,26 @@ SetupPage {
                 } // QGCViewDialog
             } // Component - levelHorizonDialogComponent
 
+            Component {
+                id: calibratePressureDialogComponent
+
+                QGCViewDialog {
+                    id: calibratePressureDialog
+
+                    function accept() {
+                        controller.calibratePressure()
+                        calibratePressureDialog.hideDialog()
+                    }
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           qsTr("Pressure calibration will set the depth to zero at the current pressure reading.")
+                    }
+                } // QGCViewDialog
+            } // Component - calibratePressureDialogComponent
+
             /// Left button column
             Column {
                 spacing:            ScreenTools.defaultFontPixelHeight / 2
@@ -493,9 +515,27 @@ SetupPage {
                 }
 
                 QGCButton {
+                    id:     calibratePressureButton
+                    width:  parent.buttonWidth
+                    text:   _calibratePressureText
+                    visible: _activeVehicle ? _activeVehicle.supportsCalibratePressure : false
+
+                    readonly property string _calibratePressureText: qsTr("Calibrate Pressure")
+                    property var  _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
+                    onClicked: {
+                        showDialog(calibratePressureDialogComponent, _calibratePressureText, qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                    }
+                }
+
+                QGCButton {
                     id:         motorInterferenceButton
                     width:      parent.buttonWidth
                     text:       qsTr("CompassMot")
+                    visible:    _activeVehicle ? _activeVehicle.supportsMotorInterference : false
+
+                    property var  _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
                     onClicked:  showDialog(compassMotDialogComponent, qsTr("CompassMot - Compass Motor Interference Calibration"), qgcView.showDialogFullWidth, StandardButton.Cancel | StandardButton.Ok)
                 }
 

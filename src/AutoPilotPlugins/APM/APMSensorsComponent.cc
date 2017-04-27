@@ -75,18 +75,6 @@ QUrl APMSensorsComponent::summaryQmlSource(void) const
     return QUrl::fromUserInput("qrc:/qml/APMSensorsComponentSummary.qml");
 }
 
-QString APMSensorsComponent::prerequisiteSetup(void) const
-{
-    APMAutoPilotPlugin* plugin = dynamic_cast<APMAutoPilotPlugin*>(_autopilot);
-    Q_ASSERT(plugin);
-    
-    if (!plugin->airframeComponent()->setupComplete()) {
-        return plugin->airframeComponent()->name();
-    }
-    
-    return QString();
-}
-
 bool APMSensorsComponent::compassSetupNeeded(void) const
 {
     const size_t cCompass = 3;

@@ -1,4 +1,4 @@
-import QtQuick 2.2
+import QtQuick 2.3
 import QtQuick.Controls 1.2
 
 import QGroundControl.FactSystem 1.0
@@ -52,6 +52,11 @@ FactPanel {
         VehicleSummaryRow {
             labelText: qsTr("Firmware Version:")
             valueText: activeVehicle.firmwareMajorVersion == -1 ? qsTr("Unknown") : activeVehicle.firmwareMajorVersion + "." + activeVehicle.firmwareMinorVersion + "." + activeVehicle.firmwarePatchVersion + "-" + activeVehicle.firmwareVersionTypeString
+        }
+
+        VehicleSummaryRow {
+            labelText: qsTr("Git Revision:")
+            valueText: activeVehicle.gitHash == -1 ? qsTr("Unknown") : activeVehicle.gitHash
         }
     }
 }

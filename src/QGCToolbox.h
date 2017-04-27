@@ -15,7 +15,6 @@
 
 class FactSystem;
 class FirmwarePluginManager;
-class FlightMapSettings;
 class GAudioOutput;
 class GPSManager;
 class JoystickManager;
@@ -32,16 +31,16 @@ class QGCPositionManager;
 class VideoManager;
 class MAVLinkLogManager;
 class QGCCorePlugin;
+class SettingsManager;
 
 /// This is used to manage all of our top level services/tools
-class QGCToolbox {
+class QGCToolbox : public QObject {
+    Q_OBJECT
 
 public:
     QGCToolbox(QGCApplication* app);
-    ~QGCToolbox();
 
     FirmwarePluginManager*      firmwarePluginManager(void)     { return _firmwarePluginManager; }
-    FlightMapSettings*          flightMapSettings(void)         { return _flightMapSettings; }
     GAudioOutput*               audioOutput(void)               { return _audioOutput; }
     JoystickManager*            joystickManager(void)           { return _joystickManager; }
     LinkManager*                linkManager(void)               { return _linkManager; }
@@ -56,6 +55,7 @@ public:
     VideoManager*               videoManager(void)              { return _videoManager; }
     MAVLinkLogManager*          mavlinkLogManager(void)         { return _mavlinkLogManager; }
     QGCCorePlugin*              corePlugin(void)                { return _corePlugin; }
+    SettingsManager*            settingsManager(void)           { return _settingsManager; }
 
 #ifndef __mobile__
     GPSManager*                 gpsManager(void)                { return _gpsManager; }
@@ -69,7 +69,6 @@ private:
     GAudioOutput*               _audioOutput;
     FactSystem*                 _factSystem;
     FirmwarePluginManager*      _firmwarePluginManager;
-    FlightMapSettings*          _flightMapSettings;
 #ifndef __mobile__
     GPSManager*                 _gpsManager;
 #endif
@@ -86,6 +85,7 @@ private:
     VideoManager*               _videoManager;
     MAVLinkLogManager*          _mavlinkLogManager;
     QGCCorePlugin*              _corePlugin;
+    SettingsManager*            _settingsManager;
 
     friend class QGCApplication;
 };
@@ -95,11 +95,12 @@ class QGCTool : public QObject {
     Q_OBJECT
 
 public:
-    // All tools are parented to QGCAppliation and go through a two phase creation. First all tools are newed,
-    // and then setToolbox is called on all tools. The prevents creating an circular dependencies at constructor
-    // time.
-    QGCTool(QGCApplication* app);
+    // All tools must be parented to the QGCToolbox and go through a two phase creation. In the constructor the toolbox
+    // should only be passed to QGCTool constructor for correct parenting. It should not be referenced or set in the
+    // protected member. Then in the second phase of setToolbox calls is where you can reference the toolbox.
+    QGCTool(QGCApplication* app, QGCToolbox* toolbox);
 
+    // If you override this method, you must call the base class.
     virtual void setToolbox(QGCToolbox* toolbox);
 
 protected:

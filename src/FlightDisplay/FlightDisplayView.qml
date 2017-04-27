@@ -8,13 +8,14 @@
  ****************************************************************************/
 
 
-import QtQuick                  2.5
-import QtQuick.Controls         1.3
-import QtQuick.Controls.Styles  1.2
+import QtQuick                  2.3
+import QtQuick.Controls         1.2
+import QtQuick.Controls.Styles  1.4
 import QtQuick.Dialogs          1.2
 import QtLocation               5.3
-import QtPositioning            5.2
+import QtPositioning            5.3
 import QtMultimedia             5.5
+import QtQuick.Layouts          1.2
 
 import QGroundControl               1.0
 import QGroundControl.FlightDisplay 1.0
@@ -33,25 +34,23 @@ QGCView {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
-    property var _activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
-    property bool _mainIsMap:           QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
-    property bool _isPipVisible:        QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
-
-    property real _roll:                _activeVehicle ? _activeVehicle.roll.value    : _defaultRoll
-    property real _pitch:               _activeVehicle ? _activeVehicle.pitch.value   : _defaultPitch
-    property real _heading:             _activeVehicle ? _activeVehicle.heading.value : _defaultHeading
-
-    property Fact _emptyFact:               Fact { }
-    property Fact _groundSpeedFact:         _activeVehicle ? _activeVehicle.groundSpeed      : _emptyFact
-    property Fact _airSpeedFact:            _activeVehicle ? _activeVehicle.airSpeed         : _emptyFact
+    property alias  guidedController:   guidedActionsController
 
     property bool activeVehicleJoystickEnabled: _activeVehicle ? _activeVehicle.joystickEnabled : false
 
-    property real _savedZoomLevel:  0
-    property real _margins:         ScreenTools.defaultFontPixelWidth / 2
+    property var    _planMasterController:  masterController
+    property var    _missionController:     _planMasterController.missionController
+    property var    _geoFenceController:    _planMasterController.geoFenceController
+    property var    _rallyPointController:  _planMasterController.rallyPointController
+    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _mainIsMap:             QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
+    property bool   _isPipVisible:          QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
+    property real   _savedZoomLevel:        0
+    property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
+    property real   _pipSize:               mainWindow.width * 0.2
+    property alias  _guidedController:      guidedActionsController
+    property alias  _altitudeSlider:        altitudeSlider
 
-
-    property real pipSize:              mainWindow.width * 0.2
 
     readonly property bool      isBackgroundDark:       _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
     readonly property real      _defaultRoll:           0
@@ -92,9 +91,19 @@ QGCView {
     }
 
     function px4JoystickCheck() {
-        if ( _activeVehicle && !_activeVehicle.supportsManualControl && (QGroundControl.virtualTabletJoystick || _activeVehicle.joystickEnabled)) {
+        if ( _activeVehicle && !_activeVehicle.supportsManualControl && (QGroundControl.settingsManager.appSettings.virtualJoystick.value || _activeVehicle.joystickEnabled)) {
             px4JoystickSupport.open()
         }
+    }
+
+    PlanElemementMasterController {
+        id:                     masterController
+        Component.onCompleted:  start(false /* editMode */)
+    }
+
+    Connections {
+        target:                 _missionController
+        onResumeMissionReady:   guidedActionsController.confirmAction(guidedActionsController.actionResumeMissionReady)
     }
 
     MessageDialog {
@@ -105,13 +114,13 @@ QGCView {
     }
 
     Connections {
-        target: QGroundControl.multiVehicleManager
+        target:                 QGroundControl.multiVehicleManager
         onActiveVehicleChanged: px4JoystickCheck()
     }
 
     Connections {
-        target: QGroundControl
-        onVirtualTabletJoystickChanged: px4JoystickCheck()
+        target:         QGroundControl.settingsManager.appSettings.virtualJoystick
+        onValueChanged: px4JoystickCheck()
     }
 
     onActiveVehicleJoystickEnabledChanged: px4JoystickCheck()
@@ -119,6 +128,49 @@ QGCView {
     Component.onCompleted: {
         setStates()
         px4JoystickCheck()
+        if(QGroundControl.corePlugin.options.flyViewOverlay.toString().length) {
+            flyViewOverlay.source = QGroundControl.corePlugin.options.flyViewOverlay
+        }
+    }
+
+    // The following code is used to track vehicle states such that we prompt to remove mission from vehicle when mission completes
+
+    property bool vehicleArmed:                 _activeVehicle ? _activeVehicle.armed : true // true here prevents pop up from showing during shutdown
+    property bool vehicleWasArmed:              false
+    property bool vehicleInMissionFlightMode:   _activeVehicle ? (_activeVehicle.flightMode === _activeVehicle.missionFlightMode) : false
+    property bool promptForMissionRemove:       false
+
+    onVehicleArmedChanged: {
+        if (vehicleArmed) {
+            if (!promptForMissionRemove) {
+                promptForMissionRemove = vehicleInMissionFlightMode
+                vehicleWasArmed = true
+            }
+        } else {
+            if (promptForMissionRemove && (_missionController.containsItems || _geoFenceController.containsItems || _rallyPointController.containsItems)) {
+                root.showDialog(removeMissionDialogComponent, qsTr("Flight complete"), showDialogDefaultWidth, StandardButton.No | StandardButton.Yes)
+            }
+            promptForMissionRemove = false
+        }
+    }
+
+    onVehicleInMissionFlightModeChanged: {
+        if (!promptForMissionRemove && vehicleArmed) {
+            promptForMissionRemove = true
+        }
+    }
+
+    Component {
+        id: removeMissionDialogComponent
+
+        QGCViewMessage {
+            message: qsTr("Do you want to remove the mission from the vehicle?")
+
+            function accept() {
+                _planMasterController.removeAllFromVehicle()
+                hideDialog()
+            }
+        }
     }
 
     QGCMapPalette { id: mapPal; lightColors: _mainIsMap ? _flightMap.isSatelliteMap : true }
@@ -136,8 +188,8 @@ QGCView {
             anchors.left:   _panel.left
             anchors.bottom: _panel.bottom
             visible:        _mainIsMap || _isPipVisible
-            width:          _mainIsMap ? _panel.width  : pipSize
-            height:         _mainIsMap ? _panel.height : pipSize * (9/16)
+            width:          _mainIsMap ? _panel.width  : _pipSize
+            height:         _mainIsMap ? _panel.height : _pipSize * (9/16)
             states: [
                 State {
                     name:   "pipMode"
@@ -155,10 +207,14 @@ QGCView {
                 }
             ]
             FlightDisplayViewMap {
-                id:                 _flightMap
-                anchors.fill:       parent
-                flightWidgets:      flightDisplayViewWidgets
-                rightPanelWidth:    ScreenTools.defaultFontPixelHeight * 9
+                id:                         _flightMap
+                anchors.fill:               parent
+                planMasterController:       masterController
+                guidedActionsController:    _guidedController
+                flightWidgets:              flightDisplayViewWidgets
+                rightPanelWidth:            ScreenTools.defaultFontPixelHeight * 9
+                qgcView:                    root
+                scaleState:                 (_mainIsMap && flyViewOverlay.item) ? (flyViewOverlay.item.scaleState ? flyViewOverlay.item.scaleState : "bottomMode") : "bottomMode"
             }
         }
 
@@ -166,8 +222,8 @@ QGCView {
         Item {
             id:             _flightVideo
             z:              _mainIsMap ? _panel.z + 2 : _panel.z + 1
-            width:          !_mainIsMap ? _panel.width  : pipSize
-            height:         !_mainIsMap ? _panel.height : pipSize * (9/16)
+            width:          !_mainIsMap ? _panel.width  : _pipSize
+            height:         !_mainIsMap ? _panel.height : _pipSize * (9/16)
             anchors.left:   _panel.left
             anchors.bottom: _panel.bottom
             visible:        QGroundControl.videoManager.hasVideo && (!_mainIsMap || _isPipVisible)
@@ -204,8 +260,8 @@ QGCView {
         QGCPipable {
             id:                 _flightVideoPipControl
             z:                  _flightVideo.z + 3
-            width:              pipSize
-            height:             pipSize * (9/16)
+            width:              _pipSize
+            height:             _pipSize * (9/16)
             anchors.left:       _panel.left
             anchors.bottom:     _panel.bottom
             anchors.margins:    ScreenTools.defaultFontPixelHeight
@@ -253,11 +309,25 @@ QGCView {
             z:                  _panel.z + 4
             height:             ScreenTools.availableHeight
             anchors.left:       parent.left
-            anchors.right:      parent.right
+            anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
             anchors.bottom:     parent.bottom
             qgcView:            root
-            isBackgroundDark:   root.isBackgroundDark
+            useLightColors:     isBackgroundDark
+            missionController:  _missionController
             visible:            singleVehicleView.checked
+        }
+
+        //-------------------------------------------------------------------------
+        //-- Loader helper for plugins to overlay elements over the fly view
+        Loader {
+            id:                 flyViewOverlay
+            z:                  flightDisplayViewWidgets.z + 1
+            height:             ScreenTools.availableHeight
+            anchors.left:       parent.left
+            anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
+            anchors.bottom:     parent.bottom
+
+            property var qgcView: root
         }
 
         // Button to start/stop video recording
@@ -275,7 +345,7 @@ QGCView {
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 width:              height
-                radius:             QGroundControl.videoManager.videoReceiver && QGroundControl.videoManager.videoReceiver.recording ? 0 : height
+                radius:             QGroundControl.videoManager && QGroundControl.videoManager.videoReceiver && QGroundControl.videoManager.videoReceiver.recording ? 0 : height
                 color:              "red"
             }
 
@@ -313,14 +383,181 @@ QGCView {
             z:                          _panel.z + 5
             width:                      parent.width  - (_flightVideoPipControl.width / 2)
             height:                     Math.min(ScreenTools.availableHeight * 0.25, ScreenTools.defaultFontPixelWidth * 16)
-            visible:                    QGroundControl.virtualTabletJoystick
+            visible:                    _virtualJoystick ? _virtualJoystick.value : false
             anchors.bottom:             _flightVideoPipControl.top
             anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
             anchors.horizontalCenter:   flightDisplayViewWidgets.horizontalCenter
             source:                     "qrc:/qml/VirtualJoystick.qml"
-            active:                     QGroundControl.virtualTabletJoystick
+            active:                     _virtualJoystick ? _virtualJoystick.value : false
 
-            property bool useLightColors: root.isBackgroundDark
+            property bool useLightColors: isBackgroundDark
+
+            property Fact _virtualJoystick: QGroundControl.settingsManager.appSettings.virtualJoystick
+        }
+
+        ToolStrip {
+            visible:            _activeVehicle ? _activeVehicle.guidedModeSupported : true
+            id:                 toolStrip
+            anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+            anchors.left:       _panel.left
+            anchors.topMargin:  ScreenTools.toolbarHeight + (_margins * 2)
+            anchors.top:        _panel.top
+            z:                  _panel.z + 4
+            title:              qsTr("Fly")
+            maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
+            buttonVisible:      [ _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true, _guidedController.smartShotsAvailable ]
+            buttonEnabled:      [ _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable, _anySmartShotAvailable ]
+
+            property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
+            property bool _anySmartShotAvailable: _guidedController.showOrbit
+            property var _actionModel: [
+                {
+                    title:      _guidedController.startMissionTitle,
+                    text:       _guidedController.startMissionMessage,
+                    action:     _guidedController.actionStartMission,
+                    visible:    _guidedController.showStartMission
+                },
+                {
+                    title:      _guidedController.resumeMissionTitle,
+                    text:       _guidedController.resumeMissionMessage,
+                    action:     _guidedController.actionResumeMission,
+                    visible:    _guidedController.showResumeMission
+                },
+                {
+                    title:      _guidedController.changeAltTitle,
+                    text:       _guidedController.changeAltMessage,
+                    action:     _guidedController.actionChangeAlt,
+                    visible:    _guidedController.showChangeAlt
+                },
+                {
+                    title:      _guidedController.landAbortTitle,
+                    text:       _guidedController.landAbortMessage,
+                    action:     _guidedController.actionLandAbort,
+                    visible:    _guidedController.showLandAbort
+                }
+            ]
+            property var _smartShotModel: [
+                {
+                    title:      _guidedController.orbitTitle,
+                    text:       _guidedController.orbitMessage,
+                    action:     _guidedController.actionOrbit,
+                    visible:    _guidedController.showOrbit
+                }
+            ]
+
+            model: [
+                {
+                    name:       _guidedController.takeoffTitle,
+                    iconSource: "/res/takeoff.svg",
+                    action:     _guidedController.actionTakeoff
+                },
+                {
+                    name:       _guidedController.landTitle,
+                    iconSource: "/res/land.svg",
+                    action:     _guidedController.actionLand
+                },
+                {
+                    name:       _guidedController.rtlTitle,
+                    iconSource: "/res/rtl.svg",
+                    action:     _guidedController.actionRTL
+                },
+                {
+                    name:       _guidedController.pauseTitle,
+                    iconSource: "/res/pause-mission.svg",
+                    action:     _guidedController.actionPause
+                },
+                {
+                    name:       qsTr("Action"),
+                    iconSource: "/res/action.svg",
+                    action:     -1
+                },
+                /*
+                  No firmware support any smart shots yet
+                {
+                    name:       qsTr("Smart"),
+                    iconSource: "/qmlimages/MapCenter.svg",
+                    action:     -1
+                },
+                */
+            ]
+
+            onClicked: {
+                //-- Dismiss any other dialog
+                rootLoader.sourceComponent  = null
+                guidedActionConfirm.visible = false
+                guidedActionList.visible    = false
+                altitudeSlider.visible      = false
+                var action = model[index].action
+                if (action === -1) {
+                    if (index == 4) {
+                        guidedActionList.model   = _actionModel
+                        guidedActionList.visible = true
+                    } else if (index == 5) {
+                        guidedActionList.model   = _smartShotModel
+                        guidedActionList.visible = true
+                    }
+                } else {
+                    _guidedController.confirmAction(action)
+                }
+            }
+        }
+
+        GuidedActionsController {
+            id:                 guidedActionsController
+            missionController:  _missionController
+            confirmDialog:      guidedActionConfirm
+            z:                  _flightVideoPipControl.z + 1
+
+            onShowStartMissionChanged: {
+                if (showStartMission && !showResumeMission) {
+                    confirmAction(actionStartMission)
+                }
+            }
+
+            onShowContinueMissionChanged: {
+                if (showContinueMission) {
+                    confirmAction(actionContinueMission)
+                }
+            }
+
+            onShowResumeMissionChanged: {
+                if (showResumeMission) {
+                    confirmAction(actionResumeMission)
+                }
+            }
+        }
+
+        GuidedActionConfirm {
+            id:                         guidedActionConfirm
+            anchors.margins:            _margins
+            anchors.bottom:             parent.bottom
+            anchors.horizontalCenter:   parent.horizontalCenter
+            guidedController:           _guidedController
+            altitudeSlider:             _altitudeSlider
+        }
+
+        GuidedActionList {
+            id:                         guidedActionList
+            anchors.margins:            _margins
+            anchors.bottom:             parent.bottom
+            anchors.horizontalCenter:   parent.horizontalCenter
+            guidedController:           _guidedController
+            altitudeSlider:             _altitudeSlider
+        }
+
+        //-- Altitude slider
+        GuidedAltitudeSlider {
+            id:                 altitudeSlider
+            anchors.margins:    _margins
+            anchors.right:      parent.right
+            anchors.topMargin:  ScreenTools.toolbarHeight + _margins
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            z:                  _guidedController.z
+            radius:             ScreenTools.defaultFontPixelWidth / 2
+            width:              ScreenTools.defaultFontPixelWidth * 10
+            color:              qgcPal.window
+            visible:            false
         }
     }
 }

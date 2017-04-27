@@ -55,8 +55,3 @@ QUrl MotorComponent::summaryQmlSource(void) const
 {
     return QUrl();
 }
-
-QString MotorComponent::prerequisiteSetup(void) const
-{
-    return QString();
-}

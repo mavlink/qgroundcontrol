@@ -19,6 +19,7 @@
 
 class MissionCommandUIInfo;
 class MissionCommandList;
+class SettingsManager;
 #ifdef UNITTEST_BUILD
 class MissionCommandTreeTest;
 #endif
@@ -47,7 +48,7 @@ class MissionCommandTree : public QGCTool
     Q_OBJECT
     
 public:
-    MissionCommandTree(QGCApplication* app, bool unitTest = false);
+    MissionCommandTree(QGCApplication* app, QGCToolbox* toolbox, bool unitTest = false);
 
     /// Returns the friendly name for the specified command
     QString friendlyName(MAV_CMD command);
@@ -75,11 +76,13 @@ private:
     void _baseVehicleInfo(Vehicle* vehicle, MAV_AUTOPILOT& baseFirmwareType, MAV_TYPE& baseVehicleType) const;
 
 private:
-    /// List of all known command ids (not vehicle specific)
-    QList<int> _allCommandIds;
+    QString             _allCommandsCategory;   ///< Category which contains all available commands
+    QList<int>          _allCommandIds;         ///< List of all known command ids (not vehicle specific)
+    SettingsManager*    _settingsManager;
+    bool                _unitTest;              ///< true: running in unit test mode
 
     /// Full hierarchy
-    QMap<MAV_AUTOPILOT, QMap<MAV_TYPE, MissionCommandList*>>                   _staticCommandTree;
+    QMap<MAV_AUTOPILOT, QMap<MAV_TYPE, MissionCommandList*>>                    _staticCommandTree;
 
     /// Collapsed hierarchy for specific vehicle type
     QMap<MAV_AUTOPILOT, QMap<MAV_TYPE, QMap<MAV_CMD, MissionCommandUIInfo*>>>   _availableCommands;
@@ -87,7 +90,6 @@ private:
     /// Collapsed hierarchy for specific vehicle type
     QMap<MAV_AUTOPILOT, QMap<MAV_TYPE, QStringList>>                            _availableCategories;
 
-    bool _unitTest; ///< true: running in unit test mode
 
 #ifdef UNITTEST_BUILD
     friend class MissionCommandTreeTest;

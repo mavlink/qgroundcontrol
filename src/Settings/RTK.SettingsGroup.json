@@ -1,0 +1,22 @@
+[
+{
+    "name":             "SurveyInAccuracyLimit",
+    "shortDescription": "Survey in accuracy limit",
+    "longDescription":  "The maximum accuracy allowed prior to completing survey in.",
+    "type":             "double",
+    "defaultValue":     2.0,
+    "min":              0.5,
+    "units":            "m",
+    "decimalPlaces":    1
+},
+{
+    "name":             "SurveyInMinObservationDuration",
+    "shortDescription": "Minimum observation time",
+    "longDescription":  "Defines the minimum amount of observation time for the position calculation.",
+    "type":             "Uint32",
+    "defaultValue":     180,
+    "min":              1,
+    "units":            "secs",
+    "decimalPlaces":    0
+}
+]

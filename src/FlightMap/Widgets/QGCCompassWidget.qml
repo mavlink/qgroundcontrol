@@ -14,8 +14,8 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick 2.4
-import QtGraphicalEffects 1.0
+import QtQuick              2.3
+import QtGraphicalEffects   1.0
 
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
@@ -25,12 +25,12 @@ Item {
     id:                     root
 
     property real size:     _defaultSize
-    property real heading:  0
     property var  vehicle:  null
 
     property real _defaultSize: ScreenTools.defaultFontPixelHeight * (10)
     property real _sizeRatio:   ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
     property int  _fontSize:    ScreenTools.defaultFontPointSize * _sizeRatio
+    property real _heading:     vehicle ? vehicle.heading.rawValue : 0
 
     width:                  size
     height:                 size
@@ -51,14 +51,14 @@ Item {
             id:                 pointer
             source:             vehicle ? vehicle.vehicleImageCompass : ""
             mipmap:             true
-            width:              size * 0.75
+            width:              size * 0.65
             sourceSize.width:   width
             fillMode:           Image.PreserveAspectFit
             anchors.centerIn:   parent
             transform: Rotation {
                 origin.x:       pointer.width  / 2
                 origin.y:       pointer.height / 2
-                angle:          heading
+                angle:          _heading
             }
         }
 
@@ -79,11 +79,15 @@ Item {
             color:              Qt.rgba(0,0,0,0.65)
 
             QGCLabel {
-                text:           vehicle ? heading.toFixed(0) : qsTr("OFF")
+                text:           _headingString3
                 font.family:    vehicle ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
                 font.pointSize: _fontSize < 8 ? 8 : _fontSize;
                 color:          "white"
                 anchors.centerIn: parent
+
+                property string _headingString: vehicle ? _heading.toFixed(0) : "OFF"
+                property string _headingString2: _headingString.length === 1 ? "0" + _headingString : _headingString
+                property string _headingString3: _headingString2.length === 2 ? "0" + _headingString2 : _headingString2
             }
         }
     }

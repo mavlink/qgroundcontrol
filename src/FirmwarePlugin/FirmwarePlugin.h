@@ -22,6 +22,7 @@
 
 #include <QList>
 #include <QString>
+#include <QVariantList>
 
 class Vehicle;
 
@@ -92,14 +93,26 @@ public:
     ///     @param[out] custom_mode Custom mode for SET_MODE mavlink message
     virtual bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
 
+    /// Returns The flight mode which indicates the vehicle is paused
+    virtual QString pauseFlightMode(void) const { return QString(); }
+
+    /// Returns the flight mode for running missions
+    virtual QString missionFlightMode(void) const { return QString(); }
+
+    /// Returns the flight mode for RTL
+    virtual QString rtlFlightMode(void) const { return QString(); }
+
+    /// Returns the flight mode for Land
+    virtual QString landFlightMode(void) const { return QString(); }
+
+    /// Returns the flight mode to use when the operator wants to take back control from autonomouse flight.
+    virtual QString takeControlFlightMode(void) const { return QString(); }
+
     /// Returns whether the vehicle is in guided mode or not.
     virtual bool isGuidedMode(const Vehicle* vehicle) const;
 
     /// Set guided flight mode
     virtual void setGuidedMode(Vehicle* vehicle, bool guidedMode);
-
-    /// Returns whether the vehicle is paused or not.
-    virtual bool isPaused(const Vehicle* vehicle) const;
 
     /// Causes the vehicle to stop at current position. If guide mode is supported, vehicle will be let in guide mode.
     /// If not, vehicle will be left in Loiter.
@@ -111,9 +124,11 @@ public:
     /// Command vehicle to land at current location
     virtual void guidedModeLand(Vehicle* vehicle);
 
-    /// Command vehicle to takeoff from current location
-    ///     @param altitudeRel Relative altitude to takeoff to
-    virtual void guidedModeTakeoff(Vehicle* vehicle, double altitudeRel);
+    /// Command vehicle to takeoff from current location to a firmware specific height.
+    virtual void guidedModeTakeoff(Vehicle* vehicle);
+
+    /// Command the vehicle to start the mission
+    virtual void startMission(Vehicle* vehicle);
 
     /// Command vehicle to orbit given center point
     ///     @param centerCoord Center Coordinates
@@ -122,17 +137,9 @@ public:
     /// Command vehicle to move to specified location (altitude is included and relative)
     virtual void guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord);
 
-    /// Command vehicle to change to the specified relatice altitude
-    virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel);
-
-    /// Returns the flight mode for running missions
-    virtual QString missionFlightMode(void);
-
-    /// Returns the flight mode for RTL
-    virtual QString rtlFlightMode(void);
-
-    /// Returns the flight mode to use when the operator wants to take back control from autonomouse flight.
-    virtual QString takeControlFlightMode(void);
+    /// Command vehicle to change altitude
+    ///     @param altitudeChange If > 0, go up by amount specified, if < 0, go down by amount specified
+    virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange);
 
     /// FIXME: This isn't quite correct being here. All code for Joystick suvehicleTypepport is currently firmware specific
     /// not just this. I'm going to try to change that. If not, this will need to be removed.
@@ -163,6 +170,14 @@ public:
     /// to be assigned via parameters in firmware. Default is false.
     virtual bool supportsJSButton(void);
 
+    /// Returns true if the firmware supports calibrating the pressure sensor so the altitude will read
+    /// zero at the current pressure. Default is false.
+    virtual bool supportsCalibratePressure(void);
+
+    /// Returns true if the firmware supports calibrating motor interference offsets for the compass
+    /// (CompassMot). Default is true.
+    virtual bool supportsMotorInterference(void);
+
     /// Called before any mavlink message is processed by Vehicle such that the firmwre plugin
     /// can adjust any message characteristics. This is handy to adjust or differences in mavlink
     /// spec implementations such that the base code can remain mavlink generic.
@@ -186,9 +201,6 @@ public:
     ///             it, it may or may not return a home position back in position 0.
     ///     false: Do not send first item to vehicle, sequence numbers must be adjusted
     virtual bool sendHomePositionToVehicle(void);
-
-    /// Returns the parameter that is used to identify the default component
-    virtual QString getDefaultComponentIdParam(void) const { return QString(); }
 
     /// Returns the parameter which is used to identify the version number of parameter set
     virtual QString getVersionParam(void) { return QString(); }
@@ -239,8 +251,11 @@ public:
     /// Return the resource file which contains the set of params loaded for offline editing.
     virtual QString offlineEditingParamFile(Vehicle* vehicle) { Q_UNUSED(vehicle); return QString(); }
 
-    /// Return the resource file which contains the brand image for the vehicle.
-    virtual QString brandImage(const Vehicle* vehicle) const { Q_UNUSED(vehicle) return QString(); }
+    /// Return the resource file which contains the brand image for the vehicle for Indoor theme.
+    virtual QString brandImageIndoor(const Vehicle* vehicle) const { Q_UNUSED(vehicle) return QString(); }
+
+    /// Return the resource file which contains the brand image for the vehicle for Outdoor theme.
+    virtual QString brandImageOutdoor(const Vehicle* vehicle) const { Q_UNUSED(vehicle) return QString(); }
 
     /// Return the resource file which contains the vehicle icon used in the flight view when the view is dark (Satellite for instance)
     virtual QString vehicleImageOpaque(const Vehicle* vehicle) const;
@@ -251,8 +266,49 @@ public:
     /// Return the resource file which contains the vehicle icon used in the compass
     virtual QString vehicleImageCompass(const Vehicle* vehicle) const;
 
+    /// Allows the core plugin to override the toolbar indicators
+    /// @return A list of QUrl with the indicators (see MainToolBarIndicators.qml)
+    virtual const QVariantList& toolBarIndicators(const Vehicle* vehicle);
+
+    /// Returns a list of CameraMetaData objects for available cameras on the vehicle.
+    virtual const QVariantList& cameraList(const Vehicle* vehicle);
+
+    /// @true: When flying a mission the vehicle is always facing towards the next waypoint
+    virtual bool vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const;
+
+    /// Returns the data needed to do battery consumption calculations
+    ///     @param[out] mAhBattery Battery milliamp-hours rating (0 for no battery data available)
+    ///     @param[out] hoverAmps Current draw in amps during hover
+    ///     @param[out] cruiseAmps Current draw in amps during cruise
+    virtual void batteryConsumptionData(Vehicle* vehicle, int& mAhBattery, double& hoverAmps, double& cruiseAmps) const;
+
+    /// Returns the default mission flight speeds.
+    ///     @param[out] hoverSpeed Flight speed for vehicle flying in multi-rotor mode. 0 for none, or not available.
+    ///     @param[out] cruiseSpeed Flight speed for vehicle flying in fixed wing forward flight mode. 0 for none, or not available.
+    virtual void missionFlightSpeedInfo(Vehicle* vehicle, double& hoverSpeed, double& cruiseSpeed);
+
+    // Returns the parameter which control auto-disarm. Assume == 0 means no auto disarm
+    virtual QString autoDisarmParameter(Vehicle* vehicle);
+
+    /// Used to determine whether a vehicle has a gimbal.
+    ///     @param[out] rollSupported Gimbal supports roll
+    ///     @param[out] pitchSupported Gimbal supports pitch
+    ///     @param[out] yawSupported Gimbal supports yaw
+    /// @return true: vehicle has gimbal, false: gimbal support unknown
+    virtual bool hasGimbal(Vehicle* vehicle, bool& rollSupported, bool& pitchSupported, bool& yawSupported);
+
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const char* px4FollowMeFlightMode;
+
+protected:
+    // Arms the vehicle, waiting for the arm state to change.
+    // @return: true - vehicle armed, false - vehicle failed to arm
+    bool _armVehicle(Vehicle* vehicle);
+
+private:
+    QVariantList _toolBarIndicatorList;
+    static QVariantList _cameraList;    ///< Standard QGC camera list
+
 };
 
 class FirmwarePluginFactory : public QObject
@@ -268,8 +324,11 @@ public:
     /// @return Singleton FirmwarePlugin instance for the specified MAV_AUTOPILOT.
     virtual FirmwarePlugin* firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) = 0;
 
-    /// @return List of autopilot types this plugin supports.
-    virtual QList<MAV_AUTOPILOT> knownFirmwareTypes(void) const = 0;
+    /// @return List of firmware types this plugin supports.
+    virtual QList<MAV_AUTOPILOT> supportedFirmwareTypes(void) const = 0;
+
+    /// @return List of vehicle types this plugin supports.
+    virtual QList<MAV_TYPE> supportedVehicleTypes(void) const;
 };
 
 class FirmwarePluginFactoryRegister : public QObject

@@ -14,25 +14,23 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick 2.4
-import QtGraphicalEffects 1.0
+import QtQuick              2.3
+import QtGraphicalEffects   1.0
 
-import QGroundControl.Controls 1.0
+import QGroundControl               1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.ScreenTools   1.0
 
 Item {
     id: root
 
-    property bool active:       false  ///< true: actively connected to data provider, false: show inactive control
-    property real rollAngle :   _defaultRollAngle
-    property real pitchAngle:   _defaultPitchAngle
     property bool showPitch:    true
+    property var  vehicle:      null
     property real size
+    property bool showHeading:  false
 
-    readonly property real _defaultRollAngle:   0
-    readonly property real _defaultPitchAngle:  0
-
-    property real _rollAngle:   active ? rollAngle  : _defaultRollAngle
-    property real _pitchAngle:  active ? pitchAngle : _defaultPitchAngle
+    property real _rollAngle:   vehicle ? vehicle.roll.rawValue  : 0
+    property real _pitchAngle:  vehicle ? vehicle.pitch.rawValue : 0
 
     width:  size
     height: size
@@ -121,4 +119,16 @@ Item {
         border.width:   2
     }
 
+    QGCLabel {
+        anchors.bottomMargin:       Math.round(ScreenTools.defaultFontPixelHeight * .75)
+        anchors.bottom:             parent.bottom
+        anchors.horizontalCenter:   parent.horizontalCenter
+        text:                       _headingString3
+        color:                      "white"
+        visible:                    showHeading
+
+        property string _headingString: vehicle ? vehicle.heading.rawValue.toFixed(0) : "OFF"
+        property string _headingString2: _headingString.length === 1 ? "0" + _headingString : _headingString
+        property string _headingString3: _headingString2.length === 2 ? "0" + _headingString2 : _headingString2
+    }
 }

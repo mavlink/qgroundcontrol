@@ -1,0 +1,46 @@
+[
+{
+    "name":             "Landing distance",
+    "shortDescription": "Distance between landing and loiter points.",
+    "type":             "double",
+    "units":            "m",
+    "min":              10,
+    "decimalPlaces":    1,
+    "defaultValue":     300.0
+},
+{
+    "name":             "Landing heading",
+    "shortDescription": "Heading from loiter point to land point.",
+    "type":             "double",
+    "units":            "deg",
+    "min":              0.0,
+    "max":              360.0,
+    "decimalPlaces":    0,
+    "defaultValue":     270.0
+},
+{
+    "name":             "Loiter altitude",
+    "shortDescription": "Aircraft will proceed to the loiter point and loiter until it reaches this altitude. Once altitude is reached the aircraft will proceed to land.",
+    "type":             "double",
+    "units":            "m",
+    "decimalPlaces":    1,
+    "defaultValue":     40.0
+},
+{
+    "name":             "Loiter radius",
+    "shortDescription": "Loiter radius.",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "min":              1,
+    "units":            "m",
+    "defaultValue":     75.0
+},
+{
+    "name":             "Landing altitude",
+    "shortDescription": "Altitude for landing point.",
+    "type":             "double",
+    "units":            "m",
+    "decimalPlaces":    1,
+    "defaultValue":     0.0
+}
+]

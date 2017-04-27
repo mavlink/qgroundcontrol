@@ -8,9 +8,9 @@
  ****************************************************************************/
 
 
-import QtQuick          2.5
-import QtQuick.Controls 1.4
-import QtQuick.Dialogs  1.1
+import QtQuick          2.3
+import QtQuick.Controls 1.2
+import QtQuick.Dialogs  1.2
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -271,12 +271,11 @@ Rectangle {
                         height: ScreenTools.defaultFontPixelHeight * 0.5
                         width:  parent.width
                     }
-                    /*
-                    //-- Auto Connect
+                    //-- Auto Connect on Start
                     QGCCheckBox {
                         text:       "Automatically Connect on Start"
                         checked:    false
-                        enabled:    editConfig ? editConfig.autoConnectAllowed : false
+                        visible:    editConfig ? editConfig.autoConnectAllowed : false
                         onCheckedChanged: {
                             if(editConfig) {
                                 editConfig.autoConnect = checked
@@ -287,7 +286,6 @@ Rectangle {
                                 checked = editConfig.autoConnect
                         }
                     }
-                    */
                     Item {
                         height: ScreenTools.defaultFontPixelHeight
                         width:  parent.width

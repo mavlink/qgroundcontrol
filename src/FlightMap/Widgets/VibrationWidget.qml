@@ -8,8 +8,8 @@
  ****************************************************************************/
 
 
-import QtQuick          2.4
-import QtQuick.Controls 1.4
+import QtQuick          2.3
+import QtQuick.Controls 1.2
 
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
@@ -38,6 +38,11 @@ QGCFlickable {
     readonly property real _barBadValue:    60.0
 
     QGCPalette { id:qgcPal; colorGroupEnabled: true }
+
+    MouseArea {
+        anchors.fill:   parent
+        onClicked:      showNextPage()
+    }
 
     Item {
         id:     innerItem

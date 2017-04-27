@@ -82,7 +82,5 @@ QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec &spec)
 void
 QGeoTileFetcherQGC::timeout()
 {
-    if(!getQGCMapEngine()->isInternetActive()) {
-        getQGCMapEngine()->testInternet();
-    }
+    getQGCMapEngine()->testInternet();
 }

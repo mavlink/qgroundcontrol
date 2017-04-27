@@ -11,7 +11,7 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-import QtQuick          2.4
+import QtQuick          2.3
 import QtLocation       5.3
 import QtPositioning    5.3
 
@@ -26,7 +26,7 @@ MapQuickItem {
 
     anchorPoint.x:  vehicleIcon.width  / 2
     anchorPoint.y:  vehicleIcon.height / 2
-    visible:        vehicle && vehicle.coordinateValid
+    visible:        vehicle && vehicle.coordinate.isValid
 
     sourceItem: Image {
         id:                 vehicleIcon

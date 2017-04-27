@@ -10,28 +10,24 @@
 #include "QGCMapPolygon.h"
 #include "QGCGeo.h"
 #include "JsonHelper.h"
+#include "QGCQGeoCoordinate.h"
 
 #include <QGeoRectangle>
 #include <QDebug>
 #include <QJsonArray>
 
-const char* QGCMapPolygon::_jsonPolygonKey = "polygon";
+const char* QGCMapPolygon::jsonPolygonKey = "polygon";
 
-QGCMapPolygon::QGCMapPolygon(QObject* parent)
+QGCMapPolygon::QGCMapPolygon(QObject* newCoordParent, QObject* parent)
     : QObject(parent)
+    , _newCoordParent(newCoordParent)
     , _dirty(false)
+    , _centerDrag(false)
+    , _ignoreCenterUpdates(false)
 {
-
-}
-
-const QGCMapPolygon& QGCMapPolygon::operator=(const QGCMapPolygon& other)
-{
-    _polygonPath = other._polygonPath;
-    setDirty(true);
-
-    emit pathChanged();
-
-    return *this;
+    connect(&_polygonModel, &QmlObjectListModel::dirtyChanged, this, &QGCMapPolygon::_polygonModelDirtyChanged);
+    connect(&_polygonModel, &QmlObjectListModel::countChanged, this, &QGCMapPolygon::_polygonModelCountChanged);
+    connect(&_polygonModel, &QmlObjectListModel::countChanged, this, &QGCMapPolygon::_updateCenter);
 }
 
 void QGCMapPolygon::clear(void)
@@ -48,13 +44,27 @@ void QGCMapPolygon::clear(void)
     // will cause the polygon to go away.
     _polygonPath.clear();
 
+    _polygonModel.clearAndDeleteContents();
+
+    emit cleared();
+
     setDirty(true);
 }
 
-void QGCMapPolygon::adjustCoordinate(int vertexIndex, const QGeoCoordinate coordinate)
+void QGCMapPolygon::adjustVertex(int vertexIndex, const QGeoCoordinate coordinate)
 {
     _polygonPath[vertexIndex] = QVariant::fromValue(coordinate);
-    emit pathChanged();
+    if (!_centerDrag) {
+        // When dragging center we don't signal path changed until add vertices are updated
+        emit pathChanged();
+    }
+
+    _polygonModel.value<QGCQGeoCoordinate*>(vertexIndex)->setCoordinate(coordinate);
+
+    if (!_ignoreCenterUpdates) {
+        _updateCenter();
+    }
+
     setDirty(true);
 }
 
@@ -113,22 +123,15 @@ bool QGCMapPolygon::containsCoordinate(const QGeoCoordinate& coordinate) const
     }
 }
 
-QGeoCoordinate QGCMapPolygon::center(void) const
-{
-    if (_polygonPath.count() > 2) {
-        QPointF centerPoint = _toPolygonF().boundingRect().center();
-        return _coordFromPointF(centerPoint);
-    } else {
-        return QGeoCoordinate();
-    }
-}
-
 void QGCMapPolygon::setPath(const QList<QGeoCoordinate>& path)
 {
     _polygonPath.clear();
+    _polygonModel.clearAndDeleteContents();
     foreach(const QGeoCoordinate& coord, path) {
-        _polygonPath << QVariant::fromValue(coord);
+        _polygonPath.append(QVariant::fromValue(coord));
+        _polygonModel.append(new QGCQGeoCoordinate(coord, _newCoordParent));
     }
+
     setDirty(true);
     emit pathChanged();
 }
@@ -136,6 +139,12 @@ void QGCMapPolygon::setPath(const QList<QGeoCoordinate>& path)
 void QGCMapPolygon::setPath(const QVariantList& path)
 {
     _polygonPath = path;
+
+    _polygonModel.clearAndDeleteContents();
+    for (int i=0; i<_polygonPath.count(); i++) {
+        _polygonModel.append(new QGCQGeoCoordinate(_polygonPath[i].value<QGeoCoordinate>(), _newCoordParent));
+    }
+
     setDirty(true);
     emit pathChanged();
 }
@@ -145,7 +154,7 @@ void QGCMapPolygon::saveToJson(QJsonObject& json)
     QJsonValue jsonValue;
 
     JsonHelper::saveGeoCoordinateArray(_polygonPath, false /* writeAltitude*/, jsonValue);
-    json.insert(_jsonPolygonKey, jsonValue);
+    json.insert(jsonPolygonKey, jsonValue);
     setDirty(false);
 }
 
@@ -155,16 +164,21 @@ bool QGCMapPolygon::loadFromJson(const QJsonObject& json, bool required, QString
     clear();
 
     if (required) {
-        if (!JsonHelper::validateRequiredKeys(json, QStringList(_jsonPolygonKey), errorString)) {
+        if (!JsonHelper::validateRequiredKeys(json, QStringList(jsonPolygonKey), errorString)) {
             return false;
         }
-    } else if (!json.contains(_jsonPolygonKey)) {
+    } else if (!json.contains(jsonPolygonKey)) {
         return true;
     }
 
-    if (!JsonHelper::loadGeoCoordinateArray(json[_jsonPolygonKey], false /* altitudeRequired */, _polygonPath, errorString)) {
+    if (!JsonHelper::loadGeoCoordinateArray(json[jsonPolygonKey], false /* altitudeRequired */, _polygonPath, errorString)) {
         return false;
     }
+
+    for (int i=0; i<_polygonPath.count(); i++) {
+        _polygonModel.append(new QGCQGeoCoordinate(_polygonPath[i].value<QGeoCoordinate>(), _newCoordParent));
+    }
+
     setDirty(false);
     emit pathChanged();
 
@@ -175,9 +189,120 @@ QList<QGeoCoordinate> QGCMapPolygon::coordinateList(void) const
 {
     QList<QGeoCoordinate> coords;
 
-    for (int i=0; i<count(); i++) {
-        coords.append((*this)[i]);
+    for (int i=0; i<_polygonPath.count(); i++) {
+        coords.append(_polygonPath[i].value<QGeoCoordinate>());
     }
 
     return coords;
+}
+
+void QGCMapPolygon::splitPolygonSegment(int vertexIndex)
+{
+    int nextIndex = vertexIndex + 1;
+    if (nextIndex > _polygonPath.length() - 1) {
+        nextIndex = 0;
+    }
+
+    QGeoCoordinate firstVertex = _polygonPath[vertexIndex].value<QGeoCoordinate>();
+    QGeoCoordinate nextVertex = _polygonPath[nextIndex].value<QGeoCoordinate>();
+
+    double distance = firstVertex.distanceTo(nextVertex);
+    double azimuth = firstVertex.azimuthTo(nextVertex);
+    QGeoCoordinate newVertex = firstVertex.atDistanceAndAzimuth(distance / 2, azimuth);
+
+    if (nextIndex == 0) {
+        appendVertex(newVertex);
+    } else {
+        _polygonModel.insert(nextIndex, new QGCQGeoCoordinate(newVertex, this));
+        _polygonPath.insert(nextIndex, QVariant::fromValue(newVertex));
+        emit pathChanged();
+    }
+}
+
+void QGCMapPolygon::appendVertex(const QGeoCoordinate& coordinate)
+{
+    _polygonPath.append(QVariant::fromValue(coordinate));
+    _polygonModel.append(new QGCQGeoCoordinate(coordinate, _newCoordParent));
+    emit pathChanged();
+}
+
+void QGCMapPolygon::_polygonModelDirtyChanged(bool dirty)
+{
+    if (dirty) {
+        setDirty(true);
+    }
+}
+
+void QGCMapPolygon::removeVertex(int vertexIndex)
+{
+    if (vertexIndex < 0 && vertexIndex > _polygonPath.length() - 1) {
+        qWarning() << "Call to removePolygonCoordinate with bad vertexIndex:count" << vertexIndex << _polygonPath.length();
+        return;
+    }
+
+    if (_polygonPath.length() <= 3) {
+        // Don't allow the user to trash the polygon
+        return;
+    }
+
+    QObject* coordObj = _polygonModel.removeAt(vertexIndex);
+    coordObj->deleteLater();
+
+    _polygonPath.removeAt(vertexIndex);
+    emit pathChanged();
+}
+
+void QGCMapPolygon::_polygonModelCountChanged(int count)
+{
+    emit countChanged(count);
+}
+
+void QGCMapPolygon::_updateCenter(void)
+{
+    if (!_ignoreCenterUpdates) {
+        QGeoCoordinate center;
+
+        if (_polygonPath.count() > 2) {
+            QPointF centerPoint = _toPolygonF().boundingRect().center();
+            center = _coordFromPointF(centerPoint);
+        }
+
+        _center = center;
+        emit centerChanged(center);
+    }
+}
+
+void QGCMapPolygon::setCenter(QGeoCoordinate newCenter)
+{
+    if (newCenter != _center) {
+        _ignoreCenterUpdates = true;
+
+        // Adjust polygon vertices to new center
+        double distance = _center.distanceTo(newCenter);
+        double azimuth = _center.azimuthTo(newCenter);
+
+        for (int i=0; i<count(); i++) {
+            QGeoCoordinate oldVertex = _polygonPath[i].value<QGeoCoordinate>();
+            QGeoCoordinate newVertex = oldVertex.atDistanceAndAzimuth(distance, azimuth);
+            adjustVertex(i, newVertex);
+        }
+
+        if (_centerDrag) {
+            // When center dragging signals are delayed until all vertices are updated
+            emit pathChanged();
+        }
+
+        _ignoreCenterUpdates = false;
+
+        _center = newCenter;
+        emit centerChanged(newCenter);
+    }
+}
+
+void QGCMapPolygon::setCenterDrag(bool centerDrag)
+{
+    if (centerDrag != _centerDrag) {
+        _centerDrag = centerDrag;
+        emit centerDragChanged(centerDrag);
+    }
 }

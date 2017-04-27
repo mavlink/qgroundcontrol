@@ -17,11 +17,14 @@
 #include "QGroundControlQmlGlobal.h"
 #include "MissionCommandUIInfo.h"
 #include "MissionCommandList.h"
+#include "SettingsManager.h"
 
 #include <QQmlEngine>
 
-MissionCommandTree::MissionCommandTree(QGCApplication* app, bool unitTest)
-    : QGCTool(app)
+MissionCommandTree::MissionCommandTree(QGCApplication* app, QGCToolbox* toolbox, bool unitTest)
+    : QGCTool(app, toolbox)
+    , _allCommandsCategory(tr("All commands"))
+    , _settingsManager(NULL)
     , _unitTest(unitTest)
 {
 }
@@ -29,6 +32,8 @@ MissionCommandTree::MissionCommandTree(QGCApplication* app, bool unitTest)
 void MissionCommandTree::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
+
+    _settingsManager = toolbox->settingsManager();
 
 #ifdef UNITTEST_BUILD
     if (_unitTest) {
@@ -42,7 +47,7 @@ void MissionCommandTree::setToolbox(QGCToolbox* toolbox)
     } else {
 #endif
         // Load all levels of hierarchy
-        foreach (MAV_AUTOPILOT firmwareType, _toolbox->firmwarePluginManager()->knownFirmwareTypes()) {
+        foreach (MAV_AUTOPILOT firmwareType, _toolbox->firmwarePluginManager()->supportedFirmwareTypes()) {
             FirmwarePlugin* plugin = _toolbox->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, MAV_TYPE_QUADROTOR);
 
             QList<MAV_TYPE> vehicleTypes;
@@ -62,7 +67,7 @@ void MissionCommandTree::setToolbox(QGCToolbox* toolbox)
 
 MAV_AUTOPILOT MissionCommandTree::_baseFirmwareType(MAV_AUTOPILOT firmwareType) const
 {
-    if (qgcApp()->toolbox()->firmwarePluginManager()->knownFirmwareTypes().contains(firmwareType)) {
+    if (qgcApp()->toolbox()->firmwarePluginManager()->supportedFirmwareTypes().contains(firmwareType)) {
         return firmwareType;
     } else {
         return MAV_AUTOPILOT_GENERIC;
@@ -164,6 +169,7 @@ void MissionCommandTree::_buildAvailableCommands(Vehicle* vehicle)
             _availableCategories[baseFirmwareType][baseVehicleType].append(newCategory);
         }
     }
+    _availableCategories[baseFirmwareType][baseVehicleType].append(_allCommandsCategory);
 }
 
 QStringList MissionCommandTree::_availableCategoriesForVehicle(Vehicle* vehicle)
@@ -234,7 +240,7 @@ QVariantList MissionCommandTree::getCommandsForCategory(Vehicle* vehicle, const 
     QMap<MAV_CMD, MissionCommandUIInfo*> commandMap = _availableCommands[baseFirmwareType][baseVehicleType];
     foreach (MAV_CMD command, commandMap.keys()) {
         MissionCommandUIInfo* uiInfo = commandMap[command];
-        if (uiInfo->category() == category) {
+        if (uiInfo->category() == category || category == _allCommandsCategory) {
             list.append(QVariant::fromValue(uiInfo));
         }
     }
@@ -249,7 +255,7 @@ void MissionCommandTree::_baseVehicleInfo(Vehicle* vehicle, MAV_AUTOPILOT& baseF
         baseVehicleType = _baseVehicleType(vehicle->vehicleType());
     } else {
         // No Vehicle means offline editing
-        baseFirmwareType = _baseFirmwareType((MAV_AUTOPILOT)QGroundControlQmlGlobal::offlineEditingFirmwareType()->rawValue().toInt());
-        baseVehicleType = _baseVehicleType((MAV_TYPE)QGroundControlQmlGlobal::offlineEditingVehicleType()->rawValue().toInt());
+        baseFirmwareType = _baseFirmwareType((MAV_AUTOPILOT)_settingsManager->appSettings()->offlineEditingFirmwareType()->rawValue().toInt());
+        baseVehicleType = _baseVehicleType((MAV_TYPE)_settingsManager->appSettings()->offlineEditingVehicleType()->rawValue().toInt());
     }
 }

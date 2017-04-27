@@ -14,7 +14,7 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick 2.4
+import QtQuick 2.3
 import QGroundControl.ScreenTools 1.0
 
 Item {
