@@ -84,6 +84,17 @@ public:
     Q_PROPERTY(qreal            rcBattery       READ    rcBattery           NOTIFY rcBatteryChanged)
     Q_PROPERTY(QString          flightTime      READ    flightTime          NOTIFY flightTimeChanged)
 
+    Q_PROPERTY(int              J1              READ    J1                  NOTIFY rawChannelChanged)
+    Q_PROPERTY(int              J2              READ    J2                  NOTIFY rawChannelChanged)
+    Q_PROPERTY(int              J3              READ    J3                  NOTIFY rawChannelChanged)
+    Q_PROPERTY(int              J4              READ    J4                  NOTIFY rawChannelChanged)
+    Q_PROPERTY(int              K1              READ    K1                  NOTIFY rawChannelChanged)
+    Q_PROPERTY(int              K2              READ    K2                  NOTIFY rawChannelChanged)
+    Q_PROPERTY(int              K3              READ    K3                  NOTIFY rawChannelChanged)
+    Q_PROPERTY(int              T12             READ    T12                 NOTIFY rawChannelChanged)
+    Q_PROPERTY(int              T34             READ    T34                 NOTIFY rawChannelChanged)
+    Q_PROPERTY(int              ASwitch         READ    ASwitch             NOTIFY rawChannelChanged)
+
     Q_INVOKABLE void enterBindMode      ();
     Q_INVOKABLE void initM4             ();
     Q_INVOKABLE void startScan          (int delay = 0);
@@ -92,6 +103,7 @@ public:
     Q_INVOKABLE void resetWifi          ();
     Q_INVOKABLE bool isWifiConfigured   (QString ssid);
     Q_INVOKABLE void calibrateGimbalMV  ();
+    Q_INVOKABLE int  rawChannels        (int channel);
 
     M4State     m4State             ();
     QString     m4StateStr          ();
@@ -123,6 +135,17 @@ public:
 
     void        init                (TyphoonHM4Interface* pHandler);
 
+    int         J1                  () { return rawChannels(0); }
+    int         J2                  () { return rawChannels(1); }
+    int         J3                  () { return rawChannels(2); }
+    int         J4                  () { return rawChannels(3); }
+    int         K1                  () { return rawChannels(4); }
+    int         K2                  () { return rawChannels(5); }
+    int         K3                  () { return rawChannels(6); }
+    int         T12                 () { return rawChannels(7); }
+    int         T34                 () { return rawChannels(8); }
+    int         ASwitch             () { return rawChannels(9); }
+
 signals:
     void    m4StateChanged              ();
     void    controllerLocationChanged   ();
@@ -136,6 +159,7 @@ signals:
     void    bindTimeout                 ();
     void    rcBatteryChanged            ();
     void    flightTimeChanged           ();
+    void    rawChannelChanged           ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -153,6 +177,7 @@ private slots:
     void    _batteryUpdate              ();
     void    _armedChanged               (bool armed);
     void    _flightUpdate               ();
+    void    _rawChannelsChanged         ();
 
 private:
     void    _saveWifiConfigurations     ();

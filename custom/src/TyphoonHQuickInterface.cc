@@ -66,6 +66,7 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(_pHandler, &TyphoonHM4Interface::wifiDisconnected,             this, &TyphoonHQuickInterface::_wifiDisconnected);
         connect(_pHandler, &TyphoonHM4Interface::batteryUpdate,                this, &TyphoonHQuickInterface::_batteryUpdate);
         connect(_pHandler, &TyphoonHM4Interface::armedChanged,                 this, &TyphoonHQuickInterface::_armedChanged);
+        connect(_pHandler, &TyphoonHM4Interface::rawChannelsChanged,           this, &TyphoonHQuickInterface::_rawChannelsChanged);
         connect(&_scanTimer, &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
         connect(&_flightTimer, &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
         _flightTimer.setSingleShot(false);
@@ -411,6 +412,19 @@ TyphoonHQuickInterface::isTyphoon()
 }
 
 //-----------------------------------------------------------------------------
+int
+TyphoonHQuickInterface::rawChannels(int channel)
+{
+    if(_pHandler) {
+        if(channel < _pHandler->rawChannels().size()) {
+            uint16_t t = _pHandler->rawChannels()[channel];
+            return t;
+        }
+    }
+    return 0;
+}
+
+//-----------------------------------------------------------------------------
 static bool
 compareRSSI(const QVariant &v1, const QVariant &v2)
 {
@@ -549,6 +563,13 @@ TyphoonHQuickInterface::_armedChanged(bool armed)
     } else {
         _flightTimer.stop();
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_rawChannelsChanged()
+{
+    emit rawChannelChanged();
 }
 
 //-----------------------------------------------------------------------------

@@ -2,6 +2,7 @@
     <qresource prefix="/qml">
         <file alias="TyphoonHQuickInterface/Widgets/OnOffSwitch.qml">res/OnOffSwitch.qml</file>
         <file alias="TyphoonHQuickInterface/Widgets/SSIDButton.qml">res/SSIDButton.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/ST16Analog.qml">res/ST16Analog.qml</file>
         <file alias="TyphoonHQuickInterface/Widgets/qmldir">res/qmldir</file>
         <file alias="QGroundControl/Controls/MainToolBar.qml">res/MainToolBar.qml</file>
         <file alias="QGroundControl/Controls/QGCToolBarButton.qml">res/QGCToolBarButton.qml</file>
@@ -59,6 +60,7 @@
     <qresource prefix="/typhoonh">
         <file alias="BatteryIndicator.qml">res/BatteryIndicator.qml</file>
         <file alias="cameraControl.qml">res/cameraControl.qml</file>
+        <file alias="ChannelComponent.qml">src/AutoPilotPlugin/ChannelComponent.qml</file>
         <file alias="LogDownload.qml">res/LogDownload.qml</file>
         <file alias="GimbalComponent.qml">src/AutoPilotPlugin/GimbalComponent.qml</file>
         <file alias="ModeIndicator.qml">res/ModeIndicator.qml</file>
