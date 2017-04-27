@@ -409,11 +409,6 @@ void MissionManager::_requestNextMissionItem(void)
 
 void MissionManager::_handleMissionItem(const mavlink_message_t& message, bool missionItemInt)
 {
-    
-    if (!_checkForExpectedAck(AckMissionItem)) {
-        return;
-    }
-
     MAV_CMD     command;
     MAV_FRAME   frame;
     double      param1;
@@ -468,7 +463,24 @@ void MissionManager::_handleMissionItem(const mavlink_message_t& message, bool m
         frame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
     }
     
-    qCDebug(MissionManagerLog) << "_handleMissionItem seq:command:current" << seq << command << isCurrentItem;
+
+    bool ardupilotHomePositionUpdate = false;
+    if (!_checkForExpectedAck(AckMissionItem)) {
+        if (_vehicle->apmFirmware() && seq ==  0) {
+            ardupilotHomePositionUpdate = true;
+        } else {
+            qCDebug(MissionManagerLog) << "_handleMissionItem dropping spurious item seq:command:current" << seq << command << isCurrentItem;
+            return;
+        }
+    }
+
+    qCDebug(MissionManagerLog) << "_handleMissionItem seq:command:current:ardupilotHomePositionUpdate" << seq << command << isCurrentItem << ardupilotHomePositionUpdate;
+
+    if (ardupilotHomePositionUpdate) {
+        QGeoCoordinate newHomePosition(param5, param6, param7);
+        _vehicle->_setHomePosition(newHomePosition);
+        return;
+    }
     
     if (_itemIndicesToRead.contains(seq)) {
         _itemIndicesToRead.removeOne(seq);
@@ -983,6 +995,8 @@ void MissionManager::generateResumeMission(int resumeIndex)
         }
     }
 
+    resumeIndex = qMin(resumeIndex, _missionItems.count() - 1);
+
     int seqNum = 0;
     QList<MissionItem*> resumeMission;
 
@@ -1001,6 +1015,9 @@ void MissionManager::generateResumeMission(int resumeIndex)
                            << MAV_CMD_IMAGE_STOP_CAPTURE
                            << MAV_CMD_VIDEO_START_CAPTURE
                            << MAV_CMD_VIDEO_STOP_CAPTURE;
+    if (_vehicle->fixedWing() && _vehicle->px4Firmware()) {
+        includedResumeCommands << MAV_CMD_NAV_TAKEOFF;
+    }
 
     bool addHomePosition = _vehicle->firmwarePlugin()->sendHomePositionToVehicle();
     int setCurrentIndex = addHomePosition ? 1 : 0;

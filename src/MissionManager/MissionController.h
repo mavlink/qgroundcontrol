@@ -70,7 +70,8 @@ public:
 
     Q_PROPERTY(double               progressPct             READ progressPct                NOTIFY progressPctChanged)
 
-    Q_PROPERTY(int                  resumeMissionIndex      READ resumeMissionIndex         NOTIFY resumeMissionIndexChanged)
+    Q_PROPERTY(int                  currentMissionIndex     READ currentMissionIndex        NOTIFY currentMissionIndexChanged)
+    Q_PROPERTY(int                  resumeMissionIndex      READ resumeMissionIndex         NOTIFY resumeMissionIndexChanged)   ///< Returns the item index two which a mission should be resumed. -1 indicates resume mission not available.
 
     Q_PROPERTY(double               missionDistance         READ missionDistance            NOTIFY missionDistanceChanged)
     Q_PROPERTY(double               missionTime             READ missionTime                NOTIFY missionTimeChanged)
@@ -134,7 +135,7 @@ public:
     QGeoCoordinate      plannedHomePosition     (void) const;
     double              progressPct             (void) const { return _progressPct; }
 
-    /// Returns the item index two which a mission should be resumed. -1 indicates resume mission not available.
+    int currentMissionIndex(void) const;
     int resumeMissionIndex(void) const;
 
     double  missionDistance         (void) const { return _missionFlightStatus.totalDistance; }
@@ -166,6 +167,7 @@ signals:
     void batteriesRequiredChanged(int batteriesRequired);
     void plannedHomePositionChanged(QGeoCoordinate plannedHomePosition);
     void progressPctChanged(double progressPct);
+    void currentMissionIndexChanged(int currentMissionIndex);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
