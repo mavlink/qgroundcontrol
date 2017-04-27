@@ -60,8 +60,12 @@ FlightMap {
 
     // When the user pans the map we stop responding to vehicle coordinate updates until the panRecenterTimer fires
     onUserPannedChanged: {
-        _disableVehicleTracking = true
-        panRecenterTimer.start()
+        if (userPanned) {
+            console.log("user panned")
+            userPanned = false
+            _disableVehicleTracking = true
+            panRecenterTimer.restart()
+        }
     }
 
     function pointInRect(point, rect) {
