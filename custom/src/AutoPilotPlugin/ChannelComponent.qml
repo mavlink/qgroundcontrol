@@ -22,25 +22,24 @@ import TyphoonHQuickInterface           1.0
 import TyphoonHQuickInterface.Widgets   1.0
 
 SetupPage {
-    id:             gimbalPage
+    id:             channelPage
     pageComponent:  pageComponent
+
     Component {
         id: pageComponent
+
         Item {
-            width:  ScreenTools.defaultFontPixelWidth * 60
+            width:  Math.max(availableWidth, innerColumn.width)
             height: innerColumn.height
-            anchors.horizontalCenter:   parent.horizontalCenter
 
-            FactPanelController { id: controller; factPanel: gimbalPage.viewPanel }
-
-            property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+            FactPanelController { id: controller; factPanel: channelPage.viewPanel }
 
             ColumnLayout {
                 id:                         innerColumn
-                anchors.horizontalCenter:   parent.horizontalCenter
                 spacing:                    ScreenTools.defaultFontPixelHeight
+                anchors.horizontalCenter:   parent.horizontalCenter
                 QGCGroupBox {
-                    title:  qsTr("Sticks Channels")
+                    title:  qsTr("Sticks")
                     Column {
                         spacing:        ScreenTools.defaultFontPixelHeight
                         width:          parent.width

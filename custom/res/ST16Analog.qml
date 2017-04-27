@@ -22,36 +22,54 @@ import QGroundControl.Controls      1.0
 
 Item {
     id:     _root
-    height: sRow.height
-    width:  ScreenTools.defaultFontPixelWidth * 50
+    height: ScreenTools.defaultFontPixelHeight
+    width:  ScreenTools.defaultFontPixelWidth  * 80
 
     property alias  text:   label.text
     property var    value:  0
 
-    property real   _indicatorWidth: ScreenTools.defaultFontPixelWidth * 30
+    property real   _indicatorWidth: ScreenTools.defaultFontPixelWidth * 60
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    Row {
-        id:             sRow
-        width:          _root.width
-        spacing:        ScreenTools.defaultFontPixelWidth
-        QGCLabel {
-            id:         label
-            width:      ScreenTools.defaultFontPixelWidth * 8
-            anchors.verticalCenter: parent.verticalCenter
-        }
-        QGCLabel {
-            text:       _root.value
-            width:      ScreenTools.defaultFontPixelWidth * 6
-            anchors.verticalCenter: parent.verticalCenter
-        }
-        Rectangle {
-            id:         indicator
-            width:      _indicatorWidth * (_root.value / 4096.0)
-            height:     ScreenTools.defaultFontPixelHeight
-            color:      qgcPal.colorGreen
-            anchors.verticalCenter: parent.verticalCenter
-        }
+    QGCLabel {
+        id:         label
+        width:      ScreenTools.defaultFontPixelWidth * 8
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+    }
+    QGCLabel {
+        id:         valueLabel
+        text:       _root.value
+        width:      ScreenTools.defaultFontPixelWidth * 6
+        anchors.left: label.right
+        anchors.verticalCenter: parent.verticalCenter
+    }
+    Rectangle {
+        id:         indicator
+        width:      _indicatorWidth * (_root.value / 4096.0)
+        height:     ScreenTools.defaultFontPixelHeight
+        color:      qgcPal.colorGreen
+        anchors.left: valueLabel.right
+        anchors.verticalCenter: parent.verticalCenter
+    }
+    Rectangle {
+        id:     rect1
+        width:  _indicatorWidth * 0.5
+        height: indicator.height
+        color:  Qt.rgba(0,0,0,0)
+        anchors.left: valueLabel.right
+        border.color: qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
+        border.width: 1
+        anchors.verticalCenter: parent.verticalCenter
+    }
+    Rectangle {
+        width:  _indicatorWidth * 0.5
+        height: indicator.height
+        color:  Qt.rgba(0,0,0,0)
+        anchors.left: rect1.right
+        border.color: qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
+        border.width: 1
+        anchors.verticalCenter: parent.verticalCenter
     }
 }

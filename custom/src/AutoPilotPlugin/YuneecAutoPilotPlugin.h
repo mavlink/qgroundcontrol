@@ -26,6 +26,9 @@ public:
     // Overrides from PX4AutoPilotPlugin
     const QVariantList& vehicleComponents(void) final;
 
+private slots:
+    void    _advancedChanged    (bool advanced);
+
 private:
     GimbalComponent*        _gimbalComponent;
     ChannelComponent*       _channelComponent;
