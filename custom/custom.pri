@@ -22,6 +22,8 @@ linux : android-g++ {
     }
 }
 
+TARGET   = DataPilot
+
 DEFINES += CUSTOMHEADER=\"\\\"TyphoonHPlugin.h\\\"\"
 DEFINES += CUSTOMCLASS=TyphoonHPlugin
 
@@ -33,9 +35,9 @@ DEFINES += QGC_DISABLE_BLUETOOTH
 DEFINES += QGC_DISABLE_UVC
 DEFINES += DISABLE_ZEROCONF
 
-DEFINES += QGC_APPLICATION_NAME=\"\\\"Typhoon-QGC\\\"\"
-DEFINES += QGC_ORG_NAME=\"\\\"Yuneec.org\\\"\"
-DEFINES += QGC_ORG_DOMAIN=\"\\\"org.yuneec\\\"\"
+DEFINES += QGC_APPLICATION_NAME=\"\\\"DataPilot\\\"\"
+DEFINES += QGC_ORG_NAME=\"\\\"Yuneec.com\\\"\"
+DEFINES += QGC_ORG_DOMAIN=\"\\\"com.yuneec\\\"\"
 
 RESOURCES += \
     $$QGCROOT/custom/typhoonh.qrc

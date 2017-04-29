@@ -38,7 +38,7 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
     }
 
     private static QGCActivity m_instance;
-    private static final String TAG = "QGroundControl_JNI";
+    private static final String TAG = "DataPilot_JNI";
     private static TextToSpeech  m_tts;
     private static PowerManager.WakeLock m_wl;
     private static WifiManager mainWifi;
@@ -80,7 +80,7 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
         super.onCreate(savedInstanceState);
         m_tts = new TextToSpeech(this,this);
         PowerManager pm = (PowerManager)m_instance.getSystemService(Context.POWER_SERVICE);
-        m_wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "QGroundControl");
+        m_wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "DataPilot");
         if(m_wl != null) {
             m_wl.acquire();
             Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK acquired.");
@@ -111,7 +111,7 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
             builder.setTitle("Incompatible Application Error");
             builder
                 .setCancelable(false)
-                .setMessage("Flymode is installed.\nPlease remove it before running QGroundControl")
+                .setMessage("Flymode is installed.\nPlease remove it before running DataPilot")
                 .setPositiveButton("Close", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog,int id) {
                         QGCActivity.this.finish();
