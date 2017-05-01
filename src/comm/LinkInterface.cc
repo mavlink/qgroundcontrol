@@ -152,7 +152,9 @@ qint64 LinkInterface::_getCurrentDataRate(int index, const qint64 dataWriteTimes
 /// Sets the mavlink channel to use for this link
 void LinkInterface::_setMavlinkChannel(uint8_t channel)
 {
-    Q_ASSERT(!_mavlinkChannelSet);
+    if (_mavlinkChannelSet) {
+        qWarning() << "Mavlink channel set multiple times";
+    }
     _mavlinkChannelSet = true;
     _mavlinkChannel = channel;
 }
