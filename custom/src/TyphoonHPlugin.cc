@@ -367,9 +367,9 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
     } else if (metaData.name() == VideoSettings::videoAspectRatioName) {
         metaData.setRawDefaultValue(1.777777);
         return false;
-    } else if (metaData.name() == AppSettings::automaticMissionUploadName) {
-        metaData.setRawDefaultValue(true);
-        return true;
+    } else if (metaData.name() == AppSettings::autoLoadMissionsName) {
+        metaData.setRawDefaultValue(false);
+        return false;
     } else if (metaData.name() == AppSettings::virtualJoystickName) {
         metaData.setRawDefaultValue(false);
         return false;

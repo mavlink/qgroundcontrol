@@ -95,7 +95,9 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     , _m4State(TyphoonHQuickInterface::M4_STATE_NONE)
     , _armed(false)
 {
-    Q_ASSERT(pTyphoonHandler == NULL);
+    if (!pTyphoonHandler) {
+        qWarning() << "Internal error";
+    }
     pTyphoonHandler = this;
     _cameraControl = new CameraControl(this);
     _rxchannelInfoIndex = 2;

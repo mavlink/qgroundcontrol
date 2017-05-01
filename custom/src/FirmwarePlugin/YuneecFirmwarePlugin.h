@@ -19,14 +19,15 @@ public:
 
     // FirmwarePlugin overrides
 
-    AutoPilotPlugin*    autopilotPlugin     (Vehicle* vehicle) final;
-    QString             vehicleImageOpaque  (const Vehicle* vehicle) const final;
-    QString             vehicleImageOutline (const Vehicle* vehicle) const final;
-    QString             vehicleImageCompass (const Vehicle* vehicle) const final;
-    const QVariantList& toolBarIndicators   (const Vehicle* vehicle) final;
-    const QVariantList& cameraList          (const Vehicle* vehicle) final;
-    bool                isGuidedMode        (const Vehicle* vehicle) const final;
-    bool                hasGimbal           (Vehicle* vehicle, bool& rollSupported, bool& pitchSupported, bool& yawSupported) final;
+    AutoPilotPlugin*    autopilotPlugin         (Vehicle* vehicle) final;
+    QString             vehicleImageOpaque      (const Vehicle* vehicle) const final;
+    QString             vehicleImageOutline     (const Vehicle* vehicle) const final;
+    QString             vehicleImageCompass     (const Vehicle* vehicle) const final;
+    const QVariantList& toolBarIndicators       (const Vehicle* vehicle) final;
+    const QVariantList& cameraList              (const Vehicle* vehicle) final;
+    bool                isGuidedMode            (const Vehicle* vehicle) const final;
+    bool                hasGimbal               (Vehicle* vehicle, bool& rollSupported, bool& pitchSupported, bool& yawSupported) final;
+    void                batteryConsumptionData  (Vehicle* vehicle, int& mAhBattery, double& hoverAmps, double& cruiseAmps) const final;
 
 private:
     QVariantList        _toolBarIndicators;
