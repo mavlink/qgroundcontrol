@@ -15,7 +15,7 @@ RadioButton {
     style: RadioButtonStyle {
         label: Item {
             implicitWidth:          text.implicitWidth + ScreenTools.defaultFontPixelWidth * 0.25
-            implicitHeight:         text.implicitHeight
+            implicitHeight:         ScreenTools.implicitRadioButtonHeight
             baselineOffset:         text.y + text.baselineOffset
 
             Rectangle {
@@ -41,6 +41,24 @@ RadioButton {
                 style:              control.textStyle
                 styleColor:         control.textStyleColor
                 anchors.centerIn:   parent
+            }
+        }
+
+        indicator: Rectangle {
+            width:          ScreenTools.radioButtonIndicatorSize
+            height:         width
+            border.color:   qgcPal.text
+            antialiasing:   true
+            radius:         height / 2
+
+            Rectangle {
+                anchors.centerIn:   parent
+                width:              Math.round(parent.width * 0.5)
+                height:             width
+                antialiasing:       true
+                radius:             height/2
+                color:              qgcPal.text
+                opacity:            control.checked ? (control.enabled ? 1 : 0.5) : 0
             }
         }
     }
