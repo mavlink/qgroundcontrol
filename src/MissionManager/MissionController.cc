@@ -1384,7 +1384,6 @@ void MissionController::managerVehicleChanged(Vehicle* managerVehicle)
     connect(_missionManager, &MissionManager::currentIndexChanged,      this, &MissionController::_currentMissionIndexChanged);
     connect(_missionManager, &MissionManager::lastCurrentIndexChanged,  this, &MissionController::resumeMissionIndexChanged);
     connect(_missionManager, &MissionManager::resumeMissionReady,       this, &MissionController::resumeMissionReady);
-    connect(_missionManager, &MissionManager::cameraFeedback,           this, &MissionController::_cameraFeedback);
     connect(_managerVehicle, &Vehicle::homePositionChanged,             this, &MissionController::_managerVehicleHomePositionChanged);
     connect(_managerVehicle, &Vehicle::defaultCruiseSpeedChanged,       this, &MissionController::_recalcMissionFlightStatus);
     connect(_managerVehicle, &Vehicle::defaultHoverSpeedChanged,        this, &MissionController::_recalcMissionFlightStatus);
@@ -1662,19 +1661,6 @@ void MissionController::applyDefaultMissionAltitude(void)
         VisualMissionItem* item = _visualItems->value<VisualMissionItem*>(i);
         item->applyNewAltitude(defaultAltitude);
     }
-}
-
-void MissionController::_cameraFeedback(QGeoCoordinate imageCoordinate, int index)
-{
-    Q_UNUSED(index);
-    if (!_editMode) {
-        _cameraPoints.append(new QGCQGeoCoordinate(imageCoordinate, this));
-    }
-}
-
-void MissionController::clearCameraPoints(void)
-{
-    _cameraPoints.clearAndDeleteContents();
 }
 
 void MissionController::_progressPctChanged(double progressPct)
