@@ -231,7 +231,8 @@ QGCView {
         id:             fileDialog
         qgcView:        _qgcView
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
-        fileExtension:  masterController.fileExtension
+        fileExtension:  QGroundControl.settingsManager.appSettings.planFileExtension
+        fileExtension2: QGroundControl.settingsManager.appSettings.missionFileExtension
 
         onAcceptedForSave: {
             masterController.saveToFile(file)
