@@ -67,15 +67,17 @@ static QString get_ip_address(const QString& address)
 
 UDPLink::UDPLink(SharedLinkConfigurationPointer& config)
     : LinkInterface(config)
-#if defined(QGC_ZEROCONF_ENABLED)
+    #if defined(QGC_ZEROCONF_ENABLED)
     , _dnssServiceRef(NULL)
-#endif
+    #endif
     , _running(false)
     , _socket(NULL)
     , _udpConfig(qobject_cast<UDPConfiguration*>(config.data()))
     , _connectState(false)
 {
-    Q_ASSERT(_udpConfig);
+    if (!_udpConfig) {
+        qWarning() << "Internal error";
+    }
     moveToThread(this);
 }
 
@@ -292,14 +294,14 @@ void UDPLink::_registerZeroconf(uint16_t port, const std::string &regType)
 {
 #if defined(QGC_ZEROCONF_ENABLED)
     DNSServiceErrorType result = DNSServiceRegister(&_dnssServiceRef, 0, 0, 0,
-        regType.c_str(),
-        NULL,
-        NULL,
-        htons(port),
-        0,
-        NULL,
-        NULL,
-        NULL);
+                                                    regType.c_str(),
+                                                    NULL,
+                                                    NULL,
+                                                    htons(port),
+                                                    0,
+                                                    NULL,
+                                                    NULL,
+                                                    NULL);
     if (result != kDNSServiceErr_NoError)
     {
         emit communicationError("UDP Link Error", "Error registering Zeroconf");
@@ -315,10 +317,10 @@ void UDPLink::_deregisterZeroconf()
 {
 #if defined(QGC_ZEROCONF_ENABLED)
     if (_dnssServiceRef)
-     {
-         DNSServiceRefDeallocate(_dnssServiceRef);
-         _dnssServiceRef = NULL;
-     }
+    {
+        DNSServiceRefDeallocate(_dnssServiceRef);
+        _dnssServiceRef = NULL;
+    }
 #endif
 }
 
@@ -347,15 +349,18 @@ void UDPConfiguration::copyFrom(LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
     UDPConfiguration* usource = dynamic_cast<UDPConfiguration*>(source);
-    Q_ASSERT(usource != NULL);
-    _localPort = usource->localPort();
-    _hosts.clear();
-    QString host;
-    int port;
-    if(usource->firstHost(host, port)) {
-        do {
-            addHost(host, port);
-        } while(usource->nextHost(host, port));
+    if (usource) {
+        _localPort = usource->localPort();
+        _hosts.clear();
+        QString host;
+        int port;
+        if(usource->firstHost(host, port)) {
+            do {
+                addHost(host, port);
+            } while(usource->nextHost(host, port));
+        }
+    } else {
+        qWarning() << "Internal error";
     }
 }
 
