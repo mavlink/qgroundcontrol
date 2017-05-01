@@ -16,15 +16,13 @@
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLog)
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLogVerbose)
 
-class QNetworkRequest;
-class QNetworkAccessManager;
-
 //-----------------------------------------------------------------------------
 // Ambarella Camera Status
 typedef struct {
-    int         rval;
-    int         msg_id;
     int         cam_mode;
+    int         video_w;
+    int         video_h;
+    int         video_fps;
     QString     status;
     uint32_t    sdfree;
     uint32_t    sdtotal;
@@ -33,7 +31,6 @@ typedef struct {
     int         ae_enable;
     uint32_t    iq_type;
     QString     exposure_value;
-    QString     video_mode;
     uint32_t    awb_lock;
     bool        audio_switch;
     QString     shutter_time;
@@ -61,7 +58,9 @@ typedef struct {
 // Video Resolution Options
 typedef struct {
     const char* description;
-    const char* video_mode;
+    int         width;
+    int         height;
+    int         fps;
     float       aspectRatio;
 } video_res_t;
 
@@ -83,7 +82,7 @@ typedef struct {
 // Photo Format
 typedef struct {
     const char* description;
-    const char* mode;
+    int         mode;
 } photo_format_t;
 
 //-----------------------------------------------------------------------------
@@ -116,7 +115,7 @@ typedef struct {
 // Exposure Compensation
 typedef struct {
     const char* description;
-    const char* value;
+    float       value;
 } exposure_compsensation_t;
 
 //-----------------------------------------------------------------------------
@@ -230,11 +229,10 @@ public:
     void        setCurrentMetering  (quint32 index);
     void        setCurrentEV        (quint32 index);
 
-    QNetworkAccessManager*  networkManager  ();
-
 private slots:
-    void    _httpFinished           ();
     void    _getCameraStatus        ();
+    void    _mavCommandResult       (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
+    void    _mavlinkMessageReceived (const mavlink_message_t& message);
 
 signals:
     void    videoStatusChanged      ();
@@ -258,11 +256,11 @@ private:
     void    _handleVideoResStatus   ();
     void    _handleShutterStatus    ();
     void    _handleISOStatus        ();
-    void    _sendAmbRequest         (QNetworkRequest request);
-    void    _setCamMode             (const char* mode);
-    void    _handleCameraStatus     (int http_code, QByteArray data);
-    void    _handleTakePhotoStatus  (int http_code, QByteArray data);
+    void    _handleCameraSettings   (const mavlink_message_t& message);
+    void    _handleCaptureStatus    (const mavlink_message_t& message);
     void    _resetCameraValues      ();
+    void    _requestCameraSettings  ();
+    void    _requestCaptureStatus   ();
 
 private:
     Vehicle*                _vehicle;
@@ -295,7 +293,8 @@ private:
     quint32                 _currentPhotoFmt;
     quint32                 _currentEV;
 
-    QNetworkAccessManager*  _networkManager;
+    quint32                 _setVideoResIndex;
+
     amb_camera_status_t     _ambarellaStatus;
     QTimer                  _statusTimer;
 };
