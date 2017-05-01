@@ -989,9 +989,12 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
     }
 
     if (heartbeat.base_mode != _base_mode || heartbeat.custom_mode != _custom_mode) {
+        QString previousFlightMode = flightMode();
         _base_mode = heartbeat.base_mode;
         _custom_mode = heartbeat.custom_mode;
-        emit flightModeChanged(flightMode());
+        if (previousFlightMode != flightMode()) {
+            emit flightModeChanged(flightMode());
+        }
     }
 }
 
