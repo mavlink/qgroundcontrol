@@ -112,3 +112,11 @@ bool YuneecFirmwarePlugin::hasGimbal(Vehicle* vehicle, bool& rollSupported, bool
     yawSupported = true;
     return true;
 }
+
+void YuneecFirmwarePlugin::batteryConsumptionData(Vehicle* vehicle, int& mAhBattery, double& hoverAmps, double& cruiseAmps) const
+{
+    Q_UNUSED(vehicle);
+    mAhBattery = 5400;
+    hoverAmps = 15.2;
+    cruiseAmps = hoverAmps * 1.2;
+}
