@@ -138,20 +138,22 @@ Rectangle {
         visible:        false
     }
 
-    RowLayout {
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
-        spacing:                _margins * 2
-        anchors.left:           logoRow.right
-        anchors.leftMargin:     _margins * 4
-        anchors.right:          uploadButton.visible ? uploadButton.left : parent.right
+    GridLayout {
+        anchors.top:                parent.top
+        anchors.bottom:             parent.bottom
+        anchors.leftMargin:     _margins
         anchors.rightMargin:    _margins
+        anchors.left:           logoRow.right
+        anchors.right:          uploadButton.visible ? uploadButton.left : parent.right
+        columnSpacing:              0//_margins
+        columns:                    3
 
         GridLayout {
             anchors.verticalCenter: parent.verticalCenter
             columns:                8
             rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
+            Layout.alignment:       Qt.AlignHCenter
 
             QGCLabel {
                 text:               qsTr("Selected Waypoint")
@@ -206,6 +208,7 @@ Rectangle {
             columns:                5
             rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
+            Layout.alignment:       Qt.AlignHCenter
 
             QGCLabel {
                 text:               qsTr("Total Mission")
@@ -242,6 +245,7 @@ Rectangle {
             columns:                3
             rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
+            Layout.alignment:       Qt.AlignHCenter
 
             QGCLabel {
                 text:               qsTr("Battery")
