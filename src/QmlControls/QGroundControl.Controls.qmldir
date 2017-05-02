@@ -9,6 +9,7 @@ DropPanel               1.0 DropPanel.qml
 ExclusiveGroupItem      1.0 ExclusiveGroupItem.qml
 FactSliderPanel         1.0 FactSliderPanel.qml
 FlightModeDropdown      1.0 FlightModeDropdown.qml
+FactStepperPanel        1.0 FactStepperPanel.qml
 FlightModeMenu          1.0 FlightModeMenu.qml
 GeoFenceEditor          1.0 GeoFenceEditor.qml
 GeoFenceMapVisuals      1.0 GeoFenceMapVisuals.qml
@@ -65,3 +66,4 @@ VehicleRotationCal      1.0 VehicleRotationCal.qml
 VehicleSummaryRow       1.0 VehicleSummaryRow.qml
 ViewWidget              1.0 ViewWidget.qml
 OfflineMapButton        1.0 OfflineMapButton.qml
+ToggleButton            1.0 ToggleButton.qml

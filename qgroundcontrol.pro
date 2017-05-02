@@ -870,6 +870,7 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMSensorsComponent.h \
         src/AutoPilotPlugins/APM/APMSensorsComponentController.h \
         src/AutoPilotPlugins/APM/APMTuningComponent.h \
+        src/AutoPilotPlugins/PX4/PX4PIDTuningComponent.h \
         src/FirmwarePlugin/APM/APMFirmwarePlugin.h \
         src/FirmwarePlugin/APM/APMGeoFenceManager.h \
         src/FirmwarePlugin/APM/APMParameterMetaData.h \
@@ -959,6 +960,7 @@ PX4FirmwarePlugin {
         src/AutoPilotPlugins/PX4/SafetyComponent.cc \
         src/AutoPilotPlugins/PX4/SensorsComponent.cc \
         src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
+        src/AutoPilotPlugins/PX4/PX4PIDTuningComponent.cc \
         src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc \
         src/FirmwarePlugin/PX4/PX4GeoFenceManager.cc \
         src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc \

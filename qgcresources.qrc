@@ -86,6 +86,7 @@
         <file alias="SafetyComponentIcon.png">src/AutoPilotPlugins/PX4/Images/SafetyComponentIcon.png</file>
         <file alias="SensorsComponentIcon.png">src/AutoPilotPlugins/PX4/Images/SensorsComponentIcon.png</file>
         <file alias="TuningComponentIcon.png">src/AutoPilotPlugins/PX4/Images/TuningComponentIcon.png</file>
+        <file alias="PIDTuningComponentIcon.png">src/AutoPilotPlugins/PX4/Images/PIDTuningComponentIcon.png</file>
         <file alias="subMenuButtonImage.png">resources/CogWheels.png</file>
         <file alias="VehicleDown.png">src/AutoPilotPlugins/PX4/Images/VehicleDown.png</file>
         <file alias="VehicleDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleDownRotate.png</file>
