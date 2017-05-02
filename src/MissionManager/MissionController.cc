@@ -1716,16 +1716,18 @@ bool MissionController::showPlanFromManagerVehicle (void)
     }
 }
 
-void MissionController::_managerSendComplete(void)
+void MissionController::_managerSendComplete(bool error)
 {
-    // FLy view always reloads on send complete
-    if (!_editMode) {
+    // Fly view always reloads on send complete
+    if (!error && !_editMode) {
         showPlanFromManagerVehicle();
     }
 }
 
-void MissionController::_managerRemoveAllComplete(void)
+void MissionController::_managerRemoveAllComplete(bool error)
 {
-    // Remove all from vehicle so we always update
-    showPlanFromManagerVehicle();
+    if (!error) {
+        // Remove all from vehicle so we always update
+        showPlanFromManagerVehicle();
+    }
 }

@@ -96,8 +96,8 @@ signals:
     void polygonSupportedChanged        (bool polygonSupported);
     void polygonEnabledChanged          (bool polygonEnabled);
     void breachReturnSupportedChanged   (bool breachReturnSupported);
-    void removeAllComplete              (void);
-    void sendComplete                   (void);
+    void removeAllComplete              (bool error);
+    void sendComplete                   (bool error);
 
 protected:
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);

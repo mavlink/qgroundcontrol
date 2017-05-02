@@ -291,18 +291,20 @@ void GeoFenceController::_managerLoadComplete(const QGeoCoordinate& breachReturn
     _itemsRequested = false;
 }
 
-void GeoFenceController::_managerSendComplete(void)
+void GeoFenceController::_managerSendComplete(bool error)
 {
     // Fly view always reloads on manager sendComplete
-    if (!_editMode) {
+    if (!error && !_editMode) {
         showPlanFromManagerVehicle();
     }
 }
 
-void GeoFenceController::_managerRemoveAllComplete(void)
+void GeoFenceController::_managerRemoveAllComplete(bool error)
 {
-    // Remove all from vehicle so we always update
-    showPlanFromManagerVehicle();
+    if (!error) {
+        // Remove all from vehicle so we always update
+        showPlanFromManagerVehicle();
+    }
 }
 
 bool GeoFenceController::containsItems(void) const
