@@ -120,3 +120,15 @@ void YuneecFirmwarePlugin::batteryConsumptionData(Vehicle* vehicle, int& mAhBatt
     hoverAmps = 15.2;
     cruiseAmps = hoverAmps * 1.2;
 }
+
+bool YuneecFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const
+{
+    // The Yuneec implementation of this method differs from standard PX4 in that it returns true for offline vehicles.
+    // This way the Heading item in waypoints will not normally show up. It will only show up if the vehicle specfically
+    // has MIS_YAWMODE modified from the default setting.
+    if (vehicle->isOfflineEditingVehicle()) {
+        return true;
+    } else {
+        return PX4FirmwarePlugin::vehicleYawsToNextWaypointInMission(vehicle);
+    }
+}
