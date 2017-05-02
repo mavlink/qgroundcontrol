@@ -90,7 +90,7 @@ void APMGeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlOb
         _sendFencePoint(index);
     }
 
-    emit sendComplete();
+    emit sendComplete(false /* error */);
 }
 
 void APMGeoFenceManager::loadFromVehicle(void)
@@ -332,5 +332,5 @@ void APMGeoFenceManager::removeAll(void)
     QmlObjectListModel emptyPolygon;
 
     sendToVehicle(_breachReturnPoint, emptyPolygon);
-    emit removeAllComplete();
+    emit removeAllComplete(false /* error */);
 }

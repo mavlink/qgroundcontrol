@@ -89,8 +89,9 @@ QStringList ParameterEditorController::searchParametersForComponent(int componen
 
 void ParameterEditorController::clearRCToParam(void)
 {
-    Q_ASSERT(_uas);
-    _uas->unsetRCToParameterMap();
+    if (_uas) {
+        _uas->unsetRCToParameterMap();
+    }
 }
 
 void ParameterEditorController::saveToFile(const QString& filename)
@@ -147,9 +148,10 @@ void ParameterEditorController::setRCToParam(const QString& paramName)
 #ifdef __mobile__
     Q_UNUSED(paramName)
 #else
-    Q_ASSERT(_uas);
-    QGCMapRCToParamDialog * d = new QGCMapRCToParamDialog(paramName, _uas, qgcApp()->toolbox()->multiVehicleManager(), MainWindow::instance());
-    d->exec();
+    if (_uas) {
+        QGCMapRCToParamDialog * d = new QGCMapRCToParamDialog(paramName, _uas, qgcApp()->toolbox()->multiVehicleManager(), MainWindow::instance());
+        d->exec();
+    }
 #endif
 }
 

@@ -36,7 +36,7 @@ void MissionControllerManagerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareTy
     QVERIFY(_missionManager);
     
     _rgMissionManagerSignals[newMissionItemsAvailableSignalIndex] = SIGNAL(newMissionItemsAvailable(bool));
-    _rgMissionManagerSignals[sendCompleteSignalIndex] =             SIGNAL(sendComplete(void));
+    _rgMissionManagerSignals[sendCompleteSignalIndex] =             SIGNAL(sendComplete(bool));
     _rgMissionManagerSignals[inProgressChangedSignalIndex] =        SIGNAL(inProgressChanged(bool));
     _rgMissionManagerSignals[errorSignalIndex] =                    SIGNAL(error(int, const QString&));
 

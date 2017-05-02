@@ -1044,7 +1044,7 @@ void MissionController::_recalcMissionFlightStatus()
         }
 
         // Look for gimbal change
-        if (_controllerVehicle->vehicleYawsToNextWaypointInMission()) {
+        if (_managerVehicle->vehicleYawsToNextWaypointInMission()) {
             // We current only support gimbal display in this mode
             double gimbalYaw = item->specifiedGimbalYaw();
             if (!qIsNaN(gimbalYaw)) {
@@ -1371,7 +1371,7 @@ void MissionController::managerVehicleChanged(Vehicle* managerVehicle)
 
     _managerVehicle = managerVehicle;
     if (!_managerVehicle) {
-        qWarning() << "RallyPointController::managerVehicleChanged managerVehicle=NULL";
+        qWarning() << "MissionController::managerVehicleChanged managerVehicle=NULL";
         return;
     }
 
@@ -1384,7 +1384,6 @@ void MissionController::managerVehicleChanged(Vehicle* managerVehicle)
     connect(_missionManager, &MissionManager::currentIndexChanged,      this, &MissionController::_currentMissionIndexChanged);
     connect(_missionManager, &MissionManager::lastCurrentIndexChanged,  this, &MissionController::resumeMissionIndexChanged);
     connect(_missionManager, &MissionManager::resumeMissionReady,       this, &MissionController::resumeMissionReady);
-    connect(_missionManager, &MissionManager::cameraFeedback,           this, &MissionController::_cameraFeedback);
     connect(_managerVehicle, &Vehicle::homePositionChanged,             this, &MissionController::_managerVehicleHomePositionChanged);
     connect(_managerVehicle, &Vehicle::defaultCruiseSpeedChanged,       this, &MissionController::_recalcMissionFlightStatus);
     connect(_managerVehicle, &Vehicle::defaultHoverSpeedChanged,        this, &MissionController::_recalcMissionFlightStatus);
@@ -1664,19 +1663,6 @@ void MissionController::applyDefaultMissionAltitude(void)
     }
 }
 
-void MissionController::_cameraFeedback(QGeoCoordinate imageCoordinate, int index)
-{
-    Q_UNUSED(index);
-    if (!_editMode) {
-        _cameraPoints.append(new QGCQGeoCoordinate(imageCoordinate, this));
-    }
-}
-
-void MissionController::clearCameraPoints(void)
-{
-    _cameraPoints.clearAndDeleteContents();
-}
-
 void MissionController::_progressPctChanged(double progressPct)
 {
     if (!qFuzzyCompare(progressPct, _progressPct)) {
@@ -1716,16 +1702,18 @@ bool MissionController::showPlanFromManagerVehicle (void)
     }
 }
 
-void MissionController::_managerSendComplete(void)
+void MissionController::_managerSendComplete(bool error)
 {
-    // FLy view always reloads on send complete
-    if (!_editMode) {
+    // Fly view always reloads on send complete
+    if (!error && !_editMode) {
         showPlanFromManagerVehicle();
     }
 }
 
-void MissionController::_managerRemoveAllComplete(void)
+void MissionController::_managerRemoveAllComplete(bool error)
 {
-    // Remove all from vehicle so we always update
-    showPlanFromManagerVehicle();
+    if (!error) {
+        // Remove all from vehicle so we always update
+        showPlanFromManagerVehicle();
+    }
 }
