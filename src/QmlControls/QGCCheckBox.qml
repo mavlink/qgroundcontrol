@@ -11,7 +11,7 @@ CheckBox {
     style: CheckBoxStyle {
         label: Item {
             implicitWidth:  text.implicitWidth + 2
-            implicitHeight: text.implicitHeight
+            implicitHeight: ScreenTools.implicitCheckBoxHeight
             baselineOffset: text.baselineOffset
 
             Rectangle {
@@ -39,7 +39,7 @@ CheckBox {
         } // label
 
         indicator:  Item {
-            implicitWidth:  ScreenTools.implicitCheckBoxWidth
+            implicitWidth:  ScreenTools.checkBoxIndicatorSize
             implicitHeight: implicitWidth
 
             Rectangle {

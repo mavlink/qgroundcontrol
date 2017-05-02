@@ -92,10 +92,7 @@ static MainWindow* _instance = NULL;   ///< @brief MainWindow singleton
 
 MainWindow* MainWindow::_create()
 {
-    Q_ASSERT(_instance == NULL);
     new MainWindow();
-    // _instance is set in constructor
-    Q_ASSERT(_instance);
     return _instance;
 }
 
@@ -118,7 +115,6 @@ MainWindow::MainWindow()
     , _mainQmlWidgetHolder(NULL)
     , _forceClose(false)
 {
-    Q_ASSERT(_instance == NULL);
     _instance = this;
 
     //-- Load fonts
@@ -337,7 +333,7 @@ void MainWindow::_showDockWidget(const QString& name, bool show)
     // Create the inner widget if we need to
     if (!_mapName2DockWidget.contains(name)) {
         if(!_createInnerDockWidget(name)) {
-            qWarning() << "Trying to load non existing widget:" << name;
+            qWarning() << "Trying to load non existent widget:" << name;
             return;
         }
     }

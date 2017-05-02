@@ -680,31 +680,6 @@ void MissionManager::_handleMissionAck(const mavlink_message_t& message)
         break;
     }
 }
-
-void MissionManager::_handleCameraFeedback(const mavlink_message_t& message)
-{
-    mavlink_camera_feedback_t feedback;
-
-    mavlink_msg_camera_feedback_decode(&message, &feedback);
-
-    QGeoCoordinate imageCoordinate((double)feedback.lat / qPow(10.0, 7.0), (double)feedback.lng / qPow(10.0, 7.0), feedback.alt_msl);
-    qCDebug(MissionManagerLog) << "_handleCameraFeedback coord:index" << imageCoordinate << feedback.img_idx;
-    emit cameraFeedback(imageCoordinate, feedback.img_idx);
-}
-
-void MissionManager::_handleCameraImageCaptured(const mavlink_message_t& message)
-{
-    mavlink_camera_image_captured_t feedback;
-
-    mavlink_msg_camera_image_captured_decode(&message, &feedback);
-
-    QGeoCoordinate imageCoordinate((double)feedback.lat / qPow(10.0, 7.0), (double)feedback.lon / qPow(10.0, 7.0), feedback.alt);
-    qCDebug(MissionManagerLog) << "_handleCameraFeedback coord:index" << imageCoordinate << feedback.image_index << feedback.capture_result;
-    if (feedback.capture_result == 1) {
-        emit cameraFeedback(imageCoordinate, feedback.image_index);
-    }
-}
-
 /// Called when a new mavlink message for out vehicle is received
 void MissionManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
@@ -739,14 +714,6 @@ void MissionManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 
     case MAVLINK_MSG_ID_MISSION_CURRENT:
         _handleMissionCurrent(message);
-        break;
-
-    case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
-        _handleCameraFeedback(message);
-        break;
-
-    case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
-        _handleCameraImageCaptured(message);
         break;
     }
 }

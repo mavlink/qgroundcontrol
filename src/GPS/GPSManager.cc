@@ -28,8 +28,6 @@ GPSManager::~GPSManager()
 
 void GPSManager::connectGPS(const QString& device)
 {
-    Q_ASSERT(_toolbox);
-
     RTKSettings* rtkSettings = qgcApp()->toolbox()->settingsManager()->rtkSettings();
 
     cleanup();
