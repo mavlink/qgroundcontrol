@@ -48,7 +48,7 @@ void APMRallyPointManager::sendToVehicle(const QList<QGeoCoordinate>& rgPoints)
         _sendRallyPoint(index);
     }
 
-    emit sendComplete();
+    emit sendComplete(false /* error */);
 }
 
 void APMRallyPointManager::loadFromVehicle(void)
@@ -157,5 +157,5 @@ void APMRallyPointManager::removeAll(void)
     QList<QGeoCoordinate> noRallyPoints;
 
     sendToVehicle(noRallyPoints);
-    emit removeAllComplete();
+    emit removeAllComplete(false /* error */);
 }
