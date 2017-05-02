@@ -1044,7 +1044,7 @@ void MissionController::_recalcMissionFlightStatus()
         }
 
         // Look for gimbal change
-        if (_controllerVehicle->vehicleYawsToNextWaypointInMission()) {
+        if (_managerVehicle->vehicleYawsToNextWaypointInMission()) {
             // We current only support gimbal display in this mode
             double gimbalYaw = item->specifiedGimbalYaw();
             if (!qIsNaN(gimbalYaw)) {
@@ -1371,7 +1371,7 @@ void MissionController::managerVehicleChanged(Vehicle* managerVehicle)
 
     _managerVehicle = managerVehicle;
     if (!_managerVehicle) {
-        qWarning() << "RallyPointController::managerVehicleChanged managerVehicle=NULL";
+        qWarning() << "MissionController::managerVehicleChanged managerVehicle=NULL";
         return;
     }
 
