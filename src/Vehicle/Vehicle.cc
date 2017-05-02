@@ -2024,6 +2024,14 @@ void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)
         qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
+    if (!coordinate().isValid()) {
+        return;
+    }
+    double maxDistance = 1000.0;
+    if (coordinate().distanceTo(gotoCoord) > maxDistance) {
+        qgcApp()->showMessage(QString("New location is too far. Must be less than %1 %2").arg(qRound(FactMetaData::metersToAppSettingsDistanceUnits(maxDistance).toDouble())).arg(FactMetaData::appSettingsDistanceUnitsString()));
+        return;
+    }
     _firmwarePlugin->guidedModeGotoLocation(this, gotoCoord);
 }
 
