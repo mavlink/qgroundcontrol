@@ -89,8 +89,8 @@ signals:
     void lastCurrentIndexChanged(int lastCurrentIndex);
     void resumeMissionReady(void);
     void progressPct(double progressPercentPct);
-    void removeAllComplete              (void);
-    void sendComplete                   (void);
+    void removeAllComplete              (bool error);
+    void sendComplete                   (bool error);
 
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
@@ -131,6 +131,7 @@ private:
     void _writeMissionCount(void);
     void _writeMissionItemsWorker(void);
     void _clearAndDeleteMissionItems(void);
+    void _clearAndDeleteWriteMissionItems(void);
     QString _lastMissionReqestString(MAV_MISSION_RESULT result);
     void _removeAllWorker(void);
 
@@ -150,7 +151,8 @@ private:
     
     QMutex _dataMutex;
     
-    QList<MissionItem*> _missionItems;
+    QList<MissionItem*> _missionItems;          ///< Set of mission items on vehicle
+    QList<MissionItem*> _writeMissionItems;     ///< Set of mission items currently being written to vehicle
     int                 _currentMissionIndex;
     int                 _lastCurrentIndex;
 };

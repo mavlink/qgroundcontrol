@@ -43,12 +43,12 @@ void GeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlObjec
     // No geofence support in unknown vehicle
     Q_UNUSED(breachReturn);
     Q_UNUSED(polygon);
-    emit sendComplete();
+    emit sendComplete(false /* error */);
 }
 
 
 void GeoFenceManager::removeAll(void)
 {
     // No geofence support in unknown vehicle
-    emit removeAllComplete();
+    emit removeAllComplete(false /* error */);
 }

@@ -176,8 +176,8 @@ private slots:
     void _updateContainsItems(void);
     void _progressPctChanged(double progressPct);
     void _visualItemsDirtyChanged(bool dirty);
-    void _managerSendComplete(void);
-    void _managerRemoveAllComplete(void);
+    void _managerSendComplete(bool error);
+    void _managerRemoveAllComplete(bool error);
 
 private:
     void _init(void);

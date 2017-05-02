@@ -90,8 +90,8 @@ private slots:
     void _setReturnPointFromManager(QGeoCoordinate breachReturnPoint);
     void _managerLoadComplete(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
     void _updateContainsItems(void);
-    void _managerSendComplete(void);
-    void _managerRemoveAllComplete(void);
+    void _managerSendComplete(bool error);
+    void _managerRemoveAllComplete(bool error);
 
 private:
     void _init(void);
