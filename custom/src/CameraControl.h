@@ -16,52 +16,37 @@
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLog)
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLogVerbose)
 
-class QNetworkRequest;
-class QNetworkAccessManager;
+//-----------------------------------------------------------------------------
+// Ambarella Camera Settings
+typedef struct {
+    int         ae_enable;
+    float       exposure_value;
+    int         cam_mode;
+    bool        audio_switch;
+    quint32     iq_type;
+    quint32     photo_format;
+    quint32     photo_quality;
+    quint32     white_balance;
+    uint32_t    metering_mode;
+} amb_camera_settings_t;
 
 //-----------------------------------------------------------------------------
 // Ambarella Camera Status
 typedef struct {
-    int         rval;
-    int         msg_id;
-    int         cam_mode;
-    QString     status;
+    int         image_status;
+    int         video_status;
     uint32_t    sdfree;
     uint32_t    sdtotal;
     uint32_t    record_time;
-    uint32_t    white_balance;
-    int         ae_enable;
-    uint32_t    iq_type;
-    QString     exposure_value;
-    QString     video_mode;
-    uint32_t    awb_lock;
-    bool        audio_switch;
-    QString     shutter_time;
-    QString     iso_value;
-    QString     photo_format;
-    QString     rtsp_res;
-    int         photo_mode;
-    int         photo_num;
-    int         photo_times;
-    QString     ev_step;
-    int         interval_ms;
-    int         cam_scene;
-    bool        audio_enable;
-    int         left_time;
-    uint32_t    metering_mode;
-    float       x_ratio;
-    float       y_ratio;
-    int         layers;
-    int         pitch;
-    int         yaw;
-    int         timer_photo_sta;
 } amb_camera_status_t;
 
 //-----------------------------------------------------------------------------
 // Video Resolution Options
 typedef struct {
     const char* description;
-    const char* video_mode;
+    int         width;
+    int         height;
+    int         fps;
     float       aspectRatio;
 } video_res_t;
 
@@ -69,7 +54,6 @@ typedef struct {
 // Color Mode
 typedef struct {
     const char* description;
-    uint32_t    mode;
 } iq_mode_t;
 
 //-----------------------------------------------------------------------------
@@ -83,14 +67,13 @@ typedef struct {
 // Photo Format
 typedef struct {
     const char* description;
-    const char* mode;
 } photo_format_t;
 
 //-----------------------------------------------------------------------------
 // White Balance
 typedef struct {
     const char* description;
-    uint32_t    mode;
+    uint32_t    temperature;
 } white_balance_t;
 
 //-----------------------------------------------------------------------------
@@ -116,7 +99,7 @@ typedef struct {
 // Exposure Compensation
 typedef struct {
     const char* description;
-    const char* value;
+    float       value;
 } exposure_compsensation_t;
 
 //-----------------------------------------------------------------------------
@@ -127,12 +110,18 @@ public:
     CameraControl(QObject* parent = NULL);
     ~CameraControl();
 
-    //-- Camera Control
+    //-- Video Capture Status
     enum VideoStatus {
         VIDEO_CAPTURE_STATUS_STOPPED = 0,
         VIDEO_CAPTURE_STATUS_RUNNING,
-        VIDEO_CAPTURE_STATUS_CAPTURE,
         VIDEO_CAPTURE_STATUS_UNDEFINED
+    };
+
+    //-- Photo Capture Status
+    enum PhotoStatus {
+        PHOTO_CAPTURE_STATUS_IDLE = 0,
+        PHOTO_CAPTURE_STATUS_RUNNING,
+        PHOTO_CAPTURE_STATUS_UNDEFINED
     };
 
     //-- cam_mode
@@ -152,10 +141,12 @@ public:
     #define DEFAULT_VALUE -1.0f
 
     Q_ENUMS(VideoStatus)
+    Q_ENUMS(PhotoStatus)
     Q_ENUMS(CameraMode)
     Q_ENUMS(AEModes)
 
     Q_PROPERTY(VideoStatus  videoStatus     READ    videoStatus                                 NOTIFY videoStatusChanged)
+    Q_PROPERTY(PhotoStatus  photoStatus     READ    photoStatus                                 NOTIFY photoStatusChanged)
     Q_PROPERTY(CameraMode   cameraMode      READ    cameraMode      WRITE   setCameraMode       NOTIFY cameraModeChanged)
     Q_PROPERTY(AEModes      aeMode          READ    aeMode          WRITE   setAeMode           NOTIFY aeModeChanged)
     Q_PROPERTY(quint32      recordTime      READ    recordTime                                  NOTIFY recordTimeChanged)
@@ -192,6 +183,7 @@ public:
     Q_INVOKABLE void formatCard     ();
 
     VideoStatus videoStatus         ();
+    PhotoStatus photoStatus         ();
     CameraMode  cameraMode          ();
     AEModes     aeMode              ();
     quint32     recordTime          ();
@@ -212,9 +204,9 @@ public:
     quint32     currentWB           () { return _currentWB; }
     quint32     currentIso          () { return _currentIso; }
     quint32     currentShutter      () { return _currentShutter; }
-    quint32     currentIQ           () { return _ambarellaStatus.iq_type; }
-    quint32     currentPhotoFmt     () { return _currentPhotoFmt; }
-    quint32     currentMetering     () { return _ambarellaStatus.metering_mode; }
+    quint32     currentIQ           () { return _ambarellaSettings.iq_type; }
+    quint32     currentPhotoFmt     () { return _ambarellaSettings.photo_format; }
+    quint32     currentMetering     () { return _ambarellaSettings.metering_mode; }
     quint32     currentEV           () { return _currentEV; }
 
     void        setCameraMode       (CameraMode mode);
@@ -230,14 +222,14 @@ public:
     void        setCurrentMetering  (quint32 index);
     void        setCurrentEV        (quint32 index);
 
-    QNetworkAccessManager*  networkManager  ();
-
 private slots:
-    void    _httpFinished           ();
-    void    _getCameraStatus        ();
+    void    _mavCommandResult       (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
+    void    _mavlinkMessageReceived (const mavlink_message_t& message);
+    void    _timerHandler           ();
 
 signals:
     void    videoStatusChanged      ();
+    void    photoStatusChanged      ();
     void    cameraModeChanged       ();
     void    aeModeChanged           ();
     void    recordTimeChanged       ();
@@ -253,16 +245,19 @@ signals:
     void    currentEVChanged        ();
 
 private:
+    int     _findVideoResIndex      (int w, int h, float fps);
+    void    _requestStorageStatus   ();
+    void    _requestCaptureStatus   ();
     void    _updateAspectRatio      ();
     void    _initStreaming          ();
-    void    _handleVideoResStatus   ();
     void    _handleShutterStatus    ();
     void    _handleISOStatus        ();
-    void    _sendAmbRequest         (QNetworkRequest request);
-    void    _setCamMode             (const char* mode);
-    void    _handleCameraStatus     (int http_code, QByteArray data);
-    void    _handleTakePhotoStatus  (int http_code, QByteArray data);
+    void    _handleCameraSettings   (const mavlink_message_t& message);
+    void    _handleCaptureStatus    (const mavlink_message_t& message);
+    void    _handleStorageInfo      (const mavlink_message_t& message);
     void    _resetCameraValues      ();
+    void    _requestCameraSettings  ();
+    void    _startTimer             (int task, int elapsed);
 
 private:
     Vehicle*                _vehicle;
@@ -280,6 +275,14 @@ private:
     QSoundEffect            _errorSound;
 
     enum {
+        TIMER_GET_STORAGE_INFO,
+        TIMER_GET_CAPTURE_INFO,
+        TIMER_GET_CAMERA_SETTINGS
+    };
+
+    int                     _currentTask;
+
+    enum {
         CAMERA_SUPPORT_UNDEFINED,
         CAMERA_SUPPORT_YES,
         CAMERA_SUPPORT_NO
@@ -292,10 +295,11 @@ private:
     quint32                 _currentWB;
     quint32                 _currentIso;
     quint32                 _currentShutter;
-    quint32                 _currentPhotoFmt;
     quint32                 _currentEV;
 
-    QNetworkAccessManager*  _networkManager;
+    quint32                 _setVideoResIndex;
+
     amb_camera_status_t     _ambarellaStatus;
+    amb_camera_settings_t   _ambarellaSettings;
     QTimer                  _statusTimer;
 };
