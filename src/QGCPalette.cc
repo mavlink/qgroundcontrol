@@ -39,8 +39,9 @@ QGCPalette::QGCPalette(QObject* parent) :
 QGCPalette::~QGCPalette()
 {
     bool fSuccess = _paletteObjects.removeOne(this);
-    Q_ASSERT(fSuccess);
-    Q_UNUSED(fSuccess);
+    if (!fSuccess) {
+        qWarning() << "Internal error";
+    }
 }
 
 void QGCPalette::_buildMap(void)

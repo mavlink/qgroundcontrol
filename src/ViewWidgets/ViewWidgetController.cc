@@ -33,11 +33,11 @@ void ViewWidgetController::_vehicleAvailable(bool available)
         
         _uas = vehicle->uas();
         _autopilot = vehicle->autopilotPlugin();
-        Q_ASSERT(_autopilot);
         emit pluginConnected(QVariant::fromValue(_autopilot));
     }
 }
-Q_INVOKABLE void ViewWidgetController::checkForVehicle(void)
+
+void ViewWidgetController::checkForVehicle(void)
 {
     _vehicleAvailable(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
 }

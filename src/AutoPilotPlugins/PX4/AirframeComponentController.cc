@@ -57,7 +57,9 @@ AirframeComponentController::AirframeComponentController(void) :
             Q_CHECK_PTR(pInfo);
 
             if (_autostartId == pInfo->autostartId) {
-                Q_ASSERT(!autostartFound);
+                if (autostartFound) {
+                    qWarning() << "AirframeComponentController::AirframeComponentController duplicate ids found:" << _autostartId;
+                }
                 autostartFound = true;
                 _currentAirframeType = pType->name;
                 _currentVehicleName = pInfo->name;

@@ -246,6 +246,7 @@ public:
     Q_PROPERTY(QString              flightMode              READ flightMode             WRITE setFlightMode             NOTIFY flightModeChanged)
     Q_PROPERTY(bool                 hilMode                 READ hilMode                WRITE setHilMode                NOTIFY hilModeChanged)
     Q_PROPERTY(QmlObjectListModel*  trajectoryPoints        READ trajectoryPoints                                       CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  cameraTriggerPoints     READ cameraTriggerPoints                                    CONSTANT)
     Q_PROPERTY(float                latitude                READ latitude                                               NOTIFY coordinateChanged)
     Q_PROPERTY(float                longitude               READ longitude                                              NOTIFY coordinateChanged)
     Q_PROPERTY(bool                 messageTypeNone         READ messageTypeNone                                        NOTIFY messageTypeChanged)
@@ -370,8 +371,6 @@ public:
 
     Q_INVOKABLE void virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust);
     Q_INVOKABLE void disconnectInactiveVehicle(void);
-
-    Q_INVOKABLE void clearTrajectoryPoints(void);
 
     /// Command vehicle to return to launch
     Q_INVOKABLE void guidedModeRTL(void);
@@ -524,6 +523,7 @@ public:
     void setPrearmError(const QString& prearmError);
 
     QmlObjectListModel* trajectoryPoints(void) { return &_mapTrajectoryList; }
+    QmlObjectListModel* cameraTriggerPoints(void) { return &_cameraTriggerPoints; }
 
     int  flowImageIndex() { return _flowImageIndex; }
 
@@ -791,8 +791,9 @@ private slots:
     void _geoFenceLoadComplete(void);
     void _rallyPointLoadComplete(void);
     void _sendMavCommandAgain(void);
-
     void _activeJoystickChanged(void);
+    void _clearTrajectoryPoints(void);
+    void _clearCameraTriggerPoints(void);
 
 private:
     bool _containsLink(LinkInterface* link);
@@ -820,6 +821,8 @@ private:
     void _handleScaledPressure(mavlink_message_t& message);
     void _handleScaledPressure2(mavlink_message_t& message);
     void _handleScaledPressure3(mavlink_message_t& message);
+    void _handleCameraFeedback(const mavlink_message_t& message);
+    void _handleCameraImageCaptured(const mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _geoFenceManagerError(int errorCode, const QString& errorMsg);
     void _rallyPointManagerError(int errorCode, const QString& errorMsg);
@@ -953,6 +956,8 @@ private:
     QGeoCoordinate      _mapTrajectoryLastCoordinate;
     bool                _mapTrajectoryHaveFirstCoordinate;
     static const int    _mapTrajectoryMsecsBetweenPoints = 1000;
+
+    QmlObjectListModel  _cameraTriggerPoints;
 
     // Toolbox references
     FirmwarePluginManager*      _firmwarePluginManager;
