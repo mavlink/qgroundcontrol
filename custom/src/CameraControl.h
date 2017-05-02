@@ -17,41 +17,30 @@ Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLog)
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLogVerbose)
 
 //-----------------------------------------------------------------------------
+// Ambarella Camera Settings
+typedef struct {
+    int         ae_enable;
+    float       exposure_value;
+    int         cam_mode;
+    bool        audio_switch;
+    quint32     iq_type;
+    quint32     photo_format;
+    quint32     photo_quality;
+    quint32     white_balance;
+    uint32_t    metering_mode;
+} amb_camera_settings_t;
+
+//-----------------------------------------------------------------------------
 // Ambarella Camera Status
 typedef struct {
-    int         cam_mode;
+    int         image_status;
+    int         video_status;
     int         video_w;
     int         video_h;
     int         video_fps;
-    QString     status;
     uint32_t    sdfree;
     uint32_t    sdtotal;
     uint32_t    record_time;
-    uint32_t    white_balance;
-    int         ae_enable;
-    uint32_t    iq_type;
-    QString     exposure_value;
-    uint32_t    awb_lock;
-    bool        audio_switch;
-    QString     shutter_time;
-    QString     iso_value;
-    QString     photo_format;
-    QString     rtsp_res;
-    int         photo_mode;
-    int         photo_num;
-    int         photo_times;
-    QString     ev_step;
-    int         interval_ms;
-    int         cam_scene;
-    bool        audio_enable;
-    int         left_time;
-    uint32_t    metering_mode;
-    float       x_ratio;
-    float       y_ratio;
-    int         layers;
-    int         pitch;
-    int         yaw;
-    int         timer_photo_sta;
 } amb_camera_status_t;
 
 //-----------------------------------------------------------------------------
@@ -68,7 +57,6 @@ typedef struct {
 // Color Mode
 typedef struct {
     const char* description;
-    uint32_t    mode;
 } iq_mode_t;
 
 //-----------------------------------------------------------------------------
@@ -82,7 +70,6 @@ typedef struct {
 // Photo Format
 typedef struct {
     const char* description;
-    int         mode;
 } photo_format_t;
 
 //-----------------------------------------------------------------------------
@@ -130,7 +117,6 @@ public:
     enum VideoStatus {
         VIDEO_CAPTURE_STATUS_STOPPED = 0,
         VIDEO_CAPTURE_STATUS_RUNNING,
-        VIDEO_CAPTURE_STATUS_CAPTURE,
         VIDEO_CAPTURE_STATUS_UNDEFINED
     };
 
@@ -211,9 +197,9 @@ public:
     quint32     currentWB           () { return _currentWB; }
     quint32     currentIso          () { return _currentIso; }
     quint32     currentShutter      () { return _currentShutter; }
-    quint32     currentIQ           () { return _ambarellaStatus.iq_type; }
-    quint32     currentPhotoFmt     () { return _currentPhotoFmt; }
-    quint32     currentMetering     () { return _ambarellaStatus.metering_mode; }
+    quint32     currentIQ           () { return _ambarellaSettings.iq_type; }
+    quint32     currentPhotoFmt     () { return _ambarellaSettings.photo_format; }
+    quint32     currentMetering     () { return _ambarellaSettings.metering_mode; }
     quint32     currentEV           () { return _currentEV; }
 
     void        setCameraMode       (CameraMode mode);
@@ -230,7 +216,7 @@ public:
     void        setCurrentEV        (quint32 index);
 
 private slots:
-    void    _getCameraStatus        ();
+    void    _requestCaptureStatus   ();
     void    _mavCommandResult       (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
     void    _mavlinkMessageReceived (const mavlink_message_t& message);
 
@@ -251,16 +237,15 @@ signals:
     void    currentEVChanged        ();
 
 private:
+    int     _findVideoResIndex      (int w, int h, float fps);
     void    _updateAspectRatio      ();
     void    _initStreaming          ();
-    void    _handleVideoResStatus   ();
     void    _handleShutterStatus    ();
     void    _handleISOStatus        ();
     void    _handleCameraSettings   (const mavlink_message_t& message);
     void    _handleCaptureStatus    (const mavlink_message_t& message);
     void    _resetCameraValues      ();
     void    _requestCameraSettings  ();
-    void    _requestCaptureStatus   ();
 
 private:
     Vehicle*                _vehicle;
@@ -290,11 +275,11 @@ private:
     quint32                 _currentWB;
     quint32                 _currentIso;
     quint32                 _currentShutter;
-    quint32                 _currentPhotoFmt;
     quint32                 _currentEV;
 
     quint32                 _setVideoResIndex;
 
     amb_camera_status_t     _ambarellaStatus;
+    amb_camera_settings_t   _ambarellaSettings;
     QTimer                  _statusTimer;
 };
