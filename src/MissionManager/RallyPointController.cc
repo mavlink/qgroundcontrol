@@ -203,18 +203,20 @@ void RallyPointController::_managerLoadComplete(const QList<QGeoCoordinate> rgPo
     _itemsRequested = false;
 }
 
-void RallyPointController::_managerSendComplete(void)
+void RallyPointController::_managerSendComplete(bool error)
 {
     // Fly view always reloads after send
-    if (_editMode) {
+    if (!error && _editMode) {
         showPlanFromManagerVehicle();
     }
 }
 
-void RallyPointController::_managerRemoveAllComplete(void)
+void RallyPointController::_managerRemoveAllComplete(bool error)
 {
-    // Remove all from vehicle so we always update
-    showPlanFromManagerVehicle();
+    if (!error) {
+        // Remove all from vehicle so we always update
+        showPlanFromManagerVehicle();
+    }
 }
 
 void RallyPointController::addPoint(QGeoCoordinate point)
