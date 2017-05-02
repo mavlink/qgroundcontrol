@@ -989,7 +989,12 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
     }
 
     if (heartbeat.base_mode != _base_mode || heartbeat.custom_mode != _custom_mode) {
-        QString previousFlightMode = flightMode();
+        QString previousFlightMode;
+        if (_base_mode != 0 || _custom_mode != 0){
+            // Vehicle is initialized with _base_mode=0 and _custom_mode=0. Don't pass this to flightMode() since it will complain about
+            // bad modes while unit testing.
+            previousFlightMode = flightMode();
+        }
         _base_mode = heartbeat.base_mode;
         _custom_mode = heartbeat.custom_mode;
         if (previousFlightMode != flightMode()) {
