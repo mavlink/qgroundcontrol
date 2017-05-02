@@ -109,11 +109,11 @@ photo_format_t photoFormatOptions[] = {
 // White Balance (CMD=SET_WHITEBLANCE_MODE&mode=x)
 white_balance_t whiteBalanceOptions[] = {
     {"Auto",            0},
-    {"Sunny",           4},
-    {"Cloudy",          5},
-    {"Fluorescent",     7},
-    {"Incandescent",    1},
-    {"Sunset",          3}
+    {"Sunny",           6500},
+    {"Cloudy",          7500},
+    {"Fluorescent",     4000},
+    {"Incandescent",    2800},
+    {"Sunset",          5000}
 };
 
 #define NUM_WB_VALUES (sizeof(whiteBalanceOptions) / sizeof(white_balance_t))
@@ -174,6 +174,7 @@ exposure_compsensation_t evOptions[] = {
 CameraControl::CameraControl(QObject* parent)
     : QObject(parent)
     , _vehicle(NULL)
+    , _currentTask(TIMER_GET_STORAGE_INFO)
     , _cameraSupported(CAMERA_SUPPORT_UNDEFINED)
     , _true_cam_mode(CAMERA_MODE_UNDEFINED)
     , _currentVideoResIndex(0)
@@ -202,18 +203,20 @@ CameraControl::setVehicle(Vehicle* vehicle)
 {
     _resetCameraValues();
     _cameraSupported = CAMERA_SUPPORT_UNDEFINED;
+    _currentTask = TIMER_GET_STORAGE_INFO;
     emit cameraModeChanged();
     emit videoStatusChanged();
+    emit photoStatusChanged();
     if(_vehicle) {
         _vehicle = NULL;
-        disconnect(&_statusTimer, &QTimer::timeout, this, &CameraControl::_requestCaptureStatus);
+        disconnect(&_statusTimer, &QTimer::timeout, this, &CameraControl::_timerHandler);
         disconnect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &CameraControl::_mavlinkMessageReceived);
         disconnect(_vehicle, &Vehicle::mavCommandResult,       this, &CameraControl::_mavCommandResult);
         _cameraSupported = CAMERA_SUPPORT_UNDEFINED;
     }
     if(vehicle) {
         _vehicle = vehicle;
-        connect(&_statusTimer, &QTimer::timeout, this, &CameraControl::_requestCaptureStatus);
+        connect(&_statusTimer, &QTimer::timeout, this, &CameraControl::_timerHandler);
         connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &CameraControl::_mavlinkMessageReceived);
         connect(_vehicle, &Vehicle::mavCommandResult,       this, &CameraControl::_mavCommandResult);
         _statusTimer.setSingleShot(true);
@@ -244,7 +247,7 @@ void
 CameraControl::takePhoto()
 {
     qCDebug(YuneecCameraLog) << "takePhoto()";
-    if(_vehicle && _cameraSupported == CAMERA_SUPPORT_YES) {
+    if(_vehicle && _cameraSupported == CAMERA_SUPPORT_YES && photoStatus() == PHOTO_CAPTURE_STATUS_IDLE) {
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_IMAGE_START_CAPTURE,                // Command id
@@ -254,6 +257,9 @@ CameraControl::takePhoto()
             1,                                          // Number of images to capture total - 0 for unlimited capture
             -1,                                         // Horizontal resolution in pixels (set to -1 for highest resolution possible)
             -1);                                        // Vertical resolution in pixels (set to -1 for highest resolution possible)
+    } else {
+        _errorSound.setLoopCount(1);
+        _errorSound.play();
     }
 }
 
@@ -329,7 +335,7 @@ CameraControl::setVideoMode()
 void
 CameraControl::setPhotoMode()
 {
-    if(_vehicle && _cameraSupported == CAMERA_SUPPORT_YES && _ambarellaSettings.cam_mode != CAMERA_MODE_VIDEO) {
+    if(_vehicle && _cameraSupported == CAMERA_SUPPORT_YES && _ambarellaSettings.cam_mode == CAMERA_MODE_VIDEO) {
         qCDebug(YuneecCameraLog) << "setPhotoMode()";
         //-- Force UI to update. We keep the real camera mode elsewhere so we
         //   track when the camera actually changed modes, which is quite some
@@ -377,7 +383,7 @@ CameraControl::setCurrentWB(quint32 index)
             NAN,                                        // ISO sensitivity
             NAN,                                        // AE mode (Auto Exposure) (0: full auto 1: full manual 2: aperture priority 3: shutter priority)
             NAN,                                        // EV value (when in auto exposure)
-            whiteBalanceOptions[index].mode);           // White balance (color temperature in K) (0: Auto WB)
+            whiteBalanceOptions[index].temperature);    // White balance (color temperature in K) (0: Auto WB)
     }
 }
 
@@ -582,6 +588,23 @@ CameraControl::_findVideoResIndex(int w, int h, float fps)
 
 //-----------------------------------------------------------------------------
 void
+CameraControl::_timerHandler()
+{
+    switch(_currentTask) {
+        case TIMER_GET_STORAGE_INFO:
+            _requestStorageStatus();
+            break;
+        case TIMER_GET_CAPTURE_INFO:
+            _requestCaptureStatus();
+            break;
+        case TIMER_GET_CAMERA_SETTINGS:
+            _requestCameraSettings();
+            break;
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 CameraControl::_requestCameraSettings()
 {
     if(_vehicle) {
@@ -611,6 +634,28 @@ CameraControl::_requestCaptureStatus()
 
 //-----------------------------------------------------------------------------
 void
+CameraControl::_requestStorageStatus()
+{
+    if(_vehicle) {
+        _vehicle->sendMavCommand(
+            MAV_COMP_ID_CAMERA,                     // target component
+            MAV_CMD_REQUEST_STORAGE_INFORMATION,    // command id
+            false,                                  // showError
+            0,                                      // Storage ID (0 for all, 1 for first, 2 for second, etc.)
+            1);                                     // Do Request
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::_startTimer(int task, int elapsed)
+{
+    _currentTask = task;
+    _statusTimer.start(elapsed);
+}
+
+//-----------------------------------------------------------------------------
+void
 CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int command, int result, bool noReponseFromVehicle)
 {
     //-- Do we already know if the firmware supports cameras or not?
@@ -625,7 +670,7 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
                 if(result == MAV_RESULT_ACCEPTED) {
                     //-- We have an answer. Start the show.
                     _cameraSupported = CAMERA_SUPPORT_YES;
-                    _requestCaptureStatus();
+                    _startTimer(TIMER_GET_STORAGE_INFO, 500);
                 } else {
                     //-- We got an answer but not a good one
                     _cameraSupported = CAMERA_SUPPORT_NO;
@@ -643,26 +688,52 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
                     _errorSound.play();
                 }
                 break;
+            case MAV_CMD_REQUEST_STORAGE_INFORMATION:
+                if(noReponseFromVehicle) {
+                    qCDebug(YuneecCameraLog) << "Retry MAV_CMD_REQUEST_STORAGE_INFORMATION";
+                    _currentTask = TIMER_GET_STORAGE_INFO;
+                    _startTimer(TIMER_GET_STORAGE_INFO, 500);
+                } else {
+                    if(result != MAV_RESULT_ACCEPTED) {
+                        qCDebug(YuneecCameraLog) << "Bad response from MAV_CMD_REQUEST_STORAGE_INFORMATION" << result << "Retrying...";
+                        _startTimer(TIMER_GET_STORAGE_INFO, 500);
+                    }
+                }
+                break;
             case MAV_CMD_REQUEST_CAMERA_SETTINGS:
                 if(noReponseFromVehicle) {
                     qCDebug(YuneecCameraLog) << "Retry MAV_CMD_REQUEST_CAMERA_SETTINGS";
-                    _requestCameraSettings();
+                    _startTimer(TIMER_GET_CAMERA_SETTINGS, 500);
                 } else {
                     if(result != MAV_RESULT_ACCEPTED) {
                         qCDebug(YuneecCameraLog) << "Bad response from MAV_CMD_REQUEST_CAMERA_SETTINGS" << result << "Retrying...";
-                        _requestCameraSettings();
+                        _startTimer(TIMER_GET_CAMERA_SETTINGS, 500);
+                    } else {
+                        _startTimer(TIMER_GET_STORAGE_INFO, 500);
                     }
                 }
                 break;
             case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
                 if(noReponseFromVehicle) {
                     qCDebug(YuneecCameraLog) << "Retry MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS";
-                    _statusTimer.start(1000);
+                    _startTimer(TIMER_GET_CAPTURE_INFO, 1000);
                 } else {
                     if(result != MAV_RESULT_ACCEPTED) {
                         qCDebug(YuneecCameraLog) << "Bad response from MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS" << result << "Retrying...";
-                        _statusTimer.start(1000);
+                        _startTimer(TIMER_GET_CAPTURE_INFO, 1000);
                     }
+                }
+                break;
+            case MAV_CMD_SET_CAMERA_SETTINGS_1:
+            case MAV_CMD_SET_CAMERA_SETTINGS_2:
+            case MAV_CMD_RESET_CAMERA_SETTINGS:
+                if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
+                    _startTimer(TIMER_GET_CAMERA_SETTINGS, 250);
+                    _videoSound.setLoopCount(1);
+                    _videoSound.play();
+                } else {
+                    _errorSound.setLoopCount(1);
+                    _errorSound.play();
                 }
                 break;
             default:
@@ -681,6 +752,9 @@ CameraControl::_mavlinkMessageReceived(const mavlink_message_t& message)
             break;
         case MAVLINK_MSG_ID_CAMERA_SETTINGS:
             _handleCameraSettings(message);
+            break;
+        case MAVLINK_MSG_ID_STORAGE_INFORMATION:
+            _handleStorageInfo(message);
             break;
     }
 }
@@ -728,7 +802,7 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
     if(_ambarellaSettings.white_balance != wb) {
         _ambarellaSettings.white_balance = wb;
         for(uint32_t i = 0; i < NUM_WB_VALUES; i++) {
-            if(whiteBalanceOptions[i].mode == wb) {
+            if(whiteBalanceOptions[i].temperature == wb) {
                 _currentWB = i;
                 break;
             }
@@ -789,7 +863,7 @@ CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
     //-- Image Capture Status
     if(_ambarellaStatus.image_status != cap.image_status) {
         _ambarellaStatus.image_status = cap.image_status;
-        //-- TODO
+        emit photoStatusChanged();
     }
     //-- Video Capture Status
     if(_ambarellaStatus.video_status != cap.video_status) {
@@ -811,12 +885,38 @@ CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
         emit currentVideoResChanged();
         _updateAspectRatio();
     }
+    //-- Recording running time
+    if(_ambarellaStatus.record_time != cap.recording_time_ms) {
+        _ambarellaStatus.record_time = cap.recording_time_ms;
+        emit recordTimeChanged();
+    }
     //-- If recording video, we do this more often
     if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
-        _statusTimer.start(500);
+        _startTimer(TIMER_GET_CAPTURE_INFO, 500);
+    } else if(photoStatus() == PHOTO_CAPTURE_STATUS_RUNNING) {
+        _startTimer(TIMER_GET_CAPTURE_INFO, 1000);
     } else {
-        _statusTimer.start(5000);
+        _startTimer(TIMER_GET_CAPTURE_INFO, 5000);
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::_handleStorageInfo(const mavlink_message_t& message)
+{
+    mavlink_storage_information_t st;
+    mavlink_msg_storage_information_decode(&message, &st);
+    qCDebug(YuneecCameraLog) << "_handleStorageInfo:" << st.available_capacity << st.status << st.storage_count << st.storage_id << st.total_capacity << st.used_capacity;
+    if(_ambarellaStatus.sdtotal != st.total_capacity) {
+        _ambarellaStatus.sdtotal = st.total_capacity;
+        emit sdTotalChanged();
+    }
+    if(_ambarellaStatus.sdfree != st.available_capacity) {
+        _ambarellaStatus.sdfree = st.available_capacity;
+        emit sdFreeChanged();
+    }
+    //-- Get Capture Status next
+    _startTimer(TIMER_GET_CAPTURE_INFO, 500);
 }
 
 #if 0
@@ -845,6 +945,16 @@ CameraControl::videoStatus()
         return (VideoStatus)_ambarellaStatus.video_status;
     }
     return VIDEO_CAPTURE_STATUS_UNDEFINED;
+}
+
+//-----------------------------------------------------------------------------
+CameraControl::PhotoStatus
+CameraControl::photoStatus()
+{
+    if(_cameraSupported == CAMERA_SUPPORT_YES) {
+        return (PhotoStatus)_ambarellaStatus.image_status;
+    }
+    return PHOTO_CAPTURE_STATUS_UNDEFINED;
 }
 
 //-----------------------------------------------------------------------------
@@ -1012,7 +1122,7 @@ CameraControl::recordTime()
 QString
 CameraControl::recordTimeStr()
 {
-    return QTime(0, 0).addSecs(recordTime()).toString("hh:mm:ss");
+    return QTime(0, 0).addMSecs(recordTime()).toString("hh:mm:ss");
 }
 
 //-----------------------------------------------------------------------------
@@ -1046,11 +1156,8 @@ CameraControl::_resetCameraValues()
     _ambarellaSettings.white_balance    = 0;
     _ambarellaSettings.metering_mode    = 0;
 
-    _ambarellaStatus.image_status       = 0;
+    _ambarellaStatus.image_status       = PHOTO_CAPTURE_STATUS_UNDEFINED;
     _ambarellaStatus.video_status       = VIDEO_CAPTURE_STATUS_UNDEFINED;
-    _ambarellaStatus.video_fps          = -1;
-    _ambarellaStatus.video_h            = -1;
-    _ambarellaStatus.video_w            = -1;
     _ambarellaStatus.sdfree             = 0xFFFFFFFF;
     _ambarellaStatus.sdtotal            = 0xFFFFFFFF;
     _ambarellaStatus.record_time        = 0;

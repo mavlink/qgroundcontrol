@@ -35,9 +35,6 @@ typedef struct {
 typedef struct {
     int         image_status;
     int         video_status;
-    int         video_w;
-    int         video_h;
-    int         video_fps;
     uint32_t    sdfree;
     uint32_t    sdtotal;
     uint32_t    record_time;
@@ -76,7 +73,7 @@ typedef struct {
 // White Balance
 typedef struct {
     const char* description;
-    uint32_t    mode;
+    uint32_t    temperature;
 } white_balance_t;
 
 //-----------------------------------------------------------------------------
@@ -113,11 +110,18 @@ public:
     CameraControl(QObject* parent = NULL);
     ~CameraControl();
 
-    //-- Camera Control
+    //-- Video Capture Status
     enum VideoStatus {
         VIDEO_CAPTURE_STATUS_STOPPED = 0,
         VIDEO_CAPTURE_STATUS_RUNNING,
         VIDEO_CAPTURE_STATUS_UNDEFINED
+    };
+
+    //-- Photo Capture Status
+    enum PhotoStatus {
+        PHOTO_CAPTURE_STATUS_IDLE = 0,
+        PHOTO_CAPTURE_STATUS_RUNNING,
+        PHOTO_CAPTURE_STATUS_UNDEFINED
     };
 
     //-- cam_mode
@@ -137,10 +141,12 @@ public:
     #define DEFAULT_VALUE -1.0f
 
     Q_ENUMS(VideoStatus)
+    Q_ENUMS(PhotoStatus)
     Q_ENUMS(CameraMode)
     Q_ENUMS(AEModes)
 
     Q_PROPERTY(VideoStatus  videoStatus     READ    videoStatus                                 NOTIFY videoStatusChanged)
+    Q_PROPERTY(PhotoStatus  photoStatus     READ    photoStatus                                 NOTIFY photoStatusChanged)
     Q_PROPERTY(CameraMode   cameraMode      READ    cameraMode      WRITE   setCameraMode       NOTIFY cameraModeChanged)
     Q_PROPERTY(AEModes      aeMode          READ    aeMode          WRITE   setAeMode           NOTIFY aeModeChanged)
     Q_PROPERTY(quint32      recordTime      READ    recordTime                                  NOTIFY recordTimeChanged)
@@ -177,6 +183,7 @@ public:
     Q_INVOKABLE void formatCard     ();
 
     VideoStatus videoStatus         ();
+    PhotoStatus photoStatus         ();
     CameraMode  cameraMode          ();
     AEModes     aeMode              ();
     quint32     recordTime          ();
@@ -216,12 +223,13 @@ public:
     void        setCurrentEV        (quint32 index);
 
 private slots:
-    void    _requestCaptureStatus   ();
     void    _mavCommandResult       (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
     void    _mavlinkMessageReceived (const mavlink_message_t& message);
+    void    _timerHandler           ();
 
 signals:
     void    videoStatusChanged      ();
+    void    photoStatusChanged      ();
     void    cameraModeChanged       ();
     void    aeModeChanged           ();
     void    recordTimeChanged       ();
@@ -238,14 +246,18 @@ signals:
 
 private:
     int     _findVideoResIndex      (int w, int h, float fps);
+    void    _requestStorageStatus   ();
+    void    _requestCaptureStatus   ();
     void    _updateAspectRatio      ();
     void    _initStreaming          ();
     void    _handleShutterStatus    ();
     void    _handleISOStatus        ();
     void    _handleCameraSettings   (const mavlink_message_t& message);
     void    _handleCaptureStatus    (const mavlink_message_t& message);
+    void    _handleStorageInfo      (const mavlink_message_t& message);
     void    _resetCameraValues      ();
     void    _requestCameraSettings  ();
+    void    _startTimer             (int task, int elapsed);
 
 private:
     Vehicle*                _vehicle;
@@ -261,6 +273,14 @@ private:
     QSoundEffect            _cameraSound;
     QSoundEffect            _videoSound;
     QSoundEffect            _errorSound;
+
+    enum {
+        TIMER_GET_STORAGE_INFO,
+        TIMER_GET_CAPTURE_INFO,
+        TIMER_GET_CAMERA_SETTINGS
+    };
+
+    int                     _currentTask;
 
     enum {
         CAMERA_SUPPORT_UNDEFINED,
