@@ -103,6 +103,9 @@ protected:
     QString _followMeFlightMode;
     QString _simpleFlightMode;
 
+private slots:
+    void _mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
+
 private:
     void _handleAutopilotVersion(Vehicle* vehicle, mavlink_message_t* message);
 
