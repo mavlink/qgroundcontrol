@@ -1364,7 +1364,7 @@ void Vehicle::_loadSettings(void)
 
     // Joystick enabled is a global setting so first make sure there are any joysticks connected
     if (qgcApp()->toolbox()->joystickManager()->joysticks().count()) {
-        _joystickEnabled = settings.value(_joystickEnabledSettingsKey, false).toBool();
+        setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
     }
 }
 
