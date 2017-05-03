@@ -418,11 +418,10 @@ Rectangle {
                 }
 
                 QGCLabel {
-                    wrapMode:       Text.WordWrap
-                    font.pointSize: ScreenTools.smallFontPointSize
-                    text:           qsTr("Which value would you like to keep constant as you adjust other settings")
+                    wrapMode:               Text.WordWrap
+                    text:                   qsTr("Select one:")
                     Layout.preferredWidth:  parent.width
-                    Layout.columnSpan: 2
+                    Layout.columnSpan:      2
                 }
 
                 QGCRadioButton {
