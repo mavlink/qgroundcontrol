@@ -847,7 +847,8 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
                                       mavlinkChannel(),
                                       &commandAck,
                                       request.command,
-                                      commandResult);
+                                      commandResult,
+                                      0);
     respondWithMavlinkMessage(commandAck);
 }
 
