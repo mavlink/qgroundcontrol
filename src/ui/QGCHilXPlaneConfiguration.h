@@ -5,6 +5,7 @@
 
 #include "QGCHilLink.h"
 
+class QGCHilConfiguration;
 namespace Ui {
 class QGCHilXPlaneConfiguration;
 }
@@ -14,7 +15,7 @@ class QGCHilXPlaneConfiguration : public QWidget
     Q_OBJECT
     
 public:
-    explicit QGCHilXPlaneConfiguration(QGCHilLink* link, QWidget *parent = 0);
+    explicit QGCHilXPlaneConfiguration(QGCHilLink* link, QGCHilConfiguration *parent = 0);
     ~QGCHilXPlaneConfiguration();
 
 public slots:

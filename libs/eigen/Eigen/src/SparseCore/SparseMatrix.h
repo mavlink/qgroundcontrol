@@ -223,7 +223,7 @@ class SparseMatrix
       
       if(isCompressed())
       {
-        reserve(VectorXi::Constant(outerSize(), 2));
+        reserve(Matrix<Index,Dynamic,1>::Constant(outerSize(), 2));
       }
       return insertUncompressed(row,col);
     }
@@ -402,7 +402,7 @@ class SparseMatrix
       * \sa insertBack, insertBackByOuterInner */
     inline void startVec(Index outer)
     {
-      eigen_assert(m_outerIndex[outer]==int(m_data.size()) && "You must call startVec for each inner vector sequentially");
+      eigen_assert(m_outerIndex[outer]==Index(m_data.size()) && "You must call startVec for each inner vector sequentially");
       eigen_assert(m_outerIndex[outer+1]==0 && "You must call startVec for each inner vector sequentially");
       m_outerIndex[outer+1] = m_outerIndex[outer];
     }
@@ -480,7 +480,7 @@ class SparseMatrix
       if(m_innerNonZeros != 0)
         return; 
       m_innerNonZeros = static_cast<Index*>(std::malloc(m_outerSize * sizeof(Index)));
-      for (int i = 0; i < m_outerSize; i++)
+      for (Index i = 0; i < m_outerSize; i++)
       {
         m_innerNonZeros[i] = m_outerIndex[i+1] - m_outerIndex[i]; 
       }
@@ -691,7 +691,8 @@ class SparseMatrix
       m_data.swap(other.m_data);
     }
 
-    /** Sets *this to the identity matrix */
+    /** Sets *this to the identity matrix.
+      * This function also turns the matrix into compressed mode, and drop any reserved memory. */
     inline void setIdentity()
     {
       eigen_assert(rows() == cols() && "ONLY FOR SQUARED MATRICES");
@@ -699,6 +700,8 @@ class SparseMatrix
       Eigen::Map<Matrix<Index, Dynamic, 1> >(&this->m_data.index(0), rows()).setLinSpaced(0, rows()-1);
       Eigen::Map<Matrix<Scalar, Dynamic, 1> >(&this->m_data.value(0), rows()).setOnes();
       Eigen::Map<Matrix<Index, Dynamic, 1> >(this->m_outerIndex, rows()+1).setLinSpaced(0, rows());
+      std::free(m_innerNonZeros);
+      m_innerNonZeros = 0;
     }
     inline SparseMatrix& operator=(const SparseMatrix& other)
     {
@@ -752,8 +755,8 @@ class SparseMatrix
         else
           for (Index i=0; i<m.outerSize(); ++i)
           {
-            int p = m.m_outerIndex[i];
-            int pe = m.m_outerIndex[i]+m.m_innerNonZeros[i];
+            Index p = m.m_outerIndex[i];
+            Index pe = m.m_outerIndex[i]+m.m_innerNonZeros[i];
             Index k=p;
             for (; k<pe; ++k)
               s << "(" << m.m_data.value(k) << "," << m.m_data.index(k) << ") ";
@@ -939,12 +942,13 @@ void set_from_triplets(const InputIterator& begin, const InputIterator& end, Spa
   EIGEN_UNUSED_VARIABLE(Options);
   enum { IsRowMajor = SparseMatrixType::IsRowMajor };
   typedef typename SparseMatrixType::Scalar Scalar;
-  SparseMatrix<Scalar,IsRowMajor?ColMajor:RowMajor> trMat(mat.rows(),mat.cols());
+  typedef typename SparseMatrixType::Index Index;
+  SparseMatrix<Scalar,IsRowMajor?ColMajor:RowMajor,Index> trMat(mat.rows(),mat.cols());
 
-  if(begin<end)
+  if(begin!=end)
   {
     // pass 1: count the nnz per inner-vector
-    VectorXi wi(trMat.outerSize());
+    Matrix<Index,Dynamic,1> wi(trMat.outerSize());
     wi.setZero();
     for(InputIterator it(begin); it!=end; ++it)
     {
@@ -1018,11 +1022,11 @@ void SparseMatrix<Scalar,_Options,_Index>::sumupDuplicates()
 {
   eigen_assert(!isCompressed());
   // TODO, in practice we should be able to use m_innerNonZeros for that task
-  VectorXi wi(innerSize());
+  Matrix<Index,Dynamic,1> wi(innerSize());
   wi.fill(-1);
   Index count = 0;
   // for each inner-vector, wi[inner_index] will hold the position of first element into the index/value buffers
-  for(int j=0; j<outerSize(); ++j)
+  for(Index j=0; j<outerSize(); ++j)
   {
     Index start   = count;
     Index oldEnd  = m_outerIndex[j]+m_innerNonZeros[j];
@@ -1081,7 +1085,7 @@ EIGEN_DONT_INLINE SparseMatrix<Scalar,_Options,_Index>& SparseMatrix<Scalar,_Opt
 
     // prefix sum
     Index count = 0;
-    VectorXi positions(dest.outerSize());
+    Matrix<Index,Dynamic,1> positions(dest.outerSize());
     for (Index j=0; j<dest.outerSize(); ++j)
     {
       Index tmp = dest.m_outerIndex[j];
@@ -1177,7 +1181,7 @@ EIGEN_DONT_INLINE typename SparseMatrix<_Scalar,_Options,_Index>::Scalar& Sparse
   size_t p = m_outerIndex[outer+1];
   ++m_outerIndex[outer+1];
 
-  float reallocRatio = 1;
+  double reallocRatio = 1;
   if (m_data.allocatedSize()<=m_data.size())
   {
     // if there is no preallocated memory, let's reserve a minimum of 32 elements
@@ -1189,13 +1193,13 @@ EIGEN_DONT_INLINE typename SparseMatrix<_Scalar,_Options,_Index>::Scalar& Sparse
     {
       // we need to reallocate the data, to reduce multiple reallocations
       // we use a smart resize algorithm based on the current filling ratio
-      // in addition, we use float to avoid integers overflows
-      float nnzEstimate = float(m_outerIndex[outer])*float(m_outerSize)/float(outer+1);
-      reallocRatio = (nnzEstimate-float(m_data.size()))/float(m_data.size());
+      // in addition, we use double to avoid integers overflows
+      double nnzEstimate = double(m_outerIndex[outer])*double(m_outerSize)/double(outer+1);
+      reallocRatio = (nnzEstimate-double(m_data.size()))/double(m_data.size());
       // furthermore we bound the realloc ratio to:
       //   1) reduce multiple minor realloc when the matrix is almost filled
       //   2) avoid to allocate too much memory when the matrix is almost empty
-      reallocRatio = (std::min)((std::max)(reallocRatio,1.5f),8.f);
+      reallocRatio = (std::min)((std::max)(reallocRatio,1.5),8.);
     }
   }
   m_data.resize(m_data.size()+1,reallocRatio);

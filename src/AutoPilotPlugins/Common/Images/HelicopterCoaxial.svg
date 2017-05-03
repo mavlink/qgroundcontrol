@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 19.2.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="draw" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 162 331.846" enable-background="new 0 0 162 331.846" xml:space="preserve">
+<title>HelicopterCoaxial</title>
+<rect x="129.876" y="54.897" fill="#4EC3E8" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" width="7" height="89.242"/>
+<rect x="22.876" y="54.897" fill="#4EC3E8" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" width="7" height="89.242"/>
+<rect x="29.876" y="63.897" fill="#4EC3E8" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" width="100" height="5"/>
+<rect x="29.876" y="130.139" fill="#4EC3E8" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" width="100" height="5"/>
+<path fill="#4EC3E8" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" d="M85,331.344
+	c4.938,0,4.463-6.183,4.463-6.183v-34.2c0,0,33.037,4,39.287,4c2.055,0.213,3.892-1.281,4.105-3.335
+	c0.03-0.29,0.026-0.583-0.012-0.872v-14.34c0-3.343-4.093-3.093-4.093-3.093l-39.283-4v-62.562c0-16.083,1.7-16.817,2.977-19.049
+	c0.843-1.477,27.941-30.738,27.941-30.738V47.759C120.385,0.509,80,0.5,80,0.5S39.615,0.509,39.615,47.759v109.213
+	c0,0,27.1,29.262,27.941,30.738c1.274,2.232,2.977,2.966,2.977,19.049v62.562l-39.283,4c0,0-4.093-0.249-4.093,3.093v14.345
+	c-0.269,2.048,1.173,3.926,3.221,4.195c0.289,0.038,0.582,0.042,0.872,0.012c6.25,0,39.287-4,39.287-4v34.2
+	c0,0-0.475,6.183,4.463,6.183h10V331.344z"/>
+<path fill="#FFFFFF" stroke="#000000" stroke-miterlimit="10" d="M111.671,37.077c0-28.669-31.67-28.675-31.67-28.675
+	s-31.67,0.005-31.67,28.675h63.341H111.671z"/>
+<g opacity="0.8">
+	
+		<ellipse transform="matrix(0.7091 -0.7051 0.7051 0.7091 -90.676 104.2502)" fill="#4EC3E8" cx="80.999" cy="162.012" rx="80.989" ry="81.006"/>
+</g>
+<g opacity="0.8">
+	
+		<ellipse transform="matrix(0.7091 -0.7051 0.7051 0.7091 -69.5208 95.5225)" fill="#159E1F" cx="80.999" cy="132.011" rx="80.989" ry="81.006"/>
+</g>
+<path fill="#FFFFFF" stroke="#000000" stroke-miterlimit="10" d="M87.944,123.116c-4.374-4.384-11.473-4.393-15.858-0.02
+	c-4.384,4.374-4.393,11.473-0.02,15.857c4.365,4.376,11.447,4.395,15.835,0.042c4.396-4.335,4.446-11.414,0.111-15.811
+	C87.99,123.162,87.967,123.139,87.944,123.116z"/>
+</svg>

@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009 - 2011 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -40,8 +27,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QProcess>
 #include <LinkInterface.h>
 #include "QGCConfig.h"
-#include "UASInterface.h"
 #include "QGCHilLink.h"
+#include "Vehicle.h"
 
 class QGCJSBSimLink : public QGCHilLink
 {
@@ -49,7 +36,7 @@ class QGCJSBSimLink : public QGCHilLink
     //Q_INTERFACES(QGCJSBSimLinkInterface:LinkInterface)
 
 public:
-    QGCJSBSimLink(UASInterface* mav, QString startupArguments, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
+    QGCJSBSimLink(Vehicle* vehicle, QString startupArguments, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
     ~QGCJSBSimLink();
 
     bool isConnected();
@@ -92,7 +79,6 @@ public slots:
     void setRemoteHost(const QString& host);
     /** @brief Send new control states to the simulation */
     void updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode);
-    void updateActuators(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
 //    /** @brief Remove a host from broadcasting messages to */
 //    void removeHost(const QString& host);
     //    void readPendingDatagrams();
@@ -115,19 +101,24 @@ public slots:
     }
 
     void readBytes();
+
+private slots:
     /**
      * @brief Write a number of bytes to the interface.
      *
      * @param data Pointer to the data byte array
      * @param size The size of the bytes array
      **/
-    void writeBytes(const char* data, qint64 length);
+    void _writeBytes(const QByteArray data);
+
+public slots:
     bool connectSimulation();
     bool disconnectSimulation();
 
     void setStartupArguments(QString startupArguments);
 
-protected:
+private:
+    Vehicle*    _vehicle;
     QString name;
     QHostAddress host;
     QHostAddress currentHost;
@@ -147,7 +138,6 @@ protected:
     QMutex statisticsMutex;
     QMutex dataMutex;
     QTimer refreshTimer;
-    UASInterface* mav;
     QProcess* process;
     unsigned int flightGearVersion;
     QString startupArguments;
@@ -155,10 +145,6 @@ protected:
     bool _sensorHilEnabled;
 
     void setName(QString name);
-
-signals:
-
-
 };
 
 #endif // QGCJSBSimLink_H

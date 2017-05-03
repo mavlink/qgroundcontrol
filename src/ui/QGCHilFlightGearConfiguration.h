@@ -5,7 +5,7 @@
 
 #include "QGCHilLink.h"
 #include "QGCFlightGearLink.h"
-#include "UAS.h"
+#include "Vehicle.h"
 
 #include "ui_QGCHilFlightGearConfiguration.h"
 
@@ -18,7 +18,7 @@ class QGCHilFlightGearConfiguration : public QWidget
     Q_OBJECT
     
 public:
-    explicit QGCHilFlightGearConfiguration(UAS* mav, QWidget *parent = 0);
+    explicit QGCHilFlightGearConfiguration(Vehicle* vehicle, QWidget *parent = 0);
     ~QGCHilFlightGearConfiguration();
 
 protected:
@@ -31,8 +31,8 @@ private slots:
     void _showContextMenu(const QPoint& pt);
 
 private:
+    Vehicle*    _vehicle;
     Ui::QGCHilFlightGearConfiguration _ui;
-    UAS* _mav;                                          /// mav associated with this ui
 
     static const char*  _settingsGroup;                 /// Top level settings group
     const char*         _mavSettingsSubGroup;           /// We maintain a settings sub group per mav type

@@ -78,10 +78,10 @@ LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval):
 
     // Start QTimer for plot update
     updateTimer = new QTimer(this);
-    connect(updateTimer, SIGNAL(timeout()), this, SLOT(paintRealtime()));
+    connect(updateTimer, &QTimer::timeout, this, &LinechartPlot::paintRealtime);
     //updateTimer->start(DEFAULT_REFRESH_RATE);
 
-    connect(&timeoutTimer, SIGNAL(timeout()), this, SLOT(removeTimedOutCurves()));
+    connect(&timeoutTimer, &QTimer::timeout, this, &LinechartPlot::removeTimedOutCurves);
     //timeoutTimer.start(5000);
 }
 
@@ -183,14 +183,14 @@ void LinechartPlot::setActive(bool active)
 
 void LinechartPlot::removeTimedOutCurves()
 {
-    foreach(QString key, lastUpdate.keys())
+    foreach(const QString &key, lastUpdate.keys())
     {
         quint64 time = lastUpdate.value(key);
         if (QGC::groundTimeMilliseconds() - time > 10000)
         {
             // Remove this curve
             // Delete curves
-            QwtPlotCurve* curve = curves.take(key);
+            QwtPlotCurve* curve = _curves.take(key);
             // Delete the object
             delete curve;
             // Set the pointer null
@@ -276,7 +276,7 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
     valueInterval = maxValue - minValue;
 
     // Assign dataset to curve
-    QwtPlotCurve* curve = curves.value(dataname);
+    QwtPlotCurve* curve = _curves.value(dataname);
     curve->setRawSamples(dataset->getPlotX(), dataset->getPlotY(), dataset->getPlotCount());
 
     //    qDebug() << "mintime" << minTime << "maxtime" << maxTime << "last max time" << "window position" << getWindowPosition();
@@ -321,7 +321,7 @@ void LinechartPlot::addCurve(QString id)
     // Create new curve and set style
     QwtPlotCurve* curve = new QwtPlotCurve(id);
     // Add curve to list
-    curves.insert(id, curve);
+    _curves.insert(id, curve);
 
     curve->setStyle(QwtPlotCurve::Lines);
     curve->setPaintAttribute(QwtPlotCurve::FilterPoints, true);
@@ -414,15 +414,15 @@ void LinechartPlot::setScaling(int scaling)
  **/
 void LinechartPlot::setVisibleById(QString id, bool visible)
 {
-    if(curves.contains(id)) {
-        curves.value(id)->setVisible(visible);
+    if(_curves.contains(id)) {
+        _curves.value(id)->setVisible(visible);
         if(visible)
         {
-            curves.value(id)->attach(this);
+            _curves.value(id)->attach(this);
         }
         else
         {
-            curves.value(id)->detach();
+            _curves.value(id)->detach();
         }
     }
 }
@@ -467,17 +467,17 @@ void LinechartPlot::showCurve(QString id)
  **/
 void LinechartPlot::setCurveColor(QString id, QColor color)
 {
-    QwtPlotCurve* curve = curves.value(id);
+    QwtPlotCurve* curve = _curves.value(id);
     // Change the color of the curve.
-    curve->setPen(QPen(QBrush(color), curveWidth));
+    curve->setPen(QPen(QBrush(color), _curveWidth));
 
-    qDebug() << "Setting curve" << id << "to" << color;
+    //qDebug() << "Setting curve" << id << "to" << color;
 
     // And change the color of the symbol, making sure to preserve the symbol style
     const QwtSymbol *oldSymbol = curve->symbol();
     QwtSymbol *newSymbol = NULL;
     if (oldSymbol) {
-        newSymbol = new QwtSymbol(oldSymbol->style(), QBrush(color), QPen(color, symbolWidth), QSize(symbolWidth, symbolWidth));
+        newSymbol = new QwtSymbol(oldSymbol->style(), QBrush(color), QPen(color, _symbolWidth), QSize(_symbolWidth, _symbolWidth));
     }
     curve->setSymbol(newSymbol);
 }
@@ -490,7 +490,7 @@ void LinechartPlot::setCurveColor(QString id, QColor color)
  **/
 bool LinechartPlot::isVisible(QString id)
 {
-    return curves.value(id)->isVisible();
+    return _curves.value(id)->isVisible();
 }
 
 /**
@@ -499,9 +499,9 @@ bool LinechartPlot::isVisible(QString id)
 bool LinechartPlot::anyCurveVisible()
 {
     bool visible = false;
-    foreach (QString key, curves.keys())
+    foreach (const QString &key, _curves.keys())
     {
-        if (curves.value(key)->isVisible())
+        if (_curves.value(key)->isVisible())
         {
             visible = true;
         }
@@ -530,7 +530,7 @@ void LinechartPlot::setAutoScroll(bool active)
  **/
 QList<QwtPlotCurve*> LinechartPlot::getCurves()
 {
-    return curves.values();
+    return _curves.values();
 }
 
 /**
@@ -679,15 +679,7 @@ void LinechartPlot::paintRealtime()
 
         windowLock.unlock();
 
-        // Only set current view as zoombase if zoomer is not active
-        // else we could not zoom out any more
-
-        if(zoomer->zoomStack().size() < 2) {
-            zoomer->setZoomBase(true);
-        } else {
-            replot();
-        }
-
+        replot();
 
         /*
         QMap<QString, QwtPlotCurve*>::iterator i;
@@ -710,10 +702,10 @@ void LinechartPlot::removeAllData()
     datalock.lock();
     // Delete curves
     QMap<QString, QwtPlotCurve*>::iterator i;
-    for(i = curves.begin(); i != curves.end(); ++i)
+    for(i = _curves.begin(); i != _curves.end(); ++i)
     {
         // Remove from curve list
-        QwtPlotCurve* curve = curves.take(i.key());
+        QwtPlotCurve* curve = _curves.take(i.key());
         // Delete the object
         delete curve;
         // Set the pointer null
@@ -786,14 +778,9 @@ void TimeSeriesData::setAverageWindowSize(int windowSize)
 void TimeSeriesData::append(quint64 ms, double value)
 {
     dataMutex.lock();
-    // Pre- allocate new space
-    // FIXME Check this for validity
-    if(static_cast<quint64>(size()) < (count + 100)) {
-        this->ms.resize(size() + 10000);
-        this->value.resize(size() + 10000);
-    }
-    this->ms[count] = ms;
-    this->value[count] = value;
+    // Qt will automatically use a smart growth strategy: http://doc.qt.io/qt-5/containers.html#growth-strategies
+    this->ms.append(ms);
+    this->value.append(value);
     this->lastValue = value;
     this->mean = 0;
     //QList<double> medianList = QList<double>();

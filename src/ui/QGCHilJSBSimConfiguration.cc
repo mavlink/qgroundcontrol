@@ -2,16 +2,17 @@
 #include "ui_QGCHilJSBSimConfiguration.h"
 
 #include "MainWindow.h"
+#include "UAS.h"
 
-QGCHilJSBSimConfiguration::QGCHilJSBSimConfiguration(UAS* mav,QWidget *parent) :
-    QWidget(parent),
-    mav(mav),
-    ui(new Ui::QGCHilJSBSimConfiguration)
+QGCHilJSBSimConfiguration::QGCHilJSBSimConfiguration(Vehicle* vehicle, QWidget *parent)
+    : QWidget(parent)
+    , _vehicle(vehicle)
+    , ui(new Ui::QGCHilJSBSimConfiguration)
 {
     ui->setupUi(this);
 
     QStringList items = QStringList();
-    if (mav->getSystemType() == MAV_TYPE_FIXED_WING)
+    if (_vehicle->vehicleType() == MAV_TYPE_FIXED_WING)
     {
         items << "EasyStar";
         items << "Rascal110-JSBSim";
@@ -19,7 +20,7 @@ QGCHilJSBSimConfiguration::QGCHilJSBSimConfiguration(UAS* mav,QWidget *parent) :
         items << "YardStik";
         items << "Malolo1";
     }
-    else if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
+    else if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR)
     {
         items << "arducopter";
     }
@@ -40,10 +41,10 @@ void QGCHilJSBSimConfiguration::on_startButton_clicked()
     //XXX check validity of inputs
     QString options = ui->optionsPlainTextEdit->toPlainText();
     options.append(" --script=" + ui->aircraftComboBox->currentText());
-    mav->enableHilJSBSim(true,  options);
+    _vehicle->uas()->enableHilJSBSim(true,  options);
 }
 
 void QGCHilJSBSimConfiguration::on_stopButton_clicked()
 {
-    mav->stopHil();
+    _vehicle->uas()->stopHil();
 }

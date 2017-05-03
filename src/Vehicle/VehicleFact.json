@@ -1,0 +1,65 @@
+[
+{
+    "name":             "roll",
+    "shortDescription": "Roll",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg"
+},
+{
+    "name":             "pitch",
+    "shortDescription": "Pitch",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg"
+},
+{
+    "name":             "heading",
+    "shortDescription": "Heading",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "deg"
+},
+{
+    "name":             "groundSpeed",
+    "shortDescription": "Ground Speed",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m/s"
+},
+{
+    "name":             "airSpeed",
+    "shortDescription": "Air Speed",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m/s"
+},
+{
+    "name":             "climbRate",
+    "shortDescription": "Climb Rate",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m/s"
+},
+{
+    "name":             "altitudeRelative",
+    "shortDescription": "Altitude-rel",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+},
+{
+    "name":             "altitudeAMSL",
+    "shortDescription": "Altitude",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+},
+{
+    "name":             "flightDistance",
+    "shortDescription": "Flight Distance",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+}
+]

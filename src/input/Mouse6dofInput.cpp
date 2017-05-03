@@ -8,8 +8,8 @@
 
 #include "Mouse6dofInput.h"
 #include "UAS.h"
-#include "UASManager.h"
-#include "QMessageBox"
+#include "MultiVehicleManager.h"
+#include "QGCMessageBox.h"
 
 #ifdef QGC_MOUSE_ENABLED_LINUX
 #include <QX11Info>
@@ -38,7 +38,8 @@ Mouse6dofInput::Mouse6dofInput(Mouse3DInput* mouseInput) :
     bValue(0.0),
     cValue(0.0)
 {
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &Mouse6dofInput::_activeVehicleChanged);
+    
     // Connect 3DxWare SDK MotionEvent
     connect(mouseInput, SIGNAL(Move3d(std::vector<float>&)), this, SLOT(motion3DMouse(std::vector<float>&)));
     connect(mouseInput, SIGNAL(On3dmouseKeyDown(int)), this, SLOT(button3DMouseDown(int)));
@@ -62,7 +63,7 @@ Mouse6dofInput::Mouse6dofInput(QWidget* parent) :
     bValue(0.0),
     cValue(0.0)
 {
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &Mouse6dofInput::_activeVehicleChanged);
 
     if (!mouseActive)
     {
@@ -86,14 +87,8 @@ Mouse6dofInput::Mouse6dofInput(QWidget* parent) :
         }
         if ( !MagellanInit( display, parent->winId() ) )
         {
-            QMessageBox msgBox;
-            msgBox.setIcon(QMessageBox::Information);
-            msgBox.setText(tr("No 3DxWare driver is running."));
-            msgBox.setInformativeText(tr("Enter in Terminal 'sudo /etc/3DxWare/daemon/3dxsrv -d usb' and then restart QGroundControl."));
-            msgBox.setStandardButtons(QMessageBox::Ok);
-            msgBox.setDefaultButton(QMessageBox::Ok);
-            msgBox.exec();
-
+            QGCMessageBox::critical(tr("No 3DxWare driver is running."),
+                                    tr("Enter in Terminal 'sudo /etc/3DxWare/daemon/3dxsrv -d usb' and then restart QGroundControl."));
             qDebug() << "No 3DxWare driver is running!";
             return;
         }
@@ -117,27 +112,22 @@ Mouse6dofInput::~Mouse6dofInput()
     done = true;
 }
 
-void Mouse6dofInput::setActiveUAS(UASInterface* uas)
+void Mouse6dofInput::_activeVehicleChanged(Vehicle* vehicle)
 {
-    // Only connect / disconnect is the UAS is of a controllable UAS class
-    UAS* tmp = 0;
     if (this->uas)
     {
-        tmp = dynamic_cast<UAS*>(this->uas);
-        if(tmp)
-        {
-            disconnect(this, SIGNAL(mouse6dofChanged(double,double,double,double,double,double)), tmp, SLOT(setManual6DOFControlCommands(double,double,double,double,double,double)));
-            // Todo: disconnect button mapping
-        }
+        disconnect(this, SIGNAL(mouse6dofChanged(double,double,double,double,double,double)), uas, SLOT(setManual6DOFControlCommands(double,double,double,double,double,double)));
+        // Todo: disconnect button mapping
+        uas = NULL;
     }
 
-    this->uas = uas;
-
-    tmp = dynamic_cast<UAS*>(this->uas);
-    if(tmp) {
-                connect(this, SIGNAL(mouse6dofChanged(double,double,double,double,double,double)), tmp, SLOT(setManual6DOFControlCommands(double,double,double,double,double,double)));
-                // Todo: connect button mapping
+    if (vehicle) {
+        uas = vehicle->uas();
+        
+        connect(this, SIGNAL(mouse6dofChanged(double,double,double,double,double,double)), uas, SLOT(setManual6DOFControlCommands(double,double,double,double,double,double)));
+            // Todo: connect button mapping
     }
+    
     if (!isRunning())
     {
         start();
@@ -147,7 +137,7 @@ void Mouse6dofInput::setActiveUAS(UASInterface* uas)
 void Mouse6dofInput::init()
 {
     // Make sure active UAS is set
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    _activeVehicleChanged(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
 }
 
 void Mouse6dofInput::run()
@@ -250,7 +240,7 @@ void Mouse6dofInput::button3DMouseDown(int button)
 #ifdef QGC_MOUSE_ENABLED_LINUX
 void Mouse6dofInput::handleX11Event(XEvent *event)
 {
-    //qDebug("XEvent occured...");
+    //qDebug("XEvent occurred...");
     if (!mouseActive)
     {
         qDebug() << "3dMouse not initialized. Cancelled handling X11event for 3dMouse";

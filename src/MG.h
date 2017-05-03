@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
-
-(c) 2009 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
-
-This file is part of the PIXHAWK project
-
-    PIXHAWK is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    PIXHAWK is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -61,34 +48,6 @@ public:
         return SYSTEM::ID;
     }
 };
-
-
-class SLEEP : public QThread
-{
-public:
-    /**
-     * @brief Set a thread to sleep for seconds
-     * @param s time in seconds to sleep
-     **/
-    static void sleep(unsigned long s) {
-        QThread::sleep(s);
-    }
-    /**
-     * @brief Set a thread to sleep for milliseconds
-     * @param ms time in milliseconds to sleep
-     **/
-    static void msleep(unsigned long ms) {
-        QThread::msleep(ms);
-    }
-    /**
-     * @brief Set a thread to sleep for microseconds
-     * @param us time in microseconds to sleep
-     **/
-    static void usleep(unsigned long us) {
-        QThread::usleep(us);
-    }
-};
-
 
 class UNITS
 {
@@ -341,64 +300,6 @@ public:
     }
 
 };
-
-class DIR
-{
-
-public:
-    /**
-     * @brief Get the current support file directory.
-     *
-     * The support files are files like icons or fonts and are typically found in the
-     * same directory as the main executable.
-     *
-     * @return The absolute path of the directory
-     **/
-    static QString getSupportFilesDirectory() {
-
-        // Checks if the software is executed in the development environment
-        QString path = QDir::current().absolutePath();
-        QDir currentDir = QDir::current();
-
-        if (QDir::current().dirName().toLower() == "debug") {
-            // Debug folder of development environment
-            path.append("/..");
-        } else if (QDir::current().dirName().toLower() == "release") {
-            // Release folder of development environment
-            path.append("/..");
-        } else if (QDir::current().dirName().toLower() == "bin") {
-            // Release folder of development environment
-            path.append("/..");
-        } else if (QDir::current().dirName().toLower() == "macos") {
-            // Mac application bundle in development environment
-            path.append("/../../../../..");
-        }
-
-        // Check if we are still in a development folder
-        if(currentDir.cdUp()) {
-            if(currentDir.dirName().toLower() == "build") {
-                path.append("/..");
-            }
-        }
-        //TODO The Mac application bundle in distribution is not yet included here
-        //qDebug() << "MG::supportfilesdirectory" << path;
-        return path;
-    }
-
-    /**
-     * @brief Get the current icon directory.
-     *
-     * The icon directory is typically a subdirectory of the main directory,
-     * but depends on the platform. For example in OS X it is part of the bundle.
-     *
-     * @return The absolute path of the icon directory
-     **/
-    static QString getIconDirectory() {
-        return MG::DIR::getSupportFilesDirectory() + "/files/images/";
-    }
-
-};
-
 }
 
 #endif // _MG_H_

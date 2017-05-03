@@ -1,6 +1,8 @@
 #include "QGCHilFlightGearConfiguration.h"
-
 #include "MainWindow.h"
+#include "UAS.h"
+
+#include <QMenu>
 
 // Various settings groups and keys
 const char* QGCHilFlightGearConfiguration::_settingsGroup =                 "QGC_HILCONFIG_FLIGHTGEAR";
@@ -15,32 +17,30 @@ const char* QGCHilFlightGearConfiguration::_sensorHilKey =                  "SEN
 // the QGCFlightGearLink code instead.
 const char* QGCHilFlightGearConfiguration::_defaultOptions = "--roll=0 --pitch=0 --vc=0 --heading=300 --timeofday=noon --disable-hud-3d --disable-fullscreen --geometry=400x300 --disable-anti-alias-hud --wind=0@0 --turbulence=0.0 --disable-sound --disable-random-objects --disable-ai-traffic --shading-flat --fog-disable --disable-specular-highlight --disable-panel --disable-clouds --fdm=jsb --units-meters --enable-terrasync";
 
-QGCHilFlightGearConfiguration::QGCHilFlightGearConfiguration(UAS* mav, QWidget *parent) :
-    QWidget(parent),
-    _mav(mav),
-    _mavSettingsSubGroup(NULL),
-    _resetOptionsAction(tr("Reset to default options"), this)
+QGCHilFlightGearConfiguration::QGCHilFlightGearConfiguration(Vehicle* vehicle, QWidget *parent)
+    : QWidget(parent)
+    , _vehicle(vehicle)
+    , _mavSettingsSubGroup(NULL)
+    , _resetOptionsAction(tr("Reset to default options"), this)
 
 {
-    Q_ASSERT(_mav);
-    
     _ui.setupUi(this);
     
     QStringList items;
-    if (_mav->getSystemType() == MAV_TYPE_FIXED_WING)
+    if (_vehicle->vehicleType() == MAV_TYPE_FIXED_WING)
     {
-        items << "EasyStar";
+        /*items << "EasyStar";*/
         items << "Rascal110-JSBSim";
-        items << "c172p";
+        /*items << "c172p";
         items << "YardStik";
-        items << "Malolo1";
+        items << "Malolo1";*/
         _mavSettingsSubGroup = _mavSettingsSubGroupFixedWing;
     }
-    else if (_mav->getSystemType() == MAV_TYPE_QUADROTOR)
+    /*else if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR)
     {
         items << "arducopter";
         _mavSettingsSubGroup = _mavSettingsSubGroupQuadRotor;
-    }
+    }*/
     else
     {
         // FIXME: Should disable all input, won't work. Show error message in the status label thing.
@@ -73,9 +73,10 @@ QGCHilFlightGearConfiguration::QGCHilFlightGearConfiguration(UAS* mav, QWidget *
 
     // Provide an option on the context menu to reset the option back to default
     _ui.optionsPlainTextEdit->setContextMenuPolicy(Qt::CustomContextMenu);
-    bool success = connect(&_resetOptionsAction, SIGNAL(triggered()), this, SLOT(_setDefaultOptions()));
+    bool success = connect(&_resetOptionsAction, &QAction::triggered, this, &QGCHilFlightGearConfiguration::_setDefaultOptions);
     Q_ASSERT(success);
-    success = connect(_ui.optionsPlainTextEdit, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(_showContextMenu(const QPoint &)));
+    success = connect(_ui.optionsPlainTextEdit, &QPlainTextEdit::customContextMenuRequested,
+                      this, &QGCHilFlightGearConfiguration::_showContextMenu);
     Q_ASSERT(success);
     Q_UNUSED(success);  // Silence release build unused variable warning
 }
@@ -117,12 +118,12 @@ void QGCHilFlightGearConfiguration::on_startButton_clicked()
     //XXX check validity of inputs
     QString options = _ui.optionsPlainTextEdit->toPlainText();
     options.append(" --aircraft=" + _ui.aircraftComboBox->currentText());
-    _mav->enableHilFlightGear(true, options, _ui.sensorHilCheckBox->isChecked(), this);
+    _vehicle->uas()->enableHilFlightGear(true, options, _ui.sensorHilCheckBox->isChecked(), this);
 }
 
 void QGCHilFlightGearConfiguration::on_stopButton_clicked()
 {
-    _mav->stopHil();
+    _vehicle->uas()->stopHil();
 }
 
 void QGCHilFlightGearConfiguration::on_barometerOffsetLineEdit_textChanged(const QString& baroOffset)

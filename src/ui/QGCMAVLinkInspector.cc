@@ -1,17 +1,19 @@
-#include <QList>
-
 #include "QGCMAVLink.h"
 #include "QGCMAVLinkInspector.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
+#include "UAS.h"
+#include "QGCApplication.h"
+
 #include "ui_QGCMAVLinkInspector.h"
 
+#include <QList>
 #include <QDebug>
 
 const float QGCMAVLinkInspector::updateHzLowpass = 0.2f;
 const unsigned int QGCMAVLinkInspector::updateInterval = 1000U;
 
-QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *parent) :
-    QWidget(parent),
+QGCMAVLinkInspector::QGCMAVLinkInspector(const QString& title, QAction* action, MAVLinkProtocol* protocol, QWidget *parent) :
+    QGCDockWidget(title, action, parent),
     _protocol(protocol),
     selectedSystemID(0),
     selectedComponentID(0),
@@ -23,10 +25,6 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *par
     ui->systemComboBox->addItem(tr("All"), 0);
     ui->componentComboBox->addItem(tr("All"), 0);
 
-    // Store metadata for all MAVLink messages.
-    mavlink_message_info_t msg_infos[256] = MAVLINK_MESSAGE_INFO;
-    memcpy(messageInfo, msg_infos, sizeof(mavlink_message_info_t)*256);
-
     // Set up the column headers for the message listing
     QStringList header;
     header << tr("Name");
@@ -34,59 +32,42 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *par
     header << tr("Type");
     ui->treeWidget->setHeaderLabels(header);
 
-    // Set up the column headers for the rate listing
-    QStringList rateHeader;
-    rateHeader << tr("Name");
-    rateHeader << tr("#ID");
-    rateHeader << tr("Rate");
-    ui->rateTreeWidget->setHeaderLabels(rateHeader);
-    connect(ui->rateTreeWidget, SIGNAL(itemChanged(QTreeWidgetItem*,int)),
-            this, SLOT(rateTreeItemChanged(QTreeWidgetItem*,int)));
-    ui->rateTreeWidget->hide();
-
     // Connect the UI
-    connect(ui->systemComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectDropDownMenuSystem(int)));
-    connect(ui->componentComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectDropDownMenuComponent(int)));
-    connect(ui->clearButton, SIGNAL(clicked()), this, SLOT(clearView()));
+    connect(ui->systemComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+            this, &QGCMAVLinkInspector::selectDropDownMenuSystem);
+    connect(ui->componentComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+            this, &QGCMAVLinkInspector::selectDropDownMenuComponent);
+
+    connect(ui->clearButton, &QPushButton::clicked, this, &QGCMAVLinkInspector::clearView);
 
     // Connect external connections
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addSystem(UASInterface*)));
-    connect(protocol, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), this, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &QGCMAVLinkInspector::_vehicleAdded);
+    connect(protocol, &MAVLinkProtocol::messageReceived, this, &QGCMAVLinkInspector::receiveMessage);
 
     // Attach the UI's refresh rate to a timer.
-    connect(&updateTimer, SIGNAL(timeout()), this, SLOT(refreshView()));
+    connect(&updateTimer, &QTimer::timeout, this, &QGCMAVLinkInspector::refreshView);
     updateTimer.start(updateInterval);
+    
+    loadSettings();
 }
 
-void QGCMAVLinkInspector::addSystem(UASInterface* uas)
+void QGCMAVLinkInspector::_vehicleAdded(Vehicle* vehicle)
 {
-    ui->systemComboBox->addItem(uas->getUASName(), uas->getUASID());
+    ui->systemComboBox->addItem(QString("Vehicle %1").arg(vehicle->id()), vehicle->id());
 
     // Add a tree for a new UAS
-    addUAStoTree(uas->getUASID());
+    addUAStoTree(vehicle->id());
 }
 
 void QGCMAVLinkInspector::selectDropDownMenuSystem(int dropdownid)
 {
     selectedSystemID = ui->systemComboBox->itemData(dropdownid).toInt();
     rebuildComponentList();
-
-    if (selectedSystemID != 0 && selectedComponentID != 0) {
-        ui->rateTreeWidget->show();
-    } else {
-        ui->rateTreeWidget->hide();
-    }
 }
 
 void QGCMAVLinkInspector::selectDropDownMenuComponent(int dropdownid)
 {
     selectedComponentID = ui->componentComboBox->itemData(dropdownid).toInt();
-
-    if (selectedSystemID != 0 && selectedComponentID != 0) {
-        ui->rateTreeWidget->show();
-    } else {
-        ui->rateTreeWidget->hide();
-    }
 }
 
 void QGCMAVLinkInspector::rebuildComponentList()
@@ -97,9 +78,10 @@ void QGCMAVLinkInspector::rebuildComponentList()
     ui->componentComboBox->addItem(tr("All"), 0);
 
     // Fill
-    UASInterface* uas = UASManager::instance()->getUASForId(selectedSystemID);
-    if (uas)
+    Vehicle* vehicle = qgcApp()->toolbox()->multiVehicleManager()->getVehicleById(selectedSystemID);
+    if (vehicle)
     {
+        UASInterface* uas = vehicle->uas();
         QMap<int, QString> components = uas->getComponents();
         foreach (int id, components.keys())
         {
@@ -186,8 +168,6 @@ void QGCMAVLinkInspector::clearView()
     onboardMessageInterval.clear();
 
     ui->treeWidget->clear();
-    ui->rateTreeWidget->clear();
-
 }
 
 void QGCMAVLinkInspector::refreshView()
@@ -196,8 +176,9 @@ void QGCMAVLinkInspector::refreshView()
 
     for(ite=uasMessageStorage.constBegin(); ite!=uasMessageStorage.constEnd();++ite)
     {
-
         mavlink_message_t* msg = ite.value();
+        const mavlink_message_info_t* msgInfo = mavlink_get_message_info(msg);
+
         // Ignore NULL values
         if (msg->msgid == 0xFF) continue;
 
@@ -242,7 +223,7 @@ void QGCMAVLinkInspector::refreshView()
 
         // Update the tree view
         QString messageName("%1 (%2 Hz, #%3)");
-        messageName = messageName.arg(messageInfo[msg->msgid].name).arg(msgHz, 3, 'f', 1).arg(msg->msgid);
+        messageName = messageName.arg(msgInfo->name).arg(msgHz, 3, 'f', 1).arg(msg->msgid);
 
         addUAStoTree(msg->sysid);
 
@@ -260,7 +241,7 @@ void QGCMAVLinkInspector::refreshView()
             QStringList fields;
             fields << messageName;
             QTreeWidgetItem* widget = new QTreeWidgetItem();
-            for (unsigned int i = 0; i < messageInfo[msg->msgid].num_fields; ++i)
+            for (unsigned int i = 0; i < msgInfo->num_fields; ++i)
             {
                 QTreeWidgetItem* field = new QTreeWidgetItem();
                 widget->addChild(field);
@@ -277,50 +258,11 @@ void QGCMAVLinkInspector::refreshView()
         {
             message->setFirstColumnSpanned(true);
             message->setData(0, Qt::DisplayRole, QVariant(messageName));
-            for (unsigned int i = 0; i < messageInfo[msg->msgid].num_fields; ++i)
+            for (unsigned int i = 0; i < msgInfo->num_fields; ++i)
             {
-                updateField(msg->sysid,msg->msgid, i, message->child(i));
+                updateField(msg, msgInfo, i, message->child(i));
             }
         }
-    }
-
-    if (selectedSystemID == 0 || selectedComponentID == 0)
-    {
-        return;
-    }
-
-    for (int i = 0; i < 256; ++i)//mavlink_message_t msg, receivedMessages)
-    {
-        const char* msgname = messageInfo[i].name;
-
-        size_t namelen = strnlen(msgname, 5);
-
-        if (namelen < 3) {
-            continue;
-        }
-
-        if (!strcmp(msgname, "EMPTY")) {
-            continue;
-        }
-
-        // Update the tree view
-        QString messageName("%1");
-        messageName = messageName.arg(msgname);
-        if (!rateTreeWidgetItems.contains(i))
-        {
-            QStringList fields;
-            fields << messageName;
-            fields << QString("%1").arg(i);
-            fields << "OFF / --- Hz";
-            QTreeWidgetItem* widget = new QTreeWidgetItem(fields);
-            widget->setFlags(widget->flags() | Qt::ItemIsEditable);
-            rateTreeWidgetItems.insert(i, widget);
-            ui->rateTreeWidget->addTopLevelItem(widget);
-        }
-
-        // Set Hz
-        //QTreeWidgetItem* message = rateTreeWidgetItems.value(i);
-        //message->setData(0, Qt::DisplayRole, QVariant(messageName));
     }
 }
 
@@ -329,19 +271,12 @@ void QGCMAVLinkInspector::addUAStoTree(int sysId)
     if(!uasTreeWidgetItems.contains(sysId))
     {
         // Add the UAS to the main tree after it has been created
-        UASInterface* uas = UASManager::instance()->getUASForId(sysId);
-
-        if (uas)
+        Vehicle* vehicle = qgcApp()->toolbox()->multiVehicleManager()->getVehicleById(sysId);
+        if (vehicle)
         {
+            UASInterface* uas = vehicle->uas();
             QStringList idstring;
-            if (uas->getUASName() == "")
-            {
-                idstring << tr("UAS ") + QString::number(uas->getUASID());
-            }
-            else
-            {
-                idstring << uas->getUASName();
-            }
+            idstring << QString("Vehicle %1").arg(uas->getUASID());
             QTreeWidgetItem* uasWidget = new QTreeWidgetItem(idstring);
             uasWidget->setFirstColumnSpanned(true);
             uasTreeWidgetItems.insert(sysId,uasWidget);
@@ -474,57 +409,23 @@ void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t m
     }
 }
 
-void QGCMAVLinkInspector::changeStreamInterval(int msgid, int interval)
-{
-    //REQUEST_DATA_STREAM
-    if (selectedSystemID == 0 || selectedComponentID == 0) {
-        return;
-    }
-
-    mavlink_request_data_stream_t stream;
-    stream.target_system = selectedSystemID;
-    stream.target_component = selectedComponentID;
-    stream.req_stream_id = msgid;
-    stream.req_message_rate = interval;
-    stream.start_stop = (interval > 0);
-
-    mavlink_message_t msg;
-    mavlink_msg_request_data_stream_encode(_protocol->getSystemId(), _protocol->getComponentId(), &msg, &stream);
-
-    _protocol->sendMessage(msg);
-}
-
-void QGCMAVLinkInspector::rateTreeItemChanged(QTreeWidgetItem* paramItem, int column)
-{
-    if (paramItem && column > 0) {
-
-        int key = paramItem->data(1, Qt::DisplayRole).toInt();
-        QVariant value = paramItem->data(2, Qt::DisplayRole);
-        float interval = 1000 / value.toFloat();
-
-        qDebug() << "Stream " << key << "interval" << interval;
-
-        changeStreamInterval(key, interval);
-    }
-}
-
 QGCMAVLinkInspector::~QGCMAVLinkInspector()
 {
     clearView();
     delete ui;
 }
 
-void QGCMAVLinkInspector::updateField(int sysid, int msgid, int fieldid, QTreeWidgetItem* item)
+void QGCMAVLinkInspector::updateField(mavlink_message_t* msg, const mavlink_message_info_t* msgInfo, int fieldid, QTreeWidgetItem* item)
 {
     // Add field tree widget item
-    item->setData(0, Qt::DisplayRole, QVariant(messageInfo[msgid].fields[fieldid].name));
+    item->setData(0, Qt::DisplayRole, QVariant(msgInfo->fields[fieldid].name));
     
     bool msgFound = false;
-    QMap<int, mavlink_message_t* >::const_iterator iteMsg = uasMessageStorage.find(sysid);
+    QMap<int, mavlink_message_t* >::const_iterator iteMsg = uasMessageStorage.find(msg->sysid);
     mavlink_message_t* uasMessage = iteMsg.value();
-    while((iteMsg != uasMessageStorage.end()) && (iteMsg.key() == sysid))
+    while((iteMsg != uasMessageStorage.end()) && (iteMsg.key() == msg->sysid))
     {
-        if (iteMsg.value()->msgid == msgid)
+        if (iteMsg.value()->msgid == msg->msgid)
         {
             msgFound = true;
             uasMessage = iteMsg.value();
@@ -538,17 +439,16 @@ void QGCMAVLinkInspector::updateField(int sysid, int msgid, int fieldid, QTreeWi
         return;
     }
 
-    uint8_t* m = ((uint8_t*)uasMessage)+8;
+    uint8_t* m = (uint8_t*)&uasMessage->payload64[0];
 
-
-    switch (messageInfo[msgid].fields[fieldid].type)
+    switch (msgInfo->fields[fieldid].type)
     {
     case MAVLINK_TYPE_CHAR:
-        if (messageInfo[msgid].fields[fieldid].array_length > 0)
+        if (msgInfo->fields[fieldid].array_length > 0)
         {
-            char* str = (char*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
+            char* str = (char*)(m+msgInfo->fields[fieldid].wire_offset);
             // Enforce null termination
-            str[messageInfo[msgid].fields[fieldid].array_length-1] = '\0';
+            str[msgInfo->fields[fieldid].array_length-1] = '\0';
             QString string(str);
             item->setData(2, Qt::DisplayRole, "char");
             item->setData(1, Qt::DisplayRole, string);
@@ -556,227 +456,227 @@ void QGCMAVLinkInspector::updateField(int sysid, int msgid, int fieldid, QTreeWi
         else
         {
             // Single char
-            char b = *((char*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
-            item->setData(2, Qt::DisplayRole, QString("char[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            char b = *((char*)(m+msgInfo->fields[fieldid].wire_offset));
+            item->setData(2, Qt::DisplayRole, QString("char[%1]").arg(msgInfo->fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, b);
         }
         break;
     case MAVLINK_TYPE_UINT8_T:
-        if (messageInfo[msgid].fields[fieldid].array_length > 0)
+        if (msgInfo->fields[fieldid].array_length > 0)
         {
-            uint8_t* nums = m+messageInfo[msgid].fields[fieldid].wire_offset;
+            uint8_t* nums = m+msgInfo->fields[fieldid].wire_offset;
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
+            for (unsigned int j = 0; j < msgInfo->fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("uint8_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QString("uint8_t[%1]").arg(msgInfo->fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
         {
             // Single value
-            uint8_t u = *(m+messageInfo[msgid].fields[fieldid].wire_offset);
+            uint8_t u = *(m+msgInfo->fields[fieldid].wire_offset);
             item->setData(2, Qt::DisplayRole, "uint8_t");
             item->setData(1, Qt::DisplayRole, u);
         }
         break;
     case MAVLINK_TYPE_INT8_T:
-        if (messageInfo[msgid].fields[fieldid].array_length > 0)
+        if (msgInfo->fields[fieldid].array_length > 0)
         {
-            int8_t* nums = (int8_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
+            int8_t* nums = (int8_t*)(m+msgInfo->fields[fieldid].wire_offset);
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
+            for (unsigned int j = 0; j < msgInfo->fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("int8_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QString("int8_t[%1]").arg(msgInfo->fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
         {
             // Single value
-            int8_t n = *((int8_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
+            int8_t n = *((int8_t*)(m+msgInfo->fields[fieldid].wire_offset));
             item->setData(2, Qt::DisplayRole, "int8_t");
             item->setData(1, Qt::DisplayRole, n);
         }
         break;
     case MAVLINK_TYPE_UINT16_T:
-        if (messageInfo[msgid].fields[fieldid].array_length > 0)
+        if (msgInfo->fields[fieldid].array_length > 0)
         {
-            uint16_t* nums = (uint16_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
+            uint16_t* nums = (uint16_t*)(m+msgInfo->fields[fieldid].wire_offset);
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
+            for (unsigned int j = 0; j < msgInfo->fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("uint16_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QString("uint16_t[%1]").arg(msgInfo->fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
         {
             // Single value
-            uint16_t n = *((uint16_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
+            uint16_t n = *((uint16_t*)(m+msgInfo->fields[fieldid].wire_offset));
             item->setData(2, Qt::DisplayRole, "uint16_t");
             item->setData(1, Qt::DisplayRole, n);
         }
         break;
     case MAVLINK_TYPE_INT16_T:
-        if (messageInfo[msgid].fields[fieldid].array_length > 0)
+        if (msgInfo->fields[fieldid].array_length > 0)
         {
-            int16_t* nums = (int16_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
+            int16_t* nums = (int16_t*)(m+msgInfo->fields[fieldid].wire_offset);
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
+            for (unsigned int j = 0; j < msgInfo->fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("int16_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QString("int16_t[%1]").arg(msgInfo->fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
         {
             // Single value
-            int16_t n = *((int16_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
+            int16_t n = *((int16_t*)(m+msgInfo->fields[fieldid].wire_offset));
             item->setData(2, Qt::DisplayRole, "int16_t");
             item->setData(1, Qt::DisplayRole, n);
         }
         break;
     case MAVLINK_TYPE_UINT32_T:
-        if (messageInfo[msgid].fields[fieldid].array_length > 0)
+        if (msgInfo->fields[fieldid].array_length > 0)
         {
-            uint32_t* nums = (uint32_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
+            uint32_t* nums = (uint32_t*)(m+msgInfo->fields[fieldid].wire_offset);
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
+            for (unsigned int j = 0; j < msgInfo->fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("uint32_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QString("uint32_t[%1]").arg(msgInfo->fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
         {
             // Single value
-            float n = *((uint32_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
+            float n = *((uint32_t*)(m+msgInfo->fields[fieldid].wire_offset));
             item->setData(2, Qt::DisplayRole, "uint32_t");
             item->setData(1, Qt::DisplayRole, n);
         }
         break;
     case MAVLINK_TYPE_INT32_T:
-        if (messageInfo[msgid].fields[fieldid].array_length > 0)
+        if (msgInfo->fields[fieldid].array_length > 0)
         {
-            int32_t* nums = (int32_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
+            int32_t* nums = (int32_t*)(m+msgInfo->fields[fieldid].wire_offset);
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
+            for (unsigned int j = 0; j < msgInfo->fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("int32_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QString("int32_t[%1]").arg(msgInfo->fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
         {
             // Single value
-            int32_t n = *((int32_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
+            int32_t n = *((int32_t*)(m+msgInfo->fields[fieldid].wire_offset));
             item->setData(2, Qt::DisplayRole, "int32_t");
             item->setData(1, Qt::DisplayRole, n);
         }
         break;
     case MAVLINK_TYPE_FLOAT:
-        if (messageInfo[msgid].fields[fieldid].array_length > 0)
+        if (msgInfo->fields[fieldid].array_length > 0)
         {
-            float* nums = (float*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
+            float* nums = (float*)(m+msgInfo->fields[fieldid].wire_offset);
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
+            for (unsigned int j = 0; j < msgInfo->fields[fieldid].array_length; ++j)
             {
                string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("float[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QString("float[%1]").arg(msgInfo->fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
         {
             // Single value
-            float f = *((float*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
+            float f = *((float*)(m+msgInfo->fields[fieldid].wire_offset));
             item->setData(2, Qt::DisplayRole, "float");
             item->setData(1, Qt::DisplayRole, f);
         }
         break;
     case MAVLINK_TYPE_DOUBLE:
-        if (messageInfo[msgid].fields[fieldid].array_length > 0)
+        if (msgInfo->fields[fieldid].array_length > 0)
         {
-            double* nums = (double*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
+            double* nums = (double*)(m+msgInfo->fields[fieldid].wire_offset);
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
+            for (unsigned int j = 0; j < msgInfo->fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("double[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QString("double[%1]").arg(msgInfo->fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
         {
             // Single value
-            double f = *((double*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
+            double f = *((double*)(m+msgInfo->fields[fieldid].wire_offset));
             item->setData(2, Qt::DisplayRole, "double");
             item->setData(1, Qt::DisplayRole, f);
         }
         break;
     case MAVLINK_TYPE_UINT64_T:
-        if (messageInfo[msgid].fields[fieldid].array_length > 0)
+        if (msgInfo->fields[fieldid].array_length > 0)
         {
-            uint64_t* nums = (uint64_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
+            uint64_t* nums = (uint64_t*)(m+msgInfo->fields[fieldid].wire_offset);
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
+            for (unsigned int j = 0; j < msgInfo->fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("uint64_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QString("uint64_t[%1]").arg(msgInfo->fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
         {
             // Single value
-            uint64_t n = *((uint64_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
+            uint64_t n = *((uint64_t*)(m+msgInfo->fields[fieldid].wire_offset));
             item->setData(2, Qt::DisplayRole, "uint64_t");
             item->setData(1, Qt::DisplayRole, (quint64) n);
         }
         break;
     case MAVLINK_TYPE_INT64_T:
-        if (messageInfo[msgid].fields[fieldid].array_length > 0)
+        if (msgInfo->fields[fieldid].array_length > 0)
         {
-            int64_t* nums = (int64_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
+            int64_t* nums = (int64_t*)(m+msgInfo->fields[fieldid].wire_offset);
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
+            for (unsigned int j = 0; j < msgInfo->fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
-            item->setData(2, Qt::DisplayRole, QString("int64_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
+            item->setData(2, Qt::DisplayRole, QString("int64_t[%1]").arg(msgInfo->fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
         }
         else
         {
             // Single value
-            int64_t n = *((int64_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
+            int64_t n = *((int64_t*)(m+msgInfo->fields[fieldid].wire_offset));
             item->setData(2, Qt::DisplayRole, "int64_t");
             item->setData(1, Qt::DisplayRole, (qint64) n);
         }

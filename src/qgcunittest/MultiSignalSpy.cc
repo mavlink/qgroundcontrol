@@ -1,25 +1,12 @@
-/*=====================================================================
- 
- QGroundControl Open Source Ground Control Station
- 
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
- This file is part of the QGROUNDCONTROL project
- 
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
- ======================================================================*/
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 
 #include "MultiSignalSpy.h"
 #include <QEventLoop>
@@ -53,10 +40,9 @@ MultiSignalSpy::~MultiSignalSpy()
 /// Initializes the class. Must be called once before use.
 ///     @return true if success, false for failure
 
-bool MultiSignalSpy::init(
-                        QObject*        signalEmitter,  ///< [in] object which the signals are emitted from
-                        const char**    rgSignals,      ///< [in] array of signals to spy on
-                        size_t          cSignals)       ///< [in] numbers of signals in rgSignals
+bool MultiSignalSpy::init(QObject*        signalEmitter,    ///< [in] object which the signals are emitted from
+                          const char**    rgSignals,        ///< [in] array of signals to spy on
+                          size_t          cSignals)         ///< [in] numbers of signals in rgSignals
 {
     if (!signalEmitter || !rgSignals || cSignals == 0) {
         qDebug() << "Invalid arguments";
@@ -85,18 +71,16 @@ bool MultiSignalSpy::init(
     return true;
 }
 
-/// @param mask bit mask specifying which signals to check. The lowest order bit represents
-///     index 0 into the rgSignals array and so on up the bit mask.
-/// @return true if signal count = 1 for the specified signals
-bool MultiSignalSpy::checkSignalByMask(quint16 mask)
+bool MultiSignalSpy::_checkSignalByMaskWorker(quint32 mask, bool multipleSignalsAllowed)
 {
     for (size_t i=0; i<_cSignals; i++) {
         if ((1 << i) & mask) {
             QSignalSpy* spy = _rgSpys[i];
             Q_ASSERT(spy != NULL);
             
-            if (spy->count() !=  1) {
-                _printSignalState();
+            if ((multipleSignalsAllowed && spy->count() ==  0) || (!multipleSignalsAllowed && spy->count() != 1)) {
+                qDebug() << "Failed index:" << i;
+                _printSignalState(mask);
                 return false;
             }
         }
@@ -105,22 +89,20 @@ bool MultiSignalSpy::checkSignalByMask(quint16 mask)
     return true;
 }
 
-/// @return true if signal count = 1 for specified signals and signal count of 0
-///     for all other signals
-bool MultiSignalSpy::checkOnlySignalByMask(quint16 mask)
+bool MultiSignalSpy::_checkOnlySignalByMaskWorker(quint32 mask, bool multipleSignalsAllowed)
 {
     for (size_t i=0; i<_cSignals; i++) {
         QSignalSpy* spy = _rgSpys[i];
         Q_ASSERT(spy != NULL);
 
         if ((1 << i) & mask) {
-            if (spy->count() != 1) {
-                _printSignalState();
+            if ((multipleSignalsAllowed && spy->count() ==  0) || (!multipleSignalsAllowed && spy->count() != 1)) {
+                _printSignalState(mask);
                 return false;
             }
         } else {
             if (spy->count() != 0) {
-                _printSignalState();
+                _printSignalState(mask);
                 return false;
             }
         }
@@ -129,8 +111,28 @@ bool MultiSignalSpy::checkOnlySignalByMask(quint16 mask)
     return true;
 }
 
+bool MultiSignalSpy::checkSignalByMask(quint32 mask)
+{
+    return _checkSignalByMaskWorker(mask, false /* multipleSignalsAllowed */);
+}
+
+bool MultiSignalSpy::checkOnlySignalByMask(quint32 mask)
+{
+    return _checkOnlySignalByMaskWorker(mask, false /* multipleSignalsAllowed */);
+}
+
+bool MultiSignalSpy::checkSignalsByMask(quint32 mask)
+{
+    return _checkSignalByMaskWorker(mask, true /* multipleSignalsAllowed */);
+}
+
+bool MultiSignalSpy::checkOnlySignalsByMask(quint32 mask)
+{
+    return _checkOnlySignalByMaskWorker(mask, true /* multipleSignalsAllowed */);
+}
+
 /// @return true if signal count = 0 for specified signals
-bool MultiSignalSpy::checkNoSignalByMask(quint16 mask)
+bool MultiSignalSpy::checkNoSignalByMask(quint32 mask)
 {
     for (size_t i=0; i<_cSignals; i++) {
         if ((1 << i) & mask) {
@@ -138,7 +140,7 @@ bool MultiSignalSpy::checkNoSignalByMask(quint16 mask)
             Q_ASSERT(spy != NULL);
 
             if (spy->count() != 0) {
-                _printSignalState();
+                _printSignalState(mask);
                 return false;
             }
         }
@@ -154,7 +156,7 @@ bool MultiSignalSpy::checkNoSignals(void)
 }
 
 /// @return QSignalSpy for the specified signal
-QSignalSpy* MultiSignalSpy::getSpyByIndex(quint16 index)
+QSignalSpy* MultiSignalSpy::getSpyByIndex(quint32 index)
 {
     Q_ASSERT(index < _cSignals);
     Q_ASSERT(_rgSpys[index] != NULL);
@@ -163,7 +165,7 @@ QSignalSpy* MultiSignalSpy::getSpyByIndex(quint16 index)
 }
 
 /// Sets the signal count to 0 for the specified signal
-void MultiSignalSpy::clearSignalByIndex(quint16 index)
+void MultiSignalSpy::clearSignalByIndex(quint32 index)
 {
     Q_ASSERT(index < _cSignals);
     Q_ASSERT(_rgSpys[index] != NULL);
@@ -172,7 +174,7 @@ void MultiSignalSpy::clearSignalByIndex(quint16 index)
 }
 
 /// Sets the signal count to 0 for all specified signals
-void MultiSignalSpy::clearSignalsByMask(quint16 mask)
+void MultiSignalSpy::clearSignalsByMask(quint32 mask)
 {
     for (size_t i=0; i<_cSignals; i++) {
         if ((1 << i) & mask) {
@@ -187,7 +189,7 @@ void MultiSignalSpy::clearSignalsByMask(quint16 mask)
 /// Sets the signal count to 0 for all signals
 void MultiSignalSpy::clearAllSignals(void)
 {
-    for (quint16 i=0;i<_cSignals; i++) {
+    for (quint32 i=0;i<_cSignals; i++) {
         clearSignalByIndex(i);
     }
 }
@@ -201,7 +203,7 @@ void MultiSignalSpy::timerEvent(QTimerEvent * event)
 /// Waits the specified signal
 ///     @return false for timeout
 bool MultiSignalSpy::waitForSignalByIndex(
-                                          quint16 index,  ///< [in] index of signal to wait on
+                                          quint32 index,  ///< [in] index of signal to wait on
                                           int     msec)   ///< [in] numbers of milleconds to wait before timeout, -1 wait forever
 {
     // Check input parameters
@@ -223,10 +225,7 @@ bool MultiSignalSpy::waitForSignalByIndex(
     Q_ASSERT(spy);
     
     while (spy->count() == 0 && !_timeout) {
-        QCoreApplication::sendPostedEvents();
-        QCoreApplication::processEvents();
-        QCoreApplication::flush();
-        QTest::qSleep(100);
+        QTest::qWait(100);
     }
     
     // Clean up and return status
@@ -237,11 +236,31 @@ bool MultiSignalSpy::waitForSignalByIndex(
     return spy->count() != 0;
 }
 
-void MultiSignalSpy::_printSignalState(void)
+void MultiSignalSpy::_printSignalState(quint32 mask)
 {
     for (size_t i=0; i<_cSignals; i++) {
+        bool expected = (1 << i) & mask;
+
         QSignalSpy* spy = _rgSpys[i];
         Q_ASSERT(spy != NULL);
-        qDebug() << "Signal index:" << i << "count:" << spy->count();
+        qDebug() << "Signal index:" << i << "count:" << spy->count() << "expected:" << expected << _rgSignals[i];
     }
+}
+
+bool MultiSignalSpy::pullBoolFromSignalIndex(quint32 index)
+{
+    QSignalSpy* spy = getSpyByIndex(index);
+    return spy->value(0).value(0).toBool();
+}
+
+int MultiSignalSpy::pullIntFromSignalIndex(quint32 index)
+{
+    QSignalSpy* spy = getSpyByIndex(index);
+    return spy->value(0).value(0).toInt();
+}
+
+QGeoCoordinate MultiSignalSpy::pullQGeoCoordinateFromSignalIndex(quint32 index)
+{
+    QSignalSpy* spy = getSpyByIndex(index);
+    return spy->value(0).value(0).value<QGeoCoordinate>();
 }

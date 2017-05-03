@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009 - 2011 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -38,18 +25,20 @@ This file is part of the QGROUNDCONTROL project
 #include <QUdpSocket>
 #include <QTimer>
 #include <QProcess>
-#include <LinkInterface.h>
+
+#include "LinkInterface.h"
 #include "QGCConfig.h"
 #include "UASInterface.h"
 #include "QGCHilLink.h"
-#include <QGCHilFlightGearConfiguration.h>
+#include "QGCHilFlightGearConfiguration.h"
+#include "Vehicle.h"
 
 class QGCFlightGearLink : public QGCHilLink
 {
     Q_OBJECT
 
 public:
-    QGCFlightGearLink(UASInterface* mav, QString startupArguments, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
+    QGCFlightGearLink(Vehicle* vehicle, QString startupArguments, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
     ~QGCFlightGearLink();
 
     bool isConnected();
@@ -101,7 +90,6 @@ public slots:
     void setRemoteHost(const QString& host);
     /** @brief Send new control states to the simulation */
     void updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode);
-    void updateActuators(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
     /** @brief Set the simulator version as text string */
     void setVersion(const QString& version)
     {
@@ -120,13 +108,17 @@ public slots:
     }
 
     void readBytes();
+
+private slots:
     /**
      * @brief Write a number of bytes to the interface.
      *
      * @param data Pointer to the data byte array
      * @param size The size of the bytes array
      **/
-    void writeBytes(const char* data, qint64 length);
+    void _writeBytes(const QByteArray data);
+
+public slots:
     bool connectSimulation();
     bool disconnectSimulation();
 
@@ -135,20 +127,6 @@ public slots:
     void processError(QProcess::ProcessError err);
 
 protected:
-    QString name;
-    QHostAddress host;
-    QHostAddress currentHost;
-    quint16 currentPort;
-    quint16 port;
-    int id;
-    bool connectState;
-
-    UASInterface* mav;
-    unsigned int flightGearVersion;
-    QString startupArguments;
-    bool _sensorHilEnabled;
-    float barometerOffsetkPa;
-
     void setName(QString name);
     
 private slots:
@@ -158,6 +136,7 @@ private slots:
 private:
     static bool _findUIArgument(const QStringList& uiArgList, const QString& argLabel, QString& argValue);
 
+    Vehicle*    _vehicle;
     QString     _fgProcessName;             ///< FlightGear process to start
     QString     _fgProcessWorkingDirPath;   ///< Working directory to start FG process in, empty for none
     QStringList _fgArgList;                 ///< Arguments passed to FlightGear process
@@ -166,6 +145,19 @@ private:
     QProcess*   _fgProcess;                 ///< FlightGear process
     
     QString     _fgProtocolFileFullyQualified;  ///< Fully qualified file name for protocol file
+
+    QString name;
+    QHostAddress host;
+    QHostAddress currentHost;
+    quint16 currentPort;
+    quint16 port;
+    int id;
+    bool connectState;
+
+    unsigned int flightGearVersion;
+    QString startupArguments;
+    bool _sensorHilEnabled;
+    float barometerOffsetkPa;
 };
 
 #endif // QGCFLIGHTGEARLINK_H

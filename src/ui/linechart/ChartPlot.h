@@ -3,6 +3,7 @@
 
 #include <qwt_plot.h>
 #include <qwt_plot_grid.h>
+#include <qwt_plot_curve.h>
 #include "MainWindow.h"
 #include "ScrollZoomer.h"
 
@@ -25,21 +26,20 @@ public:
 public slots:
 
     /** @brief Generate coloring for this plot canvas based on current window theme */
-    void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE style);
+    void styleChanged(bool styleIsDark);
 
 protected:
     const static int numColors = 20;
     const static QColor baseColors[numColors];
-    QList<QColor> colors;  ///< Colormap for curves
-    int nextColorIndex;         ///< Next index in color map
-    QMap<QString, QwtPlotCurve* > curves;  ///< Plot curves
-    ScrollZoomer* zoomer;  ///< Zoomer class for widget
-    QwtPlotGrid* grid;     ///< Plot grid
 
-    float symbolWidth; ///< Width of curve symbols in pixels
-    float curveWidth; ///< Width of curve lines in pixels
-    float gridWidth; ///< Width of gridlines in pixels
-    float zoomerWidth; ///< Width of zoomer selection box
+    QList<QColor>                   _colors;         ///< Colormap for curves
+    int                             _nextColorIndex; ///< Next index in color map
+    QMap<QString, QwtPlotCurve* >   _curves;         ///< Plot curves
+    QwtPlotGrid*                    _grid;           ///< Plot grid
+
+    float _symbolWidth;  ///< Width of curve symbols in pixels
+    float _curveWidth;   ///< Width of curve lines in pixels
+    float _gridWidth;    ///< Width of gridlines in pixels
 };
 
 #endif // CHARTPLOT_H

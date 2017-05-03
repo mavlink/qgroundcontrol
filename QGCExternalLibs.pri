@@ -7,35 +7,25 @@ WindowsBuild {
 
 #
 # [REQUIRED] Add support for the MAVLink communications protocol.
-# Some logic is involved here in selecting the proper dialect for
-# the selected autopilot system.
+# Mavlink dialect is hardwired to arudpilotmega for now. The reason being
+# the current codebase supports both PX4 and APM flight stack. PX4 flight stack
+# only usese common mavlink specifications, whereas APM flight stack uses custom
+# mavlink specifications which add to common. So by using the adupilotmega dialect
+# QGC can support both in the same codebase.
 #
-# If the user config file exists, it will be included. If this file
-# specifies the MAVLINK_CONF variable with a MAVLink dialect, support 
-# for it will be compiled in to QGC. It will also create a 
-# QGC_USE_{AUTOPILOT_NAME}_MESSAGES macro for use within the actual code.
-#
-MAVLINKPATH_REL = libs/mavlink/include/mavlink/v1.0
+# Once the mavlink helper routines include support for multiple dialects within
+# a single compiled codebase this hardwiring of dialect can go away. But until then
+# this "workaround" is needed.
+
+MAVLINKPATH_REL = libs/mavlink/include/mavlink/v2.0
 MAVLINKPATH = $$BASEDIR/$$MAVLINKPATH_REL
+MAVLINK_CONF = ardupilotmega
 DEFINES += MAVLINK_NO_DATA
 
 # First we select the dialect, checking for valid user selection
 # Users can override all other settings by specifying MAVLINK_CONF as an argument to qmake
 !isEmpty(MAVLINK_CONF) {
-    message($$sprintf("Using MAVLink dialect '%1' specified at the command line.", $$MAVLINK_CONF))
-}
-# Otherwise they can specify MAVLINK_CONF within user_config.pri
-else:exists(user_config.pri):infile(user_config.pri, MAVLINK_CONF) {
-    MAVLINK_CONF = $$fromfile(user_config.pri, MAVLINK_CONF)
-    !isEmpty(MAVLINK_CONF) {
-        message($$sprintf("Using MAVLink dialect '%1' specified in user_config.pri", $$MAVLINK_CONF))
-    }
-}
-# If no valid user selection is found, default to the pixhawk if it's available.
-# Note: This can be a list of several dialects.
-else {
-    MAVLINK_CONF=pixhawk
-    message($$sprintf("Using default MAVLink dialect '%1'.", $$MAVLINK_CONF))
+    message($$sprintf("Using MAVLink dialect '%1'.", $$MAVLINK_CONF))
 }
 
 # Then we add the proper include paths dependent on the dialect.
@@ -54,144 +44,10 @@ exists($$MAVLINKPATH/common) {
             error(Only a single mavlink dialect can be specified in MAVLINK_CONF)
         }
     } else {
-        warning("No MAVLink dialect specified, only common messages supported.")
         INCLUDEPATH += $$MAVLINKPATH/common
     }
 } else {
     error($$sprintf("MAVLink folder does not exist at '%1'! Run 'git submodule init && git submodule update' on the command line.",$$MAVLINKPATH_REL))
-}
-
-#
-# [OPTIONAL] OpenSceneGraph
-# Allow the user to override OpenSceneGraph compilation through a DISABLE_OPEN_SCENE_GRAPH
-# define like: `qmake DEFINES=DISABLE_OPEN_SCENE_GRAPH`
-contains(DEFINES, DISABLE_OPEN_SCENE_GRAPH) {
-    message("Skipping support for OpenSceneGraph (manual override from command line)")
-    DEFINES -= DISABLE_OPEN_SCENE_GRAPH
-}
-# Otherwise the user can still disable this feature in the user_config.pri file.
-else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_OPEN_SCENE_GRAPH) {
-    message("Skipping support for OpenSceneGraph (manual override from user_config.pri)")
-}
-else:MacBuild {
-    # GLUT and OpenSceneGraph are part of standard install on Mac
-	message("Including support for OpenSceneGraph")
-	CONFIG += OSGDependency
-
-    INCLUDEPATH += \
-        $$BASEDIR/libs/lib/mac64/include
-
-	LIBS += \
-        -L$$BASEDIR/libs/lib/mac64/lib \
-        -losgWidget
-} else:LinuxBuild {
-	exists(/usr/include/osg) | exists(/usr/local/include/osg) {
-		message("Including support for OpenSceneGraph")
-        CONFIG += OSGDependency
-	} else {
-		warning("Skipping support for OpenSceneGraph (missing libraries, see README)")
-	}
-} else:WindowsBuild {
-	exists($$BASEDIR/libs/lib/osg123) {
-		message("Including support for OpenSceneGraph")
-        CONFIG += OSGDependency
-
-		INCLUDEPATH += \
-            $$BASEDIR/libs/lib/osgEarth/win32/include \
-			$$BASEDIR/libs/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/include
-
-		LIBS += -L$$BASEDIR/libs/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/lib
-	} else {
-		warning("Skipping support for OpenSceneGraph (missing libraries, see README)")
-	}
-} else {
-    message("Skipping support for OpenSceneGraph (unsupported platform)")
-}
-
-OSGDependency {
-	DEFINES += QGC_OSG_ENABLED
-    
-    LIBS += \
-        -losg \
-        -losgViewer \
-        -losgGA \
-        -losgDB \
-        -losgText \
-        -lOpenThreads
-
-    HEADERS += \
-        src/ui/map3D/gpl.h \
-        src/ui/map3D/CameraParams.h \
-        src/ui/map3D/ViewParamWidget.h \
-        src/ui/map3D/SystemContainer.h \
-        src/ui/map3D/SystemViewParams.h \
-        src/ui/map3D/GlobalViewParams.h \
-        src/ui/map3D/SystemGroupNode.h \
-        src/ui/map3D/Q3DWidget.h \
-        src/ui/map3D/GCManipulator.h \
-        src/ui/map3D/ImageWindowGeode.h \
-        src/ui/map3D/PixhawkCheetahNode.h \
-        src/ui/map3D/Pixhawk3DWidget.h \
-        src/ui/map3D/Q3DWidgetFactory.h \
-        src/ui/map3D/WebImageCache.h \
-        src/ui/map3D/WebImage.h \
-        src/ui/map3D/TextureCache.h \
-        src/ui/map3D/Texture.h \
-        src/ui/map3D/Imagery.h \
-        src/ui/map3D/HUDScaleGeode.h \
-        src/ui/map3D/WaypointGroupNode.h \
-        src/ui/map3D/TerrainParamDialog.h \
-        src/ui/map3D/ImageryParamDialog.h
-        
-    SOURCES += \
-        src/ui/map3D/gpl.cc \
-        src/ui/map3D/CameraParams.cc \
-        src/ui/map3D/ViewParamWidget.cc \
-        src/ui/map3D/SystemContainer.cc \
-        src/ui/map3D/SystemViewParams.cc \
-        src/ui/map3D/GlobalViewParams.cc \
-        src/ui/map3D/SystemGroupNode.cc \
-        src/ui/map3D/Q3DWidget.cc \
-        src/ui/map3D/ImageWindowGeode.cc \
-        src/ui/map3D/GCManipulator.cc \
-        src/ui/map3D/PixhawkCheetahNode.cc \
-        src/ui/map3D/Pixhawk3DWidget.cc \
-        src/ui/map3D/Q3DWidgetFactory.cc \
-        src/ui/map3D/WebImageCache.cc \
-        src/ui/map3D/WebImage.cc \
-        src/ui/map3D/TextureCache.cc \
-        src/ui/map3D/Texture.cc \
-        src/ui/map3D/Imagery.cc \
-        src/ui/map3D/HUDScaleGeode.cc \
-        src/ui/map3D/WaypointGroupNode.cc \
-        src/ui/map3D/TerrainParamDialog.cc \
-        src/ui/map3D/ImageryParamDialog.cc
-}
-
-#
-# [OPTIONAL] Google Earth dependency. Provides Google Earth view to supplement 2D map view.
-# Only supported on Mac and Windows where Google Earth can be installed.
-#
-contains(DEFINES, DISABLE_GOOGLE_EARTH) {
-    message("Skipping support for Google Earth view (manual override from command line)")
-    DEFINES -= DISABLE_GOOGLE_EARTH
-}
-# Otherwise the user can still disable this feature in the user_config.pri file.
-else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_GOOGLE_EARTH) {
-    message("Skipping support for Google Earth view (manual override from user_config.pri)")
-} else:MacBuild {
-    message("Including support for Google Earth view")
-    DEFINES += QGC_GOOGLE_EARTH_ENABLED
-    HEADERS += src/ui/map3D/QGCGoogleEarthView.h
-    SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
-} else:WindowsBuild {
-    message("Including support for Google Earth view")
-    DEFINES += QGC_GOOGLE_EARTH_ENABLED
-    HEADERS += src/ui/map3D/QGCGoogleEarthView.h
-    SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
-    QT += axcontainer
-} else {
-    message("Skipping support for Google Earth view (unsupported platform)")
 }
 
 #
@@ -201,162 +57,12 @@ INCLUDEPATH += libs/eigen
 DEFINES += NOMINMAX
 
 #
-# [REQUIRED] OPMapControl library from OpenPilot. Provides 2D mapping functionality.
-#
-include(libs/opmapcontrol/opmapcontrol_external.pri)
-
-INCLUDEPATH += \
-    libs/utils \
-    libs \
-    libs/opmapcontrol
-
-#
 # [REQUIRED] QWT plotting library dependency. Provides plotting capabilities.
 #
+!MobileBuild {
 include(libs/qwt.pri)
 DEPENDPATH += libs/qwt
 INCLUDEPATH += libs/qwt
-
-#
-# [OPTIONAL] XBee wireless support. This is not necessary for basic serial/UART communications.
-# It's only required for speaking directly to the Xbee using their proprietary API.
-# Unsupported on Mac.
-# Installation on Windows is unnecessary, as we just link to our included .dlls directly.
-# Installing on Linux involves running `make;sudo make install` in `libs/thirdParty/libxbee`
-# Uninstalling from Linux can be done with `sudo make uninstall`.
-#
-XBEE_DEPENDENT_HEADERS += \
-	src/comm/XbeeLinkInterface.h \
-	src/comm/XbeeLink.h \
-	src/comm/HexSpinBox.h \
-	src/ui/XbeeConfigurationWindow.h \
-	src/comm/CallConv.h
-XBEE_DEPENDENT_SOURCES += \
-	src/comm/XbeeLink.cpp \
-	src/comm/HexSpinBox.cpp \
-	src/ui/XbeeConfigurationWindow.cpp
-XBEE_DEFINES = QGC_XBEE_ENABLED
-
-contains(DEFINES, DISABLE_XBEE) {
-	message("Skipping support for native XBee API (manual override from command line)")
-	DEFINES -= DISABLE_XBEE
-# Otherwise the user can still disable this feature in the user_config.pri file.
-} else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_XBEE) {
-    message("Skipping support for native XBee API (manual override from user_config.pri)")
-} else:LinuxBuild {
-        linux-g++-64 {
-            message("Skipping support for XBee API (64-bit Linux builds not supported)")
-        } else:exists(/usr/include/xbee.h) {
-		message("Including support for XBee API")
-
-		HEADERS += $$XBEE_DEPENDENT_HEADERS
-		SOURCES += $$XBEE_DEPENDENT_SOURCES
-		DEFINES += $$XBEE_DEFINES
-		LIBS += -L/usr/lib -lxbee
-	} else {
-		warning("Skipping support for XBee API (missing libraries, see README)")
-	}
-} else:WindowsBuild {
-	message("Including support for XBee API")
-	HEADERS += $$XBEE_DEPENDENT_HEADERS
-	SOURCES += $$XBEE_DEPENDENT_SOURCES
-	DEFINES += $$XBEE_DEFINES
-	INCLUDEPATH += libs/thirdParty/libxbee
-        LIBS += -l$$BASEDIR/libs/thirdParty/libxbee/lib/libxbee
-} else {
-	message("Skipping support for XBee API (unsupported platform)")
-}
-
-#
-# [OPTIONAL] Magellan 3DxWare library. Provides support for 3DConnexion's 3D mice.
-#
-contains(DEFINES, DISABLE_3DMOUSE) {
-	message("Skipping support for 3DConnexion mice (manual override from command line)")
-	DEFINES -= DISABLE_3DMOUSE
-# Otherwise the user can still disable this feature in the user_config.pri file.
-} else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_3DMOUSE) {
-    message("Skipping support for 3DConnexion mice (manual override from user_config.pri)")
-} else:LinuxBuild {
-	exists(/usr/local/lib/libxdrvlib.so) {
-		message("Including support for 3DConnexion mice")
-
-                DEFINES += \
-		QGC_MOUSE_ENABLED_LINUX \
-                ParameterCheck
-                # Hack: Has to be defined for magellan usage
-
-		HEADERS += src/input/Mouse6dofInput.h
-		SOURCES += src/input/Mouse6dofInput.cpp
-		LIBS += -L/usr/local/lib/ -lxdrvlib
-	} else {
-		warning("Skipping support for 3DConnexion mice (missing libraries, see README)")
-	}
-} else:WindowsBuild {
-    message("Including support for 3DConnexion mice")
-
-    DEFINES += QGC_MOUSE_ENABLED_WIN
-
-    INCLUDEPATH += libs/thirdParty/3DMouse/win
-
-    HEADERS += \
-        libs/thirdParty/3DMouse/win/I3dMouseParams.h \
-        libs/thirdParty/3DMouse/win/MouseParameters.h \
-        libs/thirdParty/3DMouse/win/Mouse3DInput.h \
-        src/input/Mouse6dofInput.h
-
-    SOURCES += \
-        libs/thirdParty/3DMouse/win/MouseParameters.cpp \
-        libs/thirdParty/3DMouse/win/Mouse3DInput.cpp \
-        src/input/Mouse6dofInput.cpp
-} else {
-	message("Skipping support for 3DConnexion mice (unsupported platform)")
-}
-
-#
-# [OPTIONAL] Opal RT-LAB Library. Provides integration with Opal-RT's RT-LAB simulator.
-#
-contains(DEFINES, DISABLE_RTLAB) {
-	message("Skipping support for RT-LAB (manual override from command line)")
-	DEFINES -= DISABLE_RTLAB
-# Otherwise the user can still disable this feature in the user_config.pri file.
-} else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_RTLAB) {
-    message("Skipping support for RT-LAB (manual override from user_config.pri)")
-} else:WindowsBuild {
-	exists(src/lib/opalrt/OpalApi.h) : exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) {
-		message("Including support for RT-LAB")
-
-		DEFINES += QGC_RTLAB_ENABLED
-
-		INCLUDEPATH +=
-			src/lib/opalrt
-			libs/lib/opal/include \
-
-		FORMS += src/ui/OpalLinkSettings.ui
-
-		HEADERS += \
-			src/comm/OpalRT.h \
-			src/comm/OpalLink.h \
-			src/comm/Parameter.h \
-			src/comm/QGCParamID.h \
-			src/comm/ParameterList.h \
-			src/ui/OpalLinkConfigurationWindow.h
-
-		SOURCES += \
-			src/comm/OpalRT.cc \
-			src/comm/OpalLink.cc \
-			src/comm/Parameter.cc \
-			src/comm/QGCParamID.cc \
-			src/comm/ParameterList.cc \
-			src/ui/OpalLinkConfigurationWindow.cc
-
-		LIBS += \
-			-LC:/OPAL-RT/RT-LAB7.2.4/Common/bin \
-			-lOpalApi
-	} else {
-		warning("Skipping support for RT-LAB (missing libraries, see README)")
-	}
-} else {
-    message("Skipping support for RT-LAB (unsupported platform)")
 }
 
 #
@@ -366,23 +72,21 @@ contains(DEFINES, DISABLE_RTLAB) {
 #
 MacBuild {
     INCLUDEPATH += \
-        $$BASEDIR/libs/lib/Frameworks/SDL.framework/Headers
+        $$BASEDIR/libs/lib/Frameworks/SDL2.framework/Headers
 
     LIBS += \
         -F$$BASEDIR/libs/lib/Frameworks \
-        -framework SDL
+        -framework SDL2
 } else:LinuxBuild {
-	LIBS += \
-		-lSDL \
-		-lSDLmain
+    PKGCONFIG = sdl2
 } else:WindowsBuild {
-	INCLUDEPATH += \
-        $$BASEDIR/libs/lib/sdl/msvc/include \
+    INCLUDEPATH += \
+        $$BASEDIR/libs/lib/sdl2/msvc/include \
 
-	LIBS += \
-        -L$$BASEDIR/libs/lib/sdl/msvc/lib \
-        -lSDLmain \
-        -lSDL
+    LIBS += \
+        -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x86 \
+        -lSDL2main \
+        -lSDL2
 }
 
 ##
@@ -393,28 +97,115 @@ MacBuild {
 # Windows is supported as of Windows 7
 #
 contains (DEFINES, DISABLE_SPEECH) {
-	message("Skipping support for speech output (manual override from command line)")
-	DEFINES -= DISABLE_SPEECH
+    message("Skipping support for speech output (manual override from command line)")
+    DEFINES -= DISABLE_SPEECH
 # Otherwise the user can still disable this feature in the user_config.pri file.
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_SPEECH) {
     message("Skipping support for speech output (manual override from user_config.pri)")
 } else:LinuxBuild {
-	exists(/usr/include/espeak) | exists(/usr/local/include/espeak) {
-		message("Including support for speech output")
-		DEFINES += QGC_SPEECH_ENABLED
-		LIBS += \
-		-lespeak
-	} else {
-		warning("Skipping support for speech output (missing libraries, see README)")
-	}
+    exists(/usr/include/espeak) | exists(/usr/local/include/espeak) {
+        message("Including support for speech output")
+        DEFINES += QGC_SPEECH_ENABLED
+        LIBS += \
+        -lespeak
+    } else {
+        warning("Skipping support for speech output (missing libraries, see README)")
+    }
 }
 # Mac support is built into OS 10.6+.
-else:MacBuild {
-	message("Including support for speech output")
-	DEFINES += QGC_SPEECH_ENABLED
+else:MacBuild|iOSBuild {
+    message("Including support for speech output")
+    DEFINES += QGC_SPEECH_ENABLED
 }
 # Windows supports speech through native API.
 else:WindowsBuild {
-	message("Including support for speech output")
-	DEFINES += QGC_SPEECH_ENABLED
+    message("Including support for speech output")
+    DEFINES += QGC_SPEECH_ENABLED
+    LIBS    += -lOle32
 }
+# Android supports speech through native (Java) API.
+else:AndroidBuild {
+    message("Including support for speech output")
+    DEFINES += QGC_SPEECH_ENABLED
+    QMAKE_CXXFLAGS += -g
+    INCLUDEPATH += \
+        libs/breakpad/src \
+        libs/breakpad/src/common/android/include
+    HEADERS += \
+        libs/breakpad/src/client/linux/crash_generation/crash_generation_client.h \
+        libs/breakpad/src/client/linux/handler/exception_handler.h \
+        libs/breakpad/src/client/linux/handler/minidump_descriptor.h \
+        libs/breakpad/src/client/linux/log/log.h \
+        libs/breakpad/src/client/linux/dump_writer_common/thread_info.h \
+        libs/breakpad/src/client/linux/dump_writer_common/ucontext_reader.h \
+        libs/breakpad/src/client/linux/microdump_writer/microdump_writer.h \
+        libs/breakpad/src/client/linux/minidump_writer/cpu_set.h \
+        libs/breakpad/src/client/linux/minidump_writer/proc_cpuinfo_reader.h \
+        libs/breakpad/src/client/linux/minidump_writer/minidump_writer.h \
+        libs/breakpad/src/client/linux/minidump_writer/line_reader.h \
+        libs/breakpad/src/client/linux/minidump_writer/linux_dumper.h \
+        libs/breakpad/src/client/linux/minidump_writer/linux_ptrace_dumper.h \
+        libs/breakpad/src/client/linux/minidump_writer/directory_reader.h \
+        libs/breakpad/src/client/minidump_file_writer-inl.h \
+        libs/breakpad/src/client/minidump_file_writer.h \
+        libs/breakpad/src/common/scoped_ptr.h \
+        libs/breakpad/src/common/linux/linux_libc_support.h \
+        libs/breakpad/src/common/linux/eintr_wrapper.h \
+        libs/breakpad/src/common/linux/ignore_ret.h \
+        libs/breakpad/src/common/linux/file_id.h \
+        libs/breakpad/src/common/linux/memory_mapped_file.h \
+        libs/breakpad/src/common/linux/safe_readlink.h \
+        libs/breakpad/src/common/linux/guid_creator.h \
+        libs/breakpad/src/common/linux/elfutils.h \
+        libs/breakpad/src/common/linux/elfutils-inl.h \
+        libs/breakpad/src/common/linux/elf_gnu_compat.h \
+        libs/breakpad/src/common/using_std_string.h \
+        libs/breakpad/src/common/memory.h \
+        libs/breakpad/src/common/basictypes.h \
+        libs/breakpad/src/common/memory_range.h \
+        libs/breakpad/src/common/string_conversion.h \
+        libs/breakpad/src/common/convert_UTF.h \
+        libs/breakpad/src/google_breakpad/common/minidump_format.h \
+        libs/breakpad/src/google_breakpad/common/minidump_size.h \
+        libs/breakpad/src/google_breakpad/common/breakpad_types.h \
+        libs/breakpad/src/third_party/lss/linux_syscall_support.h
+    SOURCES += \
+        libs/breakpad/src/client/linux/crash_generation/crash_generation_client.cc \
+        libs/breakpad/src/client/linux/handler/exception_handler.cc \
+        libs/breakpad/src/client/linux/handler/minidump_descriptor.cc \
+        libs/breakpad/src/client/linux/dump_writer_common/thread_info.cc \
+        libs/breakpad/src/client/linux/dump_writer_common/ucontext_reader.cc \
+        libs/breakpad/src/client/linux/log/log.cc \
+        libs/breakpad/src/client/linux/microdump_writer/microdump_writer.cc \
+        libs/breakpad/src/client/linux/minidump_writer/minidump_writer.cc \
+        libs/breakpad/src/client/linux/minidump_writer/linux_dumper.cc \
+        libs/breakpad/src/client/linux/minidump_writer/linux_ptrace_dumper.cc \
+        libs/breakpad/src/client/minidump_file_writer.cc \
+        libs/breakpad/src/common/linux/linux_libc_support.cc \
+        libs/breakpad/src/common/linux/file_id.cc \
+        libs/breakpad/src/common/linux/memory_mapped_file.cc \
+        libs/breakpad/src/common/linux/safe_readlink.cc \
+        libs/breakpad/src/common/linux/guid_creator.cc \
+        libs/breakpad/src/common/linux/elfutils.cc \
+        libs/breakpad/src/common/string_conversion.cc \
+        libs/breakpad/src/common/convert_UTF.c \
+        libs/breakpad/src/common/android/breakpad_getcontext.S
+}
+
+#
+# [OPTIONAL] Zeroconf for UDP links
+#
+contains (DEFINES, DISABLE_ZEROCONF) {
+    message("Skipping support for Zeroconf (manual override from command line)")
+    DEFINES -= DISABLE_ZEROCONF
+# Otherwise the user can still disable this feature in the user_config.pri file.
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_ZEROCONF) {
+    message("Skipping support for Zeroconf (manual override from user_config.pri)")
+# Mac support is built into OS
+} else:MacBuild|iOSBuild {
+    message("Including support for Zeroconf (Bonjour)")
+    DEFINES += QGC_ZEROCONF_ENABLED
+} else {
+    message("Skipping support for Zeroconf (unsupported platform)")
+}
+

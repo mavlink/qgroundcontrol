@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>414</width>
+    <width>216</width>
     <height>518</height>
    </rect>
   </property>
@@ -14,7 +14,7 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="3" column="1">
+   <item row="5" column="1">
     <widget class="QPushButton" name="listFilesButton">
      <property name="text">
       <string>List Files</string>
@@ -33,6 +33,9 @@
    </item>
    <item row="0" column="0" colspan="3">
     <widget class="QTreeWidget" name="treeWidget">
+     <property name="contextMenuPolicy">
+      <enum>Qt::NoContextMenu</enum>
+     </property>
      <property name="headerHidden">
       <bool>true</bool>
      </property>
@@ -43,7 +46,7 @@
      </column>
     </widget>
    </item>
-   <item row="3" column="2">
+   <item row="5" column="2">
     <widget class="QPushButton" name="downloadButton">
      <property name="enabled">
       <bool>false</bool>
@@ -53,7 +56,7 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="0" colspan="3">
+   <item row="3" column="0" colspan="3">
     <widget class="QLabel" name="statusText">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -63,6 +66,16 @@
      </property>
      <property name="text">
       <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="2">
+    <widget class="QPushButton" name="uploadButton">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>Upload File</string>
      </property>
     </widget>
    </item>

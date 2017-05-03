@@ -1,24 +1,12 @@
-/*===================================================================
-QGroundControl Open Source Ground Control Station
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-	QGROUNDCONTROL is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	QGROUNDCONTROL is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -27,16 +15,16 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
+#include "LogCompressor.h"
+#include "QGCApplication.h"
+
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
-#include <QTemporaryFile>
 #include <QTextStream>
 #include <QStringList>
 #include <QFileInfo>
 #include <QList>
-#include "LogCompressor.h"
-
 #include <QDebug>
 
 /**
@@ -51,6 +39,7 @@ LogCompressor::LogCompressor(QString logFileName, QString outFileName, QString d
     delimiter(delimiter),
     holeFillingEnabled(true)
 {
+    connect(this, &LogCompressor::logProcessingCriticalError, qgcApp(), &QGCApplication::criticalMessageBoxOnMainThread);
 }
 
 void LogCompressor::run()
@@ -58,7 +47,7 @@ void LogCompressor::run()
 	// Verify that the input file is useable
 	QFile infile(logFileName);
 	if (!infile.exists() || !infile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-		emit logProcessingStatusChanged(tr("Log Compressor: Cannot start/compress log file, since input file %1 is not readable").arg(QFileInfo(infile.fileName()).absoluteFilePath()));
+		_signalCriticalError(tr("Log Compressor: Cannot start/compress log file, since input file %1 is not readable").arg(QFileInfo(infile.fileName()).absoluteFilePath()));
 		return;
 	}
 
@@ -75,13 +64,13 @@ void LogCompressor::run()
 	// Verify that the output file is useable
     QFile outTmpFile(outFileName);
     if (!outTmpFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
-		emit logProcessingStatusChanged(tr("Log Compressor: Cannot start/compress log file, since output file %1 is not writable").arg(QFileInfo(outTmpFile.fileName()).absoluteFilePath()));
+		_signalCriticalError(tr("Log Compressor: Cannot start/compress log file, since output file %1 is not writable").arg(QFileInfo(outTmpFile.fileName()).absoluteFilePath()));
 		return;
 	}
 
 
 	// First we search the input file through keySearchLimit number of lines
-	// looking for variables. This is neccessary before CSV files require
+	// looking for variables. This is necessary before CSV files require
 	// the same number of fields for every line.
 	const unsigned int keySearchLimit = 15000;
 	unsigned int keyCounter = 0;
@@ -113,7 +102,7 @@ void LogCompressor::run()
     headerLine = headerLine.replace(".", "");
 	outTmpFile.write(headerLine.toLocal8Bit());
 
-    emit logProcessingStatusChanged(tr("Log compressor: Dataset contains dimensions: ") + headerLine);
+    _signalCriticalError(tr("Log compressor: Dataset contains dimensions: ") + headerLine);
 
     // Template list stores a list for populating with data as it's parsed from messages.
     QStringList templateList;
@@ -171,7 +160,7 @@ void LogCompressor::run()
             // Fill holes if necessary
             if (holeFillingEnabled) {
                 int index = 0;
-                foreach (QString str, list) {
+                foreach (const QString& str, list) {
                     if (str == "" || str == "NaN") {
                         list.replace(index, lastList.at(index));
                     }
@@ -192,11 +181,8 @@ void LogCompressor::run()
 	// We're now done with the source file
 	infile.close();
 
-    emit logProcessingStatusChanged(tr("Log Compressor: Writing output to file %1").arg(QFileInfo(outFileName).absoluteFilePath()));
-
 	// Clean up and update the status before we return.
 	currentDataLine = 0;
-    emit logProcessingStatusChanged(tr("Log compressor: Finished processing file: %1").arg(outFileName));
 	emit finishedFile(outFileName);
 	running = false;
 }
@@ -219,4 +205,10 @@ bool LogCompressor::isFinished()
 int LogCompressor::getCurrentLine()
 {
 	return currentDataLine;
+}
+
+
+void LogCompressor::_signalCriticalError(const QString& msg)
+{
+    emit logProcessingCriticalError(tr("Log Compressor"), msg);
 }

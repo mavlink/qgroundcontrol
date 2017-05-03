@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009 - 2011 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file QGCXPlaneLink.h
@@ -40,8 +27,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QProcess>
 #include <LinkInterface.h>
 #include "QGCConfig.h"
-#include "UASInterface.h"
 #include "QGCHilLink.h"
+#include "Vehicle.h"
 
 class QGCXPlaneLink : public QGCHilLink
 {
@@ -49,7 +36,7 @@ class QGCXPlaneLink : public QGCHilLink
     //Q_INTERFACES(QGCXPlaneLinkInterface:LinkInterface)
 
 public:
-    QGCXPlaneLink(UASInterface* mav, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress localHost = QHostAddress::Any, quint16 localPort = 49005);
+    QGCXPlaneLink(Vehicle* vehicle, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress localHost = QHostAddress::Any, quint16 localPort = 49005);
     ~QGCXPlaneLink();
 
     /**
@@ -105,6 +92,14 @@ public:
         return _sensorHilEnabled;
     }
 
+    bool useHilActuatorControls() {
+        return _useHilActuatorControls;
+    }
+
+signals:
+    /** @brief Sensor leve HIL state changed */
+    void useHilActuatorControlsChanged(bool enabled);
+
 public slots:
 //    void setAddress(QString address);
     void setPort(int port);
@@ -112,8 +107,25 @@ public slots:
     void setRemoteHost(const QString& host);
     /** @brief Send new control states to the simulation */
     void updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode);
-    /** @brief Send new motor control states to the simulation */
-    void updateActuators(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
+    /** @brief Send new control commands to the simulation */
+    void updateActuatorControls(quint64 time, quint64 flags,
+                                float ctl_0,
+                                float ctl_1,
+                                float ctl_2,
+                                float ctl_3,
+                                float ctl_4,
+                                float ctl_5,
+                                float ctl_6,
+                                float ctl_7,
+                                float ctl_8,
+                                float ctl_9,
+                                float ctl_10,
+                                float ctl_11,
+                                float ctl_12,
+                                float ctl_13,
+                                float ctl_14,
+                                float ctl_15,
+                                quint8 mode);
     /** @brief Set the simulator version as text string */
     void setVersion(const QString& version);
     /** @brief Set the simulator version as integer */
@@ -125,16 +137,22 @@ public slots:
             emit sensorHilChanged(enable);
     }
 
+    void enableHilActuatorControls(bool enable);
+
     void processError(QProcess::ProcessError err);
 
     void readBytes();
+
+private slots:
     /**
      * @brief Write a number of bytes to the interface.
      *
      * @param data Pointer to the data byte array
      * @param size The size of the bytes array
      **/
-    void writeBytes(const char* data, qint64 length);
+    void _writeBytes(const QByteArray data);
+
+public slots:
     bool connectSimulation();
     bool disconnectSimulation();
     /**
@@ -164,7 +182,7 @@ public slots:
     void setRandomAttitude();
 
 protected:
-    UASInterface* mav;
+    Vehicle* _vehicle;
     QString name;
     QHostAddress localHost;
     quint16 localPort;
@@ -210,9 +228,11 @@ protected:
     quint64 simUpdateLastGroundTruth;
     float simUpdateHz;
     bool _sensorHilEnabled;
+    bool _useHilActuatorControls;
     bool _should_exit;
 
     void setName(QString name);
+    void sendDataRef(QString ref, float value);
 };
 
 #endif // QGCXPLANESIMULATIONLINK_H

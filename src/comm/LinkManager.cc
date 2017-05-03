@@ -1,260 +1,949 @@
-/*=====================================================================
-
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
-
-/**
- * @file
- *   @brief Brief Description
+/****************************************************************************
  *
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
- */
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
 #include <QList>
 #include <QApplication>
-#include "LinkManager.h"
-#include <iostream>
-
 #include <QDebug>
+#include <QSignalSpy>
 
-LinkManager* LinkManager::instance()
+#ifndef NO_SERIAL_LINK
+#include "QGCSerialPortInfo.h"
+#endif
+
+#include "LinkManager.h"
+#include "QGCApplication.h"
+#include "UDPLink.h"
+#include "TCPLink.h"
+#include "SettingsManager.h"
+#ifdef QGC_ENABLE_BLUETOOTH
+#include "BluetoothLink.h"
+#endif
+
+#ifndef __mobile__
+#include "GPSManager.h"
+#endif
+
+QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
+QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "LinkManagerVerboseLog")
+
+const char* LinkManager::_defaultUPDLinkName =       "UDP Link (AutoConnect)";
+
+const int LinkManager::_autoconnectUpdateTimerMSecs =   1000;
+#ifdef Q_OS_WIN
+// Have to manually let the bootloader go by on Windows to get a working connect
+const int LinkManager::_autoconnectConnectDelayMSecs =  6000;
+#else
+const int LinkManager::_autoconnectConnectDelayMSecs =  1000;
+#endif
+
+LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
+    , _configUpdateSuspended(false)
+    , _configurationsLoaded(false)
+    , _connectionsSuspended(false)
+    , _mavlinkChannelsUsedBitMask(1)    // We never use channel 0 to avoid sequence numbering problems
+    , _autoConnectSettings(NULL)
+    , _mavlinkProtocol(NULL)
 {
-    static LinkManager* _instance = 0;
-    if(_instance == 0) {
-        _instance = new LinkManager();
+    qmlRegisterUncreatableType<LinkManager>         ("QGroundControl", 1, 0, "LinkManager",         "Reference only");
+    qmlRegisterUncreatableType<LinkConfiguration>   ("QGroundControl", 1, 0, "LinkConfiguration",   "Reference only");
+    qmlRegisterUncreatableType<LinkInterface>       ("QGroundControl", 1, 0, "LinkInterface",       "Reference only");
 
-        /* Set the application as parent to ensure that this object
-         * will be destroyed when the main application exits */
-        _instance->setParent(qApp);
-    }
-    return _instance;
-}
-
-/**
- * @brief Private singleton constructor
- *
- * This class implements the singleton design pattern and has therefore only a private constructor.
- **/
-LinkManager::LinkManager()
-{
-    links = QList<LinkInterface*>();
-    protocolLinks = QMap<ProtocolInterface*, LinkInterface*>();
+#ifndef NO_SERIAL_LINK
+    _activeLinkCheckTimer.setInterval(_activeLinkCheckTimeoutMSecs);
+    _activeLinkCheckTimer.setSingleShot(false);
+    connect(&_activeLinkCheckTimer, &QTimer::timeout, this, &LinkManager::_activeLinkCheck);
+#endif
 }
 
 LinkManager::~LinkManager()
 {
-    disconnectAll();
-    dataMutex.lock();
-    foreach (LinkInterface* link, links)
-    {
-        if(link) link->deleteLater();
-    }
-    dataMutex.unlock();
+
 }
 
-void LinkManager::add(LinkInterface* link)
+void LinkManager::setToolbox(QGCToolbox *toolbox)
 {
-    dataMutex.lock();
-    if (!links.contains(link))
+    QGCTool::setToolbox(toolbox);
+
+    _autoConnectSettings = toolbox->settingsManager()->autoConnectSettings();
+    _mavlinkProtocol = _toolbox->mavlinkProtocol();
+
+    connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
+    _portListTimer.start(_autoconnectUpdateTimerMSecs); // timeout must be long enough to get past bootloader on second pass
+
+}
+
+// This should only be used by Qml code
+void LinkManager::createConnectedLink(LinkConfiguration* config)
+{
+    for(int i = 0; i < _sharedConfigurations.count(); i++) {
+        SharedLinkConfigurationPointer& sharedConf = _sharedConfigurations[i];
+        if (sharedConf->name() == config->name())
+            createConnectedLink(sharedConf);
+    }
+}
+
+LinkInterface* LinkManager::createConnectedLink(SharedLinkConfigurationPointer& config)
+{
+    if (!config) {
+        qWarning() << "LinkManager::createConnectedLink called with NULL config";
+        return NULL;
+    }
+
+    LinkInterface* pLink = NULL;
+    switch(config->type()) {
+#ifndef NO_SERIAL_LINK
+    case LinkConfiguration::TypeSerial:
     {
-        if(!link) return;
-        connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(removeObj(QObject*)));
-        links.append(link);
-        dataMutex.unlock();
+        SerialConfiguration* serialConfig = dynamic_cast<SerialConfiguration*>(config.data());
+        if (serialConfig) {
+            pLink = new SerialLink(config);
+            if (serialConfig->usbDirect()) {
+                _activeLinkCheckList.append((SerialLink*)pLink);
+                if (!_activeLinkCheckTimer.isActive()) {
+                    _activeLinkCheckTimer.start();
+                }
+            }
+        }
+    }
+        break;
+#endif
+    case LinkConfiguration::TypeUdp:
+        pLink = new UDPLink(config);
+        break;
+    case LinkConfiguration::TypeTcp:
+        pLink = new TCPLink(config);
+        break;
+#ifdef QGC_ENABLE_BLUETOOTH
+    case LinkConfiguration::TypeBluetooth:
+        pLink = new BluetoothLink(config);
+        break;
+#endif
+#ifndef __mobile__
+    case LinkConfiguration::TypeLogReplay:
+        pLink = new LogReplayLink(config);
+        break;
+#endif
+#ifdef QT_DEBUG
+    case LinkConfiguration::TypeMock:
+        pLink = new MockLink(config);
+        break;
+#endif
+    case LinkConfiguration::TypeLast:
+    default:
+        break;
+    }
+
+    if (pLink) {
+        _addLink(pLink);
+        connectLink(pLink);
+    }
+
+    return pLink;
+}
+
+LinkInterface* LinkManager::createConnectedLink(const QString& name)
+{
+    if (name.isEmpty()) {
+        qWarning() << "Internal error";
+    } else {
+        for(int i = 0; i < _sharedConfigurations.count(); i++) {
+            SharedLinkConfigurationPointer& conf = _sharedConfigurations[i];
+            if (conf->name() == name) {
+                return createConnectedLink(conf);
+            }
+        }
+    }
+    return NULL;
+}
+
+void LinkManager::_addLink(LinkInterface* link)
+{
+    if (thread() != QThread::currentThread()) {
+        qWarning() << "_deleteLink called from incorrect thread";
+        return;
+    }
+
+    if (!link) {
+        return;
+    }
+
+    if (!containsLink(link)) {
+        bool channelSet = false;
+
+        // Find a mavlink channel to use for this link, Channel 0 is reserved for internal use.
+        for (int i=1; i<32; i++) {
+            if (!(_mavlinkChannelsUsedBitMask & 1 << i)) {
+                mavlink_reset_channel_status(i);
+                link->_setMavlinkChannel(i);
+                // Start the channel on Mav 1 protocol
+                mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(i);
+                mavlinkStatus->flags = mavlink_get_channel_status(i)->flags | MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+                qDebug() << "LinkManager mavlinkStatus:channel:flags" << mavlinkStatus << i << mavlinkStatus->flags;
+                _mavlinkChannelsUsedBitMask |= 1 << i;
+                channelSet = true;
+                break;
+            }
+        }
+
+        if (!channelSet) {
+            qWarning() << "Ran out of mavlink channels";
+        }
+
+        _sharedLinks.append(SharedLinkInterfacePointer(link));
         emit newLink(link);
-    } else {
-        dataMutex.unlock();
     }
+
+    connect(link, &LinkInterface::communicationError,   _app,               &QGCApplication::criticalMessageBoxOnMainThread);
+    connect(link, &LinkInterface::bytesReceived,        _mavlinkProtocol,   &MAVLinkProtocol::receiveBytes);
+
+    _mavlinkProtocol->resetMetadataForLink(link);
+
+    connect(link, &LinkInterface::connected,            this, &LinkManager::_linkConnected);
+    connect(link, &LinkInterface::disconnected,         this, &LinkManager::_linkDisconnected);
+
+    // This connection is queued since it will cloe the link. So we want the link emitter to return otherwise we would
+    // close the link our from under itself.
+    connect(link, &LinkInterface::connectionRemoved,    this, &LinkManager::_linkConnectionRemoved, Qt::QueuedConnection);
 }
 
-void LinkManager::addProtocol(LinkInterface* link, ProtocolInterface* protocol)
+void LinkManager::disconnectAll(void)
 {
-    // Connect link to protocol
-    // the protocol will receive new bytes from the link
-    if (!link || !protocol) return;
-
-    dataMutex.lock();
-    QList<LinkInterface*> linkList = protocolLinks.values(protocol);
-
-    // If protocol has not been added before (list length == 0)
-    // OR if link has not been added to protocol, add
-    if (!linkList.contains(link))
-    {
-        // Protocol is new, add
-        connect(link, SIGNAL(bytesReceived(LinkInterface*, QByteArray)), protocol, SLOT(receiveBytes(LinkInterface*, QByteArray)));
-        // Add status
-        connect(link, SIGNAL(connected(bool)), protocol, SLOT(linkStatusChanged(bool)));
-        // Store the connection information in the protocol links map
-        protocolLinks.insertMulti(protocol, link);
-        dataMutex.unlock();
-        // Make sure the protocol clears its metadata for this link.
-        protocol->resetMetadataForLink(link);
-    } else {
-        dataMutex.unlock();
+    // Walk list in reverse order to preserve indices during delete
+    for (int i=_sharedLinks.count()-1; i>=0; i--) {
+        disconnectLink(_sharedLinks[i].data());
     }
-    //qDebug() << __FILE__ << __LINE__ << "ADDED LINK TO PROTOCOL" << link->getName() << protocol->getName() << "NEW SIZE OF LINK LIST:" << protocolLinks.size();
-}
-
-QList<LinkInterface*> LinkManager::getLinksForProtocol(ProtocolInterface* protocol)
-{
-    dataMutex.lock();
-    QList<LinkInterface*> links = protocolLinks.values(protocol);
-    dataMutex.unlock();
-    return links;
-}
-
-ProtocolInterface* LinkManager::getProtocolForLink(LinkInterface* link)
-{
-    dataMutex.lock();
-    ProtocolInterface* interface = protocolLinks.key(link);
-    dataMutex.unlock();
-    return interface;
-}
-
-bool LinkManager::connectAll()
-{
-    bool allConnected = true;
-
-    dataMutex.lock();
-    foreach (LinkInterface* link, links)
-    {
-        if(!link) {}
-        else if(!link->connect()) allConnected = false;
-    }
-    dataMutex.unlock();
-
-    return allConnected;
-}
-
-bool LinkManager::disconnectAll()
-{
-    bool allDisconnected = true;
-
-    dataMutex.lock();
-    foreach (LinkInterface* link, links)
-    {
-        //static int i=0;
-        if(!link) {}
-        else if(!link->disconnect()) allDisconnected = false;
-    }
-    dataMutex.unlock();
-
-    return allDisconnected;
 }
 
 bool LinkManager::connectLink(LinkInterface* link)
 {
-    if(!link) return false;
-    return link->connect();
-}
-
-bool LinkManager::disconnectLink(LinkInterface* link)
-{
-    if(!link) return false;
-    return link->disconnect();
-}
-
-void LinkManager::removeObj(QObject* link)
-{
-    LinkInterface* linkInterface = dynamic_cast<LinkInterface*>(link);
-    if (linkInterface)
-    {
-        removeLink(linkInterface);
+    if (link) {
+        if (_connectionsSuspendedMsg()) {
+            return false;
+        }
+        return link->_connect();
+    } else {
+        qWarning() << "Internal error";
+        return false;
     }
 }
 
-bool LinkManager::removeLink(LinkInterface* link)
+void LinkManager::disconnectLink(LinkInterface* link)
 {
-    if(link)
-    {
-        dataMutex.lock();
-        for (int i=0; i < QList<LinkInterface*>(links).size(); i++)
-        {
-            if(link==links.at(i))
-            {
-                links.removeAt(i); //remove from link list
+    if (!link || !containsLink(link)) {
+        return;
+    }
+
+    link->_disconnect();
+
+    LinkConfiguration* config = link->getLinkConfiguration();
+    for (int i=0; i<_sharedAutoconnectConfigurations.count(); i++) {
+        if (_sharedAutoconnectConfigurations[i].data() == config) {
+            qCDebug(LinkManagerLog) << "Removing disconnected autoconnect config" << config->name();
+            _sharedAutoconnectConfigurations.removeAt(i);
+            break;
+        }
+    }
+
+    _deleteLink(link);
+}
+
+void LinkManager::_deleteLink(LinkInterface* link)
+{
+    if (thread() != QThread::currentThread()) {
+        qWarning() << "_deleteLink called from incorrect thread";
+        return;
+    }
+
+    if (!link) {
+        return;
+    }
+
+    // Free up the mavlink channel associated with this link
+    _mavlinkChannelsUsedBitMask &= ~(1 << link->mavlinkChannel());
+
+    for (int i=0; i<_sharedLinks.count(); i++) {
+        if (_sharedLinks[i].data() == link) {
+            _sharedLinks.removeAt(i);
+            break;
+        }
+    }
+
+    // Emit removal of link
+    emit linkDeleted(link);
+}
+
+SharedLinkInterfacePointer LinkManager::sharedLinkInterfacePointerForLink(LinkInterface* link)
+{
+    for (int i=0; i<_sharedLinks.count(); i++) {
+        if (_sharedLinks[i].data() == link) {
+            return _sharedLinks[i];
+        }
+    }
+
+    qWarning() << "LinkManager::sharedLinkInterfaceForLink returning NULL";
+    return SharedLinkInterfacePointer(NULL);
+}
+
+/// @brief If all new connections should be suspended a message is displayed to the user and true
+///         is returned;
+bool LinkManager::_connectionsSuspendedMsg(void)
+{
+    if (_connectionsSuspended) {
+        qgcApp()->showMessage(QString("Connect not allowed: %1").arg(_connectionsSuspendedReason));
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void LinkManager::setConnectionsSuspended(QString reason)
+{
+    _connectionsSuspended = true;
+    _connectionsSuspendedReason = reason;
+}
+
+void LinkManager::_linkConnected(void)
+{
+    emit linkConnected((LinkInterface*)sender());
+}
+
+void LinkManager::_linkDisconnected(void)
+{
+    emit linkDisconnected((LinkInterface*)sender());
+}
+
+void LinkManager::_linkConnectionRemoved(LinkInterface* link)
+{
+    // Link has been removed from system, disconnect it automatically
+    disconnectLink(link);
+}
+
+void LinkManager::suspendConfigurationUpdates(bool suspend)
+{
+    _configUpdateSuspended = suspend;
+}
+
+void LinkManager::saveLinkConfigurationList()
+{
+    QSettings settings;
+    settings.remove(LinkConfiguration::settingsRoot());
+    int trueCount = 0;
+    for (int i = 0; i < _sharedConfigurations.count(); i++) {
+        SharedLinkConfigurationPointer linkConfig = _sharedConfigurations[i];
+        if (linkConfig) {
+            if (!linkConfig->isDynamic()) {
+                QString root = LinkConfiguration::settingsRoot();
+                root += QString("/Link%1").arg(trueCount++);
+                settings.setValue(root + "/name", linkConfig->name());
+                settings.setValue(root + "/type", linkConfig->type());
+                settings.setValue(root + "/auto", linkConfig->isAutoConnect());
+                // Have the instance save its own values
+                linkConfig->saveSettings(settings, root);
+            }
+        } else {
+            qWarning() << "Internal error for link configuration in LinkManager";
+        }
+    }
+    QString root(LinkConfiguration::settingsRoot());
+    settings.setValue(root + "/count", trueCount);
+    emit linkConfigurationsChanged();
+}
+
+void LinkManager::loadLinkConfigurationList()
+{
+    bool linksChanged = false;
+    QSettings settings;
+    // Is the group even there?
+    if(settings.contains(LinkConfiguration::settingsRoot() + "/count")) {
+        // Find out how many configurations we have
+        int count = settings.value(LinkConfiguration::settingsRoot() + "/count").toInt();
+        for(int i = 0; i < count; i++) {
+            QString root(LinkConfiguration::settingsRoot());
+            root += QString("/Link%1").arg(i);
+            if(settings.contains(root + "/type")) {
+                int type = settings.value(root + "/type").toInt();
+                if((LinkConfiguration::LinkType)type < LinkConfiguration::TypeLast) {
+                    if(settings.contains(root + "/name")) {
+                        QString name = settings.value(root + "/name").toString();
+                        if(!name.isEmpty()) {
+                            LinkConfiguration* pLink = NULL;
+                            bool autoConnect = settings.value(root + "/auto").toBool();
+                            switch((LinkConfiguration::LinkType)type) {
+#ifndef NO_SERIAL_LINK
+                            case LinkConfiguration::TypeSerial:
+                                pLink = (LinkConfiguration*)new SerialConfiguration(name);
+                                break;
+#endif
+                            case LinkConfiguration::TypeUdp:
+                                pLink = (LinkConfiguration*)new UDPConfiguration(name);
+                                break;
+                            case LinkConfiguration::TypeTcp:
+                                pLink = (LinkConfiguration*)new TCPConfiguration(name);
+                                break;
+#ifdef QGC_ENABLE_BLUETOOTH
+                            case LinkConfiguration::TypeBluetooth:
+                                pLink = (LinkConfiguration*)new BluetoothConfiguration(name);
+                                break;
+#endif
+#ifndef __mobile__
+                            case LinkConfiguration::TypeLogReplay:
+                                pLink = (LinkConfiguration*)new LogReplayLinkConfiguration(name);
+                                break;
+#endif
+#ifdef QT_DEBUG
+                            case LinkConfiguration::TypeMock:
+                                pLink = (LinkConfiguration*)new MockConfiguration(name);
+                                break;
+#endif
+                            default:
+                            case LinkConfiguration::TypeLast:
+                                break;
+                            }
+                            if(pLink) {
+                                //-- Have the instance load its own values
+                                pLink->setAutoConnect(autoConnect);
+                                pLink->loadSettings(settings, root);
+                                addConfiguration(pLink);
+                                linksChanged = true;
+                            }
+                        } else {
+                            qWarning() << "Link Configuration" << root << "has an empty name." ;
+                        }
+                    } else {
+                        qWarning() << "Link Configuration" << root << "has no name." ;
+                    }
+                } else {
+                    qWarning() << "Link Configuration" << root << "an invalid type: " << type;
+                }
+            } else {
+                qWarning() << "Link Configuration" << root << "has no type." ;
             }
         }
-        // Remove link from protocol map
-        QList<ProtocolInterface* > protocols = protocolLinks.keys(link);
-        foreach (ProtocolInterface* proto, protocols)
-        {
-            protocolLinks.remove(proto, link);
+    }
+
+    if(linksChanged) {
+        emit linkConfigurationsChanged();
+    }
+    // Enable automatic Serial PX4/3DR Radio hunting
+    _configurationsLoaded = true;
+}
+
+#ifndef NO_SERIAL_LINK
+SerialConfiguration* LinkManager::_autoconnectConfigurationsContainsPort(const QString& portName)
+{
+    QString searchPort = portName.trimmed();
+
+    for (int i=0; i<_sharedAutoconnectConfigurations.count(); i++) {
+        SerialConfiguration* serialConfig = qobject_cast<SerialConfiguration*>(_sharedAutoconnectConfigurations[i].data());
+
+        if (serialConfig) {
+            if (serialConfig->portName() == searchPort) {
+                return serialConfig;
+            }
+        } else {
+            qWarning() << "Internal error";
         }
-        dataMutex.unlock();
+    }
+    return NULL;
+}
+#endif
 
-        // Emit removal of link
-        emit linkRemoved(link);
+void LinkManager::_updateAutoConnectLinks(void)
+{
+    if (_connectionsSuspended || qgcApp()->runningUnitTests()) {
+        return;
+    }
 
-        return true;
+    // Re-add UDP if we need to
+    bool foundUDP = false;
+    for (int i=0; i<_sharedLinks.count(); i++) {
+        LinkConfiguration* linkConfig = _sharedLinks[i]->getLinkConfiguration();
+        if (linkConfig->type() == LinkConfiguration::TypeUdp && linkConfig->name() == _defaultUPDLinkName) {
+            foundUDP = true;
+            break;
+        }
+    }
+    if (!foundUDP && _autoConnectSettings->autoConnectUDP()->rawValue().toBool()) {
+        qCDebug(LinkManagerLog) << "New auto-connect UDP port added";
+        UDPConfiguration* udpConfig = new UDPConfiguration(_defaultUPDLinkName);
+        udpConfig->setLocalPort(QGC_UDP_LOCAL_PORT);
+        udpConfig->setDynamic(true);
+        SharedLinkConfigurationPointer config = addConfiguration(udpConfig);
+        createConnectedLink(config);
+        emit linkConfigurationsChanged();
+    }
+
+#ifndef NO_SERIAL_LINK
+    QStringList currentPorts;
+    QList<QGCSerialPortInfo> portList;
+
+#ifdef __android__
+    // Android builds only support a single serial connection. Repeatedly calling availablePorts after that one serial
+    // port is connected leaks file handles due to a bug somewhere in android serial code. In order to work around that
+    // bug after we connect the first serial port we stop probing for additional ports.
+    if (!_sharedAutoconnectConfigurations.count()) {
+        portList = QGCSerialPortInfo::availablePorts();
+    }
+#else
+    portList = QGCSerialPortInfo::availablePorts();
+#endif
+
+    // Iterate Comm Ports
+    foreach (QGCSerialPortInfo portInfo, portList) {
+        qCDebug(LinkManagerVerboseLog) << "-----------------------------------------------------";
+        qCDebug(LinkManagerVerboseLog) << "portName:          " << portInfo.portName();
+        qCDebug(LinkManagerVerboseLog) << "systemLocation:    " << portInfo.systemLocation();
+        qCDebug(LinkManagerVerboseLog) << "description:       " << portInfo.description();
+        qCDebug(LinkManagerVerboseLog) << "manufacturer:      " << portInfo.manufacturer();
+        qCDebug(LinkManagerVerboseLog) << "serialNumber:      " << portInfo.serialNumber();
+        qCDebug(LinkManagerVerboseLog) << "vendorIdentifier:  " << portInfo.vendorIdentifier();
+        qCDebug(LinkManagerVerboseLog) << "productIdentifier: " << portInfo.productIdentifier();
+
+        // Save port name
+        currentPorts << portInfo.systemLocation();
+
+        QGCSerialPortInfo::BoardType_t boardType;
+        QString boardName;
+
+        if (portInfo.getBoardInfo(boardType, boardName)) {
+            if (portInfo.isBootloader()) {
+                // Don't connect to bootloader
+                qCDebug(LinkManagerLog) << "Waiting for bootloader to finish" << portInfo.systemLocation();
+                continue;
+            }
+
+            if (_autoconnectConfigurationsContainsPort(portInfo.systemLocation())) {
+                qCDebug(LinkManagerVerboseLog) << "Skipping existing autoconnect" << portInfo.systemLocation();
+            } else if (!_autoconnectWaitList.contains(portInfo.systemLocation())) {
+                // We don't connect to the port the first time we see it. The ability to correctly detect whether we
+                // are in the bootloader is flaky from a cross-platform standpoint. So by putting it on a wait list
+                // and only connect on the second pass we leave enough time for the board to boot up.
+                qCDebug(LinkManagerLog) << "Waiting for next autoconnect pass" << portInfo.systemLocation();
+                _autoconnectWaitList[portInfo.systemLocation()] = 1;
+            } else if (++_autoconnectWaitList[portInfo.systemLocation()] * _autoconnectUpdateTimerMSecs > _autoconnectConnectDelayMSecs) {
+                SerialConfiguration* pSerialConfig = NULL;
+
+                _autoconnectWaitList.remove(portInfo.systemLocation());
+
+                switch (boardType) {
+                case QGCSerialPortInfo::BoardTypePixhawk:
+                    if (_autoConnectSettings->autoConnectPixhawk()->rawValue().toBool()) {
+                        pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
+                        pSerialConfig->setUsbDirect(true);
+                    }
+                    break;
+                case QGCSerialPortInfo::BoardTypePX4Flow:
+                    if (_autoConnectSettings->autoConnectPX4Flow()->rawValue().toBool()) {
+                        pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
+                    }
+                    break;
+                case QGCSerialPortInfo::BoardTypeSiKRadio:
+                    if (_autoConnectSettings->autoConnectSiKRadio()->rawValue().toBool()) {
+                        pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
+                    }
+                    break;
+                case QGCSerialPortInfo::BoardTypeOpenPilot:
+                    if (_autoConnectSettings->autoConnectLibrePilot()->rawValue().toBool()) {
+                        pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
+                    }
+                    break;
+#ifndef __mobile__
+                case QGCSerialPortInfo::BoardTypeRTKGPS:
+                    if (_autoConnectSettings->autoConnectRTKGPS()->rawValue().toBool() && !_toolbox->gpsManager()->connected()) {
+                        qCDebug(LinkManagerLog) << "RTK GPS auto-connected";
+                        _toolbox->gpsManager()->connectGPS(portInfo.systemLocation());
+                    }
+                    break;
+#endif
+                default:
+                    qWarning() << "Internal error";
+                    continue;
+                }
+
+                if (pSerialConfig) {
+                    qCDebug(LinkManagerLog) << "New auto-connect port added: " << pSerialConfig->name() << portInfo.systemLocation();
+                    pSerialConfig->setBaud(boardType == QGCSerialPortInfo::BoardTypeSiKRadio ? 57600 : 115200);
+                    pSerialConfig->setDynamic(true);
+                    pSerialConfig->setPortName(portInfo.systemLocation());
+                    _sharedAutoconnectConfigurations.append(SharedLinkConfigurationPointer(pSerialConfig));
+                    createConnectedLink(_sharedAutoconnectConfigurations.last());
+                }
+            }
+        }
+    }
+
+#ifndef __android__
+    // Android builds only support a single serial connection. Repeatedly calling availablePorts after that one serial
+    // port is connected leaks file handles due to a bug somewhere in android serial code. In order to work around that
+    // bug after we connect the first serial port we stop probing for additional ports. The means we must rely on
+    // the port disconnecting itself when the radio is pulled to signal communication list as opposed to automatically
+    // closing the Link.
+
+    // Now we go through the current configuration list and make sure any dynamic config has gone away
+    QList<LinkConfiguration*>  _confToDelete;
+    for (int i=0; i<_sharedAutoconnectConfigurations.count(); i++) {
+        SerialConfiguration* serialConfig = qobject_cast<SerialConfiguration*>(_sharedAutoconnectConfigurations[i].data());
+        if (serialConfig) {
+            if (!currentPorts.contains(serialConfig->portName())) {
+                if (serialConfig->link()) {
+                    if (serialConfig->link()->isConnected()) {
+                        if (serialConfig->link()->active()) {
+                            // We don't remove links which are still connected which have been active with a vehicle on them
+                            // even though at this point the cable may have been pulled. Instead we wait for the user to
+                            // Disconnect. Once the user disconnects, the link will be removed.
+                            continue;
+                        }
+                    }
+                }
+                _confToDelete.append(serialConfig);
+            }
+        } else {
+            qWarning() << "Internal error";
+        }
+    }
+
+    // Now remove all configs that are gone
+    foreach (LinkConfiguration* pDeleteConfig, _confToDelete) {
+        qCDebug(LinkManagerLog) << "Removing unused autoconnect config" << pDeleteConfig->name();
+        if (pDeleteConfig->link()) {
+            disconnectLink(pDeleteConfig->link());
+        }
+        for (int i=0; i<_sharedAutoconnectConfigurations.count(); i++) {
+            if (_sharedAutoconnectConfigurations[i].data() == pDeleteConfig) {
+                _sharedAutoconnectConfigurations.removeAt(i);
+                break;
+            }
+        }
+    }
+#endif
+#endif // NO_SERIAL_LINK
+}
+
+void LinkManager::shutdown(void)
+{
+    setConnectionsSuspended("Shutdown");
+    disconnectAll();
+}
+
+QStringList LinkManager::linkTypeStrings(void) const
+{
+    //-- Must follow same order as enum LinkType in LinkConfiguration.h
+    static QStringList list;
+    if(!list.size())
+    {
+#ifndef NO_SERIAL_LINK
+        list += "Serial";
+#endif
+        list += "UDP";
+        list += "TCP";
+#ifdef QGC_ENABLE_BLUETOOTH
+        list += "Bluetooth";
+#endif
+#ifdef QT_DEBUG
+        list += "Mock Link";
+#endif
+#ifndef __mobile__
+        list += "Log Replay";
+#endif
+        if (list.size() != (int)LinkConfiguration::TypeLast) {
+            qWarning() << "Internal error";
+        }
+    }
+    return list;
+}
+
+void LinkManager::_updateSerialPorts()
+{
+    _commPortList.clear();
+    _commPortDisplayList.clear();
+#ifndef NO_SERIAL_LINK
+    QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
+    foreach (const QSerialPortInfo &info, portList)
+    {
+        QString port = info.systemLocation().trimmed();
+        _commPortList += port;
+        _commPortDisplayList += SerialConfiguration::cleanPortDisplayname(port);
+    }
+#endif
+}
+
+QStringList LinkManager::serialPortStrings(void)
+{
+    if(!_commPortDisplayList.size())
+    {
+        _updateSerialPorts();
+    }
+    return _commPortDisplayList;
+}
+
+QStringList LinkManager::serialPorts(void)
+{
+    if(!_commPortList.size())
+    {
+        _updateSerialPorts();
+    }
+    return _commPortList;
+}
+
+QStringList LinkManager::serialBaudRates(void)
+{
+#ifdef NO_SERIAL_LINK
+    QStringList foo;
+    return foo;
+#else
+    return SerialConfiguration::supportedBaudRates();
+#endif
+}
+
+bool LinkManager::endConfigurationEditing(LinkConfiguration* config, LinkConfiguration* editedConfig)
+{
+    if (config && editedConfig) {
+        _fixUnnamed(editedConfig);
+        config->copyFrom(editedConfig);
+        saveLinkConfigurationList();
+        // Tell link about changes (if any)
+        config->updateSettings();
+        // Discard temporary duplicate
+        delete editedConfig;
+    } else {
+        qWarning() << "Internal error";
+    }
+    return true;
+}
+
+bool LinkManager::endCreateConfiguration(LinkConfiguration* config)
+{
+    if (config) {
+        _fixUnnamed(config);
+        addConfiguration(config);
+        saveLinkConfigurationList();
+    } else {
+        qWarning() << "Internal error";
+    }
+    return true;
+}
+
+LinkConfiguration* LinkManager::createConfiguration(int type, const QString& name)
+{
+#ifndef NO_SERIAL_LINK
+    if((LinkConfiguration::LinkType)type == LinkConfiguration::TypeSerial)
+        _updateSerialPorts();
+#endif
+    return LinkConfiguration::createSettings(type, name);
+}
+
+LinkConfiguration* LinkManager::startConfigurationEditing(LinkConfiguration* config)
+{
+    if (config) {
+#ifndef NO_SERIAL_LINK
+        if(config->type() == LinkConfiguration::TypeSerial)
+            _updateSerialPorts();
+#endif
+        return LinkConfiguration::duplicateSettings(config);
+    } else {
+        qWarning() << "Internal error";
+        return NULL;
+    }
+}
+
+
+void LinkManager::_fixUnnamed(LinkConfiguration* config)
+{
+    if (config) {
+        //-- Check for "Unnamed"
+        if (config->name() == "Unnamed") {
+            switch(config->type()) {
+#ifndef NO_SERIAL_LINK
+            case LinkConfiguration::TypeSerial: {
+                QString tname = dynamic_cast<SerialConfiguration*>(config)->portName();
+#ifdef Q_OS_WIN
+                tname.replace("\\\\.\\", "");
+#else
+                tname.replace("/dev/cu.", "");
+                tname.replace("/dev/", "");
+#endif
+                config->setName(QString("Serial Device on %1").arg(tname));
+                break;
+            }
+#endif
+            case LinkConfiguration::TypeUdp:
+                config->setName(
+                            QString("UDP Link on Port %1").arg(dynamic_cast<UDPConfiguration*>(config)->localPort()));
+                break;
+            case LinkConfiguration::TypeTcp: {
+                TCPConfiguration* tconfig = dynamic_cast<TCPConfiguration*>(config);
+                if(tconfig) {
+                    config->setName(
+                                QString("TCP Link %1:%2").arg(tconfig->address().toString()).arg((int)tconfig->port()));
+                }
+            }
+                break;
+#ifdef QGC_ENABLE_BLUETOOTH
+            case LinkConfiguration::TypeBluetooth: {
+                BluetoothConfiguration* tconfig = dynamic_cast<BluetoothConfiguration*>(config);
+                if(tconfig) {
+                    config->setName(QString("%1 (Bluetooth Device)").arg(tconfig->device().name));
+                }
+            }
+                break;
+#endif
+#ifndef __mobile__
+            case LinkConfiguration::TypeLogReplay: {
+                LogReplayLinkConfiguration* tconfig = dynamic_cast<LogReplayLinkConfiguration*>(config);
+                if(tconfig) {
+                    config->setName(QString("Log Replay %1").arg(tconfig->logFilenameShort()));
+                }
+            }
+                break;
+#endif
+#ifdef QT_DEBUG
+            case LinkConfiguration::TypeMock:
+                config->setName(
+                            QString("Mock Link"));
+                break;
+#endif
+            case LinkConfiguration::TypeLast:
+            default:
+                break;
+            }
+        }
+    } else {
+        qWarning() << "Internal error";
+    }
+}
+
+void LinkManager::removeConfiguration(LinkConfiguration* config)
+{
+    if (config) {
+        LinkInterface* iface = config->link();
+        if(iface) {
+            disconnectLink(iface);
+        }
+
+        _removeConfiguration(config);
+        saveLinkConfigurationList();
+    } else {
+        qWarning() << "Internal error";
+    }
+}
+
+bool LinkManager::isAutoconnectLink(LinkInterface* link)
+{
+    for (int i=0; i<_sharedAutoconnectConfigurations.count(); i++) {
+        if (_sharedAutoconnectConfigurations[i].data() == link->getLinkConfiguration()) {
+            return true;
+        }
     }
     return false;
 }
 
-/**
- * The access time is linear in the number of links.
- *
- * @param id link identifier to search for
- * @return A pointer to the link or NULL if not found
- */
-LinkInterface* LinkManager::getLinkForId(int id)
+bool LinkManager::isBluetoothAvailable(void)
 {
-    dataMutex.lock();
-    LinkInterface* linkret = NULL;
-    foreach (LinkInterface* link, links)
-    {
-        if (link->getId() == id)
-        {
-            linkret = link;
+    return qgcApp()->isBluetoothAvailable();
+}
+
+#ifndef NO_SERIAL_LINK
+void LinkManager::_activeLinkCheck(void)
+{
+    SerialLink* link = NULL;
+    bool found = false;
+
+    if (_activeLinkCheckList.count() != 0) {
+        link = _activeLinkCheckList.takeFirst();
+        if (containsLink(link) && link->isConnected()) {
+            // Make sure there is a vehicle on the link
+            QmlObjectListModel* vehicles = _toolbox->multiVehicleManager()->vehicles();
+            for (int i=0; i<vehicles->count(); i++) {
+                Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles->get(i));
+                if (vehicle->containsLink(link)) {
+                    found = true;
+                    break;
+                }
+            }
+        } else {
+            link = NULL;
         }
     }
-    dataMutex.unlock();
-    return linkret;
-}
 
-/**
- *
- */
-const QList<LinkInterface*> LinkManager::getLinks()
-{
-    dataMutex.lock();
-    QList<LinkInterface*> ret(links);
-    dataMutex.unlock();
-    return ret;
-}
-
-const QList<SerialLink*> LinkManager::getSerialLinks()
-{
-    dataMutex.lock();
-    QList<SerialLink*> s;
-
-    foreach (LinkInterface* i, links)
-    {
-        SerialLink* link = qobject_cast<SerialLink*>(i);
-
-        if (link)
-            s.append(link);
+    if (_activeLinkCheckList.count() == 0) {
+        _activeLinkCheckTimer.stop();
     }
-    dataMutex.unlock();
 
-    return s;
+    if (!found && link) {
+        // See if we can get an NSH prompt on this link
+        bool foundNSHPrompt = false;
+        link->writeBytesSafe("\r", 1);
+        QSignalSpy spy(link, SIGNAL(bytesReceived(LinkInterface*, QByteArray)));
+        if (spy.wait(100)) {
+            QList<QVariant> arguments = spy.takeFirst();
+            if (arguments[1].value<QByteArray>().contains("nsh>")) {
+                foundNSHPrompt = true;
+            }
+        }
+
+        qgcApp()->showMessage(foundNSHPrompt ?
+                                  tr("Please check to make sure you have an SD Card inserted in your Vehicle and try again.") :
+                                  tr("Your Vehicle is not responding. If this continues, shutdown %1, restart the Vehicle letting it boot completely, then start %1.").arg(qgcApp()->applicationName()));
+    }
+}
+#endif
+
+bool LinkManager::containsLink(LinkInterface* link)
+{
+    for (int i=0; i<_sharedLinks.count(); i++) {
+        if (_sharedLinks[i].data() == link) {
+            return true;
+        }
+    }
+    return false;
+}
+
+SharedLinkConfigurationPointer LinkManager::addConfiguration(LinkConfiguration* config)
+{
+    _qmlConfigurations.append(config);
+    _sharedConfigurations.append(SharedLinkConfigurationPointer(config));
+    return _sharedConfigurations.last();
+}
+
+void LinkManager::_removeConfiguration(LinkConfiguration* config)
+{
+    _qmlConfigurations.removeOne(config);
+
+    for (int i=0; i<_sharedConfigurations.count(); i++) {
+        if (_sharedConfigurations[i].data() == config) {
+            _sharedConfigurations.removeAt(i);
+            return;
+        }
+    }
+
+    qWarning() << "LinkManager::_removeConfiguration called with unknown config";
+}
+
+QList<LinkInterface*> LinkManager::links(void)
+{
+    QList<LinkInterface*> rawLinks;
+
+    for (int i=0; i<_sharedLinks.count(); i++) {
+        rawLinks.append(_sharedLinks[i].data());
+    }
+
+    return rawLinks;
+}
+
+void LinkManager::startAutoConnectedLinks(void)
+{
+    SharedLinkConfigurationPointer conf;
+
+    for(int i = 0; i < _sharedConfigurations.count(); i++) {
+        conf = _sharedConfigurations[i];
+        if (conf->isAutoConnect())
+            createConnectedLink(conf);
+    }
 }

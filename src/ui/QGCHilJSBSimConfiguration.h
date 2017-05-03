@@ -5,7 +5,7 @@
 
 #include "QGCHilLink.h"
 #include "QGCFlightGearLink.h"
-#include "UAS.h"
+#include "Vehicle.h"
 
 namespace Ui {
 class QGCHilJSBSimConfiguration;
@@ -16,17 +16,16 @@ class QGCHilJSBSimConfiguration : public QWidget
     Q_OBJECT
     
 public:
-    explicit QGCHilJSBSimConfiguration(UAS* mav, QWidget *parent = 0);
+    explicit QGCHilJSBSimConfiguration(Vehicle* vehicle, QWidget *parent = 0);
     ~QGCHilJSBSimConfiguration();
 
-protected:
-    UAS* mav;
-    
 private slots:
     void on_startButton_clicked();
     void on_stopButton_clicked();
 
 private:
+    Vehicle*    _vehicle;
+
     Ui::QGCHilJSBSimConfiguration *ui;
 };
 

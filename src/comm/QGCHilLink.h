@@ -49,7 +49,6 @@ public slots:
     virtual void setRemoteHost(const QString& host) = 0;
     /** @brief Send new control states to the simulation */
     virtual void updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode) = 0;
-    virtual void updateActuators(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8) = 0;
     virtual void processError(QProcess::ProcessError err) = 0;
     /** @brief Set the simulator version as text string */
     virtual void setVersion(const QString& version) = 0;
@@ -65,12 +64,25 @@ public slots:
      * @param data Pointer to the data byte array
      * @param size The size of the bytes array
      **/
-    virtual void writeBytes(const char* data, qint64 length) = 0;
+    void writeBytesSafe(const char* data, int length)
+    {
+        emit _invokeWriteBytes(QByteArray(data, length));
+    }
+
     virtual bool connectSimulation() = 0;
     virtual bool disconnectSimulation() = 0;
 
+private slots:
+    virtual void _writeBytes(const QByteArray) = 0;
+
 protected:
     virtual void setName(QString name) = 0;
+
+    QGCHilLink() :
+        QThread()
+    {
+        connect(this, &QGCHilLink::_invokeWriteBytes, this, &QGCHilLink::_writeBytes);
+    }
 
 signals:
     /**
@@ -82,6 +94,11 @@ signals:
      * @brief This signal is emitted instantly when the link is disconnected
      **/
     void simulationDisconnected();
+
+    /**
+     * @brief Thread safe signal to disconnect simulator from other threads
+     **/
+    void disconnectSim();
 
     /**
      * @brief This signal is emitted instantly when the link status changes
@@ -126,6 +143,9 @@ signals:
 
     /** @brief Sensor leve HIL state changed */
     void sensorHilChanged(bool enabled);
+
+    /** @brief Helper signal to force execution on the correct thread */
+    void _invokeWriteBytes(QByteArray);
 };
 
 #endif // QGCHILLINK_H

@@ -1,3 +1,13 @@
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
+
 #include <QSettings>
 
 #include "QGCHilConfiguration.h"
@@ -6,11 +16,12 @@
 #include "QGCHilFlightGearConfiguration.h"
 #include "QGCHilJSBSimConfiguration.h"
 #include "QGCHilXPlaneConfiguration.h"
+#include "UAS.h"
 
-QGCHilConfiguration::QGCHilConfiguration(UAS *mav, QWidget *parent) :
-    QWidget(parent),
-    mav(mav),
-    ui(new Ui::QGCHilConfiguration)
+QGCHilConfiguration::QGCHilConfiguration(Vehicle* vehicle, QWidget *parent)
+    : QWidget(parent)
+    , _vehicle(vehicle)
+    , ui(new Ui::QGCHilConfiguration)
 {
     ui->setupUi(this);
 
@@ -42,7 +53,6 @@ QGCHilConfiguration::~QGCHilConfiguration()
     settings.beginGroup("QGC_HILCONFIG");
     settings.setValue("SIMULATOR_INDEX", ui->simComboBox->currentIndex());
     settings.endGroup();
-    settings.sync();
     delete ui;
 }
 
@@ -64,44 +74,46 @@ void QGCHilConfiguration::on_simComboBox_currentIndexChanged(int index)
     if(1 == index)
     {
         // Ensure the sim exists and is disabled
-        mav->enableHilFlightGear(false, "", true, this);
-        QGCHilFlightGearConfiguration* hfgconf = new QGCHilFlightGearConfiguration(mav, this);
+        _vehicle->uas()->enableHilFlightGear(false, "", true, this);
+        QGCHilFlightGearConfiguration* hfgconf = new QGCHilFlightGearConfiguration(_vehicle, this);
         hfgconf->show();
         ui->simulatorConfigurationLayout->addWidget(hfgconf);
-        QGCFlightGearLink* fg = dynamic_cast<QGCFlightGearLink*>(mav->getHILSimulation());
+        QGCFlightGearLink* fg = dynamic_cast<QGCFlightGearLink*>(_vehicle->uas()->getHILSimulation());
         if (fg)
         {
-            connect(fg, SIGNAL(statusMessage(QString)), ui->statusLabel, SLOT(setText(QString)));
+            connect(fg, &QGCFlightGearLink::statusMessage, ui->statusLabel, &QLabel::setText);
         }
 
     }
     else if (2 == index || 3 == index)
     {
         // Ensure the sim exists and is disabled
-        mav->enableHilXPlane(false);
-        QGCHilXPlaneConfiguration* hxpconf = new QGCHilXPlaneConfiguration(mav->getHILSimulation(), this);
+        _vehicle->uas()->enableHilXPlane(false);
+        QGCHilXPlaneConfiguration* hxpconf = new QGCHilXPlaneConfiguration(_vehicle->uas()->getHILSimulation(), this);
         hxpconf->show();
         ui->simulatorConfigurationLayout->addWidget(hxpconf);
 
         // Select correct version of XPlane
-        QGCXPlaneLink* xplane = dynamic_cast<QGCXPlaneLink*>(mav->getHILSimulation());
+        QGCXPlaneLink* xplane = dynamic_cast<QGCXPlaneLink*>(_vehicle->uas()->getHILSimulation());
         if (xplane)
         {
             xplane->setVersion((index == 2) ? 10 : 9);
-            connect(xplane, SIGNAL(statusMessage(QString)), ui->statusLabel, SLOT(setText(QString)));
+            connect(xplane, &QGCXPlaneLink::statusMessage, ui->statusLabel, &QLabel::setText);
         }
     }
-    else if (4)
-    {
-        // Ensure the sim exists and is disabled
-        mav->enableHilJSBSim(false, "");
-        QGCHilJSBSimConfiguration* hfgconf = new QGCHilJSBSimConfiguration(mav, this);
-        hfgconf->show();
-        ui->simulatorConfigurationLayout->addWidget(hfgconf);
-        QGCJSBSimLink* jsb = dynamic_cast<QGCJSBSimLink*>(mav->getHILSimulation());
-        if (jsb)
-        {
-            connect(jsb, SIGNAL(statusMessage(QString)), ui->statusLabel, SLOT(setText(QString)));
-        }
-    }
+// Disabling JSB Sim since its not well maintained,
+// but as refactoring is pending we're not ditching the code yet
+//    else if (4)
+//    {
+//        // Ensure the sim exists and is disabled
+//        _vehicle->uas()->enableHilJSBSim(false, "");
+//        QGCHilJSBSimConfiguration* hfgconf = new QGCHilJSBSimConfiguration(_vehicle, this);
+//        hfgconf->show();
+//        ui->simulatorConfigurationLayout->addWidget(hfgconf);
+//        QGCJSBSimLink* jsb = dynamic_cast<QGCJSBSimLink*>(_vehicle->uas()->getHILSimulation());
+//        if (jsb)
+//        {
+//            connect(jsb, SIGNAL(statusMessage(QString)), ui->statusLabel, SLOT(setText(QString)));
+//        }
+//    }
 }

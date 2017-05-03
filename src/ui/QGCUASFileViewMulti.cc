@@ -1,58 +1,59 @@
 #include "QGCUASFileViewMulti.h"
 #include "ui_QGCUASFileViewMulti.h"
 #include "UASInterface.h"
-#include "UASManager.h"
+#include "MultiVehicleManager.h"
 #include "QGCUASFileView.h"
+#include "QGCApplication.h"
 
-QGCUASFileViewMulti::QGCUASFileViewMulti(QWidget *parent) :
-    QWidget(parent),
+QGCUASFileViewMulti::QGCUASFileViewMulti(const QString& title, QAction* action, QWidget *parent) :
+    QGCDockWidget(title, action, parent),
     ui(new Ui::QGCUASFileViewMulti)
 {
     ui->setupUi(this);
     setMinimumSize(600, 80);
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(systemCreated(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(activeUASSet(int)), this, SLOT(systemSetActive(int)));
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &QGCUASFileViewMulti::_activeVehicleChanged);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &QGCUASFileViewMulti::_vehicleAdded);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved, this, &QGCUASFileViewMulti::_vehicleRemoved);
 
-    if (UASManager::instance()->getActiveUAS()) {
-        systemCreated(UASManager::instance()->getActiveUAS());
-        systemSetActive(UASManager::instance()->getActiveUAS()->getUASID());
+    if (qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()) {
+        _vehicleAdded(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
+        _activeVehicleChanged(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
     }
-
+    
+    loadSettings();
 }
 
-void QGCUASFileViewMulti::systemDeleted(QObject* uas)
+void QGCUASFileViewMulti::_vehicleRemoved(Vehicle* vehicle)
 {
-    UASInterface* mav = dynamic_cast<UASInterface*>(uas);
-    if (mav)
-    {
-        int id = mav->getUASID();
-        QGCUASFileView* list = lists.value(id, NULL);
-        if (list)
-        {
-            delete list;
-            lists.remove(id);
-        }
-    }
-}
-
-void QGCUASFileViewMulti::systemCreated(UASInterface* uas)
-{
-    if (!uas) {
-        return;
-    }
-
-    QGCUASFileView* list = new QGCUASFileView(ui->stackedWidget, uas->getFileManager());
-    lists.insert(uas->getUASID(), list);
-    ui->stackedWidget->addWidget(list);
-    // Ensure widget is deleted when system is deleted
-    connect(uas, SIGNAL(destroyed(QObject*)), this, SLOT(systemDeleted(QObject*)));
-}
-
-void QGCUASFileViewMulti::systemSetActive(int uas)
-{
+    UAS* uas = vehicle->uas();
+    Q_ASSERT(uas);
+    
     QGCUASFileView* list = lists.value(uas, NULL);
-    if (list) {
-        ui->stackedWidget->setCurrentWidget(list);
+    if (list)
+    {
+        delete list;
+        lists.remove(uas);
+    }
+}
+
+void QGCUASFileViewMulti::_vehicleAdded(Vehicle* vehicle)
+{
+    UAS* uas = vehicle->uas();
+    
+    if (!lists.contains(uas)) {
+        QGCUASFileView* list = new QGCUASFileView(ui->stackedWidget, vehicle);
+        lists.insert(uas, list);
+        ui->stackedWidget->addWidget(list);
+    }
+}
+
+void QGCUASFileViewMulti::_activeVehicleChanged(Vehicle* vehicle)
+{
+    if (vehicle) {
+        QGCUASFileView* list = lists.value(vehicle->uas(), NULL);
+        if (list) {
+            ui->stackedWidget->setCurrentWidget(list);
+        }
     }
 }
 

@@ -1,0 +1,4 @@
+qgroundcontrol.desktop usr/share/applications
+release/qgroundcontrol usr/bin
+resources/ usr/share/qgroundcontrol
+resources/icons/qgroundcontrol.png usr/share/pixmaps

@@ -57,11 +57,11 @@ struct permut_sparsematrix_product_retval
       if(MoveOuter)
       {
         SparseMatrix<Scalar,SrcStorageOrder,Index> tmp(m_matrix.rows(), m_matrix.cols());
-        VectorXi sizes(m_matrix.outerSize());
+        Matrix<Index,Dynamic,1> sizes(m_matrix.outerSize());
         for(Index j=0; j<m_matrix.outerSize(); ++j)
         {
           Index jp = m_permutation.indices().coeff(j);
-          sizes[((Side==OnTheLeft) ^ Transposed) ? jp : j] = m_matrix.innerVector(((Side==OnTheRight) ^ Transposed) ? jp : j).size();
+          sizes[((Side==OnTheLeft) ^ Transposed) ? jp : j] = m_matrix.innerVector(((Side==OnTheRight) ^ Transposed) ? jp : j).nonZeros();
         }
         tmp.reserve(sizes);
         for(Index j=0; j<m_matrix.outerSize(); ++j)
@@ -77,7 +77,7 @@ struct permut_sparsematrix_product_retval
       else
       {
         SparseMatrix<Scalar,int(SrcStorageOrder)==RowMajor?ColMajor:RowMajor,Index> tmp(m_matrix.rows(), m_matrix.cols());
-        VectorXi sizes(tmp.outerSize());
+        Matrix<Index,Dynamic,1> sizes(tmp.outerSize());
         sizes.setZero();
         PermutationMatrix<Dynamic,Dynamic,Index> perm;
         if((Side==OnTheLeft) ^ Transposed)

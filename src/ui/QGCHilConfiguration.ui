@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>HIL Config</string>
   </property>
   <layout class="QGridLayout" name="gridLayout" rowstretch="1,100,1" columnstretch="40,0">
    <item row="0" column="0">
@@ -52,11 +52,6 @@
        <string>X-Plane 9</string>
       </property>
      </item>
-     <item>
-      <property name="text">
-       <string>JSBSim</string>
-      </property>
-     </item>
     </widget>
    </item>
    <item row="1" column="0" colspan="2">
@@ -69,7 +64,7 @@
    <item row="2" column="0" colspan="2">
     <widget class="QLabel" name="statusLabel">
      <property name="text">
-      <string></string>
+      <string/>
      </property>
     </widget>
    </item>

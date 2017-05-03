@@ -15,7 +15,8 @@
 #include "Mouse3DInput.h"
 #endif //QGC_MOUSE_ENABLED_WIN
 
-#include "UASInterface.h"
+#include "UAS.h"
+#include "Vehicle.h"
 
 class Mouse6dofInput : public QThread
 {
@@ -37,7 +38,7 @@ public:
 protected:
     void init();
 
-    UASInterface* uas;
+    UAS* uas;
     bool done;
     bool mouseActive;
     bool translationActive;
@@ -77,7 +78,6 @@ signals:
     void mouseRotationActiveChanged(bool rotationEnable);
 
 public slots:
-    void setActiveUAS(UASInterface* uas);
 #ifdef QGC_MOUSE_ENABLED_WIN
     /** @brief Get a motion input from 3DMouse */
     void motion3DMouse(std::vector<float> &motionData);
@@ -89,6 +89,8 @@ public slots:
     void handleX11Event(XEvent* event);
 #endif //QGC_MOUSE_ENABLED_LINUX
 
+private slots:
+    void _activeVehicleChanged(Vehicle* vehicle);
 };
 
 #endif // MOUSE6DOFINPUT_H

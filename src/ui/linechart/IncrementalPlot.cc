@@ -1,25 +1,12 @@
-/*=====================================================================
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
 
 /**
  * @file
@@ -56,7 +43,7 @@ void CurveData::append(double *x, double *y, int count)
         d_y.resize(newSize);
     }
 
-    for ( register int i = 0; i < count; i++ ) {
+    for ( int i = 0; i < count; i++ ) {
         d_x[d_count + i] = x[i];
         d_y[d_count + i] = y[i];
     }
@@ -141,7 +128,7 @@ void IncrementalPlot::showLegend(bool show)
 }
 
 /**
- * Set datapoint and line style. This interface is intented
+ * Set datapoint and line style. This interface is intended
  * to be directly connected to the UI and allows to parse
  * human-readable, textual descriptions into plot specs.
  *
@@ -156,7 +143,7 @@ void IncrementalPlot::showLegend(bool show)
 void IncrementalPlot::setStyleText(const QString &style)
 {
     styleText = style.toLower();
-    foreach (QwtPlotCurve* curve, curves) {
+    foreach (QwtPlotCurve* curve, _curves) {
         updateStyle(curve);
     }
     replot();
@@ -174,24 +161,24 @@ void IncrementalPlot::updateStyle(QwtPlotCurve *curve)
     // Update the symbol style
     QwtSymbol *newSymbol = NULL;
     if (styleText.contains("circles")) {
-        newSymbol = new QwtSymbol(QwtSymbol::Ellipse, Qt::NoBrush, QPen(oldColor, symbolWidth), QSize(6, 6));
+        newSymbol = new QwtSymbol(QwtSymbol::Ellipse, Qt::NoBrush, QPen(oldColor, _symbolWidth), QSize(6, 6));
     } else if (styleText.contains("crosses")) {
-        newSymbol = new QwtSymbol(QwtSymbol::XCross, Qt::NoBrush, QPen(oldColor, symbolWidth), QSize(5, 5));
+        newSymbol = new QwtSymbol(QwtSymbol::XCross, Qt::NoBrush, QPen(oldColor, _symbolWidth), QSize(5, 5));
     } else if (styleText.contains("rect")) {
-        newSymbol = new QwtSymbol(QwtSymbol::Rect, Qt::NoBrush, QPen(oldColor, symbolWidth), QSize(6, 6));
+        newSymbol = new QwtSymbol(QwtSymbol::Rect, Qt::NoBrush, QPen(oldColor, _symbolWidth), QSize(6, 6));
     }
     // Else-case already handled by NULL value, which indicates no symbol
     curve->setSymbol(newSymbol);
 
     // Update the line style
     if (styleText.contains("dotted")) {
-        curve->setPen(QPen(oldColor, curveWidth, Qt::DotLine));
+        curve->setPen(QPen(oldColor, _curveWidth, Qt::DotLine));
     } else if (styleText.contains("dashed")) {
-        curve->setPen(QPen(oldColor, curveWidth, Qt::DashLine));
+        curve->setPen(QPen(oldColor, _curveWidth, Qt::DashLine));
     } else if (styleText.contains("line") || styleText.contains("solid")) {
-        curve->setPen(QPen(oldColor, curveWidth, Qt::SolidLine));
+        curve->setPen(QPen(oldColor, _curveWidth, Qt::SolidLine));
     } else {
-        curve->setPen(QPen(oldColor, curveWidth, Qt::NoPen));
+        curve->setPen(QPen(oldColor, _curveWidth, Qt::NoPen));
     }
     curve->setStyle(QwtPlotCurve::Lines);
 }
@@ -254,7 +241,6 @@ void IncrementalPlot::updateScale()
     }
     setAxisScale(xBottom, xMinRange, xMaxRange);
     setAxisScale(yLeft, yMinRange, yMaxRange);
-    zoomer->setZoomBase(true);
 }
 
 void IncrementalPlot::appendData(const QString &key, double x, double y)
@@ -274,22 +260,22 @@ void IncrementalPlot::appendData(const QString &key, double *x, double *y, int s
     }
 
     // If this is a new curve, create it.
-    if (!curves.contains(key)) {
+    if (!_curves.contains(key)) {
         curve = new QwtPlotCurve(key);
-        curves.insert(key, curve);
+        _curves.insert(key, curve);
         curve->setStyle(QwtPlotCurve::NoCurve);
         curve->setPaintAttribute(QwtPlotCurve::FilterPoints);
 
         // Set the color. Only the pen needs to be set
         const QColor &c = getNextColor();
-        curve->setPen(c, symbolWidth);
+        curve->setPen(c, _symbolWidth);
 
         qDebug() << "Creating curve" << key << "with color" << c;
 
         updateStyle(curve);
         curve->attach(this);
     } else {
-        curve = curves.value(key);
+        curve = _curves.value(key);
     }
 
     data->append(x, y, size);
@@ -373,21 +359,21 @@ int IncrementalPlot::data(const QString &key, double* r_x, double* r_y, int maxS
  */
 void IncrementalPlot::showGrid(bool show)
 {
-    grid->setVisible(show);
+    _grid->setVisible(show);
     replot();
 }
 
 bool IncrementalPlot::gridEnabled() const
 {
-    return grid->isVisible();
+    return _grid->isVisible();
 }
 
 void IncrementalPlot::removeData()
 {
-    foreach (QwtPlotCurve* curve, curves) {
+    foreach (QwtPlotCurve* curve, _curves) {
         delete curve;
     }
-    curves.clear();
+    _curves.clear();
 
     foreach (CurveData* data, d_data) {
         delete data;

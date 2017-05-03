@@ -1,0 +1,18 @@
+[
+{
+    "name":             "MapProvider",
+    "shortDescription": "Currently selected map provider for flight maps",
+    "type":             "uint32",
+    "enumStrings":      "Bing,Google,Statkart",
+    "enumValues":       "0,1,2",
+    "defaultValue":     0
+},
+{
+    "name":             "MapType",
+    "shortDescription": "Currently selected map type for flight maps",
+    "type":             "uint32",
+    "enumStrings":      "Street Map,Satellite Map,Hybrid Map,Terrain Map",
+    "enumValues":       "0,1,2,3",
+    "defaultValue":     2
+}
+]
