@@ -64,7 +64,6 @@ public:
 
     Q_PROPERTY(QmlObjectListModel*  visualItems             READ visualItems                NOTIFY visualItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines              NOTIFY waypointLinesChanged)
-    Q_PROPERTY(QmlObjectListModel*  cameraPoints            READ cameraPoints               CONSTANT)
     Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
     Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition        NOTIFY plannedHomePositionChanged)
 
@@ -106,8 +105,6 @@ public:
     /// Sends the mission items to the specified vehicle
     static void sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems);
 
-    Q_INVOKABLE void clearCameraPoints(void);
-
     bool loadJsonFile(QFile& file, QString& errorString);
     bool loadTextFile(QFile& file, QString& errorString);
 
@@ -130,7 +127,6 @@ public:
 
     QmlObjectListModel* visualItems             (void) { return _visualItems; }
     QmlObjectListModel* waypointLines           (void) { return &_waypointLines; }
-    QmlObjectListModel* cameraPoints            (void) { return &_cameraPoints; }
     QStringList         complexMissionItemNames (void) const;
     QGeoCoordinate      plannedHomePosition     (void) const;
     double              progressPct             (void) const { return _progressPct; }
@@ -178,11 +174,10 @@ private slots:
     void _recalcWaypointLines(void);
     void _recalcMissionFlightStatus(void);
     void _updateContainsItems(void);
-    void _cameraFeedback(QGeoCoordinate imageCoordinate, int index);
     void _progressPctChanged(double progressPct);
     void _visualItemsDirtyChanged(bool dirty);
-    void _managerSendComplete(void);
-    void _managerRemoveAllComplete(void);
+    void _managerSendComplete(bool error);
+    void _managerRemoveAllComplete(bool error);
 
 private:
     void _init(void);
@@ -220,7 +215,6 @@ private:
     QmlObjectListModel*     _visualItems;
     MissionSettingsItem*    _settingsItem;
     QmlObjectListModel      _waypointLines;
-    QmlObjectListModel      _cameraPoints;
     CoordVectHashTable      _linesTable;
     bool                    _firstItemsFromVehicle;
     bool                    _itemsRequested;
