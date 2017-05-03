@@ -29,7 +29,7 @@
     "name":             "GimbalPitch",
     "shortDescription": "Gimbal pitch rotation.",
     "type":             "double",
-    "units":            "deg",
+    "units":            "gimbal-degrees",
     "min":              -90,
     "max":              0,
     "decimalPlaces":    0,

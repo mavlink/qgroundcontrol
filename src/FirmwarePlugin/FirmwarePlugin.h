@@ -303,7 +303,7 @@ public:
 protected:
     // Arms the vehicle, waiting for the arm state to change.
     // @return: true - vehicle armed, false - vehicle failed to arm
-    bool _armVehicle(Vehicle* vehicle);
+    bool _armVehicleAndValidate(Vehicle* vehicle);
 
 private:
     QVariantList _toolBarIndicatorList;
