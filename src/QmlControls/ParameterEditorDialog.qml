@@ -138,7 +138,9 @@ QGCViewDialog {
                 }
 
                 onCurrentIndexChanged: {
-                    valueField.text = fact.enumValues[currentIndex]
+                    if (currentIndex >=0 && currentIndex < model.length) {
+                        valueField.text = fact.enumValues[currentIndex]
+                    }
                 }
             }
 

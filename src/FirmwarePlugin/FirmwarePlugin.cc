@@ -435,7 +435,7 @@ bool FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) 
     return vehicle->multiRotor() ? false : true;
 }
 
-bool FirmwarePlugin::_armVehicle(Vehicle* vehicle)
+bool FirmwarePlugin::_armVehicleAndValidate(Vehicle* vehicle)
 {
     if (!vehicle->armed()) {
         vehicle->setArmed(true);
