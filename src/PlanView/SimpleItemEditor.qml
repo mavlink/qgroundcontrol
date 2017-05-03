@@ -12,148 +12,130 @@ import QGroundControl.Palette       1.0
 
 // Editor for Simple mission items
 Rectangle {
-    id:                 valuesRect
-    width:              availableWidth
-    height:             deferedload.status == Loader.Ready ? (visible ? deferedload.item.height : 0) : 0
-    color:              qgcPal.windowShadeDark
-    visible:            missionItem.isCurrentItem
-    radius:             _radius
+    width:  availableWidth
+    height: valuesColumn.height + _margin
+    color:  qgcPal.windowShadeDark
+    radius: _radius
 
-    Loader {
-        id:              deferedload
-        active:          valuesRect.visible
-        asynchronous:    true
-        anchors.margins: _margin
-        anchors.left:    valuesRect.left
-        anchors.right:   valuesRect.right
-        anchors.top:     valuesRect.top
+    Column {
+        id:                 valuesColumn
+        anchors.margins:    _margin
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        anchors.top:        parent.top
+        spacing:            _margin
 
-        sourceComponent: Component {
-            Item {
-                id:                 valuesItem
-                height:             valuesColumn.height + (_margin * 2)
+        QGCLabel {
+            width:          parent.width
+            wrapMode:       Text.WordWrap
+            font.pointSize: ScreenTools.smallFontPointSize
+            text:           missionItem.rawEdit ?
+                                qsTr("Provides advanced access to all commands/parameters. Be very careful!") :
+                                missionItem.commandDescription
+        }
 
-                Column {
-                    id:             valuesColumn
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    anchors.top:    parent.top
-                    spacing:        _margin
+        GridLayout {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            columns:        2
 
-                    QGCLabel {
-                        width:          parent.width
-                        wrapMode:       Text.WordWrap
-                        font.pointSize: ScreenTools.smallFontPointSize
-                        text:           missionItem.rawEdit ?
-                                            qsTr("Provides advanced access to all commands/parameters. Be very careful!") :
-                                            missionItem.commandDescription
-                    }
+            Repeater {
+                model: missionItem.comboboxFacts
 
-                    GridLayout {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        columns:        2
+                QGCLabel {
+                    text:           object.name
+                    visible:        object.name != ""
+                    Layout.column:  0
+                    Layout.row:     index
+                }
+            }
 
-                        Repeater {
-                            model: missionItem.comboboxFacts
+            Repeater {
+                model: missionItem.comboboxFacts
 
-                            QGCLabel {
-                                text:           object.name
-                                visible:        object.name != ""
-                                Layout.column:  0
-                                Layout.row:     index
-                            }
-                        }
+                FactComboBox {
+                    indexModel:         false
+                    model:              object.enumStrings
+                    fact:               object
+                    Layout.column:      1
+                    Layout.row:         index
+                    Layout.fillWidth:   true
+                }
+            }
+        }
 
-                        Repeater {
-                            model: missionItem.comboboxFacts
+        GridLayout {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            flow:           GridLayout.TopToBottom
+            rows:           missionItem.textFieldFacts.count + missionItem.nanFacts.count + (missionItem.speedSection.available ? 1 : 0)
+            columns:        2
 
-                            FactComboBox {
-                                indexModel:         false
-                                model:              object.enumStrings
-                                fact:               object
-                                Layout.column:      1
-                                Layout.row:         index
-                                Layout.fillWidth:   true
-                            }
-                        }
-                    }
+            Repeater {
+                model: missionItem.textFieldFacts
 
-                    GridLayout {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        flow:           GridLayout.TopToBottom
-                        rows:           missionItem.textFieldFacts.count + missionItem.nanFacts.count + (missionItem.speedSection.available ? 1 : 0)
-                        columns:        2
+                QGCLabel { text: object.name }
+            }
 
-                        Repeater {
-                            model: missionItem.textFieldFacts
+            Repeater {
+                model: missionItem.nanFacts
 
-                            QGCLabel { text: object.name }
-                        }
+                QGCCheckBox {
+                    text:           object.name
+                    checked:        !isNaN(object.rawValue)
+                    onClicked:      object.rawValue = checked ? 0 : NaN
+                }
+            }
 
-                        Repeater {
-                            model: missionItem.nanFacts
+            QGCCheckBox {
+                id:         flightSpeedCheckbox
+                text:       qsTr("Flight Speed")
+                checked:    missionItem.speedSection.specifyFlightSpeed
+                onClicked:  missionItem.speedSection.specifyFlightSpeed = checked
+                visible:    missionItem.speedSection.available
+            }
 
-                            QGCCheckBox {
-                                text:           object.name
-                                checked:        !isNaN(object.rawValue)
-                                onClicked:      object.rawValue = checked ? 0 : NaN
-                            }
-                        }
+            Repeater {
+                model: missionItem.textFieldFacts
 
-                        QGCCheckBox {
-                            id:         flightSpeedCheckbox
-                            text:       qsTr("Flight Speed")
-                            checked:    missionItem.speedSection.specifyFlightSpeed
-                            onClicked:  missionItem.speedSection.specifyFlightSpeed = checked
-                            visible:    missionItem.speedSection.available
-                        }
+                FactTextField {
+                    showUnits:          true
+                    fact:               object
+                    Layout.fillWidth:   true
+                }
+            }
 
-                        Repeater {
-                            model: missionItem.textFieldFacts
+            Repeater {
+                model: missionItem.nanFacts
 
-                            FactTextField {
-                                showUnits:          true
-                                fact:               object
-                                Layout.fillWidth:   true
-                            }
-                        }
+                FactTextField {
+                    showUnits:          true
+                    fact:               object
+                    Layout.fillWidth:   true
+                    enabled:            !isNaN(object.rawValue)
+                }
+            }
 
-                        Repeater {
-                            model: missionItem.nanFacts
+            FactTextField {
+                fact:               missionItem.speedSection.flightSpeed
+                Layout.fillWidth:   true
+                enabled:            flightSpeedCheckbox.checked
+                visible:            missionItem.speedSection.available
+            }
+        }
 
-                            FactTextField {
-                                showUnits:          true
-                                fact:               object
-                                Layout.fillWidth:   true
-                                enabled:            !isNaN(object.rawValue)
-                            }
-                        }
+        Repeater {
+            model: missionItem.checkboxFacts
 
-                        FactTextField {
-                            fact:               missionItem.speedSection.flightSpeed
-                            Layout.fillWidth:   true
-                            enabled:            flightSpeedCheckbox.checked
-                            visible:            missionItem.speedSection.available
-                        }
-                    }
+            FactCheckBox {
+                text:   object.name
+                fact:   object
+            }
+        }
 
-                    Repeater {
-                        model: missionItem.checkboxFacts
-
-                        FactCheckBox {
-                            text:   object.name
-                            fact:   object
-                        }
-                    }
-
-                    CameraSection {
-                        checked:    missionItem.cameraSection.settingsSpecified
-                        visible:    missionItem.cameraSection.available
-                    }
-                } // Column
-            } // Item
-        } // Component
-    } // Loader
+        CameraSection {
+            checked:    missionItem.cameraSection.settingsSpecified
+            visible:    missionItem.cameraSection.available
+        }
+    } // Column
 } // Rectangle
