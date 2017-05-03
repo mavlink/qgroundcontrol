@@ -352,6 +352,29 @@ void PX4FirmwarePlugin::guidedModeOrbit(Vehicle* vehicle, const QGeoCoordinate& 
                             centerCoord.isValid() ? centerCoord.altitude()  : NAN);
 }
 
+void PX4FirmwarePlugin::_mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle)
+{
+    Q_UNUSED(vehicleId);
+    Q_UNUSED(component);
+    Q_UNUSED(noReponseFromVehicle);
+
+    Vehicle* vehicle = dynamic_cast<Vehicle*>(sender());
+    if (!vehicle) {
+        qWarning() << "Dynamic cast failed!";
+        return;
+    }
+
+    if (command == MAV_CMD_NAV_TAKEOFF && result == MAV_RESULT_ACCEPTED) {
+        // Now that we are in takeoff mode we can arm the vehicle which will cause it to takeoff.
+        // We specifically don't retry arming if it fails. This way we don't fight with the user if
+        // They are trying to disarm.
+        disconnect(vehicle, &Vehicle::mavCommandResult, this, &PX4FirmwarePlugin::_mavCommandResult);
+        if (!vehicle->armed()) {
+            vehicle->setArmed(true);
+        }
+    }
+}
+
 void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
 {
     QString takeoffAltParam("MIS_TAKEOFF_ALT");
@@ -367,11 +390,7 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
     }
     Fact* takeoffAlt = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, takeoffAltParam);
 
-    if (!_armVehicle(vehicle)) {
-        qgcApp()->showMessage(tr("Unable to takeoff: Vehicle failed to arm."));
-        return;
-    }
-
+    connect(vehicle, &Vehicle::mavCommandResult, this, &PX4FirmwarePlugin::_mavCommandResult);
     vehicle->sendMavCommand(vehicle->defaultComponentId(),
                             MAV_CMD_NAV_TAKEOFF,
                             true,                           // show error is fails
@@ -436,7 +455,7 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 
 void PX4FirmwarePlugin::startMission(Vehicle* vehicle)
 {
-    if (!_armVehicle(vehicle)) {
+    if (!_armVehicleAndValidate(vehicle)) {
         qgcApp()->showMessage(tr("Unable to start mission: Vehicle failed to arm."));
         return;
     }
