@@ -171,25 +171,12 @@ void LinkManager::_addLink(LinkInterface* link)
     }
 
     if (!containsLink(link)) {
-        bool channelSet = false;
-
-        // Find a mavlink channel to use for this link, Channel 0 is reserved for internal use.
-        for (int i=1; i<32; i++) {
-            if (!(_mavlinkChannelsUsedBitMask & 1 << i)) {
-                mavlink_reset_channel_status(i);
-                link->_setMavlinkChannel(i);
-                // Start the channel on Mav 1 protocol
-                mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(i);
-                mavlinkStatus->flags = mavlink_get_channel_status(i)->flags | MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
-                qDebug() << "LinkManager mavlinkStatus:channel:flags" << mavlinkStatus << i << mavlinkStatus->flags;
-                _mavlinkChannelsUsedBitMask |= 1 << i;
-                channelSet = true;
-                break;
-            }
-        }
-
-        if (!channelSet) {
+        int mavlinkChannel = _reserveMavlinkChannel();
+        if (mavlinkChannel != 0) {
+            link->_setMavlinkChannel(mavlinkChannel);
+        } else {
             qWarning() << "Ran out of mavlink channels";
+            return;
         }
 
         _sharedLinks.append(SharedLinkInterfacePointer(link));
@@ -260,7 +247,7 @@ void LinkManager::_deleteLink(LinkInterface* link)
     }
 
     // Free up the mavlink channel associated with this link
-    _mavlinkChannelsUsedBitMask &= ~(1 << link->mavlinkChannel());
+    _freeMavlinkChannel(link->mavlinkChannel());
 
     for (int i=0; i<_sharedLinks.count(); i++) {
         if (_sharedLinks[i].data() == link) {
@@ -924,4 +911,26 @@ void LinkManager::startAutoConnectedLinks(void)
         if (conf->isAutoConnect())
             createConnectedLink(conf);
     }
+}
+
+int LinkManager::_reserveMavlinkChannel(void)
+{
+    // Find a mavlink channel to use for this link, Channel 0 is reserved for internal use.
+    for (int mavlinkChannel=1; mavlinkChannel<32; mavlinkChannel++) {
+        if (!(_mavlinkChannelsUsedBitMask & 1 << mavlinkChannel)) {
+            mavlink_reset_channel_status(mavlinkChannel);
+            // Start the channel on Mav 1 protocol
+            mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
+            mavlinkStatus->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+            _mavlinkChannelsUsedBitMask |= 1 << mavlinkChannel;
+            return mavlinkChannel;
+        }
+    }
+
+    return 0;   // All channels reserved
+}
+
+void LinkManager::_freeMavlinkChannel(int channel)
+{
+    _mavlinkChannelsUsedBitMask &= ~(1 << channel);
 }
