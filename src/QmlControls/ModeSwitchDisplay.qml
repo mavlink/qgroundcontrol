@@ -8,9 +8,9 @@
  ****************************************************************************/
 
 
-import QtQuick 2.2
+import QtQuick 2.3
 import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.2
+import QtQuick.Controls.Styles 1.4
 
 import QGroundControl.Palette 1.0
 import QGroundControl.ScreenTools 1.0
@@ -89,7 +89,7 @@ Rectangle {
                 spacing:    ScreenTools.defaultFontPixelWidth * 2
 
                 QGCLabel {
-                    width:              ScreenTools.defaultFontPixelWidth * monitorThresholdCharWidth
+                    id:                 monitorLabel
                     height:             ScreenTools.defaultFontPixelHeight
                     verticalAlignment:  Text.AlignVCenter
                     text:               qsTr("Monitor:")
@@ -129,12 +129,11 @@ Rectangle {
                 spacing:    ScreenTools.defaultFontPixelWidth * 2
 
                 QGCLabel {
-                    width:              ScreenTools.defaultFontPixelWidth * monitorThresholdCharWidth
+                    id:                 thresholdLabel
                     height:             ScreenTools.defaultFontPixelHeight
                     verticalAlignment:  Text.AlignVCenter
                     text:               qsTr("Threshold:")
                 }
-
 
                 Item {
                     id:     thresholdContainer

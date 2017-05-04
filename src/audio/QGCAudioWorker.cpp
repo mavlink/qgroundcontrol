@@ -10,47 +10,27 @@
 
 #if (defined __macos__) && defined QGC_SPEECH_ENABLED
 #include <ApplicationServices/ApplicationServices.h>
+#include <MacTypes.h>
 
-static SpeechChannel sc;
-static Fixed volume;
-
-static void speechDone(SpeechChannel sc2, void *) {
-    if (sc2 == sc)
-    {
-        DisposeSpeechChannel(sc);
-    }
-}
-
-class MacSpeech
+void macSpeak(const char* words)
 {
-public:
-    MacSpeech()
-    {
-        setVolume(100);
+    static SpeechChannel sc = NULL;
+
+    while (SpeechBusy()) {
+        QGC::SLEEP::msleep(100);
     }
-    ~MacSpeech()
-    {
-    }
-    void say(const char* words)
-    {
-        while (SpeechBusy()) {
-            QGC::SLEEP::msleep(100);
-        }
+    if (sc == NULL) {
+        Float32 volume = 1.0;
+
         NewSpeechChannel(NULL, &sc);
-        SetSpeechInfo(sc, soVolume, &volume);
-        SetSpeechInfo(sc, soSpeechDoneCallBack, reinterpret_cast<void *>(speechDone));
-        CFStringRef cfstr = CFStringCreateWithCString(NULL, words, kCFStringEncodingUTF8);
-        SpeakCFString(sc, cfstr, NULL);
+        CFNumberRef volumeRef = CFNumberCreate(NULL, kCFNumberFloat32Type, &volume);
+        SetSpeechProperty(sc, kSpeechVolumeProperty, volumeRef);
+        CFRelease(volumeRef);
     }
-    void setVolume(int v)
-    {
-        volume = FixRatio(v, 100);
-    }
-};
-
-//-- Singleton
-MacSpeech macSpeech;
-
+    CFStringRef strRef = CFStringCreateWithCString(NULL, words, kCFStringEncodingUTF8);
+    SpeakCFString(sc, strRef, NULL);
+    CFRelease(strRef);
+}
 #endif
 
 #if (defined __ios__) && defined QGC_SPEECH_ENABLED
@@ -154,7 +134,7 @@ void QGCAudioWorker::say(QString inText)
         espeak_Synth(text.toStdString().c_str(), espeak_size, 0, POS_CHARACTER, 0, espeakCHARS_AUTO, NULL, NULL);
         espeak_Synchronize();
 #elif (defined __macos__) && defined QGC_SPEECH_ENABLED
-        macSpeech.say(text.toStdString().c_str());
+        macSpeak(text.toStdString().c_str());
 #elif (defined __ios__) && defined QGC_SPEECH_ENABLED
         iOSSpeak(text);
 #else
@@ -172,7 +152,7 @@ void QGCAudioWorker::mute(bool mute)
         this->muted = mute;
         QSettings settings;
         settings.setValue(QGC_GAUDIOOUTPUT_KEY + "muted", this->muted);
-//        emit mutedChanged(muted);
+        //        emit mutedChanged(muted);
     }
 }
 
@@ -213,9 +193,9 @@ QString QGCAudioWorker::fixTextMessageForAudio(const QString& string) {
         result.replace("ALTCTL", "Altitude Control", Qt::CaseInsensitive);
     }
     if(result.contains("AUTO_RTL", Qt::CaseInsensitive)) {
-        result.replace("AUTO_RTL", "auto Return To Land", Qt::CaseInsensitive);
+        result.replace("AUTO_RTL", "auto Return To Launch", Qt::CaseInsensitive);
     } else if(result.contains("RTL", Qt::CaseInsensitive)) {
-        result.replace("RTL", "Return To Land", Qt::CaseInsensitive);
+        result.replace("RTL", "Return To Launch", Qt::CaseInsensitive);
     }
     if(result.contains("ACCEL ", Qt::CaseInsensitive)) {
         result.replace("ACCEL ", "accelerometer ", Qt::CaseInsensitive);
@@ -241,6 +221,10 @@ QString QGCAudioWorker::fixTextMessageForAudio(const QString& string) {
     if(result.contains(" id ", Qt::CaseInsensitive)) {
         result.replace(" id ", " eye dee ", Qt::CaseInsensitive);
     }
+    if(result.contains(" ADSB ", Qt::CaseInsensitive)) {
+        result.replace(" ADSB ", " Hey Dee Ess Bee ", Qt::CaseInsensitive);
+    }
+
     int number;
     if(_getMillisecondString(string, match, number) && number > 1000) {
         if(number < 60000) {

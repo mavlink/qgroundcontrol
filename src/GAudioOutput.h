@@ -39,7 +39,7 @@ class GAudioOutput : public QGCTool
     Q_OBJECT
 
 public:
-    GAudioOutput(QGCApplication* app);
+    GAudioOutput(QGCApplication* app, QGCToolbox* toolbox);
     ~GAudioOutput();
 
     /** @brief List available voices */
@@ -62,30 +62,19 @@ public:
         AUDIO_SEVERITY_DEBUG = 7
     };
 
-    /** @brief Get the mute state */
-    bool isMuted();
-
 public slots:
     /** @brief Say this text */
     bool say(const QString& text);
-    /** @brief Mute/unmute sound */
-    void mute(bool mute);
 
 signals:
-    void mutedChanged(bool);
     bool textToSpeak(QString text);
     void beepOnce();
 
 protected:
-    bool muted;
-
 #if !defined __android__
     QThread* thread;
     QGCAudioWorker* worker;
 #endif
-
-private:
-    static const char* _mutedKey;
 };
 
 #endif // AUDIOOUTPUT_H

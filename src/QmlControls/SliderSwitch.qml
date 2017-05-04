@@ -1,5 +1,5 @@
-import QtQuick                  2.5
-import QtQuick.Controls         1.4
+import QtQuick                  2.3
+import QtQuick.Controls         1.2
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
@@ -7,11 +7,11 @@ import QGroundControl.Palette       1.0
 /// The SliderSwitch control implements a sliding switch control similar to the power off
 /// control on an iPhone.
 Rectangle {
-    id:     _root
-    width:  label.contentWidth + (_diameter * 2.5) + (_border * 4)
-    height: label.height * 2.5
-    radius: height /2
-    color:  qgcPal.window
+    id:             _root
+    implicitWidth:  label.contentWidth + (_diameter * 2.5) + (_border * 4)
+    implicitHeight: label.height * 2.5
+    radius:         height /2
+    color:          qgcPal.text
 
     signal accept   ///< Action confirmed
     signal reject   ///< Action rejected
@@ -28,7 +28,8 @@ Rectangle {
         id:                         label
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.verticalCenter:     parent.verticalCenter
-        text:                       qsTr("Slide to %1").arg(confirmText)
+        text:                       confirmText
+        color:                      qgcPal.window
     }
 
     Rectangle {
@@ -49,31 +50,39 @@ Rectangle {
             fillMode:               Image.PreserveAspectFit
             smooth:                 false
             mipmap:                 false
-
-
             color:                  qgcPal.text
             cache:                  false
             source:                 "/res/ArrowRight.svg"
         }
 
-        MouseArea {
-            id:             sliderDragArea
-            anchors.fill:   parent
-            drag.target:    slider
-            drag.axis:      Drag.XAxis
-            drag.minimumX:  _border
-            drag.maximumX:  _maxXDrag
+    }
 
-            property real _maxXDrag:    _root.width - (_diameter + _border)
-            property bool dragActive:   drag.active
+    QGCMouseArea {
+        id:                 sliderDragArea
+        anchors.leftMargin: -ScreenTools.defaultFontPixelWidth * 15
+        fillItem:           slider
+        drag.target:        slider
+        drag.axis:          Drag.XAxis
+        drag.minimumX:      _border
+        drag.maximumX:      _maxXDrag
+        preventStealing:    true
 
-            onDragActiveChanged: {
-                if (!sliderDragArea.drag.active) {
-                    if (slider.x > _maxXDrag - _border) {
-                        _root.accept()
-                    }
-                    slider.x = _border
+        property real _maxXDrag:    _root.width - (_diameter + _border)
+        property bool dragActive:   drag.active
+        property real _dragOffset:  1
+
+        Component.onCompleted: console.log(height, ScreenTools.minTouchPixels)
+
+        onPressed: {
+            mouse.x
+        }
+
+        onDragActiveChanged: {
+            if (!sliderDragArea.drag.active) {
+                if (slider.x > _maxXDrag - _border) {
+                    _root.accept()
                 }
+                slider.x = _border
             }
         }
     }

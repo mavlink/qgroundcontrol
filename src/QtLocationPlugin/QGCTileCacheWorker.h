@@ -59,17 +59,22 @@ private:
     void        _deleteTileSet          (QGCMapTask* mtask);
     void        _resetCacheDatabase     (QGCMapTask* mtask);
     void        _pruneCache             (QGCMapTask* mtask);
+    void        _exportSets             (QGCMapTask* mtask);
+    void        _importSets             (QGCMapTask* mtask);
+    bool        _testTask               (QGCMapTask* mtask);
+    void        _testInternet           ();
 
     quint64     _findTile               (const QString hash);
     bool        _findTileSetID          (const QString name, quint64& setID);
     void        _updateSetTotals        (QGCCachedTileSet* set);
     bool        _init                   ();
-    void        _createDB               ();
+    bool        _createDB               (QSqlDatabase *db, bool createDefault = true);
     quint64     _getDefaultTileSet      ();
     void        _updateTotals           ();
 
 signals:
     void        updateTotals            (quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
+    void        internetStatus          (bool active);
 
 private:
     QQueue<QGCMapTask*>     _taskQueue;

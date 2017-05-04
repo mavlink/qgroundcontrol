@@ -16,7 +16,7 @@
 #include <QXmlStreamReader>
 #include <QLoggingCategory>
 
-#include "ParameterLoader.h"
+#include "ParameterManager.h"
 #include "FactSystem.h"
 #include "UASInterface.h"
 #include "AutoPilotPlugin.h"

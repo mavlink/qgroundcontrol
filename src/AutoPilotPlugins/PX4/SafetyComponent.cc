@@ -27,7 +27,7 @@ QString SafetyComponent::name(void) const
 
 QString SafetyComponent::description(void) const
 {
-    return tr("The Safety Component is used to setup triggers for Return to Land as well as the settings for Return to Land itself.");
+    return tr("Safety Setup is used to setup triggers for Return to Land as well as the settings for Return to Land itself.");
 }
 
 QString SafetyComponent::iconResource(void) const
@@ -59,16 +59,4 @@ QUrl SafetyComponent::setupSource(void) const
 QUrl SafetyComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/SafetyComponentSummary.qml");
-}
-
-QString SafetyComponent::prerequisiteSetup(void) const
-{
-    PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
-    Q_ASSERT(plugin);
-
-    if (!plugin->airframeComponent()->setupComplete()) {
-        return plugin->airframeComponent()->name();
-    }
-
-    return QString();
 }

@@ -104,7 +104,6 @@ public:
     void        loadSettings            (QSettings& settings, const QString& root);
     void        saveSettings            (QSettings& settings, const QString& root);
     void        updateSettings          ();
-    bool        isAutoConnectAllowed    () { return false; }
     QString     settingsURL             () { return "BluetoothSettings.qml"; }
 
 public slots:
@@ -159,7 +158,6 @@ public slots:
 #ifdef __ios__
     void    serviceDiscovered       (const QBluetoothServiceInfo &info);
     void    discoveryFinished       ();
-    void    discoveryError          (QBluetoothServiceDiscoveryAgent::Error error);
 #endif
 
 protected:
@@ -169,7 +167,7 @@ protected:
 
 private:
     // Links are only created/destroyed by LinkManager so constructor/destructor is not public
-    BluetoothLink(BluetoothConfiguration* config);
+    BluetoothLink(SharedLinkConfigurationPointer& config);
     ~BluetoothLink();
 
     // From LinkInterface

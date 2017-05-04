@@ -43,12 +43,15 @@ struct stQGeoTileCacheQGCMapTypes {
 //   Changes here must reflect those in QGeoTiledMappingManagerEngineQGC.cpp
 
 stQGeoTileCacheQGCMapTypes kMapTypes[] = {
+#ifndef QGC_LIMITED_MAPS
     {"Google Street Map",       UrlFactory::GoogleMap},
     {"Google Satellite Map",    UrlFactory::GoogleSatellite},
     {"Google Terrain Map",      UrlFactory::GoogleTerrain},
+#endif
     {"Bing Street Map",         UrlFactory::BingMap},
     {"Bing Satellite Map",      UrlFactory::BingSatellite},
     {"Bing Hybrid Map",         UrlFactory::BingHybrid},
+    {"Statkart Topo2",          UrlFactory::StatkartTopo},
     {"MapQuest Street Map",     UrlFactory::MapQuestMap},
     {"MapQuest Satellite Map",  UrlFactory::MapQuestSat}
     /*
@@ -127,11 +130,13 @@ QGCMapEngine::QGCMapEngine()
     , _maxMemCache(0)
     , _prunning(false)
     , _cacheWasReset(false)
+    , _isInternetActive(false)
 {
     qRegisterMetaType<QGCMapTask::TaskType>();
     qRegisterMetaType<QGCTile>();
     qRegisterMetaType<QList<QGCTile*>>();
-    connect(&_worker, &QGCCacheWorker::updateTotals, this, &QGCMapEngine::_updateTotals);
+    connect(&_worker, &QGCCacheWorker::updateTotals,   this, &QGCMapEngine::_updateTotals);
+    connect(&_worker, &QGCCacheWorker::internetStatus, this, &QGCMapEngine::_internetStatus);
 }
 
 //-----------------------------------------------------------------------------
@@ -461,6 +466,7 @@ QGCMapEngine::concurrentDownloads(UrlFactory::MapType type)
     case UrlFactory::BingMap:
     case UrlFactory::BingSatellite:
     case UrlFactory::BingHybrid:
+    case UrlFactory::StatkartTopo:
         return 12;
     case UrlFactory::MapQuestMap:
     case UrlFactory::MapQuestSat:
@@ -477,6 +483,20 @@ QGCCreateTileSetTask::~QGCCreateTileSetTask()
     //-- If not sent out, delete it
     if(!_saved && _tileSet)
         delete _tileSet;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMapEngine::testInternet()
+{
+    getQGCMapEngine()->addTask(new QGCTestInternetTask());
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMapEngine::_internetStatus(bool active)
+{
+    _isInternetActive = active;
 }
 
 // Resolution math: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale

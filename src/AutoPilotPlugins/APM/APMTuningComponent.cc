@@ -11,6 +11,7 @@
 #include "APMTuningComponent.h"
 #include "APMAutoPilotPlugin.h"
 #include "APMAirframeComponent.h"
+#include "ParameterManager.h"
 
 APMTuningComponent::APMTuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent)
@@ -25,7 +26,7 @@ QString APMTuningComponent::name(void) const
 
 QString APMTuningComponent::description(void) const
 {
-    return tr("The Tuning Component is used to tune the flight characteristics of the Vehicle.");
+    return tr("Tuning Setup is used to tune the flight characteristics of the Vehicle.");
 }
 
 QString APMTuningComponent::iconResource(void) const
@@ -60,7 +61,7 @@ QUrl APMTuningComponent::setupSource(void) const
         case MAV_TYPE_OCTOROTOR:
         case MAV_TYPE_TRICOPTER:
             // Older firmwares do not have CH9_OPT, we don't support Tuning on older firmwares
-            if (_autopilot->parameterExists(-1, QStringLiteral("CH9_OPT"))) {
+            if (_vehicle->parameterManager()->parameterExists(-1, QStringLiteral("CH9_OPT"))) {
                 qmlFile = QStringLiteral("qrc:/qml/APMTuningComponentCopter.qml");
             }
             break;
@@ -75,16 +76,4 @@ QUrl APMTuningComponent::setupSource(void) const
 QUrl APMTuningComponent::summaryQmlSource(void) const
 {
     return QUrl();
-}
-
-QString APMTuningComponent::prerequisiteSetup(void) const
-{
-    APMAutoPilotPlugin* plugin = dynamic_cast<APMAutoPilotPlugin*>(_autopilot);
-    Q_ASSERT(plugin);
-
-    if (!plugin->airframeComponent()->setupComplete()) {
-        return plugin->airframeComponent()->name();
-    }
-
-    return QString();
 }

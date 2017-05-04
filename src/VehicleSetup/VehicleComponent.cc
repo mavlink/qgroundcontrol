@@ -13,14 +13,16 @@
 
 #include "VehicleComponent.h"
 #include "AutoPilotPlugin.h"
+#include "ParameterManager.h"
 
 VehicleComponent::VehicleComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     QObject(parent),
     _vehicle(vehicle),
     _autopilot(autopilot)
 {
-    Q_ASSERT(vehicle);
-    Q_ASSERT(autopilot);
+    if (!vehicle || !autopilot) {
+        qWarning() << "Internal error";
+    }
 }
 
 VehicleComponent::~VehicleComponent()
@@ -30,27 +32,31 @@ VehicleComponent::~VehicleComponent()
 
 void VehicleComponent::addSummaryQmlComponent(QQmlContext* context, QQuickItem* parent)
 {
-    Q_ASSERT(context);
-    
-    // FIXME: We own this object now, need to delete somewhere
-    QQmlComponent component(context->engine(), QUrl::fromUserInput("qrc:/qml/VehicleComponentSummaryButton.qml"));
-    if (component.status() == QQmlComponent::Error) {
-        qDebug() << component.errors();
-        Q_ASSERT(false);
+    if (context) {
+        // FIXME: We own this object now, need to delete somewhere
+        QQmlComponent component(context->engine(), QUrl::fromUserInput("qrc:/qml/VehicleComponentSummaryButton.qml"));
+        if (component.status() == QQmlComponent::Error) {
+            qWarning() << component.errors();
+        } else {
+            QQuickItem* item = qobject_cast<QQuickItem*>(component.create(context));
+            if (item) {
+                item->setParentItem(parent);
+                item->setProperty("vehicleComponent", QVariant::fromValue(this));
+            } else {
+                qWarning() << "Internal error";
+            }
+        }
+    } else {
+        qWarning() << "Internal error";
     }
-    
-    QQuickItem* item = qobject_cast<QQuickItem*>(component.create(context));
-    Q_ASSERT(item);
-    item->setParentItem(parent);
-    item->setProperty("vehicleComponent", QVariant::fromValue(this));
 }
 
 void VehicleComponent::setupTriggerSignals(void)
 {
     // Watch for changed on trigger list params
     foreach (const QString &paramName, setupCompleteChangedTriggerList()) {
-        if (_autopilot->parameterExists(FactSystem::defaultComponentId, paramName)) {
-            Fact* fact = _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName);
+        if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, paramName)) {
+            Fact* fact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName);
             connect(fact, &Fact::valueChanged, this, &VehicleComponent::_triggerUpdated);
         }
     }

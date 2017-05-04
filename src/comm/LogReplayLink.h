@@ -40,7 +40,6 @@ public:
     void        loadSettings            (QSettings& settings, const QString& root);
     void        saveSettings            (QSettings& settings, const QString& root);
     void        updateSettings          ();
-    bool        isAutoConnectAllowed    () { return false; }
     QString     settingsURL             () { return "LogReplaySettings.qml"; }
 signals:
     void fileNameChanged();
@@ -57,8 +56,6 @@ class LogReplayLink : public LinkInterface
     friend class LinkManager;
 
 public:
-    virtual LinkConfiguration* getLinkConfiguration() { return _config; }
-
     /// @return true: log is currently playing, false: log playback is paused
     bool isPlaying(void) { return _readTickTimer.isActive(); }
 
@@ -111,7 +108,7 @@ private slots:
 
 private:
     // Links are only created/destroyed by LinkManager so constructor/destructor is not public
-    LogReplayLink(LogReplayLinkConfiguration* config);
+    LogReplayLink(SharedLinkConfigurationPointer& config);
     ~LogReplayLink();
 
     void _replayError(const QString& errorMsg);
@@ -129,7 +126,7 @@ private:
     // Virtuals from QThread
     virtual void run(void);
 
-    LogReplayLinkConfiguration* _config;
+    LogReplayLinkConfiguration* _logReplayConfig;
 
     bool    _connected;
     QTimer _readTickTimer;      ///< Timer which signals a read of next log record

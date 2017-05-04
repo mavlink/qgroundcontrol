@@ -35,8 +35,11 @@ void LogReplayLinkConfiguration::copyFrom(LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
     LogReplayLinkConfiguration* ssource = dynamic_cast<LogReplayLinkConfiguration*>(source);
-    Q_ASSERT(ssource != NULL);
-    _logFilename = ssource->logFilename();
+    if (ssource) {
+        _logFilename = ssource->logFilename();
+    } else {
+        qWarning() << "Internal error";
+    }
 }
 
 void LogReplayLinkConfiguration::saveSettings(QSettings& settings, const QString& root)
@@ -64,12 +67,15 @@ QString LogReplayLinkConfiguration::logFilenameShort(void)
     return fi.fileName();
 }
 
-LogReplayLink::LogReplayLink(LogReplayLinkConfiguration* config) :
-    _connected(false),
-    _replayAccelerationFactor(1.0f)
+LogReplayLink::LogReplayLink(SharedLinkConfigurationPointer& config)
+    : LinkInterface(config)
+    , _logReplayConfig(qobject_cast<LogReplayLinkConfiguration*>(config.data()))
+    , _connected(false)
+    , _replayAccelerationFactor(1.0f)
 {
-    Q_ASSERT(config);
-    _config = config;
+    if (!_logReplayConfig) {
+        qWarning() << "Internal error";
+    }
     
     _readTickTimer.moveToThread(this);
     
@@ -159,7 +165,7 @@ quint64 LogReplayLink::_parseTimestamp(const QByteArray& bytes)
     return timestamp;
 }
 
-/// Seeks to the beginning of the next successully parsed mavlink message in the log file.
+/// Seeks to the beginning of the next successfully parsed mavlink message in the log file.
 ///     @param nextMsg[output] Parsed next message that was found
 /// @return A Unix timestamp in microseconds UTC for found message or 0 if parsing failed
 quint64 LogReplayLink::_seekToNextMavlinkMessage(mavlink_message_t* nextMsg)
@@ -167,7 +173,7 @@ quint64 LogReplayLink::_seekToNextMavlinkMessage(mavlink_message_t* nextMsg)
     char nextByte;
     mavlink_status_t comm;
     while (_logFile.getChar(&nextByte)) { // Loop over every byte
-        bool messageFound = mavlink_parse_char(getMavlinkChannel(), nextByte, nextMsg, &comm);
+        bool messageFound = mavlink_parse_char(mavlinkChannel(), nextByte, nextMsg, &comm);
         
         // If we've found a message, jump back to the start of the message, grab the timestamp,
         // and go back to the end of this file.
@@ -184,7 +190,7 @@ quint64 LogReplayLink::_seekToNextMavlinkMessage(mavlink_message_t* nextMsg)
 bool LogReplayLink::_loadLogFile(void)
 {
     QString errorMsg;
-    QString logFilename = _config->logFilename();
+    QString logFilename = _logReplayConfig->logFilename();
     QFileInfo logFileInfo;
     int logDurationSecondsTotal;
     
@@ -201,7 +207,7 @@ bool LogReplayLink::_loadLogFile(void)
     logFileInfo.setFile(logFilename);
     _logFileSize = logFileInfo.size();
     
-    _logTimestamped = logFilename.endsWith(".mavlink");
+    _logTimestamped = logFilename.endsWith(".tlog");
     
     if (_logTimestamped) {
         // Get the first timestamp from the log

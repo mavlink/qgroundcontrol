@@ -16,15 +16,22 @@
 #include "QGCApplication.h"
 #include "JsonHelper.h"
 
+const char* VisualMissionItem::jsonTypeKey =                "type";
+const char* VisualMissionItem::jsonTypeSimpleItemValue =    "SimpleItem";
+const char* VisualMissionItem::jsonTypeComplexItemValue =   "ComplexItem";
+
 VisualMissionItem::VisualMissionItem(Vehicle* vehicle, QObject* parent)
     : QObject(parent)
     , _vehicle(vehicle)
     , _isCurrentItem(false)
     , _dirty(false)
+    , _homePositionSpecialCase(false)
     , _altDifference(0.0)
     , _altPercent(0.0)
     , _azimuth(0.0)
     , _distance(0.0)
+    , _missionGimbalYaw(std::numeric_limits<double>::quiet_NaN())
+    , _missionVehicleYaw(std::numeric_limits<double>::quiet_NaN())
 {
 
 }
@@ -34,6 +41,7 @@ VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, QObject* pa
     , _vehicle(NULL)
     , _isCurrentItem(false)
     , _dirty(false)
+    , _homePositionSpecialCase(false)
     , _altDifference(0.0)
     , _altPercent(0.0)
     , _azimuth(0.0)
@@ -48,6 +56,7 @@ const VisualMissionItem& VisualMissionItem::operator=(const VisualMissionItem& o
 
     setIsCurrentItem(other._isCurrentItem);
     setDirty(other._dirty);
+    _homePositionSpecialCase = other._homePositionSpecialCase;
     setAltDifference(other._altDifference);
     setAltPercent(other._altPercent);
     setAzimuth(other._azimuth);
@@ -97,5 +106,22 @@ void VisualMissionItem::setAzimuth(double azimuth)
     if (!qFuzzyCompare(_azimuth, azimuth)) {
         _azimuth = azimuth;
         emit azimuthChanged(_azimuth);
+    }
+}
+
+void VisualMissionItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
+{
+    _missionFlightStatus = missionFlightStatus;
+    if (_missionFlightStatus.gimbalYaw != _missionGimbalYaw) {
+        _missionGimbalYaw = _missionFlightStatus.gimbalYaw;
+        emit missionGimbalYawChanged(_missionGimbalYaw);
+    }
+}
+
+void VisualMissionItem::setMissionVehicleYaw(double vehicleYaw)
+{
+    if (!qFuzzyCompare(_missionVehicleYaw, vehicleYaw)) {
+        _missionVehicleYaw = vehicleYaw;
+        emit missionVehicleYawChanged(_missionVehicleYaw);
     }
 }

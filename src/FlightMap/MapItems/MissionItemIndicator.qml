@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 
-import QtQuick      2.4
+import QtQuick      2.3
 import QtLocation   5.3
 
 import QGroundControl.ScreenTools   1.0
@@ -24,14 +24,18 @@ MapQuickItem {
 
     signal clicked
 
-    anchorPoint.x:  sourceItem.width  / 2
-    anchorPoint.y:  sourceItem.height / 2
+    anchorPoint.x:  sourceItem.anchorPointX
+    anchorPoint.y:  sourceItem.anchorPointY
 
     sourceItem:
         MissionItemIndexLabel {
             id:             _label
-            isCurrentItem:  _isCurrentItem
+            checked:        _isCurrentItem
             label:          missionItem ? missionItem.abbreviation : ""
+            index:          missionItem ? missionItem.sequenceNumber : 0
+            gimbalYaw:      missionItem.missionGimbalYaw
+            vehicleYaw:     missionItem.missionVehicleYaw
+            showGimbalYaw:  !isNaN(missionItem.missionGimbalYaw)
             onClicked:      _item.clicked()
 
             property bool _isCurrentItem:   missionItem ? missionItem.isCurrentItem : false

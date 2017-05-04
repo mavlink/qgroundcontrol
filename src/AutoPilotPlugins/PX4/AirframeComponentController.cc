@@ -15,7 +15,6 @@
 #include "AirframeComponentAirframes.h"
 #include "QGCMAVLink.h"
 #include "MultiVehicleManager.h"
-#include "AutoPilotPluginManager.h"
 #include "QGCApplication.h"
 
 #include <QVariant>
@@ -58,7 +57,9 @@ AirframeComponentController::AirframeComponentController(void) :
             Q_CHECK_PTR(pInfo);
 
             if (_autostartId == pInfo->autostartId) {
-                Q_ASSERT(!autostartFound);
+                if (autostartFound) {
+                    qWarning() << "AirframeComponentController::AirframeComponentController duplicate ids found:" << _autostartId;
+                }
                 autostartFound = true;
                 _currentAirframeType = pType->name;
                 _currentVehicleName = pInfo->name;
@@ -118,7 +119,7 @@ void AirframeComponentController::_waitParamWriteSignal(QVariant value)
 
 void AirframeComponentController::_rebootAfterStackUnwind(void)
 {    
-    _uas->executeCommand(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
+    _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, true /* showError */, 1.0f);
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
     for (unsigned i = 0; i < 2000; i++) {
         QGC::SLEEP::usleep(500);

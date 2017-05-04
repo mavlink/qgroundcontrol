@@ -12,6 +12,10 @@
 #include "RadioComponentController.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
+#include "PX4/PX4AutoPilotPlugin.h"
+#include "APM/APMAutoPilotPlugin.h"
+#include "APM/APMRadioComponent.h"
+#include "PX4RadioComponent.h"
 
 /// @file
 ///     @brief QRadioComponentController Widget unit test
@@ -200,6 +204,27 @@ void RadioConfigTest::_init(MAV_AUTOPILOT firmwareType)
     _calWidget->resize(600, 600);
     Q_CHECK_PTR(_calWidget);
     _calWidget->setAutoPilot(_autopilot);
+
+    // Find the radio component
+    QObject* vehicleComponent = NULL;
+    foreach (const QVariant& varVehicleComponent, _autopilot->vehicleComponents()) {
+        if (firmwareType == MAV_AUTOPILOT_PX4) {
+            PX4RadioComponent* radioComponent = qobject_cast<PX4RadioComponent*>(varVehicleComponent.value<VehicleComponent*>());
+            if (radioComponent) {
+                vehicleComponent = radioComponent;
+                break;
+            }
+        } else {
+            APMRadioComponent* radioComponent = qobject_cast<APMRadioComponent*>(varVehicleComponent.value<VehicleComponent*>());
+            if (radioComponent) {
+                vehicleComponent = radioComponent;
+                break;
+            }
+        }
+    }
+    Q_CHECK_PTR(vehicleComponent);
+
+    _calWidget->setContextPropertyObject("vehicleComponent", vehicleComponent);
     _calWidget->setSource(QUrl::fromUserInput("qrc:/qml/RadioComponent.qml"));
     
     // Nasty hack to get to controller
@@ -322,28 +347,6 @@ void RadioConfigTest::_switchMinMaxStep(void)
     QCOMPARE(_controller->_currentStep, saveStep + 1);
 }
 
-void RadioConfigTest::_switchSelectAutoStep(const char* functionStr, RadioComponentController::rcCalFunctions function)
-{
-    Q_UNUSED(functionStr);
-    ////qCDebug(RadioConfigTestLog)() << "_switchSelectAutoStep" << functionStr << "function:" << function;
-    
-    int buttonMask = cancelButtonMask;
-    if (function != RadioComponentController::rcCalFunctionModeSwitch) {
-        buttonMask |= skipButtonMask;
-    }
-    
-    CHK_BUTTONS(buttonMask);
-    
-    int saveStep = _controller->_currentStep;
-    
-    // Wiggle stick for channel
-    int channel = _rgFunctionChannelMap[function];
-    _mockLink->emitRemoteControlChannelRawChanged(channel, _testMinValue);
-    _mockLink->emitRemoteControlChannelRawChanged(channel, _testMaxValue);
-    
-    QCOMPARE(_controller->_currentStep, saveStep + 1);
-}
-
 void RadioConfigTest::_fullCalibrationWorker(MAV_AUTOPILOT firmwareType)
 {
     _init(firmwareType);
@@ -368,7 +371,7 @@ void RadioConfigTest::_fullCalibrationWorker(MAV_AUTOPILOT firmwareType)
                     switchList << "RC_MAP_MODE_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_POSCTL_SW" << "RC_MAP_ACRO_SW";
 
                     foreach (const QString &switchParam, switchList) {
-                        Q_ASSERT(_autopilot->getParameterFact(FactSystem::defaultComponentId, switchParam)->rawValue().toInt() != channel + 1);
+                        Q_ASSERT(_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, switchParam)->rawValue().toInt() != channel + 1);
                     }
                 }
                 
@@ -383,7 +386,7 @@ void RadioConfigTest::_fullCalibrationWorker(MAV_AUTOPILOT firmwareType)
         if (!found) {
             const char* paramName = _functionInfo()[function].parameterName;
             if (paramName) {
-                _rgFunctionChannelMap[function] = _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName)->rawValue().toInt();
+                _rgFunctionChannelMap[function] = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName)->rawValue().toInt();
                 qCDebug(RadioConfigTestLog) << "Assigning switch" << function << _rgFunctionChannelMap[function];
                 if (_rgFunctionChannelMap[function] == 0) {
                     _rgFunctionChannelMap[function] = -1;   // -1 signals no mapping
@@ -399,15 +402,15 @@ void RadioConfigTest::_fullCalibrationWorker(MAV_AUTOPILOT firmwareType)
     _channelHomePosition();
     _controller->nextButtonClicked();
     _beginCalibration();
-    _stickMoveAutoStep("Throttle", RadioComponentController::rcCalFunctionThrottle, moveToMax, true /* identify step */);
-    _stickMoveAutoStep("Throttle", RadioComponentController::rcCalFunctionThrottle, moveToMin, false /* not identify step */);
-    _stickMoveAutoStep("Yaw", RadioComponentController::rcCalFunctionYaw, moveToMax, true /* identify step */);
-    _stickMoveAutoStep("Yaw", RadioComponentController::rcCalFunctionYaw, moveToMin, false /* not identify step */);
-    _stickMoveAutoStep("Roll", RadioComponentController::rcCalFunctionRoll, moveToMax, true /* identify step */);
-    _stickMoveAutoStep("Roll", RadioComponentController::rcCalFunctionRoll, moveToMin, false /* not identify step */);
-    _stickMoveAutoStep("Pitch", RadioComponentController::rcCalFunctionPitch, moveToMax, true /* identify step */);
-    _stickMoveAutoStep("Pitch", RadioComponentController::rcCalFunctionPitch, moveToMin, false /* not identify step */);
-    _stickMoveAutoStep("Pitch", RadioComponentController::rcCalFunctionPitch, moveToCenter, false /* not identify step */);
+    _stickMoveAutoStep("Throttle",  RadioComponentController::rcCalFunctionThrottle,    moveToMax,      true /* identify step */);
+    _stickMoveAutoStep("Throttle",  RadioComponentController::rcCalFunctionThrottle,    moveToMin,      false /* not identify step */);
+    _stickMoveAutoStep("Yaw",       RadioComponentController::rcCalFunctionYaw,         moveToMax,      true /* identify step */);
+    _stickMoveAutoStep("Yaw",       RadioComponentController::rcCalFunctionYaw,         moveToMin,      false /* not identify step */);
+    _stickMoveAutoStep("Roll",      RadioComponentController::rcCalFunctionRoll,        moveToMax,      true /* identify step */);
+    _stickMoveAutoStep("Roll",      RadioComponentController::rcCalFunctionRoll,        moveToMin,      false /* not identify step */);
+    _stickMoveAutoStep("Pitch",     RadioComponentController::rcCalFunctionPitch,       moveToMax,      true /* identify step */);
+    _stickMoveAutoStep("Pitch",     RadioComponentController::rcCalFunctionPitch,       moveToMin,      false /* not identify step */);
+    _stickMoveAutoStep("Pitch",     RadioComponentController::rcCalFunctionPitch,       moveToCenter,   false /* not identify step */);
     _switchMinMaxStep();
 
     // One more click and the parameters should get saved
@@ -459,8 +462,8 @@ void RadioConfigTest::_validateParameters(void)
         
         const char* paramName = _functionInfo()[chanFunction].parameterName;
         if (paramName) {
-            qCDebug(RadioConfigTestLog) << "Validate" << chanFunction << _autopilot->getParameterFact(FactSystem::defaultComponentId, paramName)->rawValue().toInt();
-            QCOMPARE(_autopilot->getParameterFact(FactSystem::defaultComponentId, paramName)->rawValue().toInt(), expectedParameterValue);
+            qCDebug(RadioConfigTestLog) << "Validate" << chanFunction << _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName)->rawValue().toInt();
+            QCOMPARE(_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName)->rawValue().toInt(), expectedParameterValue);
         }
     }
 
@@ -475,13 +478,13 @@ void RadioConfigTest::_validateParameters(void)
         int rcTrimExpected = _channelSettingsValidate()[chan].rcTrim;
         bool rcReversedExpected = _channelSettingsValidate()[chan].reversed;
 
-        int rcMinActual = _autopilot->getParameterFact(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
+        int rcMinActual = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
         QCOMPARE(convertOk, true);
-        int rcMaxActual = _autopilot->getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
+        int rcMaxActual = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
         QCOMPARE(convertOk, true);
-        int rcTrimActual = _autopilot->getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
+        int rcTrimActual = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
         QCOMPARE(convertOk, true);
-        float rcReversedFloat = _autopilot->getParameterFact(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel))->rawValue().toFloat(&convertOk);
+        float rcReversedFloat = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, revTpl.arg(oneBasedChannel))->rawValue().toFloat(&convertOk);
         QCOMPARE(convertOk, true);
         bool rcReversedActual = (rcReversedFloat == -1.0f);
         
@@ -505,7 +508,7 @@ void RadioConfigTest::_validateParameters(void)
         const char* paramName = _functionInfo()[chanFunction].parameterName;
         if (paramName) {
             // qCDebug(RadioConfigTestLog) << chanFunction << expectedValue << mapParamsSet[paramName].toInt();
-            QCOMPARE(_autopilot->getParameterFact(FactSystem::defaultComponentId, paramName)->rawValue().toInt(), expectedValue);
+            QCOMPARE(_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName)->rawValue().toInt(), expectedValue);
         }
     }
 }

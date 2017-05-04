@@ -1,4 +1,4 @@
-import QtQuick 2.5
+import QtQuick 2.3
 
 Rectangle {
     id:                    horizontalIndicator
@@ -33,7 +33,7 @@ Rectangle {
         properties:    "opacity"
         from:          1.0
         to:            0.0
-        duration:      1000
+        duration:      3000
         easing.type:   Easing.InQuint
     }
 }

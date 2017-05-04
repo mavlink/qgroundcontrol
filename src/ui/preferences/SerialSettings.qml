@@ -8,9 +8,9 @@
  ****************************************************************************/
 
 
-import QtQuick          2.5
-import QtQuick.Controls 1.4
-import QtQuick.Dialogs  1.1
+import QtQuick          2.3
+import QtQuick.Controls 1.2
+import QtQuick.Dialogs  1.2
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -50,11 +50,17 @@ Item {
                 width:  _firstColumn
                 anchors.verticalCenter: parent.verticalCenter
             }
+            QGCLabel {
+                text:       qsTr("No serial ports available");
+                visible:    QGroundControl.linkManager.serialPortStrings.length == 0
+            }
+
             QGCComboBox {
-                id:             commPortCombo
-                width:          _secondColumn
-                model:          QGroundControl.linkManager.serialPortStrings
+                id:                     commPortCombo
                 anchors.verticalCenter: parent.verticalCenter
+                width:                  _secondColumn
+                model:                  QGroundControl.linkManager.serialPortStrings
+                visible:                QGroundControl.linkManager.serialPortStrings.length > 0
                 onActivated: {
                     if (index != -1) {
                         subEditConfig.portName = QGroundControl.linkManager.serialPorts[index]

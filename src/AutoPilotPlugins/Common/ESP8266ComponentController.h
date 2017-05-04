@@ -82,8 +82,7 @@ signals:
     void        busyChanged             ();
 
 private slots:
-    void        _processTimeout     ();
-    void        _commandAck         (uint8_t compID, uint16_t command, uint8_t result);
+    void        _mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
     void        _ssidChanged        (QVariant value);
     void        _passwordChanged    (QVariant value);
     void        _baudChanged        (QVariant value);
@@ -94,7 +93,6 @@ private:
     void        _restoreDefaults    ();
 
 private:
-    QTimer      _timer;
     QStringList _channels;
     QStringList _baudRates;
     QString     _ipAddress;

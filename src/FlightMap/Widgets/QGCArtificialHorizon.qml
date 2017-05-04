@@ -14,7 +14,7 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick 2.4
+import QtQuick 2.3
 
 Item {
     id: root
@@ -28,7 +28,7 @@ Item {
     Item {
         id: artificialHorizon
         width:  root.width  * 4
-        height: root.height * 4
+        height: root.height * 8
         anchors.centerIn: parent
         Rectangle {
             id: sky

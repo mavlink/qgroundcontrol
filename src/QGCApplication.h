@@ -27,12 +27,10 @@
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "FlightMapSettings.h"
-#include "HomePositionManager.h"
 #include "FirmwarePluginManager.h"
 #include "MultiVehicleManager.h"
 #include "JoystickManager.h"
 #include "GAudioOutput.h"
-#include "AutoPilotPluginManager.h"
 #include "UASMessageHandler.h"
 #include "FactSystem.h"
 
@@ -65,33 +63,14 @@ public:
     QGCApplication(int &argc, char* argv[], bool unitTesting);
     ~QGCApplication();
 
-    static const char* parameterFileExtension;
-    static const char* missionFileExtension;
-    static const char* telemetryFileExtension;
-
     /// @brief Sets the persistent flag to delete all settings the next time QGroundControl is started.
     void deleteAllSettingsNextBoot(void);
 
     /// @brief Clears the persistent flag to delete all settings the next time QGroundControl is started.
     void clearDeleteAllSettingsNextBoot(void);
 
-    /// @return true: Prompt to save log file when vehicle goes away
-    bool promptFlightDataSave(void);
-
-    /// @return true: Prompt to save log file even if vehicle was not armed
-    bool promptFlightDataSaveNotArmed(void);
-
-    void setPromptFlightDataSave(bool promptForSave);
-    void setPromptFlightDataSaveNotArmed(bool promptForSave);
-
     /// @brief Returns truee if unit test are being run
     bool runningUnitTests(void) { return _runningUnitTests; }
-
-    /// @return true: dark ui style, false: light ui style
-    bool styleIsDark(void) { return _styleIsDark; }
-
-    /// Set the current UI style
-    void setStyle(bool styleIsDark);
 
     /// Used to report a missing Parameter. Warning will be displayed to user. Method may be called
     /// multiple times.
@@ -113,9 +92,6 @@ public:
     /// Do we have Bluetooth Support?
     bool isBluetoothAvailable() { return _bluetoothAvailable; }
 
-    QGeoCoordinate lastKnownHomePosition(void) { return _lastKnownHomePosition; }
-    void setLastKnownHomePosition(QGeoCoordinate& lastKnownHomePosition);
-
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
     void informationMessageBoxOnMainThread(const QString& title, const QString& msg);
@@ -126,22 +102,19 @@ public slots:
     /// You can connect to this slot to show a critical message box from a different thread.
     void criticalMessageBoxOnMainThread(const QString& title, const QString& msg);
 
-    void showFlyView(void);
-    void showPlanView(void);
     void showSetupView(void);
 
     void qmlAttemptWindowClose(void);
 
 #ifndef __mobile__
-    /// Save the specified Flight Data Log
-    void saveTempFlightDataLogOnMainThread(QString tempLogfile);
+    /// Save the specified telemetry Log
+    void saveTelemetryLogOnMainThread(QString tempLogfile);
+
+    /// Check that the telemetry save path is set correctly
+    void checkTelemetrySavePathOnMainThread(void);
 #endif
 
 signals:
-    /// Signals that the style has changed
-    ///     @param darkStyle true: dark style, false: light style
-    void styleChanged(bool darkStyle);
-
     /// This is connected to MAVLinkProtocol::checkForLostLogFiles. We signal this to ourselves to call the slot
     /// on the MAVLinkProtocol thread;
     void checkForLostLogFiles(void);
@@ -161,18 +134,22 @@ public:
     ///         unit tests. Although public should only be called by main.
     bool _initForUnitTests(void);
 
-    void _showSetupFirmware(void);
-    void _showSetupParameters(void);
-    void _showSetupSummary(void);
-    void _showSetupVehicleComponent(VehicleComponent* vehicleComponent);
+    void _loadCurrentStyleSheet(void);
 
     static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
+
+public:
+    // Although public, these methods are internal and should only be called by UnitTest code
+
+    /// Shutdown the application object
+    void _shutdown(void);
+
+    bool _checkTelemetrySavePath(bool useMessageBox);
 
 private slots:
     void _missingParamsDisplay(void);
 
 private:
-    void _loadCurrentStyle(void);
     QObject* _rootQmlObject(void);
 
 #ifdef __mobile__
@@ -183,7 +160,6 @@ private:
 
     static const char*  _darkStyleFile;
     static const char*  _lightStyleFile;
-    bool                _styleIsDark;                                       ///< true: dark style, false: light style
     static const int    _missingParamsDelayedDisplayTimerTimeout = 1000;    ///< Timeout to wait for next missing fact to come in before display
     QTimer              _missingParamsDelayedDisplayTimer;                  ///< Timer use to delay missing fact display
     QStringList         _missingParams;                                     ///< List of missing facts to be displayed
@@ -198,19 +174,12 @@ private:
 
     bool _bluetoothAvailable;
 
-    QGeoCoordinate _lastKnownHomePosition;    ///< Map position when all other sources fail
-
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
-    static const char* _promptFlightDataSave;           ///< Settings key for promptFlightDataSave
-    static const char* _promptFlightDataSaveNotArmed;   ///< Settings key for promptFlightDataSaveNotArmed
-    static const char* _styleKey;                       ///< Settings key for UI style
-    static const char* _lastKnownHomePositionLatKey;
-    static const char* _lastKnownHomePositionLonKey;
-    static const char* _lastKnownHomePositionAltKey;
 
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
+
 };
 
 /// @brief Returns the QGCApplication object singleton.

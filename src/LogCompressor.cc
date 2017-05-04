@@ -70,7 +70,7 @@ void LogCompressor::run()
 
 
 	// First we search the input file through keySearchLimit number of lines
-	// looking for variables. This is neccessary before CSV files require
+	// looking for variables. This is necessary before CSV files require
 	// the same number of fields for every line.
 	const unsigned int keySearchLimit = 15000;
 	unsigned int keyCounter = 0;

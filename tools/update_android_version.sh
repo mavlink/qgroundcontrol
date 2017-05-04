@@ -10,6 +10,15 @@ VERSIONCODE=$(($(($patch*1000)) + $VERSIONCODE))
 VERSIONCODE=$(($(($dev)) + $VERSIONCODE))
 
 MANIFEST_FILE=android/AndroidManifest.xml
+
+# manifest package
+if [ ${#dev} -gt 0 ]; then
+	QGC_PKG_NAME="org.mavlink.qgroundcontrolbeta"
+	sed -i -e 's/package *= *"[^"]*"/package="'$QGC_PKG_NAME'"/' $MANIFEST_FILE
+	echo "Android package name: $QGC_PKG_NAME"
+fi
+
+# android:versionCode
 if [ -n "$VERSIONCODE" ]; then
 	sed -i -e "s/android:versionCode=\"[0-9][0-9]*\"/android:versionCode=\"$VERSIONCODE\"/" $MANIFEST_FILE
 	echo "Android version: ${VERSIONCODE}"
@@ -18,6 +27,7 @@ else
 	exit 0 # don't cause the build to fail
 fi
 
+# android:versionName
 if [ -n "$VERSIONNAME" ]; then
 	sed -i -e 's/versionName *= *"[^"]*"/versionName="'$VERSIONNAME'"/' $MANIFEST_FILE
 	echo "Android name: ${VERSIONNAME}"

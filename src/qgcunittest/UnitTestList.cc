@@ -20,16 +20,22 @@
 #include "MessageBoxTest.h"
 #include "MissionItemTest.h"
 #include "SimpleMissionItemTest.h"
-#include "ComplexMissionItemTest.h"
+#include "SurveyMissionItemTest.h"
 #include "MissionControllerTest.h"
 #include "MissionManagerTest.h"
 #include "RadioConfigTest.h"
-#include "SetupViewTest.h"
 #include "MavlinkLogTest.h"
 #include "MainWindowTest.h"
 #include "FileManagerTest.h"
 #include "TCPLinkTest.h"
-#include "ParameterLoaderTest.h"
+#include "ParameterManagerTest.h"
+#include "MissionCommandTreeTest.h"
+#include "LogDownloadTest.h"
+#include "SendMavCommandTest.h"
+#include "VisualMissionItemTest.h"
+#include "CameraSectionTest.h"
+#include "SpeedSectionTest.h"
+#include "PlanMasterControllerTest.h"
 
 UT_REGISTER_TEST(FactSystemTestGeneric)
 UT_REGISTER_TEST(FactSystemTestPX4)
@@ -37,24 +43,30 @@ UT_REGISTER_TEST(FileDialogTest)
 UT_REGISTER_TEST(FlightGearUnitTest)
 UT_REGISTER_TEST(GeoTest)
 UT_REGISTER_TEST(LinkManagerTest)
-UT_REGISTER_TEST(MavlinkLogTest)
 UT_REGISTER_TEST(MessageBoxTest)
 UT_REGISTER_TEST(MissionItemTest)
 UT_REGISTER_TEST(SimpleMissionItemTest)
-UT_REGISTER_TEST(ComplexMissionItemTest)
 UT_REGISTER_TEST(MissionControllerTest)
 UT_REGISTER_TEST(MissionManagerTest)
 UT_REGISTER_TEST(RadioConfigTest)
 UT_REGISTER_TEST(TCPLinkTest)
-UT_REGISTER_TEST(FileManagerTest)
-UT_REGISTER_TEST(ParameterLoaderTest)
+UT_REGISTER_TEST(ParameterManagerTest)
+UT_REGISTER_TEST(MissionCommandTreeTest)
+UT_REGISTER_TEST(LogDownloadTest)
+UT_REGISTER_TEST(SendMavCommandTest)
+UT_REGISTER_TEST(SurveyMissionItemTest)
+UT_REGISTER_TEST(CameraSectionTest)
+UT_REGISTER_TEST(SpeedSectionTest)
+UT_REGISTER_TEST(PlanMasterControllerTest)
 
 // List of unit test which are currently disabled.
 // If disabling a new test, include reason in comment.
 
-// works, but causes other tests to fail
-//UT_REGISTER_TEST(SetupViewTest)
-
 // FIXME: Temporarily disabled until this can be stabilized
 //UT_REGISTER_TEST(MainWindowTest)
 
+// Onboard file support has been removed until it can be make to work correctly
+//UT_REGISTER_TEST(FileManagerTest)
+
+// Needs to be update for latest updates
+//UT_REGISTER_TEST(MavlinkLogTest)

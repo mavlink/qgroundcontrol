@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 
-import QtQuick 2.2
+import QtQuick 2.3
 import QtQuick.Controls 1.2
 import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0
@@ -32,7 +32,7 @@ FactPanel {
     TextInput {
         text:       fact2.value
 
-        property Fact fact2: controller.getParameterFact(50, "RC_MAP_THROTTLE")
+        property Fact fact2: controller.getParameterFact(200, "RC_MAP_THROTTLE")
 
         onAccepted: fact2.value = text
     }

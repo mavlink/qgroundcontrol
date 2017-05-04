@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 
-import QtQuick 2.5
+import QtQuick 2.3
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -17,11 +17,11 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Vehicle       1.0
 
 Item {
-    QGCMapPalette { id: mapPal; lightColors: !isBackgroundDark }
+    //property bool useLightColors - Must be passed in from loaded
 
     Timer {
         interval:   40  // 25Hz, same as real joystick rate
-        running:    QGroundControl.virtualTabletJoystick && _activeVehicle
+        running:    QGroundControl.settingsManager.appSettings.virtualJoystick.value && _activeVehicle
         repeat:     true
         onTriggered: {
             if (_activeVehicle) {
@@ -39,7 +39,7 @@ Item {
         width:                  parent.height
         height:                 parent.height
         yAxisThrottle:          true
-        lightColors:            !isBackgroundDark
+        lightColors:            useLightColors
     }
 
     JoystickThumbPad {
@@ -50,6 +50,6 @@ Item {
         anchors.bottom:         parent.bottom
         width:                  parent.height
         height:                 parent.height
-        lightColors:            !isBackgroundDark
+        lightColors:            useLightColors
     }
 }

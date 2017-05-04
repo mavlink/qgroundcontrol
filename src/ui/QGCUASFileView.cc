@@ -10,7 +10,7 @@
 
 #include "QGCUASFileView.h"
 #include "FileManager.h"
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #include "UAS.h"
 
 #include <QFileDialog>
@@ -54,10 +54,10 @@ void QGCUASFileView::_downloadFile(void)
     
     _ui.statusText->clear();
     
-    QString downloadToHere = QGCFileDialog::getExistingDirectory(this,
+    QString downloadToHere = QGCQFileDialog::getExistingDirectory(this,
                                                                  "Download Directory",
                                                                  QDir::homePath(),
-                                                                 QGCFileDialog::ShowDirsOnly | QGCFileDialog::DontResolveSymlinks);
+                                                                 QGCQFileDialog::ShowDirsOnly | QGCQFileDialog::DontResolveSymlinks);
     
     // And now download to this location
     
@@ -111,7 +111,7 @@ void QGCUASFileView::_uploadFile(void)
         item = item->parent();
     } while (item);
 
-    QString uploadFromHere = QGCFileDialog::getOpenFileName(this, "Upload File", QDir::homePath());
+    QString uploadFromHere = QGCQFileDialog::getOpenFileName(this, "Upload File", QDir::homePath());
 
     _ui.statusText->setText(QString("Uploading: %1").arg(uploadFromHere));
                             

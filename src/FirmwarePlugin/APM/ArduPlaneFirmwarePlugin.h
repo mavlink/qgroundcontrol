@@ -54,6 +54,16 @@ class ArduPlaneFirmwarePlugin : public APMFirmwarePlugin
     
 public:
     ArduPlaneFirmwarePlugin(void);
+
+    // Overrides from FirmwarePlugin
+    QString offlineEditingParamFile(Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Plane.OfflineEditing.params"); }
+    const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
+    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
+    QString autoDisarmParameter(Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral("LAND_DISARMDELAY"); }
+
+private:
+    static bool _remapParamNameIntialized;
+    static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
 };
 
 #endif

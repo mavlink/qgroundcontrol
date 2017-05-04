@@ -16,7 +16,9 @@
 GenericAutoPilotPlugin::GenericAutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
     AutoPilotPlugin(vehicle, parent)
 {
-    Q_ASSERT(vehicle);
+    if (!vehicle) {
+        qWarning() << "Internal error";
+    }
 }
 
 const QVariantList& GenericAutoPilotPlugin::vehicleComponents(void)
@@ -26,11 +28,8 @@ const QVariantList& GenericAutoPilotPlugin::vehicleComponents(void)
     return emptyList;
 }
 
-/// This will perform various checks prior to signalling that the plug in ready
-void GenericAutoPilotPlugin::_parametersReadyPreChecks(bool missingParameters)
+QString GenericAutoPilotPlugin:: prerequisiteSetup(VehicleComponent* component) const
 {
-    _parametersReady = true;
-    _missingParameters = missingParameters;
-    emit missingParametersChanged(_missingParameters);
-    emit parametersReadyChanged(_parametersReady);
+    Q_UNUSED(component);
+    return QString();
 }

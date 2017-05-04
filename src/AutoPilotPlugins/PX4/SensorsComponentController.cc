@@ -15,6 +15,7 @@
 #include "QGCMAVLink.h"
 #include "UAS.h"
 #include "QGCApplication.h"
+#include "ParameterManager.h"
 
 #include <QVariant>
 #include <QQmlProperty>
@@ -72,7 +73,10 @@ bool SensorsComponentController::usingUDPLink(void)
 /// Appends the specified text to the status log area in the ui
 void SensorsComponentController::_appendStatusLog(const QString& text)
 {
-    Q_ASSERT(_statusLog);
+    if (!_statusLog) {
+        qWarning() << "Internal error";
+        return;
+    }
     
     QVariant returnedValue;
     QVariant varText = text;
@@ -219,9 +223,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
     Q_UNUSED(compId);
     Q_UNUSED(severity);
     
-    UASInterface* uas = _autopilot->vehicle()->uas();
-    Q_ASSERT(uas);
-    if (uasId != uas->getUASID()) {
+    if (uasId != _vehicle->id()) {
         return;
     }
     
@@ -230,8 +232,11 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
         bool ok;
         int p = percent.toInt(&ok);
         if (ok) {
-            Q_ASSERT(_progressBar);
-            _progressBar->setProperty("value", (float)(p / 100.0));
+            if (_progressBar) {
+                _progressBar->setProperty("value", (float)(p / 100.0));
+            } else {
+                qWarning() << "Internal error";
+            }
         }
         return;
     }
@@ -306,9 +311,9 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
                 // Work out what the autopilot is configured to
                 int sides = 0;
 
-                if (_autopilot->parameterExists(FactSystem::defaultComponentId, "CAL_MAG_SIDES")) {
+                if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "CAL_MAG_SIDES")) {
                     // Read the requested calibration directions off the system
-                    sides = _autopilot->getParameterFact(FactSystem::defaultComponentId, "CAL_MAG_SIDES")->rawValue().toFloat();
+                    sides = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "CAL_MAG_SIDES")->rawValue().toFloat();
                 } else {
                     // There is no valid setting, default to all six sides
                     sides = (1 << 5) | (1 << 4) | (1 << 3) | (1 << 2) | (1 << 1) | (1 << 0);
@@ -325,7 +330,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
                 _gyroCalInProgress = true;
                 _orientationCalDownSideVisible = true;
             } else {
-                Q_ASSERT(false);
+                qWarning() << "Unknown calibration message type" << text;
             }
             emit orientationCalSidesDoneChanged();
             emit orientationCalSidesVisibleChanged();
@@ -449,12 +454,12 @@ void SensorsComponentController::_refreshParams(void)
     // We ask for a refresh on these first so that the rotation combo show up as fast as possible
     fastRefreshList << "CAL_MAG0_ID" << "CAL_MAG1_ID" << "CAL_MAG2_ID" << "CAL_MAG0_ROT" << "CAL_MAG1_ROT" << "CAL_MAG2_ROT";
     foreach (const QString &paramName, fastRefreshList) {
-        _autopilot->refreshParameter(FactSystem::defaultComponentId, paramName);
+        _vehicle->parameterManager()->refreshParameter(FactSystem::defaultComponentId, paramName);
     }
     
     // Now ask for all to refresh
-    _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, "CAL_");
-    _autopilot->refreshParametersPrefix(FactSystem::defaultComponentId, "SENS_");
+    _vehicle->parameterManager()->refreshParametersPrefix(FactSystem::defaultComponentId, "CAL_");
+    _vehicle->parameterManager()->refreshParametersPrefix(FactSystem::defaultComponentId, "SENS_");
 }
 
 void SensorsComponentController::_updateAndEmitShowOrientationCalArea(bool show)

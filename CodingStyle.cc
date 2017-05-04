@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 // This is an example class c++ file which is used to describe the QGroundControl
 // coding style. In general almost everything in here has some coding style meaning.
 // Not all style choices are explained.
@@ -20,7 +19,7 @@
 
 #include <math.h>
 
-// Note how the Qt headers and the QGroundControl headers above are kept seperate
+// Note how the Qt headers and the QGroundControl headers above are kept separate
 
 Q_LOGGING_CATEGORY(CodingStyleLog, "CodingStyleLog")
 

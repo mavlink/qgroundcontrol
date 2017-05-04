@@ -8,8 +8,8 @@
  ****************************************************************************/
 
 
-import QtQuick                  2.5
-import QtQuick.Controls         1.4
+import QtQuick                  2.3
+import QtQuick.Controls         1.2
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
@@ -36,10 +36,10 @@ QGCViewDialog {
         anchors.margins:    ScreenTools.defaultFontPixelWidth
         anchors.left:       categoryLabel.right
         anchors.right:      parent.right
-        model:              QGroundControl.missionCommands.categories(_vehicle)
+        model:              QGroundControl.missionCommandTree.categoriesForVehicle(_vehicle)
 
         function categorySelected(category) {
-            commandList.model = QGroundControl.missionCommands.getCommandsForCategory(_vehicle, category)
+            commandList.model = QGroundControl.missionCommandTree.getCommandsForCategory(_vehicle, category)
         }
 
         Component.onCompleted: {
@@ -51,7 +51,7 @@ QGCViewDialog {
         onActivated: categorySelected(textAt(index))
     }
 
-    ListView {
+    QGCListView {
         id:                 commandList
         anchors.margins:    ScreenTools.defaultFontPixelHeight
         anchors.left:       parent.left
@@ -67,7 +67,7 @@ QGCViewDialog {
             height: commandColumn.height + ScreenTools.defaultFontPixelHeight
             color:  qgcPal.button
 
-            property var    mavCmdInfo: object
+            property var    mavCmdInfo: modelData
             property var    textColor:  qgcPal.buttonText
 
             Column {
@@ -101,5 +101,5 @@ QGCViewDialog {
                 }
             }
         }
-    } // ListView
+    } // QGCListView
 } // QGCViewDialog

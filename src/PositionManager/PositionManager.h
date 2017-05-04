@@ -21,7 +21,7 @@ class QGCPositionManager : public QGCTool {
 
 public:
 
-    QGCPositionManager(QGCApplication* app);
+    QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox);
     ~QGCPositionManager();
 
     enum QGCPositionSource {
@@ -33,6 +33,8 @@ public:
     void setPositionSource(QGCPositionSource source);
 
     int updateInterval() const;
+
+    void setToolbox(QGCToolbox* toolbox);
 
 private slots:
     void positionUpdated(const QGeoPositionInfo &update);

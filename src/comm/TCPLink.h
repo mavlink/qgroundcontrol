@@ -121,7 +121,6 @@ class TCPLink : public LinkInterface
 
 public:
     QTcpSocket* getSocket(void) { return _socket; }
-    virtual LinkConfiguration* getLinkConfiguration() { return _config; }
 
     void signalBytesWritten(void);
 
@@ -160,7 +159,7 @@ protected:
 
 private:
     // Links are only created/destroyed by LinkManager so constructor/destructor is not public
-    TCPLink(TCPConfiguration* config);
+    TCPLink(SharedLinkConfigurationPointer& config);
     ~TCPLink();
 
     // From LinkInterface
@@ -174,7 +173,7 @@ private:
     void _writeDebugBytes(const QByteArray data);
 #endif
 
-    TCPConfiguration* _config;
+    TCPConfiguration* _tcpConfig;
     QTcpSocket*       _socket;
     bool              _socketIsConnected;
 

@@ -28,7 +28,7 @@ QString PowerComponent::name(void) const
 
 QString PowerComponent::description(void) const
 {
-    return tr("The Power Component is used to setup battery parameters as well as advanced settings for propellers and magnetometer.");
+    return tr("Power Setup is used to setup battery parameters as well as advanced settings for propellers.");
 }
 
 QString PowerComponent::iconResource(void) const
@@ -44,9 +44,9 @@ bool PowerComponent::requiresSetup(void) const
 bool PowerComponent::setupComplete(void) const
 {
     QVariant cvalue, evalue, nvalue;
-    return _autopilot->getParameterFact(FactSystem::defaultComponentId, "BAT_V_CHARGED")->rawValue().toFloat() != 0.0f &&
-        _autopilot->getParameterFact(FactSystem::defaultComponentId, "BAT_V_EMPTY")->rawValue().toFloat() != 0.0f &&
-        _autopilot->getParameterFact(FactSystem::defaultComponentId, "BAT_N_CELLS")->rawValue().toInt() != 0;
+    return _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "BAT_V_CHARGED")->rawValue().toFloat() != 0.0f &&
+        _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "BAT_V_EMPTY")->rawValue().toFloat() != 0.0f &&
+        _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "BAT_N_CELLS")->rawValue().toInt() != 0;
 }
 
 QStringList PowerComponent::setupCompleteChangedTriggerList(void) const
@@ -65,14 +65,4 @@ QUrl PowerComponent::setupSource(void) const
 QUrl PowerComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/PowerComponentSummary.qml");
-}
-
-QString PowerComponent::prerequisiteSetup(void) const
-{
-    PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
-    Q_ASSERT(plugin);
-    if (!plugin->airframeComponent()->setupComplete()) {
-        return plugin->airframeComponent()->name();
-    }
-    return QString();
 }

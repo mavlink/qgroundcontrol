@@ -1,0 +1,48 @@
+[
+{
+    "name":             "VideoSource",
+    "shortDescription": "Video source",
+    "longDescription":  "Source for video. UDP, RTSP and UVC Cameras may be supported depending on Vehicle and ground station version.",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "VideoUDPPort",
+    "shortDescription": "Video UDP Port",
+    "longDescription":  "UDP port to bind to for video stream.",
+    "type":             "uint16",
+    "min":              1025,
+    "defaultValue":     5600
+},
+{
+    "name":             "VideoRTSPUrl",
+    "shortDescription": "Video RTSP Url",
+    "longDescription":  "RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "VideoSavePath",
+    "shortDescription": "Video save directory",
+    "longDescription":  "Directory to save videos to.",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "VideoAspectRatio",
+    "shortDescription": "Video Aspect Ratio",
+    "longDescription":  "Video Aspect Ratio (width / height). Use 0.0 to ignore it.",
+    "type":             "float",
+    "decimalPlaces":    6,
+    "defaultValue":     1.777777
+},
+{
+    "name":             "VideoGridLines",
+    "shortDescription": "Video Grid Lines",
+    "longDescription":  "Displays a grid overlayed over the video view.",
+    "type":             "uint32",
+    "enumStrings":      "Hide,Show",
+    "enumValues":       "1,0",
+    "defaultValue":     0
+}
+]

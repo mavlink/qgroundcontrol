@@ -24,9 +24,8 @@ QString PX4RadioComponent::name(void) const
 
 QString PX4RadioComponent::description(void) const
 {
-    return tr("The Radio Component is used to setup which channels on your RC Transmitter you will use for each vehicle control such as Roll, Pitch, Yaw and Throttle. "
-              "It also allows you to assign switches and dials to the various flight modes. "
-              "Prior to flight you must also calibrate the extents for all of your channels.");
+    return tr("Radio Setup is used to calibrate your transmitter. "
+              "It also assign channels for Roll, Pitch, Yaw and Throttle vehicle control as well as determining whether they are reversed.");
 }
 
 QString PX4RadioComponent::iconResource(void) const
@@ -36,18 +35,18 @@ QString PX4RadioComponent::iconResource(void) const
 
 bool PX4RadioComponent::requiresSetup(void) const
 {
-    return _autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1 ? false : true;
+    return _vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1 ? false : true;
 }
 
 bool PX4RadioComponent::setupComplete(void) const
 {
-    if (_autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() != 1) {
+    if (_vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() != 1) {
         // The best we can do to detect the need for a radio calibration is look for attitude
         // controls to be mapped.
         QStringList attitudeMappings;
         attitudeMappings << "RC_MAP_ROLL" << "RC_MAP_PITCH" << "RC_MAP_YAW" << "RC_MAP_THROTTLE";
         foreach(const QString &mapParam, attitudeMappings) {
-            if (_autopilot->getParameterFact(FactSystem::defaultComponentId, mapParam)->rawValue().toInt() == 0) {
+            if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, mapParam)->rawValue().toInt() == 0) {
                 return false;
             }
         }
@@ -73,18 +72,4 @@ QUrl PX4RadioComponent::setupSource(void) const
 QUrl PX4RadioComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/PX4RadioComponentSummary.qml");
-}
-
-QString PX4RadioComponent::prerequisiteSetup(void) const
-{
-    if (_autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() != 1) {
-        PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
-        
-        if (!plugin->airframeComponent()->setupComplete()) {
-            return plugin->airframeComponent()->name();
-
-        }
-    }
-    
-    return QString();
 }

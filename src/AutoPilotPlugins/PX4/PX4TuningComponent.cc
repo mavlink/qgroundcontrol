@@ -25,7 +25,7 @@ QString PX4TuningComponent::name(void) const
 
 QString PX4TuningComponent::description(void) const
 {
-    return tr("The Tuning Component is used to tune the flight characteristics of the Vehicle.");
+    return tr("Tuning Setup is used to tune the flight characteristics of the Vehicle.");
 }
 
 QString PX4TuningComponent::iconResource(void) const
@@ -83,18 +83,4 @@ QUrl PX4TuningComponent::setupSource(void) const
 QUrl PX4TuningComponent::summaryQmlSource(void) const
 {
     return QUrl();
-}
-
-QString PX4TuningComponent::prerequisiteSetup(void) const
-{
-    PX4AutoPilotPlugin* plugin = dynamic_cast<PX4AutoPilotPlugin*>(_autopilot);
-    if (plugin) {
-        if (!plugin->airframeComponent()->setupComplete()) {
-            return plugin->airframeComponent()->name();
-        }
-    } else {
-        qWarning() << "Internal error: plugin cast failed";
-    }
-
-    return QString();
 }

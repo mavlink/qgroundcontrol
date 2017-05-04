@@ -25,6 +25,7 @@
 #include <QDesktopServices>
 #include <QDockWidget>
 #include <QMenuBar>
+#include <QDialog>
 
 #include "QGC.h"
 #include "MAVLinkProtocol.h"
@@ -36,27 +37,23 @@
 #include "MAVLinkDecoder.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
-#include "HomePositionManager.h"
 #include "LogCompressor.h"
 #include "UAS.h"
 #include "QGCImageProvider.h"
+#include "QGCCorePlugin.h"
 
 #ifndef __mobile__
-#include "SettingsDialog.h"
-#include "QGCDataPlot2D.h"
 #include "Linecharts.h"
 #include "QGCUASFileViewMulti.h"
 #include "UASQuickView.h"
 #include "QGCTabbedInfoView.h"
 #include "CustomCommandWidget.h"
 #include "QGCDockWidget.h"
-#include "UASInfoWidget.h"
 #include "HILDockWidget.h"
-#include "LogDownload.h"
 #include "AppMessages.h"
 #endif
 
-#ifndef __ios__
+#ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
 
@@ -72,22 +69,18 @@ enum DockWidgetTypes {
     MAVLINK_INSPECTOR,
     CUSTOM_COMMAND,
     ONBOARD_FILES,
-    STATUS_DETAILS,
     INFO_VIEW,
     HIL_CONFIG,
-    ANALYZE,
-    LOG_DOWNLOAD
+    ANALYZE
 };
 
 static const char *rgDockWidgetNames[] = {
     "MAVLink Inspector",
     "Custom Command",
     "Onboard Files",
-    "Status Details",
     "Info View",
     "HIL Config",
-    "Analyze",
-    "Log Download"
+    "Analyze"
 };
 
 #define ARRAY_SIZE(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
@@ -99,10 +92,7 @@ static MainWindow* _instance = NULL;   ///< @brief MainWindow singleton
 
 MainWindow* MainWindow::_create()
 {
-    Q_ASSERT(_instance == NULL);
     new MainWindow();
-    // _instance is set in constructor
-    Q_ASSERT(_instance);
     return _instance;
 }
 
@@ -125,7 +115,6 @@ MainWindow::MainWindow()
     , _mainQmlWidgetHolder(NULL)
     , _forceClose(false)
 {
-    Q_ASSERT(_instance == NULL);
     _instance = this;
 
     //-- Load fonts
@@ -182,6 +171,9 @@ MainWindow::MainWindow()
     connect(qmlTestAction, &QAction::triggered, this, &MainWindow::_showQmlTestWidget);
     _ui.menuWidgets->addAction(qmlTestAction);
 #endif
+
+    connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &MainWindow::_showAdvancedUIChanged);
+    _showAdvancedUIChanged(qgcApp()->toolbox()->corePlugin()->showAdvancedUI());
 
     // Status Bar
     setStatusBar(new QStatusBar(this));
@@ -282,6 +274,11 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
+    // Enforce thread-safe shutdown of the mavlink decoder
+    mavlinkDecoder->finish();
+    mavlinkDecoder->wait(1000);
+    mavlinkDecoder->deleteLater();
+
     // This needs to happen before we get into the QWidget dtor
     // otherwise  the QML engine reads freed data and tries to
     // destroy MainWindow a second time.
@@ -298,8 +295,7 @@ QString MainWindow::_getWindowGeometryKey()
 void MainWindow::_buildCommonWidgets(void)
 {
     // Add generic MAVLink decoder
-    // TODO: This is never deleted
-    mavlinkDecoder = new MAVLinkDecoder(qgcApp()->toolbox()->mavlinkProtocol(), this);
+    mavlinkDecoder = new MAVLinkDecoder(qgcApp()->toolbox()->mavlinkProtocol());
     connect(mavlinkDecoder.data(), &MAVLinkDecoder::valueChanged, this, &MainWindow::valueChanged);
 
     // Log player
@@ -307,12 +303,17 @@ void MainWindow::_buildCommonWidgets(void)
     logPlayer = new QGCMAVLinkLogPlayer(statusBar());
     statusBar()->addPermanentWidget(logPlayer);
 
+    // Populate widget menu
     for (int i = 0, end = ARRAY_SIZE(rgDockWidgetNames); i < end; i++) {
+        if (i == ONBOARD_FILES) {
+            // Temporarily removed until twe can fix all the problems with it
+            continue;
+        }
 
         const char* pDockWidgetName = rgDockWidgetNames[i];
 
         // Add to menu
-        QAction* action = new QAction(tr(pDockWidgetName), this);
+        QAction* action = new QAction(pDockWidgetName, this);
         action->setCheckable(true);
         action->setData(i);
         connect(action, &QAction::triggered, this, &MainWindow::_showDockWidgetAction);
@@ -324,10 +325,15 @@ void MainWindow::_buildCommonWidgets(void)
 /// Shows or hides the specified dock widget, creating if necessary
 void MainWindow::_showDockWidget(const QString& name, bool show)
 {
+    if (name == rgDockWidgetNames[ONBOARD_FILES]) {
+        // Temporarily disabled due to bugs
+        return;
+    }
+
     // Create the inner widget if we need to
     if (!_mapName2DockWidget.contains(name)) {
         if(!_createInnerDockWidget(name)) {
-            qWarning() << "Trying to load non existing widget:" << name;
+            qWarning() << "Trying to load non existent widget:" << name;
             return;
         }
     }
@@ -354,12 +360,6 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
                 break;
             case ONBOARD_FILES:
                 widget = new QGCUASFileViewMulti(widgetName, action, this);
-                break;
-            case LOG_DOWNLOAD:
-                widget = new LogDownload(widgetName, action, this);
-                break;
-            case STATUS_DETAILS:
-                widget = new UASInfoWidget(widgetName, action, this);
                 break;
             case HIL_CONFIG:
                 widget = new HILDockWidget(widgetName, action, this);
@@ -411,7 +411,7 @@ void MainWindow::reallyClose(void)
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (!_forceClose) {
-        // Attemp close from within the root Qml item
+        // Attempt close from within the root Qml item
         qgcApp()->qmlAttemptWindowClose();
         event->ignore();
         return;
@@ -454,28 +454,7 @@ void MainWindow::storeSettings()
 
 void MainWindow::configureWindowName()
 {
-    QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
-    QString windowname = qApp->applicationName() + " " + qApp->applicationVersion();
-
-    // XXX we do have UDP MAVLink heartbeat broadcast now in SITL and will have it on the
-    // WIFI radio, so people should not be in need any more of knowing their IP.
-    // this can go once we are certain its not needed any more.
-    #if 0
-    bool prevAddr = false;
-    windowname.append(" (" + QHostInfo::localHostName() + ": ");
-    for (int i = 0; i < hostAddresses.size(); i++)
-    {
-        // Exclude loopback IPv4 and all IPv6 addresses
-        if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":"))
-        {
-            if(prevAddr) windowname.append("/");
-            windowname.append(hostAddresses.at(i).toString());
-            prevAddr = true;
-        }
-    }
-    windowname.append(")");
-    #endif
-    setWindowTitle(windowname);
+    setWindowTitle(qApp->applicationName() + " " + qApp->applicationVersion());
 }
 
 /**
@@ -484,14 +463,6 @@ void MainWindow::configureWindowName()
 **/
 void MainWindow::connectCommonActions()
 {
-    // Audio output
-    _ui.actionMuteAudioOutput->setChecked(qgcApp()->toolbox()->audioOutput()->isMuted());
-    connect(qgcApp()->toolbox()->audioOutput(), &GAudioOutput::mutedChanged, _ui.actionMuteAudioOutput, &QAction::setChecked);
-    connect(_ui.actionMuteAudioOutput, &QAction::triggered, qgcApp()->toolbox()->audioOutput(), &GAudioOutput::mute);
-
-    // Application Settings
-    connect(_ui.actionSettings, &QAction::triggered, this, &MainWindow::showSettings);
-
     // Connect internal actions
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &MainWindow::_vehicleAdded);
 }
@@ -502,14 +473,6 @@ void MainWindow::_openUrl(const QString& url, const QString& errorMessage)
         qgcApp()->showMessage(QString("Could not open information in browser: %1").arg(errorMessage));
     }
 }
-
-#ifndef __mobile__
-void MainWindow::showSettings()
-{
-    SettingsDialog settings(this);
-    settings.exec();
-}
-#endif
 
 void MainWindow::_vehicleAdded(Vehicle* vehicle)
 {
@@ -594,4 +557,14 @@ void MainWindow::_storeVisibleWidgetsSettings(void)
 QObject* MainWindow::rootQmlObject(void)
 {
     return _mainQmlWidgetHolder->getRootObject();
+}
+
+void MainWindow::_showAdvancedUIChanged(bool advanced)
+{
+    if (advanced) {
+        menuBar()->addMenu(_ui.menuFile);
+        menuBar()->addMenu(_ui.menuWidgets);
+    } else {
+        menuBar()->clear();
+    }
 }

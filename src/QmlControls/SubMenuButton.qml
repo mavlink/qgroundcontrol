@@ -1,20 +1,23 @@
-import QtQuick                  2.2
+import QtQuick                  2.3
 import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.2
+import QtQuick.Controls.Styles  1.4
 import QtGraphicalEffects       1.0
 
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
 Button {
+    id:             _rootButton
     property bool   setupComplete:  true                                    ///< true: setup complete indicator shows as completed
     property bool   setupIndicator: true                                    ///< true: show setup complete indicator
     property string imageResource:  "/qmlimages/subMenuButtonImage.png"     ///< Button image
+    property size   sourceSize:     Qt.size(ScreenTools.defaultFontPixelHeight * 2, ScreenTools.defaultFontPixelHeight * 2)
 
     text: "Button"  ///< Pass in your own button text
 
     checkable:      true
     implicitHeight: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 3.5 : ScreenTools.defaultFontPixelHeight * 2.5
+    implicitWidth:  __panel.implicitWidth
 
     style: ButtonStyle {
         id: buttonStyle
@@ -40,9 +43,10 @@ Button {
                 width:                  ScreenTools.defaultFontPixelHeight * 2
                 height:                 ScreenTools.defaultFontPixelHeight * 2
                 fillMode:               Image.PreserveAspectFit
-                smooth:                 true
+                mipmap:                 true
                 color:                  control.setupComplete ? qgcPal.button : "red"
                 source:                 control.imageResource
+                sourceSize:             _rootButton.sourceSize
             }
 
             QGCLabel {

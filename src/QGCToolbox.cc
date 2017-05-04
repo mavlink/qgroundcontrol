@@ -8,113 +8,124 @@
  ****************************************************************************/
 
 
-#include "AutoPilotPluginManager.h"
 #include "FactSystem.h"
 #include "FirmwarePluginManager.h"
-#include "FlightMapSettings.h"
 #include "GAudioOutput.h"
 #ifndef __mobile__
 #include "GPSManager.h"
 #endif
-#include "HomePositionManager.h"
 #include "JoystickManager.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
-#include "MissionCommands.h"
+#include "MissionCommandTree.h"
 #include "MultiVehicleManager.h"
 #include "QGCImageProvider.h"
 #include "UASMessageHandler.h"
 #include "QGCMapEngineManager.h"
 #include "FollowMe.h"
 #include "PositionManager.h"
+#include "VideoManager.h"
+#include "MAVLinkLogManager.h"
+#include "QGCCorePlugin.h"
+#include "QGCOptions.h"
+#include "SettingsManager.h"
+#include "QGCApplication.h"
+
+#if defined(QGC_CUSTOM_BUILD)
+#include CUSTOMHEADER
+#endif
 
 QGCToolbox::QGCToolbox(QGCApplication* app)
     : _audioOutput(NULL)
-    , _autopilotPluginManager(NULL)
     , _factSystem(NULL)
     , _firmwarePluginManager(NULL)
-    , _flightMapSettings(NULL)
 #ifndef __mobile__
     , _gpsManager(NULL)
 #endif
-    , _homePositionManager(NULL)
     , _imageProvider(NULL)
     , _joystickManager(NULL)
     , _linkManager(NULL)
     , _mavlinkProtocol(NULL)
-    , _missionCommands(NULL)
+    , _missionCommandTree(NULL)
     , _multiVehicleManager(NULL)
     , _mapEngineManager(NULL)
     , _uasMessageHandler(NULL)
     , _followMe(NULL)
     , _qgcPositionManager(NULL)
+    , _videoManager(NULL)
+    , _mavlinkLogManager(NULL)
+    , _corePlugin(NULL)
+    , _settingsManager(NULL)
 {
-    _audioOutput =              new GAudioOutput(app);
-    _autopilotPluginManager =   new AutoPilotPluginManager(app);
-    _factSystem =               new FactSystem(app);
-    _firmwarePluginManager =    new FirmwarePluginManager(app);
-    _flightMapSettings =        new FlightMapSettings(app);
-#ifndef __mobile__
-    _gpsManager =               new GPSManager(app);
-#endif
-    _homePositionManager =      new HomePositionManager(app);
-    _imageProvider =            new QGCImageProvider(app);
-    _joystickManager =          new JoystickManager(app);
-    _linkManager =              new LinkManager(app);
-    _mavlinkProtocol =          new MAVLinkProtocol(app);
-    _missionCommands =          new MissionCommands(app);
-    _multiVehicleManager =      new MultiVehicleManager(app);
-    _mapEngineManager =         new QGCMapEngineManager(app);
-    _uasMessageHandler =        new UASMessageHandler(app);
-    _qgcPositionManager =       new QGCPositionManager(app);
-    _followMe =                 new FollowMe(app);
+    // SettingsManager must be first so settings are available to any subsequent tools
+    _settingsManager =          new SettingsManager(app, this);
 
+    //-- Scan and load plugins
+    _scanAndLoadPlugins(app);
+    _audioOutput =              new GAudioOutput            (app, this);
+    _factSystem =               new FactSystem              (app, this);
+    _firmwarePluginManager =    new FirmwarePluginManager   (app, this);
+#ifndef __mobile__
+    _gpsManager =               new GPSManager              (app, this);
+#endif
+    _imageProvider =            new QGCImageProvider        (app, this);
+    _joystickManager =          new JoystickManager         (app, this);
+    _linkManager =              new LinkManager             (app, this);
+    _mavlinkProtocol =          new MAVLinkProtocol         (app, this);
+    _missionCommandTree =       new MissionCommandTree      (app, this);
+    _multiVehicleManager =      new MultiVehicleManager     (app, this);
+    _mapEngineManager =         new QGCMapEngineManager     (app, this);
+    _uasMessageHandler =        new UASMessageHandler       (app, this);
+    _qgcPositionManager =       new QGCPositionManager      (app, this);
+    _followMe =                 new FollowMe                (app, this);
+    _videoManager =             new VideoManager            (app, this);
+    _mavlinkLogManager =        new MAVLinkLogManager       (app, this);
+}
+
+void QGCToolbox::setChildToolboxes(void)
+{
+    // SettingsManager must be first so settings are available to any subsequent tools
+    _settingsManager->setToolbox(this);
+
+    _corePlugin->setToolbox(this);
     _audioOutput->setToolbox(this);
-    _autopilotPluginManager->setToolbox(this);
     _factSystem->setToolbox(this);
     _firmwarePluginManager->setToolbox(this);
-    _flightMapSettings->setToolbox(this);
 #ifndef __mobile__
     _gpsManager->setToolbox(this);
 #endif
-    _homePositionManager->setToolbox(this);
     _imageProvider->setToolbox(this);
     _joystickManager->setToolbox(this);
     _linkManager->setToolbox(this);
     _mavlinkProtocol->setToolbox(this);
-    _missionCommands->setToolbox(this);
+    _missionCommandTree->setToolbox(this);
     _multiVehicleManager->setToolbox(this);
     _mapEngineManager->setToolbox(this);
     _uasMessageHandler->setToolbox(this);
     _followMe->setToolbox(this);
     _qgcPositionManager->setToolbox(this);
+    _videoManager->setToolbox(this);
+    _mavlinkLogManager->setToolbox(this);
 }
 
-QGCToolbox::~QGCToolbox()
+void QGCToolbox::_scanAndLoadPlugins(QGCApplication* app)
 {
-    delete _audioOutput;
-    delete _autopilotPluginManager;
-    delete _factSystem;
-    delete _firmwarePluginManager;
-    delete _flightMapSettings;
-    delete _homePositionManager;
-    delete _joystickManager;
-    delete _linkManager;
-    delete _mavlinkProtocol;
-    delete _missionCommands;
-    delete _mapEngineManager;
-    delete _multiVehicleManager;
-    delete _uasMessageHandler;
-    delete _followMe;
-    delete _qgcPositionManager;
+#if defined (QGC_CUSTOM_BUILD)
+    //-- Create custom plugin (Static)
+    _corePlugin = (QGCCorePlugin*) new CUSTOMCLASS(app, app->toolbox());
+    if(_corePlugin) {
+        return;
+    }
+#endif
+    //-- No plugins found, use default instance
+    _corePlugin = new QGCCorePlugin(app, app->toolbox());
 }
 
-QGCTool::QGCTool(QGCApplication* app)
-    : QObject((QObject*)app)
+QGCTool::QGCTool(QGCApplication* app, QGCToolbox* toolbox)
+    : QObject(toolbox)
     , _app(app)
     , _toolbox(NULL)
 {
-
 }
 
 void QGCTool::setToolbox(QGCToolbox* toolbox)

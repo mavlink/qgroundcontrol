@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 
-import QtQuick          2.5
+import QtQuick          2.3
 import QtQuick.Window   2.2
 import QtQuick.Dialogs  1.2
 
@@ -28,34 +28,8 @@ Window {
         }
     }
 
-    function showFlyView() {
-        mainWindowInner.item.showFlyView()
-    }
-
-    function showPlanView() {
-        mainWindowInner.item.showPlanView()
-    }
-
     function showSetupView() {
         mainWindowInner.item.showSetupView()
-    }
-
-    // The following are use for unit testing only
-
-    function showSetupFirmware() {
-        mainWindowInner.item.showSetupFirmware()
-    }
-
-    function showSetupParameters() {
-        mainWindowInner.item.showSetupParameters()
-    }
-
-    function showSetupSummary() {
-        mainWindowInner.item.showSetupSummary()
-    }
-
-    function showSetupVehicleComponent(vehicleComponent) {
-        mainWindowInner.showSetupVehicleComponent(vehicleComponent)
     }
 
     function showMessage(message) {

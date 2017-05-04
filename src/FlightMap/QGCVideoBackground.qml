@@ -14,28 +14,13 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick 2.4
-import QtQuick.Controls 1.3
+import QtQuick 2.3
+import QtQuick.Controls 1.2
 import QGroundControl.QgcQtGStreamer 1.0
 
 VideoItem {
     id: videoBackground
     property var display
     property var receiver
-    property var runVideo:  false
     surface: display
-    onRunVideoChanged: {
-        if(videoBackground.receiver && videoBackground.display) {
-            if(videoBackground.runVideo) {
-                videoBackground.receiver.start();
-            } else {
-                videoBackground.receiver.stop();
-            }
-        }
-    }
-    Component.onCompleted: {
-        if(videoBackground.runVideo && videoBackground.receiver) {
-            videoBackground.receiver.start();
-        }
-    }
 }

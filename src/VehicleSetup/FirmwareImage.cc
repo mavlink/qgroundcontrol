@@ -18,7 +18,7 @@
 #include "QGCMAVLink.h"
 #include "QGCApplication.h"
 #include "FirmwarePlugin.h"
-#include "ParameterLoader.h"
+#include "ParameterManager.h"
 
 #include <QDebug>
 #include <QFile>
@@ -51,9 +51,8 @@ bool FirmwareImage::load(const QString& imageFilename, uint32_t boardId)
     _boardId = boardId;
     
     if (imageFilename.endsWith(".bin")) {
-        return _binLoad(imageFilename);
         _binFormat = true;
-        return true;
+        return _binLoad(imageFilename);
     } else if (imageFilename.endsWith(".px4")) {
         _binFormat = true;
         return _px4Load(imageFilename);
@@ -198,7 +197,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
 {
     _imageSize = 0;
     
-    // We need to collect information from the .px4 file as well as pull the binary image out to a seperate file.
+    // We need to collect information from the .px4 file as well as pull the binary image out to a separate file.
     
     QFile px4File(imageFilename);
     if (!px4File.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -275,7 +274,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
         }
 
         // Cache this file with the system
-        ParameterLoader::cacheMetaDataFile(parameterFilename, firmwareType);
+        ParameterManager::cacheMetaDataFile(parameterFilename, firmwareType);
     }
 
     // Decompress the airframe xml and save to file
@@ -400,7 +399,7 @@ bool FirmwareImage::_decompressJsonValue(const QJsonObject&	jsonObject,			///< J
         return false;
     }
     
-    emit statusMessage(QString("Succesfully decompressed %1").arg(bytesKey));
+    emit statusMessage(QString("Successfully decompressed %1").arg(bytesKey));
     
     return true;
 }
@@ -435,6 +434,8 @@ bool FirmwareImage::_binLoad(const QString& imageFilename)
     _imageSize = (uint32_t)binFile.size();
     
     binFile.close();
+    
+    _binFilename = imageFilename;
     
     return true;
 }

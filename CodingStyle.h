@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 // This is an example class header file which is used to describe the QGroundControl
 // coding style. In general almost everything in here has some coding style meaning.
 // Not all style choices are explained.
@@ -25,7 +24,7 @@
 #include "Fact.h"
 #include "UASInterface.h"
 
-// Note how the Qt headers, System, headers and the QGroundControl headers above are kept in seperate groups
+// Note how the Qt headers, System, headers and the QGroundControl headers above are kept in separate groups
 
 // If you are going to use a logging category for a class it should have the same name as the class
 // with a suffix of Log.

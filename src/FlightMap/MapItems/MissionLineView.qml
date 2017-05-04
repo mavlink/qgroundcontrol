@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 
-import QtQuick          2.4
+import QtQuick          2.3
 import QtLocation       5.3
 import QtPositioning    5.3
 
@@ -24,7 +24,7 @@ MapItemView {
     delegate: MapPolyline {
         line.width: 3
         line.color: "#be781c"                           // Hack, can't get palette to work in here
-        z:          QGroundControl.zOrderMapItems - 1   // Under item indicators
+        z:          QGroundControl.zOrderWaypointLines
 
         path: [
             object.coordinate1,

@@ -54,14 +54,12 @@
      <height>22</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuMGround">
+   <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
     </property>
     <addaction name="separator"/>
-    <addaction name="actionMuteAudioOutput"/>
     <addaction name="actionStatusBar"/>
-    <addaction name="actionSettings"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -70,7 +68,7 @@
      <string>Widgets</string>
     </property>
    </widget>
-   <addaction name="menuMGround"/>
+   <addaction name="menuFile"/>
    <addaction name="menuWidgets"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -87,25 +85,6 @@
     <string>Manage Communication Links</string>
    </property>
   </action>
-  <action name="actionMuteAudioOutput">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Mute Audio Output</string>
-   </property>
-  </action>
-  <action name="actionSettings">
-   <property name="text">
-    <string>Settings</string>
-   </property>
-   <property name="toolTip">
-    <string>Application settings</string>
-   </property>
-   <property name="menuRole">
-    <enum>QAction::PreferencesRole</enum>
-   </property>
-  </action>
   <action name="actionAdvanced_Mode">
    <property name="checkable">
     <bool>true</bool>
@@ -119,7 +98,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Show Status Bar</string>
+    <string>Replay Flight Data</string>
    </property>
   </action>
  </widget>

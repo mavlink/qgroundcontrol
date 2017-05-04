@@ -73,8 +73,12 @@ LinuxBuild {
         QMAKE_POST_LINK += $$escape_expand(\\n) xcopy \"$$GST_ROOT_WIN\\lib\\gstreamer-1.0\\validate\\*.dll\" \"$$DESTDIR_WIN\\gstreamer-plugins\\validate\\\" /Y $$escape_expand(\\n)
     }
 } else:AndroidBuild {
-    #- gstreamer assumed to be installed in $$PWD/../../android/gstreamer-1.0-android-armv7-1.5.2
-    GST_ROOT = $$PWD/../../gstreamer-1.0-android-armv7-1.5.2
+    #- gstreamer assumed to be installed in $$PWD/../../android/gstreamer-1.0-android-armv7-1.5.2 (or x86)
+    Androidx86Build {
+        GST_ROOT = $$PWD/../../gstreamer-1.0-android-x86-1.5.2
+    } else {
+        GST_ROOT = $$PWD/../../gstreamer-1.0-android-armv7-1.5.2
+    }
     exists($$GST_ROOT) {
         QMAKE_CXXFLAGS  += -pthread
         CONFIG          += VideoEnabled
@@ -85,19 +89,24 @@ LinuxBuild {
             -lgstcoreelements \
             -lgstudp \
             -lgstrtp \
+            -lgstrtsp \
             -lgstx264 \
             -lgstlibav \
-            -lgstvideoparsersbad
+            -lgstsdpelem \
+            -lgstvideoparsersbad \
+            -lgstrtpmanager \
+            -lgstrmdemux \
 
         # Rest of GStreamer dependencies
         LIBS += -L$$GST_ROOT/lib \
             -lgstfft-1.0 -lm  \
             -lgstnet-1.0 -lgio-2.0 \
             -lgstaudio-1.0 -lgstcodecparsers-1.0 -lgstbase-1.0 \
-            -lgstreamer-1.0 -lgsttag-1.0 -lgstrtp-1.0 -lgstpbutils-1.0 \
-            -lgstvideo-1.0 -lavformat -lavcodec -lavresample -lavutil -lx264 \
-            -lbz2 -lgobject-2.0 \
-            -Wl,--export-dynamic -lgmodule-2.0 -pthread -lglib-2.0 -lorc-0.4 -liconv -lffi -lintl
+            -lgstreamer-1.0 -lgstrtp-1.0 -lgstpbutils-1.0 -lgstrtsp-1.0 -lgsttag-1.0 \
+            -lgstvideo-1.0 -lavformat -lavcodec -lavutil -lx264 -lavresample \
+            -lgstriff-1.0 -lgstcontroller-1.0 -lgstapp-1.0 \
+            -lgstsdp-1.0 -lbz2 -lgobject-2.0 \
+            -Wl,--export-dynamic -lgmodule-2.0 -pthread -lglib-2.0 -lorc-0.4 -liconv -lffi -lintl \
 
         INCLUDEPATH += \
             $$GST_ROOT/include/gstreamer-1.0 \
@@ -110,6 +119,15 @@ LinuxBuild {
 VideoEnabled {
 
     message("Including support for video streaming")
+
+    contains (CONFIG, DISABLE_VIDEORECORDING) {
+        message("Skipping support for video recording (manual override from command line)")
+    # Otherwise the user can still disable this feature in the user_config.pri file.
+    } else:exists($$BASEDIR/user_config.pri):infile($$BASEDIR/user_config.pri, DEFINES, DISABLE_VIDEORECORDING) {
+        message("Skipping support for video recording (manual override from user_config.pri)")
+    } else {
+        DEFINES += QGC_ENABLE_VIDEORECORDING
+    }
 
     DEFINES += \
         QGC_GST_STREAMING \
@@ -177,7 +195,7 @@ VideoEnabled {
         }
         LinuxBuild {
             message("  You can install it using apt-get")
-            message("  sudo apt-get install libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev")
+            message("  sudo apt-get install gstreamer1.0*")
         }
         WindowsBuild {
             message("  You can download it from http://gstreamer.freedesktop.org/data/pkg/windows/")

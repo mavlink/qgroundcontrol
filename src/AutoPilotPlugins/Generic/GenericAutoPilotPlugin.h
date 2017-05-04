@@ -26,11 +26,8 @@ public:
     GenericAutoPilotPlugin(Vehicle* vehicle, QObject* parent = NULL);
     
     // Overrides from AutoPilotPlugin
-    virtual const QVariantList& vehicleComponents(void);
-    
-public slots:
-    // FIXME: This is public until we restructure AutoPilotPlugin/FirmwarePlugin/Vehicle
-    void _parametersReadyPreChecks(bool missingParameters);
+    const QVariantList& vehicleComponents(void) final;
+    QString prerequisiteSetup(VehicleComponent* component) const final;
 };
 
 #endif

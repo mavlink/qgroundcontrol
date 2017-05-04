@@ -51,29 +51,23 @@ public:
     Q_PROPERTY(bool pitchAxisMapped     READ pitchAxisMapped    NOTIFY pitchAxisMappedChanged)
     Q_PROPERTY(bool yawAxisMapped       READ yawAxisMapped      NOTIFY yawAxisMappedChanged)
     Q_PROPERTY(bool throttleAxisMapped  READ throttleAxisMapped NOTIFY throttleAxisMappedChanged)
-    
-    Q_PROPERTY(int rollAxisValue        READ rollAxisValue      NOTIFY rollAxisValueChanged)
-    Q_PROPERTY(int pitchAxisValue       READ pitchAxisValue     NOTIFY pitchAxisValueChanged)
-    Q_PROPERTY(int yawAxisValue         READ yawAxisValue       NOTIFY yawAxisValueChanged)
-    Q_PROPERTY(int throttleAxisValue    READ throttleAxisValue  NOTIFY throttleAxisValueChanged)
-    
+
     Q_PROPERTY(int rollAxisReversed     READ rollAxisReversed       NOTIFY rollAxisReversedChanged)
     Q_PROPERTY(int pitchAxisReversed    READ pitchAxisReversed      NOTIFY pitchAxisReversedChanged)
     Q_PROPERTY(int yawAxisReversed      READ yawAxisReversed        NOTIFY yawAxisReversedChanged)
     Q_PROPERTY(int throttleAxisReversed READ throttleAxisReversed   NOTIFY throttleAxisReversedChanged)
     
+    Q_PROPERTY(bool deadbandToggle            READ getDeadbandToggle        WRITE setDeadbandToggle    NOTIFY deadbandToggled)
+
+    Q_PROPERTY(int transmitterMode READ transmitterMode WRITE setTransmitterMode NOTIFY transmitterModeChanged)
     Q_PROPERTY(QString imageHelp MEMBER _imageHelp NOTIFY imageHelpChanged)
+    Q_PROPERTY(bool calibrating READ calibrating NOTIFY calibratingChanged)
     
     Q_INVOKABLE void cancelButtonClicked(void);
     Q_INVOKABLE void skipButtonClicked(void);
     Q_INVOKABLE void nextButtonClicked(void);
     Q_INVOKABLE void start(void);
-    
-    int rollAxisValue(void);
-    int pitchAxisValue(void);
-    int yawAxisValue(void);
-    int throttleAxisValue(void);
-    
+
     bool rollAxisMapped(void);
     bool pitchAxisMapped(void);
     bool yawAxisMapped(void);
@@ -84,27 +78,35 @@ public:
     bool yawAxisReversed(void);
     bool throttleAxisReversed(void);
     
+    bool getDeadbandToggle(void);
+    void setDeadbandToggle(bool);
+
     int axisCount(void);
+
+    int transmitterMode(void) { return _transmitterMode; }
+    void setTransmitterMode(int mode);
+
+    bool calibrating(void) { return _currentStep != -1; }
     
 signals:
     void axisValueChanged(int axis, int value);
-    
+    void axisDeadbandChanged(int axis, int value);
+
     void rollAxisMappedChanged(bool mapped);
     void pitchAxisMappedChanged(bool mapped);
     void yawAxisMappedChanged(bool mapped);
     void throttleAxisMappedChanged(bool mapped);
-    
-    void rollAxisValueChanged(int value);
-    void pitchAxisValueChanged(int value);
-    void yawAxisValueChanged(int value);
-    void throttleAxisValueChanged(int value);
-    
+
     void rollAxisReversedChanged(bool reversed);
     void pitchAxisReversedChanged(bool reversed);
     void yawAxisReversedChanged(bool reversed);
     void throttleAxisReversedChanged(bool reversed);
+
+    void deadbandToggled(bool value);
     
     void imageHelpChanged(QString source);
+    void transmitterModeChanged(int mode);
+    void calibratingChanged(void);
     
     // @brief Signalled when in unit test mode and a message box should be displayed by the next button
     void nextButtonMessageBoxDisplayed(void);
@@ -112,6 +114,7 @@ signals:
 private slots:
     void _activeJoystickChanged(Joystick* joystick);
     void _axisValueChanged(int axis, int value);
+    void _axisDeadbandChanged(int axis, int value);
    
 private:
     /// @brief The states of the calibration state machine.
@@ -144,10 +147,12 @@ private:
         int                         axisMin;    ///< Minimum axis value
         int                         axisMax;    ///< Maximum axis value
         int                         axisTrim;   ///< Trim position
+        int                         deadband;   ///< Deadband
     };
     
     Joystick* _activeJoystick;
     
+    int _transmitterMode;
     int _currentStep;  ///< Current step of state machine
     
     const struct stateMachineEntry* _getStateMachineEntry(int step);
@@ -183,11 +188,14 @@ private:
     
     void _setHelpImage(const char* imageFile);
     
-    void _signalAllAttiudeValueChanges(void);
+    void _signalAllAttitudeValueChanges(void);
     
     // Member variables
 
+    static const char* _imageFileMode1Dir;
     static const char* _imageFileMode2Dir;
+    static const char* _imageFileMode3Dir;
+    static const char* _imageFileMode4Dir;
     static const char* _imageFilePrefix;
     static const char* _imageCenter;
     static const char* _imageThrottleUp;

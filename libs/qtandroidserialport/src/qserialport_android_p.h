@@ -49,6 +49,9 @@
 #include <QtCore/qstringlist.h>
 #include <QtCore/qthread.h>
 
+#include "QGCLoggingCategory.h"
+
+Q_DECLARE_LOGGING_CATEGORY(AndroidSerialPortLog)
 
 QT_BEGIN_NAMESPACE
 

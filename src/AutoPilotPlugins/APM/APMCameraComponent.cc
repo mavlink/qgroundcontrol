@@ -29,7 +29,7 @@ QString APMCameraComponent::name(void) const
 
 QString APMCameraComponent::description(void) const
 {
-    return tr("The Camera Component is used to setup camera and gimbal settings.");
+    return tr("Camera setup is used to adjust camera and gimbal settings.");
 }
 
 QString APMCameraComponent::iconResource(void) const
@@ -60,16 +60,4 @@ QUrl APMCameraComponent::setupSource(void) const
 QUrl APMCameraComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMCameraComponentSummary.qml"));
-}
-
-QString APMCameraComponent::prerequisiteSetup(void) const
-{
-    APMAutoPilotPlugin* plugin = dynamic_cast<APMAutoPilotPlugin*>(_autopilot);
-    Q_ASSERT(plugin);
-
-    if (!plugin->airframeComponent()->setupComplete()) {
-        return plugin->airframeComponent()->name();
-    }
-
-    return QString();
 }

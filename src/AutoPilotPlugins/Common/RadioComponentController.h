@@ -24,6 +24,7 @@
 #include "AutoPilotPlugin.h"
 
 Q_DECLARE_LOGGING_CATEGORY(RadioComponentControllerLog)
+Q_DECLARE_LOGGING_CATEGORY(RadioComponentControllerVerboseLog)
 
 class RadioConfigest;
 
@@ -45,10 +46,10 @@ public:
     Q_PROPERTY(int minChannelCount MEMBER _chanMinimum CONSTANT)
     Q_PROPERTY(int channelCount READ channelCount NOTIFY channelCountChanged)
     
-    Q_PROPERTY(QQuickItem* statusText MEMBER _statusText)
-    Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
-    Q_PROPERTY(QQuickItem* nextButton MEMBER _nextButton)
-    Q_PROPERTY(QQuickItem* skipButton MEMBER _skipButton)
+    Q_PROPERTY(QQuickItem* statusText   MEMBER _statusText      NOTIFY statusTextChanged)
+    Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton    NOTIFY cancelButtonChanged)
+    Q_PROPERTY(QQuickItem* nextButton   MEMBER _nextButton      NOTIFY nextButtonChanged)
+    Q_PROPERTY(QQuickItem* skipButton   MEMBER _skipButton      NOTIFY skipButtonChanged)
     
     Q_PROPERTY(bool rollChannelMapped READ rollChannelMapped NOTIFY rollChannelMappedChanged)
     Q_PROPERTY(bool pitchChannelMapped READ pitchChannelMapped NOTIFY pitchChannelMappedChanged)
@@ -103,6 +104,11 @@ public:
     void setTransmitterMode(int mode);
     
 signals:
+    void statusTextChanged(void);
+    void cancelButtonChanged(void);
+    void nextButtonChanged(void);
+    void skipButtonChanged(void);
+
     void channelCountChanged(int channelCount);
     void channelRCValueChanged(int channel, int rcValue);
     
@@ -144,20 +150,7 @@ private:
         rcCalFunctionPitch,
         rcCalFunctionYaw,
         rcCalFunctionThrottle,
-        rcCalFunctionModeSwitch,
-        rcCalFunctionPosCtlSwitch,
-        rcCalFunctionLoiterSwitch,
-        rcCalFunctionReturnSwitch,
-        rcCalFunctionAcroSwitch,
         rcCalFunctionMax,
-        
-        // Attitude functions are roll/pitch/yaw/throttle
-        rcCalFunctionFirstAttitudeFunction = rcCalFunctionRoll,
-        rcCalFunctionLastAttitudeFunction = rcCalFunctionThrottle,
-        
-        // Non-Attitude functions are everything else
-        rcCalFunctionFirstNonAttitudeFunction = rcCalFunctionModeSwitch,
-        rcCalFunctionLastNonAttitudeFunction = rcCalFunctionAcroSwitch,
     };
     
     /// @brief The states of the calibration state machine.
@@ -237,10 +230,13 @@ private:
     void _loadSettings(void);
     void _storeSettings(void);
     
-    void _signalAllAttiudeValueChanges(void);
+    void _signalAllAttitudeValueChanges(void);
 
     int _chanMax(void) const;
-    
+
+    bool _channelReversedParamValue(int channel);
+    void _setChannelReversedParamValue(int channel, bool reversed);
+
     // @brief Called by unit test code to set the mode to unit testing
     void _setUnitTestMode(void){ _unitTestMode = true; }
     
@@ -267,20 +263,20 @@ private:
     int _transmitterMode;   ///< 1: transmitter is mode 1, 2: transmitted is mode 2
     
     static const int _updateInterval;   ///< Interval for ui update timer
-    
+
     static const struct FunctionInfo _rgFunctionInfoAPM[rcCalFunctionMax]; ///< Information associated with each function, PX4 firmware
     static const struct FunctionInfo _rgFunctionInfoPX4[rcCalFunctionMax]; ///< Information associated with each function, APM firmware
 
     int _rgFunctionChannelMapping[rcCalFunctionMax];                    ///< Maps from rcCalFunctions to channel index. _chanMax indicates channel not set for this function.
 
     static const int _attitudeControls = 5;
-    
+
     int _chanCount;                     ///< Number of actual rc channels available
     static const int _chanMaxPX4 = 18;  ///< Maximum number of supported rc channels, PX4 Firmware
     static const int _chanMaxAPM = 14;  ///< Maximum number of supported rc channels, APM firmware
     static const int _chanMaxAny = 18;  ///< Maximum number of support rc channels by this implementation
     static const int _chanMinimum = 5;  ///< Minimum numner of channels required to run
-    
+
     struct ChannelInfo _rgChannelInfo[_chanMaxAny];    ///< Information associated with each rc channel
 
     QList<int> _apmPossibleMissingRCChannelParams;  ///< List of possible missing RC*_* params for APM stack
@@ -300,7 +296,12 @@ private:
     static const int _rcCalMoveDelta;
     static const int _rcCalSettleDelta;
     static const int _rcCalMinDelta;
-    
+
+    static const char*  _px4RevParamFormat;
+    static const char*  _apmNewRevParamFormat;
+    QString             _revParamFormat;
+    bool                _revParamIsBool;
+
     int _rcValueSave[_chanMaxAny];        ///< Saved values prior to detecting channel movement
     
     int _rcRawValue[_chanMaxAny];         ///< Current set of raw channel values

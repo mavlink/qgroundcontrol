@@ -1,4 +1,4 @@
-import QtQuick                  2.5
+import QtQuick                  2.3
 import QtQuick.Controls         1.2
 
 import QGroundControl.Palette       1.0
@@ -85,6 +85,14 @@ Item {
 
     Rectangle {
         anchors.margins:    parent.width / 4
+        anchors.fill:       parent
+        radius:             width / 2
+        border.color:       mapPal.thumbJoystick
+        border.width:       2
+        color:              "transparent"
+    }
+
+    Rectangle {
         anchors.fill:       parent
         radius:             width / 2
         border.color:       mapPal.thumbJoystick

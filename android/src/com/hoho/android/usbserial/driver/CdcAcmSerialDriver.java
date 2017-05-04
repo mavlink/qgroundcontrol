@@ -47,31 +47,75 @@ public class CdcAcmSerialDriver extends CommonUsbSerialDriver {
 
     @Override
     public void open() throws IOException {
-        Log.d(TAG, "claiming interfaces, count=" + mDevice.getInterfaceCount());
+        Log.d(TAG, "device " + mDevice);
+        mControlInterface = null;
+        mDataInterface = null;
+        mWriteEndpoint = null;
+        mReadEndpoint = null;
 
-        Log.d(TAG, "Claiming control interface.");
-        mControlInterface = mDevice.getInterface(0);
-        Log.d(TAG, "Control iface=" + mControlInterface);
-        // class should be USB_CLASS_COMM
+        // locate all needed interfaces
+        for(int i = 0; i < mDevice.getInterfaceCount();i++){
+            UsbInterface iface = mDevice.getInterface(i);
+
+            switch(iface.getInterfaceClass()){
+                case UsbConstants.USB_CLASS_COMM:
+                    mControlInterface = iface;
+                    Log.d(TAG, "control iface=" + iface);
+                    break;
+                case UsbConstants.USB_CLASS_CDC_DATA:
+                    mDataInterface = iface;
+                    Log.d(TAG, "data iface=" + iface);
+                    break;
+                default:
+                    Log.d(TAG, "skipping iface=" + iface);
+                    break;
+            }
+        }
+
+        // failback to the old way
+        if(mControlInterface == null) {
+            mControlInterface = mDevice.getInterface(0);
+            Log.d(TAG, "Failback: Control iface=" + mControlInterface);
+        }
 
         if (!mConnection.claimInterface(mControlInterface, true)) {
             throw new IOException("Could not claim control interface.");
         }
-        mControlEndpoint = mControlInterface.getEndpoint(0);
-        Log.d(TAG, "Control endpoint direction: " + mControlEndpoint.getDirection());
 
-        Log.d(TAG, "Claiming data interface.");
-        mDataInterface = mDevice.getInterface(1);
-        Log.d(TAG, "data iface=" + mDataInterface);
-        // class should be USB_CLASS_CDC_DATA
+        mControlEndpoint = mControlInterface.getEndpoint(0);
+        Log.d(TAG, "Control endpoint: " + mControlEndpoint);
+
+
+        if(mDataInterface == null) {
+            mDataInterface = mDevice.getInterface(1);
+            Log.d(TAG, "Failback: data iface=" + mDataInterface);
+        }
 
         if (!mConnection.claimInterface(mDataInterface, true)) {
             throw new IOException("Could not claim data interface.");
         }
-        mReadEndpoint = mDataInterface.getEndpoint(1);
-        Log.d(TAG, "Read endpoint direction: " + mReadEndpoint.getDirection());
-        mWriteEndpoint = mDataInterface.getEndpoint(0);
-        Log.d(TAG, "Write endpoint direction: " + mWriteEndpoint.getDirection());
+
+        for(int i = 0; i < mDataInterface.getEndpointCount(); i++) {
+            UsbEndpoint endpoint = mDataInterface.getEndpoint(i);
+            switch (endpoint.getDirection()) {
+                case UsbConstants.USB_DIR_OUT:
+                    mWriteEndpoint = endpoint;
+                    Log.d(TAG, "Write endpoint: " + mWriteEndpoint);
+                    break;
+                case UsbConstants.USB_DIR_IN:
+                    mReadEndpoint = endpoint;
+                    Log.d(TAG, "Read endpoint: " + mReadEndpoint);
+                    break;
+            }
+        }
+
+        if(mReadEndpoint == null || mWriteEndpoint == null){
+            // failback to the old method
+            mReadEndpoint = mDataInterface.getEndpoint(0);
+            Log.d(TAG, "Read endpoint direction: " + mReadEndpoint.getDirection());
+            mWriteEndpoint = mDataInterface.getEndpoint(1);
+            Log.d(TAG, "Write endpoint direction: " + mWriteEndpoint.getDirection());
+        }
     }
 
     private int sendAcmControlMessage(int request, int value, byte[] buf) {
@@ -252,6 +296,13 @@ public class CdcAcmSerialDriver extends CommonUsbSerialDriver {
                     UsbId.DEVICE_UBLOX_6,
                     UsbId.DEVICE_UBLOX_7,
                     UsbId.DEVICE_UBLOX_8,
+                });
+        supportedDevices.put(Integer.valueOf(UsbId.VENDOR_OPENPILOT),
+                new int[] {
+                    UsbId.DEVICE_CC3D,
+                    UsbId.DEVICE_REVOLUTION,
+                    UsbId.DEVICE_SPARKY2,
+                    UsbId.DEVICE_OPLINK,
                 });
         return supportedDevices;
     }

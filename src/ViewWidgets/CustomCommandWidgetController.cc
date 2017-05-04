@@ -11,7 +11,7 @@
 #include "CustomCommandWidgetController.h"
 #include "MultiVehicleManager.h"
 #include "QGCMAVLink.h"
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #include "UAS.h"
 #include "QGCApplication.h"
 
@@ -21,10 +21,10 @@
 const char* CustomCommandWidgetController::_settingsKey = "CustomCommand.QmlFile";
 
 CustomCommandWidgetController::CustomCommandWidgetController(void) :
-	_uas(NULL)
+    _vehicle(NULL)
 {
     if(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()) {
-        _uas = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->uas();
+        _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
     }
     QSettings settings;
     _customQmlFile = settings.value(_settingsKey).toString();
@@ -33,21 +33,27 @@ CustomCommandWidgetController::CustomCommandWidgetController(void) :
 
 void CustomCommandWidgetController::sendCommand(int commandId, QVariant componentId, QVariant confirm, QVariant param1, QVariant param2, QVariant param3, QVariant param4, QVariant param5, QVariant param6, QVariant param7)
 {
-    if(_uas) {
-        _uas->executeCommand((MAV_CMD)commandId, confirm.toInt(), param1.toFloat(), param2.toFloat(), param3.toFloat(), param4.toFloat(), param5.toFloat(), param6.toFloat(), param7.toFloat(), componentId.toInt());
+    Q_UNUSED(confirm);
+
+    if(_vehicle) {
+        _vehicle->sendMavCommand(componentId.toInt(),
+                                 (MAV_CMD)commandId,
+                                 true,  // show error if fails
+                                 param1.toFloat(), param2.toFloat(), param3.toFloat(), param4.toFloat(), param5.toFloat(), param6.toFloat(), param7.toFloat());
     }
 }
 
 void CustomCommandWidgetController::_activeVehicleChanged(Vehicle* activeVehicle)
 {
-    if(activeVehicle)
-        _uas = activeVehicle->uas();
+    if (activeVehicle) {
+        _vehicle = activeVehicle;
+    }
 }
 
 void CustomCommandWidgetController::selectQmlFile(void)
 {
     QSettings settings;
-    QString qmlFile = QGCFileDialog::getOpenFileName(NULL, "Select custom Qml file", QString(), "Qml files (*.qml)");
+    QString qmlFile = QGCQFileDialog::getOpenFileName(NULL, "Select custom Qml file", QString(), "Qml files (*.qml)");
     if (qmlFile.isEmpty()) {
         _customQmlFile.clear();
         settings.remove(_settingsKey);

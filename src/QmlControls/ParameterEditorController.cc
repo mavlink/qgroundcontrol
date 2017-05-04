@@ -12,11 +12,13 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "ParameterEditorController.h"
-#include "AutoPilotPluginManager.h"
 #include "QGCApplication.h"
+#include "ParameterManager.h"
+#include "SettingsManager.h"
+#include "AppSettings.h"
 
 #ifndef __mobile__
-#include "QGCFileDialog.h"
+#include "QGCQFileDialog.h"
 #include "QGCMapRCToParamDialog.h"
 #include "MainWindow.h"
 #endif
@@ -25,14 +27,23 @@
 
 /// @Brief Constructs a new ParameterEditorController Widget. This widget is used within the PX4VehicleConfig set of screens.
 ParameterEditorController::ParameterEditorController(void)
+    : _currentComponentId(_vehicle->defaultComponentId())
+    , _parameters(new QmlObjectListModel(this))
 {
-    if (_autopilot) {
-        const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
-
-        foreach (int componentId, groupMap.keys()) {
-            _componentIds += QString("%1").arg(componentId);
-        }
+    const QMap<int, QMap<QString, QStringList> >& groupMap = _vehicle->parameterManager()->getGroupMap();
+    foreach (int componentId, groupMap.keys()) {
+        _componentIds += QString("%1").arg(componentId);
     }
+
+    // Be careful about no parameters
+    if (groupMap.contains(_currentComponentId) && groupMap[_currentComponentId].size() != 0) {
+        _currentGroup = groupMap[_currentComponentId].keys()[0];
+    }
+    _updateParameters();
+
+    connect(this, &ParameterEditorController::searchTextChanged, this, &ParameterEditorController::_updateParameters);
+    connect(this, &ParameterEditorController::currentComponentIdChanged, this, &ParameterEditorController::_updateParameters);
+    connect(this, &ParameterEditorController::currentGroupChanged, this, &ParameterEditorController::_updateParameters);
 }
 
 ParameterEditorController::~ParameterEditorController()
@@ -42,27 +53,27 @@ ParameterEditorController::~ParameterEditorController()
 
 QStringList ParameterEditorController::getGroupsForComponent(int componentId)
 {
-	const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
+    const QMap<int, QMap<QString, QStringList> >& groupMap = _vehicle->parameterManager()->getGroupMap();
 
-	return groupMap[componentId].keys();
+    return groupMap[componentId].keys();
 }
 
 QStringList ParameterEditorController::getParametersForGroup(int componentId, QString group)
 {
-	const QMap<int, QMap<QString, QStringList> >& groupMap = _autopilot->getGroupMap();
-	
-	return groupMap[componentId][group];
+    const QMap<int, QMap<QString, QStringList> >& groupMap = _vehicle->parameterManager()->getGroupMap();
+
+    return groupMap[componentId][group];
 }
 
 QStringList ParameterEditorController::searchParametersForComponent(int componentId, const QString& searchText, bool searchInName, bool searchInDescriptions)
 {
     QStringList list;
     
-    foreach(const QString &paramName, _autopilot->parameterNames(componentId)) {
+    foreach(const QString &paramName, _vehicle->parameterManager()->parameterNames(componentId)) {
         if (searchText.isEmpty()) {
             list += paramName;
         } else {
-            Fact* fact = _autopilot->getParameterFact(componentId, paramName);
+            Fact* fact = _vehicle->parameterManager()->getParameter(componentId, paramName);
             
             if (searchInName && fact->name().contains(searchText, Qt::CaseInsensitive)) {
                 list += paramName;
@@ -78,53 +89,31 @@ QStringList ParameterEditorController::searchParametersForComponent(int componen
 
 void ParameterEditorController::clearRCToParam(void)
 {
-	Q_ASSERT(_uas);
-	_uas->unsetRCToParameterMap();
+    if (_uas) {
+        _uas->unsetRCToParameterMap();
+    }
 }
 
 void ParameterEditorController::saveToFile(const QString& filename)
 {
-    if (!_autopilot) {
-        qWarning() << "Internal error _autopilot==NULL";
-        return;
-    }
-
     if (!filename.isEmpty()) {
         QFile file(filename);
         
-		if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
             qgcApp()->showMessage(QString("Unable to create file: %1").arg(filename));
-			return;
-		}
+            return;
+        }
         
-		QTextStream stream(&file);
-		_autopilot->writeParametersToStream(stream);
-		file.close();
-	}
-}
-
-void ParameterEditorController::saveToFilePicker(void)
-{
-#ifndef __mobile__
-    QString fileName = QGCFileDialog::getSaveFileName(NULL,
-                                                      "Save Parameters",
-                                                      QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
-                                                      "Parameter Files (*.params)",
-                                                      "params",
-                                                      true);
-    saveToFile(fileName);
-#endif
+        QTextStream stream(&file);
+        _vehicle->parameterManager()->writeParametersToStream(stream);
+        file.close();
+    }
 }
 
 void ParameterEditorController::loadFromFile(const QString& filename)
 {
     QString errors;
     
-    if (!_autopilot) {
-        qWarning() << "Internal error _autopilot==NULL";
-        return;
-    }
-
     if (!filename.isEmpty()) {
         QFile file(filename);
         
@@ -134,7 +123,7 @@ void ParameterEditorController::loadFromFile(const QString& filename)
         }
         
         QTextStream stream(&file);
-        errors = _autopilot->readParametersFromStream(stream);
+        errors = _vehicle->parameterManager()->readParametersFromStream(stream);
         file.close();
         
         if (!errors.isEmpty()) {
@@ -143,25 +132,14 @@ void ParameterEditorController::loadFromFile(const QString& filename)
     }
 }
 
-void ParameterEditorController::loadFromFilePicker(void)
-{
-#ifndef __mobile__
-    QString fileName = QGCFileDialog::getOpenFileName(NULL,
-                                                      "Load Parameters",
-                                                      QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
-                                                      "Parameter Files (*.params);;All Files (*)");
-    loadFromFile(fileName);
-#endif
-}
-
 void ParameterEditorController::refresh(void)
 {
-	_autopilot->refreshAllParameters();
+    _vehicle->parameterManager()->refreshAllParameters();
 }
 
 void ParameterEditorController::resetAllToDefaults(void)
 {
-    _autopilot->resetAllParametersToDefaults();
+    _vehicle->parameterManager()->resetAllParametersToDefaults();
     refresh();
 }
 
@@ -170,8 +148,32 @@ void ParameterEditorController::setRCToParam(const QString& paramName)
 #ifdef __mobile__
     Q_UNUSED(paramName)
 #else
-	Q_ASSERT(_uas);
-    QGCMapRCToParamDialog * d = new QGCMapRCToParamDialog(paramName, _uas, qgcApp()->toolbox()->multiVehicleManager(), MainWindow::instance());
-	d->exec();
+    if (_uas) {
+        QGCMapRCToParamDialog * d = new QGCMapRCToParamDialog(paramName, _uas, qgcApp()->toolbox()->multiVehicleManager(), MainWindow::instance());
+        d->exec();
+    }
 #endif
+}
+
+void ParameterEditorController::_updateParameters(void)
+{
+    QObjectList newParameterList;
+
+    if (_searchText.isEmpty()) {
+        const QMap<int, QMap<QString, QStringList> >& groupMap = _vehicle->parameterManager()->getGroupMap();
+        foreach (const QString& parameter, groupMap[_currentComponentId][_currentGroup]) {
+            newParameterList.append(_vehicle->parameterManager()->getParameter(_currentComponentId, parameter));
+        }
+    } else {
+        foreach(const QString &parameter, _vehicle->parameterManager()->parameterNames(_vehicle->defaultComponentId())) {
+            Fact* fact = _vehicle->parameterManager()->getParameter(_vehicle->defaultComponentId(), parameter);
+            if (fact->name().contains(_searchText, Qt::CaseInsensitive) ||
+                    fact->shortDescription().contains(_searchText, Qt::CaseInsensitive) ||
+                    fact->longDescription().contains(_searchText, Qt::CaseInsensitive)) {
+                newParameterList.append(fact);
+            }
+        }
+    }
+
+    _parameters->swapObjectList(newParameterList);
 }

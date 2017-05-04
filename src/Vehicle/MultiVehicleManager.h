@@ -21,7 +21,6 @@
 #include "QGCLoggingCategory.h"
 
 class FirmwarePluginManager;
-class AutoPilotPluginManager;
 class FollowMe;
 class JoystickManager;
 class QGCApplication;
@@ -34,7 +33,7 @@ class MultiVehicleManager : public QGCTool
     Q_OBJECT
 
 public:
-    MultiVehicleManager(QGCApplication* app);
+    MultiVehicleManager(QGCApplication* app, QGCToolbox* toolbox);
 
     Q_INVOKABLE void        saveSetting (const QString &key, const QString& value);
     Q_INVOKABLE QString     loadSetting (const QString &key, const QString& defaultValue);
@@ -45,8 +44,8 @@ public:
     Q_PROPERTY(QmlObjectListModel*  vehicles                        READ vehicles                                                       CONSTANT)
     Q_PROPERTY(bool                 gcsHeartBeatEnabled             READ gcsHeartbeatEnabled            WRITE setGcsHeartbeatEnabled    NOTIFY gcsHeartBeatEnabledChanged)
 
-    /// A disconnected vehicle is used to access FactGroup information for the Vehicle object when no active vehicle is available
-    Q_PROPERTY(Vehicle*             disconnectedVehicle             MEMBER _disconnectedVehicle                                         CONSTANT)
+    /// A disconnected vehicle used for offline editing. It will match the vehicle type specified in Settings.
+    Q_PROPERTY(Vehicle*             offlineEditingVehicle           READ offlineEditingVehicle                                          CONSTANT)
 
     // Methods
 
@@ -67,6 +66,8 @@ public:
 
     bool gcsHeartbeatEnabled(void) const { return _gcsHeartbeatEnabled; }
     void setGcsHeartbeatEnabled(bool gcsHeartBeatEnabled);
+
+    Vehicle* offlineEditingVehicle(void) { return _offlineEditingVehicle; }
 
     /// Determines if the link is in use by a Vehicle
     ///     @param link Link to test against
@@ -91,9 +92,9 @@ private slots:
     void _deleteVehiclePhase1(Vehicle* vehicle);
     void _deleteVehiclePhase2(void);
     void _setActiveVehiclePhase2(void);
-    void _autopilotParametersReadyChanged(bool parametersReady);
+    void _vehicleParametersReadyChanged(bool parametersReady);
     void _sendGCSHeartbeat(void);
-    void _vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType);
+    void _vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType);
 
 private:
     bool _vehicleExists(int vehicleId);
@@ -101,7 +102,7 @@ private:
     bool        _activeVehicleAvailable;            ///< true: An active vehicle is available
     bool        _parameterReadyVehicleAvailable;    ///< true: An active vehicle with ready parameters is available
     Vehicle*    _activeVehicle;                     ///< Currently active vehicle from a ui perspective
-    Vehicle*    _disconnectedVehicle;               ///< Disconnected vechicle for FactGroup access
+    Vehicle*    _offlineEditingVehicle;             ///< Disconnected vechicle used for offline editing
 
     QList<Vehicle*> _vehiclesBeingDeleted;          ///< List of Vehicles being deleted in queued phases
     Vehicle*        _vehicleBeingSetActive;         ///< Vehicle being set active in queued phases
@@ -111,7 +112,6 @@ private:
     QmlObjectListModel  _vehicles;
 
     FirmwarePluginManager*      _firmwarePluginManager;
-    AutoPilotPluginManager*     _autopilotPluginManager;
     JoystickManager*            _joystickManager;
     MAVLinkProtocol*            _mavlinkProtocol;
 

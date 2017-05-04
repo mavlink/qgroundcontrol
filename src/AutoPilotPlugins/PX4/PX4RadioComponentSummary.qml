@@ -1,4 +1,4 @@
-import QtQuick 2.2
+import QtQuick 2.3
 import QtQuick.Controls 1.2
 
 import QGroundControl.FactSystem 1.0
@@ -46,8 +46,9 @@ FactPanel {
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Flaps:")
-            valueText: mapFlapsFact ? (mapFlapsFact.value === 0 ? qsTr("Disabled") : mapFlapsFact.valueString) : ""
+            labelText:  qsTr("Flaps:")
+            valueText:  mapFlapsFact ? (mapFlapsFact.value === 0 ? qsTr("Disabled") : mapFlapsFact.valueString) : ""
+            visible:    !controller.vehicle.multiRotor
         }
 
         VehicleSummaryRow {
