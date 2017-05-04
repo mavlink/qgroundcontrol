@@ -277,7 +277,7 @@ Rectangle {
                             }
                             QGCComboBox {
                                 width:       _editFieldWidth
-                                enabled:     _cameraVideoMode
+                                enabled:     _cameraVideoMode && TyphoonHQuickInterface.cameraControl.videoStatus !== CameraControl.VIDEO_CAPTURE_STATUS_RUNNING
                                 model:       TyphoonHQuickInterface.cameraControl.videoResList
                                 currentIndex:TyphoonHQuickInterface.cameraControl.currentVideoRes
                                 onActivated: {

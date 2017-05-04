@@ -80,6 +80,7 @@ typedef struct {
 // ISO Values
 typedef struct {
     const char* description;
+    int value;
 } iso_values_t;
 
 //-----------------------------------------------------------------------------
@@ -92,7 +93,7 @@ typedef struct {
 // Shutter Speeds
 typedef struct {
     const char* description;
-    const char* value;
+    float value;
 } shutter_speeds_t;
 
 //-----------------------------------------------------------------------------
@@ -257,6 +258,7 @@ private:
     void    _handleStorageInfo      (const mavlink_message_t& message);
     void    _resetCameraValues      ();
     void    _requestCameraSettings  ();
+    void    _setIsoShutter          (int iso, float shutter);
     void    _startTimer             (int task, int elapsed);
 
 private:
@@ -294,7 +296,9 @@ private:
     quint32                 _currentVideoResIndex;
     quint32                 _currentWB;
     quint32                 _currentIso;
+    quint32                 _tempIso;
     quint32                 _currentShutter;
+    quint32                 _tempShutter;
     quint32                 _currentEV;
 
     quint32                 _setVideoResIndex;

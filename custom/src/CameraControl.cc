@@ -121,15 +121,15 @@ white_balance_t whiteBalanceOptions[] = {
 //-----------------------------------------------------------------------------
 // ISO Values
 iso_values_t isoValues[] = {
-    {"100"},
-    {"150"},
-    {"200"},
-    {"300"},
-    {"400"},
-    {"600"},
-    {"800"},
-    {"1600"},
-    {"3200"}
+    {"100",   100},
+    {"150",   150},
+    {"200",   200},
+    {"300",   300},
+    {"400",   400},
+    {"600",   600},
+    {"800",   800},
+    {"1600", 1600},
+    {"3200", 3200}
 };
 
 #define NUM_ISO_VALUES (sizeof(isoValues) / sizeof(iso_values_t))
@@ -137,19 +137,19 @@ iso_values_t isoValues[] = {
 //-----------------------------------------------------------------------------
 // Shutter Speeds
 shutter_speeds_t shutterSpeeds[] = {
-    { "4s", "4L"},
-    { "3s", "3L"},
-    { "2s", "2L"},
-    { "1s", "1L"},
-    { "1/30",   "30"},
-    { "1/60",   "60"},
-    { "1/125",  "125"},
-    { "1/250",  "250"},
-    { "1/500",  "500"},
-    { "1/1000", "1000"},
-    { "1/2000", "2000"},
-    { "1/4000", "4000"},
-    { "1/8000", "8000"}
+    { "4s", 4.0f},
+    { "3s", 3.0f},
+    { "2s", 2.0f},
+    { "1s", 1.0f},
+    { "1/30",   1.0f/30.0f},
+    { "1/60",   1.0f/60.0f},
+    { "1/125",  1.0f/125.0f},
+    { "1/250",  1.0f/250.0f},
+    { "1/500",  1.0f/500.0f},
+    { "1/1000", 1.0f/1000.0f},
+    { "1/2000", 1.0f/2000.0f},
+    { "1/4000", 1.0f/4000.0f},
+    { "1/8000", 1.0f/8000.0f}
 };
 
 #define NUM_SHUTTER_VALUES (sizeof(shutterSpeeds) / sizeof(shutter_speeds_t))
@@ -180,7 +180,9 @@ CameraControl::CameraControl(QObject* parent)
     , _currentVideoResIndex(0)
     , _currentWB(0)
     , _currentIso(0)
+    , _tempIso(0)
     , _currentShutter(0)
+    , _tempShutter(0)
 {
     _resetCameraValues();
     _cameraSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/wav/camera.wav"));
@@ -257,6 +259,9 @@ CameraControl::takePhoto()
             1,                                          // Number of images to capture total - 0 for unlimited capture
             -1,                                         // Horizontal resolution in pixels (set to -1 for highest resolution possible)
             -1);                                        // Vertical resolution in pixels (set to -1 for highest resolution possible)
+        _startTimer(TIMER_GET_CAPTURE_INFO, 250);
+        _cameraSound.setLoopCount(1);
+        _cameraSound.play();
     } else {
         _errorSound.setLoopCount(1);
         _errorSound.play();
@@ -285,6 +290,9 @@ CameraControl::startVideo()
             f,                                          // FPS: (-1 for max)
             w,                                          // Horizontal resolution in pixels (set to -1 for highest resolution possible)
             h);                                         // Vertical resolution in pixels (set to -1 for highest resolution possible)
+        _startTimer(TIMER_GET_CAPTURE_INFO, 250);
+        _videoSound.setLoopCount(1);
+        _videoSound.play();
     } else {
         _errorSound.setLoopCount(1);
         _errorSound.play();
@@ -302,6 +310,9 @@ CameraControl::stopVideo()
             MAV_CMD_VIDEO_STOP_CAPTURE,                 // Command id
             true,                                       // ShowError
             0);                                         // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
+        _startTimer(TIMER_GET_CAPTURE_INFO, 250);
+        _videoSound.setLoopCount(2);
+        _videoSound.play();
     }
 }
 
@@ -389,13 +400,34 @@ CameraControl::setCurrentWB(quint32 index)
 
 //-----------------------------------------------------------------------------
 void
+CameraControl::_setIsoShutter(int iso, float shutter)
+{
+    Q_UNUSED(iso);
+    Q_UNUSED(shutter);
+    /*
+     * Firmware is not ready for this yet
+    _vehicle->sendMavCommand(
+        MAV_COMP_ID_CAMERA,                         // Target component
+        MAV_CMD_SET_CAMERA_SETTINGS_1,              // Command id
+        true,                                       // ShowError
+        1,                                          // Camera ID (1 for first, 2 for second, etc.)
+        NAN,                                        // Aperture (1/value) (Fixed for CGO3+)
+        shutter,                                    // Shutter speed in seconds
+        iso,                                        // ISO sensitivity
+        NAN,                                        // AE mode (Auto Exposure) (0: full auto 1: full manual 2: aperture priority 3: shutter priority)
+        NAN,                                        // EV value (when in auto exposure)
+        NAN);                                       // White balance (color temperature in K) (0: Auto WB)
+    */
+}
+
+//-----------------------------------------------------------------------------
+void
 CameraControl::setCurrentIso(quint32 index)
 {
     if(_vehicle && index < NUM_ISO_VALUES && _cameraSupported == CAMERA_SUPPORT_YES) {
         qCDebug(YuneecCameraLog) << "setCurrentIso:" << isoValues[index].description;
-
-
-
+        _tempIso = index;
+        _setIsoShutter(isoValues[index].value, _tempShutter);
     }
 }
 
@@ -405,9 +437,8 @@ CameraControl::setCurrentShutter(quint32 index)
 {
     if(_vehicle && index < NUM_SHUTTER_VALUES && _cameraSupported == CAMERA_SUPPORT_YES) {
         qCDebug(YuneecCameraLog) << "setCurrentShutter:" << shutterSpeeds[index].description;
-
-
-
+        _tempShutter = index;
+        _setIsoShutter(_tempIso, shutterSpeeds[index].value);
     }
 }
 
@@ -680,10 +711,7 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
     } else if(_cameraSupported == CAMERA_SUPPORT_YES) {
         switch(command) {
             case MAV_CMD_IMAGE_START_CAPTURE:
-                if(result == MAV_RESULT_ACCEPTED) {
-                    _cameraSound.play();
-                    //_waitingShutter = false;
-                } else {
+                if(result != MAV_RESULT_ACCEPTED) {
                     _errorSound.setLoopCount(2);
                     _errorSound.play();
                 }
@@ -729,8 +757,6 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
             case MAV_CMD_RESET_CAMERA_SETTINGS:
                 if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
                     _startTimer(TIMER_GET_CAMERA_SETTINGS, 250);
-                    _videoSound.setLoopCount(1);
-                    _videoSound.play();
                 } else {
                     _errorSound.setLoopCount(1);
                     _errorSound.play();
@@ -867,16 +893,8 @@ CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
     }
     //-- Video Capture Status
     if(_ambarellaStatus.video_status != cap.video_status) {
-        bool was_running = videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING;
         _ambarellaStatus.video_status = cap.video_status;
         emit videoStatusChanged();
-        if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
-            _videoSound.setLoopCount(1);
-            _videoSound.play();
-        } else if(was_running) {
-            _videoSound.setLoopCount(2);
-            _videoSound.play();
-        }
     }
     //-- Current Video Resolution and FPS
     int idx = _findVideoResIndex(cap.video_resolution_h, cap.video_resolution_v, cap.video_framerate);
