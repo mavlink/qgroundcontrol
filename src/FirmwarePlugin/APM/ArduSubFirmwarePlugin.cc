@@ -62,6 +62,8 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void)
         remapV3_5["SERVO13_FUNCTION"] = QStringLiteral("RC13_FUNCTION");
         remapV3_5["SERVO14_FUNCTION"] = QStringLiteral("RC14_FUNCTION");
 
+        remapV3_5["FENCE_ALT_MIN"] = QStringLiteral("FENCE_DEPTH_MAX");
+
         _remapParamNameIntialized = true;
     }
 }
@@ -115,6 +117,7 @@ const QVariantList& ArduSubFirmwarePlugin::toolBarIndicators(const Vehicle* vehi
         _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")));
         _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")));
         _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")));
+        _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/JoystickIndicator.qml")));
     }
     return _toolBarIndicators;
 }
