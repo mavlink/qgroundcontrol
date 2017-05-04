@@ -15,7 +15,7 @@ import QGroundControl.Palette       1.0
 /// Mission item edit control
 Rectangle {
     id:     _root
-    height: editorLoader.y + editorLoader.height + (_margin * 2)
+    height: editorLoader.y + (editorLoader.visible ? editorLoader.height : 0) + (_margin * 2)
     color:  _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
     radius: _radius
 
@@ -198,12 +198,8 @@ Rectangle {
         anchors.topMargin:  _margin
         anchors.left:       parent.left
         anchors.top:        commandPicker.bottom
-        height:             item ? item.height : 0
         source:             missionItem.editorQml
-
-        onLoaded: {
-            item.visible = Qt.binding(function() { return _currentItem; })
-        }
+        visible:            _currentItem
 
         property var    masterController:   _masterController
         property real   availableWidth:     _root.width - (_margin * 2) ///< How wide the editor should be

@@ -34,9 +34,10 @@ const qreal FactMetaData::UnitConsts_s::inchesToCentimeters =   2.54;
 
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
-    { "centi-degrees",  "deg",  FactMetaData::_centiDegreesToDegrees,   FactMetaData::_degreesToCentiDegrees },
-    { "radians",        "deg",  FactMetaData::_radiansToDegrees,        FactMetaData::_degreesToRadians },
-    { "norm",           "%",    FactMetaData::_normToPercent,           FactMetaData::_percentToNorm },
+    { "centi-degrees",  "deg",  FactMetaData::_centiDegreesToDegrees,                   FactMetaData::_degreesToCentiDegrees },
+    { "radians",        "deg",  FactMetaData::_radiansToDegrees,                        FactMetaData::_degreesToRadians },
+    { "gimbal-degrees", "deg",  FactMetaData::_mavlinkGimbalDegreesToUserGimbalDegrees, FactMetaData::_userGimbalDegreesToMavlinkGimbalDegrees },
+    { "norm",           "%",    FactMetaData::_normToPercent,                           FactMetaData::_percentToNorm },
 };
 
 // Translations driven by app settings
@@ -256,7 +257,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
     case FactMetaData::valueTypeInt32:
         typedValue = QVariant(rawValue.toInt(&convertOk));
         if (!convertOnly && convertOk) {
-            if (rawMin() > typedValue || typedValue > rawMax()) {
+            if (typedValue < rawMin() || typedValue > rawMax()) {
                 errorString = QString("Value must be within %1 and %2").arg(cookedMin().toInt()).arg(cookedMax().toInt());
             }
         }
@@ -267,7 +268,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
     case FactMetaData::valueTypeUint32:
         typedValue = QVariant(rawValue.toUInt(&convertOk));
         if (!convertOnly && convertOk) {
-            if (rawMin() > typedValue || typedValue > rawMax()) {
+            if (typedValue < rawMin() || typedValue > rawMax()) {
                 errorString = QString("Value must be within %1 and %2").arg(cookedMin().toUInt()).arg(cookedMax().toUInt());
             }
         }
@@ -276,7 +277,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
     case FactMetaData::valueTypeFloat:
         typedValue = QVariant(rawValue.toFloat(&convertOk));
         if (!convertOnly && convertOk) {
-            if (rawMin() > typedValue || typedValue > rawMax()) {
+            if (typedValue < rawMin() || typedValue > rawMax()) {
                 errorString = QString("Value must be within %1 and %2").arg(cookedMin().toFloat()).arg(cookedMax().toFloat());
             }
         }
@@ -285,7 +286,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
     case FactMetaData::valueTypeDouble:
         typedValue = QVariant(rawValue.toDouble(&convertOk));
         if (!convertOnly && convertOk) {
-            if (rawMin() > typedValue || typedValue > rawMax()) {
+            if (typedValue < rawMin() || typedValue > rawMax()) {
                 errorString = QString("Value must be within %1 and %2").arg(cookedMin().toDouble()).arg(cookedMax().toDouble());
             }
         }
@@ -453,6 +454,20 @@ QVariant FactMetaData::_centiDegreesToDegrees(const QVariant& centiDegrees)
 QVariant FactMetaData::_degreesToCentiDegrees(const QVariant& degrees)
 {
     return QVariant(qRound(degrees.toReal() * 100.0));
+}
+
+QVariant FactMetaData::_userGimbalDegreesToMavlinkGimbalDegrees(const QVariant& userGimbalDegrees)
+{
+    // User facing gimbal degree values are from 0 (level) to 90 (straight down)
+    // Mavlink gimbal degree values are from 0 (level) to -90 (straight down)
+    return userGimbalDegrees.toDouble() * -1.0;
+}
+
+QVariant FactMetaData::_mavlinkGimbalDegreesToUserGimbalDegrees(const QVariant& mavlinkGimbalDegrees)
+{
+    // User facing gimbal degree values are from 0 (level) to 90 (straight down)
+    // Mavlink gimbal degree values are from 0 (level) to -90 (straight down)
+    return mavlinkGimbalDegrees.toDouble() * -1.0;
 }
 
 QVariant FactMetaData::_metersToFeet(const QVariant& meters)
@@ -907,4 +922,30 @@ QMap<QString, FactMetaData*> FactMetaData::createMapFromJsonFile(const QString& 
     }
 
     return metaDataMap;
+}
+
+QVariant FactMetaData::cookedMax(void) const
+{
+    // We have to be careful with cooked min/max. Running the raw values through the translator could flip min and max.
+    QVariant cookedMax = _rawTranslator(_rawMax);
+    QVariant cookedMin = _rawTranslator(_rawMin);
+    if (cookedMax < cookedMin) {
+        // We need to flip
+        return cookedMin;
+    } else {
+        return cookedMax;
+    }
+}
+
+QVariant FactMetaData::cookedMin(void) const
+{
+    // We have to be careful with cooked min/max. Running the raw values through the translator could flip min and max.
+    QVariant cookedMax = _rawTranslator(_rawMax);
+    QVariant cookedMin = _rawTranslator(_rawMin);
+    if (cookedMax < cookedMin) {
+        // We need to flip
+        return cookedMax;
+    } else {
+        return cookedMin;
+    }
 }

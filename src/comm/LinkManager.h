@@ -153,6 +153,13 @@ public:
 
     void startAutoConnectedLinks(void);
 
+    /// Reserves a mavlink channel for use
+    /// @return Mavlink channel index, 0 for no channels available
+    int _reserveMavlinkChannel(void);
+
+    /// Free the specified mavlink channel for re-use
+    void _freeMavlinkChannel(int channel);
+
     static const char*  settingsGroup;
 
 signals:
