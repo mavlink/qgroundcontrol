@@ -346,17 +346,18 @@ QGCView {
 
             // Add the mission item visuals to the map
             Repeater {
-                model: _missionController.visualItems
+                model: _editingLayer == _layerMission ? _missionController.visualItems : undefined
 
                 delegate: MissionItemMapVisual {
                     map:        editorMap
                     onClicked:  setCurrentItem(sequenceNumber, false)
+                    visible:    _editingLayer == _layerMission
                 }
             }
 
             // Add lines between waypoints
             MissionLineView {
-                model:      _editingLayer == _layerMission ? _missionController.waypointLines : undefined
+                model: _editingLayer == _layerMission ? _missionController.waypointLines : undefined
             }
 
             // Add the vehicles to the map
