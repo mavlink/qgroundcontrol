@@ -376,7 +376,7 @@ QStringList PlanMasterController::loadNameFilters(void) const
 {
     QStringList filters;
 
-    filters << tr("Supported types (*.%1 *.%2 *.%3 *.%4)").arg(AppSettings::planFileExtension).arg(AppSettings::missionFileExtension).arg(AppSettings::waypointsFileExtension).arg("*.txt") <<
+    filters << tr("Supported types (*.%1 *.%2 *.%3 *.%4)").arg(AppSettings::planFileExtension).arg(AppSettings::missionFileExtension).arg(AppSettings::waypointsFileExtension).arg("txt") <<
                tr("All Files (*.*)");
     return filters;
 }
