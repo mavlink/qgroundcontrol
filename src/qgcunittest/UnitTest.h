@@ -98,11 +98,11 @@ protected slots:
     // call the UnitTest private implementation.
     
     /// @brief Called before each test.
-    ///         Make sure to call _init first in your derived class.
+    ///         Make sure to call UnitTest::init first in your derived class.
     virtual void init(void);
     
     /// @brief Called after each test.
-    ///         Make sure to call _cleanup first in your derived class.
+    ///         Make sure to call UnitTest::cleanup last in your derived class.
     virtual void cleanup(void);
     
 protected:
