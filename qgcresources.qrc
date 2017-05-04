@@ -194,7 +194,7 @@
         <file alias="TrashDelete.svg">resources/TrashDelete.svg</file>
         <file alias="waves.svg">resources/waves.svg</file>
         <file alias="wind-rose.svg">resources/wind-rose.svg</file>
-        <file alias="wind-rose-arrows.svg">resources/wind-rose-arrows.svg</file>
+        <file alias="wind-rose-arrow.svg">resources/wind-rose-arrow.svg</file>
         <file alias="XDelete.svg">resources/XDelete.svg</file>
         <file alias="XDeleteBlack.svg">resources/XDeleteBlack.svg</file>
         <file>resources/icons/qgroundcontrol.ico</file>
