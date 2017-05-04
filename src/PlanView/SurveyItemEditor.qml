@@ -422,7 +422,7 @@ Rectangle {
 
                         onClicked: {
                             var cords = windRoseButton.mapToItem(_root, 0, 0)
-                            windRose.popup(cords.x + windRoseButton.width/2, cords.y + windRoseButton.height/2);
+                            windRosePie.popup(cords.x + windRoseButton.width / 2, cords.y + windRoseButton.height / 2);
                         }
                     }
                 }
@@ -547,83 +547,86 @@ Rectangle {
         }
     }
 
-
-    PieMenu {
-        id:          windRose
-        triggerMode: TriggerMode.TriggerOnPress
-        height:      2.75*windRoseButton.height
-        width:       2.75*windRoseButton.width
-
-        onVisibleChanged: {
-            windRoseSvg.visible = visible
+    Image {
+        id:      windRoseArrow
+        source:  "/res/wind-rose-arrow.svg"
+        visible: windRosePie.visible
+        width:   windRosePie.width / 5
+        height:  width * 1.454
+        smooth:  true
+        transform: Rotation {
+            origin.x: windRoseArrow.width / 2
+            origin.y: windRoseArrow.height / 2
+            axis { x: 0; y: 0; z: 1 } angle: windRosePie.angle
         }
-
-        style: PieMenuStyle {
-            cancelRadius: windRoseButton.height*0.5
-            shadowRadius: 0
-            startAngle:   -22.5
-            endAngle:     337.5
-        }
-
-
-        MenuItem {
-            onTriggered: {
-                gridAngleText.text = "-90";
-                gridAngleText.editingFinished();
-            }
-        }
-        MenuItem {
-            onTriggered: {
-                gridAngleText.text = "-45";
-                gridAngleText.editingFinished();
-            }
-        }
-        MenuItem {
-            onTriggered: {
-                gridAngleText.text = "0";
-                gridAngleText.editingFinished();
-            }
-        }
-        MenuItem {
-            onTriggered: {
-                gridAngleText.text = "45";
-                gridAngleText.editingFinished();
-            }
-        }
-        MenuItem {
-            onTriggered: {
-                gridAngleText.text = "90";
-                gridAngleText.editingFinished();
-            }
-        }
-        MenuItem {
-            onTriggered: {
-                gridAngleText.text = "135";
-                gridAngleText.editingFinished();
-            }
-        }
-        MenuItem {
-            onTriggered: {
-                gridAngleText.text = "180";
-                gridAngleText.editingFinished();
-            }
-        }
-        MenuItem {
-            onTriggered: {
-                gridAngleText.text = "-135";
-                gridAngleText.editingFinished();
-            }
-        }
+        x:       windRosePie.x + Math.sin(- windRosePie.angle*Math.PI/180 - Math.PI/2)*(windRosePie.width/2 - windRoseArrow.width/2) + windRosePie.width / 2 - windRoseArrow.width / 2
+        y:       windRosePie.y + Math.cos(- windRosePie.angle*Math.PI/180 - Math.PI/2)*(windRosePie.height/2 - windRoseArrow.width/2) + windRosePie.height / 2 - windRoseArrow.height / 2
+        z:       windRosePie.z
     }
 
-    Image {
-        id:      windRoseSvg
-        source:  "/res/wind-rose-arrows.svg"
-        visible: false
-        width:   windRose.width
-        height:  windRose.height
-        x:       windRose.x;
-        y:       windRose.y;
-        z:       windRose.z;
+    Item {
+        id:          windRosePie
+        height:      2.6*windRoseButton.height
+        width:       2.6*windRoseButton.width
+        visible:     false
+
+        property string colorCircle: Qt.rgba(0, 0, 0, 0.45)
+        property string colorBackground: Qt.rgba(0, 0, 0, 0.75)
+        property real lineWidth: windRoseButton.width / 3
+        property real angle: 0
+
+        Canvas {
+            id: windRoseCanvas
+            anchors.fill: parent
+
+            onPaint: {
+                var ctx = getContext("2d")
+                var x = width / 2
+                var y = height / 2
+                var angleWidth = 0.03 * Math.PI
+                var start = windRosePie.angle*Math.PI/180 - angleWidth
+                var end = windRosePie.angle*Math.PI/180 + angleWidth
+                ctx.reset()
+
+                ctx.beginPath();
+                ctx.arc(x, y, (width / 3) - windRosePie.lineWidth / 2, 0, 2*Math.PI, false)
+                ctx.lineWidth = windRosePie.lineWidth
+                ctx.strokeStyle = windRosePie.colorBackground
+                ctx.stroke()
+
+                ctx.beginPath();
+                ctx.arc(x, y, (width / 3) - windRosePie.lineWidth / 2, start, end, false)
+                ctx.lineWidth = windRosePie.lineWidth
+                ctx.strokeStyle = windRosePie.colorCircle
+                ctx.stroke()
+            }
+        }
+
+        function popup(x, y) {
+            if (x !== undefined)
+                windRosePie.x = x - windRosePie.width / 2;
+            if (y !== undefined)
+                windRosePie.y = y - windRosePie.height / 2;
+
+            windRosePie.visible = true;
+        }
+
+        MouseArea {
+            id: mouseArea
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+
+            onClicked: {
+                windRosePie.visible = false;
+            }
+            onPositionChanged: {
+                var point = Qt.point(mouseX - parent.width / 2, mouseY - parent.height / 2)
+                var angle = Math.round(Math.atan2(point.y, point.x) * 180 / Math.PI)
+                windRoseCanvas.requestPaint()
+                windRosePie.angle = angle
+                gridAngleText.text = angle
+                gridAngleText.editingFinished();
+            }
+        }
     }
 }
