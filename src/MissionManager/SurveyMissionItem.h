@@ -170,8 +170,8 @@ private slots:
 private:
     enum CameraTriggerCode {
         CameraTriggerNone,
-        CameraTriggerOn,
-        CameraTriggerOff,
+        CameraTriggerRun,
+        CameraTriggerPause,
         CameraTriggerHoverAndCapture
     };
 
