@@ -623,6 +623,7 @@ void SimpleMissionItem::setDefaultsForCommand(void)
         break;
 
     case MAV_CMD_NAV_LAND:
+    case MAV_CMD_NAV_VTOL_LAND:
         _missionItem.setParam7(0);
         break;
     default:
