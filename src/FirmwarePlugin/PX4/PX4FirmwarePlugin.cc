@@ -547,21 +547,3 @@ bool PX4FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicl
     }
     return true;
 }
-
-void PX4FirmwarePlugin::missionFlightSpeedInfo(Vehicle* vehicle, double& hoverSpeed, double& cruiseSpeed)
-{
-    QString hoverSpeedParam("MPC_XY_CRUISE");
-    QString cruiseSpeedParam("FW_AIRSPD_TRIM");
-
-    // First pull settings defaults
-    FirmwarePlugin::missionFlightSpeedInfo(vehicle, hoverSpeed, cruiseSpeed);
-
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, hoverSpeedParam)) {
-        Fact* speed = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, hoverSpeedParam);
-        hoverSpeed = speed->rawValue().toDouble();
-    }
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, cruiseSpeedParam)) {
-        Fact* speed = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, cruiseSpeedParam);
-        cruiseSpeed = speed->rawValue().toDouble();
-    }
-}
