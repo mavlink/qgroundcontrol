@@ -26,11 +26,7 @@ Item {
     width:          _hasTelemetry ? telemIcon.width * 1.1 : 0
     visible:        _hasTelemetry
 
-    //-- SiK Radio: -120 to < 0
-    //-- Others:    > 0 - 100
-
     property var  _activeVehicle:   QGroundControl.multiVehicleManager.activeVehicle
-    property bool _isSiKRadio:      _activeVehicle ? _activeVehicle.telemetryLRSSI < 0 : false
     property bool _hasTelemetry:    _activeVehicle ? _activeVehicle.telemetryLRSSI !== 0 : false
 
     Component {
@@ -60,9 +56,9 @@ Item {
                     columns:            2
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel { text: qsTr("Local RSSI:") }
-                    QGCLabel { text: _activeVehicle.telemetryLRSSI + _isSiKRadio ? " dBm" : ""}
+                    QGCLabel { text: _activeVehicle.telemetryLRSSI + " dBm"}
                     QGCLabel { text: qsTr("Remote RSSI:") }
-                    QGCLabel { text: _activeVehicle.telemetryRRSSI + _isSiKRadio ? " dBm" : ""}
+                    QGCLabel { text: _activeVehicle.telemetryRRSSI + " dBm"}
                     QGCLabel { text: qsTr("RX Errors:") }
                     QGCLabel { text: _activeVehicle.telemetryRXErrors }
                     QGCLabel { text: qsTr("Errors Fixed:") }

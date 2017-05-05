@@ -919,6 +919,8 @@ void Vehicle::_handleRadioStatus(mavlink_message_t& message)
     mavlink_msg_radio_status_decode(&message, &rstatus);
     int rssi    = rstatus.rssi;
     int remrssi = rstatus.remrssi;
+    int lnoise = (int)(int8_t)rstatus.noise;
+    int rnoise = (int)(int8_t)rstatus.remnoise;
     //-- 3DR Si1k radio needs rssi fields to be converted to dBm
     if (message.sysid == '3' && message.compid == 'D') {
         /* Per the Si1K datasheet figure 23.25 and SI AN474 code
@@ -933,6 +935,9 @@ void Vehicle::_handleRadioStatus(mavlink_message_t& message)
          */
         rssi    = qMin(qMax(qRound(static_cast<qreal>(rssi)    / 1.9 - 127.0), - 120), 0);
         remrssi = qMin(qMax(qRound(static_cast<qreal>(remrssi) / 1.9 - 127.0), - 120), 0);
+    } else {
+        rssi    = (int)(int8_t)rstatus.rssi;
+        remrssi = (int)(int8_t)rstatus.remrssi;
     }
     //-- Check for changes
     if(_telemetryLRSSI != rssi) {
@@ -955,12 +960,12 @@ void Vehicle::_handleRadioStatus(mavlink_message_t& message)
         _telemetryTXBuffer = rstatus.txbuf;
         emit telemetryTXBufferChanged(_telemetryTXBuffer);
     }
-    if(_telemetryLNoise != rstatus.noise) {
-        _telemetryLNoise = rstatus.noise;
+    if(_telemetryLNoise != lnoise) {
+        _telemetryLNoise = lnoise;
         emit telemetryLNoiseChanged(_telemetryLNoise);
     }
-    if(_telemetryRNoise != rstatus.remnoise) {
-        _telemetryRNoise = rstatus.remnoise;
+    if(_telemetryRNoise != rnoise) {
+        _telemetryRNoise = rnoise;
         emit telemetryRNoiseChanged(_telemetryRNoise);
     }
 }
