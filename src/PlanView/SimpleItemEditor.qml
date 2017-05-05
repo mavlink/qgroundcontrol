@@ -13,7 +13,7 @@ import QGroundControl.Palette       1.0
 // Editor for Simple mission items
 Rectangle {
     width:  availableWidth
-    height: valuesColumn.height + _margin
+    height: valuesColumn.height + (_margin * 2)
     color:  qgcPal.windowShadeDark
     radius: _radius
 
