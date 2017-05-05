@@ -231,7 +231,8 @@ QGCView {
         id:             fileDialog
         qgcView:        _qgcView
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
-        fileExtension:  masterController.fileExtension
+        fileExtension:  QGroundControl.settingsManager.appSettings.planFileExtension
+        fileExtension2: QGroundControl.settingsManager.appSettings.missionFileExtension
 
         onAcceptedForSave: {
             masterController.saveToFile(file)
@@ -346,17 +347,18 @@ QGCView {
 
             // Add the mission item visuals to the map
             Repeater {
-                model: _missionController.visualItems
+                model: _editingLayer == _layerMission ? _missionController.visualItems : undefined
 
                 delegate: MissionItemMapVisual {
                     map:        editorMap
                     onClicked:  setCurrentItem(sequenceNumber, false)
+                    visible:    _editingLayer == _layerMission
                 }
             }
 
             // Add lines between waypoints
             MissionLineView {
-                model:      _editingLayer == _layerMission ? _missionController.waypointLines : undefined
+                model: _editingLayer == _layerMission ? _missionController.waypointLines : undefined
             }
 
             // Add the vehicles to the map
@@ -653,7 +655,7 @@ QGCView {
         id: syncLoadFromFileOverwrite
         QGCViewMessage {
             id:         syncLoadFromVehicleCheck
-            message:   qsTr("You have unsaved/unsent changes. Loading a from a file will lose these changes. Are you sure you want to load from a file?")
+            message:   qsTr("You have unsaved/unsent changes. Loading from a file will lose these changes. Are you sure you want to load from a file?")
             function accept() {
                 hideDialog()
                 masterController.loadFromSelectedFile()

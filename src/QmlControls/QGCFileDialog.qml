@@ -18,6 +18,7 @@ Item {
     property string folder
     property var    nameFilters
     property string fileExtension
+    property string fileExtension2
     property string title
     property bool   selectExisting
     property bool   selectFolder
@@ -90,7 +91,7 @@ Item {
                     spacing:        ScreenTools.defaultFontPixelHeight / 2
 
                     Repeater {
-                        id:     fileList;
+                        id:     fileList
                         model:  controller.getFiles(folder, fileExtension)
 
                         QGCButton {
@@ -105,9 +106,25 @@ Item {
                         }
                     }
 
+                    Repeater {
+                        id:     fileList2
+                        model:  fileExtension2 == "" ? [ ] : controller.getFiles(folder, fileExtension2)
+
+                        QGCButton {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            text:           modelData
+
+                            onClicked: {
+                                hideDialog()
+                                _root.acceptedForLoad(controller.fullyQualifiedFilename(folder, modelData, fileExtension2))
+                            }
+                        }
+                    }
+
                     QGCLabel {
                         text:       qsTr("No files")
-                        visible:    fileList.model.length == 0
+                        visible:    fileList.model.length == 0 && fileList2.model.length == 0
                     }
                 }
             }

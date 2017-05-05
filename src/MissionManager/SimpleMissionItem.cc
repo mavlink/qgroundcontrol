@@ -446,6 +446,17 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
             const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i);
 
             if (paramInfo && paramInfo->nanUnchanged()) {
+                // Show hide Heading field on waypoint based on vehicle yaw to next waypoint setting. This needs to come from the actual vehicle if it exists
+                // and not _vehicle which is always offline.
+                Vehicle* firmwareVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+                if (!firmwareVehicle) {
+                    firmwareVehicle = _vehicle;
+                }
+                bool hideWaypointHeading = (command == MAV_CMD_NAV_WAYPOINT) && (i == 4) && firmwareVehicle->firmwarePlugin()->vehicleYawsToNextWaypointInMission(firmwareVehicle);
+                if (hideWaypointHeading) {
+                    continue;
+                }
+
                 Fact*               paramFact =     rgParamFacts[i-1];
                 FactMetaData*       paramMetaData = rgParamMetaData[i-1];
 
@@ -623,6 +634,7 @@ void SimpleMissionItem::setDefaultsForCommand(void)
         break;
 
     case MAV_CMD_NAV_LAND:
+    case MAV_CMD_NAV_VTOL_LAND:
         _missionItem.setParam7(0);
         break;
     default:

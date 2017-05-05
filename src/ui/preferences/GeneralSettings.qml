@@ -495,7 +495,7 @@ QGCView {
                     visible:                    QGroundControl.settingsManager.videoSettings.visible
                     QGCLabel {
                         id:             videoLabel
-                        text:           qsTr("Video (Requires Restart)")
+                        text:           qsTr("Video")
                         font.family:    ScreenTools.demiboldFontFamily
                     }
                 }

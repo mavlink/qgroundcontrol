@@ -41,6 +41,7 @@ public:
     Q_PROPERTY(bool                     guidedBarShowEmergencyStop      READ guidedBarShowEmergencyStop     NOTIFY guidedBarShowEmergencyStopChanged)
     Q_PROPERTY(bool                     guidedBarShowOrbit              READ guidedBarShowOrbit             NOTIFY guidedBarShowOrbitChanged)
     Q_PROPERTY(bool                     missionWaypointsOnly            READ missionWaypointsOnly           NOTIFY missionWaypointsOnlyChanged)
+    Q_PROPERTY(bool                     multiVehicleEnabled             READ multiVehicleEnabled            NOTIFY multiVehicleEnabledChanged)
 
     /// Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /// @return true if QGC should consolidate both menus into one.
@@ -68,13 +69,11 @@ public:
     virtual bool    showSensorCalibrationAirspeed   () const { return true; }
     virtual bool    wifiReliableForCalibration      () const { return false; }
     virtual bool    sensorsHaveFixedOrientation     () const { return false; }
-
     virtual bool    showFirmwareUpgrade             () const { return true; }
-
     virtual bool    guidedBarShowEmergencyStop      () const { return true; }
     virtual bool    guidedBarShowOrbit              () const { return true; }
-
     virtual bool    missionWaypointsOnly            () const { return false; }  ///< true: Only allow waypoints and complex items in Plan
+    virtual bool    multiVehicleEnabled             () const { return true; }   ///< false: multi vehicle support is disabled
 
     /// If returned QString in non-empty it means that firmware upgrade will run in a mode which only
     /// supports downloading a single firmware file from the URL. It also supports custom install through
@@ -91,6 +90,7 @@ signals:
     void guidedBarShowEmergencyStopChanged      (bool show);
     void guidedBarShowOrbitChanged              (bool show);
     void missionWaypointsOnlyChanged            (bool missionWaypointsOnly);
+    void multiVehicleEnabledChanged             (bool multiVehicleEnabled);
 
 private:
     CustomInstrumentWidget* _defaultInstrumentWidget;

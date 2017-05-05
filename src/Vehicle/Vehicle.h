@@ -246,6 +246,7 @@ public:
     Q_PROPERTY(QString              flightMode              READ flightMode             WRITE setFlightMode             NOTIFY flightModeChanged)
     Q_PROPERTY(bool                 hilMode                 READ hilMode                WRITE setHilMode                NOTIFY hilModeChanged)
     Q_PROPERTY(QmlObjectListModel*  trajectoryPoints        READ trajectoryPoints                                       CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  cameraTriggerPoints     READ cameraTriggerPoints                                    CONSTANT)
     Q_PROPERTY(float                latitude                READ latitude                                               NOTIFY coordinateChanged)
     Q_PROPERTY(float                longitude               READ longitude                                              NOTIFY coordinateChanged)
     Q_PROPERTY(bool                 messageTypeNone         READ messageTypeNone                                        NOTIFY messageTypeChanged)
@@ -313,10 +314,13 @@ public:
     Q_PROPERTY(QVariantList         cameraList              READ cameraList                                             CONSTANT)
 
     /// true: Vehicle is flying, false: Vehicle is on ground
-    Q_PROPERTY(bool flying      READ flying     WRITE setFlying     NOTIFY flyingChanged)
+    Q_PROPERTY(bool flying READ flying NOTIFY flyingChanged)
+
+    /// true: Vehicle is flying, false: Vehicle is on ground
+    Q_PROPERTY(bool landing READ landing NOTIFY landingChanged)
 
     /// true: Vehicle is in Guided mode and can respond to guided commands, false: vehicle cannot respond to direct control commands
-    Q_PROPERTY(bool guidedMode  READ guidedMode WRITE setGuidedMode NOTIFY guidedModeChanged)
+    Q_PROPERTY(bool guidedMode READ guidedMode WRITE setGuidedMode NOTIFY guidedModeChanged)
 
     /// true: Guided mode commands are supported by this vehicle
     Q_PROPERTY(bool guidedModeSupported READ guidedModeSupported CONSTANT)
@@ -370,8 +374,6 @@ public:
 
     Q_INVOKABLE void virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust);
     Q_INVOKABLE void disconnectInactiveVehicle(void);
-
-    Q_INVOKABLE void clearTrajectoryPoints(void);
 
     /// Command vehicle to return to launch
     Q_INVOKABLE void guidedModeRTL(void);
@@ -517,13 +519,13 @@ public:
     bool supportsCalibratePressure(void) const;
     bool supportsMotorInterference(void) const;
 
-    void setFlying(bool flying);
     void setGuidedMode(bool guidedMode);
 
     QString prearmError(void) const { return _prearmError; }
     void setPrearmError(const QString& prearmError);
 
     QmlObjectListModel* trajectoryPoints(void) { return &_mapTrajectoryList; }
+    QmlObjectListModel* cameraTriggerPoints(void) { return &_cameraTriggerPoints; }
 
     int  flowImageIndex() { return _flowImageIndex; }
 
@@ -566,6 +568,7 @@ public:
     uint            messagesSent            () { return _messagesSent; }
     uint            messagesLost            () { return _messagesLost; }
     bool            flying                  () const { return _flying; }
+    bool            landing                 () const { return _landing; }
     bool            guidedMode              () const;
     uint8_t         baseMode                () const { return _base_mode; }
     uint32_t        customMode              () const { return _custom_mode; }
@@ -621,6 +624,7 @@ public:
     ///     @param component Component to send to
     ///     @param command MAV_CMD to send
     ///     @param showError true: Display error to user if command failed, false:  no error shown
+    /// Signals: mavCommandResult on success or failure
     void sendMavCommand(int component, MAV_CMD command, bool showError, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
 
     int firmwareMajorVersion(void) const { return _firmwareMajorVersion; }
@@ -673,6 +677,8 @@ public:
     /// @return: true: initial request is complete, false: initial request is still in progress;
     bool initialPlanRequestComplete(void) const { return _initialPlanRequestComplete; }
 
+    void _setFlying(bool flying);
+    void _setLanding(bool landing);
     void _setHomePosition(QGeoCoordinate& homeCoord);
 
 signals:
@@ -692,6 +698,7 @@ signals:
     void connectionLostEnabledChanged(bool connectionLostEnabled);
     void autoDisconnectChanged(bool autoDisconnectChanged);
     void flyingChanged(bool flying);
+    void landingChanged(bool landing);
     void guidedModeChanged(bool guidedMode);
     void prearmErrorChanged(const QString& prearmError);
     void soloFirmwareChanged(bool soloFirmware);
@@ -791,8 +798,9 @@ private slots:
     void _geoFenceLoadComplete(void);
     void _rallyPointLoadComplete(void);
     void _sendMavCommandAgain(void);
-
     void _activeJoystickChanged(void);
+    void _clearTrajectoryPoints(void);
+    void _clearCameraTriggerPoints(void);
 
 private:
     bool _containsLink(LinkInterface* link);
@@ -820,6 +828,8 @@ private:
     void _handleScaledPressure(mavlink_message_t& message);
     void _handleScaledPressure2(mavlink_message_t& message);
     void _handleScaledPressure3(mavlink_message_t& message);
+    void _handleCameraFeedback(const mavlink_message_t& message);
+    void _handleCameraImageCaptured(const mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _geoFenceManagerError(int errorCode, const QString& errorMsg);
     void _rallyPointManagerError(int errorCode, const QString& errorMsg);
@@ -876,6 +886,7 @@ private:
     double          _rcRSSIstore;
     bool            _autoDisconnect;    ///< true: Automatically disconnect vehicle when last connection goes away or lost heartbeat
     bool            _flying;
+    bool            _landing;
     uint32_t        _onboardControlSensorsPresent;
     uint32_t        _onboardControlSensorsEnabled;
     uint32_t        _onboardControlSensorsHealth;
@@ -953,6 +964,8 @@ private:
     QGeoCoordinate      _mapTrajectoryLastCoordinate;
     bool                _mapTrajectoryHaveFirstCoordinate;
     static const int    _mapTrajectoryMsecsBetweenPoints = 1000;
+
+    QmlObjectListModel  _cameraTriggerPoints;
 
     // Toolbox references
     FirmwarePluginManager*      _firmwarePluginManager;

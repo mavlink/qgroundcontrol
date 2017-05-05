@@ -29,6 +29,7 @@
 #include "MissionCommandTree.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
+#include "QGCQGeoCoordinate.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -93,6 +94,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _rcRSSIstore(255)
     , _autoDisconnect(false)
     , _flying(false)
+    , _landing(false)
     , _onboardControlSensorsPresent(0)
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
@@ -253,6 +255,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _rcRSSIstore(255)
     , _autoDisconnect(false)
     , _flying(false)
+    , _landing(false)
     , _onboardControlSensorsPresent(0)
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
@@ -316,6 +319,10 @@ void Vehicle::_commonInit(void)
     _missionManager = new MissionManager(this);
     connect(_missionManager, &MissionManager::error,                    this, &Vehicle::_missionManagerError);
     connect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_missionLoadComplete);
+    connect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_clearCameraTriggerPoints);
+    connect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_clearTrajectoryPoints);
+    connect(_missionManager, &MissionManager::sendComplete,             this, &Vehicle::_clearCameraTriggerPoints);
+    connect(_missionManager, &MissionManager::sendComplete,             this, &Vehicle::_clearTrajectoryPoints);
 
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
@@ -584,6 +591,13 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_SCALED_PRESSURE3:
         _handleScaledPressure3(message);
+        break;        
+    case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
+        _handleCameraFeedback(message);
+        break;
+
+    case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
+        _handleCameraImageCaptured(message);
         break;
 
     case MAVLINK_MSG_ID_SERIAL_CONTROL:
@@ -603,6 +617,31 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     emit mavlinkMessageReceived(message);
 
     _uas->receiveMessage(message);
+}
+
+
+void Vehicle::_handleCameraFeedback(const mavlink_message_t& message)
+{
+    mavlink_camera_feedback_t feedback;
+
+    mavlink_msg_camera_feedback_decode(&message, &feedback);
+
+    QGeoCoordinate imageCoordinate((double)feedback.lat / qPow(10.0, 7.0), (double)feedback.lng / qPow(10.0, 7.0), feedback.alt_msl);
+    qCDebug(VehicleLog) << "_handleCameraFeedback coord:index" << imageCoordinate << feedback.img_idx;
+    _cameraTriggerPoints.append(new QGCQGeoCoordinate(imageCoordinate, this));
+}
+
+void Vehicle::_handleCameraImageCaptured(const mavlink_message_t& message)
+{
+    mavlink_camera_image_captured_t feedback;
+
+    mavlink_msg_camera_image_captured_decode(&message, &feedback);
+
+    QGeoCoordinate imageCoordinate((double)feedback.lat / qPow(10.0, 7.0), (double)feedback.lon / qPow(10.0, 7.0), feedback.alt);
+    qCDebug(VehicleLog) << "_handleCameraFeedback coord:index" << imageCoordinate << feedback.image_index << feedback.capture_result;
+    if (feedback.capture_result == 1) {
+        _cameraTriggerPoints.append(new QGCQGeoCoordinate(imageCoordinate, this));
+    }
 }
 
 void Vehicle::_handleVfrHud(mavlink_message_t& message)
@@ -794,14 +833,21 @@ void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
     mavlink_msg_extended_sys_state_decode(&message, &extendedState);
 
     switch (extendedState.landed_state) {
-    case MAV_LANDED_STATE_UNDEFINED:
-        break;
     case MAV_LANDED_STATE_ON_GROUND:
-        setFlying(false);
+        _setFlying(false);
+        _setLanding(false);
         break;
+    case MAV_LANDED_STATE_TAKEOFF:
     case MAV_LANDED_STATE_IN_AIR:
-        setFlying(true);
-        return;
+        _setFlying(true);
+        _setLanding(false);
+        break;
+    case MAV_LANDED_STATE_LANDING:
+        _setFlying(true);
+        _setLanding(true);
+        break;
+    default:
+        break;
     }
 }
 
@@ -945,15 +991,24 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
         // We are transitioning to the armed state, begin tracking trajectory points for the map
         if (_armed) {
             _mapTrajectoryStart();
+            _clearCameraTriggerPoints();
         } else {
             _mapTrajectoryStop();
         }
     }
 
     if (heartbeat.base_mode != _base_mode || heartbeat.custom_mode != _custom_mode) {
+        QString previousFlightMode;
+        if (_base_mode != 0 || _custom_mode != 0){
+            // Vehicle is initialized with _base_mode=0 and _custom_mode=0. Don't pass this to flightMode() since it will complain about
+            // bad modes while unit testing.
+            previousFlightMode = flightMode();
+        }
         _base_mode = heartbeat.base_mode;
         _custom_mode = heartbeat.custom_mode;
-        emit flightModeChanged(flightMode());
+        if (previousFlightMode != flightMode()) {
+            emit flightModeChanged(flightMode());
+        }
     }
 }
 
@@ -1277,7 +1332,6 @@ void Vehicle::_handleTextMessage(int newCount)
     }
 
     UASMessageHandler* pMh = qgcApp()->toolbox()->uasMessageHandler();
-    Q_ASSERT(pMh);
     MessageType_t type = newCount ? _currentMessageType : MessageNone;
     int errorCount     = _currentErrorCount;
     int warnCount      = _currentWarningCount;
@@ -1364,7 +1418,7 @@ void Vehicle::_loadSettings(void)
 
     // Joystick enabled is a global setting so first make sure there are any joysticks connected
     if (qgcApp()->toolbox()->joystickManager()->joysticks().count()) {
-        _joystickEnabled = settings.value(_joystickEnabledSettingsKey, false).toBool();
+        setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
     }
 }
 
@@ -1622,10 +1676,20 @@ void Vehicle::_addNewMapTrajectoryPoint(void)
     _mapTrajectoryLastCoordinate = _coordinate;
 }
 
+void Vehicle::_clearTrajectoryPoints(void)
+{
+    _mapTrajectoryList.clearAndDeleteContents();
+}
+
+void Vehicle::_clearCameraTriggerPoints(void)
+{
+    _cameraTriggerPoints.clearAndDeleteContents();
+}
+
 void Vehicle::_mapTrajectoryStart(void)
 {
     _mapTrajectoryHaveFirstCoordinate = false;
-    _mapTrajectoryList.clear();
+    _clearTrajectoryPoints();
     _mapTrajectoryTimer.start();
     _flightDistanceFact.setRawValue(0);
 }
@@ -1907,16 +1971,19 @@ void Vehicle::_announceArmedChanged(bool armed)
     _say(QString("%1 %2").arg(_vehicleIdSpeech()).arg(armed ? QStringLiteral("armed") : QStringLiteral("disarmed")));
 }
 
-void Vehicle::clearTrajectoryPoints(void)
-{
-    _mapTrajectoryList.clearAndDeleteContents();
-}
-
-void Vehicle::setFlying(bool flying)
+void Vehicle::_setFlying(bool flying)
 {
     if (armed() && _flying != flying) {
         _flying = flying;
         emit flyingChanged(flying);
+    }
+}
+
+void Vehicle::_setLanding(bool landing)
+{
+    if (armed() && _landing != landing) {
+        _landing = landing;
+        emit landingChanged(landing);
     }
 }
 
@@ -1972,6 +2039,14 @@ void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)
 {
     if (!guidedModeSupported()) {
         qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+        return;
+    }
+    if (!coordinate().isValid()) {
+        return;
+    }
+    double maxDistance = 1000.0;
+    if (coordinate().distanceTo(gotoCoord) > maxDistance) {
+        qgcApp()->showMessage(QString("New location is too far. Must be less than %1 %2").arg(qRound(FactMetaData::metersToAppSettingsDistanceUnits(maxDistance).toDouble())).arg(FactMetaData::appSettingsDistanceUnitsString()));
         return;
     }
     _firmwarePlugin->guidedModeGotoLocation(this, gotoCoord);

@@ -90,6 +90,9 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, QObje
     connect(this,                       &FixedWingLandingComplexItem::loiterClockwiseChanged,           this, &FixedWingLandingComplexItem::_setDirty);
     connect(this,                       &FixedWingLandingComplexItem::loiterAltitudeRelativeChanged,    this, &FixedWingLandingComplexItem::_setDirty);
     connect(this,                       &FixedWingLandingComplexItem::landingAltitudeRelativeChanged,   this, &FixedWingLandingComplexItem::_setDirty);
+
+    connect(this,                       &FixedWingLandingComplexItem::loiterAltitudeRelativeChanged,    this, &FixedWingLandingComplexItem::coordinateHasRelativeAltitudeChanged);
+    connect(this,                       &FixedWingLandingComplexItem::landingAltitudeRelativeChanged,   this, &FixedWingLandingComplexItem::exitCoordinateHasRelativeAltitudeChanged);
 }
 
 int FixedWingLandingComplexItem::lastSequenceNumber(void) const
@@ -409,6 +412,7 @@ void FixedWingLandingComplexItem::_recalcFromRadiusChange(void)
             double angleLoiterToTangent = qRadiansToDegrees(qAsin(radius/landToLoiterDistance)) * (_loiterClockwise ? -1 : 1);
 
             _loiterCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToLoiterDistance, heading + 180 + angleLoiterToTangent);
+            _loiterCoordinate.setAltitude(_loiterAltitudeFact.rawValue().toDouble());
 
             _ignoreRecalcSignals = true;
             emit loiterCoordinateChanged(_loiterCoordinate);
@@ -446,6 +450,7 @@ void FixedWingLandingComplexItem::_recalcFromHeadingAndDistanceChange(void)
 
         // Use those values to get the new loiter point which takes heading into acount
         _loiterCoordinate = _landingCoordinate.atDistanceAndAzimuth(loiterDistance, heading + 180 + loiterAzimuth);
+        _loiterCoordinate.setAltitude(_loiterAltitudeFact.rawValue().toDouble());
 
         _ignoreRecalcSignals = true;
         emit loiterTangentCoordinateChanged(_loiterTangentCoordinate);
@@ -509,11 +514,14 @@ void FixedWingLandingComplexItem::_recalcFromCoordinateChange(void)
 void FixedWingLandingComplexItem::_updateLoiterCoodinateAltitudeFromFact(void)
 {
     _loiterCoordinate.setAltitude(_loiterAltitudeFact.rawValue().toDouble());
+    emit loiterCoordinateChanged(_loiterCoordinate);
+    emit coordinateChanged(_loiterCoordinate);
 }
 
 void FixedWingLandingComplexItem::_updateLandingCoodinateAltitudeFromFact(void)
 {
     _landingCoordinate.setAltitude(_landingAltitudeFact.rawValue().toDouble());
+    emit landingCoordinateChanged(_landingCoordinate);
 }
 
 void FixedWingLandingComplexItem::_setDirty(void)

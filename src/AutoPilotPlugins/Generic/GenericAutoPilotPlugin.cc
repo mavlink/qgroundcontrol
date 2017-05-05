@@ -16,7 +16,9 @@
 GenericAutoPilotPlugin::GenericAutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
     AutoPilotPlugin(vehicle, parent)
 {
-    Q_ASSERT(vehicle);
+    if (!vehicle) {
+        qWarning() << "Internal error";
+    }
 }
 
 const QVariantList& GenericAutoPilotPlugin::vehicleComponents(void)
