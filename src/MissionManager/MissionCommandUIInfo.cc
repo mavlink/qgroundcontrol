@@ -334,7 +334,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
 
             // Validate key types
             QList<QJsonValue::Type> types;
-            types << QJsonValue::Double <<  QJsonValue::Double << QJsonValue::String << QJsonValue::String << QJsonValue::String << QJsonValue::String << QJsonValue::Bool;
+            types << QJsonValue::Null <<  QJsonValue::Double << QJsonValue::String << QJsonValue::String << QJsonValue::String << QJsonValue::String << QJsonValue::Bool;
             if (!JsonHelper::validateKeyTypes(jsonObject, allParamKeys, types, internalError)) {
                 errorString = _loadErrorString(internalError);
                 return false;
@@ -358,7 +358,15 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             paramInfo->_nanUnchanged =  paramObject.value(_nanUnchangedJsonKey).toBool(false);
 
             if (paramObject.contains(_defaultJsonKey)) {
-                paramInfo->_defaultValue = paramObject.value(_defaultJsonKey).toDouble(0.0);
+                if (paramInfo->_nanUnchanged) {
+                    paramInfo->_defaultValue = JsonHelper::possibleNaNJsonValue(paramObject[_defaultJsonKey]);
+                } else {
+                    if (paramObject[_defaultJsonKey].type() == QJsonValue::Null) {
+                        errorString = QString("Param %1 default value was null/NaN but NaN is not allowed");
+                        return false;
+                    }
+                    paramInfo->_defaultValue = paramObject.value(_defaultJsonKey).toDouble(0.0);
+                }
             } else {
                 paramInfo->_defaultValue = paramInfo->_nanUnchanged ? std::numeric_limits<double>::quiet_NaN() : 0;
             }
