@@ -54,6 +54,7 @@
                 "label":            "Heading",
                 "units":            "radians",
                 "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
@@ -75,6 +76,7 @@
                 "label":            "Heading",
                 "units":            "radians",
                 "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
@@ -101,6 +103,7 @@
                 "label":            "Heading",
                 "units":            "radians",
                 "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
@@ -157,6 +160,7 @@
                 "label":            "Heading",
                 "units":            "radians",
                 "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
@@ -178,6 +182,7 @@
                 "label":            "Heading",
                 "units":            "radians",
                 "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
@@ -316,6 +321,7 @@
                 "label":            "Heading",
                 "units":            "deg",
                 "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
@@ -331,6 +337,7 @@
                 "label":            "Heading",
                 "units":            "deg",
                 "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
