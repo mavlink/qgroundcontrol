@@ -307,8 +307,8 @@ public:
     Q_PROPERTY(unsigned int         telemetryRXErrors       READ telemetryRXErrors                                      NOTIFY telemetryRXErrorsChanged)
     Q_PROPERTY(unsigned int         telemetryFixed          READ telemetryFixed                                         NOTIFY telemetryFixedChanged)
     Q_PROPERTY(unsigned int         telemetryTXBuffer       READ telemetryTXBuffer                                      NOTIFY telemetryTXBufferChanged)
-    Q_PROPERTY(unsigned int         telemetryLNoise         READ telemetryLNoise                                        NOTIFY telemetryLNoiseChanged)
-    Q_PROPERTY(unsigned int         telemetryRNoise         READ telemetryRNoise                                        NOTIFY telemetryRNoiseChanged)
+    Q_PROPERTY(int                  telemetryLNoise         READ telemetryLNoise                                        NOTIFY telemetryLNoiseChanged)
+    Q_PROPERTY(int                  telemetryRNoise         READ telemetryRNoise                                        NOTIFY telemetryRNoiseChanged)
     Q_PROPERTY(QVariantList         toolBarIndicators       READ toolBarIndicators                                      CONSTANT)
     Q_PROPERTY(QVariantList         cameraList              READ cameraList                                             CONSTANT)
 
@@ -587,8 +587,8 @@ public:
     unsigned int    telemetryRXErrors       () { return _telemetryRXErrors; }
     unsigned int    telemetryFixed          () { return _telemetryFixed; }
     unsigned int    telemetryTXBuffer       () { return _telemetryTXBuffer; }
-    unsigned int    telemetryLNoise         () { return _telemetryLNoise; }
-    unsigned int    telemetryRNoise         () { return _telemetryRNoise; }
+    int             telemetryLNoise         () { return _telemetryLNoise; }
+    int             telemetryRNoise         () { return _telemetryRNoise; }
     bool            autoDisarm              ();
 
     Fact* roll              (void) { return &_rollFact; }
@@ -717,8 +717,8 @@ signals:
     void telemetryRXErrorsChanged   (unsigned int value);
     void telemetryFixedChanged      (unsigned int value);
     void telemetryTXBufferChanged   (unsigned int value);
-    void telemetryLNoiseChanged     (unsigned int value);
-    void telemetryRNoiseChanged     (unsigned int value);
+    void telemetryLNoiseChanged     (int value);
+    void telemetryRNoiseChanged     (int value);
     void autoDisarmChanged          (void);
 
     void firmwareMajorVersionChanged(int major);
@@ -881,8 +881,8 @@ private:
     uint32_t        _telemetryRXErrors;
     uint32_t        _telemetryFixed;
     uint32_t        _telemetryTXBuffer;
-    uint32_t        _telemetryLNoise;
-    uint32_t        _telemetryRNoise;
+    int             _telemetryLNoise;
+    int             _telemetryRNoise;
     bool            _vehicleCapabilitiesKnown;
     bool            _supportsMissionItemInt;
 
