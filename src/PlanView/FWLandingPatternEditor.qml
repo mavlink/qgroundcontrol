@@ -41,14 +41,6 @@ Rectangle {
         anchors.right:      parent.right
         visible:            missionItem.landingCoordSet
 
-        QGCLabel {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            wrapMode:       Text.WordWrap
-            font.pointSize: ScreenTools.smallFontPointSize
-            text:           qsTr("WIP (NOT FOR REAL FLIGHT!)")
-        }
-
         SectionHeader {
             text: qsTr("Loiter point")
         }
