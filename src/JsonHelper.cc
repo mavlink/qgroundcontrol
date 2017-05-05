@@ -102,6 +102,10 @@ bool JsonHelper::validateKeyTypes(const QJsonObject& jsonObject, const QStringLi
         QString valueKey = keys[i];
         if (jsonObject.contains(valueKey)) {
             const QJsonValue& jsonValue = jsonObject[valueKey];
+            if (types[i] == QJsonValue::Null && jsonValue.type() == QJsonValue::Double) {
+                // Null type signals a NaN on a double value
+                continue;
+            }
             if (jsonValue.type() != types[i]) {
                 errorString  = QObject::tr("Incorrect value type - key:type:expected %1:%2:%3").arg(valueKey).arg(_jsonValueTypeToString(jsonValue.type())).arg(_jsonValueTypeToString(types[i]));
                 return false;
@@ -340,5 +344,14 @@ void JsonHelper::savePolygon(QmlObjectListModel& list, QJsonArray& polygonArray)
         QJsonValue jsonValue;
         JsonHelper::saveGeoCoordinate(vertex, false /* writeAltitude */, jsonValue);
         polygonArray.append(jsonValue);
+    }
+}
+
+double JsonHelper::possibleNaNJsonValue(const  QJsonValue& value)
+{
+    if (value.type() == QJsonValue::Null) {
+        return std::numeric_limits<double>::quiet_NaN();
+    } else {
+        return value.toDouble();
     }
 }
