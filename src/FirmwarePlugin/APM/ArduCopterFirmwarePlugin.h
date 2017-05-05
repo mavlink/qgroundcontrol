@@ -76,7 +76,6 @@ public:
     QString takeControlFlightMode(void) const override { return QString("Stablize"); }
     bool vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const final;
     QString autoDisarmParameter(Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
-    void missionFlightSpeedInfo(Vehicle* vehicle, double& hoverSpeed, double& cruiseSpeed) override;
 
 private:
     static bool _remapParamNameIntialized;
