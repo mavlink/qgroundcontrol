@@ -314,10 +314,13 @@ public:
     Q_PROPERTY(QVariantList         cameraList              READ cameraList                                             CONSTANT)
 
     /// true: Vehicle is flying, false: Vehicle is on ground
-    Q_PROPERTY(bool flying      READ flying     WRITE setFlying     NOTIFY flyingChanged)
+    Q_PROPERTY(bool flying READ flying NOTIFY flyingChanged)
+
+    /// true: Vehicle is flying, false: Vehicle is on ground
+    Q_PROPERTY(bool landing READ landing NOTIFY landingChanged)
 
     /// true: Vehicle is in Guided mode and can respond to guided commands, false: vehicle cannot respond to direct control commands
-    Q_PROPERTY(bool guidedMode  READ guidedMode WRITE setGuidedMode NOTIFY guidedModeChanged)
+    Q_PROPERTY(bool guidedMode READ guidedMode WRITE setGuidedMode NOTIFY guidedModeChanged)
 
     /// true: Guided mode commands are supported by this vehicle
     Q_PROPERTY(bool guidedModeSupported READ guidedModeSupported CONSTANT)
@@ -516,7 +519,6 @@ public:
     bool supportsCalibratePressure(void) const;
     bool supportsMotorInterference(void) const;
 
-    void setFlying(bool flying);
     void setGuidedMode(bool guidedMode);
 
     QString prearmError(void) const { return _prearmError; }
@@ -566,6 +568,7 @@ public:
     uint            messagesSent            () { return _messagesSent; }
     uint            messagesLost            () { return _messagesLost; }
     bool            flying                  () const { return _flying; }
+    bool            landing                 () const { return _landing; }
     bool            guidedMode              () const;
     uint8_t         baseMode                () const { return _base_mode; }
     uint32_t        customMode              () const { return _custom_mode; }
@@ -674,6 +677,8 @@ public:
     /// @return: true: initial request is complete, false: initial request is still in progress;
     bool initialPlanRequestComplete(void) const { return _initialPlanRequestComplete; }
 
+    void _setFlying(bool flying);
+    void _setLanding(bool landing);
     void _setHomePosition(QGeoCoordinate& homeCoord);
 
 signals:
@@ -693,6 +698,7 @@ signals:
     void connectionLostEnabledChanged(bool connectionLostEnabled);
     void autoDisconnectChanged(bool autoDisconnectChanged);
     void flyingChanged(bool flying);
+    void landingChanged(bool landing);
     void guidedModeChanged(bool guidedMode);
     void prearmErrorChanged(const QString& prearmError);
     void soloFirmwareChanged(bool soloFirmware);
@@ -880,6 +886,7 @@ private:
     double          _rcRSSIstore;
     bool            _autoDisconnect;    ///< true: Automatically disconnect vehicle when last connection goes away or lost heartbeat
     bool            _flying;
+    bool            _landing;
     uint32_t        _onboardControlSensorsPresent;
     uint32_t        _onboardControlSensorsEnabled;
     uint32_t        _onboardControlSensorsHealth;

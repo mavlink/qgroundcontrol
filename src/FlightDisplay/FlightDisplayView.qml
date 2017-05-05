@@ -525,6 +525,12 @@ QGCView {
                     confirmAction(actionResumeMission)
                 }
             }
+
+            onShowLandAbortChanged: {
+                if (showLandAbort) {
+                    confirmAction(actionLandAbort)
+                }
+            }
         }
 
         GuidedActionConfirm {
