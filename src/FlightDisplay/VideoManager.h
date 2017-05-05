@@ -15,6 +15,7 @@
 #include <QTimer>
 #include <QUrl>
 
+#include "MAVLinkVideoManager.h"
 #include "QGCLoggingCategory.h"
 #include "VideoSurface.h"
 #include "VideoReceiver.h"
@@ -95,6 +96,7 @@ private:
     VideoSettings*  _videoSettings;
     QString         _imageFile;
     bool            _showFullScreen;
+    MAVLinkVideoManager* _mavlinkVideoManager;
 };
 
 #endif
