@@ -27,14 +27,11 @@ SpeedSection::SpeedSection(Vehicle* vehicle, QObject* parent)
         _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/SpeedSection.FactMetaData.json"), NULL /* metaDataParent */);
     }
 
-    double hoverSpeed, cruiseSpeed;
     double flightSpeed = 0;
-
-    _vehicle->firmwarePlugin()->missionFlightSpeedInfo(_vehicle, hoverSpeed, cruiseSpeed);
     if (_vehicle->multiRotor()) {
-        flightSpeed = hoverSpeed;
-    } else if (_vehicle->fixedWing()) {
-        flightSpeed = cruiseSpeed;
+        flightSpeed = _vehicle->defaultHoverSpeed();
+    } else {
+        flightSpeed = _vehicle->defaultCruiseSpeed();
     }
 
     _metaDataMap[_flightSpeedName]->setRawDefaultValue(flightSpeed);
