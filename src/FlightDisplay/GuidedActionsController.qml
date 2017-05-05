@@ -92,7 +92,7 @@ Item {
     property bool showPause:            _activeVehicle && _vehicleArmed && _activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused
     property bool showChangeAlt:        (_activeVehicle && _vehicleFlying) && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
     property bool showOrbit:            !_hideOrbit && _activeVehicle && _vehicleFlying && _activeVehicle.orbitModeSupported && _vehicleArmed && !_missionActive
-    property bool showLandAbort:        _activeVehicle && _vehicleFlying && _activeVehicle.fixedWing
+    property bool showLandAbort:        _activeVehicle && _vehicleFlying && _activeVehicle.fixedWing && _vehicleLanding
     property bool showGotoLocation:     _activeVehicle && _activeVehicle.guidedMode && _vehicleFlying
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
@@ -101,6 +101,7 @@ Item {
     property bool   _missionActive:         _activeVehicle ? _vehicleArmed && (_vehicleInLandMode || _vehicleInRTLMode || _vehicleInMissionMode) : false
     property bool   _vehicleArmed:          _activeVehicle ? _activeVehicle.armed  : false
     property bool   _vehicleFlying:         _activeVehicle ? _activeVehicle.flying  : false
+    property bool   _vehicleLanding:        _activeVehicle ? _activeVehicle.landing  : false
     property bool   _vehiclePaused:         false
     property bool   _vehicleInMissionMode:  false
     property bool   _vehicleInRTLMode:      false

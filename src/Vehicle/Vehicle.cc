@@ -94,6 +94,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _rcRSSIstore(255)
     , _autoDisconnect(false)
     , _flying(false)
+    , _landing(false)
     , _onboardControlSensorsPresent(0)
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
@@ -254,6 +255,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _rcRSSIstore(255)
     , _autoDisconnect(false)
     , _flying(false)
+    , _landing(false)
     , _onboardControlSensorsPresent(0)
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
@@ -831,14 +833,21 @@ void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
     mavlink_msg_extended_sys_state_decode(&message, &extendedState);
 
     switch (extendedState.landed_state) {
-    case MAV_LANDED_STATE_UNDEFINED:
-        break;
     case MAV_LANDED_STATE_ON_GROUND:
-        setFlying(false);
+        _setFlying(false);
+        _setLanding(false);
         break;
+    case MAV_LANDED_STATE_TAKEOFF:
     case MAV_LANDED_STATE_IN_AIR:
-        setFlying(true);
-        return;
+        _setFlying(true);
+        _setLanding(false);
+        break;
+    case MAV_LANDED_STATE_LANDING:
+        _setFlying(true);
+        _setLanding(true);
+        break;
+    default:
+        break;
     }
 }
 
@@ -1962,11 +1971,19 @@ void Vehicle::_announceArmedChanged(bool armed)
     _say(QString("%1 %2").arg(_vehicleIdSpeech()).arg(armed ? QStringLiteral("armed") : QStringLiteral("disarmed")));
 }
 
-void Vehicle::setFlying(bool flying)
+void Vehicle::_setFlying(bool flying)
 {
     if (armed() && _flying != flying) {
         _flying = flying;
         emit flyingChanged(flying);
+    }
+}
+
+void Vehicle::_setLanding(bool landing)
+{
+    if (armed() && _landing != landing) {
+        _landing = landing;
+        emit landingChanged(landing);
     }
 }
 
