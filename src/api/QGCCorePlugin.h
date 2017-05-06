@@ -75,8 +75,7 @@ public:
     virtual QString brandImageOutdoor(void) const { return QString(); }
 
     /// @return The message to show to the user when they a re prompted to confirm turning on advanced ui.
-    virtual QString showAdvancedUIMessage(void) const { return tr("WARNING: You are about to enter Advanced Mode. This may expose features which may cause your vehicle to malfunction. "
-                                                                  "You should do so only if instructed by customer support. Are you sure you want to enable Advanced Mode?"); }
+    virtual QString showAdvancedUIMessage(void) const;
 
     /// @return An instance of an alternate postion source (or NULL if not available)
     virtual QGeoPositionInfoSource* createPositionSource(QObject* parent) { Q_UNUSED(parent); return NULL; }
