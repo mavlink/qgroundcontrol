@@ -198,3 +198,9 @@ QString QGCCorePlugin::showAdvancedUIMessage(void) const
               "You should do so only if instructed by customer support. "
               "Are you sure you want to enable Advanced Mode?");
 }
+
+void QGCCorePlugin::valuesWidgetDefaultSettings(QStringList& largeValues, QStringList& smallValues)
+{
+    Q_UNUSED(smallValues);
+    largeValues << "Vehicle.altitudeRelative" << "Vehicle.groundSpeed" << "Vehicle.flightTime";
+}

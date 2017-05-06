@@ -52,6 +52,7 @@ QVariant PX4ParameterMetaData::_stringToTypedVariant(const QString& string, Fact
     case FactMetaData::valueTypeFloat:
         convertTo = QMetaType::Float;
         break;
+    case FactMetaData::valueTypeElapsedTimeInSeconds:
     case FactMetaData::valueTypeDouble:
         convertTo = QVariant::Double;
         break;
