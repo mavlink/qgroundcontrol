@@ -959,6 +959,7 @@ private:
     QTimer  _sendMultipleTimer;
     int     _nextSendMessageMultipleIndex;
 
+    QTime               _flightTimer;
     QTimer              _mapTrajectoryTimer;
     QmlObjectListModel  _mapTrajectoryList;
     QGeoCoordinate      _mapTrajectoryLastCoordinate;
@@ -1004,6 +1005,7 @@ private:
     Fact _altitudeRelativeFact;
     Fact _altitudeAMSLFact;
     Fact _flightDistanceFact;
+    Fact _flightTimeFact;
 
     VehicleGPSFactGroup         _gpsFactGroup;
     VehicleBatteryFactGroup     _batteryFactGroup;
@@ -1020,6 +1022,7 @@ private:
     static const char* _altitudeRelativeFactName;
     static const char* _altitudeAMSLFactName;
     static const char* _flightDistanceFactName;
+    static const char* _flightTimeFactName;
 
     static const char* _gpsFactGroupName;
     static const char* _batteryFactGroupName;

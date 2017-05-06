@@ -52,6 +52,7 @@ const char* Vehicle::_climbRateFactName =           "climbRate";
 const char* Vehicle::_altitudeRelativeFactName =    "altitudeRelative";
 const char* Vehicle::_altitudeAMSLFactName =        "altitudeAMSL";
 const char* Vehicle::_flightDistanceFactName =      "flightDistance";
+const char* Vehicle::_flightTimeFactName =          "flightTime";
 
 const char* Vehicle::_gpsFactGroupName =        "gps";
 const char* Vehicle::_batteryFactGroupName =    "battery";
@@ -150,6 +151,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _altitudeRelativeFact (0, _altitudeRelativeFactName,  FactMetaData::valueTypeDouble)
     , _altitudeAMSLFact     (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
     , _flightDistanceFact   (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
+    , _flightTimeFact       (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _gpsFactGroup(this)
     , _batteryFactGroup(this)
     , _windFactGroup(this)
@@ -303,6 +305,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _climbRateFact        (0, _climbRateFactName,         FactMetaData::valueTypeDouble)
     , _altitudeRelativeFact (0, _altitudeRelativeFactName,  FactMetaData::valueTypeDouble)
     , _altitudeAMSLFact     (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
+    , _flightDistanceFact   (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
+    , _flightTimeFact       (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _gpsFactGroup(this)
     , _batteryFactGroup(this)
     , _windFactGroup(this)
@@ -353,6 +357,7 @@ void Vehicle::_commonInit(void)
     _addFact(&_altitudeRelativeFact,    _altitudeRelativeFactName);
     _addFact(&_altitudeAMSLFact,        _altitudeAMSLFactName);
     _addFact(&_flightDistanceFact,      _flightDistanceFactName);
+    _addFact(&_flightTimeFact,          _flightTimeFactName);
 
     _addFactGroup(&_gpsFactGroup,       _gpsFactGroupName);
     _addFactGroup(&_batteryFactGroup,   _batteryFactGroupName);
@@ -361,6 +366,7 @@ void Vehicle::_commonInit(void)
     _addFactGroup(&_temperatureFactGroup, _temperatureFactGroupName);
 
     _flightDistanceFact.setRawValue(0);
+    _flightTimeFact.setRawValue(0);
 }
 
 Vehicle::~Vehicle()
@@ -1674,6 +1680,7 @@ void Vehicle::_addNewMapTrajectoryPoint(void)
     }
     _mapTrajectoryHaveFirstCoordinate = true;
     _mapTrajectoryLastCoordinate = _coordinate;
+    _flightTimeFact.setRawValue((double)_flightTimer.elapsed() / 1000.0);
 }
 
 void Vehicle::_clearTrajectoryPoints(void)
@@ -1691,7 +1698,9 @@ void Vehicle::_mapTrajectoryStart(void)
     _mapTrajectoryHaveFirstCoordinate = false;
     _clearTrajectoryPoints();
     _mapTrajectoryTimer.start();
+    _flightTimer.start();
     _flightDistanceFact.setRawValue(0);
+    _flightTimeFact.setRawValue(0);
 }
 
 void Vehicle::_mapTrajectoryStop()

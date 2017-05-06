@@ -39,7 +39,8 @@ public:
         valueTypeFloat,
         valueTypeDouble,
         valueTypeString,
-        valueTypeBool
+        valueTypeBool,
+        valueTypeElapsedTimeInSeconds,  // Internally stored as double, valueString displays as HH:MM:SS
     } ValueType_t;
 
     typedef QVariant (*Translator)(const QVariant& from);
