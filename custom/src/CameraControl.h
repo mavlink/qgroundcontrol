@@ -251,7 +251,7 @@ private:
     void    _requestCaptureStatus   ();
     void    _updateAspectRatio      ();
     void    _initStreaming          ();
-    void    _handleShutterStatus    ();
+    int     _findShutterSpeedIndex  (float shutter_speed);
     void    _handleISOStatus        ();
     void    _handleCameraSettings   (const mavlink_message_t& message);
     void    _handleCaptureStatus    (const mavlink_message_t& message);
