@@ -23,13 +23,13 @@ public:
     TyphoonHM4Interface*   handler                      () { return _pHandler; }
 
     // Overrides from QGCCorePlugin
-    QGCOptions*         options                         () final;
-    QVariantList&       settingsPages                   () final;
-    bool                overrideSettingsGroupVisibility (QString name) final;
-    bool                adjustSettingMetaData           (FactMetaData& metaData) final;
-    QString             brandImageIndoor                () const final;
-    QString             brandImageOutdoor               () const final;
-    QGeoPositionInfoSource* createPositionSource        (QObject* parent);
+    QGCOptions*     options                         () final;
+    QVariantList&   settingsPages                   () final;
+    bool            overrideSettingsGroupVisibility (QString name) final;
+    bool            adjustSettingMetaData           (FactMetaData& metaData) final;
+    QString         brandImageIndoor                () const final;
+    QString         brandImageOutdoor               () const final;
+    QGeoPositionInfoSource* createPositionSource    (QObject* parent);
 
     // Overrides from QGCTool
     void                setToolbox                      (QGCToolbox* toolbox);

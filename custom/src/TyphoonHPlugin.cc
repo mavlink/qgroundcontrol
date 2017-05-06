@@ -137,11 +137,12 @@ public:
     bool        showSensorCalibrationGyro      () const final;
     bool        showSensorCalibrationAccel     () const final;
     bool        showSensorCalibrationLevel     () const final;
-    bool        wifiReliableForCalibration     () const { return true; }
-    bool        sensorsHaveFixedOrientation    () const { return true; }
-    bool        guidedBarShowEmergencyStop     () const { return false; }
-    bool        guidedBarShowOrbit             () const { return false; }
-    bool        missionWaypointsOnly           () const { return true; }
+    bool        wifiReliableForCalibration     () const final { return true; }
+    bool        sensorsHaveFixedOrientation    () const final { return true; }
+    bool        guidedBarShowEmergencyStop     () const final { return false; }
+    bool        guidedBarShowOrbit             () const final { return false; }
+    bool        missionWaypointsOnly           () const final { return true; }
+    bool        multiVehicleEnabled            () const final { return false; }
 
 private slots:
     void _advancedChanged(bool advanced);
