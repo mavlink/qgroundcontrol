@@ -270,6 +270,18 @@ QString Fact::_variantToString(const QVariant& variant, int decimalPlaces) const
         }
     }
         break;
+    case FactMetaData::valueTypeElapsedTimeInSeconds:
+    {
+        double dValue = variant.toDouble();
+        if (qIsNaN(dValue)) {
+            valueString = QStringLiteral("--:--:--");
+        } else {
+            QTime time(0, 0, 0, 0);
+            time = time.addSecs(dValue);
+            valueString = time.toString(QStringLiteral("hh:mm:ss"));
+        }
+    }
+        break;
     default:
         valueString = variant.toString();
         break;
