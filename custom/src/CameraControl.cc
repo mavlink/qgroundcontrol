@@ -404,8 +404,6 @@ CameraControl::_setIsoShutter(int iso, float shutter)
 {
     Q_UNUSED(iso);
     Q_UNUSED(shutter);
-    /*
-     * Firmware is not ready for this yet
     _vehicle->sendMavCommand(
         MAV_COMP_ID_CAMERA,                         // Target component
         MAV_CMD_SET_CAMERA_SETTINGS_1,              // Command id
@@ -417,7 +415,6 @@ CameraControl::_setIsoShutter(int iso, float shutter)
         NAN,                                        // AE mode (Auto Exposure) (0: full auto 1: full manual 2: aperture priority 3: shutter priority)
         NAN,                                        // EV value (when in auto exposure)
         NAN);                                       // White balance (color temperature in K) (0: Auto WB)
-    */
 }
 
 //-----------------------------------------------------------------------------
@@ -571,20 +568,17 @@ CameraControl::resetSettings()
 }
 
 //-----------------------------------------------------------------------------
-void
-CameraControl::_handleShutterStatus()
+int CameraControl::_findShutterSpeedIndex(float shutter_speed)
 {
-    /*
-    for(uint32_t i = 0; i < NUM_SHUTTER_VALUES; i++) {
-        if(_ambarellaSettings.shutter_time == shutterSpeeds[i].value) {
-            if(_currentShutter != i) {
-                _currentShutter = i;
-                emit currentShutterChanged();
-                return;
-            }
+    //-- As accuracy, use 1/10 of the smallest shutter possible.
+    const float accuracy = (1.0f / 8000.0f) / 10.0f;
+    for (uint32_t i = 0; i < NUM_SHUTTER_VALUES; ++i) {
+        float diff = fabsf(shutterSpeeds[i].value - shutter_speed);
+        if (diff < accuracy) {
+            return i;
         }
     }
-    */
+    return -1;
 }
 
 //-----------------------------------------------------------------------------
@@ -797,18 +791,17 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
     if(_ambarellaSettings.ae_enable != ae) {
         _ambarellaSettings.ae_enable = ae;
         emit aeModeChanged();
-        if(!ae) {
-            _handleShutterStatus();
-            _handleISOStatus();
-        }
     }
-    //-- Shutter and ISO (Manual Mode)
-    /*
-    _ambarellaSettings.shutter_time    = set.value(QString("shutter_time")).toString();
-    _handleShutterStatus();
-    _ambarellaSettings.iso_value       = set.value(QString("iso_value")).toString();
-    _handleISOStatus();
-    */
+    //-- Shutter Speed
+    int idx = _findShutterSpeedIndex(settings.shutter_speed);
+    if(idx >= 0) {
+        _tempShutter = idx;
+        _currentShutter = idx;
+        emit currentShutterChanged();
+    }
+    //-- ISO Value
+    // TODO: Waiting to see what is returned.
+    // For now, all I get is NAN.
     //-- EV
     if(_ambarellaSettings.exposure_value != settings.ev) {
         uint32_t idx = 100000;
