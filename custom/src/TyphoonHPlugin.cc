@@ -376,6 +376,7 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         return false;
     } else if (metaData.name() == AppSettings::defaultMissionItemAltitudeSettingsName) {
         metaData.setRawDefaultValue(25);
+        metaData.setRawMax(121.92); // 400 feet
         return true;
     } else if (metaData.name() == AppSettings::appFontPointSizeName) {
 #if defined(__androidx86__)
