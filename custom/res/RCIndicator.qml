@@ -177,7 +177,6 @@ Item {
             to:         qgcPal.colorOrange
             duration:   1000
             loops:      Animation.Infinite
-            easing:     Easing.InOutQuad
         }
         Column {
             anchors.verticalCenter: parent.verticalCenter
