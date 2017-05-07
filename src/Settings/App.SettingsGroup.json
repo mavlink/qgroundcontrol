@@ -52,7 +52,6 @@
     "type":             "double",
     "defaultValue":     50.0,
     "min":              0.0,
-    "max":              121.92,
     "units":            "meters",
     "decimalPlaces":    2
 },
