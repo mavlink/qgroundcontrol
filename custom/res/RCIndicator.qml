@@ -63,6 +63,38 @@ Item {
         return ""
     }
 
+    function handleRssiWarning() {
+        if(_activeVehicle) {
+            if(_activeVehicle.rcRSSI < 0 || _activeVehicle.rcRSSI > 100) {
+                if(!rcAnimation.running) {
+                    rcAnimation.start()
+                }
+            } else {
+                if(rcAnimation.running) {
+                    rcAnimation.stop()
+                    rcIcon.color = qgcPal.buttonText
+                }
+            }
+        } else {
+            rcAnimation.stop()
+            rcIcon.color = qgcPal.buttonText
+        }
+    }
+
+    Connections {
+        target: QGroundControl.multiVehicleManager.activeVehicle
+        onRcRSSIChanged: {
+            handleRssiWarning()
+        }
+    }
+
+    Connections {
+        target: QGroundControl.multiVehicleManager
+        onActiveVehicleAvailableChanged: {
+            handleRssiWarning()
+        }
+    }
+
     Component {
         id: rcInfo
 
@@ -121,6 +153,7 @@ Item {
         anchors.bottom: parent.bottom
         spacing:        ScreenTools.defaultFontPixelWidth
         QGCColoredImage {
+            id:                 rcIcon
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             width:              height
@@ -129,6 +162,22 @@ Item {
             fillMode:           Image.PreserveAspectFit
             opacity:            _activeVehicle ? 1 : 0.5
             color:              qgcPal.buttonText
+            SequentialAnimation on color {
+                id:         rcAnimation
+                running:    false
+                loops:      Animation.Infinite
+                ColorAnimation { from: qgcPal.colorRed; to: qgcPal.text;     duration: 750 }
+                ColorAnimation { from: qgcPal.text;     to: qgcPal.colorRed; duration: 750 }
+            }
+        }
+        ColorAnimation {
+            target:     rcIcon
+            property:   "color"
+            from:       qgcPal.colorRed
+            to:         qgcPal.colorOrange
+            duration:   1000
+            loops:      Animation.Infinite
+            easing:     Easing.InOutQuad
         }
         Column {
             anchors.verticalCenter: parent.verticalCenter
