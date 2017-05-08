@@ -419,6 +419,7 @@ Rectangle {
                         id:                     windRoseButton
                         anchors.verticalCenter: angleText.verticalCenter
                         iconSource:             "/res/wind-rose.svg"
+                        visible: _activeVehicle ? _activeVehicle.fixedWing : true
 
                         onClicked: {
                             var cords = windRoseButton.mapToItem(_root, 0, 0)
