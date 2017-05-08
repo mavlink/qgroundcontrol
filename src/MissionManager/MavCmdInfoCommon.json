@@ -968,6 +968,30 @@
         { "id": 511, "rawName": "MAV_CMD_SET_MESSAGE_INTERVAL", "friendlyName": "Set message interval" },
         { "id": 520, "rawName": "MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES", "friendlyName": "Get capabilities" },
         {
+            "id":           530,
+            "rawName":      "MAV_CMD_SET_CAMERA_MODE",
+            "friendlyName": "Set camera modes" ,
+            "description":  "Set camera photo, video, audio modes.",
+            "category":     "Camera",
+            "param1": {
+                "label":            "Camera id",
+                "default":          0,
+                "decimalPlaces":    0
+            },
+            "param2": {
+                "label":            "Mode",
+                "enumStrings":      "Take photos,Record video",
+                "enumValues":       "0,1",
+                "default":          0
+            },
+            "param3": {
+                "label":            "Audio",
+                "enumStrings":      "Recording disabled,Recording enabled",
+                "enumValues":       "0,1",
+                "default":          0
+            }
+        },
+        {
             "id":           2000,
             "rawName":      "MAV_CMD_IMAGE_START_CAPTURE",
             "friendlyName": "Start image capture" ,
