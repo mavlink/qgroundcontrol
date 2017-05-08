@@ -44,5 +44,13 @@
     "max":              180.0,
     "decimalPlaces":    0,
     "defaultValue":     0
+},
+{
+    "name":             "CameraMode",
+    "shortDescription": "Specify whether the camera should switch to photo or video mode",
+    "type":             "uint32",
+    "enumStrings":      "Take photos,Record video",
+    "enumValues":       "0,1",
+    "defaultValue":     0
 }
 ]
