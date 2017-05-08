@@ -59,6 +59,7 @@ const char* Vehicle::_batteryFactGroupName =    "battery";
 const char* Vehicle::_windFactGroupName =       "wind";
 const char* Vehicle::_vibrationFactGroupName =  "vibration";
 const char* Vehicle::_temperatureFactGroupName = "temperature";
+const char* Vehicle::_submarineFactGroupName = "sub";
 
 Vehicle::Vehicle(LinkInterface*             link,
                  int                        vehicleId,
@@ -372,6 +373,11 @@ void Vehicle::_commonInit(void)
     _addFactGroup(&_vibrationFactGroup, _vibrationFactGroupName);
     _addFactGroup(&_temperatureFactGroup, _temperatureFactGroupName);
 
+    if (_vehicleType == MAV_TYPE_SUBMARINE) {
+        _submarineFactGroup = new VehicleSubmarineFactGroup(this);
+        _addFactGroup(_submarineFactGroup, _submarineFactGroupName);
+    }
+
     _flightDistanceFact.setRawValue(0);
     _flightTimeFact.setRawValue(0);
 }
@@ -596,6 +602,10 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
     case MAVLINK_MSG_ID_WIND:
         _handleWind(message);
+        break;
+
+    case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
+        _handleNamedValueFloat(message);
         break;
     }
 
@@ -1162,6 +1172,27 @@ void Vehicle::_handleScaledPressure3(mavlink_message_t& message) {
     mavlink_scaled_pressure3_t pressure;
     mavlink_msg_scaled_pressure3_decode(&message, &pressure);
     _temperatureFactGroup.temperature3()->setRawValue(pressure.temperature / 100.0);
+}
+
+void Vehicle::_handleNamedValueFloat(mavlink_message_t &message) {
+    if (!_submarineFactGroup) {
+        return;
+    }
+
+    mavlink_named_value_float_t value;
+    mavlink_msg_named_value_float_decode(&message, &value);
+
+    QString name = QString(value.name);
+
+    if (name == "CamTilt") {
+        _submarineFactGroup->camTilt()->setRawValue(value.value * 100);
+    } else if (name == "TetherTrn") {
+        _submarineFactGroup->tetherTurns()->setRawValue(value.value);
+    } else if (name == "Lights1") {
+        _submarineFactGroup->lightsLevel1()->setRawValue(value.value * 100);
+    } else if (name == "Lights2") {
+        _submarineFactGroup->lightsLevel2()->setRawValue(value.value * 100);
+    }
 }
 
 bool Vehicle::_containsLink(LinkInterface* link)
@@ -2711,4 +2742,28 @@ VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject* parent)
     _temperature1Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
     _temperature2Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
     _temperature3Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
+}
+
+const char* VehicleSubmarineFactGroup::_camTiltFactName = "camera tilt";
+const char* VehicleSubmarineFactGroup::_tetherTurnsFactName = "tether turns";
+const char* VehicleSubmarineFactGroup::_lightsLevel1FactName = "lights 1";
+const char* VehicleSubmarineFactGroup::_lightsLevel2FactName = "lights 2";
+
+VehicleSubmarineFactGroup::VehicleSubmarineFactGroup(QObject* parent)
+    : FactGroup(300, ":/json/Vehicle/SubmarineFact.json", parent)
+    , _camTiltFact       (0, _camTiltFactName,       FactMetaData::valueTypeDouble)
+    , _tetherTurnsFact   (0, _tetherTurnsFactName,   FactMetaData::valueTypeDouble)
+    , _lightsLevel1Fact  (0, _lightsLevel1FactName,  FactMetaData::valueTypeDouble)
+    , _lightsLevel2Fact  (0, _lightsLevel2FactName,  FactMetaData::valueTypeDouble)
+{
+    _addFact(&_camTiltFact,       _camTiltFactName);
+    _addFact(&_tetherTurnsFact,   _tetherTurnsFactName);
+    _addFact(&_lightsLevel1Fact,  _lightsLevel1FactName);
+    _addFact(&_lightsLevel2Fact,  _lightsLevel2FactName);
+
+    // Start out as not available "--.--"
+    _camTiltFact.setRawValue       (std::numeric_limits<float>::quiet_NaN());
+    _tetherTurnsFact.setRawValue   (std::numeric_limits<float>::quiet_NaN());
+    _lightsLevel1Fact.setRawValue  (std::numeric_limits<float>::quiet_NaN());
+    _lightsLevel2Fact.setRawValue  (std::numeric_limits<float>::quiet_NaN());
 }
