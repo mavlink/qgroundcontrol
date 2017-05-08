@@ -557,7 +557,7 @@ quint64 LinechartPlot::getMaxTime()
  * @brief Get the plot interval
  * The plot interval is the time interval which is displayed on the plot
  *
- * @return The plot inteval in milliseconds
+ * @return The plot interval in milliseconds
  * @see setPlotInterval()
  * @see getDataInterval() To get the interval for which data is available
  **/

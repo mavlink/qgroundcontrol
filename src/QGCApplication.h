@@ -126,11 +126,11 @@ public:
     ///         Although public should only be called by main.
     void _initCommon(void);
 
-    /// @brief Intialize the application for normal application boot. Or in other words we are not going to run
+    /// @brief Initialize the application for normal application boot. Or in other words we are not going to run
     ///         unit tests. Although public should only be called by main.
     bool _initForNormalAppBoot(void);
 
-    /// @brief Intialize the application for normal application boot. Or in other words we are not going to run
+    /// @brief Initialize the application for normal application boot. Or in other words we are not going to run
     ///         unit tests. Although public should only be called by main.
     bool _initForUnitTests(void);
 

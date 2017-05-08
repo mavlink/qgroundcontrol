@@ -1693,7 +1693,7 @@ bool MissionController::showPlanFromManagerVehicle (void)
     qCDebug(MissionControllerLog) << "showPlanFromManagerVehicle" << _editMode;
     if (_masterController->offline()) {
         qCWarning(MissionControllerLog) << "MissionController::showPlanFromManagerVehicle called while offline";
-        return true;    // stops further propogation of showPlanFromManagerVehicle due to error
+        return true;    // stops further propagation of showPlanFromManagerVehicle due to error
     } else {
         if (!_managerVehicle->initialPlanRequestComplete()) {
             // The vehicle hasn't completed initial load, we can just wait for newMissionItemsAvailable to be signalled automatically

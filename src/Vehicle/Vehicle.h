@@ -466,7 +466,7 @@ public:
     MAV_TYPE vehicleType(void) const { return _vehicleType; }
     Q_INVOKABLE QString vehicleTypeName(void) const;
 
-    /// Returns the highest quality link available to the Vehicle. If you need to hold a refernce to this link use
+    /// Returns the highest quality link available to the Vehicle. If you need to hold a reference to this link use
     /// LinkManager::sharedLinkInterfaceForGet to get QSharedPointer for link.
     LinkInterface* priorityLink(void) { return _priorityLink.data(); }
 

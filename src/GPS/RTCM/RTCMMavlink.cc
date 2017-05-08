@@ -44,12 +44,12 @@ void RTCMMavlink::RTCMDataUpdate(QByteArray message)
         // We need to fragment
 
         static uint8_t sequenceId = 0;  // Sequence id is used to indicate that the individual fragements belong to the same set
-        uint8_t fragmentId = 0;         // Fragment id indicates the fragement within a set
+        uint8_t fragmentId = 0;         // Fragment id indicates the fragment within a set
 
         int start = 0;
         while (start < message.size()) {
             int length = std::min(message.size() - start, maxMessageLength);
-            mavlinkRtcmData.flags = 1;                      // LSB set indicates messsage is fragmented
+            mavlinkRtcmData.flags = 1;                      // LSB set indicates message is fragmented
             mavlinkRtcmData.flags |= fragmentId++ << 1;     // Next 2 bits are fragment id
             mavlinkRtcmData.flags |= sequenceId++ << 3;     // Next 5 bits are sequence id
             mavlinkRtcmData.len = length;
