@@ -62,6 +62,41 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void)
         remapV3_5["SERVO13_FUNCTION"] = QStringLiteral("RC13_FUNCTION");
         remapV3_5["SERVO14_FUNCTION"] = QStringLiteral("RC14_FUNCTION");
 
+        remapV3_5["SERVO5_MIN"] = QStringLiteral("RC5_MIN");
+        remapV3_5["SERVO6_MIN"] = QStringLiteral("RC6_MIN");
+        remapV3_5["SERVO7_MIN"] = QStringLiteral("RC7_MIN");
+        remapV3_5["SERVO8_MIN"] = QStringLiteral("RC8_MIN");
+        remapV3_5["SERVO9_MIN"] = QStringLiteral("RC9_MIN");
+        remapV3_5["SERVO10_MIN"] = QStringLiteral("RC10_MIN");
+        remapV3_5["SERVO11_MIN"] = QStringLiteral("RC11_MIN");
+        remapV3_5["SERVO12_MIN"] = QStringLiteral("RC12_MIN");
+        remapV3_5["SERVO13_MIN"] = QStringLiteral("RC13_MIN");
+        remapV3_5["SERVO14_MIN"] = QStringLiteral("RC14_MIN");
+
+        remapV3_5["SERVO5_MAX"] = QStringLiteral("RC5_MAX");
+        remapV3_5["SERVO6_MAX"] = QStringLiteral("RC6_MAX");
+        remapV3_5["SERVO7_MAX"] = QStringLiteral("RC7_MAX");
+        remapV3_5["SERVO8_MAX"] = QStringLiteral("RC8_MAX");
+        remapV3_5["SERVO9_MAX"] = QStringLiteral("RC9_MAX");
+        remapV3_5["SERVO10_MAX"] = QStringLiteral("RC10_MAX");
+        remapV3_5["SERVO11_MAX"] = QStringLiteral("RC11_MAX");
+        remapV3_5["SERVO12_MAX"] = QStringLiteral("RC12_MAX");
+        remapV3_5["SERVO13_MAX"] = QStringLiteral("RC13_MAX");
+        remapV3_5["SERVO14_MAX"] = QStringLiteral("RC14_MAX");
+
+        remapV3_5["SERVO5_REVERSED"] = QStringLiteral("RC5_REVERSED");
+        remapV3_5["SERVO6_REVERSED"] = QStringLiteral("RC6_REVERSED");
+        remapV3_5["SERVO7_REVERSED"] = QStringLiteral("RC7_REVERSED");
+        remapV3_5["SERVO8_REVERSED"] = QStringLiteral("RC8_REVERSED");
+        remapV3_5["SERVO9_REVERSED"] = QStringLiteral("RC9_REVERSED");
+        remapV3_5["SERVO10_REVERSED"] = QStringLiteral("RC10_REVERSED");
+        remapV3_5["SERVO11_REVERSED"] = QStringLiteral("RC11_REVERSED");
+        remapV3_5["SERVO12_REVERSED"] = QStringLiteral("RC12_REVERSED");
+        remapV3_5["SERVO13_REVERSED"] = QStringLiteral("RC13_REVERSED");
+        remapV3_5["SERVO14_REVERSED"] = QStringLiteral("RC14_REVERSED");
+
+        remapV3_5["FENCE_ALT_MIN"] = QStringLiteral("FENCE_DEPTH_MAX");
+
         _remapParamNameIntialized = true;
     }
 }
@@ -115,6 +150,7 @@ const QVariantList& ArduSubFirmwarePlugin::toolBarIndicators(const Vehicle* vehi
         _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")));
         _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")));
         _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")));
+        _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/JoystickIndicator.qml")));
     }
     return _toolBarIndicators;
 }

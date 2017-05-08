@@ -352,6 +352,29 @@ void PX4FirmwarePlugin::guidedModeOrbit(Vehicle* vehicle, const QGeoCoordinate& 
                             centerCoord.isValid() ? centerCoord.altitude()  : NAN);
 }
 
+void PX4FirmwarePlugin::_mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle)
+{
+    Q_UNUSED(vehicleId);
+    Q_UNUSED(component);
+    Q_UNUSED(noReponseFromVehicle);
+
+    Vehicle* vehicle = dynamic_cast<Vehicle*>(sender());
+    if (!vehicle) {
+        qWarning() << "Dynamic cast failed!";
+        return;
+    }
+
+    if (command == MAV_CMD_NAV_TAKEOFF && result == MAV_RESULT_ACCEPTED) {
+        // Now that we are in takeoff mode we can arm the vehicle which will cause it to takeoff.
+        // We specifically don't retry arming if it fails. This way we don't fight with the user if
+        // They are trying to disarm.
+        disconnect(vehicle, &Vehicle::mavCommandResult, this, &PX4FirmwarePlugin::_mavCommandResult);
+        if (!vehicle->armed()) {
+            vehicle->setArmed(true);
+        }
+    }
+}
+
 void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
 {
     QString takeoffAltParam("MIS_TAKEOFF_ALT");
@@ -367,11 +390,7 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
     }
     Fact* takeoffAlt = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, takeoffAltParam);
 
-    if (!_armVehicle(vehicle)) {
-        qgcApp()->showMessage(tr("Unable to takeoff: Vehicle failed to arm."));
-        return;
-    }
-
+    connect(vehicle, &Vehicle::mavCommandResult, this, &PX4FirmwarePlugin::_mavCommandResult);
     vehicle->sendMavCommand(vehicle->defaultComponentId(),
                             MAV_CMD_NAV_TAKEOFF,
                             true,                           // show error is fails
@@ -436,7 +455,7 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 
 void PX4FirmwarePlugin::startMission(Vehicle* vehicle)
 {
-    if (!_armVehicle(vehicle)) {
+    if (!_armVehicleAndValidate(vehicle)) {
         qgcApp()->showMessage(tr("Unable to start mission: Vehicle failed to arm."));
         return;
     }
@@ -518,27 +537,13 @@ void PX4FirmwarePlugin::_handleAutopilotVersion(Vehicle* vehicle, mavlink_messag
 
 bool PX4FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const
 {
-    if (!vehicle->isOfflineEditingVehicle() && vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("MIS_YAWMODE"))) {
-        Fact* yawMode = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("MIS_YAWMODE"));
-        return yawMode && yawMode->rawValue().toInt() == 1;
+    if (vehicle->isOfflineEditingVehicle()) {
+        return FirmwarePlugin::vehicleYawsToNextWaypointInMission(vehicle);
+    } else {
+        if (vehicle->multiRotor() && vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("MIS_YAWMODE"))) {
+            Fact* yawMode = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("MIS_YAWMODE"));
+            return yawMode && yawMode->rawValue().toInt() == 1;
+        }
     }
     return true;
-}
-
-void PX4FirmwarePlugin::missionFlightSpeedInfo(Vehicle* vehicle, double& hoverSpeed, double& cruiseSpeed)
-{
-    QString hoverSpeedParam("MPC_XY_CRUISE");
-    QString cruiseSpeedParam("FW_AIRSPD_TRIM");
-
-    // First pull settings defaults
-    FirmwarePlugin::missionFlightSpeedInfo(vehicle, hoverSpeed, cruiseSpeed);
-
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, hoverSpeedParam)) {
-        Fact* speed = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, hoverSpeedParam);
-        hoverSpeed = speed->rawValue().toDouble();
-    }
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, cruiseSpeedParam)) {
-        Fact* speed = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, cruiseSpeedParam);
-        cruiseSpeed = speed->rawValue().toDouble();
-    }
 }

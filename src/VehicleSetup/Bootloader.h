@@ -64,6 +64,8 @@ public:
     static const int boardIDPX4FMUV1 = 5;       ///< PX4 V1 board, as from USB PID
     static const int boardIDPX4FMUV2 = 9;       ///< PX4 V2 board, as from USB PID
     static const int boardIDPX4FMUV4 = 11;      ///< PX4 V4 board, as from USB PID
+    static const int boardIDPX4FMUV4PRO = 13;      ///< PX4 V4PRO board, as from USB PID
+    static const int boardIDPX4FMUV5 = 50;      ///< PX4 V5 board, as from USB PID
     static const int boardIDPX4Flow = 6;        ///< PX4 Flow board, as from USB PID
     static const int boardIDAeroCore = 98;      ///< Gumstix AeroCore board, as from USB PID
     static const int boardIDAUAVX2_1 = 33;      ///< AUAV X2.1 board, as from USB PID
@@ -98,6 +100,7 @@ private:
     enum {
         // protocol bytes
         PROTO_INSYNC =          0x12,   ///< 'in sync' byte sent before status
+        PROTO_BAD_SILICON_REV = 0x14,   ///< device is using silicon not suitable for the target the bootloader was used for
         PROTO_EOC =             0x20,   ///< end of command
         
         // Reply bytes

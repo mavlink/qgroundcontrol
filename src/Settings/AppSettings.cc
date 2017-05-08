@@ -31,10 +31,11 @@ const char* AppSettings::indoorPaletteName =                            "StyleIs
 const char* AppSettings::showLargeCompassName =                         "ShowLargeCompass";
 const char* AppSettings::savePathName =                                 "SavePath";
 const char* AppSettings::autoLoadMissionsName =                         "AutoLoadMissions";
-const char* AppSettings::automaticMissionUploadName =                   "AutomaticMissionUpload";
 
 const char* AppSettings::parameterFileExtension =   "params";
+const char* AppSettings::planFileExtension =        "plan";
 const char* AppSettings::missionFileExtension =     "mission";
+const char* AppSettings::waypointsFileExtension =   "waypoints";
 const char* AppSettings::fenceFileExtension =       "fence";
 const char* AppSettings::rallyPointFileExtension =  "rally";
 const char* AppSettings::telemetryFileExtension =   "tlog";
@@ -60,7 +61,6 @@ AppSettings::AppSettings(QObject* parent)
     , _showLargeCompassFact(NULL)
     , _savePathFact(NULL)
     , _autoLoadMissionsFact(NULL)
-    , _automaticMissionUpload(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
@@ -278,12 +278,26 @@ Fact* AppSettings::autoLoadMissions(void)
     return _autoLoadMissionsFact;
 }
 
-Fact* AppSettings::automaticMissionUpload(void)
+MAV_AUTOPILOT AppSettings::offlineEditingFirmwareTypeFromFirmwareType(MAV_AUTOPILOT firmwareType)
 {
-    if (!_automaticMissionUpload) {
-        _automaticMissionUpload = _createSettingsFact(automaticMissionUploadName);
+    if (firmwareType != MAV_AUTOPILOT_PX4 && firmwareType != MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        firmwareType = MAV_AUTOPILOT_GENERIC;
     }
+    return firmwareType;
+}
 
-    return _automaticMissionUpload;
+MAV_TYPE AppSettings::offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleType)
+{
+    if (QGCMAVLink::isRover(vehicleType)) {
+        return MAV_TYPE_GROUND_ROVER;
+    } else if (QGCMAVLink::isSub(vehicleType)) {
+        return MAV_TYPE_SUBMARINE;
+    } else if (QGCMAVLink::isVTOL(vehicleType)) {
+        return MAV_TYPE_VTOL_QUADROTOR;
+    } else if (QGCMAVLink::isFixedWing(vehicleType)) {
+        return MAV_TYPE_FIXED_WING;
+    } else {
+        return MAV_TYPE_QUADROTOR;
+    }
 }
 

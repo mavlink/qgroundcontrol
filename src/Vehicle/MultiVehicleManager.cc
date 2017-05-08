@@ -16,6 +16,8 @@
 #include "QGroundControlQmlGlobal.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
+#include "QGCCorePlugin.h"
+#include "QGCOptions.h"
 
 #if defined (__ios__) || defined(__android__)
 #include "MobileScreenMgr.h"
@@ -72,6 +74,9 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 
 void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType)
 {
+    if (_vehicles.count() > 0 && !qgcApp()->toolbox()->corePlugin()->options()->multiVehicleEnabled()) {
+        return;
+    }
     if (_ignoreVehicleIds.contains(vehicleId) || getVehicleById(vehicleId) || vehicleId == 0) {
         return;
     }
