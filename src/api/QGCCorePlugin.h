@@ -48,25 +48,25 @@ public:
 
     /// The list of settings under the Settings Menu
     /// @return A list of QGCSettings
-    virtual QVariantList&           settingsPages       ();
+    virtual QVariantList& settingsPages(void);
 
     /// The default settings panel to show
     /// @return The settings index
-    virtual int                     defaultSettings     ();
+    virtual int defaultSettings(void);
 
     /// Global options
     /// @return An instance of QGCOptions
-    virtual QGCOptions*             options             ();
+    virtual QGCOptions* options(void);
 
     /// Allows the core plugin to override the visibility for a settings group
     ///     @param name - Setting group name
     /// @return true: Show settings ui, false: Hide settings ui
-    virtual bool overrideSettingsGroupVisibility        (QString name);
+    virtual bool overrideSettingsGroupVisibility(QString name);
 
     /// Allows the core plugin to override the setting meta data before the setting fact is created.
     ///     @param metaData - MetaData for setting fact
     /// @return true: Setting should be visible in ui, false: Setting should not be shown in ui
-    virtual bool adjustSettingMetaData                  (FactMetaData& metaData);
+    virtual bool adjustSettingMetaData(FactMetaData& metaData);
 
     /// Return the resource file which contains the brand image for for Indoor theme.
     virtual QString brandImageIndoor(void) const { return QString(); }
@@ -75,14 +75,16 @@ public:
     virtual QString brandImageOutdoor(void) const { return QString(); }
 
     /// @return The message to show to the user when they a re prompted to confirm turning on advanced ui.
-    virtual QString showAdvancedUIMessage(void) const { return tr("WARNING: You are about to enter Advanced Mode. This may expose features which may cause your vehicle to malfunction. "
-                                                                  "You should do so only if instructed by customer support. Are you sure you want to enable Advanced Mode?"); }
+    virtual QString showAdvancedUIMessage(void) const;
 
     /// @return An instance of an alternate postion source (or NULL if not available)
     virtual QGeoPositionInfoSource* createPositionSource(QObject* parent) { Q_UNUSED(parent); return NULL; }
 
     /// Allows a plugin to override the specified color name from the palette
     virtual void paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo);
+
+    /// Allows the plugin the override the default settings for the Values Widget large and small values
+    virtual void valuesWidgetDefaultSettings(QStringList& largeValues, QStringList& smallValues);
 
     bool showTouchAreas(void) const { return _showTouchAreas; }
     bool showAdvancedUI(void) const { return _showAdvancedUI; }

@@ -30,7 +30,7 @@ QGCFlickable {
         width:  parent.width
         height: geoFenceItems.y + geoFenceItems.height + (_margin * 2)
         radius: _radius
-        color:  qgcPal.buttonHighlight
+        color:  qgcPal.missionItemEditor
 
         QGCLabel {
             id:                 geoFenceLabel

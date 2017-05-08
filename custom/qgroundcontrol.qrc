@@ -5,6 +5,7 @@
     <qresource prefix="/toolbar">
         <file alias="ArmedIndicator.qml">../src/ui/toolbar/ArmedIndicator.qml</file>
         <file alias="MessageIndicator.qml">../src/ui/toolbar/MessageIndicator.qml</file>
+        <file alias="JoystickIndicator.qml">../src/ui/toolbar/JoystickIndicator.qml</file>
     </qresource>
     <qresource prefix="/qml">
         <file alias="AirframeComponent.qml">../src/AutoPilotPlugins/PX4/AirframeComponent.qml</file>

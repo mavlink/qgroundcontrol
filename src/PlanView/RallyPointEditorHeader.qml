@@ -20,7 +20,7 @@ QGCFlickable {
         width:  parent.width
         height: innerEditorRect.y + innerEditorRect.height + (_margin * 2)
         radius: _radius
-        color:  qgcPal.buttonHighlight
+        color:  qgcPal.missionItemEditor
 
         QGCLabel {
             id:                 editorLabel
