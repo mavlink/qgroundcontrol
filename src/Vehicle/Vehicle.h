@@ -214,6 +214,37 @@ private:
     Fact            _temperature3Fact;
 };
 
+class VehicleSubmarineFactGroup : public FactGroup
+{
+    Q_OBJECT
+
+public:
+    VehicleSubmarineFactGroup(QObject* parent = NULL);
+
+    Q_PROPERTY(Fact* camTilt       READ camTilt       CONSTANT)
+    Q_PROPERTY(Fact* tetherTurns   READ tetherTurns   CONSTANT)
+    Q_PROPERTY(Fact* lightsLevel1  READ lightsLevel1  CONSTANT)
+    Q_PROPERTY(Fact* lightsLevel2  READ lightsLevel2  CONSTANT)
+
+    Fact* camTilt       (void) { return &_camTiltFact; }
+    Fact* tetherTurns   (void) { return &_tetherTurnsFact; }
+    Fact* lightsLevel1  (void) { return &_lightsLevel1Fact; }
+    Fact* lightsLevel2  (void) { return &_lightsLevel2Fact; }
+
+    static const char* _camTiltFactName;
+    static const char* _tetherTurnsFactName;
+    static const char* _lightsLevel1FactName;
+    static const char* _lightsLevel2FactName;
+
+    static const char* _settingsGroup;
+
+private:
+    Fact            _camTiltFact;
+    Fact            _tetherTurnsFact;
+    Fact            _lightsLevel1Fact;
+    Fact            _lightsLevel2Fact;
+};
+
 class Vehicle : public FactGroup
 {
     Q_OBJECT
@@ -350,6 +381,7 @@ public:
     Q_PROPERTY(FactGroup* wind        READ windFactGroup        CONSTANT)
     Q_PROPERTY(FactGroup* vibration   READ vibrationFactGroup   CONSTANT)
     Q_PROPERTY(FactGroup* temperature READ temperatureFactGroup CONSTANT)
+    Q_PROPERTY(FactGroup* submarineFactGroup   READ submarineFactGroup   CONSTANT)
 
     Q_PROPERTY(int      firmwareMajorVersion        READ firmwareMajorVersion       NOTIFY firmwareVersionChanged)
     Q_PROPERTY(int      firmwareMinorVersion        READ firmwareMinorVersion       NOTIFY firmwareVersionChanged)
@@ -612,6 +644,7 @@ public:
     FactGroup* windFactGroup        (void) { return &_windFactGroup; }
     FactGroup* vibrationFactGroup   (void) { return &_vibrationFactGroup; }
     FactGroup* temperatureFactGroup (void) { return &_temperatureFactGroup; }
+    FactGroup* submarineFactGroup   (void) { return _submarineFactGroup; }
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
@@ -832,6 +865,7 @@ private:
     void _handleScaledPressure(mavlink_message_t& message);
     void _handleScaledPressure2(mavlink_message_t& message);
     void _handleScaledPressure3(mavlink_message_t& message);
+    void _handleNamedValueFloat(mavlink_message_t& message);
     void _handleCameraFeedback(const mavlink_message_t& message);
     void _handleCameraImageCaptured(const mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
@@ -1019,6 +1053,7 @@ private:
     VehicleWindFactGroup        _windFactGroup;
     VehicleVibrationFactGroup   _vibrationFactGroup;
     VehicleTemperatureFactGroup _temperatureFactGroup;
+    VehicleSubmarineFactGroup*  _submarineFactGroup;
 
     static const char* _rollFactName;
     static const char* _pitchFactName;
@@ -1036,6 +1071,7 @@ private:
     static const char* _windFactGroupName;
     static const char* _vibrationFactGroupName;
     static const char* _temperatureFactGroupName;
+    static const char* _submarineFactGroupName;
 
     static const int _vehicleUIUpdateRateMSecs = 100;
 
