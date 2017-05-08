@@ -108,6 +108,39 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         remapV3_5["SERVO13_FUNCTION"] = QStringLiteral("RC13_FUNCTION");
         remapV3_5["SERVO14_FUNCTION"] = QStringLiteral("RC14_FUNCTION");
 
+        remapV3_5["SERVO5_MIN"] = QStringLiteral("RC5_MIN");
+        remapV3_5["SERVO6_MIN"] = QStringLiteral("RC6_MIN");
+        remapV3_5["SERVO7_MIN"] = QStringLiteral("RC7_MIN");
+        remapV3_5["SERVO8_MIN"] = QStringLiteral("RC8_MIN");
+        remapV3_5["SERVO9_MIN"] = QStringLiteral("RC9_MIN");
+        remapV3_5["SERVO10_MIN"] = QStringLiteral("RC10_MIN");
+        remapV3_5["SERVO11_MIN"] = QStringLiteral("RC11_MIN");
+        remapV3_5["SERVO12_MIN"] = QStringLiteral("RC12_MIN");
+        remapV3_5["SERVO13_MIN"] = QStringLiteral("RC13_MIN");
+        remapV3_5["SERVO14_MIN"] = QStringLiteral("RC14_MIN");
+
+        remapV3_5["SERVO5_MAX"] = QStringLiteral("RC5_MAX");
+        remapV3_5["SERVO6_MAX"] = QStringLiteral("RC6_MAX");
+        remapV3_5["SERVO7_MAX"] = QStringLiteral("RC7_MAX");
+        remapV3_5["SERVO8_MAX"] = QStringLiteral("RC8_MAX");
+        remapV3_5["SERVO9_MAX"] = QStringLiteral("RC9_MAX");
+        remapV3_5["SERVO10_MAX"] = QStringLiteral("RC10_MAX");
+        remapV3_5["SERVO11_MAX"] = QStringLiteral("RC11_MAX");
+        remapV3_5["SERVO12_MAX"] = QStringLiteral("RC12_MAX");
+        remapV3_5["SERVO13_MAX"] = QStringLiteral("RC13_MAX");
+        remapV3_5["SERVO14_MAX"] = QStringLiteral("RC14_MAX");
+
+        remapV3_5["SERVO5_REVERSED"] = QStringLiteral("RC5_REVERSED");
+        remapV3_5["SERVO6_REVERSED"] = QStringLiteral("RC6_REVERSED");
+        remapV3_5["SERVO7_REVERSED"] = QStringLiteral("RC7_REVERSED");
+        remapV3_5["SERVO8_REVERSED"] = QStringLiteral("RC8_REVERSED");
+        remapV3_5["SERVO9_REVERSED"] = QStringLiteral("RC9_REVERSED");
+        remapV3_5["SERVO10_REVERSED"] = QStringLiteral("RC10_REVERSED");
+        remapV3_5["SERVO11_REVERSED"] = QStringLiteral("RC11_REVERSED");
+        remapV3_5["SERVO12_REVERSED"] = QStringLiteral("RC12_REVERSED");
+        remapV3_5["SERVO13_REVERSED"] = QStringLiteral("RC13_REVERSED");
+        remapV3_5["SERVO14_REVERSED"] = QStringLiteral("RC14_REVERSED");
+
         _remapParamNameIntialized = true;
     }
 }
@@ -139,7 +172,7 @@ void ArduCopterFirmwarePlugin::guidedModeLand(Vehicle* vehicle)
 
 void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
 {
-    if (!_armVehicle(vehicle)) {
+    if (!_armVehicleAndValidate(vehicle)) {
         qgcApp()->showMessage(tr("Unable to takeoff: Vehicle failed to arm."));
         return;
     }
@@ -237,23 +270,13 @@ QString ArduCopterFirmwarePlugin::geoFenceRadiusParam(Vehicle* vehicle)
 
 bool ArduCopterFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const
 {
-    if (!vehicle->isOfflineEditingVehicle() && vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("WP_YAW_BEHAVIOR"))) {
-        Fact* yawMode = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("WP_YAW_BEHAVIOR"));
-        return yawMode && yawMode->rawValue().toInt() != 0;
+    if (vehicle->isOfflineEditingVehicle()) {
+        return FirmwarePlugin::vehicleYawsToNextWaypointInMission(vehicle);
+    } else {
+        if (vehicle->multiRotor() && vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("WP_YAW_BEHAVIOR"))) {
+            Fact* yawMode = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("WP_YAW_BEHAVIOR"));
+            return yawMode && yawMode->rawValue().toInt() != 0;
+        }
     }
     return true;
-}
-
-void ArduCopterFirmwarePlugin::missionFlightSpeedInfo(Vehicle* vehicle, double& hoverSpeed, double& cruiseSpeed)
-{
-    QString hoverSpeedParam("WPNAV_SPEED");
-
-    // First pull settings defaults
-    FirmwarePlugin::missionFlightSpeedInfo(vehicle, hoverSpeed, cruiseSpeed);
-
-    cruiseSpeed = 0;
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, hoverSpeedParam)) {
-        Fact* speed = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, hoverSpeedParam);
-        hoverSpeed = speed->rawValue().toDouble() / 100; // cm/s -> m/s
-    }
 }

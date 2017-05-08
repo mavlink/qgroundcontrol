@@ -92,19 +92,12 @@ SetupPage {
             }
 
             function setGimbalSettingsServoInfo(loader, channel) {
-                var rcPrefix = "RC" + channel + "_"
+                var rcPrefix = "r.SERVO" + channel + "_"
 
                 loader.gimbalOutIndex = channel - 4
                 loader.servoPWMMinFact = controller.getParameterFact(-1, rcPrefix + "MIN")
                 loader.servoPWMMaxFact = controller.getParameterFact(-1, rcPrefix + "MAX")
-                if (controller.parameterExists(-1, "RC5_REVERSED")) {
-                    // Newer firmware parameter
-                    loader.servoReverseFact = controller.getParameterFact(-1, rcPrefix + "REVERSED")
-                } else {
-                    // Older firmware parameter
-                    loader.servoReverseFact = controller.getParameterFact(-1, rcPrefix + "REV")
-                }
-
+                loader.servoReverseFact = controller.getParameterFact(-1, rcPrefix + "REVERSED")
             }
 
             /// Gimbal output channels are stored in SERVO#_FUNCTION parameters. We need to loop through those

@@ -6,16 +6,15 @@ import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
 RadioButton {
-    property var color:             qgcPal.text    ///< Text color
-    property int textStyle:         Text.Normal
-    property color textStyleColor:  qgcPal.text
-
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+    property var    color:          qgcPal.text    ///< Text color
+    property int    textStyle:      Text.Normal
+    property color  textStyleColor: qgcPal.text
+    property var    qgcPal:         QGCPalette { colorGroupEnabled: enabled }
 
     style: RadioButtonStyle {
         label: Item {
             implicitWidth:          text.implicitWidth + ScreenTools.defaultFontPixelWidth * 0.25
-            implicitHeight:         text.implicitHeight
+            implicitHeight:         ScreenTools.implicitRadioButtonHeight
             baselineOffset:         text.y + text.baselineOffset
 
             Rectangle {
@@ -41,6 +40,25 @@ RadioButton {
                 style:              control.textStyle
                 styleColor:         control.textStyleColor
                 anchors.centerIn:   parent
+            }
+        }
+
+        indicator: Rectangle {
+            width:          ScreenTools.radioButtonIndicatorSize
+            height:         width
+            color:          "white"
+            border.color:   control.qgcPal.text
+            antialiasing:   true
+            radius:         height / 2
+
+            Rectangle {
+                anchors.centerIn:   parent
+                width:              Math.round(parent.width * 0.5)
+                height:             width
+                antialiasing:       true
+                radius:             height / 2
+                color:              "black"
+                opacity:            control.checked ? (control.enabled ? 1 : 0.5) : 0
             }
         }
     }

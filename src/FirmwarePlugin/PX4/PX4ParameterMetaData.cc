@@ -52,6 +52,7 @@ QVariant PX4ParameterMetaData::_stringToTypedVariant(const QString& string, Fact
     case FactMetaData::valueTypeFloat:
         convertTo = QMetaType::Float;
         break;
+    case FactMetaData::valueTypeElapsedTimeInSeconds:
     case FactMetaData::valueTypeDouble:
         convertTo = QVariant::Double;
         break;
@@ -79,7 +80,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
         return;
     }
     _parameterMetaDataLoaded = true;
-	
+
     qCDebug(PX4ParameterMetaDataLog) << "Loading parameter meta data:" << metaDataFile;
 
     QFile xmlFile(metaDataFile);
@@ -218,136 +219,132 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 }
 
                 if (!badMetaData) {
-                    if (elementName == "short_desc") {
-                        Q_ASSERT(metaData);
-                        QString text = xml.readElementText();
-                        text = text.replace("\n", " ");
-                        qCDebug(PX4ParameterMetaDataLog) << "Short description:" << text;
-                        metaData->setShortDescription(text);
+                    if (metaData) {
+                        if (elementName == "short_desc") {
+                            QString text = xml.readElementText();
+                            text = text.replace("\n", " ");
+                            qCDebug(PX4ParameterMetaDataLog) << "Short description:" << text;
+                            metaData->setShortDescription(text);
 
-                    } else if (elementName == "long_desc") {
-                        Q_ASSERT(metaData);
-                        QString text = xml.readElementText();
-                        text = text.replace("\n", " ");
-                        qCDebug(PX4ParameterMetaDataLog) << "Long description:" << text;
-                        metaData->setLongDescription(text);
-                        
-                    } else if (elementName == "min") {
-                        Q_ASSERT(metaData);
-                        QString text = xml.readElementText();
-                        qCDebug(PX4ParameterMetaDataLog) << "Min:" << text;
-                        
-                        QVariant varMin;
-                        if (metaData->convertAndValidateRaw(text, true /* convertOnly */, varMin, errorString)) {
-                            metaData->setRawMin(varMin);
-                        } else {
-                            qCWarning(PX4ParameterMetaDataLog) << "Invalid min value, name:" << metaData->name() << " type:" << metaData->type() << " min:" << text << " error:" << errorString;
-                        }
-                        
-                    } else if (elementName == "max") {
-                        Q_ASSERT(metaData);
-                        QString text = xml.readElementText();
-                        qCDebug(PX4ParameterMetaDataLog) << "Max:" << text;
-                        
-                        QVariant varMax;
-                        if (metaData->convertAndValidateRaw(text, true /* convertOnly */, varMax, errorString)) {
-                            metaData->setRawMax(varMax);
-                        } else {
-                            qCWarning(PX4ParameterMetaDataLog) << "Invalid max value, name:" << metaData->name() << " type:" << metaData->type() << " max:" << text << " error:" << errorString;
-                        }
-                        
-                    } else if (elementName == "unit") {
-                        Q_ASSERT(metaData);
-                        QString text = xml.readElementText();
-                        qCDebug(PX4ParameterMetaDataLog) << "Unit:" << text;
-                        metaData->setRawUnits(text);
-                        
-                    } else if (elementName == "decimal") {
-                        Q_ASSERT(metaData);
-                        QString text = xml.readElementText();
-                        qCDebug(PX4ParameterMetaDataLog) << "Decimal:" << text;
+                        } else if (elementName == "long_desc") {
+                            QString text = xml.readElementText();
+                            text = text.replace("\n", " ");
+                            qCDebug(PX4ParameterMetaDataLog) << "Long description:" << text;
+                            metaData->setLongDescription(text);
 
-                        bool convertOk;
-                        QVariant varDecimals = QVariant(text).toUInt(&convertOk);
-                        if (convertOk) {
-                            metaData->setDecimalPlaces(varDecimals.toInt());
-                        } else {
-                            qCWarning(PX4ParameterMetaDataLog) << "Invalid decimals value, name:" << metaData->name() << " type:" << metaData->type() << " decimals:" << text << " error: invalid number";
-                        }
+                        } else if (elementName == "min") {
+                            QString text = xml.readElementText();
+                            qCDebug(PX4ParameterMetaDataLog) << "Min:" << text;
 
-                    } else if (elementName == "reboot_required") {
-                        Q_ASSERT(metaData);
-                        QString text = xml.readElementText();
-                        qCDebug(PX4ParameterMetaDataLog) << "RebootRequired:" << text;
-                        if (text.compare("true", Qt::CaseInsensitive) == 0) {
-                            metaData->setRebootRequired(true);
-                        }
-
-                    } else if (elementName == "values") {
-                        // doing nothing individual value will follow anyway. May be used for sanity checking.
-
-                    } else if (elementName == "value") {
-                        QString enumValueStr = xml.attributes().value("code").toString();
-                        QString enumString = xml.readElementText();
-                        qCDebug(PX4ParameterMetaDataLog) << "parameter value:"
-                                                         << "value desc:" << enumString << "code:" << enumValueStr;
-
-                        QVariant    enumValue;
-                        QString     errorString;
-                        if (metaData->convertAndValidateRaw(enumValueStr, false /* validate */, enumValue, errorString)) {
-                            metaData->addEnumInfo(enumString, enumValue);
-                        } else {
-                            qCDebug(PX4ParameterMetaDataLog) << "Invalid enum value, name:" << metaData->name()
-                                                             << " type:" << metaData->type() << " value:" << enumValueStr
-                                                             << " error:" << errorString;
-                        }
-                    } else if (elementName == "increment") {
-                        Q_ASSERT(metaData);
-                        double  increment;
-                        bool    ok;
-                        QString text = xml.readElementText();
-                        increment = text.toDouble(&ok);
-                        if (ok) {
-                            metaData->setIncrement(increment);
-                        } else {
-                            qCWarning(PX4ParameterMetaDataLog) << "Invalid value for increment, name:" << metaData->name() << " increment:" << text;
-                        }
-
-                    } else if (elementName == "boolean") {
-                        QVariant    enumValue;
-                        metaData->convertAndValidateRaw(1, false /* validate */, enumValue, errorString);
-                        metaData->addEnumInfo(tr("Enabled"), enumValue);
-                        metaData->convertAndValidateRaw(0, false /* validate */, enumValue, errorString);
-                        metaData->addEnumInfo(tr("Disabled"), enumValue);
-
-                    } else if (elementName == "bitmask") {
-                        // doing nothing individual bits will follow anyway. May be used for sanity checking.
-
-                    } else if (elementName == "bit") {
-                        bool ok = false;
-                        unsigned char bit = xml.attributes().value("index").toString().toUInt(&ok);
-                        if (ok) {
-                            QString bitDescription = xml.readElementText();
-                            qCDebug(PX4ParameterMetaDataLog) << "parameter value:"
-                                                             << "index:" << bit << "description:" << bitDescription;
-
-                            if (bit < 31) {
-                                QVariant bitmaskRawValue = 1 << bit;
-                                QVariant bitmaskValue;
-                                QString errorString;
-                                if (metaData->convertAndValidateRaw(bitmaskRawValue, true, bitmaskValue, errorString)) {
-                                    metaData->addBitmaskInfo(bitDescription, bitmaskValue);
-                                } else {
-                                    qCDebug(PX4ParameterMetaDataLog) << "Invalid bitmask value, name:" << metaData->name()
-                                                                     << " type:" << metaData->type() << " value:" << bitmaskValue
-                                                                     << " error:" << errorString;
-                                }
+                            QVariant varMin;
+                            if (metaData->convertAndValidateRaw(text, true /* convertOnly */, varMin, errorString)) {
+                                metaData->setRawMin(varMin);
                             } else {
-                                qCWarning(PX4ParameterMetaDataLog) << "Invalid value for bitmask, bit:" << bit;
+                                qCWarning(PX4ParameterMetaDataLog) << "Invalid min value, name:" << metaData->name() << " type:" << metaData->type() << " min:" << text << " error:" << errorString;
                             }
+
+                        } else if (elementName == "max") {
+                            QString text = xml.readElementText();
+                            qCDebug(PX4ParameterMetaDataLog) << "Max:" << text;
+
+                            QVariant varMax;
+                            if (metaData->convertAndValidateRaw(text, true /* convertOnly */, varMax, errorString)) {
+                                metaData->setRawMax(varMax);
+                            } else {
+                                qCWarning(PX4ParameterMetaDataLog) << "Invalid max value, name:" << metaData->name() << " type:" << metaData->type() << " max:" << text << " error:" << errorString;
+                            }
+
+                        } else if (elementName == "unit") {
+                            QString text = xml.readElementText();
+                            qCDebug(PX4ParameterMetaDataLog) << "Unit:" << text;
+                            metaData->setRawUnits(text);
+
+                        } else if (elementName == "decimal") {
+                            QString text = xml.readElementText();
+                            qCDebug(PX4ParameterMetaDataLog) << "Decimal:" << text;
+
+                            bool convertOk;
+                            QVariant varDecimals = QVariant(text).toUInt(&convertOk);
+                            if (convertOk) {
+                                metaData->setDecimalPlaces(varDecimals.toInt());
+                            } else {
+                                qCWarning(PX4ParameterMetaDataLog) << "Invalid decimals value, name:" << metaData->name() << " type:" << metaData->type() << " decimals:" << text << " error: invalid number";
+                            }
+
+                        } else if (elementName == "reboot_required") {
+                            QString text = xml.readElementText();
+                            qCDebug(PX4ParameterMetaDataLog) << "RebootRequired:" << text;
+                            if (text.compare("true", Qt::CaseInsensitive) == 0) {
+                                metaData->setRebootRequired(true);
+                            }
+
+                        } else if (elementName == "values") {
+                            // doing nothing individual value will follow anyway. May be used for sanity checking.
+
+                        } else if (elementName == "value") {
+                            QString enumValueStr = xml.attributes().value("code").toString();
+                            QString enumString = xml.readElementText();
+                            qCDebug(PX4ParameterMetaDataLog) << "parameter value:"
+                                                             << "value desc:" << enumString << "code:" << enumValueStr;
+
+                            QVariant    enumValue;
+                            QString     errorString;
+                            if (metaData->convertAndValidateRaw(enumValueStr, false /* validate */, enumValue, errorString)) {
+                                metaData->addEnumInfo(enumString, enumValue);
+                            } else {
+                                qCDebug(PX4ParameterMetaDataLog) << "Invalid enum value, name:" << metaData->name()
+                                                                 << " type:" << metaData->type() << " value:" << enumValueStr
+                                                                 << " error:" << errorString;
+                            }
+                        } else if (elementName == "increment") {
+                            double  increment;
+                            bool    ok;
+                            QString text = xml.readElementText();
+                            increment = text.toDouble(&ok);
+                            if (ok) {
+                                metaData->setIncrement(increment);
+                            } else {
+                                qCWarning(PX4ParameterMetaDataLog) << "Invalid value for increment, name:" << metaData->name() << " increment:" << text;
+                            }
+
+                        } else if (elementName == "boolean") {
+                            QVariant    enumValue;
+                            metaData->convertAndValidateRaw(1, false /* validate */, enumValue, errorString);
+                            metaData->addEnumInfo(tr("Enabled"), enumValue);
+                            metaData->convertAndValidateRaw(0, false /* validate */, enumValue, errorString);
+                            metaData->addEnumInfo(tr("Disabled"), enumValue);
+
+                        } else if (elementName == "bitmask") {
+                            // doing nothing individual bits will follow anyway. May be used for sanity checking.
+
+                        } else if (elementName == "bit") {
+                            bool ok = false;
+                            unsigned char bit = xml.attributes().value("index").toString().toUInt(&ok);
+                            if (ok) {
+                                QString bitDescription = xml.readElementText();
+                                qCDebug(PX4ParameterMetaDataLog) << "parameter value:"
+                                                                 << "index:" << bit << "description:" << bitDescription;
+
+                                if (bit < 31) {
+                                    QVariant bitmaskRawValue = 1 << bit;
+                                    QVariant bitmaskValue;
+                                    QString errorString;
+                                    if (metaData->convertAndValidateRaw(bitmaskRawValue, true, bitmaskValue, errorString)) {
+                                        metaData->addBitmaskInfo(bitDescription, bitmaskValue);
+                                    } else {
+                                        qCDebug(PX4ParameterMetaDataLog) << "Invalid bitmask value, name:" << metaData->name()
+                                                                         << " type:" << metaData->type() << " value:" << bitmaskValue
+                                                                         << " error:" << errorString;
+                                    }
+                                } else {
+                                    qCWarning(PX4ParameterMetaDataLog) << "Invalid value for bitmask, bit:" << bit;
+                                }
+                            }
+                        } else {
+                            qCDebug(PX4ParameterMetaDataLog) << "Unknown element in XML: " << elementName;
                         }
                     } else {
-                        qCDebug(PX4ParameterMetaDataLog) << "Unknown element in XML: " << elementName;
+                        qWarning() << "Internal error";
                     }
                 }
             }
@@ -358,12 +355,12 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 // Done loading this parameter, validate default value
                 if (metaData->defaultValueAvailable()) {
                     QVariant var;
-                    
+
                     if (!metaData->convertAndValidateRaw(metaData->rawDefaultValue(), false /* convertOnly */, var, errorString)) {
                         qCWarning(PX4ParameterMetaDataLog) << "Invalid default value, name:" << metaData->name() << " type:" << metaData->type() << " default:" << metaData->rawDefaultValue() << " error:" << errorString;
                     }
                 }
-                
+
                 // Reset for next parameter
                 metaData = NULL;
                 badMetaData = false;

@@ -110,19 +110,24 @@ void QGCFileDownload::_downloadFinished(void)
 
     // Download file location is in user attribute
     QString downloadFilename = reply->request().attribute(QNetworkRequest::User).toString();
-    Q_ASSERT(!downloadFilename.isEmpty());
-    
-    // Store downloaded file in download location
-    QFile file(downloadFilename);
-    if (!file.open(QIODevice::WriteOnly)) {
-        emit error(QString("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
-        return;
-    }
-    
-    file.write(reply->readAll());
-    file.close();
 
-    emit downloadFinished(_originalRemoteFile, downloadFilename);
+    if (!downloadFilename.isEmpty()) {
+        // Store downloaded file in download location
+        QFile file(downloadFilename);
+        if (!file.open(QIODevice::WriteOnly)) {
+            emit error(QString("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
+            return;
+        }
+
+        file.write(reply->readAll());
+        file.close();
+
+        emit downloadFinished(_originalRemoteFile, downloadFilename);
+    } else {
+        QString errorMsg = "Internal error";
+        qWarning() << errorMsg;
+        emit error(errorMsg);
+    }
 }
 
 /// @brief Called when an error occurs during download

@@ -34,15 +34,15 @@ SetupPage {
 
             QGCPalette { id: ggcPal; colorGroupEnabled: true }
 
-            property Fact _failsafeGCSEnable:   controller.getParameterFact(-1, "FS_GCS_ENABLE")
-            property Fact _failsafeLeakEnable:  controller.getParameterFact(-1, "FS_LEAK_ENABLE")
+            property Fact _failsafeGCSEnable:      controller.getParameterFact(-1, "FS_GCS_ENABLE")
+            property Fact _failsafeLeakEnable:     controller.getParameterFact(-1, "FS_LEAK_ENABLE")
             property Fact _failsafePressureEnable: controller.getParameterFact(-1, "FS_PRESS_ENABLE")
             property Fact _failsafePressureValue:  controller.getParameterFact(-1, "FS_PRESS_MAX")
-            property Fact _failsafeTempEnable:  controller.getParameterFact(-1, "FS_TEMP_ENABLE")
-            property Fact _failsafeTempValue:   controller.getParameterFact(-1, "FS_TEMP_MAX")
+            property Fact _failsafeTempEnable:     controller.getParameterFact(-1, "FS_TEMP_ENABLE")
+            property Fact _failsafeTempValue:      controller.getParameterFact(-1, "FS_TEMP_MAX")
 
             property Fact _fenceAction: controller.getParameterFact(-1, "FENCE_ACTION")
-            property Fact _fenceAltMax: controller.getParameterFact(-1, "FENCE_ALT_MAX")
+            property Fact _fenceAltMax: controller.getParameterFact(-1, "r.FENCE_ALT_MIN")
             property Fact _fenceEnable: controller.getParameterFact(-1, "FENCE_ENABLE")
             property Fact _fenceMargin: controller.getParameterFact(-1, "FENCE_MARGIN")
             property Fact _fenceType:   controller.getParameterFact(-1, "FENCE_TYPE")

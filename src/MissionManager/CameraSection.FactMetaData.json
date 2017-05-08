@@ -29,7 +29,7 @@
     "name":             "GimbalPitch",
     "shortDescription": "Gimbal pitch rotation.",
     "type":             "double",
-    "units":            "deg",
+    "units":            "gimbal-degrees",
     "min":              -90,
     "max":              0,
     "decimalPlaces":    0,
@@ -40,8 +40,8 @@
     "shortDescription": "Gimbal yaw rotation.",
     "type":             "double",
     "units":            "deg",
-    "min":              0.0,
-    "max":              360.0,
+    "min":              -180.0,
+    "max":              180.0,
     "decimalPlaces":    0,
     "defaultValue":     0
 }

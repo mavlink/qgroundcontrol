@@ -33,12 +33,16 @@ public:
     virtual bool inProgress(void) const { return false; }
 
     /// Load the current settings from the vehicle
+    ///     Signals loadComplete when done
     virtual void loadFromVehicle(void);
 
     /// Send the current settings to the vehicle
+    ///     Signals sendComplete when done
     virtual void sendToVehicle(const QList<QGeoCoordinate>& rgPoints);
 
-    virtual void removeAll(void) { };
+    /// Remove all rally points from the vehicle
+    ///     Signals removeAllCompleted when done
+    virtual void removeAll(void);
 
     virtual bool rallyPointsSupported(void) const { return false; }
 
@@ -58,7 +62,9 @@ signals:
     void loadComplete       (const QList<QGeoCoordinate> rgPoints);
     void inProgressChanged  (bool inProgress);
     void error              (int errorCode, const QString& errorMsg);
-    
+    void removeAllComplete  (bool error);
+    void sendComplete       (bool error);
+
 protected:
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
 

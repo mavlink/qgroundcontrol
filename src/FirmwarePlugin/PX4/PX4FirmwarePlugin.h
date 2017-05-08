@@ -68,7 +68,6 @@ public:
     QString             brandImageOutdoor               (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/PX4/BrandImage"); }
     bool                vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const override;
     QString             autoDisarmParameter             (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("COM_DISARM_LAND"); }
-    void                missionFlightSpeedInfo          (Vehicle* vehicle, double& hoverSpeed, double& cruiseSpeed) override;
 
 protected:
     typedef struct {
@@ -102,6 +101,9 @@ protected:
     QString _rtgsFlightMode;
     QString _followMeFlightMode;
     QString _simpleFlightMode;
+
+private slots:
+    void _mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
 
 private:
     void _handleAutopilotVersion(Vehicle* vehicle, mavlink_message_t* message);

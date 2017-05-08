@@ -43,10 +43,13 @@ public:
     /// Last current mission item reported while in Mission flight mode
     int lastCurrentIndex(void) const { return _lastCurrentIndex; }
     
-    void requestMissionItems(void);
+    /// Load the mission items from the vehicle
+    ///     Signals newMissionItemsAvailable when done
+    void loadFromVehicle(void);
     
     /// Writes the specified set of mission items to the vehicle
     ///     @param missionItems Items to send to vehicle
+    ///     Signals sendComplete when done
     void writeMissionItems(const QList<MissionItem*>& missionItems);
     
     /// Writes the specified set mission items to the vehicle as an ArduPilot guided mode mission item.
@@ -55,6 +58,7 @@ public:
     void writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoCoord, bool altChangeOnly);
 
     /// Removes all mission items from vehicle
+    ///     Signals removeAllComplete when done
     void removeAll(void);
 
     /// Generates a new mission which starts from the specified index. It will include all the CMD_DO items
@@ -84,7 +88,9 @@ signals:
     void currentIndexChanged(int currentIndex);
     void lastCurrentIndexChanged(int lastCurrentIndex);
     void resumeMissionReady(void);
-    void cameraFeedback(QGeoCoordinate imageCoordinate, int index);
+    void progressPct(double progressPercentPct);
+    void removeAllComplete              (bool error);
+    void sendComplete                   (bool error);
 
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
@@ -104,7 +110,7 @@ private:
         TransactionNone,
         TransactionRead,
         TransactionWrite,
-        TransactionClearAll
+        TransactionRemoveAll
     } TransactionType_t;
 
     void _startAckTimeout(AckType_t ack);
@@ -115,8 +121,6 @@ private:
     void _handleMissionRequest(const mavlink_message_t& message, bool missionItemInt);
     void _handleMissionAck(const mavlink_message_t& message);
     void _handleMissionCurrent(const mavlink_message_t& message);
-    void _handleCameraFeedback(const mavlink_message_t& message);
-    void _handleCameraImageCaptured(const mavlink_message_t& message);
     void _requestNextMissionItem(void);
     void _clearMissionItems(void);
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
@@ -127,6 +131,7 @@ private:
     void _writeMissionCount(void);
     void _writeMissionItemsWorker(void);
     void _clearAndDeleteMissionItems(void);
+    void _clearAndDeleteWriteMissionItems(void);
     QString _lastMissionReqestString(MAV_MISSION_RESULT result);
     void _removeAllWorker(void);
 
@@ -146,7 +151,8 @@ private:
     
     QMutex _dataMutex;
     
-    QList<MissionItem*> _missionItems;
+    QList<MissionItem*> _missionItems;          ///< Set of mission items on vehicle
+    QList<MissionItem*> _writeMissionItems;     ///< Set of mission items currently being written to vehicle
     int                 _currentMissionIndex;
     int                 _lastCurrentIndex;
 };
