@@ -41,6 +41,19 @@ Item {
     }
 
     Component {
+        id: dragAreaComponent
+
+        MissionItemIndicatorDrag {
+            itemCoordinate: rallyPointObject.coordinate
+            visible:        rallyPointObject == myRallyPointController.currentRallyPoint
+
+            property var rallyPointObject
+
+            onItemCoordinateChanged: rallyPointObject.coordinate = itemCoordinate
+        }
+    }
+
+    Component {
         id: rallyPointComponent
 
         MapQuickItem {
@@ -72,17 +85,14 @@ Item {
                 property var _visuals: [ ]
 
                 Component.onCompleted: {
-                    var rallyPoint = rallyPointComponent.createObject(map)
-                    rallyPoint.coordinate = Qt.binding(function() { return object.coordinate })
-                    rallyPoint.rallyPointObject = Qt.binding(function() { return object })
-                    map.addMapItem(rallyPoint)
-                    _visuals.push(rallyPoint)
-/*
-                    var dragArea = dragAreaComponent.createObject(map, { "itemIndicator": dragHandle, "itemCoordinate": object.coordinate })
-                    dragArea.polygonVertex = Qt.binding(function() { return index })
-                    _visuals.push(dragHandle)
+                    var rallyPointIndicator = rallyPointComponent.createObject(map)
+                    rallyPointIndicator.coordinate = Qt.binding(function() { return object.coordinate })
+                    rallyPointIndicator.rallyPointObject = Qt.binding(function() { return object })
+                    map.addMapItem(rallyPointIndicator)
+                    _visuals.push(rallyPointIndicator)
+
+                    var dragArea = dragAreaComponent.createObject(map, { "itemIndicator": rallyPointIndicator, "rallyPointObject": object })
                     _visuals.push(dragArea)
-*/
                 }
 
                 Component.onDestruction: {

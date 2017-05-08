@@ -210,6 +210,8 @@ QVariant FactMetaData::_minForType(void) const
         return QVariant();
     case valueTypeBool:
         return QVariant(0);
+    case valueTypeElapsedTimeInSeconds:
+        return QVariant(0.0);
     }
     
     // Make windows compiler happy, even switch is full cased
@@ -233,6 +235,7 @@ QVariant FactMetaData::_maxForType(void) const
         return QVariant(std::numeric_limits<int>::max());
     case valueTypeFloat:
         return QVariant(std::numeric_limits<float>::max());
+    case valueTypeElapsedTimeInSeconds:
     case valueTypeDouble:
         return QVariant(std::numeric_limits<double>::max());
     case valueTypeString:
@@ -262,7 +265,6 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
             }
         }
         break;
-
     case FactMetaData::valueTypeUint8:
     case FactMetaData::valueTypeUint16:
     case FactMetaData::valueTypeUint32:
@@ -273,7 +275,6 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
             }
         }
         break;
-
     case FactMetaData::valueTypeFloat:
         typedValue = QVariant(rawValue.toFloat(&convertOk));
         if (!convertOnly && convertOk) {
@@ -282,7 +283,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
             }
         }
         break;
-
+    case FactMetaData::valueTypeElapsedTimeInSeconds:
     case FactMetaData::valueTypeDouble:
         typedValue = QVariant(rawValue.toDouble(&convertOk));
         if (!convertOnly && convertOk) {
@@ -325,7 +326,6 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
             }
         }
         break;
-
     case FactMetaData::valueTypeUint8:
     case FactMetaData::valueTypeUint16:
     case FactMetaData::valueTypeUint32:
@@ -336,7 +336,6 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
             }
         }
         break;
-
     case FactMetaData::valueTypeFloat:
         typedValue = QVariant(cookedValue.toFloat(&convertOk));
         if (!convertOnly && convertOk) {
@@ -345,7 +344,7 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
             }
         }
         break;
-
+    case FactMetaData::valueTypeElapsedTimeInSeconds:
     case FactMetaData::valueTypeDouble:
         typedValue = QVariant(cookedValue.toDouble(&convertOk));
         if (!convertOnly && convertOk) {
@@ -604,7 +603,8 @@ FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, 
                      << QStringLiteral("Float")
                      << QStringLiteral("Double")
                      << QStringLiteral("String")
-                     << QStringLiteral("Bool");
+                     << QStringLiteral("Bool")
+                     << QStringLiteral("ElapsedSeconds");
 
     knownTypes << valueTypeUint8
                << valueTypeInt8
@@ -615,7 +615,8 @@ FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, 
                << valueTypeFloat
                << valueTypeDouble
                << valueTypeString
-               << valueTypeBool;
+               << valueTypeBool
+               << valueTypeElapsedTimeInSeconds;
 
     for (int i=0; i<knownTypeStrings.count(); i++) {
         if (knownTypeStrings[i].compare(typeString, Qt::CaseInsensitive) == 0) {

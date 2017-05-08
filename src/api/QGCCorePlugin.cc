@@ -190,3 +190,17 @@ void QGCCorePlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorI
     Q_UNUSED(colorName);
     Q_UNUSED(colorInfo);
 }
+
+QString QGCCorePlugin::showAdvancedUIMessage(void) const
+{
+    return tr("WARNING: You are about to enter Advanced Mode. "
+              "If used incorrectly, this may cause your vehicle to malfunction thus voiding your warranty. "
+              "You should do so only if instructed by customer support. "
+              "Are you sure you want to enable Advanced Mode?");
+}
+
+void QGCCorePlugin::valuesWidgetDefaultSettings(QStringList& largeValues, QStringList& smallValues)
+{
+    Q_UNUSED(smallValues);
+    largeValues << "Vehicle.altitudeRelative" << "Vehicle.groundSpeed" << "Vehicle.flightTime";
+}
