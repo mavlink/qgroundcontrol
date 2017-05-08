@@ -559,9 +559,26 @@ Rectangle {
             origin.y: windRoseArrow.height / 2
             axis { x: 0; y: 0; z: 1 } angle: windRosePie.angle
         }
-        x:       windRosePie.x + Math.sin(- windRosePie.angle*Math.PI/180 - Math.PI/2)*(windRosePie.width/2 - windRoseArrow.width/2) + windRosePie.width / 2 - windRoseArrow.width / 2
-        y:       windRosePie.y + Math.cos(- windRosePie.angle*Math.PI/180 - Math.PI/2)*(windRosePie.height/2 - windRoseArrow.width/2) + windRosePie.height / 2 - windRoseArrow.height / 2
-        z:       windRosePie.z
+        x: windRosePie.x + Math.sin(- windRosePie.angle*Math.PI/180 - Math.PI/2)*(windRosePie.width/2 - windRoseArrow.width/2) + windRosePie.width / 2 - windRoseArrow.width / 2
+        y: windRosePie.y + Math.cos(- windRosePie.angle*Math.PI/180 - Math.PI/2)*(windRosePie.width/2 - windRoseArrow.width/2) + windRosePie.height / 2 - windRoseArrow.height / 2
+        z: windRosePie.z
+    }
+
+    Image {
+        id:      windGuru
+        source:  "/res/wind-guru.svg"
+        visible: windRosePie.visible
+        width:   windRosePie.width / 3
+        height:  width * 4.28e-1
+        smooth:  true
+        transform: Rotation {
+            origin.x: windGuru.width / 2
+            origin.y: windGuru.height / 2
+            axis { x: 0; y: 0; z: 1 } angle: windRosePie.angle + 180
+        }
+        x: windRosePie.x + Math.sin(- windRosePie.angle*Math.PI/180 - 3*Math.PI/2)*(windRosePie.width/2/* - windGuru.height/2*/) + windRosePie.width / 2 - windGuru.width / 2
+        y: windRosePie.y + Math.cos(- windRosePie.angle*Math.PI/180 - 3*Math.PI/2)*(windRosePie.height/2/* - windGuru.height/2*/) + windRosePie.height / 2 - windGuru.height / 2
+        z: windRosePie.z
     }
 
     Item {
