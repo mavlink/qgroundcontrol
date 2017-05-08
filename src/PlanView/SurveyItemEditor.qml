@@ -415,10 +415,11 @@ Rectangle {
 
                     Item { Layout.fillWidth: true }
 
+                    property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
                     ToolButton {
                         id:                     windRoseButton
                         anchors.verticalCenter: angleText.verticalCenter
-                        iconSource:             "/res/wind-rose.svg"
+                        iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
                         visible: _activeVehicle ? _activeVehicle.fixedWing : true
 
                         onClicked: {
