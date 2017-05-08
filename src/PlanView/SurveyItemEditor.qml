@@ -549,13 +549,14 @@ Rectangle {
         }
     }
 
-    Image {
+    QGCColoredImage {
         id:      windRoseArrow
         source:  "/res/wind-rose-arrow.svg"
         visible: windRosePie.visible
         width:   windRosePie.width / 5
         height:  width * 1.454
         smooth:  true
+        color:   qgcPal.colorGrey
         transform: Rotation {
             origin.x: windRoseArrow.width / 2
             origin.y: windRoseArrow.height / 2
@@ -566,13 +567,14 @@ Rectangle {
         z: windRosePie.z
     }
 
-    Image {
+    QGCColoredImage {
         id:      windGuru
         source:  "/res/wind-guru.svg"
         visible: windRosePie.visible
         width:   windRosePie.width / 3
         height:  width * 4.28e-1
         smooth:  true
+        color:   qgcPal.colorGrey
         transform: Rotation {
             origin.x: windGuru.width / 2
             origin.y: windGuru.height / 2
@@ -589,8 +591,8 @@ Rectangle {
         width:       2.6*windRoseButton.width
         visible:     false
 
-        property string colorCircle: Qt.rgba(0, 0, 0, 0.45)
-        property string colorBackground: Qt.rgba(0, 0, 0, 0.75)
+        property string colorCircle: qgcPal.windowShade
+        property string colorBackground: qgcPal.colorGrey
         property real lineWidth: windRoseButton.width / 3
         property real angle: 0
 
