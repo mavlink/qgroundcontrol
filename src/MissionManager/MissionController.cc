@@ -316,10 +316,16 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
         bool rollSupported = false;
         bool pitchSupported = false;
         bool yawSupported = false;
+        MissionSettingsItem* settingsItem = _visualItems->value<MissionSettingsItem*>(0);
+        CameraSection* cameraSection = settingsItem->cameraSection();
+        // Set camera to photo mode (leave alone if user already specified)
+        if (!cameraSection->specifyCameraMode()) {
+            cameraSection->setSpecifyCameraMode(true);
+            cameraSection->cameraMode()->setRawValue(0);
+        }
+        // Point gimbal straight down
         if (_controllerVehicle->firmwarePlugin()->hasGimbal(_controllerVehicle, rollSupported, pitchSupported, yawSupported) && pitchSupported) {
-            MissionSettingsItem* settingsItem = _visualItems->value<MissionSettingsItem*>(0);
             // If the user already specified a gimbal angle leave it alone
-            CameraSection* cameraSection = settingsItem->cameraSection();
             if (!cameraSection->specifyGimbal()) {
                 cameraSection->setSpecifyGimbal(true);
                 cameraSection->gimbalPitch()->setRawValue(-90.0);
@@ -364,17 +370,20 @@ void MissionController::removeMissionItem(int index)
             }
         }
 
-        // If there is no longer a survey item in the mission remove the gimbal pitch command
+        // If there is no longer a survey item in the mission remove added commands
         if (!foundSurvey) {
             bool rollSupported = false;
             bool pitchSupported = false;
             bool yawSupported = false;
+            MissionSettingsItem* settingsItem = _visualItems->value<MissionSettingsItem*>(0);
+            CameraSection* cameraSection = settingsItem->cameraSection();
             if (_controllerVehicle->firmwarePlugin()->hasGimbal(_controllerVehicle, rollSupported, pitchSupported, yawSupported) && pitchSupported) {
-                MissionSettingsItem* settingsItem = _visualItems->value<MissionSettingsItem*>(0);
-                CameraSection* cameraSection = settingsItem->cameraSection();
                 if (cameraSection->specifyGimbal() && cameraSection->gimbalPitch()->rawValue().toDouble() == -90.0 && cameraSection->gimbalYaw()->rawValue().toDouble() == 0.0) {
                     cameraSection->setSpecifyGimbal(false);
                 }
+            }
+            if (cameraSection->specifyCameraMode() && cameraSection->cameraMode()->rawValue().toInt() == 0) {
+                cameraSection->setSpecifyCameraMode(false);
             }
         }
     }

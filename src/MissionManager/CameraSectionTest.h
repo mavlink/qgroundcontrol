@@ -35,6 +35,7 @@ private slots:
     void _testScanForStartVideoSection(void);
     void _testScanForStopVideoSection(void);
     void _testScanForStopImageSection(void);
+    void _testScanForCameraModeSection(void);
     void _testScanForFullSection(void);
 
 private:
@@ -43,12 +44,14 @@ private:
     enum {
         specifyGimbalChangedIndex = 0,
         specifiedGimbalYawChangedIndex,
+        specifyCameraModeChangedIndex,
         maxSignalIndex,
     };
 
     enum {
         specifyGimbalChangedMask =      1 << specifyGimbalChangedIndex,
-        specifiedGimbalYawChangedMask = 1 << specifiedGimbalYawChangedIndex
+        specifiedGimbalYawChangedMask = 1 << specifiedGimbalYawChangedIndex,
+        specifyCameraModeChangedMask =  1 << specifyCameraModeChangedIndex,
     };
 
     static const size_t cCameraSignals = maxSignalIndex;
@@ -64,4 +67,6 @@ private:
     SimpleMissionItem*  _validStopVideoItem;
     SimpleMissionItem*  _validStopDistanceItem;
     SimpleMissionItem*  _validStopTimeItem;
+    SimpleMissionItem*  _validCameraPhotoModeItem;
+    SimpleMissionItem*  _validCameraVideoModeItem;
 };
