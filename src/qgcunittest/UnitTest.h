@@ -92,6 +92,10 @@ public:
     /// @return true: files are alike, false: files differ
     static bool fileCompare(const QString& file1, const QString& file2);
 
+    /// Fuzzy compare on two doubles, where NaN is a possible value
+    /// @return true: equal
+    static bool doubleNaNCompare(double value1, double value2);
+
 protected slots:
     
     // These are all pure virtuals to force the derived class to implement each one and in turn
