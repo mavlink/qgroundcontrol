@@ -1671,10 +1671,12 @@ void Vehicle::_rallyPointManagerError(int errorCode, const QString& errorMsg)
 void Vehicle::_addNewMapTrajectoryPoint(void)
 {
     if (_mapTrajectoryHaveFirstCoordinate) {
-        // Keep three minutes of trajectory
+        // Keep three minutes of trajectory on mobile due to perf impact of lines
+#ifdef __mobile__
         if (_mapTrajectoryList.count() * _mapTrajectoryMsecsBetweenPoints > 3 * 1000 * 60) {
             _mapTrajectoryList.removeAt(0)->deleteLater();
         }
+#endif
         _mapTrajectoryList.append(new CoordinateVector(_mapTrajectoryLastCoordinate, _coordinate, this));
         _flightDistanceFact.setRawValue(_flightDistanceFact.rawValue().toDouble() + _mapTrajectoryLastCoordinate.distanceTo(_coordinate));
     }
