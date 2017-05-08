@@ -52,6 +52,7 @@ const char* Vehicle::_climbRateFactName =           "climbRate";
 const char* Vehicle::_altitudeRelativeFactName =    "altitudeRelative";
 const char* Vehicle::_altitudeAMSLFactName =        "altitudeAMSL";
 const char* Vehicle::_flightDistanceFactName =      "flightDistance";
+const char* Vehicle::_flightTimeFactName =          "flightTime";
 
 const char* Vehicle::_gpsFactGroupName =        "gps";
 const char* Vehicle::_batteryFactGroupName =    "battery";
@@ -94,6 +95,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _rcRSSIstore(255)
     , _autoDisconnect(false)
     , _flying(false)
+    , _landing(false)
     , _onboardControlSensorsPresent(0)
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
@@ -149,6 +151,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _altitudeRelativeFact (0, _altitudeRelativeFactName,  FactMetaData::valueTypeDouble)
     , _altitudeAMSLFact     (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
     , _flightDistanceFact   (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
+    , _flightTimeFact       (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _gpsFactGroup(this)
     , _batteryFactGroup(this)
     , _windFactGroup(this)
@@ -254,6 +257,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _rcRSSIstore(255)
     , _autoDisconnect(false)
     , _flying(false)
+    , _landing(false)
     , _onboardControlSensorsPresent(0)
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
@@ -301,6 +305,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _climbRateFact        (0, _climbRateFactName,         FactMetaData::valueTypeDouble)
     , _altitudeRelativeFact (0, _altitudeRelativeFactName,  FactMetaData::valueTypeDouble)
     , _altitudeAMSLFact     (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
+    , _flightDistanceFact   (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
+    , _flightTimeFact       (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _gpsFactGroup(this)
     , _batteryFactGroup(this)
     , _windFactGroup(this)
@@ -351,6 +357,7 @@ void Vehicle::_commonInit(void)
     _addFact(&_altitudeRelativeFact,    _altitudeRelativeFactName);
     _addFact(&_altitudeAMSLFact,        _altitudeAMSLFactName);
     _addFact(&_flightDistanceFact,      _flightDistanceFactName);
+    _addFact(&_flightTimeFact,          _flightTimeFactName);
 
     _addFactGroup(&_gpsFactGroup,       _gpsFactGroupName);
     _addFactGroup(&_batteryFactGroup,   _batteryFactGroupName);
@@ -359,6 +366,7 @@ void Vehicle::_commonInit(void)
     _addFactGroup(&_temperatureFactGroup, _temperatureFactGroupName);
 
     _flightDistanceFact.setRawValue(0);
+    _flightTimeFact.setRawValue(0);
 }
 
 Vehicle::~Vehicle()
@@ -831,14 +839,21 @@ void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
     mavlink_msg_extended_sys_state_decode(&message, &extendedState);
 
     switch (extendedState.landed_state) {
-    case MAV_LANDED_STATE_UNDEFINED:
-        break;
     case MAV_LANDED_STATE_ON_GROUND:
-        setFlying(false);
+        _setFlying(false);
+        _setLanding(false);
         break;
+    case MAV_LANDED_STATE_TAKEOFF:
     case MAV_LANDED_STATE_IN_AIR:
-        setFlying(true);
-        return;
+        _setFlying(true);
+        _setLanding(false);
+        break;
+    case MAV_LANDED_STATE_LANDING:
+        _setFlying(true);
+        _setLanding(true);
+        break;
+    default:
+        break;
     }
 }
 
@@ -1656,15 +1671,18 @@ void Vehicle::_rallyPointManagerError(int errorCode, const QString& errorMsg)
 void Vehicle::_addNewMapTrajectoryPoint(void)
 {
     if (_mapTrajectoryHaveFirstCoordinate) {
-        // Keep three minutes of trajectory
+        // Keep three minutes of trajectory on mobile due to perf impact of lines
+#ifdef __mobile__
         if (_mapTrajectoryList.count() * _mapTrajectoryMsecsBetweenPoints > 3 * 1000 * 60) {
             _mapTrajectoryList.removeAt(0)->deleteLater();
         }
+#endif
         _mapTrajectoryList.append(new CoordinateVector(_mapTrajectoryLastCoordinate, _coordinate, this));
         _flightDistanceFact.setRawValue(_flightDistanceFact.rawValue().toDouble() + _mapTrajectoryLastCoordinate.distanceTo(_coordinate));
     }
     _mapTrajectoryHaveFirstCoordinate = true;
     _mapTrajectoryLastCoordinate = _coordinate;
+    _flightTimeFact.setRawValue((double)_flightTimer.elapsed() / 1000.0);
 }
 
 void Vehicle::_clearTrajectoryPoints(void)
@@ -1682,7 +1700,9 @@ void Vehicle::_mapTrajectoryStart(void)
     _mapTrajectoryHaveFirstCoordinate = false;
     _clearTrajectoryPoints();
     _mapTrajectoryTimer.start();
+    _flightTimer.start();
     _flightDistanceFact.setRawValue(0);
+    _flightTimeFact.setRawValue(0);
 }
 
 void Vehicle::_mapTrajectoryStop()
@@ -1962,11 +1982,19 @@ void Vehicle::_announceArmedChanged(bool armed)
     _say(QString("%1 %2").arg(_vehicleIdSpeech()).arg(armed ? QStringLiteral("armed") : QStringLiteral("disarmed")));
 }
 
-void Vehicle::setFlying(bool flying)
+void Vehicle::_setFlying(bool flying)
 {
     if (armed() && _flying != flying) {
         _flying = flying;
         emit flyingChanged(flying);
+    }
+}
+
+void Vehicle::_setLanding(bool landing)
+{
+    if (armed() && _landing != landing) {
+        _landing = landing;
+        emit landingChanged(landing);
     }
 }
 

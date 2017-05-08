@@ -96,6 +96,9 @@ bool Bootloader::_getCommandResponse(QextSerialPort* port, int responseTimeout)
     if (response[0] != PROTO_INSYNC) {
         _errorString = tr("Invalid sync response: 0x%1 0x%2").arg(response[0], 2, 16, QLatin1Char('0')).arg(response[1], 2, 16, QLatin1Char('0'));
         return false;
+    } else if (response[0] == PROTO_INSYNC && response[1] == PROTO_BAD_SILICON_REV) {
+        _errorString = tr("This board is using a microcontroller with faulty silicon and an incorrect configuration and should be put out of service.");
+        return false;
     } else if (response[1] != PROTO_OK) {
         QString responseCode = tr("Unknown response code");
         if (response[1] == PROTO_FAILED) {

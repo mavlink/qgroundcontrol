@@ -444,7 +444,7 @@ void APMFirmwarePlugin::_handleIncomingHeartbeat(Vehicle* vehicle, mavlink_messa
         }
     }
 
-    vehicle->setFlying(flying);
+    vehicle->_setFlying(flying);
 }
 
 bool APMFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)

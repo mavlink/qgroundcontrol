@@ -6,5 +6,7 @@
         <file alias="MavCmdInfoRover.json">src/MissionManager/UnitTest/MavCmdInfoRover.json</file>
         <file alias="MavCmdInfoSub.json">src/MissionManager/UnitTest/MavCmdInfoSub.json</file>
         <file alias="MavCmdInfoVTOL.json">src/MissionManager/UnitTest/MavCmdInfoVTOL.json</file>
+        <file alias="MissionPlanner.waypoints">src/MissionManager/UnitTest/MissionPlanner.waypoints</file>
+        <file alias="OldFileFormat.mission">src/MissionManager/UnitTest/OldFileFormat.mission</file>
     </qresource>
 </RCC>
