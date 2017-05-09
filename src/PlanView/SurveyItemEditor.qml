@@ -499,13 +499,49 @@ Rectangle {
             spacing:        _margin
             visible:        manualGridHeader.visible && manualGridHeader.checked
 
+            GridLayout {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                columnSpacing:  _margin
+                rowSpacing:     _margin
+                columns:        4
+                visible:        gridHeader.checked
+
+                QGCLabel {
+                    id:         manualAngleText
+                    text:       qsTr("Angle")
+                    Layout.columnSpan: 1
+                    Layout.fillWidth:  true
+                }
+
+                property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+                ToolButton {
+                    id:                     manualWindRoseButton
+                    anchors.verticalCenter: manualAngleText.verticalCenter
+                    Layout.columnSpan:      1
+                    iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
+                    visible: _activeVehicle ? _activeVehicle.fixedWing : true
+
+                    onClicked: {
+                        var cords = manualWindRoseButton.mapToItem(_root, 0, 0)
+                        windRosePie.popup(cords.x + manualWindRoseButton.width / 2, cords.y + manualWindRoseButton.height / 2);
+                    }
+                }
+
+                FactTextField {
+                    id:                 manualGridAngleText
+                    fact:               missionItem.gridAngle
+                    Layout.columnSpan:  2
+                }
+            }
+
             FactTextFieldGrid {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 columnSpacing:  ScreenTools.defaultFontPixelWidth
                 rowSpacing:     _margin
-                factList:       [ missionItem.gridAngle, missionItem.gridSpacing, missionItem.gridAltitude, missionItem.turnaroundDist ]
-                factLabels:     [ qsTr("Angle"), qsTr("Spacing"), qsTr("Altitude"), qsTr("Turnaround dist")]
+                factList:       [ missionItem.gridSpacing, missionItem.gridAltitude, missionItem.turnaroundDist ]
+                factLabels:     [ qsTr("Spacing"), qsTr("Altitude"), qsTr("Turnaround dist")]
             }
 
             QGCCheckBox {
@@ -590,6 +626,7 @@ Rectangle {
         height:      2.6*windRoseButton.height
         width:       2.6*windRoseButton.width
         visible:     false
+        focus:       true
 
         property string colorCircle: qgcPal.windowShade
         property string colorBackground: qgcPal.colorGrey
@@ -623,6 +660,10 @@ Rectangle {
             }
         }
 
+        onFocusChanged: {
+            visible = focus
+        }
+
         function popup(x, y) {
             if (x !== undefined)
                 windRosePie.x = x - windRosePie.width / 2;
@@ -630,6 +671,7 @@ Rectangle {
                 windRosePie.y = y - windRosePie.height / 2;
 
             windRosePie.visible = true;
+            windRosePie.focus = true
         }
 
         MouseArea {
