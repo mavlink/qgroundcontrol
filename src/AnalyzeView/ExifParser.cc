@@ -71,7 +71,7 @@ bool ExifParser::write(QByteArray &buf, QGeoCoordinate coordinate)
     conversionPointer = reinterpret_cast<uint16_t *>(buf.mid(nextIfdOffsetInd, 2).data());
     uint16_t nextIfdOffset = *conversionPointer;
 
-    // Definition of usefull unions and structs
+    // Definition of useful unions and structs
     union char2uint32_u {
         char c[4];
         uint32_t i;

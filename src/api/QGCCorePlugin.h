@@ -77,7 +77,7 @@ public:
     /// @return The message to show to the user when they a re prompted to confirm turning on advanced ui.
     virtual QString showAdvancedUIMessage(void) const;
 
-    /// @return An instance of an alternate postion source (or NULL if not available)
+    /// @return An instance of an alternate position source (or NULL if not available)
     virtual QGeoPositionInfoSource* createPositionSource(QObject* parent) { Q_UNUSED(parent); return NULL; }
 
     /// Allows a plugin to override the specified color name from the palette
