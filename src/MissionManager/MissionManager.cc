@@ -180,7 +180,7 @@ void MissionManager::loadFromVehicle(void)
         qCDebug(MissionManagerLog) << "loadFromVehicle called while transaction in progress";
         return;
     }
-
+    _readTransactionInProgress=true;
     _retryCount = 0;
     _transactionInProgress = TransactionRead;
     emit inProgressChanged(true);
