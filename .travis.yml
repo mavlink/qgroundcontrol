@@ -27,11 +27,11 @@ matrix:
           language: android
           env: SPEC=android-g++ CONFIG=installer
           sudo: false
-        - os: osx
-          osx_image: xcode8
-          env: SPEC=macx-clang CONFIG=installer
-          sudo: required
-# OSX builds pared back to installer only since travis sucks so bad we can't afford more than one'
+# OSX builds pared back since travis sucks so bad
+#        - os: osx
+#          osx_image: xcode8
+#          env: SPEC=macx-clang CONFIG=installer
+#          sudo: required
 #        - os: osx
 #          osx_image: xcode8
 #          env: SPEC=macx-clang CONFIG=debug
