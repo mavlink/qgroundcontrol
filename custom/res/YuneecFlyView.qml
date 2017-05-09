@@ -63,6 +63,7 @@ Item {
         onControllerLocationChanged: {
             if(_activeVehicle) {
                 if(TyphoonHQuickInterface.latitude == 0.0 && TyphoonHQuickInterface.longitude == 0.0) {
+                    //-- Unless you really are in the middle of the Atlantic, this means we don't have location.
                     _distance = 0.0
                 } else {
                     var gcs = QtPositioning.coordinate(TyphoonHQuickInterface.latitude, TyphoonHQuickInterface.longitude, TyphoonHQuickInterface.altitude)
@@ -82,6 +83,13 @@ Item {
                 ssidChanged.start()
             } else {
                 ssidChanged.stop()
+            }
+        }
+        //-- Big Red Button down for > 1 second
+        onPowerHeld: {
+            if(_activeVehicle) {
+                rootLoader.sourceComponent = panicDialog
+                mainWindow.disableToolbar()
             }
         }
     }
@@ -654,6 +662,90 @@ Item {
             Component.onCompleted: {
                 rootLoader.width  = connectedToAPItem.width
                 rootLoader.height = connectedToAPItem.height
+            }
+        }
+    }
+
+    //-- Panic Button Dialog
+    Component {
+        id:             panicDialog
+        Item {
+            id:         panicDialogItem
+            width:      mainWindow.width
+            height:     mainWindow.height
+            z:          1000000
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+            Rectangle {
+                id:     panicDialogRect
+                width:  mainWindow.width   * 0.65
+                height: nosdcardCol.height * 1.5
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  qgcPal.alertBackground
+                border.color: qgcPal.alertBorder
+                border.width: 2
+                anchors.centerIn: parent
+                Column {
+                    id:                 nosdcardCol
+                    width:              panicDialogRect.width
+                    spacing:            ScreenTools.defaultFontPixelHeight * 3
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           qsTr("Emergency Vehicle Stop")
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        color:          qgcPal.alertText
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           qsTr("Warning: Motors Will Be Shut Down!")
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           qsTr("Confirm Emergency Vehicle Stop?")
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    Row {
+                        spacing:        ScreenTools.defaultFontPixelWidth * 4
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCButton {
+                            text:           qsTr("Stop Vehicle")
+                            width:          ScreenTools.defaultFontPixelWidth  * 16
+                            height:         ScreenTools.defaultFontPixelHeight * 2
+                            onClicked: {
+                                if(_activeVehicle) {
+                                    _activeVehicle.emergencyStop()
+                                }
+                                rootLoader.sourceComponent = null
+                                mainWindow.enableToolbar()
+                            }
+                        }
+                        QGCButton {
+                            text:           qsTr("Cancel")
+                            width:          ScreenTools.defaultFontPixelWidth  * 16
+                            height:         ScreenTools.defaultFontPixelHeight * 2
+                            onClicked: {
+                                rootLoader.sourceComponent = null
+                                mainWindow.enableToolbar()
+                            }
+                        }
+                    }
+                }
+            }
+            Component.onCompleted: {
+                rootLoader.width  = panicDialogItem.width
+                rootLoader.height = panicDialogItem.height
             }
         }
     }

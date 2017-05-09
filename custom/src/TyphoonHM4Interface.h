@@ -34,6 +34,7 @@ public:
     QString m4StateStr              ();
     void    resetBind               ();
     bool    armed                   () { return _armed; }
+    bool    rcActive                () { return _rcActive; }
 
     Vehicle*            vehicle         () { return _vehicle; }
     CameraControl*      cameraControl   () { return _cameraControl; }
@@ -60,6 +61,7 @@ private slots:
     void    _remoteControlRSSIChanged           (uint8_t rssi);
     void    _armedChanged                       (bool armed);
     void    _initAndCheckBinding                ();
+    void    _rcTimeout                          ();
 
 private:
     bool    _exitToAwait                        ();
@@ -142,6 +144,7 @@ private:
     bool                    _sendRxInfoEnd;
     RxBindInfo              _rxBindInfoFeedback;
     QTimer                  _timer;
+    QTimer                  _rcTimer;
     ControllerLocation      _controllerLocation;
     bool                    _binding;
     bool                    _receivedRCRSSI;
@@ -152,4 +155,5 @@ private:
     QString                 _currentConnection;
     bool                    _armed;
     QList<uint16_t>         _rawChannels;
+    bool                    _rcActive;
 };

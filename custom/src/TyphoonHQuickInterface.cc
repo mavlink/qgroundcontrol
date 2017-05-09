@@ -67,10 +67,37 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(_pHandler, &TyphoonHM4Interface::batteryUpdate,                this, &TyphoonHQuickInterface::_batteryUpdate);
         connect(_pHandler, &TyphoonHM4Interface::armedChanged,                 this, &TyphoonHQuickInterface::_armedChanged);
         connect(_pHandler, &TyphoonHM4Interface::rawChannelsChanged,           this, &TyphoonHQuickInterface::_rawChannelsChanged);
+        connect(_pHandler, &TyphoonHM4Interface::switchStateChanged,           this, &TyphoonHQuickInterface::_switchStateChanged);
         connect(&_scanTimer, &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
         connect(&_flightTimer, &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
+        connect(&_powerTimer,  &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
         _flightTimer.setSingleShot(false);
+        _powerTimer.setSingleShot(true);
         _loadWifiConfigurations();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_powerTrigger()
+{
+    //-- If RC is not working
+    if(!_pHandler->rcActive()) {
+        //-- Panic button held down
+        emit powerHeld();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_switchStateChanged(int swId, int /*oldState*/, int newState)
+{
+    if(swId == Yuneec::BUTTON_POWER) {
+        if(newState) {
+            _powerTimer.start(1000);
+        } else {
+            _powerTimer.stop();
+        }
     }
 }
 
