@@ -90,7 +90,7 @@ void MissionSettingsItem::save(QJsonArray&  missionItems)
 
     appendMissionItems(items, this);
 
-    // First item show be planned home position, we are not reponsible for save/load
+    // First item show be planned home position, we are not responsible for save/load
     // Remaining items we just output as is
     for (int i=1; i<items.count(); i++) {
         MissionItem* item = items[i];
