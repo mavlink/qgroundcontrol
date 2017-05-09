@@ -26,6 +26,13 @@
 
 #include "px4_custom_mode.h"
 
+PX4FirmwarePluginInstanceData::PX4FirmwarePluginInstanceData(QObject* parent)
+    : QObject(parent)
+    , versionNotified(false)
+{
+
+}
+
 PX4FirmwarePlugin::PX4FirmwarePlugin(void)
     : _manualFlightMode(tr("Manual"))
     , _acroFlightMode(tr("Acro"))
@@ -43,7 +50,6 @@ PX4FirmwarePlugin::PX4FirmwarePlugin(void)
     , _rtgsFlightMode(tr("Return to Groundstation"))
     , _followMeFlightMode(tr("Follow Me"))
     , _simpleFlightMode(tr("Simple"))
-    , _versionNotified(false)
 {
     qmlRegisterType<PX4AdvancedFlightModesController>   ("QGroundControl.Controllers", 1, 0, "PX4AdvancedFlightModesController");
     qmlRegisterType<PX4SimpleFlightModesController>     ("QGroundControl.Controllers", 1, 0, "PX4SimpleFlightModesController");
@@ -229,9 +235,7 @@ bool PX4FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities c
 
 void PX4FirmwarePlugin::initializeVehicle(Vehicle* vehicle)
 {
-    Q_UNUSED(vehicle);
-
-    // PX4 Flight Stack doesn't need to do any extra work
+    vehicle->setFirmwarePluginInstanceData(new PX4FirmwarePluginInstanceData);
 }
 
 bool PX4FirmwarePlugin::sendHomePositionToVehicle(void)
@@ -500,7 +504,8 @@ void PX4FirmwarePlugin::_handleAutopilotVersion(Vehicle* vehicle, mavlink_messag
 {
     Q_UNUSED(vehicle);
 
-    if (!_versionNotified) {
+    PX4FirmwarePluginInstanceData* instanceData = qobject_cast<PX4FirmwarePluginInstanceData*>(vehicle->firmwarePluginInstanceData());
+    if (!instanceData->versionNotified) {
         bool notifyUser = false;
         int supportedMajorVersion = 1;
         int supportedMinorVersion = 4;
@@ -530,7 +535,7 @@ void PX4FirmwarePlugin::_handleAutopilotVersion(Vehicle* vehicle, mavlink_messag
         }
 
         if (notifyUser) {
-            _versionNotified = true;
+            instanceData->versionNotified = true;
             qgcApp()->showMessage(QString("QGroundControl supports PX4 Pro firmware Version %1.%2.%3 and above. You are using a version prior to that which will lead to unpredictable results. Please upgrade your firmware.").arg(supportedMajorVersion).arg(supportedMinorVersion).arg(supportedPatchVersion));
         }
     }
