@@ -120,13 +120,24 @@ private:
     void _handleOutgoingParamSet(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
     void _soloVideoHandshake(Vehicle* vehicle);
 
-    bool                    _textSeverityAdjustmentNeeded;
+    // Any instance data here must be global to all vehicles
+    // Vehicle specific data should go into APMFirmwarePluginInstanceData
+
     QList<APMCustomMode>    _supportedModes;
-    QMap<QString, QTime>    _noisyPrearmMap;
 
     static const char*      _artooIP;
     static const int        _artooVideoHandshakePort;
+};
 
+class APMFirmwarePluginInstanceData : public QObject
+{
+    Q_OBJECT
+
+public:
+    APMFirmwarePluginInstanceData(QObject* parent = NULL);
+
+    bool                    textSeverityAdjustmentNeeded;
+    QMap<QString, QTime>    noisyPrearmMap;
 };
 
 #endif
