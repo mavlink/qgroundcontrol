@@ -286,7 +286,7 @@ bool RallyPointController::showPlanFromManagerVehicle (void)
     qCDebug(RallyPointControllerLog) << "showPlanFromManagerVehicle _editMode" << _editMode;
     if (_masterController->offline()) {
         qCWarning(RallyPointControllerLog) << "RallyPointController::showPlanFromManagerVehicle called while offline";
-        return true;    // stops further propogation of showPlanFromManagerVehicle due to error
+        return true;    // stops further propagation of showPlanFromManagerVehicle due to error
     } else {
         if (!_managerVehicle->initialPlanRequestComplete()) {
             // The vehicle hasn't completed initial load, we can just wait for loadComplete to be signalled automatically

@@ -322,7 +322,7 @@ bool GeoFenceController::showPlanFromManagerVehicle(void)
     qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle" << _editMode;
     if (_masterController->offline()) {
         qCWarning(GeoFenceControllerLog) << "GeoFenceController::showPlanFromManagerVehicle called while offline";
-        return true;    // stops further propogation of showPlanFromManagerVehicle due to error
+        return true;    // stops further propagation of showPlanFromManagerVehicle due to error
     } else {
         _itemsRequested = true;
         if (!_managerVehicle->initialPlanRequestComplete()) {

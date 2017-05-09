@@ -24,7 +24,7 @@ class MissionCommandTreeTest;
 
 /// UI Information associated with a mission command (MAV_CMD) parameter
 ///
-/// MissionCommandParamInfo is used to automatically generate editing ui for a parameter assocaited with a MAV_CMD.
+/// MissionCommandParamInfo is used to automatically generate editing ui for a parameter associated with a MAV_CMD.
 ///
 /// The json format for a MissionCmdParamInfo object is:
 ///
@@ -34,7 +34,7 @@ class MissionCommandTreeTest;
 /// default         double  0.0/NaN     Default value for param. If no default value specified and nanUnchanged == true, then defaultValue is NaN.
 /// decimalPlaces   int     7           Number of decimal places to show for value
 /// enumStrings     string              Strings to show in combo box for selection
-/// enumValues      string              Values assocaited with each enum string
+/// enumValues      string              Values associated with each enum string
 /// nanUnchanged    bool    false       True: value can be set to NaN to signal unchanged
 ///
 class MissionCmdParamInfo : public QObject {

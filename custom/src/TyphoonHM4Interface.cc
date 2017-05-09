@@ -94,6 +94,7 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     , _cameraControl(NULL)
     , _m4State(TyphoonHQuickInterface::M4_STATE_NONE)
     , _armed(false)
+    , _rcActive(false)
 {
     pTyphoonHandler = this;
     _cameraControl = new CameraControl(this);
@@ -101,7 +102,9 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     _channelNumIndex    = 6;
     _commPort = new M4SerialComm(this);
     _timer.setSingleShot(true);
-    connect(&_timer, &QTimer::timeout, this, &TyphoonHM4Interface::_stateManager);
+    _rcTimer.setSingleShot(true);
+    connect(&_timer,   &QTimer::timeout, this, &TyphoonHM4Interface::_stateManager);
+    connect(&_rcTimer, &QTimer::timeout, this, &TyphoonHM4Interface::_rcTimeout);
 }
 
 //-----------------------------------------------------------------------------
@@ -248,15 +251,26 @@ TyphoonHM4Interface::_initAndCheckBinding()
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHM4Interface::_remoteControlRSSIChanged(uint8_t /*rssi*/)
+TyphoonHM4Interface::_rcTimeout()
 {
-    //-- This is not working. I'm getting RSSI even with no bound RX (or even with no ST16 powered on)
-    /*
-    if(rssi > 0 && !_receivedRCRSSI) {
-        qCDebug(YuneecLog) << "Received RSSI, RC is bound.";
-        _receivedRCRSSI = true;
+    _rcActive = false;
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHM4Interface::_remoteControlRSSIChanged(uint8_t rssi)
+{
+    if(rssi > 0) {
+        _rcActive = true;
+        _rcTimer.start(1000);
+        if(!_receivedRCRSSI) {
+            //-- This is not working. I'm getting RSSI even with no bound RX (or even with no ST16 powered on)
+            /*
+            qCDebug(YuneecLog) << "Received RSSI, RC is bound.";
+            _receivedRCRSSI = true;
+            */
+        }
     }
-    */
 }
 
 //-----------------------------------------------------------------------------
@@ -1397,10 +1411,10 @@ TyphoonHM4Interface::_switchChanged(m4Packet& packet)
     QByteArray commandValues = packet.commandValues();
     SwitchChanged switchChanged;
     switchChanged.hwId      = (int)commandValues[0];
-    switchChanged.oldState  = (int)commandValues[1];
-    switchChanged.newState  = (int)commandValues[2];
+    switchChanged.newState  = (int)commandValues[1];
+    switchChanged.oldState  = (int)commandValues[2];
     emit switchStateChanged(switchChanged.hwId, switchChanged.oldState, switchChanged.newState);
-    qCDebug(YuneecLog) << "Switches:" << switchChanged.hwId << switchChanged.oldState << switchChanged.newState;
+    qCDebug(YuneecLog) << "Switches:" << switchChanged.hwId << switchChanged.newState << switchChanged.oldState;
     //-- On Button Down
     if(switchChanged.newState == 1) {
         switch(switchChanged.hwId) {

@@ -108,7 +108,18 @@ private slots:
 private:
     void _handleAutopilotVersion(Vehicle* vehicle, mavlink_message_t* message);
 
-    bool _versionNotified;  ///< true: user notified over version issue
+    // Any instance data here must be global to all vehicles
+    // Vehicle specific data should go into PX4FirmwarePluginInstanceData
+};
+
+class PX4FirmwarePluginInstanceData : public QObject
+{
+    Q_OBJECT
+
+public:
+    PX4FirmwarePluginInstanceData(QObject* parent = NULL);
+
+    bool versionNotified;  ///< true: user notified over version issue
 };
 
 #endif

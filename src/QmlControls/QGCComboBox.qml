@@ -210,7 +210,7 @@ Button {
 
             onObjectAdded: {
                 // There is a bug in Instantiator which can cause objects to be added out of order from an index standpoint.
-                // If not handled correcty this will cause menu items to be added incorrectly due to the way Menu.insertItem works.
+                // If not handled correctly this will cause menu items to be added incorrectly due to the way Menu.insertItem works.
                 //console.log("menu add", index, object.text)
                 if (index === popup.__selectedIndex) {
                     popup.selectedText = object["text"]

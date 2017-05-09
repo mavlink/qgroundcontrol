@@ -160,6 +160,7 @@ signals:
     void    rcBatteryChanged            ();
     void    flightTimeChanged           ();
     void    rawChannelChanged           ();
+    void    powerHeld                   ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -177,7 +178,9 @@ private slots:
     void    _batteryUpdate              ();
     void    _armedChanged               (bool armed);
     void    _flightUpdate               ();
+    void    _powerTrigger               ();
     void    _rawChannelsChanged         ();
+    void    _switchStateChanged         (int swId, int oldState, int newState);
 
 private:
     void    _saveWifiConfigurations     ();
@@ -195,6 +198,7 @@ private:
     QString                 _password;
     QTimer                  _scanTimer;
     QTimer                  _flightTimer;
+    QTimer                  _powerTimer;
     QTime                   _flightTime;
     bool                    _scanEnabled;
     bool                    _scanningWiFi;
