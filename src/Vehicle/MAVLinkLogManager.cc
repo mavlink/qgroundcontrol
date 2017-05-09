@@ -264,7 +264,7 @@ MAVLinkLogProcessor::processStreamData(uint16_t sequence, uint8_t first_message,
         if(num_drops > 0) {
             _writeUlogMessage(_ulogMessage);
             _ulogMessage.clear();
-            //-- If no usefull information in this message. Drop it.
+            //-- If no useful information in this message. Drop it.
             if(first_message == 255) {
                 break;
             }
