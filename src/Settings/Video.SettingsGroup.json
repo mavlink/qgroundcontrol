@@ -39,7 +39,7 @@
 {
     "name":             "VideoGridLines",
     "shortDescription": "Video Grid Lines",
-    "longDescription":  "Displays a grid overlayed over the video view.",
+    "longDescription":  "Displays a grid overlaid over the video view.",
     "type":             "uint32",
     "enumStrings":      "Hide,Show",
     "enumValues":       "1,0",

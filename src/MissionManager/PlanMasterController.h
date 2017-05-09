@@ -38,7 +38,7 @@ public:
     Q_PROPERTY(bool         containsItems       READ containsItems                      NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
     Q_PROPERTY(bool         syncInProgress      READ syncInProgress                     NOTIFY syncInProgressChanged)   ///< true: Information is currently being saved/sent, false: no active save/send in progress
     Q_PROPERTY(bool         dirty               READ dirty              WRITE setDirty  NOTIFY dirtyChanged)            ///< true: Unsaved/sent changes are present, false: no changes since last save/send
-    Q_PROPERTY(QString      fileExtension       READ fileExtension                      CONSTANT)                       ///< File extention for missions
+    Q_PROPERTY(QString      fileExtension       READ fileExtension                      CONSTANT)                       ///< File extension for missions
     Q_PROPERTY(QStringList  loadNameFilters     READ loadNameFilters                    CONSTANT)                       ///< File filter list loading plan files
     Q_PROPERTY(QStringList  saveNameFilters     READ saveNameFilters                    CONSTANT)                       ///< File filter list saving plan files
 
