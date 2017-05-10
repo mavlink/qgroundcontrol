@@ -29,6 +29,7 @@ public:
     bool                hasGimbal                           (Vehicle* vehicle, bool& rollSupported, bool& pitchSupported, bool& yawSupported) final;
     void                batteryConsumptionData              (Vehicle* vehicle, int& mAhBattery, double& hoverAmps, double& cruiseAmps) const final;
     bool                vehicleYawsToNextWaypointInMission  (const Vehicle* vehicle) const final;
+    QString             internalParameterMetaDataFile       (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QString(":/typhoonh/YuneecParameterFactMetaData.xml"); }
 
 private:
     QVariantList        _toolBarIndicators;
