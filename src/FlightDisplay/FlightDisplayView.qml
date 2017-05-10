@@ -418,6 +418,12 @@ QGCView {
                     visible:    _guidedController.showStartMission
                 },
                 {
+                    title:      _guidedController.continueMissionTitle,
+                    text:       _guidedController.continueMissionMessage,
+                    action:     _guidedController.actionContinueMission,
+                    visible:    _guidedController.showContinueMission
+                },
+                {
                     title:      _guidedController.resumeMissionTitle,
                     text:       _guidedController.resumeMissionMessage,
                     action:     _guidedController.actionResumeMission,
@@ -502,6 +508,7 @@ QGCView {
             id:                 guidedActionsController
             missionController:  _missionController
             confirmDialog:      guidedActionConfirm
+            altitudeSlider:     _altitudeSlider
             z:                  _flightVideoPipControl.z + 1
 
             onShowStartMissionChanged: {
@@ -552,7 +559,6 @@ QGCView {
             anchors.bottom:             parent.bottom
             anchors.horizontalCenter:   parent.horizontalCenter
             guidedController:           _guidedController
-            altitudeSlider:             _altitudeSlider
         }
 
         //-- Altitude slider
