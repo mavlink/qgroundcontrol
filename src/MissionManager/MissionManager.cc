@@ -16,6 +16,8 @@
 #include "FirmwarePlugin.h"
 #include "MAVLinkProtocol.h"
 #include "QGCApplication.h"
+#include "MissionCommandTree.h"
+#include "MissionCommandUIInfo.h"
 
 QGC_LOGGING_CATEGORY(MissionManagerLog, "MissionManagerLog")
 
@@ -753,7 +755,16 @@ QString MissionManager::_lastMissionReqestString(MAV_MISSION_RESULT result)
         case MAV_MISSION_UNSUPPORTED_FRAME:
             return QString(". Frame: %1").arg(item->frame());
         case MAV_MISSION_UNSUPPORTED:
-            return QString(". Command: %1").arg(item->command());
+        {
+            const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_vehicle, item->command());
+            QString friendlyName;
+            QString rawName;
+            if (uiInfo) {
+                friendlyName = uiInfo->friendlyName();
+                rawName = uiInfo->rawName();
+            }
+            return QString(". Command: (%1, %2, %3)").arg(friendlyName).arg(rawName).arg(item->command());
+        }
         case MAV_MISSION_INVALID_PARAM1:
             return QString(". Param1: %1").arg(item->param1());
         case MAV_MISSION_INVALID_PARAM2:
