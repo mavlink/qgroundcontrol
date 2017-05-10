@@ -48,7 +48,7 @@ Item {
 
     readonly property string armMessage:                qsTr("Arm the vehicle.")
     readonly property string disarmMessage:             qsTr("Disarm the vehicle")
-    readonly property string emergencyStopMessage:      qsTr("WARNING: This still stop all motors. If vehicle is currently in air it will crash.")
+    readonly property string emergencyStopMessage:      qsTr("WARNING: This will stop all motors. If vehicle is currently in air it will crash.")
     readonly property string takeoffMessage:            qsTr("Takeoff from ground and hold position.")
     readonly property string startMissionMessage:       qsTr("Takeoff from ground and start the current mission.")
     readonly property string continueMissionMessage:    qsTr("Continue the mission from the current waypoint.")
