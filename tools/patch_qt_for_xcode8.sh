@@ -1,15 +1,25 @@
-XCODEVER=`xcodebuild -version 2>&1 | (head -n1) | awk  '{print $2}'`
-echo "Testing Xcode version: $XCODEVER"
+#!/bin/sh
+
 IOSDIR=/tmp/ios
 OSXDIR=/tmp/$QT_DIR
+
+# Uncomment below with the appropriate paths for your setup
+# after installing the proper verion of qt.
+# At least one of ios or osx is necessary.
+
+#IOSDIR=/path/to/Qt/5.5/ios
+#OSXDIR=/path/to/5.5/clang_64
+#TRAVIS_BUILD_DIR=/path/to/qgroundcontrol
+
+XCODEVER=`xcodebuild -version 2>&1 | (head -n1) | awk  '{print $2}'`
+echo "Testing Xcode version: $XCODEVER"
+MAJVER=${XCODEVER:0:1}
 if [ X"$TRAVIS_BUILD_DIR" == "X" ]; then
-    echo "missing TRAVIS_BUILD_DIR"
+    echo "Missing TRAVIS_BUILD_DIR configuration variable"
     exit 1
 fi
-#IOSDIR=/Applications/Qt/5.5/ios
-#OSXDIR=/Applications/Qt/5.5/clang_64
-#TRAVIS_BUILD_DIR=/Users/gus/github/work/qgroundcontrol
-if [ "$XCODEVER" == "8.0" ]; then
+
+if [ "$MAJVER" == "8" ]; then
     if [ -d $OSXDIR/bin ]; then
         QTVER=`$OSXDIR/bin/qmake -version | grep "Using Qt" | awk  '{print $4}'`
         echo "Testing Qt Version: $QTVER"
