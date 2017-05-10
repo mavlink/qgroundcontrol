@@ -22,5 +22,11 @@
     "shortDescription": "Lights 2 level",
     "type":             "int16",
     "units":            "%"
+},
+{
+    "name":             "pilot gain",
+    "shortDescription": "Pilot Gain",
+    "type":             "int16",
+    "units":            "%"
 }
 ]
