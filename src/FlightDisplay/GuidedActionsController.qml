@@ -29,6 +29,7 @@ Item {
 
     property var missionController
     property var confirmDialog
+    property var altitudeSlider
 
     readonly property string emergencyStopTitle:    qsTr("Emergency Stop")
     readonly property string armTitle:              qsTr("Arm")
@@ -188,6 +189,8 @@ Item {
             confirmDialog.title = changeAltTitle
             confirmDialog.message = changeAltMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showChangeAlt })
+            altitudeSlider.reset()
+            altitudeSlider.visible = true
             break;
         case actionGoto:
             confirmDialog.title = gotoTitle
