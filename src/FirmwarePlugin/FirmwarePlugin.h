@@ -295,6 +295,9 @@ public:
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const char* px4FollowMeFlightMode;
 
+    /// Used to add additional firmware-specific facts to the vehicle values widget
+    FactGroup* fwFactGroup = NULL;
+
 protected:
     // Arms the vehicle with validation and retries
     // @return: true - vehicle armed, false - vehicle failed to arm
@@ -307,7 +310,6 @@ protected:
 private:
     QVariantList _toolBarIndicatorList;
     static QVariantList _cameraList;    ///< Standard QGC camera list
-
 };
 
 class FirmwarePluginFactory : public QObject
