@@ -450,6 +450,8 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
 
 HEADERS += \
     src/AnalyzeView/ExifParser.h \
+    src/AnalyzeView/ULogParser.h \
+    src/AnalyzeView/PX4LogParser.h \
     src/CmdLineOptParser.h \
     src/FirmwarePlugin/PX4/px4_custom_mode.h \
     src/FlightDisplay/VideoManager.h \
@@ -635,6 +637,8 @@ AndroidBuild {
 
 SOURCES += \
     src/AnalyzeView/ExifParser.cc \
+    src/AnalyzeView/ULogParser.cc \
+    src/AnalyzeView/PX4LogParser.cc \
     src/CmdLineOptParser.cc \
     src/FlightDisplay/VideoManager.cc \
     src/FlightMap/Widgets/ValuesWidgetController.cc \

@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "GeoTagController.h"
-#include "ExifParser.h"
 #include "QGCQFileDialog.h"
 #include "QGCLoggingCategory.h"
 #include "MainWindow.h"
@@ -17,6 +16,10 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <cfloat>
+
+#include "ExifParser.h"
+#include "ULogParser.h"
+#include "PX4LogParser.h"
 
 GeoTagController::GeoTagController(void)
     : _progress(0)
@@ -35,7 +38,7 @@ GeoTagController::~GeoTagController()
 
 void GeoTagController::pickLogFile(void)
 {
-    QString filename = QGCQFileDialog::getOpenFileName(MainWindow::instance(), "Select log file load", QString(), "PX4 log file (*.px4log);;All Files (*.*)");
+    QString filename = QGCQFileDialog::getOpenFileName(MainWindow::instance(), "Select log file load", QString(), "ULog file (*.ulg);;PX4 log file (*.px4log);;All Files (*.*)");
     if (!filename.isEmpty()) {
         _worker.setLogFile(filename);
         emit logFileChanged(filename);
@@ -173,7 +176,7 @@ void GeoTagWorker::run(void)
 
     // Parse EXIF
     ExifParser exifParser;
-    _tagTime.clear();
+    _imageTime.clear();
     for (int i = 0; i < _imageList.size(); ++i) {
         QFile file(_imageList.at(i).absoluteFilePath());
         if (!file.open(QIODevice::ReadOnly)) {
@@ -183,7 +186,7 @@ void GeoTagWorker::run(void)
         QByteArray imageBuffer = file.readAll();
         file.close();
 
-        _tagTime.append(exifParser.readTime(imageBuffer));
+        _imageTime.append(exifParser.readTime(imageBuffer));
 
         emit progressChanged((100/nSteps) + ((100/nSteps) / _imageList.size())*i);
 
@@ -194,10 +197,30 @@ void GeoTagWorker::run(void)
         }
     }
 
-    // Load PX4 log
-    _geoRef.clear();
-    _triggerTime.clear();
-    if (!parsePX4Log()) {
+    // Load log
+    bool isULog = _logFile.endsWith(".ulg", Qt::CaseSensitive);
+    QFile file(_logFile);
+    if (!file.open(QIODevice::ReadOnly)) {
+        emit error(tr("Geotagging failed. Couldn't open log file."));
+        return;
+    }
+    QByteArray log = file.readAll();
+    file.close();
+
+    // Instantiate appropriate parser
+    _triggerList.clear();
+    bool parseComplete = false;
+    if(isULog) {
+        ULogParser parser;
+        parseComplete = parser.getTagsFromLog(log, _triggerList);
+
+    } else {
+        PX4LogParser parser;
+        parseComplete = parser.getTagsFromLog(log, _triggerList);
+
+    }
+
+    if (!parseComplete) {
         if (_cancel) {
             qCDebug(GeotaggingLog) << "Tagging cancelled";
             emit error(tr("Tagging cancelled"));
@@ -210,7 +233,7 @@ void GeoTagWorker::run(void)
     }
     emit progressChanged(3*(100/nSteps));
 
-    qCDebug(GeotaggingLog) << "Found " << _geoRef.count() << " trigger logs.";
+    qCDebug(GeotaggingLog) << "Found " << _triggerList.count() << " trigger logs.";
 
     if (_cancel) {
         qCDebug(GeotaggingLog) << "Tagging cancelled";
@@ -244,7 +267,7 @@ void GeoTagWorker::run(void)
         QByteArray imageBuffer = fileRead.readAll();
         fileRead.close();
 
-        if (!exifParser.write(imageBuffer, _geoRef[_triggerIndices[i]])) {
+        if (!exifParser.write(imageBuffer, _triggerList[_triggerIndices[i]])) {
             emit error(tr("Geotagging failed. Couldn't write to image."));
             return;
         } else {
@@ -279,108 +302,11 @@ void GeoTagWorker::run(void)
     emit progressChanged(100);
 }
 
-bool GeoTagWorker::parsePX4Log()
-{
-    // general message header
-    char header[] = {(char)0xA3, (char)0x95, (char)0x00};
-    // header for GPOS message header
-    char gposHeaderHeader[] = {(char)0xA3, (char)0x95, (char)0x80, (char)0x10, (char)0x00};
-    int gposHeaderOffset;
-    // header for GPOS message
-    char gposHeader[] = {(char)0xA3, (char)0x95, (char)0x10, (char)0x00};
-    int gposOffsets[3] = {3, 7, 11};
-    int gposLengths[3] = {4, 4, 4};
-    // header for trigger message header
-    char triggerHeaderHeader[] = {(char)0xA3, (char)0x95, (char)0x80, (char)0x37, (char)0x00};
-    int triggerHeaderOffset;
-    // header for trigger message
-    char triggerHeader[] = {(char)0xA3, (char)0x95, (char)0x37, (char)0x00};
-    int triggerOffsets[2] = {3, 11};
-    int triggerLengths[2] = {8, 4};
-
-    // load log
-    QFile file(_logFile);
-    if (!file.open(QIODevice::ReadOnly)) {
-        qCDebug(GeotaggingLog) << "Could not open log file " << _logFile;
-        return false;
-    }
-    QByteArray log = file.readAll();
-    file.close();
-
-    // extract header information: message lengths
-    uint8_t* iptr = reinterpret_cast<uint8_t*>(log.mid(log.indexOf(gposHeaderHeader) + 4, 1).data());
-    gposHeaderOffset = static_cast<int>(qFromLittleEndian(*iptr));
-    iptr = reinterpret_cast<uint8_t*>(log.mid(log.indexOf(triggerHeaderHeader) + 4, 1).data());
-    triggerHeaderOffset = static_cast<int>(qFromLittleEndian(*iptr));
-
-    // extract trigger data
-    int index = 1;
-    int sequence = -1;
-    QGeoCoordinate lastCoordinate;
-    while(index < log.count() - 1) {
-
-        if (_cancel) {
-            return false;
-        }
-
-        // first extract trigger
-        index = log.indexOf(triggerHeader, index + 1);
-        // check for whether last entry has been passed
-        if (index < 0) {
-            break;
-        }
-
-        if (log.indexOf(header, index + 1) != index + triggerHeaderOffset) {
-            continue;
-        }
-        uint64_t* time = reinterpret_cast<uint64_t*>(log.mid(index + triggerOffsets[0], triggerLengths[0]).data());
-        double timeDouble = static_cast<double>(qFromLittleEndian(*time)) / 1.0e6;
-        uint32_t* seq = reinterpret_cast<uint32_t*>(log.mid(index + triggerOffsets[1], triggerLengths[1]).data());
-        int seqInt = static_cast<int>(qFromLittleEndian(*seq));
-        if (sequence >= seqInt || sequence + 20 < seqInt) { // assume that logging has not skipped more than 20 triggers. this prevents wrong header detection
-            continue;
-        }
-        _triggerTime.append(timeDouble);
-        sequence = seqInt;
-
-        // second extract position
-        bool lookForGpos = true;
-        while (lookForGpos) {
-
-            if (_cancel) {
-                return false;
-            }
-
-            int gposIndex = log.indexOf(gposHeader, index + 1);
-            if (gposIndex < 0) {
-                _geoRef.append(lastCoordinate);
-                break;
-            }
-            index = gposIndex;
-            // verify that at an offset of gposHeaderOffset the next log message starts
-            if (gposIndex + gposHeaderOffset == log.indexOf(header, gposIndex + 1)) {
-                int32_t* lat = reinterpret_cast<int32_t*>(log.mid(gposIndex + gposOffsets[0], gposLengths[0]).data());
-                double latitude = static_cast<double>(qFromLittleEndian(*lat))/1.0e7;
-                lastCoordinate.setLatitude(latitude);
-                int32_t* lon = reinterpret_cast<int32_t*>(log.mid(gposIndex + gposOffsets[1], gposLengths[1]).data());
-                double longitude = static_cast<double>(qFromLittleEndian(*lon))/1.0e7;
-                longitude = fmod(180.0 + longitude, 360.0) - 180.0;
-                lastCoordinate.setLongitude(longitude);
-                float* alt = reinterpret_cast<float*>(log.mid(gposIndex + gposOffsets[2], gposLengths[2]).data());
-                lastCoordinate.setAltitude(qFromLittleEndian(*alt));
-                _geoRef.append(lastCoordinate);
-                break;
-            }
-        }
-    }
-    return true;
-}
-
 bool GeoTagWorker::triggerFiltering()
 {
     _imageIndices.clear();
     _triggerIndices.clear();
-    for(int i = 0; i < _tagTime.count() && i < _triggerTime.count(); i++) {
+    for(int i = 0; i < _imageTime.count() && i < _triggerList.count(); i++) {
         _imageIndices.append(i);
         _triggerIndices.append(i);
     }

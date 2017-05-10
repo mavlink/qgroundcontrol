@@ -924,13 +924,15 @@ int SurveyMissionItem::_appendWaypointToMission(QList<MissionItem*>& items, int 
     items.append(item);
 
     switch (cameraTrigger) {
-    case CameraTriggerOff:
-    case CameraTriggerOn:
+    case CameraTriggerRun:
+    case CameraTriggerPause:
         item = new MissionItem(seqNum++,
-                               MAV_CMD_DO_SET_CAM_TRIGG_DIST,
+                               MAV_CMD_DO_TRIGGER_CONTROL,
                                MAV_FRAME_MISSION,
-                               cameraTrigger == CameraTriggerOn ? _triggerDistance() : 0,
-                               0, 0, 0, 0, 0, 0,               // param 2-7 unused
+                               -1,                             // don't change trigger main state
+                               -1,                             // don't reset trigger sequence
+                               cameraTrigger == CameraTriggerPause ? 1 : 0,                     // Pause triggering
+                               0, 0, 0, 0,                     // param 4-7 unused
                                true,                           // autoContinue
                                false,                          // isCurrentItem
                                missionItemParent);
@@ -938,14 +940,11 @@ int SurveyMissionItem::_appendWaypointToMission(QList<MissionItem*>& items, int 
         break;
     case CameraTriggerHoverAndCapture:
         item = new MissionItem(seqNum++,
-                               MAV_CMD_IMAGE_START_CAPTURE,
+                               MAV_CMD_DO_DIGICAM_CONTROL,
                                MAV_FRAME_MISSION,
-                               0,                  // Interval
-                               1,                  // Take 1 photo
-                               -1,                 // Mav resolution
-                               0, 0,               // Param 4-5 unused
-                               0,                  // Camera ID
-                               7,                  // Param 7 unused
+                               0, 0, 0, 0,         // Param 1-4 unused
+                               1,                  // Capture image
+                               0, 0,               // Param 6-7 unused
                                true,               // autoContinue
                                false,              // isCurrentItem
                                missionItemParent);
@@ -953,7 +952,7 @@ int SurveyMissionItem::_appendWaypointToMission(QList<MissionItem*>& items, int 
         item = new MissionItem(seqNum++,
                                MAV_CMD_NAV_DELAY,
                                MAV_FRAME_MISSION,
-                               0.5,                // Delay in seconds, give some time for image to be taken
+                               1,                  // Delay in seconds, give some time for image to be taken
                                -1, -1, -1,         // No time
                                0, 0, 0,            // Param 5-7 unused
                                true,               // autoContinue
@@ -991,8 +990,8 @@ bool SurveyMissionItem::_appendMissionItemsWorker(QList<MissionItem*>& items, QO
 
     QList<QList<QGeoCoordinate>>& transectSegments = buildRefly ? _reflyTransectSegments : _transectSegments;
 
-    if (!buildRefly && _imagesEverywhere()) {
-        // We are taking images in turnaround, so we start command once at beginning
+    if (!buildRefly) {
+        // We enable the camera and start trigerring at the beginning of the survey
         MissionItem* item = new MissionItem(seqNum++,
                                             MAV_CMD_DO_SET_CAM_TRIGG_DIST,
                                             MAV_FRAME_MISSION,
@@ -1001,6 +1000,17 @@ bool SurveyMissionItem::_appendMissionItemsWorker(QList<MissionItem*>& items, QO
                                             true,                   // autoContinue
                                             false,                  // isCurrentItem
                                             missionItemParent);
+        items.append(item);
+        item = new MissionItem(seqNum++,
+                               MAV_CMD_DO_TRIGGER_CONTROL,
+                               MAV_FRAME_MISSION,
+                               1,                              // enable trigger
+                               -1,                             // don't reset trigger sequence
+                               1,                              // pause trigger until we get to survey entrypoint
+                               0, 0, 0, 0,                     // param 4-7 unused
+                               true,                           // autoContinue
+                               false,                          // isCurrentItem
+                               missionItemParent);
         items.append(item);
     }
 
@@ -1024,7 +1034,7 @@ bool SurveyMissionItem::_appendMissionItemsWorker(QList<MissionItem*>& items, QO
         if (!_nextTransectCoord(segment, pointIndex++, coord)) {
             return false;
         }
-        cameraTrigger = _imagesEverywhere() || !_triggerCamera() ? CameraTriggerNone : (_hoverAndCaptureEnabled() ? CameraTriggerHoverAndCapture : CameraTriggerOn);
+        cameraTrigger = _imagesEverywhere() || !_triggerCamera() ? CameraTriggerNone : (_hoverAndCaptureEnabled() ? CameraTriggerHoverAndCapture : CameraTriggerRun);
         seqNum = _appendWaypointToMission(items, seqNum, coord, cameraTrigger, missionItemParent);
 
         // Add internal hover and capture points
@@ -1043,7 +1053,7 @@ bool SurveyMissionItem::_appendMissionItemsWorker(QList<MissionItem*>& items, QO
         if (!_nextTransectCoord(segment, pointIndex++, coord)) {
             return false;
         }
-        cameraTrigger = _imagesEverywhere() || !_triggerCamera() ? CameraTriggerNone : (_hoverAndCaptureEnabled() ? CameraTriggerNone : CameraTriggerOff);
+        cameraTrigger = _imagesEverywhere() || !_triggerCamera() ? CameraTriggerNone : (_hoverAndCaptureEnabled() ? CameraTriggerNone : CameraTriggerPause);
         seqNum = _appendWaypointToMission(items, seqNum, coord, cameraTrigger, missionItemParent);
 
         if (_hasTurnaround()) {
@@ -1057,16 +1067,18 @@ bool SurveyMissionItem::_appendMissionItemsWorker(QList<MissionItem*>& items, QO
         qCDebug(SurveyMissionItemLog) << "last PointIndex" << pointIndex;
     }
 
-    if (((hasRefly && buildRefly) || !hasRefly) && _imagesEverywhere()) {
+    if ((hasRefly && buildRefly) || !hasRefly) {
+
         // Turn off camera at end of survey
         MissionItem* item = new MissionItem(seqNum++,
-                                            MAV_CMD_DO_SET_CAM_TRIGG_DIST,
-                                            MAV_FRAME_MISSION,
-                                            0.0,                    // trigger distance (off)
-                                            0, 0, 0, 0, 0, 0,       // param 2-7 unused
-                                            true,                   // autoContinue
-                                            false,                  // isCurrentItem
-                                            missionItemParent);
+                               MAV_CMD_DO_TRIGGER_CONTROL,
+                               MAV_FRAME_MISSION,
+                               0,                              // disable trigger
+                               0,                              // don't reset trigger sequence
+                               0, 0, 0, 0, 0,                  // param 3-7 unused
+                               true,                           // autoContinue
+                               false,                          // isCurrentItem
+                               missionItemParent);
         items.append(item);
     }
 
