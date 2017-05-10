@@ -24,6 +24,7 @@
 #include "MotorComponent.h"
 #include "PX4TuningComponent.h"
 #include "MixersComponent.h"
+#include "SyslinkComponent.h"
 #include "Vehicle.h"
 
 #include <QImage>
@@ -44,7 +45,6 @@ public:
     const QVariantList& vehicleComponents(void) override;
     void parametersReadyPreChecks(void) override;
     QString prerequisiteSetup(VehicleComponent* component) const override;
-
 protected:
     bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
     PX4AirframeLoader*      _airframeFacts;
@@ -59,7 +59,7 @@ protected:
     MotorComponent*         _motorComponent;
     PX4TuningComponent*     _tuningComponent;
     MixersComponent*        _mixersComponent;
-
+    SyslinkComponent*       _syslinkComponent;
 private:
     QVariantList            _components;
 };
