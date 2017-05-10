@@ -69,5 +69,6 @@
         <file alias="WIFIRSSIIndicator.qml">res/WIFIRSSIIndicator.qml</file>
         <file alias="YGPSIndicator.qml">res/YGPSIndicator.qml</file>
         <file alias="YuneecFlyView.qml">res/YuneecFlyView.qml</file>
+        <file alias="YuneecParameterFactMetaData.xml">res/YuneecParameterFactMetaData.xml</file>
     </qresource>
 </RCC>
