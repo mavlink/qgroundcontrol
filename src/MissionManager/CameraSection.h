@@ -38,8 +38,9 @@ public:
     Q_PROPERTY(Fact*    cameraAction                    READ cameraAction                                                       CONSTANT)
     Q_PROPERTY(Fact*    cameraPhotoIntervalTime         READ cameraPhotoIntervalTime                                            CONSTANT)
     Q_PROPERTY(Fact*    cameraPhotoIntervalDistance     READ cameraPhotoIntervalDistance                                        CONSTANT)
+    Q_PROPERTY(bool     cameraModeSupported             READ cameraModeSupported                                                CONSTANT)   ///< true: cameraMode is supported by this vehicle
     Q_PROPERTY(bool     specifyCameraMode               READ specifyCameraMode              WRITE setSpecifyCameraMode          NOTIFY specifyCameraModeChanged)
-    Q_PROPERTY(Fact*    cameraMode                      READ cameraMode                                                         CONSTANT)
+    Q_PROPERTY(Fact*    cameraMode                      READ cameraMode                                                         CONSTANT)   ///< MAV_CMD_SET_CAMERA_MODE.param2
 
     bool    specifyGimbal               (void) const { return _specifyGimbal; }
     Fact*   gimbalYaw                   (void) { return &_gimbalYawFact; }
@@ -47,6 +48,7 @@ public:
     Fact*   cameraAction                (void) { return &_cameraActionFact; }
     Fact*   cameraPhotoIntervalTime     (void) { return &_cameraPhotoIntervalTimeFact; }
     Fact*   cameraPhotoIntervalDistance (void) { return &_cameraPhotoIntervalDistanceFact; }
+    bool    cameraModeSupported         (void) const;
     bool    specifyCameraMode           (void) const { return _specifyCameraMode; }
     Fact*   cameraMode                  (void) { return &_cameraModeFact; }
 
