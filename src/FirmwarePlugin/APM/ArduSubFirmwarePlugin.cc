@@ -40,7 +40,8 @@ APMSubMode::APMSubMode(uint32_t mode, bool settable) :
     setEnumToStringMapping(enumToString);
 }
 
-ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void)
+ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
+    _infoFactGroup(this)
 {
     QList<APMCustomMode> supportedFlightModes;
     supportedFlightModes << APMSubMode(APMSubMode::MANUAL ,true);
@@ -100,7 +101,7 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void)
         _remapParamNameIntialized = true;
     }
 
-    fwFactGroup = new APMSubmarineFactGroup(this);
+    _factGroups.append(&_infoFactGroup);
 }
 
 int ArduSubFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
@@ -166,15 +167,15 @@ void ArduSubFirmwarePlugin::_handleNamedValueFloat(mavlink_message_t* message)
     QString name = QString(value.name);
 
     if (name == "CamTilt") {
-        fwFactGroup->getFact("camera tilt")->setRawValue(value.value * 100);
+        _infoFactGroup.getFact("camera tilt")->setRawValue(value.value * 100);
     } else if (name == "TetherTrn") {
-        fwFactGroup->getFact("tether turns")->setRawValue(value.value);
+        _infoFactGroup.getFact("tether turns")->setRawValue(value.value);
     } else if (name == "Lights1") {
-        fwFactGroup->getFact("lights 1")->setRawValue(value.value * 100);
+        _infoFactGroup.getFact("lights 1")->setRawValue(value.value * 100);
     } else if (name == "Lights2") {
-        fwFactGroup->getFact("lights 2")->setRawValue(value.value * 100);
+        _infoFactGroup.getFact("lights 2")->setRawValue(value.value * 100);
     } else if (name == "PilotGain") {
-        fwFactGroup->getFact("pilot gain")->setRawValue(value.value * 100);
+        _infoFactGroup.getFact("pilot gain")->setRawValue(value.value * 100);
     }
 }
 

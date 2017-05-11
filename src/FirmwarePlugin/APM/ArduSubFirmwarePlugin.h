@@ -28,6 +28,40 @@
 #define ArduSubFirmwarePlugin_H
 
 #include "APMFirmwarePlugin.h"
+class APMSubmarineFactGroup : public FactGroup
+{
+    Q_OBJECT
+
+public:
+    APMSubmarineFactGroup(QObject* parent = NULL);
+
+    Q_PROPERTY(Fact* camTilt       READ camTilt       CONSTANT)
+    Q_PROPERTY(Fact* tetherTurns   READ tetherTurns   CONSTANT)
+    Q_PROPERTY(Fact* lightsLevel1  READ lightsLevel1  CONSTANT)
+    Q_PROPERTY(Fact* lightsLevel2  READ lightsLevel2  CONSTANT)
+    Q_PROPERTY(Fact* pilotGain     READ pilotGain     CONSTANT)
+
+    Fact* camTilt       (void) { return &_camTiltFact; }
+    Fact* tetherTurns   (void) { return &_tetherTurnsFact; }
+    Fact* lightsLevel1  (void) { return &_lightsLevel1Fact; }
+    Fact* lightsLevel2  (void) { return &_lightsLevel2Fact; }
+    Fact* pilotGain     (void) { return &_pilotGainFact; }
+
+    static const char* _camTiltFactName;
+    static const char* _tetherTurnsFactName;
+    static const char* _lightsLevel1FactName;
+    static const char* _lightsLevel2FactName;
+    static const char* _pilotGainFactName;
+
+    static const char* _settingsGroup;
+
+private:
+    Fact            _camTiltFact;
+    Fact            _tetherTurnsFact;
+    Fact            _lightsLevel1Fact;
+    Fact            _lightsLevel2Fact;
+    Fact            _pilotGainFact;
+};
 
 class APMSubMode : public APMCustomMode
 {
@@ -97,40 +131,7 @@ private:
     static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
     void _handleNamedValueFloat(mavlink_message_t* message);
     void _handleMavlinkMessage(mavlink_message_t* message);
-};
 
-class APMSubmarineFactGroup : public FactGroup
-{
-    Q_OBJECT
-
-public:
-    APMSubmarineFactGroup(QObject* parent = NULL);
-
-    Q_PROPERTY(Fact* camTilt       READ camTilt       CONSTANT)
-    Q_PROPERTY(Fact* tetherTurns   READ tetherTurns   CONSTANT)
-    Q_PROPERTY(Fact* lightsLevel1  READ lightsLevel1  CONSTANT)
-    Q_PROPERTY(Fact* lightsLevel2  READ lightsLevel2  CONSTANT)
-    Q_PROPERTY(Fact* pilotGain     READ pilotGain     CONSTANT)
-
-    Fact* camTilt       (void) { return &_camTiltFact; }
-    Fact* tetherTurns   (void) { return &_tetherTurnsFact; }
-    Fact* lightsLevel1  (void) { return &_lightsLevel1Fact; }
-    Fact* lightsLevel2  (void) { return &_lightsLevel2Fact; }
-    Fact* pilotGain     (void) { return &_pilotGainFact; }
-
-    static const char* _camTiltFactName;
-    static const char* _tetherTurnsFactName;
-    static const char* _lightsLevel1FactName;
-    static const char* _lightsLevel2FactName;
-    static const char* _pilotGainFactName;
-
-    static const char* _settingsGroup;
-
-private:
-    Fact            _camTiltFact;
-    Fact            _tetherTurnsFact;
-    Fact            _lightsLevel1Fact;
-    Fact            _lightsLevel2Fact;
-    Fact            _pilotGainFact;
+    APMSubmarineFactGroup _infoFactGroup;
 };
 #endif
