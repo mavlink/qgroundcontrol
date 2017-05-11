@@ -273,6 +273,8 @@ public:
     /// Returns a list of CameraMetaData objects for available cameras on the vehicle.
     virtual const QVariantList& cameraList(const Vehicle* vehicle);
 
+    virtual QList<FactGroup*> factGroups(void);
+
     /// @true: When flying a mission the vehicle is always facing towards the next waypoint
     virtual bool vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const;
 
@@ -295,13 +297,11 @@ public:
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const char* px4FollowMeFlightMode;
 
-    /// Used to add additional firmware-specific facts to the vehicle values widget
-    FactGroup* fwFactGroup = NULL;
-
 protected:
     // Arms the vehicle with validation and retries
     // @return: true - vehicle armed, false - vehicle failed to arm
     bool _armVehicleAndValidate(Vehicle* vehicle);
+    QList<FactGroup*> _factGroups;
 
     // Sets the vehicle to the specified flight mode with validation and retries
     // @return: true - vehicle in specified flight mode, false - flight mode change failed
