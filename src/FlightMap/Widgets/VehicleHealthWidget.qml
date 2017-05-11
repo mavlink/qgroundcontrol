@@ -27,13 +27,6 @@ QGCFlickable {
 
     property var    unhealthySensors:   QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.unhealthySensors : [ ]
 
-    // Any time the unhealthy sensors list changes, switch to the health page
-    onUnhealthySensorsChanged: {
-        if (unhealthySensors.length != 0) {
-            showPage(2)
-        }
-    }
-
     MouseArea {
         anchors.fill:   parent
         onClicked:      showNextPage()
