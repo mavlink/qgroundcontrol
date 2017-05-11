@@ -2406,7 +2406,9 @@ void Vehicle::triggerCamera(void)
                    MAV_CMD_DO_DIGICAM_CONTROL,
                    true,                            // show errors
                    0.0, 0.0, 0.0, 0.0,              // param 1-4 unused
-                   1.0);                            // trigger camera
+                   1.0,                             // trigger camera
+                   0.0,                             // param 6 unused
+                   1.0);                            // test shot flag
 }
 
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
