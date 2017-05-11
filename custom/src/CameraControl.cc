@@ -259,7 +259,6 @@ CameraControl::takePhoto()
             1,                                          // Number of images to capture total - 0 for unlimited capture
             -1,                                         // Horizontal resolution in pixels (set to -1 for highest resolution possible)
             -1);                                        // Vertical resolution in pixels (set to -1 for highest resolution possible)
-        _startTimer(TIMER_GET_CAPTURE_INFO, 250);
         _cameraSound.setLoopCount(1);
         _cameraSound.play();
     } else {
@@ -290,7 +289,6 @@ CameraControl::startVideo()
             f,                                          // FPS: (-1 for max)
             w,                                          // Horizontal resolution in pixels (set to -1 for highest resolution possible)
             h);                                         // Vertical resolution in pixels (set to -1 for highest resolution possible)
-        _startTimer(TIMER_GET_CAPTURE_INFO, 250);
         _videoSound.setLoopCount(1);
         _videoSound.play();
     } else {
@@ -310,7 +308,6 @@ CameraControl::stopVideo()
             MAV_CMD_VIDEO_STOP_CAPTURE,                 // Command id
             true,                                       // ShowError
             0);                                         // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
-        _startTimer(TIMER_GET_CAPTURE_INFO, 250);
         _videoSound.setLoopCount(2);
         _videoSound.play();
     }
@@ -330,15 +327,11 @@ CameraControl::setVideoMode()
         emit cameraModeChanged();
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
-            MAV_CMD_SET_CAMERA_SETTINGS_2,              // Command id
+            MAV_CMD_SET_CAMERA_MODE,                    // Command id
             true,                                       // ShowError
-            1,                                          // Camera ID (1 for first, 2 for second, etc.)
+            0,                                          // Camera ID (0 for all, 1 for first, 2 for second, etc.)
             1,                                          // Camera mode (0: photo, 1: video)
-            NAN,                                        // Audio recording enabled (0: off 1: on)
-            NAN,                                        // Metering mode ID (Average, Center, Spot, etc.)
-            NAN,                                        // Image format ID (Jpeg/Raw/Jpeg+Raw)
-            NAN,                                        // Image quality ID (Compression)
-            NAN);                                       // Color mode ID (Neutral, Vivid, etc.)
+            NAN);                                       // Audio recording enabled (0: off 1: on)
     }
 }
 
@@ -356,15 +349,11 @@ CameraControl::setPhotoMode()
         emit cameraModeChanged();
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
-            MAV_CMD_SET_CAMERA_SETTINGS_2,              // Command id
+            MAV_CMD_SET_CAMERA_MODE,                    // Command id
             true,                                       // ShowError
-            1,                                          // Camera ID (1 for first, 2 for second, etc.)
+            0,                                          // Camera ID (0 for all, 1 for first, 2 for second, etc.)
             0,                                          // Camera mode (0: photo, 1: video)
-            NAN,                                        // Audio recording enabled (0: off 1: on)
-            NAN,                                        // Metering mode ID (Average, Center, Spot, etc.)
-            NAN,                                        // Image format ID (Jpeg/Raw/Jpeg+Raw)
-            NAN,                                        // Image quality ID (Compression)
-            NAN);                                       // Color mode ID (Neutral, Vivid, etc.)
+            NAN);                                       // Audio recording enabled (0: off 1: on)
     }
 }
 
@@ -450,8 +439,7 @@ CameraControl::setCurrentIQ(quint32 index)
             MAV_CMD_SET_CAMERA_SETTINGS_2,              // Command id
             true,                                       // ShowError
             1,                                          // Camera ID (1 for first, 2 for second, etc.)
-            NAN,                                        // Camera mode (0: photo, 1: video)
-            NAN,                                        // Audio recording enabled (0: off 1: on)
+            NAN,                                        // Reserved for Flicker mode (0 for Auto)
             NAN,                                        // Metering mode ID (Average, Center, Spot, etc.)
             NAN,                                        // Image format ID (Jpeg/Raw/Jpeg+Raw)
             NAN,                                        // Image quality ID (Compression)
@@ -470,8 +458,7 @@ CameraControl::setCurrentPhotoFmt(quint32 index)
             MAV_CMD_SET_CAMERA_SETTINGS_2,              // Command id
             true,                                       // ShowError
             1,                                          // Camera ID (1 for first, 2 for second, etc.)
-            NAN,                                        // Camera mode (0: photo, 1: video)
-            NAN,                                        // Audio recording enabled (0: off 1: on)
+            NAN,                                        // Reserved for Flicker mode (0 for Auto)
             NAN,                                        // Metering mode ID (Average, Center, Spot, etc.)
             index,                                      // Image format ID (Jpeg/Raw/Jpeg+Raw)
             NAN,                                        // Image quality ID (Compression)
@@ -490,8 +477,7 @@ CameraControl::setCurrentMetering(quint32 index)
             MAV_CMD_SET_CAMERA_SETTINGS_2,              // Command id
             true,                                       // ShowError
             1,                                          // Camera ID (1 for first, 2 for second, etc.)
-            NAN,                                        // Camera mode (0: photo, 1: video)
-            NAN,                                        // Audio recording enabled (0: off 1: on)
+            NAN,                                        // Reserved for Flicker mode (0 for Auto)
             meteringModeOptions[index].mode,            // Metering mode ID (Average, Center, Spot, etc.)
             NAN,                                        // Image format ID (Jpeg/Raw/Jpeg+Raw)
             NAN,                                        // Image quality ID (Compression)
@@ -695,7 +681,6 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
                 if(result == MAV_RESULT_ACCEPTED) {
                     //-- We have an answer. Start the show.
                     _cameraSupported = CAMERA_SUPPORT_YES;
-                    _startTimer(TIMER_GET_STORAGE_INFO, 500);
                 } else {
                     //-- We got an answer but not a good one
                     _cameraSupported = CAMERA_SUPPORT_NO;
@@ -704,12 +689,6 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
         }
     } else if(_cameraSupported == CAMERA_SUPPORT_YES) {
         switch(command) {
-            case MAV_CMD_IMAGE_START_CAPTURE:
-                if(result != MAV_RESULT_ACCEPTED) {
-                    _errorSound.setLoopCount(2);
-                    _errorSound.play();
-                }
-                break;
             case MAV_CMD_REQUEST_STORAGE_INFORMATION:
                 if(noReponseFromVehicle) {
                     qCDebug(YuneecCameraLog) << "Retry MAV_CMD_REQUEST_STORAGE_INFORMATION";
@@ -730,8 +709,6 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
                     if(result != MAV_RESULT_ACCEPTED) {
                         qCDebug(YuneecCameraLog) << "Bad response from MAV_CMD_REQUEST_CAMERA_SETTINGS" << result << "Retrying...";
                         _startTimer(TIMER_GET_CAMERA_SETTINGS, 500);
-                    } else {
-                        _startTimer(TIMER_GET_STORAGE_INFO, 500);
                     }
                 }
                 break;
@@ -749,10 +726,14 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
             case MAV_CMD_SET_CAMERA_SETTINGS_1:
             case MAV_CMD_SET_CAMERA_SETTINGS_2:
             case MAV_CMD_RESET_CAMERA_SETTINGS:
+            case MAV_CMD_SET_CAMERA_MODE:
+            case MAV_CMD_IMAGE_START_CAPTURE:
+            case MAV_CMD_VIDEO_START_CAPTURE:
+            case MAV_CMD_VIDEO_STOP_CAPTURE:
                 if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
-                    _startTimer(TIMER_GET_CAMERA_SETTINGS, 250);
+                    _startTimer(TIMER_GET_CAMERA_SETTINGS, 333);
                 } else {
-                    _errorSound.setLoopCount(1);
+                    _errorSound.setLoopCount(2);
                     _errorSound.play();
                 }
                 break;
@@ -869,6 +850,8 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
         _ambarellaSettings.metering_mode = settings.metering_mode_id;
         emit currentMeteringChanged();
     }
+    //-- Get Storage Setting next
+    _startTimer(TIMER_GET_STORAGE_INFO, 500);
 }
 
 //-----------------------------------------------------------------------------
@@ -879,6 +862,11 @@ CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
     mavlink_camera_capture_status_t cap;
     mavlink_msg_camera_capture_status_decode(&message, &cap);
     qCDebug(YuneecCameraLog) << "_handleCaptureStatus:" << cap.available_capacity << cap.image_interval << cap.image_resolution_h << cap.image_resolution_v << cap.image_status << cap.recording_time_ms << cap.video_framerate << cap.video_resolution_h << cap.video_resolution_v << cap.video_status;
+    //-- Disk Free Space
+    if(_ambarellaStatus.sdfree != cap.available_capacity) {
+        _ambarellaStatus.sdfree = cap.available_capacity;
+        emit sdFreeChanged();
+    }
     //-- Image Capture Status
     if(_ambarellaStatus.image_status != cap.image_status) {
         _ambarellaStatus.image_status = cap.image_status;
