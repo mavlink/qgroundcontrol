@@ -12,6 +12,7 @@ import QtQuick              2.3
 import QtQuick.Controls     1.2
 import QtGraphicalEffects   1.0
 
+import QGroundControl               1.0
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
@@ -34,21 +35,27 @@ SetupPage {
 
             QGCPalette { id: ggcPal; colorGroupEnabled: true }
 
-            property Fact _failsafeGCSEnable:      controller.getParameterFact(-1, "FS_GCS_ENABLE")
-            property Fact _failsafeLeakEnable:     controller.getParameterFact(-1, "FS_LEAK_ENABLE")
-            property Fact _failsafePressureEnable: controller.getParameterFact(-1, "FS_PRESS_ENABLE")
-            property Fact _failsafePressureValue:  controller.getParameterFact(-1, "FS_PRESS_MAX")
-            property Fact _failsafeTempEnable:     controller.getParameterFact(-1, "FS_TEMP_ENABLE")
-            property Fact _failsafeTempValue:      controller.getParameterFact(-1, "FS_TEMP_MAX")
+            property var _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+            property bool _firmware34: _activeVehicle.firmwareMajorVersion == 3 && _activeVehicle.firmwareMinorVersion == 4
 
-            property Fact _fenceAction: controller.getParameterFact(-1, "FENCE_ACTION")
-            property Fact _fenceAltMax: controller.getParameterFact(-1, "r.FENCE_ALT_MIN")
-            property Fact _fenceEnable: controller.getParameterFact(-1, "FENCE_ENABLE")
-            property Fact _fenceMargin: controller.getParameterFact(-1, "FENCE_MARGIN")
-            property Fact _fenceType:   controller.getParameterFact(-1, "FENCE_TYPE")
+            // Enable/Action parameters
+            property Fact _failsafeBatteryEnable:     controller.getParameterFact(-1, "FS_BATT_ENABLE")
+            property Fact _failsafeEKFEnable:         controller.getParameterFact(-1, "FS_EKF_ACTION")
+            property Fact _failsafeGCSEnable:         controller.getParameterFact(-1, "FS_GCS_ENABLE")
+            property Fact _failsafeLeakEnable:        controller.getParameterFact(-1, "FS_LEAK_ENABLE")
+            property Fact _failsafePilotEnable:       controller.getParameterFact(-1, "FS_PILOT_INPUT")
+            property Fact _failsafePressureEnable:    controller.getParameterFact(-1, "FS_PRESS_ENABLE")
+            property Fact _failsafeTemperatureEnable: controller.getParameterFact(-1, "FS_TEMP_ENABLE")
 
-            property Fact _leakPin:            controller.getParameterFact(-1, "LEAK1_PIN")
-            property Fact _leakLogic:          controller.getParameterFact(-1, "LEAK1_LOGIC")
+            // Threshold parameters
+            property Fact _failsafePressureThreshold:    controller.getParameterFact(-1, "FS_PRESS_MAX")
+            property Fact _failsafeTemperatureThreshold: controller.getParameterFact(-1, "FS_TEMP_MAX")
+            property Fact _failsafePilotTimeout:         controller.getParameterFact(-1, "FS_PILOT_TIMEOUT")
+            property Fact _failsafeLeakPin:              controller.getParameterFact(-1, "LEAK1_PIN")
+            property Fact _failsafeLeakLogic:            controller.getParameterFact(-1, "LEAK1_LOGIC")
+            property Fact _failsafeEKFThreshold:         controller.getParameterFact(-1, "FS_EKF_THRESH")
+            property Fact _failsafeBatteryVoltage:       controller.getParameterFact(-1, "FS_BATT_VOLTAGE")
+            property Fact _failsafeBatteryCapacity:      controller.getParameterFact(-1, "FS_BATT_MAH")
 
             property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
 
@@ -67,158 +74,264 @@ SetupPage {
                 }
 
                 Rectangle {
-                    id:     failsafeSettings
-                    width:  leakEnableCombo.x + leakEnableCombo.width + _margins
-                    height: leakEnableCombo.y + leakEnableCombo.height + _margins
+                    id:     failsafeRectangle
+                    width:  flowLayout.width
+                    height: childrenRect.height + _margins
                     color:  ggcPal.windowShade
 
-                    QGCLabel {
-                        id:                 gcsEnableLabel
-                        anchors.margins:    _margins
-                        anchors.left:       parent.left
-                        anchors.baseline:   gcsEnableCombo.baseline
-                        text:               qsTr("Ground Station failsafe:")
-                    }
+                    Column {
+                        anchors.top: failsafeRectangle.top
+                        anchors.left: failsafeRectangle.left
+                        anchors.margins: _margins / 2
+                        property var _labelWidth: ScreenTools.defaultFontPixelWidth * 15
+                        property var _editWidth: ScreenTools.defaultFontPixelWidth * 20
+                        id:     failsafeSettings
+                        spacing: ScreenTools.defaultFontPixelHeight
 
-                    FactComboBox {
-                        id:                 gcsEnableCombo
-                        anchors.margins:    _margins
-                        anchors.left:       gcsEnableLabel.right
-                        anchors.top:        parent.top
-                        width:              ScreenTools.defaultFontPixelWidth*15
-                        fact:               _failsafeGCSEnable
-                        indexModel:         false
-                    }
+                        Row {
+                            spacing: _margins / 2
 
-                    QGCLabel {
-                        id:                 leakEnableLabel
-                        anchors.margins:    _margins
-                        anchors.left:       parent.left
-                        anchors.baseline:   leakEnableCombo.baseline
-                        text:               qsTr("Leak failsafe:")
-                    }
+                            QGCLabel {
+                                id:                 gcsEnableLabel
+                                width:              failsafeSettings._labelWidth
+                                anchors.baseline:   gcsEnableCombo.baseline
+                                text:               qsTr("GCS Heartbeat:")
+                            }
 
-                    FactComboBox {
-                        id:                 leakEnableCombo
-                        anchors.topMargin:  _margins
-                        anchors.left:       gcsEnableCombo.left
-                        anchors.top:        gcsEnableCombo.bottom
-                        width:              ScreenTools.defaultFontPixelWidth*15
-                        fact:               _failsafeLeakEnable
-                        indexModel:         false
-                    }
-                } // Rectangle - Failsafe Settings
-            } // Column - Failsafe Settings
-
-            Column {
-                spacing: _margins / 2
-
-                QGCLabel {
-                    id:             geoFenceLabel
-                    text:           qsTr("GeoFence")
-                    font.family:    ScreenTools.demiboldFontFamily
-                }
-
-                Rectangle {
-                    id:     geoFenceSettings
-                    width:  fenceAltMaxField.x + fenceAltMaxField.width + _margins
-                    height: fenceAltMaxField.y + fenceAltMaxField.height + _margins
-                    color:  ggcPal.windowShade
-
-                    QGCCheckBox {
-                        id:                 altitudeGeo
-                        anchors.margins:    _margins
-                        anchors.left:       parent.left
-                        anchors.top:        parent.top
-                        text:               qsTr("Depth GeoFence enabled\n(report only)")
-                        checked:            _fenceEnable.value != 0 && _fenceType.value & 1
-
-                        onClicked: {
-                            if (checked) {
-                                if (_fenceEnable.value == 1) {
-                                    _fenceType.value |= 1
-                                } else {
-                                    _fenceEnable.value = 1
-                                    _fenceType.value = 1
-                                }
-                            } else {
-                                _fenceEnable.value = 0
-                                _fenceType.value = 0
+                            FactComboBox {
+                                id:                 gcsEnableCombo
+                                width:              failsafeSettings._editWidth
+                                fact:               _failsafeGCSEnable
+                                indexModel:         false
                             }
                         }
-                    }
 
-                    QGCLabel {
-                        id:                 fenceAltMaxLabel
-                        anchors.left:       altitudeGeo.left
-                        anchors.baseline:   fenceAltMaxField.baseline
-                        text:               qsTr("Max depth:")
-                    }
+                        Row {
+                            spacing: _margins / 2
 
-                    FactTextField {
-                        id:                 fenceAltMaxField
-                        anchors.topMargin:  _margins / 2
-                        anchors.leftMargin: _margins
-                        anchors.left:       fenceAltMaxLabel.right
-                        anchors.top:        altitudeGeo.bottom
-                        fact:               _fenceAltMax
-                        showUnits:          true
-                    }
-                } // Rectangle - GeoFence Settings
-            } // Column - GeoFence Settings
+                            QGCLabel {
+                                id:                 leakEnableLabel
+                                width:              failsafeSettings._labelWidth
+                                anchors.baseline:   leakEnableCombo.baseline
+                                text:               qsTr("Leak:")
+                            }
 
-            Column {
-                spacing: _margins / 2
+                            FactComboBox {
+                                id:                 leakEnableCombo
+                                width:              failsafeSettings._editWidth
+                                fact:               _failsafeLeakEnable
+                                indexModel:         false
+                            }
 
-                QGCLabel {
-                    id:             leakDetectorLabel
-                    text:           qsTr("Leak Detector")
-                    font.family:    ScreenTools.demiboldFontFamily
-                }
+                            QGCLabel {
+                                text: "Detector Pin:"
+                                width:              failsafeSettings._labelWidth
+                                visible:            leakEnableCombo.currentIndex != 0
+                                anchors.baseline:   leakEnableCombo.baseline
+                            }
 
-                Rectangle {
-                    id:     leakDetectorSettings
-                    width:  leakLogicCombo.x + leakLogicCombo.width + _margins
-                    height: leakLogicCombo.y + leakLogicCombo.height + _margins
-                    color:  ggcPal.windowShade
+                            FactComboBox {
+                                width:              failsafeSettings._editWidth
+                                visible:            leakEnableCombo.currentIndex != 0
+                                anchors.baseline:   leakEnableCombo.baseline
+                                fact:               _failsafeLeakPin
+                            }
 
-                    QGCLabel {
-                        id:                 leakPinLabel
-                        anchors.margins:    _margins
-                        anchors.left:       parent.left
-                        anchors.top:        parent.top
-                        text:               qsTr("Pin:")
-                    }
+                            QGCLabel {
+                                text: "Logic when Dry:"
+                                width:              failsafeSettings._labelWidth
+                                visible:            leakEnableCombo.currentIndex != 0
+                                anchors.baseline:   leakEnableCombo.baseline
+                            }
 
-                    FactComboBox {
-                        id:                 leakPinCombo
-                        anchors.margins:    _margins
-                        anchors.left:       leakLogicLabel.right
-                        anchors.baseline:   leakPinLabel.baseline
-                        width:              ScreenTools.defaultFontPixelWidth*15
-                        fact:               _leakPin
-                        indexModel:         false
-                    }
+                            FactComboBox {
+                                width:              failsafeSettings._editWidth
+                                visible:            leakEnableCombo.currentIndex != 0
+                                anchors.baseline:   leakEnableCombo.baseline
+                                fact:               _failsafeLeakLogic
+                            }
+                        }
 
-                    QGCLabel {
-                        id:                 leakLogicLabel
-                        anchors.margins:    _margins
-                        anchors.left:       parent.left
-                        anchors.top:        leakPinLabel.bottom
-                        text:               qsTr("Logic (when dry):")
-                    }
+                        Row {
+                            spacing: _margins / 2
+                            visible: !_firmware34
 
-                    FactComboBox {
-                        id:                 leakLogicCombo
-                        anchors.margins:    _margins
-                        anchors.left:       leakLogicLabel.right
-                        anchors.baseline:   leakLogicLabel.baseline
-                        width:              ScreenTools.defaultFontPixelWidth*15
-                        fact:               _leakLogic
-                        indexModel:         false
-                    }
-                } // Rectangle - Leak Detector Settings
-            } // Column - Leak Detector Settings
+                            QGCLabel {
+                                id:                 batteryEnableLabel
+                                width:              failsafeSettings._labelWidth
+                                anchors.baseline:   batteryEnableCombo.baseline
+                                text:               qsTr("Battery:")
+                            }
+
+                            FactComboBox {
+                                id:                 batteryEnableCombo
+                                width:              failsafeSettings._editWidth
+                                fact:               _failsafeBatteryEnable
+                                indexModel:         false
+                            }
+
+                            QGCLabel {
+                                text: "Voltage:"
+                                width:              failsafeSettings._labelWidth
+                                visible:            batteryEnableCombo.currentIndex != 0
+                                anchors.baseline:   batteryEnableCombo.baseline
+                            }
+
+                            FactTextField {
+                                width:              failsafeSettings._editWidth
+                                visible:            batteryEnableCombo.currentIndex != 0
+                                anchors.baseline:   batteryEnableCombo.baseline
+                                fact:               _failsafeBatteryVoltage
+                            }
+
+                            QGCLabel {
+                                text: "Remaining Capacity:"
+                                width:              failsafeSettings._labelWidth
+                                visible:            batteryEnableCombo.currentIndex != 0
+                                anchors.baseline:   batteryEnableCombo.baseline
+                            }
+
+                            FactTextField {
+                                width:              failsafeSettings._editWidth
+                                visible:            batteryEnableCombo.currentIndex != 0
+                                anchors.baseline:   batteryEnableCombo.baseline
+                                fact:               _failsafeBatteryCapacity
+                            }
+                        }
+
+                        Row {
+                            spacing: _margins / 2
+                            visible: !_firmware34
+
+                            QGCLabel {
+                                id:                 ekfEnableLabel
+                                width:              failsafeSettings._labelWidth
+                                anchors.baseline:   ekfEnableCombo.baseline
+                                text:               qsTr("EKF:")
+                            }
+
+                            FactComboBox {
+                                id:                 ekfEnableCombo
+                                width:              failsafeSettings._editWidth
+                                fact:               _failsafeEKFEnable
+                                indexModel:         false
+                            }
+
+                            QGCLabel {
+                                text: "Threshold:"
+                                width:              failsafeSettings._labelWidth
+                                visible:            ekfEnableCombo.currentIndex != 0
+                                anchors.baseline:   ekfEnableCombo.baseline
+                            }
+
+                            FactTextField {
+                                width:              failsafeSettings._editWidth
+                                visible:            ekfEnableCombo.currentIndex != 0
+                                anchors.baseline:   ekfEnableCombo.baseline
+                                fact:               _failsafeEKFThreshold
+                            }
+                        }
+
+                        Row {
+                            spacing: _margins / 2
+                            visible: !_firmware34
+
+                            QGCLabel {
+                                id:                 pilotEnableLabel
+                                width:              failsafeSettings._labelWidth
+                                anchors.baseline:   pilotEnableCombo.baseline
+                                text:               qsTr("Pilot Input:")
+                            }
+
+                            FactComboBox {
+                                id:                 pilotEnableCombo
+                                width:              failsafeSettings._editWidth
+                                fact:               _failsafePilotEnable
+                                indexModel:         false
+                            }
+
+                            QGCLabel {
+                                text: "Timeout:"
+                                width:              failsafeSettings._labelWidth
+                                visible:            pilotEnableCombo.currentIndex != 0
+                                anchors.baseline:   pilotEnableCombo.baseline
+
+                            }
+
+                            FactTextField {
+                                width:              failsafeSettings._editWidth
+                                visible:            pilotEnableCombo.currentIndex != 0
+                                anchors.baseline:   pilotEnableCombo.baseline
+                                fact:               _failsafePilotTimeout
+                            }
+                        }
+
+                        Row {
+                            spacing: _margins / 2
+
+                            QGCLabel {
+                                id:                 temperatureEnableLabel
+                                width:              failsafeSettings._labelWidth
+                                anchors.baseline:   temperatureEnableCombo.baseline
+                                text:               qsTr("Internal Temperature:")
+                            }
+
+                            FactComboBox {
+                                id:                 temperatureEnableCombo
+                                width:              failsafeSettings._editWidth
+                                fact:               _failsafeTemperatureEnable
+                                indexModel:         false
+                            }
+
+                            QGCLabel {
+                                text: "Threshold:"
+                                width:              failsafeSettings._labelWidth
+                                visible:            temperatureEnableCombo.currentIndex != 0
+                                anchors.baseline:   temperatureEnableCombo.baseline
+                            }
+
+                            FactTextField {
+                                width:              failsafeSettings._editWidth
+                                visible:            temperatureEnableCombo.currentIndex != 0
+                                anchors.baseline:   temperatureEnableCombo.baseline
+                                fact:               _failsafeTemperatureThreshold
+                            }
+                        }
+
+                        Row {
+                            spacing: _margins / 2
+
+                            QGCLabel {
+                                id:                 pressureEnableLabel
+                                width:              failsafeSettings._labelWidth
+                                anchors.baseline:   pressureEnableCombo.baseline
+                                text:               qsTr("Internal Pressure:")
+                            }
+
+                            FactComboBox {
+                                id:                 pressureEnableCombo
+                                width:              failsafeSettings._editWidth
+                                fact:               _failsafePressureEnable
+                                indexModel:         false
+                            }
+
+                            QGCLabel {
+                                text: "Threshold:"
+                                width:              failsafeSettings._labelWidth
+                                visible:            pressureEnableCombo.currentIndex != 0
+                                anchors.baseline:   pressureEnableCombo.baseline
+                            }
+
+                            FactTextField {
+                                width:              failsafeSettings._editWidth
+                                visible:            pressureEnableCombo.currentIndex != 0
+                                anchors.baseline:   pressureEnableCombo.baseline
+                                fact:               _failsafePressureThreshold
+                            }
+                        }
+                    } // Column - Failsafe Settings
+                }// Rectangle - Failsafe Settings
+            } // Column - Failsafe Settings
 
             Column {
                 spacing: _margins / 2
