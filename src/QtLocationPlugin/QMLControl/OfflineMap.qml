@@ -89,8 +89,10 @@ QGCView {
 
     function updateMap() {
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
+            //console.log(_map.supportedMapTypes[i].name)
             if (mapType === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]
+                //console.log("Update Map:" + " " + _map.activeMapType)
                 handleChanges()
                 return
             }
@@ -226,6 +228,7 @@ QGCView {
 
             function accept() {
                 QGroundControl.mapEngineManager.mapboxToken  = mapBoxToken.text
+                QGroundControl.mapEngineManager.esriToken    = esriToken.text
                 QGroundControl.mapEngineManager.maxDiskCache = parseInt(maxCacheSize.text)
                 QGroundControl.mapEngineManager.maxMemCache  = parseInt(maxCacheMemSize.text)
                 optionDialog.hideDialog()
@@ -283,6 +286,22 @@ QGCView {
 
                     QGCLabel {
                         text:           qsTr("With an access token, you can use MapBox Maps.")
+                        font.pointSize: _adjustableFontPointSize
+                    }
+
+                    Item { width: 1; height: 1 }
+
+                    QGCLabel { text: qsTr("Esri Access Token") }
+
+                    QGCTextField {
+                        id:             esriToken
+                        maximumLength:  256
+                        width:          ScreenTools.defaultFontPixelWidth * 30
+                        text:           QGroundControl.mapEngineManager.esriToken
+                    }
+
+                    QGCLabel {
+                        text:           qsTr("With an access token, you can use Esri Maps.")
                         font.pointSize: _adjustableFontPointSize
                     }
                 } // GridLayout
