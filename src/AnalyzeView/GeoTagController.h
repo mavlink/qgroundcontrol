@@ -38,6 +38,18 @@ public:
 
     void cancelTagging      (void) { _cancel = true; }
 
+    struct cameraFeedbackPacket {
+        double timestamp;
+        double timestampUTC;
+        uint32_t imageSequence;
+        double latitude;
+        double longitude;
+        float altitude;
+        float groundDistance;
+        float attitudeQuaternion[4];
+        uint8_t captureResult;
+    };
+
 protected:
     void run(void) final;
 
@@ -47,7 +59,6 @@ signals:
     void progressChanged    (double progress);
 
 private:
-    bool parsePX4Log();
     bool triggerFiltering();
 
     bool                    _cancel;
@@ -55,11 +66,11 @@ private:
     QString                 _imageDirectory;
     QString                 _saveDirectory;
     QFileInfoList           _imageList;
-    QList<double>           _tagTime;
-    QList<QGeoCoordinate>   _geoRef;
-    QList<double>           _triggerTime;
+    QList<double>           _imageTime;
+    QList<cameraFeedbackPacket> _triggerList;
     QList<int>              _imageIndices;
     QList<int>              _triggerIndices;
+
 };
 
 /// Controller for GeoTagPage.qml. Supports geotagging images based on logfile camera tags.
