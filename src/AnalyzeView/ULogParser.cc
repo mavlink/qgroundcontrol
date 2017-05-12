@@ -99,13 +99,15 @@ bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedb
 
     while(index < log.count() - 1) {
 
-        ULogMessageHeader header{};
+        ULogMessageHeader header;
+        memset(&header, 0, sizeof(header));
         memcpy(&header, log.data() + index, ULOG_MSG_HEADER_LEN);
 
         switch (header.msgType) {
             case (int)ULogMessageType::FORMAT:
             {
-                ULogMessageFormat format_msg{};
+                ULogMessageFormat format_msg;
+                memset(&format_msg, 0, sizeof(format_msg));
                 memcpy(&format_msg, log.data() + index, ULOG_MSG_HEADER_LEN + header.msgSize);
 
                 QString fmt(format_msg.format);
@@ -121,7 +123,8 @@ bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedb
 
             case (int)ULogMessageType::ADD_LOGGED_MSG:
             {
-                ULogMessageAddLogged addLoggedMsg{};
+                ULogMessageAddLogged addLoggedMsg;
+                memset(&addLoggedMsg, 0, sizeof(addLoggedMsg));
                 memcpy(&addLoggedMsg, log.data() + index, ULOG_MSG_HEADER_LEN + header.msgSize);
 
                 QString messageName(addLoggedMsg.msgName);
@@ -147,7 +150,8 @@ bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedb
                 if(msgID == _cameraCaptureMsgID) {
 
                     // Completely dynamic parsing, so that changing/reordering the message format will not break the parser
-                    GeoTagWorker::cameraFeedbackPacket feedback{};
+                    GeoTagWorker::cameraFeedbackPacket feedback;
+                    memset(&feedback, 0, sizeof(feedback));
                     memcpy(&feedback.timestamp, log.data() + index + 5 + _cameraCaptureOffsets.value("timestamp"), 8);
                     feedback.timestamp /= 1.0e6; // to seconds
                     memcpy(&feedback.timestampUTC, log.data() + index + 5 + _cameraCaptureOffsets.value("timestamp_utc"), 8);
