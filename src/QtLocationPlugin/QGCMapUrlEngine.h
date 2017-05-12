@@ -50,8 +50,10 @@ public:
         BingSatellite           = 555,
         BingHybrid              = 666,
 
+        /*
         MapQuestMap             = 700,
         MapQuestSat             = 701,
+        */
 
         MapBoxStreets           = 6000,
         MapBoxLight             = 6001,
@@ -66,7 +68,11 @@ public:
         MapBoxPencil            = 6010,
         MapBoxPirates           = 6011,
         MapBoxEmerald           = 6012,
-        MapBoxHighContrast      = 6013
+        MapBoxHighContrast      = 6013,
+
+        EsriWorldStreet         = 7000,
+        EsriWorldSatellite      = 7001,
+        EsriTerrain             = 7002
     };
 
     UrlFactory      ();
