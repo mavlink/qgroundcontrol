@@ -55,7 +55,8 @@ bool PX4LogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFee
             continue;
         }
 
-        GeoTagWorker::cameraFeedbackPacket feedback{};
+        GeoTagWorker::cameraFeedbackPacket feedback;
+        memset(&feedback, 0, sizeof(feedback));
 
         uint64_t* time = reinterpret_cast<uint64_t*>(log.mid(index + triggerOffsets[0], triggerLengths[0]).data());
         double timeDouble = static_cast<double>(qFromLittleEndian(*time)) / 1.0e6;
