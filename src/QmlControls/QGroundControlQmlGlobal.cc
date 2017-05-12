@@ -26,7 +26,7 @@ const char* QGroundControlQmlGlobal::_flightMapZoomSettingsKey =                
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
-    , _flightMapInitialZoom(14.7)   // About 500 meter scale
+    , _flightMapInitialZoom(17.0)
     , _linkManager(NULL)
     , _multiVehicleManager(NULL)
     , _mapEngineManager(NULL)

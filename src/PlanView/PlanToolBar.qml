@@ -33,9 +33,9 @@ Rectangle {
     property bool   missionDirty:               _controllerValid ? planMasterController.missionController.dirty : false
 
     property bool   _controllerValid:           planMasterController != undefined
-    property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
-    property var    _controllerDirty:           planMasterController ? planMasterController.dirty : false
-    property var    _controllerSyncInProgress:  planMasterController ? planMasterController.syncInProgress : false
+    property bool   _controllerOffline:         _controllerValid ? planMasterController.offline : true
+    property var    _controllerDirty:           _controllerValid ? planMasterController.dirty : false
+    property var    _controllerSyncInProgress:  _controllerValid ? planMasterController.syncInProgress : false
 
     property bool   _statusValid:               currentMissionItem != undefined
     property bool   _missionValid:              missionItems != undefined
@@ -57,6 +57,8 @@ Rectangle {
     property real   _missionTime:               _missionValid ? missionTime : NaN
     property int    _batteryChangePoint:        _controllerValid ? planMasterController.missionController.batteryChangePoint : -1
     property int    _batteriesRequired:         _controllerValid ? planMasterController.missionController.batteriesRequired : -1
+    property real   _controllerProgressPct:     _controllerValid ? planMasterController.missionController.progressPct : 0
+    property bool   _syncInProgress:            _controllerValid ? planMasterController.missionController.syncInProgress : false
 
     property string _distanceText:              isNaN(_distance) ?              "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
     property string _altDifferenceText:         isNaN(_altDifference) ?         "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
@@ -110,20 +112,48 @@ Rectangle {
         }
     }
 
-    RowLayout {
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
-        spacing:                _margins * 2
-        anchors.left:           logoRow.right
-        anchors.leftMargin:     _margins * 4
-        anchors.right:          uploadButton.visible ? uploadButton.left : parent.right
+    // Progress bar
+
+    on_ControllerProgressPctChanged: {
+        if (_controllerProgressPct === 1) {
+            resetProgressTimer.start()
+        } else if (_controllerProgressPct > 0) {
+            progressBar.visible = true
+        }
+    }
+
+    Timer {
+        id:             resetProgressTimer
+        interval:       1000
+        onTriggered:    progressBar.visible = false
+    }
+
+    Rectangle {
+        id:             progressBar
+        anchors.left:   parent.left
+        anchors.bottom: parent.bottom
+        height:         4
+        width:          _controllerProgressPct * parent.width
+        color:          qgcPal.colorGreen
+        visible:        false
+    }
+
+    GridLayout {
+        anchors.top:                parent.top
+        anchors.bottom:             parent.bottom
+        anchors.leftMargin:     _margins
         anchors.rightMargin:    _margins
+        anchors.left:           logoRow.right
+        anchors.right:          uploadButton.visible ? uploadButton.left : parent.right
+        columnSpacing:              0//_margins
+        columns:                    3
 
         GridLayout {
             anchors.verticalCenter: parent.verticalCenter
             columns:                8
             rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
+            Layout.alignment:       Qt.AlignHCenter
 
             QGCLabel {
                 text:               qsTr("Selected Waypoint")
@@ -178,6 +208,7 @@ Rectangle {
             columns:                5
             rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
+            Layout.alignment:       Qt.AlignHCenter
 
             QGCLabel {
                 text:               qsTr("Total Mission")
@@ -214,6 +245,7 @@ Rectangle {
             columns:                3
             rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
+            Layout.alignment:       Qt.AlignHCenter
 
             QGCLabel {
                 text:               qsTr("Battery")
@@ -245,8 +277,8 @@ Rectangle {
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
         text:                   _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
-        enabled:                _activeVehicle && !_controllerSyncInProgress
-        visible:                _activeVehicle
+        enabled:                !_controllerSyncInProgress
+        visible:                !_controllerOffline
         onClicked:              planMasterController.upload()
 
         PropertyAnimation on opacity {

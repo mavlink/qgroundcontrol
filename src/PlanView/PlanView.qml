@@ -138,7 +138,7 @@ QGCView {
                     text:       qsTr("Pause and Upload")
                     onClicked: {
                         _activeVehicle.flightMode = _activeVehicle.pauseFlightMode
-                        _missionController.sendToVehicle()
+                        _planMasterController.sendToVehicle()
                         hideDialog()
                     }
                 }
@@ -231,7 +231,8 @@ QGCView {
         id:             fileDialog
         qgcView:        _qgcView
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
-        fileExtension:  masterController.fileExtension
+        fileExtension:  QGroundControl.settingsManager.appSettings.planFileExtension
+        fileExtension2: QGroundControl.settingsManager.appSettings.missionFileExtension
 
         onAcceptedForSave: {
             masterController.saveToFile(file)
@@ -346,17 +347,18 @@ QGCView {
 
             // Add the mission item visuals to the map
             Repeater {
-                model: _missionController.visualItems
+                model: _editingLayer == _layerMission ? _missionController.visualItems : undefined
 
                 delegate: MissionItemMapVisual {
                     map:        editorMap
                     onClicked:  setCurrentItem(sequenceNumber, false)
+                    visible:    _editingLayer == _layerMission
                 }
             }
 
             // Add lines between waypoints
             MissionLineView {
-                model:      _editingLayer == _layerMission ? _missionController.waypointLines : undefined
+                model: _editingLayer == _layerMission ? _missionController.waypointLines : undefined
             }
 
             // Add the vehicles to the map
@@ -396,9 +398,9 @@ QGCView {
                 color:              qgcPal.window
                 title:              qsTr("Plan")
                 z:                  QGroundControl.zOrderWidgets
-                showAlternateIcon:  [ false, false, !_autoSync && masterController.dirty, false, false, false ]
+                showAlternateIcon:  [ false, false, masterController.dirty, false, false, false ]
                 rotateImage:        [ false, false, masterController.syncInProgress, false, false, false ]
-                animateImage:       [ false, false, !_autoSync && masterController.dirty, false, false, false ]
+                animateImage:       [ false, false, masterController.dirty, false, false, false ]
                 buttonEnabled:      [ true, true, !masterController.syncInProgress, true, true, true ]
                 buttonVisible:      [ true, true, true, true, _showZoom, _showZoom ]
                 maxHeight:          mapScale.y - toolStrip.y
@@ -557,7 +559,7 @@ QGCView {
 
                     delegate: MissionItemEditor {
                         map:                editorMap
-                        missionController:  _missionController
+                        masterController:  _planMasterController
                         missionItem:        object
                         width:              parent.width
                         readOnly:           false
@@ -653,7 +655,7 @@ QGCView {
         id: syncLoadFromFileOverwrite
         QGCViewMessage {
             id:         syncLoadFromVehicleCheck
-            message:   qsTr("You have unsaved/unsent changes. Loading a from a file will lose these changes. Are you sure you want to load from a file?")
+            message:   qsTr("You have unsaved/unsent changes. Loading from a file will lose these changes. Are you sure you want to load from a file?")
             function accept() {
                 hideDialog()
                 masterController.loadFromSelectedFile()
@@ -664,9 +666,14 @@ QGCView {
     Component {
         id: removeAllPromptDialog
         QGCViewMessage {
-            message: qsTr("Are you sure you want to remove all items? This will also remove all items from the vehicle.")
+            message: qsTr("Are you sure you want to remove all items? ") +
+                     (_planMasterController.offline ? "" : qsTr("This will also remove all items from the vehicle."))
             function accept() {
-                masterController.removeAllFromVehicle()
+                if (_planMasterController.offline) {
+                    masterController.removeAll()
+                } else {
+                    masterController.removeAllFromVehicle()
+                }
                 hideDialog()
             }
         }
@@ -734,7 +741,7 @@ QGCView {
                 QGCButton {
                     text:               qsTr("Upload")
                     Layout.fillWidth:   true
-                    enabled:            _activeVehicle && !masterController.syncInProgress
+                    enabled:            !masterController.offline && !masterController.syncInProgress
                     onClicked: {
                         dropPanel.hide()
                         masterController.upload()
@@ -744,7 +751,7 @@ QGCView {
                 QGCButton {
                     text:               qsTr("Download")
                     Layout.fillWidth:   true
-                    enabled:            _activeVehicle && !masterController.syncInProgress
+                    enabled:            !masterController.offline && !masterController.syncInProgress
                     onClicked: {
                         dropPanel.hide()
                         if (masterController.dirty) {

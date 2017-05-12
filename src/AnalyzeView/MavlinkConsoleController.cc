@@ -80,9 +80,10 @@ MavlinkConsoleController::_receiveData(uint8_t device, uint8_t, uint16_t, uint32
 void
 MavlinkConsoleController::_sendSerialData(QByteArray data, bool close)
 {
-    Q_ASSERT(_vehicle);
-    if (!_vehicle)
+    if (!_vehicle) {
+        qWarning() << "Internal error";
         return;
+    }
 
     // Send maximum sized chunks until the complete buffer is transmitted
     while(data.size()) {

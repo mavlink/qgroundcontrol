@@ -39,7 +39,8 @@ public:
         valueTypeFloat,
         valueTypeDouble,
         valueTypeString,
-        valueTypeBool
+        valueTypeBool,
+        valueTypeElapsedTimeInSeconds,  // Internally stored as double, valueString displays as HH:MM:SS
     } ValueType_t;
 
     typedef QVariant (*Translator)(const QVariant& from);
@@ -83,10 +84,10 @@ public:
     QString         group                   (void) const { return _group; }
     QString         longDescription         (void) const { return _longDescription;}
     QVariant        rawMax                  (void) const { return _rawMax; }
-    QVariant        cookedMax               (void) const { return _rawTranslator(_rawMax); }
+    QVariant        cookedMax               (void) const;
     bool            maxIsDefaultForType     (void) const { return _maxIsDefaultForType; }
     QVariant        rawMin                  (void) const { return _rawMin; }
-    QVariant        cookedMin               (void) const { return _rawTranslator(_rawMin); }
+    QVariant        cookedMin               (void) const;
     bool            minIsDefaultForType     (void) const { return _minIsDefaultForType; }
     QString         name                    (void) const { return _name; }
     QString         shortDescription        (void) const { return _shortDescription; }
@@ -155,6 +156,8 @@ private:
     static QVariant _radiansToDegrees(const QVariant& radians);
     static QVariant _centiDegreesToDegrees(const QVariant& centiDegrees);
     static QVariant _degreesToCentiDegrees(const QVariant& degrees);
+    static QVariant _userGimbalDegreesToMavlinkGimbalDegrees(const QVariant& userGimbalDegrees);
+    static QVariant _mavlinkGimbalDegreesToUserGimbalDegrees(const QVariant& mavlinkGimbalDegrees);
     static QVariant _metersToFeet(const QVariant& meters);
     static QVariant _feetToMeters(const QVariant& feet);
     static QVariant _squareMetersToSquareKilometers(const QVariant& squareMeters);

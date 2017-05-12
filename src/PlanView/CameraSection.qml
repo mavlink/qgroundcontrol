@@ -104,5 +104,25 @@ Column {
                 enabled:        gimbalCheckBox.checked
             }
         }
+
+        RowLayout {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            spacing:        ScreenTools.defaultFontPixelWidth
+            visible:        _camera.cameraModeSupported
+
+            QGCCheckBox {
+                id:                 modeCheckBox
+                text:               qsTr("Mode")
+                checked:            _camera.specifyCameraMode
+                onClicked:          _camera.specifyCameraMode = checked
+            }
+            FactComboBox {
+                fact:               _camera.cameraMode
+                indexModel:         false
+                enabled:            modeCheckBox.checked
+                Layout.fillWidth:   true
+            }
+        }
     }
 }

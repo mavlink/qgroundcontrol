@@ -68,7 +68,6 @@ public:
     QString             brandImageOutdoor               (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/PX4/BrandImage"); }
     bool                vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const override;
     QString             autoDisarmParameter             (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("COM_DISARM_LAND"); }
-    void                missionFlightSpeedInfo          (Vehicle* vehicle, double& hoverSpeed, double& cruiseSpeed) override;
 
 protected:
     typedef struct {
@@ -103,10 +102,24 @@ protected:
     QString _followMeFlightMode;
     QString _simpleFlightMode;
 
+private slots:
+    void _mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
+
 private:
     void _handleAutopilotVersion(Vehicle* vehicle, mavlink_message_t* message);
 
-    bool _versionNotified;  ///< true: user notified over version issue
+    // Any instance data here must be global to all vehicles
+    // Vehicle specific data should go into PX4FirmwarePluginInstanceData
+};
+
+class PX4FirmwarePluginInstanceData : public QObject
+{
+    Q_OBJECT
+
+public:
+    PX4FirmwarePluginInstanceData(QObject* parent = NULL);
+
+    bool versionNotified;  ///< true: user notified over version issue
 };
 
 #endif

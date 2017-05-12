@@ -60,8 +60,12 @@ FlightMap {
 
     // When the user pans the map we stop responding to vehicle coordinate updates until the panRecenterTimer fires
     onUserPannedChanged: {
-        _disableVehicleTracking = true
-        panRecenterTimer.start()
+        if (userPanned) {
+            console.log("user panned")
+            userPanned = false
+            _disableVehicleTracking = true
+            panRecenterTimer.restart()
+        }
     }
 
     function pointInRect(point, rect) {
@@ -241,9 +245,9 @@ FlightMap {
         }
     }    
 
-    // Camera points
+    // Camera trigger points
     MapItemView {
-        model: _missionController.cameraPoints
+        model: _activeVehicle ? _activeVehicle.cameraTriggerPoints : 0
 
         delegate: CameraTriggerIndicator {
             coordinate:     object.coordinate

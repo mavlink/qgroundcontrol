@@ -56,16 +56,17 @@ void SectionTest::_createSpy(Section* section, MultiSignalSpy** sectionSpy)
 
 void SectionTest::_missionItemsEqual(MissionItem& item1, MissionItem& item2)
 {
-    QCOMPARE(item1.command(),           item2.command());
-    QCOMPARE(item1.frame(),             item2.frame());
-    QCOMPARE(item1.autoContinue(),      item2.autoContinue());
-    QCOMPARE(item1.param1(),            item2.param1());
-    QCOMPARE(item1.param2(),            item2.param2());
-    QCOMPARE(item1.param3(),            item2.param3());
-    QCOMPARE(item1.param4(),            item2.param4());
-    QCOMPARE(item1.param5(),            item2.param5());
-    QCOMPARE(item1.param6(),            item2.param6());
-    QCOMPARE(item1.param7(),            item2.param7());
+    QCOMPARE(item1.command(),       item2.command());
+    QCOMPARE(item1.frame(),         item2.frame());
+    QCOMPARE(item1.autoContinue(),  item2.autoContinue());
+
+    QVERIFY(UnitTest::doubleNaNCompare(item1.param1(), item2.param1()));
+    QVERIFY(UnitTest::doubleNaNCompare(item1.param2(), item2.param2()));
+    QVERIFY(UnitTest::doubleNaNCompare(item1.param3(), item2.param3()));
+    QVERIFY(UnitTest::doubleNaNCompare(item1.param4(), item2.param4()));
+    QVERIFY(UnitTest::doubleNaNCompare(item1.param5(), item2.param5()));
+    QVERIFY(UnitTest::doubleNaNCompare(item1.param6(), item2.param6()));
+    QVERIFY(UnitTest::doubleNaNCompare(item1.param7(), item2.param7()));
 }
 
 void SectionTest::_commonScanTest(Section* section)

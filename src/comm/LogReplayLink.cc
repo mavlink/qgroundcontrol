@@ -35,8 +35,11 @@ void LogReplayLinkConfiguration::copyFrom(LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
     LogReplayLinkConfiguration* ssource = dynamic_cast<LogReplayLinkConfiguration*>(source);
-    Q_ASSERT(ssource != NULL);
-    _logFilename = ssource->logFilename();
+    if (ssource) {
+        _logFilename = ssource->logFilename();
+    } else {
+        qWarning() << "Internal error";
+    }
 }
 
 void LogReplayLinkConfiguration::saveSettings(QSettings& settings, const QString& root)
@@ -70,7 +73,9 @@ LogReplayLink::LogReplayLink(SharedLinkConfigurationPointer& config)
     , _connected(false)
     , _replayAccelerationFactor(1.0f)
 {
-    Q_ASSERT(_logReplayConfig);
+    if (!_logReplayConfig) {
+        qWarning() << "Internal error";
+    }
     
     _readTickTimer.moveToThread(this);
     
