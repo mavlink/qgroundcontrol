@@ -101,7 +101,7 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
         _remapParamNameIntialized = true;
     }
 
-    _factGroups.append(&_infoFactGroup);
+    _nameToFactGroupMap.insert("APMSubInfo", &_infoFactGroup);
 }
 
 int ArduSubFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const

@@ -419,8 +419,8 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
     return _cameraList;
 }
 
-QList<FactGroup*> FirmwarePlugin::factGroups(void) {
-    return _factGroups;
+const QMap<QString, FactGroup*>& FirmwarePlugin::factGroups(void) {
+    return _nameToFactGroupMap;
 }
 
 bool FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const

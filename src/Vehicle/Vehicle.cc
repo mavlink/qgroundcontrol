@@ -372,10 +372,12 @@ void Vehicle::_commonInit(void)
     _addFactGroup(&_vibrationFactGroup, _vibrationFactGroupName);
     _addFactGroup(&_temperatureFactGroup, _temperatureFactGroupName);
 
-    // Add firmware-specific fact group, if provided
-    QList<FactGroup*> fwFactGroups = _firmwarePlugin->factGroups();
-    for (int i = 0; i < fwFactGroups.count(); i++) {
-        _addFactGroup(fwFactGroups[i], QString("FWPlugin%1").arg(i));
+    // Add firmware-specific fact groups, if provided
+    QMap<QString, FactGroup*> fwFactGroups = _firmwarePlugin->factGroups();
+    QMapIterator<QString, FactGroup*> i(fwFactGroups);
+    while(i.hasNext()) {
+        i.next();
+        _addFactGroup(i.value(), i.key());
     }
 
     _flightDistanceFact.setRawValue(0);
