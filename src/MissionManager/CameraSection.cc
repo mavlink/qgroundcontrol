@@ -9,6 +9,7 @@
 
 #include "CameraSection.h"
 #include "SimpleMissionItem.h"
+#include "FirmwarePlugin.h"
 
 QGC_LOGGING_CATEGORY(CameraSectionLog, "CameraSectionLog")
 
@@ -401,4 +402,9 @@ void CameraSection::_cameraActionChanged(void)
 {
     _setDirtyAndUpdateItemCount();
     _updateSettingsSpecified();
+}
+
+bool CameraSection::cameraModeSupported(void) const
+{
+    return _vehicle->firmwarePlugin()->supportedMissionCommands().contains(MAV_CMD_SET_CAMERA_MODE);
 }
