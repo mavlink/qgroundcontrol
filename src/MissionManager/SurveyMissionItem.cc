@@ -437,7 +437,7 @@ void SurveyMissionItem::_convertTransectToGeo(const QList<QList<QPointF>>& trans
         for (int j=0; j<transectPoints.count(); j++) {
             QGeoCoordinate coord;
             const QPointF& point = transectPoints[j];
-            convertNedToGeo(-point.y(), point.x(), 0, tangentOrigin, &coord);
+            convertNedToGeo(point.y(), point.x(), 0, tangentOrigin, &coord);
             transectCoords.append(coord);
         }
         transectSegmentsGeo.append(transectCoords);
@@ -467,7 +467,6 @@ void SurveyMissionItem::_optimizeReflySegments(void)
     }
 
     if (shortestIndex > 1) {
-        qDebug() << "Reverse segments";
         // We need to reverse the order of segments
         QList<QList<QGeoCoordinate>> rgReversedTransects;
         for (int i=_reflyTransectSegments.count() - 1; i>=0; i--) {
@@ -476,7 +475,6 @@ void SurveyMissionItem::_optimizeReflySegments(void)
         _reflyTransectSegments = rgReversedTransects;
     }
     if (shortestIndex & 1) {
-        qDebug() << "Reverse points";
         // We need to reverse the points within each segment
         for (int i=0; i<_reflyTransectSegments.count(); i++) {
             QList<QGeoCoordinate> rgReversedCoords;
@@ -497,6 +495,70 @@ void SurveyMissionItem::_appendGridPointsFromTransects(QList<QList<QGeoCoordinat
     }
 }
 
+qreal SurveyMissionItem::_ccw(QPointF pt1, QPointF pt2, QPointF pt3)
+{
+    return (pt2.x()-pt1.x())*(pt3.y()-pt1.y()) - (pt2.y()-pt1.y())*(pt3.x()-pt1.x());
+}
+
+qreal SurveyMissionItem::_dp(QPointF pt1, QPointF pt2)
+{
+    return (pt2.x()-pt1.x())/qSqrt((pt2.x()-pt1.x())*(pt2.x()-pt1.x()) + (pt2.y()-pt1.y())*(pt2.y()-pt1.y()));
+}
+
+void SurveyMissionItem::_swapPoints(QList<QPointF>& points, int index1, int index2)
+{
+    QPointF temp = points[index1];
+    points[index1] = points[index2];
+    points[index2] = temp;
+}
+
+QList<QPointF> SurveyMissionItem::_convexPolygon(const QList<QPointF>& polygon)
+{
+    // We use the Graham scan algorithem to convert the possibly concave polygon to a convex polygon
+    // https://en.wikipedia.org/wiki/Graham_scan
+
+    QList<QPointF> workPolygon(polygon);
+
+    // First point must be lowest y-coordinate point
+    for (int i=1; i<workPolygon.count(); i++) {
+        if (workPolygon[i].y() < workPolygon[0].y()) {
+            _swapPoints(workPolygon, i, 0);
+        }
+    }
+
+    // Sort the points by angle with first point
+    for (int i=1; i<workPolygon.count(); i++) {
+        qreal angle = _dp(workPolygon[0], workPolygon[i]);
+        for (int j=i+1; j<workPolygon.count(); j++) {
+            if (_dp(workPolygon[0], workPolygon[j]) > angle) {
+                _swapPoints(workPolygon, i, j);
+                angle = _dp(workPolygon[0], workPolygon[j]);
+            }
+        }
+    }
+
+    // Perform the the Graham scan
+
+    workPolygon.insert(0, workPolygon.last());  // Sentinel for algo stop
+    int convexCount = 1;                        // Number of points on the convex hull.
+
+    for (int i=2; i<=polygon.count(); i++) {
+        while (_ccw(workPolygon[convexCount-1], workPolygon[convexCount], workPolygon[i]) <= 0) {
+            if (convexCount > 1) {
+                convexCount -= 1;
+            } else if (i == polygon.count()) {
+                break;
+            } else {
+                i++;
+            }
+        }
+        convexCount++;
+        _swapPoints(workPolygon, convexCount, i);
+    }
+
+    return workPolygon.mid(1, convexCount);
+}
+
 void SurveyMissionItem::_generateGrid(void)
 {
     if (_ignoreRecalc) {
@@ -515,16 +577,18 @@ void SurveyMissionItem::_generateGrid(void)
     QList<QPointF>          polygonPoints;
     QList<QList<QPointF>>   transectSegments;
 
-    // Convert polygon to Qt coordinate system (y positive is down)
+    // Convert polygon to NED
     qCDebug(SurveyMissionItemLog) << "Convert polygon";
     QGeoCoordinate tangentOrigin = _mapPolygon.path()[0].value<QGeoCoordinate>();
     for (int i=0; i<_mapPolygon.count(); i++) {
         double y, x, down;
         QGeoCoordinate vertex = _mapPolygon.pathModel().value<QGCQGeoCoordinate*>(i)->coordinate();
         convertGeoToNed(vertex, tangentOrigin, &y, &x, &down);
-        polygonPoints += QPointF(x, -y);
+        polygonPoints += QPointF(x, y);
         qCDebug(SurveyMissionItemLog) << vertex << polygonPoints.last().x() << polygonPoints.last().y();
     }
+
+    polygonPoints = _convexPolygon(polygonPoints);
 
     double coveredArea = 0.0;
     for (int i=0; i<polygonPoints.count(); i++) {
@@ -704,11 +768,16 @@ void SurveyMissionItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList
 /// Adjust the line segments such that they are all going the same direction with respect to going from P1->P2
 void SurveyMissionItem::_adjustLineDirection(const QList<QLineF>& lineList, QList<QLineF>& resultLines)
 {
+    qreal firstAngle = 0;
     for (int i=0; i<lineList.count(); i++) {
         const QLineF& line = lineList[i];
         QLineF adjustedLine;
 
-        if (line.angle() > 180.0) {
+        if (i == 0) {
+            firstAngle = line.angle();
+        }
+
+        if (qAbs(line.angle() - firstAngle) > 1.0) {
             adjustedLine.setP1(line.p2());
             adjustedLine.setP2(line.p1());
         } else {
@@ -745,10 +814,10 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
 
     // Rotate the bounding rect around it's center to generate the larger bounding rect
     QPolygonF boundPolygon;
-    boundPolygon << _rotatePoint(smallBoundRect.topLeft(),       center, gridAngle);
-    boundPolygon << _rotatePoint(smallBoundRect.topRight(),      center, gridAngle);
-    boundPolygon << _rotatePoint(smallBoundRect.bottomRight(),   center, gridAngle);
-    boundPolygon << _rotatePoint(smallBoundRect.bottomLeft(),    center, gridAngle);
+    boundPolygon << _rotatePoint(smallBoundRect.topLeft(),      center, gridAngle);
+    boundPolygon << _rotatePoint(smallBoundRect.topRight(),     center, gridAngle);
+    boundPolygon << _rotatePoint(smallBoundRect.bottomRight(),  center, gridAngle);
+    boundPolygon << _rotatePoint(smallBoundRect.bottomLeft(),   center, gridAngle);
     boundPolygon << boundPolygon[0];
     QRectF largeBoundRect = boundPolygon.boundingRect();
     qCDebug(SurveyMissionItemLog) << "Rotated bounding rect" << largeBoundRect.topLeft().x() << largeBoundRect.topLeft().y() << largeBoundRect.bottomRight().x() << largeBoundRect.bottomRight().y();

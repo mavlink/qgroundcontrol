@@ -20,6 +20,7 @@
 #include "JsonHelper.h"
 #include "QGCQGeoCoordinate.h"
 #include "AppSettings.h"
+#include "PlanMasterController.h"
 
 #ifndef __mobile__
 #include "MainWindow.h"
@@ -34,13 +35,17 @@ QGC_LOGGING_CATEGORY(GeoFenceControllerLog, "GeoFenceControllerLog")
 const char* GeoFenceController::_jsonFileTypeValue =    "GeoFence";
 const char* GeoFenceController::_jsonBreachReturnKey =  "breachReturn";
 
-GeoFenceController::GeoFenceController(QObject* parent)
-    : PlanElementController(parent)
+GeoFenceController::GeoFenceController(PlanMasterController* masterController, QObject* parent)
+    : PlanElementController(masterController, parent)
+    , _geoFenceManager(_managerVehicle->geoFenceManager())
     , _dirty(false)
     , _mapPolygon(this)
+    , _itemsRequested(false)
 {
     connect(_mapPolygon.qmlPathModel(), &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
     connect(_mapPolygon.qmlPathModel(), &QmlObjectListModel::dirtyChanged, this, &GeoFenceController::_polygonDirtyChanged);
+
+    managerVehicleChanged(_managerVehicle);
 }
 
 GeoFenceController::~GeoFenceController()
@@ -53,14 +58,6 @@ void GeoFenceController::start(bool editMode)
     qCDebug(GeoFenceControllerLog) << "start editMode" << editMode;
 
     PlanElementController::start(editMode);
-    _init();
-}
-
-void GeoFenceController::startStaticActiveVehicle(Vehicle* vehicle)
-{
-    qCDebug(GeoFenceControllerLog) << "startStaticActiveVehicle";
-
-    PlanElementController::startStaticActiveVehicle(vehicle);
     _init();
 }
 
@@ -89,27 +86,30 @@ void GeoFenceController::_signalAll(void)
     emit dirtyChanged(dirty());
 }
 
-void GeoFenceController::activeVehicleBeingRemoved(void)
+void GeoFenceController::managerVehicleChanged(Vehicle* managerVehicle)
 {
-    _activeVehicle->geoFenceManager()->disconnect(this);
-    _activeVehicle = NULL;
-}
-
-void GeoFenceController::activeVehicleSet(Vehicle* vehicle)
-{
-    _activeVehicle = vehicle;
-    GeoFenceManager* geoFenceManager = _activeVehicle->geoFenceManager();
-    connect(geoFenceManager, &GeoFenceManager::breachReturnSupportedChanged,    this, &GeoFenceController::breachReturnSupportedChanged);
-    connect(geoFenceManager, &GeoFenceManager::circleEnabledChanged,            this, &GeoFenceController::circleEnabledChanged);
-    connect(geoFenceManager, &GeoFenceManager::circleRadiusFactChanged,         this, &GeoFenceController::circleRadiusFactChanged);
-    connect(geoFenceManager, &GeoFenceManager::polygonEnabledChanged,           this, &GeoFenceController::polygonEnabledChanged);
-    connect(geoFenceManager, &GeoFenceManager::polygonSupportedChanged,         this, &GeoFenceController::polygonSupportedChanged);
-    connect(geoFenceManager, &GeoFenceManager::loadComplete,                    this, &GeoFenceController::_loadComplete);
-    connect(geoFenceManager, &GeoFenceManager::inProgressChanged,               this, &GeoFenceController::syncInProgressChanged);
-
-    if (!geoFenceManager->inProgress()) {
-        _loadComplete(geoFenceManager->breachReturnPoint(), geoFenceManager->polygon());
+    if (_managerVehicle) {
+        _geoFenceManager->disconnect(this);
+        _managerVehicle = NULL;
+        _geoFenceManager = NULL;
     }
+
+    _managerVehicle = managerVehicle;
+    if (!_managerVehicle) {
+        qWarning() << "GeoFenceController::managerVehicleChanged managerVehicle=NULL";
+        return;
+    }
+
+    _geoFenceManager = _managerVehicle->geoFenceManager();
+    connect(_geoFenceManager, &GeoFenceManager::breachReturnSupportedChanged,   this, &GeoFenceController::breachReturnSupportedChanged);
+    connect(_geoFenceManager, &GeoFenceManager::circleEnabledChanged,           this, &GeoFenceController::circleEnabledChanged);
+    connect(_geoFenceManager, &GeoFenceManager::circleRadiusFactChanged,        this, &GeoFenceController::circleRadiusFactChanged);
+    connect(_geoFenceManager, &GeoFenceManager::polygonEnabledChanged,          this, &GeoFenceController::polygonEnabledChanged);
+    connect(_geoFenceManager, &GeoFenceManager::polygonSupportedChanged,        this, &GeoFenceController::polygonSupportedChanged);
+    connect(_geoFenceManager, &GeoFenceManager::loadComplete,                   this, &GeoFenceController::_managerLoadComplete);
+    connect(_geoFenceManager, &GeoFenceManager::sendComplete,                   this, &GeoFenceController::_managerSendComplete);
+    connect(_geoFenceManager, &GeoFenceManager::removeAllComplete,              this, &GeoFenceController::_managerRemoveAllComplete);
+    connect(_geoFenceManager, &GeoFenceManager::inProgressChanged,              this, &GeoFenceController::syncInProgressChanged);
 
     _signalAll();
 }
@@ -156,29 +156,46 @@ void GeoFenceController::removeAll(void)
     _mapPolygon.clear();
 }
 
+void GeoFenceController::removeAllFromVehicle(void)
+{
+    if (_masterController->offline()) {
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while offline";
+    } else if (syncInProgress()) {
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while syncInProgress";
+    } else {
+        _geoFenceManager->removeAll();
+    }
+}
+
 void GeoFenceController::loadFromVehicle(void)
 {
-    if (_activeVehicle->parameterManager()->parametersReady() && !syncInProgress()) {
-        _activeVehicle->geoFenceManager()->loadFromVehicle();
+    if (_masterController->offline()) {
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while offline";
+    } else if (syncInProgress()) {
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while syncInProgress";
     } else {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle call at wrong time" << _activeVehicle->parameterManager()->parametersReady() << syncInProgress();
+        _itemsRequested = true;
+        _geoFenceManager->loadFromVehicle();
     }
 }
 
 void GeoFenceController::sendToVehicle(void)
 {
-    if (_activeVehicle->parameterManager()->parametersReady() && !syncInProgress()) {
-        _activeVehicle->geoFenceManager()->sendToVehicle(_breachReturnPoint, _mapPolygon.pathModel());
+    if (_masterController->offline()) {
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while offline";
+    } else if (syncInProgress()) {
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while syncInProgress";
+    } else {
+        qCDebug(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle";
+        _geoFenceManager->sendToVehicle(_breachReturnPoint, _mapPolygon.pathModel());
         _mapPolygon.setDirty(false);
         setDirty(false);
-    } else {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle call at wrong time" << _activeVehicle->parameterManager()->parametersReady() << syncInProgress();
     }
 }
 
 bool GeoFenceController::syncInProgress(void) const
 {
-    return _activeVehicle->geoFenceManager()->inProgress();
+    return _geoFenceManager->inProgress();
 }
 
 bool GeoFenceController::dirty(void) const
@@ -207,37 +224,37 @@ void GeoFenceController::_polygonDirtyChanged(bool dirty)
 
 bool GeoFenceController::breachReturnSupported(void) const
 {
-    return _activeVehicle->geoFenceManager()->breachReturnSupported();
+    return _geoFenceManager->breachReturnSupported();
 }
 
 bool GeoFenceController::circleEnabled(void) const
 {
-    return _activeVehicle->geoFenceManager()->circleEnabled();
+    return _geoFenceManager->circleEnabled();
 }
 
 Fact* GeoFenceController::circleRadiusFact(void) const
 {
-    return _activeVehicle->geoFenceManager()->circleRadiusFact();
+    return _geoFenceManager->circleRadiusFact();
 }
 
 bool GeoFenceController::polygonSupported(void) const
 {
-    return _activeVehicle->geoFenceManager()->polygonSupported();
+    return _geoFenceManager->polygonSupported();
 }
 
 bool GeoFenceController::polygonEnabled(void) const
 {
-    return _activeVehicle->geoFenceManager()->polygonEnabled();
+    return _geoFenceManager->polygonEnabled();
 }
 
 QVariantList GeoFenceController::params(void) const
 {
-    return _activeVehicle->geoFenceManager()->params();
+    return _geoFenceManager->params();
 }
 
 QStringList GeoFenceController::paramLabels(void) const
 {
-    return _activeVehicle->geoFenceManager()->paramLabels();
+    return _geoFenceManager->paramLabels();
 }
 
 void GeoFenceController::_setDirty(void)
@@ -260,12 +277,34 @@ void GeoFenceController::_setReturnPointFromManager(QGeoCoordinate breachReturnP
     emit breachReturnPointChanged(_breachReturnPoint);
 }
 
-void GeoFenceController::_loadComplete(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon)
+void GeoFenceController::_managerLoadComplete(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon)
 {
-    _setReturnPointFromManager(breachReturn);
-    _setPolygonFromManager(polygon);
-    setDirty(false);
-    emit loadComplete();
+    // Fly view always reloads on _loadComplete
+    // Plan view only reloads on _loadComplete if specifically requested
+    if (!_editMode || _itemsRequested) {
+        _setReturnPointFromManager(breachReturn);
+        _setPolygonFromManager(polygon);
+        setDirty(false);
+        _signalAll();
+        emit loadComplete();
+    }
+    _itemsRequested = false;
+}
+
+void GeoFenceController::_managerSendComplete(bool error)
+{
+    // Fly view always reloads on manager sendComplete
+    if (!error && !_editMode) {
+        showPlanFromManagerVehicle();
+    }
+}
+
+void GeoFenceController::_managerRemoveAllComplete(bool error)
+{
+    if (!error) {
+        // Remove all from vehicle so we always update
+        showPlanFromManagerVehicle();
+    }
 }
 
 bool GeoFenceController::containsItems(void) const
@@ -278,7 +317,28 @@ void GeoFenceController::_updateContainsItems(void)
     emit containsItemsChanged(containsItems());
 }
 
-void GeoFenceController::removeAllFromVehicle(void)
+bool GeoFenceController::showPlanFromManagerVehicle(void)
 {
-    _activeVehicle->geoFenceManager()->removeAll();
+    qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle" << _editMode;
+    if (_masterController->offline()) {
+        qCWarning(GeoFenceControllerLog) << "GeoFenceController::showPlanFromManagerVehicle called while offline";
+        return true;    // stops further propagation of showPlanFromManagerVehicle due to error
+    } else {
+        _itemsRequested = true;
+        if (!_managerVehicle->initialPlanRequestComplete()) {
+            // The vehicle hasn't completed initial load, we can just wait for loadComplete to be signalled automatically
+            qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle: !initialPlanRequestComplete, wait for signal";
+            return true;
+        } else if (syncInProgress()) {
+            // If the sync is already in progress, _loadComplete will be called automatically when it is done. So no need to do anything.
+            qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle: syncInProgress wait for signal";
+            return true;
+        } else {
+            // Fake a _loadComplete with the current items
+            qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle: sync complete simulate signal";
+            _itemsRequested = true;
+            _managerLoadComplete(_geoFenceManager->breachReturnPoint(), _geoFenceManager->polygon());
+            return false;
+        }
+    }
 }

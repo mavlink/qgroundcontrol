@@ -204,7 +204,6 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t& boardType, 
     if (boardType == BoardTypeUnknown) {
         // Fall back to port name matching which could lead to incorrect board mapping. But in some cases the
         // vendor and product id do not come through correctly so this is used as a last chance detection method.
-
         for (int i=0; i<_boardFallbackList.count(); i++) {
             const BoardFallback_t& boardFallback = _boardFallbackList[i];
 

@@ -111,7 +111,7 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
     // ArduPilot has this strange behavior of streaming parameters that we didn't ask for. This even happens before it responds to the
     // PARAM_REQUEST_LIST. We disregard any of this until the initial request is responded to.
     if (parameterId == 65535 && parameterName != "_HASH_CHECK" && _initialRequestTimeoutTimer.isActive()) {
-        qCDebug(ParameterManagerVerbose1Log) << "Disregarding unrequested param prior to intial list response" << parameterName;
+        qCDebug(ParameterManagerVerbose1Log) << "Disregarding unrequested param prior to initial list response" << parameterName;
         return;
     }
 
@@ -303,11 +303,15 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
 
     _dataMutex.unlock();
 
-    Q_ASSERT(_mapParameterName2Variant[componentId].contains(parameterName));
-
-    Fact* fact = _mapParameterName2Variant[componentId][parameterName].value<Fact*>();
-    Q_ASSERT(fact);
-    fact->_containerSetRawValue(value);
+    Fact* fact = NULL;
+    if (_mapParameterName2Variant[componentId].contains(parameterName)) {
+        fact = _mapParameterName2Variant[componentId][parameterName].value<Fact*>();
+    }
+    if (fact) {
+        fact->_containerSetRawValue(value);
+    } else {
+        qWarning() << "Internal error";
+    }
 
     if (componentParamsComplete) {
         if (componentId == _vehicle->defaultComponentId()) {
@@ -352,18 +356,24 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
 void ParameterManager::_valueUpdated(const QVariant& value)
 {
     Fact* fact = qobject_cast<Fact*>(sender());
-    Q_ASSERT(fact);
+    if (!fact) {
+        qWarning() << "Internal error";
+        return;
+    }
 
     int componentId = fact->componentId();
     QString name = fact->name();
 
     _dataMutex.lock();
 
-    Q_ASSERT(_waitingWriteParamNameMap.contains(componentId));
-    _waitingWriteParamNameMap[componentId].remove(name);    // Remove any old entry
-    _waitingWriteParamNameMap[componentId][name] = 0;       // Add new entry and set retry count
-    _waitingParamTimeoutTimer.start();
-    _saveRequired = true;
+    if (_waitingWriteParamNameMap.contains(componentId)) {
+        _waitingWriteParamNameMap[componentId].remove(name);    // Remove any old entry
+        _waitingWriteParamNameMap[componentId][name] = 0;       // Add new entry and set retry count
+        _waitingParamTimeoutTimer.start();
+        _saveRequired = true;
+    } else {
+        qWarning() << "Internal error";
+    }
 
     _dataMutex.unlock();
 
@@ -397,7 +407,6 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
     _dataMutex.unlock();
 
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    Q_ASSERT(mavlink);
 
     mavlink_message_t msg;
     mavlink_msg_param_request_list_pack_chan(mavlink->getSystemId(),
@@ -432,8 +441,6 @@ void ParameterManager::refreshParameter(int componentId, const QString& name)
 
     _dataMutex.lock();
 
-    Q_ASSERT(_waitingReadParamNameMap.contains(componentId));
-
     if (_waitingReadParamNameMap.contains(componentId)) {
         QString mappedParamName = _remapParamNameToVersion(name);
 
@@ -441,6 +448,8 @@ void ParameterManager::refreshParameter(int componentId, const QString& name)
         _waitingReadParamNameMap[componentId][mappedParamName] = 0;     // Add new wait entry and update retry count
         qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "restarting _waitingParamTimeout";
         _waitingParamTimeoutTimer.start();
+    } else {
+        qWarning() << "Internal error";
     }
 
     _dataMutex.unlock();

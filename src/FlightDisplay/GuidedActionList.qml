@@ -86,10 +86,6 @@ Rectangle {
                             text:                       modelData.title
 
                             onClicked: {
-                                if (modelData.action === guidedController.actionChangeAlt) {
-                                    altitudeSlider.reset()
-                                    altitudeSlider.visible = true
-                                }
                                 _root.visible = false
                                 guidedController.confirmAction(modelData.action)
                             }

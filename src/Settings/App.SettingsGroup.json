@@ -5,7 +5,7 @@
     "type":             "uint32",
     "enumStrings":      "ArduPilot,PX4 Pro,Mavlink Generic",
     "enumValues":       "3,12,0",
-    "defaultValue":     3
+    "defaultValue":     12
 },
 {
     "name":             "OfflineEditingVehicleType",
@@ -13,14 +13,14 @@
     "type":             "uint32",
     "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub",
     "enumValues":       "1,2,19,10,12",
-    "defaultValue":     1
+    "defaultValue":     2
 },
 {
     "name":             "OfflineEditingCruiseSpeed",
     "shortDescription": "Offline editing cruise speed",
     "longDescription":  "This value defines the cruising speed for forward flight vehicles for use in calculating mission duration when not connected to a vehicle.",
     "type":             "double",
-    "defaultValue":     16.0,
+    "defaultValue":     15.0,
     "min":              1.0,
     "units":            "m/s",
     "decimalPlaces":    2
@@ -30,7 +30,7 @@
     "shortDescription": "Offline editing hover speed",
     "longDescription":  "This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration when not connected to a vehicle.",
     "type":             "double",
-    "defaultValue":     4.0,
+    "defaultValue":     5.0,
     "min":              1.0,
     "units":            "m/s",
     "decimalPlaces":    2
@@ -115,13 +115,6 @@
     "longDescription":  "Show large compass on instrument panel",
     "type":             "bool",
     "defaultValue":     false
-},
-{
-    "name":             "AutomaticMissionUpload",
-    "shortDescription": "Automatic mission upload",
-    "longDescription":  "Automatically upload mission to vehicle after changes",
-    "type":             "bool",
-    "defaultValue":     true
 },
 {
     "name":             "SavePath",

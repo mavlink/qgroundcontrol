@@ -202,7 +202,7 @@ void QGCXPlaneLink::run()
     struct iset_struct
     {
         char b[5];
-        int index; // (0->20 in the lsit below)
+        int index; // (0->20 in the list below)
         char str_ipad_them[16];
         char str_port_them[6];
         char padding[2];

@@ -82,6 +82,7 @@ void APMGeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlOb
 
     // Total point count, +1 polygon close in last index, +1 for breach in index 0
     _cWriteFencePoints = validatedPolygonCount ? validatedPolygonCount + 1 + 1 : 0;
+    qCDebug(GeoFenceManagerLog) << "APMGeoFenceManager::sendToVehicle validatedPolygonCount:_cWriteFencePoints" << validatedPolygonCount << _cWriteFencePoints;
     _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _fenceTotalParam)->setRawValue(_cWriteFencePoints);
 
     // FIXME: No validation of correct fence received
@@ -89,7 +90,7 @@ void APMGeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlOb
         _sendFencePoint(index);
     }
 
-    emit loadComplete(_breachReturnPoint, _polygon);
+    emit sendComplete(false /* error */);
 }
 
 void APMGeoFenceManager::loadFromVehicle(void)
@@ -132,7 +133,7 @@ void APMGeoFenceManager::loadFromVehicle(void)
     _requestFencePoint(_currentFencePoint);
 }
 
-/// Called when a new mavlink message for out vehicle is received
+/// Called when a new mavlink message for our vehicle is received
 void APMGeoFenceManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
     if (message.msgid == MAVLINK_MSG_ID_FENCE_POINT) {
@@ -326,7 +327,10 @@ void APMGeoFenceManager::_parametersReady(void)
 
 void APMGeoFenceManager::removeAll(void)
 {
+    qCDebug(GeoFenceManagerLog) << "APMGeoFenceManager::removeAll";
+
     QmlObjectListModel emptyPolygon;
 
     sendToVehicle(_breachReturnPoint, emptyPolygon);
+    emit removeAllComplete(false /* error */);
 }

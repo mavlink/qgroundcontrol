@@ -3399,7 +3399,7 @@ if required for the gimbal (only in AUX output mode)</short_desc>
     </parameter>
     <parameter default="0.5" name="MC_YAW_FF" type="FLOAT">
       <short_desc>Yaw feed forward</short_desc>
-      <long_desc>Feed forward weight for manual yaw control. 0 will give slow responce and no overshot, 1 - fast responce and big overshot.</long_desc>
+      <long_desc>Feed forward weight for manual yaw control. 0 will give slow response and no overshot, 1 - fast response and big overshot.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>2</decimal>
@@ -3642,7 +3642,7 @@ if required for the gimbal (only in AUX output mode)</short_desc>
     </parameter>
     <parameter default="0.5" name="MPC_Z_FF" type="FLOAT">
       <short_desc>Vertical velocity feed forward</short_desc>
-      <long_desc>Feed forward weight for altitude control in stabilized modes (ALTCTRL, POSCTRL). 0 will give slow responce and no overshot, 1 - fast responce and big overshot.</long_desc>
+      <long_desc>Feed forward weight for altitude control in stabilized modes (ALTCTRL, POSCTRL). 0 will give slow response and no overshot, 1 - fast response and big overshot.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>2</decimal>
@@ -3718,7 +3718,7 @@ if required for the gimbal (only in AUX output mode)</short_desc>
     </parameter>
     <parameter default="0.5" name="MPC_XY_FF" type="FLOAT">
       <short_desc>Horizontal velocity feed forward</short_desc>
-      <long_desc>Feed forward weight for position control in position control mode (POSCTRL). 0 will give slow responce and no overshot, 1 - fast responce and big overshot.</long_desc>
+      <long_desc>Feed forward weight for position control in position control mode (POSCTRL). 0 will give slow response and no overshot, 1 - fast response and big overshot.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>2</decimal>

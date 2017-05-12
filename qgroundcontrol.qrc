@@ -10,6 +10,7 @@
         <file alias="ModeIndicator.qml">src/ui/toolbar/ModeIndicator.qml</file>
         <file alias="RCRSSIIndicator.qml">src/ui/toolbar/RCRSSIIndicator.qml</file>
         <file alias="TelemetryRSSIIndicator.qml">src/ui/toolbar/TelemetryRSSIIndicator.qml</file>
+        <file alias="JoystickIndicator.qml">src/ui/toolbar/JoystickIndicator.qml</file>
     </qresource>
     <qresource prefix="/qml">
         <file alias="AirframeComponent.qml">src/AutoPilotPlugins/PX4/AirframeComponent.qml</file>
@@ -23,6 +24,7 @@
         <file alias="DebugWindow.qml">src/ui/preferences/DebugWindow.qml</file>
         <file alias="ESP8266Component.qml">src/AutoPilotPlugins/Common/ESP8266Component.qml</file>
         <file alias="ESP8266ComponentSummary.qml">src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml</file>
+        <file alias="SyslinkComponent.qml">src/AutoPilotPlugins/Common/SyslinkComponent.qml</file>
         <file alias="FirmwareUpgrade.qml">src/VehicleSetup/FirmwareUpgrade.qml</file>
         <file alias="FlightDisplayViewDummy.qml">src/FlightDisplay/FlightDisplayViewDummy.qml</file>
         <file alias="FlightDisplayViewUVC.qml">src/FlightDisplay/FlightDisplayViewUVC.qml</file>

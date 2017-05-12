@@ -30,7 +30,6 @@ PX4AirframeLoader::PX4AirframeLoader(AutoPilotPlugin* autopilot, UASInterface* u
     Q_UNUSED(autopilot);
     Q_UNUSED(uas);
     Q_UNUSED(parent);
-    Q_ASSERT(uas);
 }
 
 QString PX4AirframeLoader::aiframeMetaDataFile(void)
@@ -51,7 +50,10 @@ void PX4AirframeLoader::loadAirframeMetaData(void)
 
     qCDebug(PX4AirframeLoaderLog) << "Loading PX4 airframe fact meta data";
 
-    Q_ASSERT(AirframeComponentAirframes::get().count() == 0);
+    if (AirframeComponentAirframes::get().count() != 0) {
+        qCWarning(PX4AirframeLoaderLog) << "Internal error";
+        return;
+    }
 
     QString airframeFilename;
 
@@ -67,11 +69,12 @@ void PX4AirframeLoader::loadAirframeMetaData(void)
     qCDebug(PX4AirframeLoaderLog) << "Loading meta data file:" << airframeFilename;
 
     QFile xmlFile(airframeFilename);
-    Q_ASSERT(xmlFile.exists());
+    if (!xmlFile.exists()) {
+        qCWarning(PX4AirframeLoaderLog) << "Internal error";
+        return;
+    }
 
     bool success = xmlFile.open(QIODevice::ReadOnly);
-    Q_UNUSED(success);
-    Q_ASSERT(success);
 
     if (!success) {
         qCWarning(PX4AirframeLoaderLog) << "Failed opening airframe XML";

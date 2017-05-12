@@ -154,6 +154,7 @@
         <file alias="TelemRSSI.svg">src/ui/toolbar/Images/TelemRSSI.svg</file>
         <file alias="Yield.svg">src/ui/toolbar/Images/Yield.svg</file>
         <file alias="CameraIcon.svg">src/ui/toolbar/Images/CameraIcon.svg</file>
+        <file alias="Joystick.png">src/ui/toolbar/Images/Joystick.png</file>
         <file alias="CogWheel.svg">src/MissionManager/CogWheel.svg</file>
         <file alias="StationMode.svg">src/AutoPilotPlugins/Common/Images/StationMode.svg</file>
         <file alias="APMode.svg">src/AutoPilotPlugins/Common/Images/APMode.svg</file>
@@ -192,6 +193,10 @@
         <file alias="takeoff.svg">resources/takeoff.svg</file>
         <file alias="TrashDelete.svg">resources/TrashDelete.svg</file>
         <file alias="waves.svg">resources/waves.svg</file>
+        <file alias="wind-guru.svg">resources/wind-guru.svg</file>
+        <file alias="wind-rose.svg">resources/wind-rose.svg</file>
+        <file alias="wind-roseBlack.svg">resources/wind-roseBlack.svg</file>
+        <file alias="wind-rose-arrow.svg">resources/wind-rose-arrow.svg</file>
         <file alias="XDelete.svg">resources/XDelete.svg</file>
         <file alias="XDeleteBlack.svg">resources/XDeleteBlack.svg</file>
         <file>resources/icons/qgroundcontrol.ico</file>

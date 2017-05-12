@@ -30,7 +30,7 @@ QGCFlickable {
     // Any time the unhealthy sensors list changes, switch to the health page
     onUnhealthySensorsChanged: {
         if (unhealthySensors.length != 0) {
-            showPage(1)
+            showPage(2)
         }
     }
 

@@ -52,6 +52,7 @@ QVariant APMParameterMetaData::_stringToTypedVariant(const QString& string,
     case FactMetaData::valueTypeFloat:
         convertTo = QMetaType::Float;
         break;
+    case FactMetaData::valueTypeElapsedTimeInSeconds:
     case FactMetaData::valueTypeDouble:
         convertTo = QVariant::Double;
         break;

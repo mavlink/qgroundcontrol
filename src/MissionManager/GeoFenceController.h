@@ -26,7 +26,7 @@ class GeoFenceController : public PlanElementController
     Q_OBJECT
     
 public:
-    GeoFenceController(QObject* parent = NULL);
+    GeoFenceController(PlanMasterController* masterController, QObject* parent = NULL);
     ~GeoFenceController();
 
     Q_PROPERTY(QGCMapPolygon*   mapPolygon              READ mapPolygon                                         CONSTANT)
@@ -45,7 +45,6 @@ public:
     Q_INVOKABLE void removePolygon  (void) { _mapPolygon.clear(); }
 
     void start                      (bool editMode) final;
-    void startStaticActiveVehicle   (Vehicle* vehicle) final;
     void save                       (QJsonObject& json) final;
     bool load                       (const QJsonObject& json, QString& errorString) final;
     void loadFromVehicle            (void) final;
@@ -56,8 +55,8 @@ public:
     bool dirty                      (void) const final;
     void setDirty                   (bool dirty) final;
     bool containsItems              (void) const final;
-    void activeVehicleBeingRemoved  (void) final;
-    void activeVehicleSet           (Vehicle* vehicle) final;
+    void managerVehicleChanged      (Vehicle* managerVehicle) final;
+    bool showPlanFromManagerVehicle (void) final;
 
     bool            circleEnabled           (void) const;
     Fact*           circleRadiusFact        (void) const;
@@ -89,16 +88,20 @@ private slots:
     void _setDirty(void);
     void _setPolygonFromManager(const QList<QGeoCoordinate>& polygon);
     void _setReturnPointFromManager(QGeoCoordinate breachReturnPoint);
-    void _loadComplete(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
+    void _managerLoadComplete(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
     void _updateContainsItems(void);
+    void _managerSendComplete(bool error);
+    void _managerRemoveAllComplete(bool error);
 
 private:
     void _init(void);
     void _signalAll(void);
 
-    bool            _dirty;
-    QGCMapPolygon   _mapPolygon;
-    QGeoCoordinate  _breachReturnPoint;
+    GeoFenceManager*    _geoFenceManager;
+    bool                _dirty;
+    QGCMapPolygon       _mapPolygon;
+    QGeoCoordinate      _breachReturnPoint;
+    bool                _itemsRequested;
 
     static const char* _jsonFileTypeValue;
     static const char* _jsonBreachReturnKey;

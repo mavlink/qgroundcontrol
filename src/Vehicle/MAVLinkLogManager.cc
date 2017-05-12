@@ -150,10 +150,10 @@ bool
 MAVLinkLogProcessor::create(MAVLinkLogManager* manager, const QString path, uint8_t id)
 {
     _fileName.sprintf("%s/%03d-%s%s",
-        path.toLatin1().data(),
-        id,
-        QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss-zzz").toLatin1().data(),
-        kUlogExtension);
+                      path.toLatin1().data(),
+                      id,
+                      QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss-zzz").toLatin1().data(),
+                      kUlogExtension);
     _fd = fopen(_fileName.toLatin1().data(), "wb");
     if(_fd) {
         _record = new MAVLinkLogFiles(manager, _fileName, true);
@@ -264,7 +264,7 @@ MAVLinkLogProcessor::processStreamData(uint16_t sequence, uint8_t first_message,
         if(num_drops > 0) {
             _writeUlogMessage(_ulogMessage);
             _ulogMessage.clear();
-            //-- If no usefull information in this message. Drop it.
+            //-- If no useful information in this message. Drop it.
             if(first_message == 255) {
                 break;
             }
@@ -498,17 +498,20 @@ MAVLinkLogManager::uploadLog()
     }
     for(int i = 0; i < _logFiles.count(); i++) {
         _currentLogfile = qobject_cast<MAVLinkLogFiles*>(_logFiles.get(i));
-        Q_ASSERT(_currentLogfile);
-        if(_currentLogfile->selected()) {
-            _currentLogfile->setSelected(false);
-            if(!_currentLogfile->uploaded() && !_emailAddress.isEmpty() && !_uploadURL.isEmpty()) {
-                _currentLogfile->setUploading(true);
-                _currentLogfile->setProgress(0.0);
-                QString filePath = _makeFilename(_currentLogfile->name());
-                _sendLog(filePath);
-                emit uploadingChanged();
-                return;
+        if (_currentLogfile) {
+            if(_currentLogfile->selected()) {
+                _currentLogfile->setSelected(false);
+                if(!_currentLogfile->uploaded() && !_emailAddress.isEmpty() && !_uploadURL.isEmpty()) {
+                    _currentLogfile->setUploading(true);
+                    _currentLogfile->setProgress(0.0);
+                    QString filePath = _makeFilename(_currentLogfile->name());
+                    _sendLog(filePath);
+                    emit uploadingChanged();
+                    return;
+                }
             }
+        } else {
+            qWarning() << "Internal error";
         }
     }
     _currentLogfile = NULL;
@@ -541,9 +544,12 @@ MAVLinkLogManager::_getFirstSelected()
 {
     for(int i = 0; i < _logFiles.count(); i++) {
         MAVLinkLogFiles* f = qobject_cast<MAVLinkLogFiles*>(_logFiles.get(i));
-        Q_ASSERT(f);
-        if(f->selected()) {
-            return i;
+        if (f) {
+            if(f->selected()) {
+                return i;
+            }
+        } else {
+            qWarning() << "Internal error";
         }
     }
     return -1;
@@ -590,9 +596,12 @@ MAVLinkLogManager::cancelUpload()
 {
     for(int i = 0; i < _logFiles.count(); i++) {
         MAVLinkLogFiles* pLogFile = qobject_cast<MAVLinkLogFiles*>(_logFiles.get(i));
-        Q_ASSERT(pLogFile);
-        if(pLogFile->selected() && pLogFile != _currentLogfile) {
-            pLogFile->setSelected(false);
+        if (pLogFile) {
+            if(pLogFile->selected() && pLogFile != _currentLogfile) {
+                pLogFile->setSelected(false);
+            }
+        } else {
+            qWarning() << "Internal error";
         }
     }
     if(_currentLogfile) {

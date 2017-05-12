@@ -35,13 +35,16 @@ public:
     virtual bool inProgress(void) const { return false; }
 
     /// Load the current settings from the vehicle
+    ///     Signals loadComplete when done
     virtual void loadFromVehicle(void);
 
     /// Send the current settings to the vehicle
+    ///     Signals sendComplete when done
     virtual void sendToVehicle(const QGeoCoordinate& breachReturn, QmlObjectListModel& polygon);
 
-    /// Remove all fence related items from vehicle (does not affect paramters)
-    virtual void removeAll(void) { }
+    /// Remove all fence related items from vehicle (does not affect parameters)
+    ///     Signals removeAllComplete when done
+    virtual void removeAll(void);
 
     /// Returns true if this vehicle support polygon fence
     ///     Signal: polygonSupportedChanged
@@ -93,6 +96,8 @@ signals:
     void polygonSupportedChanged        (bool polygonSupported);
     void polygonEnabledChanged          (bool polygonEnabled);
     void breachReturnSupportedChanged   (bool breachReturnSupported);
+    void removeAllComplete              (bool error);
+    void sendComplete                   (bool error);
 
 protected:
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);

@@ -26,7 +26,7 @@
 #endif
 
 #ifndef __mobile__
-    #include "GPSManager.h"
+#include "GPSManager.h"
 #endif
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
@@ -69,10 +69,10 @@ LinkManager::~LinkManager()
 
 void LinkManager::setToolbox(QGCToolbox *toolbox)
 {
-   QGCTool::setToolbox(toolbox);
+    QGCTool::setToolbox(toolbox);
 
-   _autoConnectSettings = toolbox->settingsManager()->autoConnectSettings();
-   _mavlinkProtocol = _toolbox->mavlinkProtocol();
+    _autoConnectSettings = toolbox->settingsManager()->autoConnectSettings();
+    _mavlinkProtocol = _toolbox->mavlinkProtocol();
 
     connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
     _portListTimer.start(_autoconnectUpdateTimerMSecs); // timeout must be long enough to get past bootloader on second pass
@@ -99,45 +99,45 @@ LinkInterface* LinkManager::createConnectedLink(SharedLinkConfigurationPointer& 
     LinkInterface* pLink = NULL;
     switch(config->type()) {
 #ifndef NO_SERIAL_LINK
-        case LinkConfiguration::TypeSerial:
-        {
-            SerialConfiguration* serialConfig = dynamic_cast<SerialConfiguration*>(config.data());
-            if (serialConfig) {
-                pLink = new SerialLink(config);
-                if (serialConfig->usbDirect()) {
-                    _activeLinkCheckList.append((SerialLink*)pLink);
-                    if (!_activeLinkCheckTimer.isActive()) {
-                        _activeLinkCheckTimer.start();
-                    }
+    case LinkConfiguration::TypeSerial:
+    {
+        SerialConfiguration* serialConfig = dynamic_cast<SerialConfiguration*>(config.data());
+        if (serialConfig) {
+            pLink = new SerialLink(config);
+            if (serialConfig->usbDirect()) {
+                _activeLinkCheckList.append((SerialLink*)pLink);
+                if (!_activeLinkCheckTimer.isActive()) {
+                    _activeLinkCheckTimer.start();
                 }
             }
         }
+    }
         break;
 #endif
-        case LinkConfiguration::TypeUdp:
-            pLink = new UDPLink(config);
-            break;
-        case LinkConfiguration::TypeTcp:
-            pLink = new TCPLink(config);
-            break;
+    case LinkConfiguration::TypeUdp:
+        pLink = new UDPLink(config);
+        break;
+    case LinkConfiguration::TypeTcp:
+        pLink = new TCPLink(config);
+        break;
 #ifdef QGC_ENABLE_BLUETOOTH
-        case LinkConfiguration::TypeBluetooth:
-            pLink = new BluetoothLink(config);
-            break;
+    case LinkConfiguration::TypeBluetooth:
+        pLink = new BluetoothLink(config);
+        break;
 #endif
 #ifndef __mobile__
-        case LinkConfiguration::TypeLogReplay:
-            pLink = new LogReplayLink(config);
-            break;
+    case LinkConfiguration::TypeLogReplay:
+        pLink = new LogReplayLink(config);
+        break;
 #endif
 #ifdef QT_DEBUG
-        case LinkConfiguration::TypeMock:
-            pLink = new MockLink(config);
-            break;
+    case LinkConfiguration::TypeMock:
+        pLink = new MockLink(config);
+        break;
 #endif
-        case LinkConfiguration::TypeLast:
-        default:
-            break;
+    case LinkConfiguration::TypeLast:
+    default:
+        break;
     }
 
     if (pLink) {
@@ -150,11 +150,15 @@ LinkInterface* LinkManager::createConnectedLink(SharedLinkConfigurationPointer& 
 
 LinkInterface* LinkManager::createConnectedLink(const QString& name)
 {
-    Q_ASSERT(name.isEmpty() == false);
-    for(int i = 0; i < _sharedConfigurations.count(); i++) {
-        SharedLinkConfigurationPointer& conf = _sharedConfigurations[i];
-        if (conf->name() == name)
-            return createConnectedLink(conf);
+    if (name.isEmpty()) {
+        qWarning() << "Internal error";
+    } else {
+        for(int i = 0; i < _sharedConfigurations.count(); i++) {
+            SharedLinkConfigurationPointer& conf = _sharedConfigurations[i];
+            if (conf->name() == name) {
+                return createConnectedLink(conf);
+            }
+        }
     }
     return NULL;
 }
@@ -171,25 +175,12 @@ void LinkManager::_addLink(LinkInterface* link)
     }
 
     if (!containsLink(link)) {
-        bool channelSet = false;
-
-        // Find a mavlink channel to use for this link, Channel 0 is reserved for internal use.
-        for (int i=1; i<32; i++) {
-            if (!(_mavlinkChannelsUsedBitMask & 1 << i)) {
-                mavlink_reset_channel_status(i);
-                link->_setMavlinkChannel(i);
-                // Start the channel on Mav 1 protocol
-                mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(i);
-                mavlinkStatus->flags = mavlink_get_channel_status(i)->flags | MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
-                qDebug() << "LinkManager mavlinkStatus:channel:flags" << mavlinkStatus << i << mavlinkStatus->flags;
-                _mavlinkChannelsUsedBitMask |= 1 << i;
-                channelSet = true;
-                break;
-            }
-        }
-
-        if (!channelSet) {
+        int mavlinkChannel = _reserveMavlinkChannel();
+        if (mavlinkChannel != 0) {
+            link->_setMavlinkChannel(mavlinkChannel);
+        } else {
             qWarning() << "Ran out of mavlink channels";
+            return;
         }
 
         _sharedLinks.append(SharedLinkInterfacePointer(link));
@@ -219,13 +210,15 @@ void LinkManager::disconnectAll(void)
 
 bool LinkManager::connectLink(LinkInterface* link)
 {
-    Q_ASSERT(link);
-
-    if (_connectionsSuspendedMsg()) {
+    if (link) {
+        if (_connectionsSuspendedMsg()) {
+            return false;
+        }
+        return link->_connect();
+    } else {
+        qWarning() << "Internal error";
         return false;
     }
-
-    return link->_connect();
 }
 
 void LinkManager::disconnectLink(LinkInterface* link)
@@ -260,7 +253,7 @@ void LinkManager::_deleteLink(LinkInterface* link)
     }
 
     // Free up the mavlink channel associated with this link
-    _mavlinkChannelsUsedBitMask &= ~(1 << link->mavlinkChannel());
+    _freeMavlinkChannel(link->mavlinkChannel());
 
     for (int i=0; i<_sharedLinks.count(); i++) {
         if (_sharedLinks[i].data() == link) {
@@ -301,7 +294,6 @@ void LinkManager::setConnectionsSuspended(QString reason)
 {
     _connectionsSuspended = true;
     _connectionsSuspendedReason = reason;
-    Q_ASSERT(!reason.isEmpty());
 }
 
 void LinkManager::_linkConnected(void)
@@ -372,34 +364,34 @@ void LinkManager::loadLinkConfigurationList()
                             bool autoConnect = settings.value(root + "/auto").toBool();
                             switch((LinkConfiguration::LinkType)type) {
 #ifndef NO_SERIAL_LINK
-                                case LinkConfiguration::TypeSerial:
-                                    pLink = (LinkConfiguration*)new SerialConfiguration(name);
-                                    break;
+                            case LinkConfiguration::TypeSerial:
+                                pLink = (LinkConfiguration*)new SerialConfiguration(name);
+                                break;
 #endif
-                                case LinkConfiguration::TypeUdp:
-                                    pLink = (LinkConfiguration*)new UDPConfiguration(name);
-                                    break;
-                                case LinkConfiguration::TypeTcp:
-                                    pLink = (LinkConfiguration*)new TCPConfiguration(name);
-                                    break;
+                            case LinkConfiguration::TypeUdp:
+                                pLink = (LinkConfiguration*)new UDPConfiguration(name);
+                                break;
+                            case LinkConfiguration::TypeTcp:
+                                pLink = (LinkConfiguration*)new TCPConfiguration(name);
+                                break;
 #ifdef QGC_ENABLE_BLUETOOTH
-                                case LinkConfiguration::TypeBluetooth:
-                                    pLink = (LinkConfiguration*)new BluetoothConfiguration(name);
-                                    break;
+                            case LinkConfiguration::TypeBluetooth:
+                                pLink = (LinkConfiguration*)new BluetoothConfiguration(name);
+                                break;
 #endif
 #ifndef __mobile__
-                                case LinkConfiguration::TypeLogReplay:
-                                    pLink = (LinkConfiguration*)new LogReplayLinkConfiguration(name);
-                                    break;
+                            case LinkConfiguration::TypeLogReplay:
+                                pLink = (LinkConfiguration*)new LogReplayLinkConfiguration(name);
+                                break;
 #endif
 #ifdef QT_DEBUG
-                                case LinkConfiguration::TypeMock:
-                                    pLink = (LinkConfiguration*)new MockConfiguration(name);
-                                    break;
+                            case LinkConfiguration::TypeMock:
+                                pLink = (LinkConfiguration*)new MockConfiguration(name);
+                                break;
 #endif
-                                default:
-                                case LinkConfiguration::TypeLast:
-                                    break;
+                            default:
+                            case LinkConfiguration::TypeLast:
+                                break;
                             }
                             if(pLink) {
                                 //-- Have the instance load its own values
@@ -469,7 +461,7 @@ void LinkManager::_updateAutoConnectLinks(void)
         qCDebug(LinkManagerLog) << "New auto-connect UDP port added";
         UDPConfiguration* udpConfig = new UDPConfiguration(_defaultUPDLinkName);
         udpConfig->setLocalPort(QGC_UDP_LOCAL_PORT);
-        udpConfig->setDynamic(true);        
+        udpConfig->setDynamic(true);
         SharedLinkConfigurationPointer config = addConfiguration(udpConfig);
         createConnectedLink(config);
         emit linkConfigurationsChanged();
@@ -647,7 +639,9 @@ QStringList LinkManager::linkTypeStrings(void) const
 #ifndef __mobile__
         list += "Log Replay";
 #endif
-        Q_ASSERT(list.size() == (int)LinkConfiguration::TypeLast);
+        if (list.size() != (int)LinkConfiguration::TypeLast) {
+            qWarning() << "Internal error";
+        }
     }
     return list;
 }
@@ -697,24 +691,29 @@ QStringList LinkManager::serialBaudRates(void)
 
 bool LinkManager::endConfigurationEditing(LinkConfiguration* config, LinkConfiguration* editedConfig)
 {
-    Q_ASSERT(config != NULL);
-    Q_ASSERT(editedConfig != NULL);
-    _fixUnnamed(editedConfig);
-    config->copyFrom(editedConfig);
-    saveLinkConfigurationList();
-    // Tell link about changes (if any)
-    config->updateSettings();
-    // Discard temporary duplicate
-    delete editedConfig;
+    if (config && editedConfig) {
+        _fixUnnamed(editedConfig);
+        config->copyFrom(editedConfig);
+        saveLinkConfigurationList();
+        // Tell link about changes (if any)
+        config->updateSettings();
+        // Discard temporary duplicate
+        delete editedConfig;
+    } else {
+        qWarning() << "Internal error";
+    }
     return true;
 }
 
 bool LinkManager::endCreateConfiguration(LinkConfiguration* config)
 {
-    Q_ASSERT(config != NULL);
-    _fixUnnamed(config);
-    addConfiguration(config);
-    saveLinkConfigurationList();
+    if (config) {
+        _fixUnnamed(config);
+        addConfiguration(config);
+        saveLinkConfigurationList();
+    } else {
+        qWarning() << "Internal error";
+    }
     return true;
 }
 
@@ -729,21 +728,25 @@ LinkConfiguration* LinkManager::createConfiguration(int type, const QString& nam
 
 LinkConfiguration* LinkManager::startConfigurationEditing(LinkConfiguration* config)
 {
-    Q_ASSERT(config != NULL);
+    if (config) {
 #ifndef NO_SERIAL_LINK
-    if(config->type() == LinkConfiguration::TypeSerial)
-        _updateSerialPorts();
+        if(config->type() == LinkConfiguration::TypeSerial)
+            _updateSerialPorts();
 #endif
-    return LinkConfiguration::duplicateSettings(config);
+        return LinkConfiguration::duplicateSettings(config);
+    } else {
+        qWarning() << "Internal error";
+        return NULL;
+    }
 }
 
 
 void LinkManager::_fixUnnamed(LinkConfiguration* config)
 {
-    Q_ASSERT(config != NULL);
-    //-- Check for "Unnamed"
-    if (config->name() == "Unnamed") {
-        switch(config->type()) {
+    if (config) {
+        //-- Check for "Unnamed"
+        if (config->name() == "Unnamed") {
+            switch(config->type()) {
 #ifndef NO_SERIAL_LINK
             case LinkConfiguration::TypeSerial: {
                 QString tname = dynamic_cast<SerialConfiguration*>(config)->portName();
@@ -755,61 +758,67 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
 #endif
                 config->setName(QString("Serial Device on %1").arg(tname));
                 break;
-                }
+            }
 #endif
             case LinkConfiguration::TypeUdp:
                 config->setName(
-                    QString("UDP Link on Port %1").arg(dynamic_cast<UDPConfiguration*>(config)->localPort()));
+                            QString("UDP Link on Port %1").arg(dynamic_cast<UDPConfiguration*>(config)->localPort()));
                 break;
             case LinkConfiguration::TypeTcp: {
-                    TCPConfiguration* tconfig = dynamic_cast<TCPConfiguration*>(config);
-                    if(tconfig) {
-                        config->setName(
-                            QString("TCP Link %1:%2").arg(tconfig->address().toString()).arg((int)tconfig->port()));
-                    }
+                TCPConfiguration* tconfig = dynamic_cast<TCPConfiguration*>(config);
+                if(tconfig) {
+                    config->setName(
+                                QString("TCP Link %1:%2").arg(tconfig->address().toString()).arg((int)tconfig->port()));
                 }
+            }
                 break;
 #ifdef QGC_ENABLE_BLUETOOTH
             case LinkConfiguration::TypeBluetooth: {
-                    BluetoothConfiguration* tconfig = dynamic_cast<BluetoothConfiguration*>(config);
-                    if(tconfig) {
-                        config->setName(QString("%1 (Bluetooth Device)").arg(tconfig->device().name));
-                    }
+                BluetoothConfiguration* tconfig = dynamic_cast<BluetoothConfiguration*>(config);
+                if(tconfig) {
+                    config->setName(QString("%1 (Bluetooth Device)").arg(tconfig->device().name));
                 }
+            }
                 break;
 #endif
 #ifndef __mobile__
             case LinkConfiguration::TypeLogReplay: {
-                    LogReplayLinkConfiguration* tconfig = dynamic_cast<LogReplayLinkConfiguration*>(config);
-                    if(tconfig) {
-                        config->setName(QString("Log Replay %1").arg(tconfig->logFilenameShort()));
-                    }
+                LogReplayLinkConfiguration* tconfig = dynamic_cast<LogReplayLinkConfiguration*>(config);
+                if(tconfig) {
+                    config->setName(QString("Log Replay %1").arg(tconfig->logFilenameShort()));
                 }
+            }
                 break;
 #endif
 #ifdef QT_DEBUG
             case LinkConfiguration::TypeMock:
                 config->setName(
-                    QString("Mock Link"));
+                            QString("Mock Link"));
                 break;
 #endif
             case LinkConfiguration::TypeLast:
             default:
                 break;
+            }
         }
+    } else {
+        qWarning() << "Internal error";
     }
 }
 
 void LinkManager::removeConfiguration(LinkConfiguration* config)
 {
-    Q_ASSERT(config != NULL);
-    LinkInterface* iface = config->link();
-    if(iface) {
-        disconnectLink(iface);
-    }
+    if (config) {
+        LinkInterface* iface = config->link();
+        if(iface) {
+            disconnectLink(iface);
+        }
 
-    _removeConfiguration(config);
-    saveLinkConfigurationList();
+        _removeConfiguration(config);
+        saveLinkConfigurationList();
+    } else {
+        qWarning() << "Internal error";
+    }
 }
 
 bool LinkManager::isAutoconnectLink(LinkInterface* link)
@@ -924,4 +933,26 @@ void LinkManager::startAutoConnectedLinks(void)
         if (conf->isAutoConnect())
             createConnectedLink(conf);
     }
+}
+
+int LinkManager::_reserveMavlinkChannel(void)
+{
+    // Find a mavlink channel to use for this link, Channel 0 is reserved for internal use.
+    for (int mavlinkChannel=1; mavlinkChannel<32; mavlinkChannel++) {
+        if (!(_mavlinkChannelsUsedBitMask & 1 << mavlinkChannel)) {
+            mavlink_reset_channel_status(mavlinkChannel);
+            // Start the channel on Mav 1 protocol
+            mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
+            mavlinkStatus->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+            _mavlinkChannelsUsedBitMask |= 1 << mavlinkChannel;
+            return mavlinkChannel;
+        }
+    }
+
+    return 0;   // All channels reserved
+}
+
+void LinkManager::_freeMavlinkChannel(int channel)
+{
+    _mavlinkChannelsUsedBitMask &= ~(1 << channel);
 }

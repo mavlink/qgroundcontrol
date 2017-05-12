@@ -15,12 +15,12 @@ import QGroundControl.Palette       1.0
 /// Mission item edit control
 Rectangle {
     id:     _root
-    height: editorLoader.y + editorLoader.height + (_margin * 2)
-    color:  _currentItem ? qgcPal.primaryButton : qgcPal.windowShade
+    height: editorLoader.y + (editorLoader.visible ? editorLoader.height : 0) + (_margin * 2)
+    color:  _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
     radius: _radius
 
     property var    map                 ///< Map control
-    property var    missionController
+    property var    masterController
     property var    missionItem         ///< MissionItem associated with this editor
     property bool   readOnly            ///< true: read only view, false: full editing view
     property var    rootQgcView
@@ -30,11 +30,13 @@ Rectangle {
     signal insertWaypoint
     signal insertComplexItem(string complexItemName)
 
+    property var    _masterController:          masterController
+    property var    _missionController:         _masterController.missionController
     property bool   _currentItem:               missionItem.isCurrentItem
     property color  _outerTextColor:            _currentItem ? qgcPal.primaryButtonText : qgcPal.text
     property bool   _noMissionItemsAdded:       ListView.view.model.count === 1
     property real   _sectionSpacer:             ScreenTools.defaultFontPixelWidth / 2  // spacing between section headings
-    property bool   _singleComplexItem:         missionController.complexMissionItemNames.length === 1
+    property bool   _singleComplexItem:         _missionController.complexMissionItemNames.length === 1
 
     readonly property real  _editFieldWidth:    Math.min(width - _margin * 2, ScreenTools.defaultFontPixelWidth * 12)
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
@@ -105,7 +107,7 @@ Rectangle {
                 visible:    !_singleComplexItem
 
                 Instantiator {
-                    model: missionController.complexMissionItemNames
+                    model: _missionController.complexMissionItemNames
 
                     onObjectAdded:      patternMenu.insertItem(index, object)
                     onObjectRemoved:    patternMenu.removeItem(object)
@@ -118,9 +120,9 @@ Rectangle {
             }
 
             MenuItem {
-                text:           qsTr("Insert ") + missionController.complexMissionItemNames[0]
+                text:           qsTr("Insert ") + _missionController.complexMissionItemNames[0]
                 visible:        _singleComplexItem
-                onTriggered:    insertComplexItem(missionController.complexMissionItemNames[0])
+                onTriggered:    insertComplexItem(_missionController.complexMissionItemNames[0])
             }
 
             MenuItem {
@@ -196,14 +198,11 @@ Rectangle {
         anchors.topMargin:  _margin
         anchors.left:       parent.left
         anchors.top:        commandPicker.bottom
-        height:             item ? item.height : 0
         source:             missionItem.editorQml
+        visible:            _currentItem
 
-        onLoaded: {
-            item.visible = Qt.binding(function() { return _currentItem; })
-        }
-
-        property real   availableWidth: _root.width - (_margin * 2) ///< How wide the editor should be
-        property var    editorRoot:     _root
+        property var    masterController:   _masterController
+        property real   availableWidth:     _root.width - (_margin * 2) ///< How wide the editor should be
+        property var    editorRoot:         _root
     }
 } // Rectangle

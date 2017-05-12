@@ -11,6 +11,7 @@
 #define AppSettings_H
 
 #include "SettingsGroup.h"
+#include "QGCMAVLink.h"
 
 class AppSettings : public SettingsGroup
 {
@@ -34,7 +35,6 @@ public:
     Q_PROPERTY(Fact* showLargeCompass                   READ showLargeCompass                   CONSTANT)
     Q_PROPERTY(Fact* savePath                           READ savePath                           CONSTANT)
     Q_PROPERTY(Fact* autoLoadMissions                   READ autoLoadMissions                   CONSTANT)
-    Q_PROPERTY(Fact* automaticMissionUpload             READ automaticMissionUpload             CONSTANT)
 
     Q_PROPERTY(QString missionSavePath      READ missionSavePath    NOTIFY savePathsChanged)
     Q_PROPERTY(QString parameterSavePath    READ parameterSavePath  NOTIFY savePathsChanged)
@@ -42,6 +42,7 @@ public:
 
     Q_PROPERTY(QString planFileExtension        MEMBER planFileExtension     CONSTANT)
     Q_PROPERTY(QString missionFileExtension     MEMBER missionFileExtension     CONSTANT)
+    Q_PROPERTY(QString waypointsFileExtension   MEMBER waypointsFileExtension   CONSTANT)
     Q_PROPERTY(QString parameterFileExtension   MEMBER parameterFileExtension   CONSTANT)
     Q_PROPERTY(QString telemetryFileExtension   MEMBER telemetryFileExtension   CONSTANT)
 
@@ -60,11 +61,13 @@ public:
     Fact* showLargeCompass                  (void);
     Fact* savePath                          (void);
     Fact* autoLoadMissions                  (void);
-    Fact* automaticMissionUpload            (void);
 
     QString missionSavePath     (void);
     QString parameterSavePath   (void);
     QString telemetrySavePath   (void);
+
+    static MAV_AUTOPILOT offlineEditingFirmwareTypeFromFirmwareType(MAV_AUTOPILOT firmwareType);
+    static MAV_TYPE offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleType);
 
     static const char* appSettingsGroupName;
 
@@ -83,12 +86,12 @@ public:
     static const char* showLargeCompassName;
     static const char* savePathName;
     static const char* autoLoadMissionsName;
-    static const char* automaticMissionUploadName;
 
     // Application wide file extensions
     static const char* parameterFileExtension;
     static const char* planFileExtension;
     static const char* missionFileExtension;
+    static const char* waypointsFileExtension;
     static const char* fenceFileExtension;
     static const char* rallyPointFileExtension;
     static const char* telemetryFileExtension;
@@ -121,7 +124,6 @@ private:
     SettingsFact* _showLargeCompassFact;
     SettingsFact* _savePathFact;
     SettingsFact* _autoLoadMissionsFact;
-    SettingsFact* _automaticMissionUpload;
 };
 
 #endif

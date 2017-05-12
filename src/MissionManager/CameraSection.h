@@ -38,6 +38,9 @@ public:
     Q_PROPERTY(Fact*    cameraAction                    READ cameraAction                                                       CONSTANT)
     Q_PROPERTY(Fact*    cameraPhotoIntervalTime         READ cameraPhotoIntervalTime                                            CONSTANT)
     Q_PROPERTY(Fact*    cameraPhotoIntervalDistance     READ cameraPhotoIntervalDistance                                        CONSTANT)
+    Q_PROPERTY(bool     cameraModeSupported             READ cameraModeSupported                                                CONSTANT)   ///< true: cameraMode is supported by this vehicle
+    Q_PROPERTY(bool     specifyCameraMode               READ specifyCameraMode              WRITE setSpecifyCameraMode          NOTIFY specifyCameraModeChanged)
+    Q_PROPERTY(Fact*    cameraMode                      READ cameraMode                                                         CONSTANT)   ///< MAV_CMD_SET_CAMERA_MODE.param2
 
     bool    specifyGimbal               (void) const { return _specifyGimbal; }
     Fact*   gimbalYaw                   (void) { return &_gimbalYawFact; }
@@ -45,8 +48,12 @@ public:
     Fact*   cameraAction                (void) { return &_cameraActionFact; }
     Fact*   cameraPhotoIntervalTime     (void) { return &_cameraPhotoIntervalTimeFact; }
     Fact*   cameraPhotoIntervalDistance (void) { return &_cameraPhotoIntervalDistanceFact; }
+    bool    cameraModeSupported         (void) const;
+    bool    specifyCameraMode           (void) const { return _specifyCameraMode; }
+    Fact*   cameraMode                  (void) { return &_cameraModeFact; }
 
-    void setSpecifyGimbal   (bool specifyGimbal);
+    void setSpecifyGimbal       (bool specifyGimbal);
+    void setSpecifyCameraMode   (bool specifyCameraMode);
 
     ///< @return The gimbal yaw specified by this item, NaN if not specified
     double specifiedGimbalYaw(void) const;
@@ -63,13 +70,14 @@ public:
 
 signals:
     bool specifyGimbalChanged       (bool specifyGimbal);
+    bool specifyCameraModeChanged   (bool specifyCameraMode);
     void specifiedGimbalYawChanged  (double gimbalYaw);
 
 private slots:
     void _setDirty(void);
     void _setDirtyAndUpdateItemCount(void);
     void _updateSpecifiedGimbalYaw(void);
-    void _specifyGimbalChanged(bool specifyGimbal);
+    void _specifyChanged(void);
     void _updateSettingsSpecified(void);
     void _cameraActionChanged(void);
 
@@ -77,11 +85,13 @@ private:
     bool    _available;
     bool    _settingsSpecified;
     bool    _specifyGimbal;
+    bool    _specifyCameraMode;
     Fact    _gimbalYawFact;
     Fact    _gimbalPitchFact;
     Fact    _cameraActionFact;
     Fact    _cameraPhotoIntervalDistanceFact;
     Fact    _cameraPhotoIntervalTimeFact;
+    Fact    _cameraModeFact;
     bool    _dirty;
 
     static QMap<QString, FactMetaData*> _metaDataMap;
@@ -91,4 +101,5 @@ private:
     static const char* _cameraActionName;
     static const char* _cameraPhotoIntervalDistanceName;
     static const char* _cameraPhotoIntervalTimeName;
+    static const char* _cameraModeName;
 };

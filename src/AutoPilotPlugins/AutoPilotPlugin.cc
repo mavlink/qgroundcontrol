@@ -21,7 +21,7 @@ AutoPilotPlugin::AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : QObject(parent)
     , _vehicle(vehicle)
     , _firmwarePlugin(vehicle->firmwarePlugin())
-	, _setupComplete(false)
+    , _setupComplete(false)
 {
 
 }
@@ -33,27 +33,29 @@ AutoPilotPlugin::~AutoPilotPlugin()
 
 void AutoPilotPlugin::_recalcSetupComplete(void)
 {
-	bool newSetupComplete = true;
-	
-	foreach(const QVariant componentVariant, vehicleComponents()) {
-		VehicleComponent* component = qobject_cast<VehicleComponent*>(qvariant_cast<QObject *>(componentVariant));
-		Q_ASSERT(component);
-		
-		if (!component->setupComplete()) {
-			newSetupComplete = false;
-			break;
-		}
-	}
-	
-	if (_setupComplete != newSetupComplete) {
-		_setupComplete = newSetupComplete;
-		emit setupCompleteChanged(_setupComplete);
-	}
+    bool newSetupComplete = true;
+
+    foreach(const QVariant componentVariant, vehicleComponents()) {
+        VehicleComponent* component = qobject_cast<VehicleComponent*>(qvariant_cast<QObject *>(componentVariant));
+        if (component) {
+            if (!component->setupComplete()) {
+                newSetupComplete = false;
+                break;
+            }
+        } else {
+            qWarning() << "AutoPilotPlugin::_recalcSetupComplete Incorrectly typed VehicleComponent";
+        }
+    }
+
+    if (_setupComplete != newSetupComplete) {
+        _setupComplete = newSetupComplete;
+        emit setupCompleteChanged(_setupComplete);
+    }
 }
 
 bool AutoPilotPlugin::setupComplete(void)
 {
-	return _setupComplete;
+    return _setupComplete;
 }
 
 void AutoPilotPlugin::parametersReadyPreChecks(void)
