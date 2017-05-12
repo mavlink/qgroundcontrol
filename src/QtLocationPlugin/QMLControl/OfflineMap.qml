@@ -89,10 +89,10 @@ QGCView {
 
     function updateMap() {
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
-            console.log(_map.supportedMapTypes[i].name)
+            //console.log(_map.supportedMapTypes[i].name)
             if (mapType === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]
-                console.log("Update Map:" + " " + _map.activeMapType)
+                //console.log("Update Map:" + " " + _map.activeMapType)
                 handleChanges()
                 return
             }
