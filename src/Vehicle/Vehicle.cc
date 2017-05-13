@@ -1754,6 +1754,7 @@ void Vehicle::_startPlanRequest(void)
                 QDir missionAutoLoadDir(missionAutoLoadDirPath);
                 QString autoloadFilename = missionAutoLoadDir.absoluteFilePath(tr("AutoLoad%1.%2").arg(_id).arg(AppSettings::planFileExtension));
                 if (QFile(autoloadFilename).exists()) {
+                    _initialPlanRequestComplete = true; // We aren't going to load from the vehicle, so we are done
                     PlanMasterController::sendPlanToVehicle(this, autoloadFilename);
                     return;
                 }
