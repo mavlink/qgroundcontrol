@@ -39,7 +39,7 @@ QGCView {
 
     function firmwareVersion() {
         if(_activeVehicle) {
-            return qsTr("Firmware Version: " + _activeVehicle.firmwareMajorVersion + "." + _activeVehicle.firmwareMinorVersion + "." + _activeVehicle.firmwarePatchVersion + " (" + _activeVehicle.firmwareVersionTypeString + ")")
+            return qsTr("Firmware Version: " + _activeVehicle.firmwareCustomMajorVersion + "." + _activeVehicle.firmwareCustomMinorVersion + "." + _activeVehicle.firmwareCustomPatchVersion)
         } else {
             return ""
         }
