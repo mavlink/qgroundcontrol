@@ -15,6 +15,7 @@
 #error Should not be included in mobile builds
 #endif
 
+#include <QCoreApplication>
 #include <QFileDialog>
 
 /// @file
@@ -40,7 +41,7 @@
 */
 
 class QGCQFileDialog : public QFileDialog {
-    
+    Q_DECLARE_TR_FUNCTIONS(QGCQFileDialog)
 public:
 
     //! Static helper that will return an existing directory selected by the user.
