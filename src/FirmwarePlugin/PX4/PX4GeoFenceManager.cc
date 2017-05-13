@@ -84,6 +84,8 @@ void PX4GeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlOb
 {
     Q_UNUSED(breachReturn);
 
+    qDebug() << polygon.count();
+
     QList<MissionItem*> polygonItems;
 
     _sendPolygon.clear();
@@ -92,7 +94,7 @@ void PX4GeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlOb
 
         _sendPolygon.append(vertex);
         MissionItem* item = new MissionItem(0,
-                            MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION,
+                                            MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION,
                                             MAV_FRAME_GLOBAL,
                                             0, 0, 0, 0,         // param 1-4 unused
                                             vertex.latitude(),

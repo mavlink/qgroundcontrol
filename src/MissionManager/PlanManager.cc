@@ -84,7 +84,7 @@ void PlanManager::writeMissionItems(const QList<MissionItem*>& missionItems)
 
     _clearAndDeleteWriteMissionItems();
 
-    bool skipFirstItem = !_vehicle->firmwarePlugin()->sendHomePositionToVehicle();
+    bool skipFirstItem = _planType == MAV_MISSION_TYPE_MISSION && !_vehicle->firmwarePlugin()->sendHomePositionToVehicle();
 
     int firstIndex = skipFirstItem ? 1 : 0;
 
@@ -150,7 +150,7 @@ void PlanManager::loadFromVehicle(void)
 /// Internal call to request list of mission items. May be called during a retry sequence.
 void PlanManager::_requestList(void)
 {
-    qCDebug(PlanManagerLog) << "_requestList retry count" << _retryCount;
+    qCDebug(PlanManagerLog) << "_requestList _planType:_retryCount" << _planType << _retryCount;
 
     mavlink_message_t message;
 

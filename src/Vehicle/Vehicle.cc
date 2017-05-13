@@ -1773,6 +1773,7 @@ void Vehicle::_missionLoadComplete(void)
 {
     // After the initial mission request completes we ask for the geofence
     if (!_geoFenceManagerInitialRequestSent) {
+        qCDebug(VehicleLog) << "_missionLoadComplete requesting geofence";
         _geoFenceManagerInitialRequestSent = true;
         _geoFenceManager->loadFromVehicle();
     }
@@ -1782,6 +1783,7 @@ void Vehicle::_geoFenceLoadComplete(void)
 {
     // After geofence request completes we ask for the rally points
     if (!_rallyPointManagerInitialRequestSent) {
+        qCDebug(VehicleLog) << "_missionLoadComplete requesting rally points";
         _rallyPointManagerInitialRequestSent = true;
         _rallyPointManager->loadFromVehicle();
     }
