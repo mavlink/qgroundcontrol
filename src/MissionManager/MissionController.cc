@@ -319,7 +319,7 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
         MissionSettingsItem* settingsItem = _visualItems->value<MissionSettingsItem*>(0);
         CameraSection* cameraSection = settingsItem->cameraSection();
         // Set camera to photo mode (leave alone if user already specified)
-        if (!cameraSection->specifyCameraMode()) {
+        if (cameraSection->cameraModeSupported() && !cameraSection->specifyCameraMode()) {
             cameraSection->setSpecifyCameraMode(true);
             cameraSection->cameraMode()->setRawValue(0);
         }
@@ -382,7 +382,7 @@ void MissionController::removeMissionItem(int index)
                     cameraSection->setSpecifyGimbal(false);
                 }
             }
-            if (cameraSection->specifyCameraMode() && cameraSection->cameraMode()->rawValue().toInt() == 0) {
+            if (cameraSection->cameraModeSupported() && cameraSection->specifyCameraMode() && cameraSection->cameraMode()->rawValue().toInt() == 0) {
                 cameraSection->setSpecifyCameraMode(false);
             }
         }

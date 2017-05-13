@@ -1,4 +1,5 @@
 # QGroundControl Ground Control Station
+
 ## Open Source Micro Air Vehicle Ground Control Station
 
 [![Releases](https://img.shields.io/github/release/mavlink/QGroundControl.svg)](https://github.com/mavlink/QGroundControl/releases)
@@ -10,7 +11,7 @@
 The license terms are set in the COPYING.md file.
 
 * Project:
-<http://qgroundcontrol.org>
+<http://qgroundcontrol.com>
 
 * Files:
 <http://github.com/mavlink/qgroundcontrol>
@@ -27,7 +28,7 @@ git clone --recursive https://github.com/mavlink/qgroundcontrol.git
 Each time you pull new source to your repository you should run `git submodule update` to get the latest submodules as well. Since QGroundControl uses submodules, using the zip file for source download will not work. You must use git.
 
 ### User Manual
-https://donlakeflyer.gitbooks.io/qgroundcontrol-user-guide/content/
+https://docs.qgroundcontrol.com/en/
 
 ### Supported Builds
 
@@ -41,7 +42,7 @@ QGroundControl builds are supported for OSX, Linux, Windows, iOS and Android. QG
 * Qt version: 5.7.1 ONLY
 
 ###### Install QT
-You need to install Qt as described below instead of using pre-built packages from say, a Linux distribution because QGroundControl needs access to private Qt headers.
+You need to install Qt as described below instead of using pre-built packages from say, a Linux distribution, because QGroundControl needs access to private Qt headers.
 * Download the [Qt installer](http://www.qt.io/download-open-source)
     * Make sure to install Qt version **5.7.1** NOT 5.4.x, 5.6.x, 5.8.x, etc. 
     * Ubuntu: Set the downloaded file to executable using:`chmod +x`. Install to default location for use with ./qgroundcontrol-start.sh. If you install Qt to a non-default location you will need to modify qgroundcontrol-start.sh in order to run downloaded builds.
@@ -80,7 +81,7 @@ A Vagrantfile is provided to build QGroundControl using the [Vagrant](https://ww
 * If you get this error when running qgroundcontrol: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version 'GLIBCXX_3.4.20' not found. You need to either update to the latest gcc, or install the latest libstdc++.6 using: sudo apt-get install libstdc++6.
 
 ## Additional functionality
-QGroundcontrol has functionality that is dependent on the operating system and libraries installed by the user. The following sections describe these features, their dependencies, and how to disable/alter them during the build process. These features can be forcibly enabled/disabled by specifying additional values to qmake. 
+QGroundControl has functionality that is dependent on the operating system and libraries installed by the user. The following sections describe these features, their dependencies, and how to disable/alter them during the build process. These features can be forcibly enabled/disabled by specifying additional values to qmake. 
 
 ### Opal-RT's RT-LAB simulator
 Integration with Opal-RT's RT-LAB simulator can be enabled on Windows by installing RT-LAB 7.2.4. This allows vehicles to be simulated in RT-LAB and communicate directly with QGC on the same computer as if the UAS was actually deployed. This support is enabled by default once the requisite RT-LAB software is installed. Disabling this can be done by adding `DEFINES+=DISABLE_RTLAB` to qmake.

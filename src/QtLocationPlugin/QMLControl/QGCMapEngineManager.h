@@ -48,6 +48,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  tileSets        READ    tileSets        NOTIFY tileSetsChanged)
     Q_PROPERTY(QStringList          mapList         READ    mapList         CONSTANT)
     Q_PROPERTY(QString              mapboxToken     READ    mapboxToken     WRITE   setMapboxToken  NOTIFY  mapboxTokenChanged)
+    Q_PROPERTY(QString              esriToken       READ    esriToken       WRITE   setEsriToken    NOTIFY  esriTokenChanged)
     Q_PROPERTY(quint32              maxMemCache     READ    maxMemCache     WRITE   setMaxMemCache  NOTIFY  maxMemCacheChanged)
     Q_PROPERTY(quint32              maxDiskCache    READ    maxDiskCache    WRITE   setMaxDiskCache NOTIFY  maxDiskCacheChanged)
     Q_PROPERTY(QString              errorMessage    READ    errorMessage    NOTIFY  errorMessageChanged)
@@ -85,6 +86,7 @@ public:
     QString                         tileSizeStr             ();
     QStringList                     mapList                 ();
     QString                         mapboxToken             ();
+    QString                         esriToken               ();
     QmlObjectListModel*             tileSets                () { return &_tileSets; }
     quint32                         maxMemCache             ();
     quint32                         maxDiskCache            ();
@@ -97,6 +99,7 @@ public:
     bool                            importReplace           () { return _importReplace; }
 
     void                            setMapboxToken          (QString token);
+    void                            setEsriToken            (QString token);
     void                            setMaxMemCache          (quint32 size);
     void                            setMaxDiskCache         (quint32 size);
     void                            setImportReplace        (bool replace) { _importReplace = replace; emit importReplaceChanged(); }
@@ -114,6 +117,7 @@ signals:
     void tileCountChanged       ();
     void tileSizeChanged        ();
     void mapboxTokenChanged     ();
+    void esriTokenChanged       ();
     void tileSetsChanged        ();
     void maxMemCacheChanged     ();
     void maxDiskCacheChanged    ();
