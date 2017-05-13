@@ -140,7 +140,11 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _firmwareMajorVersion(versionNotSetValue)
     , _firmwareMinorVersion(versionNotSetValue)
     , _firmwarePatchVersion(versionNotSetValue)
+    , _firmwareCustomMajorVersion(versionNotSetValue)
+    , _firmwareCustomMinorVersion(versionNotSetValue)
+    , _firmwareCustomPatchVersion(versionNotSetValue)
     , _firmwareVersionType(FIRMWARE_VERSION_TYPE_OFFICIAL)
+    , _gitHash(versionNotSetValue)
     , _lastAnnouncedLowBatteryPercent(100)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
@@ -294,6 +298,10 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _firmwareMajorVersion(versionNotSetValue)
     , _firmwareMinorVersion(versionNotSetValue)
     , _firmwarePatchVersion(versionNotSetValue)
+    , _firmwareCustomMajorVersion(versionNotSetValue)
+    , _firmwareCustomMinorVersion(versionNotSetValue)
+    , _firmwareCustomPatchVersion(versionNotSetValue)
+    , _firmwareVersionType(FIRMWARE_VERSION_TYPE_OFFICIAL)
     , _gitHash(versionNotSetValue)
     , _lastAnnouncedLowBatteryPercent(100)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
@@ -714,14 +722,23 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
     }
 
     // Git hash
-    if (autopilotVersion.flight_custom_version[0] != 0) {
+    if (*((uint64_t*)(&autopilotVersion.flight_custom_version)) != 0) {
         // PX4 Firmware stores the first 16 characters of the git hash as binary, with the individual bytes in reverse order
         if (px4Firmware()) {
+            // Lower 3 bytes is custom version
+            int majorVersion, minorVersion, patchVersion;
+            majorVersion = autopilotVersion.flight_custom_version[2];
+            minorVersion = autopilotVersion.flight_custom_version[1];
+            patchVersion = autopilotVersion.flight_custom_version[0];
+            setFirmwareCustomVersion(majorVersion, minorVersion, patchVersion);
+
+            qDebug() << majorVersion << minorVersion << patchVersion;
+
             _gitHash = "";
             QByteArray array((char*)autopilotVersion.flight_custom_version, 8);
             for (int i = 7; i >= 0; i--) {
                 _gitHash.append(QString("%1").arg(autopilotVersion.flight_custom_version[i], 2, 16, QChar('0')));
-            }
+            }            
         } else {
             // APM Firmware stores the first 8 characters of the git hash as an ASCII character string
             _gitHash = QString::fromUtf8((char*)autopilotVersion.flight_custom_version, 8);
@@ -2290,10 +2307,15 @@ void Vehicle::setFirmwareVersion(int majorVersion, int minorVersion, int patchVe
     _firmwareMinorVersion = minorVersion;
     _firmwarePatchVersion = patchVersion;
     _firmwareVersionType = versionType;
-    emit firmwareMajorVersionChanged(_firmwareMajorVersion);
-    emit firmwareMinorVersionChanged(_firmwareMinorVersion);
-    emit firmwarePatchVersionChanged(_firmwarePatchVersion);
-    emit firmwareVersionTypeChanged(_firmwareVersionType);
+    emit firmwareVersionChanged();
+}
+
+void Vehicle::setFirmwareCustomVersion(int majorVersion, int minorVersion, int patchVersion)
+{
+    _firmwareCustomMajorVersion = majorVersion;
+    _firmwareCustomMinorVersion = minorVersion;
+    _firmwareCustomPatchVersion = patchVersion;
+    emit firmwareCustomVersionChanged();
 }
 
 QString Vehicle::firmwareVersionTypeString(void) const
