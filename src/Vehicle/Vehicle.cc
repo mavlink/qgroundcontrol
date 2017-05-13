@@ -722,7 +722,7 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
     }
 
     // Git hash
-    if (*((uint64_t*)(&autopilotVersion.flight_custom_version)) != 0) {
+    if (*((uint64_t*)(&autopilotVersion.flight_custom_version[0])) != 0) {
         // PX4 Firmware stores the first 16 characters of the git hash as binary, with the individual bytes in reverse order
         if (px4Firmware()) {
             // Lower 3 bytes is custom version
