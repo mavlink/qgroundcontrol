@@ -467,7 +467,6 @@ void SurveyMissionItem::_optimizeReflySegments(void)
     }
 
     if (shortestIndex > 1) {
-        qDebug() << "Reverse segments";
         // We need to reverse the order of segments
         QList<QList<QGeoCoordinate>> rgReversedTransects;
         for (int i=_reflyTransectSegments.count() - 1; i>=0; i--) {
@@ -476,7 +475,6 @@ void SurveyMissionItem::_optimizeReflySegments(void)
         _reflyTransectSegments = rgReversedTransects;
     }
     if (shortestIndex & 1) {
-        qDebug() << "Reverse points";
         // We need to reverse the points within each segment
         for (int i=0; i<_reflyTransectSegments.count(); i++) {
             QList<QGeoCoordinate> rgReversedCoords;
@@ -770,11 +768,16 @@ void SurveyMissionItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList
 /// Adjust the line segments such that they are all going the same direction with respect to going from P1->P2
 void SurveyMissionItem::_adjustLineDirection(const QList<QLineF>& lineList, QList<QLineF>& resultLines)
 {
+    qreal firstAngle = 0;
     for (int i=0; i<lineList.count(); i++) {
         const QLineF& line = lineList[i];
         QLineF adjustedLine;
 
-        if (line.angle() > 180.0) {
+        if (i == 0) {
+            firstAngle = line.angle();
+        }
+
+        if (qAbs(line.angle() - firstAngle) > 1.0) {
             adjustedLine.setP1(line.p2());
             adjustedLine.setP2(line.p1());
         } else {

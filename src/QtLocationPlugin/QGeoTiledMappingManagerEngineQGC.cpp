@@ -87,9 +87,8 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     setTileSize(QSize(256, 256));
 
     /*
-     * Most of these don't seem kosher at all. This was based on original code from OpenPilot and heavily modified to be used in QGC.
+     * Google and Bing don't seem kosher at all. This was based on original code from OpenPilot and heavily modified to be used in QGC.
      */
-
 
     //-- IMPORTANT
     //   Changes here must reflect those in QGCMapEngine.cpp
@@ -103,19 +102,24 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
 #endif
 
     /* TODO:
-     *  Proper google hybrid maps requires collecting two separate bimaps and overlaying them.
+     *  Proper google hybrid maps requires collecting two separate bitmaps and overlaying them.
      *
      * mapTypes << QGeoMapType(QGeoMapType::HybridMap,       "Google Hybrid Map",        "Google hybrid map",            false, false, UrlFactory::GoogleHybrid);
      *
      */
 
     // Bing
-    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "Bing Street Map",          "Bing street map",              false,  false,  UrlFactory::BingMap);
-    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   "Bing Satellite Map",       "Bing satellite map",           false,  false,  UrlFactory::BingSatellite);
-    mapTypes << QGeoMapType(QGeoMapType::HybridMap,         "Bing Hybrid Map",          "Bing hybrid map",              false,  false,  UrlFactory::BingHybrid);
+    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "Bing Street Map",          "Bing street map",                  false,  false,  UrlFactory::BingMap);
+    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   "Bing Satellite Map",       "Bing satellite map",               false,  false,  UrlFactory::BingSatellite);
+    mapTypes << QGeoMapType(QGeoMapType::HybridMap,         "Bing Hybrid Map",          "Bing hybrid map",                  false,  false,  UrlFactory::BingHybrid);
 
     // Statkart
-    mapTypes << QGeoMapType(QGeoMapType::TerrainMap,             "Statkart Topo2",           "Statkart Topo2",               false,  false,  UrlFactory::StatkartTopo);
+    mapTypes << QGeoMapType(QGeoMapType::TerrainMap,        "Statkart Topo2",           "Statkart Topo2",                   false,  false,  UrlFactory::StatkartTopo);
+
+    // Esri
+    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "Esri Street Map",          "ArcGIS Online World Street Map",   true,   false,  UrlFactory::EsriWorldStreet);
+    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   "Esri Satellite Map",       "ArcGIS Online World Imagery",      true,   false,  UrlFactory::EsriWorldSatellite);
+    mapTypes << QGeoMapType(QGeoMapType::TerrainMap,        "Esri Terrain Map",         "World Terrain Base",               false,  false,  UrlFactory::EsriTerrain);
 
     /* See: https://wiki.openstreetmap.org/wiki/Tile_usage_policy
     mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "Open Street Map",          "Open Street map",              false, false, UrlFactory::OpenStreetMap);
@@ -161,11 +165,6 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
 
     *error = QGeoServiceProvider::NoError;
     errorString->clear();
-
-#if QT_VERSION >= 0x050500
-    if (parameters.contains(QStringLiteral("mapping.copyright")))
-        m_customCopyright = parameters.value(QStringLiteral("mapping.copyright")).toString().toLatin1();
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -188,13 +187,6 @@ QGeoMap*
 QGeoTiledMappingManagerEngineQGC::createMap()
 {
     return new QGeoTiledMapQGC(this);
-}
-
-//-----------------------------------------------------------------------------
-QString
-QGeoTiledMappingManagerEngineQGC::customCopyright() const
-{
-    return m_customCopyright;
 }
 
 #endif

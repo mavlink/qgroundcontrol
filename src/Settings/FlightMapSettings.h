@@ -23,7 +23,9 @@ public:
     typedef enum {
         mapProviderBing,
         mapProviderGoogle,
-        mapProviderStarkart
+        mapProviderStarkart,
+        mapProviderMapBox,
+        mapProviderEsri
     } MapProvider_t;
 
     // This enum must match the json meta data
@@ -52,6 +54,7 @@ private slots:
 
 private:
     void _removeEnumValue(int value, QStringList& enumStrings, QVariantList& enumValues);
+    void _excludeProvider(MapProvider_t provider);
 
     SettingsFact*   _mapProviderFact;
     SettingsFact*   _mapTypeFact;

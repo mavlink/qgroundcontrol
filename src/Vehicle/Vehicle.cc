@@ -1754,6 +1754,7 @@ void Vehicle::_startPlanRequest(void)
                 QDir missionAutoLoadDir(missionAutoLoadDirPath);
                 QString autoloadFilename = missionAutoLoadDir.absoluteFilePath(tr("AutoLoad%1.%2").arg(_id).arg(AppSettings::planFileExtension));
                 if (QFile(autoloadFilename).exists()) {
+                    _initialPlanRequestComplete = true; // We aren't going to load from the vehicle, so we are done
                     PlanMasterController::sendPlanToVehicle(this, autoloadFilename);
                     return;
                 }
@@ -2406,7 +2407,9 @@ void Vehicle::triggerCamera(void)
                    MAV_CMD_DO_DIGICAM_CONTROL,
                    true,                            // show errors
                    0.0, 0.0, 0.0, 0.0,              // param 1-4 unused
-                   1.0);                            // trigger camera
+                   1.0,                             // trigger camera
+                   0.0,                             // param 6 unused
+                   1.0);                            // test shot flag
 }
 
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";

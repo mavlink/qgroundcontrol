@@ -74,6 +74,9 @@ void PlanMasterController::start(bool editMode)
 void PlanMasterController::startStaticActiveVehicle(Vehicle* vehicle)
 {
     _editMode = false;
+    _missionController.start(false);
+    _geoFenceController.start(false);
+    _rallyPointController.start(false);
     _activeVehicleChanged(vehicle);
 }
 
@@ -186,7 +189,7 @@ void PlanMasterController::_loadRallyPointsComplete(void)
 
 void PlanMasterController::_sendMissionComplete(void)
 {
-    if (_editMode && _sendGeoFence) {
+    if (_sendGeoFence) {
         qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start fence sendToVehicle";
         _sendGeoFence = false;
         _sendRallyPoints = true;
@@ -197,7 +200,7 @@ void PlanMasterController::_sendMissionComplete(void)
 
 void PlanMasterController::_sendGeoFenceComplete(void)
 {
-    if (_editMode && _sendRallyPoints) {
+    if (_sendRallyPoints) {
         qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start rally sendToVehicle";
         _sendRallyPoints = false;
         _rallyPointController.sendToVehicle();
@@ -206,7 +209,7 @@ void PlanMasterController::_sendGeoFenceComplete(void)
 
 void PlanMasterController::_sendRallyPointsComplete(void)
 {
-    if (_editMode && _syncInProgress) {
+    if (_syncInProgress) {
         qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle rally point send complete";
         _syncInProgress = false;
         emit syncInProgressChanged(false);
@@ -217,8 +220,6 @@ void PlanMasterController::sendToVehicle(void)
 {
     if (offline()) {
         qCWarning(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called while offline";
-    } else if (!_editMode) {
-        qCWarning(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called from Fly view";
     } else if (syncInProgress()) {
         qCWarning(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called while syncInProgress";
     } else {
@@ -396,6 +397,7 @@ void PlanMasterController::sendPlanToVehicle(Vehicle* vehicle, const QString& fi
     PlanMasterController* controller = new PlanMasterController();
     controller->startStaticActiveVehicle(vehicle);
     controller->loadFromFile(filename);
+    controller->sendToVehicle();
     delete controller;
 }
 

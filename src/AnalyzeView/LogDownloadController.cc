@@ -95,7 +95,7 @@ QGCLogEntry::QGCLogEntry(uint logId, const QDateTime& dateTime, uint logSize, bo
     , _received(received)
     , _selected(false)
 {
-    _status = "Pending";
+    _status = tr("Pending");
 }
 
 //----------------------------------------------------------------------------------------
@@ -180,7 +180,7 @@ LogDownloadController::_logEntry(UASInterface* uas, uint32_t time_utc, uint32_t 
                 entry->setSize(size);
                 entry->setTime(QDateTime::fromTime_t(time_utc));
                 entry->setReceived(true);
-                entry->setStatus(QString("Available"));
+                entry->setStatus(QString(tr("Available")));
             } else {
                 qWarning() << "Received log entry for out-of-bound index:" << id;
             }
@@ -227,7 +227,7 @@ LogDownloadController::_resetSelection(bool canceled)
         if(entry) {
             if(entry->selected()) {
                 if(canceled) {
-                    entry->setStatus(QString("Canceled"));
+                    entry->setStatus(QString(tr("Canceled")));
                 }
                 entry->setSelected(false);
             }
@@ -274,7 +274,7 @@ LogDownloadController::_findMissingEntries()
             for(int i = 0; i < num_logs; i++) {
                 QGCLogEntry* entry = _logEntriesModel[i];
                 if(entry && !entry->received()) {
-                    entry->setStatus(QString("Error"));
+                    entry->setStatus(QString(tr("Error")));
                 }
             }
             //-- Give up
@@ -360,7 +360,7 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
             _timer.start(timeout_time);
             //-- Do we have it all?
             if(_logComplete()) {
-                _downloadData->entry->setStatus(QString("Downloaded"));
+                _downloadData->entry->setStatus(QString(tr("Downloaded")));
                 //-- Check for more
                 _receivedAllData();
             } else if (_chunkComplete()) {
@@ -379,7 +379,7 @@ LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, ui
         qWarning() << "Received log offset greater than expected";
     }
     if(!result) {
-        _downloadData->entry->setStatus(QString("Error"));
+        _downloadData->entry->setStatus(QString(tr("Error")));
     }
 }
 
@@ -425,7 +425,7 @@ LogDownloadController::_findMissingData()
     }
 
     if(_retries++ > 2) {
-        _downloadData->entry->setStatus(QString("Timed Out"));
+        _downloadData->entry->setStatus(QString(tr("Timed Out")));
         //-- Give up
         qWarning() << "Too many errors retreiving log data. Giving up.";
         _receivedAllData();
@@ -516,7 +516,7 @@ LogDownloadController::download(QString path)
     if(dir.isEmpty()) {
         dir = QGCQFileDialog::getExistingDirectory(
                 MainWindow::instance(),
-                "Log Download Directory",
+                tr("Log Download Directory"),
                 QDir::homePath(),
                 QGCQFileDialog::ShowDirsOnly | QGCQFileDialog::DontResolveSymlinks);
     }
@@ -543,7 +543,7 @@ void LogDownloadController::downloadToDirectory(const QString& dir)
             QGCLogEntry* entry = _logEntriesModel[i];
             if(entry) {
                 if(entry->selected()) {
-                   entry->setStatus(QString("Waiting"));
+                   entry->setStatus(QString(tr("Waiting")));
                 }
             }
         }
@@ -634,7 +634,7 @@ LogDownloadController::_prepareLogDownload()
         if (_downloadData->file.exists()) {
             _downloadData->file.remove();
         }
-        _downloadData->entry->setStatus(QString("Error"));
+        _downloadData->entry->setStatus(QString(tr("Error")));
         delete _downloadData;
         _downloadData = NULL;
     }
@@ -688,7 +688,7 @@ LogDownloadController::cancel(void)
         _receivedAllEntries();
     }
     if(_downloadData) {
-        _downloadData->entry->setStatus(QString("Canceled"));
+        _downloadData->entry->setStatus(QString(tr("Canceled")));
         if (_downloadData->file.exists()) {
             _downloadData->file.remove();
         }
