@@ -13,6 +13,7 @@
 #include "GeoFenceManager.h"
 #include "QGCMAVLink.h"
 #include "FactSystem.h"
+#include "PlanManager.h"
 
 class PX4GeoFenceManager : public GeoFenceManager
 {
@@ -23,19 +24,30 @@ public:
     ~PX4GeoFenceManager();
 
     // Overrides from GeoFenceManager
-    bool            circleEnabled       (void) const { return true; }
-    Fact*           circleRadiusFact    (void) const { return _circleRadiusFact; }
-    QVariantList    params              (void) const final { return _params; }
-    QStringList     paramLabels         (void) const final { return _paramLabels; }
+    bool                    inProgress              (void) const final;
+    void                    loadFromVehicle         (void) final;
+    void                    sendToVehicle           (const QGeoCoordinate& breachReturn, QmlObjectListModel& polygon) final;
+    void                    removeAll               (void) final;
+    bool                    polygonSupported        (void) const final { return true; }
+    bool                    polygonEnabled          (void) const final { return true; }
+    bool                    breachReturnSupported   (void) const final { return true; }
+    bool                    circleEnabled           (void) const final { return true; }
+    Fact*                   circleRadiusFact        (void) const final { return _circleRadiusFact; }
+    QVariantList            params                  (void) const final { return _params; }
+    QStringList             paramLabels             (void) const final { return _paramLabels; }
 
 private slots:
-    void _parametersReady(void);
-    
+    void _parametersReady           (void);
+    void _sendComplete              (bool error);
+    void _planManagerLoadComplete   (bool removeAllRequested);
+
 private:
-    bool            _firstParamLoadComplete;
-    Fact*           _circleRadiusFact;
-    QVariantList    _params;
-    QStringList     _paramLabels;
+    PlanManager             _planManager;
+    bool                    _firstParamLoadComplete;
+    Fact*                   _circleRadiusFact;
+    QVariantList            _params;
+    QStringList             _paramLabels;
+    QList<QGeoCoordinate>   _sendPolygon;
 };
 
 #endif

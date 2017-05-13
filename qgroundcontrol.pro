@@ -474,6 +474,7 @@ HEADERS += \
     src/MissionManager/MissionManager.h \
     src/MissionManager/MissionSettingsItem.h \
     src/MissionManager/PlanElementController.h \
+    src/MissionManager/PlanManager.h \
     src/MissionManager/PlanMasterController.h \
     src/MissionManager/QGCMapPolygon.h \
     src/MissionManager/RallyPoint.h \
@@ -657,6 +658,7 @@ SOURCES += \
     src/MissionManager/MissionManager.cc \
     src/MissionManager/MissionSettingsItem.cc \
     src/MissionManager/PlanElementController.cc \
+    src/MissionManager/PlanManager.cc \
     src/MissionManager/PlanMasterController.cc \
     src/MissionManager/QGCMapPolygon.cc \
     src/MissionManager/RallyPoint.cc \
