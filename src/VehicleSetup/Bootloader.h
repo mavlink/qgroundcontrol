@@ -73,7 +73,7 @@ public:
     static const int boardIDMINDPXFMUV2 = 88;   ///< MindPX V2 board, as from USB PID
     static const int boardIDTAPV1 = 64;         ///< TAP V1 board, as from USB PID
     static const int boardIDASCV1 = 65;         ///< ASC V1 board, as from USB PID
-    
+    static const int boardIDCrazyflie2 = 12;    ///< Crazyflie 2.0 board, as from USB PID
 signals:
     /// @brief Signals progress indicator for long running bootloader utility routines
     void updateProgress(int curr, int total);

@@ -30,6 +30,10 @@
 #include <QStandardPaths>
 #endif
 
+static const unsigned char pngSignature[]   = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00};
+static const unsigned char jpegSignature[]  = {0xFF, 0xD8, 0xFF, 0x00};
+static const unsigned char gifSignature[]   = {0x47, 0x49, 0x46, 0x38, 0x00};
+
 //-----------------------------------------------------------------------------
 UrlFactory::UrlFactory()
     : _timeout(5 * 1000)
@@ -72,10 +76,12 @@ UrlFactory::getImageFormat(MapType type, const QByteArray& image)
     QString format;
     if(image.size() > 2)
     {
-        if((char)image[0] == (char)0xff && (char)image[1] == (char)0xd8)
-            format = "jpg";
-        else if((char)image[0] == (char)0x89 && (char)image[1] == (char)0x50)
+        if (image.startsWith(reinterpret_cast<const char*>(pngSignature)))
             format = "png";
+        else if (image.startsWith(reinterpret_cast<const char*>(jpegSignature)))
+            format = "jpg";
+        else if (image.startsWith(reinterpret_cast<const char*>(gifSignature)))
+            format = "gif";
         else {
             switch (type) {
                 case GoogleMap:
@@ -83,12 +89,14 @@ UrlFactory::getImageFormat(MapType type, const QByteArray& image)
                 case GoogleTerrain:
                 case GoogleHybrid:
                 case BingMap:
-                case OpenStreetMap:
                 case StatkartTopo:
                     format = "png";
                     break;
+                /*
                 case MapQuestMap:
                 case MapQuestSat:
+                case OpenStreetMap:
+                */
                 case MapBoxStreets:
                 case MapBoxLight:
                 case MapBoxDark:
@@ -128,7 +136,6 @@ UrlFactory::getTileURL(MapType type, int x, int y, int zoom, QNetworkAccessManag
         return request;
     request.setUrl(QUrl(url));
     request.setRawHeader("Accept", "*/*");
-    request.setRawHeader("User-Agent", _userAgent);
     switch (type) {
 #ifndef QGC_NO_GOOGLE_MAPS
         case GoogleMap:
@@ -157,9 +164,20 @@ UrlFactory::getTileURL(MapType type, int x, int y, int zoom, QNetworkAccessManag
             request.setRawHeader("Referrer", "https://www.openstreetmap.org/");
             break;
         */
+
+        case EsriWorldStreet:
+        case EsriWorldSatellite:
+        case EsriTerrain: {
+                QByteArray token = getQGCMapEngine()->getEsriToken().toLatin1();
+                request.setRawHeader("User-Agent", QByteArrayLiteral("Qt Location based application"));
+                request.setRawHeader("User-Token", token);
+            }
+            return request;
+
         default:
             break;
     }
+    request.setRawHeader("User-Agent", _userAgent);
     return request;
 }
 
@@ -281,6 +299,7 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
         QString key = _tileXYToQuadKey(x, y, zoom);
         return QString("http://ecn.t%1.tiles.virtualearth.net/tiles/h%2.jpeg?g=%3&mkt=%4").arg(_getServerNum(x, y, 4)).arg(key).arg(_versionBingMaps).arg(_language);
     }
+    /*
     case MapQuestMap:
     {
         char letter = "1234"[_getServerNum(x, y, 4)];
@@ -293,6 +312,13 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
         return QString("http://otile%1.mqcdn.com/tiles/1.0.0/sat/%2/%3/%4.jpg").arg(letter).arg(zoom).arg(x).arg(y);
     }
     break;
+    */
+    case EsriWorldStreet:
+        return QString("http://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/%1/%2/%3").arg(zoom).arg(y).arg(x);
+    case EsriWorldSatellite:
+        return QString("http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/%1/%2/%3").arg(zoom).arg(y).arg(x);
+    case EsriTerrain:
+        return QString("http://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/%1/%2/%3").arg(zoom).arg(y).arg(x);
 
     case MapBoxStreets:
     case MapBoxLight:

@@ -74,11 +74,9 @@ public:
     QGeoMapData *createMapData();
 #else
     QGeoMap *createMap();
-    QString customCopyright() const;
 #endif
 private:
 #if QT_VERSION >= 0x050500
-    QString m_customCopyright;
     void _setCache(const QVariantMap &parameters);
 #endif
 };

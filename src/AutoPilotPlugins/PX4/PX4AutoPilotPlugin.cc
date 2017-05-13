@@ -40,6 +40,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _motorComponent(NULL)
     , _tuningComponent(NULL)
     , _mixersComponent(NULL)
+    , _syslinkComponent(NULL)
 {
     if (!vehicle) {
         qWarning() << "Internal error";
@@ -121,6 +122,12 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 }
             } else {
                 qWarning() << "Call to vehicleCompenents prior to parametersReady";
+            }
+
+            if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "SLNK_RADIO_CHAN")) {
+                _syslinkComponent = new SyslinkComponent(_vehicle, this);
+                _syslinkComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_syslinkComponent));
             }
         } else {
             qWarning() << "Internal error";
