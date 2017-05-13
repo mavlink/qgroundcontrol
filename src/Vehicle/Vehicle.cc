@@ -721,30 +721,25 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
         setFirmwareVersion(majorVersion, minorVersion, patchVersion, versionType);
     }
 
-    // Git hash
-    if (*((uint64_t*)(&autopilotVersion.flight_custom_version[0])) != 0) {
+    if (px4Firmware()) {
+        // Lower 3 bytes is custom version
+        int majorVersion, minorVersion, patchVersion;
+        majorVersion = autopilotVersion.flight_custom_version[2];
+        minorVersion = autopilotVersion.flight_custom_version[1];
+        patchVersion = autopilotVersion.flight_custom_version[0];
+        setFirmwareCustomVersion(majorVersion, minorVersion, patchVersion);
+
         // PX4 Firmware stores the first 16 characters of the git hash as binary, with the individual bytes in reverse order
-        if (px4Firmware()) {
-            // Lower 3 bytes is custom version
-            int majorVersion, minorVersion, patchVersion;
-            majorVersion = autopilotVersion.flight_custom_version[2];
-            minorVersion = autopilotVersion.flight_custom_version[1];
-            patchVersion = autopilotVersion.flight_custom_version[0];
-            setFirmwareCustomVersion(majorVersion, minorVersion, patchVersion);
-
-            qDebug() << majorVersion << minorVersion << patchVersion;
-
-            _gitHash = "";
-            QByteArray array((char*)autopilotVersion.flight_custom_version, 8);
-            for (int i = 7; i >= 0; i--) {
-                _gitHash.append(QString("%1").arg(autopilotVersion.flight_custom_version[i], 2, 16, QChar('0')));
-            }            
-        } else {
-            // APM Firmware stores the first 8 characters of the git hash as an ASCII character string
-            _gitHash = QString::fromUtf8((char*)autopilotVersion.flight_custom_version, 8);
+        _gitHash = "";
+        QByteArray array((char*)autopilotVersion.flight_custom_version, 8);
+        for (int i = 7; i >= 0; i--) {
+            _gitHash.append(QString("%1").arg(autopilotVersion.flight_custom_version[i], 2, 16, QChar('0')));
         }
-        emit gitHashChanged(_gitHash);
+    } else {
+        // APM Firmware stores the first 8 characters of the git hash as an ASCII character string
+        _gitHash = QString::fromUtf8((char*)autopilotVersion.flight_custom_version, 8);
     }
+    emit gitHashChanged(_gitHash);
 
     _setCapabilities(autopilotVersion.capabilities);
     _startPlanRequest();
