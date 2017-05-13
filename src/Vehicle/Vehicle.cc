@@ -2014,7 +2014,7 @@ void Vehicle::_announceArmedChanged(bool armed)
 
 void Vehicle::_setFlying(bool flying)
 {
-    if (armed() && _flying != flying) {
+    if (_flying != flying) {
         _flying = flying;
         emit flyingChanged(flying);
     }
