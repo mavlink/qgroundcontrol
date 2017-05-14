@@ -31,8 +31,6 @@ PX4GeoFenceManager::PX4GeoFenceManager(Vehicle* vehicle)
     if (_vehicle->parameterManager()->parametersReady()) {
         _parametersReady();
     }
-
-    void loadComplete                   (const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
 }
 
 PX4GeoFenceManager::~PX4GeoFenceManager()
@@ -96,7 +94,8 @@ void PX4GeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlOb
         MissionItem* item = new MissionItem(0,
                                             MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION,
                                             MAV_FRAME_GLOBAL,
-                                            0, 0, 0, 0,         // param 1-4 unused
+                                            polygon.count(),    // vertex count
+                                            0, 0, 0,            // param 2-4 unused
                                             vertex.latitude(),
                                             vertex.longitude(),
                                             0,                  // param 7 unused
@@ -131,4 +130,21 @@ void PX4GeoFenceManager::_sendComplete(bool error)
 void PX4GeoFenceManager::_planManagerLoadComplete(bool removeAllRequested)
 {
     Q_UNUSED(removeAllRequested);
+
+    // FIXME: Does not handle multiple polygons
+
+    _polygon.clear();
+
+    const QList<MissionItem*>& polygonItems = _planManager.missionItems();
+    for (int i=0; i<polygonItems.count(); i++) {
+        MissionItem* item = polygonItems[i];
+
+        if (item->command() == MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION) {
+            _polygon.append(QGeoCoordinate(item->param5(), item->param6()));
+        } else {
+            qWarning() << "_planManagerLoadComplete Unknown command" << item->command();
+        }
+    }
+
+    emit loadComplete(_breachReturnPoint, _polygon);
 }
