@@ -176,15 +176,14 @@ Item {
             }
 
             Rectangle {
-                id:     wifiRect
-                width:  mainWindow.width  * 0.5
-                height: mainWindow.height * 0.75
+                width:  mainWindow.width  * 0.45
+                height: mainWindow.height * 0.45
                 radius: ScreenTools.defaultFontPixelWidth
                 color:  qgcPal.window
+                visible:          TyphoonHQuickInterface.bindingWiFi
                 anchors.centerIn: parent
                 QGCLabel {
                     text:               qsTr("Connecting...")
-                    visible:            TyphoonHQuickInterface.bindingWiFi
                     font.family:        ScreenTools.demiboldFontFamily
                     anchors.top:        parent.top
                     anchors.topMargin:  parent.height * 0.3333
@@ -210,6 +209,16 @@ Item {
                         running:        TyphoonHQuickInterface.bindingWiFi
                     }
                 }
+            }
+
+            Rectangle {
+                id:     wifiRect
+                width:  mainWindow.width  * 0.5
+                height: mainWindow.height * 0.75
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  qgcPal.window
+                visible:          !TyphoonHQuickInterface.bindingWiFi
+                anchors.centerIn: parent
                 Item {
                     width:  ScreenTools.defaultFontPixelWidth * 36
                     height: scanningIcon.height
@@ -293,6 +302,7 @@ Item {
                 }
                 Row {
                     spacing:                ScreenTools.defaultFontPixelWidth * 4
+                    visible:                !TyphoonHQuickInterface.bindingWiFi
                     anchors.bottom:         parent.bottom
                     anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -300,7 +310,6 @@ Item {
                         text:           qsTr("Reset All Links")
                         width:          ScreenTools.defaultFontPixelWidth  * 16
                         height:         ScreenTools.defaultFontPixelHeight * 2
-                        visible:        !TyphoonHQuickInterface.bindingWiFi
                         //-- Don't allow restting if vehicle is connected and armed
                         enabled:        _activeVehicle ? !_activeVehicle.armed : true
                         onClicked: {
@@ -355,14 +364,13 @@ Item {
                 //-- Authentication Error Dialog
                 Rectangle {
                     id:         authErrorDialog
-                    width:      badPpwdCol.width  * 1.5
-                    height:     badPpwdCol.height * 1.5
+                    width:      badPpwdCol.width  * 3
+                    height:     badPpwdCol.height * 3
                     radius:     ScreenTools.defaultFontPixelWidth * 0.5
                     color:      qgcPal.window
                     visible:    false
                     border.color: qgcPal.text
-                    anchors.top: parent.top
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.centerIn: parent
                     Keys.onBackPressed: {
                         authErrorDialog.visible = false
                     }
