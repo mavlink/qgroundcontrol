@@ -166,6 +166,7 @@ Item {
                 TyphoonHQuickInterface.startScan();
                 rootLoader.width  = wifiManagementItem.width
                 rootLoader.height = wifiManagementItem.height
+                Qt.inputMethod.hide();
             }
 
             MouseArea {
@@ -219,16 +220,15 @@ Item {
                 color:  qgcPal.window
                 visible:          !TyphoonHQuickInterface.bindingWiFi
                 anchors.centerIn: parent
-                Item {
-                    width:  ScreenTools.defaultFontPixelWidth * 36
-                    height: scanningIcon.height
-                    visible:            !TyphoonHQuickInterface.bindingWiFi
+                Row {
+                    spacing:    ScreenTools.defaultFontPixelWidth
+                    height:     scanningIcon.height
+                    visible:    !TyphoonHQuickInterface.bindingWiFi
                     anchors.top:        parent.top
                     anchors.topMargin:  ScreenTools.defaultFontPixelHeight
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
                         text:           qsTr("Select Vehicle to Connect")
-                        anchors.left:   parent.left
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     QGCColoredImage {
@@ -241,7 +241,6 @@ Item {
                         mipmap:             true
                         smooth:             true
                         color:              qgcPal.buttonText
-                        anchors.right:      parent.right
                         anchors.verticalCenter: parent.verticalCenter
                         RotationAnimation on rotation {
                             id:             imageRotation
