@@ -192,6 +192,14 @@ Rectangle {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+            visible:            ScreenTools.isMobile
+            source:             "/typhoonh/RCIndicator.qml"
+        }
+
+        Loader {
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
             source:             "/typhoonh/YGPSIndicator.qml"
         }
 
@@ -200,14 +208,6 @@ Rectangle {
             anchors.bottom:     parent.bottom
             anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
             source:             "/typhoonh/BatteryIndicator.qml"
-        }
-
-        Loader {
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
-            visible:            ScreenTools.isMobile
-            source:             "/typhoonh/RCIndicator.qml"
         }
 
         Loader {
