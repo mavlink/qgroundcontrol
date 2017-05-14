@@ -31,6 +31,11 @@ Item {
     property bool _hasWifi:     TyphoonHQuickInterface.rssi > -100 && TyphoonHQuickInterface.rssi < 0
     property bool _isAP:        _hasWifi && !TyphoonHQuickInterface.isTyphoon
 
+    function hideWiFiManagement() {
+        rootLoader.sourceComponent = null
+        mainWindow.enableToolbar()
+    }
+
     Component {
         id: wifiRSSIInfo
 
@@ -139,6 +144,7 @@ Item {
                         QGroundControl.skipSetupPage = false
                         TyphoonHQuickInterface.stopScan();
                         mainWindow.showFlyView()
+                        hideWiFiManagement()
                     }
                 }
                 onScanningWiFiChanged: {
@@ -310,8 +316,7 @@ Item {
                         width:          ScreenTools.defaultFontPixelWidth  * 16
                         height:         ScreenTools.defaultFontPixelHeight * 2
                         onClicked: {
-                            rootLoader.sourceComponent = null
-                            mainWindow.enableToolbar()
+                            hideWiFiManagement()
                         }
                     }
                 }
