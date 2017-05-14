@@ -21,6 +21,15 @@ Window {
 
     property bool _forceClose: false
 
+    width:      934
+    height:     459
+    onWidthChanged: {
+        console.log("Width: " + width)
+    }
+    onHeightChanged: {
+        console.log("Height: " + height)
+    }
+
     onClosing: {
         if (!_forceClose) {
             mainWindowInner.item.attemptWindowClose()

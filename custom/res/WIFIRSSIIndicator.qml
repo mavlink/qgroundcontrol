@@ -19,6 +19,7 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 
 import TyphoonHQuickInterface               1.0
+import TyphoonHQuickInterface.Widgets       1.0
 
 //-------------------------------------------------------------------------
 //-- WIFI RSSI Indicator
@@ -67,6 +68,23 @@ Item {
                     QGCLabel { text: qsTr("RSSI:") }
                     QGCLabel { text: TyphoonHQuickInterface.rssi + "dB" }
                 }
+
+                Item {
+                    width:  1
+                    height: ScreenTools.defaultFontPixelHeight
+                }
+
+                QGCButton {
+                    text:   "Link Management"
+                    onClicked: {
+                        rootLoader.sourceComponent = wifiManagement
+                        mainWindow.disableToolbar()
+                        if(mainWindow.currentPopUp) {
+                            mainWindow.currentPopUp.close()
+                        }
+                    }
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
             }
 
             Component.onCompleted: {
@@ -79,6 +97,346 @@ Item {
             }
         }
     }
+
+    //-------------------------------------------------------------------------
+    //-- Wi-Fi Link Management
+    Component {
+        id:             wifiManagement
+        Item {
+            id:         wifiManagementItem
+            z:          1000000
+            width:      mainWindow.width
+            height:     mainWindow.height
+
+            property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
+            property real _labelWidth:          ScreenTools.defaultFontPixelWidth * 15
+            property real _editFieldWidth:      ScreenTools.defaultFontPixelWidth * 30
+            property var  _selectedSSID:        ""
+            property var  _connectText:         qsTr("Connect")
+
+            ExclusiveGroup  { id: ssidGroup }
+
+            function connectWifi(password) {
+                QGroundControl.skipSetupPage = true
+                //-- If we were connected to something, let it go away when it disconnects.
+                if(QGroundControl.multiVehicleManager.activeVehicle) {
+                    QGroundControl.multiVehicleManager.activeVehicle.autoDisconnect = true;
+                }
+                TyphoonHQuickInterface.bindWIFI(_selectedSSID, password)
+                _selectedSSID = ""
+                passwordField.text = ""
+                passwordDialog.visible = false
+            }
+
+            Connections {
+                target: TyphoonHQuickInterface
+                onAuthenticationError: {
+                    QGroundControl.skipSetupPage = false
+                    authErrorDialog.visible = true
+                }
+                onWifiConnectedChanged: {
+                    if(TyphoonHQuickInterface.connected) {
+                        QGroundControl.skipSetupPage = false
+                        TyphoonHQuickInterface.stopScan();
+                        mainWindow.showFlyView()
+                    }
+                }
+                onScanningWiFiChanged: {
+                    if(TyphoonHQuickInterface.scanningWiFi) {
+                        imageRotation.start()
+                    }
+                }
+                onBindTimeout: {
+                    QGroundControl.skipSetupPage = false
+                    timeoutDialog.visible = true;
+                }
+            }
+
+            Component.onDestruction: {
+                TyphoonHQuickInterface.stopScan();
+            }
+
+            Component.onCompleted: {
+                TyphoonHQuickInterface.startScan();
+                rootLoader.width  = wifiManagementItem.width
+                rootLoader.height = wifiManagementItem.height
+            }
+
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+
+            Rectangle {
+                id:     wifiRect
+                width:  mainWindow.width  * 0.5
+                height: mainWindow.height * 0.75
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  qgcPal.window
+                anchors.centerIn: parent
+                QGCLabel {
+                    text:               qsTr("Connecting...")
+                    visible:            TyphoonHQuickInterface.bindingWiFi
+                    font.family:        ScreenTools.demiboldFontFamily
+                    anchors.top:        parent.top
+                    anchors.topMargin:  parent.height * 0.3333
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                QGCColoredImage {
+                    height:             ScreenTools.defaultFontPixelHeight * 2
+                    width:              height
+                    source:             "/qmlimages/MapSync.svg"
+                    sourceSize.height:  height
+                    fillMode:           Image.PreserveAspectFit
+                    mipmap:             true
+                    smooth:             true
+                    color:              qgcPal.buttonText
+                    visible:            TyphoonHQuickInterface.bindingWiFi
+                    anchors.centerIn:   parent
+                    RotationAnimation on rotation {
+                        id:             connectionRotation
+                        loops:          Animation.Infinite
+                        from:           0
+                        to:             360
+                        duration:       500
+                        running:        TyphoonHQuickInterface.bindingWiFi
+                    }
+                }
+                Item {
+                    width:  ScreenTools.defaultFontPixelWidth * 36
+                    height: scanningIcon.height
+                    visible:            !TyphoonHQuickInterface.bindingWiFi
+                    anchors.top:        parent.top
+                    anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    QGCLabel {
+                        text:           qsTr("Select Vehicle to Connect")
+                        anchors.left:   parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    QGCColoredImage {
+                        id:                 scanningIcon
+                        height:             ScreenTools.defaultFontPixelHeight * 2
+                        width:              height
+                        source:             "/qmlimages/MapSync.svg"
+                        sourceSize.height:  height
+                        fillMode:           Image.PreserveAspectFit
+                        mipmap:             true
+                        smooth:             true
+                        color:              qgcPal.buttonText
+                        anchors.right:      parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        RotationAnimation on rotation {
+                            id:             imageRotation
+                            loops:          1
+                            from:           0
+                            to:             360
+                            duration:       500
+                            running:        false
+                        }
+                        MouseArea {
+                            anchors.fill:   parent
+                            onClicked:      TyphoonHQuickInterface.startScan();
+                        }
+                    }
+                }
+                QGCFlickable {
+                    clip:               true
+                    width:              scanCol.width
+                    height:             Math.min(wifiRect.height * 0.666, scanCol.height)
+                    contentHeight:      scanCol.height
+                    contentWidth:       scanCol.width
+                    visible:            !TyphoonHQuickInterface.bindingWiFi
+                    anchors.centerIn:   parent
+                    Column {
+                        id:         scanCol
+                        spacing:    ScreenTools.defaultFontPixelHeight * 0.25
+                        width:      ScreenTools.defaultFontPixelWidth * 40
+                        anchors.centerIn: parent
+                        Repeater {
+                            model:          TyphoonHQuickInterface.ssidList
+                            delegate:
+                            SSIDButton {
+                                exclusiveGroup:     ssidGroup
+                                text:               modelData.ssid
+                                rssi:               modelData.rssi
+                                source:             "qrc:/typhoonh/img/checkMark.svg"
+                                showIcon:           TyphoonHQuickInterface.connectedSSID === modelData.ssid
+                                enabled:            _activeVehicle ? !_activeVehicle.armed && TyphoonHQuickInterface.connectedSSID !== modelData.ssid : TyphoonHQuickInterface.connectedSSID !== modelData.ssid
+                                anchors.horizontalCenter:   parent.horizontalCenter
+                                onClicked:  {
+                                    if(_selectedSSID === modelData.ssid) {
+                                        _selectedSSID = ""
+                                        checked = false
+                                    } else {
+                                        _selectedSSID = modelData.ssid
+                                        checked = true
+                                        //-- If we have the config, use it (don't ask for password)
+                                        if(TyphoonHQuickInterface.isWifiConfigured(_selectedSSID)) {
+                                            connectWifi("")
+                                        } else {
+                                            passwordDialog.visible = true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Row {
+                    spacing:                ScreenTools.defaultFontPixelWidth * 4
+                    anchors.bottom:         parent.bottom
+                    anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    QGCButton {
+                        text:           qsTr("Reset All Links")
+                        width:          ScreenTools.defaultFontPixelWidth  * 16
+                        height:         ScreenTools.defaultFontPixelHeight * 2
+                        visible:        !TyphoonHQuickInterface.bindingWiFi
+                        //-- Don't allow restting if vehicle is connected and armed
+                        enabled:        _activeVehicle ? !_activeVehicle.armed : true
+                        onClicked: {
+                            QGroundControl.skipSetupPage = true
+                            if(_activeVehicle) {
+                                _activeVehicle.autoDisconnect = true;
+                            }
+                            TyphoonHQuickInterface.resetWifi();
+                        }
+                    }
+                    QGCButton {
+                        text:           qsTr("Close")
+                        width:          ScreenTools.defaultFontPixelWidth  * 16
+                        height:         ScreenTools.defaultFontPixelHeight * 2
+                        onClicked: {
+                            rootLoader.sourceComponent = null
+                            mainWindow.enableToolbar()
+                        }
+                    }
+                }
+                //-- Connection Timeout
+                Rectangle {
+                    id:         timeoutDialog
+                    width:      timeoutCol.width  * 1.5
+                    height:     timeoutCol.height * 1.5
+                    radius:     ScreenTools.defaultFontPixelWidth * 0.5
+                    color:      qgcPal.window
+                    visible:    false
+                    border.color: qgcPal.text
+                    anchors.top: parent.top
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Keys.onBackPressed: {
+                        timeoutDialog.visible = false
+                    }
+                    Column {
+                        id:         timeoutCol
+                        spacing:    ScreenTools.defaultFontPixelHeight
+                        anchors.centerIn: parent
+                        QGCLabel {
+                            text:   qsTr("Connection Timeout")
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        QGCButton {
+                            text:       qsTr("Close")
+                            width:      _labelWidth
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            onClicked:  {
+                                timeoutDialog.visible = false
+                            }
+                        }
+                    }
+                }
+                //-- Authentication Error Dialog
+                Rectangle {
+                    id:         authErrorDialog
+                    width:      badPpwdCol.width  * 1.5
+                    height:     badPpwdCol.height * 1.5
+                    radius:     ScreenTools.defaultFontPixelWidth * 0.5
+                    color:      qgcPal.window
+                    visible:    false
+                    border.color: qgcPal.text
+                    anchors.top: parent.top
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Keys.onBackPressed: {
+                        authErrorDialog.visible = false
+                    }
+                    Column {
+                        id:         badPpwdCol
+                        spacing:    ScreenTools.defaultFontPixelHeight
+                        anchors.centerIn: parent
+                        QGCLabel {
+                            text:   qsTr("Invalid ") + _connectText + qsTr(" Password")
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        QGCButton {
+                            text:       qsTr("Close")
+                            width:      _labelWidth
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            onClicked:  {
+                                authErrorDialog.visible = false
+                            }
+                        }
+                    }
+                }
+                //-- Password Dialog
+                Rectangle {
+                    id:         passwordDialog
+                    width:      pwdCol.width  * 1.25
+                    height:     pwdCol.height * 1.25
+                    radius:     ScreenTools.defaultFontPixelWidth * 0.5
+                    color:      qgcPal.window
+                    visible:    false
+                    border.color: qgcPal.text
+                    anchors.top: parent.top
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Keys.onBackPressed: {
+                        passwordDialog.visible = false
+                    }
+                    Column {
+                        id:         pwdCol
+                        spacing:    ScreenTools.defaultFontPixelHeight
+                        anchors.centerIn: parent
+                        QGCLabel {
+                            text:   qsTr("Please enter password for ") + _selectedSSID
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        QGCTextField {
+                            id:         passwordField
+                            echoMode:   TextInput.Password
+                            width:      ScreenTools.defaultFontPixelWidth * 20
+                            focus:      true
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth * 4
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            QGCButton {
+                                text:       qsTr("Ok")
+                                width:      _labelWidth
+                                enabled:    passwordField.text.length > 7
+                                onClicked:  {
+                                    Qt.inputMethod.hide();
+                                    connectWifi(passwordField.text)
+                                }
+                            }
+                            QGCButton {
+                                text:       qsTr("Cancel")
+                                width:      _labelWidth
+                                onClicked:  {
+                                    Qt.inputMethod.hide();
+                                    ssidGroup.current = null
+                                    passwordField.text = ""
+                                    passwordDialog.visible = false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     Row {
         spacing:        ScreenTools.defaultFontPixelWidth
         anchors.top:    parent.top
@@ -121,8 +479,16 @@ Item {
     MouseArea {
         anchors.fill:   parent
         onClicked: {
-            var centerX = mapToItem(toolBar, x, y).x + (width / 2)
-            mainWindow.showPopUp(wifiRSSIInfo, centerX)
+            if(_hasWifi) {
+                var centerX = mapToItem(toolBar, x, y).x + (width / 2)
+                mainWindow.showPopUp(wifiRSSIInfo, centerX)
+            } else {
+                rootLoader.sourceComponent = wifiManagement
+                mainWindow.disableToolbar()
+                if(mainWindow.currentPopUp) {
+                    mainWindow.currentPopUp.close()
+                }
+            }
         }
     }
 }

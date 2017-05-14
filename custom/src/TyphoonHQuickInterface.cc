@@ -497,15 +497,19 @@ void
 TyphoonHQuickInterface::_newSSID(QString ssid, int rssi)
 {
     qDebug() << "New SSID" << ssid << rssi;
+#if !defined(QT_DEBUG)
     if(ssid.startsWith("CGO3P") || ssid.startsWith("CGOET") || ssid.startsWith("CGOPRO") ||
         ssid.startsWith("E90_") || ssid.startsWith("E50_")) {
+#endif
         if(!_findSsid(ssid, rssi)) {
             TyphoonSSIDItem* ssidInfo = new TyphoonSSIDItem(ssid, rssi);
             _ssidList.append(QVariant::fromValue((TyphoonSSIDItem*)ssidInfo));
             qSort(_ssidList.begin(), _ssidList.end(), compareRSSI);
             emit ssidListChanged();
         }
+#if !defined(QT_DEBUG)
     }
+#endif
 }
 
 //-----------------------------------------------------------------------------
