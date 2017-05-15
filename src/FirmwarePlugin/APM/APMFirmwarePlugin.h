@@ -76,27 +76,27 @@ public:
     QList<MAV_CMD> supportedMissionCommands(void) final;
 
     AutoPilotPlugin*    autopilotPlugin                 (Vehicle* vehicle) final;
-    bool                isCapable                       (const Vehicle *vehicle, FirmwareCapabilities capabilities);
+    bool                isCapable                       (const Vehicle *vehicle, FirmwareCapabilities capabilities) override;
     QStringList         flightModes                     (Vehicle* vehicle) final;
     QString             flightMode                      (uint8_t base_mode, uint32_t custom_mode) const final;
     bool                setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
     bool                isGuidedMode                    (const Vehicle* vehicle) const final;
-    void                pauseVehicle                    (Vehicle* vehicle);
-    int                 manualControlReservedButtonCount(void);
+    void                pauseVehicle                    (Vehicle* vehicle) override;
+    int                 manualControlReservedButtonCount(void) override;
     bool                adjustIncomingMavlinkMessage    (Vehicle* vehicle, mavlink_message_t* message) override;
     void                adjustOutgoingMavlinkMessage    (Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message) final;
     void                initializeVehicle               (Vehicle* vehicle) final;
     bool                sendHomePositionToVehicle       (void) final;
     void                addMetaDataToFact               (QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) final;
-    QString             missionCommandOverrides         (MAV_TYPE vehicleType) const;
+    QString             missionCommandOverrides         (MAV_TYPE vehicleType) const override;
     QString             getVersionParam                 (void) final { return QStringLiteral("SYSID_SW_MREV"); }
     QString             internalParameterMetaDataFile   (Vehicle* vehicle) final;
     void                getParameterMetaDataVersionInfo (const QString& metaDataFile, int& majorVersion, int& minorVersion) final { APMParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion); }
-    QObject*            loadParameterMetaData           (const QString& metaDataFile);
-    GeoFenceManager*    newGeoFenceManager              (Vehicle* vehicle) { return new APMGeoFenceManager(vehicle); }
-    RallyPointManager*  newRallyPointManager            (Vehicle* vehicle) { return new APMRallyPointManager(vehicle); }
-    QString             brandImageIndoor                (const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
-    QString             brandImageOutdoor               (const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
+    QObject*            loadParameterMetaData           (const QString& metaDataFile) final;
+    GeoFenceManager*    newGeoFenceManager              (Vehicle* vehicle) final { return new APMGeoFenceManager(vehicle); }
+    RallyPointManager*  newRallyPointManager            (Vehicle* vehicle) final { return new APMRallyPointManager(vehicle); }
+    QString             brandImageIndoor                (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
+    QString             brandImageOutdoor               (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
 
 protected:
     /// All access to singleton is through stack specific implementation
