@@ -172,6 +172,20 @@ void ArduCopterFirmwarePlugin::guidedModeLand(Vehicle* vehicle)
 
 void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
 {
+    QString takeoffAltParam("PILOT_TKOFF_ALT");
+
+    if (!vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, takeoffAltParam)) {
+        qgcApp()->showMessage(tr("Unable to takeoff, %1 parameter missing.").arg(takeoffAltParam));
+        return;
+    }
+    Fact* takeoffAltFact = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, takeoffAltParam);
+    float takeoffAlt = takeoffAltFact->rawValue().toDouble();
+    if (takeoffAlt <= 0) {
+        takeoffAlt = 2.5;
+    } else {
+        takeoffAlt /= 100;   // centimeters -> meters
+    }
+
     if (!_armVehicleAndValidate(vehicle)) {
         qgcApp()->showMessage(tr("Unable to takeoff: Vehicle failed to arm."));
         return;
@@ -181,7 +195,7 @@ void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
                             MAV_CMD_NAV_TAKEOFF,
                             true, // show error
                             0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                            2.5);
+                            takeoffAlt);
 }
 
 void ArduCopterFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
@@ -201,15 +215,6 @@ void ArduCopterFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double
     if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
         qgcApp()->showMessage(QStringLiteral("Unable to change altitude, vehicle altitude not known."));
         return;
-    }
-
-    // Don't allow altitude to fall below 3 meters above home
-    double currentAltRel = vehicle->altitudeRelative()->rawValue().toDouble();
-    if (altitudeChange <= 0 && currentAltRel <= 3) {
-        return;
-    }
-    if (currentAltRel + altitudeChange < 3) {
-        altitudeChange = 3 - currentAltRel;
     }
 
     setGuidedMode(vehicle, true);
