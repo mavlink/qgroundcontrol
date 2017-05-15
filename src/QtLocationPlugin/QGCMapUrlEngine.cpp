@@ -16,7 +16,10 @@
 
 //#define DEBUG_GOOGLE_MAPS
 
+#include "QGCApplication.h"
 #include "QGCMapEngine.h"
+#include "AppSettings.h"
+#include "SettingsManager.h"
 
 #include <QRegExp>
 #include <QNetworkReply>
@@ -168,7 +171,7 @@ UrlFactory::getTileURL(MapType type, int x, int y, int zoom, QNetworkAccessManag
         case EsriWorldStreet:
         case EsriWorldSatellite:
         case EsriTerrain: {
-                QByteArray token = getQGCMapEngine()->getEsriToken().toLatin1();
+                QByteArray token = qgcApp()->toolbox()->settingsManager()->appSettings()->esriToken()->rawValue().toString().toLatin1();
                 request.setRawHeader("User-Agent", QByteArrayLiteral("Qt Location based application"));
                 request.setRawHeader("User-Token", token);
             }
@@ -335,7 +338,7 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
     case MapBoxEmerald:
     case MapBoxHighContrast:
     {
-        QString mapBoxToken = getQGCMapEngine()->getMapBoxToken();
+        QString mapBoxToken = qgcApp()->toolbox()->settingsManager()->appSettings()->mapboxToken()->rawValue().toString();
         if(!mapBoxToken.isEmpty()) {
             QString server = "https://api.mapbox.com/v4/";
             switch(type) {

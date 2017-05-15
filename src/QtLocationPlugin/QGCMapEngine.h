@@ -78,10 +78,6 @@ public:
     const QString               userAgent           () { return _userAgent; }
     void                        setUserAgent        (const QString& ua) { _userAgent = ua; }
     UrlFactory::MapType         hashToType          (const QString& hash);
-    QString                     getMapBoxToken      ();
-    QString                     getEsriToken        ();
-    void                        setMapBoxToken      (const QString& token);
-    void                        setEsriToken        (const QString& token);
     quint32                     getMaxDiskCache     ();
     void                        setMaxDiskCache     (quint32 size);
     quint32                     getMaxMemCache      ();
@@ -121,8 +117,6 @@ private:
     QGCCacheWorker          _worker;
     QString                 _cachePath;
     QString                 _cacheFile;
-    QString                 _mapBoxToken;
-    QString                 _esriToken;
     UrlFactory*             _urlFactory;
     QString                 _userAgent;
     quint32                 _maxDiskCache;
