@@ -276,33 +276,31 @@ QGCView {
                         text:           qsTr("Memory cache changes require a restart to take effect.")
                     }
 
-                    Item { width: 1; height: 1 }
-
-                    QGCLabel { text: qsTr("MapBox Access Token") }
-
+                    Item { width: 1; height: 1; visible: _mapboxFact ? _mapboxFact.visible : false }
+                    QGCLabel { text: qsTr("MapBox Access Token"); visible: _mapboxFact ? _mapboxFact.visible : false }
                     FactTextField {
                         fact:               _mapboxFact
+                        visible:            _mapboxFact ? _mapboxFact.visible : false
                         maximumLength:      256
                         width:              ScreenTools.defaultFontPixelWidth * 30
                     }
-
                     QGCLabel {
                         text:           qsTr("With an access token, you can use MapBox Maps.")
+                        visible:        _mapboxFact ? _mapboxFact.visible : false
                         font.pointSize: _adjustableFontPointSize
                     }
 
-                    Item { width: 1; height: 1 }
-
-                    QGCLabel { text: qsTr("Esri Access Token") }
-
+                    Item { width: 1; height: 1; visible: _esriFact ? _esriFact.visible : false }
+                    QGCLabel { text: qsTr("Esri Access Token"); visible: _esriFact ? _esriFact.visible : false }
                     FactTextField {
                         fact:               _esriFact
+                        visible:            _esriFact ? _esriFact.visible : false
                         maximumLength:      256
                         width:              ScreenTools.defaultFontPixelWidth * 30
                     }
-
                     QGCLabel {
                         text:           qsTr("With an access token, you can use Esri Maps.")
+                        visible:        _esriFact ? _esriFact.visible : false
                         font.pointSize: _adjustableFontPointSize
                     }
                 } // GridLayout
