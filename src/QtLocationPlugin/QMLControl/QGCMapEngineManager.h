@@ -47,8 +47,6 @@ public:
     Q_PROPERTY(QString              tileSizeStr     READ    tileSizeStr     NOTIFY tileSizeChanged)
     Q_PROPERTY(QmlObjectListModel*  tileSets        READ    tileSets        NOTIFY tileSetsChanged)
     Q_PROPERTY(QStringList          mapList         READ    mapList         CONSTANT)
-    Q_PROPERTY(QString              mapboxToken     READ    mapboxToken     WRITE   setMapboxToken  NOTIFY  mapboxTokenChanged)
-    Q_PROPERTY(QString              esriToken       READ    esriToken       WRITE   setEsriToken    NOTIFY  esriTokenChanged)
     Q_PROPERTY(quint32              maxMemCache     READ    maxMemCache     WRITE   setMaxMemCache  NOTIFY  maxMemCacheChanged)
     Q_PROPERTY(quint32              maxDiskCache    READ    maxDiskCache    WRITE   setMaxDiskCache NOTIFY  maxDiskCacheChanged)
     Q_PROPERTY(QString              errorMessage    READ    errorMessage    NOTIFY  errorMessageChanged)
@@ -85,8 +83,6 @@ public:
     quint64                         tileSize                () { return _totalSet.tileSize; }
     QString                         tileSizeStr             ();
     QStringList                     mapList                 ();
-    QString                         mapboxToken             ();
-    QString                         esriToken               ();
     QmlObjectListModel*             tileSets                () { return &_tileSets; }
     quint32                         maxMemCache             ();
     quint32                         maxDiskCache            ();
@@ -98,8 +94,6 @@ public:
     ImportAction                    importAction            () { return _importAction; }
     bool                            importReplace           () { return _importReplace; }
 
-    void                            setMapboxToken          (QString token);
-    void                            setEsriToken            (QString token);
     void                            setMaxMemCache          (quint32 size);
     void                            setMaxDiskCache         (quint32 size);
     void                            setImportReplace        (bool replace) { _importReplace = replace; emit importReplaceChanged(); }
@@ -116,8 +110,6 @@ signals:
     void tileY1Changed          ();
     void tileCountChanged       ();
     void tileSizeChanged        ();
-    void mapboxTokenChanged     ();
-    void esriTokenChanged       ();
     void tileSetsChanged        ();
     void maxMemCacheChanged     ();
     void maxDiskCacheChanged    ();
