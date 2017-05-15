@@ -245,6 +245,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackAPM, StableFirmware,    HeliFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-heli/ArduCopter-v2.px4"},
         { AutoPilotStackAPM, StableFirmware,    PlaneFirmware,          "http://firmware.ardupilot.org/Plane/stable/PX4/ArduPlane-v2.px4"},
         { AutoPilotStackAPM, StableFirmware,    RoverFirmware,          "http://firmware.ardupilot.org/Rover/stable/PX4/APMrover2-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    SubFirmware,            "http://firmware.ardupilot.org/Sub/stable/PX4/ArduSub-v2.px4"},
         { AutoPilotStackAPM, BetaFirmware,      CopterFirmware,         "http://firmware.ardupilot.org/Copter/beta/PX4/ArduCopter-v2.px4"},
         { AutoPilotStackAPM, BetaFirmware,      HeliFirmware,           "http://firmware.ardupilot.org/Copter/beta/PX4-heli/ArduCopter-v2.px4"},
         { AutoPilotStackAPM, BetaFirmware,      PlaneFirmware,          "http://firmware.ardupilot.org/Plane/beta/PX4/ArduPlane-v2.px4"},

@@ -110,6 +110,10 @@
 <value code=" 2">Disarm</value>
 </values>
 </param>
+<param humanName="Timeout for activation of pilot input failsafe" name="ArduSub:FS_PILOT_TIMEOUT" documentation="Controls the maximum interval between received pilot inputs before the failsafe action is triggered" user="Standard">
+<field name="Range">0.1 3.0</field>
+<field name="Units">Seconds</field>
+</param>
 <param humanName="Crosstrack correction angle limit" name="ArduSub:XTRACK_ANG_LIM" documentation="Maximum allowed angle (in degrees) between current track and desired heading during waypoint navigation" user="Standard">
 <field name="Range">10 90</field>
 </param>
@@ -176,7 +180,9 @@
 </param>
 <param humanName="EKF Failsafe Action" name="ArduSub:FS_EKF_ACTION" documentation="Controls the action that will be taken when an EKF failsafe is invoked" user="Advanced">
 <values>
-<value code="1">Disabled</value>
+<value code="0">Disabled</value>
+<value code=" 1">Warn only</value>
+<value code=" 2">Disarm</value>
 </values>
 </param>
 <param humanName="EKF failsafe variance threshold" name="ArduSub:FS_EKF_THRESH" documentation="Allows setting the maximum acceptable compass and velocity variance" user="Advanced">

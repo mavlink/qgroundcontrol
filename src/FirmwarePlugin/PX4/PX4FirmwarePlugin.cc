@@ -435,16 +435,8 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
         return;
     }
 
-    // Don't allow altitude to fall below 3 meters above home
     double currentAltRel = vehicle->altitudeRelative()->rawValue().toDouble();
-    double newAltRel = currentAltRel;
-    if (altitudeChange <= 0 && currentAltRel <= 3) {
-        return;
-    }
-    if (currentAltRel + altitudeChange < 3) {
-        altitudeChange = 3 - currentAltRel;
-    }
-    newAltRel = currentAltRel + altitudeChange;
+    double newAltRel = currentAltRel + altitudeChange;
 
     vehicle->sendMavCommand(vehicle->defaultComponentId(),
                             MAV_CMD_DO_REPOSITION,
