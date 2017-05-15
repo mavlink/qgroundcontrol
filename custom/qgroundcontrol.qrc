@@ -12,6 +12,7 @@
         <file alias="AirframeComponentSummary.qml">../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
         <file alias="AppSettings.qml">../src/ui/AppSettings.qml</file>
         <file alias="DebugWindow.qml">../src/ui/preferences/DebugWindow.qml</file>
+        <file alias="SyslinkComponent.qml">../src/AutoPilotPlugins/Common/SyslinkComponent.qml</file>
         <file alias="FirmwareUpgrade.qml">../src/VehicleSetup/FirmwareUpgrade.qml</file>
         <file alias="FlightDisplayViewDummy.qml">../src/FlightDisplay/FlightDisplayViewDummy.qml</file>
         <file alias="FlightDisplayViewUVC.qml">../src/FlightDisplay/FlightDisplayViewUVC.qml</file>
@@ -170,6 +171,7 @@
         <file alias="App.SettingsGroup.json">../src/Settings/App.SettingsGroup.json</file>
         <file alias="AutoConnect.SettingsGroup.json">../src/Settings/AutoConnect.SettingsGroup.json</file>
         <file alias="FlightMap.SettingsGroup.json">../src/Settings/FlightMap.SettingsGroup.json</file>
+        <file alias="Guided.SettingsGroup.json">../src/Settings/Guided.SettingsGroup.json</file>
         <file alias="RTK.SettingsGroup.json">../src/Settings/RTK.SettingsGroup.json</file>
         <file alias="Survey.SettingsGroup.json">../src/MissionManager/Survey.SettingsGroup.json</file>
         <file alias="Units.SettingsGroup.json">../src/Settings/Units.SettingsGroup.json</file>
