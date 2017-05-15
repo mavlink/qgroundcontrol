@@ -25,15 +25,15 @@ Rectangle {
     property var _activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
     property real _vehicleAltitude:     _activeVehicle ? _activeVehicle.altitudeRelative.rawValue : 0
     property bool _fixedWing:           _activeVehicle ? _activeVehicle.fixedWing : false
-    property real _sliderMaxAlt:        _fixedWing ? _guidedSettings.fixedWingMaximumAltitude.value : _guidedSettings.vehicleMaximumAltitude.value
-    property real _sliderMinAlt:        _fixedWing ? _guidedSettings.fixedWingMinimumAltitude.value : _guidedSettings.vehicleMinimumAltitude.value
+    property real _sliderMaxAlt:        _fixedWing ? _guidedSettings.fixedWingMaximumAltitude.rawValue : _guidedSettings.vehicleMaximumAltitude.rawValue
+    property real _sliderMinAlt:        _fixedWing ? _guidedSettings.fixedWingMinimumAltitude.rawValue : _guidedSettings.vehicleMinimumAltitude.rawValue
 
     function reset() {
         altSlider.value = 0
     }
 
     function getValue() {
-        return altField.newAltitude - _vehicleAltitude
+        return altField.newAltitudeMeters - _vehicleAltitude
     }
 
     function log10(value) {
@@ -62,13 +62,14 @@ Rectangle {
         QGCLabel {
             id:                         altField
             anchors.horizontalCenter:   parent.horizontalCenter
-            text:                       Math.abs(newAltitude.toFixed(1)) + " " + QGroundControl.appSettingsDistanceUnitsString
+            text:                       newAltitudeAppUnits + " " + QGroundControl.appSettingsDistanceUnitsString
 
-            property real altGainRange: Math.max(_sliderMaxAlt - _vehicleAltitude, 0)
-            property real altLossRange: Math.max(_vehicleAltitude - _sliderMinAlt, 0)
-            property real altExp:       Math.pow(altSlider.value, 3)
-            property real altLossGain:  altExp * (altSlider.value > 0 ? altGainRange : altLossRange)
-            property real newAltitude: _vehicleAltitude + altLossGain // QGroundControl.metersToAppSettingsDistanceUnits(_root._vehicleAltitude + altSlider.value).toFixed(1)
+            property real   altGainRange:           Math.max(_sliderMaxAlt - _vehicleAltitude, 0)
+            property real   altLossRange:           Math.max(_vehicleAltitude - _sliderMinAlt, 0)
+            property real   altExp:                 Math.pow(altSlider.value, 3)
+            property real   altLossGain:            altExp * (altSlider.value > 0 ? altGainRange : altLossRange)
+            property real   newAltitudeMeters:      _vehicleAltitude + altLossGain
+            property string newAltitudeAppUnits:    QGroundControl.metersToAppSettingsDistanceUnits(newAltitudeMeters).toFixed(1)
         }
     }
 

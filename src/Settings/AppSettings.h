@@ -35,12 +35,14 @@ public:
     Q_PROPERTY(Fact* showLargeCompass                   READ showLargeCompass                   CONSTANT)
     Q_PROPERTY(Fact* savePath                           READ savePath                           CONSTANT)
     Q_PROPERTY(Fact* autoLoadMissions                   READ autoLoadMissions                   CONSTANT)
+    Q_PROPERTY(Fact* mapboxToken                        READ mapboxToken                        CONSTANT)
+    Q_PROPERTY(Fact* esriToken                          READ esriToken                          CONSTANT)
 
     Q_PROPERTY(QString missionSavePath      READ missionSavePath    NOTIFY savePathsChanged)
     Q_PROPERTY(QString parameterSavePath    READ parameterSavePath  NOTIFY savePathsChanged)
     Q_PROPERTY(QString telemetrySavePath    READ telemetrySavePath  NOTIFY savePathsChanged)
 
-    Q_PROPERTY(QString planFileExtension        MEMBER planFileExtension     CONSTANT)
+    Q_PROPERTY(QString planFileExtension        MEMBER planFileExtension        CONSTANT)
     Q_PROPERTY(QString missionFileExtension     MEMBER missionFileExtension     CONSTANT)
     Q_PROPERTY(QString waypointsFileExtension   MEMBER waypointsFileExtension   CONSTANT)
     Q_PROPERTY(QString parameterFileExtension   MEMBER parameterFileExtension   CONSTANT)
@@ -61,6 +63,8 @@ public:
     Fact* showLargeCompass                  (void);
     Fact* savePath                          (void);
     Fact* autoLoadMissions                  (void);
+    Fact* mapboxToken                       (void);
+    Fact* esriToken                         (void);
 
     QString missionSavePath     (void);
     QString parameterSavePath   (void);
@@ -86,6 +90,8 @@ public:
     static const char* showLargeCompassName;
     static const char* savePathName;
     static const char* autoLoadMissionsName;
+    static const char* mapboxTokenName;
+    static const char* esriTokenName;
 
     // Application wide file extensions
     static const char* parameterFileExtension;
@@ -124,6 +130,8 @@ private:
     SettingsFact* _showLargeCompassFact;
     SettingsFact* _savePathFact;
     SettingsFact* _autoLoadMissionsFact;
+    SettingsFact* _mapboxTokenFact;
+    SettingsFact* _esriTokenFact;
 };
 
 #endif
