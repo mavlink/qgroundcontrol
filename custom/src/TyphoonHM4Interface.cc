@@ -312,19 +312,21 @@ TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHM4Interface::enterBindMode()
+TyphoonHM4Interface::enterBindMode(bool skipPairCommand)
 {
     qCDebug(YuneecLog) << "enterBindMode() Current Mode: " << _m4State;
     //-- Send MAVLink command telling vehicle to enter bind mode
     if(_vehicle) {
-        qCDebug(YuneecLog) << "pairRX()";
-        _binding = true;
-        _vehicle->sendMavCommand(
-            _vehicle->defaultComponentId(),         // target component
-            MAV_CMD_START_RX_PAIR,                  // command id
-            true,                                   // showError
-            1,
-            0);
+        if(!skipPairCommand) {
+            qCDebug(YuneecLog) << "pairRX()";
+            _binding = true;
+            _vehicle->sendMavCommand(
+                _vehicle->defaultComponentId(),         // target component
+                MAV_CMD_START_RX_PAIR,                  // command id
+                true,                                   // showError
+                1,
+                0);
+        }
         //-- Set M4 into bind mode
         _rxBindInfoFeedback.clear();
         if(_m4State == TyphoonHQuickInterface::M4_STATE_BIND) {

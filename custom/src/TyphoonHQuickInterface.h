@@ -83,6 +83,8 @@ public:
     Q_PROPERTY(int              rssi            READ    rssi                NOTIFY rssiChanged)
     Q_PROPERTY(qreal            rcBattery       READ    rcBattery           NOTIFY rcBatteryChanged)
     Q_PROPERTY(QString          flightTime      READ    flightTime          NOTIFY flightTimeChanged)
+    Q_PROPERTY(bool             copyingFiles    READ    copyingFiles        NOTIFY copyingFilesChanged)
+    Q_PROPERTY(int              copyResult      READ    copyResult          NOTIFY copyResultChanged)
 
     Q_PROPERTY(int              J1              READ    J1                  NOTIFY rawChannelChanged)
     Q_PROPERTY(int              J2              READ    J2                  NOTIFY rawChannelChanged)
@@ -104,6 +106,9 @@ public:
     Q_INVOKABLE bool isWifiConfigured   (QString ssid);
     Q_INVOKABLE void calibrateGimbalMV  ();
     Q_INVOKABLE int  rawChannels        (int channel);
+    Q_INVOKABLE void exportData         ();
+    Q_INVOKABLE void importMission      ();
+    Q_INVOKABLE void manualBind         ();
 
     M4State     m4State             ();
     QString     m4StateStr          ();
@@ -129,9 +134,11 @@ public:
     bool        bindingWiFi         () { return _bindingWiFi; }
     bool        isTyphoon           ();
     bool        connected           ();
+    bool        copyingFiles        () { return _copyingFiles; }
     int         rssi                ();
     qreal       rcBattery           ();
     QString     flightTime          ();
+    int         copyResult          () { return _copyResult; }
 
     void        init                (TyphoonHM4Interface* pHandler);
 
@@ -161,6 +168,8 @@ signals:
     void    flightTimeChanged           ();
     void    rawChannelChanged           ();
     void    powerHeld                   ();
+    void    copyingFilesChanged         ();
+    void    copyResultChanged           ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -181,10 +190,13 @@ private slots:
     void    _powerTrigger               ();
     void    _rawChannelsChanged         ();
     void    _switchStateChanged         (int swId, int oldState, int newState);
+    void    _exportData                 ();
+    void    _importMissions             ();
 
 private:
     void    _saveWifiConfigurations     ();
     void    _loadWifiConfigurations     ();
+    int     _copyFilesInPath            (const QString src, const QString dst);
 
 private:
     TyphoonSSIDItem*        _findSsid   (QString ssid, int rssi);
@@ -203,4 +215,6 @@ private:
     bool                    _scanEnabled;
     bool                    _scanningWiFi;
     bool                    _bindingWiFi;
+    bool                    _copyingFiles;
+    int                     _copyResult;
 };

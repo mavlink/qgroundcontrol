@@ -18,6 +18,7 @@ import QtQuick              2.4
 import QtPositioning        5.2
 import QtQuick.Layouts      1.2
 import QtQuick.Dialogs      1.2
+import QtGraphicalEffects   1.0
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
@@ -225,6 +226,24 @@ Rectangle {
                 }
             }
             Rectangle {
+                id:             ccamSettingsShadow
+                anchors.fill:   camSettingsRect
+                radius:         camSettingsRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       ccamSettingsShadow
+                visible:            camSettingsRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             ccamSettingsShadow
+            }
+            Rectangle {
+                id:     camSettingsRect
                 width:  mainWindow.width  * 0.45
                 height: mainWindow.height * 0.65
                 radius: ScreenTools.defaultFontPixelWidth
