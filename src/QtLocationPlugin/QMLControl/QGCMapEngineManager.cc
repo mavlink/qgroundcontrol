@@ -421,8 +421,8 @@ QGCMapEngineManager::importSets(QString path) {
         dir = QDir(QDir::homePath()).filePath(QString("export_%1.db").arg(QDateTime::currentDateTime().toTime_t()));
 #else
         dir = QGCQFileDialog::getOpenFileName(
-            MainWindow::instance(),
-            "Export Tile Set",
+            NULL,
+            "Import Tile Set",
             QDir::homePath(),
             "Tile Sets (*.qgctiledb)");
 #endif
