@@ -405,22 +405,20 @@ Rectangle {
                     anchors.right:  parent.right
                     columnSpacing:  _margin
                     rowSpacing:     _margin
-                    columns:        3
+                    columns:        2
                     visible:        gridHeader.checked
 
                     QGCLabel {
-                        id:         angleText
-                        text:       qsTr("Angle")
+                        id:                 angleText
+                        text:               qsTr("Angle")
+                        Layout.fillWidth:   true
                     }
 
-                    Item { Layout.fillWidth: true }
-
-                    property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
                     ToolButton {
                         id:                     windRoseButton
                         anchors.verticalCenter: angleText.verticalCenter
                         iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
-                        visible: _activeVehicle ? _activeVehicle.fixedWing : true
+                        visible:                _vehicle.fixedWing
 
                         onClicked: {
                             var cords = windRoseButton.mapToItem(_root, 0, 0)
@@ -433,7 +431,6 @@ Rectangle {
                     id:                 gridAngleText
                     fact:               missionItem.gridAngle
                     Layout.fillWidth:   true
-                    Layout.columnSpan:  1
                 }
 
                 QGCLabel { text: qsTr("Turnaround dist") }
@@ -443,10 +440,10 @@ Rectangle {
                 }
 
                 QGCCheckBox {
-                    text:       qsTr("Refly at 90 degree offset")
-                    checked:    missionItem.refly90Degrees
-                    onClicked:  missionItem.refly90Degrees = checked
-                    Layout.columnSpan: 2
+                    text:               qsTr("Refly at 90 degree offset")
+                    checked:            missionItem.refly90Degrees
+                    onClicked:          missionItem.refly90Degrees = checked
+                    Layout.columnSpan:  2
                 }
 
                 QGCLabel {
@@ -493,67 +490,72 @@ Rectangle {
             visible:    gridTypeCombo.currentIndex == _gridTypeManual
         }
 
-        Column {
+        GridLayout {
             anchors.left:   parent.left
             anchors.right:  parent.right
-            spacing:        _margin
+            columnSpacing:  _margin
+            rowSpacing:     _margin
+            columns:        2
             visible:        manualGridHeader.visible && manualGridHeader.checked
 
-            GridLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                columnSpacing:  _margin
-                rowSpacing:     _margin
-                columns:        4
-                visible:        gridHeader.checked
+            RowLayout {
+                spacing: _margin
 
                 QGCLabel {
-                    id:         manualAngleText
-                    text:       qsTr("Angle")
-                    Layout.columnSpan: 1
+                    id:                 manualAngleText
+                    text:               qsTr("Angle")
                     Layout.fillWidth:  true
                 }
 
-                property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
                 ToolButton {
                     id:                     manualWindRoseButton
                     anchors.verticalCenter: manualAngleText.verticalCenter
                     Layout.columnSpan:      1
                     iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
-                    visible: _activeVehicle ? _activeVehicle.fixedWing : true
+                    visible:                _vehicle.fixedWing
 
                     onClicked: {
                         var cords = manualWindRoseButton.mapToItem(_root, 0, 0)
                         windRosePie.popup(cords.x + manualWindRoseButton.width / 2, cords.y + manualWindRoseButton.height / 2);
                     }
                 }
-
-                FactTextField {
-                    id:                 manualGridAngleText
-                    fact:               missionItem.gridAngle
-                    Layout.columnSpan:  2
-                }
             }
 
-            FactTextFieldGrid {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                columnSpacing:  ScreenTools.defaultFontPixelWidth
-                rowSpacing:     _margin
-                factList:       [ missionItem.gridSpacing, missionItem.gridAltitude, missionItem.turnaroundDist ]
-                factLabels:     [ qsTr("Spacing"), qsTr("Altitude"), qsTr("Turnaround dist")]
+            FactTextField {
+                id:                 manualGridAngleText
+                fact:               missionItem.gridAngle
+                Layout.fillWidth:   true
+            }
+
+            QGCLabel { text: qsTr("Spacing") }
+            FactTextField {
+                fact:                   missionItem.gridSpacing
+                Layout.fillWidth:       true
+            }
+
+            QGCLabel { text: qsTr("Altitude") }
+            FactTextField {
+                fact:                   missionItem.gridAltitude
+                Layout.fillWidth:       true
+            }
+            QGCLabel { text: qsTr("Turnaround dist") }
+            FactTextField {
+                fact:                   missionItem.turnaroundDist
+                Layout.fillWidth:       true
             }
 
             QGCCheckBox {
-                text:       qsTr("Refly at 90 degree offset")
-                checked:    missionItem.refly90Degrees
-                onClicked:  missionItem.refly90Degrees = checked
+                text:               qsTr("Refly at 90 degree offset")
+                checked:            missionItem.refly90Degrees
+                onClicked:          missionItem.refly90Degrees = checked
+                Layout.columnSpan:  2
             }
 
             FactCheckBox {
-                anchors.left:   parent.left
-                text:           qsTr("Relative altitude")
-                fact:           missionItem.gridAltitudeRelative
+                anchors.left:       parent.left
+                text:               qsTr("Relative altitude")
+                fact:               missionItem.gridAltitudeRelative
+                Layout.columnSpan:  2
             }
         }
 
