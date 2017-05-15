@@ -368,6 +368,10 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
     } else if (metaData.name() == VideoSettings::videoAspectRatioName) {
         metaData.setRawDefaultValue(1.777777);
         return false;
+    } else if (metaData.name() == AppSettings::esriTokenName) {
+        //-- This is a bogus token for now
+        metaData.setRawDefaultValue(QStringLiteral("3E300F9A-3E0F-44D4-AD92-0D5525E7F525"));
+        return false;
     } else if (metaData.name() == AppSettings::autoLoadMissionsName) {
         metaData.setRawDefaultValue(false);
         return false;
