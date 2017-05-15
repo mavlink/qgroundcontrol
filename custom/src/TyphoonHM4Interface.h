@@ -29,7 +29,7 @@ public:
 
     void    init                    (bool skipConnections = false);
     bool    vehicleReady            ();
-    void    enterBindMode           ();
+    void    enterBindMode           (bool skipPairCommand = false);
     void    initM4                  ();
     QString m4StateStr              ();
     void    resetBind               ();

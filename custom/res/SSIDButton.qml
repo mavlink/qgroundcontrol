@@ -42,10 +42,12 @@ Item {
     QGCPalette { id: qgcPal }
 
     Rectangle {
-        id:         ssidRect
-        height:     parent.height
-        width:      parent.width
-        color:      checked ? qgcPal.buttonHighlight : qgcPal.button
+        id:             ssidRect
+        height:         parent.height
+        width:          parent.width
+        color:          checked ? qgcPal.buttonHighlight : qgcPal.button
+        border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
+        border.width:   1
         Row {
             spacing:        ScreenTools.defaultFontPixelWidth
             anchors.left:       parent.left

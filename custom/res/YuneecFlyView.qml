@@ -12,6 +12,7 @@ import QtQuick.Layouts      1.2
 import QtQuick.Controls     1.2
 import QtQuick.Dialogs      1.2
 import QtPositioning        5.2
+import QtGraphicalEffects   1.0
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -563,6 +564,23 @@ Item {
                 onReleased:     { mouse.accepted = true; }
             }
             Rectangle {
+                id:             nosdShadow
+                anchors.fill:   nosdRect
+                radius:         nosdRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       nosdShadow
+                visible:            nosdRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             nosdShadow
+            }
+            Rectangle {
                 id:     nosdRect
                 width:  mainWindow.width   * 0.65
                 height: nosdcardCol.height * 1.5
@@ -622,7 +640,24 @@ Item {
                 onReleased:     { mouse.accepted = true; }
             }
             Rectangle {
-                id:     nosdRect
+                id:             conAPShadow
+                anchors.fill:   conAPRect
+                radius:         conAPRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       conAPShadow
+                visible:            conAPRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             conAPShadow
+            }
+            Rectangle {
+                id:     conAPRect
                 width:  mainWindow.width   * 0.65
                 height: nosdcardCol.height * 1.5
                 radius: ScreenTools.defaultFontPixelWidth
@@ -632,7 +667,7 @@ Item {
                 anchors.centerIn: parent
                 Column {
                     id:                 nosdcardCol
-                    width:              nosdRect.width
+                    width:              conAPRect.width
                     spacing:            ScreenTools.defaultFontPixelHeight * 3
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     anchors.centerIn:   parent
@@ -679,6 +714,23 @@ Item {
                 onWheel:        { wheel.accepted = true; }
                 onPressed:      { mouse.accepted = true; }
                 onReleased:     { mouse.accepted = true; }
+            }
+            Rectangle {
+                id:             panicDialogShadow
+                anchors.fill:   panicDialogRect
+                radius:         panicDialogRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       panicDialogShadow
+                visible:            panicDialogRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             panicDialogShadow
             }
             Rectangle {
                 id:     panicDialogRect
@@ -758,6 +810,23 @@ Item {
             z:          1000000
             width:      mainWindow.width
             height:     mainWindow.height
+            Rectangle {
+                id:             connectionLostArmedShadow
+                anchors.fill:   connectionLostArmedRect
+                radius:         connectionLostArmedRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       connectionLostArmedShadow
+                visible:            connectionLostArmedRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             connectionLostArmedShadow
+            }
             Rectangle {
                 id:     connectionLostArmedRect
                 width:  mainWindow.width   * 0.65

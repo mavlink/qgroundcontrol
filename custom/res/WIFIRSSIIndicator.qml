@@ -8,9 +8,10 @@
  ****************************************************************************/
 
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick              2.3
+import QtQuick.Controls     1.2
+import QtQuick.Layouts      1.2
+import QtGraphicalEffects   1.0
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -38,8 +39,8 @@ Item {
 
     Component {
         id: wifiRSSIInfo
-
         Rectangle {
+            id:     wifiInfoRect
             width:  rcrssiCol.width   + ScreenTools.defaultFontPixelWidth  * 3
             height: rcrssiCol.height  + ScreenTools.defaultFontPixelHeight * 2
             radius: ScreenTools.defaultFontPixelHeight * 0.5
@@ -177,12 +178,32 @@ Item {
             }
 
             Rectangle {
+                id:             connectingShadow
+                anchors.fill:   connectingRect
+                radius:         connectingRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       connectingShadow
+                visible:            connectingRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             connectingShadow
+            }
+            Rectangle {
+                id:     connectingRect
                 width:  mainWindow.width  * 0.45
                 height: mainWindow.height * 0.45
                 radius: ScreenTools.defaultFontPixelWidth
                 color:  qgcPal.window
-                visible:          TyphoonHQuickInterface.bindingWiFi
-                anchors.centerIn: parent
+                visible:            TyphoonHQuickInterface.bindingWiFi
+                border.width:       1
+                border.color:       qgcPal.text
+                anchors.centerIn:   parent
                 QGCLabel {
                     text:               qsTr("Connecting...")
                     font.family:        ScreenTools.demiboldFontFamily
@@ -211,19 +232,36 @@ Item {
                     }
                 }
             }
-
+            Rectangle {
+                id:             wifiShadow
+                anchors.fill:   wifiRect
+                radius:         wifiRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       wifiShadow
+                visible:            wifiRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             wifiShadow
+            }
             Rectangle {
                 id:     wifiRect
                 width:  mainWindow.width  * 0.5
                 height: mainWindow.height * 0.75
                 radius: ScreenTools.defaultFontPixelWidth
                 color:  qgcPal.window
-                visible:          !TyphoonHQuickInterface.bindingWiFi
-                anchors.centerIn: parent
+                border.width:       1
+                border.color:       qgcPal.text
+                visible:            !TyphoonHQuickInterface.bindingWiFi
+                anchors.centerIn:   parent
                 Row {
                     spacing:    ScreenTools.defaultFontPixelWidth
                     height:     scanningIcon.height
-                    visible:    !TyphoonHQuickInterface.bindingWiFi
                     anchors.top:        parent.top
                     anchors.topMargin:  ScreenTools.defaultFontPixelHeight
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -336,8 +374,9 @@ Item {
                     radius:     ScreenTools.defaultFontPixelWidth * 0.5
                     color:      qgcPal.window
                     visible:    false
-                    border.color: qgcPal.text
-                    anchors.top: parent.top
+                    border.width:   1
+                    border.color:   qgcPal.text
+                    anchors.top:    parent.top
                     anchors.horizontalCenter: parent.horizontalCenter
                     Keys.onBackPressed: {
                         timeoutDialog.visible = false
@@ -368,8 +407,9 @@ Item {
                     radius:     ScreenTools.defaultFontPixelWidth * 0.5
                     color:      qgcPal.window
                     visible:    false
-                    border.color: qgcPal.text
-                    anchors.centerIn: parent
+                    border.width:       1
+                    border.color:       qgcPal.text
+                    anchors.centerIn:   parent
                     Keys.onBackPressed: {
                         authErrorDialog.visible = false
                     }
@@ -399,8 +439,9 @@ Item {
                     radius:     ScreenTools.defaultFontPixelWidth * 0.5
                     color:      qgcPal.window
                     visible:    false
-                    border.color: qgcPal.text
-                    anchors.top: parent.top
+                    border.width:   1
+                    border.color:   qgcPal.text
+                    anchors.top:    parent.top
                     anchors.horizontalCenter: parent.horizontalCenter
                     Keys.onBackPressed: {
                         passwordDialog.visible = false
