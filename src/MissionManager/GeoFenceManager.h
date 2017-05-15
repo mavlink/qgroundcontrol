@@ -39,8 +39,11 @@ public:
     virtual void loadFromVehicle(void);
 
     /// Send the current settings to the vehicle
-    ///     Signals sendComplete when done
-    virtual void sendToVehicle(const QGeoCoordinate& breachReturn, QmlObjectListModel& polygon);
+    ///     @param breadchReturn Breach return point
+    ///     @param inclusionPolygons List of inclusion QGCMapMpolygons
+    ///     @param exclusionPolygons List of exclusion QGCMapMpolygons
+    /// Signals sendComplete when done
+    virtual void sendToVehicle(const QGeoCoordinate& breachReturn, QmlObjectListModel& inclusionPolygons, QmlObjectListModel& exclusionPolygons);
 
     /// Remove all fence related items from vehicle (does not affect parameters)
     ///     Signals removeAllComplete when done
@@ -74,19 +77,22 @@ public:
     ///     Signal: circleRadiusFactChanged
     virtual Fact* circleRadiusFact(void) const { return NULL; }
 
-    QList<QGeoCoordinate>   polygon             (void) const { return _polygon; }
-    QGeoCoordinate          breachReturnPoint   (void) const { return _breachReturnPoint; }
+    const QList<QList<QGeoCoordinate>>& inclusionPolygons(void) const { return _inclusionPolygons; }
+    const QList<QList<QGeoCoordinate>>& exclusionPolygons(void) const { return _exclusionPolygons; }
+    const QGeoCoordinate&               breachReturnPoint   (void) const { return _breachReturnPoint; }
 
     /// Error codes returned in error signal
     typedef enum {
         InternalError,
-        TooFewPoints,           ///< Too few points for valid geofence
-        TooManyPoints,          ///< Too many points for valid geofence
+        PolygonTooFewPoints,    ///< Too few points for valid fence polygon
+        PolygonTooManyPoints,   ///< Too many points for valid fence polygon
+        UnsupportedCommand,     ///< Usupported command in mission type
+        BadPolygonItemFormat,   ///< Error re-creating polygons from mission items
         InvalidCircleRadius,
     } ErrorCode_t;
     
 signals:
-    void loadComplete                   (const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
+    void loadComplete                   (void);
     void inProgressChanged              (bool inProgress);
     void error                          (int errorCode, const QString& errorMsg);
     void paramsChanged                  (QVariantList params);
@@ -102,9 +108,10 @@ signals:
 protected:
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
 
-    Vehicle*                _vehicle;
-    QList<QGeoCoordinate>   _polygon;
-    QGeoCoordinate          _breachReturnPoint;
+    Vehicle*                        _vehicle;
+    QList<QList<QGeoCoordinate>>    _inclusionPolygons;
+    QList<QList<QGeoCoordinate>>    _exclusionPolygons;
+    QGeoCoordinate                  _breachReturnPoint;
 };
 
 #endif

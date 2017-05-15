@@ -29,8 +29,9 @@ public:
     GeoFenceController(PlanMasterController* masterController, QObject* parent = NULL);
     ~GeoFenceController();
 
-    Q_PROPERTY(QGCMapPolygon*   mapPolygon              READ mapPolygon                                         CONSTANT)
-    Q_PROPERTY(QGeoCoordinate   breachReturnPoint       READ breachReturnPoint      WRITE setBreachReturnPoint  NOTIFY breachReturnPointChanged)
+    Q_PROPERTY(QmlObjectListModel*  inclusionMapPolygons    READ inclusionMapPolygons                               CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  exclusionMapPolygons    READ exclusionMapPolygons                               CONSTANT)
+    Q_PROPERTY(QGeoCoordinate       breachReturnPoint       READ breachReturnPoint      WRITE setBreachReturnPoint  NOTIFY breachReturnPointChanged)
 
     // The following properties are reflections of properties from GeoFenceManager
     Q_PROPERTY(bool             circleEnabled           READ circleEnabled          NOTIFY circleEnabledChanged)
@@ -41,8 +42,13 @@ public:
     Q_PROPERTY(QVariantList     params                  READ params                 NOTIFY paramsChanged)
     Q_PROPERTY(QStringList      paramLabels             READ paramLabels            NOTIFY paramLabelsChanged)
 
-    Q_INVOKABLE void addPolygon     (void) { emit addInitialFencePolygon(); }
-    Q_INVOKABLE void removePolygon  (void) { _mapPolygon.clear(); }
+    // FIXME: Method/Signal names here are bad
+
+    Q_INVOKABLE void signalAddInclusionPolygon     (void) { emit addInclusionPolygon(); }
+    Q_INVOKABLE void signalAddExclusionPolygon     (void) { emit addExclusionPolygon(); }
+
+    Q_INVOKABLE void addInclusion(QGeoCoordinate topLeft, QGeoCoordinate bottomRight);
+    Q_INVOKABLE void addExclusion(QGeoCoordinate topLeft, QGeoCoordinate bottomRight);
 
     void start                      (bool editMode) final;
     void save                       (QJsonObject& json) final;
@@ -58,15 +64,16 @@ public:
     void managerVehicleChanged      (Vehicle* managerVehicle) final;
     bool showPlanFromManagerVehicle (void) final;
 
-    bool            circleEnabled           (void) const;
-    Fact*           circleRadiusFact        (void) const;
-    bool            polygonSupported        (void) const;
-    bool            polygonEnabled          (void) const;
-    bool            breachReturnSupported   (void) const;
-    QVariantList    params                  (void) const;
-    QStringList     paramLabels             (void) const;
-    QGCMapPolygon*  mapPolygon              (void) { return &_mapPolygon; }
-    QGeoCoordinate  breachReturnPoint       (void) const { return _breachReturnPoint; }
+    bool                circleEnabled           (void) const;
+    Fact*               circleRadiusFact        (void) const;
+    bool                polygonSupported        (void) const;
+    bool                polygonEnabled          (void) const;
+    QmlObjectListModel* inclusionMapPolygons    (void) { return &_inclusionPolygons; }
+    QmlObjectListModel* exclusionMapPolygons    (void) { return &_exclusionPolygons; }
+    bool                breachReturnSupported   (void) const;
+    QVariantList        params                  (void) const;
+    QStringList         paramLabels             (void) const;
+    QGeoCoordinate      breachReturnPoint       (void) const { return _breachReturnPoint; }
 
     void setBreachReturnPoint(const QGeoCoordinate& breachReturnPoint);
 
@@ -74,7 +81,8 @@ signals:
     void breachReturnPointChanged       (QGeoCoordinate breachReturnPoint);
     void editorQmlChanged               (QString editorQml);
     void loadComplete                   (void);
-    void addInitialFencePolygon         (void);
+    void addInclusionPolygon            (void);
+    void addExclusionPolygon            (void);
     void circleEnabledChanged           (bool circleEnabled);
     void circleRadiusFactChanged        (Fact* circleRadiusFact);
     void polygonSupportedChanged        (bool polygonSupported);
@@ -86,9 +94,9 @@ signals:
 private slots:
     void _polygonDirtyChanged(bool dirty);
     void _setDirty(void);
-    void _setPolygonFromManager(const QList<QGeoCoordinate>& polygon);
+    void _setPolygonsFromManager(const QList<QList<QGeoCoordinate>>& inclusionPolygons, const QList<QList<QGeoCoordinate>>& exclusionPolygons);
     void _setReturnPointFromManager(QGeoCoordinate breachReturnPoint);
-    void _managerLoadComplete(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon);
+    void _managerLoadComplete(void);
     void _updateContainsItems(void);
     void _managerSendComplete(bool error);
     void _managerRemoveAllComplete(bool error);
@@ -99,7 +107,8 @@ private:
 
     GeoFenceManager*    _geoFenceManager;
     bool                _dirty;
-    QGCMapPolygon       _mapPolygon;
+    QmlObjectListModel  _inclusionPolygons;
+    QmlObjectListModel  _exclusionPolygons;
     QGeoCoordinate      _breachReturnPoint;
     bool                _itemsRequested;
 

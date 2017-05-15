@@ -24,7 +24,7 @@ class QGCMapPolygon : public QObject
     Q_OBJECT
 
 public:
-    QGCMapPolygon(QObject* newCoordParent, QObject* parent = NULL);
+    QGCMapPolygon(QObject* parent = NULL);
 
     Q_PROPERTY(int                  count       READ count                              NOTIFY countChanged)
     Q_PROPERTY(QVariantList         path        READ path                               NOTIFY pathChanged)
@@ -99,7 +99,6 @@ private:
     QGeoCoordinate _coordFromPointF(const QPointF& point) const;
     QPointF _pointFFromCoord(const QGeoCoordinate& coordinate) const;
 
-    QObject*            _newCoordParent;
     QVariantList        _polygonPath;
     QmlObjectListModel  _polygonModel;
     bool                _dirty;

@@ -13,6 +13,7 @@
 #include "ParameterManager.h"
 #include "PlanManager.h"
 #include "QGCQGeoCoordinate.h"
+#include "QGCMapPolygon.h"
 
 PX4GeoFenceManager::PX4GeoFenceManager(Vehicle* vehicle)
     : GeoFenceManager(vehicle)
@@ -78,32 +79,62 @@ void PX4GeoFenceManager::loadFromVehicle(void)
     _planManager.loadFromVehicle();
 }
 
-void PX4GeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlObjectListModel& polygon)
+void PX4GeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlObjectListModel& inclusionPolygons, QmlObjectListModel& exclusionPolygons)
 {
     Q_UNUSED(breachReturn);
 
-    qDebug() << polygon.count();
-
     QList<MissionItem*> polygonItems;
 
-    _sendPolygon.clear();
-    for (int i=0; i<polygon.count(); i++) {
-        QGeoCoordinate vertex = polygon.value<QGCQGeoCoordinate*>(i)->coordinate();
-
-        _sendPolygon.append(vertex);
-        MissionItem* item = new MissionItem(0,
-                                            MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION,
-                                            MAV_FRAME_GLOBAL,
-                                            polygon.count(),    // vertex count
-                                            0, 0, 0,            // param 2-4 unused
-                                            vertex.latitude(),
-                                            vertex.longitude(),
-                                            0,                  // param 7 unused
-                                            false,              // autocontinue
-                                            false,              // isCurrentItem
-                                            this);              // parent
-        polygonItems.append(item);
+    _sendInclusions.clear();
+    _sendExclusions.clear();
+    for (int i=0; i<inclusionPolygons.count(); i++) {
+        _sendInclusions.append(inclusionPolygons.value<QGCMapPolygon*>(i)->coordinateList());
     }
+    for (int i=0; i<exclusionPolygons.count(); i++) {
+        _sendExclusions.append(exclusionPolygons.value<QGCMapPolygon*>(i)->coordinateList());
+    }
+
+    for (int i=0; i<_sendInclusions.count(); i++) {
+        const QList<QGeoCoordinate>& polygon = _sendInclusions[i];
+
+        for (int j=0; j<polygon.count(); j++) {
+            const QGeoCoordinate& vertex = polygon[j];
+
+            MissionItem* item = new MissionItem(0,
+                                                MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION,
+                                                MAV_FRAME_GLOBAL,
+                                                polygon.count(),    // vertex count
+                                                0, 0, 0,            // param 2-4 unused
+                                                vertex.latitude(),
+                                                vertex.longitude(),
+                                                0,                  // param 7 unused
+                                                false,              // autocontinue
+                                                false,              // isCurrentItem
+                                                this);              // parent
+            polygonItems.append(item);
+        }
+    }
+    for (int i=0; i<_sendExclusions.count(); i++) {
+        const QList<QGeoCoordinate>& polygon = _sendExclusions[i];
+
+        for (int j=0; j<polygon.count(); j++) {
+            const QGeoCoordinate& vertex = polygon[j];
+
+            MissionItem* item = new MissionItem(0,
+                                                MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION,
+                                                MAV_FRAME_GLOBAL,
+                                                polygon.count(),    // vertex count
+                                                0, 0, 0,            // param 2-4 unused
+                                                vertex.latitude(),
+                                                vertex.longitude(),
+                                                0,                  // param 7 unused
+                                                false,              // autocontinue
+                                                false,              // isCurrentItem
+                                                this);              // parent
+            polygonItems.append(item);
+        }
+    }
+
     _planManager.writeMissionItems(polygonItems);
 
     for (int i=0; i<polygonItems.count(); i++) {
@@ -119,11 +150,14 @@ void PX4GeoFenceManager::removeAll(void)
 void PX4GeoFenceManager::_sendComplete(bool error)
 {
     if (error) {
-        _polygon.clear();
+        _inclusionPolygons.clear();
+        _exclusionPolygons.clear();
     } else {
-        _polygon = _sendPolygon;
+        _inclusionPolygons = _sendInclusions;
+        _exclusionPolygons = _sendExclusions;
     }
-    _sendPolygon.clear();
+    _sendInclusions.clear();
+    _sendExclusions.clear();
     emit sendComplete(error);
 }
 
@@ -131,20 +165,46 @@ void PX4GeoFenceManager::_planManagerLoadComplete(bool removeAllRequested)
 {
     Q_UNUSED(removeAllRequested);
 
-    // FIXME: Does not handle multiple polygons
+    _inclusionPolygons.clear();
+    _exclusionPolygons.clear();
 
-    _polygon.clear();
-
+    MAV_CMD expectedCommand = (MAV_CMD)0;
+    int expectedVertexCount = 0;
+    QList<QGeoCoordinate> nextPolygon;
     const QList<MissionItem*>& polygonItems = _planManager.missionItems();
     for (int i=0; i<polygonItems.count(); i++) {
         MissionItem* item = polygonItems[i];
 
-        if (item->command() == MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION) {
-            _polygon.append(QGeoCoordinate(item->param5(), item->param6()));
+        MAV_CMD command = item->command();
+        if (command == MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION || command == MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION) {
+            if (nextPolygon.count() == 0) {
+                // Starting a new polygon
+                expectedVertexCount = item->param1();
+                expectedCommand = command;
+            } else if (expectedVertexCount != item->param1()){
+                // In the middle of a polygon, but count suddenly changed
+                emit error(BadPolygonItemFormat, tr("GeoFence load: Vertex count change mid-polygon - actual:expected").arg(item->param1()).arg(expectedVertexCount));
+                break;
+            } if (expectedCommand != command) {
+                // Command changed before last polygon was completely loaded
+                emit error(BadPolygonItemFormat, tr("GeoFence load: Polygon type changed before last load complete - actual:expected").arg(command).arg(expectedCommand));
+                break;
+            }
+            nextPolygon.append(QGeoCoordinate(item->param5(), item->param6()));
+            if (nextPolygon.count() == expectedVertexCount) {
+                // Polygon is complete
+                if (command == MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION) {
+                    _inclusionPolygons.append(nextPolygon);
+                } else {
+                    _exclusionPolygons.append(nextPolygon);
+                }
+                nextPolygon.clear();
+            }
         } else {
-            qWarning() << "_planManagerLoadComplete Unknown command" << item->command();
+            emit error(UnsupportedCommand, tr("GeoFence load: Unsupported command %1").arg(item->command()));
+            break;
         }
     }
 
-    emit loadComplete(_breachReturnPoint, _polygon);
+    emit loadComplete();
 }

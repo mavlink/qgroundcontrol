@@ -105,15 +105,15 @@ QGCFlickable {
                 }
 
                 QGCButton {
-                    text:       qsTr("Add fence polygon")
-                    visible:    myGeoFenceController.polygonSupported && myGeoFenceController.mapPolygon.count === 0
-                    onClicked:  myGeoFenceController.addPolygon()
+                    text:       qsTr("Add inclusion polygon")
+                    visible:    myGeoFenceController.polygonSupported
+                    onClicked:  myGeoFenceController.signalAddInclusionPolygon()
                 }
 
                 QGCButton {
-                    text:       qsTr("Remove fence polygon")
-                    visible:    myGeoFenceController.polygonSupported && myGeoFenceController.mapPolygon.count > 0
-                    onClicked:  myGeoFenceController.removePolygon()
+                    text:       qsTr("Add exclusion polygon")
+                    visible:    myGeoFenceController.polygonSupported
+                    onClicked:  myGeoFenceController.signalAddExclusionPolygon()
                 }
             }
         }

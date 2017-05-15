@@ -27,7 +27,7 @@ public:
     // Overrides from GeoFenceManager
     bool            inProgress              (void) const final;
     void            loadFromVehicle         (void) final;
-    void            sendToVehicle           (const QGeoCoordinate& breachReturn, QmlObjectListModel& polygon) final;
+    void            sendToVehicle           (const QGeoCoordinate& breachReturn, QmlObjectListModel& inclusionPolygons, QmlObjectListModel& exclusionPolygons) final;
     bool            polygonSupported        (void) const final { return _polygonSupported; }
     bool            polygonEnabled          (void) const final { return _polygonEnabled; }
     bool            breachReturnSupported   (void) const final { return _breachReturnSupported; }

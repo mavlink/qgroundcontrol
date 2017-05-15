@@ -107,7 +107,7 @@ Item {
     }
 
     Component.onCompleted: {
-        mapPolygonVisuals.addVisuals()
+        addVisuals()
         if (interactive) {
             addHandles()
         }

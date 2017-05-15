@@ -18,9 +18,8 @@
 
 const char* QGCMapPolygon::jsonPolygonKey = "polygon";
 
-QGCMapPolygon::QGCMapPolygon(QObject* newCoordParent, QObject* parent)
+QGCMapPolygon::QGCMapPolygon(QObject* parent)
     : QObject(parent)
-    , _newCoordParent(newCoordParent)
     , _dirty(false)
     , _centerDrag(false)
     , _ignoreCenterUpdates(false)
@@ -129,7 +128,7 @@ void QGCMapPolygon::setPath(const QList<QGeoCoordinate>& path)
     _polygonModel.clearAndDeleteContents();
     foreach(const QGeoCoordinate& coord, path) {
         _polygonPath.append(QVariant::fromValue(coord));
-        _polygonModel.append(new QGCQGeoCoordinate(coord, _newCoordParent));
+        _polygonModel.append(new QGCQGeoCoordinate(coord, this));
     }
 
     setDirty(true);
@@ -142,7 +141,7 @@ void QGCMapPolygon::setPath(const QVariantList& path)
 
     _polygonModel.clearAndDeleteContents();
     for (int i=0; i<_polygonPath.count(); i++) {
-        _polygonModel.append(new QGCQGeoCoordinate(_polygonPath[i].value<QGeoCoordinate>(), _newCoordParent));
+        _polygonModel.append(new QGCQGeoCoordinate(_polygonPath[i].value<QGeoCoordinate>(), this));
     }
 
     setDirty(true);
@@ -176,7 +175,7 @@ bool QGCMapPolygon::loadFromJson(const QJsonObject& json, bool required, QString
     }
 
     for (int i=0; i<_polygonPath.count(); i++) {
-        _polygonModel.append(new QGCQGeoCoordinate(_polygonPath[i].value<QGeoCoordinate>(), _newCoordParent));
+        _polygonModel.append(new QGCQGeoCoordinate(_polygonPath[i].value<QGeoCoordinate>(), this));
     }
 
     setDirty(false);
@@ -222,7 +221,7 @@ void QGCMapPolygon::splitPolygonSegment(int vertexIndex)
 void QGCMapPolygon::appendVertex(const QGeoCoordinate& coordinate)
 {
     _polygonPath.append(QVariant::fromValue(coordinate));
-    _polygonModel.append(new QGCQGeoCoordinate(coordinate, _newCoordParent));
+    _polygonModel.append(new QGCQGeoCoordinate(coordinate, this));
     emit pathChanged();
 }
 

@@ -15,6 +15,7 @@
 #include "ParameterManager.h"
 #include "QmlObjectListModel.h"
 #include "QGCQGeoCoordinate.h"
+#include "QGCMapPolygon.h"
 
 const char* APMGeoFenceManager::_fenceTotalParam =  "FENCE_TOTAL";
 const char* APMGeoFenceManager::_fenceActionParam = "FENCE_ACTION";
@@ -47,7 +48,7 @@ APMGeoFenceManager::~APMGeoFenceManager()
 
 }
 
-void APMGeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlObjectListModel& polygon)
+void APMGeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlObjectListModel& inclusionPolygons, QmlObjectListModel& exclusionPolygons)
 {
     if (_vehicle->isOfflineEditingVehicle()) {
         return;
@@ -62,23 +63,29 @@ void APMGeoFenceManager::sendToVehicle(const QGeoCoordinate& breachReturn, QmlOb
         return;
     }
 
+    if (inclusionPolygons.count() > 1) {
+        _sendError(InternalError, QStringLiteral("Geo-Fence write failed: Vehicle only supports single inclusion fence polygon"));
+        return;
+    }
+    if (exclusionPolygons.count() > 0) {
+        _sendError(InternalError, QStringLiteral("Geo-Fence write failed: Vehicle only does not support exclusion fence polygons"));
+        return;
+    }
+    QGCMapPolygon* polygon = inclusionPolygons.value<QGCMapPolygon*>(0);
+
     // Validate
     int validatedPolygonCount = 0;
-    if (polygon.count() >= 3) {
-        validatedPolygonCount = polygon.count();
+    if (polygon->count() >= 3) {
+        validatedPolygonCount = polygon->count();
     }
-    if (polygon.count() > std::numeric_limits<uint8_t>::max()) {
-        _sendError(TooManyPoints, QStringLiteral("Geo-Fence polygon has too many points: %1.").arg(_polygon.count()));
+    if (polygon->count() > std::numeric_limits<uint8_t>::max()) {
+        _sendError(PolygonTooManyPoints, QStringLiteral("Geo-Fence polygon has too many points: %1.").arg(polygon->count()));
         validatedPolygonCount = 0;
     }
 
     _breachReturnPoint = breachReturn;
-    _polygon.clear();
-    if (validatedPolygonCount) {
-        for (int i=0; i<polygon.count(); i++) {
-            _polygon.append(polygon.value<QGCQGeoCoordinate*>(i)->coordinate());
-        }
-    }
+    _inclusionPolygons.clear();
+    _inclusionPolygons.append(polygon->coordinateList());
 
     // Total point count, +1 polygon close in last index, +1 for breach in index 0
     _cWriteFencePoints = validatedPolygonCount ? validatedPolygonCount + 1 + 1 : 0;
@@ -100,7 +107,7 @@ void APMGeoFenceManager::loadFromVehicle(void)
     }
 
     _breachReturnPoint = QGeoCoordinate();
-    _polygon.clear();
+    _inclusionPolygons.clear();
 
     if (!_fenceSupported) {
         return;
@@ -114,21 +121,22 @@ void APMGeoFenceManager::loadFromVehicle(void)
     qCDebug(GeoFenceManagerLog) << "APMGeoFenceManager::loadFromVehicle" << cFencePoints;
     if (cFencePoints == 0) {
         // No fence
-        emit loadComplete(_breachReturnPoint, _polygon);
+        emit loadComplete();
         return;
     }
     if (cFencePoints < 0 || (cFencePoints > 0 && cFencePoints < minFencePoints)) {
-        _sendError(TooFewPoints, QStringLiteral("Geo-Fence information from Vehicle has too few points: %1").arg(cFencePoints));
+        _sendError(PolygonTooFewPoints, QStringLiteral("Geo-Fence information from Vehicle has too few points: %1").arg(cFencePoints));
         return;
     }
     if (cFencePoints > std::numeric_limits<uint8_t>::max()) {
-        _sendError(TooManyPoints, QStringLiteral("Geo-Fence information from Vehicle has too many points: %1").arg(cFencePoints));
+        _sendError(PolygonTooManyPoints, QStringLiteral("Geo-Fence information from Vehicle has too many points: %1").arg(cFencePoints));
         return;
     }
 
     _readTransactionInProgress = true;
     _cReadFencePoints = cFencePoints;
     _currentFencePoint = 0;
+    _inclusionPolygons.append(QList<QGeoCoordinate>());
 
     _requestFencePoint(_currentFencePoint);
 }
@@ -156,7 +164,7 @@ void APMGeoFenceManager::_mavlinkMessageReceived(const mavlink_message_t& messag
             _requestFencePoint(++_currentFencePoint);
         } else if (fencePoint.idx < _cReadFencePoints - 1) {
             QGeoCoordinate polyCoord(fencePoint.lat, fencePoint.lng);
-            _polygon.append(polyCoord);
+            _inclusionPolygons[0].append(polyCoord);
             qCDebug(GeoFenceManagerLog) << "From vehicle: polygon point" << fencePoint.idx << polyCoord;
             if (fencePoint.idx < _cReadFencePoints - 2) {
                 // Still more points to request
@@ -165,7 +173,7 @@ void APMGeoFenceManager::_mavlinkMessageReceived(const mavlink_message_t& messag
                 // We've finished collecting fence points
                 qCDebug(GeoFenceManagerLog) << "Fence point load complete";
                 _readTransactionInProgress = false;
-                emit loadComplete(_breachReturnPoint, _polygon);
+                emit loadComplete();
                 emit inProgressChanged(inProgress());
             }
         }
@@ -198,14 +206,14 @@ void APMGeoFenceManager::_sendFencePoint(uint8_t pointIndex)
         fenceCoord = breachReturnPoint();
     } else if (pointIndex == _cWriteFencePoints - 1) {
         // Polygon close point
-        fenceCoord = _polygon[0];
+        fenceCoord = _inclusionPolygons[0][0];
     } else {
         // Polygon point
-        fenceCoord = _polygon[pointIndex - 1];
+        fenceCoord = _inclusionPolygons[0][pointIndex - 1];
     }
 
     // Total point count, +1 polygon close in last index, +1 for breach in index 0
-    uint8_t totalPointCount = _polygon.count() + 1 + 1;
+    uint8_t totalPointCount = _inclusionPolygons[0].count() + 1 + 1;
 
     mavlink_msg_fence_point_pack_chan(mavlink->getSystemId(),
                                       mavlink->getComponentId(),
@@ -329,8 +337,8 @@ void APMGeoFenceManager::removeAll(void)
 {
     qCDebug(GeoFenceManagerLog) << "APMGeoFenceManager::removeAll";
 
-    QmlObjectListModel emptyPolygon;
+    QmlObjectListModel emptyList;
 
-    sendToVehicle(_breachReturnPoint, emptyPolygon);
+    sendToVehicle(_breachReturnPoint, emptyList, emptyList);
     emit removeAllComplete(false /* error */);
 }
