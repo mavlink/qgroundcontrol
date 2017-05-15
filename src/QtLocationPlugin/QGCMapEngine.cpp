@@ -15,6 +15,9 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  *
  */
+#include "QGCApplication.h"
+#include "AppSettings.h"
+#include "SettingsManager.h"
 
 #include <math.h>
 #include <QSettings>
@@ -88,8 +91,6 @@ stQGeoTileCacheQGCMapTypes kEsriTypes[] = {
 
 #define NUM_ESRIMAPS (sizeof(kEsriTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
 
-static const char* kMapBoxTokenKey  = "MapBoxToken";
-static const char* kEsriTokenKey    = "EsriToken";
 static const char* kMaxDiskCacheKey = "MaxDiskCache";
 static const char* kMaxMemCacheKey  = "MaxMemoryCache";
 
@@ -346,57 +347,17 @@ QGCMapEngine::getMapNameList()
     for(size_t i = 0; i < NUM_MAPS; i++) {
         mapList << kMapTypes[i].name;
     }
-    if(!getMapBoxToken().isEmpty()) {
+    if(!qgcApp()->toolbox()->settingsManager()->appSettings()->mapboxToken()->rawValue().toString().isEmpty()) {
         for(size_t i = 0; i < NUM_MAPBOXMAPS; i++) {
             mapList << kMapBoxTypes[i].name;
         }
     }
-    if(!getEsriToken().isEmpty()) {
+    if(!qgcApp()->toolbox()->settingsManager()->appSettings()->esriToken()->rawValue().toString().isEmpty()) {
         for(size_t i = 0; i < NUM_ESRIMAPS; i++) {
             mapList << kEsriTypes[i].name;
         }
     }
     return mapList;
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCMapEngine::setMapBoxToken(const QString& token)
-{
-    QSettings settings;
-    settings.setValue(kMapBoxTokenKey, token);
-    _mapBoxToken = token;
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCMapEngine::setEsriToken(const QString& token)
-{
-    QSettings settings;
-    settings.setValue(kEsriTokenKey, token);
-    _esriToken = token;
-}
-
-//-----------------------------------------------------------------------------
-QString
-QGCMapEngine::getMapBoxToken()
-{
-    if(_mapBoxToken.isEmpty()) {
-        QSettings settings;
-        _mapBoxToken = settings.value(kMapBoxTokenKey).toString();
-    }
-    return _mapBoxToken;
-}
-
-//-----------------------------------------------------------------------------
-QString
-QGCMapEngine::getEsriToken()
-{
-    if(_esriToken.isEmpty()) {
-        QSettings settings;
-        _esriToken = settings.value(kEsriTokenKey).toString();
-    }
-    return _esriToken;
 }
 
 //-----------------------------------------------------------------------------

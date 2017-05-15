@@ -21,6 +21,8 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 import QGroundControl.FlightMap             1.0
 import QGroundControl.QGCMapEngineManager   1.0
+import QGroundControl.FactSystem            1.0
+import QGroundControl.FactControls          1.0
 
 QGCView {
     id:             offlineMapView
@@ -30,6 +32,9 @@ QGCView {
     property var    _currentSelection:  null
 
     property string mapKey:             "lastMapType"
+
+    property Fact   _mapboxFact:        QGroundControl.settingsManager.appSettings.mapboxToken
+    property Fact   _esriFact:          QGroundControl.settingsManager.appSettings.esriToken
 
     property string mapType:            _settings.mapProvider.enumStringValue + " " + _settings.mapType.enumStringValue
     property bool   isMapInteractive:   false
@@ -227,8 +232,6 @@ QGCView {
             id: optionDialog
 
             function accept() {
-                QGroundControl.mapEngineManager.mapboxToken  = mapBoxToken.text
-                QGroundControl.mapEngineManager.esriToken    = esriToken.text
                 QGroundControl.mapEngineManager.maxDiskCache = parseInt(maxCacheSize.text)
                 QGroundControl.mapEngineManager.maxMemCache  = parseInt(maxCacheMemSize.text)
                 optionDialog.hideDialog()
@@ -273,35 +276,31 @@ QGCView {
                         text:           qsTr("Memory cache changes require a restart to take effect.")
                     }
 
-                    Item { width: 1; height: 1 }
-
-                    QGCLabel { text: qsTr("MapBox Access Token") }
-
-                    QGCTextField {
-                        id:             mapBoxToken
-                        maximumLength:  256
-                        width:          ScreenTools.defaultFontPixelWidth * 30
-                        text:           QGroundControl.mapEngineManager.mapboxToken
+                    Item { width: 1; height: 1; visible: _mapboxFact ? _mapboxFact.visible : false }
+                    QGCLabel { text: qsTr("MapBox Access Token"); visible: _mapboxFact ? _mapboxFact.visible : false }
+                    FactTextField {
+                        fact:               _mapboxFact
+                        visible:            _mapboxFact ? _mapboxFact.visible : false
+                        maximumLength:      256
+                        width:              ScreenTools.defaultFontPixelWidth * 30
                     }
-
                     QGCLabel {
                         text:           qsTr("With an access token, you can use MapBox Maps.")
+                        visible:        _mapboxFact ? _mapboxFact.visible : false
                         font.pointSize: _adjustableFontPointSize
                     }
 
-                    Item { width: 1; height: 1 }
-
-                    QGCLabel { text: qsTr("Esri Access Token") }
-
-                    QGCTextField {
-                        id:             esriToken
-                        maximumLength:  256
-                        width:          ScreenTools.defaultFontPixelWidth * 30
-                        text:           QGroundControl.mapEngineManager.esriToken
+                    Item { width: 1; height: 1; visible: _esriFact ? _esriFact.visible : false }
+                    QGCLabel { text: qsTr("Esri Access Token"); visible: _esriFact ? _esriFact.visible : false }
+                    FactTextField {
+                        fact:               _esriFact
+                        visible:            _esriFact ? _esriFact.visible : false
+                        maximumLength:      256
+                        width:              ScreenTools.defaultFontPixelWidth * 30
                     }
-
                     QGCLabel {
                         text:           qsTr("With an access token, you can use Esri Maps.")
+                        visible:        _esriFact ? _esriFact.visible : false
                         font.pointSize: _adjustableFontPointSize
                     }
                 } // GridLayout
