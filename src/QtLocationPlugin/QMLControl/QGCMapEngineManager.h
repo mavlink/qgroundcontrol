@@ -58,7 +58,7 @@ public:
     //-- Tile set export
     Q_PROPERTY(int                  selectedCount   READ    selectedCount   NOTIFY selectedCountChanged)
     Q_PROPERTY(int                  actionProgress  READ    actionProgress  NOTIFY actionProgressChanged)
-    Q_PROPERTY(ImportAction         importAction    READ    importAction    NOTIFY importActionChanged)
+    Q_PROPERTY(ImportAction         importAction    READ    importAction    WRITE  setImportAction   NOTIFY importActionChanged)
 
     Q_PROPERTY(bool                 importReplace   READ    importReplace   WRITE   setImportReplace   NOTIFY importReplaceChanged)
 
@@ -103,7 +103,7 @@ public:
     void                            setMaxMemCache          (quint32 size);
     void                            setMaxDiskCache         (quint32 size);
     void                            setImportReplace        (bool replace) { _importReplace = replace; emit importReplaceChanged(); }
-
+    void                            setImportAction         (ImportAction action)  {_importAction = action; emit importActionChanged(); }
     void                            setErrorMessage         (const QString& error) { _errorMessage = error; emit errorMessageChanged(); }
 
     // Override from QGCTool
