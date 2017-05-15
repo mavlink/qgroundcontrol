@@ -196,34 +196,6 @@ QGCMapEngineManager::mapList()
 }
 
 //-----------------------------------------------------------------------------
-QString
-QGCMapEngineManager::mapboxToken()
-{
-    return getQGCMapEngine()->getMapBoxToken();
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCMapEngineManager::setMapboxToken(QString token)
-{
-    getQGCMapEngine()->setMapBoxToken(token);
-}
-
-//-----------------------------------------------------------------------------
-QString
-QGCMapEngineManager::esriToken()
-{
-    return getQGCMapEngine()->getEsriToken();
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCMapEngineManager::setEsriToken(QString token)
-{
-    getQGCMapEngine()->setEsriToken(token);
-}
-
-//-----------------------------------------------------------------------------
 quint32
 QGCMapEngineManager::maxMemCache()
 {

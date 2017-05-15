@@ -7,8 +7,11 @@
  *
  ****************************************************************************/
 
+#include "QGCApplication.h"
 #include "FlightMapSettings.h"
 #include "QGCMapEngine.h"
+#include "AppSettings.h"
+#include "SettingsManager.h"
 
 #include <QQmlEngine>
 #include <QtQml>
@@ -34,10 +37,10 @@ FlightMapSettings::FlightMapSettings(QObject* parent)
     //-- Remove Google
     _excludeProvider(mapProviderGoogle);
 #endif
-    if(getQGCMapEngine()->getMapBoxToken().isEmpty()) {
+    if(qgcApp()->toolbox()->settingsManager()->appSettings()->mapboxToken()->rawValue().toString().isEmpty()) {
         _excludeProvider(mapProviderMapBox);
     }
-    if(getQGCMapEngine()->getEsriToken().isEmpty()) {
+    if(qgcApp()->toolbox()->settingsManager()->appSettings()->esriToken()->rawValue().toString().isEmpty()) {
         _excludeProvider(mapProviderEsri);
     }
     _newMapProvider(mapProvider()->rawValue());

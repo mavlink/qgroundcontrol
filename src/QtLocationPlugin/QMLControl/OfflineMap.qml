@@ -21,6 +21,8 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 import QGroundControl.FlightMap             1.0
 import QGroundControl.QGCMapEngineManager   1.0
+import QGroundControl.FactSystem            1.0
+import QGroundControl.FactControls          1.0
 
 QGCView {
     id:             offlineMapView
@@ -30,6 +32,9 @@ QGCView {
     property var    _currentSelection:  null
 
     property string mapKey:             "lastMapType"
+
+    property Fact   _mapboxFact:        QGroundControl.settingsManager.appSettings.mapboxToken
+    property Fact   _esriFact:          QGroundControl.settingsManager.appSettings.esriToken
 
     property string mapType:            _settings.mapProvider.enumStringValue + " " + _settings.mapType.enumStringValue
     property bool   isMapInteractive:   false
@@ -227,8 +232,6 @@ QGCView {
             id: optionDialog
 
             function accept() {
-                QGroundControl.mapEngineManager.mapboxToken  = mapBoxToken.text
-                QGroundControl.mapEngineManager.esriToken    = esriToken.text
                 QGroundControl.mapEngineManager.maxDiskCache = parseInt(maxCacheSize.text)
                 QGroundControl.mapEngineManager.maxMemCache  = parseInt(maxCacheMemSize.text)
                 optionDialog.hideDialog()
@@ -277,11 +280,10 @@ QGCView {
 
                     QGCLabel { text: qsTr("MapBox Access Token") }
 
-                    QGCTextField {
-                        id:             mapBoxToken
-                        maximumLength:  256
-                        width:          ScreenTools.defaultFontPixelWidth * 30
-                        text:           QGroundControl.mapEngineManager.mapboxToken
+                    FactTextField {
+                        fact:               _mapboxFact
+                        maximumLength:      256
+                        width:              ScreenTools.defaultFontPixelWidth * 30
                     }
 
                     QGCLabel {
@@ -293,11 +295,10 @@ QGCView {
 
                     QGCLabel { text: qsTr("Esri Access Token") }
 
-                    QGCTextField {
-                        id:             esriToken
-                        maximumLength:  256
-                        width:          ScreenTools.defaultFontPixelWidth * 30
-                        text:           QGroundControl.mapEngineManager.esriToken
+                    FactTextField {
+                        fact:               _esriFact
+                        maximumLength:      256
+                        width:              ScreenTools.defaultFontPixelWidth * 30
                     }
 
                     QGCLabel {
