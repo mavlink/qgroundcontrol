@@ -31,6 +31,8 @@ const char* AppSettings::indoorPaletteName =                            "StyleIs
 const char* AppSettings::showLargeCompassName =                         "ShowLargeCompass";
 const char* AppSettings::savePathName =                                 "SavePath";
 const char* AppSettings::autoLoadMissionsName =                         "AutoLoadMissions";
+const char* AppSettings::mapboxTokenName =                              "MapBoxToken";
+const char* AppSettings::esriTokenName =                                "EsriToken";
 
 const char* AppSettings::parameterFileExtension =   "params";
 const char* AppSettings::planFileExtension =        "plan";
@@ -61,6 +63,8 @@ AppSettings::AppSettings(QObject* parent)
     , _showLargeCompassFact(NULL)
     , _savePathFact(NULL)
     , _autoLoadMissionsFact(NULL)
+    , _mapboxTokenFact(NULL)
+    , _esriTokenFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
@@ -276,6 +280,24 @@ Fact* AppSettings::autoLoadMissions(void)
     }
 
     return _autoLoadMissionsFact;
+}
+
+Fact* AppSettings::mapboxToken(void)
+{
+    if (!_mapboxTokenFact) {
+        _mapboxTokenFact = _createSettingsFact(mapboxTokenName);
+    }
+
+    return _mapboxTokenFact;
+}
+
+Fact* AppSettings::esriToken(void)
+{
+    if (!_esriTokenFact) {
+        _esriTokenFact = _createSettingsFact(esriTokenName);
+    }
+
+    return _esriTokenFact;
 }
 
 MAV_AUTOPILOT AppSettings::offlineEditingFirmwareTypeFromFirmwareType(MAV_AUTOPILOT firmwareType)

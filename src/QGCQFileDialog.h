@@ -74,7 +74,7 @@ public:
         const QString& caption = QString(),
         const QString& dir = QString(),
         const QString& filter = QString(),
-        Options options = 0);
+        Options options = Options());
     
     //! Static helper that invokes a File Open dialog where the user can select one or more files to be opened.
     /*!
@@ -91,7 +91,7 @@ public:
         const QString& caption = QString(),
         const QString& dir = QString(),
         const QString& filter = QString(),
-        Options options = 0);
+        Options options = Options());
     
     //! Static helper that invokes a File Save dialog where the user can select a directory and enter a filename to be saved.
     /*!
@@ -117,7 +117,7 @@ public:
         const QString& filter = QString(),
         const QString& defaultSuffix = QString(),
         bool strict = false,
-        Options options = 0);
+        Options options = Options());
 
 private slots:
     /// @brief The exec slot is private because we only want QGCQFileDialog users to use the static methods. Otherwise it will break

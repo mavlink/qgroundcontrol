@@ -196,34 +196,6 @@ QGCMapEngineManager::mapList()
 }
 
 //-----------------------------------------------------------------------------
-QString
-QGCMapEngineManager::mapboxToken()
-{
-    return getQGCMapEngine()->getMapBoxToken();
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCMapEngineManager::setMapboxToken(QString token)
-{
-    getQGCMapEngine()->setMapBoxToken(token);
-}
-
-//-----------------------------------------------------------------------------
-QString
-QGCMapEngineManager::esriToken()
-{
-    return getQGCMapEngine()->getEsriToken();
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCMapEngineManager::setEsriToken(QString token)
-{
-    getQGCMapEngine()->setEsriToken(token);
-}
-
-//-----------------------------------------------------------------------------
 quint32
 QGCMapEngineManager::maxMemCache()
 {
@@ -421,8 +393,8 @@ QGCMapEngineManager::importSets(QString path) {
         dir = QDir(QDir::homePath()).filePath(QString("export_%1.db").arg(QDateTime::currentDateTime().toTime_t()));
 #else
         dir = QGCQFileDialog::getOpenFileName(
-            MainWindow::instance(),
-            "Export Tile Set",
+            NULL,
+            "Import Tile Set",
             QDir::homePath(),
             "Tile Sets (*.qgctiledb)");
 #endif
