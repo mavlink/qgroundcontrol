@@ -29,7 +29,7 @@ SetupPage {
 
         Item {
             width:  Math.max(availableWidth, outerGrid.width)
-            height: outerGrid.height
+            height: lastRect.y + lastRect.height
 
             FactPanelController {
                 id:         controller
@@ -38,7 +38,8 @@ SetupPage {
 
             property real _margins:         ScreenTools.defaultFontPixelHeight
             property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 20
-            property real _imageWidth:      ScreenTools.defaultFontPixelWidth * 20
+            property real _imageWidth:      ScreenTools.defaultFontPixelWidth * 15
+            property real _imageHeight:     ScreenTools.defaultFontPixelHeight * 3
 
             property Fact _fenceAction:     controller.getParameterFact(-1, "GF_ACTION")
             property Fact _fenceRadius:     controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
@@ -93,6 +94,7 @@ SetupPage {
             }
 
             Rectangle {
+                id:     lastRect
                 x:      landModeGrid.x + outerGrid.x - _margins
                 y:      landModeGrid.y + outerGrid.y - _margins
                 width:  landModeGrid.width + (_margins * 2)
@@ -119,13 +121,14 @@ SetupPage {
                     columns:    3
 
                     Image {
-                        height:             ScreenTools.defaultFontPixelWidth * 6
-                        sourceSize.height:  height
                         mipmap:             true
                         fillMode:           Image.PreserveAspectFit
                         source:             qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/LowBatteryLight.svg" : "/qmlimages/LowBattery.svg"
                         Layout.rowSpan:     3
-                        Layout.minimumWidth:    _imageWidth
+                        Layout.maximumWidth:    _imageWidth
+                        Layout.maximumHeight:   _imageHeight
+                        width:                  _imageWidth
+                        height:                 _imageHeight
                     }
 
                     QGCLabel {
@@ -173,13 +176,14 @@ SetupPage {
                     columns:    3
 
                     Image {
-                        height:             ScreenTools.defaultFontPixelWidth * 6
-                        sourceSize.height:  height
                         mipmap:             true
                         fillMode:           Image.PreserveAspectFit
                         source:             qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/RCLossLight.svg" : "/qmlimages/RCLoss.svg"
                         Layout.rowSpan:     3
-                        Layout.minimumWidth:    _imageWidth
+                        Layout.maximumWidth:    _imageWidth
+                        Layout.maximumHeight:   _imageHeight
+                        width:                  _imageWidth
+                        height:                 _imageHeight
                     }
 
                     QGCLabel {
@@ -218,13 +222,14 @@ SetupPage {
                     columns:    3
 
                     Image {
-                        height:             ScreenTools.defaultFontPixelWidth * 6
-                        sourceSize.height:  height
                         mipmap:             true
                         fillMode:           Image.PreserveAspectFit
                         source:             qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/DatalinkLossLight.svg" : "/qmlimages/DatalinkLoss.svg"
                         Layout.rowSpan:     3
-                        Layout.minimumWidth:    _imageWidth
+                        Layout.maximumWidth:    _imageWidth
+                        Layout.maximumHeight:   _imageHeight
+                        width:                  _imageWidth
+                        height:                 _imageHeight
                     }
 
                     QGCLabel {
@@ -263,13 +268,14 @@ SetupPage {
                     columns:    3
 
                     Image {
-                        height:             ScreenTools.defaultFontPixelWidth * 10
-                        sourceSize.height:  height
                         mipmap:             true
                         fillMode:           Image.PreserveAspectFit
                         source:             qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/GeoFenceLight.svg" : "/qmlimages/GeoFence.svg"
                         Layout.rowSpan:     3
-                        Layout.minimumWidth:    _imageWidth
+                        Layout.maximumWidth:    _imageWidth
+                        Layout.maximumHeight:   _imageHeight
+                        width:                  _imageWidth
+                        height:                 _imageHeight
                     }
 
                     QGCLabel {
@@ -326,13 +332,14 @@ SetupPage {
 
                     QGCColoredImage {
                         color:                  qgcPal.text
-                        height:                 ScreenTools.defaultFontPixelWidth * 10
-                        sourceSize.height:      height
                         mipmap:                 true
                         fillMode:               Image.PreserveAspectFit
                         source:                 controller.vehicle.fixedWing ? "/qmlimages/ReturnToHomeAltitude.svg" : "/qmlimages/ReturnToHomeAltitudeCopter.svg"
                         Layout.rowSpan:         7
-                        Layout.minimumWidth:    _imageWidth
+                        Layout.maximumWidth:    _imageWidth
+                        Layout.maximumHeight:   _imageHeight
+                        width:                  _imageWidth
+                        height:                 _imageHeight
                     }
 
                     QGCLabel {
@@ -420,13 +427,14 @@ SetupPage {
 
                     QGCColoredImage {
                         color:                  qgcPal.text
-                        height:                 ScreenTools.defaultFontPixelWidth * 13
-                        sourceSize.height:      height
                         mipmap:                 true
                         fillMode:               Image.PreserveAspectFit
                         source:                 controller.vehicle.fixedWing ? "/qmlimages/LandMode.svg" : "/qmlimages/LandModeCopter.svg"
                         Layout.rowSpan:         landVelocityLabel.visible ? 2 : 1
-                        Layout.minimumWidth:    _imageWidth
+                        width:                  _imageWidth
+                        height:                 _imageHeight
+                        Layout.maximumWidth:    _imageWidth
+                        Layout.maximumHeight:   _imageHeight
                     }
 
                     QGCLabel {
