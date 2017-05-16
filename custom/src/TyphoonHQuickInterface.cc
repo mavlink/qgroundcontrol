@@ -8,7 +8,10 @@
 #include "QGCApplication.h"
 #include "AppSettings.h"
 #include "SettingsManager.h"
+#include "MAVLinkLogManager.h"
+
 #include <QDirIterator>
+#include <QtAlgorithms>
 
 #include "TyphoonHQuickInterface.h"
 #include "TyphoonHM4Interface.h"
@@ -55,6 +58,13 @@ TyphoonHQuickInterface::~TyphoonHQuickInterface()
 }
 
 //-----------------------------------------------------------------------------
+static bool
+created_less_than(const QFileInfo &f1, const QFileInfo &f2)
+ {
+     return f1.created() < f2.created();
+ }
+
+//-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
 {
@@ -79,6 +89,27 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         _flightTimer.setSingleShot(false);
         _powerTimer.setSingleShot(true);
         _loadWifiConfigurations();
+        //-- Enable logging
+        qgcApp()->toolbox()->mavlinkLogManager()->setEnableAutoUpload(false);
+        qgcApp()->toolbox()->mavlinkLogManager()->setEnableAutoStart(true);
+        //-- See how many logs we have stored
+        QString filter = "*.";
+        filter += qgcApp()->toolbox()->settingsManager()->appSettings()->logFileExtension;
+        QDir logDir(qgcApp()->toolbox()->settingsManager()->appSettings()->logSavePath(), filter);
+        QFileInfoList logs = logDir.entryInfoList();
+        qSort(logs.begin(), logs.end(), created_less_than);
+        if(logs.size() > 1) {
+            qint64 totalLogSize = 0;
+            for(int i = 0; i < logs.size(); i++) {
+               totalLogSize += logs[i].size();
+            }
+            //-- We want to limit at 1G
+            while(totalLogSize > (1024 * 1024 * 1024) && logs.size()) {
+                qDebug() << "Removing old log file:" << logs[0].fileName();
+                totalLogSize -= logs[0].size();
+                QFile::remove(logs[0].filePath());
+            }
+        }
     }
 }
 
@@ -511,8 +542,14 @@ TyphoonHQuickInterface::_exportData()
         if(res >= 0) {
             _copyResult += res;
             emit copyResultChanged();
-        } else {
-            _copyResult = -1;
+            res = _copyFilesInPath(qgcApp()->toolbox()->settingsManager()->appSettings()->logSavePath(),
+                                   QStringLiteral("/storage/sdcard1/") + AppSettings::logDirectory);
+            if(res >= 0) {
+                _copyResult += res;
+                emit copyResultChanged();
+            } else {
+                _copyResult = -1;
+            }
         }
     }
     _copyingFiles = false;
