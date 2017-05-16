@@ -24,7 +24,7 @@ public:
         mapProviderBing,
         mapProviderGoogle,
         mapProviderStarkart,
-        mapProviderMapBox,
+        mapProviderMapbox,
         mapProviderEsri
     } MapProvider_t;
 

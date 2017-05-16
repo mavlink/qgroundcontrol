@@ -124,9 +124,9 @@
     "defaultValue":     ""
 },
 {
-    "name":             "MapBoxToken",
-    "shortDescription": "Access token to MapBox maps",
-    "longDescription":  "Your personal access token for MapBox maps",
+    "name":             "MapboxToken",
+    "shortDescription": "Access token to Mapbox maps",
+    "longDescription":  "Your personal access token for Mapbox maps",
     "type":             "string",
     "defaultValue":     ""
 },
