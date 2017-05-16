@@ -31,7 +31,7 @@ const char* AppSettings::indoorPaletteName =                            "StyleIs
 const char* AppSettings::showLargeCompassName =                         "ShowLargeCompass";
 const char* AppSettings::savePathName =                                 "SavePath";
 const char* AppSettings::autoLoadMissionsName =                         "AutoLoadMissions";
-const char* AppSettings::mapboxTokenName =                              "MapBoxToken";
+const char* AppSettings::mapboxTokenName =                              "MapboxToken";
 const char* AppSettings::esriTokenName =                                "EsriToken";
 
 const char* AppSettings::parameterFileExtension =   "params";
