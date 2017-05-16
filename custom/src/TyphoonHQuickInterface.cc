@@ -58,11 +58,13 @@ TyphoonHQuickInterface::~TyphoonHQuickInterface()
 }
 
 //-----------------------------------------------------------------------------
+/*
 static bool
 created_less_than(const QFileInfo &f1, const QFileInfo &f2)
  {
      return f1.created() < f2.created();
  }
+*/
 
 //-----------------------------------------------------------------------------
 void
@@ -89,9 +91,12 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         _flightTimer.setSingleShot(false);
         _powerTimer.setSingleShot(true);
         _loadWifiConfigurations();
+        /*
+         * Ulog is disabled on the H520. I will have to change this to use telemetry logs instead.
+         *
         //-- Enable logging
         qgcApp()->toolbox()->mavlinkLogManager()->setEnableAutoUpload(false);
-        qgcApp()->toolbox()->mavlinkLogManager()->setEnableAutoStart(true);
+        qgcApp()->toolbox()->mavlinkLogManager()->setEnableAutoStart(false);
         //-- See how many logs we have stored
         QString filter = "*.";
         filter += qgcApp()->toolbox()->settingsManager()->appSettings()->logFileExtension;
@@ -110,6 +115,7 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
                 QFile::remove(logs[0].filePath());
             }
         }
+        */
     }
 }
 
