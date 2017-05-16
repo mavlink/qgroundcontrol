@@ -129,7 +129,7 @@ QGCView {
                         }
                     }
                     QGCLabel {
-                        text:   qsTr("Manualy bind RC to vehicle.")
+                        text:   qsTr("Manually bind RC to vehicle.")
                         width:   _textWidth
                         anchors.verticalCenter: parent.verticalCenter
                     }
