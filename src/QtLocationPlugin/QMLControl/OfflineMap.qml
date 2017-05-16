@@ -277,7 +277,7 @@ QGCView {
                     }
 
                     Item { width: 1; height: 1; visible: _mapboxFact ? _mapboxFact.visible : false }
-                    QGCLabel { text: qsTr("MapBox Access Token"); visible: _mapboxFact ? _mapboxFact.visible : false }
+                    QGCLabel { text: qsTr("Mapbox Access Token"); visible: _mapboxFact ? _mapboxFact.visible : false }
                     FactTextField {
                         fact:               _mapboxFact
                         visible:            _mapboxFact ? _mapboxFact.visible : false
@@ -285,7 +285,7 @@ QGCView {
                         width:              ScreenTools.defaultFontPixelWidth * 30
                     }
                     QGCLabel {
-                        text:           qsTr("With an access token, you can use MapBox Maps.")
+                        text:           qsTr("To enable Mapbox maps, enter your access token.")
                         visible:        _mapboxFact ? _mapboxFact.visible : false
                         font.pointSize: _adjustableFontPointSize
                     }
@@ -299,7 +299,7 @@ QGCView {
                         width:              ScreenTools.defaultFontPixelWidth * 30
                     }
                     QGCLabel {
-                        text:           qsTr("With an access token, you can use Esri Maps.")
+                        text:           qsTr("To enable Esri maps, enter your access token.")
                         visible:        _esriFact ? _esriFact.visible : false
                         font.pointSize: _adjustableFontPointSize
                     }
