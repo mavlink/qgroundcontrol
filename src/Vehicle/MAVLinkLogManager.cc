@@ -9,6 +9,8 @@
 
 #include "MAVLinkLogManager.h"
 #include "QGCApplication.h"
+#include "SettingsManager.h"
+
 #include <QQmlContext>
 #include <QQmlProperty>
 #include <QQmlEngine>
@@ -30,7 +32,6 @@ static const char* kDefaultPx4URL           = "http://logs.px4.io/upload";
 static const char* kEnableAutoUploadKey     = "EnableAutoUpload";
 static const char* kEnableAutoStartKey      = "EnableAutoStart";
 static const char* kEnableDeletetKey        = "EnableDelete";
-static const char* kUlogExtension           = ".ulg";
 static const char* kSidecarExtension        = ".uploaded";
 static const char* kVideoURLKey             = "VideoURL";
 static const char* kWindSpeedKey            = "WindSpeed";
@@ -54,7 +55,7 @@ MAVLinkLogFiles::MAVLinkLogFiles(MAVLinkLogManager* manager, const QString& file
     if(!newFile) {
         _size = (quint32)fi.size();
         QString sideCar = filePath;
-        sideCar.replace(kUlogExtension, kSidecarExtension);
+        sideCar.replace(manager->logExtension(), kSidecarExtension);
         QFileInfo sc(sideCar);
         _uploaded = sc.exists();
     }
@@ -152,9 +153,9 @@ MAVLinkLogProcessor::create(MAVLinkLogManager* manager, const QString path, uint
     _fileName.sprintf("%s/%03d-%s%s",
                       path.toLatin1().data(),
                       id,
-                      QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss-zzz").toLatin1().data(),
-                      kUlogExtension);
-    _fd = fopen(_fileName.toLatin1().data(), "wb");
+                      QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss-zzz").toLocal8Bit().data(),
+                      manager->logExtension().toLocal8Bit().data());
+    _fd = fopen(_fileName.toLocal8Bit().data(), "wb");
     if(_fd) {
         _record = new MAVLinkLogFiles(manager, _fileName, true);
         _record->setWriting(true);
@@ -322,25 +323,6 @@ MAVLinkLogManager::MAVLinkLogManager(QGCApplication* app, QGCToolbox* toolbox)
     setWindSpeed(settings.value(kWindSpeedKey, -1).toInt());
     setRating(settings.value(kRateKey, "notset").toString());
     setPublicLog(settings.value(kPublicLogKey, true).toBool());
-    //-- Logging location
-    _logPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    _logPath += "/MAVLinkLogs";
-    if(!QDir(_logPath).exists()) {
-        if(!QDir().mkpath(_logPath)) {
-            qCWarning(MAVLinkLogManagerLog) << "Could not create MAVLink log download path:" << _logPath;
-            _loggingDisabled = true;
-        }
-    }
-    if(!_loggingDisabled) {
-        //-- Load current list of logs
-        QString filter = "*";
-        filter += kUlogExtension;
-        QDirIterator it(_logPath, QStringList() << filter, QDir::Files);
-        while(it.hasNext()) {
-            _insertNewLog(new MAVLinkLogFiles(this, it.next()));
-        }
-        qCDebug(MAVLinkLogManagerLog) << "MAVLink logs directory:" << _logPath;
-    }
 }
 
 //-----------------------------------------------------------------------------
@@ -356,7 +338,25 @@ MAVLinkLogManager::setToolbox(QGCToolbox* toolbox)
     QGCTool::setToolbox(toolbox);
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<MAVLinkLogManager>("QGroundControl.MAVLinkLogManager", 1, 0, "MAVLinkLogManager", "Reference only");
+    //-- Logging location
+    _ulogExtension  = ".";
+    _ulogExtension += qgcApp()->toolbox()->settingsManager()->appSettings()->logFileExtension;
+    _logPath = qgcApp()->toolbox()->settingsManager()->appSettings()->logSavePath();
+    if(!QDir(_logPath).exists()) {
+        if(!QDir().mkpath(_logPath)) {
+            qCWarning(MAVLinkLogManagerLog) << "Could not create MAVLink log download path:" << _logPath;
+            _loggingDisabled = true;
+        }
+    }
     if(!_loggingDisabled) {
+        //-- Load current list of logs
+        QString filter = "*";
+        filter += _ulogExtension;
+        QDirIterator it(_logPath, QStringList() << filter, QDir::Files);
+        while(it.hasNext()) {
+            _insertNewLog(new MAVLinkLogFiles(this, it.next()));
+        }
+        qCDebug(MAVLinkLogManagerLog) << "MAVLink logs directory:" << _logPath;
         connect(toolbox->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkLogManager::_activeVehicleChanged);
     }
 }
@@ -579,7 +579,7 @@ MAVLinkLogManager::_deleteLog(MAVLinkLogFiles* log)
         qCWarning(MAVLinkLogManagerLog) << "Could not delete MAVLink log file:" << _logPath;
     }
     //-- Remove sidecar file (if any)
-    filePath.replace(kUlogExtension, kSidecarExtension);
+    filePath.replace(_ulogExtension, kSidecarExtension);
     QFile sgone(filePath);
     if(sgone.exists()) {
         sgone.remove();
@@ -796,7 +796,7 @@ MAVLinkLogManager::_uploadFinished()
                 _currentLogfile->setUploaded(true);
                 //-- Write side-car file to flag it as uploaded
                 QString sideCar = _makeFilename(_currentLogfile->name());
-                sideCar.replace(kUlogExtension, kSidecarExtension);
+                sideCar.replace(_ulogExtension, kSidecarExtension);
                 FILE* f = fopen(sideCar.toLatin1().data(), "wb");
                 if(f) {
                     fclose(f);
@@ -956,6 +956,6 @@ MAVLinkLogManager::_makeFilename(const QString& baseName)
     QString filePath = _logPath;
     filePath += "/";
     filePath += baseName;
-    filePath += kUlogExtension;
+    filePath += _ulogExtension;
     return filePath;
 }
