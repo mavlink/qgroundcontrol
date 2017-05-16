@@ -114,6 +114,7 @@ QGCView {
                 height:         bindRow.height * 2
                 width:          ScreenTools.defaultFontPixelWidth * 80
                 color:          qgcPal.windowShade
+                visible:        !_activeVehicle || (_activeVehicle.rcRSSI === 0 || _activeVehicle.rcRSSI === 255)
                 anchors.horizontalCenter: parent.horizontalCenter
                 Row {
                     id:         bindRow
