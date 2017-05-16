@@ -100,20 +100,20 @@ UrlFactory::getImageFormat(MapType type, const QByteArray& image)
                 case MapQuestSat:
                 case OpenStreetMap:
                 */
-                case MapBoxStreets:
-                case MapBoxLight:
-                case MapBoxDark:
-                case MapBoxSatellite:
-                case MapBoxHybrid:
-                case MapBoxWheatPaste:
-                case MapBoxStreetsBasic:
-                case MapBoxComic:
-                case MapBoxOutdoors:
-                case MapBoxRunBikeHike:
-                case MapBoxPencil:
-                case MapBoxPirates:
-                case MapBoxEmerald:
-                case MapBoxHighContrast:
+                case MapboxStreets:
+                case MapboxLight:
+                case MapboxDark:
+                case MapboxSatellite:
+                case MapboxHybrid:
+                case MapboxWheatPaste:
+                case MapboxStreetsBasic:
+                case MapboxComic:
+                case MapboxOutdoors:
+                case MapboxRunBikeHike:
+                case MapboxPencil:
+                case MapboxPirates:
+                case MapboxEmerald:
+                case MapboxHighContrast:
                 case GoogleSatellite:
                 case BingSatellite:
                 case BingHybrid:
@@ -323,65 +323,65 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
     case EsriTerrain:
         return QString("http://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/%1/%2/%3").arg(zoom).arg(y).arg(x);
 
-    case MapBoxStreets:
-    case MapBoxLight:
-    case MapBoxDark:
-    case MapBoxSatellite:
-    case MapBoxHybrid:
-    case MapBoxWheatPaste:
-    case MapBoxStreetsBasic:
-    case MapBoxComic:
-    case MapBoxOutdoors:
-    case MapBoxRunBikeHike:
-    case MapBoxPencil:
-    case MapBoxPirates:
-    case MapBoxEmerald:
-    case MapBoxHighContrast:
+    case MapboxStreets:
+    case MapboxLight:
+    case MapboxDark:
+    case MapboxSatellite:
+    case MapboxHybrid:
+    case MapboxWheatPaste:
+    case MapboxStreetsBasic:
+    case MapboxComic:
+    case MapboxOutdoors:
+    case MapboxRunBikeHike:
+    case MapboxPencil:
+    case MapboxPirates:
+    case MapboxEmerald:
+    case MapboxHighContrast:
     {
         QString mapBoxToken = qgcApp()->toolbox()->settingsManager()->appSettings()->mapboxToken()->rawValue().toString();
         if(!mapBoxToken.isEmpty()) {
             QString server = "https://api.mapbox.com/v4/";
             switch(type) {
-                case MapBoxStreets:
+                case MapboxStreets:
                     server += "mapbox.streets";
                     break;
-                case MapBoxLight:
+                case MapboxLight:
                     server += "mapbox.light";
                     break;
-                case MapBoxDark:
+                case MapboxDark:
                     server += "mapbox.dark";
                     break;
-                case MapBoxSatellite:
+                case MapboxSatellite:
                     server += "mapbox.satellite";
                     break;
-                case MapBoxHybrid:
+                case MapboxHybrid:
                     server += "mapbox.streets-satellite";
                     break;
-                case MapBoxWheatPaste:
+                case MapboxWheatPaste:
                     server += "mapbox.wheatpaste";
                     break;
-                case MapBoxStreetsBasic:
+                case MapboxStreetsBasic:
                     server += "mapbox.streets-basic";
                     break;
-                case MapBoxComic:
+                case MapboxComic:
                     server += "mapbox.comic";
                     break;
-                case MapBoxOutdoors:
+                case MapboxOutdoors:
                     server += "mapbox.outdoors";
                     break;
-                case MapBoxRunBikeHike:
+                case MapboxRunBikeHike:
                     server += "mapbox.run-bike-hike";
                     break;
-                case MapBoxPencil:
+                case MapboxPencil:
                     server += "mapbox.pencil";
                     break;
-                case MapBoxPirates:
+                case MapboxPirates:
                     server += "mapbox.pirates";
                     break;
-                case MapBoxEmerald:
+                case MapboxEmerald:
                     server += "mapbox.emerald";
                     break;
-                case MapBoxHighContrast:
+                case MapboxHighContrast:
                     server += "mapbox.high-contrast";
                     break;
                 default:
@@ -546,30 +546,30 @@ UrlFactory::averageSizeForType(MapType type)
         return AVERAGE_BING_STREET_MAP;
     case GoogleSatellite:
         return AVERAGE_GOOGLE_SAT_MAP;
-    case MapBoxSatellite:
+    case MapboxSatellite:
         return AVERAGE_MAPBOX_SAT_MAP;
     case BingHybrid:
     case BingSatellite:
         return AVERAGE_BING_SAT_MAP;
     case GoogleTerrain:
         return AVERAGE_GOOGLE_TERRAIN_MAP;
-    case MapBoxStreets:
-    case MapBoxStreetsBasic:
-    case MapBoxRunBikeHike:
+    case MapboxStreets:
+    case MapboxStreetsBasic:
+    case MapboxRunBikeHike:
         return AVERAGE_MAPBOX_STREET_MAP;
     case GoogleLabels:
-    case MapBoxDark:
-    case MapBoxLight:
-    case MapBoxOutdoors:
-    case MapBoxPencil:
+    case MapboxDark:
+    case MapboxLight:
+    case MapboxOutdoors:
+    case MapboxPencil:
     case OpenStreetMap:
     case GoogleHybrid:
-    case MapBoxComic:
-    case MapBoxEmerald:
-    case MapBoxHighContrast:
-    case MapBoxHybrid:
-    case MapBoxPirates:
-    case MapBoxWheatPaste:
+    case MapboxComic:
+    case MapboxEmerald:
+    case MapboxHighContrast:
+    case MapboxHybrid:
+    case MapboxPirates:
+    case MapboxWheatPaste:
     default:
         break;
     }

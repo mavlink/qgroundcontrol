@@ -38,7 +38,7 @@ FlightMapSettings::FlightMapSettings(QObject* parent)
     _excludeProvider(mapProviderGoogle);
 #endif
     if(qgcApp()->toolbox()->settingsManager()->appSettings()->mapboxToken()->rawValue().toString().isEmpty()) {
-        _excludeProvider(mapProviderMapBox);
+        _excludeProvider(mapProviderMapbox);
     }
     if(qgcApp()->toolbox()->settingsManager()->appSettings()->esriToken()->rawValue().toString().isEmpty()) {
         _excludeProvider(mapProviderEsri);

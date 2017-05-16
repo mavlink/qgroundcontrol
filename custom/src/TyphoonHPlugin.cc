@@ -41,9 +41,9 @@ myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString
         break;
     }
     QString message;
-  //message.sprintf("(%s:%u, %s) %s", context.file, context.line, context.function, msg.toLatin1().data());
-    message.sprintf("(%s) %s", context.category, msg.toLatin1().data());
-    __android_log_write(prio, "DataPilotLog", message.toLatin1().data());
+  //message.sprintf("(%s:%u, %s) %s", context.file, context.line, context.function, msg.toLocal8Bit().data());
+    message.sprintf("(%s) %s", context.category, msg.toLocal8Bit().data());
+    __android_log_write(prio, "DataPilotLog", message.toLocal8Bit().data());
 }
 #endif
 
