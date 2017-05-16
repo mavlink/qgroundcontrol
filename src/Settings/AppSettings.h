@@ -41,12 +41,14 @@ public:
     Q_PROPERTY(QString missionSavePath      READ missionSavePath    NOTIFY savePathsChanged)
     Q_PROPERTY(QString parameterSavePath    READ parameterSavePath  NOTIFY savePathsChanged)
     Q_PROPERTY(QString telemetrySavePath    READ telemetrySavePath  NOTIFY savePathsChanged)
+    Q_PROPERTY(QString logSavePath          READ logSavePath        NOTIFY savePathsChanged)
 
     Q_PROPERTY(QString planFileExtension        MEMBER planFileExtension        CONSTANT)
     Q_PROPERTY(QString missionFileExtension     MEMBER missionFileExtension     CONSTANT)
     Q_PROPERTY(QString waypointsFileExtension   MEMBER waypointsFileExtension   CONSTANT)
     Q_PROPERTY(QString parameterFileExtension   MEMBER parameterFileExtension   CONSTANT)
     Q_PROPERTY(QString telemetryFileExtension   MEMBER telemetryFileExtension   CONSTANT)
+    Q_PROPERTY(QString logFileExtension         MEMBER logFileExtension         CONSTANT)
 
     Fact* offlineEditingFirmwareType        (void);
     Fact* offlineEditingVehicleType         (void);
@@ -69,6 +71,7 @@ public:
     QString missionSavePath     (void);
     QString parameterSavePath   (void);
     QString telemetrySavePath   (void);
+    QString logSavePath         (void);
 
     static MAV_AUTOPILOT offlineEditingFirmwareTypeFromFirmwareType(MAV_AUTOPILOT firmwareType);
     static MAV_TYPE offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleType);
@@ -101,11 +104,13 @@ public:
     static const char* fenceFileExtension;
     static const char* rallyPointFileExtension;
     static const char* telemetryFileExtension;
+    static const char* logFileExtension;
 
     // Child directories of savePath for specific file types
     static const char* parameterDirectory;
     static const char* telemetryDirectory;
     static const char* missionDirectory;
+    static const char* logDirectory;
 
 signals:
     void savePathsChanged(void);
