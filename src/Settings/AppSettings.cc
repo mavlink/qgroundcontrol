@@ -41,10 +41,12 @@ const char* AppSettings::waypointsFileExtension =   "waypoints";
 const char* AppSettings::fenceFileExtension =       "fence";
 const char* AppSettings::rallyPointFileExtension =  "rally";
 const char* AppSettings::telemetryFileExtension =   "tlog";
+const char* AppSettings::logFileExtension =         "ulg";
 
-const char* AppSettings::parameterDirectory =   "Parameters";
-const char* AppSettings::telemetryDirectory =   "Telemetry";
-const char* AppSettings::missionDirectory =     "Missions";
+const char* AppSettings::parameterDirectory =       "Parameters";
+const char* AppSettings::telemetryDirectory =       "Telemetry";
+const char* AppSettings::missionDirectory =         "Missions";
+const char* AppSettings::logDirectory =             "Logs";
 
 AppSettings::AppSettings(QObject* parent)
     : SettingsGroup(appSettingsGroupName, QString() /* root settings group */, parent)
@@ -100,6 +102,7 @@ void AppSettings::_checkSavePathDirectories(void)
         savePathDir.mkdir(parameterDirectory);
         savePathDir.mkdir(telemetryDirectory);
         savePathDir.mkdir(missionDirectory);
+        savePathDir.mkdir(logDirectory);
     }
 }
 
@@ -268,6 +271,19 @@ QString AppSettings::telemetrySavePath(void)
     if (!path.isEmpty() && QDir(path).exists()) {
         QDir dir(path);
         return dir.filePath(telemetryDirectory);
+    }
+
+    return fullPath;
+}
+
+QString AppSettings::logSavePath(void)
+{
+    QString fullPath;
+
+    QString path = savePath()->rawValue().toString();
+    if (!path.isEmpty() && QDir(path).exists()) {
+        QDir dir(path);
+        return dir.filePath(logDirectory);
     }
 
     return fullPath;
