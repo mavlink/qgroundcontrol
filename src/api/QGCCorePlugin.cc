@@ -155,8 +155,8 @@ bool QGCCorePlugin::overrideSettingsGroupVisibility(QString name)
 
 bool QGCCorePlugin::adjustSettingMetaData(FactMetaData& metaData)
 {
+    //-- Default Palette
     if (metaData.name() == AppSettings::indoorPaletteName) {
-        // Set up correct default for palette setting
         QVariant outdoorPalette;
 #if defined (__mobile__)
         outdoorPalette = 0;
@@ -164,9 +164,18 @@ bool QGCCorePlugin::adjustSettingMetaData(FactMetaData& metaData)
         outdoorPalette = 1;
 #endif
         metaData.setRawDefaultValue(outdoorPalette);
+        return true;
+    //-- Auto Save Telemetry Logs
+    } else if (metaData.name() == AppSettings::telemetrySaveName) {
+#if defined (__mobile__)
+        metaData.setRawDefaultValue(false);
+        return false;
+#else
+        metaData.setRawDefaultValue(true);
+        return true;
+#endif
     }
-
-    return true;        // Show setting in ui
+    return true; // Show setting in ui
 }
 
 void QGCCorePlugin::setShowTouchAreas(bool show)
