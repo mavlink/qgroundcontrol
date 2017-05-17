@@ -30,9 +30,10 @@ Item {
 
     property var    _breachReturnPointComponent
     property var    _mouseAreaComponent
-    property var    _circleComponent
     property var    _inclusionPolygons:             myGeoFenceController.inclusionMapPolygons
     property var    _exclusionPolygons:             myGeoFenceController.exclusionMapPolygons
+    property var    _inclusionCircles:              myGeoFenceController.inclusionMapCircles
+    property var    _exclusionCircles:              myGeoFenceController.exclusionMapCircles
     property bool   _interactive:                   interactive
     property bool   _circleSupported:               myGeoFenceController.circleRadiusFact !== null
     property bool   _circleEnabled:                 myGeoFenceController.circleEnabled
@@ -74,15 +75,12 @@ Item {
     }
 
     Component.onCompleted: {
-        _circleComponent = circleComponent.createObject(map)
-        map.addMapItem(_circleComponent)
         _breachReturnPointComponent = breachReturnPointComponent.createObject(map)
         map.addMapItem(_breachReturnPointComponent)
         _mouseAreaComponent = mouseAreaComponent.createObject(map)
     }
 
     Component.onDestruction: {
-        _circleComponent.destroy()
         _breachReturnPointComponent.destroy()
         _mouseAreaComponent.destroy()
     }
@@ -108,8 +106,6 @@ Item {
     Instantiator {
         model: _inclusionPolygons
 
-        onCountChanged: console.log("Instantiator", count)
-
         delegate : QGCMapPolygonVisuals {
             mapControl:     map
             mapPolygon:     object
@@ -131,18 +127,25 @@ Item {
         }
     }
 
-    // GeoFence circle
-    Component {
-        id: circleComponent
+    Instantiator {
+        model: _inclusionCircles
 
-        MapCircle {
-            z:              QGroundControl.zOrderMapItems
-            border.width:   2
-            border.color:   "orange"
-            color:          "transparent"
-            center:         homePosition ? homePosition : QtPositioning.coordinate()
-            radius:         _circleRadius
-            visible:        _circleSupported && _circleRadius > 0 && (planView || _circleEnabled)
+        delegate : QGCMapCircleVisuals {
+            mapControl:     map
+            mapCircle:      object
+            borderWidth:    2
+            borderColor:    "orange"
+        }
+    }
+
+    Instantiator {
+        model: _exclusionCircles
+
+        delegate : QGCMapCircleVisuals {
+            mapControl:         map
+            mapCircle:          object
+            interiorColor:      "orange"
+            interiorOpacity:    0.2
         }
     }
 

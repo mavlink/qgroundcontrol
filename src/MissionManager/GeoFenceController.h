@@ -31,6 +31,8 @@ public:
 
     Q_PROPERTY(QmlObjectListModel*  inclusionMapPolygons    READ inclusionMapPolygons                               CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  exclusionMapPolygons    READ exclusionMapPolygons                               CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  inclusionMapCircles     READ inclusionMapCircles                                CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  exclusionMapCircles     READ exclusionMapCircles                                CONSTANT)
     Q_PROPERTY(QGeoCoordinate       breachReturnPoint       READ breachReturnPoint      WRITE setBreachReturnPoint  NOTIFY breachReturnPointChanged)
 
     // The following properties are reflections of properties from GeoFenceManager
@@ -49,6 +51,9 @@ public:
 
     Q_INVOKABLE void addInclusion(QGeoCoordinate topLeft, QGeoCoordinate bottomRight);
     Q_INVOKABLE void addExclusion(QGeoCoordinate topLeft, QGeoCoordinate bottomRight);
+
+    Q_INVOKABLE void addInclusionCircle(QGeoCoordinate center);
+    Q_INVOKABLE void addExclusionCircle(QGeoCoordinate center);
 
     void start                      (bool editMode) final;
     void save                       (QJsonObject& json) final;
@@ -70,6 +75,8 @@ public:
     bool                polygonEnabled          (void) const;
     QmlObjectListModel* inclusionMapPolygons    (void) { return &_inclusionPolygons; }
     QmlObjectListModel* exclusionMapPolygons    (void) { return &_exclusionPolygons; }
+    QmlObjectListModel* inclusionMapCircles     (void) { return &_inclusionCircles; }
+    QmlObjectListModel* exclusionMapCircles     (void) { return &_exclusionCircles; }
     bool                breachReturnSupported   (void) const;
     QVariantList        params                  (void) const;
     QStringList         paramLabels             (void) const;
@@ -94,7 +101,10 @@ signals:
 private slots:
     void _polygonDirtyChanged(bool dirty);
     void _setDirty(void);
-    void _setPolygonsFromManager(const QList<QList<QGeoCoordinate>>& inclusionPolygons, const QList<QList<QGeoCoordinate>>& exclusionPolygons);
+    void _setFenceFromManager(const QList<QList<QGeoCoordinate>>&   inclusionPolygons,
+                              const QList<QList<QGeoCoordinate>>&   exclusionPolygons,
+                              const QList<QGCMapCircle>&            inclusionCircles,
+                              const QList<QGCMapCircle>&            exclusionCircles);
     void _setReturnPointFromManager(QGeoCoordinate breachReturnPoint);
     void _managerLoadComplete(void);
     void _updateContainsItems(void);
@@ -109,6 +119,8 @@ private:
     bool                _dirty;
     QmlObjectListModel  _inclusionPolygons;
     QmlObjectListModel  _exclusionPolygons;
+    QmlObjectListModel  _inclusionCircles;
+    QmlObjectListModel  _exclusionCircles;
     QGeoCoordinate      _breachReturnPoint;
     bool                _itemsRequested;
 

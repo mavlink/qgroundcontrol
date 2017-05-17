@@ -17,7 +17,6 @@
 #include "FirmwarePlugin.h"
 #include "ParameterManager.h"
 #include "PX4ParameterMetaData.h"
-#include "PX4GeoFenceManager.h"
 
 class PX4FirmwarePlugin : public FirmwarePlugin
 {
@@ -62,7 +61,6 @@ public:
     void                getParameterMetaDataVersionInfo (const QString& metaDataFile, int& majorVersion, int& minorVersion) override { PX4ParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion); }
     QObject*            loadParameterMetaData           (const QString& metaDataFile) final;
     bool                adjustIncomingMavlinkMessage    (Vehicle* vehicle, mavlink_message_t* message) override;
-    GeoFenceManager*    newGeoFenceManager              (Vehicle* vehicle) override { return new PX4GeoFenceManager(vehicle); }
     QString             offlineEditingParamFile(Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/PX4/PX4.OfflineEditing.params"); }
     QString             brandImageIndoor                (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/PX4/BrandImage"); }
     QString             brandImageOutdoor               (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/PX4/BrandImage"); }

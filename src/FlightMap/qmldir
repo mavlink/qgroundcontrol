@@ -29,6 +29,3 @@ MissionItemView             1.0 MissionItemView.qml
 MissionLineView             1.0 MissionLineView.qml
 PolygonEditor               1.0 PolygonEditor.qml
 VehicleMapItem              1.0 VehicleMapItem.qml
-
-# Editor controls
-QGCMapPolygonControls  1.0 QGCMapPolygonControls.qml

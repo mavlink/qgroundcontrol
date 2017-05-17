@@ -115,6 +115,16 @@ QGCFlickable {
                     visible:    myGeoFenceController.polygonSupported
                     onClicked:  myGeoFenceController.signalAddExclusionPolygon()
                 }
+
+                QGCButton {
+                    text:       qsTr("Add inclusion circle")
+                    onClicked:  myGeoFenceController.addInclusionCircle(flightMap.center)
+                }
+
+                QGCButton {
+                    text:       qsTr("Add exclusion circle")
+                    onClicked:  myGeoFenceController.addExclusionCircle(flightMap.center)
+                }
             }
         }
     }

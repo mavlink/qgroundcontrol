@@ -15,9 +15,12 @@
 
 #include "QGCLoggingCategory.h"
 #include "FactSystem.h"
+#include "PlanManager.h"
+#include "QGCMapCircle.h"
 
 class Vehicle;
 class QmlObjectListModel;
+class PlanManager;
 
 Q_DECLARE_LOGGING_CATEGORY(GeoFenceManagerLog)
 
@@ -32,18 +35,19 @@ public:
     ~GeoFenceManager();
     
     /// Returns true if the manager is currently communicating with the vehicle
-    virtual bool inProgress(void) const { return false; }
+    virtual bool inProgress(void) const;
 
     /// Load the current settings from the vehicle
     ///     Signals loadComplete when done
     virtual void loadFromVehicle(void);
 
-    /// Send the current settings to the vehicle
-    ///     @param breadchReturn Breach return point
-    ///     @param inclusionPolygons List of inclusion QGCMapMpolygons
-    ///     @param exclusionPolygons List of exclusion QGCMapMpolygons
-    /// Signals sendComplete when done
-    virtual void sendToVehicle(const QGeoCoordinate& breachReturn, QmlObjectListModel& inclusionPolygons, QmlObjectListModel& exclusionPolygons);
+    /// Send the geofence settings to the vehicle
+    ///     Signals sendComplete when done
+    virtual void sendToVehicle(const QGeoCoordinate&    breachReturn,       ///< Breach return point
+                               QmlObjectListModel&      inclusionPolygons,  ///< List of inclusion QGCMapPolygons
+                               QmlObjectListModel&      exclusionPolygons,  ///< List of exclusion QGCMapPolygons
+                               QmlObjectListModel&      inclusionCircles,   ///< List of inclusion QGCMapCircles
+                               QmlObjectListModel&      exclusionCircles);  ///< List of exclusion QGCMapCircles
 
     /// Remove all fence related items from vehicle (does not affect parameters)
     ///     Signals removeAllComplete when done
@@ -51,11 +55,11 @@ public:
 
     /// Returns true if this vehicle support polygon fence
     ///     Signal: polygonSupportedChanged
-    virtual bool polygonSupported(void) const { return false; }
+    virtual bool polygonSupported(void) const { return true; }
 
     /// Returns true if polygon fence is currently enabled on this vehicle
     ///     Signal: polygonEnabledChanged
-    virtual bool polygonEnabled(void) const { return false; }
+    virtual bool polygonEnabled(void) const { return true; }
 
     /// Returns true if breach return is supported by this vehicle
     ///     Signal: breachReturnSupportedChanged
@@ -63,11 +67,11 @@ public:
 
     /// Returns a list of parameter facts that relate to geofence support for the vehicle
     ///     Signal: paramsChanged
-    virtual QVariantList params(void) const { return QVariantList(); }
+    virtual QVariantList params(void) const { return _params; }
 
     /// Returns the user visible labels for the paremeters returned by params method
     ///     Signal: paramLabelsChanged
-    virtual QStringList paramLabels(void) const { return QStringList(); }
+    virtual QStringList paramLabels(void) const { return _paramLabels; }
 
     /// Returns true if circular fence is currently enabled on vehicle
     ///     Signal: circleEnabledChanged
@@ -75,10 +79,14 @@ public:
 
     /// Returns the fact which controls the fence circle radius. NULL if not supported
     ///     Signal: circleRadiusFactChanged
-    virtual Fact* circleRadiusFact(void) const { return NULL; }
+    virtual Fact* circleRadiusFact(void) const { return _circleRadiusFact; }
 
     const QList<QList<QGeoCoordinate>>& inclusionPolygons(void) const { return _inclusionPolygons; }
     const QList<QList<QGeoCoordinate>>& exclusionPolygons(void) const { return _exclusionPolygons; }
+
+    const QList<QGCMapCircle>& inclusionMapCircles(void) { return _inclusionCircles; }
+    const QList<QGCMapCircle>& exclusionMapCircles(void) { return _exclusionCircles; }
+
     const QGeoCoordinate&               breachReturnPoint   (void) const { return _breachReturnPoint; }
 
     /// Error codes returned in error signal
@@ -86,6 +94,7 @@ public:
         InternalError,
         PolygonTooFewPoints,    ///< Too few points for valid fence polygon
         PolygonTooManyPoints,   ///< Too many points for valid fence polygon
+        IncompletePolygonLoad,  ///< Incomplete polygon loaded
         UnsupportedCommand,     ///< Usupported command in mission type
         BadPolygonItemFormat,   ///< Error re-creating polygons from mission items
         InvalidCircleRadius,
@@ -105,13 +114,29 @@ signals:
     void removeAllComplete              (bool error);
     void sendComplete                   (bool error);
 
-protected:
+private slots:
+    void _parametersReady           (void);
+    void _sendComplete              (bool error);
+    void _planManagerLoadComplete   (bool removeAllRequested);
+
+private:
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
 
     Vehicle*                        _vehicle;
+    PlanManager                     _planManager;
     QList<QList<QGeoCoordinate>>    _inclusionPolygons;
     QList<QList<QGeoCoordinate>>    _exclusionPolygons;
+    QList<QGCMapCircle>             _inclusionCircles;
+    QList<QGCMapCircle>             _exclusionCircles;
     QGeoCoordinate                  _breachReturnPoint;
+    bool                            _firstParamLoadComplete;
+    Fact*                           _circleRadiusFact;
+    QVariantList                    _params;
+    QStringList                     _paramLabels;
+    QList<QList<QGeoCoordinate>>    _sendInclusionPolygons;
+    QList<QList<QGeoCoordinate>>    _sendExclusionPolygons;
+    QList<QGCMapCircle>             _sendInclusionCircles;
+    QList<QGCMapCircle>             _sendExclusionCircles;
 };
 
 #endif

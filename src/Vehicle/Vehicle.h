@@ -7,12 +7,7 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef Vehicle_H
-#define Vehicle_H
+#pragma once
 
 #include <QObject>
 #include <QGeoCoordinate>
@@ -1038,4 +1033,3 @@ private:
     static const char* _joystickEnabledSettingsKey;
 
 };
-#endif
