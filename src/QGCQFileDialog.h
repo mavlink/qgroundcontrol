@@ -15,6 +15,7 @@
 #error Should not be included in mobile builds
 #endif
 
+#include <QCoreApplication>
 #include <QFileDialog>
 
 /// @file
@@ -40,7 +41,7 @@
 */
 
 class QGCQFileDialog : public QFileDialog {
-    
+    Q_DECLARE_TR_FUNCTIONS(QGCQFileDialog)
 public:
 
     //! Static helper that will return an existing directory selected by the user.
@@ -73,7 +74,7 @@ public:
         const QString& caption = QString(),
         const QString& dir = QString(),
         const QString& filter = QString(),
-        Options options = 0);
+        Options options = Options());
     
     //! Static helper that invokes a File Open dialog where the user can select one or more files to be opened.
     /*!
@@ -90,7 +91,7 @@ public:
         const QString& caption = QString(),
         const QString& dir = QString(),
         const QString& filter = QString(),
-        Options options = 0);
+        Options options = Options());
     
     //! Static helper that invokes a File Save dialog where the user can select a directory and enter a filename to be saved.
     /*!
@@ -116,7 +117,7 @@ public:
         const QString& filter = QString(),
         const QString& defaultSuffix = QString(),
         bool strict = false,
-        Options options = 0);
+        Options options = Options());
 
 private slots:
     /// @brief The exec slot is private because we only want QGCQFileDialog users to use the static methods. Otherwise it will break

@@ -15,6 +15,9 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  *
  */
+#include "QGCApplication.h"
+#include "AppSettings.h"
+#include "SettingsManager.h"
 
 #include <math.h>
 #include <QSettings>
@@ -61,24 +64,24 @@ stQGeoTileCacheQGCMapTypes kMapTypes[] = {
 
 #define NUM_MAPS (sizeof(kMapTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
 
-stQGeoTileCacheQGCMapTypes kMapBoxTypes[] = {
-    {"MapBox Street Map",       UrlFactory::MapBoxStreets},
-    {"MapBox Satellite Map",    UrlFactory::MapBoxSatellite},
-    {"MapBox High Contrast Map",UrlFactory::MapBoxHighContrast},
-    {"MapBox Light Map",        UrlFactory::MapBoxLight},
-    {"MapBox Dark Map",         UrlFactory::MapBoxDark},
-    {"MapBox Hybrid Map",       UrlFactory::MapBoxHybrid},
-    {"MapBox Wheat Paste Map",  UrlFactory::MapBoxWheatPaste},
-    {"MapBox Streets Basic Map",UrlFactory::MapBoxStreetsBasic},
-    {"MapBox Comic Map",        UrlFactory::MapBoxComic},
-    {"MapBox Outdoors Map",     UrlFactory::MapBoxOutdoors},
-    {"MapBox Run, Byke and Hike Map",   UrlFactory::MapBoxRunBikeHike},
-    {"MapBox Pencil Map",       UrlFactory::MapBoxPencil},
-    {"MapBox Pirates Map",      UrlFactory::MapBoxPirates},
-    {"MapBox Emerald Map",      UrlFactory::MapBoxEmerald}
+stQGeoTileCacheQGCMapTypes kMapboxTypes[] = {
+    {"Mapbox Street Map",       UrlFactory::MapboxStreets},
+    {"Mapbox Satellite Map",    UrlFactory::MapboxSatellite},
+    {"Mapbox High Contrast Map",UrlFactory::MapboxHighContrast},
+    {"Mapbox Light Map",        UrlFactory::MapboxLight},
+    {"Mapbox Dark Map",         UrlFactory::MapboxDark},
+    {"Mapbox Hybrid Map",       UrlFactory::MapboxHybrid},
+    {"Mapbox Wheat Paste Map",  UrlFactory::MapboxWheatPaste},
+    {"Mapbox Streets Basic Map",UrlFactory::MapboxStreetsBasic},
+    {"Mapbox Comic Map",        UrlFactory::MapboxComic},
+    {"Mapbox Outdoors Map",     UrlFactory::MapboxOutdoors},
+    {"Mapbox Run, Byke and Hike Map",   UrlFactory::MapboxRunBikeHike},
+    {"Mapbox Pencil Map",       UrlFactory::MapboxPencil},
+    {"Mapbox Pirates Map",      UrlFactory::MapboxPirates},
+    {"Mapbox Emerald Map",      UrlFactory::MapboxEmerald}
 };
 
-#define NUM_MAPBOXMAPS (sizeof(kMapBoxTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
+#define NUM_MAPBOXMAPS (sizeof(kMapboxTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
 
 stQGeoTileCacheQGCMapTypes kEsriTypes[] = {
     {"Esri Street Map",       UrlFactory::EsriWorldStreet},
@@ -88,8 +91,6 @@ stQGeoTileCacheQGCMapTypes kEsriTypes[] = {
 
 #define NUM_ESRIMAPS (sizeof(kEsriTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
 
-static const char* kMapBoxTokenKey  = "MapBoxToken";
-static const char* kEsriTokenKey    = "EsriToken";
 static const char* kMaxDiskCacheKey = "MaxDiskCache";
 static const char* kMaxMemCacheKey  = "MaxMemoryCache";
 
@@ -328,8 +329,8 @@ QGCMapEngine::getTypeFromName(const QString& name)
             return kMapTypes[i].type;
     }
     for(i = 0; i < NUM_MAPBOXMAPS; i++) {
-        if(name.compare(kMapBoxTypes[i].name, Qt::CaseInsensitive) == 0)
-            return kMapBoxTypes[i].type;
+        if(name.compare(kMapboxTypes[i].name, Qt::CaseInsensitive) == 0)
+            return kMapboxTypes[i].type;
     }
     for(i = 0; i < NUM_ESRIMAPS; i++) {
         if(name.compare(kEsriTypes[i].name, Qt::CaseInsensitive) == 0)
@@ -346,57 +347,17 @@ QGCMapEngine::getMapNameList()
     for(size_t i = 0; i < NUM_MAPS; i++) {
         mapList << kMapTypes[i].name;
     }
-    if(!getMapBoxToken().isEmpty()) {
+    if(!qgcApp()->toolbox()->settingsManager()->appSettings()->mapboxToken()->rawValue().toString().isEmpty()) {
         for(size_t i = 0; i < NUM_MAPBOXMAPS; i++) {
-            mapList << kMapBoxTypes[i].name;
+            mapList << kMapboxTypes[i].name;
         }
     }
-    if(!getEsriToken().isEmpty()) {
+    if(!qgcApp()->toolbox()->settingsManager()->appSettings()->esriToken()->rawValue().toString().isEmpty()) {
         for(size_t i = 0; i < NUM_ESRIMAPS; i++) {
             mapList << kEsriTypes[i].name;
         }
     }
     return mapList;
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCMapEngine::setMapBoxToken(const QString& token)
-{
-    QSettings settings;
-    settings.setValue(kMapBoxTokenKey, token);
-    _mapBoxToken = token;
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCMapEngine::setEsriToken(const QString& token)
-{
-    QSettings settings;
-    settings.setValue(kEsriTokenKey, token);
-    _esriToken = token;
-}
-
-//-----------------------------------------------------------------------------
-QString
-QGCMapEngine::getMapBoxToken()
-{
-    if(_mapBoxToken.isEmpty()) {
-        QSettings settings;
-        _mapBoxToken = settings.value(kMapBoxTokenKey).toString();
-    }
-    return _mapBoxToken;
-}
-
-//-----------------------------------------------------------------------------
-QString
-QGCMapEngine::getEsriToken()
-{
-    if(_esriToken.isEmpty()) {
-        QSettings settings;
-        _esriToken = settings.value(kEsriTokenKey).toString();
-    }
-    return _esriToken;
 }
 
 //-----------------------------------------------------------------------------

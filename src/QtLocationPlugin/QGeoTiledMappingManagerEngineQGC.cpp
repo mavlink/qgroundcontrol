@@ -132,23 +132,23 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     */
 
     /*
-     * These are OK as you need your own token for accessing it. Out-of-the box, QGC does not even offer these unless you enter a proper MapBox token.
+     * These are OK as you need your own token for accessing it. Out-of-the box, QGC does not even offer these unless you enter a proper Mapbox token.
      */
 
-    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "MapBox Street Map",        "MapBox Street Map",            false,  false,  UrlFactory::MapBoxStreets);
-    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   "MapBox Satellite Map",     "MapBox Satellite Map",         false,  false,  UrlFactory::MapBoxSatellite);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox High Contrast Map", "MapBox High Contrast Map",     false,  false,  UrlFactory::MapBoxHighContrast);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Light Map",         "MapBox Light Map",             false,  false,  UrlFactory::MapBoxLight);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Dark Map",          "MapBox Dark Map",              false,  false,  UrlFactory::MapBoxDark);
-    mapTypes << QGeoMapType(QGeoMapType::HybridMap,         "MapBox Hybrid Map",        "MapBox Hybrid Map",            false,  false,  UrlFactory::MapBoxHybrid);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Wheat Paste Map",   "MapBox Wheat Paste Map",       false,  false,  UrlFactory::MapBoxWheatPaste);
-    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "MapBox Streets Basic Map", "MapBox Streets Basic Map",     false,  false,  UrlFactory::MapBoxStreetsBasic);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Comic Map",         "MapBox Comic Map",             false,  false,  UrlFactory::MapBoxComic);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Outdoors Map",      "MapBox Outdoors Map",          false,  false,  UrlFactory::MapBoxOutdoors);
-    mapTypes << QGeoMapType(QGeoMapType::CycleMap,          "MapBox Run, Byke and Hike Map",   "MapBox Run, Byke and Hike Map",     false,  false,  UrlFactory::MapBoxRunBikeHike);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Pencil Map",        "MapBox Pencil Map",            false,  false,  UrlFactory::MapBoxPencil);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Pirates Map",       "MapBox Pirates Map",           false,  false,  UrlFactory::MapBoxPirates);
-    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "MapBox Emerald Map",       "MapBox Emerald Map",           false,  false,  UrlFactory::MapBoxEmerald);
+    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "Mapbox Street Map",        "Mapbox Street Map",            false,  false,  UrlFactory::MapboxStreets);
+    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   "Mapbox Satellite Map",     "Mapbox Satellite Map",         false,  false,  UrlFactory::MapboxSatellite);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "Mapbox High Contrast Map", "Mapbox High Contrast Map",     false,  false,  UrlFactory::MapboxHighContrast);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "Mapbox Light Map",         "Mapbox Light Map",             false,  false,  UrlFactory::MapboxLight);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "Mapbox Dark Map",          "Mapbox Dark Map",              false,  false,  UrlFactory::MapboxDark);
+    mapTypes << QGeoMapType(QGeoMapType::HybridMap,         "Mapbox Hybrid Map",        "Mapbox Hybrid Map",            false,  false,  UrlFactory::MapboxHybrid);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "Mapbox Wheat Paste Map",   "Mapbox Wheat Paste Map",       false,  false,  UrlFactory::MapboxWheatPaste);
+    mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "Mapbox Streets Basic Map", "Mapbox Streets Basic Map",     false,  false,  UrlFactory::MapboxStreetsBasic);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "Mapbox Comic Map",         "Mapbox Comic Map",             false,  false,  UrlFactory::MapboxComic);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "Mapbox Outdoors Map",      "Mapbox Outdoors Map",          false,  false,  UrlFactory::MapboxOutdoors);
+    mapTypes << QGeoMapType(QGeoMapType::CycleMap,          "Mapbox Run, Byke and Hike Map",   "Mapbox Run, Byke and Hike Map",     false,  false,  UrlFactory::MapboxRunBikeHike);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "Mapbox Pencil Map",        "Mapbox Pencil Map",            false,  false,  UrlFactory::MapboxPencil);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "Mapbox Pirates Map",       "Mapbox Pirates Map",           false,  false,  UrlFactory::MapboxPirates);
+    mapTypes << QGeoMapType(QGeoMapType::CustomMap,         "Mapbox Emerald Map",       "Mapbox Emerald Map",           false,  false,  UrlFactory::MapboxEmerald);
 
     setSupportedMapTypes(mapTypes);
 

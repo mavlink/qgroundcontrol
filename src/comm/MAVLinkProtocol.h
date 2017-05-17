@@ -108,13 +108,11 @@ public slots:
     /** @brief Store protocol settings */
     void storeSettings();
     
-#ifndef __mobile__
     /// @brief Deletes any log files which are in the temp directory
     static void deleteTempLogFiles(void);
     
     /// Checks for lost log files
     void checkForLostLogFiles(void);
-#endif
 
 protected:
     bool m_enable_version_check; ///< Enable checking of version match of MAV and QGC
@@ -168,7 +166,6 @@ private slots:
     void _vehicleCountChanged(int count);
     
 private:
-#ifndef __mobile__
     bool _closeLogFile(void);
     void _startLogging(void);
     void _stopLogging(void);
@@ -180,7 +177,6 @@ private:
     QGCTemporaryFile    _tempLogFile;            ///< File to log to
     static const char*  _tempLogFileTemplate;    ///< Template for temporary log file
     static const char*  _logFileExtension;       ///< Extension for log files
-#endif
 
     LinkManager*            _linkMgr;
     MultiVehicleManager*    _multiVehicleManager;

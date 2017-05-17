@@ -122,5 +122,19 @@
     "longDescription":  "Directory to which all data files  are saved/loaded from",
     "type":             "string",
     "defaultValue":     ""
+},
+{
+    "name":             "MapboxToken",
+    "shortDescription": "Access token to Mapbox maps",
+    "longDescription":  "Your personal access token for Mapbox maps",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "EsriToken",
+    "shortDescription": "Access token to Esri maps",
+    "longDescription":  "Your personal access token for Esri maps",
+    "type":             "string",
+    "defaultValue":     ""
 }
 ]
