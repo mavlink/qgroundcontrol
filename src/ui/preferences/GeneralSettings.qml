@@ -143,7 +143,7 @@ QGCView {
                             spacing: ScreenTools.defaultFontPixelWidth
                             QGCLabel {
                                 id:     baseFontLabel
-                                text:   qsTr("Font size:")
+                                text:   qsTr("Font Size:")
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             Row {
@@ -188,7 +188,7 @@ QGCView {
                             spacing: ScreenTools.defaultFontPixelWidth
                             visible: QGroundControl.settingsManager.appSettings.indoorPalette.visible
                             QGCLabel {
-                                text:           qsTr("Color scheme:")
+                                text:           qsTr("Color Scheme:")
                                 width:          _labelWidth
                                 anchors.verticalCenter: parent.verticalCenter
                             }
@@ -335,7 +335,7 @@ QGCView {
                             QGCLabel {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width:  (_labelWidth + _editFieldWidth) * 0.65
-                                text:   qsTr("Default mission altitude:")
+                                text:   qsTr("Default Mission Altitude:")
                             }
                             FactTextField {
                                 id:     defaultItemAltitudeField
@@ -348,7 +348,7 @@ QGCView {
                         //-----------------------------------------------------------------
                         //-- Mission AutoLoad
                         FactCheckBox {
-                            text:       qsTr("AutoLoad missions")
+                            text:       qsTr("AutoLoad Missions")
                             fact:       _autoLoad
                             visible:    _autoLoad.visible
 
@@ -363,7 +363,7 @@ QGCView {
 
                             QGCLabel {
                                 anchors.baseline:   savePathBrowse.baseline
-                                text:               qsTr("File save path:")
+                                text:               qsTr("File Save Path:")
                             }
                             QGCLabel {
                                 anchors.baseline:   savePathBrowse.baseline
@@ -590,7 +590,7 @@ QGCView {
 
                             QGCLabel {
                                 anchors.baseline:   videoBrowse.baseline
-                                text:               qsTr("Save path:")
+                                text:               qsTr("Save Path:")
                                 enabled:            promptSaveLog.checked
                             }
                             QGCLabel {
