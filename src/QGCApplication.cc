@@ -503,31 +503,39 @@ void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const 
 #endif
 }
 
-#ifndef __mobile__
 void QGCApplication::saveTelemetryLogOnMainThread(QString tempLogfile)
 {
-    // The vehicle is gone now and we are shutting down so we need to use a message box for errors to hold shutdown and show the error
-    if (_checkTelemetrySavePath(true /* useMessageBox */)) {
+    // Are we supposed to log?
+    if(toolbox()->settingsManager()->appSettings()->telemetrySave()->rawValue().toBool()) {
+        // The vehicle is gone now and we are shutting down so we need to use a message box for errors to hold shutdown and show the error
+        if (_checkTelemetrySavePath(true /* useMessageBox */)) {
 
-        QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
-        QDir saveDir(saveDirPath);
+            QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
+            QDir saveDir(saveDirPath);
 
-        QString nameFormat("%1%2.tlog");
-        QString dtFormat("yyyy-MM-dd hh-mm-ss");
+            QString nameFormat("%1%2.%3");
+            QString dtFormat("yyyy-MM-dd hh-mm-ss");
 
-        int tryIndex = 1;
-        QString saveFileName = nameFormat.arg(QDateTime::currentDateTime().toString(dtFormat)).arg("");
-        while (saveDir.exists(saveFileName)) {
-            saveFileName = nameFormat.arg(QDateTime::currentDateTime().toString(dtFormat)).arg(QStringLiteral(".%1").arg(tryIndex++));
-        }
-        QString saveFilePath = saveDir.absoluteFilePath(saveFileName);
+            int tryIndex = 1;
+            QString saveFileName = nameFormat.arg(
+                QDateTime::currentDateTime().toString(dtFormat)).arg("").arg(toolbox()->settingsManager()->appSettings()->telemetryFileExtension);
+            while (saveDir.exists(saveFileName)) {
+                saveFileName = nameFormat.arg(
+                    QDateTime::currentDateTime().toString(dtFormat)).arg(QStringLiteral(".%1").arg(tryIndex++)).arg(toolbox()->settingsManager()->appSettings()->telemetryFileExtension);
+            }
+            QString saveFilePath = saveDir.absoluteFilePath(saveFileName);
 
-        QFile tempFile(tempLogfile);
-        if (!tempFile.copy(saveFilePath)) {
-            QGCMessageBox::warning(tr("Telemetry save error"), tr("Unable to save telemetry log. Error copying telemetry to '%1': '%2'.").arg(saveFilePath).arg(tempFile.errorString()));
+            QFile tempFile(tempLogfile);
+            if (!tempFile.copy(saveFilePath)) {
+                QString error = tr("Unable to save telemetry log. Error copying telemetry to '%1': '%2'.").arg(saveFilePath).arg(tempFile.errorString());
+#ifndef __mobile__
+                QGCMessageBox::warning(tr("Telemetry Save Error"), error);
+#else
+                showMessage(error);
+#endif
+            }
         }
     }
-
     QFile::remove(tempLogfile);
 }
 
@@ -544,28 +552,36 @@ bool QGCApplication::_checkTelemetrySavePath(bool useMessageBox)
     QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
     if (saveDirPath.isEmpty()) {
         QString error = tr("Unable to save telemetry log. Application save directory is not set.");
+#ifndef __mobile__
         if (useMessageBox) {
             QGCMessageBox::warning(errorTitle, error);
         } else {
+#endif
+            Q_UNUSED(useMessageBox);
             showMessage(error);
+#ifndef __mobile__
         }
+#endif
         return false;
     }
 
     QDir saveDir(saveDirPath);
     if (!saveDir.exists()) {
         QString error = tr("Unable to save telemetry log. Telemetry save directory \"%1\" does not exist.").arg(saveDirPath);
+#ifndef __mobile__
         if (useMessageBox) {
             QGCMessageBox::warning(errorTitle, error);
         } else {
+#endif
             showMessage(error);
+#ifndef __mobile__
         }
+#endif
         return false;
     }
 
     return true;
 }
-#endif
 
 void QGCApplication::_loadCurrentStyleSheet(void)
 {
