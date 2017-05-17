@@ -382,6 +382,9 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         metaData.setRawDefaultValue(25);
         metaData.setRawMax(121.92); // 400 feet
         return true;
+    } else if (metaData.name() == AppSettings::telemetrySaveName) {
+        metaData.setRawDefaultValue(true);
+        return false;
     } else if (metaData.name() == AppSettings::appFontPointSizeName) {
 #if defined(__androidx86__)
         int defaultFontPointSize = 16;
