@@ -10,7 +10,10 @@ configfile        = YAML.load_file("#{current_dir}/.vagrantconfig.yml")
 yaml_config = configfile['configs']['dev']
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "ubuntu/trusty64"
+  config.vm.box = "boxcutter/ubuntu1604"
+  config.vm.provider :docker do |docker, override|
+    override.vm.box = "tknerr/baseimage-ubuntu-16.04"
+  end
   config.vm.provider :virtualbox do |vb|
     vb.customize ["modifyvm", :id, "--memory", "4096"]
     vb.customize ["modifyvm", :id, "--cpus", "1"]
@@ -21,6 +24,12 @@ Vagrant.configure(2) do |config|
       v.vmx["numvcpus"] = "1"
     end
   end
+  if Vagrant.has_plugin?("vagrant-cachier")
+    config.cache.scope = :box
+    config.cache.synced_folder_opts = {
+      owner: "_apt"
+    }
+  end
 
   # the "dev configuration puts the build products and a suitable
   # environment into the /vagrant directory.  This allows you to run
@@ -29,6 +38,8 @@ Vagrant.configure(2) do |config|
 
   $config_shell = <<-'SHELL'
      sudo apt-get update -y
+     # we need this long command to keep grub-pc from prompting for input
+     sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
      sudo apt-get dist-upgrade -y
      sudo apt-get install -y git build-essential
      sudo apt-get install -y espeak libespeak-dev libudev-dev libsdl2-dev
