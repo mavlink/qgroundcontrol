@@ -106,13 +106,11 @@ public slots:
 
     void qmlAttemptWindowClose(void);
 
-#ifndef __mobile__
     /// Save the specified telemetry Log
     void saveTelemetryLogOnMainThread(QString tempLogfile);
 
     /// Check that the telemetry save path is set correctly
     void checkTelemetrySavePathOnMainThread(void);
-#endif
 
 signals:
     /// This is connected to MAVLinkProtocol::checkForLostLogFiles. We signal this to ourselves to call the slot
