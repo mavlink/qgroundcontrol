@@ -24,6 +24,8 @@
 #include <QStandardPaths>
 #include <QtEndian>
 #include <QMetaType>
+#include <QDir>
+#include <QFileInfo>
 
 #include "MAVLinkProtocol.h"
 #include "UASInterface.h"
