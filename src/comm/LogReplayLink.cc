@@ -19,14 +19,14 @@ const char*  LogReplayLinkConfiguration::_logFilenameKey = "logFilename";
 
 const char* LogReplayLink::_errorTitle = "Log Replay Error";
 
-LogReplayLinkConfiguration::LogReplayLinkConfiguration(const QString& name) :
-LinkConfiguration(name)
+LogReplayLinkConfiguration::LogReplayLinkConfiguration(const QString& name)
+	: LinkConfiguration(name)
 {
     
 }
 
-LogReplayLinkConfiguration::LogReplayLinkConfiguration(LogReplayLinkConfiguration* copy) :
-LinkConfiguration(copy)
+LogReplayLinkConfiguration::LogReplayLinkConfiguration(LogReplayLinkConfiguration* copy)
+	: LinkConfiguration(copy)
 {
     _logFilename = copy->logFilename();
 }
@@ -79,7 +79,7 @@ LogReplayLink::LogReplayLink(SharedLinkConfigurationPointer& config)
     
     _readTickTimer.moveToThread(this);
     
-	QObject::connect(&_readTickTimer, &QTimer::timeout, this, &LogReplayLink::_readNextLogEntry);
+    QObject::connect(&_readTickTimer, &QTimer::timeout, this, &LogReplayLink::_readNextLogEntry);
     QObject::connect(this, &LogReplayLink::_playOnThread, this, &LogReplayLink::_play);
     QObject::connect(this, &LogReplayLink::_pauseOnThread, this, &LogReplayLink::_pause);
     QObject::connect(this, &LogReplayLink::_setAccelerationFactorOnThread, this, &LogReplayLink::_setAccelerationFactor);
@@ -170,15 +170,22 @@ quint64 LogReplayLink::_parseTimestamp(const QByteArray& bytes)
 /// @return A Unix timestamp in microseconds UTC for found message or 0 if parsing failed
 quint64 LogReplayLink::_seekToNextMavlinkMessage(mavlink_message_t* nextMsg)
 {
-    char nextByte;
-    mavlink_status_t comm;
+    char                nextByte;
+    mavlink_status_t    status;
+    qint64              messageStartPos = -1;
+
     while (_logFile.getChar(&nextByte)) { // Loop over every byte
-        bool messageFound = mavlink_parse_char(mavlinkChannel(), nextByte, nextMsg, &comm);
+        bool messageFound = mavlink_parse_char(mavlinkChannel(), nextByte, nextMsg, &status);
+
+        if (status.parse_state == MAVLINK_PARSE_STATE_GOT_STX) {
+            // This is the possible beginning of a mavlink message
+            messageStartPos = _logFile.pos() - 1;
+        }
         
         // If we've found a message, jump back to the start of the message, grab the timestamp,
         // and go back to the end of this file.
-        if (messageFound) {
-            _logFile.seek(_logFile.pos() - (nextMsg->len + MAVLINK_NUM_NON_PAYLOAD_BYTES + cbTimestamp));
+        if (messageFound && messageStartPos != -1) {
+            _logFile.seek(messageStartPos - cbTimestamp);
             QByteArray rawTime = _logFile.read(cbTimestamp);
             return _parseTimestamp(rawTime);
         }
@@ -240,7 +247,7 @@ bool LogReplayLink::_loadLogFile(void)
         _logStartTimeUSecs = startTimeUSecs;
         _logDurationUSecs = endTimeUSecs - startTimeUSecs;
         _logCurrentTimeUSecs = startTimeUSecs;
-        
+
         // Reset our log file so when we go to read it for the first time, we start at the beginning.
         _logFile.reset();
         
@@ -308,7 +315,7 @@ void LogReplayLink::_readNextLogEntry(void)
             // Now we're sitting at the start of a MAVLink message, so read it all into a byte array for feeding to our parser.
             QByteArray message = _logFile.read(msg.len + MAVLINK_NUM_NON_PAYLOAD_BYTES);
             
-            emit bytesReceived(this, message);            
+            emit bytesReceived(this, message);
             emit playbackPercentCompleteChanged(((float)(_logCurrentTimeUSecs - _logStartTimeUSecs) / (float)_logDurationUSecs) * 100);
             
             // If we've reached the end of the of the file, make sure we handle that well
