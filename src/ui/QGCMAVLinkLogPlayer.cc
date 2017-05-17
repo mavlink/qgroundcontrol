@@ -129,6 +129,8 @@ void QGCMAVLinkLogPlayer::_logFileStats(bool    logTimestamped,         ///< tru
     Q_UNUSED(logTimestamped);
     Q_UNUSED(binaryBaudRate);
 
+    qDebug() << "_logFileStats" << logDurationSeconds;
+
     _logDurationSeconds = logDurationSeconds;
 
     _ui->logStatsLabel->setText(_secondsToHMS(logDurationSeconds));
