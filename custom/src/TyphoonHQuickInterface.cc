@@ -58,13 +58,11 @@ TyphoonHQuickInterface::~TyphoonHQuickInterface()
 }
 
 //-----------------------------------------------------------------------------
-/*
 static bool
-created_less_than(const QFileInfo &f1, const QFileInfo &f2)
+created_greater_than(const QFileInfo &f1, const QFileInfo &f2)
  {
-     return f1.created() < f2.created();
+     return f1.created() > f2.created();
  }
-*/
 
 //-----------------------------------------------------------------------------
 void
@@ -91,18 +89,15 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         _flightTimer.setSingleShot(false);
         _powerTimer.setSingleShot(true);
         _loadWifiConfigurations();
-        /*
-         * Ulog is disabled on the H520. I will have to change this to use telemetry logs instead.
-         *
-        //-- Enable logging
+        //-- Make sure uLog is disabled
         qgcApp()->toolbox()->mavlinkLogManager()->setEnableAutoUpload(false);
         qgcApp()->toolbox()->mavlinkLogManager()->setEnableAutoStart(false);
         //-- See how many logs we have stored
         QString filter = "*.";
-        filter += qgcApp()->toolbox()->settingsManager()->appSettings()->logFileExtension;
-        QDir logDir(qgcApp()->toolbox()->settingsManager()->appSettings()->logSavePath(), filter);
+        filter += qgcApp()->toolbox()->settingsManager()->appSettings()->telemetryFileExtension;
+        QDir logDir(qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath(), filter);
         QFileInfoList logs = logDir.entryInfoList();
-        qSort(logs.begin(), logs.end(), created_less_than);
+        qSort(logs.begin(), logs.end(), created_greater_than);
         if(logs.size() > 1) {
             qint64 totalLogSize = 0;
             for(int i = 0; i < logs.size(); i++) {
@@ -113,9 +108,9 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
                 qDebug() << "Removing old log file:" << logs[0].fileName();
                 totalLogSize -= logs[0].size();
                 QFile::remove(logs[0].filePath());
+                logs.removeAt(0);
             }
         }
-        */
     }
 }
 
