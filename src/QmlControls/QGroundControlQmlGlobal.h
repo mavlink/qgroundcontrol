@@ -92,7 +92,7 @@ public:
     Q_INVOKABLE void    startAPMArduCopterMockLink  (bool sendStatusText);
     Q_INVOKABLE void    startAPMArduPlaneMockLink   (bool sendStatusText);
     Q_INVOKABLE void    startAPMArduSubMockLink     (bool sendStatusText);
-    Q_INVOKABLE void    stopAllMockLinks            (void);
+    Q_INVOKABLE void    stopOneMockLink             (void);
 
     /// Converts from meters to the user specified distance unit
     Q_INVOKABLE QVariant metersToAppSettingsDistanceUnits(const QVariant& meters) const { return FactMetaData::metersToAppSettingsDistanceUnits(meters); }
