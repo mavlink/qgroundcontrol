@@ -61,6 +61,7 @@
         <file alias="BatteryIndicator.qml">res/BatteryIndicator.qml</file>
         <file alias="cameraControl.qml">res/cameraControl.qml</file>
         <file alias="ChannelComponent.qml">src/AutoPilotPlugin/ChannelComponent.qml</file>
+        <file alias="HealthComponentSummary.qml">src/AutoPilotPlugin/HealthComponentSummary.qml</file>
         <file alias="LogDownload.qml">res/LogDownload.qml</file>
         <file alias="GimbalComponent.qml">src/AutoPilotPlugin/GimbalComponent.qml</file>
         <file alias="ModeIndicator.qml">res/ModeIndicator.qml</file>
