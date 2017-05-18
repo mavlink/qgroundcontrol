@@ -10,6 +10,7 @@
 #include "YuneecAutoPilotPlugin.h"
 #include "GimbalComponent.h"
 #include "ChannelComponent.h"
+#include "HealthComponent.h"
 
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
@@ -54,6 +55,12 @@ const QVariantList& YuneecAutoPilotPlugin::vehicleComponents(void)
                 _gimbalComponent->setupTriggerSignals();
             }
             _components.append(QVariant::fromValue((VehicleComponent*)_gimbalComponent));
+
+            if(!_healthComponent) {
+                _healthComponent = new HealthComponent(_vehicle, this);
+                _healthComponent->setupTriggerSignals();
+            }
+            _components.append(QVariant::fromValue((VehicleComponent*)_healthComponent));
 
             if(qgcApp()->toolbox()->corePlugin()->showAdvancedUI()) {
                 if(!_channelComponent) {
