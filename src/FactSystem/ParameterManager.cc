@@ -52,6 +52,7 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
     , _initialLoadComplete(false)
     , _waitingForDefaultComponent(false)
     , _saveRequired(false)
+    , _logReplay(vehicle->priorityLink() && vehicle->priorityLink()->isLogReplay())
     , _parameterSetMajorVersion(-1)
     , _parameterMetaData(NULL)
     , _prevWaitingReadParamIndexCount(0)
@@ -83,6 +84,7 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
 
     // Ensure the cache directory exists
     QFileInfo(QSettings().fileName()).dir().mkdir("ParamCache");
+
     refreshAllParameters();
 }
 
@@ -135,7 +137,7 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
     }
 #endif
 
-    if (_vehicle->px4Firmware() && parameterName == "_HASH_CHECK") {
+    if (_vehicle->px4Firmware() && parameterName == "_HASH_CHECK" && !_logReplay) {
         /* we received a cache hash, potentially load from cache */
         _tryCacheHashLoad(vehicleId, componentId, value);
         return;
@@ -387,6 +389,10 @@ void ParameterManager::_valueUpdated(const QVariant& value)
 
 void ParameterManager::refreshAllParameters(uint8_t componentId)
 {
+    if (_logReplay) {
+        return;
+    }
+
     _dataMutex.lock();
 
     if (!_initialLoadComplete) {
