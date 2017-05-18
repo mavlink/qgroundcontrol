@@ -273,7 +273,13 @@ Item {
         onShowFlyView:          mainWindow.showFlyView()
         onShowAnalyzeView:      mainWindow.showAnalyzeView()
         onArmVehicle:           flightView.guidedController.confirmAction(flightView.guidedController.actionArm)
-        onDisarmVehicle:        flightView.guidedController.confirmAction(flightView.guidedController.actionDisarm)
+        onDisarmVehicle: {
+            if (flightView.guidedController.showEmergenyStop) {
+                flightView.guidedController.confirmAction(flightView.guidedController.actionEmergencyStop)
+            } else {
+                flightView.guidedController.confirmAction(flightView.guidedController.actionDisarm)
+            }
+        }
 
         //-- Entire tool bar area disable on cammand
         MouseArea {
