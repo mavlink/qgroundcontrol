@@ -39,6 +39,7 @@ Rectangle {
         anchors.margins:    _margin
         anchors.left:       parent.left
         anchors.right:      parent.right
+        spacing:            _margin
         visible:            missionItem.landingCoordSet
 
         SectionHeader {
@@ -79,7 +80,63 @@ Rectangle {
         FactTextFieldGrid {
             anchors.left:   parent.left
             anchors.right:  parent.right
-            factList:       [ missionItem.landingAltitude, missionItem.landingDistance, missionItem.landingHeading ]
+            factList:       [ missionItem.landingHeading, missionItem.landingAltitude]
+        }
+
+        GridLayout {
+            anchors.left:    parent.left
+            anchors.right:   parent.right
+            columns:         2
+
+            QGCRadioButton {
+                id:                     useLandingDistance
+                text:                   missionItem.landingDistance.name
+                checked:                !useFallRate.checked
+                onClicked: {
+                    useFallRate.checked = false
+                    missionItem.fallRate.value = parseFloat(missionItem.loiterAltitude.value)*100/parseFloat (missionItem.landingDistance.value)
+                }
+                Layout.fillWidth:       true
+            }
+
+            FactTextField {
+                fact:                   missionItem.landingDistance
+                enabled:                useLandingDistance.checked
+                Layout.fillWidth:       true
+            }
+
+            QGCRadioButton {
+                id:                     useFallRate
+                text:                   missionItem.fallRate.name
+                checked:                !useLandingDistance.checked
+                onClicked: {
+                    useLandingDistance.checked = false
+                    missionItem.landingDistance.value = parseFloat(missionItem.loiterAltitude.value)*100/parseFloat (missionItem.fallRate.value)
+                }
+                Layout.fillWidth:       true
+            }
+
+            FactTextField {
+                fact:                   missionItem.fallRate
+                enabled:                useFallRate.checked
+                Layout.fillWidth:       true
+            }
+
+            Connections {
+                target: missionItem.landingDistance
+
+                onValueChanged: {
+                    missionItem.fallRate.value = parseFloat(missionItem.loiterAltitude.value)*100/parseFloat (missionItem.landingDistance.value)
+                }
+            }
+
+            Connections {
+                target: missionItem.fallRate
+
+                onValueChanged: {
+                    missionItem.landingDistance.value = parseFloat(missionItem.loiterAltitude.value)*100/parseFloat (missionItem.fallRate.value)
+                }
+            }
         }
 
         Item { width: 1; height: _spacer }
