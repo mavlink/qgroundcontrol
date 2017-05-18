@@ -1,6 +1,6 @@
 [
 {
-    "name":             "Landing distance",
+    "name":             "Landing dist",
     "shortDescription": "Distance between landing and loiter points.",
     "type":             "double",
     "units":            "m",
@@ -42,5 +42,15 @@
     "units":            "m",
     "decimalPlaces":    1,
     "defaultValue":     0.0
+},
+{
+    "name":             "Fall rate",
+    "shortDescription": "Fall rate between landing and loiter altitude.",
+    "type":             "double",
+    "units":            "%",
+    "min":              0.1,
+    "max":              100,
+    "decimalPlaces":    1,
+    "defaultValue":     12.0
 }
 ]
