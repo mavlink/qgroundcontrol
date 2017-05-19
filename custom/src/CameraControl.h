@@ -227,6 +227,7 @@ private slots:
     void    _mavCommandResult       (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
     void    _mavlinkMessageReceived (const mavlink_message_t& message);
     void    _timerHandler           ();
+    void    _recTimerHandler        ();
 
 signals:
     void    videoStatusChanged      ();
@@ -306,4 +307,6 @@ private:
     amb_camera_status_t     _ambarellaStatus;
     amb_camera_settings_t   _ambarellaSettings;
     QTimer                  _statusTimer;
+    QTimer                  _recTimer;
+    QTime                   _recTime;
 };

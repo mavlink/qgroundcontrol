@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-/// @file
-///     @brief  Channel Calibration
-///     @author Gus Grubba <mavlink@grubba.com>
-
 #include "QGCApplication.h"
 #include "Vehicle.h"
 

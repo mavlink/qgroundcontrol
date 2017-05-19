@@ -11,10 +11,6 @@
 
 #include "VehicleComponent.h"
 
-/// @file
-///     @brief  Channel Calibration
-///     @author Gus Grubba <mavlink@grubba.com>
-
 class HealthComponent : public VehicleComponent
 {
     Q_OBJECT

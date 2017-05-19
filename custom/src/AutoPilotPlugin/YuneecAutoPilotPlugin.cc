@@ -19,6 +19,7 @@ YuneecAutoPilotPlugin::YuneecAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : PX4AutoPilotPlugin(vehicle, parent)
     , _gimbalComponent(NULL)
     , _channelComponent(NULL)
+    , _healthComponent(NULL)
 {
     connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &YuneecAutoPilotPlugin::_advancedChanged);
 }
