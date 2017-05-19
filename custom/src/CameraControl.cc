@@ -157,6 +157,8 @@ shutter_speeds_t shutterSpeeds[] = {
 //-----------------------------------------------------------------------------
 // Exposure Compensation
 exposure_compsensation_t evOptions[] = {
+    { "-3.0", -3.0f},
+    { "-2.5", -2.5f},
     { "-2.0", -2.0f},
     { "-1.5", -1.5f},
     { "-1.0", -1.0f},
@@ -166,9 +168,14 @@ exposure_compsensation_t evOptions[] = {
     { "+1.0", 1.0f},
     { "+1.5", 1.5f},
     { "+2.0", 2.0f},
+    { "+2.5", 2.5f},
+    { "+3.0", 3.0f},
 };
 
-#define NUM_EV_VALUES (sizeof(evOptions) / sizeof(exposure_compsensation_t))
+#define NUM_EV_VALUES       (sizeof(evOptions) / sizeof(exposure_compsensation_t))
+
+exposure_compsensation_t*   evOptionsE50 = &evOptions[2];
+#define NUM_EV_VALUES_E50   (NUM_EV_VALUES - 4)
 
 //-----------------------------------------------------------------------------
 CameraControl::CameraControl(QObject* parent)
@@ -211,17 +218,21 @@ CameraControl::setVehicle(Vehicle* vehicle)
     emit photoStatusChanged();
     if(_vehicle) {
         _vehicle = NULL;
-        disconnect(&_statusTimer, &QTimer::timeout, this, &CameraControl::_timerHandler);
-        disconnect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &CameraControl::_mavlinkMessageReceived);
-        disconnect(_vehicle, &Vehicle::mavCommandResult,       this, &CameraControl::_mavCommandResult);
+        disconnect(&_statusTimer,   &QTimer::timeout, this, &CameraControl::_timerHandler);
+        disconnect(&_recTimer,      &QTimer::timeout, this, &CameraControl::_recTimerHandler);
+        disconnect(_vehicle,        &Vehicle::mavlinkMessageReceived, this, &CameraControl::_mavlinkMessageReceived);
+        disconnect(_vehicle,        &Vehicle::mavCommandResult,       this, &CameraControl::_mavCommandResult);
         _cameraSupported = CAMERA_SUPPORT_UNDEFINED;
     }
     if(vehicle) {
         _vehicle = vehicle;
-        connect(&_statusTimer, &QTimer::timeout, this, &CameraControl::_timerHandler);
-        connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &CameraControl::_mavlinkMessageReceived);
-        connect(_vehicle, &Vehicle::mavCommandResult,       this, &CameraControl::_mavCommandResult);
+        connect(&_statusTimer,  &QTimer::timeout, this, &CameraControl::_timerHandler);
+        connect(&_recTimer,     &QTimer::timeout, this, &CameraControl::_recTimerHandler);
+        connect(_vehicle,       &Vehicle::mavlinkMessageReceived, this, &CameraControl::_mavlinkMessageReceived);
+        connect(_vehicle,       &Vehicle::mavCommandResult,       this, &CameraControl::_mavCommandResult);
         _statusTimer.setSingleShot(true);
+        _recTimer.setSingleShot(false);
+        _recTimer.setInterval(333);
         //-- Ambarella Interface
         _initStreaming();
         //-- Request Camera Settings
@@ -489,6 +500,7 @@ CameraControl::setCurrentMetering(quint32 index)
 void
 CameraControl::setCurrentEV(quint32 index)
 {
+    //-- TODO: Need to diferentiate between E50 and E90
     if(_vehicle && index < NUM_EV_VALUES && _cameraSupported == CAMERA_SUPPORT_YES) {
         qCDebug(YuneecCameraLog) << "setCurrentEV:" << evOptions[index].description;
         _vehicle->sendMavCommand(
@@ -615,6 +627,17 @@ CameraControl::_timerHandler()
 }
 
 //-----------------------------------------------------------------------------
+// Getting the rec time from the camera is way too expensive because of the
+// LCM interface within the camera firmware. Instead, we keep track of the
+// timer here.
+void
+CameraControl::_recTimerHandler()
+{
+    _ambarellaStatus.record_time = _recTime.elapsed();
+    emit recordTimeChanged();
+}
+
+//-----------------------------------------------------------------------------
 void
 CameraControl::_requestCameraSettings()
 {
@@ -681,6 +704,9 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
                 if(result == MAV_RESULT_ACCEPTED) {
                     //-- We have an answer. Start the show.
                     _cameraSupported = CAMERA_SUPPORT_YES;
+                } else if(result == MAV_RESULT_TEMPORARILY_REJECTED) {
+                    //--Keep Trying
+                    _startTimer(TIMER_GET_CAMERA_SETTINGS, 500);
                 } else {
                     //-- We got an answer but not a good one
                     _cameraSupported = CAMERA_SUPPORT_NO;
@@ -691,11 +717,16 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
         switch(command) {
             case MAV_CMD_REQUEST_STORAGE_INFORMATION:
                 if(noReponseFromVehicle) {
+                    //-- No response. This is not normal. It means we sent it 3 times and it didn't respond
                     qCDebug(YuneecCameraLog) << "Retry MAV_CMD_REQUEST_STORAGE_INFORMATION";
+                    //-- Keep trying
                     _currentTask = TIMER_GET_STORAGE_INFO;
                     _startTimer(TIMER_GET_STORAGE_INFO, 500);
                 } else {
-                    if(result != MAV_RESULT_ACCEPTED) {
+                    if(result == MAV_RESULT_TEMPORARILY_REJECTED) {
+                        qCDebug(YuneecCameraLog) << "Camera is too busy for MAV_CMD_REQUEST_STORAGE_INFORMATION. Retrying...";
+                        _startTimer(TIMER_GET_STORAGE_INFO, 500);
+                    } if(result != MAV_RESULT_ACCEPTED) {
                         qCDebug(YuneecCameraLog) << "Bad response from MAV_CMD_REQUEST_STORAGE_INFORMATION" << result << "Retrying...";
                         _startTimer(TIMER_GET_STORAGE_INFO, 500);
                     }
@@ -706,7 +737,10 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
                     qCDebug(YuneecCameraLog) << "Retry MAV_CMD_REQUEST_CAMERA_SETTINGS";
                     _startTimer(TIMER_GET_CAMERA_SETTINGS, 500);
                 } else {
-                    if(result != MAV_RESULT_ACCEPTED) {
+                    if(result == MAV_RESULT_TEMPORARILY_REJECTED) {
+                        qCDebug(YuneecCameraLog) << "Camera is too busy for MAV_CMD_REQUEST_CAMERA_SETTINGS. Retrying...";
+                        _startTimer(TIMER_GET_CAMERA_SETTINGS, 500);
+                    } else if(result != MAV_RESULT_ACCEPTED) {
                         qCDebug(YuneecCameraLog) << "Bad response from MAV_CMD_REQUEST_CAMERA_SETTINGS" << result << "Retrying...";
                         _startTimer(TIMER_GET_CAMERA_SETTINGS, 500);
                     }
@@ -717,7 +751,10 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
                     qCDebug(YuneecCameraLog) << "Retry MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS";
                     _startTimer(TIMER_GET_CAPTURE_INFO, 1000);
                 } else {
-                    if(result != MAV_RESULT_ACCEPTED) {
+                    if(result == MAV_RESULT_TEMPORARILY_REJECTED) {
+                        qCDebug(YuneecCameraLog) << "Camera is too busy for MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS. Retrying...";
+                        _startTimer(TIMER_GET_CAPTURE_INFO, 500);
+                    } else if(result != MAV_RESULT_ACCEPTED) {
                         qCDebug(YuneecCameraLog) << "Bad response from MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS" << result << "Retrying...";
                         _startTimer(TIMER_GET_CAPTURE_INFO, 1000);
                     }
@@ -731,8 +768,15 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
             case MAV_CMD_VIDEO_START_CAPTURE:
             case MAV_CMD_VIDEO_STOP_CAPTURE:
                 if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
+                    qCDebug(YuneecCameraLog) << "No response for" << command << "Retry MAV_CMD_REQUEST_CAMERA_SETTINGS";
                     _startTimer(TIMER_GET_CAMERA_SETTINGS, 333);
                 } else {
+                    //-- The camera didn't take it. There isn't much what we can do.
+                    //   Sound an error to let the user know. Whatever setting was
+                    //   being changed has not been changed and the UI will reflect
+                    //   that. There is no good reason for this to fail. The camera
+                    //   firmware needs to be fixed and stop this nonsense of "busy".
+                    qCDebug(YuneecCameraLog) << "Bad response for" << command << "Retry MAV_CMD_REQUEST_CAMERA_SETTINGS";
                     _errorSound.setLoopCount(2);
                     _errorSound.play();
                 }
@@ -766,6 +810,7 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
 {
     mavlink_camera_settings_t settings;
     mavlink_msg_camera_settings_decode(&message, &settings);
+    //                                                      1                   1                         0              0                         1                           2375                        1                            0
     qCDebug(YuneecCameraLog) << "_handleCameraSettings:" << settings.mode_id << settings.color_mode_id << settings.ev << settings.exposure_mode << settings.image_format_id << settings.iso_sensitivity << settings.metering_mode_id << settings.shutter_speed;
     //-- Auto Exposure Mode
     int ae = settings.exposure_mode == 0 ? AE_MODE_AUTO : AE_MODE_MANUAL;
@@ -785,6 +830,7 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
     // For now, all I get is NAN.
     //-- EV
     if(_ambarellaSettings.exposure_value != settings.ev) {
+        //-- TODO: Need to diferentiate between E50 and E90
         uint32_t idx = 100000;
         for(uint32_t i = 0; i < NUM_EV_VALUES; i++) {
             if(settings.ev == evOptions[i].value) {
@@ -876,6 +922,14 @@ CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
     if(_ambarellaStatus.video_status != cap.video_status) {
         _ambarellaStatus.video_status = cap.video_status;
         emit videoStatusChanged();
+        if((VideoStatus)cap.video_status == VIDEO_CAPTURE_STATUS_RUNNING) {
+            _recTimer.stop();
+            _ambarellaStatus.record_time = 0;
+            emit recordTimeChanged();
+        } else {
+            _recTime.start();
+            _recTimer.start();
+        }
     }
     //-- Current Video Resolution and FPS
     int idx = _findVideoResIndex(cap.video_resolution_h, cap.video_resolution_v, cap.video_framerate);
@@ -884,19 +938,15 @@ CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
         emit currentVideoResChanged();
         _updateAspectRatio();
     }
+    /*
     //-- Recording running time
     if(_ambarellaStatus.record_time != cap.recording_time_ms) {
         _ambarellaStatus.record_time = cap.recording_time_ms;
         emit recordTimeChanged();
     }
-    //-- If recording video, we do this more often
-    if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
-        _startTimer(TIMER_GET_CAPTURE_INFO, 500);
-    } else if(photoStatus() == PHOTO_CAPTURE_STATUS_RUNNING) {
-        _startTimer(TIMER_GET_CAPTURE_INFO, 1000);
-    } else {
-        _startTimer(TIMER_GET_CAPTURE_INFO, 5000);
-    }
+    */
+    //-- More often than once every 5 seconds makes the camera barf
+    _startTimer(TIMER_GET_CAPTURE_INFO, 5000);
 }
 
 //-----------------------------------------------------------------------------
@@ -1146,14 +1196,14 @@ CameraControl::_resetCameraValues()
     _true_cam_mode = CAMERA_MODE_UNDEFINED;
 
     _ambarellaSettings.ae_enable        = AE_MODE_UNDEFINED;
-    _ambarellaSettings.exposure_value   = 0.0f;
+    _ambarellaSettings.exposure_value   = 1000.0f;
     _ambarellaSettings.cam_mode         = CAMERA_MODE_UNDEFINED;
     _ambarellaSettings.audio_switch     = false;
-    _ambarellaSettings.iq_type          = 0;
-    _ambarellaSettings.photo_format     = 0;
-    _ambarellaSettings.photo_quality    = 100;
-    _ambarellaSettings.white_balance    = 0;
-    _ambarellaSettings.metering_mode    = 0;
+    _ambarellaSettings.iq_type          = 1000;
+    _ambarellaSettings.photo_format     = 1000;
+    _ambarellaSettings.photo_quality    = 1000;
+    _ambarellaSettings.white_balance    = 1000;
+    _ambarellaSettings.metering_mode    = 1000;
 
     _ambarellaStatus.image_status       = PHOTO_CAPTURE_STATUS_UNDEFINED;
     _ambarellaStatus.video_status       = VIDEO_CAPTURE_STATUS_UNDEFINED;
