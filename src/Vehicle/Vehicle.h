@@ -214,6 +214,68 @@ private:
     Fact            _temperature3Fact;
 };
 
+
+class CameraInformationFactGroup : public FactGroup
+{
+    Q_OBJECT
+
+public:
+    CameraInformationFactGroup(QObject* parent = NULL);
+
+    Q_PROPERTY(Fact* cameraIdFact        READ cameraIdFact CONSTANT)
+    Q_PROPERTY(Fact* vendorNameFact      READ vendorNameFact CONSTANT)
+    Q_PROPERTY(Fact* modelNameFact       READ modelNameFact CONSTANT)
+    Q_PROPERTY(Fact* firmwareVersionFact READ firmwareVersionFact CONSTANT)
+    Q_PROPERTY(Fact* focalLengthFact     READ focalLengthFact CONSTANT)
+    Q_PROPERTY(Fact* sensorSizeHFact     READ sensorSizeHFact CONSTANT)
+    Q_PROPERTY(Fact* sensorSizeVFact     READ sensorSizeVFact CONSTANT)
+    Q_PROPERTY(Fact* resolutionHFact     READ resolutionHFact CONSTANT)
+    Q_PROPERTY(Fact* resolutionVFact     READ resolutionVFact CONSTANT)
+    Q_PROPERTY(Fact* lensIdFact          READ lensIdFact CONSTANT)
+    Q_PROPERTY(Fact* urlFact             READ urlFact CONSTANT)
+    Q_PROPERTY(Fact* fileNameFact        READ fileNameFact CONSTANT)
+
+    Fact* cameraIdFact(void)  { return &_cameraIdFact; }
+    Fact* vendorNameFact(void) { return &_vendorNameFact; }
+    Fact* modelNameFact(void) { return &_modelNameFact; }
+    Fact* firmwareVersionFact(void) { return &_firmwareVersionFact; }
+    Fact* focalLengthFact(void) { return &_focalLengthFact; }
+    Fact* sensorSizeHFact(void) { return &_sensorSizeHFact; }
+    Fact* sensorSizeVFact(void) { return &_sensorSizeVFact; }
+    Fact* resolutionHFact(void) { return &_resolutionHFact; }
+    Fact* resolutionVFact(void) { return &_resolutionVFact; }
+    Fact* lensIdFact(void) { return &_lensIdFact; }
+    Fact* urlFact(void) { return &_urlFact; }
+    Fact* fileNameFact(void) { return &_fileNameFact; }
+
+    static const char* _cameraIdFactName;
+    static const char* _vendorNameFactName;
+    static const char* _modelNameFactName;
+    static const char* _firmwareVersionFactName;
+    static const char* _focalLengthFactName;
+    static const char* _sensorSizeHFactName;
+    static const char* _sensorSizeVFactName;
+    static const char* _resolutionHFactName;
+    static const char* _resolutionVFactName;
+    static const char* _lensIdFactName;
+    static const char* _urlFactName;
+    static const char* _fileNameFactName;
+
+private:
+    Fact _cameraIdFact;
+    Fact _vendorNameFact;
+    Fact _modelNameFact;
+    Fact _firmwareVersionFact;
+    Fact _focalLengthFact;
+    Fact _sensorSizeHFact;
+    Fact _sensorSizeVFact;
+    Fact _resolutionHFact;
+    Fact _resolutionVFact;
+    Fact _lensIdFact;
+    Fact _urlFact;
+    Fact _fileNameFact;
+};
+
 class Vehicle : public FactGroup
 {
     Q_OBJECT
@@ -596,6 +658,7 @@ public:
     int             telemetryLNoise         () { return _telemetryLNoise; }
     int             telemetryRNoise         () { return _telemetryRNoise; }
     bool            autoDisarm              ();
+    int             cameraCount             () { return _cameraCount; }
 
     Fact* roll              (void) { return &_rollFact; }
     Fact* heading           (void) { return &_headingFact; }
@@ -687,6 +750,8 @@ public:
     void _setFlying(bool flying);
     void _setLanding(bool landing);
     void _setHomePosition(QGeoCoordinate& homeCoord);
+
+    QList<CameraInformationFactGroup*> _cameras;
 
 signals:
     void allLinksInactive(Vehicle* vehicle);
@@ -834,6 +899,7 @@ private:
     void _handleScaledPressure3(mavlink_message_t& message);
     void _handleCameraFeedback(const mavlink_message_t& message);
     void _handleCameraImageCaptured(const mavlink_message_t& message);
+    void _handleCameraInformation(mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _geoFenceManagerError(int errorCode, const QString& errorMsg);
     void _rallyPointManagerError(int errorCode, const QString& errorMsg);
@@ -908,6 +974,7 @@ private:
     int             _telemetryRNoise;
     bool            _vehicleCapabilitiesKnown;
     bool            _supportsMissionItemInt;
+    int             _cameraCount;
 
     typedef struct {
         int     component;

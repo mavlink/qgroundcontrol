@@ -1,0 +1,52 @@
+[
+{
+    "name":             "cameraId",
+    "shortDescription": "Camera ID",
+    "type":             "uint8"
+},
+{
+    "name":             "vendorName",
+    "shortDescription": "Vendor name",
+    "type":             "string"
+},
+{
+    "name":             "modelName",
+    "shortDescription": "Model name",
+    "type":             "string"
+},
+{
+    "name":             "firmwareVersion",
+    "shortDescription": "Firmware version",
+    "type":             "uint32"
+},
+{
+    "name":             "focalLength",
+    "shortDescription": "Focal length",
+    "type":             "float"
+},
+{
+    "name":             "sensorsSizeH",
+    "shortDescription": "Sensors size horizontal",
+    "type":             "float"
+},
+{
+    "name":             "sensorSizeV",
+    "shortDescription": "Sensor size vertical",
+    "type":             "float"
+},
+{
+    "name":             "resolutionH",
+    "shortDescription": "Resolution horizontal",
+    "type":             "uint16"
+},
+{
+    "name":             "resolutionV",
+    "shortDescription": "Resolution vertical",
+    "type":             "uint16"
+},
+{
+    "name":             "lensId",
+    "shortDescription": "Lens Id",
+    "type":             "uint8"
+}
+]

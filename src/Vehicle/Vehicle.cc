@@ -113,6 +113,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _telemetryRNoise(0)
     , _vehicleCapabilitiesKnown(false)
     , _supportsMissionItemInt(false)
+    , _cameraCount(0)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _initialPlanRequestComplete(false)
@@ -217,6 +218,12 @@ Vehicle::Vehicle(LinkInterface*             link,
                     MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES,
                    false,                                   // No error shown if fails
                     1);                                     // Request firmware version
+
+    sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
+                   MAV_CMD_REQUEST_CAMERA_INFORMATION,
+                   false,                                  // No error shown if fails
+                   0,                                      // For all cameras
+                   1);                                     // Request
 
     _firmwarePlugin->initializeVehicle(this);
 
@@ -583,6 +590,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
     case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
         _handleCameraImageCaptured(message);
+        break;
+    case MAVLINK_MSG_ID_CAMERA_INFORMATION:
+        _handleCameraInformation(message);
         break;
 
     case MAVLINK_MSG_ID_SERIAL_CONTROL:
@@ -1162,6 +1172,33 @@ void Vehicle::_handleScaledPressure3(mavlink_message_t& message) {
     mavlink_scaled_pressure3_t pressure;
     mavlink_msg_scaled_pressure3_decode(&message, &pressure);
     _temperatureFactGroup.temperature3()->setRawValue(pressure.temperature / 100.0);
+}
+
+void Vehicle::_handleCameraInformation(mavlink_message_t& message) {
+    mavlink_camera_information_t info;
+    CameraInformationFactGroup *camera = new CameraInformationFactGroup();
+
+    mavlink_msg_camera_information_decode(&message, &info);
+
+    camera->cameraIdFact()->setRawValue(info.camera_id);
+    camera->vendorNameFact()->setRawValue(QString((char *)info.vendor_name));
+    camera->modelNameFact()->setRawValue(QString((char *)info.model_name));
+    camera->firmwareVersionFact()->setRawValue(info.firmware_version);
+    camera->focalLengthFact()->setRawValue(info.focal_length);
+    camera->sensorSizeHFact()->setRawValue(info.sensor_size_h);
+    camera->sensorSizeVFact()->setRawValue(info.sensor_size_v);
+    camera->resolutionHFact()->setRawValue(info.resolution_h);
+    camera->resolutionVFact()->setRawValue(info.resolution_v);
+    camera->lensIdFact()->setRawValue(info.lens_id);
+
+    // Check if list has camera with this ID
+    for (int i=0; i<_cameraCount; i++) {
+        if (_cameras[i]->cameraIdFact()->rawValue().toInt() == info.camera_id) {
+            return;
+        }
+    }
+    _cameras.append(camera);
+    _cameraCount++;
 }
 
 bool Vehicle::_containsLink(LinkInterface* link)
@@ -2711,4 +2748,46 @@ VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject* parent)
     _temperature1Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
     _temperature2Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
     _temperature3Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
+}
+
+const char* CameraInformationFactGroup::_cameraIdFactName = "cameraId";
+const char* CameraInformationFactGroup::_vendorNameFactName = "vendorName";
+const char* CameraInformationFactGroup::_modelNameFactName = "modelName";
+const char* CameraInformationFactGroup::_firmwareVersionFactName = "firmwareVersion";
+const char* CameraInformationFactGroup::_focalLengthFactName = "focalLength";
+const char* CameraInformationFactGroup::_sensorSizeHFactName = "sensorsSizeH";
+const char* CameraInformationFactGroup::_sensorSizeVFactName = "sensorSizeV";
+const char* CameraInformationFactGroup::_resolutionHFactName = "resolutionH";
+const char* CameraInformationFactGroup::_resolutionVFactName = "resolutionV";
+const char* CameraInformationFactGroup::_lensIdFactName = "lensId";
+const char* CameraInformationFactGroup::_urlFactName = "url";
+const char* CameraInformationFactGroup::_fileNameFactName = "fileName";
+
+CameraInformationFactGroup::CameraInformationFactGroup(QObject* parent)
+    : FactGroup(1000, ":/json/Vehicle/CameraFact.json", parent)
+    , _cameraIdFact        (0, _cameraIdFactName,        FactMetaData::valueTypeUint8)
+    , _vendorNameFact      (0, _vendorNameFactName,      FactMetaData::valueTypeString)
+    , _modelNameFact       (0, _modelNameFactName,       FactMetaData::valueTypeString)
+    , _firmwareVersionFact (0, _firmwareVersionFactName, FactMetaData::valueTypeUint32)
+    , _focalLengthFact     (0, _focalLengthFactName,     FactMetaData::valueTypeFloat)
+    , _sensorSizeHFact     (0, _sensorSizeHFactName,     FactMetaData::valueTypeFloat)
+    , _sensorSizeVFact     (0, _sensorSizeVFactName,     FactMetaData::valueTypeFloat)
+    , _resolutionHFact     (0, _resolutionHFactName,     FactMetaData::valueTypeUint16)
+    , _resolutionVFact     (0, _resolutionVFactName,     FactMetaData::valueTypeUint16)
+    , _lensIdFact          (0, _lensIdFactName,          FactMetaData::valueTypeUint8)
+    , _urlFact             (0, _urlFactName,             FactMetaData::valueTypeString)
+    , _fileNameFact        (0, _fileNameFactName,        FactMetaData::valueTypeString)
+{
+    _addFact(&_cameraIdFact,        _cameraIdFactName);
+    _addFact(&_vendorNameFact,      _vendorNameFactName);
+    _addFact(&_modelNameFact,       _modelNameFactName);
+    _addFact(&_firmwareVersionFact, _firmwareVersionFactName);
+    _addFact(&_focalLengthFact,     _focalLengthFactName);
+    _addFact(&_sensorSizeHFact,     _sensorSizeHFactName);
+    _addFact(&_sensorSizeVFact,     _sensorSizeVFactName);
+    _addFact(&_resolutionHFact,     _resolutionHFactName);
+    _addFact(&_resolutionVFact,     _resolutionVFactName);
+    _addFact(&_lensIdFact,          _lensIdFactName);
+    _addFact(&_urlFact,             _urlFactName);
+    _addFact(&_fileNameFact,        _fileNameFactName);
 }
