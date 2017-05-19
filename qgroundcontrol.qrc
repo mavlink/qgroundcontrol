@@ -184,6 +184,8 @@
         <file alias="test.qml">src/test.qml</file>
         <file alias="UdpSettings.qml">src/ui/preferences/UdpSettings.qml</file>
         <file alias="VehicleSummary.qml">src/VehicleSetup/VehicleSummary.qml</file>
+        <file alias="VideoStreamingComponent.qml">src/AutoPilotPlugins/Common/VideoStreamingComponent.qml</file>
+        <file alias="VideoStreamingComponentSummary.qml">src/AutoPilotPlugins/Common/VideoStreamingComponentSummary.qml</file>
         <file alias="VirtualJoystick.qml">src/FlightDisplay/VirtualJoystick.qml</file>
     </qresource>
     <qresource prefix="/json">
@@ -214,6 +216,7 @@
         <file alias="Vehicle/VibrationFact.json">src/Vehicle/VibrationFact.json</file>
         <file alias="Vehicle/TemperatureFact.json">src/Vehicle/TemperatureFact.json</file>
         <file alias="Vehicle/CameraFact.json">src/Vehicle/CameraFact.json</file>
+        <file alias="Vehicle/VideoStreamingFact.json">src/Vehicle/VideoStreamingFact.json</file>
     </qresource>
     <qresource prefix="/MockLink">
         <file alias="APMArduCopterMockLink.params">src/comm/APMArduCopterMockLink.params</file>
