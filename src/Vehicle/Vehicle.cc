@@ -598,6 +598,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_VIDEO_STREAM_CAPABILITIES:
         _handleVideoStreamCapabilities(message);
         break;
+    case MAVLINK_MSG_ID_VIDEO_STREAM_INFORMATION:
+        emit mavlinkVideoStreamInformation(message);
+        break;
 
     case MAVLINK_MSG_ID_SERIAL_CONTROL:
     {
