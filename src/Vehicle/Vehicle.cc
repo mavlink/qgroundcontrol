@@ -30,6 +30,7 @@
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 #include "QGCQGeoCoordinate.h"
+#include "QGCFileDownload.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -593,6 +594,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_CAMERA_INFORMATION:
         _handleCameraInformation(message);
+        break;
+    case MAVLINK_MSG_ID_VIDEO_STREAM_CAPABILITIES:
+        _handleVideoStreamCapabilities(message);
         break;
 
     case MAVLINK_MSG_ID_SERIAL_CONTROL:
@@ -1199,6 +1203,49 @@ void Vehicle::_handleCameraInformation(mavlink_message_t& message) {
     }
     _cameras.append(camera);
     _cameraCount++;
+
+    // Request for file with video streaming capabilities
+    sendMavCommand(_defaultComponentId, MAV_CMD_REQUEST_VIDEO_STREAM_CAPABILITIES, false, info.camera_id, 1.0f);
+}
+
+void Vehicle::_handleVideoStreamCapabilities(mavlink_message_t& message)
+{
+    mavlink_video_stream_capabilities_t capabilities;
+    mavlink_msg_video_stream_capabilities_decode(&message, &capabilities);
+
+    for (int i=0; i<_cameraCount; i++) {
+        if (_cameras[i]->cameraIdFact()->rawValue().toInt() == capabilities.camera_id) {
+            _cameras[i]->urlFact()->setRawValue(capabilities.file_url);
+            _getCameraCapabilities(capabilities.file_url);
+            break;
+        }
+    }
+}
+
+void Vehicle::_getCameraCapabilities(QString url)
+{
+    QGCFileDownload* downloader = new QGCFileDownload(this);
+    connect(downloader, &QGCFileDownload::downloadFinished, this, &Vehicle::_downloadFinished);
+    connect(downloader, &QGCFileDownload::error,            this, &Vehicle::_downloadError);
+    downloader->download(url);
+}
+
+void Vehicle::_downloadFinished(QString remoteFile, QString localFile)
+{
+    Q_UNUSED(remoteFile);
+
+    qWarning() << "Download finished " << localFile;
+    for (int i=0; i<_cameras.count(); i++) {
+        if (_cameras[i]->urlFact()->rawValueString() == remoteFile) {
+            _cameras[i]->fileNameFact()->setRawValue(localFile);
+            break;
+        }
+    }
+}
+
+void Vehicle::_downloadError(QString errorMsg)
+{
+    qWarning() << "Camera capabilities download error " << errorMsg;
 }
 
 bool Vehicle::_containsLink(LinkInterface* link)

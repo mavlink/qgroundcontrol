@@ -900,6 +900,7 @@ private:
     void _handleCameraFeedback(const mavlink_message_t& message);
     void _handleCameraImageCaptured(const mavlink_message_t& message);
     void _handleCameraInformation(mavlink_message_t& message);
+    void _handleVideoStreamCapabilities(mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _geoFenceManagerError(int errorCode, const QString& errorMsg);
     void _rallyPointManagerError(int errorCode, const QString& errorMsg);
@@ -917,6 +918,9 @@ private:
     void _startPlanRequest(void);
     void _setupAutoDisarmSignalling(void);
     void _setCapabilities(uint64_t capabilityBits);
+    void _getCameraCapabilities(QString url);
+    void _downloadFinished(QString remoteFile, QString localFile);
+    void _downloadError(QString errorMsg);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
