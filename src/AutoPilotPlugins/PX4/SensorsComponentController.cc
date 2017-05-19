@@ -20,6 +20,8 @@
 #include <QVariant>
 #include <QQmlProperty>
 
+// IMPORTANT NOTE: This is a custom version of code for Yuneec. The compass cal procedure is different than the norma firmware procedure.
+
 QGC_LOGGING_CATEGORY(SensorsComponentControllerLog, "SensorsComponentControllerLog")
 
 SensorsComponentController::SensorsComponentController(void) :
@@ -387,6 +389,13 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
         return;
     }
     
+    // Yuneec compass cal differs from normal firmware in that it goes through a fix set of orientations in order and you rotate the vehicle
+    // around the arms. The order of arms is:
+    //      back, front, left, right, up down
+    // These don't really correspond to the normal vehicle orientation. They are just the sequence that the firmware has hacked in using the
+    // existing compass cal code. Once a side is done we need to automatically proceed to the next since instead of waiting for the user to
+    // hold an orientation.
+
     if (text.endsWith("side done, rotate to a different side")) {
         QString side = text.section(" ", 0, 0);
         qDebug() << "Side finished" << side;
@@ -399,22 +408,37 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
             _orientationCalUpsideDownSideInProgress = false;
             _orientationCalUpsideDownSideDone = true;
             _orientationCalUpsideDownSideRotate = false;
+            if (_magCalInProgress) {
+                _orientationCalDownSideRotate = true;
+            }
         } else if (side == "left") {
             _orientationCalLeftSideInProgress = false;
             _orientationCalLeftSideDone = true;
             _orientationCalLeftSideRotate = false;
+            if (_magCalInProgress) {
+                _orientationCalRightSideRotate = true;
+            }
         } else if (side == "right") {
             _orientationCalRightSideInProgress = false;
             _orientationCalRightSideDone = true;
             _orientationCalRightSideRotate = false;
+            if (_magCalInProgress) {
+                _orientationCalUpsideDownSideRotate = true;
+            }
         } else if (side == "front") {
             _orientationCalNoseDownSideInProgress = false;
             _orientationCalNoseDownSideDone = true;
             _orientationCalNoseDownSideRotate = false;
+            if (_magCalInProgress) {
+                _orientationCalLeftSideRotate = true;
+            }
         } else if (side == "back") {
             _orientationCalTailDownSideInProgress = false;
             _orientationCalTailDownSideDone = true;
             _orientationCalTailDownSideRotate = false;
+            if (_magCalInProgress) {
+                _orientationCalNoseDownSideRotate = true;
+            }
         }
         
         _orientationCalAreaHelpText->setProperty("text", "Place you vehicle into one of the orientations shown below and hold it still");
