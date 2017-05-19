@@ -82,4 +82,5 @@ src/latex/
 
 # vagrant
 .vagrant/
+Qt*-linux*.tar.*
 
