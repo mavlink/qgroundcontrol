@@ -37,18 +37,23 @@ Vagrant.configure(2) do |config|
   # "cd shadow-build/release; ./qgroundcontrol-start.sh"
 
   $config_shell = <<-'SHELL'
+     set -e
+
      sudo apt-get update -y
      # we need this long command to keep grub-pc from prompting for input
      sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
-     sudo apt-get dist-upgrade -y
-     sudo apt-get install -y git build-essential
-     sudo apt-get install -y espeak libespeak-dev libudev-dev libsdl2-dev
-     sudo apt-get install -y doxygen
-     sudo apt-get install -y gstreamer1.0* libgstreamer1.0*
 
-     # taken from travis.yml
      echo 'Initialising submodules'
      su - vagrant -c 'cd %{project_root_dir}; git submodule init && git submodule update'
+
+     # taken from travis.yml
+     export CCACHE_CPP2=1 CCACHE_DISABLE=1 JOBS=4 QT_FATAL_WARNINGS=1
+     export JOBS=$((`cat /proc/cpuinfo | grep -c ^processor`+1))
+
+     sudo apt-get install -y git build-essential wget
+     sudo apt-get install -y espeak libespeak-dev libudev-dev libsdl2-dev
+     sudo apt-get install -y doxygen
+     sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev
 
      echo 'Saving %{qt_deps_tarball} from %{deps_url} to %{project_root_dir}'
      su - vagrant -c 'wget --continue -q %{deps_url} -P %{project_root_dir}'
@@ -56,15 +61,17 @@ Vagrant.configure(2) do |config|
      su - vagrant -c 'mkdir -p %{qt_deps_unpack_parent_dir}'
      su - vagrant -c 'cd %{project_root_dir}; tar jxf "%{qt_deps_tarball}" -C  %{qt_deps_unpack_parent_dir}'
      su - vagrant -c 'rm -rf %{shadow_build_dir}'
-     su - vagrant -c 'mkdir -p %{shadow_build_dir}'
-     su - vagrant -c "cd %{shadow_build_dir}; LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir} PATH=%{qt_deps_bin_unpack_dir}:\$PATH qmake -r %{pro} -spec %{spec}"
-     su - vagrant -c "cd %{shadow_build_dir}; LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir} PATH=%{qt_deps_bin_unpack_dir}:\$PATH make -j4"
 
-     su - vagrant -c 'mkdir -p %{qt_deps_dir}'
-     su - vagrant -c 'cp -a %{qt_deps_bin_unpack_dir} %{qt_deps_bin_dir}'
-     su - vagrant -c 'cp -a %{qt_deps_lib_unpack_dir} %{qt_deps_lib_dir}'
-     su - vagrant -c 'cp -a %{qt_deps_plugins_unpack_dir} %{qt_deps_plugins_dir}'
-     su - vagrant -c 'cp -a %{qt_deps_qml_unpack_dir} %{qt_deps_qml_dir}'
+     # grab latest PX4 parameter and airframe metadata
+     su - vagrant -c 'wget http://px4-travis.s3.amazonaws.com/Firmware/master/parameters.xml -O %{project_root_dir}/src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml'
+     su - vagrant -c 'wget http://px4-travis.s3.amazonaws.com/Firmware/master/airframes.xml -O %{project_root_dir}/src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml'
+
+     su - vagrant -c 'mkdir -p %{shadow_build_dir}'
+     su - vagrant -c "cd %{shadow_build_dir}; LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir} PATH=%{qt_deps_bin_unpack_dir}:\$PATH qmake -r %{pro} CONFIG+=\${CONFIG} CONFIG+=WarningsAsErrorsOn -spec %{spec}"
+     su - vagrant -c "cd %{shadow_build_dir}; LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir} PATH=%{qt_deps_bin_unpack_dir}:\$PATH make -j${JOBS}"
+
+     su - vagrant -c 'mkdir -p %{shadow_build_dir}/release/package'
+     su - vagrant -c 'cd %{project_root_dir}; ./deploy/create_linux_appimage.sh %{project_root_dir} %{shadow_build_dir}/release %{shadow_build_dir}/release/package'
 
    SHELL
 
