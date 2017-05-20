@@ -20,7 +20,7 @@
 #include <QVariant>
 #include <QQmlProperty>
 
-// IMPORTANT NOTE: This is a custom version of code for Yuneec. The compass cal procedure is different than the norma firmware procedure.
+// IMPORTANT NOTE: This is a custom version of code for Yuneec. The compass cal procedure is different than the normal firmware procedure.
 
 QGC_LOGGING_CATEGORY(SensorsComponentControllerLog, "SensorsComponentControllerLog")
 

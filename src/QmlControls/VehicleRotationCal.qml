@@ -33,20 +33,21 @@ Rectangle {
     color:  calInProgress ? "yellow" : (calValid ? "green" : "red")
 
     Rectangle {
-        readonly property int inset: 5
+        readonly property int inset: 2
 
-        x:      inset
-        y:      inset
-        width:  parent.width - (inset * 2)
+        width:  parent.width  - (inset * 2)
         height: parent.height - (inset * 2)
         color: qgcPal.windowShade
+        anchors.centerIn:   parent
 
         Image {
-            width:      parent.width
-            height:     parent.height
+            width:      parent.width  * 0.75
+            height:     parent.height * 0.75
             source:     imageSource
             fillMode:   Image.PreserveAspectFit
-            smooth: true
+            smooth:     true
+            antialiasing:       true
+            anchors.centerIn:   parent
         }
 
         QGCLabel {
