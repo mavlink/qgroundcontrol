@@ -500,7 +500,7 @@ SetupPage {
                                 calValid:           controller.orientationCalTailDownSideDone
                                 calInProgress:      controller.orientationCalTailDownSideInProgress
                                 calInProgressText:  controller.orientationCalTailDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalTailDownSideRotate ? "qrc:///qmlimages/VehicleTailDownRotate.png" : "qrc:///qmlimages/VehicleTailDown.png"
+                                imageSource:        controller.orientationCalTailDownSideRotate ? "/typhoonh/img/mag-cal-1.svg" : "/typhoonh/img/mag-cal-1-rest.svg"
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -509,7 +509,7 @@ SetupPage {
                                 calValid:           controller.orientationCalNoseDownSideDone
                                 calInProgress:      controller.orientationCalNoseDownSideInProgress
                                 calInProgressText:  controller.orientationCalNoseDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalNoseDownSideRotate ? "qrc:///qmlimages/VehicleNoseDownRotate.png" : "qrc:///qmlimages/VehicleNoseDown.png"
+                                imageSource:        controller.orientationCalNoseDownSideRotate ? "/typhoonh/img/mag-cal-2.svg" : "/typhoonh/img/mag-cal-2-rest.svg"
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -518,7 +518,7 @@ SetupPage {
                                 calValid:           controller.orientationCalLeftSideDone
                                 calInProgress:      controller.orientationCalLeftSideInProgress
                                 calInProgressText:  controller.orientationCalLeftSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalLeftSideRotate ? "qrc:///qmlimages/VehicleLeftRotate.png" : "qrc:///qmlimages/VehicleLeft.png"
+                                imageSource:        controller.orientationCalLeftSideRotate ? "/typhoonh/img/mag-cal-3.svg" : "/typhoonh/img/mag-cal-3-rest.svg"
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -527,7 +527,7 @@ SetupPage {
                                 calValid:           controller.orientationCalRightSideDone
                                 calInProgress:      controller.orientationCalRightSideInProgress
                                 calInProgressText:  controller.orientationCalRightSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalRightSideRotate ? "qrc:///qmlimages/VehicleRightRotate.png" : "qrc:///qmlimages/VehicleRight.png"
+                                imageSource:        controller.orientationCalRightSideRotate ? "/typhoonh/img/mag-cal-4.svg" : "/typhoonh/img/mag-cal-4-rest.svg"
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -536,7 +536,7 @@ SetupPage {
                                 calValid:           controller.orientationCalUpsideDownSideDone
                                 calInProgress:      controller.orientationCalUpsideDownSideInProgress
                                 calInProgressText:  controller.orientationCalUpsideDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalUpsideDownSideRotate ? "qrc:///qmlimages/VehicleUpsideDownRotate.png" : "qrc:///qmlimages/VehicleUpsideDown.png"
+                                imageSource:        controller.orientationCalUpsideDownSideRotate ? "/typhoonh/img/mag-cal-5.svg" : "/typhoonh/img/mag-cal-5-rest.svg"
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -545,7 +545,7 @@ SetupPage {
                                 calValid:           controller.orientationCalDownSideDone
                                 calInProgress:      controller.orientationCalDownSideInProgress
                                 calInProgressText:  controller.orientationCalDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalDownSideRotate ? "qrc:///qmlimages/VehicleDownRotate.png" : "qrc:///qmlimages/VehicleDown.png"
+                                imageSource:        controller.orientationCalDownSideRotate ? "/typhoonh/img/mag-cal-6.svg" : "/typhoonh/img/mag-cal-6-rest.svg"
                             }
                         }
                     }
