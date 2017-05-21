@@ -60,14 +60,6 @@ typedef enum {
 } ChannelNumType_t;
 
 typedef enum {
-    CalibrationStateNone = 0,
-    CalibrationStateMin,
-    CalibrationStateMid,
-    CalibrationStateMax,
-    CalibrationStateRag,
-} CalibrationState_t;
-
-typedef enum {
     CalibrationHwIndexJ1 = 0,
     CalibrationHwIndexJ2,
     CalibrationHwIndexJ3,

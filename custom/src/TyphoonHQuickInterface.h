@@ -58,10 +58,19 @@ public:
         M4_STATE_SETUP          = 4,
         M4_STATE_RUN            = 5,
         M4_STATE_SIM            = 6,
-        M4_STATE_FACTORY_CALI   = 7
+        M4_STATE_FACTORY_CAL    = 7
+    };
+
+    enum CalibrationState {
+        CalibrationStateNone = 0,
+        CalibrationStateMin,
+        CalibrationStateMid,
+        CalibrationStateMax,
+        CalibrationStateRag,
     };
 
     Q_ENUMS(M4State)
+    Q_ENUMS(CalibrationState)
 
     Q_PROPERTY(M4State          m4State         READ    m4State             NOTIFY m4StateChanged)
     Q_PROPERTY(QString          m4StateStr      READ    m4StateStr          NOTIFY m4StateChanged)
@@ -97,6 +106,19 @@ public:
     Q_PROPERTY(int              T34             READ    T34                 NOTIFY rawChannelChanged)
     Q_PROPERTY(int              ASwitch         READ    ASwitch             NOTIFY rawChannelChanged)
 
+    Q_PROPERTY(int              J1Cal           READ    J1Cal               NOTIFY calibrationStateChanged)
+    Q_PROPERTY(int              J2Cal           READ    J2Cal               NOTIFY calibrationStateChanged)
+    Q_PROPERTY(int              J3Cal           READ    J3Cal               NOTIFY calibrationStateChanged)
+    Q_PROPERTY(int              J4Cal           READ    J4Cal               NOTIFY calibrationStateChanged)
+    Q_PROPERTY(int              K1Cal           READ    K1Cal               NOTIFY calibrationStateChanged)
+    Q_PROPERTY(int              K2Cal           READ    K2Cal               NOTIFY calibrationStateChanged)
+    Q_PROPERTY(int              K3Cal           READ    K3Cal               NOTIFY calibrationStateChanged)
+    Q_PROPERTY(int              T12Cal          READ    T12Cal              NOTIFY calibrationStateChanged)
+    Q_PROPERTY(int              T34Cal          READ    T34Cal              NOTIFY calibrationStateChanged)
+    Q_PROPERTY(int              ASwitchCal      READ    ASwitchCal          NOTIFY calibrationStateChanged)
+
+    Q_PROPERTY(bool             calibrationComplete     READ    calibrationComplete NOTIFY calibrationCompleteChanged)
+
     Q_INVOKABLE void enterBindMode      ();
     Q_INVOKABLE void initM4             ();
     Q_INVOKABLE void startScan          (int delay = 0);
@@ -105,10 +127,12 @@ public:
     Q_INVOKABLE void resetWifi          ();
     Q_INVOKABLE bool isWifiConfigured   (QString ssid);
     Q_INVOKABLE void calibrateGimbalMV  ();
-    Q_INVOKABLE int  rawChannels        (int channel);
+    Q_INVOKABLE int  rawChannel         (int channel);
+    Q_INVOKABLE int  calChannelState    (int channel);
     Q_INVOKABLE void exportData         ();
     Q_INVOKABLE void importMission      ();
     Q_INVOKABLE void manualBind         ();
+    Q_INVOKABLE void startCalibration   ();
 
     M4State     m4State             ();
     QString     m4StateStr          ();
@@ -142,16 +166,29 @@ public:
 
     void        init                (TyphoonHM4Interface* pHandler);
 
-    int         J1                  () { return rawChannels(0); }
-    int         J2                  () { return rawChannels(1); }
-    int         J3                  () { return rawChannels(2); }
-    int         J4                  () { return rawChannels(3); }
-    int         K1                  () { return rawChannels(4); }
-    int         K2                  () { return rawChannels(5); }
-    int         K3                  () { return rawChannels(6); }
-    int         T12                 () { return rawChannels(7); }
-    int         T34                 () { return rawChannels(8); }
-    int         ASwitch             () { return rawChannels(9); }
+    int         J1                  () { return rawChannel(0); }
+    int         J2                  () { return rawChannel(1); }
+    int         J3                  () { return rawChannel(2); }
+    int         J4                  () { return rawChannel(3); }
+    int         K1                  () { return rawChannel(4); }
+    int         K2                  () { return rawChannel(5); }
+    int         K3                  () { return rawChannel(6); }
+    int         T12                 () { return rawChannel(7); }
+    int         T34                 () { return rawChannel(8); }
+    int         ASwitch             () { return rawChannel(9); }
+
+    int         J1Cal               () { return calChannelState(0); }
+    int         J2Cal               () { return calChannelState(1); }
+    int         J3Cal               () { return calChannelState(2); }
+    int         J4Cal               () { return calChannelState(3); }
+    int         K1Cal               () { return calChannelState(4); }
+    int         K2Cal               () { return calChannelState(5); }
+    int         K3Cal               () { return calChannelState(6); }
+    int         T12Cal              () { return calChannelState(7); }
+    int         T34Cal              () { return calChannelState(8); }
+    int         ASwitchCal          () { return calChannelState(9); }
+
+    bool        calibrationComplete ();
 
 signals:
     void    m4StateChanged              ();
@@ -170,6 +207,8 @@ signals:
     void    powerHeld                   ();
     void    copyingFilesChanged         ();
     void    copyResultChanged           ();
+    void    calibrationCompleteChanged  ();
+    void    calibrationStateChanged     ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -192,6 +231,8 @@ private slots:
     void    _switchStateChanged         (int swId, int oldState, int newState);
     void    _exportData                 ();
     void    _importMissions             ();
+    void    _calibrationCompleteChanged ();
+    void    _calibrationStateChanged    ();
 
 private:
     void    _saveWifiConfigurations     ();

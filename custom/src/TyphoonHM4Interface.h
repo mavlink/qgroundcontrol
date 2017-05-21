@@ -35,10 +35,13 @@ public:
     void    resetBind               ();
     bool    armed                   () { return _armed; }
     bool    rcActive                () { return _rcActive; }
+    bool    rcCalibrationComplete   () { return _rcCalibrationComplete; }
+    void    startCalibration        ();
 
     Vehicle*            vehicle         () { return _vehicle; }
     CameraControl*      cameraControl   () { return _cameraControl; }
     QList<uint16_t>     rawChannels     () { return _rawChannels; }
+    int                 calChannel      (int index);
 
     TyphoonHQuickInterface::M4State     m4State             () { return _m4State; }
     const ControllerLocation&           controllerLocation  () { return _controllerLocation; }
@@ -96,7 +99,7 @@ private:
     void    _handleChannel                      (m4Packet& packet);
     bool    _handleCommand                      (m4Packet& packet);
     void    _switchChanged                      (m4Packet& packet);
-    void    _calibrateionStateChanged           (m4Packet& packet);
+    void    _calibrationStateChanged           (m4Packet& packet);
     void    _handleMixedChannelData             (m4Packet& packet);
     void    _handleRawChannelData               (m4Packet& packet);
     void    _handControllerFeedback             (m4Packet& packet);
@@ -108,6 +111,9 @@ signals:
     void    controllerLocationChanged           ();
     void    destroyed                           ();
     void    armedChanged                        (bool armed);
+    void    rawChannelsChanged                  ();
+    void    calibrationCompleteChanged          ();
+    void    calibrationStateChanged             ();
     //-- WIFI
     void    newWifiSSID                         (QString ssid, int rssi);
     void    newWifiRSSI                         ();
@@ -116,7 +122,6 @@ signals:
     void    wifiConnected                       ();
     void    wifiDisconnected                    ();
     void    batteryUpdate                       ();
-    void    rawChannelsChanged                  ();
 
 private:
     M4SerialComm* _commPort;
@@ -158,5 +163,7 @@ private:
     QString                 _currentConnection;
     bool                    _armed;
     QList<uint16_t>         _rawChannels;
+    uint16_t                _rawChannelsCalibration[CalibrationHwIndexMax];
     bool                    _rcActive;
+    bool                    _rcCalibrationComplete;
 };
