@@ -250,17 +250,20 @@ private:
     int     _findVideoResIndex      (int w, int h, float fps);
     void    _requestStorageStatus   ();
     void    _requestCaptureStatus   ();
+    void    _requestCameraInfo      ();
+    void    _requestCameraSettings  ();
     void    _updateAspectRatio      ();
     void    _initStreaming          ();
     int     _findShutterSpeedIndex  (float shutter_speed);
     void    _handleISOStatus        ();
+    void    _handleCameraInfo       (const mavlink_message_t& message);
     void    _handleCameraSettings   (const mavlink_message_t& message);
     void    _handleCaptureStatus    (const mavlink_message_t& message);
     void    _handleStorageInfo      (const mavlink_message_t& message);
     void    _resetCameraValues      ();
-    void    _requestCameraSettings  ();
     void    _setIsoShutter          (int iso, float shutter);
     void    _startTimer             (int task, int elapsed);
+    void    _handleCommandResult    (bool noReponseFromVehicle, int command, int result);
 
 private:
     Vehicle*                _vehicle;
@@ -277,13 +280,9 @@ private:
     QSoundEffect            _videoSound;
     QSoundEffect            _errorSound;
 
-    enum {
-        TIMER_GET_STORAGE_INFO,
-        TIMER_GET_CAPTURE_INFO,
-        TIMER_GET_CAMERA_SETTINGS
-    };
-
-    int                     _currentTask;
+    QString                 _cameraModel;
+    QString                 _cameraVendor;
+    uint32_t                _cameraVersion;
 
     enum {
         CAMERA_SUPPORT_UNDEFINED,
@@ -291,6 +290,7 @@ private:
         CAMERA_SUPPORT_NO
     };
 
+    int                     _currentTask;
     int                     _cameraSupported;
     int                     _httpErrorCount;
     int                     _true_cam_mode;
