@@ -283,6 +283,10 @@ enum {
         ACTION_REQUEST_CONFIG = 8,
 
 
+        CMD_ENTER_FACTORY_CALI          = 0x9F,
+        CMD_EXIT_FACTORY_CALI           = 0xA0,
+        CMD_CALIBRATION_STATE_CHANGE    = 0x96,
+
         CMD_TX_CHANNEL_DATA_RAW         = 0x77,
         CMD_TX_CHANNEL_DATA_MIXED       = 0x78,
         CMD_TX_STATE_MACHINE            = 0x83,
