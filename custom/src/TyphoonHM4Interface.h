@@ -67,6 +67,8 @@ private:
     bool    _exitToAwait                        ();
     bool    _enterRun                           ();
     bool    _exitRun                            ();
+    bool    _enterFactoryCalibration            ();
+    bool    _exitFactoryCalibration             ();
     bool    _startBind                          ();
     bool    _enterBind                          ();
     bool    _exitBind                           ();
@@ -94,6 +96,7 @@ private:
     void    _handleChannel                      (m4Packet& packet);
     bool    _handleCommand                      (m4Packet& packet);
     void    _switchChanged                      (m4Packet& packet);
+    void    _calibrateionStateChanged           (m4Packet& packet);
     void    _handleMixedChannelData             (m4Packet& packet);
     void    _handleRawChannelData               (m4Packet& packet);
     void    _handControllerFeedback             (m4Packet& packet);

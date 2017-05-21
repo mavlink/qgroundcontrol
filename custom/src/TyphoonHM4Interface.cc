@@ -591,6 +591,33 @@ TyphoonHM4Interface::_enterBind()
 
 //-----------------------------------------------------------------------------
 /**
+ * This command is used for calibrating joysticks and knobs of M4.
+ * Generally, it is using by factory when the board of st16 was producted at first.
+ */
+bool
+TyphoonHM4Interface::_enterFactoryCalibration()
+{
+    qCDebug(YuneecLogVerbose) << "Sending: CMD_ENTER_FACTORY_CALI";
+    m4Command enterFactoryCaliCmd(Yuneec::CMD_ENTER_FACTORY_CALI);
+    QByteArray cmd = enterFactoryCaliCmd.pack();
+    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+}
+
+//-----------------------------------------------------------------------------
+/**
+ * This command is used for exit calibration.
+ */
+bool
+TyphoonHM4Interface::_exitFactoryCalibration()
+{
+    qCDebug(YuneecLogVerbose) << "Sending: CMD_ENTER_RUN";
+    m4Command exitFacoryCaliCmd(Yuneec::CMD_ENTER_FACTORY_CALI);
+    QByteArray cmd = exitFacoryCaliCmd.pack();
+    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+}
+
+//-----------------------------------------------------------------------------
+/**
  * Use this command to set the type of channel receive original hardware signal values and encoding values.
  */
 //-- TODO: Do we really need raw data? Maybe CMD_RECV_MIXED_CH_ONLY would be enough.
@@ -1398,6 +1425,9 @@ TyphoonHM4Interface::_handleCommand(m4Packet& packet)
         case Yuneec::CMD_TX_SWITCH_CHANGED:
             _switchChanged(packet);
             return true;
+        case Yuneec::CMD_CALIBRATION_STATE_CHANGE:
+            _calibrateionStateChanged(packet);
+            return true;
         default:
             qCDebug(YuneecLog) << "Received Unknown TYPE_CMD:" << packet.commandID() << packet.data.toHex();
             break;
@@ -1430,6 +1460,26 @@ TyphoonHM4Interface::_switchChanged(m4Packet& packet)
                 break;
         }
     }
+}
+
+//-----------------------------------------------------------------------------
+/*
+ * This funtion is not finish, it should call the function which is used for update calibration UI.
+*/
+void
+TyphoonHM4Interface::_calibrateionStateChanged(m4Packet &packet)
+{
+    Q_UNUSED(packet);
+    QByteArray commandValues = packet.commandValues();
+
+    for (int i = CalibrationHwIndex_t.CalibrationHwIndexJ1; i < CalibrationHwIndex_t.CalibrationHwIndexMax; ++i) {
+        if (commandValues[i] == CalibrationState_t.CalibrationStateRag) {
+            //The hardware calibrate finished
+        }else {
+            //The hardware calibrate not finished
+        }
+    }
+
 }
 
 //-----------------------------------------------------------------------------

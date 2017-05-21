@@ -59,6 +59,28 @@ typedef enum {
     ChannelNumExtra,
 } ChannelNumType_t;
 
+typedef enum {
+    CalibrationStateNone = 0,
+    CalibrationStateMin,
+    CalibrationStateMid,
+    CalibrationStateMax,
+    CalibrationStateRag,
+} CalibrationState_t;
+
+typedef enum {
+    CalibrationHwIndexJ1 = 0,
+    CalibrationHwIndexJ2,
+    CalibrationHwIndexJ3,
+    CalibrationHwIndexJ4,
+    CalibrationHwIndexK1,
+    CalibrationHwIndexK2,
+    CalibrationHwIndexK3,
+    CalibrationHwIndexK4,
+    CalibrationHwIndexK5,
+    CalibrationHwIndexK6,
+    CalibrationHwIndexMax
+} CalibrationHwIndex_t;
+
 class M4SerialComm;
 
 //-----------------------------------------------------------------------------
