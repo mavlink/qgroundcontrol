@@ -100,6 +100,12 @@ bool LogReplayLink::_connect(void)
         return false;
     }
 
+    _mavlinkChannel = qgcApp()->toolbox()->linkManager()->_reserveMavlinkChannel();
+    if (_mavlinkChannel == 0) {
+        qWarning() << "No mavlink channels available";
+        return false;
+    }
+
     if (isRunning()) {
         quit();
         wait();
@@ -114,6 +120,11 @@ void LogReplayLink::_disconnect(void)
         quit();
         wait();
         _connected = false;
+
+        if (_mavlinkChannel != 0) {
+            qgcApp()->toolbox()->linkManager()->_freeMavlinkChannel(_mavlinkChannel);
+        }
+
         emit disconnected();
     }
 }
@@ -165,6 +176,36 @@ quint64 LogReplayLink::_parseTimestamp(const QByteArray& bytes)
     return timestamp;
 }
 
+/// Reads the next mavlink message from the log
+///     @param bytes[output] Bytes for mavlink message
+/// @return Unix timestamp in microseconds UTC for NEXT mavlink message or 0 if no message found
+quint64 LogReplayLink::_readNextMavlinkMessage(QByteArray& bytes)
+{
+    char                nextByte;
+    mavlink_status_t    status;
+
+    bytes.clear();
+
+    while (_logFile.getChar(&nextByte)) { // Loop over every byte
+        mavlink_message_t message;
+        bool messageFound = mavlink_parse_char(_mavlinkChannel, nextByte, &message, &status);
+
+        if (status.parse_state == MAVLINK_PARSE_STATE_GOT_STX) {
+            // This is the possible beginning of a mavlink message, clear any partial bytes
+            bytes.clear();
+        }
+        bytes.append(nextByte);
+
+        if (messageFound) {
+            // Return the timestamp for the next message
+            QByteArray rawTime = _logFile.read(cbTimestamp);
+            return _parseTimestamp(rawTime);
+        }
+    }
+
+    return 0;
+}
+
 /// Seeks to the beginning of the next successfully parsed mavlink message in the log file.
 ///     @param nextMsg[output] Parsed next message that was found
 /// @return A Unix timestamp in microseconds UTC for found message or 0 if parsing failed
@@ -175,7 +216,7 @@ quint64 LogReplayLink::_seekToNextMavlinkMessage(mavlink_message_t* nextMsg)
     qint64              messageStartPos = -1;
 
     while (_logFile.getChar(&nextByte)) { // Loop over every byte
-        bool messageFound = mavlink_parse_char(mavlinkChannel(), nextByte, nextMsg, &status);
+        bool messageFound = mavlink_parse_char(_mavlinkChannel, nextByte, nextMsg, &status);
 
         if (status.parse_state == MAVLINK_PARSE_STATE_GOT_STX) {
             // This is the possible beginning of a mavlink message
@@ -294,6 +335,8 @@ Error:
 /// induce a static drift into the log file replay.
 void LogReplayLink::_readNextLogEntry(void)
 {
+    QByteArray bytes;
+
     // If we have a file with timestamps, try and pace this out following the time differences
     // between the timestamps and the current playback speed.
     if (_logTimestamped) {
@@ -304,28 +347,18 @@ void LogReplayLink::_readNextLogEntry(void)
         // the next timer interrupt.
         int timeToNextExecutionMSecs = 0;
         
-        // We use the `_seekToNextMavlinkMessage()` function to scan ahead for MAVLink messages. This
-        // is necessary because we don't know how big each MAVLink message is until we finish parsing
-        // one, and since we only output arrays of bytes, we need to know the size of that array.
-        mavlink_message_t msg;
-        _seekToNextMavlinkMessage(&msg);
-        
         while (timeToNextExecutionMSecs < 3) {
-            
-            // Now we're sitting at the start of a MAVLink message, so read it all into a byte array for feeding to our parser.
-            QByteArray message = _logFile.read(msg.len + MAVLINK_NUM_NON_PAYLOAD_BYTES);
-            
-            emit bytesReceived(this, message);
+            // Read the next mavlink message from the log
+            qint64 nextTimeUSecs = _readNextMavlinkMessage(bytes);
+            emit bytesReceived(this, bytes);
             emit playbackPercentCompleteChanged(((float)(_logCurrentTimeUSecs - _logStartTimeUSecs) / (float)_logDurationUSecs) * 100);
             
-            // If we've reached the end of the of the file, make sure we handle that well
             if (_logFile.atEnd()) {
                 _finishPlayback();
                 return;
             }
             
-            // Run our parser to find the next timestamp and leave us at the start of the next MAVLink message.
-            _logCurrentTimeUSecs = _seekToNextMavlinkMessage(&msg);
+            _logCurrentTimeUSecs = nextTimeUSecs;
             
             // Calculate how long we should wait in real time until parsing this message.
             // We pace ourselves relative to the start time of playback to fix any drift (initially set in play())
