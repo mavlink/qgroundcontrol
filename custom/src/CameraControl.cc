@@ -424,7 +424,7 @@ CameraControl::setCurrentIso(quint32 index)
     if(_vehicle && index < NUM_ISO_VALUES && _cameraSupported == CAMERA_SUPPORT_YES) {
         qCDebug(YuneecCameraLog) << "setCurrentIso:" << isoValues[index].description;
         _tempIso = index;
-        _setIsoShutter(isoValues[index].value, _tempShutter);
+        _setIsoShutter(isoValues[index].value, shutterSpeeds[_tempShutter].value);
     }
 }
 
@@ -435,7 +435,7 @@ CameraControl::setCurrentShutter(quint32 index)
     if(_vehicle && index < NUM_SHUTTER_VALUES && _cameraSupported == CAMERA_SUPPORT_YES) {
         qCDebug(YuneecCameraLog) << "setCurrentShutter:" << shutterSpeeds[index].description;
         _tempShutter = index;
-        _setIsoShutter(_tempIso, shutterSpeeds[index].value);
+        _setIsoShutter(isoValues[_tempIso].value, shutterSpeeds[index].value);
     }
 }
 
@@ -768,15 +768,14 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
             case MAV_CMD_VIDEO_START_CAPTURE:
             case MAV_CMD_VIDEO_STOP_CAPTURE:
                 if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
-                    qCDebug(YuneecCameraLog) << "No response for" << command << "Retry MAV_CMD_REQUEST_CAMERA_SETTINGS";
-                    _startTimer(TIMER_GET_CAMERA_SETTINGS, 333);
+                    _startTimer(TIMER_GET_CAMERA_SETTINGS, 500);
                 } else {
                     //-- The camera didn't take it. There isn't much what we can do.
                     //   Sound an error to let the user know. Whatever setting was
                     //   being changed has not been changed and the UI will reflect
                     //   that. There is no good reason for this to fail. The camera
                     //   firmware needs to be fixed and stop this nonsense of "busy".
-                    qCDebug(YuneecCameraLog) << "Bad response for" << command << "Retry MAV_CMD_REQUEST_CAMERA_SETTINGS";
+                    qCDebug(YuneecCameraLog) << "Bad or no response for" << command;
                     _errorSound.setLoopCount(2);
                     _errorSound.play();
                 }
@@ -923,12 +922,12 @@ CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
         _ambarellaStatus.video_status = cap.video_status;
         emit videoStatusChanged();
         if((VideoStatus)cap.video_status == VIDEO_CAPTURE_STATUS_RUNNING) {
+            _recTime.start();
+            _recTimer.start();
+        } else {
             _recTimer.stop();
             _ambarellaStatus.record_time = 0;
             emit recordTimeChanged();
-        } else {
-            _recTime.start();
-            _recTimer.start();
         }
     }
     //-- Current Video Resolution and FPS
