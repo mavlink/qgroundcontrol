@@ -21,6 +21,7 @@
 #include <QQmlProperty>
 
 // IMPORTANT NOTE: This is a custom version of code for Yuneec. The compass cal procedure is different than the normal firmware procedure.
+// This in turn required changes t both compass and accel cal due to user model and image changes.
 
 QGC_LOGGING_CATEGORY(SensorsComponentControllerLog, "SensorsComponentControllerLog")
 
@@ -298,7 +299,11 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
             _orientationCalTailDownSideVisible = false;
             _orientationCalNoseDownSideVisible = false;
             
-            _orientationCalAreaHelpText->setProperty("text", "Place your vehicle into one of the Incomplete orientations shown below and hold it still");
+            if (text == "accel" || text == "gyro") {
+                _orientationCalAreaHelpText->setProperty("text", "Place your vehicle into one of the Incomplete orientations shown below and hold it still");
+            } else {
+                _orientationCalAreaHelpText->setProperty("text", "Rotate your vehicle around the arms which are blinking green. ");
+            }
             
             if (text == "accel") {
                 _accelCalInProgress = true;
@@ -379,7 +384,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
         }
         
         if (_magCalInProgress) {
-            _orientationCalAreaHelpText->setProperty("text", "Rotate the vehicle continuously as shown in the diagram until marked as Completed");
+            _orientationCalAreaHelpText->setProperty("text", "Continue rotating the vehicle until you hear the beep.");
         } else {
             _orientationCalAreaHelpText->setProperty("text", "Hold still in the current orientation");
         }
@@ -441,7 +446,11 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
             }
         }
         
-        _orientationCalAreaHelpText->setProperty("text", "Place you vehicle into one of the orientations shown below and hold it still");
+        if (_magCalInProgress) {
+            _orientationCalAreaHelpText->setProperty("text", "Rotate your vehicle around the arms which are blinking green. ");
+        } else {
+            _orientationCalAreaHelpText->setProperty("text", "Place you vehicle into one of the orientations shown below and hold it still");
+        }
 
         emit orientationCalSidesInProgressChanged();
         emit orientationCalSidesDoneChanged();
