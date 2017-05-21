@@ -1464,7 +1464,7 @@ TyphoonHM4Interface::_switchChanged(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 /*
- * This funtion is not finish, it should call the function which is used for update calibration UI.
+ * The function is not finish, it should call the function which is used for update calibration UI.
 */
 void
 TyphoonHM4Interface::_calibrateionStateChanged(m4Packet &packet)
