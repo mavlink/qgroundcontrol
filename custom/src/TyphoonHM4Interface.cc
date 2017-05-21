@@ -95,6 +95,7 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     , _m4State(TyphoonHQuickInterface::M4_STATE_NONE)
     , _armed(false)
     , _rcActive(false)
+    , _rcCalibrationComplete(true)
 {
     pTyphoonHandler = this;
     _cameraControl = new CameraControl(this);
@@ -105,6 +106,7 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     _rcTimer.setSingleShot(true);
     connect(&_timer,   &QTimer::timeout, this, &TyphoonHM4Interface::_stateManager);
     connect(&_rcTimer, &QTimer::timeout, this, &TyphoonHM4Interface::_rcTimeout);
+    memset(_rawChannelsCalibration, 0, sizeof(_rawChannelsCalibration));
 }
 
 //-----------------------------------------------------------------------------
@@ -202,7 +204,7 @@ TyphoonHM4Interface::m4StateStr()
             return QString("Running...");
         case TyphoonHQuickInterface::M4_STATE_SIM:
             return QString("Simulation...");
-        case TyphoonHQuickInterface::M4_STATE_FACTORY_CALI:
+        case TyphoonHQuickInterface::M4_STATE_FACTORY_CAL:
             return QString("Factory Calibration...");
         default:
             return QString("Unknown state...");
@@ -336,6 +338,17 @@ TyphoonHM4Interface::enterBindMode(bool skipPairCommand)
         }
         QTimer::singleShot(1000, this, &TyphoonHM4Interface::_initSequence);
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHM4Interface::startCalibration()
+{
+    memset(_rawChannelsCalibration, 0, sizeof(_rawChannelsCalibration));
+    _rcCalibrationComplete = false;
+    emit calibrationCompleteChanged();
+    emit calibrationStateChanged();
+    _enterFactoryCalibration();
 }
 
 //-----------------------------------------------------------------------------
@@ -597,8 +610,8 @@ TyphoonHM4Interface::_enterBind()
 bool
 TyphoonHM4Interface::_enterFactoryCalibration()
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_ENTER_FACTORY_CALI";
-    m4Command enterFactoryCaliCmd(Yuneec::CMD_ENTER_FACTORY_CALI);
+    qCDebug(YuneecLogVerbose) << "Sending: CMD_ENTER_FACTORY_CAL";
+    m4Command enterFactoryCaliCmd(Yuneec::CMD_ENTER_FACTORY_CAL);
     QByteArray cmd = enterFactoryCaliCmd.pack();
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
 }
@@ -610,8 +623,8 @@ TyphoonHM4Interface::_enterFactoryCalibration()
 bool
 TyphoonHM4Interface::_exitFactoryCalibration()
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_ENTER_RUN";
-    m4Command exitFacoryCaliCmd(Yuneec::CMD_ENTER_FACTORY_CALI);
+    qCDebug(YuneecLogVerbose) << "Sending: CMD_EXIT_FACTORY_CALI";
+    m4Command exitFacoryCaliCmd(Yuneec::CMD_EXIT_FACTORY_CAL);
     QByteArray cmd = exitFacoryCaliCmd.pack();
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
 }
@@ -1426,7 +1439,7 @@ TyphoonHM4Interface::_handleCommand(m4Packet& packet)
             _switchChanged(packet);
             return true;
         case Yuneec::CMD_CALIBRATION_STATE_CHANGE:
-            _calibrateionStateChanged(packet);
+            _calibrationStateChanged(packet);
             return true;
         default:
             qCDebug(YuneecLog) << "Received Unknown TYPE_CMD:" << packet.commandID() << packet.data.toHex();
@@ -1464,22 +1477,43 @@ TyphoonHM4Interface::_switchChanged(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 /*
- * The function is not finish, it should call the function which is used for update calibration UI.
+ * Calibration Progress
 */
 void
-TyphoonHM4Interface::_calibrateionStateChanged(m4Packet &packet)
+TyphoonHM4Interface::_calibrationStateChanged(m4Packet &packet)
 {
     Q_UNUSED(packet);
+    bool state  = true;
+    bool change = false;
     QByteArray commandValues = packet.commandValues();
-
-    for (int i = CalibrationHwIndex_t.CalibrationHwIndexJ1; i < CalibrationHwIndex_t.CalibrationHwIndexMax; ++i) {
-        if (commandValues[i] == CalibrationState_t.CalibrationStateRag) {
-            //The hardware calibrate finished
-        }else {
-            //The hardware calibrate not finished
+    for (int i = CalibrationHwIndexJ1; i < CalibrationHwIndexMax; ++i) {
+        if(_rawChannelsCalibration[i] != commandValues[i]) {
+            _rawChannelsCalibration[i] = commandValues[i];
+            change = true;
+        }
+        if ((int)commandValues[i] != TyphoonHQuickInterface::CalibrationStateRag) {
+            state = false;
         }
     }
 
+    QString text = "Cal: ";
+    for (int i = CalibrationHwIndexJ1; i < CalibrationHwIndexMax; ++i) {
+        text += QString::number(commandValues[i]);
+        text += " ";
+    }
+    qDebug() << text;
+
+    if(_rcCalibrationComplete != state) {
+        _rcCalibrationComplete = state;
+        emit calibrationCompleteChanged();
+        if(_rcCalibrationComplete) {
+            //-- We're done with calibration
+            _exitFactoryCalibration();
+        }
+    }
+    if(change) {
+        emit calibrationStateChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1622,4 +1656,14 @@ TyphoonHM4Interface::byteArrayToShort(QByteArray data, int offset, bool isBigEnd
     }
     iRetVal = (iHigh << 8) | (0xFF & iLow);
     return iRetVal;
+}
+
+//-----------------------------------------------------------------------------
+int
+TyphoonHM4Interface::calChannel(int index)
+{
+    if(index < CalibrationHwIndexMax) {
+        return _rawChannelsCalibration[index];
+    }
+    return 0;
 }

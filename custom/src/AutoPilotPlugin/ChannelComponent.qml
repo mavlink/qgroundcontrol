@@ -31,12 +31,13 @@ SetupPage {
         Item {
             width:  Math.max(availableWidth, innerColumn.width)
             height: innerColumn.height
+            anchors.verticalCenter: parent.verticalCenter
 
             FactPanelController { id: controller; factPanel: channelPage.viewPanel }
 
             ColumnLayout {
                 id:                         innerColumn
-                spacing:                    ScreenTools.defaultFontPixelHeight
+                spacing:                    ScreenTools.defaultFontPixelHeight * 0.5
                 anchors.horizontalCenter:   parent.horizontalCenter
                 QGCGroupBox {
                     title:  qsTr("Sticks")
@@ -97,6 +98,27 @@ SetupPage {
                             text:   "Switches"
                             value:  TyphoonHQuickInterface.ASwitch
                         }
+                    }
+                }
+                Item {
+                    width:  1
+                    height: ScreenTools.defaultFontPixelHeight
+                }
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
+                    anchors.left: parent.left
+                    QGCButton {
+                        text:       "Start Calibration"
+                      //enabled:    TyphoonHQuickInterface.calibrationComplete
+                        width:      ScreenTools.defaultFontPixelWidth * 18
+                        onClicked: {
+                            TyphoonHQuickInterface.startCalibration()
+                        }
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    QGCLabel {
+                        text:   "Not yet functional"
+                        anchors.verticalCenter: parent.verticalCenter
                     }
                 }
             }

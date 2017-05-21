@@ -83,9 +83,11 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(_pHandler, &TyphoonHM4Interface::armedChanged,                 this, &TyphoonHQuickInterface::_armedChanged);
         connect(_pHandler, &TyphoonHM4Interface::rawChannelsChanged,           this, &TyphoonHQuickInterface::_rawChannelsChanged);
         connect(_pHandler, &TyphoonHM4Interface::switchStateChanged,           this, &TyphoonHQuickInterface::_switchStateChanged);
-        connect(&_scanTimer, &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
-        connect(&_flightTimer, &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
-        connect(&_powerTimer,  &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
+        connect(_pHandler, &TyphoonHM4Interface::calibrationStateChanged,      this, &TyphoonHQuickInterface::_calibrationStateChanged);
+        connect(_pHandler, &TyphoonHM4Interface::calibrationCompleteChanged,   this, &TyphoonHQuickInterface::_calibrationCompleteChanged);
+        connect(&_scanTimer,    &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
+        connect(&_flightTimer,  &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
+        connect(&_powerTimer,   &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
         _flightTimer.setSingleShot(false);
         _powerTimer.setSingleShot(true);
         _loadWifiConfigurations();
@@ -481,7 +483,7 @@ TyphoonHQuickInterface::isTyphoon()
 
 //-----------------------------------------------------------------------------
 int
-TyphoonHQuickInterface::rawChannels(int channel)
+TyphoonHQuickInterface::rawChannel(int channel)
 {
     if(_pHandler) {
         if(channel < _pHandler->rawChannels().size()) {
@@ -490,6 +492,26 @@ TyphoonHQuickInterface::rawChannels(int channel)
         }
     }
     return 0;
+}
+
+//-----------------------------------------------------------------------------
+int
+TyphoonHQuickInterface::calChannelState(int channel)
+{
+    if(_pHandler) {
+        return _pHandler->calChannel(channel);
+    }
+    return 0;
+}
+
+//-----------------------------------------------------------------------------
+bool
+TyphoonHQuickInterface::calibrationComplete()
+{
+    if(_pHandler) {
+        return _pHandler->rcCalibrationComplete();
+    }
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -600,6 +622,15 @@ TyphoonHQuickInterface::manualBind()
 {
     if(_pHandler) {
         _pHandler->enterBindMode(true);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::startCalibration()
+{
+    if(_pHandler) {
+        _pHandler->startCalibration();
     }
 }
 
@@ -754,6 +785,20 @@ void
 TyphoonHQuickInterface::_rawChannelsChanged()
 {
     emit rawChannelChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_calibrationCompleteChanged()
+{
+    emit calibrationCompleteChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_calibrationStateChanged()
+{
+    emit calibrationStateChanged();
 }
 
 //-----------------------------------------------------------------------------
