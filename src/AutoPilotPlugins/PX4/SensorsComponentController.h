@@ -11,6 +11,9 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
+// IMPORTANT NOTE: This is a custom version of code for Yuneec. The compass cal procedure is different than the normal firmware procedure.
+// This in turn required changes t both compass and accel cal due to user model and image changes.
+
 #ifndef SENSORSCOMPONENTCONTROLLER_H
 #define SENSORSCOMPONENTCONTROLLER_H
 

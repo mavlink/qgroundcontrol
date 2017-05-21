@@ -7,6 +7,9 @@
  *
  ****************************************************************************/
 
+// IMPORTANT NOTE: This is a custom version of code for Yuneec. The compass cal procedure is different than the normal firmware procedure.
+// This in turn required changes t both compass and accel cal due to user model and image changes.
+
 import QtQuick                  2.3
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.4
@@ -47,6 +50,8 @@ SetupPage {
 
             // Used to pass what type of calibration is being performed to the preCalibrationDialog
             property string preCalibrationDialogType
+
+            property bool accelCal: preCalibrationDialogType == "accel"
 
             // Used to pass help text to the preCalibrationDialog dialog
             property string preCalibrationDialogHelp
@@ -348,6 +353,7 @@ SetupPage {
                     onClicked: {
                         preCalibrationDialogType = "compass"
                         preCalibrationDialogHelp = compassHelp
+                        statusTextArea = ""
                         showDialog(preCalibrationDialogComponent, qsTr("Calibrate Compass"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
                 }
@@ -362,6 +368,7 @@ SetupPage {
                     onClicked: {
                         preCalibrationDialogType = "gyro"
                         preCalibrationDialogHelp = gyroHelp
+                        statusTextArea = ""
                         showDialog(preCalibrationDialogComponent, qsTr("Calibrate Gyro"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
                 }
@@ -376,6 +383,7 @@ SetupPage {
                     onClicked: {
                         preCalibrationDialogType = "accel"
                         preCalibrationDialogHelp = accelHelp
+                        statusTextArea = ""
                         showDialog(preCalibrationDialogComponent, qsTr("Calibrate Accelerometer"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
                 }
@@ -391,6 +399,7 @@ SetupPage {
                     onClicked: {
                         preCalibrationDialogType = "level"
                         preCalibrationDialogHelp = levelHelp
+                        statusTextArea = ""
                         showDialog(preCalibrationDialogComponent, qsTr("Level Horizon"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
                 }
@@ -405,6 +414,7 @@ SetupPage {
                     onClicked: {
                         preCalibrationDialogType = "airspeed"
                         preCalibrationDialogHelp = airspeedHelp
+                        statusTextArea = ""
                         showDialog(preCalibrationDialogComponent, qsTr("Calibrate Airspeed"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
                 }
@@ -500,7 +510,7 @@ SetupPage {
                                 calValid:           controller.orientationCalTailDownSideDone
                                 calInProgress:      controller.orientationCalTailDownSideInProgress
                                 calInProgressText:  controller.orientationCalTailDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalTailDownSideRotate ? "/typhoonh/img/mag-cal-1.svg" : "/typhoonh/img/mag-cal-1-rest.svg"
+                                imageSource:        accelCal ? "qrc:///qmlimages/VehicleTailDown.png" : (controller.orientationCalTailDownSideRotate ? "/typhoonh/img/mag-cal-1.svg" : "/typhoonh/img/mag-cal-1-rest.svg")
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -509,7 +519,7 @@ SetupPage {
                                 calValid:           controller.orientationCalNoseDownSideDone
                                 calInProgress:      controller.orientationCalNoseDownSideInProgress
                                 calInProgressText:  controller.orientationCalNoseDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalNoseDownSideRotate ? "/typhoonh/img/mag-cal-2.svg" : "/typhoonh/img/mag-cal-2-rest.svg"
+                                imageSource:        accelCal ? "qrc:///qmlimages/VehicleNoseDown.png" : (controller.orientationCalNoseDownSideRotate ? "/typhoonh/img/mag-cal-2.svg" : "/typhoonh/img/mag-cal-2-rest.svg")
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -518,7 +528,7 @@ SetupPage {
                                 calValid:           controller.orientationCalLeftSideDone
                                 calInProgress:      controller.orientationCalLeftSideInProgress
                                 calInProgressText:  controller.orientationCalLeftSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalLeftSideRotate ? "/typhoonh/img/mag-cal-3.svg" : "/typhoonh/img/mag-cal-3-rest.svg"
+                                imageSource:        accelCal ? "qrc:///qmlimages/VehicleLeft.png" : (controller.orientationCalLeftSideRotate ? "/typhoonh/img/mag-cal-3.svg" : "/typhoonh/img/mag-cal-3-rest.svg")
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -527,7 +537,7 @@ SetupPage {
                                 calValid:           controller.orientationCalRightSideDone
                                 calInProgress:      controller.orientationCalRightSideInProgress
                                 calInProgressText:  controller.orientationCalRightSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalRightSideRotate ? "/typhoonh/img/mag-cal-4.svg" : "/typhoonh/img/mag-cal-4-rest.svg"
+                                imageSource:        accelCal ? "qrc:///qmlimages/VehicleRight.png" : (controller.orientationCalRightSideRotate ? "/typhoonh/img/mag-cal-4.svg" : "/typhoonh/img/mag-cal-4-rest.svg")
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -536,7 +546,7 @@ SetupPage {
                                 calValid:           controller.orientationCalUpsideDownSideDone
                                 calInProgress:      controller.orientationCalUpsideDownSideInProgress
                                 calInProgressText:  controller.orientationCalUpsideDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalUpsideDownSideRotate ? "/typhoonh/img/mag-cal-5.svg" : "/typhoonh/img/mag-cal-5-rest.svg"
+                                imageSource:        accelCal ? "qrc:///qmlimages/VehicleUpsideDown.png" : (controller.orientationCalUpsideDownSideRotate ? "/typhoonh/img/mag-cal-5.svg" : "/typhoonh/img/mag-cal-5-rest.svg")
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -545,7 +555,7 @@ SetupPage {
                                 calValid:           controller.orientationCalDownSideDone
                                 calInProgress:      controller.orientationCalDownSideInProgress
                                 calInProgressText:  controller.orientationCalDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalDownSideRotate ? "/typhoonh/img/mag-cal-6.svg" : "/typhoonh/img/mag-cal-6-rest.svg"
+                                imageSource:        accelCal ? "qrc:///qmlimages/VehicleDown.png" : (controller.orientationCalDownSideRotate ? "/typhoonh/img/mag-cal-6.svg" : "/typhoonh/img/mag-cal-6-rest.svg")
                             }
                         }
                     }
