@@ -186,6 +186,8 @@ void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
         takeoffAlt /= 100;   // centimeters -> meters
     }
 
+    setGuidedMode(vehicle, true);
+
     if (!_armVehicleAndValidate(vehicle)) {
         qgcApp()->showMessage(tr("Unable to takeoff: Vehicle failed to arm."));
         return;
@@ -285,3 +287,31 @@ bool ArduCopterFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle*
     }
     return true;
 }
+
+void ArduCopterFirmwarePlugin::startMission(Vehicle* vehicle)
+{
+    double currentAlt = vehicle->altitudeRelative()->rawValue().toDouble();
+
+    if (!vehicle->flying()) {
+        guidedModeTakeoff(vehicle);
+
+        // Wait for vehicle to get off ground before switching to auto
+        bool didTakeoff = false;
+        for (int i=0; i<50; i++) {
+            if (vehicle->altitudeRelative()->rawValue().toDouble() >= currentAlt + 1.0) {
+                didTakeoff = true;
+                break;
+            }
+            QGC::SLEEP::msleep(100);
+            qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+        }
+
+        if (!didTakeoff) {
+            qgcApp()->showMessage(QStringLiteral("Unable to switch to Auto. Vehicle takeoff failed."));
+            return;
+        }
+    }
+
+    vehicle->setFlightMode(missionFlightMode());
+}
+
