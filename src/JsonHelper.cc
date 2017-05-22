@@ -63,20 +63,15 @@ bool JsonHelper::loadGeoCoordinate(const QJsonValue&    jsonValue,
     }
 
     foreach(const QJsonValue& jsonValue, coordinateArray) {
-        if (jsonValue.type() != QJsonValue::Double) {
+        if (jsonValue.type() != QJsonValue::Double && jsonValue.type() != QJsonValue::Null) {
             errorString = QObject::tr("Coordinate array may only contain double values, found: %1").arg(jsonValue.type());
             return false;
         }
     }
 
-    coordinate = QGeoCoordinate(coordinateArray[0].toDouble(), coordinateArray[1].toDouble());
+    coordinate = QGeoCoordinate(possibleNaNJsonValue(coordinateArray[0]), possibleNaNJsonValue(coordinateArray[1]));
     if (altitudeRequired) {
-        coordinate.setAltitude(coordinateArray[2].toDouble());
-    }
-
-    if (!coordinate.isValid()) {
-        errorString = QObject::tr("Coordinate is invalid: %1").arg(coordinate.toString());
-        return false;
+        coordinate.setAltitude(possibleNaNJsonValue(coordinateArray[2]));
     }
 
     return true;
