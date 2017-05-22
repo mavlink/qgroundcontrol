@@ -45,6 +45,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _scanningWiFi(false)
     , _bindingWiFi(false)
     , _copyingFiles(false)
+    , _wifiAlertEnabled(true)
     , _copyResult(0)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
