@@ -10,6 +10,10 @@ configfile        = YAML.load_file("#{current_dir}/.vagrantconfig.yml")
 yaml_config = configfile['configs']['dev']
 
 Vagrant.configure(2) do |config|
+  # This trick is used to prefer a VM box over docker
+  config.vm.provider "virtualbox"
+  config.vm.provider "vmware_fusion"
+
   config.vm.box = "boxcutter/ubuntu1604"
   config.vm.provider :docker do |docker, override|
     override.vm.box = "tknerr/baseimage-ubuntu-16.04"
