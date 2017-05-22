@@ -67,9 +67,6 @@ typedef enum {
     CalibrationHwIndexK1,
     CalibrationHwIndexK2,
     CalibrationHwIndexK3,
-    CalibrationHwIndexK4,
-    CalibrationHwIndexK5,
-    CalibrationHwIndexK6,
     CalibrationHwIndexMax
 } CalibrationHwIndex_t;
 

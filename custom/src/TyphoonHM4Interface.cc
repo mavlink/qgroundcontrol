@@ -344,11 +344,22 @@ TyphoonHM4Interface::enterBindMode(bool skipPairCommand)
 void
 TyphoonHM4Interface::startCalibration()
 {
-    memset(_rawChannelsCalibration, 0, sizeof(_rawChannelsCalibration));
-    _rcCalibrationComplete = false;
-    emit calibrationCompleteChanged();
-    emit calibrationStateChanged();
-    _enterFactoryCalibration();
+    if(_vehicle && _vehicle->armed()) {
+        qCWarning(YuneecLog) << "Cannot start calibration while armed.";
+        return;
+    }
+    //-- Ignore it if already in factory cal mode
+    if(_m4State != TyphoonHQuickInterface::M4_STATE_FACTORY_CAL) {
+        memset(_rawChannelsCalibration, 0, sizeof(_rawChannelsCalibration));
+        _rcCalibrationComplete = false;
+        emit calibrationCompleteChanged();
+        emit calibrationStateChanged();
+        if(_m4State == TyphoonHQuickInterface::M4_STATE_RUN) {
+            _exitRun();
+            QThread::msleep(SEND_INTERVAL);
+        }
+        _enterFactoryCalibration();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1223,6 +1234,12 @@ TyphoonHM4Interface::_bytesReady(QByteArray data)
                 case Yuneec::CMD_EXIT_TO_AWAIT:
                     qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_EXIT_TO_AWAIT";
                     break;
+                case Yuneec::CMD_ENTER_FACTORY_CAL:
+                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_ENTER_FACTORY_CAL";
+                    break;
+                case Yuneec::CMD_EXIT_FACTORY_CAL:
+                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_EXIT_FACTORY_CAL";
+                    break;
                 default:
                     qCDebug(YuneecLog) << "Received TYPE_RSP: ???" << packet.commandID() << data.toHex();
                     break;
@@ -1429,9 +1446,14 @@ TyphoonHM4Interface::_handleCommand(m4Packet& packet)
                 QByteArray commandValues = packet.commandValues();
                 TyphoonHQuickInterface::M4State state = (TyphoonHQuickInterface::M4State)(commandValues[0] & 0x1f);
                 if(state != _m4State) {
+                    TyphoonHQuickInterface::M4State old_state = _m4State;
                     _m4State = state;
                     emit m4StateChanged();
                     qCDebug(YuneecLog) << "New State:" << m4StateStr() << "(" << _m4State << ")";
+                    //-- If we were connected and just finished calibration, bind again
+                    if(_vehicle && old_state == TyphoonHQuickInterface::M4_STATE_FACTORY_CAL) {
+                        _initAndCheckBinding();
+                    }
                 }
             }
             break;
@@ -1496,12 +1518,14 @@ TyphoonHM4Interface::_calibrationStateChanged(m4Packet &packet)
         }
     }
 
+    /*
     QString text = "Cal: ";
     for (int i = CalibrationHwIndexJ1; i < CalibrationHwIndexMax; ++i) {
         text += QString::number(commandValues[i]);
         text += " ";
     }
     qDebug() << text;
+    */
 
     if(_rcCalibrationComplete != state) {
         _rcCalibrationComplete = state;

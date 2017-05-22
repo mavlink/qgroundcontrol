@@ -204,6 +204,8 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app, QGCToolbox* toolbox)
     , _pGeneral(NULL)
     , _pOfflineMaps(NULL)
     , _pMAVLink(NULL)
+    , _pRCCal(NULL)
+    , _pLogDownload(NULL)
 #if defined (QT_DEBUG)
     , _pMockLink(NULL)
 #endif
@@ -309,6 +311,14 @@ TyphoonHPlugin::settingsPages()
             _settingsList.append(QVariant::fromValue((QGCSettings*)_pLogDownload));
         }
 #ifdef QT_DEBUG
+#if defined(__mobile__)
+        if(!_pRCCal) {
+            _pRCCal = new QGCSettings(tr("RC Calibration"),
+                QUrl::fromUserInput("qrc:/typhoonh/RCCalibration.qml"),
+                QUrl::fromUserInput("qrc:/qmlimages/RC.svg"));
+        }
+#endif
+        _settingsList.append(QVariant::fromValue((QGCSettings*)_pRCCal));
         if(!_pMockLink) {
             _pMockLink = new QGCSettings(tr("MockLink"),
                 QUrl::fromUserInput("qrc:/qml/MockLink.qml"),
@@ -323,6 +333,14 @@ TyphoonHPlugin::settingsPages()
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pConsole));
 #else
         if (_showAdvancedUI) {
+#if defined(__mobile__)
+            if(!_pRCCal) {
+                _pRCCal = new QGCSettings(tr("RC Calibration"),
+                    QUrl::fromUserInput("qrc:/typhoonh/RCCalibration.qml"),
+                    QUrl::fromUserInput("qrc:/qmlimages/RC.svg"));
+            }
+#endif
+            _settingsList.append(QVariant::fromValue((QGCSettings*)_pRCCal));
             if(!_pConsole) {
                 _pConsole = new QGCSettings(tr("Console"),
                     QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/AppMessages.qml"),
