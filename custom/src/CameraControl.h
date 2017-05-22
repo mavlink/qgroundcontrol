@@ -163,6 +163,7 @@ public:
     Q_PROPERTY(QStringList  meteringList    READ    meteringList                                CONSTANT)
     Q_PROPERTY(QStringList  photoFormatList READ    photoFormatList                             CONSTANT)
     Q_PROPERTY(QStringList  evList          READ    evList                                      CONSTANT)
+    Q_PROPERTY(QString      firmwareVersion READ    firmwareVersion                             NOTIFY firmwareVersionChanged)
 
     Q_PROPERTY(quint32      currentVideoRes READ    currentVideoRes WRITE setCurrentVideoRes    NOTIFY currentVideoResChanged)
     Q_PROPERTY(quint32      currentWB       READ    currentWB       WRITE setCurrentWB          NOTIFY currentWBChanged)
@@ -200,6 +201,7 @@ public:
     QStringList meteringList        ();
     QStringList photoFormatList     ();
     QStringList evList              ();
+    QString     firmwareVersion     ();
 
     quint32     currentVideoRes     () { return _currentVideoResIndex; }
     quint32     currentWB           () { return _currentWB; }
@@ -245,6 +247,7 @@ signals:
     void    currentPhotoFmtChanged  ();
     void    currentMeteringChanged  ();
     void    currentEVChanged        ();
+    void    firmwareVersionChanged  ();
 
 private:
     int     _findVideoResIndex      (int w, int h, float fps);
@@ -281,7 +284,6 @@ private:
 
     QString                 _cameraModel;
     QString                 _cameraVendor;
-    uint32_t                _cameraVersion;
 
     enum {
         CAMERA_SUPPORT_UNDEFINED,
@@ -300,6 +302,7 @@ private:
     quint32                 _currentShutter;
     quint32                 _tempShutter;
     quint32                 _currentEV;
+    quint32                 _cameraVersion;
 
     quint32                 _setVideoResIndex;
 

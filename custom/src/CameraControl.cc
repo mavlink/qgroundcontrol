@@ -190,6 +190,7 @@ CameraControl::CameraControl(QObject* parent)
     , _tempIso(0)
     , _currentShutter(0)
     , _tempShutter(0)
+    , _cameraVersion(0)
 {
     _resetCameraValues();
     _cameraSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/wav/camera.wav"));
@@ -790,6 +791,19 @@ CameraControl::_mavlinkMessageReceived(const mavlink_message_t& message)
 }
 
 //-----------------------------------------------------------------------------
+QString
+CameraControl::firmwareVersion()
+{
+    QString ver;
+    ver.sprintf("%d.%d.%d %c",
+                (_cameraVersion & 0xFF),
+                (_cameraVersion >> 8  & 0xFF),
+                (_cameraVersion >> 16 & 0xFF),
+                (_cameraVersion >> 24 & 0xFF));
+    return ver;
+}
+
+//-----------------------------------------------------------------------------
 void
 CameraControl::_handleCameraInfo(const mavlink_message_t& message)
 {
@@ -799,6 +813,7 @@ CameraControl::_handleCameraInfo(const mavlink_message_t& message)
     _cameraVendor   = (const char*)&info.vendor_name[0];
     _cameraModel    = (const char*)&info.model_name[0];
     qCDebug(YuneecCameraLog) << "_handleCameraInfo:" << _cameraVendor << _cameraModel << _cameraVersion << (_cameraVersion >> 24 & 0xFF) << (_cameraVersion >> 16 & 0xFF) << (_cameraVersion >> 8 & 0xFF) << (_cameraVersion & 0xFF);
+    emit firmwareVersionChanged();
     _startTimer(MAV_CMD_REQUEST_CAMERA_SETTINGS, 500);
 }
 

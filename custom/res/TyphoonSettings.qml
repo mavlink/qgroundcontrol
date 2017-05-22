@@ -38,7 +38,7 @@ QGCView {
 
     function firmwareVersion() {
         if(_activeVehicle) {
-            return qsTr("Firmware Version: " + _activeVehicle.firmwareCustomMajorVersion + "." + _activeVehicle.firmwareCustomMinorVersion + "." + _activeVehicle.firmwareCustomPatchVersion)
+            return _activeVehicle.firmwareCustomMajorVersion + "." + _activeVehicle.firmwareCustomMinorVersion + "." + _activeVehicle.firmwareCustomPatchVersion
         } else {
             return ""
         }
@@ -136,10 +136,20 @@ QGCView {
                     }
                 }
             }
-            QGCLabel {
-                visible: _activeVehicle
+            Item {
+                width:  1
+                height: ScreenTools.defaultFontPixelHeight
+            }
+            GridLayout {
+                anchors.margins:    ScreenTools.defaultFontPixelHeight
+                columnSpacing:      ScreenTools.defaultFontPixelWidth
+                columns:            2
+                visible:            _activeVehicle
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: firmwareVersion()
+                QGCLabel { text: qsTr("Flight Controller Version:") }
+                QGCLabel { text: firmwareVersion() }
+                QGCLabel { text: qsTr("Camera Version:") }
+                QGCLabel { text: (_activeVehicle && TyphoonHQuickInterface.cameraControl) ? TyphoonHQuickInterface.cameraControl.firmwareVersion : "" }
             }
         }
     }
