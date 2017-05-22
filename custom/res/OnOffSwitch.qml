@@ -25,6 +25,8 @@ Rectangle {
     height: Math.round(ScreenTools.defaultFontPixelHeight * 2)
     width:  ScreenTools.defaultFontPixelWidth  * 10
     color:  qgcPal.button
+    border.color: qgcPal.text
+    border.width: 1
 
     property bool checked: true
 
@@ -37,6 +39,8 @@ Rectangle {
         height:     parent.height
         color:      qgcPal.windowShade
         visible:    !checked
+        border.color: qgcPal.text
+        border.width: 1
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         QGCLabel {
@@ -49,6 +53,8 @@ Rectangle {
         height:     parent.height * 0.95
         color:      qgcPal.buttonHighlight
         visible:    checked
+        border.color: qgcPal.text
+        border.width: 1
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         QGCLabel {
