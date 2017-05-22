@@ -580,24 +580,6 @@ int CameraControl::_findShutterSpeedIndex(float shutter_speed)
 }
 
 //-----------------------------------------------------------------------------
-void
-CameraControl::_handleISOStatus()
-{
-    /*
-    for(uint32_t i = 0; i < NUM_ISO_VALUES; i++) {
-        QString iso = QString("ISO_%1").arg(isoValues[i].description);
-        if(_ambarellaSettings.iso_value == iso) {
-            if(_currentIso != i) {
-                _currentIso = i;
-                emit currentIsoChanged();
-                return;
-            }
-        }
-    }
-    */
-}
-
-//-----------------------------------------------------------------------------
 int
 CameraControl::_findVideoResIndex(int w, int h, float fps)
 {
@@ -842,8 +824,15 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
         emit currentShutterChanged();
     }
     //-- ISO Value
-    // TODO: Waiting to see what is returned.
-    // For now, all I get is NAN.
+    for(uint32_t i = 0; i < NUM_ISO_VALUES; i++) {
+        if(isoValues[i].value == (int)settings.iso_sensitivity) {
+            if(_currentIso != i) {
+                _currentIso = i;
+                emit currentIsoChanged();
+                break;
+            }
+        }
+    }
     //-- EV
     if(_ambarellaSettings.exposure_value != settings.ev) {
         //-- TODO: Need to diferentiate between E50 and E90
