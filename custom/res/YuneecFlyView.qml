@@ -54,7 +54,9 @@ Item {
         running:   false;
         repeat:    false;
         onTriggered: {
-            rootLoader.sourceComponent = connectedToAP
+            if(TyphoonHQuickInterface.wifiAlertEnabled) {
+                rootLoader.sourceComponent = connectedToAP
+            }
         }
     }
 

@@ -532,6 +532,7 @@ Item {
     MouseArea {
         anchors.fill:   parent
         onClicked: {
+            TyphoonHQuickInterface.wifiAlertEnabled = false
             if(_hasWifi) {
                 var centerX = mapToItem(toolBar, x, y).x + (width / 2)
                 mainWindow.showPopUp(wifiRSSIInfo, centerX)

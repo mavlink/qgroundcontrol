@@ -95,6 +95,8 @@ public:
     Q_PROPERTY(bool             copyingFiles    READ    copyingFiles        NOTIFY copyingFilesChanged)
     Q_PROPERTY(int              copyResult      READ    copyResult          NOTIFY copyResultChanged)
 
+    Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
+
     Q_PROPERTY(int              J1              READ    J1                  NOTIFY rawChannelChanged)
     Q_PROPERTY(int              J2              READ    J2                  NOTIFY rawChannelChanged)
     Q_PROPERTY(int              J3              READ    J3                  NOTIFY rawChannelChanged)
@@ -160,8 +162,10 @@ public:
     qreal       rcBattery           ();
     QString     flightTime          ();
     int         copyResult          () { return _copyResult; }
+    bool        wifiAlertEnabled    () { return _wifiAlertEnabled; }
 
     void        init                (TyphoonHM4Interface* pHandler);
+    void        setWifiAlertEnabled (bool enabled) { _wifiAlertEnabled = enabled; emit wifiAlertEnabledChanged(); }
 
     int         J1                  () { return rawChannel(0); }
     int         J2                  () { return rawChannel(1); }
@@ -203,6 +207,7 @@ signals:
     void    copyResultChanged           ();
     void    calibrationCompleteChanged  ();
     void    calibrationStateChanged     ();
+    void    wifiAlertEnabledChanged     ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -251,5 +256,6 @@ private:
     bool                    _scanningWiFi;
     bool                    _bindingWiFi;
     bool                    _copyingFiles;
+    bool                    _wifiAlertEnabled;
     int                     _copyResult;
 };
