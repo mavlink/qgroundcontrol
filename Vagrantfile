@@ -6,8 +6,9 @@
 require 'yaml'
 
 current_dir    = File.dirname(File.expand_path(__FILE__))
-configfile        = YAML.load_file("#{current_dir}/.vagrantconfig.yml")
-yaml_config = configfile['configs']['dev']
+configfile     = YAML.load_file("#{current_dir}/.vagrantconfig.yml")
+travisfile     = YAML.load_file("#{current_dir}/.travis.yml")
+yaml_config    = configfile['configs']['dev']
 
 Vagrant.configure(2) do |config|
   # This trick is used to prefer a VM box over docker
@@ -43,21 +44,17 @@ Vagrant.configure(2) do |config|
   $config_shell = <<-'SHELL'
      set -e
 
+     export %{build_env}
+     export JOBS=$((`cat /proc/cpuinfo | grep -c ^processor`+1))
+
      sudo apt-get update -y
      # we need this long command to keep grub-pc from prompting for input
      sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
 
+     sudo apt-get install -y %{apt_pkgs}
+
      echo 'Initialising submodules'
      su - vagrant -c 'cd %{project_root_dir}; git submodule init && git submodule update'
-
-     # taken from travis.yml
-     export CCACHE_CPP2=1 CCACHE_DISABLE=1 JOBS=4 QT_FATAL_WARNINGS=1
-     export JOBS=$((`cat /proc/cpuinfo | grep -c ^processor`+1))
-
-     sudo apt-get install -y git build-essential wget
-     sudo apt-get install -y espeak libespeak-dev libudev-dev libsdl2-dev
-     sudo apt-get install -y doxygen
-     sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev
 
      echo 'Saving %{qt_deps_tarball} from %{deps_url} to %{project_root_dir}'
      su - vagrant -c 'wget --continue -q %{deps_url} -P %{project_root_dir}'
@@ -85,6 +82,8 @@ Vagrant.configure(2) do |config|
     :pro => yaml_config['pro'],
     :spec => yaml_config['spec'],
     :deps_url => yaml_config['deps_url'],
+    :apt_pkgs => (travisfile['addons']['apt']['packages']+['git', 'build-essential', 'fuse']).join(' '),
+    :build_env => travisfile['env']['global'].select { |item| item.is_a?(String) }.join(' '),
 
     :project_root_dir => yaml_config['project_root_dir'],
     :qt_deps_unpack_parent_dir => yaml_config['qt_deps_unpack_parent_dir'],
