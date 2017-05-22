@@ -687,6 +687,7 @@ CameraControl::_requestStorageStatus()
 void
 CameraControl::_requestCameraInfo()
 {
+    qCDebug(YuneecCameraLog) << "_requestCameraInfo()";
     if(_vehicle) {
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                     // target component
@@ -815,6 +816,7 @@ CameraControl::_handleCameraInfo(const mavlink_message_t& message)
     _cameraVersion  = info.firmware_version;
     _cameraVendor   = (const char*)&info.vendor_name[0];
     _cameraModel    = (const char*)&info.model_name[0];
+    qCDebug(YuneecCameraLog) << "_handleCameraInfo:" << _cameraVendor << _cameraModel << _cameraVersion << (_cameraVersion >> 24 & 0xFF) << (_cameraVersion >> 16 & 0xFF) << (_cameraVersion >> 8 & 0xFF) << (_cameraVersion & 0xFF);
     _startTimer(MAV_CMD_REQUEST_CAMERA_SETTINGS, 500);
 }
 

@@ -113,9 +113,6 @@ public:
     Q_PROPERTY(int              K1Cal           READ    K1Cal               NOTIFY calibrationStateChanged)
     Q_PROPERTY(int              K2Cal           READ    K2Cal               NOTIFY calibrationStateChanged)
     Q_PROPERTY(int              K3Cal           READ    K3Cal               NOTIFY calibrationStateChanged)
-    Q_PROPERTY(int              T12Cal          READ    T12Cal              NOTIFY calibrationStateChanged)
-    Q_PROPERTY(int              T34Cal          READ    T34Cal              NOTIFY calibrationStateChanged)
-    Q_PROPERTY(int              ASwitchCal      READ    ASwitchCal          NOTIFY calibrationStateChanged)
 
     Q_PROPERTY(bool             calibrationComplete     READ    calibrationComplete NOTIFY calibrationCompleteChanged)
 
@@ -184,9 +181,6 @@ public:
     int         K1Cal               () { return calChannelState(4); }
     int         K2Cal               () { return calChannelState(5); }
     int         K3Cal               () { return calChannelState(6); }
-    int         T12Cal              () { return calChannelState(7); }
-    int         T34Cal              () { return calChannelState(8); }
-    int         ASwitchCal          () { return calChannelState(9); }
 
     bool        calibrationComplete ();
 

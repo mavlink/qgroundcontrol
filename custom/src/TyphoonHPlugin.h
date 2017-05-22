@@ -43,6 +43,7 @@ private:
     QGCSettings*        _pGeneral;
     QGCSettings*        _pOfflineMaps;
     QGCSettings*        _pMAVLink;
+    QGCSettings*        _pRCCal;
     QGCSettings*        _pLogDownload;
 #ifdef QT_DEBUG
     QGCSettings*        _pMockLink;
