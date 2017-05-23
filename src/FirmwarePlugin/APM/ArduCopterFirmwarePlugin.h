@@ -81,6 +81,8 @@ public:
 private:
     static bool _remapParamNameIntialized;
     static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
+
+    bool _guidedModeTakeoff(Vehicle* vehicle);
 };
 
 #endif

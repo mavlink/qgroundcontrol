@@ -296,9 +296,13 @@ public:
     static const char* px4FollowMeFlightMode;
 
 protected:
-    // Arms the vehicle, waiting for the arm state to change.
+    // Arms the vehicle with validation and retries
     // @return: true - vehicle armed, false - vehicle failed to arm
     bool _armVehicleAndValidate(Vehicle* vehicle);
+
+    // Sets the vehicle to the specified flight mode with validation and retries
+    // @return: true - vehicle in specified flight mode, false - flight mode change failed
+    bool _setFlightModeAndValidate(Vehicle* vehicle, const QString& flightMode);
 
 private:
     QVariantList _toolBarIndicatorList;
