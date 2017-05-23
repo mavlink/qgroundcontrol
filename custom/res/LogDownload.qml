@@ -142,12 +142,20 @@ QGCView {
                     enabled:    !controller.requestingList && !controller.downloadingLogs
                     text:       qsTr("Refresh")
                     width:      _butttonWidth
-
                     onClicked: {
                         if (!QGroundControl.multiVehicleManager.activeVehicle || QGroundControl.multiVehicleManager.activeVehicle.isOfflineEditingVehicle) {
-                            logDownloadPage.showMessage(qsTr("Log Refresh"), qsTr("You must be connected to a vehicle in order to download logs."), StandardButton.Ok)
+                            refreshDlg.open()
                         } else {
                             controller.refresh()
+                        }
+                    }
+                    MessageDialog {
+                        id:                 refreshDlg
+                        title:              qsTr("Log Refresh")
+                        text:               qsTr("You must be connected to a vehicle in order to download logs.")
+                        standardButtons:    StandardButton.Ok
+                        onAccepted: {
+                            confirmDeleteAll.close()
                         }
                     }
                 }
@@ -171,30 +179,24 @@ QGCView {
                         controller.download()
                     }
                 }
-
                 QGCButton {
                     enabled:    !controller.requestingList && !controller.downloadingLogs && controller.model.count > 0
                     text:       qsTr("Erase All")
                     width:      _butttonWidth
-                    onClicked:  logDownloadPage.showDialog(eraseAllMessage,
-                                                           qsTr("Delete All Log Files"),
-                                                           logDownloadPage.showDialogDefaultWidth,
-                                                           StandardButton.Yes | StandardButton.No)
-
-                    Component {
-                        id: eraseAllMessage
-
-                        QGCViewMessage {
-                            message:    qsTr("All log files will be erased permanently. Is this really what you want?")
-
-                            function accept() {
-                                logDownloadPage.hideDialog()
-                                controller.eraseAll()
-                            }
+                    onClicked: {
+                        confirmDeleteAll.open()
+                    }
+                    MessageDialog {
+                        id:                 confirmDeleteAll
+                        title:              qsTr("Delete All Log Files")
+                        text:               qsTr("All log files will be erased permanently. Is this really what you want?")
+                        standardButtons:    StandardButton.Ok | StandardButton.Cancel
+                        onAccepted: {
+                            controller.eraseAll()
+                            confirmDeleteAll.close()
                         }
                     }
                 }
-
                 QGCButton {
                     text:       qsTr("Cancel")
                     width:      _butttonWidth
