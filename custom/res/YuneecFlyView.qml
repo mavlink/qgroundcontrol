@@ -316,7 +316,7 @@ Item {
 
     //-- Camera Control
     Loader {
-        visible:                !_mainIsMap
+        visible:                !_mainIsMap && TyphoonHQuickInterface.cameraControl && _cameraPresent
         source:                 _mainIsMap ? "" : "/typhoonh/cameraControl.qml"
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
