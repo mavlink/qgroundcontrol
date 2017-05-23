@@ -3290,9 +3290,9 @@ void Vehicle::setSoloFirmware(bool soloFirmware)
     }
 }
 
-void Vehicle::motorTest(int motor, int percent, int timeoutSecs)
+void Vehicle::motorTest(int motor, int percent)
 {
-    sendMavCommand(_defaultComponentId, MAV_CMD_DO_MOTOR_TEST, motor, MOTOR_TEST_THROTTLE_PERCENT, percent, timeoutSecs);
+    sendMavCommand(_defaultComponentId, MAV_CMD_DO_MOTOR_TEST, true, motor, MOTOR_TEST_THROTTLE_PERCENT, percent, 0, 0, MOTOR_TEST_ORDER_BOARD);
 }
 
 QString Vehicle::brandImageIndoor(void) const
