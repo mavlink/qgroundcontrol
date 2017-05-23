@@ -21,12 +21,14 @@ Vagrant.configure(2) do |config|
   end
   config.vm.provider :virtualbox do |vb|
     vb.customize ["modifyvm", :id, "--memory", "4096"]
-    vb.customize ["modifyvm", :id, "--cpus", "1"]
+    vb.customize ["modifyvm", :id, "--cpus", "4"]
+    vb.gui = true
   end
   ["vmware_fusion", "vmware_workstation"].each do |p|
     config.vm.provider p do |v|
       v.vmx["memsize"] = "4096"
-      v.vmx["numvcpus"] = "1"
+      v.vmx["numvcpus"] = "4"
+      v.gui = true
     end
   end
   if Vagrant.has_plugin?("vagrant-cachier")
@@ -48,10 +50,10 @@ Vagrant.configure(2) do |config|
      export JOBS=$((`cat /proc/cpuinfo | grep -c ^processor`+1))
 
      sudo apt-get update -y
-     # we need this long command to keep grub-pc from prompting for input
+     # we need this long command to keep packages (grub-pc esp.) from prompting for input
      sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
-
-     sudo apt-get install -y %{apt_pkgs}
+     sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install %{apt_pkgs} xubuntu-desktop qtcreator
+     sudo systemctl set-default graphical.target
 
      echo 'Initialising submodules'
      su - vagrant -c 'cd %{project_root_dir}; git submodule init && git submodule update'
@@ -71,8 +73,8 @@ Vagrant.configure(2) do |config|
      su - vagrant -c "cd %{shadow_build_dir}; LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir} PATH=%{qt_deps_bin_unpack_dir}:\$PATH qmake -r %{pro} CONFIG+=\${CONFIG} CONFIG+=WarningsAsErrorsOn -spec %{spec}"
      su - vagrant -c "cd %{shadow_build_dir}; LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir} PATH=%{qt_deps_bin_unpack_dir}:\$PATH make -j${JOBS}"
 
-     su - vagrant -c 'mkdir -p %{shadow_build_dir}/release/package'
-     su - vagrant -c 'cd %{project_root_dir}; ./deploy/create_linux_appimage.sh %{project_root_dir} %{shadow_build_dir}/release %{shadow_build_dir}/release/package'
+     #su - vagrant -c 'mkdir -p %{shadow_build_dir}/release/package'
+     #su - vagrant -c 'cd %{project_root_dir}; ./deploy/create_linux_appimage.sh %{project_root_dir} %{shadow_build_dir}/release %{shadow_build_dir}/release/package'
 
    SHELL
 
