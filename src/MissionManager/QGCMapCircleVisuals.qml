@@ -31,6 +31,7 @@ Item {
     property color  borderColor:        "black"
 
     property var _circleComponent
+    property var _centerDragHandleComponent
 
     function addVisuals() {
         _circleComponent = circleComponent.createObject(mapControl)
@@ -41,12 +42,37 @@ Item {
         _circleComponent.destroy()
     }
 
+    function addHandles() {
+        if (!_centerDragHandleComponent) {
+            _centerDragHandleComponent = centerDragHandleComponent.createObject(mapControl)
+        }
+    }
+
+    function removeHandles() {
+        if (_centerDragHandleComponent) {
+            _centerDragHandleComponent.destroy()
+            _centerDragHandleComponent = undefined
+        }
+    }
+
+    onInteractiveChanged: {
+        if (interactive) {
+            addHandles()
+        } else {
+            removeHandles()
+        }
+    }
+
     Component.onCompleted: {
         addVisuals()
+        if (interactive) {
+            addHandles()
+        }
     }
 
     Component.onDestruction: {
         removeVisuals()
+        removeHandles()
     }
 
     Component {
@@ -59,6 +85,55 @@ Item {
             border.width:   borderWidth
             center:         mapCircle.center
             radius:         mapCircle.radius
+        }
+    }
+
+    Component {
+        id: dragHandleComponent
+
+        MapQuickItem {
+            id:             mapQuickItem
+            anchorPoint.x:  dragHandle.width / 2
+            anchorPoint.y:  dragHandle.height / 2
+            z:              QGroundControl.zOrderMapItems + 2
+
+            sourceItem: Rectangle {
+                id:         dragHandle
+                width:      ScreenTools.defaultFontPixelHeight * 1.5
+                height:     width
+                radius:     width / 2
+                color:      "white"
+                opacity:    .90
+            }
+        }
+    }
+
+    Component {
+        id: centerDragAreaComponent
+
+        MissionItemIndicatorDrag {
+            onItemCoordinateChanged:    mapCircle.center = itemCoordinate
+        }
+    }
+
+    Component {
+        id: centerDragHandleComponent
+
+        Item {
+            property var dragHandle
+            property var dragArea
+
+            Component.onCompleted: {
+                dragHandle = dragHandleComponent.createObject(mapControl)
+                dragHandle.coordinate = Qt.binding(function() { return mapCircle.center })
+                mapControl.addMapItem(dragHandle)
+                dragArea = centerDragAreaComponent.createObject(mapControl, { "itemIndicator": dragHandle, "itemCoordinate": mapCircle.center })
+            }
+
+            Component.onDestruction: {
+                dragHandle.destroy()
+                dragArea.destroy()
+            }
         }
     }
 }

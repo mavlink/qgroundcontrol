@@ -12,7 +12,8 @@
 
 #include "PlanElementController.h"
 #include "GeoFenceManager.h"
-#include "QGCMapPolygon.h"
+#include "QGCFencePolygon.h"
+#include "QGCFenceCircle.h"
 #include "Vehicle.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
@@ -29,11 +30,9 @@ public:
     GeoFenceController(PlanMasterController* masterController, QObject* parent = NULL);
     ~GeoFenceController();
 
-    Q_PROPERTY(QmlObjectListModel*  inclusionMapPolygons    READ inclusionMapPolygons                               CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  exclusionMapPolygons    READ exclusionMapPolygons                               CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  inclusionMapCircles     READ inclusionMapCircles                                CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  exclusionMapCircles     READ exclusionMapCircles                                CONSTANT)
-    Q_PROPERTY(QGeoCoordinate       breachReturnPoint       READ breachReturnPoint      WRITE setBreachReturnPoint  NOTIFY breachReturnPointChanged)
+    Q_PROPERTY(QmlObjectListModel*  polygons            READ polygons                                       CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  circles             READ circles                                        CONSTANT)
+    Q_PROPERTY(QGeoCoordinate       breachReturnPoint   READ breachReturnPoint  WRITE setBreachReturnPoint  NOTIFY breachReturnPointChanged)
 
     // The following properties are reflections of properties from GeoFenceManager
     Q_PROPERTY(bool             circleEnabled           READ circleEnabled          NOTIFY circleEnabledChanged)
@@ -44,16 +43,23 @@ public:
     Q_PROPERTY(QVariantList     params                  READ params                 NOTIFY paramsChanged)
     Q_PROPERTY(QStringList      paramLabels             READ paramLabels            NOTIFY paramLabelsChanged)
 
-    // FIXME: Method/Signal names here are bad
+    /// Add a new inclusion polygon to the fence
+    ///     @param topLeft - Top left coordinate or map viewport
+    ///     @param topLeft - Bottom right left coordinate or map viewport
+    Q_INVOKABLE void addInclusionPolygon(QGeoCoordinate topLeft, QGeoCoordinate bottomRight);
 
-    Q_INVOKABLE void signalAddInclusionPolygon     (void) { emit addInclusionPolygon(); }
-    Q_INVOKABLE void signalAddExclusionPolygon     (void) { emit addExclusionPolygon(); }
+    /// Add a new inclusion circle to the fence
+    ///     @param topLeft - Top left coordinate or map viewport
+    ///     @param topLeft - Bottom right left coordinate or map viewport
+    Q_INVOKABLE void addInclusionCircle(QGeoCoordinate topLeft, QGeoCoordinate bottomRight);
 
-    Q_INVOKABLE void addInclusion(QGeoCoordinate topLeft, QGeoCoordinate bottomRight);
-    Q_INVOKABLE void addExclusion(QGeoCoordinate topLeft, QGeoCoordinate bottomRight);
+    /// Deletes the specified polygon from the polygon list
+    ///     @param index Index of poygon to delete
+    Q_INVOKABLE void deletePolygon(int index);
 
-    Q_INVOKABLE void addInclusionCircle(QGeoCoordinate center);
-    Q_INVOKABLE void addExclusionCircle(QGeoCoordinate center);
+    /// Deletes the specified circle from the circle list
+    ///     @param index Index of circle to delete
+    Q_INVOKABLE void deleteCircle(int index);
 
     void start                      (bool editMode) final;
     void save                       (QJsonObject& json) final;
@@ -73,10 +79,8 @@ public:
     Fact*               circleRadiusFact        (void) const;
     bool                polygonSupported        (void) const;
     bool                polygonEnabled          (void) const;
-    QmlObjectListModel* inclusionMapPolygons    (void) { return &_inclusionPolygons; }
-    QmlObjectListModel* exclusionMapPolygons    (void) { return &_exclusionPolygons; }
-    QmlObjectListModel* inclusionMapCircles     (void) { return &_inclusionCircles; }
-    QmlObjectListModel* exclusionMapCircles     (void) { return &_exclusionCircles; }
+    QmlObjectListModel* polygons                (void) { return &_polygons; }
+    QmlObjectListModel* circles                 (void) { return &_circles; }
     bool                breachReturnSupported   (void) const;
     QVariantList        params                  (void) const;
     QStringList         paramLabels             (void) const;
@@ -88,8 +92,6 @@ signals:
     void breachReturnPointChanged       (QGeoCoordinate breachReturnPoint);
     void editorQmlChanged               (QString editorQml);
     void loadComplete                   (void);
-    void addInclusionPolygon            (void);
-    void addExclusionPolygon            (void);
     void circleEnabledChanged           (bool circleEnabled);
     void circleRadiusFactChanged        (Fact* circleRadiusFact);
     void polygonSupportedChanged        (bool polygonSupported);
@@ -101,10 +103,8 @@ signals:
 private slots:
     void _polygonDirtyChanged(bool dirty);
     void _setDirty(void);
-    void _setFenceFromManager(const QList<QList<QGeoCoordinate>>&   inclusionPolygons,
-                              const QList<QList<QGeoCoordinate>>&   exclusionPolygons,
-                              const QList<QGCMapCircle>&            inclusionCircles,
-                              const QList<QGCMapCircle>&            exclusionCircles);
+    void _setFenceFromManager(const QList<QGCFencePolygon>& polygons,
+                              const QList<QGCFenceCircle>&  circles);
     void _setReturnPointFromManager(QGeoCoordinate breachReturnPoint);
     void _managerLoadComplete(void);
     void _updateContainsItems(void);
@@ -117,10 +117,8 @@ private:
 
     GeoFenceManager*    _geoFenceManager;
     bool                _dirty;
-    QmlObjectListModel  _inclusionPolygons;
-    QmlObjectListModel  _exclusionPolygons;
-    QmlObjectListModel  _inclusionCircles;
-    QmlObjectListModel  _exclusionCircles;
+    QmlObjectListModel  _polygons;
+    QmlObjectListModel  _circles;
     QGeoCoordinate      _breachReturnPoint;
     bool                _itemsRequested;
 

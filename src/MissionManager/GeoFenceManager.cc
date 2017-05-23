@@ -81,41 +81,31 @@ void GeoFenceManager::loadFromVehicle(void)
 }
 
 void GeoFenceManager::sendToVehicle(const QGeoCoordinate&   breachReturn,
-                                    QmlObjectListModel&     inclusionPolygons,
-                                    QmlObjectListModel&     exclusionPolygons,
-                                    QmlObjectListModel&     inclusionCircles,
-                                    QmlObjectListModel&     exclusionCircles)
+                                    QmlObjectListModel&     polygons,
+                                    QmlObjectListModel&     circles)
 {
     Q_UNUSED(breachReturn);
 
     QList<MissionItem*> fenceItems;
 
-    _sendInclusionPolygons.clear();
-    _sendExclusionPolygons.clear();
-    _sendInclusionCircles.clear();
-    _sendExclusionCircles.clear();
+    _sendPolygons.clear();
+    _sendCircles.clear();
 
-    for (int i=0; i<inclusionPolygons.count(); i++) {
-        _sendInclusionPolygons.append(inclusionPolygons.value<QGCMapPolygon*>(i)->coordinateList());
+    for (int i=0; i<polygons.count(); i++) {
+        _sendPolygons.append(*polygons.value<QGCFencePolygon*>(i));
     }
-    for (int i=0; i<exclusionPolygons.count(); i++) {
-        _sendExclusionPolygons.append(exclusionPolygons.value<QGCMapPolygon*>(i)->coordinateList());
-    }
-    for (int i=0; i<inclusionCircles.count(); i++) {
-        _sendInclusionCircles.append(*inclusionCircles.value<QGCMapCircle*>(i));
-    }
-    for (int i=0; i<exclusionCircles.count(); i++) {
-        _sendExclusionCircles.append(*exclusionCircles.value<QGCMapCircle*>(i));
+    for (int i=0; i<circles.count(); i++) {
+        _sendCircles.append(*circles.value<QGCFenceCircle*>(i));
     }
 
-    for (int i=0; i<_sendInclusionPolygons.count(); i++) {
-        const QList<QGeoCoordinate>& polygon = _sendInclusionPolygons[i];
+    for (int i=0; i<_sendPolygons.count(); i++) {
+        const QGCFencePolygon& polygon = _sendPolygons[i];
 
         for (int j=0; j<polygon.count(); j++) {
-            const QGeoCoordinate& vertex = polygon[j];
+            const QGeoCoordinate& vertex = polygon.path()[j].value<QGeoCoordinate>();
 
             MissionItem* item = new MissionItem(0,
-                                                MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION,
+                                                polygon.inclusion() ? MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION : MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION,
                                                 MAV_FRAME_GLOBAL,
                                                 polygon.count(),    // vertex count
                                                 0, 0, 0,            // param 2-4 unused
@@ -129,47 +119,11 @@ void GeoFenceManager::sendToVehicle(const QGeoCoordinate&   breachReturn,
         }
     }
 
-    for (int i=0; i<_sendExclusionPolygons.count(); i++) {
-        const QList<QGeoCoordinate>& polygon = _sendExclusionPolygons[i];
+    for (int i=0; i<_sendCircles.count(); i++) {
+        const QGCFenceCircle& circle = _sendCircles[i];
 
-        for (int j=0; j<polygon.count(); j++) {
-            const QGeoCoordinate& vertex = polygon[j];
-
-            MissionItem* item = new MissionItem(0,
-                                                MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION,
-                                                MAV_FRAME_GLOBAL,
-                                                polygon.count(),    // vertex count
-                                                0, 0, 0,            // param 2-4 unused
-                                                vertex.latitude(),
-                                                vertex.longitude(),
-                                                0,                  // param 7 unused
-                                                false,              // autocontinue
-                                                false,              // isCurrentItem
-                                                this);              // parent
-            fenceItems.append(item);
-        }
-    }
-
-    for (int i=0; i<_sendInclusionCircles.count(); i++) {
-        const QGCMapCircle& circle = _sendInclusionCircles[i];
         MissionItem* item = new MissionItem(0,
-                                            MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION,
-                                            MAV_FRAME_GLOBAL,
-                                            circle.radius(),
-                                            0, 0, 0,                    // param 2-4 unused
-                                            circle.center().latitude(),
-                                            circle.center().longitude(),
-                                            0,                          // param 7 unused
-                                            false,                      // autocontinue
-                                            false,                      // isCurrentItem
-                                            this);                      // parent
-        fenceItems.append(item);
-    }
-
-    for (int i=0; i<_sendExclusionCircles.count(); i++) {
-        const QGCMapCircle& circle = _sendExclusionCircles[i];
-        MissionItem* item = new MissionItem(0,
-                                            MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION,
+                                            circle.inclusion() ? MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION : MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION,
                                             MAV_FRAME_GLOBAL,
                                             circle.radius(),
                                             0, 0, 0,                    // param 2-4 unused
@@ -197,20 +151,14 @@ void GeoFenceManager::removeAll(void)
 void GeoFenceManager::_sendComplete(bool error)
 {
     if (error) {
-        _inclusionPolygons.clear();
-        _exclusionPolygons.clear();
-        _inclusionCircles.clear();
-        _exclusionCircles.clear();
+        _polygons.clear();
+        _circles.clear();
     } else {
-        _inclusionPolygons = _sendInclusionPolygons;
-        _exclusionPolygons = _sendExclusionPolygons;
-        _inclusionCircles = _sendInclusionCircles;
-        _exclusionCircles = _sendExclusionCircles;
+        _polygons = _sendPolygons;
+        _circles = _sendCircles;
     }
-    _sendInclusionPolygons.clear();
-    _sendExclusionPolygons.clear();
-    _sendInclusionCircles.clear();
-    _sendExclusionCircles.clear();
+    _sendPolygons.clear();
+    _sendCircles.clear();
     emit sendComplete(error);
 }
 
@@ -220,14 +168,12 @@ void GeoFenceManager::_planManagerLoadComplete(bool removeAllRequested)
 
     Q_UNUSED(removeAllRequested);
 
-    _inclusionPolygons.clear();
-    _exclusionPolygons.clear();
-    _inclusionCircles.clear();
-    _exclusionCircles.clear();
+    _polygons.clear();
+    _circles.clear();
 
     MAV_CMD expectedCommand = (MAV_CMD)0;
     int expectedVertexCount = 0;
-    QList<QGeoCoordinate> nextPolygon;
+    QGCFencePolygon nextPolygon(true /* inclusion */);
     const QList<MissionItem*>& fenceItems = _planManager.missionItems();
 
     for (int i=0; i<fenceItems.count(); i++) {
@@ -249,14 +195,11 @@ void GeoFenceManager::_planManagerLoadComplete(bool removeAllRequested)
                 emit error(BadPolygonItemFormat, tr("GeoFence load: Polygon type changed before last load complete - actual:expected").arg(command).arg(expectedCommand));
                 break;
             }
-            nextPolygon.append(QGeoCoordinate(item->param5(), item->param6()));
+            nextPolygon.appendVertex(QGeoCoordinate(item->param5(), item->param6()));
             if (nextPolygon.count() == expectedVertexCount) {
                 // Polygon is complete
-                if (command == MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION) {
-                    _inclusionPolygons.append(nextPolygon);
-                } else {
-                    _exclusionPolygons.append(nextPolygon);
-                }
+                nextPolygon.setInclusion(command == MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION);
+                _polygons.append(nextPolygon);
                 nextPolygon.clear();
             }
         } else if (command == MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION || command == MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION) {
@@ -265,12 +208,9 @@ void GeoFenceManager::_planManagerLoadComplete(bool removeAllRequested)
                 emit error(IncompletePolygonLoad, tr("GeoFence load: Incomplete polygon loaded"));
                 break;
             }
-            QGCMapCircle circle(QGeoCoordinate(item->param5(), item->param6()), item->param1());
-            if (command == MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION) {
-                _inclusionCircles.append(circle);
-            } else {
-                _exclusionCircles.append(circle);
-            }
+            QGCFenceCircle circle(QGeoCoordinate(item->param5(), item->param6()), item->param1(), command == MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION /* inclusion */);
+            circle.setInclusion(command == MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION);
+            _circles.append(circle);
         } else {
             emit error(UnsupportedCommand, tr("GeoFence load: Unsupported command %1").arg(item->command()));
             break;
@@ -278,10 +218,8 @@ void GeoFenceManager::_planManagerLoadComplete(bool removeAllRequested)
     }
 
     if (loadFailed) {
-        _inclusionPolygons.clear();
-        _exclusionPolygons.clear();
-        _inclusionCircles.clear();
-        _exclusionCircles.clear();
+        _polygons.clear();
+        _circles.clear();
     }
 
     emit loadComplete();

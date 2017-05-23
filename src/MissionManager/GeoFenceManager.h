@@ -16,7 +16,8 @@
 #include "QGCLoggingCategory.h"
 #include "FactSystem.h"
 #include "PlanManager.h"
-#include "QGCMapCircle.h"
+#include "QGCFencePolygon.h"
+#include "QGCFenceCircle.h"
 
 class Vehicle;
 class QmlObjectListModel;
@@ -43,11 +44,9 @@ public:
 
     /// Send the geofence settings to the vehicle
     ///     Signals sendComplete when done
-    virtual void sendToVehicle(const QGeoCoordinate&    breachReturn,       ///< Breach return point
-                               QmlObjectListModel&      inclusionPolygons,  ///< List of inclusion QGCMapPolygons
-                               QmlObjectListModel&      exclusionPolygons,  ///< List of exclusion QGCMapPolygons
-                               QmlObjectListModel&      inclusionCircles,   ///< List of inclusion QGCMapCircles
-                               QmlObjectListModel&      exclusionCircles);  ///< List of exclusion QGCMapCircles
+    virtual void sendToVehicle(const QGeoCoordinate&    breachReturn,   ///< Breach return point
+                               QmlObjectListModel&      polygons,       ///< List of QGCFencePolygons
+                               QmlObjectListModel&      circles);       ///< List of QGCFenceCircles
 
     /// Remove all fence related items from vehicle (does not affect parameters)
     ///     Signals removeAllComplete when done
@@ -81,13 +80,9 @@ public:
     ///     Signal: circleRadiusFactChanged
     virtual Fact* circleRadiusFact(void) const { return _circleRadiusFact; }
 
-    const QList<QList<QGeoCoordinate>>& inclusionPolygons(void) const { return _inclusionPolygons; }
-    const QList<QList<QGeoCoordinate>>& exclusionPolygons(void) const { return _exclusionPolygons; }
-
-    const QList<QGCMapCircle>& inclusionMapCircles(void) { return _inclusionCircles; }
-    const QList<QGCMapCircle>& exclusionMapCircles(void) { return _exclusionCircles; }
-
-    const QGeoCoordinate&               breachReturnPoint   (void) const { return _breachReturnPoint; }
+    const QList<QGCFencePolygon>&   polygons(void) { return _polygons; }
+    const QList<QGCFenceCircle>&    circles(void) { return _circles; }
+    const QGeoCoordinate&           breachReturnPoint(void) const { return _breachReturnPoint; }
 
     /// Error codes returned in error signal
     typedef enum {
@@ -122,21 +117,17 @@ private slots:
 private:
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
 
-    Vehicle*                        _vehicle;
-    PlanManager                     _planManager;
-    QList<QList<QGeoCoordinate>>    _inclusionPolygons;
-    QList<QList<QGeoCoordinate>>    _exclusionPolygons;
-    QList<QGCMapCircle>             _inclusionCircles;
-    QList<QGCMapCircle>             _exclusionCircles;
-    QGeoCoordinate                  _breachReturnPoint;
-    bool                            _firstParamLoadComplete;
-    Fact*                           _circleRadiusFact;
-    QVariantList                    _params;
-    QStringList                     _paramLabels;
-    QList<QList<QGeoCoordinate>>    _sendInclusionPolygons;
-    QList<QList<QGeoCoordinate>>    _sendExclusionPolygons;
-    QList<QGCMapCircle>             _sendInclusionCircles;
-    QList<QGCMapCircle>             _sendExclusionCircles;
+    Vehicle*                _vehicle;
+    PlanManager             _planManager;
+    QList<QGCFencePolygon>  _polygons;
+    QList<QGCFenceCircle>   _circles;
+    QGeoCoordinate          _breachReturnPoint;
+    bool                    _firstParamLoadComplete;
+    Fact*                   _circleRadiusFact;
+    QVariantList            _params;
+    QStringList             _paramLabels;
+    QList<QGCFencePolygon>  _sendPolygons;
+    QList<QGCFenceCircle>   _sendCircles;
 };
 
 #endif

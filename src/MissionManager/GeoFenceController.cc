@@ -41,10 +41,8 @@ GeoFenceController::GeoFenceController(PlanMasterController* masterController, Q
     , _dirty(false)
     , _itemsRequested(false)
 {
-    connect(&_inclusionPolygons,    &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
-    connect(&_exclusionPolygons,    &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
-    connect(&_inclusionCircles,     &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
-    connect(&_exclusionCircles,     &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
+    connect(&_polygons, &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
+    connect(&_circles,  &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
 
     managerVehicleChanged(_managerVehicle);
 }
@@ -162,8 +160,8 @@ void  GeoFenceController::save(QJsonObject& json)
 void GeoFenceController::removeAll(void)
 {    
     setBreachReturnPoint(QGeoCoordinate());
-    _inclusionPolygons.clear();
-    _exclusionPolygons.clear();
+    _polygons.clearAndDeleteContents();
+    _circles.clearAndDeleteContents();
 }
 
 void GeoFenceController::removeAllFromVehicle(void)
@@ -197,7 +195,7 @@ void GeoFenceController::sendToVehicle(void)
         qCWarning(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while syncInProgress";
     } else {
         qCDebug(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle";
-        _geoFenceManager->sendToVehicle(_breachReturnPoint, _inclusionPolygons, _exclusionPolygons, _inclusionCircles, _exclusionCircles);
+        _geoFenceManager->sendToVehicle(_breachReturnPoint, _polygons, _circles);
         setDirty(false);
     }
 }
@@ -218,13 +216,13 @@ void GeoFenceController::setDirty(bool dirty)
     if (dirty != _dirty) {
         _dirty = dirty;
         if (!dirty) {
-            for (int i=0; i<_inclusionPolygons.count(); i++) {
-                QGCMapPolygon* polygon = _inclusionPolygons.value<QGCMapPolygon*>(i);
+            for (int i=0; i<_polygons.count(); i++) {
+                QGCFencePolygon* polygon = _polygons.value<QGCFencePolygon*>(i);
                 polygon->setDirty(false);
             }
-            for (int i=0; i<_exclusionPolygons.count(); i++) {
-                QGCMapPolygon* polygon = _exclusionPolygons.value<QGCMapPolygon*>(i);
-                polygon->setDirty(false);
+            for (int i=0; i<_circles.count(); i++) {
+                QGCFenceCircle* circle = _circles.value<QGCFenceCircle*>(i);
+                circle->setDirty(false);
             }
         }
         emit dirtyChanged(dirty);
@@ -278,42 +276,18 @@ void GeoFenceController::_setDirty(void)
     setDirty(true);
 }
 
-void GeoFenceController::_setFenceFromManager(const QList<QList<QGeoCoordinate>>&   inclusionPolygons,
-                                              const QList<QList<QGeoCoordinate>>&   exclusionPolygons,
-                                              const QList<QGCMapCircle>&            inclusionCircles,
-                                              const QList<QGCMapCircle>&            exclusionCircles)
+void GeoFenceController::_setFenceFromManager(const QList<QGCFencePolygon>& polygons,
+                                              const QList<QGCFenceCircle>&  circles)
 {
-    _inclusionPolygons.clearAndDeleteContents();
-    _exclusionPolygons.clearAndDeleteContents();
-    _inclusionCircles.clearAndDeleteContents();
-    _exclusionCircles.clearAndDeleteContents();
+    _polygons.clearAndDeleteContents();
+    _circles.clearAndDeleteContents();
 
-    for (int i=0; i<inclusionPolygons.count(); i++) {
-        QGCMapPolygon*                  mapPolygon = new QGCMapPolygon(this);
-        const QList<QGeoCoordinate>&    polygon = inclusionPolygons[i];
-
-        for (int j=0; j<polygon.count(); j++) {
-            mapPolygon->appendVertex(polygon[j]);
-        }
-        _inclusionPolygons.append(mapPolygon);
+    for (int i=0; i<polygons.count(); i++) {
+        _polygons.append(new QGCFencePolygon(polygons[i], this));
     }
 
-    for (int i=0; i<exclusionPolygons.count(); i++) {
-        QGCMapPolygon*                  mapPolygon = new QGCMapPolygon(this);
-        const QList<QGeoCoordinate>&    polygon = exclusionPolygons[i];
-
-        for (int j=0; j<polygon.count(); j++) {
-            mapPolygon->appendVertex(polygon[j]);
-        }
-        _exclusionPolygons.append(mapPolygon);
-    }
-
-    for (int i=0; i<inclusionCircles.count(); i++) {
-        _inclusionCircles.append(new QGCMapCircle(inclusionCircles[i]));
-    }
-
-    for (int i=0; i<exclusionCircles.count(); i++) {
-        _exclusionCircles.append(new QGCMapCircle(exclusionCircles[i]));
+    for (int i=0; i<circles.count(); i++) {
+        _circles.append(new QGCMapCircle(circles[i], this));
     }
 
     setDirty(false);
@@ -331,10 +305,7 @@ void GeoFenceController::_managerLoadComplete(void)
     // Plan view only reloads on _loadComplete if specifically requested
     if (!_editMode || _itemsRequested) {
         _setReturnPointFromManager(_geoFenceManager->breachReturnPoint());
-        _setFenceFromManager(_geoFenceManager->inclusionPolygons(),
-                             _geoFenceManager->exclusionPolygons(),
-                             _geoFenceManager->inclusionMapCircles(),
-                             _geoFenceManager->exclusionMapCircles());
+        _setFenceFromManager(_geoFenceManager->polygons(), _geoFenceManager->circles());
         setDirty(false);
         _signalAll();
         emit loadComplete();
@@ -360,7 +331,7 @@ void GeoFenceController::_managerRemoveAllComplete(bool error)
 
 bool GeoFenceController::containsItems(void) const
 {
-    return _inclusionPolygons.count() > 0 || _exclusionPolygons.count() > 0;
+    return _polygons.count() > 0 || _circles.count() > 0;
 }
 
 void GeoFenceController::_updateContainsItems(void)
@@ -394,36 +365,69 @@ bool GeoFenceController::showPlanFromManagerVehicle(void)
     }
 }
 
-void GeoFenceController::addInclusion(QGeoCoordinate topLeft, QGeoCoordinate bottomRight)
+void GeoFenceController::addInclusionPolygon(QGeoCoordinate topLeft, QGeoCoordinate bottomRight)
 {
-    QGCMapPolygon* polygon = new QGCMapPolygon(this);
+    QGeoCoordinate topRight(topLeft.latitude(), bottomRight.longitude());
+    QGeoCoordinate bottomLeft(bottomRight.latitude(), topLeft.longitude());
 
-    polygon->appendVertex(QGeoCoordinate(topLeft.latitude(), topLeft.longitude()));
-    polygon->appendVertex(QGeoCoordinate(topLeft.latitude(), bottomRight.longitude()));
-    polygon->appendVertex(QGeoCoordinate(bottomRight.latitude(), bottomRight.longitude()));
-    polygon->appendVertex(QGeoCoordinate(bottomRight.latitude(), topLeft.longitude()));
+    double halfWidthMeters = topLeft.distanceTo(topRight) / 2.0;
+    double halfHeightMeters = topLeft.distanceTo(bottomLeft) / 2.0;
 
-    _inclusionPolygons.append(polygon);
+    QGeoCoordinate centerLeftEdge = topLeft.atDistanceAndAzimuth(halfHeightMeters, 180);
+    QGeoCoordinate centerTopEdge = topLeft.atDistanceAndAzimuth(halfWidthMeters, 90);
+    QGeoCoordinate center(centerLeftEdge.latitude(), centerTopEdge.longitude());
+
+    // Initial polygon is inset to take 3/4s of viewport with max width/height of 3000 meters
+    halfWidthMeters =   qMin(halfWidthMeters * 0.75, 1500.0);
+    halfHeightMeters =  qMin(halfHeightMeters * 0.75, 1500.0);
+
+    // Initial polygon has max width and height of 3000 meters
+    topLeft =           center.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 0);
+    topRight =          center.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 0);
+    bottomLeft =        center.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 180);
+    bottomRight =       center.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 180);
+
+    QGCFencePolygon* polygon = new QGCFencePolygon(true /* inclusion */, this);
+    polygon->appendVertex(topLeft);
+    polygon->appendVertex(topRight);
+    polygon->appendVertex(bottomRight);
+    polygon->appendVertex(bottomLeft);
+    _polygons.append(polygon);
 }
 
-void GeoFenceController::addExclusion(QGeoCoordinate topLeft, QGeoCoordinate bottomRight)
+void GeoFenceController::addInclusionCircle(QGeoCoordinate topLeft, QGeoCoordinate bottomRight)
 {
-    QGCMapPolygon* polygon = new QGCMapPolygon(this);
+    QGeoCoordinate topRight(topLeft.latitude(), bottomRight.longitude());
+    QGeoCoordinate bottomLeft(bottomRight.latitude(), topLeft.longitude());
 
-    polygon->appendVertex(QGeoCoordinate(topLeft.latitude(), topLeft.longitude()));
-    polygon->appendVertex(QGeoCoordinate(topLeft.latitude(), bottomRight.longitude()));
-    polygon->appendVertex(QGeoCoordinate(bottomRight.latitude(), bottomRight.longitude()));
-    polygon->appendVertex(QGeoCoordinate(bottomRight.latitude(), topLeft.longitude()));
+    // Initial radius is inset to take 3/4s of viewport and max of 1500 meters
+    double halfWidthMeters = topLeft.distanceTo(topRight) / 2.0;
+    double halfHeightMeters = topLeft.distanceTo(bottomLeft) / 2.0;
+    double radius = qMin(qMin(halfWidthMeters, halfHeightMeters) * 0.75, 1500.0);
 
-    _exclusionPolygons.append(polygon);
+    QGeoCoordinate centerLeftEdge = topLeft.atDistanceAndAzimuth(halfHeightMeters, 180);
+    QGeoCoordinate centerTopEdge = topLeft.atDistanceAndAzimuth(halfWidthMeters, 90);
+    QGeoCoordinate center(centerLeftEdge.latitude(), centerTopEdge.longitude());
+
+    _circles.append(new QGCFenceCircle(center, radius, true /* inclusion */, this));
 }
 
-void GeoFenceController::addInclusionCircle(QGeoCoordinate center)
+void GeoFenceController::deletePolygon(int index)
 {
-    _inclusionCircles.append(new QGCMapCircle(center, 1000, this));
+    if (index < 0 || index > _polygons.count() - 1) {
+        return;
+    }
+
+    QGCFencePolygon* polygon = qobject_cast<QGCFencePolygon*>(_polygons.removeAt(index));
+    polygon->deleteLater();
 }
 
-void GeoFenceController::addExclusionCircle(QGeoCoordinate center)
+void GeoFenceController::deleteCircle(int index)
 {
-    _exclusionCircles.append(new QGCMapCircle(center, 100, this));
+    if (index < 0 || index > _circles.count() - 1) {
+        return;
+    }
+
+    QGCFenceCircle* circle = qobject_cast<QGCFenceCircle*>(_circles.removeAt(index));
+    circle->deleteLater();
 }

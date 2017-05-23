@@ -30,16 +30,14 @@ Item {
 
     property var    _breachReturnPointComponent
     property var    _mouseAreaComponent
-    property var    _inclusionPolygons:             myGeoFenceController.inclusionMapPolygons
-    property var    _exclusionPolygons:             myGeoFenceController.exclusionMapPolygons
-    property var    _inclusionCircles:              myGeoFenceController.inclusionMapCircles
-    property var    _exclusionCircles:              myGeoFenceController.exclusionMapCircles
-    property bool   _interactive:                   interactive
-    property bool   _circleSupported:               myGeoFenceController.circleRadiusFact !== null
-    property bool   _circleEnabled:                 myGeoFenceController.circleEnabled
-    property real   _circleRadius:                  _circleSupported ? myGeoFenceController.circleRadiusFact.rawValue : 0
-    property bool   _polygonSupported:              myGeoFenceController.polygonSupported
-    property bool   _polygonEnabled:                myGeoFenceController.polygonEnabled
+    property var    _polygons:                  myGeoFenceController.polygons
+    property var    _circles:                   myGeoFenceController.circles
+    property bool   _interactive:               interactive
+    property bool   _circleSupported:           myGeoFenceController.circleRadiusFact !== null
+    property bool   _circleEnabled:             myGeoFenceController.circleEnabled
+    property real   _circleRadius:              _circleSupported ? myGeoFenceController.circleRadiusFact.rawValue : 0
+    property bool   _polygonSupported:          myGeoFenceController.polygonSupported
+    property bool   _polygonEnabled:            myGeoFenceController.polygonEnabled
 
     function addPolygon(inclusionPolygon) {
         // Initial polygon is inset to take 2/3rds space
@@ -85,13 +83,6 @@ Item {
         _mouseAreaComponent.destroy()
     }
 
-    Connections {
-        target:             myGeoFenceController
-
-        onAddInclusionPolygon: addPolygon(true)
-        onAddExclusionPolygon: addPolygon(false)
-    }
-
     // Mouse area to capture breach return point coordinate
     Component {
         id: mouseAreaComponent
@@ -104,48 +95,30 @@ Item {
     }
 
     Instantiator {
-        model: _inclusionPolygons
+        model: _polygons
 
         delegate : QGCMapPolygonVisuals {
-            mapControl:     map
-            mapPolygon:     object
-            interactive:    _interactive
-            borderWidth:    2
-            borderColor:    "orange"
+            mapControl:         map
+            mapPolygon:         object
+            interactive:        _interactive
+            borderWidth:        object.inclusion ? 2 : 0
+            borderColor:        "orange"
+            interiorColor:      object.inclusion ? "transparent" : "orange"
+            interiorOpacity:    object.inclusion ? 1: 0.2
         }
     }
 
     Instantiator {
-        model: _exclusionPolygons
-
-        delegate : QGCMapPolygonVisuals {
-            mapControl:     map
-            mapPolygon:     object
-            interactive:    _interactive
-            borderWidth:    2
-            borderColor:    "orange"
-        }
-    }
-
-    Instantiator {
-        model: _inclusionCircles
-
-        delegate : QGCMapCircleVisuals {
-            mapControl:     map
-            mapCircle:      object
-            borderWidth:    2
-            borderColor:    "orange"
-        }
-    }
-
-    Instantiator {
-        model: _exclusionCircles
+        model: _circles
 
         delegate : QGCMapCircleVisuals {
             mapControl:         map
             mapCircle:          object
-            interiorColor:      "orange"
-            interiorOpacity:    0.2
+            interactive:        _interactive
+            borderWidth:        object.inclusion ? 2 : 0
+            borderColor:        "orange"
+            interiorColor:      object.inclusion ? "transparent" : "orange"
+            interiorOpacity:    object.inclusion ? 1: 0.2
         }
     }
 

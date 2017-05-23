@@ -19,14 +19,42 @@
 const char* QGCMapPolygon::jsonPolygonKey = "polygon";
 
 QGCMapPolygon::QGCMapPolygon(QObject* parent)
-    : QObject(parent)
-    , _dirty(false)
-    , _centerDrag(false)
-    , _ignoreCenterUpdates(false)
+    : QObject               (parent)
+    , _dirty                (false)
+    , _centerDrag           (false)
+    , _ignoreCenterUpdates  (false)
+{
+    _init();
+}
+
+QGCMapPolygon::QGCMapPolygon(const QGCMapPolygon& other, QObject* parent)
+    : QObject               (parent)
+    , _dirty                (false)
+    , _centerDrag           (false)
+    , _ignoreCenterUpdates  (false)
+{
+    *this = other;
+
+    _init();
+}
+
+void QGCMapPolygon::_init(void)
 {
     connect(&_polygonModel, &QmlObjectListModel::dirtyChanged, this, &QGCMapPolygon::_polygonModelDirtyChanged);
     connect(&_polygonModel, &QmlObjectListModel::countChanged, this, &QGCMapPolygon::_polygonModelCountChanged);
     connect(&_polygonModel, &QmlObjectListModel::countChanged, this, &QGCMapPolygon::_updateCenter);
+}
+
+const QGCMapPolygon& QGCMapPolygon::operator=(const QGCMapPolygon& other)
+{
+    clear();
+
+    QVariantList vertices = other.path();
+    for (int i=0; i<vertices.count(); i++) {
+        appendVertex(vertices[i].value<QGeoCoordinate>());
+    }
+
+    return *this;
 }
 
 void QGCMapPolygon::clear(void)

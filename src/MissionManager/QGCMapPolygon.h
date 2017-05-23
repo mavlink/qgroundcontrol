@@ -25,6 +25,9 @@ class QGCMapPolygon : public QObject
 
 public:
     QGCMapPolygon(QObject* parent = NULL);
+    QGCMapPolygon(const QGCMapPolygon& other, QObject* parent = NULL);
+
+    const QGCMapPolygon& operator=(const QGCMapPolygon& other);
 
     Q_PROPERTY(int                  count       READ count                              NOTIFY countChanged)
     Q_PROPERTY(QVariantList         path        READ path                               NOTIFY pathChanged)
@@ -95,6 +98,7 @@ private slots:
     void _updateCenter(void);
 
 private:
+    void _init(void);
     QPolygonF _toPolygonF(void) const;
     QGeoCoordinate _coordFromPointF(const QPointF& point) const;
     QPointF _pointFFromCoord(const QGeoCoordinate& coordinate) const;
