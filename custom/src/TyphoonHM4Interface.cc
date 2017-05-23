@@ -364,6 +364,15 @@ TyphoonHM4Interface::startCalibration()
 
 //-----------------------------------------------------------------------------
 void
+TyphoonHM4Interface::stopCalibration()
+{
+    if(_m4State == TyphoonHQuickInterface::M4_STATE_FACTORY_CAL) {
+        _exitFactoryCalibration();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 TyphoonHM4Interface::softReboot()
 {
 #if defined(__androidx86__)
@@ -1530,10 +1539,6 @@ TyphoonHM4Interface::_calibrationStateChanged(m4Packet &packet)
     if(_rcCalibrationComplete != state) {
         _rcCalibrationComplete = state;
         emit calibrationCompleteChanged();
-        if(_rcCalibrationComplete) {
-            //-- We're done with calibration
-            _exitFactoryCalibration();
-        }
     }
     if(change) {
         emit calibrationStateChanged();

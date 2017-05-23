@@ -132,6 +132,7 @@ public:
     Q_INVOKABLE void importMission      ();
     Q_INVOKABLE void manualBind         ();
     Q_INVOKABLE void startCalibration   ();
+    Q_INVOKABLE void stopCalibration    ();
 
     M4State     m4State             ();
     QString     m4StateStr          ();

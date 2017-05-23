@@ -38,15 +38,15 @@ QGCView {
 
     function getCalText() {
         if(TyphoonHQuickInterface.m4State === TyphoonHQuickInterface.M4_STATE_FACTORY_CAL) {
-            return qsTr("Move all switches to their limits.")
+            return qsTr("Move all switches to their limits. Leave them in their middle position.")
         }
         return qsTr("Ready to start calibration.")
     }
 
     MessageDialog {
         id:                 confirmCal
-        title:              qsTr("Calibration Confirmation")
-        text:               qsTr("This is work in progress. Do NOT use it unless you know what you are doing.")
+        title:              qsTr("RC Calibration")
+        text:               qsTr("Move all analog switches to their limits several times. Switches must be left in their middle position before exting calibration.")
         standardButtons:    StandardButton.Ok | StandardButton.Cancel
         onAccepted: {
             TyphoonHQuickInterface.startCalibration()
@@ -112,14 +112,25 @@ QGCView {
                         width:  1
                         height: ScreenTools.defaultFontPixelHeight
                     }
-                    QGCButton {
-                        text:       "Start Calibration"
-                        enabled:    TyphoonHQuickInterface.calibrationComplete
-                        width:      ScreenTools.defaultFontPixelWidth * 18
-                        onClicked: {
-                            confirmCal.open()
-                        }
+                    Row {
+                        spacing: ScreenTools.defaultFontPixelWidth * 4
                         anchors.horizontalCenter:   parent.horizontalCenter
+                        QGCButton {
+                            text:       "Start Calibration"
+                            enabled:    TyphoonHQuickInterface.calibrationComplete && TyphoonHQuickInterface.m4State !== TyphoonHQuickInterface.M4_STATE_FACTORY_CAL
+                            width:      ScreenTools.defaultFontPixelWidth * 18
+                            onClicked: {
+                                confirmCal.open()
+                            }
+                        }
+                        QGCButton {
+                            text:       "Stop Calibration"
+                            enabled:    TyphoonHQuickInterface.calibrationComplete && TyphoonHQuickInterface.m4State === TyphoonHQuickInterface.M4_STATE_FACTORY_CAL
+                            width:      ScreenTools.defaultFontPixelWidth * 18
+                            onClicked: {
+                                TyphoonHQuickInterface.stopCalibration()
+                            }
+                        }
                     }
                 }
             }
