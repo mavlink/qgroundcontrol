@@ -453,6 +453,14 @@ SetupPage {
 
                                     onClicked: _activeJoystick.throttleMode = 1
                                 }
+
+                                QGCCheckBox {
+                                    id:             negativeThrust
+                                    text:           qsTr("Allow negative Thrust")
+                                    checked:        _activeJoystick ? _activeJoystick.negativeThrust : false
+
+                                    onClicked: _activeJoystick.negativeThrust = checked
+                                }
                             }
 
                             Column {
