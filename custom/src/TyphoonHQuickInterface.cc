@@ -636,6 +636,15 @@ TyphoonHQuickInterface::startCalibration()
 }
 
 //-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::stopCalibration()
+{
+    if(_pHandler) {
+        _pHandler->stopCalibration();
+    }
+}
+
+//-----------------------------------------------------------------------------
 static bool
 compareRSSI(const QVariant &v1, const QVariant &v2)
 {

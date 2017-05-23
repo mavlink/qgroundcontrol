@@ -37,6 +37,7 @@ public:
     bool    rcActive                () { return _rcActive; }
     bool    rcCalibrationComplete   () { return _rcCalibrationComplete; }
     void    startCalibration        ();
+    void    stopCalibration         ();
 
     Vehicle*            vehicle         () { return _vehicle; }
     CameraControl*      cameraControl   () { return _cameraControl; }
