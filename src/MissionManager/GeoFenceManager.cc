@@ -42,6 +42,8 @@ GeoFenceManager::~GeoFenceManager()
 
 void GeoFenceManager::_parametersReady(void)
 {
+#if 0
+    // FIXME: Params here makes this code not mavlink generic
     if (!_firstParamLoadComplete) {
         _firstParamLoadComplete = true;
 
@@ -68,6 +70,7 @@ void GeoFenceManager::_parametersReady(void)
         emit paramsChanged(_params);
         emit paramLabelsChanged(_paramLabels);
     }
+#endif
 }
 
 bool GeoFenceManager::inProgress(void) const

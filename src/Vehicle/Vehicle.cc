@@ -1792,7 +1792,10 @@ void Vehicle::_geoFenceLoadComplete(void)
 
 void Vehicle::_rallyPointLoadComplete(void)
 {
-    _initialPlanRequestComplete = true;
+    if (!_initialPlanRequestComplete) {
+        _initialPlanRequestComplete = true;
+        emit initialPlanRequestCompleted();
+    }
 }
 
 void Vehicle::_parametersReady(bool parametersReady)

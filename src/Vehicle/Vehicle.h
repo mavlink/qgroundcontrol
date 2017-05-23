@@ -702,6 +702,7 @@ signals:
     void defaultHoverSpeedChanged(double hoverSpeed);
     void firmwareTypeChanged(void);
     void vehicleTypeChanged(void);
+    void initialPlanRequestCompleted();
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
