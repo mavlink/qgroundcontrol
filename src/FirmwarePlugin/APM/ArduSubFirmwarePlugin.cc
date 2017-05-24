@@ -193,6 +193,10 @@ bool ArduSubFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavli
     return APMFirmwarePlugin::adjustIncomingMavlinkMessage(vehicle, message);
 }
 
+QMap<QString, FactGroup*>* ArduSubFirmwarePlugin::factGroups(void) {
+    return &_nameToFactGroupMap;
+}
+
 const char* APMSubmarineFactGroup::_camTiltFactName = "camera tilt";
 const char* APMSubmarineFactGroup::_tetherTurnsFactName = "tether turns";
 const char* APMSubmarineFactGroup::_lightsLevel1FactName = "lights 1";

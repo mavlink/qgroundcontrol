@@ -273,7 +273,8 @@ public:
     /// Returns a list of CameraMetaData objects for available cameras on the vehicle.
     virtual const QVariantList& cameraList(const Vehicle* vehicle);
 
-    virtual const QMap<QString, FactGroup*>& factGroups(void);
+    /// Returns a pointer to a dictionary of firmware-specific FactGroups
+    virtual QMap<QString, FactGroup*>* factGroups(void);
 
     /// @true: When flying a mission the vehicle is always facing towards the next waypoint
     virtual bool vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const;
@@ -301,7 +302,6 @@ protected:
     // Arms the vehicle with validation and retries
     // @return: true - vehicle armed, false - vehicle failed to arm
     bool _armVehicleAndValidate(Vehicle* vehicle);
-    QMap<QString, FactGroup*> _nameToFactGroupMap;
 
     // Sets the vehicle to the specified flight mode with validation and retries
     // @return: true - vehicle in specified flight mode, false - flight mode change failed
