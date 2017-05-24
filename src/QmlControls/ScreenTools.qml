@@ -137,7 +137,7 @@ Item {
                             // we will just drop point size to make things fit. Correct size not yet determined.
                             baseSize = 12;  // This will be lowered in a future pull
                         } else {
-                            baseSize = 12;
+                            baseSize = 14;
                         }
                     } else if((Screen.width / Screen.pixelDensity) < 120) {
                         baseSize = 11;
