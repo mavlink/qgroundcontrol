@@ -62,7 +62,7 @@ private slots:
     void    _vehicleAdded                       (Vehicle* vehicle);
     void    _vehicleRemoved                     (Vehicle* vehicle);
     void    _vehicleReady                       (bool ready);
-    void    _remoteControlRSSIChanged           (uint8_t rssi);
+    void    _mavlinkMessageReceived             (const mavlink_message_t& message);
     void    _armedChanged                       (bool armed);
     void    _initAndCheckBinding                ();
     void    _rcTimeout                          ();
@@ -156,8 +156,6 @@ private:
     QTimer                  _rcTimer;
     ControllerLocation      _controllerLocation;
     bool                    _binding;
-    bool                    _receivedRCRSSI;
-    bool                    _resetBind;
     Vehicle*                _vehicle;
     CameraControl*          _cameraControl;
     TyphoonHQuickInterface::M4State     _m4State;
@@ -165,6 +163,8 @@ private:
     bool                    _armed;
     QList<uint16_t>         _rawChannels;
     uint16_t                _rawChannelsCalibration[CalibrationHwIndexMax];
+    uint32_t                _rcTime;
     bool                    _rcActive;
     bool                    _rcCalibrationComplete;
+    bool                    _softReboot;
 };
