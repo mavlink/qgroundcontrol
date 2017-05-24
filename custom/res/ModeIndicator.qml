@@ -91,7 +91,7 @@ Item {
     }
 
     QGCLabel {
-        text:                   _activeVehicle ? _activeVehicle.flightMode : qsTr("Not Connected")
+        text:                   _activeVehicle ? (QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable ? _activeVehicle.flightMode : qsTr("Waiting For Vehicle")) : qsTr("Not Connected")
         font.pointSize:         ScreenTools.mediumFontPointSize
         color:                  qgcPal.buttonText
         anchors.centerIn:       parent
@@ -100,7 +100,7 @@ Item {
     MouseArea {
         anchors.fill:       parent
         onClicked: {
-            if(_activeVehicle) {
+            if(_activeVehicle && QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable) {
                 var centerX = mapToItem(toolBar, x, y).x + (width / 2)
                 mainWindow.showPopUp(modeMenu, centerX)
             }
