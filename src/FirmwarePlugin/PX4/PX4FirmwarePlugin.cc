@@ -331,12 +331,12 @@ void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
 
 void PX4FirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
 {
-    vehicle->setFlightMode(_rtlFlightMode);
+    _setFlightModeAndValidate(vehicle, _rtlFlightMode);
 }
 
 void PX4FirmwarePlugin::guidedModeLand(Vehicle* vehicle)
 {
-    vehicle->setFlightMode(_landingFlightMode);
+    _setFlightModeAndValidate(vehicle, _landingFlightMode);
 }
 
 void PX4FirmwarePlugin::guidedModeOrbit(Vehicle* vehicle, const QGeoCoordinate& centerCoord, double radius, double velocity, double altitude)
@@ -457,13 +457,13 @@ void PX4FirmwarePlugin::startMission(Vehicle* vehicle)
         return;
     }
 
-    vehicle->setFlightMode(missionFlightMode());
+    _setFlightModeAndValidate(vehicle, missionFlightMode());
 }
 
 void PX4FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
 {
     if (guidedMode) {
-        vehicle->setFlightMode(_holdFlightMode);
+        _setFlightModeAndValidate(vehicle, _holdFlightMode);
     } else {
         pauseVehicle(vehicle);
     }
