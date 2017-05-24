@@ -123,6 +123,7 @@ public:
     int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
     const QVariantList& toolBarIndicators(const Vehicle* vehicle) final;
     bool  adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message);
+    virtual QMap<QString, FactGroup*>* factGroups(void);
 
 
 private:
@@ -132,6 +133,7 @@ private:
     void _handleNamedValueFloat(mavlink_message_t* message);
     void _handleMavlinkMessage(mavlink_message_t* message);
 
+    QMap<QString, FactGroup*> _nameToFactGroupMap;
     APMSubmarineFactGroup _infoFactGroup;
 };
 #endif
