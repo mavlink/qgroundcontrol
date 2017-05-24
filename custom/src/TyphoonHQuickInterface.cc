@@ -86,6 +86,7 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(_pHandler, &TyphoonHM4Interface::switchStateChanged,           this, &TyphoonHQuickInterface::_switchStateChanged);
         connect(_pHandler, &TyphoonHM4Interface::calibrationStateChanged,      this, &TyphoonHQuickInterface::_calibrationStateChanged);
         connect(_pHandler, &TyphoonHM4Interface::calibrationCompleteChanged,   this, &TyphoonHQuickInterface::_calibrationCompleteChanged);
+        connect(_pHandler, &TyphoonHM4Interface::rcActiveChanged,              this, &TyphoonHQuickInterface::_rcActiveChanged);
         connect(&_scanTimer,    &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
         connect(&_flightTimer,  &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
         connect(&_powerTimer,   &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
@@ -642,6 +643,16 @@ TyphoonHQuickInterface::stopCalibration()
 }
 
 //-----------------------------------------------------------------------------
+bool
+TyphoonHQuickInterface::rcActive()
+{
+    if(_pHandler) {
+        return _pHandler->rcActive();
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
 static bool
 compareRSSI(const QVariant &v1, const QVariant &v2)
 {
@@ -799,6 +810,13 @@ void
 TyphoonHQuickInterface::_calibrationCompleteChanged()
 {
     emit calibrationCompleteChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_rcActiveChanged()
+{
+    emit rcActiveChanged();
 }
 
 //-----------------------------------------------------------------------------
