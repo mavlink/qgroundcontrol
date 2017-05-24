@@ -23,7 +23,7 @@
 #include <QNetworkReply>
 #include <QMutex>
 
-#define MAX_MAP_ZOOM (20.0)
+#define MAX_MAP_ZOOM (22.0)
 
 class UrlFactory : public QObject {
     Q_OBJECT
