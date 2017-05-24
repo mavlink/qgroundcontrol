@@ -88,14 +88,14 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     , _rxLocalIndex(0)
     , _sendRxInfoEnd(false)
     , _binding(false)
-    , _receivedRCRSSI(false)
-    , _resetBind(false)
     , _vehicle(NULL)
     , _cameraControl(NULL)
     , _m4State(TyphoonHQuickInterface::M4_STATE_NONE)
     , _armed(false)
+    , _rcTime(0)
     , _rcActive(false)
     , _rcCalibrationComplete(true)
+    , _softReboot(false)
 {
     pTyphoonHandler = this;
     _cameraControl = new CameraControl(this);
@@ -178,7 +178,6 @@ TyphoonHM4Interface::init(bool skipConnections)
 //-----------------------------------------------------------------------------
 void
 TyphoonHM4Interface::resetBind() {
-    _resetBind = true;
     _rxBindInfoFeedback.clear();
     _exitRun();
     _unbind();
@@ -224,12 +223,16 @@ TyphoonHM4Interface::_vehicleReady(bool ready)
             } else {
                 qCDebug(YuneecLog) << "_vehicleReady( YES )";
                 _cameraControl->setVehicle(_vehicle);
-                //-- If we have not received RSSI yet and the M4 is running, wait a bit longer
-                if(_m4State != TyphoonHQuickInterface::M4_STATE_AWAIT && !_receivedRCRSSI && !_resetBind) {
+                //-- If we have not received RC messages yet and the M4 is running, wait a bit longer
+                if(_m4State == TyphoonHQuickInterface::M4_STATE_RUN && !_rcActive) {
+                    qCDebug(YuneecLog) << "In RUN mode but no RC yet";
                     QTimer::singleShot(2000, this, &TyphoonHM4Interface::_initAndCheckBinding);
                 } else {
-                    //-- We're either not bound or the M4 is not initialized
-                    _initAndCheckBinding();
+                    if(_m4State != TyphoonHQuickInterface::M4_STATE_RUN) {
+                        //-- The M4 is not initialized
+                        qCDebug(YuneecLog) << "M4 not yet initialized";
+                        _initAndCheckBinding();
+                    }
                 }
             }
         } else {
@@ -243,11 +246,13 @@ void
 TyphoonHM4Interface::_initAndCheckBinding()
 {
     //-- First boot, not bound
-    if(_m4State == TyphoonHQuickInterface::M4_STATE_AWAIT) {
+    if(_m4State != TyphoonHQuickInterface::M4_STATE_RUN) {
         enterBindMode();
-    //-- RC is bound to something. Is it bound to whoever we are connected (or are we resetting)?
-    } else if(_m4State == TyphoonHQuickInterface::M4_STATE_RUN && (!_receivedRCRSSI || _resetBind)) {
+    //-- RC is bound to something. Is it bound to whoever we are connected?
+    } else if(!_rcActive) {
         enterBindMode();
+    } else {
+        qCDebug(YuneecLog) << "In RUN mode and RC ready";
     }
 }
 
@@ -255,22 +260,33 @@ TyphoonHM4Interface::_initAndCheckBinding()
 void
 TyphoonHM4Interface::_rcTimeout()
 {
+    qCDebug(YuneecLog) << "RC Timeout";
     _rcActive = false;
+    //-- If we are in run state after binding and we don't have RC, bind it again.
+    if(_vehicle && _softReboot && _m4State == TyphoonHQuickInterface::M4_STATE_RUN) {
+        _softReboot = false;
+        enterBindMode();
+    }
 }
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHM4Interface::_remoteControlRSSIChanged(uint8_t rssi)
+TyphoonHM4Interface::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
-    if(rssi > 0) {
-        _rcActive = true;
-        _rcTimer.start(1000);
-        if(!_receivedRCRSSI) {
-            //-- This is not working. I'm getting RSSI even with no bound RX (or even with no ST16 powered on)
-            /*
-            qCDebug(YuneecLog) << "Received RSSI, RC is bound.";
-            _receivedRCRSSI = true;
-            */
+    if(message.msgid == MAVLINK_MSG_ID_RC_CHANNELS) {
+        mavlink_rc_channels_t channels;
+        mavlink_msg_rc_channels_decode(&message, &channels);
+        //-- Check if boot time changed
+        if(channels.time_boot_ms != _rcTime) {
+            _softReboot = false;
+            _rcTime     = channels.time_boot_ms;
+            _rcActive   = true;
+            _rcTimer.stop();
+        } else {
+            if(!_rcTimer.isActive() && !_softReboot) {
+                //-- Wait a bit before assuming RC is lost
+                _rcTimer.start(1000);
+            }
         }
     }
 }
@@ -290,8 +306,8 @@ TyphoonHM4Interface::_vehicleAdded(Vehicle* vehicle)
     if(!_vehicle) {
         qCDebug(YuneecLog) << "_vehicleAdded()";
         _vehicle = vehicle;
-        connect(_vehicle, &Vehicle::remoteControlRSSIChanged, this, &TyphoonHM4Interface::_remoteControlRSSIChanged);
-        connect(_vehicle, &Vehicle::armedChanged,             this, &TyphoonHM4Interface::_armedChanged);
+        connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &TyphoonHM4Interface::_mavlinkMessageReceived);
+        connect(_vehicle, &Vehicle::armedChanged,           this, &TyphoonHM4Interface::_armedChanged);
         //-- Set the "Big Red Button" to bind mode
         _setPowerKey(Yuneec::BIND_KEY_FUNCTION_BIND);
     }
@@ -303,11 +319,11 @@ TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
 {
     if(_vehicle == vehicle) {
         qCDebug(YuneecLog) << "_vehicleRemoved()";
-        disconnect(_vehicle, &Vehicle::remoteControlRSSIChanged, this, &TyphoonHM4Interface::_remoteControlRSSIChanged);
-        disconnect(_vehicle, &Vehicle::armedChanged,             this, &TyphoonHM4Interface::_armedChanged);
+        disconnect(_vehicle, &Vehicle::mavlinkMessageReceived,  this, &TyphoonHM4Interface::_mavlinkMessageReceived);
+        disconnect(_vehicle, &Vehicle::armedChanged,            this, &TyphoonHM4Interface::_armedChanged);
         _cameraControl->setVehicle(NULL);
         _vehicle = NULL;
-        _receivedRCRSSI = false;
+        _rcActive = false;
         _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
     }
 }
@@ -377,10 +393,9 @@ TyphoonHM4Interface::softReboot()
 {
 #if defined(__androidx86__)
     qCDebug(YuneecLog) << "softReboot()";
-    if(_receivedRCRSSI && !_resetBind) {
+    if(_rcActive) {
         qCDebug(YuneecLog) << "softReboot() -> Already bound. Skipping it...";
     } else {
-        _resetBind = false;
         _timer.stop();
         if(_commPort) {
             disconnect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonHM4Interface::_bytesReady);
@@ -398,6 +413,10 @@ TyphoonHM4Interface::softReboot()
         _commPort = new M4SerialComm(this);
         init(true);
     }
+    //-- We just finished binding. Set the timer and see if we are indeed bound.
+    _rcTimer.start(1000);
+    _rcActive   = false;
+    _softReboot = true;
 #endif
 }
 
@@ -574,8 +593,8 @@ bool
 TyphoonHM4Interface::_exitToAwait()
 {
     qCDebug(YuneecLogVerbose) << "Sending: CMD_EXIT_TO_AWAIT";
-    m4Command enterRunCmd(Yuneec::CMD_EXIT_TO_AWAIT);
-    QByteArray cmd = enterRunCmd.pack();
+    m4Command exitToAwaitCmd(Yuneec::CMD_EXIT_TO_AWAIT);
+    QByteArray cmd = exitToAwaitCmd.pack();
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
 }
 

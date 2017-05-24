@@ -381,9 +381,6 @@ TyphoonHQuickInterface::bindWIFI(QString ssid, QString password)
         }
     }
 #if defined __android__
-    if(_pHandler) {
-        _pHandler->resetBind();
-    }
     reset_jni();
     QAndroidJniObject::callStaticMethod<void>(jniClassName, "disconnectWifi", "()V");
     //-- There isn't currently a way to disconnect and remove a Vehicle from here.
