@@ -47,7 +47,6 @@ typedef struct {
     int         width;
     int         height;
     int         fps;
-    float       aspectRatio;
 } video_res_t;
 
 //-----------------------------------------------------------------------------
@@ -155,14 +154,15 @@ public:
     Q_PROPERTY(QString      sdFreeStr       READ    sdFreeStr                                   NOTIFY sdFreeChanged)
     Q_PROPERTY(quint32      sdTotal         READ    sdTotal                                     NOTIFY sdTotalChanged)
     Q_PROPERTY(QString      recordTimeStr   READ    recordTimeStr                               NOTIFY recordTimeChanged)
-    Q_PROPERTY(QStringList  videoResList    READ    videoResList                                CONSTANT)
+    Q_PROPERTY(QStringList  videoResList    READ    videoResList                                NOTIFY videoResListChanged)
     Q_PROPERTY(QStringList  iqModeList      READ    iqModeList                                  CONSTANT)
     Q_PROPERTY(QStringList  wbList          READ    wbList                                      CONSTANT)
     Q_PROPERTY(QStringList  isoList         READ    isoList                                     CONSTANT)
-    Q_PROPERTY(QStringList  shutterList     READ    shutterList                                 CONSTANT)
+    Q_PROPERTY(QStringList  shutterList     READ    shutterList                                 NOTIFY shutterListChanged)
     Q_PROPERTY(QStringList  meteringList    READ    meteringList                                CONSTANT)
     Q_PROPERTY(QStringList  photoFormatList READ    photoFormatList                             CONSTANT)
     Q_PROPERTY(QStringList  evList          READ    evList                                      CONSTANT)
+    Q_PROPERTY(QString      cameraModel     READ    cameraModel                                 NOTIFY cameraModelChanged)
     Q_PROPERTY(QString      firmwareVersion READ    firmwareVersion                             NOTIFY firmwareVersionChanged)
 
     Q_PROPERTY(quint32      currentVideoRes READ    currentVideoRes WRITE setCurrentVideoRes    NOTIFY currentVideoResChanged)
@@ -202,11 +202,12 @@ public:
     QStringList photoFormatList     ();
     QStringList evList              ();
     QString     firmwareVersion     ();
+    QString     cameraModel         () { return _cameraModel; }
 
     quint32     currentVideoRes     () { return _currentVideoResIndex; }
     quint32     currentWB           () { return _currentWB; }
     quint32     currentIso          () { return _currentIso; }
-    quint32     currentShutter      () { return _currentShutter; }
+    quint32     currentShutter      () { return _currentShutter - _minShutter; }
     quint32     currentIQ           () { return _ambarellaSettings.iq_type; }
     quint32     currentPhotoFmt     () { return _ambarellaSettings.photo_format; }
     quint32     currentMetering     () { return _ambarellaSettings.metering_mode; }
@@ -248,6 +249,9 @@ signals:
     void    currentMeteringChanged  ();
     void    currentEVChanged        ();
     void    firmwareVersionChanged  ();
+    void    videoResListChanged     ();
+    void    shutterListChanged      ();
+    void    cameraModelChanged      ();
 
 private:
     int     _findVideoResIndex      (int w, int h, float fps);
@@ -266,6 +270,7 @@ private:
     void    _setIsoShutter          (int iso, float shutter);
     void    _startTimer             (int task, int elapsed);
     void    _handleCommandResult    (bool noReponseFromVehicle, int command, int result);
+    void    _updateShutterLimit     ();
 
 private:
     Vehicle*                _vehicle;
@@ -299,12 +304,11 @@ private:
     quint32                 _currentWB;
     quint32                 _currentIso;
     quint32                 _tempIso;
+    quint32                 _minShutter;
     quint32                 _currentShutter;
     quint32                 _tempShutter;
     quint32                 _currentEV;
     quint32                 _cameraVersion;
-
-    quint32                 _setVideoResIndex;
 
     amb_camera_status_t     _ambarellaStatus;
     amb_camera_settings_t   _ambarellaSettings;

@@ -19,21 +19,21 @@ QGC_LOGGING_CATEGORY(YuneecCameraLogVerbose, "YuneecCameraLogVerbose")
 //-----------------------------------------------------------------------------
 // Video Resolution Options (CGO3+)
 video_res_t videoResCGO3P[] = {
-    {"4096 x 2160 25fps (4K DCI)",    4096, 2160, 25,  4096.0f / 2160.0f},
-    {"4096 x 2160 24fps (4K DCI)",    4096, 2160, 24,  4096.0f / 2160.0f},
-    {"3840 x 2160 30fps (4K UHD)",    3840, 2160, 30,  3840.0f / 2160.0f},
-    {"3840 x 2160 25fps (4K UHD)",    3840, 2160, 25,  3840.0f / 2160.0f},
-    {"3840 x 2160 24fps (4K UHD)",    3840, 2160, 24,  3840.0f / 2160.0f},
-    {"2560 x 1440 30fps (WQHD)",      2560, 1440, 30,  2560.0f / 1440.0f},
-    {"2560 x 1440 25fps (WQHD)",      2560, 1440, 25,  2560.0f / 1440.0f},
-    {"2560 x 1440 24fps (WQHD)",      2560, 1440, 24,  2560.0f / 1440.0f},
-    {"1920 x 1080 120fps (1080P)",    1920, 1080, 120, 1920.0f / 1080.0f},
-    {"1920 x 1080 60fps (1080P)",     1920, 1080, 60,  1920.0f / 1080.0f},
-    {"1920 x 1080 50fps (1080P)",     1920, 1080, 50,  1920.0f / 1080.0f},
-    {"1920 x 1080 48fps (1080P)",     1920, 1080, 48,  1920.0f / 1080.0f},
-    {"1920 x 1080 30fps (1080P)",     1920, 1080, 30,  1920.0f / 1080.0f},
-    {"1920 x 1080 25fps (1080P)",     1920, 1080, 25,  1920.0f / 1080.0f},
-    {"1920 x 1080 24fps (1080P)",     1920, 1080, 24,  1920.0f / 1080.0f}
+    {"4096 x 2160 25fps (4K DCI)",    4096, 2160, 25},
+    {"4096 x 2160 24fps (4K DCI)",    4096, 2160, 24},
+    {"3840 x 2160 30fps (4K UHD)",    3840, 2160, 30},
+    {"3840 x 2160 25fps (4K UHD)",    3840, 2160, 25},
+    {"3840 x 2160 24fps (4K UHD)",    3840, 2160, 24},
+    {"2560 x 1440 30fps (WQHD)",      2560, 1440, 30},
+    {"2560 x 1440 25fps (WQHD)",      2560, 1440, 25},
+    {"2560 x 1440 24fps (WQHD)",      2560, 1440, 24},
+    {"1920 x 1080 120fps (1080P)",    1920, 1080, 120},
+    {"1920 x 1080 60fps (1080P)",     1920, 1080, 60},
+    {"1920 x 1080 50fps (1080P)",     1920, 1080, 50},
+    {"1920 x 1080 48fps (1080P)",     1920, 1080, 48},
+    {"1920 x 1080 30fps (1080P)",     1920, 1080, 30},
+    {"1920 x 1080 25fps (1080P)",     1920, 1080, 25},
+    {"1920 x 1080 24fps (1080P)",     1920, 1080, 24}
 };
 
 #define NUM_CGO3P_VIDEO_RES (sizeof(videoResCGO3P) / sizeof(video_res_t))
@@ -41,37 +41,37 @@ video_res_t videoResCGO3P[] = {
 //-----------------------------------------------------------------------------
 // Video Resolution Options (E90)
 video_res_t videoResE90[] = {
-    {"4096 x 2160 60fps (4K DCI)",    4096, 2160, 60,  4096.0f / 2160.0f},
-    {"4096 x 2160 48fps (4K DCI)",    4096, 2160, 48,  4096.0f / 2160.0f},
-    {"4096 x 2160 30fps (4K DCI)",    4096, 2160, 30,  4096.0f / 2160.0f},
-    {"4096 x 2160 24fps (4K DCI)",    4096, 2160, 24,  4096.0f / 2160.0f},
+    {"4096 x 2160 60fps (4K DCI)",    4096, 2160, 60},
+    {"4096 x 2160 48fps (4K DCI)",    4096, 2160, 48},
+    {"4096 x 2160 30fps (4K DCI)",    4096, 2160, 30},
+    {"4096 x 2160 24fps (4K DCI)",    4096, 2160, 24},
 
-    {"3840 x 2160 60fps (4K UHD)",    3840, 2160, 60,  3840.0f / 2160.0f},
-    {"3840 x 2160 48fps (4K UHD)",    3840, 2160, 48,  3840.0f / 2160.0f},
-    {"3840 x 2160 30fps (4K UHD)",    3840, 2160, 30,  3840.0f / 2160.0f},
-    {"3840 x 2160 24fps (4K UHD)",    3840, 2160, 24,  3840.0f / 2160.0f},
+    {"3840 x 2160 60fps (4K UHD)",    3840, 2160, 60},
+    {"3840 x 2160 48fps (4K UHD)",    3840, 2160, 48},
+    {"3840 x 2160 30fps (4K UHD)",    3840, 2160, 30},
+    {"3840 x 2160 24fps (4K UHD)",    3840, 2160, 24},
 
-    {"2515 x 1530 60fps (WQHD)",      2515, 1530, 60,  2515.0f / 1530.0f},
-    {"2515 x 1530 48fps (WQHD)",      2515, 1530, 48,  2515.0f / 1530.0f},
-    {"2515 x 1530 30fps (WQHD)",      2515, 1530, 30,  2515.0f / 1530.0f},
-    {"2515 x 1530 24fps (WQHD)",      2515, 1530, 24,  2515.0f / 1530.0f},
+    {"2515 x 1530 60fps (WQHD)",      2515, 1530, 60},
+    {"2515 x 1530 48fps (WQHD)",      2515, 1530, 48},
+    {"2515 x 1530 30fps (WQHD)",      2515, 1530, 30},
+    {"2515 x 1530 24fps (WQHD)",      2515, 1530, 24},
 
-    {"1920 x 1080 120fps (1080P)",    1920, 1080, 120, 1920.0f / 1080.0f},
-    {"1920 x 1080 60fps (1080P)",     1920, 1080, 60,  1920.0f / 1080.0f},
-    {"1920 x 1080 48fps (1080P)",     1920, 1080, 48,  1920.0f / 1080.0f},
-    {"1920 x 1080 30fps (1080P)",     1920, 1080, 30,  1920.0f / 1080.0f},
-    {"1920 x 1080 24fps (1080P)",     1920, 1080, 24,  1920.0f / 1080.0f},
+    {"1920 x 1080 120fps (1080P)",    1920, 1080, 120},
+    {"1920 x 1080 60fps (1080P)",     1920, 1080, 60},
+    {"1920 x 1080 48fps (1080P)",     1920, 1080, 48},
+    {"1920 x 1080 30fps (1080P)",     1920, 1080, 30},
+    {"1920 x 1080 24fps (1080P)",     1920, 1080, 24},
 
-    {"1280 x 720 120fps (720P)",      1280,  720, 120,  1280.0f /  720.0f},
-    {"1280 x 720 60fps (720P)",       1280,  720, 60,   1280.0f /  720.0f},
-    {"1280 x 720 48fps (720P)",       1280,  720, 48,   1280.0f /  720.0f},
-    {"1280 x 720 30fps (720P)",       1280,  720, 30,   1280.0f /  720.0f},
-    {"1280 x 720 24fps (720P)",       1280,  720, 24,   1280.0f /  720.0f}
+    {"1280 x 720 120fps (720P)",      1280,  720, 120},
+    {"1280 x 720 60fps (720P)",       1280,  720, 60},
+    {"1280 x 720 48fps (720P)",       1280,  720, 48},
+    {"1280 x 720 30fps (720P)",       1280,  720, 30},
+    {"1280 x 720 24fps (720P)",       1280,  720, 24}
 };
 
 #define NUM_E90_VIDEO_RES (sizeof(videoResE90) / sizeof(video_res_t))
 
-//static video_res_t  current_camera = videoResCGO3P;
+static video_res_t*   current_camera = &videoResCGO3P[0];
 static quint32        current_camera_option_count = NUM_CGO3P_VIDEO_RES;
 
 //-----------------------------------------------------------------------------
@@ -188,6 +188,7 @@ CameraControl::CameraControl(QObject* parent)
     , _currentWB(0)
     , _currentIso(0)
     , _tempIso(0)
+    , _minShutter(0)
     , _currentShutter(0)
     , _tempShutter(0)
     , _cameraVersion(0)
@@ -288,10 +289,10 @@ CameraControl::startVideo()
         int w = -1;
         int h = -1;
         int f = -1;
-        if(_setVideoResIndex < current_camera_option_count) {
-            w = videoResCGO3P[_currentVideoResIndex].width;
-            h = videoResCGO3P[_currentVideoResIndex].height;
-            f = videoResCGO3P[_currentVideoResIndex].fps;
+        if(_currentVideoResIndex < current_camera_option_count) {
+            w = current_camera[_currentVideoResIndex].width;
+            h = current_camera[_currentVideoResIndex].height;
+            f = current_camera[_currentVideoResIndex].fps;
         }
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
@@ -374,8 +375,10 @@ void
 CameraControl::setCurrentVideoRes(quint32 index)
 {
     if(index < current_camera_option_count) {
-        qCDebug(YuneecCameraLog) << "setCurrentVideoRes:" << videoResCGO3P[index].description;
-        _setVideoResIndex = index;
+        qCDebug(YuneecCameraLog) << "setCurrentVideoRes:" << current_camera[index].description;
+        _currentVideoResIndex = index;
+        emit currentVideoResChanged();
+        _updateShutterLimit();
     }
 }
 
@@ -433,6 +436,7 @@ CameraControl::setCurrentIso(quint32 index)
 void
 CameraControl::setCurrentShutter(quint32 index)
 {
+    index += _minShutter;
     if(_vehicle && index < NUM_SHUTTER_VALUES && _cameraSupported == CAMERA_SUPPORT_YES) {
         qCDebug(YuneecCameraLog) << "setCurrentShutter:" << shutterSpeeds[index].description;
         _tempShutter = index;
@@ -571,7 +575,7 @@ int CameraControl::_findShutterSpeedIndex(float shutter_speed)
 {
     //-- As accuracy, use 1/10 of the smallest shutter possible.
     const float accuracy = (1.0f / 8000.0f) / 10.0f;
-    for (uint32_t i = 0; i < NUM_SHUTTER_VALUES; ++i) {
+    for (uint32_t i = _minShutter; i < NUM_SHUTTER_VALUES; ++i) {
         float diff = fabsf(shutterSpeeds[i].value - shutter_speed);
         if (diff < accuracy) {
             return i;
@@ -585,7 +589,7 @@ int
 CameraControl::_findVideoResIndex(int w, int h, float fps)
 {
     for(uint32_t i = 0; i < current_camera_option_count; i++) {
-        if(w == videoResCGO3P[i].width && h == videoResCGO3P[i].height && fps == videoResCGO3P[i].fps) {
+        if(w == current_camera[i].width && h == current_camera[i].height && fps == current_camera[i].fps) {
             return i;
         }
     }
@@ -813,7 +817,22 @@ CameraControl::_handleCameraInfo(const mavlink_message_t& message)
     _cameraVendor   = (const char*)&info.vendor_name[0];
     _cameraModel    = (const char*)&info.model_name[0];
     qCDebug(YuneecCameraLog) << "_handleCameraInfo:" << _cameraVendor << _cameraModel << _cameraVersion << (_cameraVersion >> 24 & 0xFF) << (_cameraVersion >> 16 & 0xFF) << (_cameraVersion >> 8 & 0xFF) << (_cameraVersion & 0xFF);
+    //-- The E90 has a different set of video resolutions
+    if(_cameraModel.startsWith("E90")) {
+        current_camera = &videoResE90[0];
+        current_camera_option_count = NUM_E90_VIDEO_RES;
+    } else {
+        current_camera = &videoResCGO3P[0];
+        current_camera_option_count = NUM_CGO3P_VIDEO_RES;
+    }
+    //-- Update resolution list based on camera type
+    _videoResList.clear();
+    for(size_t i = 0; i < current_camera_option_count; i++) {
+        _videoResList.append(current_camera[i].description);
+    }
+    emit videoResListChanged();
     emit firmwareVersionChanged();
+    emit cameraModelChanged();
     _startTimer(MAV_CMD_REQUEST_CAMERA_SETTINGS, 500);
 }
 
@@ -823,7 +842,6 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
 {
     mavlink_camera_settings_t settings;
     mavlink_msg_camera_settings_decode(&message, &settings);
-    //                                                      1                   1                         0              0                         1                           2375                        1                            0
     qCDebug(YuneecCameraLog) << "_handleCameraSettings:" << settings.mode_id << settings.color_mode_id << settings.ev << settings.exposure_mode << settings.image_format_id << settings.iso_sensitivity << settings.metering_mode_id << settings.shutter_speed;
     //-- Auto Exposure Mode
     int ae = settings.exposure_mode == 0 ? AE_MODE_AUTO : AE_MODE_MANUAL;
@@ -888,6 +906,7 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
         _true_cam_mode = cam_mode;
         _ambarellaSettings.cam_mode = cam_mode;
         emit cameraModeChanged();
+        _updateShutterLimit();
         _updateAspectRatio();
     }
     //-- Audio Enabled
@@ -951,12 +970,16 @@ CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
             emit recordTimeChanged();
         }
     }
-    //-- Current Video Resolution and FPS
-    int idx = _findVideoResIndex(cap.video_resolution_h, cap.video_resolution_v, cap.video_framerate);
-    if((int)_currentVideoResIndex != idx && idx >= 0) {
-        _currentVideoResIndex = idx;
-        emit currentVideoResChanged();
-        _updateAspectRatio();
+    //-- Video res is only valid when video started recording
+    if(_ambarellaStatus.video_status == VIDEO_CAPTURE_STATUS_RUNNING) {
+        //-- Current Video Resolution and FPS
+        int idx = _findVideoResIndex(cap.video_resolution_h, cap.video_resolution_v, cap.video_framerate);
+        if((int)_currentVideoResIndex != idx && idx >= 0) {
+            _currentVideoResIndex = idx;
+            emit currentVideoResChanged();
+            _updateAspectRatio();
+            _updateShutterLimit();
+        }
     }
     /*
     //-- Recording running time
@@ -987,24 +1010,6 @@ CameraControl::_handleStorageInfo(const mavlink_message_t& message)
     //-- Get Capture Status next
     _startTimer(MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS, 500);
 }
-
-#if 0
-//-----------------------------------------------------------------------------
-void
-CameraControl::_handleTakePhotoStatus(int http_code, QByteArray data)
-{
-    if(http_code == 200) {
-        qCDebug(YuneecCameraLog) << "TAKE_PHOTO" << data;
-        if(data.contains("status\":\"OK")) {
-            _cameraSound.setLoopCount(1);
-            _cameraSound.play();
-        } else {
-            _errorSound.setLoopCount(1);
-            _errorSound.play();
-        }
-    }
-}
-#endif
 
 //-----------------------------------------------------------------------------
 CameraControl::VideoStatus
@@ -1053,7 +1058,7 @@ CameraControl::videoResList()
 
     if(_videoResList.size() == 0) {
         for(size_t i = 0; i < current_camera_option_count; i++) {
-            _videoResList.append(videoResCGO3P[i].description);
+            _videoResList.append(current_camera[i].description);
         }
     }
     return _videoResList;
@@ -1212,6 +1217,42 @@ CameraControl::_updateAspectRatio()
         }
     }
     qgcApp()->toolbox()->settingsManager()->videoSettings()->aspectRatio()->setRawValue(aspect);
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::_updateShutterLimit()
+{
+    float cur_shutter = shutterSpeeds[_tempShutter].value;
+    _minShutter = 0;
+    if(_ambarellaSettings.cam_mode == CAMERA_MODE_VIDEO) {
+        //-- Minimum shutter cannot be slower than frame rate
+        float curFps = 1.01f / (float)(current_camera[_currentVideoResIndex].fps);
+        for(uint32_t i = 0; i < NUM_SHUTTER_VALUES; i++) {
+            if(curFps > shutterSpeeds[i].value) {
+                _minShutter = i;
+                break;
+            }
+        }
+    }
+    //-- Adjust list of shutter speed options
+    _shutterList.clear();
+    for(uint32_t i = _minShutter; i < NUM_SHUTTER_VALUES; i++) {
+        _shutterList.append(shutterSpeeds[i].description);
+    }
+    emit shutterListChanged();
+    if(_currentShutter < _minShutter) {
+        _currentShutter = _minShutter;
+        _tempShutter    = _minShutter;
+        emit currentShutterChanged();
+    } else {
+        int idx = _findShutterSpeedIndex(cur_shutter);
+        if(idx >= 0) {
+            _currentShutter = idx;
+            _tempShutter    = idx;
+            emit currentShutterChanged();
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------

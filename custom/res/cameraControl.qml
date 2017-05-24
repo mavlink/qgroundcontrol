@@ -88,7 +88,7 @@ Rectangle {
         //-----------------------------------------------------------------
         QGCLabel {
             id:         cameraLabel
-            text:       _activeVehicle ? (TyphoonHQuickInterface.connectedCamera !== "" ? TyphoonHQuickInterface.connectedCamera : _commLostStr) : _commLostStr
+            text:       _activeVehicle ? (TyphoonHQuickInterface.cameraControl.cameraModel !== "" ? TyphoonHQuickInterface.cameraControl.cameraModel : _commLostStr) : _commLostStr
             font.pointSize: ScreenTools.smallFontPointSize
             anchors.horizontalCenter: parent.horizontalCenter
         }
@@ -253,7 +253,7 @@ Rectangle {
                 anchors.centerIn: parent
                 QGCLabel {
                     id:                 cameraSettingsLabel
-                    text:               "Camera Settings"
+                    text:               _cameraVideoMode ? "Video Settings" : "Camera Settings"
                     font.family:        ScreenTools.demiboldFontFamily
                     font.pointSize:     ScreenTools.mediumFontPointSize
                     anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
