@@ -100,7 +100,7 @@ private:
     void    _handleChannel                      (m4Packet& packet);
     bool    _handleCommand                      (m4Packet& packet);
     void    _switchChanged                      (m4Packet& packet);
-    void    _calibrationStateChanged           (m4Packet& packet);
+    void    _calibrationStateChanged            (m4Packet& packet);
     void    _handleMixedChannelData             (m4Packet& packet);
     void    _handleRawChannelData               (m4Packet& packet);
     void    _handControllerFeedback             (m4Packet& packet);
@@ -115,6 +115,7 @@ signals:
     void    rawChannelsChanged                  ();
     void    calibrationCompleteChanged          ();
     void    calibrationStateChanged             ();
+    void    rcActiveChanged                     ();
     //-- WIFI
     void    newWifiSSID                         (QString ssid, int rssi);
     void    newWifiRSSI                         ();

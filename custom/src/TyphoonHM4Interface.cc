@@ -245,6 +245,7 @@ TyphoonHM4Interface::_vehicleReady(bool ready)
 void
 TyphoonHM4Interface::_initAndCheckBinding()
 {
+#if defined(__androidx86__)
     //-- First boot, not bound
     if(_m4State != TyphoonHQuickInterface::M4_STATE_RUN) {
         enterBindMode();
@@ -254,6 +255,7 @@ TyphoonHM4Interface::_initAndCheckBinding()
     } else {
         qCDebug(YuneecLog) << "In RUN mode and RC ready";
     }
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -262,11 +264,14 @@ TyphoonHM4Interface::_rcTimeout()
 {
     qCDebug(YuneecLog) << "RC Timeout";
     _rcActive = false;
+    emit rcActiveChanged();
+#if defined(__androidx86__)
     //-- If we are in run state after binding and we don't have RC, bind it again.
     if(_vehicle && _softReboot && _m4State == TyphoonHQuickInterface::M4_STATE_RUN) {
         _softReboot = false;
         enterBindMode();
     }
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -280,8 +285,11 @@ TyphoonHM4Interface::_mavlinkMessageReceived(const mavlink_message_t& message)
         if(channels.time_boot_ms != _rcTime) {
             _softReboot = false;
             _rcTime     = channels.time_boot_ms;
-            _rcActive   = true;
             _rcTimer.stop();
+            if(!_rcActive) {
+                _rcActive   = true;
+                emit rcActiveChanged();
+            }
         } else {
             if(!_rcTimer.isActive() && !_softReboot) {
                 //-- Wait a bit before assuming RC is lost
@@ -324,6 +332,7 @@ TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
         _cameraControl->setVehicle(NULL);
         _vehicle = NULL;
         _rcActive = false;
+        emit rcActiveChanged();
         _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
     }
 }
@@ -332,6 +341,7 @@ TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
 void
 TyphoonHM4Interface::enterBindMode(bool skipPairCommand)
 {
+#if defined(__androidx86__)
     qCDebug(YuneecLog) << "enterBindMode() Current Mode: " << _m4State;
     //-- Send MAVLink command telling vehicle to enter bind mode
     if(_vehicle) {
@@ -354,6 +364,9 @@ TyphoonHM4Interface::enterBindMode(bool skipPairCommand)
         }
         QTimer::singleShot(1000, this, &TyphoonHM4Interface::_initSequence);
     }
+#else
+    Q_UNUSED(skipPairCommand);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -417,6 +430,7 @@ TyphoonHM4Interface::softReboot()
     _rcTimer.start(1000);
     _rcActive   = false;
     _softReboot = true;
+    emit rcActiveChanged();
 #endif
 }
 

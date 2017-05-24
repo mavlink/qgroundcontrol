@@ -117,6 +117,7 @@ public:
     Q_PROPERTY(int              K3Cal           READ    K3Cal               NOTIFY calibrationStateChanged)
 
     Q_PROPERTY(bool             calibrationComplete     READ    calibrationComplete NOTIFY calibrationCompleteChanged)
+    Q_PROPERTY(bool             rcActive                READ    rcActive            NOTIFY rcActiveChanged)
 
     Q_INVOKABLE void enterBindMode      ();
     Q_INVOKABLE void initM4             ();
@@ -164,6 +165,7 @@ public:
     QString     flightTime          ();
     int         copyResult          () { return _copyResult; }
     bool        wifiAlertEnabled    () { return _wifiAlertEnabled; }
+    bool        rcActive            ();
 
     void        init                (TyphoonHM4Interface* pHandler);
     void        setWifiAlertEnabled (bool enabled) { _wifiAlertEnabled = enabled; emit wifiAlertEnabledChanged(); }
@@ -209,6 +211,7 @@ signals:
     void    calibrationCompleteChanged  ();
     void    calibrationStateChanged     ();
     void    wifiAlertEnabledChanged     ();
+    void    rcActiveChanged             ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -233,6 +236,7 @@ private slots:
     void    _importMissions             ();
     void    _calibrationCompleteChanged ();
     void    _calibrationStateChanged    ();
+    void    _rcActiveChanged            ();
 
 private:
     void    _saveWifiConfigurations     ();

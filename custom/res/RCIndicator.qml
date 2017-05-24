@@ -65,7 +65,7 @@ Item {
 
     function handleRssiWarning() {
         if(_activeVehicle) {
-            if(_activeVehicle.rcRSSI < 0 || _activeVehicle.rcRSSI > 100) {
+            if(!TyphoonHQuickInterface.rcActive) {
                 if(!rcAnimation.running) {
                     rcAnimation.start()
                 }
@@ -82,8 +82,8 @@ Item {
     }
 
     Connections {
-        target: QGroundControl.multiVehicleManager.activeVehicle
-        onRcRSSIChanged: {
+        target: TyphoonHQuickInterface
+        onRcActiveChanged: {
             handleRssiWarning()
         }
     }
