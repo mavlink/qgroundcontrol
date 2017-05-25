@@ -164,6 +164,7 @@ public:
     Q_PROPERTY(QStringList  evList          READ    evList                                      CONSTANT)
     Q_PROPERTY(QString      cameraModel     READ    cameraModel                                 NOTIFY cameraModelChanged)
     Q_PROPERTY(QString      firmwareVersion READ    firmwareVersion                             NOTIFY firmwareVersionChanged)
+    Q_PROPERTY(bool         cameraAvailable READ    cameraAvailable                             NOTIFY cameraAvailableChanged)
 
     Q_PROPERTY(quint32      currentVideoRes READ    currentVideoRes WRITE setCurrentVideoRes    NOTIFY currentVideoResChanged)
     Q_PROPERTY(quint32      currentWB       READ    currentWB       WRITE setCurrentWB          NOTIFY currentWBChanged)
@@ -203,6 +204,7 @@ public:
     QStringList evList              ();
     QString     firmwareVersion     ();
     QString     cameraModel         () { return _cameraModel; }
+    bool        cameraAvailable     () { return _cameraSupported == CAMERA_SUPPORT_YES; }
 
     quint32     currentVideoRes     () { return _currentVideoResIndex; }
     quint32     currentWB           () { return _currentWB; }
@@ -252,6 +254,7 @@ signals:
     void    videoResListChanged     ();
     void    shutterListChanged      ();
     void    cameraModelChanged      ();
+    void    cameraAvailableChanged  ();
 
 private:
     int     _findVideoResIndex      (int w, int h, float fps);
@@ -298,8 +301,8 @@ private:
 
     int                     _currentTask;
     int                     _cameraSupported;
-    int                     _httpErrorCount;
     int                     _true_cam_mode;
+    int                     _camInfoTries;
     quint32                 _currentVideoResIndex;
     quint32                 _currentWB;
     quint32                 _currentIso;
