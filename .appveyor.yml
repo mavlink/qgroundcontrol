@@ -70,7 +70,7 @@ deploy:
     artifact: qgcinstaller
     on:
       CONFIG: installer
-      appveyor_repo_tag: true
+      appveyor_repo_tag: false
 
 # deploy daily build symbols to s3
   - provider: S3
