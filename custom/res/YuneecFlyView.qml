@@ -47,6 +47,7 @@ Item {
     property string _distanceStr:       isNaN(_distance) ? "0 m" : _distance.toFixed(0) + ' ' + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "m")
     property real   _heading:           _activeVehicle ? _activeVehicle.heading.rawValue : 0
     property bool   _showAttitude:      false
+    property int    _eggCount:          0
 
     Timer {
         id: ssidChanged
@@ -57,6 +58,25 @@ Item {
             if(TyphoonHQuickInterface.wifiAlertEnabled) {
                 rootLoader.sourceComponent = connectedToAP
             }
+        }
+    }
+
+    Timer {
+        id:         toggleTimer
+        interval:   1000
+        onTriggered: {
+            toggleTimer.stop()
+            parent._eggCount = 0
+        }
+    }
+
+    function indicatorClicked() {
+        vehicleStatus.visible = !vehicleStatus.visible
+        _eggCount++
+        toggleTimer.restart()
+        if (_eggCount == 8) {
+            vehicleStatus.visible = true
+            _showAttitude = !_showAttitude
         }
     }
 
@@ -485,11 +505,7 @@ Item {
         MouseArea {
             anchors.fill: parent
             onClicked: {
-                vehicleStatus.visible = !vehicleStatus.visible
-            }
-            onDoubleClicked: {
-                vehicleStatus.visible = true
-                _showAttitude = !_showAttitude
+                indicatorClicked()
             }
         }
     }
@@ -542,11 +558,7 @@ Item {
         MouseArea {
             anchors.fill: parent
             onClicked: {
-                vehicleStatus.visible = !vehicleStatus.visible
-            }
-            onDoubleClicked: {
-                vehicleStatus.visible = true
-                _showAttitude = !_showAttitude
+                indicatorClicked()
             }
         }
     }
