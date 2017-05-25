@@ -16,10 +16,11 @@ Button {
     readonly property alias count:          popupItems.count
     readonly property alias currentText:    popup.currentText
 
-    property var    _qgcPal:                QGCPalette { colorGroupEnabled: enabled }
-    property int    _horizontalPadding:    ScreenTools.defaultFontPixelWidth
-    property int    _verticalPadding:      Math.round(ScreenTools.defaultFontPixelHeight / 2)
-    property var    __popup:               popup
+    property bool   _showBorder:        _qgcPal.globalTheme === QGCPalette.Light
+    property var    _qgcPal:            QGCPalette { colorGroupEnabled: enabled }
+    property int    _horizontalPadding: ScreenTools.defaultFontPixelWidth
+    property int    _verticalPadding:   Math.round(ScreenTools.defaultFontPixelHeight / 2)
+    property var    __popup:            popup
 
     signal activated(int index)
 
@@ -37,6 +38,8 @@ Button {
             implicitWidth:  ScreenTools.implicitComboBoxWidth
             implicitHeight: ScreenTools.implicitComboBoxHeight
             color:          control._qgcPal.button
+            border.width:   control._showBorder ? 1: 0
+            border.color:   control._qgcPal.buttonText
 
             QGCColoredImage {
                 id:                     image
