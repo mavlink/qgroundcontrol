@@ -184,6 +184,7 @@ CameraControl::CameraControl(QObject* parent)
     , _currentTask(MAV_CMD_REQUEST_STORAGE_INFORMATION)
     , _cameraSupported(CAMERA_SUPPORT_UNDEFINED)
     , _true_cam_mode(CAMERA_MODE_UNDEFINED)
+    , _camInfoTries(0)
     , _currentVideoResIndex(0)
     , _currentWB(0)
     , _currentIso(0)
@@ -214,7 +215,8 @@ CameraControl::setVehicle(Vehicle* vehicle)
 {
     _resetCameraValues();
     _cameraSupported = CAMERA_SUPPORT_UNDEFINED;
-    _currentTask = MAV_CMD_REQUEST_STORAGE_INFORMATION;
+    _currentTask     = MAV_CMD_REQUEST_STORAGE_INFORMATION;
+    _camInfoTries    = 0;
     emit cameraModeChanged();
     emit videoStatusChanged();
     emit photoStatusChanged();
@@ -611,7 +613,16 @@ CameraControl::_timerHandler()
             _requestCameraSettings();
             break;
         case MAV_CMD_REQUEST_CAMERA_INFORMATION:
+            if(_cameraSupported == CAMERA_SUPPORT_YES) {
+                //-- We got an ACK but no response
+                if(_camInfoTries++ > 3) {
+                    _cameraSupported = CAMERA_SUPPORT_NO;
+                    emit cameraAvailableChanged();
+                    break;
+                }
+            }
             _requestCameraInfo();
+            _startTimer(MAV_CMD_REQUEST_CAMERA_INFORMATION, 1000);
             break;
     }
 }
@@ -727,16 +738,21 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
                 qCDebug(YuneecCameraLog) << "No response for MAV_CMD_REQUEST_CAMERA_INFORMATION";
                 //-- We got no answer so we assume no camera support
                 _cameraSupported = CAMERA_SUPPORT_NO;
+                emit cameraAvailableChanged();
             } else {
                 if(result == MAV_RESULT_ACCEPTED) {
                     //-- We have an answer. Start the show.
                     _cameraSupported = CAMERA_SUPPORT_YES;
+                    emit cameraAvailableChanged();
+                    //-- Make sure we get an answer
+                    _startTimer(MAV_CMD_REQUEST_CAMERA_INFORMATION, 1000);
                 } else if(result == MAV_RESULT_TEMPORARILY_REJECTED) {
                     //--Keep Trying
                     _startTimer(MAV_CMD_REQUEST_CAMERA_INFORMATION, 500);
                 } else {
                     //-- We got an answer but not a good one
                     _cameraSupported = CAMERA_SUPPORT_NO;
+                    emit cameraAvailableChanged();
                 }
             }
         }

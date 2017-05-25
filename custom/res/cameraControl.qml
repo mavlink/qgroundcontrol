@@ -54,20 +54,14 @@ Rectangle {
     property bool _cameraModeUndefined:     _communicationLost  || (_emptySD ? true  : TyphoonHQuickInterface.cameraControl.cameraMode  === CameraControl.CAMERA_MODE_UNDEFINED)
     property bool _cameraAutoMode:          TyphoonHQuickInterface.cameraControl ? TyphoonHQuickInterface.cameraControl.aeMode === CameraControl.AE_MODE_AUTO : false;
 
-    /*
     Connections {
         target: TyphoonHQuickInterface.cameraControl
-        onCameraModeChanged: {
-            console.log('QML: Camera Mode Changed: ' + TyphoonHQuickInterface.cameraControl.cameraMode)
-        }
-        onRecordTimeChanged: {
-            console.log('QML: Record Time: ' + TyphoonHQuickInterface.cameraControl.recordTime)
-        }
-        onVideoStatusChanged: {
-            console.log('QML: Video Status: ' + TyphoonHQuickInterface.cameraControl.videoStatus + ' ' + CameraControl.VIDEO_CAPTURE_STATUS_STOPPED)
+        onCameraAvailableChanged: {
+            if(!TyphoonHQuickInterface.cameraControl.cameraAvailable) {
+                rootLoader.sourceComponent = noCameraDlg
+            }
         }
     }
-    */
 
     MouseArea {
         anchors.fill:   parent
@@ -594,6 +588,81 @@ Rectangle {
             }
             Keys.onBackPressed: {
                 rootLoader.sourceComponent = null
+            }
+        }
+    }
+    //-- Connected to some AP and not a Typhoon
+    Component {
+        id:             noCameraDlg
+        Item {
+            id:         noCameraItem
+            width:      mainWindow.width
+            height:     mainWindow.height
+            z:          1000000
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+            Rectangle {
+                id:             noCameraShadow
+                anchors.fill:   noCameraRect
+                radius:         noCameraRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       noCameraShadow
+                visible:            noCameraRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             noCameraShadow
+            }
+            Rectangle {
+                id:     noCameraRect
+                width:  mainWindow.width   * 0.65
+                height: noCameraCol.height * 1.5
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  qgcPal.alertBackground
+                border.color: qgcPal.alertBorder
+                border.width: 2
+                anchors.centerIn: parent
+                Column {
+                    id:                 noCameraCol
+                    width:              noCameraRect.width
+                    spacing:            ScreenTools.defaultFontPixelHeight * 3
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           qsTr("No Camera Reported")
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        color:          qgcPal.alertText
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           qsTr("Vehicle did not report camera available.")
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCButton {
+                        text:           qsTr("Close")
+                        width:          ScreenTools.defaultFontPixelWidth  * 10
+                        height:         ScreenTools.defaultFontPixelHeight * 2
+                        onClicked:      rootLoader.sourceComponent = null
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
+            }
+            Component.onCompleted: {
+                rootLoader.width  = noCameraItem.width
+                rootLoader.height = noCameraItem.height
             }
         }
     }
