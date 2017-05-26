@@ -42,7 +42,7 @@ void CameraSectionTest::init(void)
                                              MissionItem(0, MAV_CMD_DO_MOUNT_CONTROL, MAV_FRAME_MISSION, 10.1234, 0, 20.1234, 0, 0, 0, MAV_MOUNT_MODE_MAVLINK_TARGETING, true, false),
                                              this);
     _validTimeItem = new SimpleMissionItem(_offlineVehicle,
-                                           MissionItem(0, MAV_CMD_IMAGE_START_CAPTURE, MAV_FRAME_MISSION, 48, 0,-1, 0, 0, 0, 0, true, false),
+                                           MissionItem(0, MAV_CMD_IMAGE_START_CAPTURE, MAV_FRAME_MISSION, 0, 48, 0, -1, -1, 0, 0, true, false),
                                            this);
     _validDistanceItem = new SimpleMissionItem(_offlineVehicle,
                                                MissionItem(0, MAV_CMD_DO_SET_CAM_TRIGG_DIST, MAV_FRAME_MISSION, 72, 0, 0, 0, 0, 0, 0, true, false),
@@ -442,7 +442,7 @@ void CameraSectionTest::_testAppendSectionItems(void)
     // Test camera actions
 
     _cameraSection->cameraAction()->setRawValue(CameraSection::TakePhotosIntervalTime);
-    _cameraSection->cameraPhotoIntervalTime()->setRawValue(_validTimeItem->missionItem().param1());
+    _cameraSection->cameraPhotoIntervalTime()->setRawValue(_validTimeItem->missionItem().param2());
     _cameraSection->appendSectionItems(rgMissionItems, this, seqNum);
     QCOMPARE(rgMissionItems.count(), 1);
     QCOMPARE(seqNum, 1);
@@ -494,7 +494,7 @@ void CameraSectionTest::_testAppendSectionItems(void)
     _cameraSection->gimbalPitch()->setRawValue(_validGimbalItem->missionItem().param1());
     _cameraSection->gimbalYaw()->setRawValue(_validGimbalItem->missionItem().param3());
     _cameraSection->cameraAction()->setRawValue(CameraSection::TakePhotosIntervalTime);
-    _cameraSection->cameraPhotoIntervalTime()->setRawValue(_validTimeItem->missionItem().param1());
+    _cameraSection->cameraPhotoIntervalTime()->setRawValue(_validTimeItem->missionItem().param2());
     _cameraSection->appendSectionItems(rgMissionItems, this, seqNum);
     QCOMPARE(rgMissionItems.count(), 2);
     QCOMPARE(seqNum, 2);
@@ -678,7 +678,7 @@ void CameraSectionTest::_testScanForPhotoIntervalTimeSection(void)
     // Image start command but incorrect settings
 
     SimpleMissionItem invalidSimpleItem(_offlineVehicle, _validTimeItem->missionItem());
-    invalidSimpleItem.missionItem().setParam2(10);    // must be unlimited
+    invalidSimpleItem.missionItem().setParam3(10);    // must be unlimited
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);

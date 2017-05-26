@@ -510,6 +510,10 @@ bool UnitTest::doubleNaNCompare(double value1, double value2)
     if (qIsNaN(value1) && qIsNaN(value2)) {
         return true;
     } else {
-        return qFuzzyCompare(value1, value2);
+        bool ret = qFuzzyCompare(value1, value2);
+        if (!ret) {
+            qDebug() << value1 << value2;
+        }
+        return ret;
     }
 }
