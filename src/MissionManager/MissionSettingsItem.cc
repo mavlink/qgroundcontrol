@@ -220,10 +220,14 @@ void MissionSettingsItem::_setDirty(void)
 void MissionSettingsItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
     if (_plannedHomePositionCoordinate != coordinate) {
-        _plannedHomePositionCoordinate = coordinate;
-        emit coordinateChanged(coordinate);
-        emit exitCoordinateChanged(coordinate);
-        _plannedHomePositionAltitudeFact.setRawValue(coordinate.altitude());
+        // ArduPilot tends to send crap home positions at initial vehicel boot, discard them
+        if (coordinate.latitude() != 0 || coordinate.longitude() != 0) {
+            qDebug() << "Setting home position" << coordinate;
+            _plannedHomePositionCoordinate = coordinate;
+            emit coordinateChanged(coordinate);
+            emit exitCoordinateChanged(coordinate);
+            _plannedHomePositionAltitudeFact.setRawValue(coordinate.altitude());
+        }
     }
 }
 
