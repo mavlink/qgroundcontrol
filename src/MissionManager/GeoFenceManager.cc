@@ -123,12 +123,12 @@ void GeoFenceManager::sendToVehicle(const QGeoCoordinate&   breachReturn,
     }
 
     for (int i=0; i<_sendCircles.count(); i++) {
-        const QGCFenceCircle& circle = _sendCircles[i];
+        QGCFenceCircle& circle = _sendCircles[i];
 
         MissionItem* item = new MissionItem(0,
                                             circle.inclusion() ? MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION : MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION,
                                             MAV_FRAME_GLOBAL,
-                                            circle.radius(),
+                                            circle.radius()->rawValue().toDouble(),
                                             0, 0, 0,                    // param 2-4 unused
                                             circle.center().latitude(),
                                             circle.center().longitude(),

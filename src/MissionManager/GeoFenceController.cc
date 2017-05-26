@@ -393,6 +393,9 @@ void GeoFenceController::addInclusionPolygon(QGeoCoordinate topLeft, QGeoCoordin
     polygon->appendVertex(bottomRight);
     polygon->appendVertex(bottomLeft);
     _polygons.append(polygon);
+
+    clearAllInteractive();
+    polygon->setInteractive(true);
 }
 
 void GeoFenceController::addInclusionCircle(QGeoCoordinate topLeft, QGeoCoordinate bottomRight)
@@ -409,7 +412,11 @@ void GeoFenceController::addInclusionCircle(QGeoCoordinate topLeft, QGeoCoordina
     QGeoCoordinate centerTopEdge = topLeft.atDistanceAndAzimuth(halfWidthMeters, 90);
     QGeoCoordinate center(centerLeftEdge.latitude(), centerTopEdge.longitude());
 
-    _circles.append(new QGCFenceCircle(center, radius, true /* inclusion */, this));
+    QGCFenceCircle* circle = new QGCFenceCircle(center, radius, true /* inclusion */, this);
+    _circles.append(circle);
+
+    clearAllInteractive();
+    circle->setInteractive(true);
 }
 
 void GeoFenceController::deletePolygon(int index)
@@ -430,4 +437,14 @@ void GeoFenceController::deleteCircle(int index)
 
     QGCFenceCircle* circle = qobject_cast<QGCFenceCircle*>(_circles.removeAt(index));
     circle->deleteLater();
+}
+
+void GeoFenceController::clearAllInteractive(void)
+{
+    for (int i=0; i<_polygons.count(); i++) {
+        _polygons.value<QGCFencePolygon*>(i)->setInteractive(false);
+    }
+    for (int i=0; i<_circles.count(); i++) {
+        _circles.value<QGCFenceCircle*>(i)->setInteractive(false);
+    }
 }

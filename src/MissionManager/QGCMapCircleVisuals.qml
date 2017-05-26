@@ -22,9 +22,9 @@ import QGroundControl.FlightMap     1.0
 Item {
     id: _root
 
-    property var    mapControl                          ///< Map control to place item in
-    property var    mapCircle                           ///< QGCMapCircle object
-    property bool   interactive:        false           /// true: user can manipulate polygon
+    property var    mapControl                                  ///< Map control to place item in
+    property var    mapCircle                                   ///< QGCMapCircle object
+    property bool   interactive:        mapCircle.interactive   /// true: user can manipulate polygon
     property color  interiorColor:      "transparent"
     property real   interiorOpacity:    1
     property int    borderWidth:        0
@@ -84,7 +84,7 @@ Item {
             border.color:   borderColor
             border.width:   borderWidth
             center:         mapCircle.center
-            radius:         mapCircle.radius
+            radius:         mapCircle.radius.rawValue
         }
     }
 

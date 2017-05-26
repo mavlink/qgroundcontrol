@@ -1,0 +1,10 @@
+[
+{
+    "name":             "Radius",
+    "shortDescription": "Radius for geofence circle.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0.1,
+    "units":            "m"
+}
+]

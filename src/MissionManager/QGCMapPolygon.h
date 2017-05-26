@@ -29,12 +29,13 @@ public:
 
     const QGCMapPolygon& operator=(const QGCMapPolygon& other);
 
-    Q_PROPERTY(int                  count       READ count                              NOTIFY countChanged)
-    Q_PROPERTY(QVariantList         path        READ path                               NOTIFY pathChanged)
-    Q_PROPERTY(QmlObjectListModel*  pathModel   READ qmlPathModel                       CONSTANT)
-    Q_PROPERTY(bool                 dirty       READ dirty          WRITE setDirty      NOTIFY dirtyChanged)
-    Q_PROPERTY(QGeoCoordinate       center      READ center         WRITE setCenter     NOTIFY centerChanged)
-    Q_PROPERTY(bool                 centerDrag  READ centerDrag     WRITE setCenterDrag NOTIFY centerDragChanged)
+    Q_PROPERTY(int                  count       READ count                                  NOTIFY countChanged)
+    Q_PROPERTY(QVariantList         path        READ path                                   NOTIFY pathChanged)
+    Q_PROPERTY(QmlObjectListModel*  pathModel   READ qmlPathModel                           CONSTANT)
+    Q_PROPERTY(bool                 dirty       READ dirty          WRITE setDirty          NOTIFY dirtyChanged)
+    Q_PROPERTY(QGeoCoordinate       center      READ center         WRITE setCenter         NOTIFY centerChanged)
+    Q_PROPERTY(bool                 centerDrag  READ centerDrag     WRITE setCenterDrag     NOTIFY centerDragChanged)
+    Q_PROPERTY(bool                 interactive READ interactive    WRITE setInteractive    NOTIFY interactiveChanged)
 
     Q_INVOKABLE void clear(void);
     Q_INVOKABLE void appendVertex(const QGeoCoordinate& coordinate);
@@ -72,6 +73,7 @@ public:
     void            setDirty    (bool dirty);
     QGeoCoordinate  center      (void) const { return _center; }
     bool            centerDrag  (void) const { return _centerDrag; }
+    bool            interactive (void) const { return _interactive; }
 
     QVariantList        path        (void) const { return _polygonPath; }
     QmlObjectListModel* qmlPathModel(void) { return &_polygonModel; }
@@ -81,6 +83,7 @@ public:
     void setPath        (const QVariantList& path);
     void setCenter      (QGeoCoordinate newCenter);
     void setCenterDrag  (bool centerDrag);
+    void setInteractive (bool interactive);
 
     static const char* jsonPolygonKey;
 
@@ -91,6 +94,7 @@ signals:
     void cleared            (void);
     void centerChanged      (QGeoCoordinate center);
     void centerDragChanged  (bool centerDrag);
+    void interactiveChanged (bool interactive);
 
 private slots:
     void _polygonModelCountChanged(int count);
@@ -109,6 +113,7 @@ private:
     QGeoCoordinate      _center;
     bool                _centerDrag;
     bool                _ignoreCenterUpdates;
+    bool                _interactive;
 };
 
 #endif

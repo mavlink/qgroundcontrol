@@ -23,6 +23,7 @@ QGCMapPolygon::QGCMapPolygon(QObject* parent)
     , _dirty                (false)
     , _centerDrag           (false)
     , _ignoreCenterUpdates  (false)
+    , _interactive          (false)
 {
     _init();
 }
@@ -32,6 +33,7 @@ QGCMapPolygon::QGCMapPolygon(const QGCMapPolygon& other, QObject* parent)
     , _dirty                (false)
     , _centerDrag           (false)
     , _ignoreCenterUpdates  (false)
+    , _interactive          (false)
 {
     *this = other;
 
@@ -53,6 +55,8 @@ const QGCMapPolygon& QGCMapPolygon::operator=(const QGCMapPolygon& other)
     for (int i=0; i<vertices.count(); i++) {
         appendVertex(vertices[i].value<QGeoCoordinate>());
     }
+
+    setDirty(true);
 
     return *this;
 }
@@ -331,5 +335,13 @@ void QGCMapPolygon::setCenterDrag(bool centerDrag)
     if (centerDrag != _centerDrag) {
         _centerDrag = centerDrag;
         emit centerDragChanged(centerDrag);
+    }
+}
+
+void QGCMapPolygon::setInteractive(bool interactive)
+{
+    if (_interactive != interactive) {
+        _interactive = interactive;
+        emit interactiveChanged(interactive);
     }
 }

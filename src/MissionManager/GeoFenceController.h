@@ -61,6 +61,9 @@ public:
     ///     @param index Index of circle to delete
     Q_INVOKABLE void deleteCircle(int index);
 
+    /// Clears the interactive bit from all fence items
+    Q_INVOKABLE void clearAllInteractive(void);
+
     void start                      (bool editMode) final;
     void save                       (QJsonObject& json) final;
     bool load                       (const QJsonObject& json, QString& errorString) final;

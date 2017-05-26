@@ -32,7 +32,6 @@ Item {
     property var    _mouseAreaComponent
     property var    _polygons:                  myGeoFenceController.polygons
     property var    _circles:                   myGeoFenceController.circles
-    property bool   _interactive:               interactive
     property bool   _circleSupported:           myGeoFenceController.circleRadiusFact !== null
     property bool   _circleEnabled:             myGeoFenceController.circleEnabled
     property real   _circleRadius:              _circleSupported ? myGeoFenceController.circleRadiusFact.rawValue : 0
@@ -100,7 +99,6 @@ Item {
         delegate : QGCMapPolygonVisuals {
             mapControl:         map
             mapPolygon:         object
-            interactive:        _interactive
             borderWidth:        object.inclusion ? 2 : 0
             borderColor:        "orange"
             interiorColor:      object.inclusion ? "transparent" : "orange"
@@ -114,7 +112,6 @@ Item {
         delegate : QGCMapCircleVisuals {
             mapControl:         map
             mapCircle:          object
-            interactive:        _interactive
             borderWidth:        object.inclusion ? 2 : 0
             borderColor:        "orange"
             interiorColor:      object.inclusion ? "transparent" : "orange"
