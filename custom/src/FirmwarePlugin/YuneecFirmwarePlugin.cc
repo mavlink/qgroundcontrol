@@ -77,28 +77,36 @@ const QVariantList& YuneecFirmwarePlugin::cameraList(const Vehicle* vehicle)
     Q_UNUSED(vehicle);
 
     if (_cameraList.size() == 0) {
-        CameraMetaData* metaData1;
-        metaData1 = new CameraMetaData(tr("Typhoon H CGO3+"),   // Camera name
-                                      6.264,                    // sensorWidth
-                                      4.698,                    // sensorHeight
-                                      4000,                     // imageWidth
-                                      3000,                     // imageHeight
-                                      14,                       // focalLength
-                                      true,                     // true: landscape orientation
-                                      true,                     // true: camera is fixed orientation
-                                      this);                    // parent
-        CameraMetaData* metaData2;
-        metaData2 = new CameraMetaData(tr("Typhoon H E90"),     // Camera name
-                                      13.3056,                  // sensorWidth
-                                      8.656,                    // sensorHeight
-                                      5472,                     // imageWidth
-                                      3080,                     // imageHeight
-                                      8.29,                     // focalLength
-                                      true,                     // true: landscape orientation
-                                      true,                     // true: camera is fixed orientation
-                                      this);                    // parent
-        _cameraList.append(QVariant::fromValue(metaData1));
-        _cameraList.append(QVariant::fromValue(metaData2));
+        _cameraList.append(QVariant::fromValue(new CameraMetaData(
+            tr("CGO3+"),              // Camera name
+            6.264,                    // sensorWidth
+            4.698,                    // sensorHeight
+            4000,                     // imageWidth
+            3000,                     // imageHeight
+            14,                       // focalLength
+            true,                     // true: landscape orientation
+            true,                     // true: camera is fixed orientation
+            this)));                  // parent
+        _cameraList.append(QVariant::fromValue(new CameraMetaData(
+            tr("E50"),                // Camera name
+            6.2372,                   // sensorWidth
+            4.7058,                   // sensorHeight
+            4000,                     // imageWidth
+            3000,                     // imageHeight
+            7.2,                      // focalLength
+            true,                     // true: landscape orientation
+            true,                     // true: camera is fixed orientation
+            this)));                  // parent
+        _cameraList.append(QVariant::fromValue(new CameraMetaData(
+            tr("E90"),                // Camera name
+            13.3056,                  // sensorWidth
+            8.656,                    // sensorHeight
+            5472,                     // imageWidth
+            3080,                     // imageHeight
+            8.29,                     // focalLength
+            true,                     // true: landscape orientation
+            true,                     // true: camera is fixed orientation
+            this)));                  // parent
     }
 
     return _cameraList;
