@@ -65,6 +65,7 @@ deploy:
     secret_access_key:
       secure: RiYqaR+3T2PMNz2j5ur8LCA6H/Zfd4jTX33CZE5iBxm+zaz4QLs25p0B7prpaoNN
     bucket: qgroundcontrol
+    region: us-west-2
     set_public: true
     folder: builds/$(APPVEYOR_REPO_BRANCH)
     artifact: qgcinstaller
