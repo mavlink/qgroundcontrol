@@ -10,16 +10,26 @@
 
 import QtQuick              2.3
 import QtQuick.Controls     1.2
+import QtQuick.Dialogs      1.2
 
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
+import QGroundControl.Controllers   1.0
 
 SetupPage {
     id:                 subFramePage
     pageComponent:      subFramePageComponent
+    property var  _flatParamList:       ListModel {
+        ListElement {
+            name: "Blue Robotics BlueROV2"
+            file: "Sub/bluerov2-3_5.params"
+        }
+    }
+
+    APMAirframeComponentController { id: controller; factPanel: subFramePage.viewPanel }
 
     Component {
         id: subFramePageComponent
@@ -27,8 +37,6 @@ SetupPage {
         Column {
             id:     mainColumn
             width:  availableWidth
-
-            FactPanelController { id: controller; factPanel: subFramePage.viewPanel }
 
             QGCPalette { id: palette; colorGroupEnabled: true }
 
@@ -100,6 +108,19 @@ SetupPage {
                 }
             }
 
+            Item {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                height: defaultsButton.height
+
+                QGCButton {
+                    id: defaultsButton
+                    anchors.left: parent.left
+                    text:       qsTr("Load Vehicle Default Parameters")
+                    onClicked:  showDialog(selectParamFileDialogComponent, qsTr("Load Vehicle Default Parameters"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+                }
+            }
+
             Flow {
                 id:         flowView
                 width:      parent.width
@@ -148,4 +169,47 @@ SetupPage {
             }// Flow
         } // Column
     } // Component
+
+
+    Component {
+        id: selectParamFileDialogComponent
+
+        QGCViewDialog {
+            QGCLabel {
+                id:                 applyParamsText
+                anchors.top:        parent.top
+                anchors.left:       parent.left
+                anchors.right:      parent.right
+                anchors.margins:    _margins
+                wrapMode:           Text.WordWrap
+                text:               qsTr("Select your vehicle to load the default parameters:")
+            }
+
+            Flow {
+                anchors.margins:    _margins
+                anchors.top:        applyParamsText.bottom
+                anchors.left:       parent.left
+                anchors.right:      parent.right
+                anchors.bottom:     parent.bottom
+                spacing :           _margins
+                layoutDirection:    Qt.Vertical;
+
+                Repeater {
+                    id:     airframePicker
+                    model:  _flatParamList
+
+                    delegate: QGCButton {
+                        width:  parent.width / 2.1
+                        height: (ScreenTools.defaultFontPixelHeight * 14) / 5
+                        text:   name
+
+                        onClicked : {
+                            controller.loadParameters(file)
+                            hideDialog()
+                        }
+                    }
+                }
+            }
+        }
+    }
 } // SetupPage
