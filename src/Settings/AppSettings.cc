@@ -33,6 +33,7 @@ const char* AppSettings::savePathName =                                 "SavePat
 const char* AppSettings::autoLoadMissionsName =                         "AutoLoadMissions";
 const char* AppSettings::mapboxTokenName =                              "MapboxToken";
 const char* AppSettings::esriTokenName =                                "EsriToken";
+const char* AppSettings::defaultFirmwareTypeName =                      "DefaultFirmwareType";
 
 const char* AppSettings::parameterFileExtension =   "params";
 const char* AppSettings::planFileExtension =        "plan";
@@ -67,6 +68,7 @@ AppSettings::AppSettings(QObject* parent)
     , _autoLoadMissionsFact(NULL)
     , _mapboxTokenFact(NULL)
     , _esriTokenFact(NULL)
+    , _defaultFirmwareTypeFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
@@ -343,3 +345,11 @@ MAV_TYPE AppSettings::offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleT
     }
 }
 
+Fact* AppSettings::defaultFirmwareType(void)
+{
+    if (!_defaultFirmwareTypeFact) {
+        _defaultFirmwareTypeFact = _createSettingsFact(defaultFirmwareTypeName);
+    }
+
+    return _defaultFirmwareTypeFact;
+}
