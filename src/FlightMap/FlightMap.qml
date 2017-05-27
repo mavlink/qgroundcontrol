@@ -117,12 +117,16 @@ Map {
 
     /// Ground Station location
     MapQuickItem {
-        anchorPoint.x:  sourceItem.anchorPointX
-        anchorPoint.y:  sourceItem.anchorPointY
+        anchorPoint.x:  sourceItem.width / 2
+        anchorPoint.y:  sourceItem.height / 2
         visible:        gcsPosition.isValid
         coordinate:     gcsPosition
-        sourceItem:     MissionItemIndexLabel {
-        label:          QGroundControl.appName.charAt(0)
+
+        sourceItem: Image {
+            source:     "/res/QGCLogoFull"
+            smooth:     true
+            fillMode:   Image.PreserveAspectFit
+            height:     ScreenTools.defaultFontPixelHeight * 1.5
         }
     }
 } // Map
