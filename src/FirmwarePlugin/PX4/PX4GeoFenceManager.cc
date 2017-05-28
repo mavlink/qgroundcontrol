@@ -15,7 +15,6 @@
 PX4GeoFenceManager::PX4GeoFenceManager(Vehicle* vehicle)
     : GeoFenceManager(vehicle)
     , _firstParamLoadComplete(false)
-    , _circleEnabled(false)
     , _circleRadiusFact(NULL)
 {
     connect(_vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &PX4GeoFenceManager::_parametersReady);
@@ -36,14 +35,13 @@ void PX4GeoFenceManager::_parametersReady(void)
         _firstParamLoadComplete = true;
 
         _circleRadiusFact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("GF_MAX_HOR_DIST"));
-        connect(_circleRadiusFact, &Fact::rawValueChanged, this, &PX4GeoFenceManager::_circleRadiusRawValueChanged);
-        emit circleRadiusChanged(circleRadius());
+        emit circleRadiusFactChanged(_circleRadiusFact);
 
         QStringList paramNames;
         QStringList paramLabels;
 
         paramNames << QStringLiteral("GF_ACTION") << QStringLiteral("GF_MAX_HOR_DIST") << QStringLiteral("GF_MAX_VER_DIST");
-        paramLabels << QStringLiteral("Action:") << QStringLiteral("Radius:") << QStringLiteral("Max Altitude:");
+        paramLabels << QStringLiteral("Breach Action:") << QStringLiteral("Radius:") << QStringLiteral("Max Altitude:");
 
         _params.clear();
         _paramLabels.clear();
@@ -55,32 +53,8 @@ void PX4GeoFenceManager::_parametersReady(void)
                 _paramLabels << paramLabels[i];
             }
         }
+
         emit paramsChanged(_params);
         emit paramLabelsChanged(_paramLabels);
-
-        _circleEnabled = true;
-        emit circleEnabledChanged(true);
-
-        qCDebug(GeoFenceManagerLog) << "fenceSupported:circleSupported:polygonSupported:breachReturnSupported" <<
-                                       _circleEnabled << polygonEnabled() << breachReturnEnabled();
     }
-}
-
-float PX4GeoFenceManager::circleRadius(void) const
-{
-    if (_circleRadiusFact) {
-        return _circleRadiusFact->rawValue().toFloat();
-    } else {
-        return 0.0;
-    }
-}
-
-void PX4GeoFenceManager::_circleRadiusRawValueChanged(QVariant value)
-{
-    emit circleRadiusChanged(value.toFloat());
-}
-
-void PX4GeoFenceManager::removeAll(void)
-{
-    // Only params so nothing to do
 }

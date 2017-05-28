@@ -21,6 +21,8 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 import QGroundControl.FlightMap             1.0
 import QGroundControl.QGCMapEngineManager   1.0
+import QGroundControl.FactSystem            1.0
+import QGroundControl.FactControls          1.0
 
 QGCView {
     id:             offlineMapView
@@ -30,6 +32,9 @@ QGCView {
     property var    _currentSelection:  null
 
     property string mapKey:             "lastMapType"
+
+    property Fact   _mapboxFact:        QGroundControl.settingsManager.appSettings.mapboxToken
+    property Fact   _esriFact:          QGroundControl.settingsManager.appSettings.esriToken
 
     property string mapType:            _settings.mapProvider.enumStringValue + " " + _settings.mapType.enumStringValue
     property bool   isMapInteractive:   false
@@ -89,8 +94,10 @@ QGCView {
 
     function updateMap() {
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
+            //console.log(_map.supportedMapTypes[i].name)
             if (mapType === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]
+                //console.log("Update Map:" + " " + _map.activeMapType)
                 handleChanges()
                 return
             }
@@ -225,7 +232,6 @@ QGCView {
             id: optionDialog
 
             function accept() {
-                QGroundControl.mapEngineManager.mapboxToken  = mapBoxToken.text
                 QGroundControl.mapEngineManager.maxDiskCache = parseInt(maxCacheSize.text)
                 QGroundControl.mapEngineManager.maxMemCache  = parseInt(maxCacheMemSize.text)
                 optionDialog.hideDialog()
@@ -270,19 +276,31 @@ QGCView {
                         text:           qsTr("Memory cache changes require a restart to take effect.")
                     }
 
-                    Item { width: 1; height: 1 }
-
-                    QGCLabel { text: qsTr("MapBox Access Token") }
-
-                    QGCTextField {
-                        id:             mapBoxToken
-                        maximumLength:  256
-                        width:          ScreenTools.defaultFontPixelWidth * 30
-                        text:           QGroundControl.mapEngineManager.mapboxToken
+                    Item { width: 1; height: 1; visible: _mapboxFact ? _mapboxFact.visible : false }
+                    QGCLabel { text: qsTr("Mapbox Access Token"); visible: _mapboxFact ? _mapboxFact.visible : false }
+                    FactTextField {
+                        fact:               _mapboxFact
+                        visible:            _mapboxFact ? _mapboxFact.visible : false
+                        maximumLength:      256
+                        width:              ScreenTools.defaultFontPixelWidth * 30
+                    }
+                    QGCLabel {
+                        text:           qsTr("To enable Mapbox maps, enter your access token.")
+                        visible:        _mapboxFact ? _mapboxFact.visible : false
+                        font.pointSize: _adjustableFontPointSize
                     }
 
+                    Item { width: 1; height: 1; visible: _esriFact ? _esriFact.visible : false }
+                    QGCLabel { text: qsTr("Esri Access Token"); visible: _esriFact ? _esriFact.visible : false }
+                    FactTextField {
+                        fact:               _esriFact
+                        visible:            _esriFact ? _esriFact.visible : false
+                        maximumLength:      256
+                        width:              ScreenTools.defaultFontPixelWidth * 30
+                    }
                     QGCLabel {
-                        text:           qsTr("With an access token, you can use MapBox Maps.")
+                        text:           qsTr("To enable Esri maps, enter your access token.")
+                        visible:        _esriFact ? _esriFact.visible : false
                         font.pointSize: _adjustableFontPointSize
                     }
                 } // GridLayout
@@ -343,17 +361,6 @@ QGCView {
             // Used to make pinch zoom work
             MouseArea {
                 anchors.fill: parent
-            }
-
-            CenterMapDropButton {
-                anchors.margins:    _margins
-                anchors.left:       parent.left
-                anchors.top:        parent.top
-                map:                _map
-                z:                  QGroundControl.zOrderTopMost
-                showMission:        false
-                showAllItems:       false
-                visible:            addNewSetView.visible
             }
 
             MapScale {
@@ -602,6 +609,17 @@ QGCView {
                     } // Map
                 }
             } // Item - Add new set view
+
+            CenterMapDropButton {
+                topMargin:          0
+                anchors.margins:    _margins
+                anchors.left:       map.left
+                anchors.top:        map.top
+                map:                _map
+                showMission:        false
+                showAllItems:       false
+                visible:            addNewSetView.visible
+            }
         } // Map
 
         //-- Add new set dialog
@@ -609,7 +627,7 @@ QGCView {
             anchors.margins:    ScreenTools.defaultFontPixelWidth
             anchors.verticalCenter: parent.verticalCenter
             anchors.right:      parent.right
-            visible:            _map.visible
+            visible:            addNewSetView.visible
             width:              ScreenTools.defaultFontPixelWidth * (ScreenTools.isTinyScreen ? 24 : 28)
             height:             Math.min(parent.height - (anchors.margins * 2), addNewSetFlickable.y + addNewSetColumn.height + addNewSetLabel.anchors.margins)
             color:              Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.85)
@@ -917,7 +935,10 @@ QGCView {
                 text:           qsTr("Import")
                 width:          _buttonSize
                 visible:        !ScreenTools.isMobile
-                onClicked:      rootLoader.sourceComponent = importDialog
+                onClicked: {
+                    QGroundControl.mapEngineManager.importAction = QGCMapEngineManager.ActionNone
+                    rootLoader.sourceComponent = importDialog
+                }
             }
             QGCButton {
                 text:           qsTr("Export")
@@ -984,7 +1005,7 @@ QGCView {
                 onClicked:      QGroundControl.mapEngineManager.selectNone()
             }
             QGCButton {
-                text:           qsTr("Export to Disk")
+                text:           qsTr("Export")
                 width:          _bigButtonSize
                 enabled:        QGroundControl.mapEngineManager.selectedCount > 0
                 onClicked: {
@@ -992,14 +1013,6 @@ QGCView {
                     if(QGroundControl.mapEngineManager.exportSets()) {
                         rootLoader.sourceComponent = exportToDiskProgress
                     }
-                }
-            }
-            QGCButton {
-                text:           qsTr("Export to Device")
-                width:          _bigButtonSize
-                enabled:        QGroundControl.mapEngineManager.selectedCount > 0
-                onClicked: {
-                    rootLoader.sourceComponent = exportToDevice
                 }
             }
             QGCButton {
@@ -1043,8 +1056,8 @@ QGCView {
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     BusyIndicator {
-                        visible:        QGroundControl.mapEngineManager.exporting
-                        running:        QGroundControl.mapEngineManager.exporting
+                        visible:        QGroundControl.mapEngineManager ? QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionExporting : false
+                        running:        QGroundControl.mapEngineManager ? QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionExporting : false
                         width:          exportCloseButton.height
                         height:         exportCloseButton.height
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -1072,7 +1085,7 @@ QGCView {
             color:      "black"
             anchors.centerIn: parent
             Rectangle {
-                width:  parent.width  * 0.45
+                width:  parent.width  * 0.5
                 height: importCol.height * 1.5
                 radius: ScreenTools.defaultFontPixelWidth
                 color:  qgcPal.windowShadeDark
@@ -1147,7 +1160,7 @@ QGCView {
                         visible:            QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCButton {
-                            text:           qsTr("Import From Disk")
+                            text:           qsTr("Import")
                             width:          _bigButtonSize * 1.25
                             onClicked: {
                                 if(!QGroundControl.mapEngineManager.importSets()) {
@@ -1157,109 +1170,12 @@ QGCView {
                             }
                         }
                         QGCButton {
-                            text:           qsTr("Import From Device")
-                            width:          _bigButtonSize * 1.25
-                            onClicked: {
-                                rootLoader.sourceComponent = importFromDevice
-                            }
-                        }
-                        QGCButton {
                             text:           qsTr("Cancel")
                             width:          _bigButtonSize * 1.25
                             onClicked: {
                                 showList();
                                 rootLoader.sourceComponent = null
                             }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    Component {
-        id: importFromDevice
-        Rectangle {
-            width:      mainWindow.width
-            height:     mainWindow.height
-            color:      "black"
-            anchors.centerIn: parent
-            Rectangle {
-                width:  parent.width  * 0.45
-                height: importCol.height * 1.5
-                radius: ScreenTools.defaultFontPixelWidth
-                color:  qgcPal.windowShadeDark
-                border.color: qgcPal.text
-                anchors.centerIn: parent
-                Column {
-                    id:                 importCol
-                    spacing:            ScreenTools.defaultFontPixelHeight
-                    width:              parent.width
-                    anchors.centerIn:   parent
-                    QGCLabel {
-                        text:           qsTr("Map Tile Set Import From Device");
-                        font.family:        ScreenTools.demiboldFontFamily
-                        font.pointSize:     ScreenTools.mediumFontPointSize
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCLabel {
-                        text:           qsTr("NOT YET IMPLEMENTED");
-                        font.family:        ScreenTools.demiboldFontFamily
-                        font.pointSize:     ScreenTools.mediumFontPointSize
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCButton {
-                        text:           qsTr("Close")
-                        width:          _bigButtonSize * 1.25
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        onClicked: {
-                            showList();
-                            rootLoader.sourceComponent = null
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    Component {
-        id: exportToDevice
-        Rectangle {
-            width:      mainWindow.width
-            height:     mainWindow.height
-            color:      "black"
-            anchors.centerIn: parent
-            Rectangle {
-                width:  parent.width  * 0.45
-                height: importCol.height * 1.5
-                radius: ScreenTools.defaultFontPixelWidth
-                color:  qgcPal.windowShadeDark
-                border.color: qgcPal.text
-                anchors.centerIn: parent
-                Column {
-                    id:                 importCol
-                    spacing:            ScreenTools.defaultFontPixelHeight
-                    width:              parent.width
-                    anchors.centerIn:   parent
-                    QGCLabel {
-                        text:           qsTr("Map Tile Set Export To Device");
-                        font.family:        ScreenTools.demiboldFontFamily
-                        font.pointSize:     ScreenTools.mediumFontPointSize
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCLabel {
-                        text:           qsTr("NOT YET IMPLEMENTED");
-                        font.family:        ScreenTools.demiboldFontFamily
-                        font.pointSize:     ScreenTools.mediumFontPointSize
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCButton {
-                        text:           qsTr("Close")
-                        width:          _bigButtonSize * 1.25
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        onClicked: {
-                            showList();
-                            rootLoader.sourceComponent = null
                         }
                     }
                 }

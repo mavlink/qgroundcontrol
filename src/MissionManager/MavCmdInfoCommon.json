@@ -32,7 +32,6 @@
             "specifiesCoordinate":  true,
             "friendlyEdit":         true,
             "category":             "Basic",
-            "cameraSection":        true,
             "param1": {
                 "label":            "Hold",
                 "units":            "secs",
@@ -54,7 +53,8 @@
             "param4": {
                 "label":            "Heading",
                 "units":            "radians",
-                "default":          0.0,
+                "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
@@ -70,6 +70,13 @@
                 "label":            "Radius",
                 "units":            "m",
                 "default":          50.0,
+                "decimalPlaces":    2
+            },
+            "param4": {
+                "label":            "Heading",
+                "units":            "radians",
+                "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
@@ -93,11 +100,11 @@
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "Exit loiter from",
-                "enumStrings":      "Center,Tangent",
-                "enumValues":       "0,1",
-                "default":          1,
-                "decimalPlaces":    0
+                "label":            "Heading",
+                "units":            "radians",
+                "nanUnchanged":     true,
+                "default":          null,
+                "decimalPlaces":    2
             }
         },
         {
@@ -121,11 +128,10 @@
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "Exit loiter from",
-                "enumStrings":      "Center,Tangent",
-                "enumValues":       "0,1",
-                "default":          1,
-                "decimalPlaces":    0
+                "label":            "Heading",
+                "units":            "radians",
+                "nanUnchanged":     true,
+                "decimalPlaces":    2
             }
         },
         {
@@ -153,7 +159,8 @@
             "param4": {
                 "label":            "Heading",
                 "units":            "radians",
-                "default":          0.0,
+                "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
@@ -174,7 +181,8 @@
             "param4": {
                 "label":            "Heading",
                 "units":            "radians",
-                "default":          0.0,
+                "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
@@ -312,7 +320,8 @@
             "param4": {
                 "label":            "Heading",
                 "units":            "deg",
-                "default":          0.0,
+                "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
@@ -327,7 +336,8 @@
             "param4": {
                 "label":            "Heading",
                 "units":            "deg",
-                "default":          0.0,
+                "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
@@ -345,7 +355,7 @@
             }
         },
         {
-            "id":           94,
+            "id":           93,
             "rawName":      "MAV_CMD_NAV_DELAY",
             "friendlyName": "Delay until",
             "description":  "Delay unti the specified time is reached.",
@@ -958,6 +968,30 @@
         { "id": 511, "rawName": "MAV_CMD_SET_MESSAGE_INTERVAL", "friendlyName": "Set message interval" },
         { "id": 520, "rawName": "MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES", "friendlyName": "Get capabilities" },
         {
+            "id":           530,
+            "rawName":      "MAV_CMD_SET_CAMERA_MODE",
+            "friendlyName": "Set camera modes" ,
+            "description":  "Set camera photo, video, audio modes.",
+            "category":     "Camera",
+            "param1": {
+                "label":            "Camera id",
+                "default":          0,
+                "decimalPlaces":    0
+            },
+            "param2": {
+                "label":            "Mode",
+                "enumStrings":      "Take photos,Record video",
+                "enumValues":       "0,1",
+                "default":          0
+            },
+            "param3": {
+                "label":            "Audio",
+                "enumStrings":      "Recording disabled,Recording enabled",
+                "enumValues":       "0,1",
+                "default":          0
+            }
+        },
+        {
             "id":           2000,
             "rawName":      "MAV_CMD_IMAGE_START_CAPTURE",
             "friendlyName": "Start image capture" ,
@@ -985,7 +1019,18 @@
                 "decimalPlaces":    0
             }
         },
-        { "id": 2001, "rawName": "MAV_CMD_IMAGE_STOP_CAPTURE", "friendlyName": "Stop image capture" },
+        {
+            "id": 2001,
+            "rawName": "MAV_CMD_IMAGE_STOP_CAPTURE",
+            "friendlyName": "Stop image capture",
+            "description":  "Stop taking photos.",
+            "category":     "Camera",
+            "param1": {
+                "label":            "Camera id",
+                "default":          0,
+                "decimalPlaces":    0
+            }
+        },
         { "id": 2003, "rawName": "MAV_CMD_DO_TRIGGER_CONTROL", "friendlyName": "Trigger control" },
         {
             "id":           2500,

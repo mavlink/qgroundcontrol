@@ -24,19 +24,17 @@ QGC_LOGGING_CATEGORY(MissionSettingsComplexItemLog, "MissionSettingsComplexItemL
 const char* MissionSettingsItem::jsonComplexItemTypeValue = "MissionSettings";
 
 const char* MissionSettingsItem::_plannedHomePositionAltitudeName = "PlannedHomePositionAltitude";
-const char* MissionSettingsItem::_missionFlightSpeedName =          "FlightSpeed";
-const char* MissionSettingsItem::_missionEndActionName =            "MissionEndAction";
 
 QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
 
 MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
-    : ComplexMissionItem(vehicle, parent)
-    , _specifyMissionFlightSpeed(false)
+    : ComplexMissionItem                (vehicle, parent)
     , _plannedHomePositionAltitudeFact  (0, _plannedHomePositionAltitudeName,   FactMetaData::valueTypeDouble)
-    , _missionFlightSpeedFact           (0, _missionFlightSpeedName,            FactMetaData::valueTypeDouble)
-    , _missionEndActionFact             (0, _missionEndActionName,              FactMetaData::valueTypeUint32)
-    , _sequenceNumber(0)
-    , _dirty(false)
+    , _missionEndRTL                    (false)
+    , _cameraSection                    (vehicle)
+    , _speedSection                     (vehicle)
+    , _sequenceNumber                   (0)
+    , _dirty                            (false)
 {
     _editorQml = "qrc:/qml/MissionSettingsEditor.qml";
 
@@ -45,52 +43,35 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
     }
 
     _plannedHomePositionAltitudeFact.setMetaData    (_metaDataMap[_plannedHomePositionAltitudeName]);
-    _missionFlightSpeedFact.setMetaData             (_metaDataMap[_missionFlightSpeedName]);
-    _missionEndActionFact.setMetaData               (_metaDataMap[_missionEndActionName]);
-
     _plannedHomePositionAltitudeFact.setRawValue    (_plannedHomePositionAltitudeFact.rawDefaultValue());
-    _missionEndActionFact.setRawValue               (_missionEndActionFact.rawDefaultValue());
-
-    // FIXME: Flight speed default value correctly based firmware parameter if online
-    AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
-    Fact* speedFact = vehicle->multiRotor() ? appSettings->offlineEditingHoverSpeed() : appSettings->offlineEditingCruiseSpeed();
-    _missionFlightSpeedFact.setRawValue(speedFact->rawValue().toDouble());
-
     setHomePositionSpecialCase(true);
 
-    connect(this,               &MissionSettingsItem::specifyMissionFlightSpeedChanged, this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
-    connect(&_cameraSection,    &CameraSection::missionItemCountChanged,                this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
+    _cameraSection.setAvailable(true);
+    _speedSection.setAvailable(true);
 
-    connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged, this, &MissionSettingsItem::_setDirty);
+    connect(this,               &MissionSettingsItem::specifyMissionFlightSpeedChanged, this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
+    connect(this,               &MissionSettingsItem::missionEndRTLChanged,             this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
+    connect(&_cameraSection,    &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
+    connect(&_speedSection,     &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
+
+    connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged,                        this, &MissionSettingsItem::_setDirty);
+
     connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged, this, &MissionSettingsItem::_updateAltitudeInCoordinate);
 
-    connect(&_missionFlightSpeedFact,           &Fact::valueChanged, this, &MissionSettingsItem::_setDirty);
-    connect(&_missionEndActionFact,             &Fact::valueChanged, this, &MissionSettingsItem::_setDirty);
+    connect(&_cameraSection,    &CameraSection::dirtyChanged,   this, &MissionSettingsItem::_sectionDirtyChanged);
+    connect(&_speedSection,     &SpeedSection::dirtyChanged,    this, &MissionSettingsItem::_sectionDirtyChanged);
 
-    connect(&_cameraSection, &CameraSection::dirtyChanged, this, &MissionSettingsItem::_cameraSectionDirtyChanged);
-
-    connect(&_missionFlightSpeedFact,   &Fact::valueChanged,                        this, &MissionSettingsItem::specifiedFlightSpeedChanged);
-    connect(&_cameraSection,            &CameraSection::specifyGimbalChanged,       this, &MissionSettingsItem::specifiedGimbalYawChanged);
-    connect(&_cameraSection,            &CameraSection::specifiedGimbalYawChanged,  this, &MissionSettingsItem::specifiedGimbalYawChanged);
+    connect(&_cameraSection,    &CameraSection::specifyGimbalChanged,       this, &MissionSettingsItem::specifiedGimbalYawChanged);
+    connect(&_cameraSection,    &CameraSection::specifiedGimbalYawChanged,  this, &MissionSettingsItem::specifiedGimbalYawChanged);
 }
 
-
-void MissionSettingsItem::setSpecifyMissionFlightSpeed(bool specifyMissionFlightSpeed)
-{
-    if (specifyMissionFlightSpeed != _specifyMissionFlightSpeed) {
-        _specifyMissionFlightSpeed = specifyMissionFlightSpeed;
-        emit specifyMissionFlightSpeedChanged(specifyMissionFlightSpeed);
-    }
-}
 
 int MissionSettingsItem::lastSequenceNumber(void) const
 {
     int lastSequenceNumber = _sequenceNumber;
 
-    if (_specifyMissionFlightSpeed) {
-        lastSequenceNumber++;
-    }
-    lastSequenceNumber += _cameraSection.missionItemCount();
+    lastSequenceNumber += _cameraSection.itemCount();
+    lastSequenceNumber += _speedSection.itemCount();
 
     return lastSequenceNumber;
 }
@@ -109,7 +90,7 @@ void MissionSettingsItem::save(QJsonArray&  missionItems)
 
     appendMissionItems(items, this);
 
-    // First item show be planned home position, we are not reponsible for save/load
+    // First item show be planned home position, we are not responsible for save/load
     // Remaining items we just output as is
     for (int i=1; i<items.count(); i++) {
         MissionItem* item = items[i];
@@ -171,23 +152,8 @@ void MissionSettingsItem::appendMissionItems(QList<MissionItem*>& items, QObject
                                         missionItemParent);
     items.append(item);
 
-    if (_specifyMissionFlightSpeed) {
-        qCDebug(MissionSettingsComplexItemLog) << "Appending MAV_CMD_DO_CHANGE_SPEED";
-        MissionItem* item = new MissionItem(seqNum++,
-                                            MAV_CMD_DO_CHANGE_SPEED,
-                                            MAV_FRAME_MISSION,
-                                            _vehicle->multiRotor() ? 1 /* groundspeed */ : 0 /* airspeed */,    // Change airspeed or groundspeed
-                                            _missionFlightSpeedFact.rawValue().toDouble(),
-                                            -1,                                                                 // No throttle change
-                                            0,                                                                  // Absolute speed change
-                                            0, 0, 0,                                                            // param 5-7 not used
-                                            true,                                                               // autoContinue
-                                            false,                                                              // isCurrentItem
-                                            missionItemParent);
-        items.append(item);
-    }
-
-    _cameraSection.appendMissionItems(items, missionItemParent, seqNum);
+    _cameraSection.appendSectionItems(items, missionItemParent, seqNum);
+    _speedSection.appendSectionItems(items, missionItemParent, seqNum);
 }
 
 bool MissionSettingsItem::addMissionEndAction(QList<MissionItem*>& items, int seqNum, QObject* missionItemParent)
@@ -196,43 +162,7 @@ bool MissionSettingsItem::addMissionEndAction(QList<MissionItem*>& items, int se
 
     // IMPORTANT NOTE: If anything changes here you must also change MissionSettingsItem::scanForMissionSettings
 
-    // Find last waypoint coordinate information so we have a lat/lon/alt to use
-    QGeoCoordinate  lastWaypointCoord;
-    MAV_FRAME       lastWaypointFrame;
-
-    bool found = false;
-    for (int i=items.count()-1; i>0; i--) {
-        MissionItem* missionItem = items[i];
-
-        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_vehicle, (MAV_CMD)missionItem->command());
-        if (uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
-            lastWaypointCoord = missionItem->coordinate();
-            lastWaypointFrame = missionItem->frame();
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
-        return false;
-    }
-
-    switch(_missionEndActionFact.rawValue().toInt()) {
-    case MissionEndLoiter:
-        qCDebug(MissionSettingsComplexItemLog) << "Appending end action Loiter seqNum" << seqNum;
-        item = new MissionItem(seqNum,
-                               MAV_CMD_NAV_LOITER_UNLIM,
-                               lastWaypointFrame,
-                               0, 0,                        // param 1-2 unused
-                               0,                           // use default loiter radius
-                               0,                           // param 4 not used
-                               lastWaypointCoord.latitude(),
-                               lastWaypointCoord.longitude(),
-                               lastWaypointCoord.altitude(),
-                               true,                        // autoContinue
-                               false,                       // isCurrentItem
-                               missionItemParent);
-        break;
-    case MissionEndRTL:
+    if (_missionEndRTL) {
         qCDebug(MissionSettingsComplexItemLog) << "Appending end action RTL seqNum" << seqNum;
         item = new MissionItem(seqNum,
                                MAV_CMD_NAV_RETURN_TO_LAUNCH,
@@ -241,12 +171,6 @@ bool MissionSettingsItem::addMissionEndAction(QList<MissionItem*>& items, int se
                                true,                       // autoContinue
                                false,                      // isCurrentItem
                                missionItemParent);
-        break;
-    default:
-        break;
-    }
-
-    if (item) {
         items.append(item);
         return true;
     } else {
@@ -254,71 +178,16 @@ bool MissionSettingsItem::addMissionEndAction(QList<MissionItem*>& items, int se
     }
 }
 
-bool MissionSettingsItem::scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle)
+bool MissionSettingsItem::scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex)
 {
-    bool foundSpeed = false;
+    bool foundSpeedSection = false;
     bool foundCameraSection = false;
-    bool stopLooking = false;
 
     qCDebug(MissionSettingsComplexItemLog) << "MissionSettingsItem::scanForMissionSettings count:scanIndex" << visualItems->count() << scanIndex;
 
-    MissionSettingsItem* settingsItem = visualItems->value<MissionSettingsItem*>(scanIndex);
-    if (!settingsItem) {
-        qWarning() << "Item specified by scanIndex not MissionSettingsItem";
-        return false;
-    }
-
     // Scan through the initial mission items for possible mission settings
-
-    scanIndex++;
-    while (!stopLooking && visualItems->count() > 1) {
-        SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(scanIndex);
-        if (!item) {
-            // We hit a complex item, there can be no more possible mission settings
-            break;
-        }
-        MissionItem& missionItem = item->missionItem();
-
-        qCDebug(MissionSettingsComplexItemLog) << item->command() << missionItem.param1() << missionItem.param2() << missionItem.param3() << missionItem.param4() << missionItem.param5() << missionItem.param6() << missionItem.param7() ;
-
-        // See MissionSettingsItem::getMissionItems for specs on what compomises a known mission setting
-
-        switch ((MAV_CMD)item->command()) {
-        case MAV_CMD_DO_CHANGE_SPEED:
-            if (!foundSpeed && missionItem.param3() == -1 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
-                if (vehicle->multiRotor()) {
-                    if (missionItem.param1() != 1) {
-                        stopLooking = true;
-                        break;
-                    }
-                } else {
-                    if (missionItem.param1() != 0) {
-                        stopLooking = true;
-                        break;
-                    }
-                }
-                foundSpeed = true;
-                settingsItem->setSpecifyMissionFlightSpeed(true);
-                settingsItem->missionFlightSpeed()->setRawValue(missionItem.param2());
-                visualItems->removeAt(scanIndex)->deleteLater();
-                qCDebug(MissionSettingsComplexItemLog) << "Scan: Found MAV_CMD_DO_CHANGE_SPEED";
-                continue;
-            }
-            stopLooking = true;
-            break;
-
-        default:
-            if (!foundCameraSection) {
-                if (settingsItem->_cameraSection.scanForCameraSection(visualItems, scanIndex)) {
-                    foundCameraSection = true;
-                    qCDebug(MissionSettingsComplexItemLog) << "Scan: Found Camera Section";
-                    continue;
-                }
-            }
-            stopLooking = true;
-            break;
-        }
-    }
+    foundCameraSection = _cameraSection.scanForSection(visualItems, scanIndex);
+    foundSpeedSection = _speedSection.scanForSection(visualItems, scanIndex);
 
     // Look at the end of the mission for end actions
 
@@ -327,29 +196,15 @@ bool MissionSettingsItem::scanForMissionSettings(QmlObjectListModel* visualItems
     if (item) {
         MissionItem& missionItem = item->missionItem();
 
-        switch ((MAV_CMD)item->command()) {
-        case MAV_CMD_NAV_LOITER_UNLIM:
-            if (missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0) {
-                qCDebug(MissionSettingsComplexItemLog) << "Scan: Found end action Loiter";
-                settingsItem->missionEndAction()->setRawValue(MissionEndLoiter);
-                visualItems->removeAt(lastIndex)->deleteLater();
-            }
-            break;
-
-        case MAV_CMD_NAV_RETURN_TO_LAUNCH:
-            if (missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
-                qCDebug(MissionSettingsComplexItemLog) << "Scan: Found end action RTL";
-                settingsItem->missionEndAction()->setRawValue(MissionEndRTL);
-                visualItems->removeAt(lastIndex)->deleteLater();
-            }
-            break;
-
-        default:
-            break;
+        if (missionItem.command() == MAV_CMD_NAV_RETURN_TO_LAUNCH &&
+                missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+            qCDebug(MissionSettingsComplexItemLog) << "Scan: Found end action RTL";
+            _missionEndRTL = true;
+            visualItems->removeAt(lastIndex)->deleteLater();
         }
     }
 
-    return foundSpeed || foundCameraSection;
+    return foundSpeedSection || foundCameraSection;
 }
 
 double MissionSettingsItem::complexDistance(void) const
@@ -365,10 +220,14 @@ void MissionSettingsItem::_setDirty(void)
 void MissionSettingsItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
     if (_plannedHomePositionCoordinate != coordinate) {
-        _plannedHomePositionCoordinate = coordinate;
-        emit coordinateChanged(coordinate);
-        emit exitCoordinateChanged(coordinate);
-        _plannedHomePositionAltitudeFact.setRawValue(coordinate.altitude());
+        // ArduPilot tends to send crap home positions at initial vehicel boot, discard them
+        if (coordinate.latitude() != 0 || coordinate.longitude() != 0) {
+            qDebug() << "Setting home position" << coordinate;
+            _plannedHomePositionCoordinate = coordinate;
+            emit coordinateChanged(coordinate);
+            emit exitCoordinateChanged(coordinate);
+            _plannedHomePositionAltitudeFact.setRawValue(coordinate.altitude());
+        }
     }
 }
 
@@ -378,16 +237,11 @@ void MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber(void)
     setDirty(true);
 }
 
-void MissionSettingsItem::_cameraSectionDirtyChanged(bool dirty)
+void MissionSettingsItem::_sectionDirtyChanged(bool dirty)
 {
     if (dirty) {
         setDirty(true);
     }
-}
-
-double MissionSettingsItem::specifiedFlightSpeed(void)
-{
-    return _specifyMissionFlightSpeed ? _missionFlightSpeedFact.rawValue().toDouble() : std::numeric_limits<double>::quiet_NaN();
 }
 
 double MissionSettingsItem::specifiedGimbalYaw(void)
@@ -404,5 +258,14 @@ void MissionSettingsItem::_updateAltitudeInCoordinate(QVariant value)
         _plannedHomePositionCoordinate.setAltitude(newAltitude);
         emit coordinateChanged(_plannedHomePositionCoordinate);
         emit exitCoordinateChanged(_plannedHomePositionCoordinate);
+    }
+}
+
+double MissionSettingsItem::specifiedFlightSpeed(void)
+{
+    if (_speedSection.specifyFlightSpeed()) {
+        return _speedSection.flightSpeed()->rawValue().toDouble();
+    } else {
+        return std::numeric_limits<double>::quiet_NaN();
     }
 }

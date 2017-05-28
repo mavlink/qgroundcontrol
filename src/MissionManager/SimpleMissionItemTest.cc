@@ -9,7 +9,6 @@
 
 
 #include "SimpleMissionItemTest.h"
-#include "SimpleMissionItem.h"
 #include "QGCApplication.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
@@ -21,48 +20,43 @@ const SimpleMissionItemTest::ItemInfo_t SimpleMissionItemTest::_rgItemInfo[] = {
     { MAV_CMD_NAV_LOITER_TIME,  MAV_FRAME_GLOBAL_RELATIVE_ALT },
     { MAV_CMD_NAV_LAND,         MAV_FRAME_GLOBAL_RELATIVE_ALT },
     { MAV_CMD_NAV_TAKEOFF,      MAV_FRAME_GLOBAL_RELATIVE_ALT },
-    { MAV_CMD_CONDITION_DELAY,  MAV_FRAME_MISSION },
     { MAV_CMD_DO_JUMP,          MAV_FRAME_MISSION },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesWaypoint[] = {
-    { "Altitude:",      70.1234567 },
-    { "Hold:",          10.1234567 },
+    { "Altitude",   70.1234567 },
+    { "Hold",       10.1234567 },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesLoiterUnlim[] = {
-    { "Altitude:",  70.1234567 },
-    { "Radius:",    30.1234567 },
+    { "Altitude",   70.1234567 },
+    { "Radius",     30.1234567 },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesLoiterTurns[] = {
-    { "Altitude:",  70.1234567 },
-    { "Radius:",    30.1234567 },
-    { "Turns:",     10.1234567 },
+    { "Altitude",   70.1234567 },
+    { "Radius",     30.1234567 },
+    { "Turns",      10.1234567 },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesLoiterTime[] = {
-    { "Altitude:",  70.1234567 },
-    { "Radius:",    30.1234567 },
-    { "Hold:",      10.1234567 },
+    { "Altitude",   70.1234567 },
+    { "Radius",     30.1234567 },
+    { "Hold",       10.1234567 },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesLand[] = {
-    { "Altitude:",  70.1234567 },
+    { "Altitude",   70.1234567 },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesTakeoff[] = {
-    { "Pitch:",     10.1234567 },
-    { "Altitude:",  70.1234567 },
-};
-
-const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesConditionDelay[] = {
-    { "Hold:", 10.1234567 },
+    { "Pitch",      10.1234567 },
+    { "Altitude",   70.1234567 },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesDoJump[] = {
-    { "Item #:",    10.1234567 },
-    { "Repeat:",    20.1234567 },
+    { "Item #",     10.1234567 },
+    { "Repeat",     20.1234567 },
 };
 
 const SimpleMissionItemTest::ItemExpected_t SimpleMissionItemTest::_rgItemExpected[] = {
@@ -72,13 +66,54 @@ const SimpleMissionItemTest::ItemExpected_t SimpleMissionItemTest::_rgItemExpect
     { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime[0]),         SimpleMissionItemTest::_rgFactValuesLoiterTime,     true },
     { sizeof(SimpleMissionItemTest::_rgFactValuesLand)/sizeof(SimpleMissionItemTest::_rgFactValuesLand[0]),                     SimpleMissionItemTest::_rgFactValuesLand,           true },
     { sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff)/sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff[0]),               SimpleMissionItemTest::_rgFactValuesTakeoff,        true },
-    { sizeof(SimpleMissionItemTest::_rgFactValuesConditionDelay)/sizeof(SimpleMissionItemTest::_rgFactValuesConditionDelay[0]), SimpleMissionItemTest::_rgFactValuesConditionDelay, false },
     { sizeof(SimpleMissionItemTest::_rgFactValuesDoJump)/sizeof(SimpleMissionItemTest::_rgFactValuesDoJump[0]),                 SimpleMissionItemTest::_rgFactValuesDoJump,         false },
 };
 
 SimpleMissionItemTest::SimpleMissionItemTest(void)
+    : _simpleItem(NULL)
 {
     
+}
+
+void SimpleMissionItemTest::init(void)
+{
+    VisualMissionItemTest::init();
+
+    rgSimpleItemSignals[commandChangedIndex] =              SIGNAL(commandChanged(int));
+    rgSimpleItemSignals[frameChangedIndex] =                SIGNAL(frameChanged(int));
+    rgSimpleItemSignals[friendlyEditAllowedChangedIndex] =  SIGNAL(friendlyEditAllowedChanged(bool));
+    rgSimpleItemSignals[headingDegreesChangedIndex] =       SIGNAL(headingDegreesChanged(double));
+    rgSimpleItemSignals[rawEditChangedIndex] =              SIGNAL(rawEditChanged(bool));
+    rgSimpleItemSignals[cameraSectionChangedIndex] =        SIGNAL(rawEditChanged(bool));
+    rgSimpleItemSignals[speedSectionChangedIndex] =         SIGNAL(rawEditChanged(bool));
+
+    MissionItem missionItem(1,              // sequence number
+                            MAV_CMD_NAV_WAYPOINT,
+                            MAV_FRAME_GLOBAL_RELATIVE_ALT,
+                            10.1234567,     // param 1-7
+                            20.1234567,
+                            30.1234567,
+                            40.1234567,
+                            50.1234567,
+                            60.1234567,
+                            70.1234567,
+                            true,           // autoContinue
+                            false);         // isCurrentItem
+    _simpleItem = new SimpleMissionItem(_offlineVehicle, missionItem);
+
+    // It's important top check that the right signals are emitted at the right time since that drives ui change.
+    // It's also important to check that things are not being over-signalled when they should not be, since that can lead
+    // to incorrect ui or perf impact of uneeded signals propogating ui change.
+
+    _spySimpleItem = new MultiSignalSpy();
+    QCOMPARE(_spySimpleItem->init(_simpleItem, rgSimpleItemSignals, cSimpleItemSignals), true);
+    VisualMissionItemTest::_createSpy(_simpleItem, &_spyVisualItem);
+}
+
+void SimpleMissionItemTest::cleanup(void)
+{
+    delete _simpleItem;
+    VisualMissionItemTest::cleanup();
 }
 
 void SimpleMissionItemTest::_testEditorFacts(void)
@@ -89,7 +124,7 @@ void SimpleMissionItemTest::_testEditorFacts(void)
         const ItemInfo_t* info = &_rgItemInfo[i];
         const ItemExpected_t* expected = &_rgItemExpected[i];
         
-        qDebug() << "Command:" << info->command;
+        qDebug() << "Command" << info->command;
         
         MissionItem missionItem(1,              // sequence number
                                 info->command,
@@ -123,7 +158,7 @@ void SimpleMissionItemTest::_testEditorFacts(void)
                 }
             }
             
-            qDebug() << fact->name();
+            qDebug() << "textFieldFact" << fact->name();
             QVERIFY(found);
         }
         QCOMPARE(factCount, expected->cFactValues);
@@ -137,7 +172,7 @@ void SimpleMissionItemTest::_testEditorFacts(void)
 
 void SimpleMissionItemTest::_testDefaultValues(void)
 {
-    SimpleMissionItem item(NULL /* Vehicle */);
+    SimpleMissionItem item(_offlineVehicle);
 
     item.missionItem().setCommand(MAV_CMD_NAV_WAYPOINT);
     item.missionItem().setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
@@ -146,135 +181,108 @@ void SimpleMissionItemTest::_testDefaultValues(void)
 
 void SimpleMissionItemTest::_testSignals(void)
 {
-    enum {
-        commandChangedIndex = 0,
-        coordinateChangedIndex,
-        exitCoordinateChangedIndex,
-        dirtyChangedIndex,
-        frameChangedIndex,
-        friendlyEditAllowedChangedIndex,
-        headingDegreesChangedIndex,
-        rawEditChangedIndex,
-        uiModelChangedIndex,
-        maxSignalIndex
-    };
+    MissionItem& missionItem = _simpleItem->missionItem();
 
-    enum {
-        commandChangedMask =                1 << commandChangedIndex,
-        coordinateChangedMask =             1 << coordinateChangedIndex,
-        exitCoordinateChangedMask =         1 << exitCoordinateChangedIndex,
-        dirtyChangedMask =                  1 << dirtyChangedIndex,
-        frameChangedMask =                  1 << frameChangedIndex,
-        friendlyEditAllowedChangedMask =    1 << friendlyEditAllowedChangedIndex,
-        headingDegreesChangedMask =         1 << headingDegreesChangedIndex,
-        rawEditChangedMask =                1 << rawEditChangedIndex,
-        uiModelChangedMask =                1 << uiModelChangedIndex,
-    };
-
-    static const size_t cSimpleMissionItemSignals = maxSignalIndex;
-    const char*         rgSimpleMissionItemSignals[cSimpleMissionItemSignals];
-
-    rgSimpleMissionItemSignals[commandChangedIndex] =               SIGNAL(commandChanged(int));
-    rgSimpleMissionItemSignals[coordinateChangedIndex] =            SIGNAL(coordinateChanged(const QGeoCoordinate&));
-    rgSimpleMissionItemSignals[exitCoordinateChangedIndex] =        SIGNAL(exitCoordinateChanged(const QGeoCoordinate&));
-    rgSimpleMissionItemSignals[dirtyChangedIndex] =                 SIGNAL(dirtyChanged(bool));
-    rgSimpleMissionItemSignals[frameChangedIndex] =                 SIGNAL(frameChanged(int));
-    rgSimpleMissionItemSignals[friendlyEditAllowedChangedIndex] =   SIGNAL(friendlyEditAllowedChanged(bool));
-    rgSimpleMissionItemSignals[headingDegreesChangedIndex] =        SIGNAL(headingDegreesChanged(double));
-    rgSimpleMissionItemSignals[rawEditChangedIndex] =               SIGNAL(rawEditChanged(bool));
-    rgSimpleMissionItemSignals[uiModelChangedIndex] =               SIGNAL(uiModelChanged());
-
-    MissionItem missionItem(1,              // sequence number
-                            MAV_CMD_NAV_WAYPOINT,
-                            MAV_FRAME_GLOBAL_RELATIVE_ALT,
-                            10.1234567,     // param 1-7
-                            20.1234567,
-                            30.1234567,
-                            40.1234567,
-                            50.1234567,
-                            60.1234567,
-                            70.1234567,
-                            true,           // autoContinue
-                            false);         // isCurrentItem
-    SimpleMissionItem simpleMissionItem(NULL /* Vehicle */, missionItem);
-
-    // It's important top check that the right signals are emitted at the right time since that drives ui change.
-    // It's also important to check that things are not being over-signalled when they should not be, since that can lead
-    // to incorrect ui or perf impact of uneeded signals propogating ui change.
-
-    MultiSignalSpy* multiSpy = new MultiSignalSpy();
-    Q_CHECK_PTR(multiSpy);
-    QCOMPARE(multiSpy->init(&simpleMissionItem, rgSimpleMissionItemSignals, cSimpleMissionItemSignals), true);
-
-    // Check commandChanged signalling. Call setCommand should trigger:
-    //      commandChanged
-    //      dirtyChanged
-    //      uiModelChanged
-    //      coordinateChanged - since altitude will be set back to default
-
-    simpleMissionItem.setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT);
-    QVERIFY(multiSpy->checkNoSignals());
-    simpleMissionItem.setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_LOITER_TIME);
-    QVERIFY(multiSpy->checkSignalsByMask(commandChangedMask | dirtyChangedMask | uiModelChangedMask | coordinateChangedMask));
-    multiSpy->clearAllSignals();
+    // Check that changing to the same coordinate does not signal
+    _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5(), missionItem.param6(), missionItem.param7()));
+    QVERIFY(_spyVisualItem->checkNoSignals());
+    QVERIFY(_spySimpleItem->checkNoSignals());
 
     // Check coordinateChanged signalling. Calling setCoordinate should trigger:
     //      coordinateChanged
     //      dirtyChanged
 
-    // Check that changing to the same coordinate does not signal
-    simpleMissionItem.setCoordinate(QGeoCoordinate(50.1234567, 60.1234567, qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble()));
-    QVERIFY(multiSpy->checkNoSignals());
-
     // Check that actually changing coordinate signals correctly
-    simpleMissionItem.setCoordinate(QGeoCoordinate(50.1234567, 60.1234567, 70.1234567));
-    QVERIFY(multiSpy->checkOnlySignalByMask(coordinateChangedMask | dirtyChangedMask));
-    multiSpy->clearAllSignals();
+    _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5() + 1, missionItem.param6(), missionItem.param7()));
+    QVERIFY(_spyVisualItem->checkOnlySignalByMask(coordinateChangedMask | dirtyChangedMask));
+    _spyVisualItem->clearAllSignals();
+    _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5(), missionItem.param6() + 1, missionItem.param7()));
+    QVERIFY(_spyVisualItem->checkOnlySignalByMask(coordinateChangedMask | dirtyChangedMask));
+    _spyVisualItem->clearAllSignals();
+    _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5(), missionItem.param6(), missionItem.param7() + 1));
+    QVERIFY(_spyVisualItem->checkOnlySignalByMask(coordinateChangedMask | dirtyChangedMask));
+    _spyVisualItem->clearAllSignals();
 
     // Check dirtyChanged signalling
 
-    // Reset param 1-5 for testing
-    simpleMissionItem.missionItem().setParam1(10.1234567);
-    simpleMissionItem.missionItem().setParam2(20.1234567);
-    simpleMissionItem.missionItem().setParam3(30.1234567);
-    simpleMissionItem.missionItem().setParam4(40.1234567);
-    multiSpy->clearAllSignals();
+    missionItem.setParam1(missionItem.param1());
+    QVERIFY(_spyVisualItem->checkNoSignals());
+    missionItem.setParam2(missionItem.param2());
+    QVERIFY(_spyVisualItem->checkNoSignals());
+    missionItem.setParam3(missionItem.param3());
+    QVERIFY(_spyVisualItem->checkNoSignals());
+    missionItem.setParam4(missionItem.param4());
+    QVERIFY(_spyVisualItem->checkNoSignals());
 
-    simpleMissionItem.missionItem().setParam1(10.1234567);
-    QVERIFY(multiSpy->checkNoSignals());
-    simpleMissionItem.missionItem().setParam1(20.1234567);
-    QVERIFY(multiSpy->checkOnlySignalByMask(dirtyChangedMask));
-    multiSpy->clearAllSignals();
-
-    simpleMissionItem.missionItem().setParam2(20.1234567);
-    QVERIFY(multiSpy->checkNoSignals());
-    simpleMissionItem.missionItem().setParam2(30.1234567);
-    QVERIFY(multiSpy->checkOnlySignalByMask(dirtyChangedMask));
-    multiSpy->clearAllSignals();
-
-    simpleMissionItem.missionItem().setParam3(30.1234567);
-    QVERIFY(multiSpy->checkNoSignals());
-    simpleMissionItem.missionItem().setParam3(40.1234567);
-    QVERIFY(multiSpy->checkOnlySignalByMask(dirtyChangedMask));
-    multiSpy->clearAllSignals();
-
-    simpleMissionItem.missionItem().setParam4(40.1234567);
-    QVERIFY(multiSpy->checkNoSignals());
-    simpleMissionItem.missionItem().setParam4(50.1234567);
-    QVERIFY(multiSpy->checkOnlySignalByMask(dirtyChangedMask));
-    multiSpy->clearAllSignals();
+    missionItem.setParam1(missionItem.param1() + 1);
+    QVERIFY(_spyVisualItem->checkOnlySignalByMask(dirtyChangedMask));
+    _spyVisualItem->clearAllSignals();
+    missionItem.setParam1(missionItem.param2() + 1);
+    QVERIFY(_spyVisualItem->checkOnlySignalByMask(dirtyChangedMask));
+    _spyVisualItem->clearAllSignals();
+    missionItem.setParam1(missionItem.param3() + 1);
+    QVERIFY(_spyVisualItem->checkOnlySignalByMask(dirtyChangedMask));
+    _spyVisualItem->clearAllSignals();
+    missionItem.setParam1(missionItem.param4() + 1);
+    QVERIFY(_spyVisualItem->checkOnlySignalByMask(dirtyChangedMask));
+    _spyVisualItem->clearAllSignals();
 
     // Check frameChanged signalling. Calling setFrame should signal:
     //      frameChanged
     //      dirtyChanged
     //      friendlyEditAllowedChanged - this signal is not very smart on when it gets sent
 
-    simpleMissionItem.setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT);
-    simpleMissionItem.missionItem().setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
-    multiSpy->clearAllSignals();
-    simpleMissionItem.missionItem().setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
-    QVERIFY(multiSpy->checkNoSignals());
-    simpleMissionItem.missionItem().setFrame(MAV_FRAME_GLOBAL);
-    QVERIFY(multiSpy->checkOnlySignalByMask(frameChangedMask | dirtyChangedMask | friendlyEditAllowedChangedMask));
-    multiSpy->clearAllSignals();
+    missionItem.setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
+    QVERIFY(_spyVisualItem->checkNoSignals());
+    QVERIFY(_spySimpleItem->checkNoSignals());
+
+    missionItem.setFrame(MAV_FRAME_GLOBAL);
+    QVERIFY(_spySimpleItem->checkOnlySignalByMask(frameChangedMask | dirtyChangedMask | friendlyEditAllowedChangedMask));
+    _spySimpleItem->clearAllSignals();
+    _spyVisualItem->clearAllSignals();
+
+    // Check commandChanged signalling. Call setCommand should trigger:
+    //      commandChanged
+    //      commandNameChanged
+    //      dirtyChanged
+    //      coordinateChanged - since altitude will be set back to default
+
+    _simpleItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT);
+    QVERIFY(_spyVisualItem->checkNoSignals());
+    QVERIFY(_spySimpleItem->checkNoSignals());
+
+    _simpleItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_LOITER_TIME);
+    QVERIFY(_spySimpleItem->checkSignalsByMask(commandChangedMask));
+    QVERIFY(_spyVisualItem->checkSignalsByMask(commandNameChangedMask | dirtyChangedMask | coordinateChangedMask));
+}
+
+void SimpleMissionItemTest::_testCameraSection(void)
+{
+    // No gimbal yaw to start with
+    QVERIFY(qIsNaN(_simpleItem->specifiedGimbalYaw()));
+    QVERIFY(qIsNaN(_simpleItem->missionGimbalYaw()));
+    QCOMPARE(_simpleItem->dirty(), false);
+
+    double gimbalYaw = 10.1234;
+    _simpleItem->cameraSection()->setSpecifyGimbal(true);
+    _simpleItem->cameraSection()->gimbalYaw()->setRawValue(gimbalYaw);
+    QCOMPARE(_simpleItem->specifiedGimbalYaw(), gimbalYaw);
+    QVERIFY(qIsNaN(_simpleItem->missionGimbalYaw()));
+    QCOMPARE(_spyVisualItem->checkSignalsByMask(specifiedGimbalYawChangedMask), true);
+    QCOMPARE(_simpleItem->dirty(), true);
+}
+
+
+void SimpleMissionItemTest::_testSpeedSection(void)
+{
+    // No flight speed
+    QVERIFY(qIsNaN(_simpleItem->specifiedFlightSpeed()));
+    QCOMPARE(_simpleItem->dirty(), false);
+
+    double flightSpeed = 10.1234;
+    _simpleItem->speedSection()->setSpecifyFlightSpeed(true);
+    _simpleItem->speedSection()->flightSpeed()->setRawValue(flightSpeed);
+    QCOMPARE(_simpleItem->specifiedFlightSpeed(), flightSpeed);
+    QCOMPARE(_spyVisualItem->checkSignalsByMask(specifiedFlightSpeedChangedMask), true);
+    QCOMPARE(_simpleItem->dirty(), true);
 }

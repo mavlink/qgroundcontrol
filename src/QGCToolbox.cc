@@ -29,6 +29,7 @@
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "SettingsManager.h"
+#include "QGCApplication.h"
 
 #if defined(QGC_CUSTOM_BUILD)
 #include CUSTOMHEADER
@@ -57,28 +58,28 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     , _settingsManager(NULL)
 {
     // SettingsManager must be first so settings are available to any subsequent tools
-    _settingsManager =          new SettingsManager(app);
+    _settingsManager =          new SettingsManager(app, this);
 
     //-- Scan and load plugins
     _scanAndLoadPlugins(app);
-    _audioOutput =              new GAudioOutput(app);
-    _factSystem =               new FactSystem(app);
-    _firmwarePluginManager =    new FirmwarePluginManager(app);
+    _audioOutput =              new GAudioOutput            (app, this);
+    _factSystem =               new FactSystem              (app, this);
+    _firmwarePluginManager =    new FirmwarePluginManager   (app, this);
 #ifndef __mobile__
-    _gpsManager =               new GPSManager(app);
+    _gpsManager =               new GPSManager              (app, this);
 #endif
-    _imageProvider =            new QGCImageProvider(app);
-    _joystickManager =          new JoystickManager(app);
-    _linkManager =              new LinkManager(app);
-    _mavlinkProtocol =          new MAVLinkProtocol(app);
-    _missionCommandTree =       new MissionCommandTree(app);
-    _multiVehicleManager =      new MultiVehicleManager(app);
-    _mapEngineManager =         new QGCMapEngineManager(app);
-    _uasMessageHandler =        new UASMessageHandler(app);
-    _qgcPositionManager =       new QGCPositionManager(app);
-    _followMe =                 new FollowMe(app);
-    _videoManager =             new VideoManager(app);
-    _mavlinkLogManager =        new MAVLinkLogManager(app);
+    _imageProvider =            new QGCImageProvider        (app, this);
+    _joystickManager =          new JoystickManager         (app, this);
+    _linkManager =              new LinkManager             (app, this);
+    _mavlinkProtocol =          new MAVLinkProtocol         (app, this);
+    _missionCommandTree =       new MissionCommandTree      (app, this);
+    _multiVehicleManager =      new MultiVehicleManager     (app, this);
+    _mapEngineManager =         new QGCMapEngineManager     (app, this);
+    _uasMessageHandler =        new UASMessageHandler       (app, this);
+    _qgcPositionManager =       new QGCPositionManager      (app, this);
+    _followMe =                 new FollowMe                (app, this);
+    _videoManager =             new VideoManager            (app, this);
+    _mavlinkLogManager =        new MAVLinkLogManager       (app, this);
 }
 
 void QGCToolbox::setChildToolboxes(void)
@@ -107,40 +108,21 @@ void QGCToolbox::setChildToolboxes(void)
     _mavlinkLogManager->setToolbox(this);
 }
 
-QGCToolbox::~QGCToolbox()
-{
-    delete _videoManager;
-    delete _mavlinkLogManager;
-    delete _audioOutput;
-    delete _factSystem;
-    delete _firmwarePluginManager;
-    delete _joystickManager;
-    delete _linkManager;
-    delete _mavlinkProtocol;
-    delete _missionCommandTree;
-    delete _mapEngineManager;
-    delete _multiVehicleManager;
-    delete _uasMessageHandler;
-    delete _followMe;
-    delete _qgcPositionManager;
-    delete _corePlugin;
-}
-
 void QGCToolbox::_scanAndLoadPlugins(QGCApplication* app)
 {
 #if defined (QGC_CUSTOM_BUILD)
     //-- Create custom plugin (Static)
-    _corePlugin = (QGCCorePlugin*) new CUSTOMCLASS(app);
+    _corePlugin = (QGCCorePlugin*) new CUSTOMCLASS(app, app->toolbox());
     if(_corePlugin) {
         return;
     }
 #endif
     //-- No plugins found, use default instance
-    _corePlugin = new QGCCorePlugin(app);
+    _corePlugin = new QGCCorePlugin(app, app->toolbox());
 }
 
-QGCTool::QGCTool(QGCApplication* app)
-    : QObject((QObject*)app)
+QGCTool::QGCTool(QGCApplication* app, QGCToolbox* toolbox)
+    : QObject(toolbox)
     , _app(app)
     , _toolbox(NULL)
 {

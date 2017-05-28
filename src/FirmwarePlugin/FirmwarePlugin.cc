@@ -11,6 +11,8 @@
 #include "QGCApplication.h"
 #include "Generic/GenericAutoPilotPlugin.h"
 #include "CameraMetaData.h"
+#include "SettingsManager.h"
+#include "AppSettings.h"
 
 #include <QDebug>
 
@@ -336,6 +338,7 @@ const QVariantList &FirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")));
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")));
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")));
+        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ArmedIndicator.qml")));
     }
     return _toolBarIndicatorList;
 }
@@ -375,6 +378,17 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       4000,
                                       3000,
                                       5.2,
+                                      true,
+                                      false,
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("Canon G9 X PowerShot"),
+                                      13.2,
+                                      8.8,
+                                      5488,
+                                      3680,
+                                      10.2,
                                       true,
                                       false,
                                       this);
@@ -421,27 +435,84 @@ bool FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) 
     return vehicle->multiRotor() ? false : true;
 }
 
-bool FirmwarePlugin::_armVehicle(Vehicle* vehicle)
+bool FirmwarePlugin::_armVehicleAndValidate(Vehicle* vehicle)
 {
-    if (!vehicle->armed()) {
-        vehicle->setArmed(true);
+    if (vehicle->armed()) {
+        return true;
     }
 
-    // Wait for vehicle to return armed state for 2 seconds
-    for (int i=0; i<20; i++) {
-        if (vehicle->armed()) {
+    bool armedChanged = false;
+
+    // We try arming 3 times
+    for (int retries=0; retries<3; retries++) {
+        vehicle->setArmed(true);
+
+        // Wait for vehicle to return armed state for 3 seconds
+        for (int i=0; i<30; i++) {
+            if (vehicle->armed()) {
+                armedChanged = true;
+                break;
+            }
+            QGC::SLEEP::msleep(100);
+            qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+        }
+        if (armedChanged) {
             break;
         }
-        QGC::SLEEP::msleep(100);
-        qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
     }
-    return vehicle->armed();
+
+    return armedChanged;
 }
 
-void FirmwarePlugin::batteryConsumptionData(Vehicle* vehicle, int& mAhBattery, int& hoverAmps, int& cruiseAmps) const
+bool FirmwarePlugin::_setFlightModeAndValidate(Vehicle* vehicle, const QString& flightMode)
+{
+    if (vehicle->flightMode() == flightMode) {
+        return true;
+    }
+
+    bool flightModeChanged = false;
+
+    // We try 3 times
+    for (int retries=0; retries<3; retries++) {
+        vehicle->setFlightMode(flightMode);
+
+        // Wait for vehicle to return flight mode
+        for (int i=0; i<30; i++) {
+            if (vehicle->flightMode() == flightMode) {
+                flightModeChanged = true;
+                break;
+            }
+            QGC::SLEEP::msleep(100);
+            qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+        }
+        if (flightModeChanged) {
+            break;
+        }
+    }
+
+    return flightModeChanged;
+}
+
+
+void FirmwarePlugin::batteryConsumptionData(Vehicle* vehicle, int& mAhBattery, double& hoverAmps, double& cruiseAmps) const
 {
     Q_UNUSED(vehicle);
     mAhBattery = 0;
     hoverAmps = 0;
     cruiseAmps = 0;
+}
+
+QString FirmwarePlugin::autoDisarmParameter(Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+    return QString();
+}
+
+bool FirmwarePlugin::hasGimbal(Vehicle* vehicle, bool& rollSupported, bool& pitchSupported, bool& yawSupported)
+{
+    Q_UNUSED(vehicle);
+    rollSupported = false;
+    pitchSupported = false;
+    yawSupported = false;
+    return false;
 }

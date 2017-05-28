@@ -28,24 +28,28 @@ const qreal FactMetaData::UnitConsts_s::secondsPerHour = 3600.0;
 const qreal FactMetaData::UnitConsts_s::knotsToKPH = 1.852; // exact, hence weird base for knotsToMetersPerSecond
 
 // Length
-const qreal FactMetaData::UnitConsts_s::milesToMeters = 1609.344;
-const qreal FactMetaData::UnitConsts_s::feetToMeters = 0.3048;
+const qreal FactMetaData::UnitConsts_s::milesToMeters =         1609.344;
+const qreal FactMetaData::UnitConsts_s::feetToMeters =          0.3048;
+const qreal FactMetaData::UnitConsts_s::inchesToCentimeters =   2.54;
 
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
-    { "centi-degrees",  "deg",  FactMetaData::_centiDegreesToDegrees,   FactMetaData::_degreesToCentiDegrees },
-    { "radians",        "deg",  FactMetaData::_radiansToDegrees,        FactMetaData::_degreesToRadians },
-    { "norm",           "%",    FactMetaData::_normToPercent,           FactMetaData::_percentToNorm },
+    { "centi-degrees",  "deg",  FactMetaData::_centiDegreesToDegrees,                   FactMetaData::_degreesToCentiDegrees },
+    { "radians",        "deg",  FactMetaData::_radiansToDegrees,                        FactMetaData::_degreesToRadians },
+    { "gimbal-degrees", "deg",  FactMetaData::_mavlinkGimbalDegreesToUserGimbalDegrees, FactMetaData::_userGimbalDegreesToMavlinkGimbalDegrees },
+    { "norm",           "%",    FactMetaData::_normToPercent,                           FactMetaData::_percentToNorm },
 };
 
 // Translations driven by app settings
 const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTranslations[] = {
     { "m",      "m",        false,  UnitsSettings::DistanceUnitsMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "meters", "meters",   false,  UnitsSettings::DistanceUnitsMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "cm/px",  "cm/px",    false,  UnitsSettings::DistanceUnitsMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "m/s",    "m/s",      true,   UnitsSettings::SpeedUnitsMetersPerSecond,   FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "m^2",    "m^2",      false,  UnitsSettings::AreaUnitsSquareMeters,       FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "m",      "ft",       false,  UnitsSettings::DistanceUnitsFeet,           FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "meters", "ft",       false,  UnitsSettings::DistanceUnitsFeet,           FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
+    { "cm/px",  "in/px",    false,  UnitsSettings::DistanceUnitsFeet,           FactMetaData::_centimetersToInches,                 FactMetaData::_inchesToCentimeters },
     { "m^2",    "km^2",     false,  UnitsSettings::AreaUnitsSquareKilometers,   FactMetaData::_squareMetersToSquareKilometers,      FactMetaData::_squareKilometersToSquareMeters },
     { "m^2",    "ha",       false,  UnitsSettings::AreaUnitsHectares,           FactMetaData::_squareMetersToHectares,              FactMetaData::_hectaresToSquareMeters },
     { "m^2",    "ft^2",     false,  UnitsSettings::AreaUnitsSquareFeet,         FactMetaData::_squareMetersToSquareFeet,            FactMetaData::_squareFeetToSquareMeters },
@@ -206,6 +210,8 @@ QVariant FactMetaData::_minForType(void) const
         return QVariant();
     case valueTypeBool:
         return QVariant(0);
+    case valueTypeElapsedTimeInSeconds:
+        return QVariant(0.0);
     }
     
     // Make windows compiler happy, even switch is full cased
@@ -229,6 +235,7 @@ QVariant FactMetaData::_maxForType(void) const
         return QVariant(std::numeric_limits<int>::max());
     case valueTypeFloat:
         return QVariant(std::numeric_limits<float>::max());
+    case valueTypeElapsedTimeInSeconds:
     case valueTypeDouble:
         return QVariant(std::numeric_limits<double>::max());
     case valueTypeString:
@@ -253,36 +260,34 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
     case FactMetaData::valueTypeInt32:
         typedValue = QVariant(rawValue.toInt(&convertOk));
         if (!convertOnly && convertOk) {
-            if (rawMin() > typedValue || typedValue > rawMax()) {
+            if (typedValue < rawMin() || typedValue > rawMax()) {
                 errorString = QString("Value must be within %1 and %2").arg(cookedMin().toInt()).arg(cookedMax().toInt());
             }
         }
         break;
-
     case FactMetaData::valueTypeUint8:
     case FactMetaData::valueTypeUint16:
     case FactMetaData::valueTypeUint32:
         typedValue = QVariant(rawValue.toUInt(&convertOk));
         if (!convertOnly && convertOk) {
-            if (rawMin() > typedValue || typedValue > rawMax()) {
+            if (typedValue < rawMin() || typedValue > rawMax()) {
                 errorString = QString("Value must be within %1 and %2").arg(cookedMin().toUInt()).arg(cookedMax().toUInt());
             }
         }
         break;
-
     case FactMetaData::valueTypeFloat:
         typedValue = QVariant(rawValue.toFloat(&convertOk));
         if (!convertOnly && convertOk) {
-            if (rawMin() > typedValue || typedValue > rawMax()) {
+            if (typedValue < rawMin() || typedValue > rawMax()) {
                 errorString = QString("Value must be within %1 and %2").arg(cookedMin().toFloat()).arg(cookedMax().toFloat());
             }
         }
         break;
-
+    case FactMetaData::valueTypeElapsedTimeInSeconds:
     case FactMetaData::valueTypeDouble:
         typedValue = QVariant(rawValue.toDouble(&convertOk));
         if (!convertOnly && convertOk) {
-            if (rawMin() > typedValue || typedValue > rawMax()) {
+            if (typedValue < rawMin() || typedValue > rawMax()) {
                 errorString = QString("Value must be within %1 and %2").arg(cookedMin().toDouble()).arg(cookedMax().toDouble());
             }
         }
@@ -321,7 +326,6 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
             }
         }
         break;
-
     case FactMetaData::valueTypeUint8:
     case FactMetaData::valueTypeUint16:
     case FactMetaData::valueTypeUint32:
@@ -332,7 +336,6 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
             }
         }
         break;
-
     case FactMetaData::valueTypeFloat:
         typedValue = QVariant(cookedValue.toFloat(&convertOk));
         if (!convertOnly && convertOk) {
@@ -341,7 +344,7 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
             }
         }
         break;
-
+    case FactMetaData::valueTypeElapsedTimeInSeconds:
     case FactMetaData::valueTypeDouble:
         typedValue = QVariant(cookedValue.toDouble(&convertOk));
         if (!convertOnly && convertOk) {
@@ -452,6 +455,20 @@ QVariant FactMetaData::_degreesToCentiDegrees(const QVariant& degrees)
     return QVariant(qRound(degrees.toReal() * 100.0));
 }
 
+QVariant FactMetaData::_userGimbalDegreesToMavlinkGimbalDegrees(const QVariant& userGimbalDegrees)
+{
+    // User facing gimbal degree values are from 0 (level) to 90 (straight down)
+    // Mavlink gimbal degree values are from 0 (level) to -90 (straight down)
+    return userGimbalDegrees.toDouble() * -1.0;
+}
+
+QVariant FactMetaData::_mavlinkGimbalDegreesToUserGimbalDegrees(const QVariant& mavlinkGimbalDegrees)
+{
+    // User facing gimbal degree values are from 0 (level) to 90 (straight down)
+    // Mavlink gimbal degree values are from 0 (level) to -90 (straight down)
+    return mavlinkGimbalDegrees.toDouble() * -1.0;
+}
+
 QVariant FactMetaData::_metersToFeet(const QVariant& meters)
 {
     return QVariant(meters.toDouble() * 1.0/constants.feetToMeters);
@@ -552,6 +569,16 @@ QVariant FactMetaData::_normToPercent(const QVariant& normalized)
     return QVariant(normalized.toDouble() * 100.0);
 }
 
+QVariant FactMetaData::_centimetersToInches(const QVariant& centimeters)
+{
+    return QVariant(centimeters.toDouble() * 1.0/constants.inchesToCentimeters);
+}
+
+QVariant FactMetaData::_inchesToCentimeters(const QVariant& inches)
+{
+    return QVariant(inches.toDouble() * constants.inchesToCentimeters);
+}
+
 void FactMetaData::setRawUnits(const QString& rawUnits)
 {
     _rawUnits = rawUnits;
@@ -576,7 +603,8 @@ FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, 
                      << QStringLiteral("Float")
                      << QStringLiteral("Double")
                      << QStringLiteral("String")
-                     << QStringLiteral("Bool");
+                     << QStringLiteral("Bool")
+                     << QStringLiteral("ElapsedSeconds");
 
     knownTypes << valueTypeUint8
                << valueTypeInt8
@@ -587,7 +615,8 @@ FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, 
                << valueTypeFloat
                << valueTypeDouble
                << valueTypeString
-               << valueTypeBool;
+               << valueTypeBool
+               << valueTypeElapsedTimeInSeconds;
 
     for (int i=0; i<knownTypeStrings.count(); i++) {
         if (knownTypeStrings[i].compare(typeString, Qt::CaseInsensitive) == 0) {
@@ -894,4 +923,30 @@ QMap<QString, FactMetaData*> FactMetaData::createMapFromJsonFile(const QString& 
     }
 
     return metaDataMap;
+}
+
+QVariant FactMetaData::cookedMax(void) const
+{
+    // We have to be careful with cooked min/max. Running the raw values through the translator could flip min and max.
+    QVariant cookedMax = _rawTranslator(_rawMax);
+    QVariant cookedMin = _rawTranslator(_rawMin);
+    if (cookedMax < cookedMin) {
+        // We need to flip
+        return cookedMin;
+    } else {
+        return cookedMax;
+    }
+}
+
+QVariant FactMetaData::cookedMin(void) const
+{
+    // We have to be careful with cooked min/max. Running the raw values through the translator could flip min and max.
+    QVariant cookedMax = _rawTranslator(_rawMax);
+    QVariant cookedMin = _rawTranslator(_rawMin);
+    if (cookedMax < cookedMin) {
+        // We need to flip
+        return cookedMax;
+    } else {
+        return cookedMin;
+    }
 }

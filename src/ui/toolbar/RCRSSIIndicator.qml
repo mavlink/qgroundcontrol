@@ -19,7 +19,7 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 
 //-------------------------------------------------------------------------
-//-- GPS Indicator
+//-- RC RSSI Indicator
 Item {
     width:          rssiRow.width * 1.1
     anchors.top:    parent.top

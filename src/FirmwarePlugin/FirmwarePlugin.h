@@ -62,7 +62,7 @@ public:
     ///     value:  remapParamNameMinorVersionRemapMap_t entry
     typedef QMap<int, remapParamNameMinorVersionRemapMap_t> remapParamNameMajorVersionMap_t;
 
-    /// @return The AutoPilotPlugin associated with this firmware plugin. Must be overriden.
+    /// @return The AutoPilotPlugin associated with this firmware plugin. Must be overridden.
     virtual AutoPilotPlugin* autopilotPlugin(Vehicle* vehicle);
 
     /// Called when Vehicle is first created to perform any firmware specific setup.
@@ -280,15 +280,29 @@ public:
     ///     @param[out] mAhBattery Battery milliamp-hours rating (0 for no battery data available)
     ///     @param[out] hoverAmps Current draw in amps during hover
     ///     @param[out] cruiseAmps Current draw in amps during cruise
-    virtual void batteryConsumptionData(Vehicle* vehicle, int& mAhBattery, int& hoverAmps, int& cruiseAmps) const;
+    virtual void batteryConsumptionData(Vehicle* vehicle, int& mAhBattery, double& hoverAmps, double& cruiseAmps) const;
+
+    // Returns the parameter which control auto-disarm. Assume == 0 means no auto disarm
+    virtual QString autoDisarmParameter(Vehicle* vehicle);
+
+    /// Used to determine whether a vehicle has a gimbal.
+    ///     @param[out] rollSupported Gimbal supports roll
+    ///     @param[out] pitchSupported Gimbal supports pitch
+    ///     @param[out] yawSupported Gimbal supports yaw
+    /// @return true: vehicle has gimbal, false: gimbal support unknown
+    virtual bool hasGimbal(Vehicle* vehicle, bool& rollSupported, bool& pitchSupported, bool& yawSupported);
 
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const char* px4FollowMeFlightMode;
 
 protected:
-    // Arms the vehicle, waiting for the arm state to change.
+    // Arms the vehicle with validation and retries
     // @return: true - vehicle armed, false - vehicle failed to arm
-    bool _armVehicle(Vehicle* vehicle);
+    bool _armVehicleAndValidate(Vehicle* vehicle);
+
+    // Sets the vehicle to the specified flight mode with validation and retries
+    // @return: true - vehicle in specified flight mode, false - flight mode change failed
+    bool _setFlightModeAndValidate(Vehicle* vehicle, const QString& flightMode);
 
 private:
     QVariantList _toolBarIndicatorList;

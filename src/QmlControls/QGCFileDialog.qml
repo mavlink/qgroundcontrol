@@ -1,6 +1,7 @@
 import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtQuick.Dialogs  1.2
+import QtQuick.Layouts  1.2
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -17,16 +18,19 @@ Item {
     property string folder
     property var    nameFilters
     property string fileExtension
+    property string fileExtension2
     property string title
     property bool   selectExisting
     property bool   selectFolder
 
-    property bool _openForLoad
-    property real _margins: ScreenTools.defaultFontPixelHeight / 2
+    property bool _openForLoad: true
+    property real _margins:     ScreenTools.defaultFontPixelHeight / 2
+    property bool _mobile:      ScreenTools.isMobile
+
 
     function openForLoad() {
         _openForLoad = true
-        if (ScreenTools.isMobile && folder.length !== 0) {
+        if (_mobile && folder.length !== 0) {
             qgcView.showDialog(mobileFileOpenDialog, title, qgcView.showDialogDefaultWidth, StandardButton.Cancel)
         } else {
             fullFileDialog.open()
@@ -35,7 +39,7 @@ Item {
 
     function openForSave() {
         _openForLoad = false
-        if (ScreenTools.isMobile && folder.length !== 0) {
+        if (_mobile && folder.length !== 0) {
             qgcView.showDialog(mobileFileSaveDialog, title, qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
         } else {
             fullFileDialog.open()
@@ -56,7 +60,7 @@ Item {
     FileDialog {
         id:             fullFileDialog
         folder:         "file://" + _root.folder
-        nameFilters:    _root.nameFilters
+        nameFilters:    _root.nameFilters ? _root.nameFilters : []
         title:          _root.title
         selectExisting: _root.selectExisting
         selectMultiple: false
@@ -76,30 +80,52 @@ Item {
         id: mobileFileOpenDialog
 
         QGCViewDialog {
-            Item {
-                anchors.margins:    _margins
-                anchors.fill:       parent
+            QGCFlickable {
+                anchors.fill:   parent
+                contentHeight:  fileOpenColumn.height
 
-                QGCListView {
-                    id:             listView
-                    anchors.fill:   parent
-                    spacing:        _margins / 2
-                    orientation:    ListView.Vertical
-                    model:          controller.getFiles(folder, fileExtension)
+                Column {
+                    id:             fileOpenColumn
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    spacing:        ScreenTools.defaultFontPixelHeight / 2
 
-                    delegate: QGCButton {
-                        text: modelData
+                    Repeater {
+                        id:     fileList
+                        model:  controller.getFiles(folder, fileExtension)
 
-                        onClicked: {
-                            hideDialog()
-                            _root.acceptedForLoad(controller.fullyQualifiedFilename(folder, modelData, fileExtension))
+                        QGCButton {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            text:           modelData
+
+                            onClicked: {
+                                hideDialog()
+                                _root.acceptedForLoad(controller.fullyQualifiedFilename(folder, modelData, fileExtension))
+                            }
                         }
                     }
-                }
 
-                QGCLabel {
-                    text:       qsTr("No files")
-                    visible:    listView.model.length == 0
+                    Repeater {
+                        id:     fileList2
+                        model:  fileExtension2 == "" ? [ ] : controller.getFiles(folder, fileExtension2)
+
+                        QGCButton {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            text:           modelData
+
+                            onClicked: {
+                                hideDialog()
+                                _root.acceptedForLoad(controller.fullyQualifiedFilename(folder, modelData, fileExtension2))
+                            }
+                        }
+                    }
+
+                    QGCLabel {
+                        text:       qsTr("No files")
+                        visible:    fileList.model.length == 0 && fileList2.model.length == 0
+                    }
                 }
             }
         }
@@ -123,35 +149,69 @@ Item {
                 hideDialog()
             }
 
-            Column {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        ScreenTools.defaultFontPixelHeight
+            QGCFlickable {
+                anchors.fill:   parent
+                contentHeight:  fileSaveColumn.height
 
-                QGCLabel {
-                    text: qsTr("File name:")
-                }
-
-                QGCTextField {
-                    id:             filenameTextField
-                    onTextChanged:  replaceMessage.visible = false
-                }
-
-                QGCLabel {
+                Column {
+                    id:             fileSaveColumn
                     anchors.left:   parent.left
                     anchors.right:  parent.right
-                    wrapMode:       Text.WordWrap
-                    text:           qsTr("File names must end with .%1 file extension. If missing it will be added.").arg(fileExtension)
-                }
+                    spacing:        ScreenTools.defaultFontPixelHeight / 2
 
-                QGCLabel {
-                    id:             replaceMessage
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    wrapMode:       Text.WordWrap
-                    text:           qsTr("The file %1 exists. Click Save again to replace it.").arg(filenameTextField.text)
-                    visible:        false
-                    color:          qgcPal.warningText
+                    RowLayout {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        spacing:        ScreenTools.defaultFontPixelWidth
+
+                        QGCLabel { text: qsTr("New file name:") }
+
+                        QGCTextField {
+                            id:                 filenameTextField
+                            Layout.fillWidth:   true
+                            onTextChanged:      replaceMessage.visible = false
+                        }
+                    }
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           qsTr("File names must end with .%1 file extension. If missing it will be added.").arg(fileExtension)
+                    }
+
+                    QGCLabel {
+                        id:             replaceMessage
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           qsTr("The file %1 exists. Click Save again to replace it.").arg(filenameTextField.text)
+                        visible:        false
+                        color:          qgcPal.warningText
+                    }
+
+                    SectionHeader {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        text:           qsTr("Save to existing file:")
+                    }
+
+                    Repeater {
+                        model: controller.getFiles(folder, fileExtension)
+
+                        QGCButton {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            text:           modelData
+
+                            onClicked: {
+                                hideDialog()
+                                _root.acceptedForSave(controller.fullyQualifiedFilename(folder, modelData, fileExtension))
+                            }
+                        }
+                    }
+
+
                 }
             }
         }

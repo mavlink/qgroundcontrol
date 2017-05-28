@@ -48,7 +48,7 @@ class MissionCommandTree : public QGCTool
     Q_OBJECT
     
 public:
-    MissionCommandTree(QGCApplication* app, bool unitTest = false);
+    MissionCommandTree(QGCApplication* app, QGCToolbox* toolbox, bool unitTest = false);
 
     /// Returns the friendly name for the specified command
     QString friendlyName(MAV_CMD command);

@@ -51,6 +51,7 @@
 #include "ScreenToolsController.h"
 #include "QFileDialogController.h"
 #include "RCChannelMonitorController.h"
+#include "SyslinkComponentController.h"
 #include "AutoPilotPlugin.h"
 #include "VehicleComponent.h"
 #include "FirmwarePluginManager.h"
@@ -64,9 +65,7 @@
 #include "QGroundControlQmlGlobal.h"
 #include "FlightMapSettings.h"
 #include "CoordinateVector.h"
-#include "MissionController.h"
-#include "GeoFenceController.h"
-#include "RallyPointController.h"
+#include "PlanMasterController.h"
 #include "VideoManager.h"
 #include "VideoSurface.h"
 #include "VideoReceiver.h"
@@ -134,11 +133,23 @@ static QObject* mavlinkQmlSingletonFactory(QQmlEngine*, QJSEngine*)
 static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
 {
     // We create this object as a QGCTool even though it isn't in the toolbox
-    QGroundControlQmlGlobal* qmlGlobal = new QGroundControlQmlGlobal(qgcApp());
+    QGroundControlQmlGlobal* qmlGlobal = new QGroundControlQmlGlobal(qgcApp(), qgcApp()->toolbox());
     qmlGlobal->setToolbox(qgcApp()->toolbox());
 
     return qmlGlobal;
 }
+
+#ifdef __android__
+// breakpad support
+#include "client/linux/handler/exception_handler.h"
+
+static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* /*context*/, bool succeeded)
+{
+    qDebug() << "dumpCallback" << succeeded << descriptor.path();
+    return succeeded;
+}
+#endif
+
 
 /**
  * @brief Constructor for the main application.
@@ -166,7 +177,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _toolbox(NULL)
     , _bluetoothAvailable(false)
 {
-    Q_ASSERT(_app == NULL);
     _app = this;
 
     // This prevents usage of QQuickWidget to fail since it doesn't support native widget siblings
@@ -183,11 +193,11 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         if (getuid() == 0) {
             QMessageBox msgBox;
             msgBox.setInformativeText(tr("You are running %1 as root. "
-                                      "You should not do this since it will cause other issues with %1. "
-                                      "%1 will now exit. "
-                                      "If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:\n"
-                                      "sudo usermod -a -G dialout $USER\n"
-                                      "sudo apt-get remove modemmanager").arg(qgcApp()->applicationName()));
+                                         "You should not do this since it will cause other issues with %1. "
+                                         "%1 will now exit. "
+                                         "If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:\n"
+                                         "sudo usermod -a -G dialout $USER\n"
+                                         "sudo apt-get remove modemmanager").arg(qgcApp()->applicationName()));
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.setDefaultButton(QMessageBox::Ok);
             msgBox.exec();
@@ -313,6 +323,13 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
+
+#ifdef __android__
+    std::string pathAsStr = toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString().toStdString();
+    qDebug() << "dump location" << QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    google_breakpad::MinidumpDescriptor descriptor(pathAsStr);
+    google_breakpad::ExceptionHandler eh(descriptor, NULL, dumpCallback, NULL, true, -1);
+#endif
 }
 
 void QGCApplication::_shutdown(void)
@@ -361,18 +378,20 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",      1, 0, "Joystick",               "Reference only");
     qmlRegisterUncreatableType<QGCPositionManager>  ("QGroundControl.QGCPositionManager",   1, 0, "QGCPositionManager",     "Reference only");
     qmlRegisterUncreatableType<QGCMapPolygon>       ("QGroundControl.FlightMap",            1, 0, "QGCMapPolygon",          "Reference only");
+    qmlRegisterUncreatableType<MissionController>   ("QGroundControl.Controllers",          1, 0, "MissionController",      "Reference only");
+    qmlRegisterUncreatableType<GeoFenceController>  ("QGroundControl.Controllers",          1, 0, "GeoFenceController",     "Reference only");
+    qmlRegisterUncreatableType<RallyPointController>("QGroundControl.Controllers",          1, 0, "RallyPointController",    "Reference only");
 
     qmlRegisterType<ParameterEditorController>          ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
     qmlRegisterType<ESP8266ComponentController>         ("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
     qmlRegisterType<ScreenToolsController>              ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
-    qmlRegisterType<MissionController>                  ("QGroundControl.Controllers", 1, 0, "MissionController");
-    qmlRegisterType<GeoFenceController>                 ("QGroundControl.Controllers", 1, 0, "GeoFenceController");
-    qmlRegisterType<RallyPointController>               ("QGroundControl.Controllers", 1, 0, "RallyPointController");
+    qmlRegisterType<PlanMasterController>        ("QGroundControl.Controllers", 1, 0, "PlanElemementMasterController");
     qmlRegisterType<ValuesWidgetController>             ("QGroundControl.Controllers", 1, 0, "ValuesWidgetController");
     qmlRegisterType<QFileDialogController>      ("QGroundControl.Controllers", 1, 0, "QFileDialogController");
     qmlRegisterType<RCChannelMonitorController>         ("QGroundControl.Controllers", 1, 0, "RCChannelMonitorController");
     qmlRegisterType<JoystickConfigController>           ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
     qmlRegisterType<LogDownloadController>              ("QGroundControl.Controllers", 1, 0, "LogDownloadController");
+    qmlRegisterType<SyslinkComponentController>         ("QGroundControl.Controllers", 1, 0, "SyslinkComponentController");
 #ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
@@ -455,7 +474,6 @@ void QGCApplication::clearDeleteAllSettingsNextBoot(void)
 /// @brief Returns the QGCApplication object singleton.
 QGCApplication* qgcApp(void)
 {
-    Q_ASSERT(QGCApplication::_app);
     return QGCApplication::_app;
 }
 
@@ -485,7 +503,6 @@ void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const 
 #endif
 }
 
-#ifndef __mobile__
 void QGCApplication::saveTelemetryLogOnMainThread(QString tempLogfile)
 {
     // The vehicle is gone now and we are shutting down so we need to use a message box for errors to hold shutdown and show the error
@@ -494,22 +511,28 @@ void QGCApplication::saveTelemetryLogOnMainThread(QString tempLogfile)
         QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
         QDir saveDir(saveDirPath);
 
-        QString nameFormat("%1%2.tlog");
+        QString nameFormat("%1%2.%3");
         QString dtFormat("yyyy-MM-dd hh-mm-ss");
 
         int tryIndex = 1;
-        QString saveFileName = nameFormat.arg(QDateTime::currentDateTime().toString(dtFormat)).arg("");
+        QString saveFileName = nameFormat.arg(
+            QDateTime::currentDateTime().toString(dtFormat)).arg("").arg(toolbox()->settingsManager()->appSettings()->telemetryFileExtension);
         while (saveDir.exists(saveFileName)) {
-            saveFileName = nameFormat.arg(QDateTime::currentDateTime().toString(dtFormat)).arg(QStringLiteral(".%1").arg(tryIndex++));
+            saveFileName = nameFormat.arg(
+                QDateTime::currentDateTime().toString(dtFormat)).arg(QStringLiteral(".%1").arg(tryIndex++)).arg(toolbox()->settingsManager()->appSettings()->telemetryFileExtension);
         }
         QString saveFilePath = saveDir.absoluteFilePath(saveFileName);
 
         QFile tempFile(tempLogfile);
         if (!tempFile.copy(saveFilePath)) {
-            QGCMessageBox::warning(tr("Telemetry save error"), tr("Unable to save telemetry log. Error copying telemetry to '%1': '%2'.").arg(saveFilePath).arg(tempFile.errorString()));
+            QString error = tr("Unable to save telemetry log. Error copying telemetry to '%1': '%2'.").arg(saveFilePath).arg(tempFile.errorString());
+#ifndef __mobile__
+            QGCMessageBox::warning(tr("Telemetry Save Error"), error);
+#else
+            showMessage(error);
+#endif
         }
     }
-
     QFile::remove(tempLogfile);
 }
 
@@ -526,28 +549,36 @@ bool QGCApplication::_checkTelemetrySavePath(bool useMessageBox)
     QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
     if (saveDirPath.isEmpty()) {
         QString error = tr("Unable to save telemetry log. Application save directory is not set.");
+#ifndef __mobile__
         if (useMessageBox) {
             QGCMessageBox::warning(errorTitle, error);
         } else {
+#endif
+            Q_UNUSED(useMessageBox);
             showMessage(error);
+#ifndef __mobile__
         }
+#endif
         return false;
     }
 
     QDir saveDir(saveDirPath);
     if (!saveDir.exists()) {
         QString error = tr("Unable to save telemetry log. Telemetry save directory \"%1\" does not exist.").arg(saveDirPath);
+#ifndef __mobile__
         if (useMessageBox) {
             QGCMessageBox::warning(errorTitle, error);
         } else {
+#endif
             showMessage(error);
+#ifndef __mobile__
         }
+#endif
         return false;
     }
 
     return true;
 }
-#endif
 
 void QGCApplication::_loadCurrentStyleSheet(void)
 {
@@ -594,19 +625,19 @@ void QGCApplication::reportMissingParameter(int componentId, const QString& name
 /// Called when the delay timer fires to show the missing parameters warning
 void QGCApplication::_missingParamsDisplay(void)
 {
-    Q_ASSERT(_missingParams.count());
-
-    QString params;
-    foreach (const QString &name, _missingParams) {
-        if (params.isEmpty()) {
-            params += name;
-        } else {
-            params += QString(", %1").arg(name);
+    if (_missingParams.count()) {
+        QString params;
+        foreach (const QString &name, _missingParams) {
+            if (params.isEmpty()) {
+                params += name;
+            } else {
+                params += QString(", %1").arg(name);
+            }
         }
-    }
-    _missingParams.clear();
+        _missingParams.clear();
 
-    showMessage(QString("Parameters missing from firmware: %1. You may be running an older version of firmware QGC does not work correctly with or your firmware has a bug in it.").arg(params));
+        showMessage(QString("Parameters are missing from firmware. You may be running a version of firmware QGC does not work correctly with or your firmware has a bug in it. Missing params: %1").arg(params));
+    }
 }
 
 QObject* QGCApplication::_rootQmlObject()

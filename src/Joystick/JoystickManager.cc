@@ -27,8 +27,8 @@ QGC_LOGGING_CATEGORY(JoystickManagerLog, "JoystickManagerLog")
 const char * JoystickManager::_settingsGroup =              "JoystickManager";
 const char * JoystickManager::_settingsKeyActiveJoystick =  "ActiveJoystick";
 
-JoystickManager::JoystickManager(QGCApplication* app)
-    : QGCTool(app)
+JoystickManager::JoystickManager(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
     , _activeJoystick(NULL)
     , _multiVehicleManager(NULL)
 {

@@ -17,19 +17,14 @@
 #include "Vehicle.h"
 #include "PositionManager.h"
 
-FollowMe::FollowMe(QGCApplication* app)
-    : QGCTool(app), estimatation_capabilities(0)
+FollowMe::FollowMe(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox), estimatation_capabilities(0)
 {
     memset(&_motionReport, 0, sizeof(motionReport_s));
     runTime.start();
 
     _gcsMotionReportTimer.setSingleShot(false);
     connect(&_gcsMotionReportTimer, &QTimer::timeout, this, &FollowMe::_sendGCSMotionReport);
-}
-
-FollowMe::~FollowMe()
-{
-    _disable();
 }
 
 void FollowMe::followMeHandleManager(const QString&)
@@ -124,7 +119,7 @@ void FollowMe::_sendGCSMotionReport(void)
     MAVLinkProtocol* mavlinkProtocol = _toolbox->mavlinkProtocol();
     mavlink_follow_target_t follow_target;
 
-    memset(&follow_target, 0, sizeof(mavlink_follow_target_t));
+    memset(&follow_target, 0, sizeof(follow_target));
 
     follow_target.timestamp = runTime.nsecsElapsed()*1e-6;
     follow_target.est_capabilities = estimatation_capabilities;

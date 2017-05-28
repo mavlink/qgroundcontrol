@@ -504,3 +504,16 @@ bool UnitTest::fileCompare(const QString& file1, const QString& file2)
 
     return true;
 }
+
+bool UnitTest::doubleNaNCompare(double value1, double value2)
+{
+    if (qIsNaN(value1) && qIsNaN(value2)) {
+        return true;
+    } else {
+        bool ret = qFuzzyCompare(value1, value2);
+        if (!ret) {
+            qDebug() << value1 << value2;
+        }
+        return ret;
+    }
+}

@@ -20,7 +20,7 @@
 #include "MessageBoxTest.h"
 #include "MissionItemTest.h"
 #include "SimpleMissionItemTest.h"
-#include "ComplexMissionItemTest.h"
+#include "SurveyMissionItemTest.h"
 #include "MissionControllerTest.h"
 #include "MissionManagerTest.h"
 #include "RadioConfigTest.h"
@@ -32,6 +32,10 @@
 #include "MissionCommandTreeTest.h"
 #include "LogDownloadTest.h"
 #include "SendMavCommandTest.h"
+#include "VisualMissionItemTest.h"
+#include "CameraSectionTest.h"
+#include "SpeedSectionTest.h"
+#include "PlanMasterControllerTest.h"
 
 UT_REGISTER_TEST(FactSystemTestGeneric)
 UT_REGISTER_TEST(FactSystemTestPX4)
@@ -50,6 +54,10 @@ UT_REGISTER_TEST(ParameterManagerTest)
 UT_REGISTER_TEST(MissionCommandTreeTest)
 UT_REGISTER_TEST(LogDownloadTest)
 UT_REGISTER_TEST(SendMavCommandTest)
+UT_REGISTER_TEST(SurveyMissionItemTest)
+UT_REGISTER_TEST(CameraSectionTest)
+UT_REGISTER_TEST(SpeedSectionTest)
+UT_REGISTER_TEST(PlanMasterControllerTest)
 
 // List of unit test which are currently disabled.
 // If disabling a new test, include reason in comment.
@@ -60,6 +68,5 @@ UT_REGISTER_TEST(SendMavCommandTest)
 // Onboard file support has been removed until it can be make to work correctly
 //UT_REGISTER_TEST(FileManagerTest)
 
-// Needs to be update for latest changes
-//UT_REGISTER_TEST(ComplexMissionItemTest)
+// Needs to be update for latest updates
 //UT_REGISTER_TEST(MavlinkLogTest)

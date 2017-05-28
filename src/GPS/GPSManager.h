@@ -25,11 +25,11 @@ class GPSManager : public QGCTool
 {
     Q_OBJECT
 public:
-    GPSManager(QGCApplication* app);
+    GPSManager(QGCApplication* app, QGCToolbox* toolbox);
     ~GPSManager();
 
     void connectGPS(const QString& device);
-    bool connected(void) const { return _gpsProvider != nullptr; }
+    bool connected(void) const { return _gpsProvider && _gpsProvider->isRunning(); }
 
 private slots:
     void GPSPositionUpdate(GPSPositionMessage msg);

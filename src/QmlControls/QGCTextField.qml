@@ -116,7 +116,7 @@ TextField {
     }
 
     onActiveFocusChanged: {
-        if (!ScreenTools.isMobile && activeFocus) {
+        if (activeFocus) {
             selectAll()
         }
     }

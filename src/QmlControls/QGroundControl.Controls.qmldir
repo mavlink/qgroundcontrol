@@ -28,6 +28,7 @@ ParameterEditorDialog   1.0 ParameterEditorDialog.qml
 PlanToolBar             1.0 PlanToolBar.qml
 RallyPointEditorHeader  1.0 RallyPointEditorHeader.qml
 RallyPointItemEditor    1.0 RallyPointItemEditor.qml
+RallyPointMapVisuals    1.0 RallyPointMapVisuals.qml
 RCChannelMonitor        1.0 RCChannelMonitor.qml
 QGCButton               1.0 QGCButton.qml
 QGCCheckBox             1.0 QGCCheckBox.qml
@@ -39,6 +40,7 @@ QGCGroupBox             1.0 QGCGroupBox.qml
 QGCLabel                1.0 QGCLabel.qml
 QGCListView             1.0 QGCListView.qml
 QGCMapLabel             1.0 QGCMapLabel.qml
+QGCMapPolygonVisuals    1.0 QGCMapPolygonVisuals.qml
 QGCMouseArea            1.0 QGCMouseArea.qml
 QGCMovableItem          1.0 QGCMovableItem.qml
 QGCPipable              1.0 QGCPipable.qml

@@ -1,6 +1,5 @@
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
+import QtQuick          2.3
+import QtQuick.Controls 1.2
 
 import QGroundControl.ScreenTools 1.0
 import QGroundControl.Palette     1.0
@@ -68,33 +67,28 @@ Canvas {
     }
 
     Rectangle {
-        id:                 labelControl
-        anchors.leftMargin: -_labelMargin
-        anchors.topMargin:  -_labelMargin
-        anchors.left:       indicator.left
-        anchors.top:        indicator.top
-        height:             _labelRadius * 2
-        width:              labelControlLabel.contentWidth + (_labelMargin * 3) + indicator.width
-        color:              "white"
-        opacity:            0.5
-        radius:             _labelRadius
-        visible:            _label.length !== 0
+        id:                     labelControl
+        anchors.leftMargin:     -((_labelMargin * 2) + indicator.width)
+        anchors.rightMargin:    -(_labelMargin * 2)
+        anchors.fill:           labelControlLabel
+        color:                  "white"
+        opacity:                0.5
+        radius:                 _labelRadius
+        visible:                _label.length !== 0 && !small
     }
-
 
     QGCLabel {
         id:                     labelControlLabel
-        anchors.leftMargin:     indicator.width + _labelMargin
-        anchors.left:           labelControl.left
-        anchors.rightMargin:    _labelMargin
-        anchors.right:          labelControl.right
-        anchors.top:            labelControl.top
-        anchors.bottom:         labelControl.bottom
-        verticalAlignment:      Text.AlignVCenter
+        anchors.topMargin:      -_labelMargin
+        anchors.bottomMargin:   -_labelMargin
+        anchors.leftMargin:     _labelMargin
+        anchors.left:           indicator.right
+        anchors.top:            indicator.top
+        anchors.bottom:         indicator.bottom
         color:                  "white"
-        font.pointSize:         ScreenTools.defaultFontPointSize
-        fontSizeMode:           Text.HorizontalFit
         text:                   _label
+        verticalAlignment:      Text.AlignVCenter
+        visible:                labelControl.visible
     }
 
     Rectangle {

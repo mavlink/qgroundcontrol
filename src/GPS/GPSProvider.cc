@@ -9,6 +9,7 @@
 
 
 #include "GPSProvider.h"
+#include "QGCLoggingCategory.h"
 
 #define GPS_RECEIVE_TIMEOUT 1200
 
@@ -52,18 +53,19 @@ void GPSProvider::run()
     _serial->setFlowControl(QSerialPort::NoFlowControl);
 
     unsigned int baudrate;
-    GPSHelper* gpsHelper = nullptr;
+    GPSDriverUBX* gpsDriver = nullptr;
 
     while (!_requestStop) {
 
-        if (gpsHelper) {
-            delete gpsHelper;
-            gpsHelper = nullptr;
+        if (gpsDriver) {
+            delete gpsDriver;
+            gpsDriver = nullptr;
         }
 
-        gpsHelper = new GPSDriverUBX(&callbackEntry, this, &_reportGpsPos, _pReportSatInfo);
+        gpsDriver = new GPSDriverUBX(GPSDriverUBX::Interface::UART, &callbackEntry, this, &_reportGpsPos, _pReportSatInfo);
+        gpsDriver->setSurveyInSpecs(_surveyInAccMeters * 10000, _surveryInDurationSecs);
 
-        if (gpsHelper->configure(baudrate, GPSHelper::OutputMode::RTCM) == 0) {
+        if (gpsDriver->configure(baudrate, GPSDriverUBX::OutputMode::RTCM) == 0) {
 
             /* reset report */
             memset(&_reportGpsPos, 0, sizeof(_reportGpsPos));
@@ -73,7 +75,7 @@ void GPSProvider::run()
             int numTries = 0;
 
             while (!_requestStop && numTries < 3) {
-                int helperRet = gpsHelper->receive(GPS_RECEIVE_TIMEOUT);
+                int helperRet = gpsDriver->receive(GPS_RECEIVE_TIMEOUT);
 
                 if (helperRet > 0) {
                     numTries = 0;
@@ -96,12 +98,16 @@ void GPSProvider::run()
             }
         }
     }
-    qDebug() << "Exiting GPS thread";
+    qCDebug(RTKGPSLog) << "Exiting GPS thread";
 }
 
-GPSProvider::GPSProvider(const QString& device, bool enableSatInfo, const std::atomic_bool& requestStop)
-    : _device(device), _requestStop(requestStop)
+GPSProvider::GPSProvider(const QString& device, bool enableSatInfo, double surveyInAccMeters, int surveryInDurationSecs, const std::atomic_bool& requestStop)
+    : _device(device)
+    , _requestStop(requestStop)
+    , _surveyInAccMeters(surveyInAccMeters)
+    , _surveryInDurationSecs(surveryInDurationSecs)
 {
+    qCDebug(RTKGPSLog) << "Survey in accuracy:duration" << surveyInAccMeters << surveryInDurationSecs;
     if (enableSatInfo) _pReportSatInfo = new satellite_info_s();
 }
 
@@ -165,8 +171,7 @@ int GPSProvider::callback(GPSCallbackType type, void *data1, int data2)
         case GPSCallbackType::surveyInStatus:
         {
             SurveyInStatus* status = (SurveyInStatus*)data1;
-            qInfo("Survey-in status: %is cur accuracy: %imm valid: %i active: %i",
-                status->duration, status->mean_accuracy, (int)(status->flags & 1), (int)((status->flags>>1) & 1));
+            qCDebug(RTKGPSLog) << QString("Survey-in status: %1s cur accuracy: %2mm valid: %3 active: %4").arg(status->duration).arg(status->mean_accuracy).arg((int)(status->flags & 1)).arg((int)((status->flags>>1) & 1));
         }
             break;
 

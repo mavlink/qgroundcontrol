@@ -11,6 +11,7 @@
 #define AppSettings_H
 
 #include "SettingsGroup.h"
+#include "QGCMAVLink.h"
 
 class AppSettings : public SettingsGroup
 {
@@ -34,15 +35,21 @@ public:
     Q_PROPERTY(Fact* showLargeCompass                   READ showLargeCompass                   CONSTANT)
     Q_PROPERTY(Fact* savePath                           READ savePath                           CONSTANT)
     Q_PROPERTY(Fact* autoLoadMissions                   READ autoLoadMissions                   CONSTANT)
-    Q_PROPERTY(Fact* automaticMissionUpload             READ automaticMissionUpload             CONSTANT)
+    Q_PROPERTY(Fact* mapboxToken                        READ mapboxToken                        CONSTANT)
+    Q_PROPERTY(Fact* esriToken                          READ esriToken                          CONSTANT)
+    Q_PROPERTY(Fact* defaultFirmwareType                READ defaultFirmwareType                CONSTANT)
 
     Q_PROPERTY(QString missionSavePath      READ missionSavePath    NOTIFY savePathsChanged)
     Q_PROPERTY(QString parameterSavePath    READ parameterSavePath  NOTIFY savePathsChanged)
     Q_PROPERTY(QString telemetrySavePath    READ telemetrySavePath  NOTIFY savePathsChanged)
+    Q_PROPERTY(QString logSavePath          READ logSavePath        NOTIFY savePathsChanged)
 
+    Q_PROPERTY(QString planFileExtension        MEMBER planFileExtension        CONSTANT)
     Q_PROPERTY(QString missionFileExtension     MEMBER missionFileExtension     CONSTANT)
+    Q_PROPERTY(QString waypointsFileExtension   MEMBER waypointsFileExtension   CONSTANT)
     Q_PROPERTY(QString parameterFileExtension   MEMBER parameterFileExtension   CONSTANT)
     Q_PROPERTY(QString telemetryFileExtension   MEMBER telemetryFileExtension   CONSTANT)
+    Q_PROPERTY(QString logFileExtension         MEMBER logFileExtension         CONSTANT)
 
     Fact* offlineEditingFirmwareType        (void);
     Fact* offlineEditingVehicleType         (void);
@@ -59,11 +66,17 @@ public:
     Fact* showLargeCompass                  (void);
     Fact* savePath                          (void);
     Fact* autoLoadMissions                  (void);
-    Fact* automaticMissionUpload            (void);
+    Fact* mapboxToken                       (void);
+    Fact* esriToken                         (void);
+    Fact* defaultFirmwareType               (void);
 
     QString missionSavePath     (void);
     QString parameterSavePath   (void);
     QString telemetrySavePath   (void);
+    QString logSavePath         (void);
+
+    static MAV_AUTOPILOT offlineEditingFirmwareTypeFromFirmwareType(MAV_AUTOPILOT firmwareType);
+    static MAV_TYPE offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleType);
 
     static const char* appSettingsGroupName;
 
@@ -82,19 +95,25 @@ public:
     static const char* showLargeCompassName;
     static const char* savePathName;
     static const char* autoLoadMissionsName;
-    static const char* automaticMissionUploadName;
+    static const char* mapboxTokenName;
+    static const char* esriTokenName;
+    static const char* defaultFirmwareTypeName;
 
     // Application wide file extensions
     static const char* parameterFileExtension;
+    static const char* planFileExtension;
     static const char* missionFileExtension;
+    static const char* waypointsFileExtension;
     static const char* fenceFileExtension;
     static const char* rallyPointFileExtension;
     static const char* telemetryFileExtension;
+    static const char* logFileExtension;
 
     // Child directories of savePath for specific file types
     static const char* parameterDirectory;
     static const char* telemetryDirectory;
     static const char* missionDirectory;
+    static const char* logDirectory;
 
 signals:
     void savePathsChanged(void);
@@ -119,7 +138,9 @@ private:
     SettingsFact* _showLargeCompassFact;
     SettingsFact* _savePathFact;
     SettingsFact* _autoLoadMissionsFact;
-    SettingsFact* _automaticMissionUpload;
+    SettingsFact* _mapboxTokenFact;
+    SettingsFact* _esriTokenFact;
+    SettingsFact* _defaultFirmwareTypeFact;
 };
 
 #endif

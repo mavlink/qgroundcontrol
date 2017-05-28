@@ -602,15 +602,13 @@ void APMSensorsComponentController::cancelCalibration(void)
 void APMSensorsComponentController::nextClicked(void)
 {
     mavlink_message_t       msg;
-    mavlink_command_ack_t   ack;
-
-    ack.command = 0;
-    ack.result = 1;
-    mavlink_msg_command_ack_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                        qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                        _vehicle->priorityLink()->mavlinkChannel(),
-                                        &msg,
-                                        &ack);
+    mavlink_msg_command_ack_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                      qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                      _vehicle->priorityLink()->mavlinkChannel(),
+                                      &msg,
+                                      0,    // command
+                                      1,    // result
+                                      0);   // progress
 
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 
@@ -680,7 +678,7 @@ void APMSensorsComponentController::_handleMagCalProgress(mavlink_message_t& mes
         mavlink_msg_mag_cal_progress_decode(&message, &magCalProgress);
 
         qCDebug(APMSensorsComponentControllerVerboseLog) << "_handleMagCalProgress id:mask:pct"
-                                                  << magCalProgress.compass_id << magCalProgress.cal_mask << magCalProgress.completion_pct;
+                                                         << magCalProgress.compass_id << magCalProgress.cal_mask << magCalProgress.completion_pct;
 
         // How many compasses are we calibrating?
         int compassCalCount = 0;
@@ -708,7 +706,7 @@ void APMSensorsComponentController::_handleMagCalReport(mavlink_message_t& messa
         mavlink_msg_mag_cal_report_decode(&message, &magCalReport);
 
         qCDebug(APMSensorsComponentControllerVerboseLog) << "_handleMagCalReport id:mask:status:fitness"
-                                                  << magCalReport.compass_id << magCalReport.cal_mask << magCalReport.cal_status << magCalReport.fitness;
+                                                         << magCalReport.compass_id << magCalReport.cal_mask << magCalReport.cal_status << magCalReport.fitness;
 
         bool additionalCompassCompleted = false;
         if (magCalReport.compass_id < 3 && !_rgCompassCalComplete[magCalReport.compass_id]) {

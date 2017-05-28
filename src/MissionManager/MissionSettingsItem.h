@@ -15,6 +15,7 @@
 #include "Fact.h"
 #include "QGCLoggingCategory.h"
 #include "CameraSection.h"
+#include "SpeedSection.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MissionSettingsComplexItemLog)
 
@@ -25,29 +26,18 @@ class MissionSettingsItem : public ComplexMissionItem
 public:
     MissionSettingsItem(Vehicle* vehicle, QObject* parent = NULL);
 
-    enum MissionEndAction {
-        MissionEndNoAction,
-        MissionEndLoiter,
-        MissionEndRTL
-    };
-    Q_ENUMS(MissionEndAction)
-
-    Q_PROPERTY(bool     specifyMissionFlightSpeed   READ specifyMissionFlightSpeed      WRITE setSpecifyMissionFlightSpeed  NOTIFY specifyMissionFlightSpeedChanged)
-    Q_PROPERTY(Fact*    missionFlightSpeed          READ missionFlightSpeed                                                 CONSTANT)
-    Q_PROPERTY(Fact*    missionEndAction            READ missionEndAction                                                   CONSTANT)
     Q_PROPERTY(Fact*    plannedHomePositionAltitude READ plannedHomePositionAltitude                                        CONSTANT)
+    Q_PROPERTY(bool     missionEndRTL               MEMBER _missionEndRTL                                                   NOTIFY missionEndRTLChanged)
     Q_PROPERTY(QObject* cameraSection               READ cameraSection                                                      CONSTANT)
+    Q_PROPERTY(QObject* speedSection                READ speedSection                                                       CONSTANT)
 
     Fact*   plannedHomePositionAltitude (void) { return &_plannedHomePositionAltitudeFact; }
-    Fact*   missionFlightSpeed          (void) { return &_missionFlightSpeedFact; }
-    Fact*   missionEndAction            (void) { return &_missionEndActionFact; }
-    bool    specifyMissionFlightSpeed   (void) const { return _specifyMissionFlightSpeed; }
 
-    void setSpecifyMissionFlightSpeed(bool specifyMissionFlightSpeed);
-    QObject* cameraSection(void) { return &_cameraSection; }
+    CameraSection* cameraSection(void) { return &_cameraSection; }
+    SpeedSection* speedSection(void) { return &_speedSection; }
 
     /// Scans the loaded items for settings items
-    static bool scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle);
+    bool scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex);
 
     /// Adds the optional mission end action to the list
     ///     @param items Mission items list to append to
@@ -77,10 +67,10 @@ public:
     QGeoCoordinate  coordinate              (void) const final { return _plannedHomePositionCoordinate; }
     QGeoCoordinate  exitCoordinate          (void) const final { return _plannedHomePositionCoordinate; }
     int             sequenceNumber          (void) const final { return _sequenceNumber; }
-    double          specifiedFlightSpeed    (void) final;
     double          specifiedGimbalYaw      (void) final;
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            applyNewAltitude        (double newAltitude) final { Q_UNUSED(newAltitude); /* no action */ }
+    double          specifiedFlightSpeed    (void) final;
 
     bool coordinateHasRelativeAltitude      (void) const final { return true; }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return true; }
@@ -94,21 +84,21 @@ public:
     static const char* jsonComplexItemTypeValue;
 
 signals:
-    void specifyMissionFlightSpeedChanged(bool specifyMissionFlightSpeed);
+    void specifyMissionFlightSpeedChanged   (bool specifyMissionFlightSpeed);
+    void missionEndRTLChanged               (bool missionEndRTL);
 
 private slots:
     void _setDirtyAndUpdateLastSequenceNumber   (void);
     void _setDirty                              (void);
-    void _cameraSectionDirtyChanged             (bool dirty);
+    void _sectionDirtyChanged                   (bool dirty);
     void _updateAltitudeInCoordinate            (QVariant value);
 
 private:
-    bool            _specifyMissionFlightSpeed;
-    QGeoCoordinate  _plannedHomePositionCoordinate;     // Does not include altitde
+    QGeoCoordinate  _plannedHomePositionCoordinate;     // Does not include altitude
     Fact            _plannedHomePositionAltitudeFact;
-    Fact            _missionFlightSpeedFact;
-    Fact            _missionEndActionFact;
+    bool            _missionEndRTL;
     CameraSection   _cameraSection;
+    SpeedSection    _speedSection;
 
     int     _sequenceNumber;
     bool    _dirty;
@@ -116,8 +106,6 @@ private:
     static QMap<QString, FactMetaData*> _metaDataMap;
 
     static const char* _plannedHomePositionAltitudeName;
-    static const char* _missionFlightSpeedName;
-    static const char* _missionEndActionName;
 };
 
 #endif

@@ -15,6 +15,7 @@
 #include "QGCMAVLink.h"
 
 #include <QtQml>
+#include <QQmlEngine>
 
 Fact::Fact(QObject* parent)
     : QObject(parent)
@@ -27,6 +28,9 @@ Fact::Fact(QObject* parent)
 {    
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
+
+    // Better sage than sorry on object ownership
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObject* parent)
@@ -41,12 +45,14 @@ Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObjec
 {
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 Fact::Fact(const Fact& other, QObject* parent)
     : QObject(parent)
 {
     *this = other;
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 const Fact& Fact::operator=(const Fact& other)
@@ -261,6 +267,18 @@ QString Fact::_variantToString(const QVariant& variant, int decimalPlaces) const
             valueString = QStringLiteral("--.--");
         } else {
             valueString = QString("%1").arg(dValue, 0, 'f', decimalPlaces);
+        }
+    }
+        break;
+    case FactMetaData::valueTypeElapsedTimeInSeconds:
+    {
+        double dValue = variant.toDouble();
+        if (qIsNaN(dValue)) {
+            valueString = QStringLiteral("--:--:--");
+        } else {
+            QTime time(0, 0, 0, 0);
+            time = time.addSecs(dValue);
+            valueString = time.toString(QStringLiteral("hh:mm:ss"));
         }
     }
         break;

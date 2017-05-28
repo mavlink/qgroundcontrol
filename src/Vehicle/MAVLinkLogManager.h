@@ -106,7 +106,7 @@ class MAVLinkLogManager : public QGCTool
     Q_OBJECT
 
 public:
-    MAVLinkLogManager    (QGCApplication* app);
+    MAVLinkLogManager    (QGCApplication* app, QGCToolbox* toolbox);
     ~MAVLinkLogManager   ();
 
     Q_PROPERTY(QString              emailAddress        READ    emailAddress        WRITE setEmailAddress       NOTIFY emailAddressChanged)
@@ -145,6 +145,7 @@ public:
     bool        publicLog           () { return _publicLog; }
     int         windSpeed           () { return _windSpeed; }
     QString     rating              () { return _rating; }
+    QString     logExtension        () { return _ulogExtension; }
 
     QmlObjectListModel* logFiles    () { return &_logFiles; }
 
@@ -224,6 +225,8 @@ private:
     int                     _windSpeed;
     QString                 _rating;
     bool                    _publicLog;
+    QString                 _ulogExtension;
+
 };
 
 #endif

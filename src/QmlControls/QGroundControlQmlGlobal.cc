@@ -24,9 +24,9 @@ const char* QGroundControlQmlGlobal::_flightMapPositionLatitudeSettingsKey =    
 const char* QGroundControlQmlGlobal::_flightMapPositionLongitudeSettingsKey =   "Longitude";
 const char* QGroundControlQmlGlobal::_flightMapZoomSettingsKey =                "FlightMapZoom";
 
-QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app)
-    : QGCTool(app)
-    , _flightMapInitialZoom(14.7)   // About 500 meter scale
+QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
+    , _flightMapInitialZoom(17.0)
     , _linkManager(NULL)
     , _multiVehicleManager(NULL)
     , _mapEngineManager(NULL)
@@ -137,7 +137,7 @@ void QGroundControlQmlGlobal::startAPMArduSubMockLink(bool sendStatusText)
 #endif
 }
 
-void QGroundControlQmlGlobal::stopAllMockLinks(void)
+void QGroundControlQmlGlobal::stopOneMockLink(void)
 {
 #ifdef QT_DEBUG
     LinkManager* linkManager = qgcApp()->toolbox()->linkManager();
@@ -148,6 +148,7 @@ void QGroundControlQmlGlobal::stopAllMockLinks(void)
 
         if (mockLink) {
             linkManager->disconnectLink(mockLink);
+            return;
         }
     }
 #endif

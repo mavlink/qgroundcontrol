@@ -79,8 +79,8 @@ QGCCorePlugin::~QGCCorePlugin()
     }
 }
 
-QGCCorePlugin::QGCCorePlugin(QGCApplication *app)
-    : QGCTool(app)
+QGCCorePlugin::QGCCorePlugin(QGCApplication *app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
     , _showTouchAreas(false)
     , _showAdvancedUI(true)
 {
@@ -155,8 +155,8 @@ bool QGCCorePlugin::overrideSettingsGroupVisibility(QString name)
 
 bool QGCCorePlugin::adjustSettingMetaData(FactMetaData& metaData)
 {
+    //-- Default Palette
     if (metaData.name() == AppSettings::indoorPaletteName) {
-        // Set up correct default for palette setting
         QVariant outdoorPalette;
 #if defined (__mobile__)
         outdoorPalette = 0;
@@ -164,9 +164,18 @@ bool QGCCorePlugin::adjustSettingMetaData(FactMetaData& metaData)
         outdoorPalette = 1;
 #endif
         metaData.setRawDefaultValue(outdoorPalette);
+        return true;
+    //-- Auto Save Telemetry Logs
+    } else if (metaData.name() == AppSettings::telemetrySaveName) {
+#if defined (__mobile__)
+        metaData.setRawDefaultValue(false);
+        return false;
+#else
+        metaData.setRawDefaultValue(true);
+        return true;
+#endif
     }
-
-    return true;        // Show setting in ui
+    return true; // Show setting in ui
 }
 
 void QGCCorePlugin::setShowTouchAreas(bool show)
@@ -183,4 +192,24 @@ void QGCCorePlugin::setShowAdvancedUI(bool show)
         _showAdvancedUI = show;
         emit showAdvancedUIChanged(show);
     }
+}
+
+void QGCCorePlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo)
+{
+    Q_UNUSED(colorName);
+    Q_UNUSED(colorInfo);
+}
+
+QString QGCCorePlugin::showAdvancedUIMessage(void) const
+{
+    return tr("WARNING: You are about to enter Advanced Mode. "
+              "If used incorrectly, this may cause your vehicle to malfunction thus voiding your warranty. "
+              "You should do so only if instructed by customer support. "
+              "Are you sure you want to enable Advanced Mode?");
+}
+
+void QGCCorePlugin::valuesWidgetDefaultSettings(QStringList& largeValues, QStringList& smallValues)
+{
+    Q_UNUSED(smallValues);
+    largeValues << "Vehicle.altitudeRelative" << "Vehicle.groundSpeed" << "Vehicle.flightTime";
 }

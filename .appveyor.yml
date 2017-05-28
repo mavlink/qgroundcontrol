@@ -65,11 +65,13 @@ deploy:
     secret_access_key:
       secure: RiYqaR+3T2PMNz2j5ur8LCA6H/Zfd4jTX33CZE5iBxm+zaz4QLs25p0B7prpaoNN
     bucket: qgroundcontrol
+    region: us-west-2
     set_public: true
     folder: builds/$(APPVEYOR_REPO_BRANCH)
     artifact: qgcinstaller
     on:
       CONFIG: installer
+      appveyor_repo_tag: false
 
 # deploy daily build symbols to s3
   - provider: S3
@@ -78,6 +80,7 @@ deploy:
     secret_access_key:
       secure: RiYqaR+3T2PMNz2j5ur8LCA6H/Zfd4jTX33CZE5iBxm+zaz4QLs25p0B7prpaoNN
     bucket: qgroundcontrol
+    region: us-west-2
     set_public: true
     folder: cisyms
     artifact: symbols
@@ -92,6 +95,7 @@ deploy:
     secret_access_key:
       secure: RiYqaR+3T2PMNz2j5ur8LCA6H/Zfd4jTX33CZE5iBxm+zaz4QLs25p0B7prpaoNN
     bucket: qgroundcontrol
+    region: us-west-2
     set_public: true
     folder: releasesyms
     artifact: symbols
@@ -117,6 +121,7 @@ deploy:
     secret_access_key:
       secure: RiYqaR+3T2PMNz2j5ur8LCA6H/Zfd4jTX33CZE5iBxm+zaz4QLs25p0B7prpaoNN
     bucket: qgroundcontrol
+    region: us-west-2
     set_public: true
     folder: $(APPVEYOR_REPO_TAG_NAME)
     artifact: qgcinstaller
@@ -131,6 +136,7 @@ deploy:
     secret_access_key:
       secure: RiYqaR+3T2PMNz2j5ur8LCA6H/Zfd4jTX33CZE5iBxm+zaz4QLs25p0B7prpaoNN
     bucket: qgroundcontrol
+    region: us-west-2
     set_public: true
     folder: latest
     artifact: qgcinstaller

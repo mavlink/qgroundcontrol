@@ -5,7 +5,7 @@
     "type":             "uint32",
     "enumStrings":      "ArduPilot,PX4 Pro,Mavlink Generic",
     "enumValues":       "3,12,0",
-    "defaultValue":     3
+    "defaultValue":     12
 },
 {
     "name":             "OfflineEditingVehicleType",
@@ -13,14 +13,14 @@
     "type":             "uint32",
     "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub",
     "enumValues":       "1,2,19,10,12",
-    "defaultValue":     1
+    "defaultValue":     2
 },
 {
     "name":             "OfflineEditingCruiseSpeed",
     "shortDescription": "Offline editing cruise speed",
     "longDescription":  "This value defines the cruising speed for forward flight vehicles for use in calculating mission duration when not connected to a vehicle.",
     "type":             "double",
-    "defaultValue":     16.0,
+    "defaultValue":     15.0,
     "min":              1.0,
     "units":            "m/s",
     "decimalPlaces":    2
@@ -30,7 +30,7 @@
     "shortDescription": "Offline editing hover speed",
     "longDescription":  "This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration when not connected to a vehicle.",
     "type":             "double",
-    "defaultValue":     4.0,
+    "defaultValue":     5.0,
     "min":              1.0,
     "units":            "m/s",
     "decimalPlaces":    2
@@ -106,7 +106,8 @@
     "longDescription":  "The color scheme for the user interface.",
     "type":             "uint32",
     "enumStrings":      "Indoor,Outdoor",
-    "enumValues":       "1,0"
+    "enumValues":       "1,0",
+    "defaultValue":     0
 },
 {
     "name":             "ShowLargeCompass",
@@ -116,17 +117,30 @@
     "defaultValue":     false
 },
 {
-    "name":             "AutomaticMissionUpload",
-    "shortDescription": "Automatic mission upload",
-    "longDescription":  "Automatically upload mission to vehicle after changes",
-    "type":             "bool",
-    "defaultValue":     true
-},
-{
     "name":             "SavePath",
     "shortDescription": "Application save directory",
     "longDescription":  "Directory to which all data files  are saved/loaded from",
     "type":             "string",
     "defaultValue":     ""
+},
+{
+    "name":             "MapboxToken",
+    "shortDescription": "Access token to Mapbox maps",
+    "longDescription":  "Your personal access token for Mapbox maps",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "EsriToken",
+    "shortDescription": "Access token to Esri maps",
+    "longDescription":  "Your personal access token for Esri maps",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "DefaultFirmwareType",
+    "shortDescription": "Default firmware type for flashing",
+    "type":             "uint32",
+    "defaultValue":     12
 }
 ]

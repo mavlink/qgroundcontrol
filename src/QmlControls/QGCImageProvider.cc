@@ -22,8 +22,8 @@
 #include <QPainter>
 #include <QFont>
 
-QGCImageProvider::QGCImageProvider(QGCApplication *app)
-    : QGCTool(app)
+QGCImageProvider::QGCImageProvider(QGCApplication *app, QGCToolbox* toolbox)
+    : QGCTool(app, toolbox)
     , QQuickImageProvider(QQmlImageProviderBase::Image)
 {
 }

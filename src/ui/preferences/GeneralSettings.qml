@@ -112,7 +112,7 @@ QGCView {
                 }
 
                 //-----------------------------------------------------------------
-                //-- Miscellanous
+                //-- Miscellaneous
                 Item {
                     width:                      _qgcView.width * 0.8
                     height:                     miscLabel.height
@@ -143,7 +143,7 @@ QGCView {
                             spacing: ScreenTools.defaultFontPixelWidth
                             QGCLabel {
                                 id:     baseFontLabel
-                                text:   qsTr("Font size:")
+                                text:   qsTr("Font Size:")
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             Row {
@@ -188,7 +188,7 @@ QGCView {
                             spacing: ScreenTools.defaultFontPixelWidth
                             visible: QGroundControl.settingsManager.appSettings.indoorPalette.visible
                             QGCLabel {
-                                text:           qsTr("Color scheme:")
+                                text:           qsTr("Color Scheme:")
                                 width:          _labelWidth
                                 anchors.verticalCenter: parent.verticalCenter
                             }
@@ -335,7 +335,7 @@ QGCView {
                             QGCLabel {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width:  (_labelWidth + _editFieldWidth) * 0.65
-                                text:   qsTr("Default mission altitude:")
+                                text:   qsTr("Default Mission Altitude:")
                             }
                             FactTextField {
                                 id:     defaultItemAltitudeField
@@ -348,7 +348,7 @@ QGCView {
                         //-----------------------------------------------------------------
                         //-- Mission AutoLoad
                         FactCheckBox {
-                            text:       qsTr("AutoLoad missions")
+                            text:       qsTr("AutoLoad Missions")
                             fact:       _autoLoad
                             visible:    _autoLoad.visible
 
@@ -363,7 +363,7 @@ QGCView {
 
                             QGCLabel {
                                 anchors.baseline:   savePathBrowse.baseline
-                                text:               qsTr("File save path:")
+                                text:               qsTr("File Save Path:")
                             }
                             QGCLabel {
                                 anchors.baseline:   savePathBrowse.baseline
@@ -385,6 +385,50 @@ QGCView {
                                     onAcceptedForLoad: _savePath.rawValue = file
                                 }
                             }
+                        }
+                    }
+                }
+
+                //-----------------------------------------------------------------
+                //-- RTK GPS
+                Item {
+                    width:                      _qgcView.width * 0.8
+                    height:                     unitLabel.height
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.rtkSettings.visible
+                    QGCLabel {
+                        id:             rtkLabel
+                        text:           qsTr("RTK GPS (Requires Restart)")
+                        font.family:    ScreenTools.demiboldFontFamily
+                    }
+                }
+                Rectangle {
+                    height:                     rtkGrid.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:                      _qgcView.width * 0.8
+                    color:                      qgcPal.windowShade
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.rtkSettings.visible
+                    GridLayout {
+                        id:                 rtkGrid
+                        anchors.centerIn:   parent
+                        columns:            2
+                        rowSpacing:         ScreenTools.defaultFontPixelWidth
+                        columnSpacing:      ScreenTools.defaultFontPixelWidth
+
+                        QGCLabel {
+                            text:               qsTr("Survey in accuracy:")
+                        }
+                        FactTextField {
+                            fact:               QGroundControl.settingsManager.rtkSettings.surveyInAccuracyLimit
+                        }
+
+                        QGCLabel {
+                            text:               qsTr("Minimum observation duration:")
+                        }
+                        FactTextField {
+                            fact:               QGroundControl.settingsManager.rtkSettings.surveyInMinObservationDuration
                         }
                     }
                 }
@@ -451,7 +495,7 @@ QGCView {
                     visible:                    QGroundControl.settingsManager.videoSettings.visible
                     QGCLabel {
                         id:             videoLabel
-                        text:           qsTr("Video (Requires Restart)")
+                        text:           qsTr("Video")
                         font.family:    ScreenTools.demiboldFontFamily
                     }
                 }
@@ -546,7 +590,7 @@ QGCView {
 
                             QGCLabel {
                                 anchors.baseline:   videoBrowse.baseline
-                                text:               qsTr("Save path:")
+                                text:               qsTr("Save Path:")
                                 enabled:            promptSaveLog.checked
                             }
                             QGCLabel {

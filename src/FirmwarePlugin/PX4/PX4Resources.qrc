@@ -21,7 +21,6 @@
     </qresource>
     <qresource prefix="/FirmwarePlugin/PX4">
         <file alias="PX4ParameterFactMetaData.xml">PX4ParameterFactMetaData.xml</file>
-        <file alias="PX4GeoFenceEditor.qml">PX4GeoFenceEditor.qml</file>
         <file alias="PX4.OfflineEditing.params">V1.4.OfflineEditing.params</file>
     </qresource>
 </RCC>

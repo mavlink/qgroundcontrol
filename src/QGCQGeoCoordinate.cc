@@ -9,11 +9,13 @@
 
 #include "QGCQGeoCoordinate.h"
 
+#include <QQmlEngine>
+
 QGCQGeoCoordinate::QGCQGeoCoordinate(const QGeoCoordinate& coord, QObject* parent)
     : QObject(parent)
     , _coordinate(coord)
 {
-
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 void QGCQGeoCoordinate::setCoordinate(const QGeoCoordinate& coordinate)

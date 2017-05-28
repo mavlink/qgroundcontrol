@@ -19,6 +19,8 @@ Rectangle {
     width:      ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 6
     height:     buttonStripColumn.height + (buttonStripColumn.anchors.margins * 2)
     radius:     _radius
+    border.width:   1
+    border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
 
     property string title:              "Title"
     property alias  model:              repeater.model
@@ -35,45 +37,7 @@ Rectangle {
     readonly property real  _margin:                ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _buttonSpacing:         ScreenTools.defaultFontPixelWidth
 
-    // All of the following values, connections and function are to support the ability to determine
-    // whether to show or hide the optional elements on the fly.
-
-    property bool _showOptionalElements:    true
-    property bool _needRecalc:              true
-
-    Component.onCompleted: recalcShowOptionalElements()
-
-    onMaxHeightChanged:     recalcShowOptionalElements()
-    onModelChanged:         recalcShowOptionalElements()
-    onButtonVisibleChanged: recalcShowOptionalElements()
-
-    Connections {
-        target: ScreenTools
-
-        onDefaultFontPixelWidthChanged:     recalcShowOptionalElements()
-        onDefaultFontPixelHeightChanged:    recalcShowOptionalElements()
-    }
-
-    onHeightChanged: {
-        if (_needRecalc) {
-            _needRecalc = false
-            if (maxHeight && height > maxHeight) {
-                _showOptionalElements = false
-            }
-        }
-    }
-
-    function recalcShowOptionalElements() {
-        if (_showOptionalElements) {
-            if (maxHeight && height > maxHeight) {
-                _showOptionalElements = false
-            }
-        } else {
-            _needRecalc = true
-            _showOptionalElements = true
-        }
-
-    }
+    property bool _showOptionalElements: !ScreenTools.isTinyScreen
 
     QGCPalette { id: qgcPal }
     ExclusiveGroup { id: dropButtonsExclusiveGroup }
@@ -161,75 +125,87 @@ Rectangle {
                     visible:    index == 0 ? _showOptionalElements : true
                 }
 
-                Rectangle {
+                FocusScope {
+                    id:             scope
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     height:         width
-                    color:          checked ? _repeaterPal.buttonHighlight : _repeaterPal.button
 
-                    QGCColoredImage {
-                        id:                 button
-                        anchors.fill:       parent
-                        source:             _source
-                        sourceSize.height:  parent.height
-                        fillMode:           Image.PreserveAspectFit
-                        mipmap:             true
-                        smooth:             true
-                        color:              checked ? _repeaterPal.buttonHighlightText : _repeaterPal.buttonText
+                    Rectangle {
+                        anchors.fill:   parent
+                        color:          checked ? _repeaterPal.buttonHighlight : _repeaterPal.button
 
-                        RotationAnimation on rotation {
-                            id:             imageRotation
-                            loops:          Animation.Infinite
-                            from:           0
-                            to:             360
-                            duration:       500
-                            running:        false
+                        QGCColoredImage {
+                            id:                 button
+                            anchors.fill:       parent
+                            source:             _source
+                            sourceSize.height:  parent.height
+                            fillMode:           Image.PreserveAspectFit
+                            mipmap:             true
+                            smooth:             true
+                            color:              checked ? _repeaterPal.buttonHighlightText : _repeaterPal.buttonText
+
+                            RotationAnimation on rotation {
+                                id:             imageRotation
+                                loops:          Animation.Infinite
+                                from:           0
+                                to:             360
+                                duration:       500
+                                running:        false
+                            }
+
+                            NumberAnimation on opacity {
+                                id:         opacityAnimation
+                                running:    false
+                                from:       0
+                                to:         1.0
+                                loops:      Animation.Infinite
+                                duration:   2000
+                            }
                         }
 
-                        NumberAnimation on opacity {
-                            id:         opacityAnimation
-                            running:    false
-                            from:       0
-                            to:         1.0
-                            loops:      Animation.Infinite
-                            duration:   2000
-                        }
-                    }
+                        QGCMouseArea {
+                            // Size of mouse area is expanded to make touch easier
+                            anchors.leftMargin:     -buttonStripColumn.anchors.margins
+                            anchors.rightMargin:    -buttonStripColumn.anchors.margins
+                            anchors.left:           parent.left
+                            anchors.right:          parent.right
+                            anchors.top:            parent.top
+                            height:                 parent.height + (_showOptionalElements? buttonLabel.height + buttonColumn.spacing : 0)
+                            visible:                _buttonEnabled
+                            preventStealing:        true
 
-                    QGCMouseArea {
-                        // Size of mouse area is expanded to make touch easier
-                        anchors.leftMargin:     -buttonStripColumn.anchors.margins
-                        anchors.rightMargin:    -buttonStripColumn.anchors.margins
-                        anchors.left:           parent.left
-                        anchors.right:          parent.right
-                        anchors.top:            parent.top
-                        height:                 parent.height + (_showOptionalElements? buttonLabel.height + buttonColumn.spacing : 0)
-                        visible:                _buttonEnabled
-                        preventStealing:        true
-
-                        onClicked: {
-                            if (modelData.dropPanelComponent === undefined) {
-                                dropPanel.hide()
-                                if (modelData.toggle === true) {
-                                    checked = !checked
+                            onClicked: {
+                                scope.focus = true
+                                if (modelData.dropPanelComponent === undefined) {
+                                    dropPanel.hide()
+                                    if (modelData.toggle === true) {
+                                        checked = !checked
+                                    } else {
+                                        // dropPanel.hide above will close panel, but we need to do this to clear toggles
+                                        uncheckAll()
+                                    }
+                                    _root.clicked(index, checked)
                                 } else {
-                                    // dropPanel.hide above will close panel, but we need to do this to clear toggles
-                                    uncheckAll()
-                                }
-                                _root.clicked(index, checked)
-                            } else {
-                                if (checked) {
-                                    dropPanel.hide()    // hide affects checked, so this needs to be duplicated inside not outside if
-                                } else {
-                                    dropPanel.hide()    // hide affects checked, so this needs to be duplicated inside not outside if
-                                    uncheckAll()
-                                    checked = true
-                                    var panelEdgeTopPoint = mapToItem(_root, width, 0)
-                                    dropPanel.show(panelEdgeTopPoint, height, modelData.dropPanelComponent)
+                                    if (checked) {
+                                        dropPanel.hide()    // hide affects checked, so this needs to be duplicated inside not outside if
+                                    } else {
+                                        dropPanel.hide()    // hide affects checked, so this needs to be duplicated inside not outside if
+                                        uncheckAll()
+                                        checked = true
+                                        var panelEdgeTopPoint = mapToItem(_root, width, 0)
+                                        dropPanel.show(panelEdgeTopPoint, height, modelData.dropPanelComponent)
+                                    }
                                 }
                             }
                         }
                     }
+                }
+
+                Item {
+                    width:      1
+                    height:     ScreenTools.defaultFontPixelHeight * 0.25
+                    visible:    _showOptionalElements
                 }
 
                 QGCLabel {

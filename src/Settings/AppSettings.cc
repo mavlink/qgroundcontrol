@@ -31,17 +31,23 @@ const char* AppSettings::indoorPaletteName =                            "StyleIs
 const char* AppSettings::showLargeCompassName =                         "ShowLargeCompass";
 const char* AppSettings::savePathName =                                 "SavePath";
 const char* AppSettings::autoLoadMissionsName =                         "AutoLoadMissions";
-const char* AppSettings::automaticMissionUploadName =                   "AutomaticMissionUpload";
+const char* AppSettings::mapboxTokenName =                              "MapboxToken";
+const char* AppSettings::esriTokenName =                                "EsriToken";
+const char* AppSettings::defaultFirmwareTypeName =                      "DefaultFirmwareType";
 
 const char* AppSettings::parameterFileExtension =   "params";
+const char* AppSettings::planFileExtension =        "plan";
 const char* AppSettings::missionFileExtension =     "mission";
+const char* AppSettings::waypointsFileExtension =   "waypoints";
 const char* AppSettings::fenceFileExtension =       "fence";
 const char* AppSettings::rallyPointFileExtension =  "rally";
 const char* AppSettings::telemetryFileExtension =   "tlog";
+const char* AppSettings::logFileExtension =         "ulg";
 
-const char* AppSettings::parameterDirectory =   "Parameters";
-const char* AppSettings::telemetryDirectory =   "Telemetry";
-const char* AppSettings::missionDirectory =     "Missions";
+const char* AppSettings::parameterDirectory =       "Parameters";
+const char* AppSettings::telemetryDirectory =       "Telemetry";
+const char* AppSettings::missionDirectory =         "Missions";
+const char* AppSettings::logDirectory =             "Logs";
 
 AppSettings::AppSettings(QObject* parent)
     : SettingsGroup(appSettingsGroupName, QString() /* root settings group */, parent)
@@ -60,7 +66,9 @@ AppSettings::AppSettings(QObject* parent)
     , _showLargeCompassFact(NULL)
     , _savePathFact(NULL)
     , _autoLoadMissionsFact(NULL)
-    , _automaticMissionUpload(NULL)
+    , _mapboxTokenFact(NULL)
+    , _esriTokenFact(NULL)
+    , _defaultFirmwareTypeFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
@@ -72,7 +80,11 @@ AppSettings::AppSettings(QObject* parent)
     QString appName = qgcApp()->applicationName();
     if (savePathFact->rawValue().toString().isEmpty() && _nameToMetaDataMap[savePathName]->rawDefaultValue().toString().isEmpty()) {
 #ifdef __mobile__
+#ifdef __ios__
+        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+#else
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
+#endif
         savePathFact->setVisible(false);
 #else
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
@@ -96,6 +108,7 @@ void AppSettings::_checkSavePathDirectories(void)
         savePathDir.mkdir(parameterDirectory);
         savePathDir.mkdir(telemetryDirectory);
         savePathDir.mkdir(missionDirectory);
+        savePathDir.mkdir(logDirectory);
     }
 }
 
@@ -269,6 +282,19 @@ QString AppSettings::telemetrySavePath(void)
     return fullPath;
 }
 
+QString AppSettings::logSavePath(void)
+{
+    QString fullPath;
+
+    QString path = savePath()->rawValue().toString();
+    if (!path.isEmpty() && QDir(path).exists()) {
+        QDir dir(path);
+        return dir.filePath(logDirectory);
+    }
+
+    return fullPath;
+}
+
 Fact* AppSettings::autoLoadMissions(void)
 {
     if (!_autoLoadMissionsFact) {
@@ -278,12 +304,52 @@ Fact* AppSettings::autoLoadMissions(void)
     return _autoLoadMissionsFact;
 }
 
-Fact* AppSettings::automaticMissionUpload(void)
+Fact* AppSettings::mapboxToken(void)
 {
-    if (!_automaticMissionUpload) {
-        _automaticMissionUpload = _createSettingsFact(automaticMissionUploadName);
+    if (!_mapboxTokenFact) {
+        _mapboxTokenFact = _createSettingsFact(mapboxTokenName);
     }
 
-    return _automaticMissionUpload;
+    return _mapboxTokenFact;
 }
 
+Fact* AppSettings::esriToken(void)
+{
+    if (!_esriTokenFact) {
+        _esriTokenFact = _createSettingsFact(esriTokenName);
+    }
+
+    return _esriTokenFact;
+}
+
+MAV_AUTOPILOT AppSettings::offlineEditingFirmwareTypeFromFirmwareType(MAV_AUTOPILOT firmwareType)
+{
+    if (firmwareType != MAV_AUTOPILOT_PX4 && firmwareType != MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        firmwareType = MAV_AUTOPILOT_GENERIC;
+    }
+    return firmwareType;
+}
+
+MAV_TYPE AppSettings::offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleType)
+{
+    if (QGCMAVLink::isRover(vehicleType)) {
+        return MAV_TYPE_GROUND_ROVER;
+    } else if (QGCMAVLink::isSub(vehicleType)) {
+        return MAV_TYPE_SUBMARINE;
+    } else if (QGCMAVLink::isVTOL(vehicleType)) {
+        return MAV_TYPE_VTOL_QUADROTOR;
+    } else if (QGCMAVLink::isFixedWing(vehicleType)) {
+        return MAV_TYPE_FIXED_WING;
+    } else {
+        return MAV_TYPE_QUADROTOR;
+    }
+}
+
+Fact* AppSettings::defaultFirmwareType(void)
+{
+    if (!_defaultFirmwareTypeFact) {
+        _defaultFirmwareTypeFact = _createSettingsFact(defaultFirmwareTypeName);
+    }
+
+    return _defaultFirmwareTypeFact;
+}

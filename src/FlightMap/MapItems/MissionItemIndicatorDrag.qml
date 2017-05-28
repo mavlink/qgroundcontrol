@@ -29,6 +29,8 @@ Rectangle {
     property var itemCoordinate ///< Coordinate we are updating during drag
 
     signal clicked
+    signal dragStart
+    signal dragStop
 
     property bool   _preventCoordinateBindingLoop:  false
 
@@ -37,6 +39,7 @@ Rectangle {
     property real _touchHeight:             Math.max(itemIndicator.height, ScreenTools.minTouchPixels)
     property real _touchMarginHorizontal:   _mobile ? (_touchWidth - itemIndicator.width) / 2 : 0
     property real _touchMarginVertical:     _mobile ? (_touchHeight - itemIndicator.height) / 2 : 0
+    property bool _dragStartSignalled:      false
 
     onXChanged: liveDrag()
     onYChanged: liveDrag()
@@ -65,13 +68,18 @@ Rectangle {
         preventStealing:    true
 
         onClicked: itemDragger.clicked()
-    }
 
-    Item {
-        id: fakeItemIndicator
-
-        Item {
-            id: anchorPoint
+        property bool dragActive: drag.active
+        onDragActiveChanged: {
+            if (dragActive) {
+                if (!_dragStartSignalled) {
+                    _dragStartSignalled = true
+                    dragStart()
+                }
+            } else {
+                _dragStartSignalled = false
+                dragStop()
+            }
         }
     }
 }

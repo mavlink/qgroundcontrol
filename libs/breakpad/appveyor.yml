@@ -1,0 +1,42 @@
+version: '{build}'
+
+environment:
+  GYP_MSVS_VERSION: 2013
+
+platform:
+  - Win32
+
+configuration:
+  - Debug
+  - Release
+
+# Use the source dir expected by gclient.
+clone_folder: c:\projects\breakpad\src
+
+# Before checkout.
+init:
+  - cd %APPVEYOR_BUILD_FOLDER%\..\..
+  - appveyor DownloadFile https://storage.googleapis.com/chrome-infra/depot_tools.zip
+  - 7z -bd x depot_tools.zip -odepot_tools
+  - depot_tools\update_depot_tools
+  - cd %APPVEYOR_BUILD_FOLDER%
+
+# After checkout.
+install:
+  - PATH C:\projects\depot_tools;%PATH%
+  - cd %APPVEYOR_BUILD_FOLDER%\..
+  - gclient config https://%APPVEYOR_REPO_PROVIDER%.com/%APPVEYOR_REPO_NAME% --unmanaged --name=src
+  - gclient sync
+
+build_script:
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - msbuild src\client\windows\breakpad_client.sln /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /m /verbosity:normal
+  - msbuild src\tools\windows\tools_windows.sln    /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /m /verbosity:normal
+
+test_script:
+  - src\client\windows\%CONFIGURATION%\client_tests.exe
+  - src\tools\windows\%CONFIGURATION%\dump_syms_unittest.exe
+
+artifacts:
+  - path: '**\*.exe'
+  - path: '**\*.lib'

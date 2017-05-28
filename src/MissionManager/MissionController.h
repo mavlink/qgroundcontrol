@@ -24,17 +24,19 @@ class VisualMissionItem;
 class MissionItem;
 class MissionSettingsItem;
 class AppSettings;
+class MissionManager;
 
 Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
 typedef QPair<VisualMissionItem*,VisualMissionItem*> VisualItemPair;
 typedef QHash<VisualItemPair, CoordinateVector*> CoordVectHashTable;
+
 class MissionController : public PlanElementController
 {
     Q_OBJECT
 
 public:
-    MissionController(QObject* parent = NULL);
+    MissionController(PlanMasterController* masterController, QObject* parent = NULL);
     ~MissionController();
 
     typedef struct {
@@ -48,10 +50,11 @@ public:
         double  cruiseSpeed;
         double  hoverSpeed;
         double  vehicleSpeed;           ///< Either cruise or hover speed based on vehicle type and vtol state
+        double  vehicleYaw;
         double  gimbalYaw;              ///< NaN signals yaw was never changed
         int     mAhBattery;             ///< 0 for not available
-        int     hoverAmps;              ///< Amp consumption during hover
-        int     cruiseAmps;             ///< Amp consumption during cruise
+        double  hoverAmps;              ///< Amp consumption during hover
+        double  cruiseAmps;             ///< Amp consumption during cruise
         double  ampMinutesAvailable;    ///< Amp minutes available from single battery
         double  hoverAmpsTotal;         ///< Total hover amps used
         double  cruiseAmpsTotal;        ///< Total cruise amps used
@@ -64,7 +67,10 @@ public:
     Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
     Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition        NOTIFY plannedHomePositionChanged)
 
-    Q_PROPERTY(int                  resumeMissionItem       READ resumeMissionItem          NOTIFY resumeMissionItemChanged)
+    Q_PROPERTY(double               progressPct             READ progressPct                NOTIFY progressPctChanged)
+
+    Q_PROPERTY(int                  currentMissionIndex     READ currentMissionIndex        NOTIFY currentMissionIndexChanged)
+    Q_PROPERTY(int                  resumeMissionIndex      READ resumeMissionIndex         NOTIFY resumeMissionIndexChanged)   ///< Returns the item index two which a mission should be resumed. -1 indicates resume mission not available.
 
     Q_PROPERTY(double               missionDistance         READ missionDistance            NOTIFY missionDistanceChanged)
     Q_PROPERTY(double               missionTime             READ missionTime                NOTIFY missionTimeChanged)
@@ -96,31 +102,26 @@ public:
     /// Updates the altitudes of the items in the current mission to the new default altitude
     Q_INVOKABLE void applyDefaultMissionAltitude(void);
 
-    /// Loads the mission items from the specified file
-    ///     @param[in] vehicle Vehicle we are loading items for
-    ///     @param[in] filename File to load from
-    ///     @param[out] visualItems Visual items loaded, returns NULL if error
-    /// @return success/fail
-    static bool loadItemsFromFile(Vehicle* vehicle, const QString& filename, QmlObjectListModel** visualItems);
-
     /// Sends the mission items to the specified vehicle
     static void sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems);
 
+    bool loadJsonFile(QFile& file, QString& errorString);
+    bool loadTextFile(QFile& file, QString& errorString);
+
     // Overrides from PlanElementController
     void start                      (bool editMode) final;
-    void startStaticActiveVehicle   (Vehicle* vehicle) final;
+    void save                       (QJsonObject& json) final;
+    bool load                       (const QJsonObject& json, QString& errorString) final;
     void loadFromVehicle            (void) final;
     void sendToVehicle              (void) final;
-    void loadFromFile               (const QString& filename) final;
-    void saveToFile                 (const QString& filename) final;
     void removeAll                  (void) final;
     void removeAllFromVehicle       (void) final;
     bool syncInProgress             (void) const final;
     bool dirty                      (void) const final;
     void setDirty                   (bool dirty) final;
     bool containsItems              (void) const final;
-
-    QString fileExtension(void) const final;
+    void managerVehicleChanged      (Vehicle* managerVehicle) final;
+    bool showPlanFromManagerVehicle (void) final;
 
     // Property accessors
 
@@ -128,9 +129,10 @@ public:
     QmlObjectListModel* waypointLines           (void) { return &_waypointLines; }
     QStringList         complexMissionItemNames (void) const;
     QGeoCoordinate      plannedHomePosition     (void) const;
+    double              progressPct             (void) const { return _progressPct; }
 
-    /// Returns the item index two which a mission should be resumed. -1 indicates resume mission not available.
-    int resumeMissionItem(void) const;
+    int currentMissionIndex(void) const;
+    int resumeMissionIndex(void) const;
 
     double  missionDistance         (void) const { return _missionFlightStatus.totalDistance; }
     double  missionTime             (void) const { return _missionFlightStatus.totalTime; }
@@ -155,22 +157,27 @@ signals:
     void missionCruiseTimeChanged(void);
     void missionMaxTelemetryChanged(double missionMaxTelemetry);
     void complexMissionItemNamesChanged(void);
-    void resumeMissionItemChanged(void);
+    void resumeMissionIndexChanged(void);
     void resumeMissionReady(void);
     void batteryChangePointChanged(int batteryChangePoint);
     void batteriesRequiredChanged(int batteriesRequired);
     void plannedHomePositionChanged(QGeoCoordinate plannedHomePosition);
+    void progressPctChanged(double progressPct);
+    void currentMissionIndexChanged(int currentMissionIndex);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
     void _itemCommandChanged(void);
-    void _activeVehicleHomePositionChanged(const QGeoCoordinate& homePosition);
+    void _managerVehicleHomePositionChanged(const QGeoCoordinate& homePosition);
     void _inProgressChanged(bool inProgress);
-    void _currentMissionItemChanged(int sequenceNumber);
+    void _currentMissionIndexChanged(int sequenceNumber);
     void _recalcWaypointLines(void);
     void _recalcMissionFlightStatus(void);
     void _updateContainsItems(void);
+    void _progressPctChanged(double progressPct);
     void _visualItemsDirtyChanged(bool dirty);
+    void _managerSendComplete(bool error);
+    void _managerRemoveAllComplete(bool error);
 
 private:
     void _init(void);
@@ -187,11 +194,11 @@ private:
     bool _findPreviousAltitude(int newIndex, double* prevAltitude, MAV_FRAME* prevFrame);
     static double _normalizeLat(double lat);
     static double _normalizeLon(double lon);
-    static void _addMissionSettings(Vehicle* vehicle, QmlObjectListModel* visualItems, bool addToCenter);
-    static bool _loadJsonMissionFile(Vehicle* vehicle, const QByteArray& bytes, QmlObjectListModel* visualItems, QString& errorString);
-    static bool _loadJsonMissionFileV1(Vehicle* vehicle, const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
-    static bool _loadJsonMissionFileV2(Vehicle* vehicle, const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
-    static bool _loadTextMissionFile(Vehicle* vehicle, QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString);
+    void _addMissionSettings(QmlObjectListModel* visualItems, bool addToCenter);
+    bool _loadJsonMissionFile(const QByteArray& bytes, QmlObjectListModel* visualItems, QString& errorString);
+    bool _loadJsonMissionFileV1(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
+    bool _loadJsonMissionFileV2(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
+    bool _loadTextMissionFile(QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString);
     int _nextSequenceNumber(void);
     static void _scanForAdditionalSettings(QmlObjectListModel* visualItems, Vehicle* vehicle);
     static bool _convertToMissionItems(QmlObjectListModel* visualMissionItems, QList<MissionItem*>& rgMissionItems, QObject* missionItemParent);
@@ -200,22 +207,22 @@ private:
     void _addHoverTime(double hoverTime, double hoverDistance, int waypointIndex);
     void _addCruiseTime(double cruiseTime, double cruiseDistance, int wayPointIndex);
     void _updateBatteryInfo(int waypointIndex);
-
-    // Overrides from PlanElementController
-    void _activeVehicleBeingRemoved(void) final;
-    void _activeVehicleSet(void) final;
+    bool _loadItemsFromJson(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
+    void _initLoadedVisualItems(QmlObjectListModel* loadedVisualItems);
 
 private:
+    MissionManager*         _missionManager;
     QmlObjectListModel*     _visualItems;
     MissionSettingsItem*    _settingsItem;
     QmlObjectListModel      _waypointLines;
     CoordVectHashTable      _linesTable;
     bool                    _firstItemsFromVehicle;
-    bool                    _missionItemsRequested;
+    bool                    _itemsRequested;
     MissionFlightStatus_t   _missionFlightStatus;
     QString                 _surveyMissionItemName;
     QString                 _fwLandingMissionItemName;
     AppSettings*            _appSettings;
+    double                  _progressPct;
 
     static const char*  _settingsGroup;
 

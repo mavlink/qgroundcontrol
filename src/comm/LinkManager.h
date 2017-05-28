@@ -58,7 +58,7 @@ class LinkManager : public QGCTool
     friend class LinkManagerTest;
 
 public:
-    LinkManager(QGCApplication* app);
+    LinkManager(QGCApplication* app, QGCToolbox* toolbox);
     ~LinkManager();
 
     Q_PROPERTY(bool isBluetoothAvailable                READ isBluetoothAvailable                                               CONSTANT)
@@ -152,6 +152,13 @@ public:
     SharedLinkConfigurationPointer addConfiguration(LinkConfiguration* config);
 
     void startAutoConnectedLinks(void);
+
+    /// Reserves a mavlink channel for use
+    /// @return Mavlink channel index, 0 for no channels available
+    int _reserveMavlinkChannel(void);
+
+    /// Free the specified mavlink channel for re-use
+    void _freeMavlinkChannel(int channel);
 
     static const char*  settingsGroup;
 

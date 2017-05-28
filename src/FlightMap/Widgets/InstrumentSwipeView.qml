@@ -29,6 +29,7 @@ Item {
 
     function showPage(pageIndex) {
         pageRow.x = -(pageIndex * _pageWidth)
+        _currentPage = pageIndex
     }
 
     function showNextPage() {

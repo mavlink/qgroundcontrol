@@ -29,7 +29,7 @@ class VideoManager : public QGCTool
     Q_OBJECT
 
 public:
-    VideoManager    (QGCApplication* app);
+    VideoManager    (QGCApplication* app, QGCToolbox* toolbox);
     ~VideoManager   ();
 
     Q_PROPERTY(bool             hasVideo            READ    hasVideo                                    NOTIFY hasVideoChanged)
@@ -69,10 +69,16 @@ signals:
 
 private slots:
     void _videoSourceChanged(void);
+    void _udpPortChanged(void);
+    void _rtspUrlChanged(void);
+
 
 private:
     void _updateTimer           ();
+    void _updateSettings        ();
     void _updateVideo           ();
+    void _restartVideo          ();
+
 
     VideoSurface*   _videoSurface;
     VideoReceiver*  _videoReceiver;

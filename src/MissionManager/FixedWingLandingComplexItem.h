@@ -78,9 +78,9 @@ public:
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            applyNewAltitude        (double newAltitude) final;
 
-    bool coordinateHasRelativeAltitude      (void) const final { return true; }
-    bool exitCoordinateHasRelativeAltitude  (void) const final { return true; }
-    bool exitCoordinateSameAsEntry          (void) const final { return true; }
+    bool coordinateHasRelativeAltitude      (void) const final { return _loiterAltitudeRelative; }
+    bool exitCoordinateHasRelativeAltitude  (void) const final { return _landingAltitudeRelative; }
+    bool exitCoordinateSameAsEntry          (void) const final { return false; }
 
     void setDirty           (bool dirty) final;
     void setCoordinate      (const QGeoCoordinate& coordinate) final { setLoiterCoordinate(coordinate); }

@@ -20,18 +20,22 @@ Rectangle {
     visible:            missionItem.isCurrentItem
     radius:             _radius
 
-    property var    _missionVehicle:            missionController.vehicle
-    property bool   _vehicleHasHomePosition:    _missionVehicle.homePosition.isValid
-    property bool   _offlineEditing:            _missionVehicle.isOfflineEditingVehicle
-    property bool   _showOfflineVehicleCombos:  _offlineEditing && _multipleFirmware && _noMissionItemsAdded
-    property bool   _showCruiseSpeed:           !_missionVehicle.multiRotor
-    property bool   _showHoverSpeed:            _missionVehicle.multiRotor || _missionVehicle.vtol
-    property bool   _multipleFirmware:          QGroundControl.supportedFirmwareCount > 2
-    property real   _fieldWidth:                ScreenTools.defaultFontPixelWidth * 16
-    property bool   _mobile:                    ScreenTools.isMobile
-    property var    _savePath:                  QGroundControl.settingsManager.appSettings.missionSavePath
-    property var    _fileExtension:             QGroundControl.settingsManager.appSettings.missionFileExtension
-    property var    _appSettings:               QGroundControl.settingsManager.appSettings
+    property var    _masterControler:               masterController
+    property var    _missionController:             _masterControler.missionController
+    property var    _missionVehicle:                _masterControler.controllerVehicle
+    property bool   _vehicleHasHomePosition:        _missionVehicle.homePosition.isValid
+    property bool   _offlineEditing:                _missionVehicle.isOfflineEditingVehicle
+    property bool   _showOfflineVehicleCombos:      _multipleFirmware
+    property bool   _enableOfflineVehicleCombos:    _offlineEditing && _noMissionItemsAdded
+    property bool   _showCruiseSpeed:               !_missionVehicle.multiRotor
+    property bool   _showHoverSpeed:                _missionVehicle.multiRotor || _missionVehicle.vtol
+    property bool   _multipleFirmware:              QGroundControl.supportedFirmwareCount > 2
+    property real   _fieldWidth:                    ScreenTools.defaultFontPixelWidth * 16
+    property bool   _mobile:                        ScreenTools.isMobile
+    property var    _savePath:                      QGroundControl.settingsManager.appSettings.missionSavePath
+    property var    _fileExtension:                 QGroundControl.settingsManager.appSettings.missionFileExtension
+    property var    _appSettings:                   QGroundControl.settingsManager.appSettings
+    property bool   _waypointsOnlyMode:             QGroundControl.corePlugin.options.missionWaypointsOnly
 
     readonly property string _firmwareLabel:    qsTr("Firmware")
     readonly property string _vehicleLabel:     qsTr("Vehicle")
@@ -75,9 +79,9 @@ Rectangle {
 
         Column {
             id:             valuesColumn
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            anchors.top:    parent.top
+            anchors.left:   parent ? parent.left  : undefined
+            anchors.right:  parent ? parent.right : undefined
+            anchors.top:    parent ? parent.top   : undefined
             spacing:        _margin
 
             SectionHeader {
@@ -112,22 +116,21 @@ Rectangle {
                         id:         flightSpeedCheckBox
                         text:       qsTr("Flight speed")
                         visible:    !_missionVehicle.vtol
-                        checked:    missionItem.specifyMissionFlightSpeed
-                        onClicked:  missionItem.specifyMissionFlightSpeed = checked
+                        checked:    missionItem.speedSection.specifyFlightSpeed
+                        onClicked:   missionItem.speedSection.specifyFlightSpeed = checked
                     }
                     FactTextField {
                         Layout.fillWidth:   true
-                        fact:               missionItem.missionFlightSpeed
+                        fact:               missionItem.speedSection.flightSpeed
                         visible:            flightSpeedCheckBox.visible
                         enabled:            flightSpeedCheckBox.checked
                     }
                 } // GridLayout
 
-                FactComboBox {
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    fact:           missionItem.missionEndAction
-                    indexModel:     false
+                QGCCheckBox {
+                    text:       qsTr("RTL after mission end")
+                    checked:    missionItem.missionEndRTL
+                    onClicked:  missionItem.missionEndRTL = checked
                 }
             }
 
@@ -138,7 +141,7 @@ Rectangle {
             SectionHeader {
                 id:         vehicleInfoSectionHeader
                 text:       qsTr("Vehicle Info")
-                visible:    _offlineEditing
+                visible:    _offlineEditing && !_waypointsOnlyMode
                 checked:    false
             }
 
@@ -160,6 +163,7 @@ Rectangle {
                     indexModel:             false
                     Layout.preferredWidth:  _fieldWidth
                     visible:                _showOfflineVehicleCombos
+                    enabled:                _enableOfflineVehicleCombos
                 }
 
                 QGCLabel {
@@ -172,6 +176,7 @@ Rectangle {
                     indexModel:             false
                     Layout.preferredWidth:  _fieldWidth
                     visible:                _showOfflineVehicleCombos
+                    enabled:                _enableOfflineVehicleCombos
                 }
 
                 QGCLabel {

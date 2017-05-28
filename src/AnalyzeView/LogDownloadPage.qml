@@ -27,20 +27,6 @@ AnalyzePage {
     property real _margin:          ScreenTools.defaultFontPixelWidth
     property real _butttonWidth:    ScreenTools.defaultFontPixelWidth * 10
 
-    LogDownloadController {
-        id: controller
-
-        onSelectionChanged: {
-            tableView.selection.clear()
-            for(var i = 0; i < controller.model.count; i++) {
-                var o = controller.model.get(i)
-                if (o && o.selected) {
-                    tableView.selection.select(i, i)
-                }
-            }
-        }
-    }
-
     QGCPalette { id: palette; colorGroupEnabled: enabled }
 
     Component {
@@ -50,11 +36,24 @@ AnalyzePage {
             width:  availableWidth
             height: availableHeight
 
+            Connections {
+                target: logController
+                onSelectionChanged: {
+                    tableView.selection.clear()
+                    for(var i = 0; i < logController.model.count; i++) {
+                        var o = logController.model.get(i)
+                        if (o && o.selected) {
+                            tableView.selection.select(i, i)
+                        }
+                    }
+                }
+            }
+
             TableView {
                 id: tableView
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
-                model:              controller.model
+                model:              logController.model
                 selectionMode:      SelectionMode.MultiSelection
                 Layout.fillWidth:   true
 
@@ -65,7 +64,7 @@ AnalyzePage {
                     delegate : Text  {
                         horizontalAlignment: Text.AlignHCenter
                         text: {
-                            var o = controller.model.get(styleData.row)
+                            var o = logController.model.get(styleData.row)
                             return o ? o.id : ""
                         }
                     }
@@ -77,11 +76,11 @@ AnalyzePage {
                     horizontalAlignment: Text.AlignHCenter
                     delegate : Text  {
                         text: {
-                            var o = controller.model.get(styleData.row)
+                            var o = logController.model.get(styleData.row)
                             if (o) {
                                 //-- Have we received this entry already?
-                                if(controller.model.get(styleData.row).received) {
-                                    var d = controller.model.get(styleData.row).time
+                                if(logController.model.get(styleData.row).received) {
+                                    var d = logController.model.get(styleData.row).time
                                     if(d.getUTCFullYear() < 2010)
                                         return qsTr("Date Unknown")
                                     else
@@ -100,7 +99,7 @@ AnalyzePage {
                     delegate : Text  {
                         horizontalAlignment: Text.AlignRight
                         text: {
-                            var o = controller.model.get(styleData.row)
+                            var o = logController.model.get(styleData.row)
                             return o ? o.sizeStr : ""
                         }
                     }
@@ -113,7 +112,7 @@ AnalyzePage {
                     delegate : Text  {
                         horizontalAlignment: Text.AlignHCenter
                         text: {
-                            var o = controller.model.get(styleData.row)
+                            var o = logController.model.get(styleData.row)
                             return o ? o.status : ""
                         }
                     }
@@ -125,7 +124,7 @@ AnalyzePage {
                 Layout.alignment:   Qt.AlignTop | Qt.AlignLeft
 
                 QGCButton {
-                    enabled:    !controller.requestingList && !controller.downloadingLogs
+                    enabled:    !logController.requestingList && !logController.downloadingLogs
                     text:       qsTr("Refresh")
                     width:      _butttonWidth
 
@@ -133,33 +132,46 @@ AnalyzePage {
                         if (!QGroundControl.multiVehicleManager.activeVehicle || QGroundControl.multiVehicleManager.activeVehicle.isOfflineEditingVehicle) {
                             logDownloadPage.showMessage(qsTr("Log Refresh"), qsTr("You must be connected to a vehicle in order to download logs."), StandardButton.Ok)
                         } else {
-                            controller.refresh()
+                            logController.refresh()
                         }
                     }
                 }
 
                 QGCButton {
-                    enabled:    !controller.requestingList && !controller.downloadingLogs && tableView.selection.count > 0
+                    enabled:    !logController.requestingList && !logController.downloadingLogs && tableView.selection.count > 0
                     text:       qsTr("Download")
                     width:      _butttonWidth
                     onClicked: {
                         //-- Clear selection
-                        for(var i = 0; i < controller.model.count; i++) {
-                            var o = controller.model.get(i)
+                        for(var i = 0; i < logController.model.count; i++) {
+                            var o = logController.model.get(i)
                             if (o) o.selected = false
                         }
                         //-- Flag selected log files
                         tableView.selection.forEach(function(rowIndex){
-                            var o = controller.model.get(rowIndex)
+                            var o = logController.model.get(rowIndex)
                             if (o) o.selected = true
                         })
-                        //-- Download them
-                        controller.download()
+                        fileDialog.qgcView =        logDownloadPage
+                        fileDialog.title =          qsTr("Select save directory")
+                        fileDialog.selectExisting = true
+                        fileDialog.folder =         QGroundControl.settingsManager.appSettings.telemetrySavePath
+                        fileDialog.selectFolder =   true
+                        fileDialog.openForLoad()
+                    }
+
+                    QGCFileDialog {
+                        id: fileDialog
+
+                        onAcceptedForLoad: {
+                            logController.download(file)
+                            close()
+                        }
                     }
                 }
 
                 QGCButton {
-                    enabled:    !controller.requestingList && !controller.downloadingLogs && controller.model.count > 0
+                    enabled:    !logController.requestingList && !logController.downloadingLogs && logController.model.count > 0
                     text:       qsTr("Erase All")
                     width:      _butttonWidth
                     onClicked:  logDownloadPage.showDialog(eraseAllMessage,
@@ -175,7 +187,7 @@ AnalyzePage {
 
                             function accept() {
                                 logDownloadPage.hideDialog()
-                                controller.eraseAll()
+                                logController.eraseAll()
                             }
                         }
                     }
@@ -184,8 +196,8 @@ AnalyzePage {
                 QGCButton {
                     text:       qsTr("Cancel")
                     width:      _butttonWidth
-                    enabled:    controller.requestingList || controller.downloadingLogs
-                    onClicked:  controller.cancel()
+                    enabled:    logController.requestingList || logController.downloadingLogs
+                    onClicked:  logController.cancel()
                 }
             } // Column - Buttons
         } // RowLayout

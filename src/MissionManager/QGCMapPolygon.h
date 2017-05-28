@@ -26,10 +26,12 @@ class QGCMapPolygon : public QObject
 public:
     QGCMapPolygon(QObject* newCoordParent, QObject* parent = NULL);
 
-    Q_PROPERTY(int                  count       READ count                      NOTIFY countChanged)
-    Q_PROPERTY(QVariantList         path        READ path                       NOTIFY pathChanged)
-    Q_PROPERTY(QmlObjectListModel*  pathModel   READ qmlPathModel               CONSTANT)
-    Q_PROPERTY(bool                 dirty       READ dirty      WRITE setDirty  NOTIFY dirtyChanged)
+    Q_PROPERTY(int                  count       READ count                              NOTIFY countChanged)
+    Q_PROPERTY(QVariantList         path        READ path                               NOTIFY pathChanged)
+    Q_PROPERTY(QmlObjectListModel*  pathModel   READ qmlPathModel                       CONSTANT)
+    Q_PROPERTY(bool                 dirty       READ dirty          WRITE setDirty      NOTIFY dirtyChanged)
+    Q_PROPERTY(QGeoCoordinate       center      READ center         WRITE setCenter     NOTIFY centerChanged)
+    Q_PROPERTY(bool                 centerDrag  READ centerDrag     WRITE setCenterDrag NOTIFY centerDragChanged)
 
     Q_INVOKABLE void clear(void);
     Q_INVOKABLE void appendVertex(const QGeoCoordinate& coordinate);
@@ -42,9 +44,6 @@ public:
 
     /// Splits the segment comprised of vertextIndex -> vertexIndex + 1
     Q_INVOKABLE void splitPolygonSegment(int vertexIndex);
-
-    /// Returns the center point coordinate for the polygon
-    Q_INVOKABLE QGeoCoordinate center(void) const;
 
     /// Returns true if the specified coordinate is within the polygon
     Q_INVOKABLE bool containsCoordinate(const QGeoCoordinate& coordinate) const;
@@ -65,25 +64,35 @@ public:
 
     // Property methods
 
-    int     count   (void) const { return _polygonPath.count(); }
-    bool    dirty   (void) const { return _dirty; }
-    void    setDirty(bool dirty);
+    int             count       (void) const { return _polygonPath.count(); }
+    bool            dirty       (void) const { return _dirty; }
+    void            setDirty    (bool dirty);
+    QGeoCoordinate  center      (void) const { return _center; }
+    bool            centerDrag  (void) const { return _centerDrag; }
 
     QVariantList        path        (void) const { return _polygonPath; }
     QmlObjectListModel* qmlPathModel(void) { return &_polygonModel; }
     QmlObjectListModel& pathModel   (void) { return _polygonModel; }
 
-    void setPath(const QList<QGeoCoordinate>& path);
-    void setPath(const QVariantList& path);
+    void setPath        (const QList<QGeoCoordinate>& path);
+    void setPath        (const QVariantList& path);
+    void setCenter      (QGeoCoordinate newCenter);
+    void setCenterDrag  (bool centerDrag);
+
+    static const char* jsonPolygonKey;
 
 signals:
-    void countChanged(int count);
-    void pathChanged(void);
-    void dirtyChanged(bool dirty);
+    void countChanged       (int count);
+    void pathChanged        (void);
+    void dirtyChanged       (bool dirty);
+    void cleared            (void);
+    void centerChanged      (QGeoCoordinate center);
+    void centerDragChanged  (bool centerDrag);
 
 private slots:
     void _polygonModelCountChanged(int count);
     void _polygonModelDirtyChanged(bool dirty);
+    void _updateCenter(void);
 
 private:
     QPolygonF _toPolygonF(void) const;
@@ -94,8 +103,9 @@ private:
     QVariantList        _polygonPath;
     QmlObjectListModel  _polygonModel;
     bool                _dirty;
-
-    static const char* _jsonPolygonKey;
+    QGeoCoordinate      _center;
+    bool                _centerDrag;
+    bool                _ignoreCenterUpdates;
 };
 
 #endif
