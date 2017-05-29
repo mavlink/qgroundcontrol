@@ -123,10 +123,12 @@ Map {
         coordinate:     gcsPosition
 
         sourceItem: Image {
-            source:     "/res/QGCLogoFull"
-            smooth:     true
-            fillMode:   Image.PreserveAspectFit
-            height:     ScreenTools.defaultFontPixelHeight * 1.5
+            source:         "/res/QGCLogoFull"
+            mipmap:         true
+            antialiasing:   true
+            fillMode:       Image.PreserveAspectFit
+            height:         ScreenTools.defaultFontPixelHeight * 1.75
+            sourceSize.height: height
         }
     }
 } // Map
