@@ -3966,6 +3966,7 @@
 <values>
 <value code="-1">Disabled</value>
 <value code="0">Bus0</value>
+<value code="1">Bus1</value>
 </values>
 </param>
 <param humanName="Specific Gravity (For water depth measurement)" name="GND_SPEC_GRAV" documentation="This sets the specific gravity of the fluid when flying an underwater ROV.">
