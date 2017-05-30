@@ -444,18 +444,17 @@ void SurveyMissionItem::_convertTransectToGeo(const QList<QList<QPointF>>& trans
     }
 }
 
-void SurveyMissionItem::_optimizeReflySegments(void)
+/// Reorders the transects such that the first transect is the shortest distance to the specified coordinate
+/// and the first point within that transect is the shortest distance to the specified coordinate.
+///     @param distanceCoord Coordinate to measure distance against
+///     @param transects Transects to test and reorder
+void SurveyMissionItem::_optimizeTransectsForShortestDistance(const QGeoCoordinate& distanceCoord, QList<QList<QGeoCoordinate>>& transects)
 {
-    // The last flight point of the initial pass
-    QGeoCoordinate initialPassLastCoord = _transectSegments.last().last();
-
-    // Now determine where we should start the refly pass
-
     double rgTransectDistance[4];
-    rgTransectDistance[0] = _reflyTransectSegments.first().first().distanceTo(initialPassLastCoord);
-    rgTransectDistance[1] = _reflyTransectSegments.first().last().distanceTo(initialPassLastCoord);
-    rgTransectDistance[2] = _reflyTransectSegments.last().first().distanceTo(initialPassLastCoord);
-    rgTransectDistance[3] = _reflyTransectSegments.last().last().distanceTo(initialPassLastCoord);
+    rgTransectDistance[0] = transects.first().first().distanceTo(distanceCoord);
+    rgTransectDistance[1] = transects.first().last().distanceTo(distanceCoord);
+    rgTransectDistance[2] = transects.last().first().distanceTo(distanceCoord);
+    rgTransectDistance[3] = transects.last().last().distanceTo(distanceCoord);
 
     int shortestIndex = 0;
     double shortestDistance = rgTransectDistance[0];
@@ -469,20 +468,20 @@ void SurveyMissionItem::_optimizeReflySegments(void)
     if (shortestIndex > 1) {
         // We need to reverse the order of segments
         QList<QList<QGeoCoordinate>> rgReversedTransects;
-        for (int i=_reflyTransectSegments.count() - 1; i>=0; i--) {
-            rgReversedTransects.append(_reflyTransectSegments[i]);
+        for (int i=transects.count() - 1; i>=0; i--) {
+            rgReversedTransects.append(transects[i]);
         }
-        _reflyTransectSegments = rgReversedTransects;
+        transects = rgReversedTransects;
     }
     if (shortestIndex & 1) {
         // We need to reverse the points within each segment
-        for (int i=0; i<_reflyTransectSegments.count(); i++) {
+        for (int i=0; i<transects.count(); i++) {
             QList<QGeoCoordinate> rgReversedCoords;
-            QList<QGeoCoordinate>& rgOriginalCoords = _reflyTransectSegments[i];
-            for (int j=rgOriginalCoords.count()-1; j>=0; j++) {
+            QList<QGeoCoordinate>& rgOriginalCoords = transects[i];
+            for (int j=rgOriginalCoords.count()-1; j>=0; j--) {
                 rgReversedCoords.append(rgOriginalCoords[j]);
             }
-            _reflyTransectSegments[i] = rgReversedCoords;
+            transects[i] = rgReversedCoords;
         }
     }
 }
@@ -578,14 +577,19 @@ void SurveyMissionItem::_generateGrid(void)
     QList<QList<QPointF>>   transectSegments;
 
     // Convert polygon to NED
-    qCDebug(SurveyMissionItemLog) << "Convert polygon";
-    QGeoCoordinate tangentOrigin = _mapPolygon.path()[0].value<QGeoCoordinate>();
+    QGeoCoordinate tangentOrigin = _mapPolygon.pathModel().value<QGCQGeoCoordinate*>(0)->coordinate();
+    qCDebug(SurveyMissionItemLog) << "Convert polygon to NED - tangentOrigin" << tangentOrigin;
     for (int i=0; i<_mapPolygon.count(); i++) {
         double y, x, down;
         QGeoCoordinate vertex = _mapPolygon.pathModel().value<QGCQGeoCoordinate*>(i)->coordinate();
-        convertGeoToNed(vertex, tangentOrigin, &y, &x, &down);
+        if (i == 0) {
+            // This avoids a nan calculation that comes out of convertGeoToNed
+            x = y = 0;
+        } else {
+            convertGeoToNed(vertex, tangentOrigin, &y, &x, &down);
+        }
         polygonPoints += QPointF(x, y);
-        qCDebug(SurveyMissionItemLog) << vertex << polygonPoints.last().x() << polygonPoints.last().y();
+        qCDebug(SurveyMissionItemLog) << "vertex:x:y" << vertex << polygonPoints.last().x() << polygonPoints.last().y();
     }
 
     polygonPoints = _convexPolygon(polygonPoints);
@@ -604,14 +608,16 @@ void SurveyMissionItem::_generateGrid(void)
     int cameraShots = 0;
     cameraShots += _gridGenerator(polygonPoints, transectSegments, false /* refly */);
     _convertTransectToGeo(transectSegments, tangentOrigin, _transectSegments);
+    //_optimizeTransectsForShortestDistance(?, _transectSegments);
     _appendGridPointsFromTransects(_transectSegments);
+    qDebug() << _transectSegments.count();
     if (_refly90Degrees) {
         QVariantList reflyPointsGeo;
 
         transectSegments.clear();
         cameraShots += _gridGenerator(polygonPoints, transectSegments, true /* refly */);
         _convertTransectToGeo(transectSegments, tangentOrigin, _reflyTransectSegments);
-        _optimizeReflySegments();
+        _optimizeTransectsForShortestDistance(_transectSegments.last().last(), _reflyTransectSegments);
         _appendGridPointsFromTransects(_reflyTransectSegments);
     }
 
@@ -795,7 +801,7 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
     double gridAngle = _gridAngleFact.rawValue().toDouble() + (refly ? 90 : 0);
     double gridSpacing = _gridSpacingFact.rawValue().toDouble();
 
-    qCDebug(SurveyMissionItemLog) << "SurveyMissionItem::_gridGenerator gridSpacing:gridAngle" << gridSpacing << gridAngle;
+    qCDebug(SurveyMissionItemLog) << "SurveyMissionItem::_gridGenerator gridSpacing:gridAngle:refly" << gridSpacing << gridAngle << refly;
 
     transectSegments.clear();
 
