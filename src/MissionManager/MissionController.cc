@@ -1293,8 +1293,8 @@ void MissionController::_initAllVisualItems(void)
         _settingsItem->setIsCurrentItem(true);
     }
 
-    if (!_editMode && _controllerVehicle) {
-        _settingsItem->setCoordinate(_controllerVehicle->homePosition());
+    if (!_editMode && _managerVehicle->homePosition().isValid()) {
+        _settingsItem->setCoordinate(_managerVehicle->homePosition());
     }
 
     connect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::_recalcAll);
@@ -1481,6 +1481,8 @@ void MissionController::_addMissionSettings(QmlObjectListModel* visualItems, boo
 {
     MissionSettingsItem* settingsItem = new MissionSettingsItem(_controllerVehicle, visualItems);
 
+    qCDebug(MissionControllerLog) << "_addMissionSettings addToCenter" << addToCenter;
+
     visualItems->insert(0, settingsItem);
 
     if (addToCenter) {
@@ -1515,8 +1517,8 @@ void MissionController::_addMissionSettings(QmlObjectListModel* visualItems, boo
                 settingsItem->setCoordinate(QGeoCoordinate((south + ((north - south) / 2)) - 90.0, (west + ((east - west) / 2)) - 180.0, 0.0));
             }
         }
-    } else {
-        settingsItem->setCoordinate(_controllerVehicle->homePosition());
+    } else if (_managerVehicle->homePosition().isValid()) {
+        settingsItem->setCoordinate(_managerVehicle->homePosition());
     }
 }
 
