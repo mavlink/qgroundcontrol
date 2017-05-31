@@ -407,13 +407,12 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
 #if defined(__androidx86__)
         int defaultFontPointSize = 16;
         metaData.setRawDefaultValue(defaultFontPointSize);
-        return false;
 #elif defined(__mobile__)
         //-- This is for when using Mac OS to simulate the ST16 (Development only)
         int defaultFontPointSize = 10;
         metaData.setRawDefaultValue(defaultFontPointSize);
-        return false;
 #endif
+        return false;
     } else if (metaData.name() == AppSettings::offlineEditingFirmwareTypeSettingsName) {
         metaData.setRawDefaultValue(MAV_AUTOPILOT_PX4);
         return false;
