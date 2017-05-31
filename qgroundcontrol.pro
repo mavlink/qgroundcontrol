@@ -29,6 +29,49 @@ DebugBuild {
     DESTDIR  = $${OUT_PWD}/release
 }
 
+#
+# OS Specific settings
+#
+
+MacBuild {
+    QMAKE_INFO_PLIST    = Custom-Info.plist
+    ICON                = $${BASEDIR}/resources/icons/macx.icns
+    OTHER_FILES        += Custom-Info.plist
+    equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
+        LIBS           += -framework ApplicationServices
+    }
+}
+
+iOSBuild {
+    BUNDLE.files        = $$files($$PWD/ios/AppIcon*.png) $$PWD/ios/QGCLaunchScreen.xib
+    QMAKE_BUNDLE_DATA  += BUNDLE
+    LIBS               += -framework AVFoundation
+    #-- Info.plist (need an "official" one for the App Store)
+    ForAppStore {
+        message(App Store Build)
+        #-- Create official, versioned Info.plist
+        APP_STORE = $$system(cd $${BASEDIR} && $${BASEDIR}/tools/update_ios_version.sh $${BASEDIR}/ios/iOSForAppStore-Info-Source.plist $${BASEDIR}/ios/iOSForAppStore-Info.plist)
+        APP_ERROR = $$find(APP_STORE, "Error")
+        count(APP_ERROR, 1) {
+            error("Error building .plist file. 'ForAppStore' builds are only possible through the official build system.")
+        }
+        QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOSForAppStore-Info.plist
+        OTHER_FILES      += $${BASEDIR}/ios/iOSForAppStore-Info.plist
+    } else {
+        QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOS-Info.plist
+        OTHER_FILES      += $${BASEDIR}/ios/iOS-Info.plist
+    }
+    #-- TODO: Add iTunesArtwork
+}
+
+LinuxBuild {
+    CONFIG  += qesp_linux_udev
+}
+
+WindowsBuild {
+    RC_ICONS = resources/icons/qgroundcontrol.ico
+}
+
 # Load additional config flags from user_config.pri
 exists(user_config.pri):infile(user_config.pri, CONFIG) {
     CONFIG += $$fromfile(user_config.pri, CONFIG)
@@ -181,50 +224,15 @@ ReleaseBuild {
     # We don't need the testlib console in release mode
     QT.testlib.CONFIG -= console
 }
+
 #
-# OS Specific settings
+# Branding
 #
 
-MacBuild {
-    QMAKE_INFO_PLIST    = Custom-Info.plist
-    ICON                = $${BASEDIR}/resources/icons/macx.icns
-    OTHER_FILES        += Custom-Info.plist
-equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
-    LIBS               += -framework ApplicationServices
-}
-}
-
-iOSBuild {
-    BUNDLE.files        = $$files($$PWD/ios/AppIcon*.png) $$PWD/ios/QGCLaunchScreen.xib
-    QMAKE_BUNDLE_DATA  += BUNDLE
-    LIBS               += -framework AVFoundation
-    #-- Info.plist (need an "official" one for the App Store)
-    ForAppStore {
-        message(App Store Build)
-        #-- Create official, versioned Info.plist
-        APP_STORE = $$system(cd $${BASEDIR} && $${BASEDIR}/tools/update_ios_version.sh $${BASEDIR}/ios/iOSForAppStore-Info-Source.plist $${BASEDIR}/ios/iOSForAppStore-Info.plist)
-        APP_ERROR = $$find(APP_STORE, "Error")
-        count(APP_ERROR, 1) {
-            error("Error building .plist file. 'ForAppStore' builds are only possible through the official build system.")
-        }
-        QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOSForAppStore-Info.plist
-        OTHER_FILES      += $${BASEDIR}/ios/iOSForAppStore-Info.plist
-    } else {
-        QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOS-Info.plist
-        OTHER_FILES      += $${BASEDIR}/ios/iOS-Info.plist
-    }
-    #-- TODO: Add iTunesArtwork
-}
-
-LinuxBuild {
-    CONFIG += qesp_linux_udev
-}
-
-RC_ICONS = resources/icons/qgroundcontrol.ico
-QMAKE_TARGET_COMPANY = "qgroundcontrol.org"
+QMAKE_TARGET_COMPANY     = "qgroundcontrol.org"
 QMAKE_TARGET_DESCRIPTION = "Open source ground control app provided by QGroundControl dev team"
-QMAKE_TARGET_COPYRIGHT = "Copyright (C) 2016 QGroundControl Development Team. All rights reserved."
-QMAKE_TARGET_PRODUCT = "QGroundControl"
+QMAKE_TARGET_COPYRIGHT   = "Copyright (C) 2016 QGroundControl Development Team. All rights reserved."
+QMAKE_TARGET_PRODUCT     = "QGroundControl"
 
 #
 # Build-specific settings
@@ -1051,7 +1059,11 @@ AndroidBuild {
 # Post link configuration
 #
 
-include(QGCSetup.pri)
+contains (CONFIG, QGC_DISABLE_BUILD_SETUP) {
+    message("Disable standard build setup")
+} else {
+    include(QGCSetup.pri)
+}
 
 #
 # Installer targets
