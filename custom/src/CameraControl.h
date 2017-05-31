@@ -66,6 +66,7 @@ typedef struct {
 // Photo Format
 typedef struct {
     const char* description;
+    uint32_t index;
 } photo_format_t;
 
 //-----------------------------------------------------------------------------

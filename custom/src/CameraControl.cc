@@ -97,13 +97,22 @@ metering_mode_t meteringModeOptions[] = {
 
 //-----------------------------------------------------------------------------
 // Photo Format Mode (CMD=SET_PHOTO_FORMAT&format=dng)
-photo_format_t photoFormatOptions[] = {
-    {"Jpeg"},
-    {"DNG"},
-    {"DNG + Jpeg"}
+// E90 does not support RAW only
+photo_format_t photoFormatOptionsE90[] = {
+    {"Jpeg", 0},
+    {"DNG + Jpeg", 2}
 };
 
-#define NUM_PHOTO_FORMAT_VALUES (sizeof(photoFormatOptions) / sizeof(photo_format_t))
+// Photo Format Mode (CMD=SET_PHOTO_FORMAT&format=dng)
+// E50/CGO3+ support RAW only
+photo_format_t photoFormatOptionsE50[] = {
+    {"Jpeg", 0},
+    {"DNG", 1},
+    {"DNG + Jpeg", 2}
+};
+
+#define NUM_E90_PHOTO_FORMAT_VALUES (sizeof(photoFormatOptionsE90) / sizeof(photo_format_t))
+#define NUM_E50_PHOTO_FORMAT_VALUES (sizeof(photoFormatOptionsE50) / sizeof(photo_format_t))
 
 //-----------------------------------------------------------------------------
 // White Balance (CMD=SET_WHITEBLANCE_MODE&mode=x)
@@ -469,8 +478,25 @@ CameraControl::setCurrentIQ(quint32 index)
 void
 CameraControl::setCurrentPhotoFmt(quint32 index)
 {
-    if(_vehicle && index < NUM_PHOTO_FORMAT_VALUES && _cameraSupported == CAMERA_SUPPORT_YES) {
-        qCDebug(YuneecCameraLog) << "setCurrentPhotoFmt:" << photoFormatOptions[index].description;
+    if(_vehicle && _cameraSupported == CAMERA_SUPPORT_YES) {
+
+        quint8 mavlink_index;
+        if(_cameraModel.startsWith("E90")) {
+            if (index < E90_NUM_PHOTO_FORMAT_VALUES) {
+                qCDebug(YuneecCameraLog) << "setCurrentPhotoFmt:" << photoFormatOptionsE90[index].description;
+                mavlink_index = photoFormatOptionsE90[index].index;
+            } else {
+                return;
+            }
+
+        } else {
+            if (index < E50_NUM_PHOTO_FORMAT_VALUES) {
+                qCDebug(YuneecCameraLog) << "setCurrentPhotoFmt:" << photoFormatOptionsE50[index].description;
+                mavlink_index = photoFormatOptionsE50[index].index;
+            } else {
+                return;
+            }
+        }
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_SET_CAMERA_SETTINGS_2,              // Command id
@@ -478,7 +504,7 @@ CameraControl::setCurrentPhotoFmt(quint32 index)
             1,                                          // Camera ID (1 for first, 2 for second, etc.)
             NAN,                                        // Reserved for Flicker mode (0 for Auto)
             NAN,                                        // Metering mode ID (Average, Center, Spot, etc.)
-            index,                                      // Image format ID (Jpeg/Raw/Jpeg+Raw)
+            mavlink_index,                              // Image format ID (Jpeg/Raw/Jpeg+Raw)
             NAN,                                        // Image quality ID (Compression)
             NAN);                                       // Color mode ID (Neutral, Vivid, etc.)
     }
@@ -1146,8 +1172,14 @@ QStringList
 CameraControl::photoFormatList()
 {
     if(_photoFormatList.size() == 0) {
-        for(size_t i = 0; i < NUM_PHOTO_FORMAT_VALUES; i++) {
-            _photoFormatList.append(photoFormatOptions[i].description);
+        if(_cameraModel.startsWith("E90")) {
+            for(size_t i = 0; i < E90_NUM_PHOTO_FORMAT_VALUES; i++) {
+                _photoFormatList.append(photoFormatOptionsE90[i].description);
+            }
+        } else {
+            for(size_t i = 0; i < E50_NUM_PHOTO_FORMAT_VALUES; i++) {
+                _photoFormatList.append(photoFormatOptionsE50[i].description);
+            }
         }
     }
     return _photoFormatList;
