@@ -136,6 +136,55 @@ QGCView {
                     }
                 }
             }
+            //-----------------------------------------------------------------
+            Rectangle {
+                height:         updateRow.height * 2
+                width:          ScreenTools.defaultFontPixelWidth * 80
+                color:          qgcPal.windowShade
+                visible:        ScreenTools.isMobile
+                anchors.horizontalCenter: parent.horizontalCenter
+                Row {
+                    id:         updateRow
+                    spacing:    ScreenTools.defaultFontPixelWidth * 4
+                    anchors.centerIn: parent
+                    QGCButton {
+                        text:       qsTr("Update Firmware")
+                        width:      _buttonWidth
+                        enabled:    !TyphoonHQuickInterface.updating
+                        anchors.verticalCenter: parent.verticalCenter
+                        onClicked: {
+                            if(TyphoonHQuickInterface.checkForUpdate()) {
+                                updateDialog.open()
+                            } else {
+                                noUpdateDialog.open()
+                            }
+                        }
+                        MessageDialog {
+                            id:                 noUpdateDialog
+                            title:              qsTr("Update Firmware")
+                            text:               qsTr("Update file not found.")
+                            standardButtons:    StandardButton.Ok
+                            onAccepted:         noUpdateDialog.close()
+                        }
+                        MessageDialog {
+                            id:                 updateDialog
+                            title:              qsTr("Update Firmware")
+                            text:               qsTr("Confirm updating firmware?")
+                            standardButtons:    StandardButton.Ok | StandardButton.Cancel
+                            onAccepted: {
+                                rootLoader.sourceComponent = firmwareUpdate
+                                mainWindow.disableToolbar()
+                                TyphoonHQuickInterface.updateSystemImage()
+                            }
+                        }
+                    }
+                    QGCLabel {
+                        text:   qsTr("Update ST16 Firmware (from microSD card)")
+                        width:  _textWidth
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+            }
             Item {
                 width:  1
                 height: ScreenTools.defaultFontPixelHeight
@@ -309,7 +358,7 @@ QGCView {
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     QGCLabel {
-                        text:           qsTr("Flip vehicle upside down and hit the Bind button")
+                        text:           qsTr("Flip vehicle upside down and select the Bind button")
                         color:          qgcPal.alertText
                         font.family:    ScreenTools.demiboldFontFamily
                         font.pointSize: ScreenTools.mediumFontPointSize
@@ -343,6 +392,103 @@ QGCView {
             Component.onCompleted: {
                 rootLoader.width  = bindDialogItem.width
                 rootLoader.height = bindDialogItem.height
+            }
+        }
+    }
+    //-- Firmware Update
+    Component {
+        id:             firmwareUpdate
+        Item {
+            id:         firmwareUpdateItem
+            width:      mainWindow.width
+            height:     mainWindow.height
+            z:          1000000
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+            Rectangle {
+                id:             firmwareUpdateShadow
+                anchors.fill:   firmwareUpdateRect
+                radius:         firmwareUpdateRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       firmwareUpdateShadow
+                visible:            firmwareUpdateRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             firmwareUpdateShadow
+            }
+            Rectangle {
+                id:     firmwareUpdateRect
+                width:  mainWindow.width * 0.65
+                height: fmwUpdCol.height * 1.5
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  qgcPal.alertBackground
+                border.color: qgcPal.alertBorder
+                border.width: 2
+                anchors.centerIn: parent
+                Column {
+                    id:                 fmwUpdCol
+                    width:              firmwareUpdateRect.width
+                    spacing:            ScreenTools.defaultFontPixelHeight * 3
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           qsTr("Firmware Update")
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        color:          qgcPal.alertText
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           TyphoonHQuickInterface.updateError
+                        visible:        TyphoonHQuickInterface.updateError !== ""
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           qsTr("Do not power off until update is complete.")
+                        visible:        TyphoonHQuickInterface.updateError === ""
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    ProgressBar {
+                        width:          parent.width * 0.75
+                        orientation:    Qt.Horizontal
+                        minimumValue:   0
+                        maximumValue:   100
+                        value:          TyphoonHQuickInterface.updateProgress
+                        visible:        TyphoonHQuickInterface.updateError === ""
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCButton {
+                        text:           qsTr("Close")
+                        width:          ScreenTools.defaultFontPixelWidth  * 16
+                        height:         ScreenTools.defaultFontPixelHeight * 2
+                        visible:        TyphoonHQuickInterface.updateError !== ""
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        onClicked: {
+                            rootLoader.sourceComponent = null
+                            mainWindow.enableToolbar()
+                        }
+                    }
+                }
+            }
+            Component.onCompleted: {
+                rootLoader.width  = firmwareUpdateItem.width
+                rootLoader.height = firmwareUpdateItem.height
             }
         }
     }

@@ -152,12 +152,35 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
     }
 
     private boolean isYuneecInstalled() {
+        /*
         try {
             PackageManager pm = m_instance.getPackageManager();
             pm.getPackageInfo("com.yuneec.flightmode", 0);
             return true;
         } catch (NameNotFoundException e) {
             return false;
+        }
+        */
+        //-- For now, allow them to coexist
+        return false;
+    }
+
+    public static void updateImage() {
+        //-- By the time this function is called, the caller has
+        //   to make sure "/storage/sdcard1/update.zip" has been
+        //   copied to "/mnt/sdcard/update.zip". No checks are
+        //   done here.
+        Log.d(TAG,"Update invoked");
+        //-- "/mnt/sdcard" is a 0777 symlink to "/data/media/0"
+        String file = "/data/media/0/update.zip";
+        try {
+            Intent i = new Intent();
+            i.setClassName("com.ota.reboot", "com.ota.reboot.RebootActivity");
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            i.putExtra("file", file);
+            m_instance.startActivity(i);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

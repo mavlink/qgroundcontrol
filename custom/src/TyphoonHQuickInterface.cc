@@ -24,6 +24,8 @@ extern const char* jniClassName;
 #endif
 
 static const char* kWifiConfig = "WifiConfig";
+static const char* kUpdateFile = "/storage/sdcard1/update.zip";
+static const char* kUpdateDest = "/mnt/sdcard/update.zip";
 
 #if defined __android__
 void
@@ -41,12 +43,15 @@ reset_jni()
 TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     : QObject(parent)
     , _pHandler(NULL)
+    , _pFileCopy(NULL)
     , _scanEnabled(false)
     , _scanningWiFi(false)
     , _bindingWiFi(false)
     , _copyingFiles(false)
     , _wifiAlertEnabled(true)
     , _copyResult(0)
+    , _updateProgress(0)
+    , _updateDone(false)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
 }
@@ -392,6 +397,136 @@ TyphoonHQuickInterface::bindWIFI(QString ssid, QString password)
     Q_UNUSED(ssid);
     Q_UNUSED(password);
 #endif
+}
+
+//-----------------------------------------------------------------------------
+bool
+TyphoonHQuickInterface::checkForUpdate()
+{
+    QFileInfo fi(kUpdateFile);
+    return fi.exists();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_imageUpdateProgress(int current)
+{
+    _updateProgress = current;
+    emit updateProgressChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_imageUpdateError(QString errorMsg)
+{
+    _updateError = errorMsg;
+    emit updateErrorChanged();
+    _endCopyThread();
+    qCDebug(YuneecLog) << "Error:" << errorMsg;
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_endCopyThread()
+{
+    if(_pFileCopy) {
+        _pFileCopy->thread()->quit();
+        _pFileCopy->thread()->wait();
+        _pFileCopy = NULL;
+        emit updatingChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_imageUpdateDone()
+{
+    //-- File copy finished. Reboot and update.
+#if defined __android__
+    _endCopyThread();
+    qCDebug(YuneecLog) << "Copy complete. Reboot for update.";
+    reset_jni();
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "updateImage", "()V");
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::updateSystemImage()
+{
+#if defined __android__
+    qCDebug(YuneecLog) << "Initializing update";
+    _updateError.clear();
+    _updateProgress = 0;
+    _updateDone     = false;
+    emit updateErrorChanged();
+    emit updateProgressChanged();
+    if(checkForUpdate()) {
+        //-- Create file copy thread
+        _pFileCopy = new TyphoonHFileCopy(kUpdateFile, kUpdateDest);
+        emit updatingChanged();
+        QThread* pCopyThread = new QThread(this);
+        pCopyThread->setObjectName("CopyThread");
+        connect(pCopyThread, &QThread::finished, _pFileCopy, &QObject::deleteLater);
+        _pFileCopy->moveToThread(pCopyThread);
+        pCopyThread->start();
+        //-- Start copy
+        connect(_pFileCopy,  &TyphoonHFileCopy::copyProgress,   this,       &TyphoonHQuickInterface::_imageUpdateProgress);
+        connect(_pFileCopy,  &TyphoonHFileCopy::copyError,      this,       &TyphoonHQuickInterface::_imageUpdateError);
+        connect(_pFileCopy,  &TyphoonHFileCopy::copyDone,       this,       &TyphoonHQuickInterface::_imageUpdateDone);
+        QTimer::singleShot(100, _pFileCopy, &TyphoonHFileCopy::startCopy);
+    } else {
+        _imageUpdateError(QString(tr("Could not locate update file.")));
+    }
+#endif
+}
+
+//-----------------------------------------------------------------------------
+#define READ_CHUNK_SIZE 1024 * 1024 * 4
+void
+TyphoonHFileCopy::startCopy()
+{
+    qCDebug(YuneecLog) << "Copying update file";
+    //-- File copy thread
+    QFileInfo fi(_src);
+    uint64_t total   = fi.size();
+    uint64_t current = 0;
+    QFile inFile(_src);
+    if (!inFile.open(QIODevice::ReadOnly)) {
+        emit copyError(QString(tr("Error opening firmware update file.")));
+        return;
+    }
+    QFile outFile(_dst);
+    if (!outFile.open(QIODevice::WriteOnly)) {
+        emit copyError(QString(tr("Error opening firmware destination file.")));
+        return;
+    }
+    QByteArray bytes;
+    bytes.resize(READ_CHUNK_SIZE);
+    while(!inFile.atEnd())
+    {
+        qint64 count = inFile.read(bytes.data(), READ_CHUNK_SIZE);
+        if(count < 0) {
+            emit copyError(QString(tr("Error reading firmware file.")));
+            outFile.close();
+            outFile.remove();
+            return;
+        }
+        if(count && outFile.write(bytes.data(), count) != count) {
+            emit copyError(QString(tr("Error writing firmware file.")));
+            outFile.close();
+            outFile.remove();
+            return;
+        }
+        current += count;
+        int progress = (int)((double)current / (double)total * 100.0);
+        emit copyProgress(progress);
+        qCDebug(YuneecLog) << "Copying" << total << current << progress;
+    }
+    inFile.close();
+    outFile.close();
+    emit copyDone();
+    qCDebug(YuneecLog) << "Copy complete";
 }
 
 //-----------------------------------------------------------------------------
