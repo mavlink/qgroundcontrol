@@ -127,7 +127,7 @@ public:
     bool        combineSettingsAndSetup     () { return true;  }
 #if defined(__android__)
     double      toolbarHeightMultiplier     () { return 1.25; }
-#else
+#elif defined(__mobile__)
     double      toolbarHeightMultiplier     () { return 1.5; }
 #endif
     bool        enablePlanViewSelector      () { return false; }
