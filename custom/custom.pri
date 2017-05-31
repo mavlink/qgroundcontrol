@@ -148,7 +148,7 @@ DesktopInstall {
         message("Preparing GStreamer Framework")
         QMAKE_POST_LINK += && $$QGCROOT/tools/prepare_gstreamer_framework.sh $${OUT_PWD}/gstwork/ $${DESTDIR}/$${TARGET}.app $${TARGET}
         # Copy non-standard frameworks into app package
-        QMAKE_POST_LINK += && rsync -a --delete $$BASEDIR/libs/lib/Frameworks $$DESTDIR/$${TARGET}.app/Contents/
+        QMAKE_POST_LINK += && rsync -a $$BASEDIR/libs/lib/Frameworks $$DESTDIR/$${TARGET}.app/Contents/
         # SDL2 Framework
         QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $$DESTDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
         # We cd to release directory so we can run macdeployqt without a path to the
