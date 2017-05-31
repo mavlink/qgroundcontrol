@@ -66,6 +66,7 @@ typedef struct {
 // Photo Format
 typedef struct {
     const char* description;
+    uint32_t index;
 } photo_format_t;
 
 //-----------------------------------------------------------------------------
@@ -160,7 +161,7 @@ public:
     Q_PROPERTY(QStringList  isoList         READ    isoList                                     CONSTANT)
     Q_PROPERTY(QStringList  shutterList     READ    shutterList                                 NOTIFY shutterListChanged)
     Q_PROPERTY(QStringList  meteringList    READ    meteringList                                CONSTANT)
-    Q_PROPERTY(QStringList  photoFormatList READ    photoFormatList                             CONSTANT)
+    Q_PROPERTY(QStringList  photoFormatList READ    photoFormatList                             NOTIFY photoFormatListChanged)
     Q_PROPERTY(QStringList  evList          READ    evList                                      CONSTANT)
     Q_PROPERTY(QString      cameraModel     READ    cameraModel                                 NOTIFY cameraModelChanged)
     Q_PROPERTY(QString      firmwareVersion READ    firmwareVersion                             NOTIFY firmwareVersionChanged)
@@ -255,6 +256,7 @@ signals:
     void    shutterListChanged      ();
     void    cameraModelChanged      ();
     void    cameraAvailableChanged  ();
+    void    photoFormatListChanged  ();
 
 private:
     int     _findVideoResIndex      (int w, int h, float fps);
