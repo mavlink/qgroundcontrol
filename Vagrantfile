@@ -37,7 +37,7 @@ Vagrant.configure(2) do |config|
      su - vagrant -c 'wget --continue -q %{deps_url} -P %{project_root_dir}'
      su - vagrant -c 'rm -rf %{qt_deps_unpack_dir}'
      su - vagrant -c 'mkdir -p %{qt_deps_unpack_parent_dir}'
-     su - vagrant -c 'cd %{project_root_dir}; tar jxf "%{qt_deps_tarball}" -C  %{qt_deps_unpack_parent_dir}'
+     su - vagrant -c 'cd %{project_root_dir}; tar jxf "%{qt_deps_tarball}" -C  %{qt_deps_unpack_parent_dir}; ln -s /tmp/Qt5.7-linux /tmp/Qt'
      su - vagrant -c 'rm -rf %{shadow_build_dir}'
      su - vagrant -c 'mkdir -p %{shadow_build_dir}'
      su - vagrant -c "cd %{shadow_build_dir}; LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir} PATH=%{qt_deps_bin_unpack_dir}:\$PATH qmake -r %{pro} -spec %{spec}"
