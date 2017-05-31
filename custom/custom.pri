@@ -52,6 +52,13 @@ MacBuild {
 
 WindowsBuild {
     RC_ICONS            = $$PWD/Windows/icon.ico
+    VERSION             = 1.0.0.0
+    ReleaseBuild {
+        QMAKE_CFLAGS_RELEASE   += /Gy /Ox
+        QMAKE_CXXFLAGS_RELEASE += /Gy /Ox
+        # Eliminate duplicate COMDATs
+        QMAKE_LFLAGS_RELEASE   += /OPT:ICF /LTCG
+    }
 }
 
 SOURCES += \
