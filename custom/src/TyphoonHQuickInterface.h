@@ -41,6 +41,29 @@ protected:
 };
 
 //-----------------------------------------------------------------------------
+// File Copy
+class TyphoonHFileCopy : public QObject
+{
+    Q_OBJECT
+public:
+    TyphoonHFileCopy    (const QString& src, const QString& dst)
+        : QObject(NULL)
+        , _src(src)
+        , _dst(dst)
+    {
+    }
+signals:
+    void    copyProgress    (int current);
+    void    copyError       (QString errorMsg);
+    void    copyDone        ();
+public slots:
+    void    startCopy       ();
+private:
+    QString _src;
+    QString _dst;
+};
+
+//-----------------------------------------------------------------------------
 // QtQuick Interface (UI)
 class TyphoonHQuickInterface : public QObject
 {
@@ -119,6 +142,11 @@ public:
     Q_PROPERTY(bool             calibrationComplete     READ    calibrationComplete NOTIFY calibrationCompleteChanged)
     Q_PROPERTY(bool             rcActive                READ    rcActive            NOTIFY rcActiveChanged)
 
+    Q_PROPERTY(QString          updateError     READ    updateError         NOTIFY updateErrorChanged)
+    Q_PROPERTY(int              updateProgress  READ    updateProgress      NOTIFY updateProgressChanged)
+    Q_PROPERTY(bool             updateDone      READ    updateDone          NOTIFY updateDoneChanged)
+    Q_PROPERTY(bool             updating        READ    updating            NOTIFY updatingChanged)
+
     Q_INVOKABLE void enterBindMode      ();
     Q_INVOKABLE void initM4             ();
     Q_INVOKABLE void startScan          (int delay = 0);
@@ -134,6 +162,9 @@ public:
     Q_INVOKABLE void manualBind         ();
     Q_INVOKABLE void startCalibration   ();
     Q_INVOKABLE void stopCalibration    ();
+    //-- Android image update
+    Q_INVOKABLE bool checkForUpdate     ();
+    Q_INVOKABLE void updateSystemImage  ();
 
     M4State     m4State             ();
     QString     m4StateStr          ();
@@ -191,6 +222,11 @@ public:
 
     bool        calibrationComplete ();
 
+    QString     updateError         () { return _updateError; }
+    int         updateProgress      () { return _updateProgress; }
+    bool        updateDone          () { return _updateDone; }
+    bool        updating            () { return _pFileCopy != NULL; }
+
 signals:
     void    m4StateChanged              ();
     void    controllerLocationChanged   ();
@@ -212,6 +248,10 @@ signals:
     void    calibrationStateChanged     ();
     void    wifiAlertEnabledChanged     ();
     void    rcActiveChanged             ();
+    void    updateErrorChanged          ();
+    void    updateProgressChanged       ();
+    void    updateDoneChanged           ();
+    void    updatingChanged             ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -237,11 +277,15 @@ private slots:
     void    _calibrationCompleteChanged ();
     void    _calibrationStateChanged    ();
     void    _rcActiveChanged            ();
+    void    _imageUpdateProgress        (int current);
+    void    _imageUpdateError           (QString errorMsg);
+    void    _imageUpdateDone            ();
 
 private:
     void    _saveWifiConfigurations     ();
     void    _loadWifiConfigurations     ();
     int     _copyFilesInPath            (const QString src, const QString dst);
+    void    _endCopyThread              ();
 
 private:
     TyphoonSSIDItem*        _findSsid   (QString ssid, int rssi);
@@ -249,6 +293,7 @@ private:
 
 private:
     TyphoonHM4Interface*    _pHandler;
+    TyphoonHFileCopy*       _pFileCopy;
     QMap<QString, QString>  _configurations;
     QVariantList            _ssidList;
     QString                 _ssid;
@@ -263,4 +308,7 @@ private:
     bool                    _copyingFiles;
     bool                    _wifiAlertEnabled;
     int                     _copyResult;
+    QString                 _updateError;
+    int                     _updateProgress;
+    bool                    _updateDone;
 };
