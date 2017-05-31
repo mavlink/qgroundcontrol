@@ -18,7 +18,7 @@ QGC_LOGGING_CATEGORY(YuneecCameraLogVerbose, "YuneecCameraLogVerbose")
 
 //-----------------------------------------------------------------------------
 // Video Resolution Options (CGO3+)
-video_res_t videoResCGO3P[] = {
+video_res_t videoResE50[] = {
     {"4096 x 2160 25fps (4K DCI)",    4096, 2160, 25},
     {"4096 x 2160 24fps (4K DCI)",    4096, 2160, 24},
     {"3840 x 2160 30fps (4K UHD)",    3840, 2160, 30},
@@ -36,7 +36,7 @@ video_res_t videoResCGO3P[] = {
     {"1920 x 1080 24fps (1080P)",     1920, 1080, 24}
 };
 
-#define NUM_CGO3P_VIDEO_RES (sizeof(videoResCGO3P) / sizeof(video_res_t))
+#define NUM_E50_VIDEO_RES (sizeof(videoResE50) / sizeof(video_res_t))
 
 //-----------------------------------------------------------------------------
 // Video Resolution Options (E90)
@@ -71,8 +71,8 @@ video_res_t videoResE90[] = {
 
 #define NUM_E90_VIDEO_RES (sizeof(videoResE90) / sizeof(video_res_t))
 
-static video_res_t*   current_camera = &videoResCGO3P[0];
-static quint32        current_camera_option_count = NUM_CGO3P_VIDEO_RES;
+static video_res_t*   current_camera_video_res = &videoResE50[0];
+static quint32        current_camera_video_res_count = NUM_E50_VIDEO_RES;
 
 //-----------------------------------------------------------------------------
 // Color Mode (CMD=SET_IQ_TYPE&mode=x)
@@ -113,6 +113,9 @@ photo_format_t photoFormatOptionsE50[] = {
 
 #define NUM_E90_PHOTO_FORMAT_VALUES (sizeof(photoFormatOptionsE90) / sizeof(photo_format_t))
 #define NUM_E50_PHOTO_FORMAT_VALUES (sizeof(photoFormatOptionsE50) / sizeof(photo_format_t))
+
+static photo_format_t*current_camera_photo_fmt = &photoFormatOptionsE50[0];
+static quint32        current_camera_photo_fmt_count = NUM_E50_PHOTO_FORMAT_VALUES;
 
 //-----------------------------------------------------------------------------
 // White Balance (CMD=SET_WHITEBLANCE_MODE&mode=x)
@@ -300,10 +303,10 @@ CameraControl::startVideo()
         int w = -1;
         int h = -1;
         int f = -1;
-        if(_currentVideoResIndex < current_camera_option_count) {
-            w = current_camera[_currentVideoResIndex].width;
-            h = current_camera[_currentVideoResIndex].height;
-            f = current_camera[_currentVideoResIndex].fps;
+        if(_currentVideoResIndex < current_camera_video_res_count) {
+            w = current_camera_video_res[_currentVideoResIndex].width;
+            h = current_camera_video_res[_currentVideoResIndex].height;
+            f = current_camera_video_res[_currentVideoResIndex].fps;
         }
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
@@ -385,8 +388,8 @@ CameraControl::setPhotoMode()
 void
 CameraControl::setCurrentVideoRes(quint32 index)
 {
-    if(index < current_camera_option_count) {
-        qCDebug(YuneecCameraLog) << "setCurrentVideoRes:" << current_camera[index].description;
+    if(index < current_camera_video_res_count) {
+        qCDebug(YuneecCameraLog) << "setCurrentVideoRes:" << current_camera_video_res[index].description;
         _currentVideoResIndex = index;
         emit currentVideoResChanged();
         _updateShutterLimit();
@@ -478,25 +481,8 @@ CameraControl::setCurrentIQ(quint32 index)
 void
 CameraControl::setCurrentPhotoFmt(quint32 index)
 {
-    if(_vehicle && _cameraSupported == CAMERA_SUPPORT_YES) {
-
-        quint8 mavlink_index;
-        if(_cameraModel.startsWith("E90")) {
-            if (index < E90_NUM_PHOTO_FORMAT_VALUES) {
-                qCDebug(YuneecCameraLog) << "setCurrentPhotoFmt:" << photoFormatOptionsE90[index].description;
-                mavlink_index = photoFormatOptionsE90[index].index;
-            } else {
-                return;
-            }
-
-        } else {
-            if (index < E50_NUM_PHOTO_FORMAT_VALUES) {
-                qCDebug(YuneecCameraLog) << "setCurrentPhotoFmt:" << photoFormatOptionsE50[index].description;
-                mavlink_index = photoFormatOptionsE50[index].index;
-            } else {
-                return;
-            }
-        }
+    qCDebug(YuneecCameraLog) << "setCurrentPhotoFmt:" << current_camera_photo_fmt[index].index << index;
+    if(_vehicle && _cameraSupported == CAMERA_SUPPORT_YES && index < current_camera_photo_fmt_count) {
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_SET_CAMERA_SETTINGS_2,              // Command id
@@ -504,7 +490,7 @@ CameraControl::setCurrentPhotoFmt(quint32 index)
             1,                                          // Camera ID (1 for first, 2 for second, etc.)
             NAN,                                        // Reserved for Flicker mode (0 for Auto)
             NAN,                                        // Metering mode ID (Average, Center, Spot, etc.)
-            mavlink_index,                              // Image format ID (Jpeg/Raw/Jpeg+Raw)
+            current_camera_photo_fmt[index].index,      // Image format ID (Jpeg/Raw/Jpeg+Raw)
             NAN,                                        // Image quality ID (Compression)
             NAN);                                       // Color mode ID (Neutral, Vivid, etc.)
     }
@@ -616,8 +602,8 @@ int CameraControl::_findShutterSpeedIndex(float shutter_speed)
 int
 CameraControl::_findVideoResIndex(int w, int h, float fps)
 {
-    for(uint32_t i = 0; i < current_camera_option_count; i++) {
-        if(w == current_camera[i].width && h == current_camera[i].height && fps == current_camera[i].fps) {
+    for(uint32_t i = 0; i < current_camera_video_res_count; i++) {
+        if(w == current_camera_video_res[i].width && h == current_camera_video_res[i].height && fps == current_camera_video_res[i].fps) {
             return i;
         }
     }
@@ -859,20 +845,23 @@ CameraControl::_handleCameraInfo(const mavlink_message_t& message)
     _cameraVendor   = (const char*)&info.vendor_name[0];
     _cameraModel    = (const char*)&info.model_name[0];
     qCDebug(YuneecCameraLog) << "_handleCameraInfo:" << _cameraVendor << _cameraModel << _cameraVersion << (_cameraVersion >> 24 & 0xFF) << (_cameraVersion >> 16 & 0xFF) << (_cameraVersion >> 8 & 0xFF) << (_cameraVersion & 0xFF);
-    //-- The E90 has a different set of video resolutions
+    //-- The E90 has a different set of options
     if(_cameraModel.startsWith("E90")) {
-        current_camera = &videoResE90[0];
-        current_camera_option_count = NUM_E90_VIDEO_RES;
+        current_camera_video_res = &videoResE90[0];
+        current_camera_video_res_count = NUM_E90_VIDEO_RES;
+        current_camera_photo_fmt = &photoFormatOptionsE90[0];
+        current_camera_photo_fmt_count = NUM_E90_PHOTO_FORMAT_VALUES;
     } else {
-        current_camera = &videoResCGO3P[0];
-        current_camera_option_count = NUM_CGO3P_VIDEO_RES;
+        current_camera_video_res = &videoResE50[0];
+        current_camera_video_res_count = NUM_E50_VIDEO_RES;
+        current_camera_photo_fmt = &photoFormatOptionsE50[0];
+        current_camera_photo_fmt_count = NUM_E50_PHOTO_FORMAT_VALUES;
     }
-    //-- Update resolution list based on camera type
+    //-- Update options based on camera type
     _videoResList.clear();
-    for(size_t i = 0; i < current_camera_option_count; i++) {
-        _videoResList.append(current_camera[i].description);
-    }
+    _photoFormatList.clear();
     emit videoResListChanged();
+    emit photoFormatListChanged();
     emit firmwareVersionChanged();
     emit cameraModelChanged();
     _startTimer(MAV_CMD_REQUEST_CAMERA_SETTINGS, 500);
@@ -1099,8 +1088,8 @@ CameraControl::videoResList()
 {
 
     if(_videoResList.size() == 0) {
-        for(size_t i = 0; i < current_camera_option_count; i++) {
-            _videoResList.append(current_camera[i].description);
+        for(size_t i = 0; i < current_camera_video_res_count; i++) {
+            _videoResList.append(current_camera_video_res[i].description);
         }
     }
     return _videoResList;
@@ -1172,14 +1161,8 @@ QStringList
 CameraControl::photoFormatList()
 {
     if(_photoFormatList.size() == 0) {
-        if(_cameraModel.startsWith("E90")) {
-            for(size_t i = 0; i < E90_NUM_PHOTO_FORMAT_VALUES; i++) {
-                _photoFormatList.append(photoFormatOptionsE90[i].description);
-            }
-        } else {
-            for(size_t i = 0; i < E50_NUM_PHOTO_FORMAT_VALUES; i++) {
-                _photoFormatList.append(photoFormatOptionsE50[i].description);
-            }
+        for(size_t i = 0; i < current_camera_photo_fmt_count; i++) {
+            _photoFormatList.append(current_camera_photo_fmt[i].description);
         }
     }
     return _photoFormatList;
@@ -1275,7 +1258,7 @@ CameraControl::_updateShutterLimit()
     _minShutter = 0;
     if(_ambarellaSettings.cam_mode == CAMERA_MODE_VIDEO) {
         //-- Minimum shutter cannot be slower than frame rate
-        float curFps = 1.01f / (float)(current_camera[_currentVideoResIndex].fps);
+        float curFps = 1.01f / (float)(current_camera_video_res[_currentVideoResIndex].fps);
         for(uint32_t i = 0; i < NUM_SHUTTER_VALUES; i++) {
             if(curFps > shutterSpeeds[i].value) {
                 _minShutter = i;
