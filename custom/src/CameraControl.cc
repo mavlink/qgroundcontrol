@@ -98,8 +98,8 @@ metering_mode_t meteringModeOptions[] = {
 //-----------------------------------------------------------------------------
 // Photo Format Mode (CMD=SET_PHOTO_FORMAT&format=dng)
 photo_format_t photoFormatOptions[] = {
-    {"DNG"},
     {"Jpeg"},
+    {"DNG"},
     {"DNG + Jpeg"}
 };
 
