@@ -24,8 +24,11 @@ extern const char* jniClassName;
 #endif
 
 static const char* kWifiConfig = "WifiConfig";
+
+#if defined __android__
 static const char* kUpdateFile = "/storage/sdcard1/update.zip";
 static const char* kUpdateDest = "/mnt/sdcard/update.zip";
+#endif
 
 #if defined __android__
 void
@@ -403,8 +406,12 @@ TyphoonHQuickInterface::bindWIFI(QString ssid, QString password)
 bool
 TyphoonHQuickInterface::checkForUpdate()
 {
+#if defined __android__
     QFileInfo fi(kUpdateFile);
     return fi.exists();
+#else
+    return false;
+#endif
 }
 
 //-----------------------------------------------------------------------------
