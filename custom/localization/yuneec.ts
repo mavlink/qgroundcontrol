@@ -247,6 +247,29 @@
     </message>
 </context>
 <context>
+    <name>TyphoonHFileCopy</name>
+    <message>
+        <location filename="../src/TyphoonHQuickInterface.cc" line="503"/>
+        <source>Error opening firmware update file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/TyphoonHQuickInterface.cc" line="508"/>
+        <source>Error opening firmware destination file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/TyphoonHQuickInterface.cc" line="517"/>
+        <source>Error reading firmware file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/TyphoonHQuickInterface.cc" line="523"/>
+        <source>Error writing firmware file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TyphoonHPlugin</name>
     <message>
         <location filename="../src/TyphoonHPlugin.cc" line="278"/>
@@ -292,6 +315,14 @@
     </message>
 </context>
 <context>
+    <name>TyphoonHQuickInterface</name>
+    <message>
+        <location filename="../src/TyphoonHQuickInterface.cc" line="486"/>
+        <source>Could not locate update file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TyphoonSettings</name>
     <message>
         <location filename="../res/TyphoonSettings.qml" line="67"/>
@@ -324,79 +355,112 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="149"/>
+        <location filename="../res/TyphoonSettings.qml" line="151"/>
+        <location filename="../res/TyphoonSettings.qml" line="164"/>
+        <location filename="../res/TyphoonSettings.qml" line="171"/>
+        <source>Update Firmware</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../res/TyphoonSettings.qml" line="165"/>
+        <source>Update file not found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../res/TyphoonSettings.qml" line="172"/>
+        <source>Confirm updating firmware?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../res/TyphoonSettings.qml" line="182"/>
+        <source>Update ST16 Firmware (from microSD card)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../res/TyphoonSettings.qml" line="198"/>
         <source>Flight Controller Version:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="151"/>
+        <location filename="../res/TyphoonSettings.qml" line="200"/>
         <source>Camera Version:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="203"/>
+        <location filename="../res/TyphoonSettings.qml" line="252"/>
         <source>Import Mission Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="203"/>
+        <location filename="../res/TyphoonSettings.qml" line="252"/>
         <source>Export Data Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="212"/>
+        <location filename="../res/TyphoonSettings.qml" line="261"/>
         <source>Importing </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="212"/>
-        <location filename="../res/TyphoonSettings.qml" line="214"/>
+        <location filename="../res/TyphoonSettings.qml" line="261"/>
+        <location filename="../res/TyphoonSettings.qml" line="263"/>
         <source> files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="214"/>
+        <location filename="../res/TyphoonSettings.qml" line="263"/>
         <source>Exporting </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="224"/>
+        <location filename="../res/TyphoonSettings.qml" line="273"/>
         <source> files imported</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="224"/>
+        <location filename="../res/TyphoonSettings.qml" line="273"/>
         <source> files exported</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="232"/>
+        <location filename="../res/TyphoonSettings.qml" line="281"/>
         <source>Error copying files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="240"/>
+        <location filename="../res/TyphoonSettings.qml" line="289"/>
+        <location filename="../res/TyphoonSettings.qml" line="477"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="305"/>
+        <location filename="../res/TyphoonSettings.qml" line="354"/>
         <source>Manual RC Bind</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="312"/>
-        <source>Flip vehicle upside down and hit the Bind button</source>
+        <location filename="../res/TyphoonSettings.qml" line="361"/>
+        <source>Flip vehicle upside down and select the Bind button</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="322"/>
+        <location filename="../res/TyphoonSettings.qml" line="371"/>
         <source>Bind</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="332"/>
+        <location filename="../res/TyphoonSettings.qml" line="381"/>
         <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../res/TyphoonSettings.qml" line="445"/>
+        <source>Firmware Update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../res/TyphoonSettings.qml" line="460"/>
+        <source>Do not power off until update is complete.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
