@@ -952,8 +952,15 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
         emit currentIQChanged();
     }
     //-- Photo Format
-    if(_ambarellaSettings.photo_format != settings.color_mode_id) {
-        _ambarellaSettings.photo_format = settings.color_mode_id;
+    uint32_t fmt_idx = 0;
+    for(uint32_t i = 0; i < current_camera_photo_fmt_count; i++) {
+        if(current_camera_photo_fmt[i].index == settings.image_format_id) {
+            fmt_idx = i;
+            break;
+        }
+    }
+    if(_ambarellaSettings.photo_format != fmt_idx) {
+        _ambarellaSettings.photo_format = fmt_idx;
         emit currentPhotoFmtChanged();
     }
     //-- Image Quality (Compression)
