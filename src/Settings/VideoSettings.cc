@@ -32,6 +32,7 @@ const char* VideoSettings::maxVideoSizeName =       "MaxVideoSize";
 const char* VideoSettings::videoSourceNoVideo =     "No Video Available";
 const char* VideoSettings::videoSourceUDP =         "UDP Video Stream";
 const char* VideoSettings::videoSourceRTSP =        "RTSP Video Stream";
+const char* VideoSettings::videoSourceMAVLink =     "MAVLink Auto Discovery Streams";
 
 VideoSettings::VideoSettings(QObject* parent)
     : SettingsGroup(videoSettingsGroupName, QString() /* root settings group */, parent)
@@ -55,6 +56,7 @@ VideoSettings::VideoSettings(QObject* parent)
     videoSourceList.append(videoSourceUDP);
 #endif
     videoSourceList.append(videoSourceRTSP);
+    videoSourceList.append(videoSourceMAVLink);
 #endif
 #ifndef QGC_DISABLE_UVC
     QList<QCameraInfo> cameras = QCameraInfo::availableCameras();

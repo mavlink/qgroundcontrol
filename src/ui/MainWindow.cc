@@ -51,6 +51,7 @@
 #include "QGCDockWidget.h"
 #include "HILDockWidget.h"
 #include "AppMessages.h"
+#include "VideoStreamingWidget.h"
 #endif
 
 #ifndef NO_SERIAL_LINK
@@ -71,7 +72,8 @@ enum DockWidgetTypes {
     ONBOARD_FILES,
     INFO_VIEW,
     HIL_CONFIG,
-    ANALYZE
+    ANALYZE,
+    VIDEO_STREAMING,
 };
 
 static const char *rgDockWidgetNames[] = {
@@ -80,7 +82,8 @@ static const char *rgDockWidgetNames[] = {
     "Onboard Files",
     "Info View",
     "HIL Config",
-    "Analyze"
+    "Analyze",
+    "Video Streaming",
 };
 
 #define ARRAY_SIZE(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
@@ -369,6 +372,9 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
                 break;
             case INFO_VIEW:
                 widget= new QGCTabbedInfoView(widgetName, action, this);
+                break;
+            case VIDEO_STREAMING:
+                widget = new VideoStreamingWidget(widgetName, action, this);
                 break;
         }
         if(action->data().toInt() == INFO_VIEW) {

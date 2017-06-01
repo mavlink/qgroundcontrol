@@ -54,6 +54,7 @@ public:
     static const char* videoSourceNoVideo;
     static const char* videoSourceUDP;
     static const char* videoSourceRTSP;
+    static const char* videoSourceMAVLink;
 
 private:
     SettingsFact* _videoSourceFact;

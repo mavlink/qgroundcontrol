@@ -35,6 +35,7 @@ public:
 
     Q_PROPERTY(bool             hasVideo            READ    hasVideo                                    NOTIFY hasVideoChanged)
     Q_PROPERTY(bool             isGStreamer         READ    isGStreamer                                 NOTIFY isGStreamerChanged)
+    Q_PROPERTY(bool             isMAVLinkStream     READ    isMAVLinkStream                        NOTIFY isMAVLinkStreamChanged)
     Q_PROPERTY(QString          videoSourceID       READ    videoSourceID                               NOTIFY videoSourceIDChanged)
     Q_PROPERTY(bool             videoRunning        READ    videoRunning                                NOTIFY videoRunningChanged)
     Q_PROPERTY(bool             uvcEnabled          READ    uvcEnabled                                  CONSTANT)
@@ -42,9 +43,11 @@ public:
     Q_PROPERTY(VideoReceiver*   videoReceiver       READ    videoReceiver                               CONSTANT)
     Q_PROPERTY(QString          imageFile           READ    imageFile                                   NOTIFY imageFileChanged)
     Q_PROPERTY(bool             showFullScreen      READ    showFullScreen  WRITE setShowFullScreen     NOTIFY showFullScreenChanged)
+    Q_PROPERTY(MAVLinkVideoManager* mavlinkVideoManager MEMBER  _mavlinkVideoManager CONSTANT)
 
     bool        hasVideo            ();
     bool        isGStreamer         ();
+    bool        isMAVLinkStream();
     bool        videoRunning        () { return _videoRunning; }
     QString     videoSourceID       () { return _videoSourceID; }
     QString     imageFile           () { return _imageFile; }
@@ -69,6 +72,7 @@ signals:
     void hasVideoChanged        ();
     void videoRunningChanged    ();
     void isGStreamerChanged     ();
+    void isMAVLinkStreamChanged ();
     void videoSourceIDChanged   ();
     void imageFileChanged       ();
     void showFullScreenChanged  ();
@@ -77,6 +81,7 @@ private slots:
     void _videoSourceChanged(void);
     void _udpPortChanged(void);
     void _rtspUrlChanged(void);
+    void _mavlinkUriChanged(void);
 
 private:
     void _updateTimer           ();

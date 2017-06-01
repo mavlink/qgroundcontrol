@@ -635,6 +635,7 @@ HEADERS += \
     src/ui/uas/UASQuickViewItem.h \
     src/ui/uas/UASQuickViewItemSelect.h \
     src/ui/uas/UASQuickViewTextItem.h \
+    src/ViewWidgets/VideoStreamingWidget.h \
 }
 
 iOSBuild {
@@ -799,6 +800,7 @@ SOURCES += \
     src/ui/uas/UASQuickViewItem.cc \
     src/ui/uas/UASQuickViewItemSelect.cc \
     src/ui/uas/UASQuickViewTextItem.cc \
+    src/ViewWidgets/VideoStreamingWidget.cc \
 }
 
 # Palette test widget in debug builds
