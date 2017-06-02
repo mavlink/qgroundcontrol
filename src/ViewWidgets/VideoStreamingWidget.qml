@@ -30,7 +30,7 @@ QGCView {
     viewPanel:    panel
 
     property real _margins:             ScreenTools.defaultFontPixelWidth
-    property real _labelsWidth:         ScreenTools.defaultFontPixelWidth * 7
+    property real _labelsWidth:         ScreenTools.defaultFontPixelWidth * 20
     property real _elementsHeight:      ScreenTools.defaultFontPixelWidth * 3
     property real _elementsWidth:       ScreenTools.defaultFontPixelWidth * 28
     property real _buttonWidth:         ScreenTools.defaultFontPixelWidth * 15
@@ -94,12 +94,72 @@ QGCView {
             }
 
             Row {
-                id:                         uriRow
+                id:                         resolutionRow
                 spacing:                    ScreenTools.defaultFontPixelWidth
                 anchors.margins:            _margins
                 anchors.left:               parent.left
                 anchors.right:              parent.right
                 anchors.top:                streamsRow.bottom
+
+                QGCLabel {
+                    id:                     resolutionLabel
+                    width:                  _labelsWidth
+                    height:                 _elementsHeight
+                    wrapMode:               Text.WordWrap
+                    textFormat:             Text.RichText
+                    text:                   "Desired Resolution: "
+                }
+
+                QGCComboBox {
+                    id:                     resolutionComboBox
+                    model:                  QGroundControl.videoManager.mavlinkVideoManager.resolutionList
+                    width:                  _elementsWidth
+                    height:                 _elementsHeight
+                    onModelChanged: {
+                        currentIndex = QGroundControl.videoManager.mavlinkVideoManager.currentResolution
+                    }
+                    onActivated: {
+                        QGroundControl.videoManager.mavlinkVideoManager.currentResolution = index
+                    }
+                    textRole: 'text'
+                }
+            }
+
+            Row {
+                id:                         videoResolutionRow
+                spacing:                    ScreenTools.defaultFontPixelWidth
+                anchors.margins:            _margins
+                anchors.left:               parent.left
+                anchors.right:              parent.right
+                anchors.top:                resolutionRow.bottom
+
+                QGCLabel {
+                    id:                     videoResolutionLabel
+                    width:                  _labelsWidth
+                    height:                 _elementsHeight
+                    wrapMode:               Text.WordWrap
+                    textFormat:             Text.RichText
+                    text:                   "Real Video Resolution: "
+                }
+
+                QGCLabel {
+                    id:                     videoResolutionValueLabel
+                    width:                  _labelsWidth
+                    height:                 _elementsHeight
+                    wrapMode:               Text.WordWrap
+                    textFormat:             Text.RichText
+                    text:                   QGroundControl.videoManager.mavlinkVideoManager.videoResolution
+                }
+
+            }
+
+            Row {
+                id:                         uriRow
+                spacing:                    ScreenTools.defaultFontPixelWidth
+                anchors.margins:            _margins
+                anchors.left:               parent.left
+                anchors.right:              parent.right
+                anchors.top:                videoResolutionRow.bottom
 
                 QGCLabel {
                     id:                     uriLabel

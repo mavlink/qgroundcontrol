@@ -39,13 +39,32 @@ public:
         void nameChanged();
 };
 
+class Resolution : public QObject {
+    Q_OBJECT
+
+    Q_PROPERTY(QString text MEMBER name NOTIFY nameChanged)
+public:
+    Resolution(QString _name, int _h, int _v)
+        : name(_name)
+        , h(_h)
+        , v(_v) { }
+    ~Resolution() { }
+    QString name;
+    int h, v;
+    signals:
+        void nameChanged();
+};
+
 class MAVLinkVideoManager : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QList<QObject*>  streamList              READ streamList             NOTIFY streamListChanged)
+    Q_PROPERTY(QList<QObject*>  streamList              READ streamList                                             NOTIFY streamListChanged)
     Q_PROPERTY(int              selectedStream          READ selectedStream         WRITE  setSelectedStream        NOTIFY selectedStreamChanged)
-    Q_PROPERTY(QString          currentUri              READ getVideoURI  NOTIFY currentUriChanged)
+    Q_PROPERTY(QList<QObject *> resolutionList          READ resolutionList                                         NOTIFY resolutionListChanged)
+    Q_PROPERTY(QString          currentUri              READ getVideoURI                                            NOTIFY currentUriChanged)
+    Q_PROPERTY(int              currentResolution       READ currentResolution       WRITE  setCurrentResolution    NOTIFY currentResolutionChanged)
+    Q_PROPERTY(QString          videoResolution         READ videoResolution                                        NOTIFY videoResolutionChanged)
 
 public:
     MAVLinkVideoManager();
@@ -59,13 +78,23 @@ public:
         return _selectedStream;
     }
 
+    QList<QObject *> resolutionList() {
+        return _resolutionList;
+    }
+
     QString getVideoURI();
     void setSelectedStream(int index);
+    int currentResolution();
+    QString videoResolution();
+    void setCurrentResolution(int resolution);
 
 signals:
     void streamListChanged();
     void selectedStreamChanged();
+    void resolutionListChanged();
     void currentUriChanged();
+    void currentResolutionChanged();
+    void videoResolutionChanged();
 
 private slots:
     void _mavlinkMessageReceived(LinkInterface *link, mavlink_message_t message);
@@ -76,9 +105,13 @@ private:
     MAVLinkProtocol *_mavlink;
     LinkInterface *_cameraLink;
     QList<QObject*> _streamList;
+    QList<QObject*> _resolutionList;
     int _selectedStream;
+    int _currentResolution;
+    QString _videoResolution;
 
     Stream *_find_camera_by_id(int cameraId);
+    void _updateStream();
 };
 
 #endif // MAVLINK_VIDEO_MANAGER_H

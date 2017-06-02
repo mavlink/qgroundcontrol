@@ -22,7 +22,7 @@ VideoStreamingWidget::VideoStreamingWidget(const QString& title, QAction* action
     Q_UNUSED(title)
     Q_UNUSED(action);
 
-    resize(320, 200);
+    resize(420, 200);
 
     setSource(QUrl::fromUserInput("qrc:/qml/VideoStreamingWidget.qml"));
 

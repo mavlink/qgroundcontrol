@@ -25,12 +25,17 @@ MAVLinkVideoManager::MAVLinkVideoManager()
     , _cameraSysid(0)
     , _cameraLink(NULL)
     , _selectedStream(-1)
-
-
+    , _currentResolution(0)
 {
     _mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     connect(_mavlink, &MAVLinkProtocol::videoHeartbeatInfo, this, &MAVLinkVideoManager::_videoHeartbeatInfo);
     connect(_mavlink, &MAVLinkProtocol::messageReceived, this, &MAVLinkVideoManager::_mavlinkMessageReceived);
+
+    _resolutionList.append(new Resolution("Default", 0, 0));
+    _resolutionList.append(new Resolution("4K (3840x2160)", 3840, 2160));
+    _resolutionList.append(new Resolution("1080p (1920x1080)", 1920, 1080));
+    _resolutionList.append(new Resolution("720p (1280x720)", 1280, 720));
+    _resolutionList.append(new Resolution("VGA (640x480)", 640, 480));
 }
 
 //-----------------------------------------------------------------------------
@@ -119,7 +124,10 @@ void MAVLinkVideoManager::_mavlinkMessageReceived(LinkInterface* link, mavlink_m
             break;
         }
         s->uri = info.uri;
+        qDebug() << "cahgen video res";
+        _videoResolution = QString::number(info.resolution_h) + "x" + QString::number(info.resolution_v);
 
+        emit videoResolutionChanged();
         emit currentUriChanged();
         break;
     }
@@ -134,22 +142,61 @@ QString MAVLinkVideoManager::getVideoURI()
     return ((Stream *)_streamList[_selectedStream])->uri;
 }
 
+QString MAVLinkVideoManager::videoResolution()
+{
+    return _videoResolution;
+}
+
+void MAVLinkVideoManager::_updateStream()
+{
+    Stream *s = (Stream *)_streamList[_selectedStream];
+    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    mavlink_message_t msg;
+
+    mavlink_msg_command_long_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, _cameraSysid, MAV_COMP_ID_CAMERA, MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION, 0, s->cameraId, 1, 0, 0, 0, 0, 0);
+
+    int len = mavlink_msg_to_send_buffer(buffer, &msg);
+    _cameraLink->writeBytesSafe((const char*)buffer, len);
+
+    emit currentUriChanged();
+}
+
 void MAVLinkVideoManager::setSelectedStream(int index)
 {
     if (index >= _streamList.size())
         index = -1;
     _selectedStream = index;
 
-    if (index >= 0) {
-        Stream *s = (Stream *)_streamList[index];
-        uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
-        mavlink_message_t msg;
+    if (index >= 0)
+        _updateStream();
+    setCurrentResolution(0);
+    emit currentResolutionChanged();
+    emit resolutionListChanged();
+}
 
-        mavlink_msg_command_long_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, _cameraSysid, MAV_COMP_ID_CAMERA, MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION, 0, s->cameraId, 1, 0, 0, 0, 0, 0);
+int MAVLinkVideoManager::currentResolution()
+{
+    return _currentResolution;
+}
 
-        int len = mavlink_msg_to_send_buffer(buffer, &msg);
-        _cameraLink->writeBytesSafe((const char*)buffer, len);
+void MAVLinkVideoManager::setCurrentResolution(int resolution)
+{
+    if (_selectedStream < 0 || _selectedStream >= _streamList.size())
+        return;
 
-        emit currentUriChanged();
-    }
+    if (resolution < 0 || resolution >= _resolutionList.size())
+        return;
+
+    _videoResolution = "";
+    emit videoResolutionChanged();
+    _currentResolution = resolution;
+    Stream *s = (Stream *)_streamList[_selectedStream];
+    Resolution *fs = (Resolution *) _resolutionList[_currentResolution];
+    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    mavlink_message_t msg;
+
+    mavlink_msg_set_video_stream_settings_pack(_mavlink->getSystemId(), _mavlink->getComponentId(), &msg, _cameraSysid, MAV_COMP_ID_CAMERA, s->cameraId, 0, fs->h, fs->v, 0, 0, "");
+    int len = mavlink_msg_to_send_buffer(buffer, &msg);
+    _cameraLink->writeBytesSafe((const char*)buffer, len);
+    _updateStream();
 }
