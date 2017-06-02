@@ -88,6 +88,9 @@ public:
     QString videoResolution();
     void setCurrentResolution(int resolution);
 
+public slots:
+    void refreshVideoProvider();
+
 signals:
     void streamListChanged();
     void selectedStreamChanged();

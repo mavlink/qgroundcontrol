@@ -179,6 +179,24 @@ QGCView {
                     text:                   QGroundControl.videoManager.mavlinkVideoManager.currentUri
                 }
             }
+
+            Row {
+                id:                         refreshRow
+                spacing:                    ScreenTools.defaultFontPixelWidth
+                anchors.margins:            _margins
+                anchors.left:               parent.left
+                anchors.right:              parent.right
+                anchors.top:                uriRow.bottom
+
+                QGCButton {
+                    text:       qsTr("Refresh")
+                    width:      ScreenTools.defaultFontPixelWidth * 22
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    onClicked: {
+                        QGroundControl.videoManager.mavlinkVideoManager.refreshVideoProvider()
+                    }
+                }
+            }
         }
     }
 }

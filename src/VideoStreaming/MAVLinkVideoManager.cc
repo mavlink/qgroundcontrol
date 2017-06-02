@@ -200,3 +200,17 @@ void MAVLinkVideoManager::setCurrentResolution(int resolution)
     _cameraLink->writeBytesSafe((const char*)buffer, len);
     _updateStream();
 }
+
+void MAVLinkVideoManager::refreshVideoProvider()
+{
+    _selectedStream = -1;
+    _currentResolution = 0;
+    _cameraSysid = 0;
+
+    _streamList.clear();
+
+    emit currentUriChanged();
+    emit currentResolutionChanged();
+    emit currentUriChanged();
+    emit resolutionListChanged();
+}
