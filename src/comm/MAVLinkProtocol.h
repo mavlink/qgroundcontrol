@@ -61,6 +61,10 @@ public:
     int getVersion() {
         return MAVLINK_VERSION;
     }
+    /** @brief Get the currently configured protocol version */
+    unsigned getCurrentVersion() {
+        return _current_version;
+    }
     /**
      * Retrieve a total of all successfully parsed packets for the specified link.
      * @returns -1 if this is not available for this protocol, # of packets otherwise.
@@ -89,6 +93,9 @@ public:
     
     /// Suspend/Restart logging during replay.
     void suspendLogForReplay(bool suspend);
+
+    /// Set protocol version
+    void setVersion(unsigned version);
 
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
@@ -125,6 +132,7 @@ protected:
     int currLossCounter[MAVLINK_COMM_NUM_BUFFERS];        ///< Lost messages during this sample time window. Used for calculating loss %.
     bool versionMismatchIgnore;
     int systemId;
+    unsigned _current_version;
 
 signals:
     /// Heartbeat received on link
