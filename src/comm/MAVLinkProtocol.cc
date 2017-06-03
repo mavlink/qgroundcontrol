@@ -55,6 +55,7 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app, QGCToolbox* toolbox)
     , m_enable_version_check(true)
     , versionMismatchIgnore(false)
     , systemId(255)
+    , _current_version(100)
     , _logSuspendError(false)
     , _logSuspendReplay(false)
     , _vehicleWasArmed(false)
@@ -73,6 +74,24 @@ MAVLinkProtocol::~MAVLinkProtocol()
 {
     storeSettings();
     _closeLogFile();
+}
+
+void MAVLinkProtocol::setVersion(unsigned version)
+{
+    QList<LinkInterface*> links = _linkMgr->links();
+
+    for (int i = 0; i < links.length(); i++) {
+        mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(links[i]->mavlinkChannel());
+
+        // Set flags for version
+        if (version < 200) {
+            mavlinkStatus->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+        } else {
+            mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+        }
+    }
+
+    _current_version = version;
 }
 
 void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)

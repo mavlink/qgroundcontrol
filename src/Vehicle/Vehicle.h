@@ -605,6 +605,9 @@ public:
     int             telemetryLNoise         () { return _telemetryLNoise; }
     int             telemetryRNoise         () { return _telemetryRNoise; }
     bool            autoDisarm              ();
+    /// Get the maximum MAVLink protocol version supported
+    /// @return the maximum version
+    unsigned        maxProtoVersion         () const { return _maxProtoVersion; }
 
     Fact* roll              (void) { return &_rollFact; }
     Fact* heading           (void) { return &_headingFact; }
@@ -699,6 +702,7 @@ public:
     void _setFlying(bool flying);
     void _setLanding(bool landing);
     void _setHomePosition(QGeoCoordinate& homeCoord);
+    void _setMaxProtoVersion (unsigned version);
 
 signals:
     void allLinksInactive(Vehicle* vehicle);
@@ -782,8 +786,11 @@ signals:
     ///     @param noResponseFromVehicle true: vehicle did not respond to command, false: vehicle responsed, MAV_RESULT in result
     void mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
 
-    // Mavlink Serial Data
+    // MAVlink Serial Data
     void mavlinkSerialControl(uint8_t device, uint8_t flags, uint16_t timeout, uint32_t baudrate, QByteArray data);
+
+    // MAVLink protocol version
+    void requestProtocolVersion(unsigned version);
 
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
@@ -837,6 +844,7 @@ private:
     void _handleExtendedSysState(mavlink_message_t& message);
     void _handleCommandAck(mavlink_message_t& message);
     void _handleAutopilotVersion(LinkInterface* link, mavlink_message_t& message);
+    void _handleProtocolVersion(LinkInterface* link, mavlink_message_t& message);
     void _handleHilActuatorControls(mavlink_message_t& message);
     void _handleGpsRawInt(mavlink_message_t& message);
     void _handleGlobalPositionInt(mavlink_message_t& message);
@@ -921,6 +929,7 @@ private:
     uint32_t        _telemetryTXBuffer;
     int             _telemetryLNoise;
     int             _telemetryRNoise;
+    unsigned        _maxProtoVersion;
     bool            _vehicleCapabilitiesKnown;
     bool            _supportsMissionItemInt;
 
