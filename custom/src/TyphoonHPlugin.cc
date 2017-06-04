@@ -216,6 +216,15 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app, QGCToolbox* toolbox)
     _pOptions = new TyphoonHOptions(this, this);
     _pHandler = new TyphoonHM4Interface();
     connect(this, &QGCCorePlugin::showAdvancedUIChanged, this, &TyphoonHPlugin::_showAdvancedPages);
+    //-- Initialize Localization
+    QLocale locale = QLocale::system();
+#if defined (__macos__)
+    locale = QLocale(locale.name());
+#endif
+//  QLocale locale = QLocale(QLocale::German);
+    //-- Our own localization
+    if(_YuneecTranslator.load(locale, "yuneec_", "", ":/localization"))
+        app->installTranslator(&_YuneecTranslator);
 }
 
 //-----------------------------------------------------------------------------
