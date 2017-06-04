@@ -170,6 +170,8 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         _deinitAllVisualItems();
         _visualItems->deleteLater();
         _settingsItem = NULL;
+        _visualItems = NULL;
+        _updateContainsItems(); // This will clear containsItems which will be set again below. This will re-pop Start Mission confirmation.
         _visualItems = newControllerMissionItems;
 
         if (!_controllerVehicle->firmwarePlugin()->sendHomePositionToVehicle() || _visualItems->count() == 0) {
@@ -181,6 +183,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         }
 
         _initAllVisualItems();
+        _updateContainsItems();
         emit newItemsFromVehicle();
     }
     _itemsRequested = false;

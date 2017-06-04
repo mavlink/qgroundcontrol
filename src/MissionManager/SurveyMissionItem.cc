@@ -949,16 +949,18 @@ int SurveyMissionItem::_appendWaypointToMission(QList<MissionItem*>& items, int 
         item = new MissionItem(seqNum++,
                                MAV_CMD_IMAGE_START_CAPTURE,
                                MAV_FRAME_MISSION,
-                               0,                  // Interval
-                               1,                  // Take 1 photo
-                               -1,                 // Mav resolution
-                               0, 0,               // Param 4-5 unused
-                               0,                  // Camera ID
-                               7,                  // Param 7 unused
-                               true,               // autoContinue
-                               false,              // isCurrentItem
+                               0,                           // Camera ID, all cameras
+                               0,                           // Interval (none)
+                               1,                           // Take 1 photo
+                               -1,                          // Max horizontal resolution
+                               -1,                          // Max vertical resolution
+                               0, 0,                        // param 6-7 not used
+                               true,                        // autoContinue
+                               false,                       // isCurrentItem
                                missionItemParent);
         items.append(item);
+#if 0
+        // This generates too many commands. Pulling out for now, to see if image quality is still high enough.
         item = new MissionItem(seqNum++,
                                MAV_CMD_NAV_DELAY,
                                MAV_FRAME_MISSION,
@@ -969,6 +971,7 @@ int SurveyMissionItem::_appendWaypointToMission(QList<MissionItem*>& items, int 
                                false,              // isCurrentItem
                                missionItemParent);
         items.append(item);
+#endif
     default:
         break;
     }
