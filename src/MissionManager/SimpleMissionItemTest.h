@@ -27,6 +27,8 @@ private slots:
     void _testSignals(void);
     void _testEditorFacts(void);
     void _testDefaultValues(void);
+    void _testCameraSectionDirty(void);
+    void _testSpeedSectionDirty(void);
     void _testCameraSection(void);
     void _testSpeedSection(void);
 
