@@ -114,7 +114,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _telemetryTXBuffer(0)
     , _telemetryLNoise(0)
     , _telemetryRNoise(0)
-    , _maxProtoVersion(100)
+    , _maxProtoVersion(0)
     , _vehicleCapabilitiesKnown(false)
     , _supportsMissionItemInt(false)
     , _connectionLost(false)
@@ -741,6 +741,13 @@ void Vehicle::_setCapabilities(uint64_t capabilityBits)
     _vehicleCapabilitiesKnown = true;
     emit capabilitiesKnownChanged(true);
 
+    // This should potentially be turned into a user-facing warning
+    // if the general experience after deployment is that users want MAVLink 2
+    // but forget to upgrade their radio firmware
+    if (capabilityBits & MAV_PROTOCOL_CAPABILITY_MAVLINK2 && maxProtoVersion() < 200) {
+        qCDebug(VehicleLog) << QString("Vehicle does support MAVLink 2 but the link does not allow for it.");
+    }
+
     qCDebug(VehicleLog) << QString("Vehicle %1 MISSION_ITEM_INT").arg(_supportsMissionItemInt ? QStringLiteral("supports") : QStringLiteral("does not support"));
 }
 
@@ -797,8 +804,12 @@ void Vehicle::_handleProtocolVersion(LinkInterface *link, mavlink_message_t& mes
 }
 
 void Vehicle::_setMaxProtoVersion(unsigned version) {
-    _maxProtoVersion = version;
-    emit requestProtocolVersion(_maxProtoVersion);
+
+    // Set only once or if we need to reduce the max version
+    if (_maxProtoVersion == 0 || version < _maxProtoVersion) {
+        _maxProtoVersion = version;
+        emit requestProtocolVersion(_maxProtoVersion);
+    }
 }
 
 void Vehicle::_handleHilActuatorControls(mavlink_message_t &message)
