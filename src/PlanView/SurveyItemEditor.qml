@@ -364,11 +364,11 @@ Rectangle {
                 Item { Layout.fillWidth: true }
                 QGCLabel {
                     Layout.preferredWidth:  _root._fieldWidth
-                    text:                   qsTr("Frontal")
+                    text:                   qsTr("Front Lap")
                 }
                 QGCLabel {
                     Layout.preferredWidth:  _root._fieldWidth
-                    text:                   qsTr("Side")
+                    text:                   qsTr("Side Lap")
                 }
             }
 
