@@ -29,6 +29,7 @@
 #include "APMSubFrameComponent.h"
 #include "ESP8266Component.h"
 #include "MixersComponent.h"
+#include "VideoStreamingComponent.h"
 
 /// This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_ARDUPILOT type.
 APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
@@ -126,6 +127,10 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                     _components.append(QVariant::fromValue((VehicleComponent*)_subFrameComponent));
                 }
             }
+
+            _videoStreamingComponent = new VideoStreamingComponent(_vehicle, this);
+            _videoStreamingComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue((VehicleComponent*)_videoStreamingComponent));
 
             //-- Is there an ESP8266 Connected?
             if(_vehicle->parameterManager()->parameterExists(MAV_COMP_ID_UDP_BRIDGE, "SW_VER")) {

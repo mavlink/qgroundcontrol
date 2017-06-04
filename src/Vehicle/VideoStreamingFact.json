@@ -1,0 +1,34 @@
+[
+{
+    "name":"fps",
+    "type":"double",
+    "units":"Hz",
+    "enumStrings":"auto",
+    "enumValues":"0",
+    "defaultValue":"0"
+},
+{
+    "name":"resolution",
+    "type":"uint16",
+    "units":"pix X pix",
+    "enumStrings":"auto",
+    "enumValues":"0",
+    "defaultValue":"0"
+},
+{
+    "name":"bitRate",
+    "type":"uint32",
+    "units":"b/s",
+    "enumStrings":"auto",
+    "enumValues":"0",
+    "defaultValue":"0"
+},
+{
+    "name":"rotation",
+    "type":"uint16",
+    "units":"deg",
+    "enumStrings":"0 deg",
+    "enumValues":"0",
+    "defaultValue":"0"
+}
+]

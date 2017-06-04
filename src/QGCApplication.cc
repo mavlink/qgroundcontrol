@@ -79,6 +79,7 @@
 #include "QGCMapPolygon.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
+#include "VideoStreamingComponentController.h"
 
 #ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
@@ -392,6 +393,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<JoystickConfigController>           ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
     qmlRegisterType<LogDownloadController>              ("QGroundControl.Controllers", 1, 0, "LogDownloadController");
     qmlRegisterType<SyslinkComponentController>         ("QGroundControl.Controllers", 1, 0, "SyslinkComponentController");
+    qmlRegisterType<VideoStreamingComponentController>  ("QGroundControl.Controllers", 1, 0, "VideoStreamingComponentController");
 #ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");

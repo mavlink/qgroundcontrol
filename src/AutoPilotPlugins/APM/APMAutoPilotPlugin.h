@@ -28,6 +28,7 @@ class APMLightsComponent;
 class APMSubFrameComponent;
 class ESP8266Component;
 class MixersComponent;
+class VideoStreamingComponent;
 
 /// This is the APM specific implementation of the AutoPilot class.
 class APMAutoPilotPlugin : public AutoPilotPlugin
@@ -61,6 +62,7 @@ protected:
     APMAirframeLoader*          _airframeFacts;
     ESP8266Component*           _esp8266Component;
     MixersComponent*            _mixersComponent;
+    VideoStreamingComponent*    _videoStreamingComponent;
 
 private:
     QVariantList                _components;

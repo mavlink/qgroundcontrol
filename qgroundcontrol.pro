@@ -824,6 +824,8 @@ HEADERS+= \
     src/AutoPilotPlugins/Common/RadioComponentController.h \
     src/AutoPilotPlugins/Common/SyslinkComponent.h \
     src/AutoPilotPlugins/Common/SyslinkComponentController.h \
+    src/AutoPilotPlugins/Common/VideoStreamingComponent.h \
+    src/AutoPilotPlugins/Common/VideoStreamingComponentController.h \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
     src/FirmwarePlugin/CameraMetaData.h \
     src/FirmwarePlugin/FirmwarePlugin.h \
@@ -849,6 +851,8 @@ SOURCES += \
     src/AutoPilotPlugins/Common/RadioComponentController.cc \
     src/AutoPilotPlugins/Common/SyslinkComponent.cc \
     src/AutoPilotPlugins/Common/SyslinkComponentController.cc \
+    src/AutoPilotPlugins/Common/VideoStreamingComponent.cc \
+    src/AutoPilotPlugins/Common/VideoStreamingComponentController.cc \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
     src/FirmwarePlugin/CameraMetaData.cc \
     src/FirmwarePlugin/FirmwarePlugin.cc \
