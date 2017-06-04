@@ -80,6 +80,10 @@ void MissionSettingsItem::setDirty(bool dirty)
 {
     if (_dirty != dirty) {
         _dirty = dirty;
+        if (!dirty) {
+            _cameraSection.setDirty(false);
+            _speedSection.setDirty(false);
+        }
         emit dirtyChanged(_dirty);
     }
 }

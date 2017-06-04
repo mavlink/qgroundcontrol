@@ -36,6 +36,7 @@
 #include "CameraSectionTest.h"
 #include "SpeedSectionTest.h"
 #include "PlanMasterControllerTest.h"
+#include "MissionSettingsTest.h"
 
 UT_REGISTER_TEST(FactSystemTestGeneric)
 UT_REGISTER_TEST(FactSystemTestPX4)
@@ -58,6 +59,7 @@ UT_REGISTER_TEST(SurveyMissionItemTest)
 UT_REGISTER_TEST(CameraSectionTest)
 UT_REGISTER_TEST(SpeedSectionTest)
 UT_REGISTER_TEST(PlanMasterControllerTest)
+UT_REGISTER_TEST(MissionSettingsTest)
 
 // List of unit test which are currently disabled.
 // If disabling a new test, include reason in comment.
