@@ -256,6 +256,38 @@ void SimpleMissionItemTest::_testSignals(void)
     QVERIFY(_spyVisualItem->checkSignalsByMask(commandNameChangedMask | dirtyChangedMask | coordinateChangedMask));
 }
 
+void SimpleMissionItemTest::_testCameraSectionDirty(void)
+{
+    CameraSection* cameraSection = _simpleItem->cameraSection();
+
+    QVERIFY(!cameraSection->dirty());
+    QVERIFY(!_simpleItem->dirty());
+
+    // Dirtying the camera section should also dirty the item
+    cameraSection->setDirty(true);
+    QVERIFY(_simpleItem->dirty());
+
+    // Clearing the dirty bit from the item should also clear the dirty bit on the camera section
+    _simpleItem->setDirty(false);
+    QVERIFY(!cameraSection->dirty());
+}
+
+void SimpleMissionItemTest::_testSpeedSectionDirty(void)
+{
+    SpeedSection* speedSection = _simpleItem->speedSection();
+
+    QVERIFY(!speedSection->dirty());
+    QVERIFY(!_simpleItem->dirty());
+
+    // Dirtying the speed section should also dirty the item
+    speedSection->setDirty(true);
+    QVERIFY(_simpleItem->dirty());
+
+    // Clearing the dirty bit from the item should also clear the dirty bit on the camera section
+    _simpleItem->setDirty(false);
+    QVERIFY(!speedSection->dirty());
+}
+
 void SimpleMissionItemTest::_testCameraSection(void)
 {
     // No gimbal yaw to start with
