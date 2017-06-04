@@ -9,6 +9,8 @@
 #include "QGCOptions.h"
 #include "QGCSettings.h"
 
+#include <QTranslator>
+
 class TyphoonHM4Interface;
 class TyphoonHOptions;
 class TyphoonHSettings;
@@ -51,4 +53,5 @@ private:
     QGCSettings*        _pConsole;
     QVariantList        _settingsList;
     TyphoonHM4Interface*_pHandler;
+    QTranslator         _YuneecTranslator;
 };
