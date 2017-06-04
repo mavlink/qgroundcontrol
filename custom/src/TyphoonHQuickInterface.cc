@@ -369,7 +369,8 @@ void
 TyphoonHQuickInterface::calibrateGimbalMV()
 {
     if(_pHandler && _pHandler->vehicle()) {
-        _pHandler->vehicle()->sendMavCommand(0, MAV_CMD_PREFLIGHT_CALIBRATION, true, 0,0,0,0,0,0,4);
+        //-- We can currently calibrate the accelerometer.
+        _pHandler->vehicle()->sendMavCommand(MAV_COMP_ID_GIMBAL, MAV_CMD_PREFLIGHT_CALIBRATION, true, 0,0,0,0,1,0,0);
     }
 }
 
