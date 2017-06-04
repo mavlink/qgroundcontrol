@@ -205,8 +205,12 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 else
                 {
                     warnedUserNonMavlink = true;
-                    emit protocolStatusMessage(tr("MAVLink Protocol"), tr("There is a MAVLink Version or Baud Rate Mismatch. "
-                                                                          "Please check if the baud rates of %1 and your autopilot are the same.").arg(qgcApp()->applicationName()));
+                    // Disconnect the link since its some other device and
+                    // QGC clinging on to it and feeding it data might have unintended
+                    // side effects (e.g. if its a modem)
+                    qDebug() << "disconnected link" << link->getName() << "as it contained no MAVLink data";
+                    QMetaObject::invokeMethod(_linkMgr, "disconnectLink", Q_ARG( LinkInterface*, link ) );
+                    return;
                 }
             }
         }
