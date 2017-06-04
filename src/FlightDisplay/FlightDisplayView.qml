@@ -148,7 +148,7 @@ QGCView {
             }
         } else {
             if (promptForMissionRemove && (_missionController.containsItems || _geoFenceController.containsItems || _rallyPointController.containsItems)) {
-                root.showDialog(removeMissionDialogComponent, qsTr("Flight complete"), showDialogDefaultWidth, StandardButton.No | StandardButton.Yes)
+                root.showDialog(missionCompleteDialogComponent, qsTr("Flight Plan complete"), showDialogDefaultWidth, StandardButton.Close)
             }
             promptForMissionRemove = false
         }
@@ -161,14 +161,35 @@ QGCView {
     }
 
     Component {
-        id: removeMissionDialogComponent
+        id: missionCompleteDialogComponent
 
-        QGCViewMessage {
-            message: qsTr("Do you want to remove the mission from the vehicle?")
+        QGCViewDialog {
+            QGCFlickable {
+                anchors.fill:   parent
+                contentHeight:  column.height
 
-            function accept() {
-                _planMasterController.removeAllFromVehicle()
-                hideDialog()
+                Column {
+                    id:                 column
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
+                    spacing:            ScreenTools.defaultFontPixelHeight
+
+                    QGCLabel {
+                        text:                       qsTr("%1 Images Taken").arg(_activeVehicle.cameraTriggerPoints.count)
+                        anchors.horizontalCenter:   parent.horizontalCenter
+                        visible:                    _activeVehicle.cameraTriggerPoints.count != 0
+                    }
+
+                    QGCButton {
+                        text:                       qsTr("Remove plan from vehicle")
+                        anchors.horizontalCenter:   parent.horizontalCenter
+                        onClicked: {
+                            _planMasterController.removeAllFromVehicle()
+                            hideDialog()
+                        }
+                    }
+                }
             }
         }
     }
