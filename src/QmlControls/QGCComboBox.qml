@@ -99,15 +99,21 @@ Button {
         return -1
     }
 
+    ExclusiveGroup { id: eg }
+
     Menu {
         id:             popup
         __minimumWidth: combo.width
         __visualItem:   combo
 
         style: MenuStyle {
-            font:               combo.font
-            __menuItemType:     "comboboxitem"
-            __scrollerStyle:    ScrollViewStyle { }
+            font:                       combo.font
+            __labelColor:               combo._qgcPal.text
+            __selectedLabelColor:       combo._qgcPal.buttonText
+            __selectedBackgroundColor:  combo._qgcPal.buttonHighlight
+            __maxPopupHeight:           600
+            __menuItemType:             "comboboxitem"
+            __scrollerStyle:            ScrollViewStyle { }
         }
 
         property string textRole: ""
@@ -187,22 +193,6 @@ Button {
             }
         }
 
-        Component {
-            id: menuItemComponent
-
-            MenuItem {
-                property int index
-
-                onTriggered: {
-                    //console.log("onTriggered", index, currentIndex)
-                    if (index !== currentIndex) {
-                        //console.log("activated", index)
-                        activated(index)
-                    }
-                }
-            }
-        }
-
         Instantiator {
             id: popupItems
 
@@ -239,7 +229,10 @@ Button {
             onObjectRemoved: popup.removeItem(object)
 
             MenuItem {
-                text: popup.textRole === '' ? modelData : ((popup._modelIsArray ? modelData[popup.textRole] : model[popup.textRole]) || '')
+                text:           popup.textRole === '' ? modelData : ((popup._modelIsArray ? modelData[popup.textRole] : model[popup.textRole]) || '')
+                checked:        index == currentIndex
+                checkable:      true
+                exclusiveGroup: eg
 
                 property int itemIndex: index
 
