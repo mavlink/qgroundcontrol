@@ -289,6 +289,17 @@ DebugBuild {
     RESOURCES += UnitTest.qrc
 }
 
+#
+# Multilingual support by earthloong
+#
+TRANSLATIONS += \
+    language/translate_zh_CN.ts \
+    language/translate_en_US.ts \
+    language/translate_zh_TW.ts
+CODECFORTR = utf-8 #or gbk
+#DEFAULTCODEC = utf-8
+#CODEC = utf-8
+
 DEPENDPATH += \
     . \
     plugins
