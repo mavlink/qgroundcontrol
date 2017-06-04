@@ -279,6 +279,7 @@ Rectangle {
         text:                   _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
         enabled:                !_controllerSyncInProgress
         visible:                !_controllerOffline
+        primary:                _controllerDirty
         onClicked:              planMasterController.upload()
 
         PropertyAnimation on opacity {
