@@ -135,6 +135,7 @@ SetupPage {
                                 visible:            leakEnableCombo.currentIndex != 0
                                 anchors.baseline:   leakEnableCombo.baseline
                                 fact:               _failsafeLeakPin
+                                indexModel:         false
                             }
 
                             QGCLabel {
@@ -149,6 +150,7 @@ SetupPage {
                                 visible:            leakEnableCombo.currentIndex != 0
                                 anchors.baseline:   leakEnableCombo.baseline
                                 fact:               _failsafeLeakLogic
+                                indexModel:         false
                             }
                         }
 
