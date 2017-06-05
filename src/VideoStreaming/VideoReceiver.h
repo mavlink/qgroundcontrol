@@ -84,6 +84,7 @@ private:
         GstElement*     queue;
         GstElement*     mux;
         GstElement*     filesink;
+        GstElement*     parse;
         gboolean        removing;
     } Sink;
 
@@ -100,6 +101,7 @@ private:
     void                        _detachRecordingBranch(GstPadProbeInfo* info);
     void                        _shutdownRecordingBranch();
     void                        _shutdownPipeline();
+    void                        _cleanupOldVideos();
 
 #endif
 
