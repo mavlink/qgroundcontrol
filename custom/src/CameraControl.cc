@@ -12,6 +12,7 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "QGCMapEngine.h"
+#include "VideoManager.h"
 
 QGC_LOGGING_CATEGORY(YuneecCameraLog, "YuneecCameraLog")
 QGC_LOGGING_CATEGORY(YuneecCameraLogVerbose, "YuneecCameraLogVerbose")
@@ -288,6 +289,11 @@ CameraControl::takePhoto()
             -1);                                        // Vertical resolution in pixels (set to -1 for highest resolution possible)
         _cameraSound.setLoopCount(1);
         _cameraSound.play();
+        //-- Capture local image as well
+        QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+        QDir().mkpath(photoPath);
+        photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
+        qgcApp()->toolbox()->videoManager()->grabImage(photoPath);
     } else {
         _errorSound.setLoopCount(1);
         _errorSound.play();
@@ -784,6 +790,12 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
             case MAV_CMD_VIDEO_START_CAPTURE:
             case MAV_CMD_VIDEO_STOP_CAPTURE:
                 if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
+                    //-- Faster feedback for start/stop video
+                    if(command == MAV_CMD_VIDEO_START_CAPTURE) {
+                        _handleVideoRunning(VIDEO_CAPTURE_STATUS_RUNNING);
+                    } else if(command == MAV_CMD_VIDEO_START_CAPTURE) {
+                        _handleVideoRunning(VIDEO_CAPTURE_STATUS_STOPPED);
+                    }
                     _startTimer(MAV_CMD_REQUEST_CAMERA_SETTINGS, 500);
                 } else {
                     //-- The camera didn't take it. There isn't much what we can do.
@@ -979,6 +991,32 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
 
 //-----------------------------------------------------------------------------
 void
+CameraControl::_handleVideoRunning(VideoStatus status)
+{
+    if(_ambarellaStatus.video_status != status) {
+        _ambarellaStatus.video_status = status;
+        emit videoStatusChanged();
+        if(status == VIDEO_CAPTURE_STATUS_RUNNING) {
+            _recTime.start();
+            _recTimer.start();
+            //-- Start recording local stream as well
+            if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+                qgcApp()->toolbox()->videoManager()->videoReceiver()->startRecording();
+            }
+        } else {
+            _recTimer.stop();
+            _ambarellaStatus.record_time = 0;
+            emit recordTimeChanged();
+            //-- Stop recording local stream
+            if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+                qgcApp()->toolbox()->videoManager()->videoReceiver()->stopRecording();
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
 {
     //-- This is a response to MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS
@@ -996,18 +1034,7 @@ CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
         emit photoStatusChanged();
     }
     //-- Video Capture Status
-    if(_ambarellaStatus.video_status != cap.video_status) {
-        _ambarellaStatus.video_status = cap.video_status;
-        emit videoStatusChanged();
-        if((VideoStatus)cap.video_status == VIDEO_CAPTURE_STATUS_RUNNING) {
-            _recTime.start();
-            _recTimer.start();
-        } else {
-            _recTimer.stop();
-            _ambarellaStatus.record_time = 0;
-            emit recordTimeChanged();
-        }
-    }
+    _handleVideoRunning((VideoStatus)cap.video_status);
     //-- Video res is only valid when video started recording
     if(_ambarellaStatus.video_status == VIDEO_CAPTURE_STATUS_RUNNING) {
         //-- Current Video Resolution and FPS

@@ -276,6 +276,7 @@ private:
     void    _startTimer             (int task, int elapsed);
     void    _handleCommandResult    (bool noReponseFromVehicle, int command, int result);
     void    _updateShutterLimit     ();
+    void    _handleVideoRunning     (VideoStatus status);
 
 private:
     Vehicle*                _vehicle;
