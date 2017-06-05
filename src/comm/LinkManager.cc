@@ -191,6 +191,7 @@ void LinkManager::_addLink(LinkInterface* link)
     connect(link, &LinkInterface::bytesReceived,        _mavlinkProtocol,   &MAVLinkProtocol::receiveBytes);
 
     _mavlinkProtocol->resetMetadataForLink(link);
+    _mavlinkProtocol->setVersion(_mavlinkProtocol->getCurrentVersion());
 
     connect(link, &LinkInterface::connected,            this, &LinkManager::_linkConnected);
     connect(link, &LinkInterface::disconnected,         this, &LinkManager::_linkDisconnected);

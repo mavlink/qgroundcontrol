@@ -89,7 +89,7 @@ public:
     /**
      * Reset the counters for all metadata for this link.
      */
-    virtual void resetMetadataForLink(const LinkInterface *link);
+    virtual void resetMetadataForLink(LinkInterface *link);
     
     /// Suspend/Restart logging during replay.
     void suspendLogForReplay(bool suspend);
@@ -133,6 +133,7 @@ protected:
     bool versionMismatchIgnore;
     int systemId;
     unsigned _current_version;
+    unsigned _radio_version_mismatch_count;
 
 signals:
     /// Heartbeat received on link
