@@ -37,8 +37,8 @@ public:
     Q_PROPERTY(QString          videoSourceID       READ    videoSourceID                               NOTIFY videoSourceIDChanged)
     Q_PROPERTY(bool             videoRunning        READ    videoRunning                                NOTIFY videoRunningChanged)
     Q_PROPERTY(bool             uvcEnabled          READ    uvcEnabled                                  CONSTANT)
-    Q_PROPERTY(VideoSurface*    videoSurface        MEMBER  _videoSurface                               CONSTANT)
-    Q_PROPERTY(VideoReceiver*   videoReceiver       MEMBER  _videoReceiver                              CONSTANT)
+    Q_PROPERTY(VideoSurface*    videoSurface        READ    videoSurface                                CONSTANT)
+    Q_PROPERTY(VideoReceiver*   videoReceiver       READ    videoReceiver                               CONSTANT)
     Q_PROPERTY(QString          imageFile           READ    imageFile                                   NOTIFY imageFileChanged)
     Q_PROPERTY(bool             showFullScreen      READ    showFullScreen  WRITE setShowFullScreen     NOTIFY showFullScreenChanged)
 
@@ -48,6 +48,9 @@ public:
     QString     videoSourceID       () { return _videoSourceID; }
     QString     imageFile           () { return _imageFile; }
     bool        showFullScreen      () { return _showFullScreen; }
+
+    VideoSurface*   videoSurface    () { return _videoSurface; }
+    VideoReceiver*  videoReceiver   () { return _videoReceiver; }
 
 #if defined(QGC_DISABLE_UVC)
     bool        uvcEnabled          () { return false; }
