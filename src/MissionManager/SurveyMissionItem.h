@@ -30,6 +30,7 @@ public:
     Q_PROPERTY(Fact*                gridAltitudeRelative        READ gridAltitudeRelative           CONSTANT)
     Q_PROPERTY(Fact*                gridAngle                   READ gridAngle                      CONSTANT)
     Q_PROPERTY(Fact*                gridSpacing                 READ gridSpacing                    CONSTANT)
+    Q_PROPERTY(Fact*                gridEntryLocation           READ gridEntryLocation              CONSTANT)
     Q_PROPERTY(Fact*                turnaroundDist              READ turnaroundDist                 CONSTANT)
     Q_PROPERTY(Fact*                cameraTriggerDistance       READ cameraTriggerDistance          CONSTANT)
     Q_PROPERTY(Fact*                cameraTriggerInTurnaround   READ cameraTriggerInTurnaround      CONSTANT)
@@ -65,6 +66,7 @@ public:
     Fact* gridAltitudeRelative      (void) { return &_gridAltitudeRelativeFact; }
     Fact* gridAngle                 (void) { return &_gridAngleFact; }
     Fact* gridSpacing               (void) { return &_gridSpacingFact; }
+    Fact* gridEntryLocation         (void) { return &_gridEntryLocationFact; }
     Fact* turnaroundDist            (void) { return &_turnaroundDistFact; }
     Fact* cameraTriggerDistance     (void) { return &_cameraTriggerDistanceFact; }
     Fact* cameraTriggerInTurnaround (void) { return &_cameraTriggerInTurnaroundFact; }
@@ -135,6 +137,7 @@ public:
     static const char* gridAltitudeRelativeName;
     static const char* gridAngleName;
     static const char* gridSpacingName;
+    static const char* gridEntryLocationName;
     static const char* turnaroundDistName;
     static const char* cameraTriggerDistanceName;
     static const char* cameraTriggerInTurnaroundName;
@@ -175,6 +178,14 @@ private:
         CameraTriggerHoverAndCapture
     };
 
+    // Must match json spec for GridEntryLocation
+    enum EntryLocation {
+        EntryLocationTopLeft,
+        EntryLocationTopRight,
+        EntryLocationBottomLeft,
+        EntryLocationBottomRight,
+    };
+
     void _setExitCoordinate(const QGeoCoordinate& coordinate);
     void _generateGrid(void);
     void _updateCoordinateAltitude(void);
@@ -203,6 +214,11 @@ private:
     qreal _dp(QPointF pt1, QPointF pt2);
     void _swapPoints(QList<QPointF>& points, int index1, int index2);
     QList<QPointF> _convexPolygon(const QList<QPointF>& polygon);
+    void _reverseTransectOrder(QList<QList<QGeoCoordinate>>& transects);
+    void _reverseInternalTransectPoints(QList<QList<QGeoCoordinate>>& transects);
+    void _adjustTransectsToEntryPointLocation(QList<QList<QGeoCoordinate>>& transects);
+    bool _gridAngleIsNorthSouthTransects();
+    double _clampGridAngle90(double gridAngle);
 
     int                             _sequenceNumber;
     bool                            _dirty;
@@ -230,6 +246,7 @@ private:
     SettingsFact    _gridAltitudeRelativeFact;
     SettingsFact    _gridAngleFact;
     SettingsFact    _gridSpacingFact;
+    SettingsFact    _gridEntryLocationFact;
     SettingsFact    _turnaroundDistFact;
     SettingsFact    _cameraTriggerDistanceFact;
     SettingsFact    _cameraTriggerInTurnaroundFact;
@@ -251,6 +268,7 @@ private:
     static const char* _jsonGridAltitudeRelativeKey;
     static const char* _jsonGridAngleKey;
     static const char* _jsonGridSpacingKey;
+    static const char* _jsonGridEntryLocationKey;
     static const char* _jsonTurnaroundDistKey;
     static const char* _jsonCameraTriggerDistanceKey;
     static const char* _jsonCameraTriggerInTurnaroundKey;
