@@ -24,6 +24,8 @@
     "shortDescription": "Angle for parallel lines of grid.",
     "type":             "double",
     "units":            "deg",
+    "min":              -360.0,
+    "max":              360.0,
     "decimalPlaces":    1,
     "defaultValue":     0
 },
@@ -153,5 +155,13 @@
     "shortDescription": "Camera selected for Survey.",
     "type":             "string",
     "defaultValue":     ""
+},
+{
+    "name":             "GridEntryLocation",
+    "shortDescription": "Location for entry point into survey area",
+    "type":             "uint32",
+    "enumStrings":      "Top Left, Top Right, Bottom Left, Bottom Right",
+    "enumValues":       "0,1,2,3",
+    "defaultValue":     0
 }
 ]
