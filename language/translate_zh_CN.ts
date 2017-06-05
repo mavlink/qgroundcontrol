@@ -4359,7 +4359,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
         <location filename="../src/ui/MainWindow.ui" line="68"/>
         <source>Widgets</source>
-        <translation type="unfinished"></translation>
+        <translation>窗口</translation>
     </message>
     <message>
         <location filename="../src/ui/MainWindow.ui" line="77"/>
@@ -4369,7 +4369,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
         <location filename="../src/ui/MainWindow.ui" line="80"/>
         <source>Ctrl+Q</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/ui/MainWindow.ui" line="85"/>
@@ -4925,7 +4925,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
         <location filename="../src/ui/preferences/MockLink.qml" line="64"/>
         <source>Stop One MockLink</source>
-        <translation type="unfinished">停止一个模拟链路</translation>
+        <translation>停止一个模拟链路</translation>
     </message>
 </context>
 <context>
@@ -4933,7 +4933,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
         <location filename="../src/ui/preferences/MockLinkSettings.qml" line="59"/>
         <source>Mock Link Settings</source>
-        <translation type="unfinished">模拟链路设置</translation>
+        <translation>模拟链路设置</translation>
     </message>
     <message>
         <location filename="../src/ui/preferences/MockLinkSettings.qml" line="67"/>
@@ -5027,7 +5027,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
         <location filename="../src/ui/MultiVehicleDockWidget.ui" line="14"/>
         <source>Form</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
