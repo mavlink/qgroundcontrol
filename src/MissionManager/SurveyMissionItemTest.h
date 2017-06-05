@@ -33,11 +33,7 @@ protected:
 private slots:
     void _testDirty(void);
     void _testCameraValueChanged(void);
-#if 0
-    void _testAddPolygonCoordinate(void);
-    void _testClearPolygon(void);
     void _testCameraTrigger(void);
-#endif
 
 private:
     enum {

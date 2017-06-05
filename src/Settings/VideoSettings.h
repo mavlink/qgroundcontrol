@@ -19,19 +19,25 @@ class VideoSettings : public SettingsGroup
 public:
     VideoSettings(QObject* parent = NULL);
 
-    Q_PROPERTY(Fact* videoSource    READ videoSource    CONSTANT)
-    Q_PROPERTY(Fact* udpPort        READ udpPort        CONSTANT)
-    Q_PROPERTY(Fact* rtspUrl        READ rtspUrl        CONSTANT)
-    Q_PROPERTY(Fact* videoSavePath  READ videoSavePath  CONSTANT)
-    Q_PROPERTY(Fact* aspectRatio    READ aspectRatio    CONSTANT)
-    Q_PROPERTY(Fact* gridLines      READ gridLines      CONSTANT)
+    Q_PROPERTY(Fact* videoSource        READ videoSource        CONSTANT)
+    Q_PROPERTY(Fact* udpPort            READ udpPort            CONSTANT)
+    Q_PROPERTY(Fact* rtspUrl            READ rtspUrl            CONSTANT)
+    Q_PROPERTY(Fact* videoSavePath      READ videoSavePath      CONSTANT)
+    Q_PROPERTY(Fact* aspectRatio        READ aspectRatio        CONSTANT)
+    Q_PROPERTY(Fact* gridLines          READ gridLines          CONSTANT)
+    Q_PROPERTY(Fact* showRecControl     READ showRecControl     CONSTANT)
+    Q_PROPERTY(Fact* recordingFormat    READ recordingFormat    CONSTANT)
+    Q_PROPERTY(Fact* maxVideoSize       READ maxVideoSize       CONSTANT)
 
-    Fact* videoSource   (void);
-    Fact* udpPort       (void);
-    Fact* rtspUrl       (void);
-    Fact* videoSavePath (void);
-    Fact* aspectRatio   (void);
-    Fact* gridLines     (void);
+    Fact* videoSource       (void);
+    Fact* udpPort           (void);
+    Fact* rtspUrl           (void);
+    Fact* videoSavePath     (void);
+    Fact* aspectRatio       (void);
+    Fact* gridLines         (void);
+    Fact* showRecControl    (void);
+    Fact* recordingFormat   (void);
+    Fact* maxVideoSize      (void);
 
     static const char* videoSettingsGroupName;
 
@@ -41,6 +47,9 @@ public:
     static const char* videoSavePathName;
     static const char* videoAspectRatioName;
     static const char* videoGridLinesName;
+    static const char* showRecControlName;
+    static const char* recordingFormatName;
+    static const char* maxVideoSizeName;
 
     static const char* videoSourceNoVideo;
     static const char* videoSourceUDP;
@@ -53,6 +62,9 @@ private:
     SettingsFact* _videoSavePathFact;
     SettingsFact* _videoAspectRatioFact;
     SettingsFact* _gridLinesFact;
+    SettingsFact* _showRecControlFact;
+    SettingsFact* _recordingFormatFact;
+    SettingsFact* _maxVideoSizeFact;
 };
 
 #endif

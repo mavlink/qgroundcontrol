@@ -111,6 +111,29 @@ Item {
     property int    _resumeMissionIndex:    missionController.resumeMissionIndex
     property bool   _hideEmergenyStop:      !QGroundControl.corePlugin.options.guidedBarShowEmergencyStop
     property bool   _hideOrbit:             !QGroundControl.corePlugin.options.guidedBarShowOrbit
+
+    // This is a temporary hack to debug a problem with RTL and Pause being disabled at the wrong time
+
+    property bool __guidedModeSupported: _activeVehicle ? _activeVehicle.guidedModeSupported : false
+    property bool __pauseVehicleSupported: _activeVehicle ? _activeVehicle.pauseVehicleSupported : false
+    property bool __flightMode: _flightMode
+
+    function _outputState() {
+        console.log(qsTr("_activeVehicle(%1) _vehicleArmed(%2) guidedModeSupported(%3) _vehicleFlying(%4) _vehicleInRTLMode(%5) pauseVehicleSupported(%6) _vehiclePaused(%7) _flightMode(%8)").arg(_activeVehicle ? 1 : 0).arg(_vehicleArmed ? 1 : 0).arg(__guidedModeSupported ? 1 : 0).arg(_vehicleFlying ? 1 : 0).arg(_vehicleInRTLMode ? 1 : 0).arg(__pauseVehicleSupported ? 1 : 0).arg(_vehiclePaused ? 1 : 0).arg(_flightMode))
+    }
+
+    Component.onCompleted: _outputState()
+    on_ActiveVehicleChanged: _outputState()
+    on_VehicleArmedChanged: _outputState()
+    on_VehicleFlyingChanged: _outputState()
+    on_VehicleInRTLModeChanged: _outputState()
+    on_VehiclePausedChanged: _outputState()
+    on__FlightModeChanged: _outputState()
+    on__GuidedModeSupportedChanged: _outputState()
+    on__PauseVehicleSupportedChanged: _outputState()
+
+    // End of hack
+
     property var    _actionData
 
     on_CurrentMissionIndexChanged: console.log("_currentMissionIndex", _currentMissionIndex)

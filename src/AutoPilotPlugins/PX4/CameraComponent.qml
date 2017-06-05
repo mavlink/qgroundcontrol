@@ -36,10 +36,10 @@ SetupPage {
             property real _margins:         ScreenTools.defaultFontPixelHeight
             property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 25
 
-            property Fact _camTriggerMode:  controller.getParameterFact(-1, "TRIG_MODE")
-            property Fact _camTriggerInterface:  controller.getParameterFact(-1, "TRIG_INTERFACE", false)
-            property Fact _camTriggerPol:   controller.getParameterFact(-1, "TRIG_POLARITY", false) // Don't bitch about missing as these only exist if trigger mode is enabled
-            property Fact _auxPins:         controller.getParameterFact(-1, "TRIG_PINS",     false) // Ditto
+            property Fact _camTriggerMode:      controller.getParameterFact(-1, "TRIG_MODE")
+            property Fact _camTriggerInterface: controller.getParameterFact(-1, "TRIG_INTERFACE", false /* reportMissing */)
+            property Fact _camTriggerPol:       controller.getParameterFact(-1, "TRIG_POLARITY", false /* reportMissing */)
+            property Fact _auxPins:             controller.getParameterFact(-1, "TRIG_PINS", false /* reportMissing */)
 
             property bool _rebooting:       false
             property var  _auxChannels:     [ 0, 0, 0, 0, 0, 0]
@@ -154,26 +154,28 @@ SetupPage {
                             text:               qsTr("Time Interval")
                             anchors.baseline:   timeIntervalField.baseline
                             color:              qgcPal.text
+                            visible:            timeIntervalField.visible
                         }
                         FactTextField {
                             id:                 timeIntervalField
                             fact:               controller.getParameterFact(-1, "TRIG_INTERVAL", false)
                             showUnits:          true
                             Layout.minimumWidth: _editFieldWidth
-                            enabled:            _camTriggerMode.value === 2
+                            visible:            _camTriggerMode.value === 2
                         }
 
                         QGCLabel {
                             text:               qsTr("Distance Interval")
                             anchors.baseline:   trigDistField.baseline
                             color:              qgcPal.text
+                            visible:            trigDistField.visible
                         }
                         FactTextField {
                             id:                 trigDistField
                             fact:               controller.getParameterFact(-1, "TRIG_DISTANCE", false)
                             showUnits:          true
                             Layout.minimumWidth: _editFieldWidth
-                            enabled:            _camTriggerMode.value === 3
+                            visible:            _camTriggerMode.value === 3
                         }
                     }
                 } // QGCGroupBox - Camera Trigger
@@ -297,6 +299,17 @@ SetupPage {
                                 }
                             }
                         }
+                    }
+                } // QGCGroupBox - Hardware Settings
+
+                QGCGroupBox {
+                    title:              qsTr("Camera Test")
+                    Layout.fillWidth:   true
+
+                    QGCButton {
+                        anchors.horizontalCenter:   parent.horizontalCenter
+                        text:                       qsTr("Trigger Camera")
+                        onClicked:                  controller.vehicle.triggerCamera()
                     }
                 }
             }
