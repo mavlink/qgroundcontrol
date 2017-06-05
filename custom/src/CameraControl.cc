@@ -14,6 +14,8 @@
 #include "QGCMapEngine.h"
 #include "VideoManager.h"
 
+#include <QDir>
+
 QGC_LOGGING_CATEGORY(YuneecCameraLog, "YuneecCameraLog")
 QGC_LOGGING_CATEGORY(YuneecCameraLogVerbose, "YuneecCameraLogVerbose")
 
