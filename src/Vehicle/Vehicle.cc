@@ -484,6 +484,12 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
     if (!_containsLink(link)) {
         _addLink(link);
+
+        // if the minimum supported version of MAVLink is already 2.0
+        // set our max proto version to it.
+        if (_mavlink->getCurrentVersion() >= 200) {
+            _maxProtoVersion = _mavlink->getCurrentVersion();
+        }
     }
 
     //-- Check link status
@@ -513,8 +519,11 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     }
 
 
-    // Mark this vehicle as active
-    _connectionActive();
+    // Mark this vehicle as active - but only if the traffic is coming from
+    // the actual vehicle
+    if (message.sysid == _id) {
+        _connectionActive();
+    }
 
     // Give the plugin a change to adjust the message contents
     if (!_firmwarePlugin->adjustIncomingMavlinkMessage(this, &message)) {
@@ -568,6 +577,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_COMMAND_ACK:
         _handleCommandAck(message);
+        break;
+    case MAVLINK_MSG_ID_COMMAND_LONG:
+        _handleCommandLong(message);
         break;
     case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
         _handleAutopilotVersion(link, message);
@@ -853,7 +865,9 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     if (ack.command == MAV_CMD_REQUEST_PROTOCOL_VERSION && ack.result != MAV_RESULT_ACCEPTED) {
         // The autopilot does not understand the request and consequently is likely handling only
         // MAVLink 1
-        _setMaxProtoVersion(100);
+        if (_maxProtoVersion == 0) {
+            _setMaxProtoVersion(100);
+        }
     }
 
     if (_mavCommandQueue.count() && ack.command == _mavCommandQueue[0].command) {
@@ -887,6 +901,29 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     }
 
     _sendNextQueuedMavCommand();
+}
+
+void Vehicle::_handleCommandLong(mavlink_message_t& message)
+{
+    mavlink_command_long_t cmd;
+    mavlink_msg_command_long_decode(&message, &cmd);
+
+    switch (cmd.command) {
+        // Other component on the same system
+        // requests that QGC frees up the serial port of the autopilot
+        case MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN:
+            if (cmd.param6 > 0) {
+                // disconnect the USB link if its a direct connection to a Pixhawk
+                for (int i = 0; i < _links.length(); i++) {
+                    SerialLink *sl = qobject_cast<SerialLink*>(_links.at(i));
+                    if (sl && sl->getSerialConfig()->usbDirect()) {
+                        qDebug() << "Disconnecting:" << _links.at(i)->getName();
+                        qgcApp()->toolbox()->linkManager()->disconnectLink(_links.at(i));
+                    }
+                }
+            }
+        break;
+    }
 }
 
 void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
@@ -1076,9 +1113,11 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
 
 void Vehicle::_handleRadioStatus(mavlink_message_t& message)
 {
+
     //-- Process telemetry status message
     mavlink_radio_status_t rstatus;
     mavlink_msg_radio_status_decode(&message, &rstatus);
+
     int rssi    = rstatus.rssi;
     int remrssi = rstatus.remrssi;
     int lnoise = (int)(int8_t)rstatus.noise;
@@ -1958,9 +1997,15 @@ void Vehicle::_connectionLostTimeout(void)
     if (_connectionLostEnabled && !_connectionLost) {
         _connectionLost = true;
         _heardFrom = false;
+        _maxProtoVersion = 0;
         emit connectionLostChanged(true);
         _say(QString("%1 communication lost").arg(_vehicleIdSpeech()));
         if (_autoDisconnect) {
+
+            // Reset link state
+            for (int i = 0; i < _links.length(); i++) {
+                _mavlink->resetMetadataForLink(_links.at(i));
+            }
             disconnectInactiveVehicle();
         }
     }
@@ -1973,6 +2018,12 @@ void Vehicle::_connectionActive(void)
         _connectionLost = false;
         emit connectionLostChanged(false);
         _say(QString("%1 communication regained").arg(_vehicleIdSpeech()));
+
+        // Re-negotiate protocol version for the link
+        sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
+                        MAV_CMD_REQUEST_PROTOCOL_VERSION,
+                       false,                                   // No error shown if fails
+                        1);                                     // Request protocol version
     }
 }
 
@@ -2289,8 +2340,11 @@ void Vehicle::_sendMavCommandAgain(void)
         }
 
         if (queuedCommand.command == MAV_CMD_REQUEST_PROTOCOL_VERSION) {
-            // We aren't going to get a response back for the protocol version, so assume v1 is all we can do
-            _setMaxProtoVersion(100);
+            // We aren't going to get a response back for the protocol version, so assume v1 is all we can do.
+            // If the max protocol version is uninitialized, fall back to v1.
+            if (_maxProtoVersion == 0) {
+                _setMaxProtoVersion(100);
+            }
         }
 
         emit mavCommandResult(_id, queuedCommand.component, queuedCommand.command, MAV_RESULT_FAILED, true /* noResponsefromVehicle */);
