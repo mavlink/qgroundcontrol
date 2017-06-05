@@ -72,6 +72,9 @@ void QGCMapPolygon::setDirty(bool dirty)
 {
     if (_dirty != dirty) {
         _dirty = dirty;
+        if (!dirty) {
+            _polygonModel.setDirty(false);
+        }
         emit dirtyChanged(dirty);
     }
 }

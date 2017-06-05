@@ -42,6 +42,8 @@
     GST_PLUGIN_STATIC_DECLARE(videoparsersbad);
     GST_PLUGIN_STATIC_DECLARE(x264);
     GST_PLUGIN_STATIC_DECLARE(rtpmanager);
+    GST_PLUGIN_STATIC_DECLARE(isomp4);
+    GST_PLUGIN_STATIC_DECLARE(matroska);
 #endif
     G_END_DECLS
 #endif
@@ -140,6 +142,8 @@ void initializeVideoStreaming(int &argc, char* argv[])
         GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
         GST_PLUGIN_STATIC_REGISTER(x264);
         GST_PLUGIN_STATIC_REGISTER(rtpmanager);
+        GST_PLUGIN_STATIC_REGISTER(isomp4);
+        GST_PLUGIN_STATIC_REGISTER(matroska);
     #endif
 #else
     Q_UNUSED(argc);

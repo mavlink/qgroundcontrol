@@ -872,7 +872,7 @@ void MockLink::_respondWithAutopilotVersion(void)
     uint32_t flightVersion = 0;
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         flightVersion |= 3 << (8*3);
-        flightVersion |= 3 << (8*2);
+        flightVersion |= 5 << (8*2);
         flightVersion |= 0 << (8*1);
         flightVersion |= FIRMWARE_VERSION_TYPE_DEV << (8*0);
     } else if (_firmwareType == MAV_AUTOPILOT_PX4) {

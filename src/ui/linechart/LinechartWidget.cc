@@ -87,7 +87,7 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     // Create curve list headings
     connect(ui.recolorButton, &QPushButton::clicked, this, &LinechartWidget::recolor);
     connect(ui.shortNameCheckBox, &QCheckBox::clicked, this, &LinechartWidget::setShortNames);
-    connect(ui.plotFilterLineEdit, &QLineEdit::textChanged, this, &LinechartWidget::filterCurves);
+    connect(ui.plotFilterLineEdit, &QLineEdit::textChanged, this, &LinechartWidget::_restartFilterTimeout);
     QShortcut *shortcut  = new QShortcut(this);
     shortcut->setKey(QKeySequence(Qt::CTRL + Qt::Key_F));
     connect(shortcut, &QShortcut::activated, this, &LinechartWidget::setPlotFilterLineEditFocus);
@@ -126,6 +126,9 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     readSettings();
     pUnit->setVisible(ui.showUnitsCheckBox->isChecked());
     connect(ui.showUnitsCheckBox, &QCheckBox::clicked, pUnit, &QLabel::setVisible);
+
+    _filterTimer.setInterval(500);
+    connect(&_filterTimer, &QTimer::timeout, this, &LinechartWidget::_filterTimeout);
 }
 
 LinechartWidget::~LinechartWidget()
@@ -669,6 +672,16 @@ void LinechartWidget::filterCurve(const QString &key, bool match)
             curveUnits[key]->setVisible(match && ui.showUnitsCheckBox->isChecked());
             checkBoxes[key]->setVisible(match);
         }
+}
+
+void LinechartWidget::_restartFilterTimeout(void)
+{
+    _filterTimer.start();
+}
+
+void LinechartWidget::_filterTimeout(void)
+{
+    filterCurves(ui.plotFilterLineEdit->text());
 }
 
 void LinechartWidget::filterCurves(const QString &filter)

@@ -33,7 +33,7 @@ QGCListView {
     delegate: Rectangle {
         width:      parent.width
         height:     innerColumn.y + innerColumn.height + _margin
-        color:      qgcPal.buttonHighlight
+        color:      qgcPal.missionItemEditor
         opacity:    0.8
         radius:     _margin
 

@@ -57,6 +57,7 @@ Rectangle {
     property real   _missionTime:               _missionValid ? missionTime : NaN
     property int    _batteryChangePoint:        _controllerValid ? planMasterController.missionController.batteryChangePoint : -1
     property int    _batteriesRequired:         _controllerValid ? planMasterController.missionController.batteriesRequired : -1
+    property bool   _batteryInfoAvailable:      _batteryChangePoint >= 0 || _batteriesRequired >= 0
     property real   _controllerProgressPct:     _controllerValid ? planMasterController.missionController.progressPct : 0
     property bool   _syncInProgress:            _controllerValid ? planMasterController.missionController.syncInProgress : false
 
@@ -246,6 +247,7 @@ Rectangle {
             rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
             Layout.alignment:       Qt.AlignHCenter
+            visible:                _batteryInfoAvailable
 
             QGCLabel {
                 text:               qsTr("Battery")

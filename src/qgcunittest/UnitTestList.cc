@@ -37,6 +37,7 @@
 #include "SpeedSectionTest.h"
 #include "PlanMasterControllerTest.h"
 #include "MissionSettingsTest.h"
+#include "QGCMapPolygonTest.h"
 
 UT_REGISTER_TEST(FactSystemTestGeneric)
 UT_REGISTER_TEST(FactSystemTestPX4)
@@ -60,6 +61,7 @@ UT_REGISTER_TEST(CameraSectionTest)
 UT_REGISTER_TEST(SpeedSectionTest)
 UT_REGISTER_TEST(PlanMasterControllerTest)
 UT_REGISTER_TEST(MissionSettingsTest)
+UT_REGISTER_TEST(QGCMapPolygonTest)
 
 // List of unit test which are currently disabled.
 // If disabling a new test, include reason in comment.

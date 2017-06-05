@@ -17,6 +17,7 @@
 #include "VideoReceiver.h"
 #include "SettingsManager.h"
 #include "QGCApplication.h"
+#include "VideoManager.h"
 
 #include <QDebug>
 #include <QUrl>
@@ -25,6 +26,22 @@
 #include <QSysInfo>
 
 QGC_LOGGING_CATEGORY(VideoReceiverLog, "VideoReceiverLog")
+
+static const char* kVideoExtensions[] =
+{
+    "mkv",
+    "mov",
+    "mp4"
+};
+
+static const char* kVideoMuxes[] =
+{
+    "matroskamux",
+    "qtmux",
+    "mp4mux"
+};
+
+#define NUM_MUXES (sizeof(kVideoMuxes) / sizeof(char*))
 
 VideoReceiver::VideoReceiver(QObject* parent)
     : QObject(parent)
@@ -444,6 +461,39 @@ gboolean VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer dat
 }
 #endif
 
+void VideoReceiver::_cleanupOldVideos()
+{
+    QString savePath = qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSavePath()->rawValue().toString();
+    QDir videoDir = QDir(savePath);
+    videoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
+    videoDir.setSorting(QDir::Time);
+    //-- All the movie extensions we support
+    QStringList nameFilters;
+    for(uint32_t i = 0; i < NUM_MUXES; i++) {
+        nameFilters << QString("*.") + QString(kVideoExtensions[i]);
+    }
+    videoDir.setNameFilters(nameFilters);
+    //-- get the list of videos stored
+    QFileInfoList vidList = videoDir.entryInfoList();
+    if(!vidList.isEmpty()) {
+        uint64_t total   = 0;
+        //-- Settings are stored using MB
+        uint64_t maxSize = (qgcApp()->toolbox()->settingsManager()->videoSettings()->maxVideoSize()->rawValue().toUInt() * 1024 * 1024);
+        //-- Compute total used storage
+        for(int i = 0; i < vidList.size(); i++) {
+            total += vidList[i].size();
+        }
+        //-- Remove old movies until max size is satisfied.
+        while(total >= maxSize && !vidList.isEmpty()) {
+            total -= vidList.last().size();
+            qCDebug(VideoReceiverLog) << "Removing old video file:" << vidList.last().filePath();
+            QFile file (vidList.last().filePath());
+            file.remove();
+            vidList.removeLast();
+        }
+    }
+}
+
 // When we finish our pipeline will look like this:
 //
 //                                   +-->queue-->decoder-->_videosink
@@ -457,7 +507,7 @@ gboolean VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer dat
 //                                        +--------------------------------------+
 void VideoReceiver::startRecording(void)
 {
-#if defined(QGC_GST_STREAMING) && defined(QGC_ENABLE_VIDEORECORDING)
+#if defined(QGC_GST_STREAMING)
 
     qCDebug(VideoReceiverLog) << "startRecording()";
     // exit immediately if we are already recording
@@ -468,36 +518,48 @@ void VideoReceiver::startRecording(void)
 
     QString savePath = qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSavePath()->rawValue().toString();
     if(savePath.isEmpty()) {
-        qgcApp()->showMessage("Unabled to record video. Video save path must be specified in Settings.");
+        qgcApp()->showMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
         return;
     }
+
+    uint32_t muxIdx = qgcApp()->toolbox()->settingsManager()->videoSettings()->recordingFormat()->rawValue().toUInt();
+    if(muxIdx >= NUM_MUXES) {
+        qgcApp()->showMessage(tr("Invalid video format defined."));
+        return;
+    }
+
+    //-- Disk usage maintenance
+    _cleanupOldVideos();
 
     _sink           = new Sink();
     _sink->teepad   = gst_element_get_request_pad(_tee, "src_%u");
     _sink->queue    = gst_element_factory_make("queue", NULL);
-    _sink->mux      = gst_element_factory_make("matroskamux", NULL);
+    _sink->parse    = gst_element_factory_make("h264parse", NULL);
+    _sink->mux      = gst_element_factory_make(kVideoMuxes[muxIdx], NULL);
     _sink->filesink = gst_element_factory_make("filesink", NULL);
     _sink->removing = false;
 
-    if(!_sink->teepad || !_sink->queue || !_sink->mux || !_sink->filesink) {
+    if(!_sink->teepad || !_sink->queue || !_sink->mux || !_sink->filesink || !_sink->parse) {
         qCritical() << "VideoReceiver::startRecording() failed to make _sink elements";
         return;
     }
 
     QString videoFile;
-    videoFile = savePath + "/QGC-" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + ".mkv";
+    videoFile = savePath + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + "." + kVideoExtensions[muxIdx];
 
     g_object_set(G_OBJECT(_sink->filesink), "location", qPrintable(videoFile), NULL);
     qCDebug(VideoReceiverLog) << "New video file:" << videoFile;
 
     gst_object_ref(_sink->queue);
+    gst_object_ref(_sink->parse);
     gst_object_ref(_sink->mux);
     gst_object_ref(_sink->filesink);
 
-    gst_bin_add_many(GST_BIN(_pipeline), _sink->queue, _sink->mux, _sink->filesink, NULL);
-    gst_element_link_many(_sink->queue, _sink->mux, _sink->filesink, NULL);
+    gst_bin_add_many(GST_BIN(_pipeline), _sink->queue, _sink->parse, _sink->mux, _sink->filesink, NULL);
+    gst_element_link_many(_sink->queue, _sink->parse, _sink->mux, _sink->filesink, NULL);
 
     gst_element_sync_state_with_parent(_sink->queue);
+    gst_element_sync_state_with_parent(_sink->parse);
     gst_element_sync_state_with_parent(_sink->mux);
     gst_element_sync_state_with_parent(_sink->filesink);
 
@@ -513,7 +575,7 @@ void VideoReceiver::startRecording(void)
 
 void VideoReceiver::stopRecording(void)
 {
-#if defined(QGC_GST_STREAMING) && defined(QGC_ENABLE_VIDEORECORDING)
+#if defined(QGC_GST_STREAMING)
     qCDebug(VideoReceiverLog) << "stopRecording()";
     // exit immediately if we are not recording
     if(_pipeline == NULL || !_recording) {
@@ -534,6 +596,7 @@ void VideoReceiver::stopRecording(void)
 void VideoReceiver::_shutdownRecordingBranch()
 {
     gst_bin_remove(GST_BIN(_pipelineStopRec), _sink->queue);
+    gst_bin_remove(GST_BIN(_pipelineStopRec), _sink->parse);
     gst_bin_remove(GST_BIN(_pipelineStopRec), _sink->mux);
     gst_bin_remove(GST_BIN(_pipelineStopRec), _sink->filesink);
 
@@ -541,11 +604,13 @@ void VideoReceiver::_shutdownRecordingBranch()
     gst_object_unref(_pipelineStopRec);
     _pipelineStopRec = NULL;
 
-    gst_element_set_state(_sink->filesink, GST_STATE_NULL);
-    gst_element_set_state(_sink->mux, GST_STATE_NULL);
-    gst_element_set_state(_sink->queue, GST_STATE_NULL);
+    gst_element_set_state(_sink->filesink,  GST_STATE_NULL);
+    gst_element_set_state(_sink->parse,     GST_STATE_NULL);
+    gst_element_set_state(_sink->mux,       GST_STATE_NULL);
+    gst_element_set_state(_sink->queue,     GST_STATE_NULL);
 
     gst_object_unref(_sink->queue);
+    gst_object_unref(_sink->parse);
     gst_object_unref(_sink->mux);
     gst_object_unref(_sink->filesink);
 
@@ -568,7 +633,7 @@ void VideoReceiver::_detachRecordingBranch(GstPadProbeInfo* info)
     Q_UNUSED(info)
 
     // Also unlinks and unrefs
-    gst_bin_remove_many(GST_BIN(_pipeline), _sink->queue, _sink->mux, _sink->filesink, NULL);
+    gst_bin_remove_many(GST_BIN(_pipeline), _sink->queue, _sink->parse, _sink->mux, _sink->filesink, NULL);
 
     // Give tee its pad back
     gst_element_release_request_pad(_tee, _sink->teepad);
@@ -578,8 +643,8 @@ void VideoReceiver::_detachRecordingBranch(GstPadProbeInfo* info)
     _pipelineStopRec = gst_pipeline_new("pipeStopRec");
 
     // Put our elements from the recording branch into the temporary pipeline
-    gst_bin_add_many(GST_BIN(_pipelineStopRec), _sink->queue, _sink->mux, _sink->filesink, NULL);
-    gst_element_link_many(_sink->queue, _sink->mux, _sink->filesink, NULL);
+    gst_bin_add_many(GST_BIN(_pipelineStopRec), _sink->queue, _sink->parse, _sink->mux, _sink->filesink, NULL);
+    gst_element_link_many(_sink->queue, _sink->parse, _sink->mux, _sink->filesink, NULL);
 
     // Add handler for EOS event
     GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipelineStopRec));
