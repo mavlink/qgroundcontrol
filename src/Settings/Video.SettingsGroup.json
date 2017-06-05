@@ -68,6 +68,6 @@
     "type":             "uint32",
     "min":              100,
     "units":            "MB",
-    "defaultValue":     2024
+    "defaultValue":     2048
 }
 ]
