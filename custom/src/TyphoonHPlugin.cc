@@ -318,8 +318,8 @@ TyphoonHPlugin::settingsPages()
                 QUrl::fromUserInput("qrc:/typhoonh/RCCalibration.qml"),
                 QUrl::fromUserInput("qrc:/qmlimages/RC.svg"));
         }
-#endif
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pRCCal));
+#endif
         if(!_pMockLink) {
             _pMockLink = new QGCSettings(tr("MockLink"),
                 QUrl::fromUserInput("qrc:/qml/MockLink.qml"),
@@ -340,8 +340,8 @@ TyphoonHPlugin::settingsPages()
                     QUrl::fromUserInput("qrc:/typhoonh/RCCalibration.qml"),
                     QUrl::fromUserInput("qrc:/qmlimages/RC.svg"));
             }
-#endif
             _settingsList.append(QVariant::fromValue((QGCSettings*)_pRCCal));
+#endif
             if(!_pConsole) {
                 _pConsole = new QGCSettings(tr("Console"),
                     QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/AppMessages.qml"),
@@ -391,6 +391,23 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         return false;
     } else if (metaData.name() == VideoSettings::rtspUrlName) {
         metaData.setRawDefaultValue(QStringLiteral("rtsp://192.168.42.1:554/live"));
+        return false;
+    } else if (metaData.name() == VideoSettings::videoSavePathName) {
+        QString vidPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Video");
+        QDir().mkpath(vidPath);
+        metaData.setRawDefaultValue(vidPath);
+        return false;
+    } else if (metaData.name() == VideoSettings::showRecControlName) {
+        //-- Disable Video Recording Control (UI)
+#if defined(QT_DEBUG)
+        metaData.setRawDefaultValue(true);
+#else
+        metaData.setRawDefaultValue(false);
+#endif
+        return false;
+    } else if (metaData.name() == VideoSettings::recordingFormatName) {
+        //-- Make it MP4
+        metaData.setRawDefaultValue(2);
         return false;
     } else if (metaData.name() == VideoSettings::videoAspectRatioName) {
         metaData.setRawDefaultValue(1.777777);
