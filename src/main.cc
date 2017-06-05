@@ -24,6 +24,7 @@
 #include <QUdpSocket>
 #include <QtPlugin>
 #include <QStringListModel>
+#include <QTranslator>
 #include "QGCApplication.h"
 #include "AppMessages.h"
 
@@ -91,6 +92,49 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     return JNI_VERSION_1_6;
 }
 #endif
+
+/**
+ * @brief init default language
+ *
+ * @param app: The Application Object point
+ * @return void
+ */
+int GLOBAL_LANGUAGE_FLAG = -1;
+extern int GLOBAL_LANGUAGE_FLAG;   //global language flag
+void initDefaultLanguage(QApplication * app)
+{
+    /* multiple language support */
+    QLocale locale;
+    QString translatorFile = "";
+    QTranslator *translator = new QTranslator(app);
+
+    /* get the current language environment of the system */
+    GLOBAL_LANGUAGE_FLAG = locale.language();
+    switch(GLOBAL_LANGUAGE_FLAG)
+    {
+        case QLocale::Chinese:
+            translatorFile = "./language/translate_zh_CN.qm";
+            break;
+        case QLocale::English:
+            translatorFile = "./language/translate_en_US.qm";
+            break;
+        default:
+            GLOBAL_LANGUAGE_FLAG = QLocale::Chinese;
+            translatorFile = "./language/translate_zh_CN.qm";
+            break;
+
+    }
+
+    if (translator->load(translatorFile))
+    {
+        app->installTranslator(translator);
+
+    }
+    else
+    {
+        qDebug() << "ERROR::Load language failed!";
+    }
+}
 
 /**
  * @brief Starts the application
@@ -168,7 +212,7 @@ int main(int argc, char *argv[])
 
     Q_IMPORT_PLUGIN(QGeoServiceProviderFactoryQGC)
 
-    bool runUnitTests = false;          // Run unit tests
+        bool runUnitTests = false;          // Run unit tests
 
 #ifdef QT_DEBUG
     // We parse a small set of command line options here prior to QGCApplication in order to handle the ones
@@ -208,6 +252,9 @@ int main(int argc, char *argv[])
 
     QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
     Q_CHECK_PTR(app);
+
+    //init language
+    initDefaultLanguage(app);
 
 #ifdef Q_OS_LINUX
     QApplication::setWindowIcon(QIcon(":/res/resources/icons/qgroundcontrol.ico"));
