@@ -41,7 +41,6 @@
         <file alias="MainWindowNative.qml">src/ui/MainWindowNative.qml</file>
         <file alias="MavlinkSettings.qml">src/ui/preferences/MavlinkSettings.qml</file>
         <file alias="PlanView.qml">src/PlanView/PlanView.qml</file>
-        <file alias="MixersComponent.qml">src/AutoPilotPlugins/Common/MixersComponent.qml</file>
         <file alias="MockLink.qml">src/ui/preferences/MockLink.qml</file>
         <file alias="MockLinkSettings.qml">src/ui/preferences/MockLinkSettings.qml</file>
         <file alias="MotorComponent.qml">src/AutoPilotPlugins/Common/MotorComponent.qml</file>
