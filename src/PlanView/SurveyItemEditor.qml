@@ -439,6 +439,13 @@ Rectangle {
                     Layout.fillWidth:       true
                 }
 
+                QGCLabel { text: qsTr("Entry") }
+                FactComboBox {
+                    fact:                   missionItem.gridEntryLocation
+                    indexModel:             false
+                    Layout.fillWidth:       true
+                }
+
                 QGCCheckBox {
                     text:               qsTr("Refly at 90 degree offset")
                     checked:            missionItem.refly90Degrees
@@ -543,6 +550,13 @@ Rectangle {
                 fact:                   missionItem.turnaroundDist
                 Layout.fillWidth:       true
             }
+            QGCLabel { text: qsTr("Entry") }
+            FactComboBox {
+                fact:                   missionItem.gridEntryLocation
+                indexModel:             false
+                Layout.fillWidth:       true
+            }
+
 
             QGCCheckBox {
                 text:               qsTr("Refly at 90 degree offset")
