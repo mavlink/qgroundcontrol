@@ -44,5 +44,30 @@
     "enumStrings":      "Hide,Show",
     "enumValues":       "1,0",
     "defaultValue":     0
+},
+{
+    "name":             "ShowRecControl",
+    "shortDescription": "Show Video Record Control",
+    "longDescription":  "Show recording control in the UI.",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
+    "name":             "RecordingFormat",
+    "shortDescription": "Video Recording Format",
+    "longDescription":  "Video recording file format.",
+    "type":             "uint32",
+    "enumStrings":      "mkv,mov,mp4",
+    "enumValues":       "0,1,2",
+    "defaultValue":     0
+},
+{
+    "name":             "MaxVideoSize",
+    "shortDescription": "Max Video Storage Usage",
+    "longDescription":  "Maximum amount of disk space used by video recording.",
+    "type":             "uint32",
+    "min":              100,
+    "units":            "MB",
+    "defaultValue":     2048
 }
 ]
