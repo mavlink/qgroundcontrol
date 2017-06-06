@@ -1126,7 +1126,7 @@ bool
 TyphoonHM4Interface::sendPassThroughMessage(QByteArray message)
 {
     qCDebug(YuneecLogVerbose) << "Sending: pass through message";
-    m4PassThroughCommand passThroughCommand();
+    m4PassThroughCommand passThroughCommand;
     QByteArray cmd = passThroughCommand.pack(message);
     return _commPort->write(cmd, DEBUG_DATA_DUMP);
 }
