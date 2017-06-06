@@ -103,7 +103,8 @@ private:
     void    _calibrationStateChanged            (m4Packet& packet);
     void    _handleMixedChannelData             (m4Packet& packet);
     void    _handleRawChannelData               (m4Packet& packet);
-    void    _handControllerFeedback             (m4Packet& packet);
+    void    _handleControllerFeedback           (m4Packet& packet);
+    void    _handlePassThroughPacket            (m4Packet& packet);
 
 signals:
     void    m4StateChanged                      ();

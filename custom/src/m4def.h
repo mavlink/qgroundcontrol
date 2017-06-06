@@ -139,11 +139,11 @@ enum {
      */
         TYPE_RSP = 4,
     /**
-     * Received data type：mission
+     * Received data type： pass through, it contains mission type.
      * <p/>
      * Value is {@value}
      */
-        TYPE_MISSION = 5,
+        TYPE_PASS_THROUGH = 5,
 
     /**
      * Mission status:run,received from aircraft.
@@ -178,7 +178,7 @@ enum {
      * <p/>
      * Value is {@value}
      */
-        COMMAND_TYPE_MISSION = (TYPE_MISSION << 2),
+        COMMAND_TYPE_PASS_THROUGH = (TYPE_PASS_THROUGH << 2),
 
     /**
      * Parameter of {@link com.yuneec.droneservice.command.common.PowerKey},represent the function

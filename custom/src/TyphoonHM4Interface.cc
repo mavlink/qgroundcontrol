@@ -1117,6 +1117,20 @@ TyphoonHM4Interface::_fillTableDeviceChannelNumMap(TableDeviceChannelNumInfo_t* 
     return res;
 }
 
+
+//-----------------------------------------------------------------------------
+/**
+ * This command is used for sending messages to aircraft pass through ZigBee.
+ */
+bool
+TyphoonHM4Interface::sendPassThroughMessage(QByteArray message)
+{
+    qCDebug(YuneecLogVerbose) << "Sending: pass through message";
+    m4PassThroughCommand passThroughCommand();
+    QByteArray cmd = passThroughCommand.pack(message);
+    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+}
+
 //-----------------------------------------------------------------------------
 /*
  *
@@ -1287,8 +1301,10 @@ TyphoonHM4Interface::_bytesReady(QByteArray data)
                     break;
             }
             break;
-        case Yuneec::TYPE_MISSION:
-            qCDebug(YuneecLog) << "Received TYPE_MISSION (?)";
+        case Yuneec::TYPE_PASS_THROUGH:
+            //Received pass-through data.
+            qCDebug(YuneecLog) << "Received TYPE_PASS_THROUGH (?)";
+            _handlePassThroughPacket(packet);
             break;
         default:
             qCDebug(YuneecLog) << "Received: Unknown Packet" << type << data.toHex();
@@ -1345,7 +1361,7 @@ TyphoonHM4Interface::_handleNonTypePacket(m4Packet& packet)
     int commandId = packet.commandID();
     switch(commandId) {
         case Yuneec::COMMAND_M4_SEND_GPS_DATA_TO_PA:
-            _handControllerFeedback(packet);
+            _handleControllerFeedback(packet);
             return true;
     }
     return false;
@@ -1656,7 +1672,7 @@ TyphoonHM4Interface::_handleMixedChannelData(m4Packet& packet)
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHM4Interface::_handControllerFeedback(m4Packet& packet)
+TyphoonHM4Interface::_handleControllerFeedback(m4Packet& packet)
 {
     QByteArray commandValues = packet.commandValues();
     int ilat = byteArrayToInt(commandValues, 0);
@@ -1671,6 +1687,16 @@ TyphoonHM4Interface::_handControllerFeedback(m4Packet& packet)
     _controllerLocation.satelliteCount = commandValues[18] & 0x1f;
     emit controllerLocationChanged();
 }
+
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHM4Interface::_handlePassThroughPacket(m4Packet& packet)
+{
+    //Handle pass thrugh messages
+    QByteArray passThroughValues = packet.passthroughValues();
+}
+
 
 //-----------------------------------------------------------------------------
 int
