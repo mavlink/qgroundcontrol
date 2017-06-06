@@ -795,7 +795,7 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
                     //-- Faster feedback for start/stop video
                     if(command == MAV_CMD_VIDEO_START_CAPTURE) {
                         _handleVideoRunning(VIDEO_CAPTURE_STATUS_RUNNING);
-                    } else if(command == MAV_CMD_VIDEO_START_CAPTURE) {
+                    } else if(command == MAV_CMD_VIDEO_STOP_CAPTURE) {
                         _handleVideoRunning(VIDEO_CAPTURE_STATUS_STOPPED);
                     }
                     _startTimer(MAV_CMD_REQUEST_CAMERA_SETTINGS, 500);
