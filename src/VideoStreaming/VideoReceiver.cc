@@ -27,6 +27,8 @@
 
 QGC_LOGGING_CATEGORY(VideoReceiverLog, "VideoReceiverLog")
 
+#if defined(QGC_GST_STREAMING)
+
 static const char* kVideoExtensions[] =
 {
     "mkv",
@@ -42,6 +44,9 @@ static const char* kVideoMuxes[] =
 };
 
 #define NUM_MUXES (sizeof(kVideoMuxes) / sizeof(char*))
+
+#endif
+
 
 VideoReceiver::VideoReceiver(QObject* parent)
     : QObject(parent)
@@ -461,6 +466,7 @@ gboolean VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer dat
 }
 #endif
 
+#if defined(QGC_GST_STREAMING)
 void VideoReceiver::_cleanupOldVideos()
 {
     QString savePath = qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSavePath()->rawValue().toString();
@@ -493,6 +499,7 @@ void VideoReceiver::_cleanupOldVideos()
         }
     }
 }
+#endif
 
 // When we finish our pipeline will look like this:
 //
