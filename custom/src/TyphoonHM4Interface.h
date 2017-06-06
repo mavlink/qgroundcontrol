@@ -38,6 +38,7 @@ public:
     bool    rcCalibrationComplete   () { return _rcCalibrationComplete; }
     void    startCalibration        ();
     void    stopCalibration         ();
+    bool    sendPassThroughMessage  (QByteArray message);
 
     Vehicle*            vehicle         () { return _vehicle; }
     CameraControl*      cameraControl   () { return _cameraControl; }

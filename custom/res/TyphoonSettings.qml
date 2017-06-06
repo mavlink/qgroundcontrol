@@ -75,7 +75,7 @@ QGCView {
                         }
                     }
                     QGCLabel {
-                        text:   qsTr("Import missions from MicroSD Card")
+                        text:   qsTr("Import missions from microSD Card")
                         width:   _textWidth
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -103,7 +103,7 @@ QGCView {
                         }
                     }
                     QGCLabel {
-                        text:   qsTr("Export missions and logs to MicroSD Card")
+                        text:   qsTr("Export missions and logs to microSD Card")
                         width:   _textWidth
                         anchors.verticalCenter: parent.verticalCenter
                     }

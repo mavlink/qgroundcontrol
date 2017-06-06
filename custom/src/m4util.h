@@ -249,7 +249,7 @@ public:
     m4PassThroughCommand()
     {
         data.fill(0, Yuneec::COMMAND_BODY_EXCLUDE_VALUES_LENGTH - 1);
-        data[2] = (uint8_t)Yuneec::COMMAND_TYPE_PASS_THROUGHROUGH;
+        data[2] = (uint8_t)Yuneec::COMMAND_TYPE_PASS_THROUGH;
     }
     virtual ~m4PassThroughCommand() {}
     QByteArray pack(QByteArray payload = QByteArray())
