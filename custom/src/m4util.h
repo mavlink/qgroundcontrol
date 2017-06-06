@@ -89,39 +89,13 @@ public:
     {
         return data[9] & 0xFF;
     }
-    int commandIdFromMission()
-    {
-        if(data.size() > 10)
-            return data[10] & 0xff;
-        else
-            return 0;
-    }
-    int subCommandIDFromMission()
-    {
-        if(data.size() > 11)
-            return data[11] & 0xff;
-        else
-            return 0;
-    }
     QByteArray commandValues()
     {
         return data.mid(10); //-- Data - header = payload
     }
-    int mixCommandId(int type, int commandId, int subCommandId)
+    QByteArray passthroughValues()
     {
-        if(type != Yuneec::COMMAND_TYPE_MISSION) {
-            return commandId;
-        } else {
-            return type << 16 | commandId << 8 | subCommandId;
-        }
-    }
-    int mixCommandId()
-    {
-        if(type() != Yuneec::COMMAND_TYPE_MISSION) {
-            return commandID();
-        } else {
-            return mixCommandId(type(), commandIdFromMission(), subCommandIDFromMission());
-        }
+        return data.mid(9); //-- Data - header = payload
     }
     QByteArray data;
 };
@@ -249,6 +223,35 @@ public:
         data[9] = (uint8_t)id;
     }
     virtual ~m4Command() {}
+    QByteArray pack(QByteArray payload = QByteArray())
+    {
+        if(payload.size()) {
+            data.append(payload);
+        }
+        QByteArray command;
+        command.resize(3);
+        command[0] = 0x55;
+        command[1] = 0x55;
+        command[2] = (uint8_t)data.size() + 1;
+        command.append(data);
+        uint8_t crc = crc8((uint8_t*)data.data(), data.size());
+        command.append(crc);
+        return command;
+    }
+    QByteArray data;
+};
+
+//-----------------------------------------------------------------------------
+// Base Yuneec Protocol Command
+class m4PassThroughCommand
+{
+public:
+    m4PassThroughCommand()
+    {
+        data.fill(0, Yuneec::COMMAND_BODY_EXCLUDE_VALUES_LENGTH - 1);
+        data[2] = (uint8_t)Yuneec::COMMAND_TYPE_PASS_THROUGHROUGH;
+    }
+    virtual ~m4PassThroughCommand() {}
     QByteArray pack(QByteArray payload = QByteArray())
     {
         if(payload.size()) {
