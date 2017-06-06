@@ -82,7 +82,7 @@ static quint32        current_camera_video_res_count = NUM_E50_VIDEO_RES;
 iq_mode_t iqModeOptions[] = {
     {"Natural"},
     {"Enhanced"},
-    {"Raw"},
+    {"Unprocessed"},
     {"Night"}
 };
 
