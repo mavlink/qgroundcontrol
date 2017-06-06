@@ -34,8 +34,12 @@ private slots:
     void _testDirty(void);
     void _testCameraValueChanged(void);
     void _testCameraTrigger(void);
+    void _testGridAngle(void);
+    void _testEntryLocation(void);
 
 private:
+    double _clampGridAngle180(double gridAngle);
+
     enum {
         gridPointsChangedIndex = 0,
         cameraShotsChangedIndex,
