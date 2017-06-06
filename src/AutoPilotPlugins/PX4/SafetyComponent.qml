@@ -290,7 +290,7 @@ SetupPage {
 
                     QGCCheckBox {
                         id:                 fenceRadiusCheckBox
-                        text:               qsTr("Max radius:")
+                        text:               qsTr("Max Radius:")
                         checked:            _fenceRadius.value > 0
                         onClicked:          _fenceRadius.value = checked ? 100 : 0
                         Layout.fillWidth:   true
@@ -303,7 +303,7 @@ SetupPage {
 
                     QGCCheckBox {
                         id:                 fenceAltMaxCheckBox
-                        text:               qsTr("Max altitude:")
+                        text:               qsTr("Max Altitude:")
                         checked:            _fenceAlt ? _fenceAlt.value > 0 : false
                         onClicked:          _fenceAlt.value = checked ? 100 : 0
                         Layout.fillWidth:   true
