@@ -2736,12 +2736,72 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
         <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="36"/>
         <source>%1 can upgrade the firmware on Pixhawk devices, SiK Radios and PX4 Flow Smart Cameras.</source>
-        <translation>%1 能够升级pixhawk设备，Sik收音机和PX4光流智能相机的固件。</translation>
+        <translation>%1 能够升级pixhawk、Sik收音机及PX4光流智能相机的固件。</translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="37"/>
+        <source>Plug in your device</source>
+        <translation>插入您的设备</translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="37"/>
+        <source> via USB to </source>
+        <translation> 通过USB </translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="37"/>
+        <source>start</source>
+        <translation>开始</translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="37"/>
+        <source> firmware upgrade.&lt;/big&gt;</source>
+        <translation>固件升级。&lt;/big&gt;</translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="38"/>
+        <source>If upgrade failed, make sure to connect </source>
+        <translation>如果升级失败，请确保 </translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="38"/>
+        <source>directly</source>
+        <translation>直接连接</translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="38"/>
+        <source> to a powered USB port on your computer, not through a USB hub. </source>
+        <translation>到您计算机上的供电USB端口，而不是通过USB集线器。</translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="39"/>
+        <source>Also make sure you are only powered via USB </source>
+        <translation>也请确保您只通过USB供电</translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="39"/>
+        <source>not battery</source>
+        <translation>，而非电池</translation>
     </message>
     <message>
         <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="40"/>
         <source>All %1 connections to vehicles must be </source>
-        <translation type="unfinished"></translation>
+        <translation>所有与无人机的%1连接必须</translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="40"/>
+        <source> disconnected </source>
+        <translation> 断开</translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="40"/>
+        <source>prior to firmware upgrade.</source>
+        <translation>在固件升级之前。</translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="41"/>
+        <source>&lt;big&gt;Please unplug your Pixhawk and/or Radio from USB.&lt;/big&gt;</source>
+        <translation>&lt;big&gt;请从USB拔掉您的Pixhawk和/或者无线设备。&lt;/big&gt;</translation>
     </message>
     <message>
         <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="57"/>
@@ -4349,7 +4409,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
         <location filename="../src/ui/MainWindow.ui" line="29"/>
         <source>MGMainWindow</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/ui/MainWindow.ui" line="59"/>
@@ -4385,6 +4445,36 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
         <location filename="../src/ui/MainWindow.ui" line="101"/>
         <source>Replay Flight Data</source>
         <translation>回放飞行数据</translation>
+    </message>
+    <message>
+        <location filename="../src/ui/MainWindow.cc" line="78"/>
+        <source>MAVLink Inspector</source>
+        <translation>MAVLink 检查</translation>
+    </message>
+    <message>
+        <location filename="../src/ui/MainWindow.cc" line="79"/>
+        <source>Custom Command</source>
+        <translation>自定义命令</translation>
+    </message>
+    <message>
+        <location filename="../src/ui/MainWindow.cc" line="80"/>
+        <source>Onboard Files</source>
+        <translation>机载文件</translation>
+    </message>
+    <message>
+        <location filename="../src/ui/MainWindow.cc" line="81"/>
+        <source>Info View</source>
+        <translation>信息视图</translation>
+    </message>
+    <message>
+        <location filename="../src/ui/MainWindow.cc" line="82"/>
+        <source>HIL Config</source>
+        <translation>在环仿真配置</translation>
+    </message>
+    <message>
+        <location filename="../src/ui/MainWindow.cc" line="83"/>
+        <source>Analyze</source>
+        <translation>分析</translation>
     </message>
     <message>
         <location filename="../src/ui/MainWindow.cc" line="134"/>
@@ -7632,6 +7722,30 @@ Do you want to replace it?</source>
         <source>RTK GPS</source>
         <translation>RTK GPS</translation>
     </message>
+    <message>
+        <source>MAVLink Inspector</source>
+        <translation type="vanished">MAVLink 检查</translation>
+    </message>
+    <message>
+        <source>Custom Command</source>
+        <translation type="vanished">自定义命令</translation>
+    </message>
+    <message>
+        <source>Onboard Files</source>
+        <translation type="vanished">机载文件</translation>
+    </message>
+    <message>
+        <source>Info View</source>
+        <translation type="vanished">信息视图</translation>
+    </message>
+    <message>
+        <source>HIL Config</source>
+        <translation type="vanished">在环仿真配置</translation>
+    </message>
+    <message>
+        <source>Analyze</source>
+        <translation type="vanished">分析</translation>
+    </message>
 </context>
 <context>
     <name>QextSerialPort</name>
@@ -8571,7 +8685,12 @@ Do you want to replace it?</source>
     <message>
         <location filename="../src/VehicleSetup/SetupView.qml" line="166"/>
         <source>Vehicle settings and info will display after connecting your vehicle.</source>
-        <translation>当您连接您的无人机后无人机设置和信息将会显示。</translation>
+        <translation>当您连接您的无人机后无人机设置及其信息将会显示。</translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/SetupView.qml" line="167"/>
+        <source> Click Firmware on the left to upgrade your vehicle.</source>
+        <translation>点击左侧的&quot;固件&quot;升级您的无人机。</translation>
     </message>
     <message>
         <location filename="../src/VehicleSetup/SetupView.qml" line="186"/>

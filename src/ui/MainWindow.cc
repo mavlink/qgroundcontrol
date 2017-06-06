@@ -75,12 +75,12 @@ enum DockWidgetTypes {
 };
 
 static const char *rgDockWidgetNames[] = {
-    "MAVLink Inspector",
-    "Custom Command",
-    "Onboard Files",
-    "Info View",
-    "HIL Config",
-    "Analyze"
+    QT_TRANSLATE_NOOP("MainWindow","MAVLink Inspector"),
+    QT_TRANSLATE_NOOP("MainWindow","Custom Command"),
+    QT_TRANSLATE_NOOP("MainWindow","Onboard Files"),
+    QT_TRANSLATE_NOOP("MainWindow","Info View"),
+    QT_TRANSLATE_NOOP("MainWindow","HIL Config"),
+    QT_TRANSLATE_NOOP("MainWindow","Analyze")
 };
 
 #define ARRAY_SIZE(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
@@ -313,7 +313,7 @@ void MainWindow::_buildCommonWidgets(void)
         const char* pDockWidgetName = rgDockWidgetNames[i];
 
         // Add to menu
-        QAction* action = new QAction(pDockWidgetName, this);
+        QAction* action = new QAction(tr(pDockWidgetName).toLocal8Bit().data(), this);
         action->setCheckable(true);
         action->setData(i);
         connect(action, &QAction::triggered, this, &MainWindow::_showDockWidgetAction);
@@ -352,6 +352,7 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
     QAction *action = _mapName2Action[widgetName];
     if(action) {
         switch(action->data().toInt()) {
+
             case MAVLINK_INSPECTOR:
                 widget = new QGCMAVLinkInspector(widgetName, action, qgcApp()->toolbox()->mavlinkProtocol(),this);
                 break;

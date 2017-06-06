@@ -2729,8 +2729,68 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="37"/>
+        <source>Plug in your device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="37"/>
+        <source> via USB to </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="37"/>
+        <source>start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="37"/>
+        <source> firmware upgrade.&lt;/big&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="38"/>
+        <source>If upgrade failed, make sure to connect </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="38"/>
+        <source>directly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="38"/>
+        <source> to a powered USB port on your computer, not through a USB hub. </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="39"/>
+        <source>Also make sure you are only powered via USB </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="39"/>
+        <source>not battery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="40"/>
         <source>All %1 connections to vehicles must be </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="40"/>
+        <source> disconnected </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="40"/>
+        <source>prior to firmware upgrade.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="41"/>
+        <source>&lt;big&gt;Please unplug your Pixhawk and/or Radio from USB.&lt;/big&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4368,6 +4428,36 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
         <location filename="../src/ui/MainWindow.ui" line="101"/>
         <source>Replay Flight Data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui/MainWindow.cc" line="78"/>
+        <source>MAVLink Inspector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui/MainWindow.cc" line="79"/>
+        <source>Custom Command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui/MainWindow.cc" line="80"/>
+        <source>Onboard Files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui/MainWindow.cc" line="81"/>
+        <source>Info View</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui/MainWindow.cc" line="82"/>
+        <source>HIL Config</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui/MainWindow.cc" line="83"/>
+        <source>Analyze</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8540,6 +8630,11 @@ Do you want to replace it?</source>
     <message>
         <location filename="../src/VehicleSetup/SetupView.qml" line="166"/>
         <source>Vehicle settings and info will display after connecting your vehicle.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VehicleSetup/SetupView.qml" line="167"/>
+        <source> Click Firmware on the left to upgrade your vehicle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
