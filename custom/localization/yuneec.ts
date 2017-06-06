@@ -20,6 +20,74 @@
     </message>
 </context>
 <context>
+    <name>CameraControl</name>
+    <message>
+        <location filename="../src/CameraControl.cc" line="83"/>
+        <source>Natural</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/CameraControl.cc" line="84"/>
+        <source>Enhanced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/CameraControl.cc" line="85"/>
+        <source>Unprocessed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/CameraControl.cc" line="86"/>
+        <source>Night</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/CameraControl.cc" line="94"/>
+        <source>Spot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/CameraControl.cc" line="95"/>
+        <source>Center</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/CameraControl.cc" line="96"/>
+        <source>Average</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/CameraControl.cc" line="126"/>
+        <source>Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/CameraControl.cc" line="127"/>
+        <source>Sunny</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/CameraControl.cc" line="128"/>
+        <source>Cloudy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/CameraControl.cc" line="129"/>
+        <source>Fluorescent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/CameraControl.cc" line="130"/>
+        <source>Incandescent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/CameraControl.cc" line="131"/>
+        <source>Sunset</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ChannelComponent</name>
     <message>
         <location filename="../src/AutoPilotPlugin/ChannelComponent.qml" line="43"/>
@@ -249,22 +317,22 @@
 <context>
     <name>TyphoonHFileCopy</name>
     <message>
-        <location filename="../src/TyphoonHQuickInterface.cc" line="503"/>
+        <location filename="../src/TyphoonHQuickInterface.cc" line="504"/>
         <source>Error opening firmware update file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/TyphoonHQuickInterface.cc" line="508"/>
+        <location filename="../src/TyphoonHQuickInterface.cc" line="509"/>
         <source>Error opening firmware destination file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/TyphoonHQuickInterface.cc" line="517"/>
+        <location filename="../src/TyphoonHQuickInterface.cc" line="518"/>
         <source>Error reading firmware file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/TyphoonHQuickInterface.cc" line="523"/>
+        <location filename="../src/TyphoonHQuickInterface.cc" line="524"/>
         <source>Error writing firmware file.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -272,44 +340,44 @@
 <context>
     <name>TyphoonHPlugin</name>
     <message>
-        <location filename="../src/TyphoonHPlugin.cc" line="278"/>
+        <location filename="../src/TyphoonHPlugin.cc" line="287"/>
         <source>General</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/TyphoonHPlugin.cc" line="284"/>
+        <location filename="../src/TyphoonHPlugin.cc" line="293"/>
         <source>Offline Maps</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/TyphoonHPlugin.cc" line="291"/>
+        <location filename="../src/TyphoonHPlugin.cc" line="300"/>
         <source>MAVLink</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/TyphoonHPlugin.cc" line="299"/>
+        <location filename="../src/TyphoonHPlugin.cc" line="308"/>
         <source>Log Download</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/TyphoonHPlugin.cc" line="308"/>
-        <location filename="../src/TyphoonHPlugin.cc" line="330"/>
+        <location filename="../src/TyphoonHPlugin.cc" line="317"/>
+        <location filename="../src/TyphoonHPlugin.cc" line="339"/>
         <source>RC Calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/TyphoonHPlugin.cc" line="315"/>
+        <location filename="../src/TyphoonHPlugin.cc" line="324"/>
         <source>MockLink</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/TyphoonHPlugin.cc" line="321"/>
-        <location filename="../src/TyphoonHPlugin.cc" line="337"/>
+        <location filename="../src/TyphoonHPlugin.cc" line="330"/>
+        <location filename="../src/TyphoonHPlugin.cc" line="346"/>
         <source>Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/TyphoonHPlugin.cc" line="346"/>
+        <location filename="../src/TyphoonHPlugin.cc" line="355"/>
         <source>Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
@@ -317,7 +385,7 @@
 <context>
     <name>TyphoonHQuickInterface</name>
     <message>
-        <location filename="../src/TyphoonHQuickInterface.cc" line="486"/>
+        <location filename="../src/TyphoonHQuickInterface.cc" line="487"/>
         <source>Could not locate update file.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -330,18 +398,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../res/TyphoonSettings.qml" line="78"/>
-        <source>Import missions from MicroSD Card</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../res/TyphoonSettings.qml" line="95"/>
         <source>Export Data</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../res/TyphoonSettings.qml" line="78"/>
+        <source>Import missions from microSD Card</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../res/TyphoonSettings.qml" line="106"/>
-        <source>Export missions and logs to MicroSD Card</source>
+        <source>Export missions and logs to microSD Card</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

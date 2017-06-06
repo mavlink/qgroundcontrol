@@ -80,10 +80,10 @@ static quint32        current_camera_video_res_count = NUM_E50_VIDEO_RES;
 //-----------------------------------------------------------------------------
 // Color Mode (CMD=SET_IQ_TYPE&mode=x)
 iq_mode_t iqModeOptions[] = {
-    {"Natural"},
-    {"Enhanced"},
-    {"Unprocessed"},
-    {"Night"}
+    {QT_TRANSLATE_NOOP("CameraControl", "Natural")},
+    {QT_TRANSLATE_NOOP("CameraControl", "Enhanced")},
+    {QT_TRANSLATE_NOOP("CameraControl", "Unprocessed")},
+    {QT_TRANSLATE_NOOP("CameraControl", "Night")}
 };
 
 #define NUM_IQ_MODES (sizeof(iqModeOptions) / sizeof(iq_mode_t))
@@ -91,9 +91,9 @@ iq_mode_t iqModeOptions[] = {
 //-----------------------------------------------------------------------------
 // Metering Mode (CMD=SET_METERING_MODE&mode=x)
 metering_mode_t meteringModeOptions[] = {
-    {"Spot",    0},
-    {"Center",  1},
-    {"Average", 2}
+    {QT_TRANSLATE_NOOP("CameraControl", "Spot"),    0},
+    {QT_TRANSLATE_NOOP("CameraControl", "Center"),  1},
+    {QT_TRANSLATE_NOOP("CameraControl", "Average"), 2}
 };
 
 #define NUM_METERING_VALUES (sizeof(meteringModeOptions) / sizeof(metering_mode_t))
@@ -123,12 +123,12 @@ static quint32        current_camera_photo_fmt_count = NUM_E50_PHOTO_FORMAT_VALU
 //-----------------------------------------------------------------------------
 // White Balance (CMD=SET_WHITEBLANCE_MODE&mode=x)
 white_balance_t whiteBalanceOptions[] = {
-    {"Auto",            0},
-    {"Sunny",           6500},
-    {"Cloudy",          7500},
-    {"Fluorescent",     4000},
-    {"Incandescent",    2800},
-    {"Sunset",          5000}
+    {QT_TRANSLATE_NOOP("CameraControl", "Auto"),            0},
+    {QT_TRANSLATE_NOOP("CameraControl", "Sunny"),           6500},
+    {QT_TRANSLATE_NOOP("CameraControl", "Cloudy"),          7500},
+    {QT_TRANSLATE_NOOP("CameraControl", "Fluorescent"),     4000},
+    {QT_TRANSLATE_NOOP("CameraControl", "Incandescent"),    2800},
+    {QT_TRANSLATE_NOOP("CameraControl", "Sunset"),          5000}
 };
 
 #define NUM_WB_VALUES (sizeof(whiteBalanceOptions) / sizeof(white_balance_t))
@@ -409,7 +409,7 @@ void
 CameraControl::setCurrentWB(quint32 index)
 {
     if(index < NUM_WB_VALUES && _vehicle && _cameraSupported == CAMERA_SUPPORT_YES) {
-        qCDebug(YuneecCameraLog) << "setCurrentWb:" << whiteBalanceOptions[index].description;
+        qCDebug(YuneecCameraLog) << "setCurrentWb:" << tr(whiteBalanceOptions[index].description);
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_SET_CAMERA_SETTINGS_1,              // Command id
@@ -471,7 +471,7 @@ void
 CameraControl::setCurrentIQ(quint32 index)
 {
     if(_vehicle && index < NUM_IQ_MODES && _cameraSupported == CAMERA_SUPPORT_YES) {
-        qCDebug(YuneecCameraLog) << "setCurrentIQ:" << iqModeOptions[index].description;
+        qCDebug(YuneecCameraLog) << "setCurrentIQ:" << tr(iqModeOptions[index].description);
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_SET_CAMERA_SETTINGS_2,              // Command id
@@ -509,7 +509,7 @@ void
 CameraControl::setCurrentMetering(quint32 index)
 {
     if(_vehicle && index < NUM_METERING_VALUES && _cameraSupported == CAMERA_SUPPORT_YES) {
-        qCDebug(YuneecCameraLog) << "setCurrentMetering:" << meteringModeOptions[index].description;
+        qCDebug(YuneecCameraLog) << "setCurrentMetering:" << tr(meteringModeOptions[index].description);
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_SET_CAMERA_SETTINGS_2,              // Command id
@@ -1138,7 +1138,7 @@ CameraControl::iqModeList()
 
     if(_iqModeList.size() == 0) {
         for(size_t i = 0; i < NUM_IQ_MODES; i++) {
-            _iqModeList.append(iqModeOptions[i].description);
+            _iqModeList.append(tr(iqModeOptions[i].description));
         }
     }
     return _iqModeList;
@@ -1150,7 +1150,7 @@ CameraControl::wbList()
 {
     if(_wbList.size() == 0) {
         for(size_t i = 0; i < NUM_WB_VALUES; i++) {
-            _wbList.append(whiteBalanceOptions[i].description);
+            _wbList.append(tr(whiteBalanceOptions[i].description));
         }
     }
     return _wbList;
@@ -1186,7 +1186,7 @@ CameraControl::meteringList()
 {
     if(_meteringList.size() == 0) {
         for(size_t i = 0; i < NUM_METERING_VALUES; i++) {
-            _meteringList.append(meteringModeOptions[i].description);
+            _meteringList.append(tr(meteringModeOptions[i].description));
         }
     }
     return _meteringList;
