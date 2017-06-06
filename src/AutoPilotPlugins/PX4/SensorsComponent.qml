@@ -353,7 +353,7 @@ SetupPage {
                     onClicked: {
                         preCalibrationDialogType = "compass"
                         preCalibrationDialogHelp = compassHelp
-                        statusTextArea = ""
+                        statusTextArea.text = ""
                         showDialog(preCalibrationDialogComponent, qsTr("Calibrate Compass"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
                 }
@@ -368,7 +368,7 @@ SetupPage {
                     onClicked: {
                         preCalibrationDialogType = "gyro"
                         preCalibrationDialogHelp = gyroHelp
-                        statusTextArea = ""
+                        statusTextArea.text = ""
                         showDialog(preCalibrationDialogComponent, qsTr("Calibrate Gyro"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
                 }
@@ -383,7 +383,7 @@ SetupPage {
                     onClicked: {
                         preCalibrationDialogType = "accel"
                         preCalibrationDialogHelp = accelHelp
-                        statusTextArea = ""
+                        statusTextArea.text = ""
                         showDialog(preCalibrationDialogComponent, qsTr("Calibrate Accelerometer"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
                 }
@@ -399,7 +399,7 @@ SetupPage {
                     onClicked: {
                         preCalibrationDialogType = "level"
                         preCalibrationDialogHelp = levelHelp
-                        statusTextArea = ""
+                        statusTextArea.text = ""
                         showDialog(preCalibrationDialogComponent, qsTr("Level Horizon"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
                 }
@@ -414,7 +414,7 @@ SetupPage {
                     onClicked: {
                         preCalibrationDialogType = "airspeed"
                         preCalibrationDialogHelp = airspeedHelp
-                        statusTextArea = ""
+                        statusTextArea.text = ""
                         showDialog(preCalibrationDialogComponent, qsTr("Calibrate Airspeed"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
                 }
@@ -510,7 +510,7 @@ SetupPage {
                                 calValid:           controller.orientationCalTailDownSideDone
                                 calInProgress:      controller.orientationCalTailDownSideInProgress
                                 calInProgressText:  controller.orientationCalTailDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        accelCal ? "qrc:///qmlimages/VehicleTailDown.png" : (controller.orientationCalTailDownSideRotate ? "/typhoonh/img/mag-cal-1.svg" : "/typhoonh/img/mag-cal-1-rest.svg")
+                                imageSource:        accelCal ? "/typhoonh/img/TyphoonTailDown.svg" : (controller.orientationCalTailDownSideRotate ? "/typhoonh/img/mag-cal-1.svg" : "/typhoonh/img/mag-cal-1-rest.svg")
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -519,7 +519,7 @@ SetupPage {
                                 calValid:           controller.orientationCalNoseDownSideDone
                                 calInProgress:      controller.orientationCalNoseDownSideInProgress
                                 calInProgressText:  controller.orientationCalNoseDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        accelCal ? "qrc:///qmlimages/VehicleNoseDown.png" : (controller.orientationCalNoseDownSideRotate ? "/typhoonh/img/mag-cal-2.svg" : "/typhoonh/img/mag-cal-2-rest.svg")
+                                imageSource:        accelCal ? "/typhoonh/img/TyphoonNoseDown.svg" : (controller.orientationCalNoseDownSideRotate ? "/typhoonh/img/mag-cal-2.svg" : "/typhoonh/img/mag-cal-2-rest.svg")
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -528,7 +528,7 @@ SetupPage {
                                 calValid:           controller.orientationCalLeftSideDone
                                 calInProgress:      controller.orientationCalLeftSideInProgress
                                 calInProgressText:  controller.orientationCalLeftSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        accelCal ? "qrc:///qmlimages/VehicleLeft.png" : (controller.orientationCalLeftSideRotate ? "/typhoonh/img/mag-cal-3.svg" : "/typhoonh/img/mag-cal-3-rest.svg")
+                                imageSource:        accelCal ? "/typhoonh/img/TyphoonLeft.svg" : (controller.orientationCalLeftSideRotate ? "/typhoonh/img/mag-cal-3.svg" : "/typhoonh/img/mag-cal-3-rest.svg")
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -537,7 +537,7 @@ SetupPage {
                                 calValid:           controller.orientationCalRightSideDone
                                 calInProgress:      controller.orientationCalRightSideInProgress
                                 calInProgressText:  controller.orientationCalRightSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        accelCal ? "qrc:///qmlimages/VehicleRight.png" : (controller.orientationCalRightSideRotate ? "/typhoonh/img/mag-cal-4.svg" : "/typhoonh/img/mag-cal-4-rest.svg")
+                                imageSource:        accelCal ? "/typhoonh/img/TyphoonRight.svg" : (controller.orientationCalRightSideRotate ? "/typhoonh/img/mag-cal-4.svg" : "/typhoonh/img/mag-cal-4-rest.svg")
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -546,7 +546,7 @@ SetupPage {
                                 calValid:           controller.orientationCalUpsideDownSideDone
                                 calInProgress:      controller.orientationCalUpsideDownSideInProgress
                                 calInProgressText:  controller.orientationCalUpsideDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        accelCal ? "qrc:///qmlimages/VehicleUpsideDown.png" : (controller.orientationCalUpsideDownSideRotate ? "/typhoonh/img/mag-cal-5.svg" : "/typhoonh/img/mag-cal-5-rest.svg")
+                                imageSource:        accelCal ? "/typhoonh/img/TyphoonUpsideDown.svg" : (controller.orientationCalUpsideDownSideRotate ? "/typhoonh/img/mag-cal-5.svg" : "/typhoonh/img/mag-cal-5-rest.svg")
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -555,7 +555,7 @@ SetupPage {
                                 calValid:           controller.orientationCalDownSideDone
                                 calInProgress:      controller.orientationCalDownSideInProgress
                                 calInProgressText:  controller.orientationCalDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        accelCal ? "qrc:///qmlimages/VehicleDown.png" : (controller.orientationCalDownSideRotate ? "/typhoonh/img/mag-cal-6.svg" : "/typhoonh/img/mag-cal-6-rest.svg")
+                                imageSource:        accelCal ? "/typhoonh/img/TyphoonDown.svg" : (controller.orientationCalDownSideRotate ? "/typhoonh/img/mag-cal-6.svg" : "/typhoonh/img/mag-cal-6-rest.svg")
                             }
                         }
                     }
