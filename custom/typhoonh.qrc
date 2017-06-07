@@ -7,6 +7,7 @@
         <file alias="TyphoonHQuickInterface/Widgets/qmldir">res/qmldir</file>
         <file alias="QGroundControl/Controls/MainToolBar.qml">res/MainToolBar.qml</file>
         <file alias="QGroundControl/Controls/QGCToolBarButton.qml">res/QGCToolBarButton.qml</file>
+        <file alias="QGroundControl/Controls/QGCFileDialog.qml">res/QGCFileDialog.qml</file>
     </qresource>
     <qresource prefix="/qmlimages">
         <file alias="PaperPlane.svg">res/images/Y-Logo.svg</file>

@@ -64,6 +64,7 @@ typhoonHQuickInterfaceSingletonFactory(QQmlEngine*, QJSEngine*)
 
 
 //-----------------------------------------------------------------------------
+#if defined(__androidx86__)
 class ST16PositionSource : public QGeoPositionInfoSource
 {
 public:
@@ -118,6 +119,7 @@ private:
     TyphoonHM4Interface*    _pHandler;
     QGeoPositionInfo        _lastUpdate;
 };
+#endif
 
 //-----------------------------------------------------------------------------
 class TyphoonHOptions : public QGCOptions
@@ -264,11 +266,13 @@ TyphoonHPlugin::setToolbox(QGCToolbox* toolbox)
 }
 
 //-----------------------------------------------------------------------------
+#if defined(__androidx86__)
 QGeoPositionInfoSource*
 TyphoonHPlugin::createPositionSource(QObject* parent)
 {
     return new ST16PositionSource(_pHandler, parent);
 }
+#endif
 
 //-----------------------------------------------------------------------------
 QGCOptions*
