@@ -506,6 +506,8 @@ SetupPage {
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
+                                imageWidth:         accelCal ? parent.indicatorWidth * 1.15  : parent.indicatorWidth  * 0.75
+                                imageHeight:        accelCal ? parent.indicatorHeight * 1.15 : parent.indicatorHeight * 0.75
                                 visible:            controller.orientationCalTailDownSideVisible
                                 calValid:           controller.orientationCalTailDownSideDone
                                 calInProgress:      controller.orientationCalTailDownSideInProgress
@@ -515,6 +517,8 @@ SetupPage {
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
+                                imageWidth:         accelCal ? parent.indicatorWidth * 1.15  : parent.indicatorWidth  * 0.75
+                                imageHeight:        accelCal ? parent.indicatorHeight * 1.15 : parent.indicatorHeight * 0.75
                                 visible:            controller.orientationCalNoseDownSideVisible
                                 calValid:           controller.orientationCalNoseDownSideDone
                                 calInProgress:      controller.orientationCalNoseDownSideInProgress
@@ -524,6 +528,8 @@ SetupPage {
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
+                                imageWidth:         accelCal ? parent.indicatorWidth * 1.15  : parent.indicatorWidth  * 0.75
+                                imageHeight:        accelCal ? parent.indicatorHeight * 1.15 : parent.indicatorHeight * 0.75
                                 visible:            controller.orientationCalLeftSideVisible
                                 calValid:           controller.orientationCalLeftSideDone
                                 calInProgress:      controller.orientationCalLeftSideInProgress
@@ -533,6 +539,8 @@ SetupPage {
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
+                                imageWidth:         accelCal ? parent.indicatorWidth * 1.15  : parent.indicatorWidth  * 0.75
+                                imageHeight:        accelCal ? parent.indicatorHeight * 1.15 : parent.indicatorHeight * 0.75
                                 visible:            controller.orientationCalRightSideVisible
                                 calValid:           controller.orientationCalRightSideDone
                                 calInProgress:      controller.orientationCalRightSideInProgress
@@ -542,6 +550,8 @@ SetupPage {
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
+                                imageWidth:         accelCal ? parent.indicatorWidth * 1.15  : parent.indicatorWidth  * 0.75
+                                imageHeight:        accelCal ? parent.indicatorHeight * 1.15 : parent.indicatorHeight * 0.75
                                 visible:            controller.orientationCalUpsideDownSideVisible
                                 calValid:           controller.orientationCalUpsideDownSideDone
                                 calInProgress:      controller.orientationCalUpsideDownSideInProgress
@@ -551,6 +561,8 @@ SetupPage {
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
+                                imageWidth:         accelCal ? parent.indicatorWidth * 1.15  : parent.indicatorWidth  * 0.75
+                                imageHeight:        accelCal ? parent.indicatorHeight * 1.15 : parent.indicatorHeight * 0.75
                                 visible:            controller.orientationCalDownSideVisible
                                 calValid:           controller.orientationCalDownSideDone
                                 calInProgress:      controller.orientationCalDownSideInProgress
