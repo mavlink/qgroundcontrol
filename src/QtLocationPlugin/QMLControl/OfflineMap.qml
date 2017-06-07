@@ -899,7 +899,7 @@ QGCView {
                 anchors.horizontalCenter: parent.horizontalCenter
                 OfflineMapButton {
                     id:             firstButton
-                    text:           qsTr("Add new set")
+                    text:           qsTr("Add New Set")
                     width:          _cacheList.width
                     height:         ScreenTools.defaultFontPixelHeight * 2
                     onClicked: {

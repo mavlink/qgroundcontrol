@@ -22,7 +22,7 @@ public:
     TyphoonHPlugin(QGCApplication* app, QGCToolbox *toolbox);
     ~TyphoonHPlugin();
 
-    TyphoonHM4Interface*   handler                      () { return _pHandler; }
+    TyphoonHM4Interface*   handler                  () { return _pHandler; }
 
     // Overrides from QGCCorePlugin
     QGCOptions*     options                         () final;
@@ -31,7 +31,10 @@ public:
     bool            adjustSettingMetaData           (FactMetaData& metaData) final;
     QString         brandImageIndoor                () const final;
     QString         brandImageOutdoor               () const final;
+
+#if defined(__androidx86__)
     QGeoPositionInfoSource* createPositionSource    (QObject* parent);
+#endif
 
     // Overrides from QGCTool
     void                setToolbox                      (QGCToolbox* toolbox);

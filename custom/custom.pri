@@ -46,7 +46,7 @@ RESOURCES += \
     $$QGCROOT/custom/typhoonh.qrc
 
 MacBuild {
-    QMAKE_INFO_PLIST    = $$PWD/macOS/Info.plist
+    QMAKE_INFO_PLIST    = $$PWD/macOS/YuneecInfo.plist
     ICON                = $$PWD/macOS/icon.icns
     OTHER_FILES        -= $$QGCROOT/Custom-Info.plist
     OTHER_FILES        += $$PWD/macOS/Info.plist

@@ -350,17 +350,6 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
     if (_cameraList.size() == 0) {
         CameraMetaData* metaData;
 
-        metaData = new CameraMetaData(tr("Typhoon H CGO3+"),    // Camera name
-                                      6.264,                    // sensorWidth
-                                      4.698,                    // sensorHeight
-                                      4000,                     // imageWidth
-                                      3000,                     // imageHeight
-                                      14,                       // focalLength
-                                      true,                     // landscape orientation
-                                      true,                     // camera orientation is fixed
-                                      this);                    // parent
-        _cameraList.append(QVariant::fromValue(metaData));
-
         metaData = new CameraMetaData(tr("Sony ILCE-QX1"),  //http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-qx1-body-kit/specifications
                                       23.2,                 //http://www.sony.com/electronics/camera-lenses/sel16f28/specifications
                                       15.4,

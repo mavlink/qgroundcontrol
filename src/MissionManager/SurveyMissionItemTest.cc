@@ -178,3 +178,74 @@ void SurveyMissionItemTest::_testCameraTrigger(void)
     QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), lastSeq);
 #endif
 }
+
+// Clamp expected grid angle from 0<->180. We don't care about opposite angles like 90/270
+double SurveyMissionItemTest::_clampGridAngle180(double gridAngle)
+{
+    if (gridAngle >= 0.0) {
+        if (gridAngle == 360.0) {
+            gridAngle = 0.0;
+        } else if (gridAngle >= 180.0) {
+            gridAngle -= 180.0;
+        }
+    } else {
+        if (gridAngle < -180.0) {
+            gridAngle += 360.0;
+        } else {
+            gridAngle += 180.0;
+        }
+    }
+    return gridAngle;
+}
+
+void SurveyMissionItemTest::_testGridAngle(void)
+{
+    QGCMapPolygon* mapPolygon = _surveyItem->mapPolygon();
+
+    for (int i=0; i<_polyPoints.count(); i++) {
+        QGeoCoordinate& vertex = _polyPoints[i];
+        mapPolygon->appendVertex(vertex);
+    }
+
+    for (double gridAngle=-360.0; gridAngle<=360.0; gridAngle++) {
+        _surveyItem->gridAngle()->setRawValue(gridAngle);
+
+        QVariantList gridPoints = _surveyItem->gridPoints();
+        QGeoCoordinate firstTransectEntry = gridPoints[0].value<QGeoCoordinate>();
+        QGeoCoordinate firstTransectExit = gridPoints[1].value<QGeoCoordinate>();
+        double azimuth = firstTransectEntry.azimuthTo(firstTransectExit);
+        //qDebug() << gridAngle << azimuth << _clampGridAngle180(gridAngle) << _clampGridAngle180(azimuth);
+        QCOMPARE((int)_clampGridAngle180(gridAngle), (int)_clampGridAngle180(azimuth));
+    }
+}
+
+void SurveyMissionItemTest::_testEntryLocation(void)
+{
+    QGCMapPolygon* mapPolygon = _surveyItem->mapPolygon();
+
+    for (int i=0; i<_polyPoints.count(); i++) {
+        QGeoCoordinate& vertex = _polyPoints[i];
+        mapPolygon->appendVertex(vertex);
+    }
+
+    for (double gridAngle=-360.0; gridAngle<=360.0; gridAngle++) {
+        _surveyItem->gridAngle()->setRawValue(gridAngle);
+
+        QList<QGeoCoordinate> rgSeenEntryCoords;
+        QList<int> rgEntryLocation;
+        rgEntryLocation << SurveyMissionItem::EntryLocationTopLeft
+                        << SurveyMissionItem::EntryLocationTopRight
+                        << SurveyMissionItem::EntryLocationBottomLeft
+                        << SurveyMissionItem::EntryLocationBottomRight;
+
+        // Validate that each entry location is unique
+        for (int i=0; i<rgEntryLocation.count(); i++) {
+            int entryLocation = rgEntryLocation[i];
+
+            _surveyItem->gridEntryLocation()->setRawValue(entryLocation);
+            QVERIFY(!rgSeenEntryCoords.contains(_surveyItem->coordinate()));
+            rgSeenEntryCoords << _surveyItem->coordinate();
+        }
+        rgSeenEntryCoords.clear();
+    }
+}
