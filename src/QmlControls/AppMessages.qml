@@ -111,17 +111,16 @@ QGCView {
                 delegate:        delegateItem
             }
 
-            FileDialog {
+            QGCFileDialog {
                 id:             writeDialog
-                folder:         shortcuts.home
+                folder:         QGroundControl.settingsManager.appSettings.logSavePath
                 nameFilters:    [qsTr("Log files (*.txt)"), qsTr("All Files (*)")]
                 selectExisting: false
                 title:          qsTr("Select log save file")
-                onAccepted: {
+                onAcceptedForSave: {
                     debugMessageModel.writeMessages(fileUrl);
                     visible = false;
                 }
-                onRejected:     visible = false
             }
 
             Connections {
@@ -134,7 +133,7 @@ QGCView {
                 id:              writeButton
                 anchors.bottom:  parent.bottom
                 anchors.left:    parent.left
-                onClicked:       writeDialog.visible = true
+                onClicked:       writeDialog.openForSave()
                 text:            qsTr("Save App Log")
             }
 
