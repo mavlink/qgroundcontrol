@@ -129,6 +129,14 @@ public:
     void setTurnaroundDist  (double dist) { _turnaroundDistFact.setRawValue(dist); }
     void save               (QJsonArray&  missionItems) final;
 
+    // Must match json spec for GridEntryLocation
+    enum EntryLocation {
+        EntryLocationTopLeft,
+        EntryLocationTopRight,
+        EntryLocationBottomLeft,
+        EntryLocationBottomRight,
+    };
+
     static const char* jsonComplexItemTypeValue;
 
     static const char* settingsGroup;
@@ -176,14 +184,6 @@ private:
         CameraTriggerOn,
         CameraTriggerOff,
         CameraTriggerHoverAndCapture
-    };
-
-    // Must match json spec for GridEntryLocation
-    enum EntryLocation {
-        EntryLocationTopLeft,
-        EntryLocationTopRight,
-        EntryLocationBottomLeft,
-        EntryLocationBottomRight,
     };
 
     void _setExitCoordinate(const QGeoCoordinate& coordinate);
