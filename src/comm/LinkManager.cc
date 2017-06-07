@@ -448,6 +448,13 @@ void LinkManager::_updateAutoConnectLinks(void)
         return;
     }
 
+    for (int i=0; i<_linkConfigurations.count(); i++) {
+        LinkConfiguration* conf = _linkConfigurations.value<LinkConfiguration*>(i);
+        if (!conf->link() && conf->isAutoConnect()) {
+            createConnectedLink(conf);
+        }
+    }
+
     // Re-add UDP if we need to
     bool foundUDP = false;
     for (int i=0; i<_sharedLinks.count(); i++) {
