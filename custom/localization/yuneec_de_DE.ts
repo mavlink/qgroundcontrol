@@ -24,67 +24,67 @@
     <message>
         <location filename="../src/CameraControl.cc" line="83"/>
         <source>Natural</source>
-        <translation type="unfinished"></translation>
+        <translation>Natürlich</translation>
     </message>
     <message>
         <location filename="../src/CameraControl.cc" line="84"/>
         <source>Enhanced</source>
-        <translation type="unfinished"></translation>
+        <translation>Verbessert</translation>
     </message>
     <message>
         <location filename="../src/CameraControl.cc" line="85"/>
         <source>Unprocessed</source>
-        <translation type="unfinished"></translation>
+        <translation>Unverarbeitet</translation>
     </message>
     <message>
         <location filename="../src/CameraControl.cc" line="86"/>
         <source>Night</source>
-        <translation type="unfinished"></translation>
+        <translation>Nacht</translation>
     </message>
     <message>
         <location filename="../src/CameraControl.cc" line="94"/>
         <source>Spot</source>
-        <translation type="unfinished"></translation>
+        <translation>Spot</translation>
     </message>
     <message>
         <location filename="../src/CameraControl.cc" line="95"/>
         <source>Center</source>
-        <translation type="unfinished"></translation>
+        <translation>Mittig</translation>
     </message>
     <message>
         <location filename="../src/CameraControl.cc" line="96"/>
         <source>Average</source>
-        <translation type="unfinished"></translation>
+        <translation>Durchschnittlich</translation>
     </message>
     <message>
         <location filename="../src/CameraControl.cc" line="126"/>
         <source>Auto</source>
-        <translation type="unfinished">Auto</translation>
+        <translation>Auto</translation>
     </message>
     <message>
         <location filename="../src/CameraControl.cc" line="127"/>
         <source>Sunny</source>
-        <translation type="unfinished"></translation>
+        <translation>Sonnig</translation>
     </message>
     <message>
         <location filename="../src/CameraControl.cc" line="128"/>
         <source>Cloudy</source>
-        <translation type="unfinished"></translation>
+        <translation>Wolkig</translation>
     </message>
     <message>
         <location filename="../src/CameraControl.cc" line="129"/>
         <source>Fluorescent</source>
-        <translation type="unfinished"></translation>
+        <translation>Fluoreszierend</translation>
     </message>
     <message>
         <location filename="../src/CameraControl.cc" line="130"/>
         <source>Incandescent</source>
-        <translation type="unfinished"></translation>
+        <translation>Glühlampe</translation>
     </message>
     <message>
         <location filename="../src/CameraControl.cc" line="131"/>
         <source>Sunset</source>
-        <translation type="unfinished"></translation>
+        <translation>Sonnenuntergang</translation>
     </message>
 </context>
 <context>
@@ -413,12 +413,12 @@
     <message>
         <location filename="../res/TyphoonSettings.qml" line="78"/>
         <source>Import missions from microSD Card</source>
-        <translation type="unfinished"></translation>
+        <translation>Missionen von Micro-SD-Karte importieren</translation>
     </message>
     <message>
         <location filename="../res/TyphoonSettings.qml" line="106"/>
         <source>Export missions and logs to microSD Card</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportiere Missionen und Logfiles auf Micro-SD-Karte</translation>
     </message>
     <message>
         <location filename="../res/TyphoonSettings.qml" line="124"/>
@@ -580,7 +580,7 @@
     <message>
         <location filename="../res/WIFIRSSIIndicator.qml" line="347"/>
         <source>Reset All Links</source>
-        <translation>Alle Verbindungen zurücksetzen</translation>
+        <translation>Zurücksetzen</translation>
     </message>
     <message>
         <location filename="../res/WIFIRSSIIndicator.qml" line="361"/>
