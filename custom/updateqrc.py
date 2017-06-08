@@ -8,7 +8,7 @@ res_exc = "qgcresources.exclusion"
 
 def read_file(filename):
     with open(filename) as src:
-        return [line.rstrip() for line in src.readlines()]
+        return [line.rstrip().lstrip() for line in src.readlines()]
 
 def process(src, exclusion, dst):
     file1 = read_file(src)
@@ -16,8 +16,12 @@ def process(src, exclusion, dst):
     file3 = open(dst, 'w')
     for line in file1:
         if line not in file2:
+            if line.startswith('<qresource') or line.startswith('</qresource'):
+                file3.write('\t')
+            if line.startswith('<file') or line.startswith('</file'):
+                file3.write('\t\t')
             newLine = str(line)
-            if line.strip().startswith('<file'):
+            if line.startswith('<file'):
                 newLine = newLine.replace(">", ">../", 1)
             file3.write(newLine + '\n')
         else:

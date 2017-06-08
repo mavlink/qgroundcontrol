@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 21.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="75px" height="75px" viewBox="0 0 75 75" style="enable-background:new 0 0 75 75;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:url(#SVGID_1_);stroke:#FFFFFF;stroke-width:3;stroke-miterlimit:10;}
+	.st1{fill:none;stroke:#FCA903;stroke-width:0.25;stroke-miterlimit:10;}
+	.st2{stroke:#000000;stroke-width:0.25;stroke-miterlimit:10;}
+</style>
+<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="37.5" y1="1.5" x2="37.5" y2="73.5">
+	<stop  offset="0" style="stop-color:#FF8E00"/>
+	<stop  offset="1" style="stop-color:#E76924"/>
+</linearGradient>
+<path class="st0" d="M66.576,73.5H8.424C4.6,73.5,1.5,70.4,1.5,66.576V8.424C1.5,4.6,4.6,1.5,8.424,1.5h58.153
+	C70.4,1.5,73.5,4.6,73.5,8.424v58.153C73.5,70.4,70.4,73.5,66.576,73.5z"/>
+<line class="st1" x1="10.06" y1="6.982" x2="10.06" y2="67.887"/>
+<line class="st1" x1="65.105" y1="6.982" x2="65.105" y2="67.887"/>
+<line class="st1" x1="7.012" y1="65.18" x2="67.917" y2="65.18"/>
+<line class="st1" x1="7.012" y1="9.941" x2="67.917" y2="9.941"/>
+<line class="st1" x1="37.206" y1="7.348" x2="37.206" y2="15.648"/>
+<line class="st1" x1="37.694" y1="59.582" x2="37.694" y2="67.882"/>
+<line class="st1" x1="7.147" y1="37.895" x2="15.446" y2="37.895"/>
+<line class="st1" x1="59.769" y1="37.651" x2="68.069" y2="37.651"/>
+<path class="st2" d="M58.304,10.16c3.61,0,6.536,2.926,6.536,6.536v41.608c0,3.61-2.926,6.536-6.536,6.536H16.696
+	c-3.61,0-6.536-2.926-6.536-6.536V16.696c0-3.61,2.926-6.536,6.536-6.536H58.304 M58.304,9.672H16.696
+	c-3.873,0-7.025,3.151-7.025,7.025v41.608c0,3.873,3.151,7.025,7.025,7.025h41.608c3.873,0,7.025-3.151,7.025-7.025V16.696
+	C65.328,12.823,62.177,9.672,58.304,9.672L58.304,9.672z"/>
+<circle class="st1" cx="37.5" cy="37.5" r="25.021"/>
+<polygon points="18.999,34.911 29.263,45.246 32.689,48.662 32.689,57.254 41.311,57.254 41.311,48.774 44.819,45.259 55.16,34.867 
+	55.144,22.949 46.61,22.949 46.626,33.146 41.34,38.254 32.654,38.262 27.59,33.191 27.593,22.965 19.01,22.993 "/>
+</svg>
