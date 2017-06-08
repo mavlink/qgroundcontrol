@@ -318,7 +318,7 @@ Item {
             //-- Metering
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
             QGCLabel { text: qsTr("Metering:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
-            QGCLabel { text: _camController ? _camController.meteringList[_camController.currentMetering] : ""; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
+            QGCLabel { text: _camController ? (_camController.meteringList[_camController.currentMetering] ? _camController.meteringList[_camController.currentMetering] : "" ) : ""; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
             //-- Video Res
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode; }
             QGCLabel {
