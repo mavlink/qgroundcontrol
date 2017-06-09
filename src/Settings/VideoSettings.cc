@@ -22,7 +22,6 @@ const char* VideoSettings::videoSettingsGroupName = "Video";
 const char* VideoSettings::videoSourceName =        "VideoSource";
 const char* VideoSettings::udpPortName =            "VideoUDPPort";
 const char* VideoSettings::rtspUrlName =            "VideoRTSPUrl";
-const char* VideoSettings::videoSavePathName =      "VideoSavePath";
 const char* VideoSettings::videoAspectRatioName =   "VideoAspectRatio";
 const char* VideoSettings::videoGridLinesName =     "VideoGridLines";
 const char* VideoSettings::showRecControlName =     "ShowRecControl";
@@ -38,7 +37,6 @@ VideoSettings::VideoSettings(QObject* parent)
     , _videoSourceFact(NULL)
     , _udpPortFact(NULL)
     , _rtspUrlFact(NULL)
-    , _videoSavePathFact(NULL)
     , _videoAspectRatioFact(NULL)
     , _gridLinesFact(NULL)
     , _showRecControlFact(NULL)
@@ -104,15 +102,6 @@ Fact* VideoSettings::rtspUrl(void)
     }
 
     return _rtspUrlFact;
-}
-
-Fact* VideoSettings::videoSavePath(void)
-{
-    if (!_videoSavePathFact) {
-        _videoSavePathFact = _createSettingsFact(videoSavePathName);
-    }
-
-    return _videoSavePathFact;
 }
 
 Fact* VideoSettings::aspectRatio(void)
