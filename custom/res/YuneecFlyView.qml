@@ -91,7 +91,7 @@ Item {
                 } else {
                     var gcs = QtPositioning.coordinate(TyphoonHQuickInterface.latitude, TyphoonHQuickInterface.longitude, TyphoonHQuickInterface.altitude)
                     var veh = _activeVehicle.coordinate;
-                    _distance = gcs.distanceTo(veh);
+                    _distance = QGroundControl.metersToAppSettingsDistanceUnits(gcs.distanceTo(veh));
                     //-- Ignore absurd values
                     if(_distance > 99999)
                         _distance = 0;
