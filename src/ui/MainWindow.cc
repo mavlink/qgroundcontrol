@@ -45,8 +45,6 @@
 #ifndef __mobile__
 #include "Linecharts.h"
 #include "QGCUASFileViewMulti.h"
-#include "UASQuickView.h"
-#include "QGCTabbedInfoView.h"
 #include "CustomCommandWidget.h"
 #include "QGCDockWidget.h"
 #include "HILDockWidget.h"
@@ -69,7 +67,7 @@ enum DockWidgetTypes {
     MAVLINK_INSPECTOR,
     CUSTOM_COMMAND,
     ONBOARD_FILES,
-    INFO_VIEW,
+    DEPRECATED_WIDGET,
     HIL_CONFIG,
     ANALYZE
 };
@@ -78,7 +76,7 @@ static const char *rgDockWidgetNames[] = {
     "MAVLink Inspector",
     "Custom Command",
     "Onboard Files",
-    "Info View",
+    "Deprecated Widget",
     "HIL Config",
     "Analyze"
 };
@@ -367,12 +365,6 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
             case ANALYZE:
                 widget = new Linecharts(widgetName, action, mavlinkDecoder, this);
                 break;
-            case INFO_VIEW:
-                widget= new QGCTabbedInfoView(widgetName, action, this);
-                break;
-        }
-        if(action->data().toInt() == INFO_VIEW) {
-            qobject_cast<QGCTabbedInfoView*>(widget)->addSource(mavlinkDecoder);
         }
         if(widget) {
             _mapName2DockWidget[widgetName] = widget;
