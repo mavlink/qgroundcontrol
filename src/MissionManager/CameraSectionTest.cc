@@ -655,13 +655,12 @@ void CameraSectionTest::_testScanForPhotoIntervalTimeSection(void)
     _commonScanTest(_cameraSection);
 
 #if 0
-    MAV_CMD_IMAGE_START_CAPTURE	Start image capture sequence. Sends CAMERA_IMAGE_CAPTURED after each capture.
-    Mission Param #1	Duration between two consecutive pictures (in seconds)
-    Mission Param #2	Number of images to capture total - 0 for unlimited capture
-    Mission Param #3	Resolution in megapixels (0.3 for 640x480, 1.3 for 1280x720, etc), set to 0 if param 4/5 are used, set to -1 for highest resolution possible.
-    Mission Param #4	WIP: Resolution horizontal in pixels
-    Mission Param #5	WIP: Resolution horizontal in pixels
-    Mission Param #6	WIP: Camera ID    // Check for a scan success
+    MAV_CMD_IMAGE_START_CAPTURE	WIP: Start image capture sequence. Sends CAMERA_IMAGE_CAPTURED after each capture.
+    Mission Param #1	Camera ID (0 for all cameras, 1 for first, 2 for second, etc.)
+    Mission Param #2	Duration between two consecutive pictures (in seconds)
+    Mission Param #3	Number of images to capture total - 0 for unlimited capture
+    Mission Param #4	Resolution horizontal in pixels (set to -1 for highest resolution possible)
+    Mission Param #5	Resolution vertical in pixels (set to -1 for highest resolution possible)
 #endif
 
     SimpleMissionItem* newValidTimeItem = new SimpleMissionItem(_offlineVehicle, this);
@@ -671,29 +670,21 @@ void CameraSectionTest::_testScanForPhotoIntervalTimeSection(void)
     QCOMPARE(visualItems.count(), 0);
     QCOMPARE(_cameraSection->settingsSpecified(), true);
     QCOMPARE(_cameraSection->cameraAction()->rawValue().toInt(), (int)CameraSection::TakePhotosIntervalTime);
-    QCOMPARE(_cameraSection->cameraPhotoIntervalTime()->rawValue().toInt(), (int)_validTimeItem->missionItem().param1());
+    QCOMPARE(_cameraSection->cameraPhotoIntervalTime()->rawValue().toInt(), (int)_validTimeItem->missionItem().param2());
     visualItems.clear();
     scanIndex = 0;
 
     // Image start command but incorrect settings
 
     SimpleMissionItem invalidSimpleItem(_offlineVehicle, _validTimeItem->missionItem());
-    invalidSimpleItem.missionItem().setParam3(10);    // must be unlimited
+    invalidSimpleItem.missionItem().setParam3(10);    // must be 0 for unlimited
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
     visualItems.clear();
 
     invalidSimpleItem.missionItem() = _validTimeItem->missionItem();
-    invalidSimpleItem.missionItem().setParam3(1.3);    // must be -1
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validTimeItem->missionItem();
-    invalidSimpleItem.missionItem().setParam4(10);    // must be 0
+    invalidSimpleItem.missionItem().setParam4(10);    // must be -1 for highest res
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
@@ -701,7 +692,7 @@ void CameraSectionTest::_testScanForPhotoIntervalTimeSection(void)
     visualItems.clear();
 
     invalidSimpleItem.missionItem() = _validTimeItem->missionItem();
-    invalidSimpleItem.missionItem().setParam5(10);    // must be 0
+    invalidSimpleItem.missionItem().setParam5(10);    // must be -1 for highest res
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
