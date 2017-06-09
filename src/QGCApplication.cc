@@ -139,18 +139,6 @@ static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
     return qmlGlobal;
 }
 
-#ifdef __android__
-// breakpad support
-#include "client/linux/handler/exception_handler.h"
-
-static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* /*context*/, bool succeeded)
-{
-    qDebug() << "dumpCallback" << succeeded << descriptor.path();
-    return succeeded;
-}
-#endif
-
-
 /**
  * @brief Constructor for the main application.
  *
@@ -323,13 +311,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
-
-#ifdef __android__
-    std::string pathAsStr = toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString().toStdString();
-    qDebug() << "dump location" << QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
-    google_breakpad::MinidumpDescriptor descriptor(pathAsStr);
-    google_breakpad::ExceptionHandler eh(descriptor, NULL, dumpCallback, NULL, true, -1);
-#endif
 }
 
 void QGCApplication::_shutdown(void)
