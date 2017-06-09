@@ -37,7 +37,6 @@ QGCView {
     property Fact _appFontPointSize:            QGroundControl.settingsManager.appSettings.appFontPointSize
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
-    property Fact _videoPath:                   QGroundControl.settingsManager.videoSettings.videoSavePath
     property Fact _mapProvider:                 QGroundControl.settingsManager.flightMapSettings.mapProvider
     property Fact _mapType:                     QGroundControl.settingsManager.flightMapSettings.mapType
 
@@ -638,36 +637,6 @@ QGCView {
                                 width:              _editFieldWidth
                                 fact:               QGroundControl.settingsManager.videoSettings.recordingFormat
                                 anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
-                        Row {
-                            spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    QGroundControl.settingsManager.videoSettings.videoSavePath.visible && QGroundControl.videoManager.isGStreamer
-
-                            QGCLabel {
-                                anchors.baseline:   videoBrowse.baseline
-                                text:               qsTr("Save Path:")
-                                enabled:            promptSaveLog.checked
-                            }
-                            QGCLabel {
-                                anchors.baseline:   videoBrowse.baseline
-                                text:               _videoPath.value === "" ? qsTr("<not set>") : _videoPath.value
-                            }
-                            QGCButton {
-                                id:         videoBrowse
-                                text:       "Browse"
-                                onClicked:  videoDialog.openForLoad()
-
-                                QGCFileDialog {
-                                    id:             videoDialog
-                                    title:          "Choose a location to save video files."
-                                    folder:         "file://" + _videoPath.value
-                                    selectFolder:   true
-
-                                    onAcceptedForLoad: {
-                                        _videoPath.value = file
-                                    }
-                                }
                             }
                         }
                     }
