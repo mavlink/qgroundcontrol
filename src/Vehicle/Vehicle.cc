@@ -669,6 +669,11 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     mavlink_global_position_int_t globalPositionInt;
     mavlink_msg_global_position_int_decode(&message, &globalPositionInt);
 
+    // ArduPilot sends bogus GLOBAL_POSITION_INT messages with lat/lat/alt 0/0/0 even when it has not gps signal
+    if (globalPositionInt.lat == 0 && globalPositionInt.lon == 0 && globalPositionInt.alt == 0) {
+        return;
+    }
+
     _globalPositionIntMessageAvailable = true;
     //-- Set these here and emit a single signal instead of 3 for the same variable (_coordinate)
     _coordinate.setLatitude(globalPositionInt.lat  / (double)1E7);
