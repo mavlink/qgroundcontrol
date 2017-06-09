@@ -298,7 +298,7 @@ Rectangle {
         anchors.rightMargin:    _margins
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
-        text:                   _controllerSyncInProgress ? qsTr("Uploading...") : (_controllerDirty ? qsTr("Upload Required") : qsTr("Upload"))
+        text:                   _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
         enabled:                !_controllerSyncInProgress
         visible:                !_controllerOffline
         primary:                _controllerDirty && !_controllerSyncInProgress
