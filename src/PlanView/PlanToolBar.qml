@@ -117,6 +117,8 @@ Rectangle {
 
     on_ControllerProgressPctChanged: {
         if (_controllerProgressPct === 1) {
+            missionStats.visible = false
+            uploadCompleteText.visible = true
             resetProgressTimer.start()
         } else if (_controllerProgressPct > 0) {
             progressBar.visible = true
@@ -125,8 +127,12 @@ Rectangle {
 
     Timer {
         id:             resetProgressTimer
-        interval:       1000
-        onTriggered:    progressBar.visible = false
+        interval:       5000
+        onTriggered: {
+            missionStats.visible = true
+            uploadCompleteText.visible = false
+            progressBar.visible = false
+        }
     }
 
     Rectangle {
@@ -139,15 +145,29 @@ Rectangle {
         visible:        false
     }
 
+    QGCLabel {
+        id:                     uploadCompleteText
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
+        anchors.left:           logoRow.right
+        anchors.right:          uploadButton.left
+        font.pointSize:         ScreenTools.largeFontPointSize
+        horizontalAlignment:    Text.AlignHCenter
+        verticalAlignment:      Text.AlignVCenter
+        text:                   "Done"
+        visible:                false
+    }
+
     GridLayout {
-        anchors.top:                parent.top
-        anchors.bottom:             parent.bottom
+        id:                     missionStats
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
         anchors.leftMargin:     _margins
         anchors.rightMargin:    _margins
         anchors.left:           logoRow.right
         anchors.right:          uploadButton.visible ? uploadButton.left : parent.right
-        columnSpacing:              0//_margins
-        columns:                    3
+        columnSpacing:          0
+        columns:                3
 
         GridLayout {
             anchors.verticalCenter: parent.verticalCenter
@@ -278,10 +298,10 @@ Rectangle {
         anchors.rightMargin:    _margins
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
-        text:                   _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
+        text:                   _controllerSyncInProgress ? qsTr("Uploading...") : (_controllerDirty ? qsTr("Upload Required") : qsTr("Upload"))
         enabled:                !_controllerSyncInProgress
         visible:                !_controllerOffline
-        primary:                _controllerDirty
+        primary:                _controllerDirty && !_controllerSyncInProgress
         onClicked:              planMasterController.upload()
 
         PropertyAnimation on opacity {
@@ -289,7 +309,7 @@ Rectangle {
             from:           0.5
             to:             1
             loops:          Animation.Infinite
-            running:        _controllerDirty
+            running:        _controllerDirty && !_controllerSyncInProgress
             alwaysRunToEnd: true
             duration:       2000
         }
