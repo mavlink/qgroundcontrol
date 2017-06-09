@@ -469,7 +469,7 @@ gboolean VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer dat
 #if defined(QGC_GST_STREAMING)
 void VideoReceiver::_cleanupOldVideos()
 {
-    QString savePath = qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSavePath()->rawValue().toString();
+    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
     QDir videoDir = QDir(savePath);
     videoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
     videoDir.setSorting(QDir::Time);
@@ -523,7 +523,7 @@ void VideoReceiver::startRecording(void)
         return;
     }
 
-    QString savePath = qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSavePath()->rawValue().toString();
+    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
     if(savePath.isEmpty()) {
         qgcApp()->showMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
         return;

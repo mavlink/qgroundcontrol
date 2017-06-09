@@ -48,6 +48,7 @@ const char* AppSettings::parameterDirectory =       "Parameters";
 const char* AppSettings::telemetryDirectory =       "Telemetry";
 const char* AppSettings::missionDirectory =         "Missions";
 const char* AppSettings::logDirectory =             "Logs";
+const char* AppSettings::videoDirectory =           "Video";
 
 AppSettings::AppSettings(QObject* parent)
     : SettingsGroup(appSettingsGroupName, QString() /* root settings group */, parent)
@@ -109,6 +110,7 @@ void AppSettings::_checkSavePathDirectories(void)
         savePathDir.mkdir(telemetryDirectory);
         savePathDir.mkdir(missionDirectory);
         savePathDir.mkdir(logDirectory);
+        savePathDir.mkdir(videoDirectory);
     }
 }
 
@@ -290,6 +292,19 @@ QString AppSettings::logSavePath(void)
     if (!path.isEmpty() && QDir(path).exists()) {
         QDir dir(path);
         return dir.filePath(logDirectory);
+    }
+
+    return fullPath;
+}
+
+QString AppSettings::videoSavePath(void)
+{
+    QString fullPath;
+
+    QString path = savePath()->rawValue().toString();
+    if (!path.isEmpty() && QDir(path).exists()) {
+        QDir dir(path);
+        return dir.filePath(videoDirectory);
     }
 
     return fullPath;
