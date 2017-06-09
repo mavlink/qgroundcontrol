@@ -267,7 +267,7 @@ bool CameraSection::scanForSection(QmlObjectListModel* visualItems, int scanInde
             if (!foundCameraAction && missionItem.param1() == 0 && missionItem.param2() >= 1 && missionItem.param3() == 0 && missionItem.param4() == -1 && missionItem.param5() == -1 && missionItem.param6() == 0 && missionItem.param7() == 0) {
                 foundCameraAction = true;
                 cameraAction()->setRawValue(TakePhotosIntervalTime);
-                cameraPhotoIntervalTime()->setRawValue(missionItem.param1());
+                cameraPhotoIntervalTime()->setRawValue(missionItem.param2());
                 visualItems->removeAt(scanIndex)->deleteLater();
             } else {
                 stopLooking = true;
