@@ -36,6 +36,7 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol) :
 
     textMessageFilter.insert(MAVLINK_MSG_ID_DEBUG, false);
     textMessageFilter.insert(MAVLINK_MSG_ID_DEBUG_VECT, false);
+    textMessageFilter.insert(MAVLINK_MSG_ID_DEBUG_FLOAT_ARRAY, false);
     textMessageFilter.insert(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, false);
     textMessageFilter.insert(MAVLINK_MSG_ID_NAMED_VALUE_INT, false);
 //    textMessageFilter.insert(MAVLINK_MSG_ID_HIGHRES_IMU, false);
@@ -232,6 +233,16 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
     {
         mavlink_debug_vect_t debug;
         mavlink_msg_debug_vect_decode(msg, &debug);
+        char buf[11];
+        strncpy(buf, debug.name, 10);
+        buf[10] = '\0';
+        name = QString("%1.%2").arg(buf).arg(fieldName);
+        time = getUnixTimeFromMs(msg->sysid, (debug.time_usec+500)/1000); // Scale to milliseconds, round up/down correctly
+    }
+    else if (msgid == MAVLINK_MSG_ID_DEBUG_FLOAT_ARRAY)
+    {
+        mavlink_debug_float_array_t debug;
+        mavlink_msg_debug_float_array_decode(msg, &debug);
         char buf[11];
         strncpy(buf, debug.name, 10);
         buf[10] = '\0';
