@@ -22,39 +22,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(AirMapManagerLog)
 
-/// AirMap server communication support.
-class AirMapManager : public QGCTool
-{
-    Q_OBJECT
-    
-public:
-    AirMapManager(QGCApplication* app, QGCToolbox* toolbox);
-    ~AirMapManager();
-
-    /// Set the ROI for airspace information
-    ///     @param center Center coordinate for ROI
-    ///     @param radiusMeters Radius in meters around center which is of interest
-    void setROI(QGeoCoordinate& center, double radiusMeters);
-
-    QmlObjectListModel* polygonRestrictions(void) { return &_polygonList; }
-    QmlObjectListModel* circularRestrictions(void) { return &_circleList; }
-        
-private slots:
-    void _getFinished(void);
-    void _getError(QNetworkReply::NetworkError code);
-    void _updateToROI(void);
-
-private:
-    void _get(QUrl url);
-    void _parseAirspaceJson(const QJsonDocument& airspaceDoc);
-
-    QGeoCoordinate          _roiCenter;
-    double                  _roiRadius;
-    QNetworkAccessManager   _networkManager;
-    QTimer                  _updateTimer;
-    QmlObjectListModel      _polygonList;
-    QmlObjectListModel      _circleList;
-};
 
 class AirspaceRestriction : public QObject
 {
@@ -90,6 +57,51 @@ public:
 private:
     QGeoCoordinate  _center;
     double          _radius;
+};
+
+
+/// AirMap server communication support.
+class AirMapManager : public QGCTool
+{
+    Q_OBJECT
+    
+public:
+    AirMapManager(QGCApplication* app, QGCToolbox* toolbox);
+    ~AirMapManager();
+
+    /// Set the ROI for airspace information
+    ///     @param center Center coordinate for ROI
+    ///     @param radiusMeters Radius in meters around center which is of interest
+    void setROI(QGeoCoordinate& center, double radiusMeters);
+
+    QmlObjectListModel* polygonRestrictions(void) { return &_polygonList; }
+    QmlObjectListModel* circularRestrictions(void) { return &_circleList; }
+        
+private slots:
+    void _getFinished(void);
+    void _getError(QNetworkReply::NetworkError code);
+    void _updateToROI(void);
+
+private:
+    void _get(QUrl url);
+    void _parseAirspaceJson(const QJsonDocument& airspaceDoc);
+
+    enum class State {
+        Idle,
+        RetrieveList,
+        RetrieveItems,
+    };
+
+    State                   _state = State::Idle;
+    int                     _numAwaitingItems = 0;
+    QGeoCoordinate          _roiCenter;
+    double                  _roiRadius;
+    QNetworkAccessManager   _networkManager;
+    QTimer                  _updateTimer;
+    QmlObjectListModel      _polygonList;
+    QmlObjectListModel      _circleList;
+    QList<PolygonAirspaceRestriction*> _nextPolygonList;
+    QList<CircularAirspaceRestriction*> _nextcircleList;
 };
 
 #endif
