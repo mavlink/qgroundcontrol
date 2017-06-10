@@ -66,10 +66,11 @@ public:
     /// Loads a QGeoCoordinate
     ///     Stored as array [ lat, lon, alt ]
     /// @return false: validation failed
-    static bool loadGeoCoordinate(const QJsonValue& jsonValue,          ///< json value to load from
-                                  bool              altitudeRequired,   ///< true: altitude must be specified
-                                  QGeoCoordinate&   coordinate,         ///< returned QGeoCordinate
-                                  QString&          errorString);       ///< returned error string if load failure
+    static bool loadGeoCoordinate(const QJsonValue& jsonValue,              ///< json value to load from
+                                  bool              altitudeRequired,       ///< true: altitude must be specified
+                                  QGeoCoordinate&   coordinate,             ///< returned QGeoCordinate
+                                  QString&          errorString,            ///< returned error string if load failure
+                                  bool              geoJsonFormat = false); ///< if true, use [lon, lat], [lat, lon] otherwise
 
     /// Saves a QGeoCoordinate
     ///     Stored as array [ lat, lon, alt ]

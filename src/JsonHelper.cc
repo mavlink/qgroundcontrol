@@ -104,9 +104,10 @@ void JsonHelper::_saveGeoCoordinate(const QGeoCoordinate&   coordinate,
 bool JsonHelper::loadGeoCoordinate(const QJsonValue&    jsonValue,
                                    bool                 altitudeRequired,
                                    QGeoCoordinate&      coordinate,
-                                   QString&             errorString)
+                                   QString&             errorString,
+                                   bool                 geoJsonFormat)
 {
-    return _loadGeoCoordinate(jsonValue, altitudeRequired, coordinate, errorString, false /* geoJsonFormat */);
+    return _loadGeoCoordinate(jsonValue, altitudeRequired, coordinate, errorString, geoJsonFormat);
 }
 
 void JsonHelper::saveGeoCoordinate(const QGeoCoordinate&    coordinate,
@@ -384,7 +385,7 @@ bool JsonHelper::loadPolygon(const QJsonArray& polygonArray, QmlObjectListModel&
         const QJsonValue& pointValue = polygonArray[i];
 
         QGeoCoordinate pointCoord;
-        if (!JsonHelper::loadGeoCoordinate(pointValue, false /* altitudeRequired */, pointCoord, errorString)) {
+        if (!JsonHelper::loadGeoCoordinate(pointValue, false /* altitudeRequired */, pointCoord, errorString, true)) {
             list.clearAndDeleteContents();
             return false;
         }
