@@ -35,5 +35,11 @@
     "type":             "int16",
     "enumStrings":      "Disabled,Enabled",
     "enumValues":       "0,1"
+},
+{    "name":             "rangefinder distance",
+    "shortDescription": "Rangefinder",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "units":            "meters"
 }
 ]
