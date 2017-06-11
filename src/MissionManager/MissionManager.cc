@@ -1003,7 +1003,8 @@ void MissionManager::generateResumeMission(int resumeIndex)
                            << MAV_CMD_IMAGE_START_CAPTURE
                            << MAV_CMD_IMAGE_STOP_CAPTURE
                            << MAV_CMD_VIDEO_START_CAPTURE
-                           << MAV_CMD_VIDEO_STOP_CAPTURE;
+                           << MAV_CMD_VIDEO_STOP_CAPTURE
+                           << MAV_CMD_DO_CHANGE_SPEED;
     if (_vehicle->fixedWing() && _vehicle->px4Firmware()) {
         includedResumeCommands << MAV_CMD_NAV_TAKEOFF;
     }
