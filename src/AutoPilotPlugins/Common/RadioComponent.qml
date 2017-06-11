@@ -418,7 +418,6 @@ SetupPage {
 
                 QGCButton {
                     text:       qsTr("Copy Trims")
-                    visible:    QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
                     onClicked:  showDialog(copyTrimsDialogComponent, dialogTitle, radioPage.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                 }
 

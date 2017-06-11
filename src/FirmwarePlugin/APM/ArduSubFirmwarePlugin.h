@@ -79,8 +79,6 @@ public:
 
     bool supportsJSButton(void);
 
-    bool supportsCalibratePressure(void);
-
     bool supportsMotorInterference(void);
 
     QString brandImageIndoor(const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
