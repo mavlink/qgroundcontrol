@@ -36,6 +36,7 @@ const char* AppSettings::autoLoadMissionsName =                         "AutoLoa
 const char* AppSettings::mapboxTokenName =                              "MapboxToken";
 const char* AppSettings::esriTokenName =                                "EsriToken";
 const char* AppSettings::defaultFirmwareTypeName =                      "DefaultFirmwareType";
+const char* AppSettings::airMapKeyName =                                "AirMapKey";
 
 const char* AppSettings::parameterFileExtension =   "params";
 const char* AppSettings::planFileExtension =        "plan";
@@ -75,6 +76,7 @@ AppSettings::AppSettings(QObject* parent)
     , _mapboxTokenFact(NULL)
     , _esriTokenFact(NULL)
     , _defaultFirmwareTypeFact(NULL)
+    , _airMapKeyFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
@@ -389,3 +391,12 @@ Fact* AppSettings::defaultFirmwareType(void)
 
     return _defaultFirmwareTypeFact;
 }
+Fact* AppSettings::airMapKey(void)
+{
+    if (!_airMapKeyFact) {
+        _airMapKeyFact = _createSettingsFact(airMapKeyName);
+    }
+
+    return _airMapKeyFact;
+}
+

@@ -57,7 +57,10 @@ FlightMap {
 
     // Track last known map position and zoom from Fly view in settings
     onZoomLevelChanged: QGroundControl.flightMapZoom = zoomLevel
-    onCenterChanged:    QGroundControl.flightMapPosition = center
+    onCenterChanged: {
+        airMapController.setROI(center, 5000)
+        QGroundControl.flightMapPosition = center
+    }
 
     // When the user pans the map we stop responding to vehicle coordinate updates until the panRecenterTimer fires
     onUserPannedChanged: {
@@ -322,5 +325,34 @@ FlightMap {
                 }
             }
         ]
+    }
+
+    // AirMap overlap support
+
+    AirMapController {
+        id: airMapController
+    }
+
+    MapItemView {
+        model: airMapController.circles
+
+        delegate: MapCircle {
+            center:         object.center
+            radius:         object.radius
+            border.color:   "white"
+            color:          "yellow"
+            opacity:        0.25
+        }
+    }
+
+    MapItemView {
+        model: airMapController.polygons
+
+        delegate: MapPolygon {
+            border.color:   "white"
+            color:          "yellow"
+            opacity:        0.25
+            path:           object.polygon
+        }
     }
 }
