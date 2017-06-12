@@ -170,10 +170,6 @@ public:
     /// to be assigned via parameters in firmware. Default is false.
     virtual bool supportsJSButton(void);
 
-    /// Returns true if the firmware supports calibrating the pressure sensor so the altitude will read
-    /// zero at the current pressure. Default is false.
-    virtual bool supportsCalibratePressure(void);
-
     /// Returns true if the firmware supports calibrating motor interference offsets for the compass
     /// (CompassMot). Default is true.
     virtual bool supportsMotorInterference(void);
