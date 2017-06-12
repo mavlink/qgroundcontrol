@@ -32,6 +32,7 @@ class VideoManager;
 class MAVLinkLogManager;
 class QGCCorePlugin;
 class SettingsManager;
+class AirMapManager;
 
 /// This is used to manage all of our top level services/tools
 class QGCToolbox : public QObject {
@@ -56,6 +57,7 @@ public:
     MAVLinkLogManager*          mavlinkLogManager(void)         { return _mavlinkLogManager; }
     QGCCorePlugin*              corePlugin(void)                { return _corePlugin; }
     SettingsManager*            settingsManager(void)           { return _settingsManager; }
+    AirMapManager*              airMapManager(void)             { return _airMapManager; }
 
 #ifndef __mobile__
     GPSManager*                 gpsManager(void)                { return _gpsManager; }
@@ -86,6 +88,7 @@ private:
     MAVLinkLogManager*          _mavlinkLogManager;
     QGCCorePlugin*              _corePlugin;
     SettingsManager*            _settingsManager;
+    AirMapManager*              _airMapManager;
 
     friend class QGCApplication;
 };
