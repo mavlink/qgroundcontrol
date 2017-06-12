@@ -106,8 +106,10 @@ SetupPage {
             property bool showCompass1Rot: cal_mag1_id.value > 0 && cal_mag1_rot.value >= 0
             property bool showCompass2Rot: cal_mag2_id.value > 0 && cal_mag2_rot.value >= 0
 
-            property bool _sensorsHaveFixedOrientation: QGroundControl.corePlugin.options.sensorsHaveFixedOrientation
-            property bool _wifiReliableForCalibration:  QGroundControl.corePlugin.options.wifiReliableForCalibration
+            property bool   _sensorsHaveFixedOrientation:   QGroundControl.corePlugin.options.sensorsHaveFixedOrientation
+            property bool   _wifiReliableForCalibration:    QGroundControl.corePlugin.options.wifiReliableForCalibration
+            property int    _buttonWidth:                   ScreenTools.defaultFontPixelWidth * 15
+
 
             SensorsComponentController {
                 id:                         controller
@@ -332,107 +334,113 @@ SetupPage {
                 } // QGCViewDialog
             } // Component - setOrientationsDialogComponent
 
-            Column {
-                id:         buttonColumn
-                spacing:    ScreenTools.defaultFontPixelHeight / 2
+            QGCFlickable {
+                id:             buttonFlickable
+                anchors.top:    parent.top
+                anchors.bottom: parent.bottom
+                width:          _buttonWidth
+                contentHeight:  buttonColumn.height + buttonColumn.spacing
 
-                readonly property int buttonWidth: ScreenTools.defaultFontPixelWidth * 15
+                Column {
+                    id:         buttonColumn
+                    spacing:    ScreenTools.defaultFontPixelHeight / 2
 
-                IndicatorButton {
-                    id:             compassButton
-                    width:          parent.buttonWidth
-                    text:           qsTr("Compass")
-                    indicatorGreen: cal_mag0_id.value != 0
-                    visible:        QGroundControl.corePlugin.options.showSensorCalibrationCompass
+                    IndicatorButton {
+                        id:             compassButton
+                        width:          _buttonWidth
+                        text:           qsTr("Compass")
+                        indicatorGreen: cal_mag0_id.value != 0
+                        visible:        QGroundControl.corePlugin.options.showSensorCalibrationCompass
 
-                    onClicked: {
-                        preCalibrationDialogType = "compass"
-                        preCalibrationDialogHelp = compassHelp
-                        showDialog(preCalibrationDialogComponent, qsTr("Calibrate Compass"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                        onClicked: {
+                            preCalibrationDialogType = "compass"
+                            preCalibrationDialogHelp = compassHelp
+                            showDialog(preCalibrationDialogComponent, qsTr("Calibrate Compass"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                        }
                     }
-                }
 
-                IndicatorButton {
-                    id:             gyroButton
-                    width:          parent.buttonWidth
-                    text:           qsTr("Gyroscope")
-                    indicatorGreen: cal_gyro0_id.value != 0
-                    visible:        QGroundControl.corePlugin.options.showSensorCalibrationGyro
+                    IndicatorButton {
+                        id:             gyroButton
+                        width:          _buttonWidth
+                        text:           qsTr("Gyroscope")
+                        indicatorGreen: cal_gyro0_id.value != 0
+                        visible:        QGroundControl.corePlugin.options.showSensorCalibrationGyro
 
-                    onClicked: {
-                        preCalibrationDialogType = "gyro"
-                        preCalibrationDialogHelp = gyroHelp
-                        showDialog(preCalibrationDialogComponent, qsTr("Calibrate Gyro"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                        onClicked: {
+                            preCalibrationDialogType = "gyro"
+                            preCalibrationDialogHelp = gyroHelp
+                            showDialog(preCalibrationDialogComponent, qsTr("Calibrate Gyro"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                        }
                     }
-                }
 
-                IndicatorButton {
-                    id:             accelButton
-                    width:          parent.buttonWidth
-                    text:           qsTr("Accelerometer")
-                    indicatorGreen: cal_acc0_id.value != 0
-                    visible:        QGroundControl.corePlugin.options.showSensorCalibrationAccel
+                    IndicatorButton {
+                        id:             accelButton
+                        width:          _buttonWidth
+                        text:           qsTr("Accelerometer")
+                        indicatorGreen: cal_acc0_id.value != 0
+                        visible:        QGroundControl.corePlugin.options.showSensorCalibrationAccel
 
-                    onClicked: {
-                        preCalibrationDialogType = "accel"
-                        preCalibrationDialogHelp = accelHelp
-                        showDialog(preCalibrationDialogComponent, qsTr("Calibrate Accelerometer"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                        onClicked: {
+                            preCalibrationDialogType = "accel"
+                            preCalibrationDialogHelp = accelHelp
+                            showDialog(preCalibrationDialogComponent, qsTr("Calibrate Accelerometer"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                        }
                     }
-                }
 
-                IndicatorButton {
-                    id:             levelButton
-                    width:          parent.buttonWidth
-                    text:           qsTr("Level Horizon")
-                    indicatorGreen: sens_board_x_off.value != 0 || sens_board_y_off != 0 | sens_board_z_off != 0
-                    enabled:        cal_acc0_id.value != 0 && cal_gyro0_id.value != 0
-                    visible:        QGroundControl.corePlugin.options.showSensorCalibrationLevel
+                    IndicatorButton {
+                        id:             levelButton
+                        width:          _buttonWidth
+                        text:           qsTr("Level Horizon")
+                        indicatorGreen: sens_board_x_off.value != 0 || sens_board_y_off != 0 | sens_board_z_off != 0
+                        enabled:        cal_acc0_id.value != 0 && cal_gyro0_id.value != 0
+                        visible:        QGroundControl.corePlugin.options.showSensorCalibrationLevel
 
-                    onClicked: {
-                        preCalibrationDialogType = "level"
-                        preCalibrationDialogHelp = levelHelp
-                        showDialog(preCalibrationDialogComponent, qsTr("Level Horizon"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                        onClicked: {
+                            preCalibrationDialogType = "level"
+                            preCalibrationDialogHelp = levelHelp
+                            showDialog(preCalibrationDialogComponent, qsTr("Level Horizon"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                        }
                     }
-                }
 
-                IndicatorButton {
-                    id:             airspeedButton
-                    width:          parent.buttonWidth
-                    text:           qsTr("Airspeed")
-                    visible:        (controller.vehicle.fixedWing || controller.vehicle.vtol) && controller.getParameterFact(-1, "CBRK_AIRSPD_CHK").value != 162128 && QGroundControl.corePlugin.options.showSensorCalibrationAirspeed
-                    indicatorGreen: sens_dpres_off.value != 0
+                    IndicatorButton {
+                        id:             airspeedButton
+                        width:          _buttonWidth
+                        text:           qsTr("Airspeed")
+                        visible:        (controller.vehicle.fixedWing || controller.vehicle.vtol) && controller.getParameterFact(-1, "CBRK_AIRSPD_CHK").value != 162128 && QGroundControl.corePlugin.options.showSensorCalibrationAirspeed
+                        indicatorGreen: sens_dpres_off.value != 0
 
-                    onClicked: {
-                        preCalibrationDialogType = "airspeed"
-                        preCalibrationDialogHelp = airspeedHelp
-                        showDialog(preCalibrationDialogComponent, qsTr("Calibrate Airspeed"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                        onClicked: {
+                            preCalibrationDialogType = "airspeed"
+                            preCalibrationDialogHelp = airspeedHelp
+                            showDialog(preCalibrationDialogComponent, qsTr("Calibrate Airspeed"), sensorsPage.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                        }
                     }
-                }
 
-                QGCButton {
-                    id:         cancelButton
-                    width:      parent.buttonWidth
-                    text:       qsTr("Cancel")
-                    enabled:    false
-                    onClicked:  controller.cancelCalibration()
-                }
-
-                QGCButton {
-                    id:         setOrientationsButton
-                    width:      parent.buttonWidth
-                    text:       qsTr("Set Orientations")
-                    visible:    !_sensorsHaveFixedOrientation
-
-                    onClicked:  {
-                        setOrientationsDialogShowBoardOrientation = true
-                        showDialog(setOrientationsDialogComponent, qsTr("Set Orientations"), sensorsPage.showDialogDefaultWidth, StandardButton.Ok)
+                    QGCButton {
+                        id:         cancelButton
+                        width:      _buttonWidth
+                        text:       qsTr("Cancel")
+                        enabled:    false
+                        onClicked:  controller.cancelCalibration()
                     }
-                }
-            } // Column - Buttons
+
+                    QGCButton {
+                        id:         setOrientationsButton
+                        width:      _buttonWidth
+                        text:       qsTr("Set Orientations")
+                        visible:    !_sensorsHaveFixedOrientation
+
+                        onClicked:  {
+                            setOrientationsDialogShowBoardOrientation = true
+                            showDialog(setOrientationsDialogComponent, qsTr("Set Orientations"), sensorsPage.showDialogDefaultWidth, StandardButton.Ok)
+                        }
+                    }
+                } // Column - Buttons
+            } // QGCFLickable - Buttons
 
             Column {
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
-                anchors.left:       buttonColumn.right
+                anchors.left:       buttonFlickable.right
                 anchors.right:      parent.right
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom

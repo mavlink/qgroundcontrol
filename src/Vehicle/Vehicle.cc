@@ -1964,11 +1964,6 @@ bool Vehicle::supportsJSButton(void) const
     return _firmwarePlugin->supportsJSButton();
 }
 
-bool Vehicle::supportsCalibratePressure(void) const
-{
-    return _firmwarePlugin->supportsCalibratePressure();
-}
-
 bool Vehicle::supportsMotorInterference(void) const
 {
     return _firmwarePlugin->supportsMotorInterference();
