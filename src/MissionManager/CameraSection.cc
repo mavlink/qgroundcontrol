@@ -115,6 +115,19 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
 {
     // IMPORTANT NOTE: If anything changes here you must also change CameraSection::scanForSection
 
+    if (_specifyCameraMode) {
+        MissionItem* item = new MissionItem(nextSequenceNumber++,
+                                            MAV_CMD_SET_CAMERA_MODE,
+                                            MAV_FRAME_MISSION,
+                                            0,                                      // camera id, all cameras
+                                            _cameraModeFact.rawValue().toDouble(),
+                                            NAN, NAN, NAN, NAN, NAN,                // param 3-7 unused
+                                            true,                                   // autoContinue
+                                            false,                                  // isCurrentItem
+                                            missionItemParent);
+        items.append(item);
+    }
+
     if (_specifyGimbal) {
         MissionItem* item = new MissionItem(nextSequenceNumber++,
                                             MAV_CMD_DO_MOUNT_CONTROL,
@@ -203,23 +216,25 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
                                    false,                       // isCurrentItem
                                    missionItemParent);
             break;
+
+        case TakePhoto:
+                item = new MissionItem(nextSequenceNumber++,
+                                       MAV_CMD_IMAGE_START_CAPTURE,
+                                       MAV_FRAME_MISSION,
+                                       0,                               // camera id = 0, all cameras
+                                       0,                              // Interval (none)
+                                       1,                              // Take 1 photo
+                                       -1,                             // Max horizontal resolution
+                                       -1,                             // Max vertical resolution
+                                       0, 0,                           // param 6-7 not used
+                                       true,                           // autoContinue
+                                       false,                         // isCurrentItem
+                                       missionItemParent);
+            break;
         }
         if (item) {
             items.append(item);
         }
-    }
-
-    if (_specifyCameraMode) {
-        MissionItem* item = new MissionItem(nextSequenceNumber++,
-                                            MAV_CMD_SET_CAMERA_MODE,
-                                            MAV_FRAME_MISSION,
-                                            0,                                      // camera id, all cameras
-                                            _cameraModeFact.rawValue().toDouble(),
-                                            NAN, NAN, NAN, NAN, NAN,                // param 3-7 unused
-                                            true,                                   // autoContinue
-                                            false,                                  // isCurrentItem
-                                            missionItemParent);
-        items.append(item);
     }
 }
 
@@ -264,10 +279,19 @@ bool CameraSection::scanForSection(QmlObjectListModel* visualItems, int scanInde
             break;
 
         case MAV_CMD_IMAGE_START_CAPTURE:
-            if (!foundCameraAction && missionItem.param1() == 0 && missionItem.param2() >= 1 && missionItem.param3() == 0 && missionItem.param4() == -1 && missionItem.param5() == -1 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+            // This could possibly be TakePhotosIntervalTime or TakePhoto
+            if (!foundCameraAction &&
+                    // TakePhotosIntervalTime matching
+                    ((missionItem.param1() == 0 && missionItem.param2() >= 1 && missionItem.param3() == 0 && missionItem.param4() == -1 && missionItem.param5() == -1 && missionItem.param6() == 0 && missionItem.param7() == 0) ||
+                    // TakePhoto matching
+                    (missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 1 && missionItem.param4() == -1 && missionItem.param5() == -1 && missionItem.param6() == 0 && missionItem.param7() == 0))) {
                 foundCameraAction = true;
-                cameraAction()->setRawValue(TakePhotosIntervalTime);
-                cameraPhotoIntervalTime()->setRawValue(missionItem.param2());
+                if (missionItem.param2() == 0) {
+                    cameraAction()->setRawValue(TakePhoto);
+                } else {
+                    cameraAction()->setRawValue(TakePhotosIntervalTime);
+                    cameraPhotoIntervalTime()->setRawValue(missionItem.param2());
+                }
                 visualItems->removeAt(scanIndex)->deleteLater();
             } else {
                 stopLooking = true;
