@@ -36,6 +36,7 @@ private slots:
     void _testScanForStopVideoSection(void);
     void _testScanForStopImageSection(void);
     void _testScanForCameraModeSection(void);
+    void _testScanForTakePhotoSection(void);
     void _testScanForFullSection(void);
 
 private:
@@ -69,4 +70,5 @@ private:
     SimpleMissionItem*  _validStopTimeItem;
     SimpleMissionItem*  _validCameraPhotoModeItem;
     SimpleMissionItem*  _validCameraVideoModeItem;
+    SimpleMissionItem*  _validTakePhotoItem;
 };
