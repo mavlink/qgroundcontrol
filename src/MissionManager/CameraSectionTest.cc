@@ -48,7 +48,17 @@ void CameraSectionTest::init(void)
                                                MissionItem(0, MAV_CMD_DO_SET_CAM_TRIGG_DIST, MAV_FRAME_MISSION, 72, 0, 0, 0, 0, 0, 0, true, false),
                                                this);
     _validStartVideoItem = new SimpleMissionItem(_offlineVehicle,
-                                                 MissionItem(0, MAV_CMD_VIDEO_START_CAPTURE, MAV_FRAME_MISSION, 0, -1, -1, 0, 0, 0, 0, true, false),
+                                                 MissionItem(0,                             // sequence number
+                                                             MAV_CMD_VIDEO_START_CAPTURE,
+                                                             MAV_FRAME_MISSION,
+                                                             0,                             // camera id = 0, all cameras
+                                                             -1,                            // -1 Max FPS
+                                                             -1,                            // Max horizontal resolution
+                                                             -1,                            // Max vertical resolution
+                                                             0,                             // Np CAMERA_CAPTURE_STATUS streaming
+                                                             0, 0,                          // param 6-7 not used
+                                                             true,                          // autocontinue
+                                                             false),                        // isCurrentItem
                                                  this);
     _validStopVideoItem = new SimpleMissionItem(_offlineVehicle,
                                                 MissionItem(0, MAV_CMD_VIDEO_STOP_CAPTURE, MAV_FRAME_MISSION, 0, 0, 0, 0, 0, 0, 0, true, false),
@@ -843,13 +853,12 @@ void CameraSectionTest::_testScanForStartVideoSection(void)
     _commonScanTest(_cameraSection);
 
 /*
-    MAV_CMD_VIDEO_STOP_CAPTURE	Stop the current video capture (recording)
-    Mission Param #1	WIP: Camera ID
-    Mission Param #2	Reserved
-    Mission Param #3	Resolution in megapixels (0.3 for 640x480, 1.3 for 1280x720, etc), set to 0 if param 4/5 are used, set to -1 for highest resolution possible.
-    Mission Param #4	WIP: Resolution horizontal in pixels
-    Mission Param #5	WIP: Resolution horizontal in pixels
-    Mission Param #6	WIP: Frequency CAMERA_CAPTURE_STATUS messages should be sent while recording (0 for no messages, otherwise time in Hz)
+    MAV_CMD_VIDEO_START_CAPTURE	WIP: Starts video capture (recording)
+    Mission Param #1	Camera ID (0 for all cameras, 1 for first, 2 for second, etc.)
+    Mission Param #2	Frames per second, set to -1 for highest framerate possible.
+    Mission Param #3	Resolution horizontal in pixels (set to -1 for highest resolution possible)
+    Mission Param #4	Resolution vertical in pixels (set to -1 for highest resolution possible)
+    Mission Param #5	Frequency CAMERA_CAPTURE_STATUS messages should be sent while recording (0 for no messages, otherwise time in Hz)
 */
 
     SimpleMissionItem* newValidStartVideoItem = new SimpleMissionItem(_offlineVehicle, this);
@@ -862,10 +871,10 @@ void CameraSectionTest::_testScanForStartVideoSection(void)
     visualItems.clear();
     scanIndex = 0;
 
-    // Trigger distance command but incorrect settings
+    // Start Video command but incorrect settings
 
     SimpleMissionItem invalidSimpleItem(_offlineVehicle, _validStartVideoItem->missionItem());
-    invalidSimpleItem.missionItem().setParam1(10);    // must be  0
+    invalidSimpleItem.missionItem().setParam1(10);    // Camera id must be  0
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
@@ -873,7 +882,7 @@ void CameraSectionTest::_testScanForStartVideoSection(void)
     visualItems.clear();
 
     invalidSimpleItem.missionItem() = _validStartVideoItem->missionItem();
-    invalidSimpleItem.missionItem().setParam2(10);    // must be 0
+    invalidSimpleItem.missionItem().setParam2(10);    // must be -1
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
@@ -881,7 +890,7 @@ void CameraSectionTest::_testScanForStartVideoSection(void)
     visualItems.clear();
 
     invalidSimpleItem.missionItem() = _validStartVideoItem->missionItem();
-    invalidSimpleItem.missionItem().setParam3(1);    // must be 0
+    invalidSimpleItem.missionItem().setParam3(1);    // must be -1
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
@@ -889,7 +898,7 @@ void CameraSectionTest::_testScanForStartVideoSection(void)
     visualItems.clear();
 
     invalidSimpleItem.missionItem() = _validStartVideoItem->missionItem();
-    invalidSimpleItem.missionItem().setParam4(100);    // must be 0
+    invalidSimpleItem.missionItem().setParam4(100);    // must be -1
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
