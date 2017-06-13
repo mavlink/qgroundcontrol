@@ -177,10 +177,12 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
             item = new MissionItem(nextSequenceNumber++,
                                    MAV_CMD_VIDEO_START_CAPTURE,
                                    MAV_FRAME_MISSION,
-                                   0,                           // Camera ID, all cameras
-                                   -1,                          // Max fps
-                                   -1,                          // Max resolution
-                                   0, 0, 0, 0,                  // param 5-7 not used
+                                   0,                           // camera id = 0, all cameras
+                                   -1,                          // Max FPS
+                                   -1,                          // Max horizontal resolution
+                                   -1,                          // Max vertical resolution
+                                   0,                           // Np CAMERA_CAPTURE_STATUS streaming
+                                   0, 0,                        // param 6-7 not used
                                    true,                        // autoContinue
                                    false,                       // isCurrentItem
                                    missionItemParent);
@@ -333,7 +335,7 @@ bool CameraSection::scanForSection(QmlObjectListModel* visualItems, int scanInde
             break;
 
         case MAV_CMD_VIDEO_START_CAPTURE:
-            if (!foundCameraAction && missionItem.param1() == 0 && missionItem.param2() == -1 && missionItem.param3() == -1 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+            if (!foundCameraAction && missionItem.param1() == 0 && missionItem.param2() == -1 && missionItem.param3() == -1 && missionItem.param4() == -1 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
                 foundCameraAction = true;
                 cameraAction()->setRawValue(TakeVideo);
                 visualItems->removeAt(scanIndex)->deleteLater();
