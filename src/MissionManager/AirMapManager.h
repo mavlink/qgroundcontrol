@@ -40,6 +40,8 @@ public:
 
     Q_PROPERTY(QVariantList polygon MEMBER _polygon CONSTANT)
 
+    const QVariantList& getPolygon() const { return _polygon; }
+
 private:
     QVariantList    _polygon;
 };
