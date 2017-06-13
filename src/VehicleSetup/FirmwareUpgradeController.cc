@@ -234,9 +234,9 @@ void FirmwareUpgradeController::_initFirmwareHash()
     //////////////////////////////////// PX4FMUV3 firmwares //////////////////////////////////////////////////
     // Note: ArduPilot stable does not yet support V3 firmwares, so fall back to V2
     FirmwareToUrlElement_t rgPX4FMV3FirmwareArray[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v2_default.px4"},
-        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v2_default.px4"},
-        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v2_default.px4"},
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v3_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v3_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v3_default.px4"},
         { AutoPilotStackAPM, StableFirmware,    QuadFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-quad/ArduCopter-v2.px4"},
         { AutoPilotStackAPM, StableFirmware,    X8Firmware,             "http://firmware.ardupilot.org/Copter/stable/PX4-octa-quad/ArduCopter-v2.px4"},
         { AutoPilotStackAPM, StableFirmware,    HexaFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-hexa/ArduCopter-v2.px4"},
