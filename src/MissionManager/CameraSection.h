@@ -21,16 +21,24 @@ class CameraSection : public Section
 public:
     CameraSection(Vehicle* vehicle, QObject* parent = NULL);
 
-    // These nume values must match the json meta data
+    // These enum values must match the json meta data
+
     enum CameraAction {
         CameraActionNone,
         TakePhotosIntervalTime,
         TakePhotoIntervalDistance,
         StopTakingPhotos,
         TakeVideo,
-        StopTakingVideo
-    };
+        StopTakingVideo,
+        TakePhoto
+    };    
     Q_ENUMS(CameraAction)
+
+    enum CameraMode {
+        CameraModePhoto,
+        CameraModeVideo
+    };
+    Q_ENUMS(CameraMode)
 
     Q_PROPERTY(bool     specifyGimbal                   READ specifyGimbal                  WRITE setSpecifyGimbal              NOTIFY specifyGimbalChanged)
     Q_PROPERTY(Fact*    gimbalPitch                     READ gimbalPitch                                                        CONSTANT)

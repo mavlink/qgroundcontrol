@@ -34,14 +34,8 @@ public:
     Q_PROPERTY(QQuickItem* statusLog MEMBER _statusLog)
     Q_PROPERTY(QQuickItem* progressBar MEMBER _progressBar)
     
-    Q_PROPERTY(QQuickItem* compassButton MEMBER _compassButton)
-    Q_PROPERTY(QQuickItem* accelButton MEMBER _accelButton)
-    Q_PROPERTY(QQuickItem* compassMotButton MEMBER _compassMotButton)
-    Q_PROPERTY(QQuickItem* levelButton MEMBER _levelButton)
-    Q_PROPERTY(QQuickItem* calibratePressureButton MEMBER _calibratePressureButton)
     Q_PROPERTY(QQuickItem* nextButton MEMBER _nextButton)
     Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
-    Q_PROPERTY(QQuickItem* setOrientationsButton MEMBER _setOrientationsButton)
     Q_PROPERTY(QQuickItem* orientationCalAreaHelpText MEMBER _orientationCalAreaHelpText)
 
     Q_PROPERTY(bool compassSetupNeeded  READ compassSetupNeeded NOTIFY setupNeededChanged)
@@ -135,6 +129,7 @@ signals:
     void compass1CalFitnessChanged(double compass1CalFitness);
     void compass2CalFitnessChanged(double compass2CalFitness);
     void compass3CalFitnessChanged(double compass3CalFitness);
+    void setAllCalButtonsEnabled(bool enabled);
 
 private slots:
     void _handleUASTextMessage(int uasId, int compId, int severity, QString text);
@@ -168,14 +163,8 @@ private:
 
     QQuickItem* _statusLog;
     QQuickItem* _progressBar;
-    QQuickItem* _compassButton;
-    QQuickItem* _accelButton;
-    QQuickItem* _compassMotButton;
-    QQuickItem* _levelButton;
-    QQuickItem* _calibratePressureButton;
     QQuickItem* _nextButton;
     QQuickItem* _cancelButton;
-    QQuickItem* _setOrientationsButton;
     QQuickItem* _orientationCalAreaHelpText;
     
     bool _showOrientationCalArea;

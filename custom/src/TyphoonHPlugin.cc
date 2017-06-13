@@ -396,11 +396,6 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
     } else if (metaData.name() == VideoSettings::rtspUrlName) {
         metaData.setRawDefaultValue(QStringLiteral("rtsp://192.168.42.1:554/live"));
         return false;
-    } else if (metaData.name() == VideoSettings::videoSavePathName) {
-        QString vidPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Video");
-        QDir().mkpath(vidPath);
-        metaData.setRawDefaultValue(vidPath);
-        return false;
     } else if (metaData.name() == VideoSettings::showRecControlName) {
         //-- Disable Video Recording Control (UI)
 #if defined(QT_DEBUG)

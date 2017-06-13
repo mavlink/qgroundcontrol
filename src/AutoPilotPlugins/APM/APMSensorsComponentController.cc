@@ -27,14 +27,8 @@ APMSensorsComponentController::APMSensorsComponentController(void)
     : _sensorsComponent(NULL)
     , _statusLog(NULL)
     , _progressBar(NULL)
-    , _compassButton(NULL)
-    , _accelButton(NULL)
-    , _compassMotButton(NULL)
-    , _levelButton(NULL)
-    , _calibratePressureButton(NULL)
     , _nextButton(NULL)
     , _cancelButton(NULL)
-    , _setOrientationsButton(NULL)
     , _showOrientationCalArea(false)
     , _calTypeInProgress(CalTypeNone)
     , _orientationCalDownSideDone(false)
@@ -110,12 +104,7 @@ void APMSensorsComponentController::_startLogCalibration(void)
     
     connect(_uas, &UASInterface::textMessageReceived, this, &APMSensorsComponentController::_handleUASTextMessage);
     
-    _compassButton->setEnabled(false);
-    _accelButton->setEnabled(false);
-    _compassMotButton->setEnabled(false);
-    _levelButton->setEnabled(false);
-    _calibratePressureButton->setEnabled(false);
-    _setOrientationsButton->setEnabled(false);
+    emit setAllCalButtonsEnabled(false);
     if (_calTypeInProgress == CalTypeAccel || _calTypeInProgress == CalTypeCompassMot) {
         _nextButton->setEnabled(true);
     }
@@ -124,13 +113,9 @@ void APMSensorsComponentController::_startLogCalibration(void)
 
 void APMSensorsComponentController::_startVisualCalibration(void)
 {
-    _compassButton->setEnabled(false);
-    _accelButton->setEnabled(false);
-    _compassMotButton->setEnabled(false);
-    _levelButton->setEnabled(false);
-    _calibratePressureButton->setEnabled(false);
-    _setOrientationsButton->setEnabled(false);
+    emit setAllCalButtonsEnabled(false);
     _cancelButton->setEnabled(true);
+    _nextButton->setEnabled(false);
 
     _resetInternalState();
     
@@ -169,12 +154,7 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
 
     disconnect(_uas, &UASInterface::textMessageReceived, this, &APMSensorsComponentController::_handleUASTextMessage);
     
-    _compassButton->setEnabled(true);
-    _accelButton->setEnabled(true);
-    _compassMotButton->setEnabled(true);
-    _levelButton->setEnabled(true);
-    _calibratePressureButton->setEnabled(true);
-    _setOrientationsButton->setEnabled(true);
+    emit setAllCalButtonsEnabled(true);
     _nextButton->setEnabled(false);
     _cancelButton->setEnabled(false);
 

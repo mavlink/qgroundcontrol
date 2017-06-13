@@ -23,10 +23,13 @@
 #include <QNetworkProxy>
 #include <QNetworkInterface>
 #include <iostream>
+#include <QHostInfo>
 
 #include "UDPLink.h"
 #include "QGC.h"
-#include <QHostInfo>
+#include "QGCApplication.h"
+#include "SettingsManager.h"
+#include "AutoConnectSettings.h"
 
 #define REMOVE_GONE_HOSTS 0
 
@@ -329,7 +332,12 @@ void UDPLink::_deregisterZeroconf()
 
 UDPConfiguration::UDPConfiguration(const QString& name) : LinkConfiguration(name)
 {
-    _localPort = QGC_UDP_LOCAL_PORT;
+    AutoConnectSettings* settings = qgcApp()->toolbox()->settingsManager()->autoConnectSettings();
+    _localPort = settings->udpListenPort()->rawValue().toInt();
+    QString targetHostIP = settings->udpTargetHostIP()->rawValue().toString();
+    if (!targetHostIP.isEmpty()) {
+        addHost(targetHostIP, settings->udpTargetHostPort()->rawValue().toInt());
+    }
 }
 
 UDPConfiguration::UDPConfiguration(UDPConfiguration* source) : LinkConfiguration(source)
@@ -499,11 +507,13 @@ void UDPConfiguration::saveSettings(QSettings& settings, const QString& root)
 
 void UDPConfiguration::loadSettings(QSettings& settings, const QString& root)
 {
+    AutoConnectSettings* acSettings = qgcApp()->toolbox()->settingsManager()->autoConnectSettings();
+
     _confMutex.lock();
     _hosts.clear();
     _confMutex.unlock();
     settings.beginGroup(root);
-    _localPort = (quint16)settings.value("port", QGC_UDP_LOCAL_PORT).toUInt();
+    _localPort = (quint16)settings.value("port", acSettings->udpListenPort()->rawValue().toInt()).toUInt();
     int hostCount = settings.value("hostCount", 0).toInt();
     for(int i = 0; i < hostCount; i++) {
         QString hkey = QString("host%1").arg(i);

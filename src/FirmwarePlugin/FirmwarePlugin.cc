@@ -139,11 +139,6 @@ bool FirmwarePlugin::supportsRadio(void)
     return true;
 }
 
-bool FirmwarePlugin::supportsCalibratePressure(void)
-{
-    return false;
-}
-
 bool FirmwarePlugin::supportsMotorInterference(void)
 {
     return true;
