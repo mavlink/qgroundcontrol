@@ -21,17 +21,23 @@ const char* AutoConnectSettings:: autoConnectSiKRadioSettingsName =     "Autocon
 const char* AutoConnectSettings:: autoConnectPX4FlowSettingsName =      "AutoconnectPX4Flow";
 const char* AutoConnectSettings:: autoConnectRTKGPSSettingsName =       "AutoconnectRTKGPS";
 const char* AutoConnectSettings:: autoConnectLibrePilotSettingsName =   "AutoconnectLibrePilot";
+const char* AutoConnectSettings:: udpListenPortName =                   "AutoconnectUDPListenPort";
+const char* AutoConnectSettings:: udpTargetHostIPName =                 "AutoconnectUDPTargetHostIP";
+const char* AutoConnectSettings:: udpTargetHostPortName =               "AutoconnectUDPTargetHostPort";
 
 const char* AutoConnectSettings::autoConnectSettingsGroupName = "AutoConnect";
 
 AutoConnectSettings::AutoConnectSettings(QObject* parent)
-    : SettingsGroup(autoConnectSettingsGroupName, _settingsGroup, parent)
-    , _autoConnectUDPFact(NULL)
-    , _autoConnectPixhawkFact(NULL)
-    , _autoConnectSiKRadioFact(NULL)
-    , _autoConnectPX4FlowFact(NULL)
-    , _autoConnectRTKGPSFact(NULL)
+    : SettingsGroup             (autoConnectSettingsGroupName, _settingsGroup, parent)
+    , _autoConnectUDPFact       (NULL)
+    , _autoConnectPixhawkFact   (NULL)
+    , _autoConnectSiKRadioFact  (NULL)
+    , _autoConnectPX4FlowFact   (NULL)
+    , _autoConnectRTKGPSFact    (NULL)
     , _autoConnectLibrePilotFact(NULL)
+    , _udpListenPortFact        (NULL)
+    , _udpTargetHostIPFact      (NULL)
+    , _udpTargetHostPortFact    (NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AutoConnectSettings>("QGroundControl.SettingsManager", 1, 0, "AutoConnectSettings", "Reference only");
@@ -89,4 +95,31 @@ Fact* AutoConnectSettings::autoConnectLibrePilot(void)
     }
 
     return _autoConnectLibrePilotFact;
+}
+
+Fact* AutoConnectSettings::udpListenPort(void)
+{
+    if (!_udpListenPortFact) {
+        _udpListenPortFact = _createSettingsFact(udpListenPortName);
+    }
+
+    return _udpListenPortFact;
+}
+
+Fact* AutoConnectSettings::udpTargetHostIP(void)
+{
+    if (!_udpTargetHostIPFact) {
+        _udpTargetHostIPFact = _createSettingsFact(udpTargetHostIPName);
+    }
+
+    return _udpTargetHostIPFact;
+}
+
+Fact* AutoConnectSettings::udpTargetHostPort(void)
+{
+    if (!_udpTargetHostPortFact) {
+        _udpTargetHostPortFact = _createSettingsFact(udpTargetHostPortName);
+    }
+
+    return _udpTargetHostPortFact;
 }

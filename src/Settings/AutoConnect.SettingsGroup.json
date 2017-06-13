@@ -40,5 +40,23 @@
     "longDescription":  "If this option is enabled GroundControl will automatically connect to a LibrePilot board which is connected via USB.",
     "type":             "bool",
     "defaultValue":     true
+},
+{
+    "name":             "AutoconnectUDPListenPort",
+    "shortDescription": "UDP port for autoconnect",
+    "type":             "uint32",
+    "defaultValue":     14550
+},
+{
+    "name":             "AutoconnectUDPTargetHostIP",
+    "shortDescription": "UDP target host IP for autoconnect",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "AutoconnectUDPTargetHostPort",
+    "shortDescription": "UDP target host port for autoconnect",
+    "type":             "uint32",
+    "defaultValue":     14550
 }
 ]
