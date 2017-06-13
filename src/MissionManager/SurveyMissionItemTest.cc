@@ -33,6 +33,7 @@ void SurveyMissionItemTest::init(void)
 
     _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
     _surveyItem = new SurveyMissionItem(_offlineVehicle, this);
+    _surveyItem->setTurnaroundDist(0);  // Unit test written for no turnaround distance
     _mapPolygon = _surveyItem->mapPolygon();
 
     // It's important to check that the right signals are emitted at the right time since that drives ui change.
