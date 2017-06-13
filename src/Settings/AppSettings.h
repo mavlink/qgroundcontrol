@@ -43,6 +43,7 @@ public:
     Q_PROPERTY(QString parameterSavePath    READ parameterSavePath  NOTIFY savePathsChanged)
     Q_PROPERTY(QString telemetrySavePath    READ telemetrySavePath  NOTIFY savePathsChanged)
     Q_PROPERTY(QString logSavePath          READ logSavePath        NOTIFY savePathsChanged)
+    Q_PROPERTY(QString videoSavePath        READ videoSavePath      NOTIFY savePathsChanged)
 
     Q_PROPERTY(QString planFileExtension        MEMBER planFileExtension        CONSTANT)
     Q_PROPERTY(QString missionFileExtension     MEMBER missionFileExtension     CONSTANT)
@@ -74,6 +75,7 @@ public:
     QString parameterSavePath   (void);
     QString telemetrySavePath   (void);
     QString logSavePath         (void);
+    QString videoSavePath         (void);
 
     static MAV_AUTOPILOT offlineEditingFirmwareTypeFromFirmwareType(MAV_AUTOPILOT firmwareType);
     static MAV_TYPE offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleType);
@@ -114,6 +116,7 @@ public:
     static const char* telemetryDirectory;
     static const char* missionDirectory;
     static const char* logDirectory;
+    static const char* videoDirectory;
 
 signals:
     void savePathsChanged(void);

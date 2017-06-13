@@ -353,13 +353,9 @@ FORMS += \
     src/ui/QGCMAVLinkInspector.ui \
     src/ui/QGCMAVLinkLogPlayer.ui \
     src/ui/QGCMapRCToParamDialog.ui \
-    src/ui/QGCTabbedInfoView.ui \
     src/ui/QGCUASFileView.ui \
     src/ui/QGCUASFileViewMulti.ui \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
-    src/ui/uas/UASMessageView.ui \
-    src/ui/uas/UASQuickView.ui \
-    src/ui/uas/UASQuickViewItemSelect.ui \
 }
 
 #
@@ -618,7 +614,6 @@ HEADERS += \
     src/ui/QGCMAVLinkInspector.h \
     src/ui/QGCMAVLinkLogPlayer.h \
     src/ui/QGCMapRCToParamDialog.h \
-    src/ui/QGCTabbedInfoView.h \
     src/ui/QGCUASFileView.h \
     src/ui/QGCUASFileViewMulti.h \
     src/ui/linechart/ChartPlot.h \
@@ -629,12 +624,6 @@ HEADERS += \
     src/ui/linechart/ScrollZoomer.h \
     src/ui/linechart/Scrollbar.h \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
-    src/ui/uas/UASMessageView.h \
-    src/ui/uas/UASQuickView.h \
-    src/ui/uas/UASQuickViewGaugeItem.h \
-    src/ui/uas/UASQuickViewItem.h \
-    src/ui/uas/UASQuickViewItemSelect.h \
-    src/ui/uas/UASQuickViewTextItem.h \
 }
 
 iOSBuild {
@@ -782,7 +771,6 @@ SOURCES += \
     src/ui/QGCMAVLinkInspector.cc \
     src/ui/QGCMAVLinkLogPlayer.cc \
     src/ui/QGCMapRCToParamDialog.cpp \
-    src/ui/QGCTabbedInfoView.cpp \
     src/ui/QGCUASFileView.cc \
     src/ui/QGCUASFileViewMulti.cc \
     src/ui/linechart/ChartPlot.cc \
@@ -793,12 +781,6 @@ SOURCES += \
     src/ui/linechart/ScrollZoomer.cc \
     src/ui/linechart/Scrollbar.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
-    src/ui/uas/UASMessageView.cc \
-    src/ui/uas/UASQuickView.cc \
-    src/ui/uas/UASQuickViewGaugeItem.cc \
-    src/ui/uas/UASQuickViewItem.cc \
-    src/ui/uas/UASQuickViewItemSelect.cc \
-    src/ui/uas/UASQuickViewTextItem.cc \
 }
 
 # Palette test widget in debug builds
