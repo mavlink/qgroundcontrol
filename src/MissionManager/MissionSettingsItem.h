@@ -26,15 +26,17 @@ class MissionSettingsItem : public ComplexMissionItem
 public:
     MissionSettingsItem(Vehicle* vehicle, QObject* parent = NULL);
 
-    Q_PROPERTY(Fact*    plannedHomePositionAltitude READ plannedHomePositionAltitude                                        CONSTANT)
-    Q_PROPERTY(bool     missionEndRTL               MEMBER _missionEndRTL                                                   NOTIFY missionEndRTLChanged)
-    Q_PROPERTY(QObject* cameraSection               READ cameraSection                                                      CONSTANT)
-    Q_PROPERTY(QObject* speedSection                READ speedSection                                                       CONSTANT)
+    Q_PROPERTY(Fact*    plannedHomePositionAltitude READ plannedHomePositionAltitude                            CONSTANT)
+    Q_PROPERTY(bool     missionEndRTL               READ missionEndRTL                  WRITE setMissionEndRTL  NOTIFY missionEndRTLChanged)
+    Q_PROPERTY(QObject* cameraSection               READ cameraSection                                          CONSTANT)
+    Q_PROPERTY(QObject* speedSection                READ speedSection                                           CONSTANT)
 
-    Fact*   plannedHomePositionAltitude (void) { return &_plannedHomePositionAltitudeFact; }
+    Fact*           plannedHomePositionAltitude (void) { return &_plannedHomePositionAltitudeFact; }
+    bool            missionEndRTL               (void) const { return _missionEndRTL; }
+    CameraSection*  cameraSection               (void) { return &_cameraSection; }
+    SpeedSection*   speedSection                (void) { return &_speedSection; }
 
-    CameraSection* cameraSection(void) { return &_cameraSection; }
-    SpeedSection* speedSection(void) { return &_speedSection; }
+    void setMissionEndRTL(bool missionEndRTL);
 
     /// Scans the loaded items for settings items
     bool scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex);
