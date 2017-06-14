@@ -40,6 +40,7 @@ signals:
     void positionUpdate(GPSPositionMessage message);
     void satelliteInfoUpdate(GPSSatelliteMessage message);
     void RTCMDataUpdate(QByteArray message);
+    void rtkStatus(float duration, float accuracyMM, bool valid, bool active);
 
 protected:
     void run();
