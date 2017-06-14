@@ -209,6 +209,7 @@ private:
     void _updateBatteryInfo(int waypointIndex);
     bool _loadItemsFromJson(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
     void _initLoadedVisualItems(QmlObjectListModel* loadedVisualItems);
+    void _addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair);
 
 private:
     MissionManager*         _missionManager;

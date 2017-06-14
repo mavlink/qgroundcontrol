@@ -273,3 +273,11 @@ double MissionSettingsItem::specifiedFlightSpeed(void)
         return std::numeric_limits<double>::quiet_NaN();
     }
 }
+
+void MissionSettingsItem::setMissionEndRTL(bool missionEndRTL)
+{
+    if (missionEndRTL != _missionEndRTL) {
+        _missionEndRTL = missionEndRTL;
+        emit missionEndRTLChanged(missionEndRTL);
+    }
+}
