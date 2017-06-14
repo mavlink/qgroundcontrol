@@ -172,6 +172,7 @@ int GPSProvider::callback(GPSCallbackType type, void *data1, int data2)
         {
             SurveyInStatus* status = (SurveyInStatus*)data1;
             qCDebug(RTKGPSLog) << QString("Survey-in status: %1s cur accuracy: %2mm valid: %3 active: %4").arg(status->duration).arg(status->mean_accuracy).arg((int)(status->flags & 1)).arg((int)((status->flags>>1) & 1));
+            emit rtkStatus(status->duration, status->mean_accuracy, (int)(status->flags & 1), (int)((status->flags>>1) & 1));
         }
             break;
 
