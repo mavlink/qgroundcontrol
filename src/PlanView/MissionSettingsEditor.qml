@@ -262,7 +262,7 @@ Rectangle {
             QGCLabel {
                 anchors.left:           parent.left
                 anchors.right:          parent.right
-                text:                   qsTr("Above camera commands will take effect immediately upon mission start.")
+                text:                   qsTr("Above camera commands will take affect immediately upon mission start.")
                 wrapMode:               Text.WordWrap
                 horizontalAlignment:    Text.AlignHCenter
                 font.pointSize:         ScreenTools.smallFontPointSize
