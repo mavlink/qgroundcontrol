@@ -235,11 +235,25 @@ Rectangle {
                 } // GridLayout
             }
 
+            CameraSection {
+                id:         cameraSection
+                checked:    true
+            }
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                text:                   qsTr("Above camera commands will take affect immediately upon mission start.")
+                wrapMode:               Text.WordWrap
+                horizontalAlignment:    Text.AlignHCenter
+                font.pointSize:         ScreenTools.smallFontPointSize
+                visible:                cameraSection.checked
+            }
+
             SectionHeader {
                 id:         missionEndHeader
                 text:       qsTr("Mission End")
                 checked:    true
-                showSpacer: false
             }
 
             Column {
@@ -254,20 +268,6 @@ Rectangle {
                 }
             }
 
-            CameraSection {
-                id:         cameraSection
-                checked:    missionItem.cameraSection.settingsSpecified
-            }
-
-            QGCLabel {
-                anchors.left:           parent.left
-                anchors.right:          parent.right
-                text:                   qsTr("Above camera commands will take affect immediately upon mission start.")
-                wrapMode:               Text.WordWrap
-                horizontalAlignment:    Text.AlignHCenter
-                font.pointSize:         ScreenTools.smallFontPointSize
-                visible:                cameraSection.checked
-            }
         } // Column
     } // Deferred loader
 } // Rectangle
