@@ -847,6 +847,7 @@ void SurveyMissionItem::_intersectLinesWithRect(const QList<QLineF>& lineList, c
 
 void SurveyMissionItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines)
 {
+    resultLines.clear();
     for (int i=0; i<lineList.count(); i++) {
         int foundCount = 0;
         QLineF intersectLine;
@@ -932,15 +933,15 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
     }
     polygon << polygonPoints[0];
     QRectF smallBoundRect = polygon.boundingRect();
-    QPointF center = smallBoundRect.center();
+    QPointF boundingCenter = smallBoundRect.center();
     qCDebug(SurveyMissionItemLog) << "Bounding rect" << smallBoundRect.topLeft().x() << smallBoundRect.topLeft().y() << smallBoundRect.bottomRight().x() << smallBoundRect.bottomRight().y();
 
     // Rotate the bounding rect around it's center to generate the larger bounding rect
     QPolygonF boundPolygon;
-    boundPolygon << _rotatePoint(smallBoundRect.topLeft(),      center, gridAngle);
-    boundPolygon << _rotatePoint(smallBoundRect.topRight(),     center, gridAngle);
-    boundPolygon << _rotatePoint(smallBoundRect.bottomRight(),  center, gridAngle);
-    boundPolygon << _rotatePoint(smallBoundRect.bottomLeft(),   center, gridAngle);
+    boundPolygon << _rotatePoint(smallBoundRect.topLeft(),      boundingCenter, gridAngle);
+    boundPolygon << _rotatePoint(smallBoundRect.topRight(),     boundingCenter, gridAngle);
+    boundPolygon << _rotatePoint(smallBoundRect.bottomRight(),  boundingCenter, gridAngle);
+    boundPolygon << _rotatePoint(smallBoundRect.bottomLeft(),   boundingCenter, gridAngle);
     boundPolygon << boundPolygon[0];
     QRectF largeBoundRect = boundPolygon.boundingRect();
     qCDebug(SurveyMissionItemLog) << "Rotated bounding rect" << largeBoundRect.topLeft().x() << largeBoundRect.topLeft().y() << largeBoundRect.bottomRight().x() << largeBoundRect.bottomRight().y();
@@ -962,7 +963,7 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
                 float yTop =    largeBoundRect.topLeft().y() - 100.0;
                 float yBottom = largeBoundRect.bottomRight().y() + 100.0;
 
-                lineList += QLineF(_rotatePoint(QPointF(x, yTop), center, gridAngle), _rotatePoint(QPointF(x, yBottom), center, gridAngle));
+                lineList += QLineF(_rotatePoint(QPointF(x, yTop), boundingCenter, gridAngle), _rotatePoint(QPointF(x, yBottom), boundingCenter, gridAngle));
                 qCDebug(SurveyMissionItemLog) << "line(" << lineList.last().x1() << ", " << lineList.last().y1() << ")-(" << lineList.last().x2() <<", " << lineList.last().y2() << ")";
 
                 x += gridSpacing;
@@ -975,7 +976,7 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
                 float yTop =    largeBoundRect.topRight().y() - 100.0;
                 float yBottom = largeBoundRect.bottomLeft().y() + 100.0;
 
-                lineList += QLineF(_rotatePoint(QPointF(x, yTop), center, gridAngle), _rotatePoint(QPointF(x, yBottom), center, gridAngle));
+                lineList += QLineF(_rotatePoint(QPointF(x, yTop), boundingCenter, gridAngle), _rotatePoint(QPointF(x, yBottom), boundingCenter, gridAngle));
                 qCDebug(SurveyMissionItemLog) << "line(" << lineList.last().x1() << ", " << lineList.last().y1() << ")-(" << lineList.last().x2() <<", " << lineList.last().y2() << ")";
 
                 x -= gridSpacing;
@@ -992,7 +993,7 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
                 float xLeft =   largeBoundRect.bottomLeft().x() - 100.0;
                 float xRight =  largeBoundRect.topRight().x() + 100.0;
 
-                lineList += QLineF(_rotatePoint(QPointF(xLeft, y), center, gridAngle), _rotatePoint(QPointF(xRight, y), center, gridAngle));
+                lineList += QLineF(_rotatePoint(QPointF(xLeft, y), boundingCenter, gridAngle), _rotatePoint(QPointF(xRight, y), boundingCenter, gridAngle));
                 qCDebug(SurveyMissionItemLog) << "y:xLeft:xRight" << y << xLeft << xRight << "line(" << lineList.last().x1() << ", " << lineList.last().y1() << ")-(" << lineList.last().x2() <<", " << lineList.last().y2() << ")";
 
                 y -= gridSpacing;
@@ -1005,7 +1006,7 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
                 float xLeft =   largeBoundRect.topLeft().x() - 100.0;
                 float xRight =  largeBoundRect.bottomRight().x() + 100.0;
 
-                lineList += QLineF(_rotatePoint(QPointF(xLeft, y), center, gridAngle), _rotatePoint(QPointF(xRight, y), center, gridAngle));
+                lineList += QLineF(_rotatePoint(QPointF(xLeft, y), boundingCenter, gridAngle), _rotatePoint(QPointF(xRight, y), boundingCenter, gridAngle));
                 qCDebug(SurveyMissionItemLog) << "y:xLeft:xRight" << y << xLeft << xRight << "line(" << lineList.last().x1() << ", " << lineList.last().y1() << ")-(" << lineList.last().x2() <<", " << lineList.last().y2() << ")";
 
                 y += gridSpacing;
@@ -1021,6 +1022,21 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
     // This is handy for debugging grid problems, not for release
     intersectLines = lineList;
 #endif
+
+    // Less than two transects intersected with the polygon:
+    //      Create a single transect which goes through the center of the polygon
+    //      Intersect it with the polygon
+    if (intersectLines.count() < 2) {
+        _mapPolygon.center();
+        QLineF firstLine = lineList.first();
+        QPointF lineCenter = firstLine.pointAt(0.5);
+        QPointF centerOffset = boundingCenter - lineCenter;
+        firstLine.translate(centerOffset);
+        lineList.clear();
+        lineList.append(firstLine);
+        intersectLines = lineList;
+        _intersectLinesWithPolygon(lineList, polygon, intersectLines);
+    }
 
     // Make sure all lines are going to same direction. Polygon intersection leads to line which
     // can be in varied directions depending on the order of the intesecting sides.
