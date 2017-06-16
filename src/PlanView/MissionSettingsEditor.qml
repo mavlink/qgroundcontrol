@@ -83,6 +83,82 @@ Rectangle {
             anchors.right:  parent ? parent.right : undefined
             anchors.top:    parent ? parent.top   : undefined
             spacing:        _margin
+            SectionHeader {
+                id:         missionDefaultsSectionHeader
+                text:       qsTr("Mission Defaults")
+                checked:    true
+            }
+
+            Column {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        _margin
+                visible:        missionDefaultsSectionHeader.checked
+
+                GridLayout {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    columnSpacing:  ScreenTools.defaultFontPixelWidth
+                    rowSpacing:     columnSpacing
+                    columns:        2
+
+                    QGCLabel {
+                        text:       qsTr("Waypoint alt")
+                    }
+                    FactTextField {
+                        fact:               QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
+                        Layout.fillWidth:   true
+                    }
+
+                    QGCCheckBox {
+                        id:         flightSpeedCheckBox
+                        text:       qsTr("Flight speed")
+                        visible:    !_missionVehicle.vtol
+                        checked:    missionItem.speedSection.specifyFlightSpeed
+                        onClicked:   missionItem.speedSection.specifyFlightSpeed = checked
+                    }
+                    FactTextField {
+                        Layout.fillWidth:   true
+                        fact:               missionItem.speedSection.flightSpeed
+                        visible:            flightSpeedCheckBox.visible
+                        enabled:            flightSpeedCheckBox.checked
+                    }
+                } // GridLayout
+            }
+
+            CameraSection {
+                id:         cameraSection
+                checked:    true
+            }
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                text:                   qsTr("Above camera commands will take affect immediately upon mission start.")
+                wrapMode:               Text.WordWrap
+                horizontalAlignment:    Text.AlignHCenter
+                font.pointSize:         ScreenTools.smallFontPointSize
+                visible:                cameraSection.checked
+            }
+
+            SectionHeader {
+                id:         missionEndHeader
+                text:       qsTr("Mission End")
+                checked:    true
+            }
+
+            Column {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        _margin
+                visible:        missionEndHeader.checked
+
+                FactCheckBox {
+                    text:   qsTr("Return To Launch")
+                    fact:   missionItem.missionEndRTL
+                }
+            }
+
 
             SectionHeader {
                 id:         vehicleInfoSectionHeader
@@ -191,83 +267,6 @@ Rectangle {
                     anchors.horizontalCenter:   parent.horizontalCenter
                 }
             }
-
-            SectionHeader {
-                id:         missionDefaultsSectionHeader
-                text:       qsTr("Mission Defaults")
-                checked:    true
-            }
-
-            Column {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        _margin
-                visible:        missionDefaultsSectionHeader.checked
-
-                GridLayout {
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    columnSpacing:  ScreenTools.defaultFontPixelWidth
-                    rowSpacing:     columnSpacing
-                    columns:        2
-
-                    QGCLabel {
-                        text:       qsTr("Waypoint alt")
-                    }
-                    FactTextField {
-                        fact:               QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
-                        Layout.fillWidth:   true
-                    }
-
-                    QGCCheckBox {
-                        id:         flightSpeedCheckBox
-                        text:       qsTr("Flight speed")
-                        visible:    !_missionVehicle.vtol
-                        checked:    missionItem.speedSection.specifyFlightSpeed
-                        onClicked:   missionItem.speedSection.specifyFlightSpeed = checked
-                    }
-                    FactTextField {
-                        Layout.fillWidth:   true
-                        fact:               missionItem.speedSection.flightSpeed
-                        visible:            flightSpeedCheckBox.visible
-                        enabled:            flightSpeedCheckBox.checked
-                    }
-                } // GridLayout
-            }
-
-            CameraSection {
-                id:         cameraSection
-                checked:    true
-            }
-
-            QGCLabel {
-                anchors.left:           parent.left
-                anchors.right:          parent.right
-                text:                   qsTr("Above camera commands will take affect immediately upon mission start.")
-                wrapMode:               Text.WordWrap
-                horizontalAlignment:    Text.AlignHCenter
-                font.pointSize:         ScreenTools.smallFontPointSize
-                visible:                cameraSection.checked
-            }
-
-            SectionHeader {
-                id:         missionEndHeader
-                text:       qsTr("Mission End")
-                checked:    true
-            }
-
-            Column {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        _margin
-                visible:        missionEndHeader.checked
-
-                FactCheckBox {
-                    text:   qsTr("Return To Launch")
-                    fact:   missionItem.missionEndRTL
-                }
-            }
-
         } // Column
     } // Deferred loader
 } // Rectangle
