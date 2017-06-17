@@ -83,12 +83,10 @@ Rectangle {
             anchors.right:  parent ? parent.right : undefined
             anchors.top:    parent ? parent.top   : undefined
             spacing:        _margin
-
             SectionHeader {
                 id:         missionDefaultsSectionHeader
                 text:       qsTr("Mission Defaults")
                 checked:    true
-                showSpacer: false
             }
 
             Column {
@@ -126,17 +124,41 @@ Rectangle {
                         enabled:            flightSpeedCheckBox.checked
                     }
                 } // GridLayout
-
-                QGCCheckBox {
-                    text:       qsTr("RTL after mission end")
-                    checked:    missionItem.missionEndRTL
-                    onClicked:  missionItem.missionEndRTL = checked
-                }
             }
 
             CameraSection {
-                checked: missionItem.cameraSection.settingsSpecified
+                id:         cameraSection
+                checked:    true
             }
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                text:                   qsTr("Above camera commands will take affect immediately upon mission start.")
+                wrapMode:               Text.WordWrap
+                horizontalAlignment:    Text.AlignHCenter
+                font.pointSize:         ScreenTools.smallFontPointSize
+                visible:                cameraSection.checked
+            }
+
+            SectionHeader {
+                id:         missionEndHeader
+                text:       qsTr("Mission End")
+                checked:    true
+            }
+
+            Column {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        _margin
+                visible:        missionEndHeader.checked
+
+                FactCheckBox {
+                    text:   qsTr("Return To Launch")
+                    fact:   missionItem.missionEndRTL
+                }
+            }
+
 
             SectionHeader {
                 id:         vehicleInfoSectionHeader
