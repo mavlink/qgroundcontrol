@@ -888,6 +888,7 @@ void PlanManager::_removeAllWorker(void)
 
     emit progressPct(0);
 
+    _connectToMavlink();
     _dedicatedLink = _vehicle->priorityLink();
     mavlink_msg_mission_clear_all_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                             qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
