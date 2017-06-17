@@ -703,7 +703,7 @@ Rectangle {
                 var angle = Math.round(Math.atan2(point.y, point.x) * 180 / Math.PI)
                 windRoseCanvas.requestPaint()
                 windRosePie.angle = angle
-                gridAngleText.text = angle
+                gridAngleText.text = - angle
                 gridAngleText.editingFinished();
             }
         }
