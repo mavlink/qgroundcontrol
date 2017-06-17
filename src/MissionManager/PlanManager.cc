@@ -296,21 +296,23 @@ void PlanManager::_readTransactionComplete(void)
 void PlanManager::_handleMissionCount(const mavlink_message_t& message)
 {
     mavlink_mission_count_t missionCount;
-    
+
+    mavlink_msg_mission_count_decode(&message, &missionCount);
+
+    if (missionCount.mission_type != _planType) {
+        // if there was a previous transaction with a different mission_type, it can happen that we receive
+        // a stale message here, for example when the MAV ran into a timeout and sent a message twice
+        qCDebug(PlanManagerLog) << "_handleMissionCount Incorrect mission_type received expected:actual" << _planType << missionCount.mission_type;
+        return;
+    }
+
     if (!_checkForExpectedAck(AckMissionCount)) {
         return;
     }
 
-    _retryCount = 0;
-    
-    mavlink_msg_mission_count_decode(&message, &missionCount);
     qCDebug(PlanManagerLog) << "_handleMissionCount count:" << missionCount.count;
 
-    if (missionCount.mission_type != _planType) {
-        _sendError(MissionTypeMismatch, QString("_handleMissionCount Incorrect mission_type received expected:actual %1:%2").arg(_planType).arg(missionCount.mission_type));
-        _finishTransaction(false);
-        return;
-    }
+    _retryCount = 0;
 
     if (missionCount.count == 0) {
         _readTransactionComplete();
@@ -482,18 +484,20 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
 {
     mavlink_mission_request_t missionRequest;
     
-    if (!_checkForExpectedAck(AckMissionRequest)) {
+    mavlink_msg_mission_request_decode(&message, &missionRequest);
+
+    if (missionRequest.mission_type != _planType) {
+        // if there was a previous transaction with a different mission_type, it can happen that we receive
+        // a stale message here, for example when the MAV ran into a timeout and sent a message twice
+        qCDebug(PlanManagerLog) << "_handleMissionRequest Incorrect mission_type received expected:actual" << _planType << missionRequest.mission_type;
         return;
     }
     
-    mavlink_msg_mission_request_decode(&message, &missionRequest);
-    qCDebug(PlanManagerLog) << "_handleMissionRequest sequenceNumber" << missionRequest.seq;
-
-    if (missionRequest.mission_type != _planType) {
-        _sendError(MissionTypeMismatch, QString("_handleMissionCount Incorrect mission_type received expected:actual %1:%2").arg(_planType).arg(missionRequest.mission_type));
-        _finishTransaction(false);
+    if (!_checkForExpectedAck(AckMissionRequest)) {
         return;
     }
+
+    qCDebug(PlanManagerLog) << "_handleMissionRequest sequenceNumber" << missionRequest.seq;
 
     if (missionRequest.seq > _writeMissionItems.count() - 1) {
         _sendError(RequestRangeError, QString("Vehicle requested item outside range, count:request %1:%2. Send to Vehicle failed.").arg(_writeMissionItems.count()).arg(missionRequest.seq));
@@ -564,6 +568,14 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
 {
     mavlink_mission_ack_t missionAck;
     
+    mavlink_msg_mission_ack_decode(&message, &missionAck);
+    if (missionAck.mission_type != _planType) {
+        // if there was a previous transaction with a different mission_type, it can happen that we receive
+        // a stale message here, for example when the MAV ran into a timeout and sent a message twice
+        qCDebug(PlanManagerLog) << "_handleMissionAck Incorrect mission_type received expected:actual" << _planType << missionAck.mission_type;
+        return;
+    }
+
     // Save the retry ack before calling _checkForExpectedAck since we'll need it to determine what
     // type of a protocol sequence we are in.
     AckType_t savedExpectedAck = _expectedAck;
@@ -572,13 +584,6 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
     // a protocol sequence error. Call _checkForExpectedAck with _retryAck so it will succeed no
     // matter what.
     if (!_checkForExpectedAck(_expectedAck)) {
-        return;
-    }
-    
-    mavlink_msg_mission_ack_decode(&message, &missionAck);
-    if (missionAck.mission_type != _planType) {
-        _sendError(MissionTypeMismatch, QString("_handleMissionCount Incorrect mission_type received expected:actual %1:%2").arg(_planType).arg(missionAck.mission_type));
-        _finishTransaction(false);
         return;
     }
 
