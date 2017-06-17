@@ -414,6 +414,11 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
     return _cameraList;
 }
 
+QMap<QString, FactGroup*>* FirmwarePlugin::factGroups(void) {
+    // Generic plugin has no FactGroups
+    return NULL;
+}
+
 bool FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const
 {
     return vehicle->multiRotor() ? false : true;
