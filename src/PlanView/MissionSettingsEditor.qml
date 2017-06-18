@@ -41,7 +41,7 @@ Rectangle {
     readonly property string _vehicleLabel:     qsTr("Vehicle")
 
     QGCPalette { id: qgcPal }
-    QFileDialogController { id: fileController }
+    QGCFileDialogController { id: fileController }
 
     Loader {
         id:              deferedload
@@ -153,9 +153,10 @@ Rectangle {
                 spacing:        _margin
                 visible:        missionEndHeader.checked
 
-                FactCheckBox {
-                    text:   qsTr("Return To Launch")
-                    fact:   missionItem.missionEndRTL
+                QGCCheckBox {
+                    text:       qsTr("Return To Launch")
+                    checked:    missionItem.missionEndRTL
+                    onClicked:  missionItem.missionEndRTL = checked
                 }
             }
 
