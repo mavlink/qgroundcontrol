@@ -8,6 +8,7 @@ DropButton              1.0 DropButton.qml
 DropPanel               1.0 DropPanel.qml
 ExclusiveGroupItem      1.0 ExclusiveGroupItem.qml
 FactSliderPanel         1.0 FactSliderPanel.qml
+FileButton              1.0 FileButton.qml
 FlightModeDropdown      1.0 FlightModeDropdown.qml
 FlightModeMenu          1.0 FlightModeMenu.qml
 GeoFenceEditor          1.0 GeoFenceEditor.qml

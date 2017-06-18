@@ -278,12 +278,20 @@ void SimpleMissionItem::save(QJsonArray&  missionItems)
 
 bool SimpleMissionItem::load(QTextStream &loadStream)
 {
-    return _missionItem.load(loadStream);
+    bool success;
+    if ((success = _missionItem.load(loadStream))) {
+        _updateOptionalSections();
+    }
+    return success;
 }
 
 bool SimpleMissionItem::load(const QJsonObject& json, int sequenceNumber, QString& errorString)
 {
-    return _missionItem.load(json, sequenceNumber, errorString);
+    bool success;
+    if ((success = _missionItem.load(json, sequenceNumber, errorString))) {
+        _updateOptionalSections();
+    }
+    return success;
 }
 
 bool SimpleMissionItem::isStandaloneCoordinate(void) const
@@ -755,6 +763,7 @@ void SimpleMissionItem::_updateOptionalSections(void)
 
     emit cameraSectionChanged(_cameraSection);
     emit speedSectionChanged(_speedSection);
+    emit lastSequenceNumberChanged(lastSequenceNumber());
 }
 
 int SimpleMissionItem::lastSequenceNumber(void) const
