@@ -1,5 +1,6 @@
 <RCC>
-    <qresource prefix="/json/unittest">
+    <qresource prefix="/unittest">
+		<file alias="SectionTest.plan">src/MissionManager/UnitTest/SectionTest.plan</file>
         <file alias="MavCmdInfoCommon.json">src/MissionManager/UnitTest/MavCmdInfoCommon.json</file>
         <file alias="MavCmdInfoFixedWing.json">src/MissionManager/UnitTest/MavCmdInfoFixedWing.json</file>
         <file alias="MavCmdInfoMultiRotor.json">src/MissionManager/UnitTest/MavCmdInfoMultiRotor.json</file>
