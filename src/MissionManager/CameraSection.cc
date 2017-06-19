@@ -220,18 +220,18 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
             break;
 
         case TakePhoto:
-                item = new MissionItem(nextSequenceNumber++,
-                                       MAV_CMD_IMAGE_START_CAPTURE,
-                                       MAV_FRAME_MISSION,
-                                       0,                               // camera id = 0, all cameras
-                                       0,                              // Interval (none)
-                                       1,                              // Take 1 photo
-                                       -1,                             // Max horizontal resolution
-                                       -1,                             // Max vertical resolution
-                                       0, 0,                           // param 6-7 not used
-                                       true,                           // autoContinue
-                                       false,                         // isCurrentItem
-                                       missionItemParent);
+            item = new MissionItem(nextSequenceNumber++,
+                                   MAV_CMD_IMAGE_START_CAPTURE,
+                                   MAV_FRAME_MISSION,
+                                   0,                               // camera id = 0, all cameras
+                                   0,                              // Interval (none)
+                                   1,                              // Take 1 photo
+                                   -1,                             // Max horizontal resolution
+                                   -1,                             // Max vertical resolution
+                                   0, 0,                           // param 6-7 not used
+                                   true,                           // autoContinue
+                                   false,                         // isCurrentItem
+                                   missionItemParent);
             break;
         }
         if (item) {
@@ -240,14 +240,164 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
     }
 }
 
+bool CameraSection::_scanGimbal(QmlObjectListModel* visualItems, int scanIndex)
+{
+    SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(scanIndex);
+    if (item) {
+        MissionItem& missionItem = item->missionItem();
+        if ((MAV_CMD)item->command() == MAV_CMD_DO_MOUNT_CONTROL) {
+            if (missionItem.param2() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == MAV_MOUNT_MODE_MAVLINK_TARGETING) {
+                setSpecifyGimbal(true);
+                gimbalPitch()->setRawValue(missionItem.param1());
+                gimbalYaw()->setRawValue(missionItem.param3());
+                visualItems->removeAt(scanIndex)->deleteLater();
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool CameraSection::_scanTakePhoto(QmlObjectListModel* visualItems, int scanIndex)
+{
+    SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(scanIndex);
+    if (item) {
+        MissionItem& missionItem = item->missionItem();
+        if ((MAV_CMD)item->command() == MAV_CMD_IMAGE_START_CAPTURE) {
+            if  (missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 1 && missionItem.param4() == -1 && missionItem.param5() == -1 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+                cameraAction()->setRawValue(TakePhoto);
+                visualItems->removeAt(scanIndex)->deleteLater();
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool CameraSection::_scanTakePhotosIntervalTime(QmlObjectListModel* visualItems, int scanIndex)
+{
+    SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(scanIndex);
+    if (item) {
+        MissionItem& missionItem = item->missionItem();
+        if ((MAV_CMD)item->command() == MAV_CMD_IMAGE_START_CAPTURE) {
+            if (missionItem.param1() == 0 && missionItem.param2() >= 1 && missionItem.param3() == 0 && missionItem.param4() == -1 && missionItem.param5() == -1 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+                cameraAction()->setRawValue(TakePhotosIntervalTime);
+                cameraPhotoIntervalTime()->setRawValue(missionItem.param2());
+                visualItems->removeAt(scanIndex)->deleteLater();
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool CameraSection::_scanStopTakingPhotos(QmlObjectListModel* visualItems, int scanIndex)
+{
+    SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(scanIndex);
+    if (item) {
+        MissionItem& missionItem = item->missionItem();
+        if ((MAV_CMD)item->command() == MAV_CMD_DO_SET_CAM_TRIGG_DIST) {
+            if (missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+                if (scanIndex < visualItems->count() - 1) {
+                    SimpleMissionItem* nextItem = visualItems->value<SimpleMissionItem*>(scanIndex + 1);
+                    if (nextItem) {
+                        MissionItem& nextMissionItem = nextItem->missionItem();
+                        if (nextMissionItem.command() == MAV_CMD_IMAGE_STOP_CAPTURE && nextMissionItem.param1() == 0 && nextMissionItem.param2() == 0 && nextMissionItem.param3() == 0 && nextMissionItem.param4() == 0 && nextMissionItem.param5() == 0 && nextMissionItem.param6() == 0 && nextMissionItem.param7() == 0) {
+                            cameraAction()->setRawValue(StopTakingPhotos);
+                            visualItems->removeAt(scanIndex)->deleteLater();
+                            visualItems->removeAt(scanIndex)->deleteLater();
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+bool CameraSection::_scanTriggerDistance(QmlObjectListModel* visualItems, int scanIndex)
+{
+    SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(scanIndex);
+    if (item) {
+        MissionItem& missionItem = item->missionItem();
+        if ((MAV_CMD)item->command() == MAV_CMD_DO_SET_CAM_TRIGG_DIST) {
+            if (missionItem.param1() >= 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+                cameraAction()->setRawValue(TakePhotoIntervalDistance);
+                cameraPhotoIntervalDistance()->setRawValue(missionItem.param1());
+                visualItems->removeAt(scanIndex)->deleteLater();
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool CameraSection::_scanTakeVideo(QmlObjectListModel* visualItems, int scanIndex)
+{
+    SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(scanIndex);
+    if (item) {
+        MissionItem& missionItem = item->missionItem();
+        if ((MAV_CMD)item->command() == MAV_CMD_VIDEO_START_CAPTURE) {
+            if (missionItem.param1() == 0 && missionItem.param2() == -1 && missionItem.param3() == -1 && missionItem.param4() == -1 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+                cameraAction()->setRawValue(TakeVideo);
+                visualItems->removeAt(scanIndex)->deleteLater();
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool CameraSection::_scanStopTakingVideo(QmlObjectListModel* visualItems, int scanIndex)
+{
+    SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(scanIndex);
+    if (item) {
+        MissionItem& missionItem = item->missionItem();
+        if ((MAV_CMD)item->command() == MAV_CMD_VIDEO_STOP_CAPTURE) {
+            if (missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+                cameraAction()->setRawValue(StopTakingVideo);
+                visualItems->removeAt(scanIndex)->deleteLater();
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool CameraSection::_scanSetCameraMode(QmlObjectListModel* visualItems, int scanIndex)
+{
+    SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(scanIndex);
+    if (item) {
+        MissionItem& missionItem = item->missionItem();
+        if ((MAV_CMD)item->command() == MAV_CMD_SET_CAMERA_MODE) {
+            // We specifically don't test param 5/6/7 since we don't have NaN persistence for those fields
+            if (missionItem.param1() == 0 && (missionItem.param2() == 0 || missionItem.param2() == 1) && qIsNaN(missionItem.param3())) {
+                setSpecifyCameraMode(true);
+                cameraMode()->setRawValue(missionItem.param2());
+                visualItems->removeAt(scanIndex)->deleteLater();
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 bool CameraSection::scanForSection(QmlObjectListModel* visualItems, int scanIndex)
 {
     bool foundGimbal = false;
     bool foundCameraAction = false;
     bool foundCameraMode = false;
-    bool stopLooking = false;
 
-    qCDebug(CameraSectionLog) << "CameraSection::scanForCameraSection" << visualItems->count() << scanIndex;
+    qCDebug(CameraSectionLog) << "CameraSection::scanForCameraSection visualItems->count():scanIndex;" << visualItems->count() << scanIndex;
 
     if (!_available || scanIndex >= visualItems->count()) {
         return false;
@@ -255,124 +405,43 @@ bool CameraSection::scanForSection(QmlObjectListModel* visualItems, int scanInde
 
     // Scan through the initial mission items for possible mission settings
 
-    while (!stopLooking && visualItems->count() > scanIndex) {
-        SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(scanIndex);
-        if (!item) {
-            // We hit a complex item there can be no more possible mission settings
-            return foundGimbal || foundCameraAction;
+    while (visualItems->count() > scanIndex) {
+        if (!foundGimbal && _scanGimbal(visualItems, scanIndex)) {
+            foundGimbal = true;
+            continue;
         }
-        MissionItem& missionItem = item->missionItem();
-
-        qCDebug(CameraSectionLog) << item->command() << missionItem.param1() << missionItem.param2() << missionItem.param3() << missionItem.param4() << missionItem.param5() << missionItem.param6() << missionItem.param7() ;
-
-        // See CameraSection::appendMissionItems for specs on what compomises a known camera section item
-
-        switch ((MAV_CMD)item->command()) {
-        case MAV_CMD_DO_MOUNT_CONTROL:
-            if (!foundGimbal && missionItem.param2() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == MAV_MOUNT_MODE_MAVLINK_TARGETING) {
-                foundGimbal = true;
-                setSpecifyGimbal(true);
-                gimbalPitch()->setRawValue(missionItem.param1());
-                gimbalYaw()->setRawValue(missionItem.param3());
-                visualItems->removeAt(scanIndex)->deleteLater();
-            } else {
-                stopLooking = true;
-            }
-            break;
-
-        case MAV_CMD_IMAGE_START_CAPTURE:
-            // This could possibly be TakePhotosIntervalTime or TakePhoto
-            if (!foundCameraAction &&
-                    // TakePhotosIntervalTime matching
-                    ((missionItem.param1() == 0 && missionItem.param2() >= 1 && missionItem.param3() == 0 && missionItem.param4() == -1 && missionItem.param5() == -1 && missionItem.param6() == 0 && missionItem.param7() == 0) ||
-                    // TakePhoto matching
-                    (missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 1 && missionItem.param4() == -1 && missionItem.param5() == -1 && missionItem.param6() == 0 && missionItem.param7() == 0))) {
-                foundCameraAction = true;
-                if (missionItem.param2() == 0) {
-                    cameraAction()->setRawValue(TakePhoto);
-                } else {
-                    cameraAction()->setRawValue(TakePhotosIntervalTime);
-                    cameraPhotoIntervalTime()->setRawValue(missionItem.param2());
-                }
-                visualItems->removeAt(scanIndex)->deleteLater();
-            } else {
-                stopLooking = true;
-            }
-            break;
-
-        case MAV_CMD_DO_SET_CAM_TRIGG_DIST:
-            if (!foundCameraAction && missionItem.param1() >= 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
-                // At this point we don't know if we have a stop taking photos pair, or just a distance trigger
-
-                if (missionItem.param1() == 0 && scanIndex < visualItems->count() - 1) {
-                    // Possible stop taking photos pair
-                    SimpleMissionItem* nextItem = visualItems->value<SimpleMissionItem*>(scanIndex + 1);
-                    if (nextItem) {
-                        MissionItem& nextMissionItem = nextItem->missionItem();
-                        if (nextMissionItem.command() == MAV_CMD_IMAGE_STOP_CAPTURE && nextMissionItem.param1() == 0 && nextMissionItem.param2() == 0 && nextMissionItem.param3() == 0 && nextMissionItem.param4() == 0 && nextMissionItem.param5() == 0 && nextMissionItem.param6() == 0 && nextMissionItem.param7() == 0) {
-                            // We found a stop taking photos pair
-                            foundCameraAction = true;
-                            cameraAction()->setRawValue(StopTakingPhotos);
-                            visualItems->removeAt(scanIndex)->deleteLater();
-                            visualItems->removeAt(scanIndex)->deleteLater();
-                            stopLooking = true;
-                            break;
-                        }
-                    }
-                }
-
-                // We didn't find a stop taking photos pair, check for trigger distance
-                if (missionItem.param1() > 0) {
-                    foundCameraAction = true;
-                    cameraAction()->setRawValue(TakePhotoIntervalDistance);
-                    cameraPhotoIntervalDistance()->setRawValue(missionItem.param1());
-                    visualItems->removeAt(scanIndex)->deleteLater();
-                    stopLooking = true;
-                    break;
-                }
-            }
-            stopLooking = true;
-            break;
-
-        case MAV_CMD_VIDEO_START_CAPTURE:
-            if (!foundCameraAction && missionItem.param1() == 0 && missionItem.param2() == -1 && missionItem.param3() == -1 && missionItem.param4() == -1 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
-                foundCameraAction = true;
-                cameraAction()->setRawValue(TakeVideo);
-                visualItems->removeAt(scanIndex)->deleteLater();
-            } else {
-                stopLooking = true;
-            }
-            break;
-
-        case MAV_CMD_VIDEO_STOP_CAPTURE:
-            if (!foundCameraAction && missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
-                foundCameraAction = true;
-                cameraAction()->setRawValue(StopTakingVideo);
-                visualItems->removeAt(scanIndex)->deleteLater();
-            } else {
-                stopLooking = true;
-            }
-            break;
-
-        case MAV_CMD_SET_CAMERA_MODE:
-            // We specifically don't test param 5/6/7 since we don't have NaN persistence for those fields
-            if (!foundCameraMode && missionItem.param1() == 0 && (missionItem.param2() == 0 || missionItem.param2() == 1) && qIsNaN(missionItem.param3())) {
-                foundCameraMode = true;
-                setSpecifyCameraMode(true);
-                cameraMode()->setRawValue(missionItem.param2());
-                visualItems->removeAt(scanIndex)->deleteLater();
-            } else {
-                stopLooking = true;
-            }
-            break;
-
-        default:
-            stopLooking = true;
-            break;
+        if (!foundCameraAction && _scanTakePhoto(visualItems, scanIndex)) {
+            foundCameraAction = true;
+            continue;
         }
+        if (!foundCameraAction && _scanTakePhotosIntervalTime(visualItems, scanIndex)) {
+            foundCameraAction = true;
+            continue;
+        }
+        if (!foundCameraAction && _scanStopTakingPhotos(visualItems, scanIndex)) {
+            foundCameraAction = true;
+            continue;
+        }
+        if (!foundCameraAction && _scanTriggerDistance(visualItems, scanIndex)) {
+            foundCameraAction = true;
+            continue;
+        }
+        if (!foundCameraAction && _scanTakeVideo(visualItems, scanIndex)) {
+            foundCameraAction = true;
+            continue;
+        }
+        if (!foundCameraAction && _scanStopTakingVideo(visualItems, scanIndex)) {
+            foundCameraAction = true;
+            continue;
+        }
+        if (!foundCameraMode && _scanSetCameraMode(visualItems, scanIndex)) {
+            foundCameraMode = true;
+            continue;
+        }
+        break;
     }
 
-    qCDebug(CameraSectionLog) << foundGimbal << foundCameraAction << foundCameraMode;
+    qCDebug(CameraSectionLog) << "CameraSection::scanForCameraSection foundGimbal:foundCameraAction:foundCameraMode;" << foundGimbal << foundCameraAction << foundCameraMode;
 
     _settingsSpecified = foundGimbal || foundCameraAction || foundCameraMode;
     emit settingsSpecifiedChanged(_settingsSpecified);

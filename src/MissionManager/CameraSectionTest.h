@@ -37,10 +37,12 @@ private slots:
     void _testScanForStopImageSection(void);
     void _testScanForCameraModeSection(void);
     void _testScanForTakePhotoSection(void);
-    void _testScanForFullSection(void);
+    void _testScanForMultipleItems(void);
 
 private:
     void _createSpy(CameraSection* cameraSection, MultiSignalSpy** cameraSpy);
+    void _validateItemScan(SimpleMissionItem* validItem);
+    void _resetSection(void);
 
     enum {
         specifyGimbalChangedIndex = 0,
