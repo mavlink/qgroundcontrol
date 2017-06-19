@@ -90,6 +90,15 @@ private slots:
     void _cameraActionChanged(void);
 
 private:
+    bool _scanGimbal(QmlObjectListModel* visualItems, int scanIndex);
+    bool _scanTakePhoto(QmlObjectListModel* visualItems, int scanIndex);
+    bool _scanTakePhotosIntervalTime(QmlObjectListModel* visualItems, int scanIndex);
+    bool _scanStopTakingPhotos(QmlObjectListModel* visualItems, int scanIndex);
+    bool _scanTriggerDistance(QmlObjectListModel* visualItems, int scanIndex);
+    bool _scanTakeVideo(QmlObjectListModel* visualItems, int scanIndex);
+    bool _scanStopTakingVideo(QmlObjectListModel* visualItems, int scanIndex);
+    bool _scanSetCameraMode(QmlObjectListModel* visualItems, int scanIndex);
+
     bool    _available;
     bool    _settingsSpecified;
     bool    _specifyGimbal;
