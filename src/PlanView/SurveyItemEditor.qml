@@ -51,8 +51,8 @@ Rectangle {
                 }
             }
             missionItem.cameraOrientationFixed = false
-            if (index == -1) {
-                gridTypeCombo.currentIndex = _gridTypeManual
+            if (index == _cameraList.length) {
+                gridTypeCombo.currentIndex = _gridTypeCustomCamera
             } else {
                 gridTypeCombo.currentIndex = index
                 if (index != 1) {
