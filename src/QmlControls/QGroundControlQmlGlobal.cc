@@ -62,6 +62,14 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _corePlugin             = toolbox->corePlugin();
     _firmwarePluginManager  = toolbox->firmwarePluginManager();
     _settingsManager        = toolbox->settingsManager();
+
+   GPSManager *gpsManager = toolbox->gpsManager();
+   if (gpsManager) {
+       connect(gpsManager, &GPSManager::onConnect, this, &QGroundControlQmlGlobal::_onGPSConnect);
+       connect(gpsManager, &GPSManager::onDisconnect, this, &QGroundControlQmlGlobal::_onGPSDisconnect);
+       connect(gpsManager, &GPSManager::surveyInStatus, this, &QGroundControlQmlGlobal::_GPSSurveyInStatus);
+       connect(gpsManager, &GPSManager::satelliteUpdate, this, &QGroundControlQmlGlobal::_GPSNumSatellites);
+   }
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
@@ -230,3 +238,24 @@ void QGroundControlQmlGlobal::setFlightMapZoom(double zoom)
         emit flightMapZoomChanged(zoom);
     }
 }
+
+void QGroundControlQmlGlobal::_onGPSConnect()
+{
+    _gpsRtkFactGroup.connected()->setRawValue(true);
+}
+void QGroundControlQmlGlobal::_onGPSDisconnect()
+{
+    _gpsRtkFactGroup.connected()->setRawValue(false);
+}
+void QGroundControlQmlGlobal::_GPSSurveyInStatus(float duration, float accuracyMM, bool valid, bool active)
+{
+    _gpsRtkFactGroup.currentDuration()->setRawValue(duration);
+    _gpsRtkFactGroup.currentAccuracy()->setRawValue(accuracyMM);
+    _gpsRtkFactGroup.valid()->setRawValue(valid);
+    _gpsRtkFactGroup.active()->setRawValue(active);
+}
+void QGroundControlQmlGlobal::_GPSNumSatellites(int numSatellites)
+{
+    _gpsRtkFactGroup.numSatellites()->setRawValue(numSatellites);
+}
+

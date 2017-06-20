@@ -812,6 +812,7 @@ HEADERS+= \
     src/FirmwarePlugin/FirmwarePlugin.h \
     src/FirmwarePlugin/FirmwarePluginManager.h \
     src/Vehicle/MultiVehicleManager.h \
+    src/Vehicle/GPSRTKFactGroup.h \
     src/Vehicle/Vehicle.h \
     src/VehicleSetup/VehicleComponent.h \
 
@@ -836,6 +837,7 @@ SOURCES += \
     src/FirmwarePlugin/FirmwarePlugin.cc \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
     src/Vehicle/MultiVehicleManager.cc \
+    src/Vehicle/GPSRTKFactGroup.cc \
     src/Vehicle/Vehicle.cc \
     src/VehicleSetup/VehicleComponent.cc \
 
