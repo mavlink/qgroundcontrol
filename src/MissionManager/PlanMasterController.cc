@@ -246,6 +246,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         errorString = file.errorString() + QStringLiteral(" ") + filename;
+        qgcApp()->showMessage(errorMessage.arg(errorString));
         return;
     }
 

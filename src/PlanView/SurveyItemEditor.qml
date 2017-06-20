@@ -51,8 +51,8 @@ Rectangle {
                 }
             }
             missionItem.cameraOrientationFixed = false
-            if (index == -1) {
-                gridTypeCombo.currentIndex = _gridTypeManual
+            if (index == _cameraList.length) {
+                gridTypeCombo.currentIndex = _gridTypeCustomCamera
             } else {
                 gridTypeCombo.currentIndex = index
                 if (index != 1) {
@@ -703,7 +703,7 @@ Rectangle {
                 var angle = Math.round(Math.atan2(point.y, point.x) * 180 / Math.PI)
                 windRoseCanvas.requestPaint()
                 windRosePie.angle = angle
-                gridAngleText.text = angle
+                gridAngleText.text = - angle
                 gridAngleText.editingFinished();
             }
         }

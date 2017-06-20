@@ -45,7 +45,6 @@ SetupPage {
             readonly property string gyroHelp:      "For Gyroscope calibration you will need to place your vehicle on a surface and leave it still."
             readonly property string accelHelp:     "For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds."
             readonly property string levelHelp:     "To level the horizon you need to place the vehicle in its level flight position and press OK."
-            readonly property string airspeedHelp:  "For Airspeed calibration you will need to keep your airspeed sensor out of any wind and then blow across the sensor."
 
             readonly property string statusTextAreaDefaultText: "Start the individual calibration steps by clicking one of the buttons to the left."
 
@@ -466,7 +465,7 @@ SetupPage {
 
                         readonly property string _altText:      _activeVehicle.sub ? qsTr("depth") : qsTr("altitude")
                         readonly property string _helpText:     qsTr("Pressure calibration will set the %1 to zero at the current pressure reading. %2").arg(_altText).arg(_helpTextFW)
-                        readonly property string _helpTextFW:   _activeVehicle.fixedWing ? qsTr("Cover airspeed sensor for calibration.") : ""
+                        readonly property string _helpTextFW:   _activeVehicle.fixedWing ? qsTr("To calibrate the airspeed sensor shield it from the wind. Do not touch the sensor or obstruct any holes during the calibration.") : ""
                     }
                 } // QGCViewDialog
             } // Component - calibratePressureDialogComponent
