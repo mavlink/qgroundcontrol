@@ -22,6 +22,8 @@
 #include "SimulatedPosition.h"
 #include "QGCLoggingCategory.h"
 #include "AppSettings.h"
+#include "GPS/GPSManager.h"
+#include "GPSRTKFactGroup.h"
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -48,6 +50,7 @@ public:
     Q_PROPERTY(MAVLinkLogManager*   mavlinkLogManager   READ mavlinkLogManager      CONSTANT)
     Q_PROPERTY(QGCCorePlugin*       corePlugin          READ corePlugin             CONSTANT)
     Q_PROPERTY(SettingsManager*     settingsManager     READ settingsManager        CONSTANT)
+    Q_PROPERTY(FactGroup*           gpsRtk              READ gpsRtkFactGroup        CONSTANT)
 
     Q_PROPERTY(int      supportedFirmwareCount          READ supportedFirmwareCount CONSTANT)
 
@@ -136,6 +139,7 @@ public:
     MAVLinkLogManager*      mavlinkLogManager   ()  { return _mavlinkLogManager; }
     QGCCorePlugin*          corePlugin          ()  { return _corePlugin; }
     SettingsManager*        settingsManager     ()  { return _settingsManager; }
+    FactGroup*              gpsRtkFactGroup     ()  { return &_gpsRtkFactGroup; }
     static QGeoCoordinate   flightMapPosition   ();
     static double           flightMapZoom       ();
 
@@ -177,6 +181,12 @@ signals:
     void flightMapZoomChanged           (double flightMapZoom);
     void skipSetupPageChanged           ();
 
+private slots:
+    void _onGPSConnect();
+    void _onGPSDisconnect();
+    void _GPSSurveyInStatus(float duration, float accuracyMM, bool valid, bool active);
+    void _GPSNumSatellites(int numSatellites);
+
 private:
     double                  _flightMapInitialZoom;
     LinkManager*            _linkManager;
@@ -189,6 +199,7 @@ private:
     QGCCorePlugin*          _corePlugin;
     FirmwarePluginManager*  _firmwarePluginManager;
     SettingsManager*        _settingsManager;
+    GPSRTKFactGroup         _gpsRtkFactGroup;
 
     bool                    _skipSetupPage;
 

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2017 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -14,7 +14,6 @@ import QtQuick.Layouts  1.2
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
-import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 
@@ -45,7 +44,7 @@ Item {
 
                 QGCLabel {
                     id:             gpsLabel
-                    text:           (activeVehicle && activeVehicle.gps.count.value >= 0) ? qsTr("GPS Status") : qsTr("GPS Data Unavailable")
+                    text: (QGroundControl.gpsRtk.active.value) ?  qsTr("Survey-in Active") : qsTr("RTK Active")
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
@@ -58,16 +57,14 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     columns: 2
 
-                    QGCLabel { text: qsTr("GPS Count:") }
-                    QGCLabel { text: activeVehicle ? activeVehicle.gps.count.valueString : qsTr("N/A", "No data to display") }
-                    QGCLabel { text: qsTr("GPS Lock:") }
-                    QGCLabel { text: activeVehicle ? activeVehicle.gps.lock.enumStringValue : qsTr("N/A", "No data to display") }
-                    QGCLabel { text: qsTr("HDOP:") }
-                    QGCLabel { text: activeVehicle ? activeVehicle.gps.hdop.valueString : qsTr("--.--", "No data to display") }
-                    QGCLabel { text: qsTr("VDOP:") }
-                    QGCLabel { text: activeVehicle ? activeVehicle.gps.vdop.valueString : qsTr("--.--", "No data to display") }
-                    QGCLabel { text: qsTr("Course Over Ground:") }
-                    QGCLabel { text: activeVehicle ? activeVehicle.gps.courseOverGround.valueString : qsTr("--.--", "No data to display") }
+                    QGCLabel { text: qsTr("GPS connected:") }
+                    QGCLabel { text: QGroundControl.gpsRtk.connected.value }
+                    QGCLabel { text: qsTr("Survey-in Duration:") }
+                    QGCLabel { text: QGroundControl.gpsRtk.currentDuration.value }
+                    QGCLabel { text: qsTr("Survey-in Accuracy:") }
+                    QGCLabel { text: QGroundControl.gpsRtk.currentAccuracy.value }
+                    QGCLabel { text: qsTr("Number of Satellites:") }
+                    QGCLabel { text: QGroundControl.gpsRtk.numSatellites.value }
                 }
             }
 
