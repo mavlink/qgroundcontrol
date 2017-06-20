@@ -24,6 +24,7 @@ Item {
     width:          (gpsValuesColumn.x + gpsValuesColumn.width) * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
+    visible:        QGroundControl.gpsRtk.connected.value
 
     Component {
         id: gpsInfo
@@ -44,26 +45,36 @@ Item {
 
                 QGCLabel {
                     id:             gpsLabel
-                    text: (QGroundControl.gpsRtk.active.value) ?  qsTr("Survey-in Active") : qsTr("RTK Active")
+                    text: (QGroundControl.gpsRtk.active.value) ? qsTr("Survey-in Active") : qsTr("RTK Streaming")
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
                 GridLayout {
                     id:                 gpsGrid
-                    visible:            (activeVehicle && activeVehicle.gps.count.value >= 0)
+                    visible:            true
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     columnSpacing:      ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     columns: 2
 
-                    QGCLabel { text: qsTr("GPS connected:") }
-                    QGCLabel { text: QGroundControl.gpsRtk.connected.value }
-                    QGCLabel { text: qsTr("Survey-in Duration:") }
-                    QGCLabel { text: QGroundControl.gpsRtk.currentDuration.value }
-                    QGCLabel { text: qsTr("Survey-in Accuracy:") }
-                    QGCLabel { text: QGroundControl.gpsRtk.currentAccuracy.value }
-                    QGCLabel { text: qsTr("Number of Satellites:") }
+                    QGCLabel {
+                        text: qsTr("Duration:")
+                        visible: QGroundControl.gpsRtk.active.value
+                        }
+                    QGCLabel {
+                        text: QGroundControl.gpsRtk.currentDuration.value + ' s'
+                        visible: QGroundControl.gpsRtk.active.value
+                        }
+                    QGCLabel {
+                        text: qsTr("Current Accuracy:")
+                        visible: QGroundControl.gpsRtk.active.value
+                        }
+                    QGCLabel {
+                        text: (QGroundControl.gpsRtk.currentAccuracy.value/1000).toFixed(1) + ' m'
+                        visible: QGroundControl.gpsRtk.active.value
+                        }
+                    QGCLabel { text: qsTr("Satellites:") }
                     QGCLabel { text: QGroundControl.gpsRtk.numSatellites.value }
                 }
             }
@@ -84,8 +95,8 @@ Item {
         source:             "/qmlimages/Gps.svg"
         fillMode:           Image.PreserveAspectFit
         sourceSize.height:  height
-        opacity:            (activeVehicle && activeVehicle.gps.count.value >= 0) ? 1 : 0.5
-        color:              qgcPal.buttonText
+        opacity:            1
+        color:              QGroundControl.gpsRtk.active.value ? qgcPal.colorRed : qgcPal.buttonText
     }
 
     Column {
@@ -95,17 +106,15 @@ Item {
         anchors.left:           gpsIcon.right
 
         QGCLabel {
-            anchors.horizontalCenter:   hdopValue.horizontalCenter
-            visible:                    activeVehicle && !isNaN(activeVehicle.gps.hdop.value)
+            anchors.horizontalCenter:   numSatValue.horizontalCenter
             color:                      qgcPal.buttonText
-            text:                       activeVehicle ? activeVehicle.gps.count.valueString : ""
+            text:                       QGroundControl.gpsRtk.numSatellites.value
         }
 
         QGCLabel {
-            id:         hdopValue
-            visible:    activeVehicle && !isNaN(activeVehicle.gps.hdop.value)
+            id:         numSatValue
             color:      qgcPal.buttonText
-            text:       activeVehicle ? activeVehicle.gps.hdop.value.toFixed(1) : ""
+            text:       qsTr("RTK")
         }
     }
     
