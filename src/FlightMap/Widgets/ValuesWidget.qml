@@ -65,32 +65,38 @@ QGCFlickable {
 
         Repeater {
             model: _activeVehicle ? controller.largeValues : 0
-
-            Column {
-                width:  _largeColumn.width
-
+            Loader {
+                sourceComponent: fact ? largeValue : undefined
                 property Fact fact: _activeVehicle.getFact(modelData.replace("Vehicle.", ""))
-                property bool largeValue: _root.listContains(controller.altitudeProperties, fact.name)
-
-                QGCLabel {
-                    width:                  parent.width
-                    horizontalAlignment:    Text.AlignHCenter
-                    color:                  textColor
-                    fontSizeMode:           Text.HorizontalFit
-                    text:                   fact.shortDescription + (fact.units ? " (" + fact.units + ")" : "")
-                }
-                QGCLabel {
-                    width:                  parent.width
-                    horizontalAlignment:    Text.AlignHCenter
-                    font.pointSize:         ScreenTools.mediumFontPointSize * (largeValue ? 1.3 : 1.0)
-                    font.family:            largeValue ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
-                    fontSizeMode:           Text.HorizontalFit
-                    color:                  textColor
-                    text:                   fact.valueString
-                }
             }
         } // Repeater - Large
     } // Column - Large
+
+    Component {
+        id: largeValue
+
+        Column {
+            width:  _largeColumn.width
+            property bool largeValue: _root.listContains(controller.altitudeProperties, fact.name)
+
+            QGCLabel {
+                width:                  parent.width
+                horizontalAlignment:    Text.AlignHCenter
+                color:                  textColor
+                fontSizeMode:           Text.HorizontalFit
+                text:                   fact.shortDescription + (fact.units ? " (" + fact.units + ")" : "")
+            }
+            QGCLabel {
+                width:                  parent.width
+                horizontalAlignment:    Text.AlignHCenter
+                font.pointSize:         ScreenTools.mediumFontPointSize * (largeValue ? 1.3 : 1.0)
+                font.family:            largeValue ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
+                fontSizeMode:           Text.HorizontalFit
+                color:                  textColor
+                text:                   fact.valueString
+            }
+        }
+    }
 
     Flow {
         id:                 _smallFlow
@@ -102,39 +108,45 @@ QGCFlickable {
 
         Repeater {
             model: _activeVehicle ? controller.smallValues : 0
-
-            Column {
-                width:  (_root.width / 2) - (_margins / 2) - 0.1
-                clip:   true
-
+            Loader {
+                sourceComponent: fact ? smallValue : undefined
                 property Fact fact: _activeVehicle.getFact(modelData.replace("Vehicle.", ""))
-
-                QGCLabel {
-                    width:                  parent.width
-                    horizontalAlignment:    Text.AlignHCenter
-                    font.pointSize:         ScreenTools.isTinyScreen ? ScreenTools.smallFontPointSize * 0.75 : ScreenTools.smallFontPointSize
-                    fontSizeMode:           Text.HorizontalFit
-                    color:                  textColor
-                    text:                   fact.shortDescription
-                }
-                QGCLabel {
-                    width:                  parent.width
-                    horizontalAlignment:    Text.AlignHCenter
-                    color:                  textColor
-                    fontSizeMode:           Text.HorizontalFit
-                    text:                   fact.enumOrValueString
-                }
-                QGCLabel {
-                    width:                  parent.width
-                    horizontalAlignment:    Text.AlignHCenter
-                    font.pointSize:         ScreenTools.isTinyScreen ? ScreenTools.smallFontPointSize * 0.75 : ScreenTools.smallFontPointSize
-                    fontSizeMode:           Text.HorizontalFit
-                    color:                  textColor
-                    text:                   fact.units
-                }
             }
         } // Repeater - Small
     } // Flow
+
+    Component {
+        id: smallValue
+
+        Column {
+            width:  (_root.width / 2) - (_margins / 2) - 0.1
+            clip:   true
+
+            QGCLabel {
+                width:                  parent.width
+                horizontalAlignment:    Text.AlignHCenter
+                font.pointSize:         ScreenTools.isTinyScreen ? ScreenTools.smallFontPointSize * 0.75 : ScreenTools.smallFontPointSize
+                fontSizeMode:           Text.HorizontalFit
+                color:                  textColor
+                text:                   fact.shortDescription
+            }
+            QGCLabel {
+                width:                  parent.width
+                horizontalAlignment:    Text.AlignHCenter
+                color:                  textColor
+                fontSizeMode:           Text.HorizontalFit
+                text:                   fact.enumOrValueString
+            }
+            QGCLabel {
+                width:                  parent.width
+                horizontalAlignment:    Text.AlignHCenter
+                font.pointSize:         ScreenTools.isTinyScreen ? ScreenTools.smallFontPointSize * 0.75 : ScreenTools.smallFontPointSize
+                fontSizeMode:           Text.HorizontalFit
+                color:                  textColor
+                text:                   fact.units
+            }
+        }
+    }
 
     Component {
         id: propertyPicker

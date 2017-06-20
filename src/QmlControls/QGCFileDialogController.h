@@ -8,23 +8,23 @@
  ****************************************************************************/
 
 
-#ifndef QFileDialogController_H
-#define QFileDialogController_H
+#ifndef QGCFileDialogController_H
+#define QGCFileDialogController_H
 
 #include <QObject>
 #include <QUrl>
 
 #include "QGCLoggingCategory.h"
 
-Q_DECLARE_LOGGING_CATEGORY(QFileDialogControllerLog)
+Q_DECLARE_LOGGING_CATEGORY(QGCFileDialogControllerLog)
 
-class QFileDialogController : public QObject
+class QGCFileDialogController : public QObject
 {
     Q_OBJECT
 
 public:
     /// Return all file in the specified path which match the specified extension
-    Q_INVOKABLE QStringList getFiles(const QString& directoryPath, const QString& fileExtension);
+    Q_INVOKABLE QStringList getFiles(const QString& directoryPath, const QStringList& fileExtensions);
 
     /// Returns the specified file name with the extension added it needed
     Q_INVOKABLE QString filenameWithExtension(const QString& filename, const QString& fileExtension);
@@ -35,6 +35,9 @@ public:
     /// Check for file existence of specified fully qualified file name
     Q_INVOKABLE bool fileExists(const QString& filename);
     
+    /// Deletes the file specified by the fully qualified file name
+    Q_INVOKABLE void deleteFile(const QString& filename);
+
     Q_INVOKABLE QString urlToLocalFile(QUrl url) { return url.toLocalFile(); }
 };
 

@@ -895,6 +895,28 @@ double MissionController::_calcDistanceToHome(VisualMissionItem* currentItem, Vi
     return distanceOk ? homeCoord.distanceTo(currentCoord) : 0.0;
 }
 
+void MissionController::_addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair)
+{
+    if (prevItemPairHashTable.contains(pair)) {
+        // Pair already exists and connected, just re-use
+        _linesTable[pair] = prevItemPairHashTable.take(pair);
+    } else {
+        // Create a new segment and wire update notifiers
+        auto linevect       = new CoordinateVector(pair.first->isSimpleItem() ? pair.first->coordinate() : pair.first->exitCoordinate(), pair.second->coordinate(), this);
+        auto originNotifier = pair.first->isSimpleItem() ? &VisualMissionItem::coordinateChanged : &VisualMissionItem::exitCoordinateChanged;
+        auto endNotifier    = &VisualMissionItem::coordinateChanged;
+
+        // Use signals/slots to update the coordinate endpoints
+        connect(pair.first,     originNotifier, linevect, &CoordinateVector::setCoordinate1);
+        connect(pair.second,    endNotifier,    linevect, &CoordinateVector::setCoordinate2);
+
+        // FIXME: We should ideally have signals for 2D position change, alt change, and 3D position change
+        // Not optimal, but still pretty fast, do a full update of range/bearing/altitudes
+        connect(pair.second, &VisualMissionItem::coordinateChanged, this, &MissionController::_recalcMissionFlightStatus);
+        _linesTable[pair] = linevect;
+    }
+}
+
 void MissionController::_recalcWaypointLines(void)
 {
     bool                firstCoordinateItem =   true;
@@ -908,7 +930,15 @@ void MissionController::_recalcWaypointLines(void)
     _linesTable.clear();
     _waypointLines.clear();
 
-    bool linkBackToHome = false;
+    bool linkEndToHome;
+    SimpleMissionItem* lastItem = _visualItems->value<SimpleMissionItem*>(_visualItems->count() - 1);
+    if (lastItem && (int)lastItem->command() == MAV_CMD_NAV_RETURN_TO_LAUNCH) {
+        linkEndToHome = true;
+    } else {
+        linkEndToHome = _settingsItem->missionEndRTL();
+    }
+
+    bool linkStartToHome = false;
     for (int i=1; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
 
@@ -918,35 +948,23 @@ void MissionController::_recalcWaypointLines(void)
                 item->isSimpleItem() &&
                 (qobject_cast<SimpleMissionItem*>(item)->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF ||
                  qobject_cast<SimpleMissionItem*>(item)->command() == MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF)) {
-            linkBackToHome = true;
+            linkStartToHome = true;
         }
 
         if (item->specifiesCoordinate()) {
             if (!item->isStandaloneCoordinate()) {
                 firstCoordinateItem = false;
                 VisualItemPair pair(lastCoordinateItem, item);
-                if (lastCoordinateItem != _settingsItem || (showHomePosition && linkBackToHome)) {
-                    if (old_table.contains(pair)) {
-                        // Do nothing, this segment already exists and is wired up
-                        _linesTable[pair] = old_table.take(pair);
-                    } else {
-                        // Create a new segment and wire update notifiers
-                        auto linevect       = new CoordinateVector(lastCoordinateItem->isSimpleItem() ? lastCoordinateItem->coordinate() : lastCoordinateItem->exitCoordinate(), item->coordinate(), this);
-                        auto originNotifier = lastCoordinateItem->isSimpleItem() ? &VisualMissionItem::coordinateChanged : &VisualMissionItem::exitCoordinateChanged,
-                                endNotifier    = &VisualMissionItem::coordinateChanged;
-                        // Use signals/slots to update the coordinate endpoints
-                        connect(lastCoordinateItem, originNotifier, linevect, &CoordinateVector::setCoordinate1);
-                        connect(item,               endNotifier,    linevect, &CoordinateVector::setCoordinate2);
-
-                        // FIXME: We should ideally have signals for 2D position change, alt change, and 3D position change
-                        // Not optimal, but still pretty fast, do a full update of range/bearing/altitudes
-                        connect(item, &VisualMissionItem::coordinateChanged, this, &MissionController::_recalcMissionFlightStatus);
-                        _linesTable[pair] = linevect;
-                    }
+                if (lastCoordinateItem != _settingsItem || (showHomePosition && linkStartToHome)) {
+                    _addWaypointLineSegment(old_table, pair);
                 }
                 lastCoordinateItem = item;
             }
         }
+    }
+    if (linkEndToHome && lastCoordinateItem != _settingsItem && showHomePosition) {
+        VisualItemPair pair(lastCoordinateItem, _settingsItem);
+        _addWaypointLineSegment(old_table, pair);
     }
 
     {
@@ -1029,7 +1047,7 @@ void MissionController::_recalcMissionFlightStatus()
     _resetMissionFlightStatus();
 
     bool vtolInHover = true;
-    bool linkBackToHome = false;
+    bool linkStartToHome = false;
 
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
@@ -1074,7 +1092,7 @@ void MissionController::_recalcMissionFlightStatus()
         // Link back to home if first item is takeoff and we have home position
         if (firstCoordinateItem && simpleItem && simpleItem->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
             if (showHomePosition) {
-                linkBackToHome = true;
+                linkStartToHome = true;
             }
         }
 
@@ -1129,7 +1147,7 @@ void MissionController::_recalcMissionFlightStatus()
 
             if (!item->isStandaloneCoordinate()) {
                 firstCoordinateItem = false;
-                if (lastCoordinateItem != _settingsItem || linkBackToHome) {
+                if (lastCoordinateItem != _settingsItem || linkStartToHome) {
                     // This is a subsequent waypoint or we are forcing the first waypoint back to home
                     double azimuth, distance, altDifference;
 
@@ -1261,7 +1279,7 @@ void MissionController::_setPlannedHomePositionFromFirstCoordinate(void)
         return;
     }
 
-    // Set the planned home position to be a deltae from first coordinate
+    // Set the planned home position to be a delta from first coordinate
     for (int i=1; i<_visualItems->count(); i++) {
         VisualMissionItem* item = _visualItems->value<VisualMissionItem*>(i);
 
@@ -1300,8 +1318,9 @@ void MissionController::_initAllVisualItems(void)
         _settingsItem->setCoordinate(_managerVehicle->homePosition());
     }
 
-    connect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::_recalcAll);
-    connect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::plannedHomePositionChanged);
+    connect(_settingsItem, &MissionSettingsItem::coordinateChanged,     this, &MissionController::_recalcAll);
+    connect(_settingsItem, &MissionSettingsItem::missionEndRTLChanged,  this, &MissionController::_recalcAll);
+    connect(_settingsItem, &MissionSettingsItem::coordinateChanged,     this, &MissionController::plannedHomePositionChanged);
 
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
