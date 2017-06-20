@@ -22,7 +22,9 @@
 #include "SimulatedPosition.h"
 #include "QGCLoggingCategory.h"
 #include "AppSettings.h"
+#ifndef __mobile__
 #include "GPS/GPSManager.h"
+#endif /* __mobile__ */
 #include "GPSRTKFactGroup.h"
 
 #ifdef QT_DEBUG
