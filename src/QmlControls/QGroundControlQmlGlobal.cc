@@ -63,6 +63,7 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _firmwarePluginManager  = toolbox->firmwarePluginManager();
     _settingsManager        = toolbox->settingsManager();
 
+#ifndef __mobile__
    GPSManager *gpsManager = toolbox->gpsManager();
    if (gpsManager) {
        connect(gpsManager, &GPSManager::onConnect, this, &QGroundControlQmlGlobal::_onGPSConnect);
@@ -70,6 +71,7 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
        connect(gpsManager, &GPSManager::surveyInStatus, this, &QGroundControlQmlGlobal::_GPSSurveyInStatus);
        connect(gpsManager, &GPSManager::satelliteUpdate, this, &QGroundControlQmlGlobal::_GPSNumSatellites);
    }
+#endif /* __mobile__ */
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
