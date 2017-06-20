@@ -210,8 +210,7 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
                     if(i.status == 0) {
                         currentConnection = i.SSID;
                     }
-                    if(i.SSID.startsWith("CGO3P") || i.SSID.startsWith("CGOPRO") || i.SSID.startsWith("CGOET") ||
-                        i.SSID.startsWith("E90_") || i.SSID.startsWith("E50_")) {
+                    if(i.SSID.startsWith("CGOET") || i.SSID.startsWith("E90_") || i.SSID.startsWith("E50_")) {
                         i.priority = 1;
                         currentCamera = i.SSID;
                     } else {
