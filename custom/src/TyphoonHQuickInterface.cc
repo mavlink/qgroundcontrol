@@ -596,9 +596,6 @@ QString
 TyphoonHQuickInterface::connectedCamera()
 {
     QString ssid = connectedSSID();
-    if(ssid.startsWith("CGO3P")) {
-        return QString("CGO-3+");
-    }
     if(ssid.startsWith("CGOET")) {
         return QString("CGO-ET");
     }
@@ -616,8 +613,7 @@ bool
 TyphoonHQuickInterface::isTyphoon()
 {
     QString ssid = connectedSSID();
-    if(ssid.startsWith("CGO3P") || ssid.startsWith("CGOET") || ssid.startsWith("CGOPRO") ||
-        ssid.startsWith("E90_") || ssid.startsWith("E50_")) {
+    if(ssid.startsWith("CGOET") || ssid.startsWith("E90_") || ssid.startsWith("E50_")) {
         return true;
     }
     return false;
@@ -838,8 +834,7 @@ TyphoonHQuickInterface::_newSSID(QString ssid, int rssi)
 {
     qDebug() << "New SSID" << ssid << rssi;
 #if !defined(QT_DEBUG)
-    if(ssid.startsWith("CGO3P") || ssid.startsWith("CGOET") || ssid.startsWith("CGOPRO") ||
-        ssid.startsWith("E90_") || ssid.startsWith("E50_")) {
+    if(ssid.startsWith("CGOET") || ssid.startsWith("E90_") || ssid.startsWith("E50_")) {
 #endif
         if(!_findSsid(ssid, rssi)) {
             TyphoonSSIDItem* ssidInfo = new TyphoonSSIDItem(ssid, rssi);

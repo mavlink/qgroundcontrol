@@ -78,16 +78,6 @@ const QVariantList& YuneecFirmwarePlugin::cameraList(const Vehicle* vehicle)
 
     if (_cameraList.size() == 0) {
         _cameraList.append(QVariant::fromValue(new CameraMetaData(
-            tr("CGO3+"),              // Camera name
-            6.264,                    // sensorWidth
-            4.698,                    // sensorHeight
-            4000,                     // imageWidth
-            3000,                     // imageHeight
-            14,                       // focalLength
-            true,                     // true: landscape orientation
-            true,                     // true: camera is fixed orientation
-            this)));                  // parent
-        _cameraList.append(QVariant::fromValue(new CameraMetaData(
             tr("E50"),                // Camera name
             6.2372,                   // sensorWidth
             4.7058,                   // sensorHeight
