@@ -295,7 +295,7 @@ CameraControl::takePhoto()
         QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
         QDir().mkpath(photoPath);
         photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
-        qgcApp()->toolbox()->videoManager()->grabImage(photoPath);
+        qgcApp()->toolbox()->videoManager()->videoReceiver()->grabImage(photoPath);
     } else {
         _errorSound.setLoopCount(1);
         _errorSound.play();

@@ -47,6 +47,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     : QObject(parent)
     , _pHandler(NULL)
     , _pFileCopy(NULL)
+    , _videoReceiver(NULL)
     , _scanEnabled(false)
     , _scanningWiFi(false)
     , _bindingWiFi(false)
@@ -64,6 +65,9 @@ TyphoonHQuickInterface::~TyphoonHQuickInterface()
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Destroyed";
     _clearSSids();
+    if(_videoReceiver) {
+        delete _videoReceiver;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -123,6 +127,7 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
                 logs.removeAt(0);
             }
         }
+        _enableThermalVideo();
     }
 }
 
@@ -148,6 +153,21 @@ TyphoonHQuickInterface::_switchStateChanged(int swId, int /*oldState*/, int newS
             _powerTimer.stop();
         }
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_videoRunningChanged()
+{
+    emit thermalImagePresentChanged();
+}
+
+//-----------------------------------------------------------------------------
+bool
+TyphoonHQuickInterface::thermalImagePresent()
+{
+    bool res = _videoReceiver && _videoReceiver->running();
+    return res;
 }
 
 //-----------------------------------------------------------------------------
@@ -885,6 +905,20 @@ TyphoonHQuickInterface::_authenticationError()
 
 //-----------------------------------------------------------------------------
 void
+TyphoonHQuickInterface::_enableThermalVideo()
+{
+    //-- Are we connected to a CGO-ET?
+    if(!_videoReceiver && connectedSSID().startsWith("CGOET")) {
+        _videoReceiver = new VideoReceiver(this);
+        _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:8554/live"));
+        connect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);
+        _videoReceiver->start();
+        emit thermalImagePresentChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 TyphoonHQuickInterface::_wifiConnected()
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface::_wifiConnected()";
@@ -895,6 +929,7 @@ TyphoonHQuickInterface::_wifiConnected()
     emit bindingWiFiChanged();
     emit connectedSSIDChanged();
     emit wifiConnectedChanged();
+    _enableThermalVideo();
 }
 
 //-----------------------------------------------------------------------------
@@ -903,6 +938,12 @@ TyphoonHQuickInterface::_wifiDisconnected()
 {
     emit connectedSSIDChanged();
     emit wifiConnectedChanged();
+    if(_videoReceiver) {
+        _videoReceiver->stop();
+        disconnect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);
+        delete _videoReceiver;
+        _videoReceiver = NULL;
+    }
 }
 
 //-----------------------------------------------------------------------------

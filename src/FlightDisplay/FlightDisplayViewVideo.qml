@@ -29,7 +29,7 @@ Item {
         id:             noVideo
         anchors.fill:   parent
         color:          Qt.rgba(0,0,0,0.75)
-        visible:        !QGroundControl.videoManager.videoRunning
+        visible:        !QGroundControl.videoManager.videoReceiver.videoRunning
         QGCLabel {
             text:               qsTr("WAITING FOR VIDEO")
             font.family:        ScreenTools.demiboldFontFamily
@@ -41,20 +41,20 @@ Item {
     Rectangle {
         anchors.fill:   parent
         color:          "black"
-        visible:        QGroundControl.videoManager.videoRunning
+        visible:        QGroundControl.videoManager.videoReceiver.videoRunning
         QGCVideoBackground {
             id:             videoContent
             height:         parent.height
             width:          _ar != 0.0 ? height * _ar : parent.width
             anchors.centerIn: parent
-            display:        QGroundControl.videoManager.videoSurface
             receiver:       QGroundControl.videoManager.videoReceiver
-            visible:        QGroundControl.videoManager.videoRunning
+            display:        QGroundControl.videoManager.videoReceiver.videoSurface
+            visible:        QGroundControl.videoManager.videoReceiver.videoRunning
             Connections {
-                target:         QGroundControl.videoManager
+                target:         QGroundControl.videoManager.videoReceiver
                 onImageFileChanged: {
                     videoContent.grabToImage(function(result) {
-                        if (!result.saveToFile(QGroundControl.videoManager.imageFile)) {
+                        if (!result.saveToFile(QGroundControl.videoManager.videoReceiver.imageFile)) {
                             console.error('Error capturing video frame');
                         }
                     });
