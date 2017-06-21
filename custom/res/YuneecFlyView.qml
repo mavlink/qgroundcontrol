@@ -233,6 +233,18 @@ Item {
         }
     }
 
+    Connections {
+        target: TyphoonHQuickInterface
+        onThermalImagePresentChanged: {
+            console.log('onThermalImagePresentChanged')
+            if(TyphoonHQuickInterface.thermalImagePresent) {
+                rootVideoLoader.sourceComponent = thermalImage
+            } else {
+                rootVideoLoader.sourceComponent = null
+            }
+        }
+    }
+
     //-- Handle no MicroSD card loaded in camera
     Connections {
         target: TyphoonHQuickInterface.cameraControl
@@ -331,6 +343,34 @@ Item {
             QGCLabel { text: qsTr("SD:"); anchors.verticalCenter: parent.verticalCenter;}
             QGCLabel { text: _camController ? _camController.sdFreeStr : ""; anchors.verticalCenter: parent.verticalCenter; visible: !_noSdCard}
             QGCLabel { text: qsTr("NONE"); color: qgcPal.colorOrange; anchors.verticalCenter: parent.verticalCenter; visible: _noSdCard}
+        }
+    }
+
+    Component {
+        id: thermalImage
+        Item {
+            id:                 thermalItem
+            anchors.centerIn:   parent
+            width:              height * 1.333333
+            height:             mainWindow.height * 0.75
+            visible:            !_mainIsMap
+            QGCVideoBackground {
+                id:             thermalVideo
+                anchors.fill:   parent
+                receiver:       TyphoonHQuickInterface.videoReceiver
+                display:        TyphoonHQuickInterface.videoReceiver.videoSurface
+                visible:        TyphoonHQuickInterface.videoReceiver.videoRunning
+            }
+            /*
+            MouseArea {
+                anchors.fill:   parent
+                onClicked:      thermalVideo.visible = !thermalVideo.visible
+            }
+            */
+            Component.onCompleted: {
+                rootVideoLoader.width  = thermalItem.width
+                rootVideoLoader.height = thermalItem.height
+            }
         }
     }
 

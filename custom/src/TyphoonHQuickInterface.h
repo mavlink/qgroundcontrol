@@ -8,6 +8,7 @@
 #pragma once
 
 #include "TyphoonHCommon.h"
+#include "VideoReceiver.h"
 
 class TyphoonHM4Interface;
 class CameraControl;
@@ -147,6 +148,9 @@ public:
     Q_PROPERTY(bool             updateDone      READ    updateDone          NOTIFY updateDoneChanged)
     Q_PROPERTY(bool             updating        READ    updating            NOTIFY updatingChanged)
 
+    Q_PROPERTY(VideoReceiver*   videoReceiver       READ    videoReceiver       CONSTANT)
+    Q_PROPERTY(bool             thermalImagePresent READ    thermalImagePresent NOTIFY thermalImagePresentChanged)
+
     Q_INVOKABLE void enterBindMode      ();
     Q_INVOKABLE void initM4             ();
     Q_INVOKABLE void startScan          (int delay = 0);
@@ -221,11 +225,14 @@ public:
     int         K3Cal               () { return calChannelState(6); }
 
     bool        calibrationComplete ();
+    bool        thermalImagePresent ();
 
     QString     updateError         () { return _updateError; }
     int         updateProgress      () { return _updateProgress; }
     bool        updateDone          () { return _updateDone; }
     bool        updating            () { return _pFileCopy != NULL; }
+
+    VideoReceiver*  videoReceiver   () { return _videoReceiver; }
 
 signals:
     void    m4StateChanged              ();
@@ -252,6 +259,7 @@ signals:
     void    updateProgressChanged       ();
     void    updateDoneChanged           ();
     void    updatingChanged             ();
+    void    thermalImagePresentChanged  ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -280,12 +288,14 @@ private slots:
     void    _imageUpdateProgress        (int current);
     void    _imageUpdateError           (QString errorMsg);
     void    _imageUpdateDone            ();
+    void    _videoRunningChanged        ();
 
 private:
     void    _saveWifiConfigurations     ();
     void    _loadWifiConfigurations     ();
     int     _copyFilesInPath            (const QString src, const QString dst);
     void    _endCopyThread              ();
+    void    _enableThermalVideo         ();
 
 private:
     TyphoonSSIDItem*        _findSsid   (QString ssid, int rssi);
@@ -294,6 +304,7 @@ private:
 private:
     TyphoonHM4Interface*    _pHandler;
     TyphoonHFileCopy*       _pFileCopy;
+    VideoReceiver*          _videoReceiver;
     QMap<QString, QString>  _configurations;
     QVariantList            _ssidList;
     QString                 _ssid;
