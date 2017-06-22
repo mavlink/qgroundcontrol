@@ -66,6 +66,7 @@ public:
     Q_INVOKABLE void                saveSetting             (const QString& key,  const QString& value);
     Q_INVOKABLE QString             loadSetting             (const QString& key,  const QString& defaultValue);
     Q_INVOKABLE void                deleteTileSet           (QGCCachedTileSet* tileSet);
+    Q_INVOKABLE void                renameTileSet           (QGCCachedTileSet* tileSet, QString newName);
     Q_INVOKABLE QString             getUniqueName           ();
     Q_INVOKABLE bool                findName                (const QString& name);
     Q_INVOKABLE void                selectAll               ();
