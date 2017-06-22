@@ -344,26 +344,24 @@ TyphoonHM4Interface::enterBindMode(bool skipPairCommand)
 #if defined(__androidx86__)
     qCDebug(YuneecLog) << "enterBindMode() Current Mode: " << _m4State;
     //-- Send MAVLink command telling vehicle to enter bind mode
-    if(_vehicle) {
-        if(!skipPairCommand) {
-            qCDebug(YuneecLog) << "pairRX()";
-            _binding = true;
-            _vehicle->sendMavCommand(
-                _vehicle->defaultComponentId(),         // target component
-                MAV_CMD_START_RX_PAIR,                  // command id
-                true,                                   // showError
-                1,
-                0);
-        }
-        //-- Set M4 into bind mode
-        _rxBindInfoFeedback.clear();
-        if(_m4State == TyphoonHQuickInterface::M4_STATE_BIND) {
-            _exitBind();
-        } else if(_m4State == TyphoonHQuickInterface::M4_STATE_RUN) {
-            _exitRun();
-        }
-        QTimer::singleShot(1000, this, &TyphoonHM4Interface::_initSequence);
+    if(!skipPairCommand && _vehicle) {
+        qCDebug(YuneecLog) << "pairRX()";
+        _binding = true;
+        _vehicle->sendMavCommand(
+            _vehicle->defaultComponentId(),         // target component
+            MAV_CMD_START_RX_PAIR,                  // command id
+            true,                                   // showError
+            1,
+            0);
     }
+    //-- Set M4 into bind mode
+    _rxBindInfoFeedback.clear();
+    if(_m4State == TyphoonHQuickInterface::M4_STATE_BIND) {
+        _exitBind();
+    } else if(_m4State == TyphoonHQuickInterface::M4_STATE_RUN) {
+        _exitRun();
+    }
+    QTimer::singleShot(1000, this, &TyphoonHM4Interface::_initSequence);
 #else
     Q_UNUSED(skipPairCommand);
 #endif

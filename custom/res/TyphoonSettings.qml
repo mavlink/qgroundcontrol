@@ -280,7 +280,7 @@ QGCView {
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     QGCLabel {
-                        text:           qsTr("Error copying files");
+                        text:           qsTr("Error copying files. Make sure you have a (FAT32 Formatted) microSD card loaded.");
                         color:          qgcPal.alertText
                         visible:        !TyphoonHQuickInterface.copyingFiles && TyphoonHQuickInterface.copyResult < 0
                         font.family:    ScreenTools.demiboldFontFamily
