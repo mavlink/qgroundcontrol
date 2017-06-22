@@ -195,6 +195,8 @@ QGCView {
                 columns:            2
                 visible:            _activeVehicle
                 anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel { text: qsTr("%1 Version:").arg(QGroundControl.appName) }
+                QGCLabel { text: QGroundControl.qgcVersion }
                 QGCLabel { text: qsTr("Flight Controller Version:") }
                 QGCLabel { text: firmwareVersion() }
                 QGCLabel { text: qsTr("Camera Version:") }
