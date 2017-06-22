@@ -91,9 +91,9 @@ iq_mode_t iqModeOptions[] = {
 //-----------------------------------------------------------------------------
 // Metering Mode (CMD=SET_METERING_MODE&mode=x)
 metering_mode_t meteringModeOptions[] = {
-    {QT_TRANSLATE_NOOP("CameraControl", "Spot"),    0},
-    {QT_TRANSLATE_NOOP("CameraControl", "Center"),  1},
-    {QT_TRANSLATE_NOOP("CameraControl", "Average"), 2}
+    {QT_TRANSLATE_NOOP("CameraControl", "Center"),  0},
+    {QT_TRANSLATE_NOOP("CameraControl", "Average"), 1},
+    {QT_TRANSLATE_NOOP("CameraControl", "Spot"),    2}
 };
 
 #define NUM_METERING_VALUES (sizeof(meteringModeOptions) / sizeof(metering_mode_t))
