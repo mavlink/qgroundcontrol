@@ -35,6 +35,9 @@ Item {
     property var _splitHandlesComponent
     property var _centerDragHandleComponent
 
+    property real _zorderDragHandle:    QGroundControl.zOrderMapItems + 2
+    property real _zorderSplitHandle:   QGroundControl.zOrderMapItems + 1
+
     function addVisuals() {
         _polygonComponent = polygonComponent.createObject(mapControl)
         mapControl.addMapItem(_polygonComponent)
@@ -137,7 +140,6 @@ Item {
             id:             mapQuickItem
             anchorPoint.x:  dragHandle.width / 2
             anchorPoint.y:  dragHandle.height / 2
-            z:              QGroundControl.zOrderMapItems + 1
 
             property int vertexIndex
 
@@ -148,6 +150,7 @@ Item {
                 radius:     width / 2
                 color:      "white"
                 opacity:    .50
+                z:          _zorderSplitHandle
 
                 QGCLabel {
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -205,6 +208,7 @@ Item {
 
         MissionItemIndicatorDrag {
             id: dragArea
+            z:  _zorderDragHandle
 
             property int polygonVertex
 
@@ -230,7 +234,7 @@ Item {
             id:             mapQuickItem
             anchorPoint.x:  dragHandle.width / 2
             anchorPoint.y:  dragHandle.height / 2
-            z:              QGroundControl.zOrderMapItems + 2
+            z:              _zorderDragHandle
 
             sourceItem: Rectangle {
                 id:         dragHandle
@@ -277,6 +281,7 @@ Item {
         id: centerDragAreaComponent
 
         MissionItemIndicatorDrag {
+            z:                          _zorderDragHandle
             onItemCoordinateChanged:    mapPolygon.center = itemCoordinate
             onDragStart:                mapPolygon.centerDrag = true
             onDragStop:                 mapPolygon.centerDrag = false
