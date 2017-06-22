@@ -13,8 +13,8 @@ exists($${OUT_PWD}/qgroundcontrol.pro) {
 
 message(Qt version $$[QT_VERSION])
 
-!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 4) {
-    error("Unsupported Qt version, 5.5+ is required")
+!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 6) {
+    error("Unsupported Qt version, 5.7+ is required")
 }
 
 include(QGCCommon.pri)
@@ -286,6 +286,15 @@ CustomBuild {
     RESOURCES += \
         $$PWD/qgroundcontrol.qrc \
         $$PWD/qgcresources.qrc
+}
+
+# On Qt 5.9 android versions there is the following bug: https://bugreports.qt.io/browse/QTBUG-61424
+# This prevents FileDialog from being used. So we have a temp hack workaround for it which just no-ops
+# the FileDialog fallback mechanism on android 5.9 builds.
+equals(QT_MAJOR_VERSION, 5):equals(QT_MINOR_VERSION, 9):AndroidBuild {
+    RESOURCES += $$PWD/HackAndroidFileDialog.qrc
+} else {
+    RESOURCES += $$PWD/HackFileDialog.qrc
 }
 
 #
