@@ -331,7 +331,7 @@ QGCView {
 
             QGCRadioButton {
                 exclusiveGroup: multiVehicleSelectorGroup
-                text:           qsTr("Multi-Vehicle (WIP)")
+                text:           qsTr("Multi-Vehicle")
                 color:          mapPal.text
             }
         }
@@ -339,9 +339,10 @@ QGCView {
         FlightDisplayViewWidgets {
             id:                 flightDisplayViewWidgets
             z:                  _panel.z + 4
-            height:             ScreenTools.availableHeight
+            height:             ScreenTools.availableHeight - (singleMultiSelector.visible ? (_margins * 2 + simpleMultiSelector.height) : 0)
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
+            anchors.top:        singleMultiSelector.visible ? singleMultiSelector.bottom : undefined
             anchors.bottom:     parent.bottom
             qgcView:            root
             useLightColors:     isBackgroundDark
