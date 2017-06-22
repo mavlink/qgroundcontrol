@@ -43,14 +43,14 @@ SetupPage {
             property Fact _failsafeEKFEnable:         controller.getParameterFact(-1, "FS_EKF_ACTION")
             property Fact _failsafeGCSEnable:         controller.getParameterFact(-1, "FS_GCS_ENABLE")
             property Fact _failsafeLeakEnable:        controller.getParameterFact(-1, "FS_LEAK_ENABLE")
-            property Fact _failsafePilotEnable:       controller.getParameterFact(-1, "FS_PILOT_INPUT")
+            property Fact _failsafePilotEnable:       _firmware34 ? null : controller.getParameterFact(-1, "FS_PILOT_INPUT")
             property Fact _failsafePressureEnable:    controller.getParameterFact(-1, "FS_PRESS_ENABLE")
             property Fact _failsafeTemperatureEnable: controller.getParameterFact(-1, "FS_TEMP_ENABLE")
 
             // Threshold parameters
             property Fact _failsafePressureThreshold:    controller.getParameterFact(-1, "FS_PRESS_MAX")
             property Fact _failsafeTemperatureThreshold: controller.getParameterFact(-1, "FS_TEMP_MAX")
-            property Fact _failsafePilotTimeout:         controller.getParameterFact(-1, "FS_PILOT_TIMEOUT")
+            property Fact _failsafePilotTimeout:         _firmware34 ? null : controller.getParameterFact(-1, "FS_PILOT_TIMEOUT")
             property Fact _failsafeLeakPin:              controller.getParameterFact(-1, "LEAK1_PIN")
             property Fact _failsafeLeakLogic:            controller.getParameterFact(-1, "LEAK1_LOGIC")
             property Fact _failsafeEKFThreshold:         controller.getParameterFact(-1, "FS_EKF_THRESH")
