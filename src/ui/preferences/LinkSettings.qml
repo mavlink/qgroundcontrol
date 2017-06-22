@@ -187,7 +187,7 @@ Rectangle {
                     anchors.margins:    ScreenTools.defaultFontPixelWidth
                     spacing:            ScreenTools.defaultFontPixelHeight / 2
                     QGCLabel {
-                        text:   linkConfig ? qsTr("Edit Link Configuration Settings (WIP)") : qsTr("Create New Link Configuration (WIP)")
+                        text:   linkConfig ? qsTr("Edit Link Configuration Settings") : qsTr("Create New Link Configuration")
                         font.pointSize: ScreenTools.mediumFontPointSize
                     }
                     Rectangle {
