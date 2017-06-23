@@ -122,7 +122,7 @@ Rectangle {
 
             CameraSection {
                 id:         cameraSection
-                checked:    false
+                checked:    missionItem.cameraSection.settingsSpecified
             }
 
             QGCLabel {
