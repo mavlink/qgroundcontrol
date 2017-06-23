@@ -43,11 +43,25 @@ Item {
     property bool   _cameraVideoMode:   _camController ? _camController.cameraMode === CameraControl.CAMERA_MODE_VIDEO : false
     property bool   _cameraPresent:     _camController && _camController.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
     property bool   _noSdCard:          TyphoonHQuickInterface.cameraControl.sdTotal === 0
-    property string _altitude:          _activeVehicle ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0 m"
-    property string _distanceStr:       isNaN(_distance) ? "0 m" : _distance.toFixed(0) + ' ' + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "m")
+    property string _altitude:          _activeVehicle ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0"
+    property string _distanceStr:       isNaN(_distance) ? "0" : _distance.toFixed(0) + ' ' + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "")
     property real   _heading:           _activeVehicle ? _activeVehicle.heading.rawValue : 0
     property bool   _showAttitude:      false
     property int    _eggCount:          0
+    property string _messageTitle:      ""
+    property string _messageText:       ""
+
+    function showSimpleAlert(title, message) {
+        _messageTitle   = title;
+        _messageText    = message;
+        rootLoader.sourceComponent = simpleAlert;
+    }
+
+    function showNoSDCardMessage() {
+        showSimpleAlert(
+            qsTr("No MicroSD Card in Camera"),
+            qsTr("No images will be captured or videos recorded."))
+    }
 
     Timer {
         id: ssidChanged
@@ -56,7 +70,9 @@ Item {
         repeat:    false;
         onTriggered: {
             if(TyphoonHQuickInterface.wifiAlertEnabled) {
-                rootLoader.sourceComponent = connectedToAP
+                showSimpleAlert(
+                    qsTr("Connected to Standard Wi-Fi"),
+                    qsTr("The ST16 is connected to a standard Wi-Fi and not a vehicle."))
             }
         }
     }
@@ -115,6 +131,13 @@ Item {
                 mainWindow.disableToolbar()
             }
         }
+        //-- Check for Updates
+        onUpdateAlert: {
+            showSimpleAlert(
+                qsTr("Check For Updates"),
+                qsTr("No Internet connection. Please connect to check for updates."))
+        }
+
     }
 
     Component.onCompleted: {
@@ -251,16 +274,16 @@ Item {
         onCameraModeChanged: {
             if(TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED) {
                 if(!_noSdCardMsgShown && _noSdCard) {
-                    rootLoader.sourceComponent = nosdcardComponent
-                    _noSdCardMsgShown = true
+                    showNoSDCardMessage();
+                    _noSdCardMsgShown = true;
                 }
             }
         }
         onSdTotalChanged: {
             if(_noSdCard) {
                 if(!_noSdCardMsgShown) {
-                    rootLoader.sourceComponent = nosdcardComponent
-                    _noSdCardMsgShown = true
+                    showNoSDCardMessage();
+                    _noSdCardMsgShown = true;
                 }
             } else {
                 rootLoader.sourceComponent = null
@@ -414,7 +437,7 @@ Item {
                 color:              qgcPal.colorBlue
             }
             QGCLabel {
-                text:   _activeVehicle ? ('00000' + _activeVehicle.flightDistance.value.toFixed(0)).slice(-5) + ' ' + _activeVehicle.flightDistance.units : "00000 m"
+                text:   _activeVehicle ? ('00000' + _activeVehicle.flightDistance.value.toFixed(0)).slice(-5) + ' ' + _activeVehicle.flightDistance.units : "00000"
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignRight
             }
@@ -458,7 +481,7 @@ Item {
                 visible:    _showAttitude
             }
             QGCLabel {
-                text:       _activeVehicle ? _activeVehicle.groundSpeed.rawValue.toFixed(1) + ' ' + _activeVehicle.groundSpeed.units : "0.0 m/s"
+                text:       _activeVehicle ? _activeVehicle.groundSpeed.rawValue.toFixed(1) + ' ' + _activeVehicle.groundSpeed.units : "0.0"
                 visible:    _showAttitude
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignRight
@@ -478,7 +501,7 @@ Item {
                 text:   qsTr("V.S:")
             }
             QGCLabel {
-                text:           _activeVehicle ? _activeVehicle.climbRate.value.toFixed(1) + ' ' + _activeVehicle.climbRate.units : "0.0 m/s"
+                text:           _activeVehicle ? _activeVehicle.climbRate.value.toFixed(1) + ' ' + _activeVehicle.climbRate.units : "0.0"
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignRight
             }
@@ -603,11 +626,11 @@ Item {
         }
     }
 
-    //-- No SD Card In Camera
+    //-- Simple alert message
     Component {
-        id:             nosdcardComponent
+        id:             simpleAlert
         Item {
-            id:         nosdcardComponentItem
+            id:         simpleAlertItem
             width:      mainWindow.width
             height:     mainWindow.height
             z:          1000000
@@ -618,46 +641,46 @@ Item {
                 onReleased:     { mouse.accepted = true; }
             }
             Rectangle {
-                id:             nosdShadow
-                anchors.fill:   nosdRect
-                radius:         nosdRect.radius
+                id:             simpleAlertShadow
+                anchors.fill:   simpleAlertRect
+                radius:         simpleAlertRect.radius
                 color:          qgcPal.window
                 visible:        false
             }
             DropShadow {
-                anchors.fill:       nosdShadow
-                visible:            nosdRect.visible
+                anchors.fill:       simpleAlertShadow
+                visible:            simpleAlertRect.visible
                 horizontalOffset:   4
                 verticalOffset:     4
                 radius:             32.0
                 samples:            65
                 color:              Qt.rgba(0,0,0,0.75)
-                source:             nosdShadow
+                source:             simpleAlertShadow
             }
             Rectangle {
-                id:     nosdRect
-                width:  mainWindow.width   * 0.65
-                height: nosdcardCol.height * 1.5
-                radius: ScreenTools.defaultFontPixelWidth
-                color:  qgcPal.alertBackground
-                border.color: qgcPal.alertBorder
-                border.width: 2
-                anchors.centerIn: parent
+                id:                 simpleAlertRect
+                width:              mainWindow.width * 0.65
+                height:             simpleAlertCol.height * 1.5
+                radius:             ScreenTools.defaultFontPixelWidth
+                color:              qgcPal.alertBackground
+                border.color:       qgcPal.alertBorder
+                border.width:       2
+                anchors.centerIn:   parent
                 Column {
-                    id:                 nosdcardCol
-                    width:              nosdRect.width
+                    id:                 simpleAlertCol
+                    width:              simpleAlertRect.width
                     spacing:            ScreenTools.defaultFontPixelHeight * 3
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     anchors.centerIn:   parent
                     QGCLabel {
-                        text:           qsTr("No MicroSD Card in Camera")
+                        text:           _messageTitle
                         font.family:    ScreenTools.demiboldFontFamily
                         font.pointSize: ScreenTools.largeFontPointSize
                         color:          qgcPal.alertText
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     QGCLabel {
-                        text:           qsTr("No images will be captured or videos recorded.")
+                        text:           _messageText
                         color:          qgcPal.alertText
                         font.family:    ScreenTools.demiboldFontFamily
                         font.pointSize: ScreenTools.mediumFontPointSize
@@ -673,84 +696,8 @@ Item {
                 }
             }
             Component.onCompleted: {
-                rootLoader.width  = nosdcardComponentItem.width
-                rootLoader.height = nosdcardComponentItem.height
-            }
-        }
-    }
-
-    //-- Connected to some AP and not a Typhoon
-    Component {
-        id:             connectedToAP
-        Item {
-            id:         connectedToAPItem
-            width:      mainWindow.width
-            height:     mainWindow.height
-            z:          1000000
-            MouseArea {
-                anchors.fill:   parent
-                onWheel:        { wheel.accepted = true; }
-                onPressed:      { mouse.accepted = true; }
-                onReleased:     { mouse.accepted = true; }
-            }
-            Rectangle {
-                id:             conAPShadow
-                anchors.fill:   conAPRect
-                radius:         conAPRect.radius
-                color:          qgcPal.window
-                visible:        false
-            }
-            DropShadow {
-                anchors.fill:       conAPShadow
-                visible:            conAPRect.visible
-                horizontalOffset:   4
-                verticalOffset:     4
-                radius:             32.0
-                samples:            65
-                color:              Qt.rgba(0,0,0,0.75)
-                source:             conAPShadow
-            }
-            Rectangle {
-                id:     conAPRect
-                width:  mainWindow.width   * 0.65
-                height: nosdcardCol.height * 1.5
-                radius: ScreenTools.defaultFontPixelWidth
-                color:  qgcPal.alertBackground
-                border.color: qgcPal.alertBorder
-                border.width: 2
-                anchors.centerIn: parent
-                Column {
-                    id:                 nosdcardCol
-                    width:              conAPRect.width
-                    spacing:            ScreenTools.defaultFontPixelHeight * 3
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight
-                    anchors.centerIn:   parent
-                    QGCLabel {
-                        text:           qsTr("Connected to Standard Wi-Fi")
-                        font.family:    ScreenTools.demiboldFontFamily
-                        font.pointSize: ScreenTools.largeFontPointSize
-                        color:          qgcPal.alertText
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCLabel {
-                        text:           qsTr("The ST16 is connected to a standard Wi-Fi and not a vehicle.")
-                        color:          qgcPal.alertText
-                        font.family:    ScreenTools.demiboldFontFamily
-                        font.pointSize: ScreenTools.mediumFontPointSize
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCButton {
-                        text:           qsTr("Close")
-                        width:          ScreenTools.defaultFontPixelWidth  * 10
-                        height:         ScreenTools.defaultFontPixelHeight * 2
-                        onClicked:      rootLoader.sourceComponent = null
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                }
-            }
-            Component.onCompleted: {
-                rootLoader.width  = connectedToAPItem.width
-                rootLoader.height = connectedToAPItem.height
+                rootLoader.width  = simpleAlertItem.width
+                rootLoader.height = simpleAlertItem.height
             }
         }
     }
