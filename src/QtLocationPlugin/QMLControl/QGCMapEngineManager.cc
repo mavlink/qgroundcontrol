@@ -251,6 +251,24 @@ QGCMapEngineManager::deleteTileSet(QGCCachedTileSet* tileSet)
 
 //-----------------------------------------------------------------------------
 void
+QGCMapEngineManager::renameTileSet(QGCCachedTileSet* tileSet, QString newName)
+{
+    //-- Name must be unique
+    int idx = 1;
+    QString name = newName;
+    while(findName(name)) {
+        name = QString("%1 (%2)").arg(newName).arg(idx++);
+    }
+    qCDebug(QGCMapEngineManagerLog) << "Renaming tile set " << tileSet->name() << "to" << name;
+    tileSet->setName(name);
+    QGCRenameTileSetTask* task = new QGCRenameTileSetTask(tileSet->setID(), name);
+    connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
+    getQGCMapEngine()->addTask(task);
+    emit tileSet->nameChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
 QGCMapEngineManager::_resetCompleted()
 {
     //-- Reload sets

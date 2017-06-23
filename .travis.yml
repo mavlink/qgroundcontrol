@@ -28,7 +28,7 @@ matrix:
           env: SPEC=android-g++ CONFIG=installer
           sudo: false
         - os: osx
-          osx_image: xcode8
+          osx_image: xcode8.3
           env: SPEC=macx-clang CONFIG=installer
           sudo: required
 # OSX builds pared back to installer only since travis sucks so bad we can't afford more than one'
