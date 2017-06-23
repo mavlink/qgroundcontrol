@@ -25,6 +25,7 @@ class MissionItem;
 class MissionSettingsItem;
 class AppSettings;
 class MissionManager;
+class SimpleMissionItem;
 
 Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
@@ -210,6 +211,8 @@ private:
     bool _loadItemsFromJson(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
     void _initLoadedVisualItems(QmlObjectListModel* loadedVisualItems);
     void _addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair);
+    void _addCommandTimeDelay(SimpleMissionItem* simpleItem, bool vtolInHover);
+    void _addTimeDistance(bool vtolInHover, double hoverTime, double cruiseTime, double extraTime, double distance, int seqNum);
 
 private:
     MissionManager*         _missionManager;

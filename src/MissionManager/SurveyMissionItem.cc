@@ -78,6 +78,7 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     , _cameraOrientationFixed(false)
     , _missionCommandCount(0)
     , _refly90Degrees(false)
+    , _additionalFlightDelaySeconds(0)
     , _ignoreRecalc(false)
     , _surveyDistance(0.0)
     , _cameraShots(0)
@@ -675,6 +676,7 @@ void SurveyMissionItem::_generateGrid(void)
     _simpleGridPoints.clear();
     _transectSegments.clear();
     _reflyTransectSegments.clear();
+    _additionalFlightDelaySeconds = 0;
 
     QList<QPointF>          polygonPoints;
     QList<QList<QPointF>>   transectSegments;
@@ -736,6 +738,11 @@ void SurveyMissionItem::_generateGrid(void)
         cameraShots = (int)ceil(surveyDistance / _triggerDistance());
     }
     _setCameraShots(cameraShots);
+
+    if (_hoverAndCaptureEnabled()) {
+        _additionalFlightDelaySeconds = cameraShots * _hoverAndCaptureDelaySeconds;
+    }
+    emit additionalTimeDelayChanged(_additionalFlightDelaySeconds);
 
     emit gridPointsChanged();
 
@@ -1108,7 +1115,7 @@ int SurveyMissionItem::_appendWaypointToMission(QList<MissionItem*>& items, int 
     MissionItem* item = new MissionItem(seqNum++,
                                         MAV_CMD_NAV_WAYPOINT,
                                         altitudeRelative ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,
-                                        cameraTrigger == CameraTriggerHoverAndCapture ? 1 : 0,  // Hold time (1 second for hover and capture to settle vehicle before image is taken)
+                                        cameraTrigger == CameraTriggerHoverAndCapture ? _hoverAndCaptureDelaySeconds : 0,  // Hold time (delay for hover and capture to settle vehicle before image is taken)
                                         0.0, 0.0,
                                         std::numeric_limits<double>::quiet_NaN(),   // Yaw unchanged
                                         coord.latitude(),
