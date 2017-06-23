@@ -1017,6 +1017,53 @@ void MissionController::_addCruiseTime(double cruiseTime, double cruiseDistance,
     _updateBatteryInfo(waypointIndex);
 }
 
+/// Adds additional time to a mission as specified by the command
+void MissionController::_addCommandTimeDelay(SimpleMissionItem* simpleItem, bool vtolInHover)
+{
+    double seconds = 0;
+
+    if (!simpleItem) {
+        return;
+    }
+
+    // This routine is currently quite minimal and only handles the simple cases.
+    switch ((int)simpleItem->command()) {
+    case MAV_CMD_NAV_WAYPOINT:
+    case MAV_CMD_CONDITION_DELAY:
+        seconds = simpleItem->missionItem().param1();
+        break;
+    }
+
+    _addTimeDistance(vtolInHover, 0, 0, seconds, 0, -1);
+}
+
+/// Adds the specified time to the appropriate hover or cruise time values.
+///     @param vtolInHover true: vtol is currrent in hover mode
+///     @param hoverTime    Amount of time tp add to hover
+///     @param cruiseTime   Amount of time to add to cruise
+///     @param extraTime    Amount of additional time to add to hover/cruise
+///     @param seqNum       Sequence number of waypoint for these values, -1 for no waypoint associated
+void MissionController::_addTimeDistance(bool vtolInHover, double hoverTime, double cruiseTime, double extraTime, double distance, int seqNum)
+{
+    if (_controllerVehicle->vtol()) {
+        if (vtolInHover) {
+            _addHoverTime(hoverTime, distance, seqNum);
+            _addHoverTime(extraTime, 0, -1);
+        } else {
+            _addCruiseTime(cruiseTime, distance, seqNum);
+            _addCruiseTime(extraTime, 0, -1);
+        }
+    } else {
+        if (_controllerVehicle->multiRotor()) {
+            _addHoverTime(hoverTime, distance, seqNum);
+            _addHoverTime(extraTime, 0, -1);
+        } else {
+            _addCruiseTime(cruiseTime, distance, seqNum);
+            _addCruiseTime(extraTime, 0, -1);
+        }
+    }
+}
+
 void MissionController::_recalcMissionFlightStatus()
 {
     if (!_visualItems->count()) {
@@ -1137,6 +1184,9 @@ void MissionController::_recalcMissionFlightStatus()
             }
         }
 
+        // Check for command specific time delays
+        _addCommandTimeDelay(simpleItem, vtolInHover);
+
         if (item->specifiesCoordinate()) {
             // Update vehicle yaw assuming direction to next waypoint
             if (item != lastCoordinateItem) {
@@ -1178,19 +1228,7 @@ void MissionController::_recalcMissionFlightStatus()
                     // Calculate time/distance
                     double hoverTime = distance / _missionFlightStatus.hoverSpeed;
                     double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
-                    if (_controllerVehicle->vtol()) {
-                        if (vtolInHover) {
-                            _addHoverTime(hoverTime, distance, item->sequenceNumber());
-                        } else {
-                            _addCruiseTime(cruiseTime, distance, item->sequenceNumber());
-                        }
-                    } else {
-                        if (_controllerVehicle->multiRotor()) {
-                            _addHoverTime(hoverTime, distance, item->sequenceNumber());
-                        } else {
-                            _addCruiseTime(cruiseTime, distance, item->sequenceNumber());
-                        }
-                    }
+                    _addTimeDistance(vtolInHover, hoverTime, cruiseTime, 0, distance, item->sequenceNumber());
                 }
 
                 if (complexItem) {
@@ -1200,19 +1238,8 @@ void MissionController::_recalcMissionFlightStatus()
 
                     double hoverTime = distance / _missionFlightStatus.hoverSpeed;
                     double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
-                    if (_controllerVehicle->vtol()) {
-                        if (vtolInHover) {
-                            _addHoverTime(hoverTime, distance, item->sequenceNumber());
-                        } else {
-                            _addCruiseTime(cruiseTime, distance, item->sequenceNumber());
-                        }
-                    } else {
-                        if (_controllerVehicle->multiRotor()) {
-                            _addHoverTime(hoverTime, distance, item->sequenceNumber());
-                        } else {
-                            _addCruiseTime(cruiseTime, distance, item->sequenceNumber());
-                        }
-                    }
+                    double extraTime = complexItem->additionalTimeDelay();
+                    _addTimeDistance(vtolInHover, hoverTime, cruiseTime, extraTime, distance, item->sequenceNumber());
                 }
 
                 item->setMissionFlightStatus(_missionFlightStatus);
@@ -1231,21 +1258,7 @@ void MissionController::_recalcMissionFlightStatus()
         double hoverTime = distance / _missionFlightStatus.hoverSpeed;
         double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
         double landTime = qAbs(altDifference) / _appSettings->offlineEditingDescentSpeed()->rawValue().toDouble();
-        if (_controllerVehicle->vtol()) {
-            if (vtolInHover) {
-                _addHoverTime(hoverTime, distance, -1);
-                _addHoverTime(landTime, 0, -1);
-            } else {
-                _addCruiseTime(cruiseTime, distance, -1);
-            }
-        } else {
-            if (_controllerVehicle->multiRotor()) {
-                _addHoverTime(hoverTime, distance, -1);
-                _addHoverTime(landTime, 0, -1);
-            } else {
-                _addCruiseTime(cruiseTime, distance, -1);
-            }
-        }
+        _addTimeDistance(vtolInHover, hoverTime, cruiseTime, distance, landTime, -1);
     }
 
     if (_missionFlightStatus.mAhBattery != 0 && _missionFlightStatus.batteryChangePoint == -1) {
@@ -1416,7 +1429,8 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
     } else {
         ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(visualItem);
         if (complexItem) {
-            connect(complexItem, &ComplexMissionItem::complexDistanceChanged, this, &MissionController::_recalcMissionFlightStatus);
+            connect(complexItem, &ComplexMissionItem::complexDistanceChanged,       this, &MissionController::_recalcMissionFlightStatus);
+            connect(complexItem, &ComplexMissionItem::additionalTimeDelayChanged,   this, &MissionController::_recalcMissionFlightStatus);
         } else {
             qWarning() << "ComplexMissionItem not found";
         }
