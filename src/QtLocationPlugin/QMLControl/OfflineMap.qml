@@ -405,6 +405,14 @@ QGCView {
                         text:           offlineMapView._currentSelection ? offlineMapView._currentSelection.name : ""
                         font.pointSize: _saveRealEstate ? ScreenTools.defaultFontPointSize : ScreenTools.mediumFontPointSize
                         horizontalAlignment: Text.AlignHCenter
+                        visible:        _defaultSet
+                    }
+                    QGCTextField {
+                        id:             editSetName
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        visible:        !_defaultSet
+                        text:           offlineMapView._currentSelection ? offlineMapView._currentSelection.name : ""
                     }
                     QGCLabel {
                         anchors.left:   parent.left
@@ -500,7 +508,20 @@ QGCView {
                             onClicked:  showDialog(deleteConfirmationDialogComponent, qsTr("Confirm Delete"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
                         }
                         QGCButton {
-                            text:       qsTr("Close")
+                            text:       qsTr("Ok")
+                            width:      ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
+                            visible:    !_defaultSet
+                            enabled:    editSetName.text !== ""
+                            onClicked: {
+                                if(editSetName.text !== _currentSelection.name) {
+                                    QGroundControl.mapEngineManager.renameTileSet(_currentSelection, editSetName.text)
+                                }
+                                leaveInfoView()
+                                showList()
+                            }
+                        }
+                        QGCButton {
+                            text:       _defaultSet ? qsTr("Close") : qsTr("Cancel")
                             width:      ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
                             onClicked: {
                                 leaveInfoView()
