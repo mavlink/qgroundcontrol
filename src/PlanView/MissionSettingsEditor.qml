@@ -83,17 +83,11 @@ Rectangle {
             anchors.right:  parent ? parent.right : undefined
             anchors.top:    parent ? parent.top   : undefined
             spacing:        _margin
-            SectionHeader {
-                id:         missionDefaultsSectionHeader
-                text:       qsTr("Mission Defaults")
-                checked:    true
-            }
 
             Column {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 spacing:        _margin
-                visible:        missionDefaultsSectionHeader.checked
 
                 GridLayout {
                     anchors.left:   parent.left
@@ -128,7 +122,7 @@ Rectangle {
 
             CameraSection {
                 id:         cameraSection
-                checked:    true
+                checked:    false
             }
 
             QGCLabel {

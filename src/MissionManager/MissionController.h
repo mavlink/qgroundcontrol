@@ -189,7 +189,7 @@ private:
     void _initVisualItem(VisualMissionItem* item);
     void _deinitVisualItem(VisualMissionItem* item);
     void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
-    static void _calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
+    void _calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
     static double _calcDistanceToHome(VisualMissionItem* currentItem, VisualMissionItem* homeItem);
     bool _findPreviousAltitude(int newIndex, double* prevAltitude, MAV_FRAME* prevFrame);
     static double _normalizeLat(double lat);
