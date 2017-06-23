@@ -866,10 +866,10 @@ void MissionController::_calcPrevWaypointValues(double homeAlt, VisualMissionIte
     // Convert to fixed altitudes
 
     distanceOk = true;
-    if (currentItem->coordinateHasRelativeAltitude()) {
+    if (currentItem != _settingsItem && currentItem->coordinateHasRelativeAltitude()) {
         currentCoord.setAltitude(homeAlt + currentCoord.altitude());
     }
-    if (prevItem->exitCoordinateHasRelativeAltitude()) {
+    if (prevItem != _settingsItem && prevItem->exitCoordinateHasRelativeAltitude()) {
         prevCoord.setAltitude(homeAlt + prevCoord.altitude());
     }
 
@@ -993,7 +993,7 @@ void MissionController::_updateBatteryInfo(int waypointIndex)
         _missionFlightStatus.hoverAmpsTotal = (_missionFlightStatus.hoverTime / 60.0) * _missionFlightStatus.hoverAmps;
         _missionFlightStatus.cruiseAmpsTotal = (_missionFlightStatus.cruiseTime / 60.0) * _missionFlightStatus.cruiseAmps;
         _missionFlightStatus.batteriesRequired = ceil((_missionFlightStatus.hoverAmpsTotal + _missionFlightStatus.cruiseAmpsTotal) / _missionFlightStatus.ampMinutesAvailable);
-        if (_missionFlightStatus.batteriesRequired == 2 && _missionFlightStatus.batteryChangePoint == -1) {
+        if (waypointIndex != -1 && _missionFlightStatus.batteriesRequired == 2 && _missionFlightStatus.batteryChangePoint == -1) {
             _missionFlightStatus.batteryChangePoint = waypointIndex - 1;
         }
     }
@@ -1048,6 +1048,16 @@ void MissionController::_recalcMissionFlightStatus()
 
     bool vtolInHover = true;
     bool linkStartToHome = false;
+    bool linkEndToHome = false;
+
+    if (showHomePosition) {
+        SimpleMissionItem* lastItem = _visualItems->value<SimpleMissionItem*>(_visualItems->count() - 1);
+        if (lastItem && (int)lastItem->command() == MAV_CMD_NAV_RETURN_TO_LAUNCH) {
+            linkEndToHome = true;
+        } else {
+            linkEndToHome = _settingsItem->missionEndRTL();
+        }
+    }
 
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
@@ -1093,6 +1103,13 @@ void MissionController::_recalcMissionFlightStatus()
         if (firstCoordinateItem && simpleItem && simpleItem->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
             if (showHomePosition) {
                 linkStartToHome = true;
+                if (_controllerVehicle->multiRotor() || _controllerVehicle->vtol()) {
+                    // We have to special case takeoff, assuming vehicle takes off straight up to specified altitude
+                    double azimuth, distance, altDifference;
+                    _calcPrevWaypointValues(homePositionAltitude, _settingsItem, simpleItem, &azimuth, &distance, &altDifference);
+                    double takeoffTime = qAbs(altDifference) / _appSettings->offlineEditingAscentSpeed()->rawValue().toDouble();
+                    _addHoverTime(takeoffTime, 0, -1);
+                }
             }
         }
 
@@ -1205,6 +1222,31 @@ void MissionController::_recalcMissionFlightStatus()
         }
     }
     lastCoordinateItem->setMissionVehicleYaw(_missionFlightStatus.vehicleYaw);
+
+    if (linkEndToHome && lastCoordinateItem != _settingsItem) {
+        double azimuth, distance, altDifference;
+        _calcPrevWaypointValues(homePositionAltitude, lastCoordinateItem, _settingsItem, &azimuth, &distance, &altDifference);
+
+        // Calculate time/distance
+        double hoverTime = distance / _missionFlightStatus.hoverSpeed;
+        double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
+        double landTime = qAbs(altDifference) / _appSettings->offlineEditingDescentSpeed()->rawValue().toDouble();
+        if (_controllerVehicle->vtol()) {
+            if (vtolInHover) {
+                _addHoverTime(hoverTime, distance, -1);
+                _addHoverTime(landTime, 0, -1);
+            } else {
+                _addCruiseTime(cruiseTime, distance, -1);
+            }
+        } else {
+            if (_controllerVehicle->multiRotor()) {
+                _addHoverTime(hoverTime, distance, -1);
+                _addHoverTime(landTime, 0, -1);
+            } else {
+                _addCruiseTime(cruiseTime, distance, -1);
+            }
+        }
+    }
 
     if (_missionFlightStatus.mAhBattery != 0 && _missionFlightStatus.batteryChangePoint == -1) {
         _missionFlightStatus.batteryChangePoint = 0;
