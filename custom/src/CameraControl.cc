@@ -243,18 +243,21 @@ CameraControl::setVehicle(Vehicle* vehicle)
     emit photoStatusChanged();
     if(_vehicle) {
         _vehicle = NULL;
-        disconnect(&_statusTimer,   &QTimer::timeout, this, &CameraControl::_timerHandler);
-        disconnect(&_recTimer,      &QTimer::timeout, this, &CameraControl::_recTimerHandler);
-        disconnect(_vehicle,        &Vehicle::mavlinkMessageReceived, this, &CameraControl::_mavlinkMessageReceived);
-        disconnect(_vehicle,        &Vehicle::mavCommandResult,       this, &CameraControl::_mavCommandResult);
+        disconnect(&_captureStatusTimer,&QTimer::timeout, this, &CameraControl::_requestCaptureStatus);
+        disconnect(&_statusTimer,       &QTimer::timeout, this, &CameraControl::_timerHandler);
+        disconnect(&_recTimer,          &QTimer::timeout, this, &CameraControl::_recTimerHandler);
+        disconnect(_vehicle,            &Vehicle::mavlinkMessageReceived, this, &CameraControl::_mavlinkMessageReceived);
+        disconnect(_vehicle,            &Vehicle::mavCommandResult,       this, &CameraControl::_mavCommandResult);
         _cameraSupported = CAMERA_SUPPORT_UNDEFINED;
     }
     if(vehicle) {
         _vehicle = vehicle;
-        connect(&_statusTimer,  &QTimer::timeout, this, &CameraControl::_timerHandler);
-        connect(&_recTimer,     &QTimer::timeout, this, &CameraControl::_recTimerHandler);
-        connect(_vehicle,       &Vehicle::mavlinkMessageReceived, this, &CameraControl::_mavlinkMessageReceived);
-        connect(_vehicle,       &Vehicle::mavCommandResult,       this, &CameraControl::_mavCommandResult);
+        connect(&_captureStatusTimer,   &QTimer::timeout, this, &CameraControl::_requestCaptureStatus);
+        connect(&_statusTimer,          &QTimer::timeout, this, &CameraControl::_timerHandler);
+        connect(&_recTimer,             &QTimer::timeout, this, &CameraControl::_recTimerHandler);
+        connect(_vehicle,               &Vehicle::mavlinkMessageReceived, this, &CameraControl::_mavlinkMessageReceived);
+        connect(_vehicle,               &Vehicle::mavCommandResult,       this, &CameraControl::_mavCommandResult);
+        _captureStatusTimer.setSingleShot(true);
         _statusTimer.setSingleShot(true);
         _recTimer.setSingleShot(false);
         _recTimer.setInterval(333);
@@ -632,9 +635,6 @@ CameraControl::_timerHandler()
         case MAV_CMD_REQUEST_STORAGE_INFORMATION:
             _requestStorageStatus();
             break;
-        case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
-            _requestCaptureStatus();
-            break;
         case MAV_CMD_REQUEST_CAMERA_SETTINGS:
             _requestCameraSettings();
             break;
@@ -726,6 +726,7 @@ CameraControl::_requestCameraInfo()
 void
 CameraControl::_startTimer(int task, int elapsed)
 {
+    qCDebug(YuneecCameraLogVerbose()) << "_startTimer()" << task << elapsed;
     _currentTask = task;
     _statusTimer.start(elapsed);
 }
@@ -749,7 +750,11 @@ CameraControl::_handleCommandResult(bool noReponseFromVehicle, int command, int 
         }
     }
     //-- Keep trying
-    _startTimer(command, 500);
+    if(command == MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS) {
+        _captureStatusTimer.start(500);
+    } else {
+        _startTimer(command, 500);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -798,6 +803,7 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
             case MAV_CMD_VIDEO_START_CAPTURE:
             case MAV_CMD_VIDEO_STOP_CAPTURE:
                 if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
+                    qCDebug(YuneecCameraLog) << "Good response for" << command;
                     //-- Faster feedback for start/stop video
                     if(command == MAV_CMD_VIDEO_START_CAPTURE) {
                         _handleVideoRunning(VIDEO_CAPTURE_STATUS_RUNNING);
@@ -1066,7 +1072,7 @@ CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
     }
     */
     //-- More often than once every 5 seconds makes the camera barf
-    _startTimer(MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS, 5000);
+    _captureStatusTimer.start(5000);
 }
 
 //-----------------------------------------------------------------------------
@@ -1085,7 +1091,7 @@ CameraControl::_handleStorageInfo(const mavlink_message_t& message)
         emit sdFreeChanged();
     }
     //-- Get Capture Status next
-    _startTimer(MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS, 500);
+    _captureStatusTimer.start(500);
 }
 
 //-----------------------------------------------------------------------------
