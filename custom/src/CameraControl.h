@@ -158,7 +158,7 @@ public:
     Q_PROPERTY(QStringList  videoResList    READ    videoResList                                NOTIFY videoResListChanged)
     Q_PROPERTY(QStringList  iqModeList      READ    iqModeList                                  CONSTANT)
     Q_PROPERTY(QStringList  wbList          READ    wbList                                      CONSTANT)
-    Q_PROPERTY(QStringList  isoList         READ    isoList                                     CONSTANT)
+    Q_PROPERTY(QStringList  isoList         READ    isoList                                     NOTIFY isoListChanged)
     Q_PROPERTY(QStringList  shutterList     READ    shutterList                                 NOTIFY shutterListChanged)
     Q_PROPERTY(QStringList  meteringList    READ    meteringList                                CONSTANT)
     Q_PROPERTY(QStringList  photoFormatList READ    photoFormatList                             NOTIFY photoFormatListChanged)
@@ -257,6 +257,7 @@ signals:
     void    cameraModelChanged      ();
     void    cameraAvailableChanged  ();
     void    photoFormatListChanged  ();
+    void    isoListChanged          ();
 
 private:
     int     _findVideoResIndex      (int w, int h, float fps);
