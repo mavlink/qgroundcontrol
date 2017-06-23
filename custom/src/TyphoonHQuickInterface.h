@@ -260,6 +260,7 @@ signals:
     void    updateDoneChanged           ();
     void    updatingChanged             ();
     void    thermalImagePresentChanged  ();
+    void    updateAlert                 ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -289,6 +290,7 @@ private slots:
     void    _imageUpdateError           (QString errorMsg);
     void    _imageUpdateDone            ();
     void    _videoRunningChanged        ();
+    void    _checkUpdateStatus          ();
 
 private:
     void    _saveWifiConfigurations     ();

@@ -9,6 +9,7 @@
 #include "AppSettings.h"
 #include "SettingsManager.h"
 #include "MAVLinkLogManager.h"
+#include "QGCMapEngine.h"
 
 #include <QDirIterator>
 #include <QtAlgorithms>
@@ -23,7 +24,8 @@
 extern const char* jniClassName;
 #endif
 
-static const char* kWifiConfig = "WifiConfig";
+static const char* kWifiConfig  = "WifiConfig";
+static const char* kUpdateCheck = "YuneecUpdateCheck";
 
 #if defined __android__
 static const char* kUpdateFile = "/storage/sdcard1/update.zip";
@@ -128,6 +130,8 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
             }
         }
         _enableThermalVideo();
+        //-- Give some time (15s) and check to see if we need to check for updates.
+        QTimer::singleShot(15000, this, &TyphoonHQuickInterface::_checkUpdateStatus);
     }
 }
 
@@ -1049,4 +1053,21 @@ TyphoonHQuickInterface::_saveWifiConfigurations()
         i++;
      }
     settings.endGroup();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_checkUpdateStatus()
+{
+    QSettings settings;
+    //-- If we have Internet, reset timer
+    if(getQGCMapEngine()->isInternetActive()) {
+        settings.setValue(kUpdateCheck, QDate::currentDate());
+    } else {
+        QDate lastCheck = settings.value(kUpdateCheck, QDate::currentDate()).toDate();
+        QDate now = QDate::currentDate();
+        if(lastCheck.daysTo(now) > 29) {
+            emit updateAlert();
+        }
+    }
 }
