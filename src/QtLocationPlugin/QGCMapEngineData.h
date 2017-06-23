@@ -118,6 +118,7 @@ public:
         taskGetTileDownloadList,
         taskUpdateTileDownloadState,
         taskDeleteTileSet,
+        taskRenameTileSet,
         taskPruneCache,
         taskReset,
         taskExport,
@@ -323,6 +324,25 @@ signals:
 
 private:
     qulonglong  _setID;
+};
+
+//-----------------------------------------------------------------------------
+class QGCRenameTileSetTask : public QGCMapTask
+{
+    Q_OBJECT
+public:
+    QGCRenameTileSetTask(qulonglong setID, QString newName)
+        : QGCMapTask(QGCMapTask::taskRenameTileSet)
+        , _setID(setID)
+        , _newName(newName)
+    {}
+
+    qulonglong  setID   () { return _setID; }
+    QString     newName () { return _newName; }
+
+private:
+    qulonglong  _setID;
+    QString     _newName;
 };
 
 //-----------------------------------------------------------------------------
