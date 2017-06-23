@@ -147,10 +147,13 @@ iso_values_t isoValues[] = {
     {"600",   600},
     {"800",   800},
     {"1600", 1600},
-    {"3200", 3200}
+    {"3200", 3200},
+    {"6400", 6400}
 };
 
 #define NUM_ISO_VALUES (sizeof(isoValues) / sizeof(iso_values_t))
+
+quint32 iso_option_count = NUM_ISO_VALUES;
 
 //-----------------------------------------------------------------------------
 // Shutter Speeds
@@ -450,7 +453,7 @@ CameraControl::_setIsoShutter(int iso, float shutter)
 void
 CameraControl::setCurrentIso(quint32 index)
 {
-    if(_vehicle && index < NUM_ISO_VALUES && _cameraSupported == CAMERA_SUPPORT_YES) {
+    if(_vehicle && index < iso_option_count && _cameraSupported == CAMERA_SUPPORT_YES) {
         qCDebug(YuneecCameraLog) << "setCurrentIso:" << isoValues[index].description;
         _tempIso = index;
         _setIsoShutter(isoValues[index].value, shutterSpeeds[_tempShutter].value);
@@ -868,19 +871,23 @@ CameraControl::_handleCameraInfo(const mavlink_message_t& message)
         current_camera_video_res_count = NUM_E90_VIDEO_RES;
         current_camera_photo_fmt = &photoFormatOptionsE90[0];
         current_camera_photo_fmt_count = NUM_E90_PHOTO_FORMAT_VALUES;
+        iso_option_count = NUM_ISO_VALUES;
     } else {
         current_camera_video_res = &videoResE50[0];
         current_camera_video_res_count = NUM_E50_VIDEO_RES;
         current_camera_photo_fmt = &photoFormatOptionsE50[0];
         current_camera_photo_fmt_count = NUM_E50_PHOTO_FORMAT_VALUES;
+        iso_option_count = NUM_ISO_VALUES - 1;
     }
     //-- Update options based on camera type
     _videoResList.clear();
     _photoFormatList.clear();
+    _isoList.clear();
     emit videoResListChanged();
     emit photoFormatListChanged();
     emit firmwareVersionChanged();
     emit cameraModelChanged();
+    emit isoListChanged();
     _startTimer(MAV_CMD_REQUEST_CAMERA_SETTINGS, 500);
 }
 
@@ -905,7 +912,7 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
         emit currentShutterChanged();
     }
     //-- ISO Value
-    for(uint32_t i = 0; i < NUM_ISO_VALUES; i++) {
+    for(uint32_t i = 0; i < iso_option_count; i++) {
         if(isoValues[i].value == (int)settings.iso_sensitivity) {
             if(_currentIso != i) {
                 _currentIso = i;
@@ -1164,7 +1171,7 @@ QStringList
 CameraControl::isoList()
 {
     if(_isoList.size() == 0) {
-        for(size_t i = 0; i < NUM_ISO_VALUES; i++) {
+        for(size_t i = 0; i < iso_option_count; i++) {
             _isoList.append(isoValues[i].description);
         }
     }
