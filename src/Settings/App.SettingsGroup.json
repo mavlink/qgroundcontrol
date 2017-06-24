@@ -18,7 +18,7 @@
 {
     "name":             "OfflineEditingCruiseSpeed",
     "shortDescription": "Offline editing cruise speed",
-    "longDescription":  "This value defines the cruising speed for forward flight vehicles for use in calculating mission duration when not connected to a vehicle.",
+    "longDescription":  "This value defines the cruising speed for forward flight vehicles for use in calculating mission duration.",
     "type":             "double",
     "defaultValue":     15.0,
     "min":              1.0,
@@ -28,10 +28,30 @@
 {
     "name":             "OfflineEditingHoverSpeed",
     "shortDescription": "Offline editing hover speed",
-    "longDescription":  "This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration when not connected to a vehicle.",
+    "longDescription":  "This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration.",
     "type":             "double",
     "defaultValue":     5.0,
     "min":              1.0,
+    "units":            "m/s",
+    "decimalPlaces":    2
+},
+{
+    "name":             "OfflineEditingAscentSpeed",
+    "shortDescription": "Offline editing ascent speed",
+    "longDescription":  "This value defines the ascent speed for multi-rotor vehicles for use in calculating mission duration.",
+    "type":             "double",
+    "defaultValue":     3.0,
+    "min":              0.1,
+    "units":            "m/s",
+    "decimalPlaces":    2
+},
+{
+    "name":             "OfflineEditingDescentSpeed",
+    "shortDescription": "Offline editing descent speed",
+    "longDescription":  "This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration.",
+    "type":             "double",
+    "defaultValue":     1.0,
+    "min":              0.1,
     "units":            "m/s",
     "decimalPlaces":    2
 },

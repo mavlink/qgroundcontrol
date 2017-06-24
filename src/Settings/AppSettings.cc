@@ -20,6 +20,8 @@ const char* AppSettings::offlineEditingFirmwareTypeSettingsName =       "Offline
 const char* AppSettings::offlineEditingVehicleTypeSettingsName =        "OfflineEditingVehicleType";
 const char* AppSettings::offlineEditingCruiseSpeedSettingsName =        "OfflineEditingCruiseSpeed";
 const char* AppSettings::offlineEditingHoverSpeedSettingsName =         "OfflineEditingHoverSpeed";
+const char* AppSettings::offlineEditingAscentSpeedSettingsName =        "OfflineEditingAscentSpeed";
+const char* AppSettings::offlineEditingDescentSpeedSettingsName =       "OfflineEditingDescentSpeed";
 const char* AppSettings::batteryPercentRemainingAnnounceSettingsName =  "batteryPercentRemainingAnnounce";
 const char* AppSettings::defaultMissionItemAltitudeSettingsName =       "DefaultMissionItemAltitude";
 const char* AppSettings::telemetrySaveName =                            "PromptFLightDataSave";
@@ -56,6 +58,8 @@ AppSettings::AppSettings(QObject* parent)
     , _offlineEditingVehicleTypeFact(NULL)
     , _offlineEditingCruiseSpeedFact(NULL)
     , _offlineEditingHoverSpeedFact(NULL)
+    , _offlineEditingAscentSpeedFact(NULL)
+    , _offlineEditingDescentSpeedFact(NULL)
     , _batteryPercentRemainingAnnounceFact(NULL)
     , _defaultMissionItemAltitudeFact(NULL)
     , _telemetrySaveFact(NULL)
@@ -146,6 +150,22 @@ Fact* AppSettings::offlineEditingHoverSpeed(void)
         _offlineEditingHoverSpeedFact = _createSettingsFact(offlineEditingHoverSpeedSettingsName);
     }
     return _offlineEditingHoverSpeedFact;
+}
+
+Fact* AppSettings::offlineEditingAscentSpeed(void)
+{
+    if (!_offlineEditingAscentSpeedFact) {
+        _offlineEditingAscentSpeedFact = _createSettingsFact(offlineEditingAscentSpeedSettingsName);
+    }
+    return _offlineEditingAscentSpeedFact;
+}
+
+Fact* AppSettings::offlineEditingDescentSpeed(void)
+{
+    if (!_offlineEditingDescentSpeedFact) {
+        _offlineEditingDescentSpeedFact = _createSettingsFact(offlineEditingDescentSpeedSettingsName);
+    }
+    return _offlineEditingDescentSpeedFact;
 }
 
 Fact* AppSettings::batteryPercentRemainingAnnounce(void)

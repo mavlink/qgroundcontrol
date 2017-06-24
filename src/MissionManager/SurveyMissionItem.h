@@ -95,6 +95,7 @@ public:
     // Overrides from ComplexMissionItem
 
     double              complexDistance     (void) const final { return _surveyDistance; }
+    double              additionalTimeDelay (void) const final { return _additionalFlightDelaySeconds; }
     int                 lastSequenceNumber  (void) const final;
     bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     double              greatestDistanceTo  (const QGeoCoordinate &other) const final;
@@ -231,6 +232,7 @@ private:
     bool                            _cameraOrientationFixed;
     int                             _missionCommandCount;
     bool                            _refly90Degrees;
+    double                          _additionalFlightDelaySeconds;
 
     bool            _ignoreRecalc;
     double          _surveyDistance;
@@ -287,6 +289,8 @@ private:
     static const char* _jsonCameraOrientationLandscapeKey;
     static const char* _jsonFixedValueIsAltitudeKey;
     static const char* _jsonRefly90DegreesKey;
+
+    static const int _hoverAndCaptureDelaySeconds = 1;
 };
 
 #endif
