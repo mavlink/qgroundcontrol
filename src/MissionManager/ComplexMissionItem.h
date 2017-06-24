@@ -26,6 +26,9 @@ public:
     /// @return The distance covered the complex mission item in meters.
     virtual double complexDistance(void) const = 0;
 
+    /// @return Amount of additional time delay in seconds needed to fly the complex item
+    virtual double additionalTimeDelay(void) const { return 0; }
+
     /// Load the complex mission item from Json
     ///     @param complexObject Complex mission item json object
     ///     @param sequenceNumber Sequence number for first MISSION_ITEM in survey
@@ -42,7 +45,8 @@ public:
     static const char* jsonComplexItemTypeKey;
 
 signals:
-    void complexDistanceChanged(double complexDistance);
+    void complexDistanceChanged     (double complexDistance);
+    void additionalTimeDelayChanged (double additionalTimeDelay);
 };
 
 #endif
