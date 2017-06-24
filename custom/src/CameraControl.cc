@@ -193,10 +193,7 @@ exposure_compsensation_t evOptions[] = {
     { "+3.0", 3.0f},
 };
 
-#define NUM_EV_VALUES       (sizeof(evOptions) / sizeof(exposure_compsensation_t))
-
-exposure_compsensation_t*   evOptionsE50 = &evOptions[2];
-#define NUM_EV_VALUES_E50   (NUM_EV_VALUES - 4)
+#define NUM_EV_VALUES  (sizeof(evOptions) / sizeof(exposure_compsensation_t))
 
 //-----------------------------------------------------------------------------
 CameraControl::CameraControl(QObject* parent)
@@ -536,7 +533,6 @@ CameraControl::setCurrentMetering(quint32 index)
 void
 CameraControl::setCurrentEV(quint32 index)
 {
-    //-- TODO: Need to diferentiate between E50 and E90
     if(_vehicle && index < NUM_EV_VALUES && _cameraSupported == CAMERA_SUPPORT_YES) {
         qCDebug(YuneecCameraLog) << "setCurrentEV:" << evOptions[index].description;
         _vehicle->sendMavCommand(
@@ -810,7 +806,6 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
                     } else if(command == MAV_CMD_VIDEO_STOP_CAPTURE) {
                         _handleVideoRunning(VIDEO_CAPTURE_STATUS_STOPPED);
                     }
-                    _startTimer(MAV_CMD_REQUEST_CAMERA_SETTINGS, 500);
                 } else {
                     //-- The camera didn't take it. There isn't much what we can do.
                     //   Sound an error to let the user know. Whatever setting was
@@ -821,6 +816,7 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
                     _errorSound.setLoopCount(2);
                     _errorSound.play();
                 }
+                _startTimer(MAV_CMD_REQUEST_CAMERA_SETTINGS, 500);
                 break;
             default:
                 break;
@@ -929,7 +925,6 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
     }
     //-- EV
     if(_ambarellaSettings.exposure_value != settings.ev) {
-        //-- TODO: Need to diferentiate between E50 and E90
         uint32_t idx = 100000;
         for(uint32_t i = 0; i < NUM_EV_VALUES; i++) {
             if(settings.ev == evOptions[i].value) {
