@@ -195,6 +195,9 @@ exposure_compsensation_t evOptions[] = {
 
 #define NUM_EV_VALUES  (sizeof(evOptions) / sizeof(exposure_compsensation_t))
 
+exposure_compsensation_t* current_evOptions = &evOptions[0];
+quint32 ev_option_count = NUM_EV_VALUES;
+
 //-----------------------------------------------------------------------------
 CameraControl::CameraControl(QObject* parent)
     : QObject(parent)
@@ -533,8 +536,8 @@ CameraControl::setCurrentMetering(quint32 index)
 void
 CameraControl::setCurrentEV(quint32 index)
 {
-    if(_vehicle && index < NUM_EV_VALUES && _cameraSupported == CAMERA_SUPPORT_YES) {
-        qCDebug(YuneecCameraLog) << "setCurrentEV:" << evOptions[index].description;
+    if(_vehicle && index < ev_option_count && _cameraSupported == CAMERA_SUPPORT_YES) {
+        qCDebug(YuneecCameraLog) << "setCurrentEV:" << current_evOptions[index].description;
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_SET_CAMERA_SETTINGS_1,              // Command id
@@ -544,7 +547,7 @@ CameraControl::setCurrentEV(quint32 index)
             NAN,                                        // Shutter speed in seconds
             NAN,                                        // ISO sensitivity
             NAN,                                        // AE mode (Auto Exposure) (0: full auto 1: full manual 2: aperture priority 3: shutter priority)
-            evOptions[index].value,                     // EV value (when in auto exposure)
+            current_evOptions[index].value,             // EV value (when in auto exposure)
             NAN);                                       // White balance (color temperature in K) (0: Auto WB)
     }
 }
@@ -874,22 +877,28 @@ CameraControl::_handleCameraInfo(const mavlink_message_t& message)
         current_camera_photo_fmt = &photoFormatOptionsE90[0];
         current_camera_photo_fmt_count = NUM_E90_PHOTO_FORMAT_VALUES;
         iso_option_count = NUM_ISO_VALUES;
+        ev_option_count = NUM_EV_VALUES;
+        current_evOptions = &evOptions[0];
     } else {
         current_camera_video_res = &videoResE50[0];
         current_camera_video_res_count = NUM_E50_VIDEO_RES;
         current_camera_photo_fmt = &photoFormatOptionsE50[0];
         current_camera_photo_fmt_count = NUM_E50_PHOTO_FORMAT_VALUES;
         iso_option_count = NUM_ISO_VALUES - 1;
+        ev_option_count = NUM_EV_VALUES - 4;
+        current_evOptions = &evOptions[2];
     }
     //-- Update options based on camera type
     _videoResList.clear();
     _photoFormatList.clear();
     _isoList.clear();
+    _evList.clear();
     emit videoResListChanged();
     emit photoFormatListChanged();
     emit firmwareVersionChanged();
     emit cameraModelChanged();
     emit isoListChanged();
+    emit evListChanged();
     _startTimer(MAV_CMD_REQUEST_CAMERA_SETTINGS, 500);
 }
 
@@ -926,13 +935,13 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
     //-- EV
     if(_ambarellaSettings.exposure_value != settings.ev) {
         uint32_t idx = 100000;
-        for(uint32_t i = 0; i < NUM_EV_VALUES; i++) {
-            if(settings.ev == evOptions[i].value) {
+        for(uint32_t i = 0; i < ev_option_count; i++) {
+            if(settings.ev == current_evOptions[i].value) {
                 idx = i;
                 break;
             }
         }
-        if(idx < NUM_EV_VALUES) {
+        if(idx < ev_option_count) {
             _currentEV = idx;
             emit currentEVChanged();
         }
@@ -1220,8 +1229,8 @@ QStringList
 CameraControl::evList()
 {
     if(_evList.size() == 0) {
-        for(uint32_t i = 0; i < NUM_EV_VALUES; i++) {
-            _evList.append(evOptions[i].description);
+        for(uint32_t i = 0; i < ev_option_count; i++) {
+            _evList.append(current_evOptions[i].description);
         }
     }
     return _evList;
