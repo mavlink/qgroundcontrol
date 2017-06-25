@@ -4,6 +4,7 @@
 	</qresource>
 	<qresource prefix="/toolbar">
 		<file alias="ArmedIndicator.qml">../src/ui/toolbar/ArmedIndicator.qml</file>
+		<file alias="GPSRTKIndicator.qml">../src/ui/toolbar/GPSRTKIndicator.qml</file>
 		<file alias="MessageIndicator.qml">../src/ui/toolbar/MessageIndicator.qml</file>
 		<file alias="JoystickIndicator.qml">../src/ui/toolbar/JoystickIndicator.qml</file>
 	</qresource>
@@ -184,6 +185,7 @@
 		<file alias="Vehicle/VehicleFact.json">../src/Vehicle/VehicleFact.json</file>
 		<file alias="Vehicle/BatteryFact.json">../src/Vehicle/BatteryFact.json</file>
 		<file alias="Vehicle/GPSFact.json">../src/Vehicle/GPSFact.json</file>
+		<file alias="Vehicle/GPSRTKFact.json">../src/Vehicle/GPSRTKFact.json</file>
 		<file alias="Vehicle/WindFact.json">../src/Vehicle/WindFact.json</file>
 		<file alias="Vehicle/VibrationFact.json">../src/Vehicle/VibrationFact.json</file>
 		<file alias="Vehicle/TemperatureFact.json">../src/Vehicle/TemperatureFact.json</file>
