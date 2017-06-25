@@ -79,6 +79,7 @@
 #include "QGCMapPolygon.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
+#include "QGCCorePlugin.h"
 
 #ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
@@ -395,11 +396,7 @@ bool QGCApplication::_initForNormalAppBoot(void)
     connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
 
 #ifdef __mobile__
-    _qmlAppEngine = new QQmlApplicationEngine(this);
-    _qmlAppEngine->addImportPath("qrc:/qml");
-    _qmlAppEngine->rootContext()->setContextProperty("joystickManager", toolbox()->joystickManager());
-    _qmlAppEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
-    _qmlAppEngine->load(QUrl(QStringLiteral("qrc:/qml/MainWindowNative.qml")));
+    _qmlAppEngine = toolbox()->corePlugin()->createRootWindow(this);
 #else
     // Start the user interface
     MainWindow* mainWindow = MainWindow::_create();
