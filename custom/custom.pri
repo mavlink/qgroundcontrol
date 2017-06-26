@@ -38,7 +38,15 @@ linux : android-g++ {
     }
 }
 
-TARGET   = DataPilot
+DesktopPlanner {
+    message("Desktop Planner Build")
+    DEFINES += __mobile__
+    DEFINES += __planner__
+    DEFINES += NO_SERIAL_LINK
+    CONFIG  += DISABLE_VIDEOSTREAMING
+    CONFIG  += MobileBuild
+    CONFIG  += NoSerialBuild
+}
 
 DEFINES += CUSTOMHEADER=\"\\\"TyphoonHPlugin.h\\\"\"
 DEFINES += CUSTOMCLASS=TyphoonHPlugin
@@ -54,12 +62,27 @@ DEFINES += QGC_DISABLE_BLUETOOTH
 DEFINES += QGC_DISABLE_UVC
 DEFINES += DISABLE_ZEROCONF
 
-DEFINES += QGC_APPLICATION_NAME=\"\\\"DataPilot\\\"\"
+DesktopPlanner {
+    TARGET   = DataPilotPlanner
+    DEFINES += QGC_APPLICATION_NAME=\"\\\"DataPilotPlanner\\\"\"
+} else {
+    TARGET   = DataPilot
+    DEFINES += QGC_APPLICATION_NAME=\"\\\"DataPilot\\\"\"
+}
+
 DEFINES += QGC_ORG_NAME=\"\\\"Yuneec.com\\\"\"
 DEFINES += QGC_ORG_DOMAIN=\"\\\"com.yuneec\\\"\"
 
 RESOURCES += \
-    $$QGCROOT/custom/typhoonh.qrc
+    $$QGCROOT/custom/typhoonh_common.qrc
+
+DesktopPlanner {
+    RESOURCES += \
+        $$QGCROOT/custom/typhoonh_planner.qrc
+} else {
+    RESOURCES += \
+        $$QGCROOT/custom/typhoonh.qrc
+}
 
 MacBuild {
     QMAKE_INFO_PLIST    = $$PWD/macOS/YuneecInfo.plist
@@ -80,12 +103,16 @@ WindowsBuild {
 }
 
 SOURCES += \
-    $$PWD/src/CameraControl.cc \
-    $$PWD/src/m4serial.cc \
-    $$PWD/src/m4util.cc \
-    $$PWD/src/TyphoonHM4Interface.cc \
     $$PWD/src/TyphoonHPlugin.cc \
-    $$PWD/src/TyphoonHQuickInterface.cc \
+
+!DesktopPlanner {
+    SOURCES += \
+        $$PWD/src/CameraControl.cc \
+        $$PWD/src/m4serial.cc \
+        $$PWD/src/m4util.cc \
+        $$PWD/src/TyphoonHM4Interface.cc \
+        $$PWD/src/TyphoonHQuickInterface.cc
+}
 
 AndroidBuild {
     SOURCES += \
@@ -93,15 +120,19 @@ AndroidBuild {
 }
 
 HEADERS += \
-    $$PWD/src/CameraControl.h \
-    $$PWD/src/m4channeldata.h \
-    $$PWD/src/m4def.h \
-    $$PWD/src/m4serial.h \
-    $$PWD/src/m4util.h \
-    $$PWD/src/TyphoonHCommon.h \
-    $$PWD/src/TyphoonHM4Interface.h \
     $$PWD/src/TyphoonHPlugin.h \
-    $$PWD/src/TyphoonHQuickInterface.h \
+
+!DesktopPlanner {
+    HEADERS += \
+        $$PWD/src/CameraControl.h \
+        $$PWD/src/m4channeldata.h \
+        $$PWD/src/m4def.h \
+        $$PWD/src/m4serial.h \
+        $$PWD/src/m4util.h \
+        $$PWD/src/TyphoonHCommon.h \
+        $$PWD/src/TyphoonHM4Interface.h \
+        $$PWD/src/TyphoonHQuickInterface.h
+}
 
 INCLUDEPATH += \
     $$PWD/src \
@@ -163,8 +194,10 @@ DesktopInstall {
     QMAKE_POST_LINK = echo Start post link
 
     MacBuild {
-        message("Preparing GStreamer Framework")
-        QMAKE_POST_LINK += && $$QGCROOT/tools/prepare_gstreamer_framework.sh $${OUT_PWD}/gstwork/ $${DESTDIR}/$${TARGET}.app $${TARGET}
+        VideoEnabled {
+            message("Preparing GStreamer Framework")
+            QMAKE_POST_LINK += && $$QGCROOT/tools/prepare_gstreamer_framework.sh $${OUT_PWD}/gstwork/ $${DESTDIR}/$${TARGET}.app $${TARGET}
+        }
         # Copy non-standard frameworks into app package
         QMAKE_POST_LINK += && rsync -a $$BASEDIR/libs/lib/Frameworks $$DESTDIR/$${TARGET}.app/Contents/
         # SDL2 Framework

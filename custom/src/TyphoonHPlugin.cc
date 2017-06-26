@@ -48,6 +48,7 @@ myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString
 #endif
 
 //-----------------------------------------------------------------------------
+#if !defined (__planner__)
 static QObject*
 typhoonHQuickInterfaceSingletonFactory(QQmlEngine*, QJSEngine*)
 {
@@ -61,7 +62,7 @@ typhoonHQuickInterfaceSingletonFactory(QQmlEngine*, QJSEngine*)
     }
     return pIFace;
 }
-
+#endif
 
 //-----------------------------------------------------------------------------
 #if defined(__androidx86__)
@@ -216,7 +217,9 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app, QGCToolbox* toolbox)
 {
     _showAdvancedUI = false;
     _pOptions = new TyphoonHOptions(this, this);
+#if !defined (__planner__)
     _pHandler = new TyphoonHM4Interface();
+#endif
     connect(this, &QGCCorePlugin::showAdvancedUIChanged, this, &TyphoonHPlugin::_showAdvancedPages);
     //-- Initialize Localization
     QLocale locale = QLocale::system();
@@ -260,9 +263,11 @@ TyphoonHPlugin::setToolbox(QGCToolbox* toolbox)
     qInstallMessageHandler(myMessageOutput);
 #endif
     QGCCorePlugin::setToolbox(toolbox);
+#if !defined (__planner__)
     qmlRegisterSingletonType<TyphoonHQuickInterface>("TyphoonHQuickInterface", 1, 0, "TyphoonHQuickInterface", typhoonHQuickInterfaceSingletonFactory);
     qmlRegisterUncreatableType<CameraControl>("QGroundControl.CameraControl", 1, 0, "CameraControl", "Reference only");
     _pHandler->init();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -299,6 +304,7 @@ TyphoonHPlugin::settingsPages()
                 QUrl::fromUserInput("qrc:/typhoonh/img/mapIcon.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pOfflineMaps));
+#if !defined (__planner__)
         if (_showAdvancedUI) {
             if(!_pMAVLink) {
                 _pMAVLink = new QGCSettings(tr("MAVLink"),
@@ -362,6 +368,7 @@ TyphoonHPlugin::settingsPages()
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pTyphoonSettings));
 #endif
+#endif
     }
     return _settingsList;
 }
@@ -411,6 +418,16 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
     } else if (metaData.name() == VideoSettings::videoAspectRatioName) {
         metaData.setRawDefaultValue(1.777777);
         return false;
+        //-- Default Palette
+     } else if (metaData.name() == AppSettings::indoorPaletteName) {
+        QVariant outdoorPalette;
+#if defined (__mobile__) && !defined(__planner__)
+        outdoorPalette = 0;
+#else
+        outdoorPalette = 1;
+#endif
+        metaData.setRawDefaultValue(outdoorPalette);
+        return true;
     } else if (metaData.name() == AppSettings::esriTokenName) {
         //-- This is a bogus token for now
         metaData.setRawDefaultValue(QStringLiteral("3E300F9A-3E0F-44D4-AD92-0D5525E7F525"));
@@ -444,6 +461,11 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
     } else if (metaData.name() == AppSettings::offlineEditingVehicleTypeSettingsName) {
         metaData.setRawDefaultValue(MAV_TYPE_QUADROTOR);
         return false;
+#if defined (__planner__)
+    } else if (metaData.name() == AppSettings::audioMutedName) {
+        metaData.setRawDefaultValue(true);
+        return false;
+#endif
     } else if (metaData.name() == AppSettings::savePathName) {
 #if defined(__androidx86__)
         QString appName = qgcApp()->applicationName();
@@ -475,3 +497,14 @@ TyphoonHPlugin::brandImageOutdoor(void) const
     return QStringLiteral("/typhoonh/img/YuneecBrandImageBlack.svg");
 }
 
+//-----------------------------------------------------------------------------
+#if defined (__planner__)
+QQmlApplicationEngine*
+TyphoonHPlugin::createRootWindow(QObject *parent)
+{
+    QQmlApplicationEngine* pEngine = new QQmlApplicationEngine(parent);
+    pEngine->addImportPath("qrc:/qml");
+    pEngine->load(QUrl(QStringLiteral("qrc:/typhoonh/MainWindowPlanner.qml")));
+    return pEngine;
+}
+#endif

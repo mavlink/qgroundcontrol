@@ -36,6 +36,10 @@ public:
     QGeoPositionInfoSource* createPositionSource    (QObject* parent);
 #endif
 
+#if defined (__planner__)
+    virtual QQmlApplicationEngine* createRootWindow(QObject* parent);
+#endif
+
     // Overrides from QGCTool
     void                setToolbox                      (QGCToolbox* toolbox);
 
