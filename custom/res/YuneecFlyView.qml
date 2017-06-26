@@ -342,7 +342,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter;
             }
             QGCLabel {
-                text: _camController ? _camController.shutterList[_camController.currentShutter] : "";
+                text: _camController ? (_camController.shutterList.length > _camController.currentShutter ? _camController.shutterList[_camController.currentShutter] : "") : ""
                 visible: !_cameraAutoMode;
                 anchors.verticalCenter: parent.verticalCenter;
             }
@@ -357,7 +357,7 @@ Item {
             //-- Video Res
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode; }
             QGCLabel {
-                text: _camController ? _camController.videoResList[_camController.currentVideoRes] : "";
+                text: _camController ? (_camController.videoResList.length > _camController.currentVideoRes ? _camController.videoResList[_camController.currentVideoRes] : "") : ""
                 visible: _cameraVideoMode;
                 anchors.verticalCenter: parent.verticalCenter;
             }

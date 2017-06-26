@@ -28,12 +28,14 @@ typedef struct {
     quint32     photo_quality;
     quint32     white_balance;
     uint32_t    metering_mode;
+    uint32_t    flicker_mode;
+    uint32_t    photo_res_index;
+    uint32_t    video_res_index;
 } amb_camera_settings_t;
 
 //-----------------------------------------------------------------------------
 // Ambarella Camera Status
 typedef struct {
-    int         image_status;
     int         video_status;
     uint32_t    sdfree;
     uint32_t    sdtotal;
@@ -118,18 +120,11 @@ public:
         VIDEO_CAPTURE_STATUS_UNDEFINED
     };
 
-    //-- Photo Capture Status
-    enum PhotoStatus {
-        PHOTO_CAPTURE_STATUS_IDLE = 0,
-        PHOTO_CAPTURE_STATUS_RUNNING,
-        PHOTO_CAPTURE_STATUS_UNDEFINED
-    };
-
     //-- cam_mode
     enum CameraMode {
-        CAMERA_MODE_UNDEFINED = 0,
-        CAMERA_MODE_VIDEO,
-        CAMERA_MODE_PHOTO,
+        CAMERA_MODE_UNDEFINED = -1,
+        CAMERA_MODE_PHOTO = 0,
+        CAMERA_MODE_VIDEO = 1,
     };
 
     //-- Auto Exposure
@@ -142,12 +137,10 @@ public:
     #define DEFAULT_VALUE -1.0f
 
     Q_ENUMS(VideoStatus)
-    Q_ENUMS(PhotoStatus)
     Q_ENUMS(CameraMode)
     Q_ENUMS(AEModes)
 
     Q_PROPERTY(VideoStatus  videoStatus     READ    videoStatus                                 NOTIFY videoStatusChanged)
-    Q_PROPERTY(PhotoStatus  photoStatus     READ    photoStatus                                 NOTIFY photoStatusChanged)
     Q_PROPERTY(CameraMode   cameraMode      READ    cameraMode      WRITE   setCameraMode       NOTIFY cameraModeChanged)
     Q_PROPERTY(AEModes      aeMode          READ    aeMode          WRITE   setAeMode           NOTIFY aeModeChanged)
     Q_PROPERTY(quint32      recordTime      READ    recordTime                                  NOTIFY recordTimeChanged)
@@ -187,7 +180,6 @@ public:
     Q_INVOKABLE void formatCard     ();
 
     VideoStatus videoStatus         ();
-    PhotoStatus photoStatus         ();
     CameraMode  cameraMode          ();
     AEModes     aeMode              ();
     quint32     recordTime          ();
@@ -207,7 +199,7 @@ public:
     QString     cameraModel         () { return _cameraModel; }
     bool        cameraAvailable     () { return _cameraSupported == CAMERA_SUPPORT_YES; }
 
-    quint32     currentVideoRes     () { return _currentVideoResIndex; }
+    quint32     currentVideoRes     () { return _ambarellaSettings.video_res_index; }
     quint32     currentWB           () { return _currentWB; }
     quint32     currentIso          () { return _currentIso; }
     quint32     currentShutter      () { return _currentShutter - _minShutter; }
@@ -238,7 +230,6 @@ private slots:
 
 signals:
     void    videoStatusChanged      ();
-    void    photoStatusChanged      ();
     void    cameraModeChanged       ();
     void    aeModeChanged           ();
     void    recordTimeChanged       ();
@@ -262,7 +253,6 @@ signals:
     void    evListChanged           ();
 
 private:
-    int     _findVideoResIndex      (int w, int h, float fps);
     void    _requestStorageStatus   ();
     void    _requestCameraInfo      ();
     void    _requestCameraSettings  ();
@@ -306,9 +296,7 @@ private:
 
     int                     _currentTask;
     int                     _cameraSupported;
-    int                     _true_cam_mode;
     int                     _camInfoTries;
-    quint32                 _currentVideoResIndex;
     quint32                 _currentWB;
     quint32                 _currentIso;
     quint32                 _tempIso;

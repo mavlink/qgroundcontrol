@@ -5,6 +5,7 @@
     </qresource>
     <qresource prefix="/qmlimages">
         <file alias="PaperPlane.svg">res/images/Y-Logo.svg</file>
+        <file alias="Megaphone.svg">res/images/bell.svg</file>
     </qresource>
     <qresource prefix="/typhoonh/img">
         <file alias="battery_back.svg">res/images/battery_back.svg</file>
