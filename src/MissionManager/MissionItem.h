@@ -114,6 +114,7 @@ private slots:
 
 private:
     bool _convertJsonV1ToV2(const QJsonObject& json, QJsonObject& v2Json, QString& errorString);
+    bool _convertJsonV2ToV3(QJsonObject& json, QString& errorString);
 
     int     _sequenceNumber;
     int     _doJumpId;
@@ -134,9 +135,11 @@ private:
     static const char*  _jsonFrameKey;
     static const char*  _jsonCommandKey;
     static const char*  _jsonAutoContinueKey;
-    static const char*  _jsonCoordinateKey;
     static const char*  _jsonParamsKey;
     static const char*  _jsonDoJumpIdKey;
+
+    // Deprecated V2 format keys
+    static const char*  _jsonCoordinateKey;
 
     // Deprecated V1 format keys
     static const char*  _jsonParam1Key;
