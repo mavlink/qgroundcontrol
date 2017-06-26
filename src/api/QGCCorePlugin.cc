@@ -7,11 +7,13 @@
  *
  ****************************************************************************/
 
+#include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "QGCSettings.h"
 #include "FactMetaData.h"
 #include "SettingsManager.h"
+#include "AppMessages.h"
 
 #include <QtQml>
 #include <QQmlEngine>
@@ -212,4 +214,14 @@ void QGCCorePlugin::valuesWidgetDefaultSettings(QStringList& largeValues, QStrin
 {
     Q_UNUSED(smallValues);
     largeValues << "Vehicle.altitudeRelative" << "Vehicle.groundSpeed" << "Vehicle.flightTime";
+}
+
+QQmlApplicationEngine* QGCCorePlugin::createRootWindow(QObject *parent)
+{
+    QQmlApplicationEngine* pEngine = new QQmlApplicationEngine(parent);
+    pEngine->addImportPath("qrc:/qml");
+    pEngine->rootContext()->setContextProperty("joystickManager", qgcApp()->toolbox()->joystickManager());
+    pEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
+    pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainWindowNative.qml")));
+    return pEngine;
 }
