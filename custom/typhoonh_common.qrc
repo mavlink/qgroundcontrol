@@ -1,0 +1,31 @@
+<RCC>
+    <qresource prefix="/qml">
+        <file alias="QGroundControl/Controls/QGCToolBarButton.qml">res/QGCToolBarButton.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/OnOffSwitch.qml">res/OnOffSwitch.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/SSIDButton.qml">res/SSIDButton.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/ST16Analog.qml">res/ST16Analog.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/SwitchCal.qml">res/SwitchCal.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/qmldir">res/qmldir</file>
+    </qresource>
+    <qresource prefix="/res">
+        <file alias="QGCLogoFull">res/images/AppLogo.svg</file>
+    </qresource>
+    <qresource prefix="/localization">
+        <file alias="yuneec_de_DE.qm">localization/yuneec_de_DE.qm</file>
+        <file alias="yuneec_zh_CN.qm">localization/yuneec_zh_CN.qm</file>
+    </qresource>
+    <qresource prefix="/qmlimages">
+        <file alias="PaperPlane.svg">res/images/Y-Logo.svg</file>
+    </qresource>
+    <qresource prefix="/typhoonh/img">
+        <file alias="hamburger.svg">res/images/hamburger.svg</file>
+        <file alias="mapIcon.svg">res/images/mapIcon.svg</file>
+        <file alias="waypoint.svg">res/images/waypoint.svg</file>
+        <file alias="Y-Logo.svg">res/images/Y-Logo.svg</file>
+        <file alias="YuneecBrandImage.svg">src/FirmwarePlugin/YuneecBrandImage.svg</file>
+        <file alias="YuneecBrandImageBlack.svg">src/FirmwarePlugin/YuneecBrandImageBlack.svg</file>
+    </qresource>
+    <qresource prefix="/typhoonh">
+        <file alias="YuneecParameterFactMetaData.xml">res/YuneecParameterFactMetaData.xml</file>
+    </qresource>
+</RCC>

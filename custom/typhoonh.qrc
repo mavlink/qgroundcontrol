@@ -1,24 +1,10 @@
 <RCC>
     <qresource prefix="/qml">
-        <file alias="TyphoonHQuickInterface/Widgets/OnOffSwitch.qml">res/OnOffSwitch.qml</file>
-        <file alias="TyphoonHQuickInterface/Widgets/SSIDButton.qml">res/SSIDButton.qml</file>
-        <file alias="TyphoonHQuickInterface/Widgets/ST16Analog.qml">res/ST16Analog.qml</file>
-        <file alias="TyphoonHQuickInterface/Widgets/SwitchCal.qml">res/SwitchCal.qml</file>
-        <file alias="TyphoonHQuickInterface/Widgets/qmldir">res/qmldir</file>
         <file alias="QGroundControl/Controls/MainToolBar.qml">res/MainToolBar.qml</file>
-        <file alias="QGroundControl/Controls/QGCToolBarButton.qml">res/QGCToolBarButton.qml</file>
         <file alias="QGroundControl/Controls/VehicleRotationCal.qml">res/VehicleRotationCal.qml</file>
-    </qresource>
-    <qresource prefix="/res">
-        <file alias="QGCLogoFull">res/images/AppLogo.svg</file>
     </qresource>
     <qresource prefix="/qmlimages">
         <file alias="PaperPlane.svg">res/images/Y-Logo.svg</file>
-        <file alias="Megaphone.svg">res/images/bell.svg</file>
-    </qresource>
-    <qresource prefix="/localization">
-        <file alias="yuneec_de_DE.qm">localization/yuneec_de_DE.qm</file>
-        <file alias="yuneec_zh_CN.qm">localization/yuneec_zh_CN.qm</file>
     </qresource>
     <qresource prefix="/typhoonh/img">
         <file alias="battery_back.svg">res/images/battery_back.svg</file>
@@ -38,7 +24,6 @@
         <file alias="CogWheel.svg">res/images/CogWheel.svg</file>
         <file alias="CompassIndicator.svg">res/images/CompassIndicator.svg</file>
         <file alias="gps.svg">res/images/gps.svg</file>
-        <file alias="hamburger.svg">res/images/hamburger.svg</file>
         <file alias="logoWhite.svg">res/images/logoWhite.svg</file>
         <file alias="mag-cal-1-rest.svg">res/images/mag-cal-1-rest.svg</file>
         <file alias="mag-cal-1.svg">res/images/mag-cal-1.svg</file>
@@ -52,7 +37,6 @@
         <file alias="mag-cal-5.svg">res/images/mag-cal-5.svg</file>
         <file alias="mag-cal-6-rest.svg">res/images/mag-cal-6-rest.svg</file>
         <file alias="mag-cal-6.svg">res/images/mag-cal-6.svg</file>
-        <file alias="mapIcon.svg">res/images/mapIcon.svg</file>
         <file alias="odometer.svg">res/images/odometer.svg</file>
         <file alias="rc.svg">res/images/rc.svg</file>
         <file alias="rc_battery_back.svg">res/images/rc_battery_back.svg</file>
@@ -73,11 +57,8 @@
         <file alias="UpArrow.svg">res/images/UpArrow.svg</file>
         <file alias="VehicleIndicator.svg">res/images/VehicleIndicator.svg</file>
         <file alias="video.svg">res/images/video.svg</file>
-        <file alias="waypoint.svg">res/images/waypoint.svg</file>
         <file alias="wifi.svg">res/images/wifi.svg</file>
         <file alias="Y-Logo.svg">res/images/Y-Logo.svg</file>
-        <file alias="YuneecBrandImage.svg">src/FirmwarePlugin/YuneecBrandImage.svg</file>
-        <file alias="YuneecBrandImageBlack.svg">src/FirmwarePlugin/YuneecBrandImageBlack.svg</file>
     </qresource>
     <qresource prefix="/typhoonh/wav">
         <file alias="beep.wav">res/audio/beep.wav</file>
@@ -98,6 +79,5 @@
         <file alias="WIFIRSSIIndicator.qml">res/WIFIRSSIIndicator.qml</file>
         <file alias="YGPSIndicator.qml">res/YGPSIndicator.qml</file>
         <file alias="YuneecFlyView.qml">res/YuneecFlyView.qml</file>
-        <file alias="YuneecParameterFactMetaData.xml">res/YuneecParameterFactMetaData.xml</file>
     </qresource>
 </RCC>
