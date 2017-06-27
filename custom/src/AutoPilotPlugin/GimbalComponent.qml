@@ -45,7 +45,7 @@ SetupPage {
                         QGCButton {
                             text:       "Calibrate Gimbal"
                             enabled:    _activeVehicle
-                            onClicked:  TyphoonHQuickInterface.calibrateGimbalMV()
+                            onClicked:  TyphoonHQuickInterface.cameraControl.calibrateGimbal()
                         }
                     }
                 }

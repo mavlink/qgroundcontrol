@@ -390,16 +390,6 @@ TyphoonHQuickInterface::isWifiConfigured(QString ssid)
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::calibrateGimbalMV()
-{
-    if(_pHandler && _pHandler->vehicle()) {
-        //-- We can currently calibrate the accelerometer.
-        _pHandler->vehicle()->sendMavCommand(MAV_COMP_ID_GIMBAL, MAV_CMD_PREFLIGHT_CALIBRATION, true, 0,0,0,0,1,0,0);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
 TyphoonHQuickInterface::bindWIFI(QString ssid, QString password)
 {
     stopScan();
