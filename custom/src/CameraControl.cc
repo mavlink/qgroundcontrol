@@ -1259,10 +1259,20 @@ CameraControl::_updateAspectRatio()
 {
     //-- E90 is always 720P regardless
     float aspect = 1280.0f / 720.0f;
-    if(!_cameraModel.startsWith("E90")) {
+    if(_cameraModel.startsWith("E90")) {
         //-- Photo Mode
         if(_ambarellaSettings.cam_mode == CAMERA_MODE_PHOTO) {
-            //-- CGO3+ and E50 are 4x3 in Photo Mode
+            //-- E90 is 3:2 in Photo Mode
+            aspect = 3.0f / 2.0f;
+            qCDebug(YuneecCameraLog) << "Set Photo Aspect Ratio" << aspect;
+        //-- Video Mode
+        } else if(_ambarellaSettings.cam_mode == CAMERA_MODE_VIDEO) {
+            qCDebug(YuneecCameraLog) << "Set Video Aspect Ratio" << aspect;
+        }
+    } else {
+        //-- Photo Mode
+        if(_ambarellaSettings.cam_mode == CAMERA_MODE_PHOTO) {
+            //-- CGO3+ and E50 are 4:3 in Photo Mode
             aspect = 4.0f / 3.0f;
             qCDebug(YuneecCameraLog) << "Set Photo Aspect Ratio" << aspect;
         //-- Video Mode
