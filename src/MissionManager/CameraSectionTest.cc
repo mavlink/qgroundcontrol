@@ -47,7 +47,7 @@ void CameraSectionTest::init(void)
                                              MissionItem(0, MAV_CMD_DO_MOUNT_CONTROL, MAV_FRAME_MISSION, 10.1234, 0, 20.1234, 0, 0, 0, MAV_MOUNT_MODE_MAVLINK_TARGETING, true, false),
                                              this);
     _validTimeItem = new SimpleMissionItem(_offlineVehicle,
-                                           MissionItem(0, MAV_CMD_IMAGE_START_CAPTURE, MAV_FRAME_MISSION, 0, 48, 0, -1, -1, 0, 0, true, false),
+                                           MissionItem(0, MAV_CMD_IMAGE_START_CAPTURE, MAV_FRAME_MISSION, 0, 48, 0, NAN, NAN, NAN, NAN, true, false),
                                            this);
     _validDistanceItem = new SimpleMissionItem(_offlineVehicle,
                                                MissionItem(0, MAV_CMD_DO_SET_CAM_TRIGG_DIST, MAV_FRAME_MISSION, 72, 0, 0, 0, 0, 0, 0, true, false),
@@ -57,22 +57,19 @@ void CameraSectionTest::init(void)
                                                              MAV_CMD_VIDEO_START_CAPTURE,
                                                              MAV_FRAME_MISSION,
                                                              0,                             // camera id = 0, all cameras
-                                                             -1,                            // -1 Max FPS
-                                                             -1,                            // Max horizontal resolution
-                                                             -1,                            // Max vertical resolution
-                                                             0,                             // Np CAMERA_CAPTURE_STATUS streaming
-                                                             0, 0,                          // param 6-7 not used
+                                                             0,                             // No CAMERA_CAPTURE_STATUS streaming
+                                                             NAN, NAN, NAN, NAN, NAN,       // param 3-7 reserved
                                                              true,                          // autocontinue
                                                              false),                        // isCurrentItem
                                                  this);
     _validStopVideoItem = new SimpleMissionItem(_offlineVehicle,
-                                                MissionItem(0, MAV_CMD_VIDEO_STOP_CAPTURE, MAV_FRAME_MISSION, 0, 0, 0, 0, 0, 0, 0, true, false),
+                                                MissionItem(0, MAV_CMD_VIDEO_STOP_CAPTURE, MAV_FRAME_MISSION, 0, NAN, NAN, NAN, NAN, NAN, NAN, true, false),
                                                 this);
     _validStopDistanceItem = new SimpleMissionItem(_offlineVehicle,
                                                    MissionItem(0, MAV_CMD_DO_SET_CAM_TRIGG_DIST, MAV_FRAME_MISSION, 0, 0, 0, 0, 0, 0, 0, true, false),
                                                    this);
     _validStopTimeItem = new SimpleMissionItem(_offlineVehicle,
-                                               MissionItem(1, MAV_CMD_IMAGE_STOP_CAPTURE, MAV_FRAME_MISSION, 0, 0, 0, 0, 0, 0, 0, true, false),
+                                               MissionItem(1, MAV_CMD_IMAGE_STOP_CAPTURE, MAV_FRAME_MISSION, 0, NAN, NAN, NAN, NAN, NAN, NAN, true, false),
                                                this);
     _validCameraPhotoModeItem = new SimpleMissionItem(_offlineVehicle,
                                                       MissionItem(0,                               // sequence number
@@ -80,7 +77,8 @@ void CameraSectionTest::init(void)
                                                                   MAV_FRAME_MISSION,
                                                                   0,                               // camera id = 0, all cameras
                                                                   CameraSection::CameraModePhoto,
-                                                                  NAN, NAN, NAN, NAN, NAN,         // param 3-7 unused
+                                                                  NAN,                             // Audio off/on
+                                                                  NAN, NAN, NAN, NAN,              // param 4-7 reserved
                                                                   true,                            // autocontinue
                                                                   false),                          // isCurrentItem
                                                       this);
@@ -90,7 +88,8 @@ void CameraSectionTest::init(void)
                                                                   MAV_FRAME_MISSION,
                                                                   0,                               // camera id = 0, all cameras
                                                                   CameraSection::CameraModeVideo,
-                                                                  NAN, NAN, NAN, NAN, NAN,         // param 3-7 unused
+                                                                  NAN,                             // Audio off/on
+                                                                  NAN, NAN, NAN, NAN,              // param 4-7 reserved
                                                                   true,                            // autocontinue
                                                                   false),                          // isCurrentItem
                                                       this);
@@ -98,12 +97,10 @@ void CameraSectionTest::init(void)
                                                 MissionItem(0,
                                                             MAV_CMD_IMAGE_START_CAPTURE,
                                                             MAV_FRAME_MISSION,
-                                                            0,                               // camera id = 0, all cameras
+                                                            0,                              // camera id = 0, all cameras
                                                             0,                              // Interval (none)
                                                             1,                              // Take 1 photo
-                                                            -1,                             // Max horizontal resolution
-                                                            -1,                             // Max vertical resolution
-                                                            0, 0,                           // param 6-7 not used
+                                                            NAN, NAN, NAN, NAN,             // param 4-7 not reserved
                                                             true,                           // autoContinue
                                                             false),                         // isCurrentItem
                                                 this);
@@ -703,8 +700,6 @@ void CameraSectionTest::_testScanForPhotoIntervalTimeSection(void)
     Mission Param #1	Camera ID (0 for all cameras, 1 for first, 2 for second, etc.)
     Mission Param #2	Duration between two consecutive pictures (in seconds)
     Mission Param #3	Number of images to capture total - 0 for unlimited capture
-    Mission Param #4	Resolution horizontal in pixels (set to -1 for highest resolution possible)
-    Mission Param #5	Resolution vertical in pixels (set to -1 for highest resolution possible)
 */
 
     SimpleMissionItem* newValidTimeItem = new SimpleMissionItem(_offlineVehicle, this);
@@ -862,10 +857,7 @@ void CameraSectionTest::_testScanForStartVideoSection(void)
     /*
     MAV_CMD_VIDEO_START_CAPTURE	WIP: Starts video capture (recording)
     Mission Param #1	Camera ID (0 for all cameras, 1 for first, 2 for second, etc.)
-    Mission Param #2	Frames per second, set to -1 for highest framerate possible.
-    Mission Param #3	Resolution horizontal in pixels (set to -1 for highest resolution possible)
-    Mission Param #4	Resolution vertical in pixels (set to -1 for highest resolution possible)
-    Mission Param #5	Frequency CAMERA_CAPTURE_STATUS messages should be sent while recording (0 for no messages, otherwise time in Hz)
+    Mission Param #2	Frequency CAMERA_CAPTURE_STATUS messages should be sent while recording (0 for no messages, otherwise time in Hz)
 */
 
     SimpleMissionItem* newValidStartVideoItem = new SimpleMissionItem(_offlineVehicle, this);
@@ -1069,8 +1061,6 @@ void CameraSectionTest::_testScanForTakePhotoSection(void)
       Mission Param #1	Camera ID (0 for all cameras, 1 for first, 2 for second, etc.)
       Mission Param #2	Duration between two consecutive pictures (in seconds)
       Mission Param #3	Number of images to capture total - 0 for unlimited capture
-      Mission Param #4	Resolution horizontal in pixels (set to -1 for highest resolution possible)
-      Mission Param #5	Resolution vertical in pixels (set to -1 for highest resolution possible)
 */
 
     SimpleMissionItem* newValidTakePhotoItem = new SimpleMissionItem(_offlineVehicle, this);
