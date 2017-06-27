@@ -1053,9 +1053,9 @@ void MissionManager::generateResumeMission(int resumeIndex)
         case MAV_CMD_IMAGE_START_CAPTURE:
         {
             // FIXME: Handle single image capture
-            int cameraId = resumeItem->param6();
+            int cameraId = resumeItem->param1();
 
-            if (resumeItem->param1() == 0) {
+            if (resumeItem->param3() == 1) {
                 // This is an individual image capture command, remove it
                 resumeMission.removeAt(resumeIndex);
                 break;
@@ -1084,7 +1084,7 @@ void MissionManager::generateResumeMission(int resumeIndex)
         case MAV_CMD_VIDEO_START_CAPTURE:
         {
             int cameraId = resumeItem->param1();
-            // If we already found an video stop, then all video start/stop commands are useless
+            // If we've already found a video stop, then all video start/stop commands are useless
             // De-dup repeated video start commands
             // Otherwise keep only the last video start
             if (videoStopCameraIds.contains(cameraId) || videoStopCameraIds.contains(cameraId)) {

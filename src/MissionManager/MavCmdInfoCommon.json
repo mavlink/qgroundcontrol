@@ -998,24 +998,19 @@
             "description":  "Start taking one or more photos.",
             "category":     "Camera",
             "param1": {
+                "label":            "Camera id",
+                "default":          0,
+                "decimalPlaces":    0
+            },
+            "param2": {
                 "label":            "Interval",
                 "default":          0,
                 "units":            "secs",
                 "decimalPlaces":    0
             },
-            "param2": {
+            "param3": {
                 "label":            "Photo count",
                 "default":          1,
-                "decimalPlaces":    0
-            },
-            "param3": {
-                "label":            "Resolution",
-                "default":          -1,
-                "decimalPlaces":    0
-            },
-            "param6": {
-                "label":            "Camera id",
-                "default":          0,
                 "decimalPlaces":    0
             }
         },
@@ -1041,16 +1036,6 @@
             "param1": {
                 "label":            "Camera id",
                 "default":          0,
-                "decimalPlaces":    0
-            },
-            "param2": {
-                "label":            "FPS",
-                "default":          -1,
-                "decimalPlaces":    0
-            },
-            "param3": {
-                "label":            "Resolution",
-                "default":          -1,
                 "decimalPlaces":    0
             }
         },
