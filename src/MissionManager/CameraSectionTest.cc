@@ -675,16 +675,14 @@ void CameraSectionTest::_testScanForCameraModeSection(void)
     */
 
     // Mode command but incorrect settings
-    /*
     SimpleMissionItem invalidSimpleItem(_offlineVehicle, _validCameraPhotoModeItem->missionItem());
-    invalidSimpleItem.missionItem().setParam3(0);   // Audio is not supported
+    invalidSimpleItem.missionItem().setParam3(1);   // Audio should be NaN
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
     QCOMPARE(_cameraSection->specifyCameraMode(), false);
     QCOMPARE(_cameraSection->settingsSpecified(), false);
     visualItems.clear();
-    */
 }
 
 void CameraSectionTest::_testScanForPhotoIntervalTimeSection(void)
@@ -722,40 +720,6 @@ void CameraSectionTest::_testScanForPhotoIntervalTimeSection(void)
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
     visualItems.clear();
-
-    /*
-    invalidSimpleItem.missionItem() = _validTimeItem->missionItem();
-    invalidSimpleItem.missionItem().setParam4(10);    // must be -1 for highest res
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validTimeItem->missionItem();
-    invalidSimpleItem.missionItem().setParam5(10);    // must be -1 for highest res
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validTimeItem->missionItem();
-    invalidSimpleItem.missionItem().setParam6(10);    // must be 0
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validTimeItem->missionItem();
-    invalidSimpleItem.missionItem().setParam7(10);      // must be 0
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-    */
 }
 
 void CameraSectionTest::_testScanForPhotoIntervalDistanceSection(void)
@@ -860,8 +824,9 @@ void CameraSectionTest::_testScanForStartVideoSection(void)
     /*
     MAV_CMD_VIDEO_START_CAPTURE	WIP: Starts video capture (recording)
     Mission Param #1	Camera ID (0 for all cameras, 1 for first, 2 for second, etc.)
-    Mission Param #2	Frequency CAMERA_CAPTURE_STATUS messages should be sent while recording (0 for no messages, otherwise time in Hz)
-*/
+    Mission Param #2	Frequency CAMERA_CAPTURE_STATUS messages should be sent while recording (0 for no messages, otherwise frequency in Hz)
+    Mission Param #3	Reserved
+    */
 
     SimpleMissionItem* newValidStartVideoItem = new SimpleMissionItem(_offlineVehicle, this);
     newValidStartVideoItem->missionItem() = _validStartVideoItem->missionItem();
@@ -890,48 +855,6 @@ void CameraSectionTest::_testScanForStartVideoSection(void)
     QCOMPARE(visualItems.count(), 1);
     QCOMPARE(_cameraSection->settingsSpecified(), false);
     visualItems.clear();
-
-    /*
-    invalidSimpleItem.missionItem() = _validStartVideoItem->missionItem();
-    invalidSimpleItem.missionItem().setParam3(1);    // must be -1
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validStartVideoItem->missionItem();
-    invalidSimpleItem.missionItem().setParam4(100);    // must be -1
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validStartVideoItem->missionItem();
-    invalidSimpleItem.missionItem().setParam5(10);    // must be 0
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validStartVideoItem->missionItem();
-    invalidSimpleItem.missionItem().setParam6(10);    // must be 0
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validStartVideoItem->missionItem();
-    invalidSimpleItem.missionItem().setParam7(10);      // must be 0
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-    */
 }
 
 void CameraSectionTest::_testScanForStopVideoSection(void)
@@ -967,56 +890,6 @@ void CameraSectionTest::_testScanForStopVideoSection(void)
     QCOMPARE(visualItems.count(), 1);
     QCOMPARE(_cameraSection->settingsSpecified(), false);
     visualItems.clear();
-
-    /*
-    invalidSimpleItem.missionItem() = _validStopVideoItem->missionItem();
-    invalidSimpleItem.missionItem().setParam2(10);    // must be 0
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validStopVideoItem->missionItem();
-    invalidSimpleItem.missionItem().setParam3(1);    // must be 0
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validStopVideoItem->missionItem();
-    invalidSimpleItem.missionItem().setParam4(100);    // must be 0
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validStopVideoItem->missionItem();
-    invalidSimpleItem.missionItem().setParam5(10);    // must be 0
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validStopVideoItem->missionItem();
-    invalidSimpleItem.missionItem().setParam6(10);    // must be 0
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validStopVideoItem->missionItem();
-    invalidSimpleItem.missionItem().setParam7(10);      // must be 0
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-    */
 }
 
 void CameraSectionTest::_testScanForStopImageSection(void)
@@ -1064,11 +937,12 @@ void CameraSectionTest::_testScanForTakePhotoSection(void)
     _commonScanTest(_cameraSection);
 
     /*
-    MAV_CMD_IMAGE_START_CAPTURE	Start image capture sequence. Sends CAMERA_IMAGE_CAPTURED after each capture.
-      Mission Param #1	Camera ID (0 for all cameras, 1 for first, 2 for second, etc.)
-      Mission Param #2	Duration between two consecutive pictures (in seconds)
-      Mission Param #3	Number of images to capture total - 0 for unlimited capture
-*/
+    MAV_CMD_IMAGE_START_CAPTURE	WIP: Start image capture sequence. Sends CAMERA_IMAGE_CAPTURED after each capture.
+    Mission Param #1	Camera ID (0 for all cameras, 1 for first, 2 for second, etc.)
+    Mission Param #2	Duration between two consecutive pictures (in seconds)
+    Mission Param #3	Number of images to capture total - 0 for unlimited capture
+    Mission Param #4	Reserved
+    */
 
     SimpleMissionItem* newValidTakePhotoItem = new SimpleMissionItem(_offlineVehicle, this);
     newValidTakePhotoItem->missionItem() = _validTakePhotoItem->missionItem();
@@ -1088,40 +962,6 @@ void CameraSectionTest::_testScanForTakePhotoSection(void)
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
     visualItems.clear();
-
-    /*
-    invalidSimpleItem.missionItem() = _validTimeItem->missionItem();
-    invalidSimpleItem.missionItem().setParam4(10);    // must be -1 for highest res
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validTimeItem->missionItem();
-    invalidSimpleItem.missionItem().setParam5(10);    // must be -1 for highest res
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validTimeItem->missionItem();
-    invalidSimpleItem.missionItem().setParam6(10);    // must be 0
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-
-    invalidSimpleItem.missionItem() = _validTimeItem->missionItem();
-    invalidSimpleItem.missionItem().setParam7(10);      // must be 0
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
-    */
 }
 
 void CameraSectionTest::_validateItemScan(SimpleMissionItem* validItem)
