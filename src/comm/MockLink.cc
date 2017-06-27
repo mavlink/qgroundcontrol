@@ -924,7 +924,8 @@ void MockLink::_sendHomePosition(void)
                                         (int32_t)(_vehicleAltitude * 1000),
                                         0.0f, 0.0f, 0.0f,
                                         &bogus[0],
-            0.0f, 0.0f, 0.0f);
+                                        0.0f, 0.0f, 0.0f,
+                                        0);
     respondWithMavlinkMessage(msg);
 }
 
