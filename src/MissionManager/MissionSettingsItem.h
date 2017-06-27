@@ -74,8 +74,8 @@ public:
     void            applyNewAltitude        (double newAltitude) final { Q_UNUSED(newAltitude); /* no action */ }
     double          specifiedFlightSpeed    (void) final;
 
-    bool coordinateHasRelativeAltitude      (void) const final { return true; }
-    bool exitCoordinateHasRelativeAltitude  (void) const final { return true; }
+    bool coordinateHasRelativeAltitude      (void) const final { return false; }
+    bool exitCoordinateHasRelativeAltitude  (void) const final { return false; }
     bool exitCoordinateSameAsEntry          (void) const final { return true; }
 
     void setDirty           (bool dirty) final;
