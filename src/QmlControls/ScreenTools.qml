@@ -146,15 +146,7 @@ Item {
                         baseSize = 14;
                     }
                 } else {
-                    //-- Mac OS
-                    if(ScreenToolsController.isMacOS)
-                        baseSize = _defaultFont.font.pointSize;
-                    //-- Linux
-                    else if(ScreenToolsController.isLinux)
-                        baseSize = _defaultFont.font.pointSize - 3.25;
-                    //-- Windows
-                    else
-                        baseSize = _defaultFont.font.pointSize;
+                    baseSize = _defaultFont.font.pointSize;
                 }
                 _appFontPointSizeFact.value = baseSize
                 //-- Release build doesn't get signal
