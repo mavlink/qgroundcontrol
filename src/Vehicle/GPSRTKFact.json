@@ -8,8 +8,8 @@
     "name":             "currentAccuracy",
     "shortDescription": "Current Accuracy",
     "type":             "double",
-    "decimalPlaces":    0,
-    "units":            "mm"
+    "decimalPlaces":    1,
+    "units":            "m"
 },
 {
     "name":             "currentDuration",
