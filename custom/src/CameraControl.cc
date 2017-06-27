@@ -204,9 +204,7 @@ CameraControl::CameraControl(QObject* parent)
     , _vehicle(NULL)
     , _currentTask(MAV_CMD_REQUEST_STORAGE_INFORMATION)
     , _cameraSupported(CAMERA_SUPPORT_UNDEFINED)
-    , _true_cam_mode(CAMERA_MODE_UNDEFINED)
     , _camInfoTries(0)
-    , _currentVideoResIndex(0)
     , _currentWB(0)
     , _currentIso(0)
     , _tempIso(0)
@@ -240,7 +238,6 @@ CameraControl::setVehicle(Vehicle* vehicle)
     _camInfoTries    = 0;
     emit cameraModeChanged();
     emit videoStatusChanged();
-    emit photoStatusChanged();
     if(_vehicle) {
         _vehicle = NULL;
         disconnect(&_captureStatusTimer,&QTimer::timeout, this, &CameraControl::_requestCaptureStatus);
@@ -288,16 +285,14 @@ void
 CameraControl::takePhoto()
 {
     qCDebug(YuneecCameraLog) << "takePhoto()";
-    if(_vehicle && _cameraSupported == CAMERA_SUPPORT_YES && photoStatus() == PHOTO_CAPTURE_STATUS_IDLE) {
+    if(_vehicle && _cameraSupported == CAMERA_SUPPORT_YES) {
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_IMAGE_START_CAPTURE,                // Command id
             true,                                       // ShowError
             0,                                          // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
             0,                                          // Duration between two consecutive pictures (in seconds--ignored if single image)
-            1,                                          // Number of images to capture total - 0 for unlimited capture
-            -1,                                         // Horizontal resolution in pixels (set to -1 for highest resolution possible)
-            -1);                                        // Vertical resolution in pixels (set to -1 for highest resolution possible)
+            1);                                         // Number of images to capture total - 0 for unlimited capture
         _cameraSound.setLoopCount(1);
         _cameraSound.play();
         //-- Capture local image as well
@@ -317,22 +312,12 @@ CameraControl::startVideo()
 {
     qCDebug(YuneecCameraLog) << "startVideo()";
     if(_vehicle && videoStatus() == VIDEO_CAPTURE_STATUS_STOPPED && _ambarellaSettings.cam_mode == CAMERA_MODE_VIDEO) {
-        int w = -1;
-        int h = -1;
-        int f = -1;
-        if(_currentVideoResIndex < current_camera_video_res_count) {
-            w = current_camera_video_res[_currentVideoResIndex].width;
-            h = current_camera_video_res[_currentVideoResIndex].height;
-            f = current_camera_video_res[_currentVideoResIndex].fps;
-        }
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_VIDEO_START_CAPTURE,                // Command id
             true,                                       // ShowError
             0,                                          // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
-            f,                                          // FPS: (-1 for max)
-            w,                                          // Horizontal resolution in pixels (set to -1 for highest resolution possible)
-            h);                                         // Vertical resolution in pixels (set to -1 for highest resolution possible)
+            0);                                         // CAMERA_CAPTURE_STATUS Frequency
         _videoSound.setLoopCount(1);
         _videoSound.play();
     } else {
@@ -363,18 +348,12 @@ CameraControl::setVideoMode()
 {
     if(_vehicle && _cameraSupported == CAMERA_SUPPORT_YES && _ambarellaSettings.cam_mode != CAMERA_MODE_VIDEO) {
         qCDebug(YuneecCameraLog) << "setVideoMode()";
-        //-- Force UI to update. We keep the real camera mode elsewhere so we
-        //   track when the camera actually changed modes, which is quite some
-        //   time later.
-        _true_cam_mode = _ambarellaSettings.cam_mode;
-        _ambarellaSettings.cam_mode = CAMERA_MODE_VIDEO;
-        emit cameraModeChanged();
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_SET_CAMERA_MODE,                    // Command id
             true,                                       // ShowError
             0,                                          // Camera ID (0 for all, 1 for first, 2 for second, etc.)
-            1,                                          // Camera mode (0: photo, 1: video)
+            CAMERA_MODE_VIDEO,                          // Camera mode (0: photo, 1: video)
             NAN);                                       // Audio recording enabled (0: off 1: on)
     }
 }
@@ -385,18 +364,12 @@ CameraControl::setPhotoMode()
 {
     if(_vehicle && _cameraSupported == CAMERA_SUPPORT_YES && _ambarellaSettings.cam_mode == CAMERA_MODE_VIDEO) {
         qCDebug(YuneecCameraLog) << "setPhotoMode()";
-        //-- Force UI to update. We keep the real camera mode elsewhere so we
-        //   track when the camera actually changed modes, which is quite some
-        //   time later.
-        _true_cam_mode = _ambarellaSettings.cam_mode;
-        _ambarellaSettings.cam_mode = CAMERA_MODE_PHOTO;
-        emit cameraModeChanged();
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_SET_CAMERA_MODE,                    // Command id
             true,                                       // ShowError
             0,                                          // Camera ID (0 for all, 1 for first, 2 for second, etc.)
-            0,                                          // Camera mode (0: photo, 1: video)
+            CAMERA_MODE_PHOTO,                          // Camera mode (0: photo, 1: video)
             NAN);                                       // Audio recording enabled (0: off 1: on)
     }
 }
@@ -407,9 +380,13 @@ CameraControl::setCurrentVideoRes(quint32 index)
 {
     if(index < current_camera_video_res_count) {
         qCDebug(YuneecCameraLog) << "setCurrentVideoRes:" << current_camera_video_res[index].description;
-        _currentVideoResIndex = index;
-        emit currentVideoResChanged();
-        _updateShutterLimit();
+        _vehicle->sendMavCommand(
+            MAV_COMP_ID_CAMERA,                         // Target component
+            MAV_CMD_SET_CAMERA_SETTINGS_3,              // Command id
+            true,                                       // ShowError
+            1,                                          // Camera ID (1 for first, 2 for second, etc.)
+            NAN,                                        // Photo resolution ID (4000x3000, 2560x1920, etc., -1 for maximum possible)
+            index);                                     // Video resolution and rate ID (4K 60fps, 4K 30fps, HD 60fps, HD 30fps, etc., -1 for maximum possible)
     }
 }
 
@@ -615,18 +592,6 @@ int CameraControl::_findShutterSpeedIndex(float shutter_speed)
 }
 
 //-----------------------------------------------------------------------------
-int
-CameraControl::_findVideoResIndex(int w, int h, float fps)
-{
-    for(uint32_t i = 0; i < current_camera_video_res_count; i++) {
-        if(w == current_camera_video_res[i].width && h == current_camera_video_res[i].height && fps == current_camera_video_res[i].fps) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-//-----------------------------------------------------------------------------
 void
 CameraControl::_timerHandler()
 {
@@ -796,6 +761,7 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
                 break;
             case MAV_CMD_SET_CAMERA_SETTINGS_1:
             case MAV_CMD_SET_CAMERA_SETTINGS_2:
+            case MAV_CMD_SET_CAMERA_SETTINGS_3:
             case MAV_CMD_RESET_CAMERA_SETTINGS:
             case MAV_CMD_SET_CAMERA_MODE:
             case MAV_CMD_IMAGE_START_CAPTURE:
@@ -806,20 +772,20 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
                     //-- Faster feedback for start/stop video
                     if(command == MAV_CMD_VIDEO_START_CAPTURE) {
                         _handleVideoRunning(VIDEO_CAPTURE_STATUS_RUNNING);
+                        _captureStatusTimer.start(5000);
                     } else if(command == MAV_CMD_VIDEO_STOP_CAPTURE) {
                         _handleVideoRunning(VIDEO_CAPTURE_STATUS_STOPPED);
                     }
+                    _startTimer(MAV_CMD_REQUEST_CAMERA_SETTINGS, 500);
                 } else {
                     //-- The camera didn't take it. There isn't much what we can do.
                     //   Sound an error to let the user know. Whatever setting was
                     //   being changed has not been changed and the UI will reflect
-                    //   that. There is no good reason for this to fail. The camera
-                    //   firmware needs to be fixed and stop this nonsense of "busy".
+                    //   that. There is no good reason for this to fail.
                     qCDebug(YuneecCameraLog) << "Bad or no response for" << command;
                     _errorSound.setLoopCount(2);
                     _errorSound.play();
                 }
-                _startTimer(MAV_CMD_REQUEST_CAMERA_SETTINGS, 500);
                 break;
             default:
                 break;
@@ -908,7 +874,17 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
 {
     mavlink_camera_settings_t settings;
     mavlink_msg_camera_settings_decode(&message, &settings);
-    qCDebug(YuneecCameraLog) << "_handleCameraSettings:" << settings.mode_id << settings.color_mode_id << settings.ev << settings.exposure_mode << settings.image_format_id << settings.iso_sensitivity << settings.metering_mode_id << settings.shutter_speed;
+    qCDebug(YuneecCameraLog) << "_handleCameraSettings:" <<
+        "AE:" << settings.exposure_mode <<
+        "Color Mode:" << settings.color_mode_id <<
+        "EV:" << settings.ev <<
+        "ISO:" << settings.iso_sensitivity <<
+        "Image Format:" << settings.image_format_id <<
+        "Metering:" << settings.metering_mode_id <<
+        "Mode:" << settings.mode_id <<
+        "Photo Res:" << settings.photo_resolution_id <<
+        "Shutter:" << settings.shutter_speed <<
+        "Video Res:" << settings.video_resolution_and_rate_id;
     //-- Auto Exposure Mode
     int ae = settings.exposure_mode == 0 ? AE_MODE_AUTO : AE_MODE_MANUAL;
     if(_ambarellaSettings.ae_enable != ae) {
@@ -964,11 +940,7 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
         cam_mode = CAMERA_MODE_PHOTO;
     else if(settings.mode_id == 1)
         cam_mode = CAMERA_MODE_VIDEO;
-    //-- Camera mode switch takes too long so we switch the UI right
-    //   after the user presses the switch. Internally however, we only
-    //   truly find out the mode once we get an answer from the camera.
-    if(_true_cam_mode != cam_mode) {
-        _true_cam_mode = cam_mode;
+    if(_ambarellaSettings.cam_mode != cam_mode) {
         _ambarellaSettings.cam_mode = cam_mode;
         emit cameraModeChanged();
         _updateShutterLimit();
@@ -1001,11 +973,30 @@ CameraControl::_handleCameraSettings(const mavlink_message_t& message)
     if(_ambarellaSettings.photo_quality != settings.image_quality_id) {
         _ambarellaSettings.photo_quality = settings.image_quality_id;
         //-- TODO
+
     }
     //-- Metering
     if(_ambarellaSettings.metering_mode != settings.metering_mode_id && settings.metering_mode_id < NUM_METERING_VALUES) {
         _ambarellaSettings.metering_mode = settings.metering_mode_id;
         emit currentMeteringChanged();
+    }
+    //-- Flicker Mode
+    if(_ambarellaSettings.flicker_mode != settings.flicker_mode_id) {
+        _ambarellaSettings.flicker_mode = settings.flicker_mode_id;
+        //-- TODO
+
+    }
+    //-- Photo Res
+    if(_ambarellaSettings.photo_res_index != settings.photo_resolution_id) {
+        _ambarellaSettings.photo_res_index = settings.photo_resolution_id;
+        //-- TODO
+
+    }
+    //-- Video Res
+    if(_ambarellaSettings.video_res_index != settings.video_resolution_and_rate_id) {
+        _ambarellaSettings.video_res_index = settings.video_resolution_and_rate_id;
+        emit videoResListChanged();
+        _updateShutterLimit();
     }
     //-- Get Storage Setting next
     _startTimer(MAV_CMD_REQUEST_STORAGE_INFORMATION, 500);
@@ -1044,30 +1035,14 @@ CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
     //-- This is a response to MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS
     mavlink_camera_capture_status_t cap;
     mavlink_msg_camera_capture_status_decode(&message, &cap);
-    qCDebug(YuneecCameraLog) << "_handleCaptureStatus:" << cap.available_capacity << cap.image_interval << cap.image_resolution_h << cap.image_resolution_v << cap.image_status << cap.recording_time_ms << cap.video_framerate << cap.video_resolution_h << cap.video_resolution_v << cap.video_status;
+    qCDebug(YuneecCameraLog) << "_handleCaptureStatus:" << cap.available_capacity << cap.image_interval << cap.image_status << cap.recording_time_ms << cap.video_status;
     //-- Disk Free Space
     if(_ambarellaStatus.sdfree != cap.available_capacity) {
         _ambarellaStatus.sdfree = cap.available_capacity;
         emit sdFreeChanged();
     }
-    //-- Image Capture Status
-    if(_ambarellaStatus.image_status != cap.image_status) {
-        _ambarellaStatus.image_status = cap.image_status;
-        emit photoStatusChanged();
-    }
     //-- Video Capture Status
     _handleVideoRunning((VideoStatus)cap.video_status);
-    //-- Video res is only valid when video started recording
-    if(_ambarellaStatus.video_status == VIDEO_CAPTURE_STATUS_RUNNING) {
-        //-- Current Video Resolution and FPS
-        int idx = _findVideoResIndex(cap.video_resolution_h, cap.video_resolution_v, cap.video_framerate);
-        if((int)_currentVideoResIndex != idx && idx >= 0) {
-            _currentVideoResIndex = idx;
-            emit currentVideoResChanged();
-            _updateAspectRatio();
-            _updateShutterLimit();
-        }
-    }
     /*
     //-- Recording running time
     if(_ambarellaStatus.record_time != cap.recording_time_ms) {
@@ -1076,7 +1051,9 @@ CameraControl::_handleCaptureStatus(const mavlink_message_t &message)
     }
     */
     //-- More often than once every 5 seconds makes the camera barf
-    _captureStatusTimer.start(5000);
+    if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
+        _captureStatusTimer.start(5000);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1106,16 +1083,6 @@ CameraControl::videoStatus()
         return (VideoStatus)_ambarellaStatus.video_status;
     }
     return VIDEO_CAPTURE_STATUS_UNDEFINED;
-}
-
-//-----------------------------------------------------------------------------
-CameraControl::PhotoStatus
-CameraControl::photoStatus()
-{
-    if(_cameraSupported == CAMERA_SUPPORT_YES) {
-        return (PhotoStatus)_ambarellaStatus.image_status;
-    }
-    return PHOTO_CAPTURE_STATUS_UNDEFINED;
 }
 
 //-----------------------------------------------------------------------------
@@ -1310,11 +1277,17 @@ CameraControl::_updateAspectRatio()
 void
 CameraControl::_updateShutterLimit()
 {
+    //-- Get current video index (and validate it)
+    uint32_t vid_index = _ambarellaSettings.video_res_index;
+    if(vid_index >= current_camera_video_res_count) {
+        vid_index = 0;
+    }
+    //-- Current shutter speed
     float cur_shutter = shutterSpeeds[_tempShutter].value;
     _minShutter = 0;
     if(_ambarellaSettings.cam_mode == CAMERA_MODE_VIDEO) {
         //-- Minimum shutter cannot be slower than frame rate
-        float curFps = 1.01f / (float)(current_camera_video_res[_currentVideoResIndex].fps);
+        float curFps = 1.01f / (float)(current_camera_video_res[vid_index].fps);
         for(uint32_t i = 0; i < NUM_SHUTTER_VALUES; i++) {
             if(curFps > shutterSpeeds[i].value) {
                 _minShutter = i;
@@ -1346,8 +1319,6 @@ CameraControl::_updateShutterLimit()
 void
 CameraControl::_resetCameraValues()
 {
-    _true_cam_mode = CAMERA_MODE_UNDEFINED;
-
     _ambarellaSettings.ae_enable        = AE_MODE_UNDEFINED;
     _ambarellaSettings.exposure_value   = 1000.0f;
     _ambarellaSettings.cam_mode         = CAMERA_MODE_UNDEFINED;
@@ -1357,8 +1328,10 @@ CameraControl::_resetCameraValues()
     _ambarellaSettings.photo_quality    = 1000;
     _ambarellaSettings.white_balance    = 1000;
     _ambarellaSettings.metering_mode    = 1000;
+    _ambarellaSettings.flicker_mode     = 1000;
+    _ambarellaSettings.photo_res_index  = 1000;
+    _ambarellaSettings.video_res_index  = 1000;
 
-    _ambarellaStatus.image_status       = PHOTO_CAPTURE_STATUS_UNDEFINED;
     _ambarellaStatus.video_status       = VIDEO_CAPTURE_STATUS_UNDEFINED;
     _ambarellaStatus.sdfree             = 0xFFFFFFFF;
     _ambarellaStatus.sdtotal            = 0xFFFFFFFF;

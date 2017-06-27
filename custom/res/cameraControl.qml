@@ -422,6 +422,7 @@ Rectangle {
                             }
                             QGCComboBox {
                                 width:       _editFieldWidth
+                                enabled:     _cameraPhotoMode
                                 model:       TyphoonHQuickInterface.cameraControl.iqModeList
                                 currentIndex:TyphoonHQuickInterface.cameraControl.currentIQ
                                 onActivated: {

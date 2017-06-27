@@ -1146,9 +1146,7 @@ int SurveyMissionItem::_appendWaypointToMission(QList<MissionItem*>& items, int 
                                0,                           // Camera ID, all cameras
                                0,                           // Interval (none)
                                1,                           // Take 1 photo
-                               -1,                          // Max horizontal resolution
-                               -1,                          // Max vertical resolution
-                               0, 0,                        // param 6-7 not used
+                               NAN, NAN, NAN, NAN,          // param 4-7 reserved
                                true,                        // autoContinue
                                false,                       // isCurrentItem
                                missionItemParent);

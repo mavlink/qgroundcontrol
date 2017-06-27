@@ -241,20 +241,30 @@ void MissionItemTest::_testFactSignals(void)
     QCOMPARE(arguments.at(0).toDouble(), 8.0);
 }
 
-void MissionItemTest::_checkExpectedMissionItem(const MissionItem& missionItem)
+void MissionItemTest::_checkExpectedMissionItem(const MissionItem& missionItem, bool allNaNs)
 {
     QCOMPARE(missionItem.sequenceNumber(), _seq);
     QCOMPARE(missionItem.isCurrentItem(), false);
     QCOMPARE(missionItem.frame(), (MAV_FRAME)3);
     QCOMPARE(missionItem.command(), (MAV_CMD)80);
-    QCOMPARE(missionItem.param1(), 10.0);
-    QCOMPARE(missionItem.param2(), 20.0);
-    QCOMPARE(missionItem.param3(), 30.0);
-    QCOMPARE(missionItem.param4(), 40.0);
-    QCOMPARE(missionItem.param5(), -10.0);
-    QCOMPARE(missionItem.param6(), -20.0);
-    QCOMPARE(missionItem.param7(), -30.0);
     QCOMPARE(missionItem.autoContinue(), true);
+    if (allNaNs) {
+        QVERIFY(qIsNaN(missionItem.param1()));
+        QVERIFY(qIsNaN(missionItem.param2()));
+        QVERIFY(qIsNaN(missionItem.param3()));
+        QVERIFY(qIsNaN(missionItem.param4()));
+        QVERIFY(qIsNaN(missionItem.param5()));
+        QVERIFY(qIsNaN(missionItem.param6()));
+        QVERIFY(qIsNaN(missionItem.param7()));
+    } else {
+        QCOMPARE(missionItem.param1(), 10.0);
+        QCOMPARE(missionItem.param2(), 20.0);
+        QCOMPARE(missionItem.param3(), 30.0);
+        QCOMPARE(missionItem.param4(), 40.0);
+        QCOMPARE(missionItem.param5(), -10.0);
+        QCOMPARE(missionItem.param6(), -20.0);
+        QCOMPARE(missionItem.param7(), -30.0);
+    }
 }
 
 void MissionItemTest::_testLoadFromStream(void)
@@ -285,21 +295,9 @@ void MissionItemTest::_testLoadFromJsonV1(void)
 {
     MissionItem missionItem;
     QString     errorString;
-    QJsonArray  coordinateArray;
-    coordinateArray << -10.0 << -20.0 <<-30.0;
-    QJsonObject jsonObject;
-    jsonObject.insert(MissionItem::_jsonAutoContinueKey, true);
-    jsonObject.insert(MissionItem::_jsonCommandKey, 80);
-    jsonObject.insert(MissionItem::_jsonFrameKey, 3);
-    jsonObject.insert(MissionItem::_jsonParam1Key, 10);
-    jsonObject.insert(MissionItem::_jsonParam2Key, 20);
-    jsonObject.insert(MissionItem::_jsonParam3Key, 30);
-    jsonObject.insert(MissionItem::_jsonParam4Key, 40);
-    jsonObject.insert(VisualMissionItem::jsonTypeKey, VisualMissionItem::jsonTypeSimpleItemValue);
-    jsonObject.insert(MissionItem::_jsonCoordinateKey, coordinateArray);
+    QJsonObject jsonObject = _createV1Json();
 
-
-    // We only need to test the differences between V1 and V2
+    // V1 format has param 1-4 in seperate items instead of in params array
 
     QStringList removeKeys;
     removeKeys << MissionItem::_jsonParam1Key << MissionItem::_jsonParam2Key << MissionItem::_jsonParam3Key << MissionItem::_jsonParam4Key;
@@ -313,7 +311,11 @@ void MissionItemTest::_testLoadFromJsonV1(void)
 
     // Test good load
 
-    QVERIFY(missionItem.load(jsonObject, _seq, errorString));
+    bool success = missionItem.load(jsonObject, _seq, errorString);
+    if (!success) {
+        qDebug() << errorString;
+    }
+    QVERIFY(success);
     _checkExpectedMissionItem(missionItem);
 }
 
@@ -321,27 +323,12 @@ void MissionItemTest::_testLoadFromJsonV2(void)
 {
     MissionItem missionItem;
     QString     errorString;
-    QJsonArray  coordinateArray;
-    coordinateArray << -10.0 << -20.0 <<-30.0;
-    QJsonObject jsonObject;
-    jsonObject.insert(MissionItem::_jsonAutoContinueKey, true);
-    jsonObject.insert(MissionItem::_jsonCommandKey, 80);
-    jsonObject.insert(MissionItem::_jsonFrameKey, 3);
-    jsonObject.insert(VisualMissionItem::jsonTypeKey, VisualMissionItem::jsonTypeSimpleItemValue);
-    jsonObject.insert(MissionItem::_jsonCoordinateKey, coordinateArray);
-
-    QJsonArray rgParams =  { 10, 20, 30, 40 };
-    jsonObject.insert(MissionItem::_jsonParamsKey, rgParams);
+    QJsonObject jsonObject = _createV2Json();
 
     // Test missing key detection
 
     QStringList removeKeys;
-    removeKeys << MissionItem::_jsonAutoContinueKey <<
-                  MissionItem::_jsonCommandKey <<
-                  MissionItem::_jsonFrameKey <<
-                  MissionItem::_jsonParamsKey <<
-                  VisualMissionItem::jsonTypeKey <<
-                  MissionItem::_jsonCoordinateKey;
+    removeKeys << MissionItem::_jsonCoordinateKey;
     foreach(const QString& removeKey, removeKeys) {
         QJsonObject badObject = jsonObject;
         badObject.remove(removeKey);
@@ -388,11 +375,50 @@ void MissionItemTest::_testLoadFromJsonV2(void)
     QVERIFY(!errorString.isEmpty());
     qDebug() << errorString;
 
-    // Test bad type
+    // Test good load
 
+    bool result = missionItem.load(jsonObject, _seq, errorString);
+    if (!result) {
+        qDebug() << errorString;
+        QVERIFY(result);
+    }
+    _checkExpectedMissionItem(missionItem);
+}
+
+void MissionItemTest::_testLoadFromJsonV3(void)
+{
+    MissionItem missionItem;
+    QString     errorString;
+    QJsonObject jsonObject = _createV3Json();
+
+    // Test missing key detection
+
+    QStringList removeKeys;
+    removeKeys << MissionItem::_jsonAutoContinueKey <<
+                  MissionItem::_jsonCommandKey <<
+                  MissionItem::_jsonFrameKey <<
+                  MissionItem::_jsonParamsKey <<
+                  VisualMissionItem::jsonTypeKey;
+    foreach(const QString& removeKey, removeKeys) {
+        QJsonObject badObject = jsonObject;
+        badObject.remove(removeKey);
+        QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
+        QVERIFY(!errorString.isEmpty());
+        qDebug() << errorString;
+    }
+
+    // Bad type
+    QJsonObject badObject = jsonObject;
+    badObject[VisualMissionItem::jsonTypeKey] = "foo";
+    QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
+    QVERIFY(!errorString.isEmpty());
+    qDebug() << errorString;
+
+    // Incorrect param count
     badObject = jsonObject;
-    badObject.remove("type");
-    badObject["type"] = "foo";
+    QJsonArray rgParam = badObject[MissionItem::_jsonParamsKey].toArray();
+    rgParam.removeFirst();
+    badObject[MissionItem::_jsonParamsKey] = rgParam;
     QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
     QVERIFY(!errorString.isEmpty());
     qDebug() << errorString;
@@ -405,6 +431,20 @@ void MissionItemTest::_testLoadFromJsonV2(void)
         QVERIFY(result);
     }
     _checkExpectedMissionItem(missionItem);
+}
+
+void MissionItemTest::_testLoadFromJsonV3NaN(void)
+{
+    MissionItem missionItem;
+    QString     errorString;
+    QJsonObject jsonObject = _createV3Json(true /* allNaNs */);
+
+    bool result = missionItem.load(jsonObject, _seq, errorString);
+    if (!result) {
+        qDebug() << errorString;
+        QVERIFY(result);
+    }
+    _checkExpectedMissionItem(missionItem, true /* allNaNs */);
 }
 
 void MissionItemTest::_testSimpleLoadFromJson(void)
@@ -434,36 +474,75 @@ void MissionItemTest::_testSimpleLoadFromJson(void)
 void MissionItemTest::_testSaveToJson(void)
 {
     MissionItem missionItem;
+    QString     errorString;
 
-    missionItem.setSequenceNumber(_seq);
-    missionItem.setIsCurrentItem(true);
-    missionItem.setFrame((MAV_FRAME)3);
-    missionItem.setCommand((MAV_CMD)80);
-    missionItem.setParam1(10.1234567);
-    missionItem.setParam2(20.1234567);
-    missionItem.setParam3(30.1234567);
-    missionItem.setParam4(40.1234567);
-    missionItem.setParam5(-10.1234567);
-    missionItem.setParam6(-20.1234567);
-    missionItem.setParam7(-30.1234567);
-    missionItem.setAutoContinue(true);
+    QJsonObject jsonObject = _createV3Json(false /* allNaNs */);
+    QVERIFY(missionItem.load(jsonObject, _seq, errorString));
+    missionItem.save(jsonObject);
+    QCOMPARE(jsonObject.contains(MissionItem::_jsonCoordinateKey), false);
+    QVERIFY(missionItem.load(jsonObject, _seq, errorString));
+    _checkExpectedMissionItem(missionItem, false /* allNaNs */);
 
-    // Round trip item
-    QJsonObject jsonObject;
-    QString errorString;
+    jsonObject = _createV3Json(true /* allNaNs */);
+    QVERIFY(missionItem.load(jsonObject, _seq, errorString));
     missionItem.save(jsonObject);
     QVERIFY(missionItem.load(jsonObject, _seq, errorString));
+    _checkExpectedMissionItem(missionItem, true /* allNaNs */);
+}
 
-    QCOMPARE(missionItem.sequenceNumber(), _seq);
-    QCOMPARE(missionItem.isCurrentItem(), false);
-    QCOMPARE(missionItem.frame(), (MAV_FRAME)3);
-    QCOMPARE(missionItem.command(), (MAV_CMD)80);
-    QCOMPARE(missionItem.param1(), 10.1234567);
-    QCOMPARE(missionItem.param2(), 20.1234567);
-    QCOMPARE(missionItem.param3(), 30.1234567);
-    QCOMPARE(missionItem.param4(), 40.1234567);
-    QCOMPARE(missionItem.param5(), -10.1234567);
-    QCOMPARE(missionItem.param6(), -20.1234567);
-    QCOMPARE(missionItem.param7(), -30.1234567);
-    QCOMPARE(missionItem.autoContinue(), true);
+QJsonObject MissionItemTest::_createV1Json(void)
+{
+    QJsonObject jsonObject;
+    QJsonArray  coordinateArray;
+
+    coordinateArray << -10.0 << -20.0 <<-30.0;
+    jsonObject.insert(MissionItem::_jsonAutoContinueKey, true);
+    jsonObject.insert(MissionItem::_jsonCommandKey, 80);
+    jsonObject.insert(MissionItem::_jsonFrameKey, 3);
+    jsonObject.insert(MissionItem::_jsonParam1Key, 10);
+    jsonObject.insert(MissionItem::_jsonParam2Key, 20);
+    jsonObject.insert(MissionItem::_jsonParam3Key, 30);
+    jsonObject.insert(MissionItem::_jsonParam4Key, 40);
+    jsonObject.insert(VisualMissionItem::jsonTypeKey, VisualMissionItem::jsonTypeSimpleItemValue);
+    jsonObject.insert(MissionItem::_jsonCoordinateKey, coordinateArray);
+
+    return jsonObject;
+}
+
+QJsonObject MissionItemTest::_createV2Json(void)
+{
+    QJsonObject jsonObject;
+    QJsonArray  coordinateArray;
+
+    coordinateArray << -10.0 << -20.0 <<-30.0;
+    jsonObject.insert(MissionItem::_jsonAutoContinueKey, true);
+    jsonObject.insert(MissionItem::_jsonCommandKey, 80);
+    jsonObject.insert(MissionItem::_jsonFrameKey, 3);
+    jsonObject.insert(VisualMissionItem::jsonTypeKey, VisualMissionItem::jsonTypeSimpleItemValue);
+    jsonObject.insert(MissionItem::_jsonCoordinateKey, coordinateArray);
+
+    QJsonArray rgParams =  { 10, 20, 30, 40 };
+    jsonObject.insert(MissionItem::_jsonParamsKey, rgParams);
+
+    return jsonObject;
+}
+
+QJsonObject MissionItemTest::_createV3Json(bool allNaNs)
+{
+    QJsonObject jsonObject;
+
+    jsonObject.insert(MissionItem::_jsonAutoContinueKey, true);
+    jsonObject.insert(MissionItem::_jsonCommandKey, 80);
+    jsonObject.insert(MissionItem::_jsonFrameKey, 3);
+    jsonObject.insert(VisualMissionItem::jsonTypeKey, VisualMissionItem::jsonTypeSimpleItemValue);
+
+    if (allNaNs) {
+        QJsonArray rgParams =  { NAN, NAN, NAN, NAN, NAN, NAN, NAN };
+        jsonObject.insert(MissionItem::_jsonParamsKey, rgParams);
+    } else {
+        QJsonArray rgParams =  { 10, 20, 30, 40, -10, -20, -30 };
+        jsonObject.insert(MissionItem::_jsonParamsKey, rgParams);
+    }
+
+    return jsonObject;
 }
