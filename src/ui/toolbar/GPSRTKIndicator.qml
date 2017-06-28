@@ -71,7 +71,7 @@ Item {
                         text: QGroundControl.gpsRtk.valid.value ? qsTr("Accuracy:") : qsTr("Current Accuracy:")
                         }
                     QGCLabel {
-                        text: (QGroundControl.gpsRtk.currentAccuracy.value/1000).toFixed(1) + ' m'
+                        text: QGroundControl.gpsRtk.currentAccuracy.valueString + " " + QGroundControl.appSettingsDistanceUnitsString
                         }
                     QGCLabel { text: qsTr("Satellites:") }
                     QGCLabel { text: QGroundControl.gpsRtk.numSatellites.value }
@@ -91,7 +91,7 @@ Item {
         width:              height
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
-        source:             "/qmlimages/Gps.svg"
+        source:             "/qmlimages/RTK.svg"
         fillMode:           Image.PreserveAspectFit
         sourceSize.height:  height
         opacity:            1
@@ -108,12 +108,6 @@ Item {
             anchors.horizontalCenter:   numSatValue.horizontalCenter
             color:                      qgcPal.buttonText
             text:                       QGroundControl.gpsRtk.numSatellites.value
-        }
-
-        QGCLabel {
-            id:         numSatValue
-            color:      qgcPal.buttonText
-            text:       qsTr("RTK")
         }
     }
     
