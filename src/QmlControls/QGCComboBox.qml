@@ -59,13 +59,10 @@ Button {
             implicitHeight: text.implicitHeight
             baselineOffset: text.y + text.baselineOffset
 
-            Text {
+            QGCLabel {
                 id:                     text
                 anchors.verticalCenter: parent.verticalCenter
-                antialiasing:           true
                 text:                   control.currentText
-                font.pointSize:         pointSize
-                font.family:            ScreenTools.normalFontFamily
                 color:                  control._qgcPal.buttonText
             }
         }
@@ -107,10 +104,12 @@ Button {
         __visualItem:   combo
 
         style: MenuStyle {
-            font:                       combo.font
-            __labelColor:               combo._qgcPal.text
-            __selectedLabelColor:       combo._qgcPal.buttonText
+            font.pointSize:             ScreenTools.defaultFontPointSize
+            font.family:                ScreenTools.normalFontFamily
+            __labelColor:               combo._qgcPal.buttonText
+            __selectedLabelColor:       combo._qgcPal.buttonHighlightText
             __selectedBackgroundColor:  combo._qgcPal.buttonHighlight
+            __backgroundColor:          combo._qgcPal.button
             __maxPopupHeight:           600
             __menuItemType:             "comboboxitem"
             __scrollerStyle:            ScrollViewStyle { }
