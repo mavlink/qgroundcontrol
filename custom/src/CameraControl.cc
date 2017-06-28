@@ -258,6 +258,12 @@ CameraControl::setVehicle(Vehicle* vehicle)
         _statusTimer.setSingleShot(true);
         _recTimer.setSingleShot(false);
         _recTimer.setInterval(333);
+        //-- Get Gimbal Version
+        _vehicle->sendMavCommand(
+            MAV_COMP_ID_GIMBAL,                         // Target component
+            MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES,     // Command id
+            true,                                       // ShowError
+            1);                                         // Request gimbal version
         //-- Ambarella Interface
         _initStreaming();
         //-- Request Camera Info
@@ -278,6 +284,20 @@ QString
 CameraControl::sdFreeStr()
 {
     return QGCMapEngine::bigSizeToString((quint64)_ambarellaStatus.sdfree * 1024);
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::calibrateGimbal()
+{
+    if(_vehicle && _cameraSupported == CAMERA_SUPPORT_YES) {
+        //-- We can currently calibrate the accelerometer.
+        _vehicle->sendMavCommand(
+            MAV_COMP_ID_GIMBAL,
+            MAV_CMD_PREFLIGHT_CALIBRATION,
+            true,
+            0,0,0,0,1,0,0);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -723,6 +743,26 @@ CameraControl::_handleCommandResult(bool noReponseFromVehicle, int command, int 
 
 //-----------------------------------------------------------------------------
 void
+CameraControl::_handleGimbalResult(uint16_t result, uint8_t progress)
+{
+    qCDebug(YuneecCameraLog) << "Gimbal Calibration" << QDateTime::currentDateTime().toString() << result << progress;
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::_handleCommandAck(const mavlink_message_t& message)
+{
+    mavlink_command_ack_t ack;
+    mavlink_msg_command_ack_decode(&message, &ack);
+    if(ack.command == MAV_CMD_PREFLIGHT_CALIBRATION) {
+        if(message.compid == MAV_COMP_ID_GIMBAL) {
+            _handleGimbalResult(ack.result, ack.progress);
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int command, int result, bool noReponseFromVehicle)
 {
     //-- Do we already know if the firmware supports cameras or not?
@@ -810,6 +850,12 @@ CameraControl::_mavlinkMessageReceived(const mavlink_message_t& message)
         case MAVLINK_MSG_ID_CAMERA_INFORMATION:
             _handleCameraInfo(message);
             break;
+        case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
+            _handleGimbalVersion(message);
+            break;
+        case MAVLINK_MSG_ID_COMMAND_ACK:
+            _handleCommandAck(message);
+            break;
     }
 }
 
@@ -824,6 +870,23 @@ CameraControl::firmwareVersion()
                 (_cameraVersion >> 16 & 0xFF),
                 (_cameraVersion >> 24 & 0xFF));
     return ver;
+}
+
+//-----------------------------------------------------------------------------
+void
+CameraControl::_handleGimbalVersion(const mavlink_message_t& message)
+{
+    if (message.compid != MAV_COMP_ID_GIMBAL) {
+        return;
+    }
+    mavlink_autopilot_version_t gimbal_version;
+    mavlink_msg_autopilot_version_decode(&message, &gimbal_version);
+    int major = (gimbal_version.flight_sw_version >> (8 * 3)) & 0xFF;
+    int minor = (gimbal_version.flight_sw_version >> (8 * 2)) & 0xFF;
+    int patch = (gimbal_version.flight_sw_version >> (8 * 1)) & 0xFF;
+    _gimbalVersion.sprintf("%d.%d.%d", major, minor, patch);
+    qCDebug(YuneecCameraLog) << _gimbalVersion;
+    emit gimbalVersionChanged();
 }
 
 //-----------------------------------------------------------------------------

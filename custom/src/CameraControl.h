@@ -158,6 +158,7 @@ public:
     Q_PROPERTY(QStringList  evList          READ    evList                                      NOTIFY evListChanged)
     Q_PROPERTY(QString      cameraModel     READ    cameraModel                                 NOTIFY cameraModelChanged)
     Q_PROPERTY(QString      firmwareVersion READ    firmwareVersion                             NOTIFY firmwareVersionChanged)
+    Q_PROPERTY(QString      gimbalVersion   READ    gimbalVersion                               NOTIFY gimbalVersionChanged)
     Q_PROPERTY(bool         cameraAvailable READ    cameraAvailable                             NOTIFY cameraAvailableChanged)
 
     Q_PROPERTY(quint32      currentVideoRes READ    currentVideoRes WRITE setCurrentVideoRes    NOTIFY currentVideoResChanged)
@@ -178,6 +179,7 @@ public:
     Q_INVOKABLE void toggleVideo    ();
     Q_INVOKABLE void resetSettings  ();
     Q_INVOKABLE void formatCard     ();
+    Q_INVOKABLE void calibrateGimbal();
 
     VideoStatus videoStatus         ();
     CameraMode  cameraMode          ();
@@ -196,6 +198,7 @@ public:
     QStringList photoFormatList     ();
     QStringList evList              ();
     QString     firmwareVersion     ();
+    QString     gimbalVersion       () { return _gimbalVersion; }
     QString     cameraModel         () { return _cameraModel; }
     bool        cameraAvailable     () { return _cameraSupported == CAMERA_SUPPORT_YES; }
 
@@ -244,6 +247,7 @@ signals:
     void    currentMeteringChanged  ();
     void    currentEVChanged        ();
     void    firmwareVersionChanged  ();
+    void    gimbalVersionChanged    ();
     void    videoResListChanged     ();
     void    shutterListChanged      ();
     void    cameraModelChanged      ();
@@ -259,6 +263,8 @@ private:
     void    _updateAspectRatio      ();
     void    _initStreaming          ();
     int     _findShutterSpeedIndex  (float shutter_speed);
+    void    _handleCommandAck       (const mavlink_message_t& message);
+    void    _handleGimbalVersion    (const mavlink_message_t& message);
     void    _handleCameraInfo       (const mavlink_message_t& message);
     void    _handleCameraSettings   (const mavlink_message_t& message);
     void    _handleCaptureStatus    (const mavlink_message_t& message);
@@ -267,6 +273,7 @@ private:
     void    _setIsoShutter          (int iso, float shutter);
     void    _startTimer             (int task, int elapsed);
     void    _handleCommandResult    (bool noReponseFromVehicle, int command, int result);
+    void    _handleGimbalResult     (uint16_t result, uint8_t progress);
     void    _updateShutterLimit     ();
     void    _handleVideoRunning     (VideoStatus status);
 
@@ -287,6 +294,7 @@ private:
 
     QString                 _cameraModel;
     QString                 _cameraVendor;
+    QString                 _gimbalVersion;
 
     enum {
         CAMERA_SUPPORT_UNDEFINED,

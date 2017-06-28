@@ -158,7 +158,6 @@ public:
     Q_INVOKABLE void bindWIFI           (QString ssid, QString password);
     Q_INVOKABLE void resetWifi          ();
     Q_INVOKABLE bool isWifiConfigured   (QString ssid);
-    Q_INVOKABLE void calibrateGimbalMV  ();
     Q_INVOKABLE int  rawChannel         (int channel);
     Q_INVOKABLE int  calChannelState    (int channel);
     Q_INVOKABLE void exportData         ();

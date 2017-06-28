@@ -197,10 +197,12 @@ QGCView {
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel { text: qsTr("%1 Version:").arg(QGroundControl.appName) }
                 QGCLabel { text: QGroundControl.qgcVersion }
-                QGCLabel { text: qsTr("Flight Controller Version:") }
-                QGCLabel { text: firmwareVersion() }
                 QGCLabel { text: qsTr("Camera Version:") }
                 QGCLabel { text: (_activeVehicle && TyphoonHQuickInterface.cameraControl) ? TyphoonHQuickInterface.cameraControl.firmwareVersion : "" }
+                QGCLabel { text: qsTr("Gimbal Version:") }
+                QGCLabel { text: (_activeVehicle && TyphoonHQuickInterface.cameraControl) ? TyphoonHQuickInterface.cameraControl.gimbalVersion : "" }
+                QGCLabel { text: qsTr("Flight Controller Version:") }
+                QGCLabel { text: firmwareVersion() }
             }
         }
     }
