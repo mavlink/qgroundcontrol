@@ -77,24 +77,16 @@ doinstall:
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QGroundControl" "UninstallString" "$\"$INSTDIR\QGroundControl_uninstall.exe$\""
 
   ; Only attempt to install the PX4 driver if the version isn't present
-  !define ROOTKEY "SYSTEM\CurrentControlSet\Control\Class\{4D36E978-E325-11CE-BFC1-08002BE10318}"
-  StrCpy $0 0
-loop:
-  EnumRegKey $1 HKLM ${ROOTKEY} $0
-  StrCmp $1 "" notfound cont1
+  !define ROOTKEY "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\434608CF2B6E31F0DDBA5C511053F957B55F098E"
 
-cont1:
-  StrCpy     $2 "${ROOTKEY}\$1"
-  ReadRegStr $3 HKLM $2 "ProviderName"
-  StrCmp     $3 "3D Robotics" found_provider
-mismatch:
-  IntOp      $0 $0 + 1
-  goto  loop
+  SetRegView 64
+  ReadRegStr $0 HKLM "${ROOTKEY}" "Publisher"
+  StrCmp     $0 "3D Robotics" found_provider notfound
 
 found_provider:
-  ReadRegStr $3 HKLM $2 "DriverVersion"
-  StrCmp     $3 "2.0.0.4" skip_driver
-  goto  mismatch
+  ReadRegStr $0 HKLM "${ROOTKEY}" "DisplayVersion"
+  DetailPrint "Checking USB driver version... $0"
+  StrCmp     $0 "04/11/2013 2.0.0.4" skip_driver notfound
 
 notfound:
   DetailPrint "USB Driver not found... installing"
@@ -104,6 +96,7 @@ notfound:
 skip_driver:
   DetailPrint "USB Driver found... skipping install"
 done:
+  SetRegView lastused
 SectionEnd 
 
 Section "Uninstall"
