@@ -70,3 +70,4 @@
         <file alias="TriCopter">resources/mavs/tricopter.svg</file>
         <file alias="Megaphone.svg">src/ui/toolbar/Images/Megaphone.svg</file>
         <file alias="QGCLogoFull">resources/QGCLogoFull.svg</file>
+        <file alias="RTK.svg">src/ui/toolbar/Images/RTK.svg</file>
