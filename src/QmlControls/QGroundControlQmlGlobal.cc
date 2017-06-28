@@ -252,7 +252,7 @@ void QGroundControlQmlGlobal::_onGPSDisconnect()
 void QGroundControlQmlGlobal::_GPSSurveyInStatus(float duration, float accuracyMM, bool valid, bool active)
 {
     _gpsRtkFactGroup.currentDuration()->setRawValue(duration);
-    _gpsRtkFactGroup.currentAccuracy()->setRawValue(accuracyMM);
+    _gpsRtkFactGroup.currentAccuracy()->setRawValue(accuracyMM/1000.0);
     _gpsRtkFactGroup.valid()->setRawValue(valid);
     _gpsRtkFactGroup.active()->setRawValue(active);
 }
