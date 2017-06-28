@@ -72,6 +72,17 @@ WindowsBuild {
     RC_ICONS = resources/icons/qgroundcontrol.ico
 }
 
+#
+# Branding
+#
+
+QGC_APP_NAME        = "QGroundControl Foo"
+QGC_ORG_NAME        = "QGroundControl.org"
+QGC_ORG_DOMAIN      = "org.qgroundcontrol"
+QGC_APP_DESCRIPTION = "Open source ground control app provided by QGroundControl dev team"
+QGC_APP_COPYRIGHT   = "Copyright (C) 2017 QGroundControl Development Team. All rights reserved."
+
+
 # Load additional config flags from user_config.pri
 exists(user_config.pri):infile(user_config.pri, CONFIG) {
     CONFIG += $$fromfile(user_config.pri, CONFIG)
@@ -104,6 +115,14 @@ contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) {
         # CUSTOMHEADER = \"\\\"YourIQGCCorePluginDerivation.h\\\"\"
         include($$PWD/custom/custom.pri)
     }
+}
+
+WindowsBuild {
+    # Sets up application properties
+    QMAKE_TARGET_COMPANY        = "$${QGC_ORG_NAME}"
+    QMAKE_TARGET_DESCRIPTION    = "$${QGC_APP_DESCRIPTION}"
+    QMAKE_TARGET_COPYRIGHT      = "$${QGC_APP_COPYRIGHT}"
+    QMAKE_TARGET_PRODUCT        = "$${QGC_APP_NAME}"
 }
 
 #
@@ -224,15 +243,6 @@ ReleaseBuild {
     # We don't need the testlib console in release mode
     QT.testlib.CONFIG -= console
 }
-
-#
-# Branding
-#
-
-QMAKE_TARGET_COMPANY     = "qgroundcontrol.org"
-QMAKE_TARGET_DESCRIPTION = "Open source ground control app provided by QGroundControl dev team"
-QMAKE_TARGET_COPYRIGHT   = "Copyright (C) 2016 QGroundControl Development Team. All rights reserved."
-QMAKE_TARGET_PRODUCT     = "QGroundControl"
 
 #
 # Build-specific settings
