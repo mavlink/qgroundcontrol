@@ -25,29 +25,63 @@ SetupPage {
     pageComponent:  pageComponent
     Component {
         id: pageComponent
+
         Item {
-            width:  ScreenTools.defaultFontPixelWidth * 40
-            height: innerColumn.height
+            width:  availableWidth
+            height: availableHeight
 
             FactPanelController { id: controller; factPanel: gimbalPage.viewPanel }
 
-            property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+            property var _activeVehicle:  QGroundControl.multiVehicleManager.activeVehicle
 
             ColumnLayout {
-                id:                         innerColumn
-                anchors.horizontalCenter:   parent.horizontalCenter
-                spacing:                    ScreenTools.defaultFontPixelHeight
+                id:                 settingsColumn
+                spacing:            ScreenTools.defaultFontPixelHeight
+                anchors.centerIn:   parent
                 QGCGroupBox {
-                    title:  qsTr("Calibration")
+                    id:     batteryGroup
+                    title:  qsTr("Gimbal Calibration")
                     Column {
-                        spacing:        ScreenTools.defaultFontPixelHeight
-                        width:          parent.width
-                        QGCButton {
-                            text:       "Calibrate Gimbal"
-                            enabled:    _activeVehicle
-                            onClicked:  TyphoonHQuickInterface.cameraControl.calibrateGimbal()
+                        spacing: ScreenTools.defaultFontPixelHeight
+                        Row {
+                            id:         importRow
+                            spacing:    ScreenTools.defaultFontPixelWidth * 4
+                            Image {
+                                width:              ScreenTools.defaultFontPixelHeight * 16
+                                height:             width
+                                source:             "/typhoonh/img/TyphoonDown.svg"
+                                fillMode:           Image.PreserveAspectFit
+                                sourceSize.height:  height
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QGCLabel {
+                                width:          ScreenTools.defaultFontPixelHeight * 24
+                                wrapMode:       Text.WordWrap
+                                horizontalAlignment: Text.AlignJustify
+                                anchors.verticalCenter: parent.verticalCenter
+                                text:       qsTr("Place vehicle on a stable, horizontal surface and touch the <b>Start Gimbal Calibration</b> button to initiate the gimbal calibration. Do not move the vehicle while the calibration is in progress.<br><br>This procedure will take a few minutes to complete.")
+                            }
+                        }
+                        ProgressBar {
+                            width:          parent.width * 0.75
+                            orientation:    Qt.Horizontal
+                            minimumValue:   0
+                            maximumValue:   100
+                            value:          TyphoonHQuickInterface.cameraControl.gimbalProgress
+                            visible:        TyphoonHQuickInterface.cameraControl.gimbalCalOn
+                            anchors.horizontalCenter: parent.horizontalCenter
                         }
                     }
+                }
+                Item {
+                    width:  1
+                    height: ScreenTools.defaultFontPixelHeight
+                }
+                QGCButton {
+                    text:       "Start Gimbal Calibration"
+                    enabled:    _activeVehicle && !TyphoonHQuickInterface.cameraControl.gimbalCalOn
+                    onClicked:  TyphoonHQuickInterface.cameraControl.calibrateGimbal()
+                    anchors.horizontalCenter: parent.horizontalCenter
                 }
             }
         }

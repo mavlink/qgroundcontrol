@@ -81,6 +81,10 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         return;
     }
 
+    if(componentId == MAV_COMP_ID_GIMBAL) {
+        return;
+    }
+
     switch (vehicleType) {
     case MAV_TYPE_GCS:
     case MAV_TYPE_ONBOARD_CONTROLLER:

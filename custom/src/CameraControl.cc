@@ -202,6 +202,8 @@ quint32 ev_option_count = NUM_EV_VALUES;
 CameraControl::CameraControl(QObject* parent)
     : QObject(parent)
     , _vehicle(NULL)
+    , _gimbalCalOn(false)
+    , _gimbalProgress(0)
     , _currentTask(MAV_CMD_REQUEST_STORAGE_INFORMATION)
     , _cameraSupported(CAMERA_SUPPORT_UNDEFINED)
     , _camInfoTries(0)
@@ -745,6 +747,21 @@ CameraControl::_handleCommandResult(bool noReponseFromVehicle, int command, int 
 void
 CameraControl::_handleGimbalResult(uint16_t result, uint8_t progress)
 {
+    if(_gimbalCalOn) {
+        if(progress == 255) {
+            _gimbalCalOn = false;
+            emit gimbalCalOnChanged();
+        }
+    } else {
+        if(progress && progress < 255) {
+            _gimbalCalOn = true;
+            emit gimbalCalOnChanged();
+        }
+    }
+    if(progress < 255) {
+        _gimbalProgress = progress;
+    }
+    emit gimbalProgressChanged();
     qCDebug(YuneecCameraLog) << "Gimbal Calibration" << QDateTime::currentDateTime().toString() << result << progress;
 }
 

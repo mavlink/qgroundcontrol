@@ -158,8 +158,10 @@ public:
     Q_PROPERTY(QStringList  evList          READ    evList                                      NOTIFY evListChanged)
     Q_PROPERTY(QString      cameraModel     READ    cameraModel                                 NOTIFY cameraModelChanged)
     Q_PROPERTY(QString      firmwareVersion READ    firmwareVersion                             NOTIFY firmwareVersionChanged)
-    Q_PROPERTY(QString      gimbalVersion   READ    gimbalVersion                               NOTIFY gimbalVersionChanged)
     Q_PROPERTY(bool         cameraAvailable READ    cameraAvailable                             NOTIFY cameraAvailableChanged)
+    Q_PROPERTY(QString      gimbalVersion   READ    gimbalVersion                               NOTIFY gimbalVersionChanged)
+    Q_PROPERTY(bool         gimbalCalOn     READ    gimbalCalOn                                 NOTIFY gimbalCalOnChanged)
+    Q_PROPERTY(int          gimbalProgress  READ    gimbalProgress                              NOTIFY gimbalProgressChanged)
 
     Q_PROPERTY(quint32      currentVideoRes READ    currentVideoRes WRITE setCurrentVideoRes    NOTIFY currentVideoResChanged)
     Q_PROPERTY(quint32      currentWB       READ    currentWB       WRITE setCurrentWB          NOTIFY currentWBChanged)
@@ -201,6 +203,8 @@ public:
     QString     gimbalVersion       () { return _gimbalVersion; }
     QString     cameraModel         () { return _cameraModel; }
     bool        cameraAvailable     () { return _cameraSupported == CAMERA_SUPPORT_YES; }
+    bool        gimbalCalOn         () { return _gimbalCalOn; }
+    int         gimbalProgress      () { return _gimbalProgress; }
 
     quint32     currentVideoRes     () { return _ambarellaSettings.video_res_index; }
     quint32     currentWB           () { return _currentWB; }
@@ -248,6 +252,8 @@ signals:
     void    currentEVChanged        ();
     void    firmwareVersionChanged  ();
     void    gimbalVersionChanged    ();
+    void    gimbalProgressChanged   ();
+    void    gimbalCalOnChanged      ();
     void    videoResListChanged     ();
     void    shutterListChanged      ();
     void    cameraModelChanged      ();
@@ -302,6 +308,8 @@ private:
         CAMERA_SUPPORT_NO
     };
 
+    bool                    _gimbalCalOn;
+    int                     _gimbalProgress;
     int                     _currentTask;
     int                     _cameraSupported;
     int                     _camInfoTries;
