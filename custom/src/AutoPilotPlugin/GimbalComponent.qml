@@ -7,10 +7,9 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
+import QtQuick          2.7
+import QtQuick.Layouts  1.3
+import QtQuick.Controls 1.4
 
 import QGroundControl               1.0
 import QGroundControl.FactSystem    1.0
@@ -39,25 +38,24 @@ SetupPage {
                 spacing:            ScreenTools.defaultFontPixelHeight
                 anchors.centerIn:   parent
                 QGCGroupBox {
-                    id:     batteryGroup
-                    title:  qsTr("Gimbal Calibration")
+                    title:              qsTr("Gimbal Calibration")
                     Column {
-                        spacing: ScreenTools.defaultFontPixelHeight
+                        spacing:            ScreenTools.defaultFontPixelHeight
+                        padding:            ScreenTools.defaultFontPixelWidth * 4
                         Row {
                             id:         importRow
                             spacing:    ScreenTools.defaultFontPixelWidth * 4
                             Image {
-                                width:              ScreenTools.defaultFontPixelHeight * 16
-                                height:             width
-                                source:             "/typhoonh/img/TyphoonDown.svg"
+                                width:              ScreenTools.defaultFontPixelHeight * 20
+                                source:             "/typhoonh/img/VehicleWithCamera.svg"
                                 fillMode:           Image.PreserveAspectFit
-                                sourceSize.height:  height
+                                sourceSize.width:   width
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             QGCLabel {
-                                width:          ScreenTools.defaultFontPixelHeight * 24
-                                wrapMode:       Text.WordWrap
-                                horizontalAlignment: Text.AlignJustify
+                                width:                  ScreenTools.defaultFontPixelHeight * 22
+                                wrapMode:               Text.WordWrap
+                                horizontalAlignment:    Text.AlignJustify
                                 anchors.verticalCenter: parent.verticalCenter
                                 text:       qsTr("Place vehicle on a stable, horizontal surface and touch the <b>Start Gimbal Calibration</b> button to initiate the gimbal calibration. Do not move the vehicle while the calibration is in progress.<br><br>This procedure will take a few minutes to complete.")
                             }
