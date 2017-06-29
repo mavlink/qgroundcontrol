@@ -46,14 +46,14 @@ SetupPage {
                             id:         importRow
                             spacing:    ScreenTools.defaultFontPixelWidth * 4
                             Image {
-                                width:              ScreenTools.defaultFontPixelHeight * 25
+                                width:              ScreenTools.defaultFontPixelHeight * 20
                                 source:             "/typhoonh/img/VehicleWithCamera.svg"
                                 fillMode:           Image.PreserveAspectFit
                                 sourceSize.width:   width
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             QGCLabel {
-                                width:                  ScreenTools.defaultFontPixelHeight * 25
+                                width:                  ScreenTools.defaultFontPixelHeight * 22
                                 wrapMode:               Text.WordWrap
                                 horizontalAlignment:    Text.AlignJustify
                                 anchors.verticalCenter: parent.verticalCenter
