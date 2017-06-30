@@ -410,6 +410,17 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       false,
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("Sony RX100 II 28mm"),
+                                      13.2,
+                                      8.8,
+                                      5472,
+                                      3648,
+                                      10.4,
+                                      true,
+                                      false,
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
     }
 
     return _cameraList;
