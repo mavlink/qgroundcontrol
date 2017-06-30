@@ -74,6 +74,20 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 
 void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType)
 {
+    if (componentId != MAV_COMP_ID_AUTOPILOT1) {
+        // Don't create vehicles for components other than the autopilot
+        if (!getVehicleById(vehicleId)) {
+            qCDebug(MultiVehicleManagerLog()) << "Ignoring heartbeat from unknown component "
+                                              << link->getName()
+                                              << vehicleId
+                                              << componentId
+                                              << vehicleMavlinkVersion
+                                              << vehicleFirmwareType
+                                              << vehicleType;
+        }
+        return;
+    }
+
     if (_vehicles.count() > 0 && !qgcApp()->toolbox()->corePlugin()->options()->multiVehicleEnabled()) {
         return;
     }
