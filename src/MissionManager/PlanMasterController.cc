@@ -155,6 +155,7 @@ void PlanMasterController::loadFromVehicle(void)
         _loadGeoFence = true;
         _syncInProgress = true;
         emit syncInProgressChanged(true);
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::loadFromVehicle _missionController.loadFromVehicle";
         _missionController.loadFromVehicle();
         setDirty(false);
     }
@@ -166,6 +167,7 @@ void PlanMasterController::_loadMissionComplete(void)
     if (_editMode && _loadGeoFence) {
         _loadGeoFence = false;
         _loadRallyPoints = true;
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadMissionComplete _geoFenceController.loadFromVehicle";
         _geoFenceController.loadFromVehicle();
         setDirty(false);
     }
@@ -175,6 +177,7 @@ void PlanMasterController::_loadGeoFenceComplete(void)
 {
     if (_editMode && _loadRallyPoints) {
         _loadRallyPoints = false;
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadGeoFenceComplete _rallyPointController.loadFromVehicle";
         _rallyPointController.loadFromVehicle();
         setDirty(false);
     }
