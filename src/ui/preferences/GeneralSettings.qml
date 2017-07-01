@@ -253,7 +253,7 @@ QGCView {
                             id:         promptSaveLog
                             text:       qsTr("Save telemetry log after each flight")
                             fact:       _telemetrySave
-                            visible:    !ScreenTools.isMobile && _telemetrySave.visible
+                            visible:    _telemetrySave.visible
                             property Fact _telemetrySave: QGroundControl.settingsManager.appSettings.telemetrySave
                         }
                         //-----------------------------------------------------------------
