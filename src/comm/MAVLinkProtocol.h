@@ -163,7 +163,7 @@ signals:
     void checkTelemetrySavePath(void);
 
 private slots:
-    void _vehicleCountChanged(int count);
+    void _vehicleCountChanged(void);
     
 private:
     bool _closeLogFile(void);
