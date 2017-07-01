@@ -253,7 +253,7 @@ QGCView {
                             id:         promptSaveLog
                             text:       qsTr("Save telemetry log after each flight")
                             fact:       _telemetrySave
-                            visible:    !ScreenTools.isMobile && _telemetrySave.visible
+                            visible:    _telemetrySave.visible
                             property Fact _telemetrySave: QGroundControl.settingsManager.appSettings.telemetrySave
                         }
                         //-----------------------------------------------------------------
@@ -261,7 +261,7 @@ QGCView {
                         FactCheckBox {
                             text:       qsTr("Save telemetry log even if vehicle was not armed")
                             fact:       _telemetrySaveNotArmed
-                            visible:    !ScreenTools.isMobile && _telemetrySaveNotArmed.visible
+                            visible:    _telemetrySaveNotArmed.visible
                             enabled:    promptSaveLog.checked
                             property Fact _telemetrySaveNotArmed: QGroundControl.settingsManager.appSettings.telemetrySaveNotArmed
                         }
