@@ -120,7 +120,7 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     mapTypes << QGCGEOMAPTYPE(QGeoMapType::HybridMap,         "Bing Hybrid Map",          "Bing hybrid map",                  false,  false,  UrlFactory::BingHybrid);
 
     // Statkart
-    mapTypes << QGCGEOMAPTYPE(QGeoMapType::TerrainMap,        "Statkart Topo2",           "Statkart Topo2",                   false,  false,  UrlFactory::StatkartTopo);
+    mapTypes << QGCGEOMAPTYPE(QGeoMapType::TerrainMap,        "Statkart Terrain Map",     "Statkart Terrain Map",             false,  false,  UrlFactory::StatkartTopo);
 
     // Esri
     mapTypes << QGCGEOMAPTYPE(QGeoMapType::StreetMap,         "Esri Street Map",          "ArcGIS Online World Street Map",   true,   false,  UrlFactory::EsriWorldStreet);
