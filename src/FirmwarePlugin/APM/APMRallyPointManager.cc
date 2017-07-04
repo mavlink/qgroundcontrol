@@ -53,11 +53,16 @@ void APMRallyPointManager::sendToVehicle(const QList<QGeoCoordinate>& rgPoints)
 
 void APMRallyPointManager::loadFromVehicle(void)
 {
-    if (_vehicle->isOfflineEditingVehicle() || !rallyPointsSupported() || _readTransactionInProgress) {
+    if (_vehicle->isOfflineEditingVehicle() || _readTransactionInProgress) {
         return;
     }
 
     _rgPoints.clear();
+
+    if (!rallyPointsSupported()) {
+        emit loadComplete(QList<QGeoCoordinate>());
+        return;
+    }
 
     _cReadRallyPoints = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _rallyTotalParam)->rawValue().toInt();
     qCDebug(RallyPointManagerLog) << "APMRallyPointManager::loadFromVehicle - point count" << _cReadRallyPoints;

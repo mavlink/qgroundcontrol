@@ -103,6 +103,7 @@ void APMGeoFenceManager::loadFromVehicle(void)
     _polygon.clear();
 
     if (!_fenceSupported) {
+        emit loadComplete(_breachReturnPoint, _polygon);
         return;
     }
 

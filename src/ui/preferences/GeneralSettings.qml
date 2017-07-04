@@ -261,7 +261,7 @@ QGCView {
                         FactCheckBox {
                             text:       qsTr("Save telemetry log even if vehicle was not armed")
                             fact:       _telemetrySaveNotArmed
-                            visible:    !ScreenTools.isMobile && _telemetrySaveNotArmed.visible
+                            visible:    _telemetrySaveNotArmed.visible
                             enabled:    promptSaveLog.checked
                             property Fact _telemetrySaveNotArmed: QGroundControl.settingsManager.appSettings.telemetrySaveNotArmed
                         }
@@ -529,7 +529,7 @@ QGCView {
                         }
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    QGroundControl.settingsManager.videoSettings.udpPort.visible && QGroundControl.videoManager.isGStreamer && videoSource.currentIndex === 0
+                            visible:    QGroundControl.settingsManager.videoSettings.udpPort.visible && QGroundControl.videoManager.isGStreamer && videoSource.currentIndex === 1
                             QGCLabel {
                                 text:               qsTr("UDP Port:")
                                 width:              _labelWidth
@@ -543,7 +543,7 @@ QGCView {
                         }
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    QGroundControl.settingsManager.videoSettings.rtspUrl.visible && QGroundControl.videoManager.isGStreamer && videoSource.currentIndex === 1
+                            visible:    QGroundControl.settingsManager.videoSettings.rtspUrl.visible && QGroundControl.videoManager.isGStreamer && videoSource.currentIndex === 2
                             QGCLabel {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text:               qsTr("RTSP URL:")
@@ -557,7 +557,7 @@ QGCView {
                         }
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex < 2 && QGroundControl.settingsManager.videoSettings.aspectRatio.visible
+                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex && videoSource.currentIndex < 3 && QGroundControl.settingsManager.videoSettings.aspectRatio.visible
                             QGCLabel {
                                 text:               qsTr("Aspect Ratio:")
                                 width:              _labelWidth
@@ -571,7 +571,7 @@ QGCView {
                         }
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex < 2 && QGroundControl.settingsManager.videoSettings.gridLines.visible
+                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex && videoSource.currentIndex < 3 && QGroundControl.settingsManager.videoSettings.gridLines.visible
                             QGCLabel {
                                 text:               qsTr("Grid Lines:")
                                 width:              _labelWidth
@@ -613,7 +613,7 @@ QGCView {
                         anchors.centerIn: parent
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex < 2 && QGroundControl.settingsManager.videoSettings.maxVideoSize.visible
+                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex && videoSource.currentIndex < 3 && QGroundControl.settingsManager.videoSettings.maxVideoSize.visible
                             QGCLabel {
                                 text:               qsTr("Max Storage Usage:")
                                 width:              _labelWidth
@@ -627,7 +627,7 @@ QGCView {
                         }
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex < 2 && QGroundControl.settingsManager.videoSettings.recordingFormat.visible
+                            visible:    QGroundControl.videoManager.isGStreamer && videoSource.currentIndex && videoSource.currentIndex < 3 && QGroundControl.settingsManager.videoSettings.recordingFormat.visible
                             QGCLabel {
                                 text:               qsTr("Video File Format:")
                                 width:              _labelWidth
