@@ -49,6 +49,7 @@ public:
     static const char* maxVideoSizeName;
 
     static const char* videoSourceNoVideo;
+    static const char* videoDisabled;
     static const char* videoSourceUDP;
     static const char* videoSourceRTSP;
 

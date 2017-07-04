@@ -114,11 +114,8 @@ VideoManager::_rtspUrlChanged()
 bool
 VideoManager::hasVideo()
 {
-#if defined(QGC_GST_STREAMING)
-    return true;
-#endif
     QString videoSource = _videoSettings->videoSource()->rawValue().toString();
-    return !videoSource.isEmpty() && videoSource != VideoSettings::videoSourceNoVideo;
+    return !videoSource.isEmpty() && videoSource != VideoSettings::videoSourceNoVideo && videoSource != VideoSettings::videoDisabled;
 }
 
 //-----------------------------------------------------------------------------
@@ -150,7 +147,7 @@ VideoManager::_updateSettings()
         return;
     if (_videoSettings->videoSource()->rawValue().toString() == VideoSettings::videoSourceUDP)
         _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
-    else
+    else if (_videoSettings->videoSource()->rawValue().toString() == VideoSettings::videoSourceRTSP)
         _videoReceiver->setUri(_videoSettings->rtspUrl()->rawValue().toString());
 }
 

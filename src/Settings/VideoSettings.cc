@@ -29,6 +29,7 @@ const char* VideoSettings::recordingFormatName =    "RecordingFormat";
 const char* VideoSettings::maxVideoSizeName =       "MaxVideoSize";
 
 const char* VideoSettings::videoSourceNoVideo =     "No Video Available";
+const char* VideoSettings::videoDisabled =          "Video Stream Disabled";
 const char* VideoSettings::videoSourceUDP =         "UDP Video Stream";
 const char* VideoSettings::videoSourceRTSP =        "RTSP Video Stream";
 
@@ -47,6 +48,7 @@ VideoSettings::VideoSettings(QObject* parent)
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
 
     // Setup enum values for videoSource settings into meta data
+    bool noVideo = false;
     QStringList videoSourceList;
 #ifdef QGC_GST_STREAMING
 #ifndef NO_UDP_VIDEO
@@ -61,7 +63,10 @@ VideoSettings::VideoSettings(QObject* parent)
     }
 #endif
     if (videoSourceList.count() == 0) {
+        noVideo = true;
         videoSourceList.append(videoSourceNoVideo);
+    } else {
+        videoSourceList.insert(0, videoDisabled);
     }
     QVariantList videoSourceVarList;
     foreach (const QString& videoSource, videoSourceList) {
@@ -70,11 +75,11 @@ VideoSettings::VideoSettings(QObject* parent)
     _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceList, videoSourceVarList);
 
     // Set default value for videoSource
-#if defined(NO_UDP_VIDEO)
-    _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoSourceRTSP);
-#else
-    _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoSourceUDP);
-#endif
+    if (noVideo) {
+        _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoSourceNoVideo);
+    } else {
+        _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoDisabled);
+    }
 }
 
 Fact* VideoSettings::videoSource(void)

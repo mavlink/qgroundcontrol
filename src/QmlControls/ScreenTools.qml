@@ -109,6 +109,12 @@ Item {
         mediumFontPointSize     = defaultFontPointSize  * _screenTools.mediumFontPointRatio
         largeFontPointSize      = defaultFontPointSize  * _screenTools.largeFontPointRatio
         minTouchPixels          = Math.round(minTouchMillimeters * Screen.pixelDensity)
+        if (minTouchPixels / Screen.height > 0.15) {
+            // If using physical sizing takes up too much o fthe vertical real estate fall back to font based sizing
+            minTouchPixels      = defaultFontPixelHeight * 3
+        }
+
+        console.log(minTouchPixels / Screen.height)
         toolbarHeight           = isMobile ? minTouchPixels : defaultFontPixelHeight * 3
     }
 
