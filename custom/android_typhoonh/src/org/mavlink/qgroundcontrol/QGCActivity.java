@@ -139,10 +139,10 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
 
     @Override
     protected void onStop() {
-        super.onStop();
         Intent intent = new Intent();
         intent.setClassName("com.android.launcher", "com.android.launcher2.Launcher");
         startActivity(intent);
+        super.onStop();
     }
 
     public void onInit(int status) {
