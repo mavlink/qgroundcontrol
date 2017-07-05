@@ -220,10 +220,11 @@ VideoReceiver::start()
 
     _starting = true;
 
-    bool isUdp = _uri.contains("udp://");
+    bool isUdp  = _uri.contains("udp://");
+    bool isRtsp = _uri.contains("rtsp://");
 
     //-- For RTSP, check to see if server is there first
-    if(!_serverPresent && !isUdp) {
+    if(!_serverPresent && isRtsp) {
         _timer.start(100);
         return;
     }
@@ -776,7 +777,7 @@ VideoReceiver::_updateTimer()
                 stop();
             }
         } else {
-            if(!running()) {
+            if(!running() && !_uri.isEmpty()) {
                 start();
             }
         }
