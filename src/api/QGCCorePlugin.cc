@@ -171,7 +171,7 @@ bool QGCCorePlugin::adjustSettingMetaData(FactMetaData& metaData)
     } else if (metaData.name() == AppSettings::telemetrySaveName) {
 #if defined (__mobile__)
         metaData.setRawDefaultValue(false);
-        return false;
+        return true;
 #else
         metaData.setRawDefaultValue(true);
         return true;

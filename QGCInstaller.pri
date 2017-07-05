@@ -27,18 +27,15 @@ installer {
         # qgroundcontrol.app file. If you specify a path to the .app file the symbolic
         # links to plugins will not be created correctly.
         QMAKE_POST_LINK += && mkdir -p $${DESTDIR}/package
-        QMAKE_POST_LINK += && cd $${DESTDIR} && $$dirname(QMAKE_QMAKE)/macdeployqt QGroundControl.app -appstore-compliant -verbose=2 -qmldir=$${BASEDIR}/src
+        QMAKE_POST_LINK += && cd $${DESTDIR} && $$dirname(QMAKE_QMAKE)/macdeployqt $${TARGET}.app -appstore-compliant -verbose=2 -qmldir=$${BASEDIR}/src
+        # macdeploy is missing some relocations once in a while. "Fix" it:
+        QMAKE_POST_LINK += && python $$BASEDIR/tools/osxrelocator.py $${TARGET}.app/Contents @rpath @executable_path/../Frameworks -r > /dev/null 2>&1
+        # Create package
         QMAKE_POST_LINK += && cd $${OUT_PWD}
-        QMAKE_POST_LINK += && hdiutil create -verbose -stretch 4g -layout SPUD -srcfolder $${DESTDIR}/QGroundControl.app -volname QGroundControl $${DESTDIR}/package/QGroundControl.dmg
+        QMAKE_POST_LINK += && hdiutil create -verbose -stretch 4g -layout SPUD -srcfolder $${DESTDIR}/$${TARGET}.app -volname $${TARGET} $${DESTDIR}/package/$${TARGET}.dmg
     }
     WindowsBuild {
-        # The pdb moving command are commented out for now since we are including the .pdb in the installer. This makes it much
-        # easier to debug user crashes.
-        #QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY $${DESTDIR_WIN}\\qgroundcontrol.pdb
-        #QMAKE_POST_LINK += $$escape_expand(\\n) del $${DESTDIR_WIN}\\qgroundcontrol.pdb
-        QMAKE_POST_LINK += $$escape_expand(\\n) cd $$BASEDIR_WIN && $$quote("\"C:\\Program Files \(x86\)\\NSIS\\makensis.exe\"" /NOCD "\"/XOutFile $${DESTDIR_WIN}\\QGroundControl-installer.exe\"" "$$BASEDIR_WIN\\deploy\\qgroundcontrol_installer.nsi")
-        #QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY qgroundcontrol.pdb $${DESTDIR_WIN}
-        #QMAKE_POST_LINK += $$escape_expand(\\n) del qgroundcontrol.pdb
+        QMAKE_POST_LINK += $$escape_expand(\\n) cd $$BASEDIR_WIN && $$quote("\"C:\\Program Files \(x86\)\\NSIS\\makensis.exe\"" /DAPPNAME="\"$${QGC_APP_NAME}\"" /DEXENAME="\"$${TARGET}\"" /DORGNAME="\"$${QGC_ORG_NAME}\"" /DDESTDIR=$${DESTDIR} /NOCD "\"/XOutFile $${DESTDIR_WIN}\\$${TARGET}-installer.exe\"" "$$BASEDIR_WIN\\deploy\\qgroundcontrol_installer.nsi")
         OTHER_FILES += deploy/qgroundcontrol_installer.nsi
     }
     LinuxBuild {

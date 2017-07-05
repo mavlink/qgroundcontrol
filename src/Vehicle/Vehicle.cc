@@ -464,9 +464,11 @@ void Vehicle::resetCounters()
 
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
-
     if (message.sysid != _id && message.sysid != 0) {
-        return;
+        // We allow RADIO_STATUS messages which come from a link the vehicle is using to pass through and be handled
+        if (!(message.msgid == MAVLINK_MSG_ID_RADIO_STATUS && _containsLink(link))) {
+            return;
+        }
     }
 
     if (!_containsLink(link)) {
@@ -1802,6 +1804,7 @@ void Vehicle::_missionLoadComplete(void)
     // After the initial mission request completes we ask for the geofence
     if (!_geoFenceManagerInitialRequestSent) {
         _geoFenceManagerInitialRequestSent = true;
+        qCDebug(VehicleLog) << "_missionLoadComplete requesting geoFence";
         _geoFenceManager->loadFromVehicle();
     }
 }
@@ -1811,13 +1814,14 @@ void Vehicle::_geoFenceLoadComplete(void)
     // After geofence request completes we ask for the rally points
     if (!_rallyPointManagerInitialRequestSent) {
         _rallyPointManagerInitialRequestSent = true;
+        qCDebug(VehicleLog) << "_missionLoadComplete requesting rally points";
         _rallyPointManager->loadFromVehicle();
     }
 }
 
-
 void Vehicle::_rallyPointLoadComplete(void)
 {
+    qCDebug(VehicleLog) << "_missionLoadComplete _initialPlanRequestComplete = true";
     _initialPlanRequestComplete = true;
 }
 

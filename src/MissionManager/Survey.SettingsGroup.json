@@ -61,6 +61,7 @@
     "shortDescription": "Amount of overlap between images in the forward facing direction.",
     "type":             "double",
     "decimalPlaces":    0,
+    "min":              0,
     "max":              85,
     "units":            "%",
     "defaultValue":     10
@@ -70,6 +71,7 @@
     "shortDescription": "Amount of overlap between images in the side facing direction.",
     "type":             "double",
     "decimalPlaces":    0,
+    "min":              0,
     "max":              85,
     "units":            "%",
     "defaultValue":     10
