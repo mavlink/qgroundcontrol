@@ -125,9 +125,6 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
     @Override
     protected void onDestroy() {
         try {
-            Intent intent = new Intent();
-            intent.setClassName("com.android.launcher", "com.android.launcher2.Launcher");
-            startActivity(intent);
             unregisterReceiver(receiverWifi);
             if(m_wl != null) {
                 m_wl.release();
@@ -138,6 +135,14 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
         }
         super.onDestroy();
         m_tts.shutdown();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Intent intent = new Intent();
+        intent.setClassName("com.android.launcher", "com.android.launcher2.Launcher");
+        startActivity(intent);
     }
 
     public void onInit(int status) {
