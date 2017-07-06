@@ -38,6 +38,7 @@ class ParameterManager;
 class JoystickManager;
 class UASMessage;
 class SettingsManager;
+class QGCCameraManager;
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -310,7 +311,8 @@ public:
     Q_PROPERTY(int                  telemetryLNoise         READ telemetryLNoise                                        NOTIFY telemetryLNoiseChanged)
     Q_PROPERTY(int                  telemetryRNoise         READ telemetryRNoise                                        NOTIFY telemetryRNoiseChanged)
     Q_PROPERTY(QVariantList         toolBarIndicators       READ toolBarIndicators                                      CONSTANT)
-    Q_PROPERTY(QVariantList         cameraList              READ cameraList                                             CONSTANT)
+    Q_PROPERTY(QVariantList         staticCcameraList       READ staticCcameraList                                      CONSTANT)
+    Q_PROPERTY(QGCCameraManager*    dynamicCameras          READ dynamicCameras                                         NOTIFY dynamicCamerasChanged)
 
     /// true: Vehicle is flying, false: Vehicle is on ground
     Q_PROPERTY(bool flying READ flying NOTIFY flyingChanged)
@@ -670,8 +672,10 @@ public:
     QString vehicleImageOutline () const;
     QString vehicleImageCompass () const;
 
-    const QVariantList& toolBarIndicators   ();
-    const QVariantList& cameraList          (void) const;
+    const QVariantList&         toolBarIndicators   ();
+    const QVariantList&         staticCcameraList   (void) const;
+
+    QGCCameraManager*           dynamicCameras      () { return _cameras; }
 
     bool supportsMissionItemInt(void) const { return _supportsMissionItemInt; }
 
@@ -712,6 +716,7 @@ signals:
     void defaultHoverSpeedChanged(double hoverSpeed);
     void firmwareTypeChanged(void);
     void vehicleTypeChanged(void);
+    void dynamicCamerasChanged();
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -906,6 +911,8 @@ private:
     int             _telemetryRNoise;
     bool            _vehicleCapabilitiesKnown;
     bool            _supportsMissionItemInt;
+
+    QGCCameraManager* _cameras;
 
     typedef struct {
         int     component;

@@ -64,6 +64,7 @@ public:
     Q_PROPERTY(double       increment               READ increment                                          CONSTANT)
     Q_PROPERTY(bool         typeIsString            READ typeIsString                                       CONSTANT)
     Q_PROPERTY(bool         typeIsBool              READ typeIsBool                                         CONSTANT)
+    Q_PROPERTY(bool         hasControl              READ hasControl                                         CONSTANT)
 
     /// Convert and validate value
     ///     @param convertOnly true: validate type conversion only, false: validate against meta data as well
@@ -106,11 +107,12 @@ public:
     double          increment               (void) const;
     bool            typeIsString            (void) const { return type() == FactMetaData::valueTypeString; }
     bool            typeIsBool              (void) const { return type() == FactMetaData::valueTypeBool; }
+    bool            hasControl              (void) const;
 
     /// Returns the values as a string with full 18 digit precision if float/double.
     QString rawValueStringFullPrecision(void) const;
 
-    void setRawValue        (const QVariant& value);
+    void setRawValue        (const QVariant& value, bool skipSignal = false);
     void setCookedValue     (const QVariant& value);
     void setEnumIndex       (int index);
     void setEnumStringValue (const QString& value);
@@ -132,12 +134,15 @@ public:
     /// Sets the meta data associated with the Fact.
     void setMetaData(FactMetaData* metaData);
     
+    FactMetaData* metaData() { return _metaData; }
     void _containerSetRawValue(const QVariant& value);
     
     /// Generally you should not change the name of a fact. But if you know what you are doing, you can.
     void _setName(const QString& name) { _name = name; }
 
-    
+    /// Generally this is done during parsing. But if you know what you are doing, you can.
+    void setEnumInfo(const QStringList& strings, const QVariantList& values);
+
 signals:
     void bitmaskStringsChanged(void);
     void bitmaskValuesChanged(void);

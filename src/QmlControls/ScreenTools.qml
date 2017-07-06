@@ -114,7 +114,7 @@ Item {
             minTouchPixels      = defaultFontPixelHeight * 3
         }
 
-        console.log(minTouchPixels / Screen.height)
+        //console.log(minTouchPixels / Screen.height)
         toolbarHeight           = isMobile ? minTouchPixels : defaultFontPixelHeight * 3
     }
 

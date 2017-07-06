@@ -25,6 +25,8 @@
 #include <QVariantList>
 
 class Vehicle;
+class QGCCameraControl;
+class QGCCameraManager;
 
 /// This is the base class for Firmware specific plugins
 ///
@@ -267,7 +269,14 @@ public:
     virtual const QVariantList& toolBarIndicators(const Vehicle* vehicle);
 
     /// Returns a list of CameraMetaData objects for available cameras on the vehicle.
+    /// TODO: This should go into QGCCameraManager
     virtual const QVariantList& cameraList(const Vehicle* vehicle);
+
+    /// Vehicle camera manager. Returns NULL if not supported.
+    virtual QGCCameraManager* cameraManager(Vehicle *vehicle);
+
+    /// Camera control. Returns NULL if not supported.
+    virtual QGCCameraControl* createCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = NULL);
 
     /// Returns a pointer to a dictionary of firmware-specific FactGroups
     virtual QMap<QString, FactGroup*>* factGroups(void);

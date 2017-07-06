@@ -517,3 +517,20 @@ bool FirmwarePlugin::hasGimbal(Vehicle* vehicle, bool& rollSupported, bool& pitc
     yawSupported = false;
     return false;
 }
+
+QGCCameraManager* FirmwarePlugin::cameraManager(Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+    return NULL;
+}
+
+QGCCameraControl* FirmwarePlugin::createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject* parent)
+{
+    Q_UNUSED(info);
+    Q_UNUSED(vehicle);
+    Q_UNUSED(compID);
+    Q_UNUSED(parent);
+    return NULL;
+}
+
+
