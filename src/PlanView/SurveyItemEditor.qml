@@ -252,12 +252,6 @@ Rectangle {
                     enabled:            cameraTriggerDistanceCheckBox.checked
                 }
             }
-
-            FactCheckBox {
-                text:       qsTr("Hover and capture image")
-                fact:       missionItem.hoverAndCapture
-                visible:    missionItem.hoverAndCaptureAllowed
-            }
         }
 
         // Camera based grid ui
@@ -385,6 +379,23 @@ Rectangle {
                     Layout.preferredWidth:  _root._fieldWidth
                     fact:                   missionItem.sideOverlap
                 }
+            }
+
+            FactCheckBox {
+                text:       qsTr("Hover and capture image")
+                fact:       missionItem.hoverAndCapture
+                visible:    missionItem.hoverAndCaptureAllowed
+                onClicked: {
+                    if (checked) {
+                        missionItem.cameraTriggerInTurnaround.rawValue = false
+                    }
+                }
+            }
+
+            FactCheckBox {
+                text:       qsTr("Take images in turnarounds")
+                fact:       missionItem.cameraTriggerInTurnaround
+                enabled:    !missionItem.hoverAndCapture.rawValue
             }
 
             SectionHeader {
