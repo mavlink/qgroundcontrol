@@ -132,7 +132,7 @@
     "name":             "CameraTriggerInTurnaround",
     "shortDescription": "Camera continues taking images in turnarounds.",
     "type":             "bool",
-    "defaultValue":     false
+    "defaultValue":     true
 },
 {
     "name":             "HoverAndCapture",
