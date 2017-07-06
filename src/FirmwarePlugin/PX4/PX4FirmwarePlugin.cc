@@ -21,6 +21,7 @@
 #include "SensorsComponentController.h"
 #include "PowerComponentController.h"
 #include "RadioComponentController.h"
+#include "QGCCameraManager.h"
 
 #include <QDebug>
 
@@ -34,7 +35,8 @@ PX4FirmwarePluginInstanceData::PX4FirmwarePluginInstanceData(QObject* parent)
 }
 
 PX4FirmwarePlugin::PX4FirmwarePlugin(void)
-    : _manualFlightMode(tr("Manual"))
+    : _cameraManager(NULL)
+    , _manualFlightMode(tr("Manual"))
     , _acroFlightMode(tr("Acro"))
     , _stabilizedFlightMode(tr("Stabilized"))
     , _rattitudeFlightMode(tr("Rattitude"))
@@ -122,6 +124,12 @@ PX4FirmwarePlugin::PX4FirmwarePlugin(void)
 
         _flightModeInfoList.append(info);
     }
+}
+
+PX4FirmwarePlugin::~PX4FirmwarePlugin()
+{
+    if(_cameraManager)
+        delete _cameraManager;
 }
 
 AutoPilotPlugin* PX4FirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
@@ -545,3 +553,18 @@ bool PX4FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicl
     }
     return true;
 }
+
+QGCCameraManager* PX4FirmwarePlugin::cameraManager(Vehicle* vehicle)
+{
+    if(!_cameraManager) {
+        _cameraManager = new QGCCameraManager(vehicle);
+    }
+    return _cameraManager;
+}
+
+QGCCameraControl* PX4FirmwarePlugin::createCameraControl(const mavlink_camera_information_t* info, Vehicle *vehicle, int compID, QObject* parent)
+{
+    return new QGCCameraControl(info, vehicle, compID, parent);
+}
+
+

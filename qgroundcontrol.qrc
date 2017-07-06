@@ -21,6 +21,7 @@
         <file alias="BluetoothSettings.qml">src/ui/preferences/BluetoothSettings.qml</file>
         <file alias="CameraComponent.qml">src/AutoPilotPlugins/PX4/CameraComponent.qml</file>
         <file alias="CameraComponentSummary.qml">src/AutoPilotPlugins/PX4/CameraComponentSummary.qml</file>
+        <file alias="CameraControl.qml">src/Camera/CameraControl.qml</file>
         <file alias="CustomCommandWidget.qml">src/ViewWidgets/CustomCommandWidget.qml</file>
         <file alias="DebugWindow.qml">src/ui/preferences/DebugWindow.qml</file>
         <file alias="ESP8266Component.qml">src/AutoPilotPlugins/Common/ESP8266Component.qml</file>

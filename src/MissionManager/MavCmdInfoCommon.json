@@ -983,12 +983,6 @@
                 "enumStrings":      "Take photos,Record video",
                 "enumValues":       "0,1",
                 "default":          0
-            },
-            "param3": {
-                "label":            "Audio",
-                "enumStrings":      "Recording disabled,Recording enabled",
-                "enumValues":       "0,1",
-                "default":          0
             }
         },
         {

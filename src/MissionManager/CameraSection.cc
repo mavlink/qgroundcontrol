@@ -121,8 +121,7 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
                                             MAV_FRAME_MISSION,
                                             0,                                      // camera id, all cameras
                                             _cameraModeFact.rawValue().toDouble(),
-                                            NAN,                                    // Audio off/on
-                                            NAN, NAN, NAN, NAN,                     // param 4-7 reserved
+                                            NAN, NAN, NAN, NAN, NAN,                // param 3-7 reserved
                                             true,                                   // autoContinue
                                             false,                                  // isCurrentItem
                                             missionItemParent);
