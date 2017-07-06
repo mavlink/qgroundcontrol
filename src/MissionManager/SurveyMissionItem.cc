@@ -967,8 +967,8 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
             qCDebug(SurveyMissionItemLog) << "Generate left to right";
             float x = largeBoundRect.topLeft().x() - (gridSpacing / 2);
             while (x < largeBoundRect.bottomRight().x()) {
-                float yTop =    largeBoundRect.topLeft().y() - 100.0;
-                float yBottom = largeBoundRect.bottomRight().y() + 100.0;
+                float yTop =    largeBoundRect.topLeft().y() - 10000.0;
+                float yBottom = largeBoundRect.bottomRight().y() + 10000.0;
 
                 lineList += QLineF(_rotatePoint(QPointF(x, yTop), boundingCenter, gridAngle), _rotatePoint(QPointF(x, yBottom), boundingCenter, gridAngle));
                 qCDebug(SurveyMissionItemLog) << "line(" << lineList.last().x1() << ", " << lineList.last().y1() << ")-(" << lineList.last().x2() <<", " << lineList.last().y2() << ")";
@@ -980,8 +980,8 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
             qCDebug(SurveyMissionItemLog) << "Generate right to left";
             float x = largeBoundRect.topRight().x() + (gridSpacing / 2);
             while (x > largeBoundRect.bottomLeft().x()) {
-                float yTop =    largeBoundRect.topRight().y() - 100.0;
-                float yBottom = largeBoundRect.bottomLeft().y() + 100.0;
+                float yTop =    largeBoundRect.topRight().y() - 10000.0;
+                float yBottom = largeBoundRect.bottomLeft().y() + 10000.0;
 
                 lineList += QLineF(_rotatePoint(QPointF(x, yTop), boundingCenter, gridAngle), _rotatePoint(QPointF(x, yBottom), boundingCenter, gridAngle));
                 qCDebug(SurveyMissionItemLog) << "line(" << lineList.last().x1() << ", " << lineList.last().y1() << ")-(" << lineList.last().x2() <<", " << lineList.last().y2() << ")";
@@ -997,8 +997,8 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
             qCDebug(SurveyMissionItemLog) << "Generate top to bottom";
             float y = largeBoundRect.bottomLeft().y() + (gridSpacing / 2);
             while (y > largeBoundRect.topRight().y()) {
-                float xLeft =   largeBoundRect.bottomLeft().x() - 100.0;
-                float xRight =  largeBoundRect.topRight().x() + 100.0;
+                float xLeft =   largeBoundRect.bottomLeft().x() - 10000.0;
+                float xRight =  largeBoundRect.topRight().x() + 10000.0;
 
                 lineList += QLineF(_rotatePoint(QPointF(xLeft, y), boundingCenter, gridAngle), _rotatePoint(QPointF(xRight, y), boundingCenter, gridAngle));
                 qCDebug(SurveyMissionItemLog) << "y:xLeft:xRight" << y << xLeft << xRight << "line(" << lineList.last().x1() << ", " << lineList.last().y1() << ")-(" << lineList.last().x2() <<", " << lineList.last().y2() << ")";
@@ -1010,8 +1010,8 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
             qCDebug(SurveyMissionItemLog) << "Generate bottom to top";
             float y = largeBoundRect.topLeft().y() - (gridSpacing / 2);
             while (y < largeBoundRect.bottomRight().y()) {
-                float xLeft =   largeBoundRect.topLeft().x() - 100.0;
-                float xRight =  largeBoundRect.bottomRight().x() + 100.0;
+                float xLeft =   largeBoundRect.topLeft().x() - 10000.0;
+                float xRight =  largeBoundRect.bottomRight().x() + 10000.0;
 
                 lineList += QLineF(_rotatePoint(QPointF(xLeft, y), boundingCenter, gridAngle), _rotatePoint(QPointF(xRight, y), boundingCenter, gridAngle));
                 qCDebug(SurveyMissionItemLog) << "y:xLeft:xRight" << y << xLeft << xRight << "line(" << lineList.last().x1() << ", " << lineList.last().y1() << ")-(" << lineList.last().x2() <<", " << lineList.last().y2() << ")";
