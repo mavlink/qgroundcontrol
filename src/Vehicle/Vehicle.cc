@@ -716,6 +716,7 @@ void Vehicle::_setCapabilities(uint64_t capabilityBits)
         _supportsMissionItemInt = true;
     }
     _vehicleCapabilitiesKnown = true;
+    emit capabilitiesKnownChanged(true);
 
     qCDebug(VehicleLog) << QString("Vehicle %1 MISSION_ITEM_INT").arg(_supportsMissionItemInt ? QStringLiteral("supports") : QStringLiteral("does not support"));
 }
