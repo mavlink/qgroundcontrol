@@ -26,6 +26,7 @@ public:
                    double           focalLength,
                    bool             landscape,
                    bool             fixedOrientation,
+                   double           minTriggerInterval,
                    QObject*         parent = NULL);
 
     Q_PROPERTY(QString  name                MEMBER _name                CONSTANT)   ///< Camera name
@@ -36,6 +37,7 @@ public:
     Q_PROPERTY(double   focalLength         MEMBER _focalLength         CONSTANT)   ///< Focal length in millimeters
     Q_PROPERTY(bool     landscape           MEMBER _landscape           CONSTANT)   ///< true: camera is in landscape orientation
     Q_PROPERTY(bool     fixedOrientation    MEMBER _fixedOrientation    CONSTANT)   ///< true: camera is in fixed orientation
+    Q_PROPERTY(double   minTriggerInterval  MEMBER _minTriggerInterval  CONSTANT)   ///< Minimum time in seconds between each photo taken, 0 for not specified
 
 private:
     QString _name;
@@ -46,6 +48,7 @@ private:
     double  _focalLength;
     bool    _landscape;
     bool    _fixedOrientation;
+    double  _minTriggerInterval;
 };
 
 #endif

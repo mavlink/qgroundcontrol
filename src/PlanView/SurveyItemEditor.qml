@@ -57,7 +57,9 @@ Rectangle {
                 gridTypeCombo.currentIndex = index
                 if (index != 1) {
                     // Specific camera is selected
-                    missionItem.cameraOrientationFixed = _vehicleCameraList[index - _gridTypeCamera].fixedOrientation
+                    var camera = _vehicleCameraList[index - _gridTypeCamera]
+                    missionItem.cameraOrientationFixed = camera.fixedOrientation
+                    missionItem.cameraMinTriggerInterval = camera.minTriggerInterval
                 }
             }
         }
@@ -181,6 +183,15 @@ Rectangle {
         anchors.right:      parent.right
         spacing:            _margin
 
+        QGCLabel {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(missionItem.cameraMinTriggerInterval.toFixed(1))
+            wrapMode:       Text.WordWrap
+            color:          qgcPal.warningText
+            visible:        missionItem.manualGrid.value !== true && missionItem.cameraShots > 0 && missionItem.cameraMinTriggerInterval !== 0 && missionItem.cameraMinTriggerInterval > missionItem.timeBetweenShots
+        }
+
         SectionHeader {
             id:         cameraHeader
             text:       qsTr("Camera")
@@ -207,6 +218,7 @@ Rectangle {
                         missionItem.manualGrid.value = false
                         missionItem.camera.value = gridTypeCombo.textAt(index)
                         missionItem.cameraOrientationFixed = false
+                        missionItem.cameraMinTriggerInterval = 0
                     } else {
                         missionItem.manualGrid.value = false
                         missionItem.camera.value = gridTypeCombo.textAt(index)
@@ -219,6 +231,7 @@ Rectangle {
                         missionItem.cameraFocalLength.rawValue          = _vehicleCameraList[listIndex].focalLength
                         missionItem.cameraOrientationLandscape.rawValue = _vehicleCameraList[listIndex].landscape ? 1 : 0
                         missionItem.cameraOrientationFixed              = _vehicleCameraList[listIndex].fixedOrientation
+                        missionItem.cameraMinTriggerInterval            = _vehicleCameraList[listIndex].minTriggerInterval
                         _noCameraValueRecalc = false
                         recalcFromCameraValues()
                     }
