@@ -17,7 +17,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 
 /// Dialog showing list of available guided actions
-Rectangle {
+NoMouseThroughRectangle {
     id:         _root
     width:      actionColumn.width  + (_margins * 4)
     height:     actionColumn.height + (_margins * 4)
