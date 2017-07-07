@@ -1234,6 +1234,14 @@ This parameter is used when the magnetometer fusion method is set automatically 
       <decimal>2</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
+    <parameter default="0.05" name="EKF2_RNG_SFE" type="FLOAT">
+      <short_desc>Range finder range dependant noise scaler</short_desc>
+      <long_desc>Specifies the increase in range finder noise with range.</long_desc>
+      <min>0.0</min>
+      <max>0.2</max>
+      <unit>m/m</unit>
+      <scope>modules/ekf2</scope>
+    </parameter>
     <parameter default="5.0" name="EKF2_RNG_GATE" type="FLOAT">
       <short_desc>Gate size for range finder fusion</short_desc>
       <min>1.0</min>
@@ -1520,6 +1528,29 @@ Smaller values make the saved mag bias learn slower from flight to flight. Large
       <min>0.0</min>
       <max>1.0</max>
       <decimal>2</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="0" name="EKF2_RNG_AID" type="INT32">
+      <short_desc>Range sensor aid</short_desc>
+      <long_desc>If this parameter is enabled then the estimator will make use of the range finder measurements to estimate it's height even if range sensor is not the primary height source. It will only do so if conditions for range measurement fusion are met.</long_desc>
+      <scope>modules/ekf2</scope>
+      <values>
+        <value code="1">Range aid enabled</value>
+        <value code="0">Range aid disabled</value>
+      </values>
+    </parameter>
+    <parameter default="1.0" name="EKF2_RNG_A_VMAX" type="FLOAT">
+      <short_desc>Maximum horizontal velocity allowed for range aid mode</short_desc>
+      <long_desc>If the vehicle horizontal speed exceeds this value then the estimator will not fuse range measurements to estimate it's height. This only applies when range aid mode is activated (EKF2_RNG_AID = enabled).</long_desc>
+      <min>0.1</min>
+      <max>2</max>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="5.0" name="EKF2_RNG_A_HMAX" type="FLOAT">
+      <short_desc>Maximum absolute altitude (height above ground level) allowed for range aid mode</short_desc>
+      <long_desc>If the vehicle absolute altitude exceeds this value then the estimator will not fuse range measurements to estimate it's height. This only applies when range aid mode is activated (EKF2_RNG_AID = enabled).</long_desc>
+      <min>1.0</min>
+      <max>10.0</max>
       <scope>modules/ekf2</scope>
     </parameter>
   </group>
@@ -2636,6 +2667,21 @@ but also ignore less noise</short_desc>
       <values>
         <value code="1">Enable</value>
         <value code="0">Disable</value>
+      </values>
+    </parameter>
+    <parameter default="7" name="GPS_UBX_DYNMODEL" type="INT32">
+      <short_desc>u-blox GPS dynamic platform model</short_desc>
+      <long_desc>u-blox receivers support different dynamic platform models to adjust the navigation engine to the expected application environment.</long_desc>
+      <min>0</min>
+      <max>9</max>
+      <reboot_required>true</reboot_required>
+      <scope>drivers/gps</scope>
+      <values>
+        <value code="8">airborne with &lt;4g acceleration</value>
+        <value code="2">stationary</value>
+        <value code="4">automotive</value>
+        <value code="7">airborne with &lt;2g acceleration</value>
+        <value code="6">airborne with &lt;1g acceleration</value>
       </values>
     </parameter>
   </group>
@@ -3983,14 +4029,6 @@ if required for the gimbal (only in AUX output mode)</short_desc>
       <unit>m/s</unit>
       <scope>modules/mc_pos_control</scope>
     </parameter>
-    <parameter default="0.5" name="MPC_Z_FF" type="FLOAT">
-      <short_desc>Vertical velocity feed forward</short_desc>
-      <long_desc>Feed forward weight for altitude control in stabilized modes (ALTCTRL, POSCTRL). 0 will give slow responce and no overshot, 1 - fast responce and big overshot.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <decimal>2</decimal>
-      <scope>modules/mc_pos_control</scope>
-    </parameter>
     <parameter default="0.95" name="MPC_XY_P" type="FLOAT">
       <short_desc>Proportional gain for horizontal position error</short_desc>
       <min>0.0</min>
@@ -4057,14 +4095,6 @@ if required for the gimbal (only in AUX output mode)</short_desc>
       <unit>m/s</unit>
       <decimal>2</decimal>
       <increment>1</increment>
-      <scope>modules/mc_pos_control</scope>
-    </parameter>
-    <parameter default="0.5" name="MPC_XY_FF" type="FLOAT">
-      <short_desc>Horizontal velocity feed forward</short_desc>
-      <long_desc>Feed forward weight for position control in position control mode (POSCTRL). 0 will give slow responce and no overshot, 1 - fast responce and big overshot.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <decimal>2</decimal>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="45.0" name="MPC_TILTMAX_AIR" type="FLOAT">
@@ -7291,7 +7321,8 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="SENS_EXT_MAG" type="INT32">
-      <short_desc>Select primary magnetometer</short_desc>
+      <short_desc>Select primary magnetometer.
+DEPRECATED, only used on V1 hardware</short_desc>
       <min>0</min>
       <max>2</max>
       <scope>modules/sensors</scope>
