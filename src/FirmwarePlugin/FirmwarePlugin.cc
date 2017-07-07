@@ -354,6 +354,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       16,
                                       true,
                                       false,
+                                      0,
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
 
@@ -365,6 +366,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       5.2,
                                       true,
                                       false,
+                                      0,
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
 
@@ -376,6 +378,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       10.2,
                                       true,
                                       false,
+                                      0,
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
 
@@ -387,6 +390,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       4.5,
                                       true,
                                       false,
+                                      0,
                                       this);
 
         metaData = new CameraMetaData(tr("Canon EOS-M 22mm"),
@@ -397,6 +401,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       22,
                                       true,
                                       false,
+                                      0,
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
 
@@ -408,6 +413,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       16,
                                       true,
                                       false,
+                                      0,
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
 
@@ -419,6 +425,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       10.4,
                                       true,
                                       false,
+                                      0,
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
     }
