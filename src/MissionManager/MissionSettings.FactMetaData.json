@@ -6,5 +6,21 @@
     "units":            "m",
     "decimalPlaces":    1,
     "defaultValue":     0
+},
+{
+    "name":             "PlannedHomePositionLatitude",
+    "shortDescription": "Planned home position latitude",
+    "type":             "double",
+    "units":            "deg",
+    "decimalPlaces":    7,
+    "defaultValue":     0
+},
+{
+    "name":             "PlannedHomePositionLongitude",
+    "shortDescription": "Planned home position longitude",
+    "type":             "double",
+    "units":            "deg",
+    "decimalPlaces":    7,
+    "defaultValue":     0
 }
 ]

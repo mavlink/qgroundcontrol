@@ -240,6 +240,24 @@ Rectangle {
                     columns:        2
 
                     QGCLabel {
+                        text: qsTr("Latitude")
+                    }
+                    FactTextField {
+                        fact:               missionItem.plannedHomePositionLatitude
+                        Layout.fillWidth:   true
+                        onEditingFinished:  map.center = missionItem.coordinate
+                    }
+
+                    QGCLabel {
+                        text: qsTr("Longitude")
+                    }
+                    FactTextField {
+                        fact:               missionItem.plannedHomePositionLongitude
+                        Layout.fillWidth:   true
+                        onEditingFinished:  map.center = missionItem.coordinate
+                    }
+
+                    QGCLabel {
                         text: qsTr("Altitude")
                     }
                     FactTextField {
