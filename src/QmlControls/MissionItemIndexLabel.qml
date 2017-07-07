@@ -13,7 +13,7 @@ Canvas {
     signal clicked
 
     property string label                       ///< Label to show to the side of the index indicator
-    property int    index:                  0   ///< Index to show in the indicator, 0 will show label instead
+    property int    index:                  0   ///< Index to show in the indicator, 0 will show single char label instead, -1 first char of label in indicator full label to the side
     property bool   checked:                false
     property bool   small:                  false
     property var    color:                  checked ? "green" : qgcPal.mapButtonHighlight
@@ -33,7 +33,7 @@ Canvas {
     property real   _labelMargin:       2
     property real   _labelRadius:       _indicatorRadius + _labelMargin
     property string _label:             index === 0 ? "" : label
-    property string _index:             index === 0 ? label : index
+    property string _index:             index === 0 || index === -1 ? label.charAt(0) : index
 
     onColorChanged:         requestPaint()
     onShowGimbalYawChanged: requestPaint()
