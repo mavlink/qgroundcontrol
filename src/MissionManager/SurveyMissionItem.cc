@@ -39,6 +39,7 @@ const char* SurveyMissionItem::_jsonCameraSensorHeightKey =         "sensorHeigh
 const char* SurveyMissionItem::_jsonCameraResolutionWidthKey =      "resolutionWidth";
 const char* SurveyMissionItem::_jsonCameraResolutionHeightKey =     "resolutionHeight";
 const char* SurveyMissionItem::_jsonCameraFocalLengthKey =          "focalLength";
+const char* SurveyMissionItem::_jsonCameraMinTriggerIntervalKey =   "minTriggerInterval";
 const char* SurveyMissionItem::_jsonCameraObjectKey =               "camera";
 const char* SurveyMissionItem::_jsonCameraNameKey =                 "name";
 const char* SurveyMissionItem::_jsonManualGridKey =                 "manualGrid";
@@ -79,6 +80,7 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     , _missionCommandCount(0)
     , _refly90Degrees(false)
     , _additionalFlightDelaySeconds(0)
+    , _cameraMinTriggerInterval(0)
     , _ignoreRecalc(false)
     , _surveyDistance(0.0)
     , _cameraShots(0)
@@ -240,6 +242,7 @@ void SurveyMissionItem::save(QJsonArray&  missionItems)
         cameraObject[_jsonCameraResolutionWidthKey] =       _cameraResolutionWidthFact.rawValue().toDouble();
         cameraObject[_jsonCameraResolutionHeightKey] =      _cameraResolutionHeightFact.rawValue().toDouble();
         cameraObject[_jsonCameraFocalLengthKey] =           _cameraFocalLengthFact.rawValue().toDouble();
+        cameraObject[_jsonCameraMinTriggerIntervalKey] =    _cameraMinTriggerInterval;
         cameraObject[_jsonGroundResolutionKey] =            _groundResolutionFact.rawValue().toDouble();
         cameraObject[_jsonFrontalOverlapKey] =              _frontalOverlapFact.rawValue().toInt();
         cameraObject[_jsonSideOverlapKey] =                 _sideOverlapFact.rawValue().toInt();
@@ -373,6 +376,7 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumbe
             { _jsonCameraFocalLengthKey,            QJsonValue::Double, true },
             { _jsonCameraNameKey,                   QJsonValue::String, true },
             { _jsonCameraOrientationLandscapeKey,   QJsonValue::Bool,   true },
+            { _jsonCameraMinTriggerIntervalKey,     QJsonValue::Double, false },
         };
         if (!JsonHelper::validateKeys(cameraObject, cameraKeyInfoList, errorString)) {
             return false;
@@ -389,6 +393,7 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumbe
         _cameraResolutionWidthFact.setRawValue  (cameraObject[_jsonCameraResolutionWidthKey].toDouble());
         _cameraResolutionHeightFact.setRawValue (cameraObject[_jsonCameraResolutionHeightKey].toDouble());
         _cameraFocalLengthFact.setRawValue      (cameraObject[_jsonCameraFocalLengthKey].toDouble());
+        _cameraMinTriggerInterval =             cameraObject[_jsonCameraMinTriggerIntervalKey].toDouble(0);
     }
 
     // Polygon shape
