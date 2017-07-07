@@ -24,12 +24,16 @@ QGC_LOGGING_CATEGORY(MissionSettingsComplexItemLog, "MissionSettingsComplexItemL
 const char* MissionSettingsItem::jsonComplexItemTypeValue = "MissionSettings";
 
 const char* MissionSettingsItem::_plannedHomePositionAltitudeName = "PlannedHomePositionAltitude";
+const char* MissionSettingsItem::_plannedHomePositionLatitudeName = "PlannedHomePositionLatitude";
+const char* MissionSettingsItem::_plannedHomePositionLongitudeName = "PlannedHomePositionLongitude";
 
 QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
 
 MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
     : ComplexMissionItem                (vehicle, parent)
-    , _plannedHomePositionAltitudeFact  (0, _plannedHomePositionAltitudeName,   FactMetaData::valueTypeDouble)
+    , _plannedHomePositionAltitudeFact  (0,_plannedHomePositionAltitudeName,   FactMetaData::valueTypeDouble)
+    , _plannedHomePositionLatitudeFact  (0,_plannedHomePositionLatitudeName,   FactMetaData::valueTypeDouble)
+    , _plannedHomePositionLongitudeFact  (0,_plannedHomePositionLongitudeName,   FactMetaData::valueTypeDouble)
     , _missionEndRTL                    (false)
     , _cameraSection                    (vehicle)
     , _speedSection                     (vehicle)
@@ -42,8 +46,12 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
         _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/MissionSettings.FactMetaData.json"), NULL /* metaDataParent */);
     }
 
-    _plannedHomePositionAltitudeFact.setMetaData    (_metaDataMap[_plannedHomePositionAltitudeName]);
-    _plannedHomePositionAltitudeFact.setRawValue    (_plannedHomePositionAltitudeFact.rawDefaultValue());
+    _plannedHomePositionAltitudeFact.setMetaData     (_metaDataMap[_plannedHomePositionAltitudeName]);
+    _plannedHomePositionAltitudeFact.setRawValue     (_plannedHomePositionAltitudeFact.rawDefaultValue());
+    _plannedHomePositionLatitudeFact.setMetaData    (_metaDataMap[_plannedHomePositionLatitudeName]);
+    _plannedHomePositionLatitudeFact.setRawValue    (_plannedHomePositionAltitudeFact.rawDefaultValue());
+    _plannedHomePositionLongitudeFact.setMetaData    (_metaDataMap[_plannedHomePositionLongitudeName]);
+    _plannedHomePositionLongitudeFact.setRawValue    (_plannedHomePositionAltitudeFact.rawDefaultValue());
     setHomePositionSpecialCase(true);
 
     _cameraSection.setAvailable(true);
@@ -51,12 +59,17 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
 
     connect(this,               &MissionSettingsItem::specifyMissionFlightSpeedChanged, this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
     connect(this,               &MissionSettingsItem::missionEndRTLChanged,             this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
+
     connect(&_cameraSection,    &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
     connect(&_speedSection,     &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
 
     connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged,                        this, &MissionSettingsItem::_setDirty);
+    connect(&_plannedHomePositionLatitudeFact,  &Fact::valueChanged,                        this, &MissionSettingsItem::_setDirty);
+    connect(&_plannedHomePositionLongitudeFact,  &Fact::valueChanged,                        this, &MissionSettingsItem::_setDirty);
 
     connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged, this, &MissionSettingsItem::_updateAltitudeInCoordinate);
+    connect(&_plannedHomePositionLatitudeFact,  &Fact::valueChanged, this, &MissionSettingsItem::_sendCoordinateChanged);
+    connect(&_plannedHomePositionLongitudeFact,  &Fact::valueChanged, this, &MissionSettingsItem::_sendCoordinateChanged);
 
     connect(&_cameraSection,    &CameraSection::dirtyChanged,   this, &MissionSettingsItem::_sectionDirtyChanged);
     connect(&_speedSection,     &SpeedSection::dirtyChanged,    this, &MissionSettingsItem::_sectionDirtyChanged);
@@ -225,14 +238,29 @@ void MissionSettingsItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
     if (_plannedHomePositionCoordinate != coordinate) {
         // ArduPilot tends to send crap home positions at initial vehicel boot, discard them
-        if (coordinate.isValid() && (coordinate.latitude() != 0 || coordinate.longitude() != 0)) {
+        if (coordinate.isValid() && (coordinate.latitude() != 0 || coordinate.longitude() != 0))
+        {
             qDebug() << "Setting home position" << coordinate;
             _plannedHomePositionCoordinate = coordinate;
             emit coordinateChanged(coordinate);
             emit exitCoordinateChanged(coordinate);
             _plannedHomePositionAltitudeFact.setRawValue(coordinate.altitude());
+            _plannedHomePositionLatitudeFact.setRawValue(coordinate.latitude());
+            _plannedHomePositionLongitudeFact.setRawValue(coordinate.longitude());
         }
     }
+}
+
+QGeoCoordinate MissionSettingsItem::getCurrentCoordinate(void) const
+{
+    return QGeoCoordinate(_plannedHomePositionLatitudeFact.rawValue().toDouble(),
+                          _plannedHomePositionLongitudeFact.rawValue().toDouble(),
+                          _plannedHomePositionAltitudeFact.rawValue().toDouble());
+}
+
+void MissionSettingsItem::_sendCoordinateChanged(void)
+{
+    setCoordinate(getCurrentCoordinate());
 }
 
 void MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber(void)
