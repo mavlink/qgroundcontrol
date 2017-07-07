@@ -16,7 +16,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 
 /// Guided actions confirmation dialog
-Rectangle {
+NoMouseThroughRectangle {
     id:             _root
     border.color:   qgcPal.alertBorder
     border.width:   1

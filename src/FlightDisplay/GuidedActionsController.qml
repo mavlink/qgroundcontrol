@@ -29,6 +29,7 @@ Item {
 
     property var missionController
     property var confirmDialog
+    property var actionList
     property var altitudeSlider
 
     readonly property string emergencyStopTitle:    qsTr("Emergency Stop")
@@ -95,6 +96,8 @@ Item {
     property bool showOrbit:            !_hideOrbit && _activeVehicle && _vehicleFlying && _activeVehicle.orbitModeSupported && _vehicleArmed && !_missionActive
     property bool showLandAbort:        _activeVehicle && _vehicleFlying && _activeVehicle.fixedWing && _vehicleLanding
     property bool showGotoLocation:     _activeVehicle && _activeVehicle.guidedMode && _vehicleFlying
+
+    property bool guidedUIVisible:      guidedActionConfirm.visible || guidedActionList.visible
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property string _flightMode:            _activeVehicle ? _activeVehicle.flightMode : ""
