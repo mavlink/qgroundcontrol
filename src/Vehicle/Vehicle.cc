@@ -789,7 +789,7 @@ void Vehicle::_handleHilActuatorControls(mavlink_message_t &message)
 
 void Vehicle::_handleCommandAck(mavlink_message_t& message)
 {
-    bool showError = true;
+    bool showError = false;
 
     mavlink_command_ack_t ack;
     mavlink_msg_command_ack_decode(&message, &ack);
