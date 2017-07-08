@@ -50,6 +50,7 @@ user_config.pri
 *.suo
 *.uhf.txt
 *.opensdf
+*Thumbs.db
 thirdParty/qserialport-build-desktop/
 thirdParty/qserialport/bin/
 thirdParty/qserialport/lib/

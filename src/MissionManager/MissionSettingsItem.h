@@ -26,12 +26,16 @@ class MissionSettingsItem : public ComplexMissionItem
 public:
     MissionSettingsItem(Vehicle* vehicle, QObject* parent = NULL);
 
-    Q_PROPERTY(Fact*    plannedHomePositionAltitude READ plannedHomePositionAltitude                            CONSTANT)
+    Q_PROPERTY(Fact*    plannedHomePositionAltitude  READ plannedHomePositionAltitude                          CONSTANT)
+    Q_PROPERTY(Fact*    plannedHomePositionLatitude  READ plannedHomePositionLatitude                          CONSTANT)
+    Q_PROPERTY(Fact*    plannedHomePositionLongitude  READ plannedHomePositionLongitude                          CONSTANT)
     Q_PROPERTY(bool     missionEndRTL               READ missionEndRTL                  WRITE setMissionEndRTL  NOTIFY missionEndRTLChanged)
     Q_PROPERTY(QObject* cameraSection               READ cameraSection                                          CONSTANT)
     Q_PROPERTY(QObject* speedSection                READ speedSection                                           CONSTANT)
 
     Fact*           plannedHomePositionAltitude (void) { return &_plannedHomePositionAltitudeFact; }
+    Fact*           plannedHomePositionLatitude (void) { return &_plannedHomePositionLatitudeFact; }
+    Fact*           plannedHomePositionLongitude (void) { return &_plannedHomePositionLongitudeFact; }
     bool            missionEndRTL               (void) const { return _missionEndRTL; }
     CameraSection*  cameraSection               (void) { return &_cameraSection; }
     SpeedSection*   speedSection                (void) { return &_speedSection; }
@@ -83,6 +87,8 @@ public:
     void setSequenceNumber  (int sequenceNumber) final;
     void save               (QJsonArray&  missionItems) final;
 
+    QGeoCoordinate  getCurrentCoordinate(void) const;
+
     static const char* jsonComplexItemTypeValue;
 
 signals:
@@ -94,10 +100,14 @@ private slots:
     void _setDirty                              (void);
     void _sectionDirtyChanged                   (bool dirty);
     void _updateAltitudeInCoordinate            (QVariant value);
+    void _sendCoordinateChanged                 (void);
 
 private:
     QGeoCoordinate  _plannedHomePositionCoordinate;     // Does not include altitude
     Fact            _plannedHomePositionAltitudeFact;
+    Fact            _plannedHomePositionLatitudeFact;
+    Fact            _plannedHomePositionLongitudeFact;
+
     bool            _missionEndRTL;
     CameraSection   _cameraSection;
     SpeedSection    _speedSection;
@@ -108,6 +118,8 @@ private:
     static QMap<QString, FactMetaData*> _metaDataMap;
 
     static const char* _plannedHomePositionAltitudeName;
+    static const char* _plannedHomePositionLatitudeName;
+    static const char* _plannedHomePositionLongitudeName;
 };
 
 #endif
