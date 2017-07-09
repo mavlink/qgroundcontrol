@@ -127,7 +127,6 @@ protected:
 
     QSettings settings;
 
-    QPointer<MAVLinkDecoder> mavlinkDecoder;
     QGCMAVLinkLogPlayer* logPlayer;
 #ifdef QGC_MOUSE_ENABLED_WIN
     /** @brief 3d Mouse support (WIN only) */
@@ -181,7 +180,9 @@ private:
     void _showDockWidget(const QString &name, bool show);
     void _loadVisibleWidgetsSettings(void);
     void _storeVisibleWidgetsSettings(void);
+    MAVLinkDecoder* _mavLinkDecoderInstance(void);
 
+    MAVLinkDecoder*         _mavlinkDecoder;
     bool                    _lowPowerMode;           ///< If enabled, QGC reduces the update rates of all widgets
     bool                    _showStatusBar;
     QVBoxLayout*            _centralLayout;
