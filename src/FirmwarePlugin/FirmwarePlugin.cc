@@ -485,7 +485,7 @@ bool FirmwarePlugin::_setFlightModeAndValidate(Vehicle* vehicle, const QString& 
         vehicle->setFlightMode(flightMode);
 
         // Wait for vehicle to return flight mode
-        for (int i=0; i<22; i++) {
+        for (int i=0; i<13; i++) {
             if (vehicle->flightMode() == flightMode) {
                 flightModeChanged = true;
                 break;
