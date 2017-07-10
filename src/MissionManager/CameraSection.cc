@@ -166,7 +166,9 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
                                    MAV_CMD_DO_SET_CAM_TRIGG_DIST,
                                    MAV_FRAME_MISSION,
                                    _cameraPhotoIntervalDistanceFact.rawValue().toDouble(),  // Trigger distance
-                                   0, 0, 0, 0, 0, 0,                                        // param 2-7 not used
+                                   0,                                                       // No shutter integartion
+                                   1,                                                       // Trigger immediately
+                                   0, 0, 0, 0,                                              // param 4-7 not used
                                    true,                                                    // autoContinue
                                    false,                                                   // isCurrentItem
                                    missionItemParent);
@@ -314,13 +316,31 @@ bool CameraSection::_scanStopTakingPhotos(QmlObjectListModel* visualItems, int s
     return false;
 }
 
-bool CameraSection::_scanTriggerDistance(QmlObjectListModel* visualItems, int scanIndex)
+bool CameraSection::_scanTriggerStartDistance(QmlObjectListModel* visualItems, int scanIndex)
 {
     SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(scanIndex);
     if (item) {
         MissionItem& missionItem = item->missionItem();
         if ((MAV_CMD)item->command() == MAV_CMD_DO_SET_CAM_TRIGG_DIST) {
-            if (missionItem.param1() >= 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+            if (missionItem.param1() > 0 && missionItem.param2() == 0 && missionItem.param3() == 1 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
+                cameraAction()->setRawValue(TakePhotoIntervalDistance);
+                cameraPhotoIntervalDistance()->setRawValue(missionItem.param1());
+                visualItems->removeAt(scanIndex)->deleteLater();
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool CameraSection::_scanTriggerStopDistance(QmlObjectListModel* visualItems, int scanIndex)
+{
+    SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(scanIndex);
+    if (item) {
+        MissionItem& missionItem = item->missionItem();
+        if ((MAV_CMD)item->command() == MAV_CMD_DO_SET_CAM_TRIGG_DIST) {
+            if (missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
                 cameraAction()->setRawValue(TakePhotoIntervalDistance);
                 cameraPhotoIntervalDistance()->setRawValue(missionItem.param1());
                 visualItems->removeAt(scanIndex)->deleteLater();
@@ -416,7 +436,11 @@ bool CameraSection::scanForSection(QmlObjectListModel* visualItems, int scanInde
             foundCameraAction = true;
             continue;
         }
-        if (!foundCameraAction && _scanTriggerDistance(visualItems, scanIndex)) {
+        if (!foundCameraAction && _scanTriggerStartDistance(visualItems, scanIndex)) {
+            foundCameraAction = true;
+            continue;
+        }
+        if (!foundCameraAction && _scanTriggerStopDistance(visualItems, scanIndex)) {
             foundCameraAction = true;
             continue;
         }
