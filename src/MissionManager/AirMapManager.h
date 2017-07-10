@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2017 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -13,6 +13,7 @@
 #include "QGCToolbox.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
+#include "MissionItem.h"
 
 #include <QGeoCoordinate>
 #include <QList>
@@ -62,6 +63,180 @@ private:
 };
 
 
+class AirMapLogin : public QObject
+{
+    Q_OBJECT
+public:
+    /**
+     * @param networkManager
+     * @param APIKey AirMap API key: this is stored as a reference, and thus must live as long as this object does
+     */
+    AirMapLogin(QNetworkAccessManager& networkManager, const QString& APIKey);
+
+    void setCredentials(const QString& clientID, const QString& userName, const QString& password);
+
+    /**
+     * check if the credentials are set (not necessarily valid)
+     */
+    bool hasCredentials() const { return _userName != "" && _password != ""; }
+
+    void login();
+    void logout() { _JWTToken = ""; }
+
+    /** get the JWT token. Empty if user not logged in */
+    const QString& JWTToken() const { return _JWTToken; }
+
+    bool isLoggedIn() const { return _JWTToken != ""; }
+
+signals:
+    void loginSuccess();
+    void loginFailure(QNetworkReply::NetworkError error, const QString& errorString, const QString& serverErrorMessage);
+
+private slots:
+    void _requestFinished(void);
+    void _requestError(QNetworkReply::NetworkError code);
+
+private:
+    void _post(QUrl url, const QByteArray& postData);
+
+    QNetworkAccessManager& _networkManager;
+
+    bool _isLoginInProgress = false;
+    QString _JWTToken = ""; ///< JWT login token: empty when not logged in
+    const QString& _APIKey;
+
+    // login credentials
+    QString _clientID;
+    QString _userName;
+    QString _password;
+};
+
+class AirMapNetworking : public QObject
+{
+    Q_OBJECT
+public:
+
+    struct SharedData {
+        SharedData() : login(networkManager, airmapAPIKey) {}
+
+        QNetworkAccessManager networkManager;
+        QString airmapAPIKey;
+
+        AirMapLogin login;
+    };
+
+    AirMapNetworking(SharedData& networkingData);
+
+    /**
+     * send a GET request
+     * @param url
+     * @param requiresLogin set to true if the user needs to be logged in for the request
+     */
+    void get(QUrl url, bool requiresLogin = false);
+
+    /**
+     * send a POST request
+     * @param url
+     * @param postData
+     * @param isJsonData if true, content type is set to JSON, form data otherwise
+     * @param requiresLogin set to true if the user needs to be logged in for the request
+     */
+    void post(QUrl url, const QByteArray& postData, bool isJsonData = false, bool requiresLogin = false);
+
+    const QString& JWTLoginToken() const { return _networkingData.login.JWTToken(); }
+
+    const AirMapLogin& getLogin() const { return _networkingData.login; }
+
+signals:
+    /// signal when the request finished (get or post). All requests are assumed to return JSON.
+    void finished(QJsonParseError parseError, QJsonDocument document);
+    void error(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+
+private slots:
+    void _loginSuccess();
+    void _loginFailure(QNetworkReply::NetworkError networkError, const QString& errorString, const QString& serverErrorMessage);
+    void _requestFinished(void);
+private:
+    SharedData& _networkingData;
+
+    enum class RequestType {
+        None,
+        GET,
+        POST
+    };
+    struct PendingRequest {
+        RequestType type = RequestType::None;
+        QUrl url;
+        QByteArray postData;
+        bool isJsonData;
+        bool requiresLogin;
+    };
+    PendingRequest _pendingRequest;
+};
+
+
+/// class to download polygons from AirMap
+class AirspaceRestrictionManager : public QObject
+{
+    Q_OBJECT
+public:
+    AirspaceRestrictionManager(AirMapNetworking::SharedData& sharedData);
+
+    void updateROI(const QGeoCoordinate& center, double radiusMeters);
+
+    QmlObjectListModel* polygonRestrictions(void) { return &_polygonList; }
+    QmlObjectListModel* circularRestrictions(void) { return &_circleList; }
+
+signals:
+    void networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+private slots:
+    void _parseAirspaceJson(QJsonParseError parseError, QJsonDocument airspaceDoc);
+    void _error(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+private:
+
+    enum class State {
+        Idle,
+        RetrieveList,
+        RetrieveItems,
+    };
+
+    State                   _state = State::Idle;
+    int                     _numAwaitingItems = 0;
+    AirMapNetworking        _networking;
+
+    QmlObjectListModel      _polygonList;
+    QmlObjectListModel      _circleList;
+    QList<PolygonAirspaceRestriction*> _nextPolygonList;
+    QList<CircularAirspaceRestriction*> _nextcircleList;
+};
+
+/// class to upload a flight
+class AirMapFlightManager : public QObject
+{
+    Q_OBJECT
+public:
+    AirMapFlightManager(AirMapNetworking::SharedData& sharedData);
+
+    /// Send flight path to AirMap
+    void createFlight(const QList<MissionItem*>& missionItems);
+
+signals:
+    void networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+private slots:
+    void _parseJson(QJsonParseError parseError, QJsonDocument doc);
+    void _error(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+private:
+    enum class State {
+        Idle,
+        FlightUpload,
+    };
+
+    State                   _state = State::Idle;
+    AirMapNetworking        _networking;
+    QString                 _currentFlightId;
+};
+
+
 /// AirMap server communication support.
 class AirMapManager : public QGCTool
 {
@@ -76,34 +251,30 @@ public:
     ///     @param radiusMeters Radius in meters around center which is of interest
     void setROI(QGeoCoordinate& center, double radiusMeters);
 
-    QmlObjectListModel* polygonRestrictions(void) { return &_polygonList; }
-    QmlObjectListModel* circularRestrictions(void) { return &_circleList; }
-        
+    /// Send flight path to AirMap
+    void createFlight(const QList<MissionItem*>& missionItems);
+
+
+    QmlObjectListModel* polygonRestrictions(void) { return _airspaceRestrictionManager.polygonRestrictions(); }
+    QmlObjectListModel* circularRestrictions(void) { return _airspaceRestrictionManager.circularRestrictions(); }
+
+    void setToolbox(QGCToolbox* toolbox) override;
+
 private slots:
-    void _getFinished(void);
-    void _getError(QNetworkReply::NetworkError code);
     void _updateToROI(void);
+    void _networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
 
 private:
-    void _get(QUrl url);
-    void _parseAirspaceJson(const QJsonDocument& airspaceDoc);
+    bool hasAPIKey() const { return _networkingData.airmapAPIKey != ""; }
 
-    enum class State {
-        Idle,
-        RetrieveList,
-        RetrieveItems,
-    };
+    AirMapNetworking::SharedData _networkingData;
+    AirspaceRestrictionManager   _airspaceRestrictionManager;
+    AirMapFlightManager          _flightManager;
 
-    State                   _state = State::Idle;
-    int                     _numAwaitingItems = 0;
     QGeoCoordinate          _roiCenter;
     double                  _roiRadius;
-    QNetworkAccessManager   _networkManager;
+
     QTimer                  _updateTimer;
-    QmlObjectListModel      _polygonList;
-    QmlObjectListModel      _circleList;
-    QList<PolygonAirspaceRestriction*> _nextPolygonList;
-    QList<CircularAirspaceRestriction*> _nextcircleList;
 };
 
 #endif
