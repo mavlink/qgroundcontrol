@@ -1138,9 +1138,11 @@ int SurveyMissionItem::_appendWaypointToMission(QList<MissionItem*>& items, int 
                                MAV_CMD_DO_SET_CAM_TRIGG_DIST,
                                MAV_FRAME_MISSION,
                                cameraTrigger == CameraTriggerOn ? _triggerDistance() : 0,
-                               0, 0, 0, 0, 0, 0,               // param 2-7 unused
-                               true,                           // autoContinue
-                               false,                          // isCurrentItem
+                               0,                                           // shutter integration (ignore)
+                               cameraTrigger == CameraTriggerOn ? 1 : 0,    // trigger immediately when starting
+                               0, 0, 0, 0,                                  // param 4-7 unused
+                               true,                                        // autoContinue
+                               false,                                       // isCurrentItem
                                missionItemParent);
         items.append(item);
         break;
@@ -1196,21 +1198,14 @@ bool SurveyMissionItem::_nextTransectCoord(const QList<QGeoCoordinate>& transect
 /// @return false: Generation failed
 bool SurveyMissionItem::_appendMissionItemsWorker(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, bool hasRefly, bool buildRefly)
 {
+    bool firstWaypointTrigger = false;
+
     qCDebug(SurveyMissionItemLog) << "hasTurnaround:triggerCamera:hoverAndCapture:imagesEverywhere:hasRefly:buildRefly" << _hasTurnaround() << _triggerCamera() << _hoverAndCaptureEnabled() << _imagesEverywhere() << hasRefly << buildRefly;
 
     QList<QList<QGeoCoordinate>>& transectSegments = buildRefly ? _reflyTransectSegments : _transectSegments;
 
     if (!buildRefly && _imagesEverywhere()) {
-        // We are taking images in turnaround, so we start command once at beginning
-        MissionItem* item = new MissionItem(seqNum++,
-                                            MAV_CMD_DO_SET_CAM_TRIGG_DIST,
-                                            MAV_FRAME_MISSION,
-                                            _triggerDistance(),
-                                            0, 0, 0, 0, 0, 0,       // param 2-7 unused
-                                            true,                   // autoContinue
-                                            false,                  // isCurrentItem
-                                            missionItemParent);
-        items.append(item);
+        firstWaypointTrigger = true;
     }
 
     for (int segmentIndex=0; segmentIndex<transectSegments.count(); segmentIndex++) {
@@ -1226,15 +1221,21 @@ bool SurveyMissionItem::_appendMissionItemsWorker(QList<MissionItem*>& items, QO
             if (!_nextTransectCoord(segment, pointIndex++, coord)) {
                 return false;
             }
-            seqNum = _appendWaypointToMission(items, seqNum, coord, CameraTriggerNone, missionItemParent);
+            seqNum = _appendWaypointToMission(items, seqNum, coord, firstWaypointTrigger ? CameraTriggerOn : CameraTriggerNone, missionItemParent);
+            firstWaypointTrigger = false;
         }
 
         // Add polygon entry point
         if (!_nextTransectCoord(segment, pointIndex++, coord)) {
             return false;
         }
-        cameraTrigger = _imagesEverywhere() || !_triggerCamera() ? CameraTriggerNone : (_hoverAndCaptureEnabled() ? CameraTriggerHoverAndCapture : CameraTriggerOn);
+        if (firstWaypointTrigger) {
+            cameraTrigger = CameraTriggerOn;
+        } else {
+            cameraTrigger = _imagesEverywhere() || !_triggerCamera() ? CameraTriggerNone : (_hoverAndCaptureEnabled() ? CameraTriggerHoverAndCapture : CameraTriggerOn);
+        }
         seqNum = _appendWaypointToMission(items, seqNum, coord, cameraTrigger, missionItemParent);
+        firstWaypointTrigger = false;
 
         // Add internal hover and capture points
         if (_hoverAndCaptureEnabled()) {

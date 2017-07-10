@@ -60,24 +60,6 @@ SetupPage {
                     max:            0.25
                     step:           0.01
                 }
-
-                ListElement {
-                    title:          qsTr("Altitude control sensitivity")
-                    description:    qsTr("Slide to the left to make altitude control smoother and less twitchy. Slide to the right to make altitude control more accurate and more aggressive.")
-                    param:          "MPC_Z_FF"
-                    min:            0
-                    max:            1.0
-                    step:           0.1
-                }
-
-                ListElement {
-                    title:          qsTr("Position control sensitivity")
-                    description:    qsTr("Slide to the left to make flight in position control mode smoother and less twitchy. Slide to the right to make position control more accurate and more aggressive.")
-                    param:          "MPC_XY_FF"
-                    min:            0
-                    max:            1.0
-                    step:           0.1
-                }
             }
         }
     } // Component
