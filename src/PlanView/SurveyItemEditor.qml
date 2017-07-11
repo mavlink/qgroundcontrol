@@ -442,8 +442,7 @@ Rectangle {
                         id:                     windRoseButton
                         anchors.verticalCenter: angleText.verticalCenter
                         iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
-                        // Wind Rose is temporarily turned off until bugs are fixed
-                        visible:                false//_vehicle.fixedWing
+                        visible:                _vehicle.fixedWing
 
                         onClicked: {
                             var cords = windRoseButton.mapToItem(_root, 0, 0)
@@ -544,8 +543,7 @@ Rectangle {
                     anchors.verticalCenter: manualAngleText.verticalCenter
                     Layout.columnSpan:      1
                     iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
-                    // Wind Rose is temporarily turned off until bugs are fixed
-                    visible:                false//_vehicle.fixedWing
+                    visible:                _vehicle.fixedWing
 
                     onClicked: {
                         var cords = manualWindRoseButton.mapToItem(_root, 0, 0)
