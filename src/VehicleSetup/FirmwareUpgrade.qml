@@ -40,6 +40,12 @@ QGCView {
     readonly property string qgcUnplugText1:    qsTr("All %1 connections to vehicles must be ").arg(QGroundControl.appName) + highlightPrefix + " disconnected " + highlightSuffix + "prior to firmware upgrade."
     readonly property string qgcUnplugText2:    highlightPrefix + "<big>Please unplug your Pixhawk and/or Radio from USB.</big>" + highlightSuffix
 
+    readonly property int _defaultFimwareTypePX4:   12
+    readonly property int _defaultFimwareTypeAPM:   3
+
+    property var    _defaultFirmwareFact:   QGroundControl.settingsManager.appSettings.defaultFirmwareType
+    property bool   _defaultFirmwareIsPX4:  _defaultFirmwareFact.rawValue == _defaultFimwareTypePX4
+
     property string firmwareWarningMessage
     property bool   controllerCompleted:      false
     property bool   initialBoardSearch:       true
@@ -247,14 +253,24 @@ QGCView {
                     firmwareVersionCombo.currentIndex = 0
                 }
 
+                Component.onCompleted: {
+                    if (_defaultFirmwareIsPX4) {
+                        px4FlightStack.checked = true
+                    } else {
+                        apmFlightStack.checked = true
+                    }
+                }
+
                 QGCRadioButton {
                     id:             px4FlightStack
-                    checked:        true
                     exclusiveGroup: firmwareGroup
                     text:           qsTr("PX4 Flight Stack ")
                     visible:        !_singleFirmwareMode && !px4Flow
 
-                    onClicked: parent.firmwareVersionChanged(firmwareTypeList)
+                    onClicked: {
+                        _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
+                        parent.firmwareVersionChanged(firmwareTypeList)
+                    }
                 }
 
                 QGCRadioButton {
@@ -263,7 +279,10 @@ QGCView {
                     text:           qsTr("ArduPilot Flight Stack")
                     visible:        !_singleFirmwareMode && !px4Flow
 
-                    onClicked: parent.firmwareVersionChanged(firmwareTypeList)
+                    onClicked: {
+                        _defaultFirmwareFact.rawValue = _defaultFimwareTypeAPM
+                        parent.firmwareVersionChanged(firmwareTypeList)
+                    }
                 }
 
                 QGCComboBox {

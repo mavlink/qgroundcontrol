@@ -7,11 +7,13 @@
  *
  ****************************************************************************/
 
+#include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "QGCSettings.h"
 #include "FactMetaData.h"
 #include "SettingsManager.h"
+#include "AppMessages.h"
 
 #include <QtQml>
 #include <QQmlEngine>
@@ -155,8 +157,8 @@ bool QGCCorePlugin::overrideSettingsGroupVisibility(QString name)
 
 bool QGCCorePlugin::adjustSettingMetaData(FactMetaData& metaData)
 {
+    //-- Default Palette
     if (metaData.name() == AppSettings::indoorPaletteName) {
-        // Set up correct default for palette setting
         QVariant outdoorPalette;
 #if defined (__mobile__)
         outdoorPalette = 0;
@@ -164,9 +166,18 @@ bool QGCCorePlugin::adjustSettingMetaData(FactMetaData& metaData)
         outdoorPalette = 1;
 #endif
         metaData.setRawDefaultValue(outdoorPalette);
+        return true;
+    //-- Auto Save Telemetry Logs
+    } else if (metaData.name() == AppSettings::telemetrySaveName) {
+#if defined (__mobile__)
+        metaData.setRawDefaultValue(false);
+        return true;
+#else
+        metaData.setRawDefaultValue(true);
+        return true;
+#endif
     }
-
-    return true;        // Show setting in ui
+    return true; // Show setting in ui
 }
 
 void QGCCorePlugin::setShowTouchAreas(bool show)
@@ -203,4 +214,14 @@ void QGCCorePlugin::valuesWidgetDefaultSettings(QStringList& largeValues, QStrin
 {
     Q_UNUSED(smallValues);
     largeValues << "Vehicle.altitudeRelative" << "Vehicle.groundSpeed" << "Vehicle.flightTime";
+}
+
+QQmlApplicationEngine* QGCCorePlugin::createRootWindow(QObject *parent)
+{
+    QQmlApplicationEngine* pEngine = new QQmlApplicationEngine(parent);
+    pEngine->addImportPath("qrc:/qml");
+    pEngine->rootContext()->setContextProperty("joystickManager", qgcApp()->toolbox()->joystickManager());
+    pEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
+    pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainWindowNative.qml")));
+    return pEngine;
 }

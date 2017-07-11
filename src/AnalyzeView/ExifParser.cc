@@ -56,7 +56,7 @@ double ExifParser::readTime(QByteArray& buf)
     return tagTime.toMSecsSinceEpoch()/1000.0;
 }
 
-bool ExifParser::write(QByteArray &buf, QGeoCoordinate coordinate)
+bool ExifParser::write(QByteArray& buf, GeoTagWorker::cameraFeedbackPacket& geotag)
 {
     QByteArray app1Header("\xff\xe1", 2);
     uint32_t app1HeaderInd = buf.indexOf(app1Header);
@@ -141,7 +141,7 @@ bool ExifParser::write(QByteArray &buf, QGeoCoordinate coordinate)
     gpsData.readable.fields.gpsLatRef.tagID = 1;
     gpsData.readable.fields.gpsLatRef.type = 2;
     gpsData.readable.fields.gpsLatRef.size = 2;
-    gpsData.readable.fields.gpsLatRef.content = coordinate.latitude() > 0 ? 'N' : 'S';
+    gpsData.readable.fields.gpsLatRef.content = geotag.latitude > 0 ? 'N' : 'S';
 
     gpsData.readable.fields.gpsLat.tagID = 2;
     gpsData.readable.fields.gpsLat.type = 5;
@@ -151,7 +151,7 @@ bool ExifParser::write(QByteArray &buf, QGeoCoordinate coordinate)
     gpsData.readable.fields.gpsLonRef.tagID = 3;
     gpsData.readable.fields.gpsLonRef.type = 2;
     gpsData.readable.fields.gpsLonRef.size = 2;
-    gpsData.readable.fields.gpsLonRef.content = coordinate.longitude() > 0 ? 'E' : 'W';
+    gpsData.readable.fields.gpsLonRef.content = geotag.longitude > 0 ? 'E' : 'W';
 
     gpsData.readable.fields.gpsLon.tagID = 4;
     gpsData.readable.fields.gpsLon.type = 5;
@@ -176,21 +176,21 @@ bool ExifParser::write(QByteArray &buf, QGeoCoordinate coordinate)
     gpsData.readable.fields.finishedDataField = 0;
 
     // Filling up the additional information that does not fit into the fields
-    gpsData.readable.extendedData.gpsLat[0] = abs(static_cast<int>(coordinate.latitude()));
+    gpsData.readable.extendedData.gpsLat[0] = abs(static_cast<int>(geotag.latitude));
     gpsData.readable.extendedData.gpsLat[1] = 1;
-    gpsData.readable.extendedData.gpsLat[2] = static_cast<int>((fabs(coordinate.latitude()) - floor(fabs(coordinate.latitude()))) * 60.0);
+    gpsData.readable.extendedData.gpsLat[2] = static_cast<int>((fabs(geotag.latitude) - floor(fabs(geotag.latitude))) * 60.0);
     gpsData.readable.extendedData.gpsLat[3] = 1;
-    gpsData.readable.extendedData.gpsLat[4] = static_cast<int>((fabs(coordinate.latitude()) * 60.0 - floor(fabs(coordinate.latitude()) * 60.0)) * 60000.0);
+    gpsData.readable.extendedData.gpsLat[4] = static_cast<int>((fabs(geotag.latitude) * 60.0 - floor(fabs(geotag.latitude) * 60.0)) * 60000.0);
     gpsData.readable.extendedData.gpsLat[5] = 1000;
 
-    gpsData.readable.extendedData.gpsLon[0] = abs(static_cast<int>(coordinate.longitude()));
+    gpsData.readable.extendedData.gpsLon[0] = abs(static_cast<int>(geotag.longitude));
     gpsData.readable.extendedData.gpsLon[1] = 1;
-    gpsData.readable.extendedData.gpsLon[2] = static_cast<int>((fabs(coordinate.longitude()) - floor(fabs(coordinate.longitude()))) * 60.0);
+    gpsData.readable.extendedData.gpsLon[2] = static_cast<int>((fabs(geotag.longitude) - floor(fabs(geotag.longitude))) * 60.0);
     gpsData.readable.extendedData.gpsLon[3] = 1;
-    gpsData.readable.extendedData.gpsLon[4] = static_cast<int>((fabs(coordinate.longitude()) * 60.0 - floor(fabs(coordinate.longitude()) * 60.0)) * 60000.0);
+    gpsData.readable.extendedData.gpsLon[4] = static_cast<int>((fabs(geotag.longitude) * 60.0 - floor(fabs(geotag.longitude) * 60.0)) * 60000.0);
     gpsData.readable.extendedData.gpsLon[5] = 1000;
 
-    gpsData.readable.extendedData.gpsAlt[0] = coordinate.altitude() * 100;
+    gpsData.readable.extendedData.gpsAlt[0] = geotag.altitude * 100;
     gpsData.readable.extendedData.gpsAlt[1] = 100;
     gpsData.readable.extendedData.mapDatum[0] = 'W';
     gpsData.readable.extendedData.mapDatum[1] = 'G';

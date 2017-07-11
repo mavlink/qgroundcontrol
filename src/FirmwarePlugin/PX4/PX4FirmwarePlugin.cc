@@ -74,7 +74,8 @@ PX4FirmwarePlugin::PX4FirmwarePlugin(void)
         { PX4_CUSTOM_MAIN_MODE_RATTITUDE,   0,                                      true,   true,   true },
         { PX4_CUSTOM_MAIN_MODE_ALTCTL,      0,                                      true,   true,   true },
         { PX4_CUSTOM_MAIN_MODE_POSCTL,      0,                                      true,   true,   true },
-        { PX4_CUSTOM_MAIN_MODE_SIMPLE,      0,                                      true,   false,  true },
+        // simple can't be set by the user right now
+        { PX4_CUSTOM_MAIN_MODE_SIMPLE,      0,                                      false,   false,  true },
         { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,        true,   true,   true },
         { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,       true,   true,   true },
         { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,           true,   true,   true },
@@ -331,12 +332,12 @@ void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
 
 void PX4FirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
 {
-    vehicle->setFlightMode(_rtlFlightMode);
+    _setFlightModeAndValidate(vehicle, _rtlFlightMode);
 }
 
 void PX4FirmwarePlugin::guidedModeLand(Vehicle* vehicle)
 {
-    vehicle->setFlightMode(_landingFlightMode);
+    _setFlightModeAndValidate(vehicle, _landingFlightMode);
 }
 
 void PX4FirmwarePlugin::guidedModeOrbit(Vehicle* vehicle, const QGeoCoordinate& centerCoord, double radius, double velocity, double altitude)
@@ -435,16 +436,8 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
         return;
     }
 
-    // Don't allow altitude to fall below 3 meters above home
     double currentAltRel = vehicle->altitudeRelative()->rawValue().toDouble();
-    double newAltRel = currentAltRel;
-    if (altitudeChange <= 0 && currentAltRel <= 3) {
-        return;
-    }
-    if (currentAltRel + altitudeChange < 3) {
-        altitudeChange = 3 - currentAltRel;
-    }
-    newAltRel = currentAltRel + altitudeChange;
+    double newAltRel = currentAltRel + altitudeChange;
 
     vehicle->sendMavCommand(vehicle->defaultComponentId(),
                             MAV_CMD_DO_REPOSITION,
@@ -460,18 +453,21 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 
 void PX4FirmwarePlugin::startMission(Vehicle* vehicle)
 {
-    if (!_armVehicleAndValidate(vehicle)) {
-        qgcApp()->showMessage(tr("Unable to start mission: Vehicle failed to arm."));
-        return;
-    }
 
-    vehicle->setFlightMode(missionFlightMode());
+    if (_setFlightModeAndValidate(vehicle, missionFlightMode())) {
+        if (!_armVehicleAndValidate(vehicle)) {
+            qgcApp()->showMessage(tr("Unable to start mission: Vehicle rejected arming."));
+            return;
+        }
+    } else {
+        qgcApp()->showMessage(tr("Unable to start mission: Vehicle not ready."));
+    }
 }
 
 void PX4FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
 {
     if (guidedMode) {
-        vehicle->setFlightMode(_holdFlightMode);
+        _setFlightModeAndValidate(vehicle, _holdFlightMode);
     } else {
         pauseVehicle(vehicle);
     }

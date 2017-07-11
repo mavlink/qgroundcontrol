@@ -527,8 +527,8 @@ void SerialConfiguration::_initBaudRates()
     kSupportedBaudRates << "256000";
 #endif
     kSupportedBaudRates << "460800";
-#if defined(Q_OS_LINUX)
     kSupportedBaudRates << "500000";
+#if defined(Q_OS_LINUX)
     kSupportedBaudRates << "576000";
 #endif
     kSupportedBaudRates << "921600";

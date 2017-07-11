@@ -80,11 +80,14 @@ MacBuild {
 } else:LinuxBuild {
     PKGCONFIG = sdl2
 } else:WindowsBuild {
-    INCLUDEPATH += \
-        $$BASEDIR/libs/lib/sdl2/msvc/include \
+    INCLUDEPATH += $$BASEDIR/libs/lib/sdl2/msvc/include
 
+    contains(QT_ARCH, i386) {
+        LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x86
+    } else {
+        LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x64
+    }
     LIBS += \
-        -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x86 \
         -lSDL2main \
         -lSDL2
 }
@@ -127,69 +130,6 @@ else:WindowsBuild {
 else:AndroidBuild {
     message("Including support for speech output")
     DEFINES += QGC_SPEECH_ENABLED
-    QMAKE_CXXFLAGS += -g
-    INCLUDEPATH += \
-        libs/breakpad/src \
-        libs/breakpad/src/common/android/include
-    HEADERS += \
-        libs/breakpad/src/client/linux/crash_generation/crash_generation_client.h \
-        libs/breakpad/src/client/linux/handler/exception_handler.h \
-        libs/breakpad/src/client/linux/handler/minidump_descriptor.h \
-        libs/breakpad/src/client/linux/log/log.h \
-        libs/breakpad/src/client/linux/dump_writer_common/thread_info.h \
-        libs/breakpad/src/client/linux/dump_writer_common/ucontext_reader.h \
-        libs/breakpad/src/client/linux/microdump_writer/microdump_writer.h \
-        libs/breakpad/src/client/linux/minidump_writer/cpu_set.h \
-        libs/breakpad/src/client/linux/minidump_writer/proc_cpuinfo_reader.h \
-        libs/breakpad/src/client/linux/minidump_writer/minidump_writer.h \
-        libs/breakpad/src/client/linux/minidump_writer/line_reader.h \
-        libs/breakpad/src/client/linux/minidump_writer/linux_dumper.h \
-        libs/breakpad/src/client/linux/minidump_writer/linux_ptrace_dumper.h \
-        libs/breakpad/src/client/linux/minidump_writer/directory_reader.h \
-        libs/breakpad/src/client/minidump_file_writer-inl.h \
-        libs/breakpad/src/client/minidump_file_writer.h \
-        libs/breakpad/src/common/scoped_ptr.h \
-        libs/breakpad/src/common/linux/linux_libc_support.h \
-        libs/breakpad/src/common/linux/eintr_wrapper.h \
-        libs/breakpad/src/common/linux/ignore_ret.h \
-        libs/breakpad/src/common/linux/file_id.h \
-        libs/breakpad/src/common/linux/memory_mapped_file.h \
-        libs/breakpad/src/common/linux/safe_readlink.h \
-        libs/breakpad/src/common/linux/guid_creator.h \
-        libs/breakpad/src/common/linux/elfutils.h \
-        libs/breakpad/src/common/linux/elfutils-inl.h \
-        libs/breakpad/src/common/linux/elf_gnu_compat.h \
-        libs/breakpad/src/common/using_std_string.h \
-        libs/breakpad/src/common/memory.h \
-        libs/breakpad/src/common/basictypes.h \
-        libs/breakpad/src/common/memory_range.h \
-        libs/breakpad/src/common/string_conversion.h \
-        libs/breakpad/src/common/convert_UTF.h \
-        libs/breakpad/src/google_breakpad/common/minidump_format.h \
-        libs/breakpad/src/google_breakpad/common/minidump_size.h \
-        libs/breakpad/src/google_breakpad/common/breakpad_types.h \
-        libs/breakpad/src/third_party/lss/linux_syscall_support.h
-    SOURCES += \
-        libs/breakpad/src/client/linux/crash_generation/crash_generation_client.cc \
-        libs/breakpad/src/client/linux/handler/exception_handler.cc \
-        libs/breakpad/src/client/linux/handler/minidump_descriptor.cc \
-        libs/breakpad/src/client/linux/dump_writer_common/thread_info.cc \
-        libs/breakpad/src/client/linux/dump_writer_common/ucontext_reader.cc \
-        libs/breakpad/src/client/linux/log/log.cc \
-        libs/breakpad/src/client/linux/microdump_writer/microdump_writer.cc \
-        libs/breakpad/src/client/linux/minidump_writer/minidump_writer.cc \
-        libs/breakpad/src/client/linux/minidump_writer/linux_dumper.cc \
-        libs/breakpad/src/client/linux/minidump_writer/linux_ptrace_dumper.cc \
-        libs/breakpad/src/client/minidump_file_writer.cc \
-        libs/breakpad/src/common/linux/linux_libc_support.cc \
-        libs/breakpad/src/common/linux/file_id.cc \
-        libs/breakpad/src/common/linux/memory_mapped_file.cc \
-        libs/breakpad/src/common/linux/safe_readlink.cc \
-        libs/breakpad/src/common/linux/guid_creator.cc \
-        libs/breakpad/src/common/linux/elfutils.cc \
-        libs/breakpad/src/common/string_conversion.cc \
-        libs/breakpad/src/common/convert_UTF.c \
-        libs/breakpad/src/common/android/breakpad_getcontext.S
 }
 
 #

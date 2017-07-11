@@ -277,7 +277,6 @@ public:
     Q_PROPERTY(bool        supportsThrottleModeCenterZero   READ supportsThrottleModeCenterZero                         CONSTANT)
     Q_PROPERTY(bool                 supportsJSButton        READ supportsJSButton                                       CONSTANT)
     Q_PROPERTY(bool                 supportsRadio           READ supportsRadio                                          CONSTANT)
-    Q_PROPERTY(bool               supportsCalibratePressure READ supportsCalibratePressure                              CONSTANT)
     Q_PROPERTY(bool               supportsMotorInterference READ supportsMotorInterference                              CONSTANT)
     Q_PROPERTY(bool                 autoDisconnect          MEMBER _autoDisconnect                                      NOTIFY autoDisconnectChanged)
     Q_PROPERTY(QString              prearmError             READ prearmError            WRITE setPrearmError            NOTIFY prearmErrorChanged)
@@ -346,12 +345,15 @@ public:
     Q_PROPERTY(FactGroup* vibration   READ vibrationFactGroup   CONSTANT)
     Q_PROPERTY(FactGroup* temperature READ temperatureFactGroup CONSTANT)
 
-    Q_PROPERTY(int firmwareMajorVersion READ firmwareMajorVersion NOTIFY firmwareMajorVersionChanged)
-    Q_PROPERTY(int firmwareMinorVersion READ firmwareMinorVersion NOTIFY firmwareMinorVersionChanged)
-    Q_PROPERTY(int firmwarePatchVersion READ firmwarePatchVersion NOTIFY firmwarePatchVersionChanged)
-    Q_PROPERTY(int firmwareVersionType READ firmwareVersionType NOTIFY firmwareVersionTypeChanged)
-    Q_PROPERTY(QString firmwareVersionTypeString READ firmwareVersionTypeString NOTIFY firmwareVersionTypeChanged)
-    Q_PROPERTY(QString gitHash READ gitHash NOTIFY gitHashChanged)
+    Q_PROPERTY(int      firmwareMajorVersion        READ firmwareMajorVersion       NOTIFY firmwareVersionChanged)
+    Q_PROPERTY(int      firmwareMinorVersion        READ firmwareMinorVersion       NOTIFY firmwareVersionChanged)
+    Q_PROPERTY(int      firmwarePatchVersion        READ firmwarePatchVersion       NOTIFY firmwareVersionChanged)
+    Q_PROPERTY(int      firmwareVersionType         READ firmwareVersionType        NOTIFY firmwareVersionChanged)
+    Q_PROPERTY(QString  firmwareVersionTypeString   READ firmwareVersionTypeString  NOTIFY firmwareVersionChanged)
+    Q_PROPERTY(int      firmwareCustomMajorVersion  READ firmwareCustomMajorVersion NOTIFY firmwareCustomVersionChanged)
+    Q_PROPERTY(int      firmwareCustomMinorVersion  READ firmwareCustomMinorVersion NOTIFY firmwareCustomVersionChanged)
+    Q_PROPERTY(int      firmwareCustomPatchVersion  READ firmwareCustomPatchVersion NOTIFY firmwareCustomVersionChanged)
+    Q_PROPERTY(QString  gitHash                     READ gitHash                    NOTIFY gitHashChanged)
 
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
@@ -511,7 +513,6 @@ public:
     bool supportsThrottleModeCenterZero(void) const;
     bool supportsRadio(void) const;
     bool supportsJSButton(void) const;
-    bool supportsCalibratePressure(void) const;
     bool supportsMotorInterference(void) const;
 
     void setGuidedMode(bool guidedMode);
@@ -626,8 +627,12 @@ public:
     int firmwareMinorVersion(void) const { return _firmwareMinorVersion; }
     int firmwarePatchVersion(void) const { return _firmwarePatchVersion; }
     int firmwareVersionType(void) const { return _firmwareVersionType; }
+    int firmwareCustomMajorVersion(void) const { return _firmwareCustomMajorVersion; }
+    int firmwareCustomMinorVersion(void) const { return _firmwareCustomMinorVersion; }
+    int firmwareCustomPatchVersion(void) const { return _firmwareCustomPatchVersion; }
     QString firmwareVersionTypeString(void) const;
     void setFirmwareVersion(int majorVersion, int minorVersion, int patchVersion, FIRMWARE_VERSION_TYPE versionType = FIRMWARE_VERSION_TYPE_OFFICIAL);
+    void setFirmwareCustomVersion(int majorVersion, int minorVersion, int patchVersion);
     static const int versionNotSetValue = -1;
 
     QString gitHash(void) const { return _gitHash; }
@@ -663,6 +668,7 @@ public:
     const QVariantList& toolBarIndicators   ();
     const QVariantList& cameraList          (void) const;
 
+    bool capabilitiesKnown(void) const { return _vehicleCapabilitiesKnown; }
     bool supportsMissionItemInt(void) const { return _supportsMissionItemInt; }
 
     /// @true: When flying a mission the vehicle is always facing towards the next waypoint
@@ -671,6 +677,8 @@ public:
     /// The vehicle is responsible for making the initial request for the Plan.
     /// @return: true: initial request is complete, false: initial request is still in progress;
     bool initialPlanRequestComplete(void) const { return _initialPlanRequestComplete; }
+
+    void forceInitialPlanRequestComplete(void) { _initialPlanRequestComplete = true; }
 
     void _setFlying(bool flying);
     void _setLanding(bool landing);
@@ -703,6 +711,7 @@ signals:
     void firmwareTypeChanged(void);
     void vehicleTypeChanged(void);
     void initialPlanRequestCompleted();
+    void capabilitiesKnownChanged(bool capabilitiesKnown);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -730,11 +739,8 @@ signals:
     void telemetryRNoiseChanged     (int value);
     void autoDisarmChanged          (void);
 
-    void firmwareMajorVersionChanged(int major);
-    void firmwareMinorVersionChanged(int minor);
-    void firmwarePatchVersionChanged(int patch);
-    void firmwareVersionTypeChanged(int type);
-
+    void firmwareVersionChanged(void);
+    void firmwareCustomVersionChanged(void);
     void gitHashChanged(QString hash);
 
     /// New RC channel values
@@ -982,6 +988,9 @@ private:
     int _firmwareMajorVersion;
     int _firmwareMinorVersion;
     int _firmwarePatchVersion;
+    int _firmwareCustomMajorVersion;
+    int _firmwareCustomMinorVersion;
+    int _firmwareCustomPatchVersion;
     FIRMWARE_VERSION_TYPE _firmwareVersionType;
 
     QString _gitHash;

@@ -51,7 +51,7 @@ MockLink::MockLink(SharedLinkConfigurationPointer& config)
     , _connected(false)
     , _mavlinkChannel(0)
     , _vehicleSystemId(_nextVehicleSystemId++)
-    , _vehicleComponentId(200)
+    , _vehicleComponentId(MAV_COMP_ID_AUTOPILOT1)
     , _inNSH(false)
     , _mavlinkStarted(true)
     , _mavBaseMode(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED)
@@ -872,7 +872,7 @@ void MockLink::_respondWithAutopilotVersion(void)
     uint32_t flightVersion = 0;
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         flightVersion |= 3 << (8*3);
-        flightVersion |= 3 << (8*2);
+        flightVersion |= 5 << (8*2);
         flightVersion |= 0 << (8*1);
         flightVersion |= FIRMWARE_VERSION_TYPE_DEV << (8*0);
     } else if (_firmwareType == MAV_AUTOPILOT_PX4) {
@@ -924,7 +924,8 @@ void MockLink::_sendHomePosition(void)
                                         (int32_t)(_vehicleAltitude * 1000),
                                         0.0f, 0.0f, 0.0f,
                                         &bogus[0],
-            0.0f, 0.0f, 0.0f);
+                                        0.0f, 0.0f, 0.0f,
+                                        0);
     respondWithMavlinkMessage(msg);
 }
 

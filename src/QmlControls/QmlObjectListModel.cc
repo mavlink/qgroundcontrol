@@ -196,18 +196,18 @@ int QmlObjectListModel::count(void) const
 
 void QmlObjectListModel::setDirty(bool dirty)
 {
-    _dirty = dirty;
-
-    if (!dirty) {
-        // Need to clear dirty from all children
-        foreach(QObject* object, _objectList) {
-            if (object->property("dirty").isValid()) {
-                object->setProperty("dirty", false);
+    if (_dirty != dirty) {
+        _dirty = dirty;
+        if (!dirty) {
+            // Need to clear dirty from all children
+            foreach(QObject* object, _objectList) {
+                if (object->property("dirty").isValid()) {
+                    object->setProperty("dirty", false);
+                }
             }
         }
+        emit dirtyChanged(_dirty);
     }
-    
-    emit dirtyChanged(_dirty);
 }
 
 void QmlObjectListModel::_childDirtyChanged(bool dirty)

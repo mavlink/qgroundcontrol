@@ -75,7 +75,7 @@ private:
     QNetworkReply*          _reply;
     QNetworkRequest         _request;
     QNetworkAccessManager*  _networkManager;
-    QByteArray              _badMapBox;
+    QByteArray              _badMapbox;
     QByteArray              _badTile;
     QTimer                  _timer;
     static int              _requestCount;

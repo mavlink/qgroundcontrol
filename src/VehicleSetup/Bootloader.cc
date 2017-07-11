@@ -582,6 +582,13 @@ bool Bootloader::getPX4BoardInfo(QextSerialPort* port, uint32_t& bootloaderVersi
         qWarning() << _errorString;
         goto Error;
     }
+
+    // Older V2 boards have large flash space but silicon error which prevents it from being used. Bootloader v5 and above
+    // will correctly account/report for this. Older bootloaders will not. Newer V2 board which support larger flash space are
+    // reported as V3 board id.
+    if (_boardID == boardIDPX4FMUV2 && _bootloaderVersion >= _bootloaderVersionV2CorrectFlash && _boardFlashSize > _flashSizeSmall) {
+        _boardID = boardIDPX4FMUV3;
+    }
     
     bootloaderVersion = _bootloaderVersion;
     boardID = _boardID;

@@ -24,6 +24,8 @@ public:
     Q_PROPERTY(Fact* offlineEditingVehicleType          READ offlineEditingVehicleType          CONSTANT)
     Q_PROPERTY(Fact* offlineEditingCruiseSpeed          READ offlineEditingCruiseSpeed          CONSTANT)
     Q_PROPERTY(Fact* offlineEditingHoverSpeed           READ offlineEditingHoverSpeed           CONSTANT)
+    Q_PROPERTY(Fact* offlineEditingAscentSpeed          READ offlineEditingAscentSpeed          CONSTANT)
+    Q_PROPERTY(Fact* offlineEditingDescentSpeed         READ offlineEditingDescentSpeed         CONSTANT)
     Q_PROPERTY(Fact* batteryPercentRemainingAnnounce    READ batteryPercentRemainingAnnounce    CONSTANT)
     Q_PROPERTY(Fact* defaultMissionItemAltitude         READ defaultMissionItemAltitude         CONSTANT)
     Q_PROPERTY(Fact* telemetrySave                      READ telemetrySave                      CONSTANT)
@@ -35,21 +37,29 @@ public:
     Q_PROPERTY(Fact* showLargeCompass                   READ showLargeCompass                   CONSTANT)
     Q_PROPERTY(Fact* savePath                           READ savePath                           CONSTANT)
     Q_PROPERTY(Fact* autoLoadMissions                   READ autoLoadMissions                   CONSTANT)
+    Q_PROPERTY(Fact* mapboxToken                        READ mapboxToken                        CONSTANT)
+    Q_PROPERTY(Fact* esriToken                          READ esriToken                          CONSTANT)
+    Q_PROPERTY(Fact* defaultFirmwareType                READ defaultFirmwareType                CONSTANT)
 
     Q_PROPERTY(QString missionSavePath      READ missionSavePath    NOTIFY savePathsChanged)
     Q_PROPERTY(QString parameterSavePath    READ parameterSavePath  NOTIFY savePathsChanged)
     Q_PROPERTY(QString telemetrySavePath    READ telemetrySavePath  NOTIFY savePathsChanged)
+    Q_PROPERTY(QString logSavePath          READ logSavePath        NOTIFY savePathsChanged)
+    Q_PROPERTY(QString videoSavePath        READ videoSavePath      NOTIFY savePathsChanged)
 
-    Q_PROPERTY(QString planFileExtension        MEMBER planFileExtension     CONSTANT)
+    Q_PROPERTY(QString planFileExtension        MEMBER planFileExtension        CONSTANT)
     Q_PROPERTY(QString missionFileExtension     MEMBER missionFileExtension     CONSTANT)
     Q_PROPERTY(QString waypointsFileExtension   MEMBER waypointsFileExtension   CONSTANT)
     Q_PROPERTY(QString parameterFileExtension   MEMBER parameterFileExtension   CONSTANT)
     Q_PROPERTY(QString telemetryFileExtension   MEMBER telemetryFileExtension   CONSTANT)
+    Q_PROPERTY(QString logFileExtension         MEMBER logFileExtension         CONSTANT)
 
     Fact* offlineEditingFirmwareType        (void);
     Fact* offlineEditingVehicleType         (void);
     Fact* offlineEditingCruiseSpeed         (void);
     Fact* offlineEditingHoverSpeed          (void);
+    Fact* offlineEditingAscentSpeed         (void);
+    Fact* offlineEditingDescentSpeed        (void);
     Fact* batteryPercentRemainingAnnounce   (void);
     Fact* defaultMissionItemAltitude        (void);
     Fact* telemetrySave                     (void);
@@ -61,10 +71,15 @@ public:
     Fact* showLargeCompass                  (void);
     Fact* savePath                          (void);
     Fact* autoLoadMissions                  (void);
+    Fact* mapboxToken                       (void);
+    Fact* esriToken                         (void);
+    Fact* defaultFirmwareType               (void);
 
     QString missionSavePath     (void);
     QString parameterSavePath   (void);
     QString telemetrySavePath   (void);
+    QString logSavePath         (void);
+    QString videoSavePath         (void);
 
     static MAV_AUTOPILOT offlineEditingFirmwareTypeFromFirmwareType(MAV_AUTOPILOT firmwareType);
     static MAV_TYPE offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleType);
@@ -75,6 +90,8 @@ public:
     static const char* offlineEditingVehicleTypeSettingsName;
     static const char* offlineEditingCruiseSpeedSettingsName;
     static const char* offlineEditingHoverSpeedSettingsName;
+    static const char* offlineEditingAscentSpeedSettingsName;
+    static const char* offlineEditingDescentSpeedSettingsName;
     static const char* batteryPercentRemainingAnnounceSettingsName;
     static const char* defaultMissionItemAltitudeSettingsName;
     static const char* telemetrySaveName;
@@ -86,6 +103,9 @@ public:
     static const char* showLargeCompassName;
     static const char* savePathName;
     static const char* autoLoadMissionsName;
+    static const char* mapboxTokenName;
+    static const char* esriTokenName;
+    static const char* defaultFirmwareTypeName;
 
     // Application wide file extensions
     static const char* parameterFileExtension;
@@ -95,11 +115,14 @@ public:
     static const char* fenceFileExtension;
     static const char* rallyPointFileExtension;
     static const char* telemetryFileExtension;
+    static const char* logFileExtension;
 
     // Child directories of savePath for specific file types
     static const char* parameterDirectory;
     static const char* telemetryDirectory;
     static const char* missionDirectory;
+    static const char* logDirectory;
+    static const char* videoDirectory;
 
 signals:
     void savePathsChanged(void);
@@ -113,6 +136,8 @@ private:
     SettingsFact* _offlineEditingVehicleTypeFact;
     SettingsFact* _offlineEditingCruiseSpeedFact;
     SettingsFact* _offlineEditingHoverSpeedFact;
+    SettingsFact* _offlineEditingAscentSpeedFact;
+    SettingsFact* _offlineEditingDescentSpeedFact;
     SettingsFact* _batteryPercentRemainingAnnounceFact;
     SettingsFact* _defaultMissionItemAltitudeFact;
     SettingsFact* _telemetrySaveFact;
@@ -124,6 +149,9 @@ private:
     SettingsFact* _showLargeCompassFact;
     SettingsFact* _savePathFact;
     SettingsFact* _autoLoadMissionsFact;
+    SettingsFact* _mapboxTokenFact;
+    SettingsFact* _esriTokenFact;
+    SettingsFact* _defaultFirmwareTypeFact;
 };
 
 #endif

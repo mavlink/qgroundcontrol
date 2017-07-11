@@ -40,14 +40,17 @@ APMAirframeComponentController::APMAirframeComponentController(void) :
     }
     _fillAirFrames();
 
-    Fact* frame;
+    Fact* frame = NULL;
     if (parameterExists(FactSystem::defaultComponentId, _oldFrameParam)) {
         frame = getParameterFact(FactSystem::defaultComponentId, _oldFrameParam);
-    } else {
+    } else if (parameterExists(FactSystem::defaultComponentId, _newFrameParam)){
         frame = getParameterFact(FactSystem::defaultComponentId, _newFrameParam);
     }
-    connect(frame, &Fact::rawValueChanged, this, &APMAirframeComponentController::_factFrameChanged);
-    _factFrameChanged(frame->rawValue());
+
+    if (frame) {
+        connect(frame, &Fact::rawValueChanged, this, &APMAirframeComponentController::_factFrameChanged);
+        _factFrameChanged(frame->rawValue());
+    }
 }
 
 APMAirframeComponentController::~APMAirframeComponentController()

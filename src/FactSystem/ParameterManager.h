@@ -170,6 +170,7 @@ private:
     bool        _initialLoadComplete;           ///< true: Initial load of all parameters complete, whether successful or not
     bool        _waitingForDefaultComponent;    ///< true: last chance wait for default component params
     bool        _saveRequired;                  ///< true: _saveToEEPROM should be called
+    bool        _logReplay;                     ///< true: running with log replay link
     QString     _versionParam;                  ///< Parameter which contains parameter set version
     int         _parameterSetMajorVersion;      ///< Version for parameter set, -1 if not known
     QObject*    _parameterMetaData;             ///< Opaque data from FirmwarePlugin::loadParameterMetaDataCall

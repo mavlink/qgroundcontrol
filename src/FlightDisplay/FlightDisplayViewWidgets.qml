@@ -94,7 +94,7 @@ Item {
     //-- Map warnings
     Column {
         anchors.horizontalCenter:   parent.horizontalCenter
-        anchors.verticalCenter:     parent.verticalCenter
+        anchors.top:                parent.verticalCenter
         spacing:                    ScreenTools.defaultFontPixelHeight
 
         QGCLabel {
@@ -113,6 +113,18 @@ Item {
             color:                      mapPal.text
             font.pointSize:             ScreenTools.largeFontPointSize
             text:                       _activeVehicle ? _activeVehicle.prearmError : ""
+        }
+
+        QGCLabel {
+            anchors.horizontalCenter:   parent.horizontalCenter
+            visible:                    _activeVehicle && _activeVehicle.prearmError
+            width:                      ScreenTools.defaultFontPixelWidth * 50
+            horizontalAlignment:        Text.AlignHCenter
+            wrapMode:                   Text.WordWrap
+            z:                          QGroundControl.zOrderTopMost
+            color:                      mapPal.text
+            font.pointSize:             ScreenTools.largeFontPointSize
+            text:                       "The vehicle has failed a pre-arm check. In order to arm the vehicle, resolve the failure or disable the arming check via the Safety tab on the Vehicle Setup page."
         }
     }
 

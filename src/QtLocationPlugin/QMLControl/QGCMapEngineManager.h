@@ -47,7 +47,6 @@ public:
     Q_PROPERTY(QString              tileSizeStr     READ    tileSizeStr     NOTIFY tileSizeChanged)
     Q_PROPERTY(QmlObjectListModel*  tileSets        READ    tileSets        NOTIFY tileSetsChanged)
     Q_PROPERTY(QStringList          mapList         READ    mapList         CONSTANT)
-    Q_PROPERTY(QString              mapboxToken     READ    mapboxToken     WRITE   setMapboxToken  NOTIFY  mapboxTokenChanged)
     Q_PROPERTY(quint32              maxMemCache     READ    maxMemCache     WRITE   setMaxMemCache  NOTIFY  maxMemCacheChanged)
     Q_PROPERTY(quint32              maxDiskCache    READ    maxDiskCache    WRITE   setMaxDiskCache NOTIFY  maxDiskCacheChanged)
     Q_PROPERTY(QString              errorMessage    READ    errorMessage    NOTIFY  errorMessageChanged)
@@ -57,7 +56,7 @@ public:
     //-- Tile set export
     Q_PROPERTY(int                  selectedCount   READ    selectedCount   NOTIFY selectedCountChanged)
     Q_PROPERTY(int                  actionProgress  READ    actionProgress  NOTIFY actionProgressChanged)
-    Q_PROPERTY(ImportAction         importAction    READ    importAction    NOTIFY importActionChanged)
+    Q_PROPERTY(ImportAction         importAction    READ    importAction    WRITE  setImportAction   NOTIFY importActionChanged)
 
     Q_PROPERTY(bool                 importReplace   READ    importReplace   WRITE   setImportReplace   NOTIFY importReplaceChanged)
 
@@ -67,6 +66,7 @@ public:
     Q_INVOKABLE void                saveSetting             (const QString& key,  const QString& value);
     Q_INVOKABLE QString             loadSetting             (const QString& key,  const QString& defaultValue);
     Q_INVOKABLE void                deleteTileSet           (QGCCachedTileSet* tileSet);
+    Q_INVOKABLE void                renameTileSet           (QGCCachedTileSet* tileSet, QString newName);
     Q_INVOKABLE QString             getUniqueName           ();
     Q_INVOKABLE bool                findName                (const QString& name);
     Q_INVOKABLE void                selectAll               ();
@@ -84,7 +84,6 @@ public:
     quint64                         tileSize                () { return _totalSet.tileSize; }
     QString                         tileSizeStr             ();
     QStringList                     mapList                 ();
-    QString                         mapboxToken             ();
     QmlObjectListModel*             tileSets                () { return &_tileSets; }
     quint32                         maxMemCache             ();
     quint32                         maxDiskCache            ();
@@ -96,11 +95,10 @@ public:
     ImportAction                    importAction            () { return _importAction; }
     bool                            importReplace           () { return _importReplace; }
 
-    void                            setMapboxToken          (QString token);
     void                            setMaxMemCache          (quint32 size);
     void                            setMaxDiskCache         (quint32 size);
     void                            setImportReplace        (bool replace) { _importReplace = replace; emit importReplaceChanged(); }
-
+    void                            setImportAction         (ImportAction action)  {_importAction = action; emit importActionChanged(); }
     void                            setErrorMessage         (const QString& error) { _errorMessage = error; emit errorMessageChanged(); }
 
     // Override from QGCTool
@@ -113,7 +111,6 @@ signals:
     void tileY1Changed          ();
     void tileCountChanged       ();
     void tileSizeChanged        ();
-    void mapboxTokenChanged     ();
     void tileSetsChanged        ();
     void maxMemCacheChanged     ();
     void maxDiskCacheChanged    ();

@@ -51,13 +51,15 @@ Rectangle {
                 }
             }
             missionItem.cameraOrientationFixed = false
-            if (index == -1) {
-                gridTypeCombo.currentIndex = _gridTypeManual
+            if (index == _cameraList.length) {
+                gridTypeCombo.currentIndex = _gridTypeCustomCamera
             } else {
                 gridTypeCombo.currentIndex = index
                 if (index != 1) {
                     // Specific camera is selected
-                    missionItem.cameraOrientationFixed = _vehicleCameraList[index - _gridTypeCamera].fixedOrientation
+                    var camera = _vehicleCameraList[index - _gridTypeCamera]
+                    missionItem.cameraOrientationFixed = camera.fixedOrientation
+                    missionItem.cameraMinTriggerInterval = camera.minTriggerInterval
                 }
             }
         }
@@ -181,6 +183,15 @@ Rectangle {
         anchors.right:      parent.right
         spacing:            _margin
 
+        QGCLabel {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(missionItem.cameraMinTriggerInterval.toFixed(1))
+            wrapMode:       Text.WordWrap
+            color:          qgcPal.warningText
+            visible:        missionItem.manualGrid.value !== true && missionItem.cameraShots > 0 && missionItem.cameraMinTriggerInterval !== 0 && missionItem.cameraMinTriggerInterval > missionItem.timeBetweenShots
+        }
+
         SectionHeader {
             id:         cameraHeader
             text:       qsTr("Camera")
@@ -207,6 +218,7 @@ Rectangle {
                         missionItem.manualGrid.value = false
                         missionItem.camera.value = gridTypeCombo.textAt(index)
                         missionItem.cameraOrientationFixed = false
+                        missionItem.cameraMinTriggerInterval = 0
                     } else {
                         missionItem.manualGrid.value = false
                         missionItem.camera.value = gridTypeCombo.textAt(index)
@@ -219,6 +231,7 @@ Rectangle {
                         missionItem.cameraFocalLength.rawValue          = _vehicleCameraList[listIndex].focalLength
                         missionItem.cameraOrientationLandscape.rawValue = _vehicleCameraList[listIndex].landscape ? 1 : 0
                         missionItem.cameraOrientationFixed              = _vehicleCameraList[listIndex].fixedOrientation
+                        missionItem.cameraMinTriggerInterval            = _vehicleCameraList[listIndex].minTriggerInterval
                         _noCameraValueRecalc = false
                         recalcFromCameraValues()
                     }
@@ -251,12 +264,6 @@ Rectangle {
                     fact:               missionItem.cameraTriggerDistance
                     enabled:            cameraTriggerDistanceCheckBox.checked
                 }
-            }
-
-            FactCheckBox {
-                text:       qsTr("Hover and capture image")
-                fact:       missionItem.hoverAndCapture
-                visible:    missionItem.hoverAndCaptureAllowed
             }
         }
 
@@ -364,11 +371,11 @@ Rectangle {
                 Item { Layout.fillWidth: true }
                 QGCLabel {
                     Layout.preferredWidth:  _root._fieldWidth
-                    text:                   qsTr("Frontal")
+                    text:                   qsTr("Front Lap")
                 }
                 QGCLabel {
                     Layout.preferredWidth:  _root._fieldWidth
-                    text:                   qsTr("Side")
+                    text:                   qsTr("Side Lap")
                 }
             }
 
@@ -385,6 +392,23 @@ Rectangle {
                     Layout.preferredWidth:  _root._fieldWidth
                     fact:                   missionItem.sideOverlap
                 }
+            }
+
+            FactCheckBox {
+                text:       qsTr("Hover and capture image")
+                fact:       missionItem.hoverAndCapture
+                visible:    missionItem.hoverAndCaptureAllowed
+                onClicked: {
+                    if (checked) {
+                        missionItem.cameraTriggerInTurnaround.rawValue = false
+                    }
+                }
+            }
+
+            FactCheckBox {
+                text:       qsTr("Take images in turnarounds")
+                fact:       missionItem.cameraTriggerInTurnaround
+                enabled:    !missionItem.hoverAndCapture.rawValue
             }
 
             SectionHeader {
@@ -405,22 +429,21 @@ Rectangle {
                     anchors.right:  parent.right
                     columnSpacing:  _margin
                     rowSpacing:     _margin
-                    columns:        3
+                    columns:        2
                     visible:        gridHeader.checked
 
                     QGCLabel {
-                        id:         angleText
-                        text:       qsTr("Angle")
+                        id:                 angleText
+                        text:               qsTr("Angle")
+                        Layout.fillWidth:   true
                     }
 
-                    Item { Layout.fillWidth: true }
-
-                    property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
                     ToolButton {
                         id:                     windRoseButton
                         anchors.verticalCenter: angleText.verticalCenter
                         iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
-                        visible: _activeVehicle ? _activeVehicle.fixedWing : true
+                        // Wind Rose is temporarily turned off until bugs are fixed
+                        visible:                false//_vehicle.fixedWing
 
                         onClicked: {
                             var cords = windRoseButton.mapToItem(_root, 0, 0)
@@ -433,7 +456,6 @@ Rectangle {
                     id:                 gridAngleText
                     fact:               missionItem.gridAngle
                     Layout.fillWidth:   true
-                    Layout.columnSpan:  1
                 }
 
                 QGCLabel { text: qsTr("Turnaround dist") }
@@ -442,11 +464,18 @@ Rectangle {
                     Layout.fillWidth:       true
                 }
 
+                QGCLabel { text: qsTr("Entry") }
+                FactComboBox {
+                    fact:                   missionItem.gridEntryLocation
+                    indexModel:             false
+                    Layout.fillWidth:       true
+                }
+
                 QGCCheckBox {
-                    text:       qsTr("Refly at 90 degree offset")
-                    checked:    missionItem.refly90Degrees
-                    onClicked:  missionItem.refly90Degrees = checked
-                    Layout.columnSpan: 2
+                    text:               qsTr("Refly at 90 degree offset")
+                    checked:            missionItem.refly90Degrees
+                    onClicked:          missionItem.refly90Degrees = checked
+                    Layout.columnSpan:  2
                 }
 
                 QGCLabel {
@@ -493,67 +522,80 @@ Rectangle {
             visible:    gridTypeCombo.currentIndex == _gridTypeManual
         }
 
-        Column {
+        GridLayout {
             anchors.left:   parent.left
             anchors.right:  parent.right
-            spacing:        _margin
+            columnSpacing:  _margin
+            rowSpacing:     _margin
+            columns:        2
             visible:        manualGridHeader.visible && manualGridHeader.checked
 
-            GridLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                columnSpacing:  _margin
-                rowSpacing:     _margin
-                columns:        4
-                visible:        gridHeader.checked
+            RowLayout {
+                spacing: _margin
 
                 QGCLabel {
-                    id:         manualAngleText
-                    text:       qsTr("Angle")
-                    Layout.columnSpan: 1
+                    id:                 manualAngleText
+                    text:               qsTr("Angle")
                     Layout.fillWidth:  true
                 }
 
-                property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
                 ToolButton {
                     id:                     manualWindRoseButton
                     anchors.verticalCenter: manualAngleText.verticalCenter
                     Layout.columnSpan:      1
                     iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
-                    visible: _activeVehicle ? _activeVehicle.fixedWing : true
+                    // Wind Rose is temporarily turned off until bugs are fixed
+                    visible:                false//_vehicle.fixedWing
 
                     onClicked: {
                         var cords = manualWindRoseButton.mapToItem(_root, 0, 0)
                         windRosePie.popup(cords.x + manualWindRoseButton.width / 2, cords.y + manualWindRoseButton.height / 2);
                     }
                 }
-
-                FactTextField {
-                    id:                 manualGridAngleText
-                    fact:               missionItem.gridAngle
-                    Layout.columnSpan:  2
-                }
             }
 
-            FactTextFieldGrid {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                columnSpacing:  ScreenTools.defaultFontPixelWidth
-                rowSpacing:     _margin
-                factList:       [ missionItem.gridSpacing, missionItem.gridAltitude, missionItem.turnaroundDist ]
-                factLabels:     [ qsTr("Spacing"), qsTr("Altitude"), qsTr("Turnaround dist")]
+            FactTextField {
+                id:                 manualGridAngleText
+                fact:               missionItem.gridAngle
+                Layout.fillWidth:   true
             }
+
+            QGCLabel { text: qsTr("Spacing") }
+            FactTextField {
+                fact:                   missionItem.gridSpacing
+                Layout.fillWidth:       true
+            }
+
+            QGCLabel { text: qsTr("Altitude") }
+            FactTextField {
+                fact:                   missionItem.gridAltitude
+                Layout.fillWidth:       true
+            }
+            QGCLabel { text: qsTr("Turnaround dist") }
+            FactTextField {
+                fact:                   missionItem.turnaroundDist
+                Layout.fillWidth:       true
+            }
+            QGCLabel { text: qsTr("Entry") }
+            FactComboBox {
+                fact:                   missionItem.gridEntryLocation
+                indexModel:             false
+                Layout.fillWidth:       true
+            }
+
 
             QGCCheckBox {
-                text:       qsTr("Refly at 90 degree offset")
-                checked:    missionItem.refly90Degrees
-                onClicked:  missionItem.refly90Degrees = checked
+                text:               qsTr("Refly at 90 degree offset")
+                checked:            missionItem.refly90Degrees
+                onClicked:          missionItem.refly90Degrees = checked
+                Layout.columnSpan:  2
             }
 
             FactCheckBox {
-                anchors.left:   parent.left
-                text:           qsTr("Relative altitude")
-                fact:           missionItem.gridAltitudeRelative
+                anchors.left:       parent.left
+                text:               qsTr("Relative altitude")
+                fact:               missionItem.gridAltitudeRelative
+                Layout.columnSpan:  2
             }
         }
 
@@ -687,7 +729,7 @@ Rectangle {
                 var angle = Math.round(Math.atan2(point.y, point.x) * 180 / Math.PI)
                 windRoseCanvas.requestPaint()
                 windRosePie.angle = angle
-                gridAngleText.text = angle
+                gridAngleText.text = - angle
                 gridAngleText.editingFinished();
             }
         }

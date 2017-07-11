@@ -57,6 +57,7 @@ Rectangle {
     property real   _missionTime:               _missionValid ? missionTime : NaN
     property int    _batteryChangePoint:        _controllerValid ? planMasterController.missionController.batteryChangePoint : -1
     property int    _batteriesRequired:         _controllerValid ? planMasterController.missionController.batteriesRequired : -1
+    property bool   _batteryInfoAvailable:      _batteryChangePoint >= 0 || _batteriesRequired >= 0
     property real   _controllerProgressPct:     _controllerValid ? planMasterController.missionController.progressPct : 0
     property bool   _syncInProgress:            _controllerValid ? planMasterController.missionController.syncInProgress : false
 
@@ -116,6 +117,8 @@ Rectangle {
 
     on_ControllerProgressPctChanged: {
         if (_controllerProgressPct === 1) {
+            missionStats.visible = false
+            uploadCompleteText.visible = true
             resetProgressTimer.start()
         } else if (_controllerProgressPct > 0) {
             progressBar.visible = true
@@ -124,8 +127,12 @@ Rectangle {
 
     Timer {
         id:             resetProgressTimer
-        interval:       1000
-        onTriggered:    progressBar.visible = false
+        interval:       5000
+        onTriggered: {
+            missionStats.visible = true
+            uploadCompleteText.visible = false
+            progressBar.visible = false
+        }
     }
 
     Rectangle {
@@ -138,15 +145,29 @@ Rectangle {
         visible:        false
     }
 
+    QGCLabel {
+        id:                     uploadCompleteText
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
+        anchors.left:           logoRow.right
+        anchors.right:          uploadButton.left
+        font.pointSize:         ScreenTools.largeFontPointSize
+        horizontalAlignment:    Text.AlignHCenter
+        verticalAlignment:      Text.AlignVCenter
+        text:                   "Done"
+        visible:                false
+    }
+
     GridLayout {
-        anchors.top:                parent.top
-        anchors.bottom:             parent.bottom
+        id:                     missionStats
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
         anchors.leftMargin:     _margins
         anchors.rightMargin:    _margins
         anchors.left:           logoRow.right
         anchors.right:          uploadButton.visible ? uploadButton.left : parent.right
-        columnSpacing:              0//_margins
-        columns:                    3
+        columnSpacing:          0
+        columns:                3
 
         GridLayout {
             anchors.verticalCenter: parent.verticalCenter
@@ -246,6 +267,7 @@ Rectangle {
             rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
             Layout.alignment:       Qt.AlignHCenter
+            visible:                _batteryInfoAvailable
 
             QGCLabel {
                 text:               qsTr("Battery")
@@ -278,7 +300,8 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         text:                   _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
         enabled:                !_controllerSyncInProgress
-        visible:                !_controllerOffline
+        visible:                !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible
+        primary:                _controllerDirty
         onClicked:              planMasterController.upload()
 
         PropertyAnimation on opacity {
@@ -286,7 +309,7 @@ Rectangle {
             from:           0.5
             to:             1
             loops:          Animation.Infinite
-            running:        _controllerDirty
+            running:        _controllerDirty && !_controllerSyncInProgress
             alwaysRunToEnd: true
             duration:       2000
         }

@@ -179,6 +179,11 @@ void QGCMAVLinkInspector::refreshView()
         mavlink_message_t* msg = ite.value();
         const mavlink_message_info_t* msgInfo = mavlink_get_message_info(msg);
 
+        if (!msgInfo) {
+            qWarning() << QStringLiteral("QGCMAVLinkInspector::refreshView NULL msgInfo msgid(%1)").arg(msg->msgid);
+            continue;
+        }
+
         // Ignore NULL values
         if (msg->msgid == 0xFF) continue;
 

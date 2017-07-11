@@ -79,3 +79,8 @@ android/gradle.properties
 # doxygen
 src/html/
 src/latex/
+
+# vagrant
+.vagrant/
+Qt*-linux*.tar.*
+

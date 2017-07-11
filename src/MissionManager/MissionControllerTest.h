@@ -33,12 +33,13 @@ private slots:
     void cleanup(void);
 
     void _testGimbalRecalc(void);
-
-private:
+    void _testLoadJsonSectionAvailable(void);
     void _testEmptyVehicleAPM(void);
     void _testEmptyVehiclePX4(void);
     void _testAddWayppointAPM(void);
     void _testAddWayppointPX4(void);
+
+private:
 #if 0
     void _testOfflineToOnlineAPM(void);
     void _testOfflineToOnlinePX4(void);

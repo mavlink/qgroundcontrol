@@ -170,10 +170,6 @@ public:
     /// to be assigned via parameters in firmware. Default is false.
     virtual bool supportsJSButton(void);
 
-    /// Returns true if the firmware supports calibrating the pressure sensor so the altitude will read
-    /// zero at the current pressure. Default is false.
-    virtual bool supportsCalibratePressure(void);
-
     /// Returns true if the firmware supports calibrating motor interference offsets for the compass
     /// (CompassMot). Default is true.
     virtual bool supportsMotorInterference(void);
@@ -264,6 +260,9 @@ public:
     /// Returns a list of CameraMetaData objects for available cameras on the vehicle.
     virtual const QVariantList& cameraList(const Vehicle* vehicle);
 
+    /// Returns a pointer to a dictionary of firmware-specific FactGroups
+    virtual QMap<QString, FactGroup*>* factGroups(void);
+
     /// @true: When flying a mission the vehicle is always facing towards the next waypoint
     virtual bool vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const;
 
@@ -287,14 +286,17 @@ public:
     static const char* px4FollowMeFlightMode;
 
 protected:
-    // Arms the vehicle, waiting for the arm state to change.
+    // Arms the vehicle with validation and retries
     // @return: true - vehicle armed, false - vehicle failed to arm
     bool _armVehicleAndValidate(Vehicle* vehicle);
+
+    // Sets the vehicle to the specified flight mode with validation and retries
+    // @return: true - vehicle in specified flight mode, false - flight mode change failed
+    bool _setFlightModeAndValidate(Vehicle* vehicle, const QString& flightMode);
 
 private:
     QVariantList _toolBarIndicatorList;
     static QVariantList _cameraList;    ///< Standard QGC camera list
-
 };
 
 class FirmwarePluginFactory : public QObject

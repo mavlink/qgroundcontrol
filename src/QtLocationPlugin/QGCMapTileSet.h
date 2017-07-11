@@ -42,7 +42,7 @@ public:
     QGCCachedTileSet    (const QString& name);
     ~QGCCachedTileSet   ();
 
-    Q_PROPERTY(QString      name                READ    name                CONSTANT)
+    Q_PROPERTY(QString      name                READ    name                NOTIFY nameChanged)
     Q_PROPERTY(QString      mapTypeStr          READ    mapTypeStr          CONSTANT)
     Q_PROPERTY(double       topleftLon          READ    topleftLon          CONSTANT)
     Q_PROPERTY(double       topleftLat          READ    topleftLat          CONSTANT)
@@ -147,6 +147,7 @@ signals:
     void        completeChanged         ();
     void        errorCountChanged       ();
     void        selectedChanged         ();
+    void        nameChanged             ();
 
 private slots:
     void _tileListFetched               (QList<QGCTile*> tiles);

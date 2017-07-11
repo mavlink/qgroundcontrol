@@ -20,27 +20,28 @@ Rectangle {
     visible:            missionItem.isCurrentItem
     radius:             _radius
 
-    property var    _masterControler:           masterController
-    property var    _missionController:         _masterControler.missionController
-    property var    _missionVehicle:            _masterControler.controllerVehicle
-    property bool   _vehicleHasHomePosition:    _missionVehicle.homePosition.isValid
-    property bool   _offlineEditing:            _missionVehicle.isOfflineEditingVehicle
-    property bool   _showOfflineVehicleCombos:  _offlineEditing && _multipleFirmware && _noMissionItemsAdded
-    property bool   _showCruiseSpeed:           !_missionVehicle.multiRotor
-    property bool   _showHoverSpeed:            _missionVehicle.multiRotor || _missionVehicle.vtol
-    property bool   _multipleFirmware:          QGroundControl.supportedFirmwareCount > 2
-    property real   _fieldWidth:                ScreenTools.defaultFontPixelWidth * 16
-    property bool   _mobile:                    ScreenTools.isMobile
-    property var    _savePath:                  QGroundControl.settingsManager.appSettings.missionSavePath
-    property var    _fileExtension:             QGroundControl.settingsManager.appSettings.missionFileExtension
-    property var    _appSettings:               QGroundControl.settingsManager.appSettings    
-    property bool   _waypointsOnlyMode:         QGroundControl.corePlugin.options.missionWaypointsOnly
+    property var    _masterControler:               masterController
+    property var    _missionController:             _masterControler.missionController
+    property var    _missionVehicle:                _masterControler.controllerVehicle
+    property bool   _vehicleHasHomePosition:        _missionVehicle.homePosition.isValid
+    property bool   _offlineEditing:                _missionVehicle.isOfflineEditingVehicle
+    property bool   _showOfflineVehicleCombos:      _multipleFirmware
+    property bool   _enableOfflineVehicleCombos:    _offlineEditing && _noMissionItemsAdded
+    property bool   _showCruiseSpeed:               !_missionVehicle.multiRotor
+    property bool   _showHoverSpeed:                _missionVehicle.multiRotor || _missionVehicle.vtol
+    property bool   _multipleFirmware:              QGroundControl.supportedFirmwareCount > 2
+    property real   _fieldWidth:                    ScreenTools.defaultFontPixelWidth * 16
+    property bool   _mobile:                        ScreenTools.isMobile
+    property var    _savePath:                      QGroundControl.settingsManager.appSettings.missionSavePath
+    property var    _fileExtension:                 QGroundControl.settingsManager.appSettings.missionFileExtension
+    property var    _appSettings:                   QGroundControl.settingsManager.appSettings
+    property bool   _waypointsOnlyMode:             QGroundControl.corePlugin.options.missionWaypointsOnly
 
     readonly property string _firmwareLabel:    qsTr("Firmware")
     readonly property string _vehicleLabel:     qsTr("Vehicle")
 
     QGCPalette { id: qgcPal }
-    QFileDialogController { id: fileController }
+    QGCFileDialogController { id: fileController }
 
     Loader {
         id:              deferedload
@@ -83,18 +84,10 @@ Rectangle {
             anchors.top:    parent ? parent.top   : undefined
             spacing:        _margin
 
-            SectionHeader {
-                id:         missionDefaultsSectionHeader
-                text:       qsTr("Mission Defaults")
-                checked:    true
-                showSpacer: false
-            }
-
             Column {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 spacing:        _margin
-                visible:        missionDefaultsSectionHeader.checked
 
                 GridLayout {
                     anchors.left:   parent.left
@@ -125,17 +118,42 @@ Rectangle {
                         enabled:            flightSpeedCheckBox.checked
                     }
                 } // GridLayout
+            }
+
+            CameraSection {
+                id:         cameraSection
+                checked:    missionItem.cameraSection.settingsSpecified
+            }
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                text:                   qsTr("Above camera commands will take affect immediately upon mission start.")
+                wrapMode:               Text.WordWrap
+                horizontalAlignment:    Text.AlignHCenter
+                font.pointSize:         ScreenTools.smallFontPointSize
+                visible:                cameraSection.checked
+            }
+
+            SectionHeader {
+                id:         missionEndHeader
+                text:       qsTr("Mission End")
+                checked:    true
+            }
+
+            Column {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        _margin
+                visible:        missionEndHeader.checked
 
                 QGCCheckBox {
-                    text:       qsTr("RTL after mission end")
+                    text:       qsTr("Return To Launch")
                     checked:    missionItem.missionEndRTL
                     onClicked:  missionItem.missionEndRTL = checked
                 }
             }
 
-            CameraSection {
-                checked: missionItem.cameraSection.settingsSpecified
-            }
 
             SectionHeader {
                 id:         vehicleInfoSectionHeader
@@ -162,6 +180,7 @@ Rectangle {
                     indexModel:             false
                     Layout.preferredWidth:  _fieldWidth
                     visible:                _showOfflineVehicleCombos
+                    enabled:                _enableOfflineVehicleCombos
                 }
 
                 QGCLabel {
@@ -174,6 +193,7 @@ Rectangle {
                     indexModel:             false
                     Layout.preferredWidth:  _fieldWidth
                     visible:                _showOfflineVehicleCombos
+                    enabled:                _enableOfflineVehicleCombos
                 }
 
                 QGCLabel {

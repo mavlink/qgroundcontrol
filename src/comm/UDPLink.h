@@ -34,9 +34,6 @@
 #include "QGCConfig.h"
 #include "LinkManager.h"
 
-#define QGC_UDP_LOCAL_PORT  14550
-#define QGC_UDP_TARGET_PORT 14555
-
 class UDPConfiguration : public LinkConfiguration
 {
     Q_OBJECT

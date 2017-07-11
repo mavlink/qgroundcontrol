@@ -62,12 +62,12 @@ QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager
     , _networkManager(networkManager)
 {
     if(_request.url().isEmpty()) {
-        if(!_badMapBox.size()) {
+        if(!_badMapbox.size()) {
             QFile b(":/res/notile.png");
             if(b.open(QFile::ReadOnly))
-                _badMapBox = b.readAll();
+                _badMapbox = b.readAll();
         }
-        setMapImageData(_badMapBox);
+        setMapImageData(_badMapbox);
         setMapImageFormat("png");
         setFinished(true);
         setCached(false);

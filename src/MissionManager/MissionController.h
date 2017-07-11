@@ -25,6 +25,7 @@ class MissionItem;
 class MissionSettingsItem;
 class AppSettings;
 class MissionManager;
+class SimpleMissionItem;
 
 Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
@@ -189,7 +190,7 @@ private:
     void _initVisualItem(VisualMissionItem* item);
     void _deinitVisualItem(VisualMissionItem* item);
     void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
-    static void _calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
+    void _calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
     static double _calcDistanceToHome(VisualMissionItem* currentItem, VisualMissionItem* homeItem);
     bool _findPreviousAltitude(int newIndex, double* prevAltitude, MAV_FRAME* prevFrame);
     static double _normalizeLat(double lat);
@@ -209,6 +210,9 @@ private:
     void _updateBatteryInfo(int waypointIndex);
     bool _loadItemsFromJson(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
     void _initLoadedVisualItems(QmlObjectListModel* loadedVisualItems);
+    void _addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair);
+    void _addCommandTimeDelay(SimpleMissionItem* simpleItem, bool vtolInHover);
+    void _addTimeDistance(bool vtolInHover, double hoverTime, double cruiseTime, double extraTime, double distance, int seqNum);
 
 private:
     MissionManager*         _missionManager;

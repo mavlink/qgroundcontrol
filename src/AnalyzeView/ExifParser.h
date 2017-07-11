@@ -4,13 +4,15 @@
 #include <QGeoCoordinate>
 #include <QDebug>
 
+#include "GeoTagController.h"
+
 class ExifParser
 {
 public:
     ExifParser();
     ~ExifParser();
     double readTime(QByteArray& buf);
-    bool write(QByteArray& data, QGeoCoordinate coordinate);
+    bool write(QByteArray& buf, GeoTagWorker::cameraFeedbackPacket& geotag);
 };
 
 #endif // EXIFPARSER_H

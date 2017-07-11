@@ -74,6 +74,11 @@ public:
     static const int boardIDTAPV1 = 64;         ///< TAP V1 board, as from USB PID
     static const int boardIDASCV1 = 65;         ///< ASC V1 board, as from USB PID
     static const int boardIDCrazyflie2 = 12;    ///< Crazyflie 2.0 board, as from USB PID
+
+    /// Simulated board id for V3 which is a V2 board which supports larger flash space
+    /// IMPORTANT: Make sure this id does not conflict with any newly added real board ids
+    static const int boardIDPX4FMUV3 = 255;
+
 signals:
     /// @brief Signals progress indicator for long running bootloader utility routines
     void updateProgress(int curr, int total);
@@ -141,11 +146,13 @@ private:
     
     QString _errorString;           ///< Last error
     
-    static const int _eraseTimeout = 20000;     ///< Msecs to wait for response from erase command
-    static const int _rebootTimeout = 10000;    ///< Msecs to wait for reboot command to cause serial port to disconnect
-    static const int _verifyTimeout = 5000;     ///< Msecs to wait for response to PROTO_GET_CRC command
-    static const int _readTimout = 2000;        ///< Msecs to wait for read bytes to become available
-    static const int _responseTimeout = 2000;   ///< Msecs to wait for command response bytes
+    static const int _eraseTimeout = 20000;                 ///< Msecs to wait for response from erase command
+    static const int _rebootTimeout = 10000;                ///< Msecs to wait for reboot command to cause serial port to disconnect
+    static const int _verifyTimeout = 5000;                 ///< Msecs to wait for response to PROTO_GET_CRC command
+    static const int _readTimout = 2000;                    ///< Msecs to wait for read bytes to become available
+    static const int _responseTimeout = 2000;               ///< Msecs to wait for command response bytes
+    static const int _flashSizeSmall = 1032192;             ///< Flash size for boards with silicon error
+    static const int _bootloaderVersionV2CorrectFlash = 5;  ///< Anything below this bootloader version on V2 boards cannot trust flash size
 };
 
 #endif // PX4FirmwareUpgrade_H

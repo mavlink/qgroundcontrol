@@ -205,7 +205,6 @@ bool PX4FirmwareUpgradeThreadWorker::_findBootloader(const QGCSerialPortInfo& po
     uint32_t bootloaderVersion = 0;
     uint32_t boardID;
     uint32_t flashSize = 0;
-
     
     _bootloaderPort = new QextSerialPort(QextSerialPort::Polling);
     if (radioMode) {

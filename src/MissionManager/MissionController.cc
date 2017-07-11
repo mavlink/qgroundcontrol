@@ -170,6 +170,8 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         _deinitAllVisualItems();
         _visualItems->deleteLater();
         _settingsItem = NULL;
+        _visualItems = NULL;
+        _updateContainsItems(); // This will clear containsItems which will be set again below. This will re-pop Start Mission confirmation.
         _visualItems = newControllerMissionItems;
 
         if (!_controllerVehicle->firmwarePlugin()->sendHomePositionToVehicle() || _visualItems->count() == 0) {
@@ -181,6 +183,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         }
 
         _initAllVisualItems();
+        _updateContainsItems();
         emit newItemsFromVehicle();
     }
     _itemsRequested = false;
@@ -863,10 +866,10 @@ void MissionController::_calcPrevWaypointValues(double homeAlt, VisualMissionIte
     // Convert to fixed altitudes
 
     distanceOk = true;
-    if (currentItem->coordinateHasRelativeAltitude()) {
+    if (currentItem != _settingsItem && currentItem->coordinateHasRelativeAltitude()) {
         currentCoord.setAltitude(homeAlt + currentCoord.altitude());
     }
-    if (prevItem->exitCoordinateHasRelativeAltitude()) {
+    if (prevItem != _settingsItem && prevItem->exitCoordinateHasRelativeAltitude()) {
         prevCoord.setAltitude(homeAlt + prevCoord.altitude());
     }
 
@@ -892,6 +895,28 @@ double MissionController::_calcDistanceToHome(VisualMissionItem* currentItem, Vi
     return distanceOk ? homeCoord.distanceTo(currentCoord) : 0.0;
 }
 
+void MissionController::_addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair)
+{
+    if (prevItemPairHashTable.contains(pair)) {
+        // Pair already exists and connected, just re-use
+        _linesTable[pair] = prevItemPairHashTable.take(pair);
+    } else {
+        // Create a new segment and wire update notifiers
+        auto linevect       = new CoordinateVector(pair.first->isSimpleItem() ? pair.first->coordinate() : pair.first->exitCoordinate(), pair.second->coordinate(), this);
+        auto originNotifier = pair.first->isSimpleItem() ? &VisualMissionItem::coordinateChanged : &VisualMissionItem::exitCoordinateChanged;
+        auto endNotifier    = &VisualMissionItem::coordinateChanged;
+
+        // Use signals/slots to update the coordinate endpoints
+        connect(pair.first,     originNotifier, linevect, &CoordinateVector::setCoordinate1);
+        connect(pair.second,    endNotifier,    linevect, &CoordinateVector::setCoordinate2);
+
+        // FIXME: We should ideally have signals for 2D position change, alt change, and 3D position change
+        // Not optimal, but still pretty fast, do a full update of range/bearing/altitudes
+        connect(pair.second, &VisualMissionItem::coordinateChanged, this, &MissionController::_recalcMissionFlightStatus);
+        _linesTable[pair] = linevect;
+    }
+}
+
 void MissionController::_recalcWaypointLines(void)
 {
     bool                firstCoordinateItem =   true;
@@ -905,7 +930,15 @@ void MissionController::_recalcWaypointLines(void)
     _linesTable.clear();
     _waypointLines.clear();
 
-    bool linkBackToHome = false;
+    bool linkEndToHome;
+    SimpleMissionItem* lastItem = _visualItems->value<SimpleMissionItem*>(_visualItems->count() - 1);
+    if (lastItem && (int)lastItem->command() == MAV_CMD_NAV_RETURN_TO_LAUNCH) {
+        linkEndToHome = true;
+    } else {
+        linkEndToHome = _settingsItem->missionEndRTL();
+    }
+
+    bool linkStartToHome = false;
     for (int i=1; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
 
@@ -915,35 +948,23 @@ void MissionController::_recalcWaypointLines(void)
                 item->isSimpleItem() &&
                 (qobject_cast<SimpleMissionItem*>(item)->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF ||
                  qobject_cast<SimpleMissionItem*>(item)->command() == MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF)) {
-            linkBackToHome = true;
+            linkStartToHome = true;
         }
 
         if (item->specifiesCoordinate()) {
             if (!item->isStandaloneCoordinate()) {
                 firstCoordinateItem = false;
                 VisualItemPair pair(lastCoordinateItem, item);
-                if (lastCoordinateItem != _settingsItem || (showHomePosition && linkBackToHome)) {
-                    if (old_table.contains(pair)) {
-                        // Do nothing, this segment already exists and is wired up
-                        _linesTable[pair] = old_table.take(pair);
-                    } else {
-                        // Create a new segment and wire update notifiers
-                        auto linevect       = new CoordinateVector(lastCoordinateItem->isSimpleItem() ? lastCoordinateItem->coordinate() : lastCoordinateItem->exitCoordinate(), item->coordinate(), this);
-                        auto originNotifier = lastCoordinateItem->isSimpleItem() ? &VisualMissionItem::coordinateChanged : &VisualMissionItem::exitCoordinateChanged,
-                                endNotifier    = &VisualMissionItem::coordinateChanged;
-                        // Use signals/slots to update the coordinate endpoints
-                        connect(lastCoordinateItem, originNotifier, linevect, &CoordinateVector::setCoordinate1);
-                        connect(item,               endNotifier,    linevect, &CoordinateVector::setCoordinate2);
-
-                        // FIXME: We should ideally have signals for 2D position change, alt change, and 3D position change
-                        // Not optimal, but still pretty fast, do a full update of range/bearing/altitudes
-                        connect(item, &VisualMissionItem::coordinateChanged, this, &MissionController::_recalcMissionFlightStatus);
-                        _linesTable[pair] = linevect;
-                    }
+                if (lastCoordinateItem != _settingsItem || (showHomePosition && linkStartToHome)) {
+                    _addWaypointLineSegment(old_table, pair);
                 }
                 lastCoordinateItem = item;
             }
         }
+    }
+    if (linkEndToHome && lastCoordinateItem != _settingsItem && showHomePosition) {
+        VisualItemPair pair(lastCoordinateItem, _settingsItem);
+        _addWaypointLineSegment(old_table, pair);
     }
 
     {
@@ -972,7 +993,7 @@ void MissionController::_updateBatteryInfo(int waypointIndex)
         _missionFlightStatus.hoverAmpsTotal = (_missionFlightStatus.hoverTime / 60.0) * _missionFlightStatus.hoverAmps;
         _missionFlightStatus.cruiseAmpsTotal = (_missionFlightStatus.cruiseTime / 60.0) * _missionFlightStatus.cruiseAmps;
         _missionFlightStatus.batteriesRequired = ceil((_missionFlightStatus.hoverAmpsTotal + _missionFlightStatus.cruiseAmpsTotal) / _missionFlightStatus.ampMinutesAvailable);
-        if (_missionFlightStatus.batteriesRequired == 2 && _missionFlightStatus.batteryChangePoint == -1) {
+        if (waypointIndex != -1 && _missionFlightStatus.batteriesRequired == 2 && _missionFlightStatus.batteryChangePoint == -1) {
             _missionFlightStatus.batteryChangePoint = waypointIndex - 1;
         }
     }
@@ -994,6 +1015,53 @@ void MissionController::_addCruiseTime(double cruiseTime, double cruiseDistance,
     _missionFlightStatus.cruiseDistance += cruiseDistance;
     _missionFlightStatus.totalDistance += cruiseDistance;
     _updateBatteryInfo(waypointIndex);
+}
+
+/// Adds additional time to a mission as specified by the command
+void MissionController::_addCommandTimeDelay(SimpleMissionItem* simpleItem, bool vtolInHover)
+{
+    double seconds = 0;
+
+    if (!simpleItem) {
+        return;
+    }
+
+    // This routine is currently quite minimal and only handles the simple cases.
+    switch ((int)simpleItem->command()) {
+    case MAV_CMD_NAV_WAYPOINT:
+    case MAV_CMD_CONDITION_DELAY:
+        seconds = simpleItem->missionItem().param1();
+        break;
+    }
+
+    _addTimeDistance(vtolInHover, 0, 0, seconds, 0, -1);
+}
+
+/// Adds the specified time to the appropriate hover or cruise time values.
+///     @param vtolInHover true: vtol is currrent in hover mode
+///     @param hoverTime    Amount of time tp add to hover
+///     @param cruiseTime   Amount of time to add to cruise
+///     @param extraTime    Amount of additional time to add to hover/cruise
+///     @param seqNum       Sequence number of waypoint for these values, -1 for no waypoint associated
+void MissionController::_addTimeDistance(bool vtolInHover, double hoverTime, double cruiseTime, double extraTime, double distance, int seqNum)
+{
+    if (_controllerVehicle->vtol()) {
+        if (vtolInHover) {
+            _addHoverTime(hoverTime, distance, seqNum);
+            _addHoverTime(extraTime, 0, -1);
+        } else {
+            _addCruiseTime(cruiseTime, distance, seqNum);
+            _addCruiseTime(extraTime, 0, -1);
+        }
+    } else {
+        if (_controllerVehicle->multiRotor()) {
+            _addHoverTime(hoverTime, distance, seqNum);
+            _addHoverTime(extraTime, 0, -1);
+        } else {
+            _addCruiseTime(cruiseTime, distance, seqNum);
+            _addCruiseTime(extraTime, 0, -1);
+        }
+    }
 }
 
 void MissionController::_recalcMissionFlightStatus()
@@ -1026,7 +1094,17 @@ void MissionController::_recalcMissionFlightStatus()
     _resetMissionFlightStatus();
 
     bool vtolInHover = true;
-    bool linkBackToHome = false;
+    bool linkStartToHome = false;
+    bool linkEndToHome = false;
+
+    if (showHomePosition) {
+        SimpleMissionItem* lastItem = _visualItems->value<SimpleMissionItem*>(_visualItems->count() - 1);
+        if (lastItem && (int)lastItem->command() == MAV_CMD_NAV_RETURN_TO_LAUNCH) {
+            linkEndToHome = true;
+        } else {
+            linkEndToHome = _settingsItem->missionEndRTL();
+        }
+    }
 
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
@@ -1071,7 +1149,14 @@ void MissionController::_recalcMissionFlightStatus()
         // Link back to home if first item is takeoff and we have home position
         if (firstCoordinateItem && simpleItem && simpleItem->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
             if (showHomePosition) {
-                linkBackToHome = true;
+                linkStartToHome = true;
+                if (_controllerVehicle->multiRotor() || _controllerVehicle->vtol()) {
+                    // We have to special case takeoff, assuming vehicle takes off straight up to specified altitude
+                    double azimuth, distance, altDifference;
+                    _calcPrevWaypointValues(homePositionAltitude, _settingsItem, simpleItem, &azimuth, &distance, &altDifference);
+                    double takeoffTime = qAbs(altDifference) / _appSettings->offlineEditingAscentSpeed()->rawValue().toDouble();
+                    _addHoverTime(takeoffTime, 0, -1);
+                }
             }
         }
 
@@ -1098,6 +1183,9 @@ void MissionController::_recalcMissionFlightStatus()
                 break;
             }
         }
+
+        // Check for command specific time delays
+        _addCommandTimeDelay(simpleItem, vtolInHover);
 
         if (item->specifiesCoordinate()) {
             // Update vehicle yaw assuming direction to next waypoint
@@ -1126,7 +1214,7 @@ void MissionController::_recalcMissionFlightStatus()
 
             if (!item->isStandaloneCoordinate()) {
                 firstCoordinateItem = false;
-                if (lastCoordinateItem != _settingsItem || linkBackToHome) {
+                if (lastCoordinateItem != _settingsItem || linkStartToHome) {
                     // This is a subsequent waypoint or we are forcing the first waypoint back to home
                     double azimuth, distance, altDifference;
 
@@ -1140,19 +1228,7 @@ void MissionController::_recalcMissionFlightStatus()
                     // Calculate time/distance
                     double hoverTime = distance / _missionFlightStatus.hoverSpeed;
                     double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
-                    if (_controllerVehicle->vtol()) {
-                        if (vtolInHover) {
-                            _addHoverTime(hoverTime, distance, item->sequenceNumber());
-                        } else {
-                            _addCruiseTime(cruiseTime, distance, item->sequenceNumber());
-                        }
-                    } else {
-                        if (_controllerVehicle->multiRotor()) {
-                            _addHoverTime(hoverTime, distance, item->sequenceNumber());
-                        } else {
-                            _addCruiseTime(cruiseTime, distance, item->sequenceNumber());
-                        }
-                    }
+                    _addTimeDistance(vtolInHover, hoverTime, cruiseTime, 0, distance, item->sequenceNumber());
                 }
 
                 if (complexItem) {
@@ -1162,19 +1238,8 @@ void MissionController::_recalcMissionFlightStatus()
 
                     double hoverTime = distance / _missionFlightStatus.hoverSpeed;
                     double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
-                    if (_controllerVehicle->vtol()) {
-                        if (vtolInHover) {
-                            _addHoverTime(hoverTime, distance, item->sequenceNumber());
-                        } else {
-                            _addCruiseTime(cruiseTime, distance, item->sequenceNumber());
-                        }
-                    } else {
-                        if (_controllerVehicle->multiRotor()) {
-                            _addHoverTime(hoverTime, distance, item->sequenceNumber());
-                        } else {
-                            _addCruiseTime(cruiseTime, distance, item->sequenceNumber());
-                        }
-                    }
+                    double extraTime = complexItem->additionalTimeDelay();
+                    _addTimeDistance(vtolInHover, hoverTime, cruiseTime, extraTime, distance, item->sequenceNumber());
                 }
 
                 item->setMissionFlightStatus(_missionFlightStatus);
@@ -1184,6 +1249,17 @@ void MissionController::_recalcMissionFlightStatus()
         }
     }
     lastCoordinateItem->setMissionVehicleYaw(_missionFlightStatus.vehicleYaw);
+
+    if (linkEndToHome && lastCoordinateItem != _settingsItem) {
+        double azimuth, distance, altDifference;
+        _calcPrevWaypointValues(homePositionAltitude, lastCoordinateItem, _settingsItem, &azimuth, &distance, &altDifference);
+
+        // Calculate time/distance
+        double hoverTime = distance / _missionFlightStatus.hoverSpeed;
+        double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
+        double landTime = qAbs(altDifference) / _appSettings->offlineEditingDescentSpeed()->rawValue().toDouble();
+        _addTimeDistance(vtolInHover, hoverTime, cruiseTime, distance, landTime, -1);
+    }
 
     if (_missionFlightStatus.mAhBattery != 0 && _missionFlightStatus.batteryChangePoint == -1) {
         _missionFlightStatus.batteryChangePoint = 0;
@@ -1258,7 +1334,7 @@ void MissionController::_setPlannedHomePositionFromFirstCoordinate(void)
         return;
     }
 
-    // Set the planned home position to be a deltae from first coordinate
+    // Set the planned home position to be a delta from first coordinate
     for (int i=1; i<_visualItems->count(); i++) {
         VisualMissionItem* item = _visualItems->value<VisualMissionItem*>(i);
 
@@ -1293,12 +1369,13 @@ void MissionController::_initAllVisualItems(void)
         _settingsItem->setIsCurrentItem(true);
     }
 
-    if (!_editMode && _controllerVehicle) {
-        _settingsItem->setCoordinate(_controllerVehicle->homePosition());
+    if (!_editMode && _managerVehicle->homePosition().isValid()) {
+        _settingsItem->setCoordinate(_managerVehicle->homePosition());
     }
 
-    connect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::_recalcAll);
-    connect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::plannedHomePositionChanged);
+    connect(_settingsItem, &MissionSettingsItem::coordinateChanged,     this, &MissionController::_recalcAll);
+    connect(_settingsItem, &MissionSettingsItem::missionEndRTLChanged,  this, &MissionController::_recalcAll);
+    connect(_settingsItem, &MissionSettingsItem::coordinateChanged,     this, &MissionController::plannedHomePositionChanged);
 
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
@@ -1352,7 +1429,8 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
     } else {
         ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(visualItem);
         if (complexItem) {
-            connect(complexItem, &ComplexMissionItem::complexDistanceChanged, this, &MissionController::_recalcMissionFlightStatus);
+            connect(complexItem, &ComplexMissionItem::complexDistanceChanged,       this, &MissionController::_recalcMissionFlightStatus);
+            connect(complexItem, &ComplexMissionItem::additionalTimeDelayChanged,   this, &MissionController::_recalcMissionFlightStatus);
         } else {
             qWarning() << "ComplexMissionItem not found";
         }
@@ -1481,6 +1559,8 @@ void MissionController::_addMissionSettings(QmlObjectListModel* visualItems, boo
 {
     MissionSettingsItem* settingsItem = new MissionSettingsItem(_controllerVehicle, visualItems);
 
+    qCDebug(MissionControllerLog) << "_addMissionSettings addToCenter" << addToCenter;
+
     visualItems->insert(0, settingsItem);
 
     if (addToCenter) {
@@ -1515,8 +1595,8 @@ void MissionController::_addMissionSettings(QmlObjectListModel* visualItems, boo
                 settingsItem->setCoordinate(QGeoCoordinate((south + ((north - south) / 2)) - 90.0, (west + ((east - west) / 2)) - 180.0, 0.0));
             }
         }
-    } else {
-        settingsItem->setCoordinate(_controllerVehicle->homePosition());
+    } else if (_managerVehicle->homePosition().isValid()) {
+        settingsItem->setCoordinate(_managerVehicle->homePosition());
     }
 }
 

@@ -103,6 +103,9 @@ void QGCMapPolygon::setDirty(bool dirty)
 {
     if (_dirty != dirty) {
         _dirty = dirty;
+        if (!dirty) {
+            _polygonModel.setDirty(false);
+        }
         emit dirtyChanged(dirty);
     }
 }
@@ -281,6 +284,8 @@ void QGCMapPolygon::removeVertex(int vertexIndex)
 
     _polygonPath.removeAt(vertexIndex);
     emit pathChanged();
+
+    _updateCenter();
 }
 
 void QGCMapPolygon::_polygonModelCountChanged(int count)
@@ -293,9 +298,13 @@ void QGCMapPolygon::_updateCenter(void)
     if (!_ignoreCenterUpdates) {
         QGeoCoordinate center;
 
-        if (_polygonPath.count() > 2) {
-            QPointF centerPoint = _toPolygonF().boundingRect().center();
-            center = _coordFromPointF(centerPoint);
+        if (_polygonPath.count() > 2) {            
+            QPointF centroid(0, 0);
+            QPolygonF polygonF = _toPolygonF();
+            for (int i=0; i<polygonF.count(); i++) {
+                centroid += polygonF[i];
+            }
+            center = _coordFromPointF(QPointF(centroid.x() / polygonF.count(), centroid.y() / polygonF.count()));
         }
 
         _center = center;

@@ -51,7 +51,7 @@
         <file alias="APMParameterFactMetaData.Rover.3.2.xml">APMParameterFactMetaData.Rover.3.2.xml</file>
         <file alias="APMParameterFactMetaData.Sub.3.4.xml">APMParameterFactMetaData.Sub.3.4.xml</file>
         <file alias="APMParameterFactMetaData.Sub.3.5.xml">APMParameterFactMetaData.Sub.3.5.xml</file>
-        <file alias="Copter.OfflineEditing.params">Copter3.4.OfflineEditing.params</file>
+        <file alias="Copter.OfflineEditing.params">Copter3.5.OfflineEditing.params</file>
         <file alias="Plane.OfflineEditing.params">Plane3.7.OfflineEditing.params</file>
     </qresource>
 </RCC>

@@ -36,10 +36,13 @@ private slots:
     void _testScanForStopVideoSection(void);
     void _testScanForStopImageSection(void);
     void _testScanForCameraModeSection(void);
-    void _testScanForFullSection(void);
+    void _testScanForTakePhotoSection(void);
+    void _testScanForMultipleItems(void);
 
 private:
     void _createSpy(CameraSection* cameraSection, MultiSignalSpy** cameraSpy);
+    void _validateItemScan(SimpleMissionItem* validItem);
+    void _resetSection(void);
 
     enum {
         specifyGimbalChangedIndex = 0,
@@ -69,4 +72,5 @@ private:
     SimpleMissionItem*  _validStopTimeItem;
     SimpleMissionItem*  _validCameraPhotoModeItem;
     SimpleMissionItem*  _validCameraVideoModeItem;
+    SimpleMissionItem*  _validTakePhotoItem;
 };

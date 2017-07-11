@@ -61,8 +61,8 @@ Rectangle {
                 text:   qsTr("Send status text + voice")
             }
             QGCButton {
-                text:       qsTr("Stop All MockLinks")
-                onClicked:  QGroundControl.stopAllMockLinks()
+                text:       qsTr("Stop One MockLink")
+                onClicked:  QGroundControl.stopOneMockLink()
             }
         }
     }

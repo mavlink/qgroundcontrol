@@ -140,7 +140,11 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _firmwareMajorVersion(versionNotSetValue)
     , _firmwareMinorVersion(versionNotSetValue)
     , _firmwarePatchVersion(versionNotSetValue)
+    , _firmwareCustomMajorVersion(versionNotSetValue)
+    , _firmwareCustomMinorVersion(versionNotSetValue)
+    , _firmwareCustomPatchVersion(versionNotSetValue)
     , _firmwareVersionType(FIRMWARE_VERSION_TYPE_OFFICIAL)
+    , _gitHash(versionNotSetValue)
     , _lastAnnouncedLowBatteryPercent(100)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
@@ -294,6 +298,10 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _firmwareMajorVersion(versionNotSetValue)
     , _firmwareMinorVersion(versionNotSetValue)
     , _firmwarePatchVersion(versionNotSetValue)
+    , _firmwareCustomMajorVersion(versionNotSetValue)
+    , _firmwareCustomMinorVersion(versionNotSetValue)
+    , _firmwareCustomPatchVersion(versionNotSetValue)
+    , _firmwareVersionType(FIRMWARE_VERSION_TYPE_OFFICIAL)
     , _gitHash(versionNotSetValue)
     , _lastAnnouncedLowBatteryPercent(100)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
@@ -363,6 +371,16 @@ void Vehicle::_commonInit(void)
     _addFactGroup(&_windFactGroup,      _windFactGroupName);
     _addFactGroup(&_vibrationFactGroup, _vibrationFactGroupName);
     _addFactGroup(&_temperatureFactGroup, _temperatureFactGroupName);
+
+    // Add firmware-specific fact groups, if provided
+    QMap<QString, FactGroup*>* fwFactGroups = _firmwarePlugin->factGroups();
+    if (fwFactGroups) {
+        QMapIterator<QString, FactGroup*> i(*fwFactGroups);
+        while(i.hasNext()) {
+            i.next();
+            _addFactGroup(i.value(), i.key());
+        }
+    }
 
     _flightDistanceFact.setRawValue(0);
     _flightTimeFact.setRawValue(0);
@@ -446,9 +464,11 @@ void Vehicle::resetCounters()
 
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
-
     if (message.sysid != _id && message.sysid != 0) {
-        return;
+        // We allow RADIO_STATUS messages which come from a link the vehicle is using to pass through and be handled
+        if (!(message.msgid == MAVLINK_MSG_ID_RADIO_STATUS && _containsLink(link))) {
+            return;
+        }
     }
 
     if (!_containsLink(link)) {
@@ -661,6 +681,11 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     mavlink_global_position_int_t globalPositionInt;
     mavlink_msg_global_position_int_decode(&message, &globalPositionInt);
 
+    // ArduPilot sends bogus GLOBAL_POSITION_INT messages with lat/lat/alt 0/0/0 even when it has not gps signal
+    if (globalPositionInt.lat == 0 && globalPositionInt.lon == 0 && globalPositionInt.alt == 0) {
+        return;
+    }
+
     _globalPositionIntMessageAvailable = true;
     //-- Set these here and emit a single signal instead of 3 for the same variable (_coordinate)
     _coordinate.setLatitude(globalPositionInt.lat  / (double)1E7);
@@ -691,6 +716,7 @@ void Vehicle::_setCapabilities(uint64_t capabilityBits)
         _supportsMissionItemInt = true;
     }
     _vehicleCapabilitiesKnown = true;
+    emit capabilitiesKnownChanged(true);
 
     qCDebug(VehicleLog) << QString("Vehicle %1 MISSION_ITEM_INT").arg(_supportsMissionItemInt ? QStringLiteral("supports") : QStringLiteral("does not support"));
 }
@@ -713,21 +739,25 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
         setFirmwareVersion(majorVersion, minorVersion, patchVersion, versionType);
     }
 
-    // Git hash
-    if (autopilotVersion.flight_custom_version[0] != 0) {
+    if (px4Firmware()) {
+        // Lower 3 bytes is custom version
+        int majorVersion, minorVersion, patchVersion;
+        majorVersion = autopilotVersion.flight_custom_version[2];
+        minorVersion = autopilotVersion.flight_custom_version[1];
+        patchVersion = autopilotVersion.flight_custom_version[0];
+        setFirmwareCustomVersion(majorVersion, minorVersion, patchVersion);
+
         // PX4 Firmware stores the first 16 characters of the git hash as binary, with the individual bytes in reverse order
-        if (px4Firmware()) {
-            _gitHash = "";
-            QByteArray array((char*)autopilotVersion.flight_custom_version, 8);
-            for (int i = 7; i >= 0; i--) {
-                _gitHash.append(QString("%1").arg(autopilotVersion.flight_custom_version[i], 2, 16, QChar('0')));
-            }
-        } else {
-            // APM Firmware stores the first 8 characters of the git hash as an ASCII character string
-            _gitHash = QString::fromUtf8((char*)autopilotVersion.flight_custom_version, 8);
+        _gitHash = "";
+        QByteArray array((char*)autopilotVersion.flight_custom_version, 8);
+        for (int i = 7; i >= 0; i--) {
+            _gitHash.append(QString("%1").arg(autopilotVersion.flight_custom_version[i], 2, 16, QChar('0')));
         }
-        emit gitHashChanged(_gitHash);
+    } else {
+        // APM Firmware stores the first 8 characters of the git hash as an ASCII character string
+        _gitHash = QString::fromUtf8((char*)autopilotVersion.flight_custom_version, 8);
     }
+    emit gitHashChanged(_gitHash);
 
     _setCapabilities(autopilotVersion.capabilities);
     _startPlanRequest();
@@ -759,7 +789,7 @@ void Vehicle::_handleHilActuatorControls(mavlink_message_t &message)
 
 void Vehicle::_handleCommandAck(mavlink_message_t& message)
 {
-    bool showError = true;
+    bool showError = false;
 
     mavlink_command_ack_t ack;
     mavlink_msg_command_ack_decode(&message, &ack);
@@ -1754,6 +1784,7 @@ void Vehicle::_startPlanRequest(void)
                 QDir missionAutoLoadDir(missionAutoLoadDirPath);
                 QString autoloadFilename = missionAutoLoadDir.absoluteFilePath(tr("AutoLoad%1.%2").arg(_id).arg(AppSettings::planFileExtension));
                 if (QFile(autoloadFilename).exists()) {
+                    _initialPlanRequestComplete = true; // We aren't going to load from the vehicle, so we are done
                     PlanMasterController::sendPlanToVehicle(this, autoloadFilename);
                     return;
                 }
@@ -1775,6 +1806,7 @@ void Vehicle::_missionLoadComplete(void)
     if (!_geoFenceManagerInitialRequestSent) {
         qCDebug(VehicleLog) << "_missionLoadComplete requesting geofence";
         _geoFenceManagerInitialRequestSent = true;
+        qCDebug(VehicleLog) << "_missionLoadComplete requesting geoFence";
         _geoFenceManager->loadFromVehicle();
     }
 }
@@ -1785,15 +1817,16 @@ void Vehicle::_geoFenceLoadComplete(void)
     if (!_rallyPointManagerInitialRequestSent) {
         qCDebug(VehicleLog) << "_missionLoadComplete requesting rally points";
         _rallyPointManagerInitialRequestSent = true;
+        qCDebug(VehicleLog) << "_missionLoadComplete requesting rally points";
         _rallyPointManager->loadFromVehicle();
     }
 }
-
 
 void Vehicle::_rallyPointLoadComplete(void)
 {
     if (!_initialPlanRequestComplete) {
         _initialPlanRequestComplete = true;
+        qCDebug(VehicleLog) << "_missionLoadComplete _initialPlanRequestComplete = true";
         emit initialPlanRequestCompleted();
     }
 }
@@ -1951,11 +1984,6 @@ bool Vehicle::supportsJSButton(void) const
     return _firmwarePlugin->supportsJSButton();
 }
 
-bool Vehicle::supportsCalibratePressure(void) const
-{
-    return _firmwarePlugin->supportsCalibratePressure();
-}
-
 bool Vehicle::supportsMotorInterference(void) const
 {
     return _firmwarePlugin->supportsMotorInterference();
@@ -2018,7 +2046,7 @@ void Vehicle::_announceArmedChanged(bool armed)
 
 void Vehicle::_setFlying(bool flying)
 {
-    if (armed() && _flying != flying) {
+    if (_flying != flying) {
         _flying = flying;
         emit flyingChanged(flying);
     }
@@ -2295,10 +2323,15 @@ void Vehicle::setFirmwareVersion(int majorVersion, int minorVersion, int patchVe
     _firmwareMinorVersion = minorVersion;
     _firmwarePatchVersion = patchVersion;
     _firmwareVersionType = versionType;
-    emit firmwareMajorVersionChanged(_firmwareMajorVersion);
-    emit firmwareMinorVersionChanged(_firmwareMinorVersion);
-    emit firmwarePatchVersionChanged(_firmwarePatchVersion);
-    emit firmwareVersionTypeChanged(_firmwareVersionType);
+    emit firmwareVersionChanged();
+}
+
+void Vehicle::setFirmwareCustomVersion(int majorVersion, int minorVersion, int patchVersion)
+{
+    _firmwareCustomMajorVersion = majorVersion;
+    _firmwareCustomMinorVersion = minorVersion;
+    _firmwareCustomPatchVersion = patchVersion;
+    emit firmwareCustomVersionChanged();
 }
 
 QString Vehicle::firmwareVersionTypeString(void) const
@@ -2411,7 +2444,9 @@ void Vehicle::triggerCamera(void)
                    MAV_CMD_DO_DIGICAM_CONTROL,
                    true,                            // show errors
                    0.0, 0.0, 0.0, 0.0,              // param 1-4 unused
-                   1.0);                            // trigger camera
+                   1.0,                             // trigger camera
+                   0.0,                             // param 6 unused
+                   1.0);                            // test shot flag
 }
 
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";

@@ -224,3 +224,27 @@ void MissionControllerTest::_testGimbalRecalc(void)
         QCOMPARE(visualItem->missionGimbalYaw(), 0.0);
     }
 }
+
+void MissionControllerTest::_testLoadJsonSectionAvailable(void)
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+    _masterController->loadFromFile(":/unittest/SectionTest.plan");
+
+    QmlObjectListModel* visualItems = _missionController->visualItems();
+    QVERIFY(visualItems);
+    QCOMPARE(visualItems->count(), 5);
+
+    // Check that only waypoint items have camera and speed sections
+    for (int i=1; i<visualItems->count(); i++) {
+        SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(i);
+        QVERIFY(item);
+        if ((int)item->command() == MAV_CMD_NAV_WAYPOINT) {
+            QCOMPARE(item->cameraSection()->available(), true);
+            QCOMPARE(item->speedSection()->available(), true);
+        } else {
+            QCOMPARE(item->cameraSection()->available(), false);
+            QCOMPARE(item->speedSection()->available(), false);
+        }
+
+    }
+}

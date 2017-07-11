@@ -22,7 +22,8 @@
         { "vendorID": 9900, "productID": 21,        "boardClass": "PX4 Flow",   "name": "PX4 Flow" },
 
         { "vendorID": 1027, "productID": 24597,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "3DR Radio" },
-        { "vendorID": 4292, "productID": 600000,    "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "SILabs Radio" },
+        { "vendorID": 1027, "productID": 24577,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "3DR Radio on FTDI" },
+        { "vendorID": 4292, "productID": 60000,    "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "SILabs Radio" },
 
         { "vendorID": 5446, "productID": 424,        "boardClass": "RTK GPS",    "name": "RTK GPS",              "comment": "Ublox RTK GPS" },
 

@@ -102,7 +102,7 @@ public:
     virtual bool            isSimpleItem            (void) const = 0;
     virtual bool            isStandaloneCoordinate  (void) const = 0;
     virtual bool            specifiesCoordinate     (void) const = 0;
-    virtual bool            specifiesAltitudeOnly   (void) const = 0;;
+    virtual bool            specifiesAltitudeOnly   (void) const = 0;
     virtual QString         commandDescription      (void) const = 0;
     virtual QString         commandName             (void) const = 0;
     virtual QString         abbreviation            (void) const = 0;

@@ -8,10 +8,12 @@ DropButton              1.0 DropButton.qml
 DropPanel               1.0 DropPanel.qml
 ExclusiveGroupItem      1.0 ExclusiveGroupItem.qml
 FactSliderPanel         1.0 FactSliderPanel.qml
+FileButton              1.0 FileButton.qml
 FlightModeDropdown      1.0 FlightModeDropdown.qml
 FlightModeMenu          1.0 FlightModeMenu.qml
 GeoFenceEditor          1.0 GeoFenceEditor.qml
 GeoFenceMapVisuals      1.0 GeoFenceMapVisuals.qml
+HackFileDialog          1.0 HackFileDialog.qml
 IndicatorButton         1.0 IndicatorButton.qml
 JoystickThumbPad        1.0 JoystickThumbPad.qml
 MainToolBar             1.0 MainToolBar.qml
@@ -23,6 +25,7 @@ MissionItemMapVisual    1.0 MissionItemMapVisual.qml
 MissionItemStatus       1.0 MissionItemStatus.qml
 ModeSwitchDisplay       1.0 ModeSwitchDisplay.qml
 MultiRotorMotorDisplay  1.0 MultiRotorMotorDisplay.qml
+NoMouseThroughRectangle 1.0 NoMouseThroughRectangle.qml
 ParameterEditor         1.0 ParameterEditor.qml
 ParameterEditorDialog   1.0 ParameterEditorDialog.qml
 PlanToolBar             1.0 PlanToolBar.qml

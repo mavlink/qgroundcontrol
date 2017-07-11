@@ -17,6 +17,7 @@
 #include "VideoReceiver.h"
 #include "SettingsManager.h"
 #include "QGCApplication.h"
+#include "VideoManager.h"
 
 #include <QDebug>
 #include <QUrl>
@@ -25,6 +26,27 @@
 #include <QSysInfo>
 
 QGC_LOGGING_CATEGORY(VideoReceiverLog, "VideoReceiverLog")
+
+#if defined(QGC_GST_STREAMING)
+
+static const char* kVideoExtensions[] =
+{
+    "mkv",
+    "mov",
+    "mp4"
+};
+
+static const char* kVideoMuxes[] =
+{
+    "matroskamux",
+    "qtmux",
+    "mp4mux"
+};
+
+#define NUM_MUXES (sizeof(kVideoMuxes) / sizeof(char*))
+
+#endif
+
 
 VideoReceiver::VideoReceiver(QObject* parent)
     : QObject(parent)
@@ -42,13 +64,20 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _socket(NULL)
     , _serverPresent(false)
 #endif
+    , _videoSurface(NULL)
+    , _videoRunning(false)
+    , _showFullScreen(false)
 {
+    _videoSurface  = new VideoSurface;
 #if defined(QGC_GST_STREAMING)
+    _setVideoSink(_videoSurface->videoSink());
     _timer.setSingleShot(true);
     connect(&_timer, &QTimer::timeout, this, &VideoReceiver::_timeout);
     connect(this, &VideoReceiver::msgErrorReceived, this, &VideoReceiver::_handleError);
     connect(this, &VideoReceiver::msgEOSReceived, this, &VideoReceiver::_handleEOS);
     connect(this, &VideoReceiver::msgStateChangedReceived, this, &VideoReceiver::_handleStateChanged);
+    connect(&_frameTimer, &QTimer::timeout, this, &VideoReceiver::_updateTimer);
+    _frameTimer.start(1000);
 #endif
 }
 
@@ -59,11 +88,17 @@ VideoReceiver::~VideoReceiver()
     if(_socket) {
         delete _socket;
     }
+    if (_videoSink) {
+        gst_object_unref(_videoSink);
+    }
 #endif
+    if(_videoSurface)
+        delete _videoSurface;
 }
 
 #if defined(QGC_GST_STREAMING)
-void VideoReceiver::setVideoSink(GstElement* sink)
+void
+VideoReceiver::_setVideoSink(GstElement* sink)
 {
     if (_videoSink) {
         gst_object_unref(_videoSink);
@@ -76,8 +111,18 @@ void VideoReceiver::setVideoSink(GstElement* sink)
 }
 #endif
 
+//-----------------------------------------------------------------------------
+void
+VideoReceiver::grabImage(QString imageFile)
+{
+    _imageFile = imageFile;
+    emit imageFileChanged();
+}
+
+//-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
-static void newPadCB(GstElement* element, GstPad* pad, gpointer data)
+static void
+newPadCB(GstElement* element, GstPad* pad, gpointer data)
 {
     gchar* name;
     name = gst_pad_get_name(pad);
@@ -93,8 +138,10 @@ static void newPadCB(GstElement* element, GstPad* pad, gpointer data)
 }
 #endif
 
+//-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
-void VideoReceiver::_connected()
+void
+VideoReceiver::_connected()
 {
     //-- Server showed up. Now we start the stream.
     _timer.stop();
@@ -105,8 +152,10 @@ void VideoReceiver::_connected()
 }
 #endif
 
+//-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
-void VideoReceiver::_socketError(QAbstractSocket::SocketError socketError)
+void
+VideoReceiver::_socketError(QAbstractSocket::SocketError socketError)
 {
     Q_UNUSED(socketError);
     _socket->deleteLater();
@@ -116,8 +165,10 @@ void VideoReceiver::_socketError(QAbstractSocket::SocketError socketError)
 }
 #endif
 
+//-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
-void VideoReceiver::_timeout()
+void
+VideoReceiver::_timeout()
 {
     //-- If socket is live, we got no connection nor a socket error
     if(_socket) {
@@ -138,6 +189,7 @@ void VideoReceiver::_timeout()
 }
 #endif
 
+//-----------------------------------------------------------------------------
 // When we finish our pipeline will look like this:
 //
 //                                   +-->queue-->decoder-->_videosink
@@ -147,7 +199,8 @@ void VideoReceiver::_timeout()
 //                                   ^
 //                                   |
 //                                   +-Here we will later link elements for recording
-void VideoReceiver::start()
+void
+VideoReceiver::start()
 {
 #if defined(QGC_GST_STREAMING)
     qCDebug(VideoReceiverLog) << "start()";
@@ -167,10 +220,11 @@ void VideoReceiver::start()
 
     _starting = true;
 
-    bool isUdp = _uri.contains("udp://");
+    bool isUdp  = _uri.contains("udp://");
+    bool isRtsp = _uri.contains("rtsp://");
 
     //-- For RTSP, check to see if server is there first
-    if(!_serverPresent && !isUdp) {
+    if(!_serverPresent && isRtsp) {
         _timer.start(100);
         return;
     }
@@ -183,7 +237,7 @@ void VideoReceiver::start()
     GstElement*     parser      = NULL;
     GstElement*     queue       = NULL;
     GstElement*     decoder     = NULL;
-    GstElement*     queue1     = NULL;
+    GstElement*     queue1      = NULL;
 
     do {
         if ((_pipeline = gst_pipeline_new("receiver")) == NULL) {
@@ -328,7 +382,9 @@ void VideoReceiver::start()
 #endif
 }
 
-void VideoReceiver::stop()
+//-----------------------------------------------------------------------------
+void
+VideoReceiver::stop()
 {
 #if defined(QGC_GST_STREAMING)
     qCDebug(VideoReceiverLog) << "stop()";
@@ -352,13 +408,17 @@ void VideoReceiver::stop()
 #endif
 }
 
-void VideoReceiver::setUri(const QString & uri)
+//-----------------------------------------------------------------------------
+void
+VideoReceiver::setUri(const QString & uri)
 {
     _uri = uri;
 }
 
+//-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
-void VideoReceiver::_shutdownPipeline() {
+void
+VideoReceiver::_shutdownPipeline() {
     if(!_pipeline) {
         qCDebug(VideoReceiverLog) << "No pipeline";
         return;
@@ -384,15 +444,19 @@ void VideoReceiver::_shutdownPipeline() {
 }
 #endif
 
+//-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
-void VideoReceiver::_handleError() {
+void
+VideoReceiver::_handleError() {
     qCDebug(VideoReceiverLog) << "Gstreamer error!";
     _shutdownPipeline();
 }
 #endif
 
+//-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
-void VideoReceiver::_handleEOS() {
+void
+VideoReceiver::_handleEOS() {
     if(_stopping) {
         _shutdownPipeline();
         qCDebug(VideoReceiverLog) << "Stopped";
@@ -405,15 +469,21 @@ void VideoReceiver::_handleEOS() {
 }
 #endif
 
+//-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
-void VideoReceiver::_handleStateChanged() {
-    _streaming = GST_STATE(_pipeline) == GST_STATE_PLAYING;
-    qCDebug(VideoReceiverLog) << "State changed, _streaming:" << _streaming;
+void
+VideoReceiver::_handleStateChanged() {
+    if(_pipeline) {
+        _streaming = GST_STATE(_pipeline) == GST_STATE_PLAYING;
+        qCDebug(VideoReceiverLog) << "State changed, _streaming:" << _streaming;
+    }
 }
 #endif
 
+//-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
-gboolean VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
+gboolean
+VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
 {
     Q_UNUSED(bus)
     Q_ASSERT(msg != NULL && data != NULL);
@@ -444,6 +514,44 @@ gboolean VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer dat
 }
 #endif
 
+//-----------------------------------------------------------------------------
+#if defined(QGC_GST_STREAMING)
+void
+VideoReceiver::_cleanupOldVideos()
+{
+    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+    QDir videoDir = QDir(savePath);
+    videoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
+    videoDir.setSorting(QDir::Time);
+    //-- All the movie extensions we support
+    QStringList nameFilters;
+    for(uint32_t i = 0; i < NUM_MUXES; i++) {
+        nameFilters << QString("*.") + QString(kVideoExtensions[i]);
+    }
+    videoDir.setNameFilters(nameFilters);
+    //-- get the list of videos stored
+    QFileInfoList vidList = videoDir.entryInfoList();
+    if(!vidList.isEmpty()) {
+        uint64_t total   = 0;
+        //-- Settings are stored using MB
+        uint64_t maxSize = (qgcApp()->toolbox()->settingsManager()->videoSettings()->maxVideoSize()->rawValue().toUInt() * 1024 * 1024);
+        //-- Compute total used storage
+        for(int i = 0; i < vidList.size(); i++) {
+            total += vidList[i].size();
+        }
+        //-- Remove old movies until max size is satisfied.
+        while(total >= maxSize && !vidList.isEmpty()) {
+            total -= vidList.last().size();
+            qCDebug(VideoReceiverLog) << "Removing old video file:" << vidList.last().filePath();
+            QFile file (vidList.last().filePath());
+            file.remove();
+            vidList.removeLast();
+        }
+    }
+}
+#endif
+
+//-----------------------------------------------------------------------------
 // When we finish our pipeline will look like this:
 //
 //                                   +-->queue-->decoder-->_videosink
@@ -455,9 +563,10 @@ gboolean VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer dat
 //   we are adding these elements->  +->teepad-->queue-->matroskamux-->_filesink |
 //                                        |                                      |
 //                                        +--------------------------------------+
-void VideoReceiver::startRecording(void)
+void
+VideoReceiver::startRecording(void)
 {
-#if defined(QGC_GST_STREAMING) && defined(QGC_ENABLE_VIDEORECORDING)
+#if defined(QGC_GST_STREAMING)
 
     qCDebug(VideoReceiverLog) << "startRecording()";
     // exit immediately if we are already recording
@@ -466,38 +575,50 @@ void VideoReceiver::startRecording(void)
         return;
     }
 
-    QString savePath = qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSavePath()->rawValue().toString();
+    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
     if(savePath.isEmpty()) {
-        qgcApp()->showMessage("Unabled to record video. Video save path must be specified in Settings.");
+        qgcApp()->showMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
         return;
     }
+
+    uint32_t muxIdx = qgcApp()->toolbox()->settingsManager()->videoSettings()->recordingFormat()->rawValue().toUInt();
+    if(muxIdx >= NUM_MUXES) {
+        qgcApp()->showMessage(tr("Invalid video format defined."));
+        return;
+    }
+
+    //-- Disk usage maintenance
+    _cleanupOldVideos();
 
     _sink           = new Sink();
     _sink->teepad   = gst_element_get_request_pad(_tee, "src_%u");
     _sink->queue    = gst_element_factory_make("queue", NULL);
-    _sink->mux      = gst_element_factory_make("matroskamux", NULL);
+    _sink->parse    = gst_element_factory_make("h264parse", NULL);
+    _sink->mux      = gst_element_factory_make(kVideoMuxes[muxIdx], NULL);
     _sink->filesink = gst_element_factory_make("filesink", NULL);
     _sink->removing = false;
 
-    if(!_sink->teepad || !_sink->queue || !_sink->mux || !_sink->filesink) {
+    if(!_sink->teepad || !_sink->queue || !_sink->mux || !_sink->filesink || !_sink->parse) {
         qCritical() << "VideoReceiver::startRecording() failed to make _sink elements";
         return;
     }
 
     QString videoFile;
-    videoFile = savePath + "/QGC-" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + ".mkv";
+    videoFile = savePath + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + "." + kVideoExtensions[muxIdx];
 
     g_object_set(G_OBJECT(_sink->filesink), "location", qPrintable(videoFile), NULL);
     qCDebug(VideoReceiverLog) << "New video file:" << videoFile;
 
     gst_object_ref(_sink->queue);
+    gst_object_ref(_sink->parse);
     gst_object_ref(_sink->mux);
     gst_object_ref(_sink->filesink);
 
-    gst_bin_add_many(GST_BIN(_pipeline), _sink->queue, _sink->mux, _sink->filesink, NULL);
-    gst_element_link_many(_sink->queue, _sink->mux, _sink->filesink, NULL);
+    gst_bin_add_many(GST_BIN(_pipeline), _sink->queue, _sink->parse, _sink->mux, _sink->filesink, NULL);
+    gst_element_link_many(_sink->queue, _sink->parse, _sink->mux, _sink->filesink, NULL);
 
     gst_element_sync_state_with_parent(_sink->queue);
+    gst_element_sync_state_with_parent(_sink->parse);
     gst_element_sync_state_with_parent(_sink->mux);
     gst_element_sync_state_with_parent(_sink->filesink);
 
@@ -511,9 +632,11 @@ void VideoReceiver::startRecording(void)
 #endif
 }
 
-void VideoReceiver::stopRecording(void)
+//-----------------------------------------------------------------------------
+void
+VideoReceiver::stopRecording(void)
 {
-#if defined(QGC_GST_STREAMING) && defined(QGC_ENABLE_VIDEORECORDING)
+#if defined(QGC_GST_STREAMING)
     qCDebug(VideoReceiverLog) << "stopRecording()";
     // exit immediately if we are not recording
     if(_pipeline == NULL || !_recording) {
@@ -525,15 +648,18 @@ void VideoReceiver::stopRecording(void)
 #endif
 }
 
+//-----------------------------------------------------------------------------
 // This is only installed on the transient _pipelineStopRec in order
 // to finalize a video file. It is not used for the main _pipeline.
 // -EOS has appeared on the bus of the temporary pipeline
 // -At this point all of the recoring elements have been flushed, and the video file has been finalized
 // -Now we can remove the temporary pipeline and its elements
 #if defined(QGC_GST_STREAMING)
-void VideoReceiver::_shutdownRecordingBranch()
+void
+VideoReceiver::_shutdownRecordingBranch()
 {
     gst_bin_remove(GST_BIN(_pipelineStopRec), _sink->queue);
+    gst_bin_remove(GST_BIN(_pipelineStopRec), _sink->parse);
     gst_bin_remove(GST_BIN(_pipelineStopRec), _sink->mux);
     gst_bin_remove(GST_BIN(_pipelineStopRec), _sink->filesink);
 
@@ -541,11 +667,13 @@ void VideoReceiver::_shutdownRecordingBranch()
     gst_object_unref(_pipelineStopRec);
     _pipelineStopRec = NULL;
 
-    gst_element_set_state(_sink->filesink, GST_STATE_NULL);
-    gst_element_set_state(_sink->mux, GST_STATE_NULL);
-    gst_element_set_state(_sink->queue, GST_STATE_NULL);
+    gst_element_set_state(_sink->filesink,  GST_STATE_NULL);
+    gst_element_set_state(_sink->parse,     GST_STATE_NULL);
+    gst_element_set_state(_sink->mux,       GST_STATE_NULL);
+    gst_element_set_state(_sink->queue,     GST_STATE_NULL);
 
     gst_object_unref(_sink->queue);
+    gst_object_unref(_sink->parse);
     gst_object_unref(_sink->mux);
     gst_object_unref(_sink->filesink);
 
@@ -558,17 +686,19 @@ void VideoReceiver::_shutdownRecordingBranch()
 }
 #endif
 
+//-----------------------------------------------------------------------------
 // -Unlink the recording branch from the tee in the main _pipeline
 // -Create a second temporary pipeline, and place the recording branch elements into that pipeline
 // -Setup watch and handler for EOS event on the temporary pipeline's bus
 // -Send an EOS event at the beginning of that pipeline
 #if defined(QGC_GST_STREAMING)
-void VideoReceiver::_detachRecordingBranch(GstPadProbeInfo* info)
+void
+VideoReceiver::_detachRecordingBranch(GstPadProbeInfo* info)
 {
     Q_UNUSED(info)
 
     // Also unlinks and unrefs
-    gst_bin_remove_many(GST_BIN(_pipeline), _sink->queue, _sink->mux, _sink->filesink, NULL);
+    gst_bin_remove_many(GST_BIN(_pipeline), _sink->queue, _sink->parse, _sink->mux, _sink->filesink, NULL);
 
     // Give tee its pad back
     gst_element_release_request_pad(_tee, _sink->teepad);
@@ -578,8 +708,8 @@ void VideoReceiver::_detachRecordingBranch(GstPadProbeInfo* info)
     _pipelineStopRec = gst_pipeline_new("pipeStopRec");
 
     // Put our elements from the recording branch into the temporary pipeline
-    gst_bin_add_many(GST_BIN(_pipelineStopRec), _sink->queue, _sink->mux, _sink->filesink, NULL);
-    gst_element_link_many(_sink->queue, _sink->mux, _sink->filesink, NULL);
+    gst_bin_add_many(GST_BIN(_pipelineStopRec), _sink->queue, _sink->parse, _sink->mux, _sink->filesink, NULL);
+    gst_element_link_many(_sink->queue, _sink->parse, _sink->mux, _sink->filesink, NULL);
 
     // Add handler for EOS event
     GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipelineStopRec));
@@ -599,16 +729,59 @@ void VideoReceiver::_detachRecordingBranch(GstPadProbeInfo* info)
 }
 #endif
 
+//-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
-GstPadProbeReturn VideoReceiver::_unlinkCallBack(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
+GstPadProbeReturn
+VideoReceiver::_unlinkCallBack(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
 {
     Q_UNUSED(pad);
-    Q_ASSERT(info != NULL && user_data != NULL);
-    VideoReceiver* pThis = (VideoReceiver*)user_data;
-    // We will only act once
-    if(g_atomic_int_compare_and_exchange(&pThis->_sink->removing, FALSE, TRUE))
-        pThis->_detachRecordingBranch(info);
-
+    if(info != NULL && user_data != NULL) {
+        VideoReceiver* pThis = (VideoReceiver*)user_data;
+        // We will only act once
+        if(g_atomic_int_compare_and_exchange(&pThis->_sink->removing, FALSE, TRUE)) {
+            pThis->_detachRecordingBranch(info);
+        }
+    }
     return GST_PAD_PROBE_REMOVE;
 }
 #endif
+
+//-----------------------------------------------------------------------------
+void
+VideoReceiver::_updateTimer()
+{
+#if defined(QGC_GST_STREAMING)
+    if(_videoSurface) {
+        if(stopping() || starting()) {
+            return;
+        }
+        if(streaming()) {
+            if(!_videoRunning) {
+                _videoSurface->setLastFrame(0);
+                _videoRunning = true;
+                emit videoRunningChanged();
+            }
+        } else {
+            if(_videoRunning) {
+                _videoRunning = false;
+                emit videoRunningChanged();
+            }
+        }
+        if(_videoRunning) {
+            time_t elapsed = 0;
+            time_t lastFrame = _videoSurface->lastFrame();
+            if(lastFrame != 0) {
+                elapsed = time(0) - _videoSurface->lastFrame();
+            }
+            if(elapsed > 2 && _videoSurface) {
+                stop();
+            }
+        } else {
+            if(!running() && !_uri.isEmpty()) {
+                start();
+            }
+        }
+    }
+#endif
+}
+

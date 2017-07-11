@@ -23,14 +23,13 @@ import QGroundControl.Controllers   1.0
 
 Item {
     id: root
-    property double _ar:        QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
-    property bool _showGrid:    QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
-
+    property double _ar:            QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
+    property bool   _showGrid:      QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
     Rectangle {
         id:             noVideo
         anchors.fill:   parent
         color:          Qt.rgba(0,0,0,0.75)
-        visible:        !QGroundControl.videoManager.videoRunning
+        visible:        !QGroundControl.videoManager.videoReceiver.videoRunning
         QGCLabel {
             text:               qsTr("WAITING FOR VIDEO")
             font.family:        ScreenTools.demiboldFontFamily
@@ -42,14 +41,25 @@ Item {
     Rectangle {
         anchors.fill:   parent
         color:          "black"
-        visible:        QGroundControl.videoManager.videoRunning
+        visible:        QGroundControl.videoManager.videoReceiver.videoRunning
         QGCVideoBackground {
+            id:             videoContent
             height:         parent.height
             width:          _ar != 0.0 ? height * _ar : parent.width
             anchors.centerIn: parent
-            display:        QGroundControl.videoManager.videoSurface
             receiver:       QGroundControl.videoManager.videoReceiver
-            visible:        QGroundControl.videoManager.videoRunning
+            display:        QGroundControl.videoManager.videoReceiver.videoSurface
+            visible:        QGroundControl.videoManager.videoReceiver.videoRunning
+            Connections {
+                target:         QGroundControl.videoManager.videoReceiver
+                onImageFileChanged: {
+                    videoContent.grabToImage(function(result) {
+                        if (!result.saveToFile(QGroundControl.videoManager.videoReceiver.imageFile)) {
+                            console.error('Error capturing video frame');
+                        }
+                    });
+                }
+            }
             Rectangle {
                 color:  Qt.rgba(1,1,1,0.5)
                 height: parent.height
