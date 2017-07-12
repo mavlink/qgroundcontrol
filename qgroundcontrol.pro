@@ -55,6 +55,8 @@ iOSBuild {
         count(APP_ERROR, 1) {
             error("Error building .plist file. 'ForAppStore' builds are only possible through the official build system.")
         }
+        QT               += qml-private
+        CONFIG           += qtquickcompiler
         QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOSForAppStore-Info.plist
         OTHER_FILES      += $${BASEDIR}/ios/iOSForAppStore-Info.plist
     } else {
