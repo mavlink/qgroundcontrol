@@ -176,6 +176,13 @@ bool QGCCorePlugin::adjustSettingMetaData(FactMetaData& metaData)
         metaData.setRawDefaultValue(true);
         return true;
 #endif
+#if defined(__ios__)
+    } else if (metaData.name() == AppSettings::savePathName) {
+        QString appName = qgcApp()->applicationName();
+        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        metaData.setRawDefaultValue(rootDir.filePath(appName));
+        return false;
+#endif
     }
     return true; // Show setting in ui
 }
