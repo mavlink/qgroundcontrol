@@ -94,7 +94,8 @@ private:
     bool _scanTakePhoto(QmlObjectListModel* visualItems, int scanIndex);
     bool _scanTakePhotosIntervalTime(QmlObjectListModel* visualItems, int scanIndex);
     bool _scanStopTakingPhotos(QmlObjectListModel* visualItems, int scanIndex);
-    bool _scanTriggerDistance(QmlObjectListModel* visualItems, int scanIndex);
+    bool _scanTriggerStartDistance(QmlObjectListModel* visualItems, int scanIndex);
+    bool _scanTriggerStopDistance(QmlObjectListModel* visualItems, int scanIndex);
     bool _scanTakeVideo(QmlObjectListModel* visualItems, int scanIndex);
     bool _scanStopTakingVideo(QmlObjectListModel* visualItems, int scanIndex);
     bool _scanSetCameraMode(QmlObjectListModel* visualItems, int scanIndex);

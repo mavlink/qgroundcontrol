@@ -35,8 +35,9 @@ Item {
     property var _splitHandlesComponent
     property var _centerDragHandleComponent
 
-    property real _zorderDragHandle:    QGroundControl.zOrderMapItems + 2
-    property real _zorderSplitHandle:   QGroundControl.zOrderMapItems + 1
+    property real _zorderDragHandle:    QGroundControl.zOrderMapItems + 3   // Highest to prevent splitting when items overlap
+    property real _zorderSplitHandle:   QGroundControl.zOrderMapItems + 2
+    property real _zorderCenterHandle:  QGroundControl.zOrderMapItems + 1   // Lowest such that drag or split takes precedence
 
     function addVisuals() {
         _polygonComponent = polygonComponent.createObject(mapControl)
@@ -281,7 +282,7 @@ Item {
         id: centerDragAreaComponent
 
         MissionItemIndicatorDrag {
-            z:                          _zorderDragHandle
+            z:                          _zorderCenterHandle
             onItemCoordinateChanged:    mapPolygon.center = itemCoordinate
             onDragStart:                mapPolygon.centerDrag = true
             onDragStop:                 mapPolygon.centerDrag = false

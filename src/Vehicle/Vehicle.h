@@ -673,6 +673,7 @@ public:
     const QVariantList& toolBarIndicators   ();
     const QVariantList& cameraList          (void) const;
 
+    bool capabilitiesKnown(void) const { return _vehicleCapabilitiesKnown; }
     bool supportsMissionItemInt(void) const { return _supportsMissionItemInt; }
 
     /// @true: When flying a mission the vehicle is always facing towards the next waypoint
@@ -681,6 +682,8 @@ public:
     /// The vehicle is responsible for making the initial request for the Plan.
     /// @return: true: initial request is complete, false: initial request is still in progress;
     bool initialPlanRequestComplete(void) const { return _initialPlanRequestComplete; }
+
+    void forceInitialPlanRequestComplete(void) { _initialPlanRequestComplete = true; }
 
     void _setFlying(bool flying);
     void _setLanding(bool landing);
@@ -712,6 +715,7 @@ signals:
     void defaultHoverSpeedChanged(double hoverSpeed);
     void firmwareTypeChanged(void);
     void vehicleTypeChanged(void);
+    void capabilitiesKnownChanged(bool capabilitiesKnown);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
