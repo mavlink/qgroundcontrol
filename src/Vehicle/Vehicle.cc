@@ -716,6 +716,7 @@ void Vehicle::_setCapabilities(uint64_t capabilityBits)
         _supportsMissionItemInt = true;
     }
     _vehicleCapabilitiesKnown = true;
+    emit capabilitiesKnownChanged(true);
 
     qCDebug(VehicleLog) << QString("Vehicle %1 MISSION_ITEM_INT").arg(_supportsMissionItemInt ? QStringLiteral("supports") : QStringLiteral("does not support"));
 }
@@ -788,7 +789,7 @@ void Vehicle::_handleHilActuatorControls(mavlink_message_t &message)
 
 void Vehicle::_handleCommandAck(mavlink_message_t& message)
 {
-    bool showError = true;
+    bool showError = false;
 
     mavlink_command_ack_t ack;
     mavlink_msg_command_ack_decode(&message, &ack);
