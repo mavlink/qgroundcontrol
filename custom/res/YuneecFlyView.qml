@@ -399,12 +399,12 @@ Item {
 
     //-- Camera Control
     Loader {
-        visible:                !_mainIsMap && TyphoonHQuickInterface.cameraControl && _cameraPresent
+        visible:                !_mainIsMap && TyphoonHQuickInterface.cameraControl // && _cameraPresent
         source:                 _mainIsMap ? "" : "/typhoonh/cameraControl.qml"
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.top:            parent.top
-        anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 2
+        anchors.topMargin:      ScreenTools.defaultFontPixelHeight
     }
 
     //-- Vehicle Status

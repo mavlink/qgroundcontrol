@@ -165,6 +165,9 @@ public:
     Q_INVOKABLE void manualBind         ();
     Q_INVOKABLE void startCalibration   ();
     Q_INVOKABLE void stopCalibration    ();
+
+    Q_INVOKABLE QStringList getMediaList();
+
     //-- Android image update
     Q_INVOKABLE bool checkForUpdate     ();
     Q_INVOKABLE void updateSystemImage  ();
