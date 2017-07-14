@@ -54,6 +54,15 @@ Rectangle {
     property bool _cameraModeUndefined:     _communicationLost  || (_emptySD ? true  : TyphoonHQuickInterface.cameraControl.cameraMode  === CameraControl.CAMERA_MODE_UNDEFINED)
     property bool _cameraAutoMode:          TyphoonHQuickInterface.cameraControl ? TyphoonHQuickInterface.cameraControl.aeMode === CameraControl.AE_MODE_AUTO : false;
 
+    property real _mediaWidth:              128
+    property real _mediaHeight:             72
+    property real _mediaIndex:              0
+    property var  _mediaModel:              []
+
+    function baseName(str) {
+        return (str.slice(str.lastIndexOf("/")+1))
+    }
+
     Connections {
         target: TyphoonHQuickInterface.cameraControl
         onCameraAvailableChanged: {
@@ -173,6 +182,30 @@ Rectangle {
             width:  parent.width * 0.85
             color:  qgcPal.globalTheme === QGCPalette.Dark ? Qt.rgba(1,1,1,0.25) : Qt.rgba(0,0,0,0.25)
             anchors.horizontalCenter: parent.horizontalCenter
+        }
+        //-- Media Player
+        Item {
+            width:  1
+            height: ScreenTools.defaultFontPixelHeight * 0.15
+        }
+        QGCColoredImage {
+            width:              ScreenTools.defaultFontPixelHeight * 1.5
+            height:             width
+            sourceSize.width:   width
+            source:             "qrc:/typhoonh/img/mediaPlay.svg"
+            fillMode:           Image.PreserveAspectFit
+            color:              (!_communicationLost && TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED) ? qgcPal.text : qgcPal.colorGrey
+            anchors.horizontalCenter: parent.horizontalCenter
+            MouseArea {
+                anchors.fill:   parent
+                onClicked: {
+                    if(rootLoader.sourceComponent === null) {
+                        rootLoader.sourceComponent = mediaPlayerComponent
+                    } else {
+                        rootLoader.sourceComponent = null
+                    }
+                }
+            }
         }
         Item {
             width:  1
@@ -667,4 +700,212 @@ Rectangle {
             }
         }
     }
+    //-- Media Player
+    Component {
+        id: mediaPlayerComponent
+        Item {
+            id:     mediaPlayerItem
+            z:      100000
+            width:  mainWindow.width
+            height: mainWindow.height
+            anchors.centerIn: parent
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    rootLoader.sourceComponent = null
+                }
+            }
+            Rectangle {
+                id:             mediaPlayerShadow
+                anchors.fill:   mediaPlayerRect
+                radius:         mediaPlayerRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       mediaPlayerShadow
+                visible:            mediaPlayerRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             mediaPlayerShadow
+            }
+            Rectangle {
+                id:                 mediaPlayerRect
+                width:              mediaPlayerGrid.width  + 60
+                height:             mediaPlayerGrid.height + 60
+                radius:             ScreenTools.defaultFontPixelWidth
+                color:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
+                border.width:       1
+                border.color:       qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
+                anchors.centerIn:   parent
+                MouseArea {
+                    anchors.fill:   parent
+                    onWheel:        { wheel.accepted = true; }
+                    onPressed:      { mouse.accepted = true; }
+                    onReleased:     { mouse.accepted = true; }
+                }
+                GridView {
+                    id:                 mediaPlayerGrid
+                    clip:               true
+                    model:              _mediaModel
+                    cellWidth:          _mediaWidth  + 8
+                    cellHeight:         _mediaHeight + 8
+                    width:              (_mediaWidth  + 8) * 4
+                    height:             (_mediaHeight + 8) * 4
+                    anchors.centerIn:   parent
+                    delegate:           mediaDelegate
+                }
+                QGCLabel {
+                    text:       qsTr("No Images")
+                    visible:    _mediaModel.length < 1
+                    anchors.centerIn: parent
+                }
+            }
+            Component.onCompleted: {
+                rootLoader.width  = mediaPlayerItem.width
+                rootLoader.height = mediaPlayerItem.height
+                _mediaModel = TyphoonHQuickInterface.getMediaList()
+            }
+            Keys.onBackPressed: {
+                rootLoader.sourceComponent = null
+            }
+        }
+    }
+    Component {
+        id: mediaDelegate
+        Image {
+            width:      _mediaWidth
+            height:     _mediaHeight
+            fillMode:   Image.PreserveAspectFit
+            source:     "file://" + modelData
+            MouseArea {
+                anchors.fill:   parent
+                onClicked: {
+                    _mediaIndex = index
+                    rootLoader.sourceComponent = mediaViewComponent
+                }
+            }
+        }
+    }
+    //-- Media Viewer
+    Component {
+        id: mediaViewComponent
+        Item {
+            id:     mediaViewItem
+            z:      100000
+            width:  mainWindow.width
+            height: mainWindow.height
+            anchors.centerIn: parent
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    rootLoader.sourceComponent = null
+                }
+            }
+            Rectangle {
+                id:             mediaViewShadow
+                anchors.fill:   mediaViewRect
+                radius:         mediaViewRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       mediaViewShadow
+                visible:            mediaViewRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             mediaViewShadow
+            }
+            Rectangle {
+                id:                 mediaViewRect
+                width:              mediaContent.width   + 75
+                height:             mediaContent.height  + 75
+                radius:             ScreenTools.defaultFontPixelWidth
+                color:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
+                border.width:       1
+                border.color:       qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
+                anchors.centerIn:   parent
+                MouseArea {
+                    anchors.fill:   parent
+                    onWheel:        { wheel.accepted = true; }
+                    onPressed:      { mouse.accepted = true; }
+                    onReleased:     { mouse.accepted = true; }
+                }
+                Image {
+                    id:             mediaContent
+                    width:          _mediaWidth  * 6
+                    height:         _mediaHeight * 6
+                    fillMode:       Image.PreserveAspectFit
+                    source:         "file://" + _mediaModel[_mediaIndex]
+                    anchors.centerIn:   parent
+                }
+                QGCLabel {
+                    text:           baseName(mediaContent.source.toString())
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 10
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                //-- Previous Image
+                Image {
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left:       parent.left
+                    width:              ScreenTools.defaultFontPixelHeight * 2
+                    height:             width
+                    sourceSize.height:  width
+                    source:             "qrc:/typhoonh/img/mediaBack.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    mipmap:             true
+                    smooth:             true
+                    visible:            _mediaIndex > 0
+                    MouseArea {
+                        anchors.fill:   parent
+                        onClicked: {
+                            if(_mediaIndex > 0) {
+                                _mediaIndex = _mediaIndex - 1;
+                                mediaContent.source = "file://" + _mediaModel[_mediaIndex]
+                            }
+                        }
+                    }
+                }
+                //-- Next Image
+                Image {
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right:      parent.right
+                    width:              ScreenTools.defaultFontPixelHeight * 2
+                    height:             width
+                    sourceSize.height:  width
+                    source:             "qrc:/typhoonh/img/mediaPlay.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    mipmap:             true
+                    smooth:             true
+                    visible:            _mediaIndex < (_mediaModel.length - 1)
+                    MouseArea {
+                        anchors.fill:   parent
+                        onClicked: {
+                            if(_mediaIndex < (_mediaModel.length - 1)) {
+                                _mediaIndex = _mediaIndex + 1;
+                                mediaContent.source = "file://" + _mediaModel[_mediaIndex]
+                            }
+                        }
+                    }
+                }
+            }
+            Component.onCompleted: {
+                rootLoader.width  = mediaViewItem.width
+                rootLoader.height = mediaViewItem.height
+            }
+            Keys.onBackPressed: {
+                rootLoader.sourceComponent = null
+            }
+        }
+    }
 }
+

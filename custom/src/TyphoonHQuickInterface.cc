@@ -667,6 +667,19 @@ TyphoonHQuickInterface::calibrationComplete()
 }
 
 //-----------------------------------------------------------------------------
+QStringList
+TyphoonHQuickInterface::getMediaList()
+{
+    QStringList list;
+    QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+    QDirIterator it(photoPath, QStringList() << "*.jpg", QDir::Files, QDirIterator::NoIteratorFlags);
+    while(it.hasNext()) {
+        list << it.next();
+    }
+    return list;
+}
+
+//-----------------------------------------------------------------------------
 int
 TyphoonHQuickInterface::_copyFilesInPath(const QString src, const QString dst)
 {
