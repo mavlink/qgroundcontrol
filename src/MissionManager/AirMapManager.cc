@@ -22,6 +22,12 @@
 #include <QJsonArray>
 #include <QNetworkProxy>
 #include <QSet>
+#include <QtEndian>
+
+extern "C" {
+#include <aes.h>
+}
+#include <airmap_telemetry.pb.h>
 
 QGC_LOGGING_CATEGORY(AirMapManagerLog, "AirMapManagerLog")
 
@@ -550,20 +556,258 @@ void AirMapFlightManager::_error(QNetworkReply::NetworkError code, const QString
     emit networkError(code, errorString, serverErrorMessage);
 }
 
+AirMapTelemetry::AirMapTelemetry(AirMapNetworking::SharedData& sharedData)
+: _networking(sharedData)
+{
+    connect(&_networking, &AirMapNetworking::finished, this, &AirMapTelemetry::_parseJson);
+    connect(&_networking, &AirMapNetworking::error, this, &AirMapTelemetry::_error);
+}
+
+AirMapTelemetry::~AirMapTelemetry()
+{
+    if (_socket) {
+        delete _socket;
+        _socket = nullptr;
+    }
+}
+void AirMapTelemetry::_udpTelemetryHostLookup(QHostInfo info)
+{
+    if (info.error() != QHostInfo::NoError || info.addresses().length() == 0) {
+        qCWarning(AirMapManagerLog) << "DNS lookup error:" << info.errorString();
+        QNetworkReply::NetworkError networkError = QNetworkReply::NetworkError::HostNotFoundError;
+        emit _error(networkError, "DNS lookup failed", "");
+        _state = State::Idle;
+        return;
+    }
+    qCDebug(AirMapManagerLog) << "Got Hosts for UDP telemetry:" << info.addresses();
+    _udpHost = info.addresses()[0];
+}
+
+void AirMapTelemetry::vehicleMavlinkMessageReceived(const mavlink_message_t& message)
+{
+    switch (message.msgid) {
+    case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
+        _handleGlobalPositionInt(message);
+        break;
+    }
+
+}
+
+void AirMapTelemetry::_handleGlobalPositionInt(const mavlink_message_t& message)
+{
+    if (_state != State::Streaming || _udpHost.isNull()) {
+        return;
+    }
+
+    mavlink_global_position_int_t globalPosition;
+    mavlink_msg_global_position_int_decode(&message, &globalPosition);
+
+    qDebug() << "Got position from vehicle:" << globalPosition.lat << "," << globalPosition.lon;
+
+    // documentation: https://developers.airmap.com/docs/telemetry-2
+
+    uint8_t output[512]; // assume the whole packet is not longer than this
+    uint8_t payload[512];
+    uint32_t payloadLength = 0;
+    uint32_t packetHeaderLength = 0;
+    uint8_t* key = (uint8_t*)_key.data();
+
+    uint8_t iv[16];
+    for (int i = 0; i < sizeof(iv); ++i) {
+        iv[i] = (uint8_t)(qrand() & 0xff); // TODO: should use a secure random source
+    }
+
+    // write packet header & set the length
+    qToBigEndian(_seqNum, output + packetHeaderLength);
+    packetHeaderLength += sizeof(_seqNum);
+    ++_seqNum;
+    QByteArray flightID = _flightID.toUtf8();
+    output[packetHeaderLength++] = flightID.length();
+    memcpy(output+packetHeaderLength, flightID.data(), flightID.length());
+    packetHeaderLength += flightID.length();
+    output[packetHeaderLength++] = 1; //encryption type = 'aes-256-cbc'
+    memcpy(output+packetHeaderLength, iv, sizeof(iv));
+    packetHeaderLength += sizeof(iv);
+
+    // write payload
+    airmap::telemetry::Position position;
+    position.set_timestamp(QDateTime::currentMSecsSinceEpoch());
+    position.set_latitude((double) globalPosition.lat / 1e7);
+    position.set_longitude((double) globalPosition.lon / 1e7);
+    position.set_altitude_msl((float) globalPosition.alt / 1000.f);
+    position.set_altitude_agl((float) globalPosition.relative_alt / 1000.f);
+    position.set_horizontal_accuracy(1.);
+
+    uint16_t msgID = 1; // Position: 1, Attitude: 2, Speed: 3, Barometer: 4
+    uint16_t msgLength = position.ByteSize();
+    qToBigEndian(msgID, payload);
+    qToBigEndian(msgLength, payload+sizeof(msgID));
+    payloadLength += sizeof(msgID) + sizeof(msgLength);
+    position.SerializeToArray(payload+payloadLength, msgLength);
+    payloadLength += msgLength;
+
+    // pad to 16 bytes if necessary
+    int padding = 16 - (payloadLength % 16);
+    if (padding != 16) {
+        for (int i = 0; i < padding; ++i) {
+            payload[payloadLength+i] = (uint8_t)padding;
+        }
+        payloadLength += padding;
+    }
+
+    AES_CBC_encrypt_buffer(output + packetHeaderLength, payload, payloadLength, key, iv);
+
+    qDebug() << "Telemetry Position: payload len=" << payloadLength << "header len=" << packetHeaderLength << "msglen=" << msgLength;
+
+    _socket->writeDatagram((char*)output, packetHeaderLength+payloadLength, _udpHost, _udpPort);
+}
+
+void AirMapTelemetry::_parseJson(QJsonParseError parseError, QJsonDocument doc)
+{
+    QJsonObject rootObject = doc.object();
+
+    switch(_state) {
+        case State::StartCommunication:
+        {
+            const QJsonObject& dataObject = rootObject["data"].toObject();
+            QString key = dataObject["key"].toString(); // base64 encoded key
+
+            if (key.length() == 0) {
+                qCWarning(AirMapManagerLog) << "Did not get a valid key";
+                _state = State::Idle;
+                return;
+            }
+            _key = QByteArray::fromBase64(key.toUtf8());
+            _seqNum = 1;
+            if (!_socket) {
+                _socket = new QUdpSocket(this);
+            }
+
+            qDebug() << "AES key=" << key;
+
+            _state = State::Streaming;
+        }
+            break;
+        case State::EndCommunication:
+            if (_socket) {
+                delete _socket;
+                _socket = nullptr;
+            }
+            _state = State::Idle;
+            break;
+        default:
+            qCDebug(AirMapManagerLog) << "Error: wrong state";
+            break;
+    }
+}
+
+void AirMapTelemetry::_error(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage)
+{
+    _state = State::Idle;
+    qCWarning(AirMapManagerLog) << "AirMapTelemetry::_error" << code << serverErrorMessage;
+    emit networkError(code, errorString, serverErrorMessage);
+}
+
+void AirMapTelemetry::startTelemetryStream(const QString& flightID)
+{
+    if (_state != State::Idle) {
+        qCWarning(AirMapManagerLog) << "Not starting telemetry: not in idle state:" << (int)_state;
+        return;
+    }
+
+    qCInfo(AirMapManagerLog) << "Starting Telemetry stream with flightID" << flightID;
+
+    QUrl url(QString("https://api.airmap.com//flight/v2/%1/start-comm").arg(flightID));
+
+    _networking.post(url, QByteArray(), false, true);
+    _state = State::StartCommunication;
+    _flightID = flightID;
+
+    // do the DNS lookup concurrently
+    QString host = "api-udp-telemetry.airmap.com";
+    QHostInfo::lookupHost(host, this, SLOT(_udpTelemetryHostLookup(QHostInfo)));
+}
+
+void AirMapTelemetry::stopTelemetryStream()
+{
+    if (_state == State::Idle) {
+        return;
+    }
+    qCInfo(AirMapManagerLog) << "Stopping Telemetry stream with flightID" << _flightID;
+
+    QUrl url(QString("https://api.airmap.com//flight/v2/%1/end-comm").arg(_flightID));
+
+    _networking.post(url, QByteArray(), false, true);
+    _state = State::EndCommunication;
+}
+
 AirMapManager::AirMapManager(QGCApplication* app, QGCToolbox* toolbox)
-    : QGCTool(app, toolbox), _airspaceRestrictionManager(_networkingData), _flightManager(_networkingData)
+    : QGCTool(app, toolbox), _airspaceRestrictionManager(_networkingData), _flightManager(_networkingData),
+      _telemetry(_networkingData)
 {
     _updateTimer.setInterval(2000);
     _updateTimer.setSingleShot(true);
     connect(&_updateTimer, &QTimer::timeout, this, &AirMapManager::_updateToROI);
+
     connect(&_airspaceRestrictionManager, &AirspaceRestrictionManager::networkError, this, &AirMapManager::_networkError);
     connect(&_flightManager, &AirMapFlightManager::networkError, this, &AirMapManager::_networkError);
+    connect(&_telemetry, &AirMapTelemetry::networkError, this, &AirMapManager::_networkError);
+
+    connect(&_flightManager, &AirMapFlightManager::flightPermitStatusChanged, this, &AirMapManager::flightPermitStatusChanged);
+
+    qmlRegisterUncreatableType<AirspaceAuthorization>("QGroundControl", 1, 0, "AirspaceAuthorization", "Reference only");
+
+    MultiVehicleManager* multiVehicleManager = toolbox->multiVehicleManager();
+    _connectVehicle(multiVehicleManager->activeVehicle());
+    connect(multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &AirMapManager::_activeVehicleChanged);
+
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
 }
 
 AirMapManager::~AirMapManager()
 {
 
 }
+
+void AirMapManager::_activeVehicleChanged(Vehicle* activeVehicle)
+{
+    _connectVehicle(activeVehicle);
+}
+
+void AirMapManager::_connectVehicle(Vehicle* vehicle)
+{
+    if (vehicle == _vehicle) {
+        return;
+    }
+    if (_vehicle) {
+        disconnect(_vehicle, &Vehicle::mavlinkMessageReceived, &_telemetry, &AirMapTelemetry::vehicleMavlinkMessageReceived);
+        disconnect(_vehicle, &Vehicle::armedChanged, this, &AirMapManager::_vehicleArmedChanged);
+
+        _telemetry.stopTelemetryStream();
+    }
+
+    _vehicle = vehicle;
+    if (vehicle) {
+        connect(vehicle, &Vehicle::mavlinkMessageReceived, &_telemetry, &AirMapTelemetry::vehicleMavlinkMessageReceived);
+        connect(vehicle, &Vehicle::armedChanged, this, &AirMapManager::_vehicleArmedChanged);
+
+        _vehicleArmedChanged(vehicle->armed());
+    }
+}
+
+void AirMapManager::_vehicleArmedChanged(bool armed)
+{
+    if (_flightManager.flightID().length() == 0) {
+        qCDebug(AirMapManagerLog) << "No Flight ID. Will not update telemetry state";
+        return;
+    }
+    if (armed) {
+        _telemetry.startTelemetryStream(_flightManager.flightID());
+    } else {
+        _telemetry.stopTelemetryStream();
+    }
+}
+
 
 void AirMapManager::setToolbox(QGCToolbox* toolbox)
 {
@@ -587,7 +831,7 @@ void AirMapManager::setROI(QGeoCoordinate& center, double radiusMeters)
 
 void AirMapManager::_updateToROI(void)
 {
-    if (!hasAPIKey()) {
+    if (!_hasAPIKey()) {
         qCDebug(AirMapManagerLog) << "API key not set. Not updating Airspace";
         return;
     }
@@ -612,7 +856,7 @@ void AirMapManager::_networkError(QNetworkReply::NetworkError code, const QStrin
 
 void AirMapManager::createFlight(const QList<MissionItem*>& missionItems)
 {
-    if (!hasAPIKey()) {
+    if (!_hasAPIKey()) {
         qCDebug(AirMapManagerLog) << "API key not set. Will not create a flight";
         return;
     }
