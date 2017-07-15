@@ -585,6 +585,7 @@ HEADERS += \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
     src/AnalyzeView/LogDownloadController.h \
+    libs/thirdParty/tiny-AES128-C/aes.h \
 
 AndroidBuild {
 HEADERS += \
@@ -773,6 +774,7 @@ SOURCES += \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
     src/AnalyzeView/LogDownloadController.cc \
+    libs/thirdParty/tiny-AES128-C/aes.c \
 
 DebugBuild {
 SOURCES += \
@@ -850,6 +852,7 @@ INCLUDEPATH += \
     src/FirmwarePlugin \
     src/Vehicle \
     src/VehicleSetup \
+    libs/thirdParty/tiny-AES128-C \
 
 HEADERS+= \
     src/AutoPilotPlugins/AutoPilotPlugin.h \
