@@ -903,6 +903,10 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
         _batteryFactGroup.current()->setRawValue(VehicleBatteryFactGroup::_currentUnavailable);
     } else {
         // Current is in Amps, current_battery is 10 * milliamperes (1 = 10 milliampere)
+        // To reduce confusion and misunderstandings, suggest not to work in units of centiAmperes. 
+        // Consider either Amps or milliAmps. Note that at some point, this is converted into UINT16. 
+        // If people prefer A, then suggest FLOAT for _batteryFactGroup.current(); 
+        // If people prefer mA, suggest UINT32 large drones with large current draws > 65,535 mA are happy, too. 
         _batteryFactGroup.current()->setRawValue((float)sysStatus.current_battery / 100.0f);
     }
     if (sysStatus.voltage_battery == UINT16_MAX) {
