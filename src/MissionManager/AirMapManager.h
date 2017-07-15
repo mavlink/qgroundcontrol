@@ -14,12 +14,18 @@
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "MissionItem.h"
+#include "MultiVehicleManager.h"
 
 #include <QGeoCoordinate>
 #include <QList>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QTimer>
+#include <QUdpSocket>
+#include <QHostInfo>
+#include <QHostAddress>
+
+#include <stdint.h>
 
 Q_DECLARE_LOGGING_CATEGORY(AirMapManagerLog)
 
@@ -210,6 +216,19 @@ private:
     QList<CircularAirspaceRestriction*> _nextcircleList;
 };
 
+
+class AirspaceAuthorization : public QObject {
+    Q_OBJECT
+public:
+    enum PermitStatus {
+        PermitUnknown = 0,
+        PermitPending,
+        PermitAccepted,
+        PermitRejected,
+    };
+    Q_ENUMS(PermitStatus);
+};
+
 /// class to upload a flight
 class AirMapFlightManager : public QObject
 {
@@ -220,8 +239,14 @@ public:
     /// Send flight path to AirMap
     void createFlight(const QList<MissionItem*>& missionItems);
 
+    AirspaceAuthorization::PermitStatus flightPermitStatus() const { return _flightPermitStatus; }
+
+    const QString& flightID() const { return _currentFlightId; }
+
 signals:
     void networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+    void flightPermitStatusChanged();
+
 private slots:
     void _parseJson(QJsonParseError parseError, QJsonDocument doc);
     void _error(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
@@ -231,11 +256,59 @@ private:
         FlightUpload,
     };
 
-    State                   _state = State::Idle;
-    AirMapNetworking        _networking;
-    QString                 _currentFlightId;
+    State                               _state = State::Idle;
+    AirMapNetworking                    _networking;
+    QString                             _currentFlightId; ///< Flight ID, empty if there is none
+    AirspaceAuthorization::PermitStatus _flightPermitStatus = AirspaceAuthorization::PermitUnknown;
 };
 
+/// class to send telemetry data to AirMap
+class AirMapTelemetry : public QObject
+{
+    Q_OBJECT
+public:
+    AirMapTelemetry(AirMapNetworking::SharedData& sharedData);
+    virtual ~AirMapTelemetry();
+
+    /**
+     * Setup the connection to start sending telemetry
+     */
+    void startTelemetryStream(const QString& flightID);
+
+    void stopTelemetryStream();
+
+signals:
+    void networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+
+public slots:
+    void vehicleMavlinkMessageReceived(const mavlink_message_t& message);
+
+private slots:
+    void _parseJson(QJsonParseError parseError, QJsonDocument doc);
+    void _error(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+    void _udpTelemetryHostLookup(QHostInfo info);
+
+private:
+
+    void _handleGlobalPositionInt(const mavlink_message_t& message);
+
+    enum class State {
+        Idle,
+        StartCommunication,
+        EndCommunication,
+        Streaming,
+    };
+
+    State                   _state = State::Idle;
+
+    AirMapNetworking        _networking;
+    QByteArray              _key; ///< key for AES encryption, 16 bytes
+    QString                 _flightID;
+    uint32_t                _seqNum = 1;
+    QUdpSocket*             _socket = nullptr;
+    QHostAddress            _udpHost;
+    static constexpr int    _udpPort = 16060;
+};
 
 /// AirMap server communication support.
 class AirMapManager : public QGCTool
@@ -260,21 +333,37 @@ public:
 
     void setToolbox(QGCToolbox* toolbox) override;
 
+    AirspaceAuthorization::PermitStatus flightPermitStatus() const { return _flightManager.flightPermitStatus(); }
+
+signals:
+    void flightPermitStatusChanged();
+
 private slots:
     void _updateToROI(void);
     void _networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
 
+    void _activeVehicleChanged(Vehicle* activeVehicle);
+    void _vehicleArmedChanged(bool armed);
+
 private:
-    bool hasAPIKey() const { return _networkingData.airmapAPIKey != ""; }
+    bool _hasAPIKey() const { return _networkingData.airmapAPIKey != ""; }
+
+    /**
+     * A new vehicle got connected, listen to its state
+     */
+    void _connectVehicle(Vehicle* vehicle);
 
     AirMapNetworking::SharedData _networkingData;
     AirspaceRestrictionManager   _airspaceRestrictionManager;
     AirMapFlightManager          _flightManager;
+    AirMapTelemetry              _telemetry;
 
     QGeoCoordinate          _roiCenter;
     double                  _roiRadius;
 
     QTimer                  _updateTimer;
+
+    Vehicle*                _vehicle = nullptr; ///< current vehicle
 };
 
 #endif
