@@ -85,6 +85,8 @@
 	<string>Ground Station Location</string>
 	<key>UILaunchStoryboardName</key>
 	<string>QGCLaunchScreen</string>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>QGroundControl would like to use bluetooth.</string>    
 	<key>UIRequiresFullScreen</key>
 	<true/>
 	<key>UISupportedInterfaceOrientations</key>
