@@ -1,0 +1,68 @@
+
+// protoc -I=. --cpp_out=. airmap_telemetry.proto
+
+syntax = "proto2";
+ 
+package airmap.telemetry;
+ 
+message Position {
+     
+    // UNIX time in Milliseconds
+    required uint64 timestamp = 1;
+ 
+    // The recorded latitude
+    // Decimal place requirement: 7 decimal places.
+    required double latitude = 2;
+ 
+    // The recorded longitude
+    // Decimal place requirement: 7 decimal places.
+    required double longitude = 3;
+ 
+    //Altitude above mean sea level (ie. GPS), meters
+    required float altitude_agl = 4;
+ 
+    // Altitude above ground level, meters
+    required float altitude_msl = 5;
+     
+    // Horizontal Dilution of Precision, in meters
+    required float horizontal_accuracy = 6;
+}
+ 
+message Attitude {
+     
+    // UNIX time in Milliseconds
+    required uint64 timestamp = 1;
+ 
+    // Yaw angle measured from True North, { 0 <= x < 360 } degrees
+    required float yaw = 2;
+ 
+    // Pitch angle, { -180 < x <= 180 } degrees
+    required float pitch = 3;
+ 
+    // Roll angle, { -180 < x <= 180 } degrees
+    required float roll = 4;
+}
+ 
+message Speed {
+     
+    // UNIX time in Milliseconds
+    required uint64 timestamp = 1;
+ 
+    // Aircraft Speed in the x direction in meters per second using the North-East-Down (N-E-D) coordinate system
+    required float velocity_x = 2;
+ 
+     // Aircraft Speed in the y direction in meters per second using the North-East-Down (N-E-D) coordinate system
+    required float velocity_y = 3;
+ 
+     // Aircraft Speed in the z direction in meters per second using the North-East-Down (N-E-D) coordinate system
+    required float velocity_z = 4;
+}
+ 
+message Barometer {
+ 
+    // UNIX time in Milliseconds
+    required uint64 timestamp = 1;
+ 
+    // Barometric pressure in hPa
+    required float pressure = 2;
+}

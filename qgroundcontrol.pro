@@ -587,6 +587,11 @@ HEADERS += \
     src/AnalyzeView/LogDownloadController.h \
     libs/thirdParty/tiny-AES128-C/aes.h \
 
+# Protobuf
+LIBS += -lprotobuf
+PROTOS = src/protobuf/airmap_telemetry.proto
+include(src/protobuf/proto_compile.pri)
+
 AndroidBuild {
 HEADERS += \
 	src/Joystick/JoystickAndroid.h \
