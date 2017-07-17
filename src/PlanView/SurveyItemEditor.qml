@@ -710,8 +710,9 @@ Rectangle {
             if (y !== undefined)
                 windRosePie.y = y - windRosePie.height / 2;
 
-            windRosePie.visible = true;
+            windRosePie.visible = true
             windRosePie.focus = true
+            missionItemEditorListView.interactive = false
         }
 
         MouseArea {
@@ -721,6 +722,7 @@ Rectangle {
 
             onClicked: {
                 windRosePie.visible = false;
+                missionItemEditorListView.interactive = true
             }
             onPositionChanged: {
                 var point = Qt.point(mouseX - parent.width / 2, mouseY - parent.height / 2)
