@@ -311,12 +311,10 @@ CameraControl::takePhoto()
         _vehicle->sendMavCommand(
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_IMAGE_START_CAPTURE,                // Command id
-            true,                                       // ShowError
+            false,                                      // ShowError
             0,                                          // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
             0,                                          // Duration between two consecutive pictures (in seconds--ignored if single image)
             1);                                         // Number of images to capture total - 0 for unlimited capture
-        _cameraSound.setLoopCount(1);
-        _cameraSound.play();
         //-- Capture local image as well
         QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
         QDir().mkpath(photoPath);
@@ -821,25 +819,41 @@ CameraControl::_mavCommandResult(int /*vehicleId*/, int /*component*/, int comma
             case MAV_CMD_SET_CAMERA_SETTINGS_3:
             case MAV_CMD_RESET_CAMERA_SETTINGS:
             case MAV_CMD_SET_CAMERA_MODE:
-            case MAV_CMD_IMAGE_START_CAPTURE:
-            case MAV_CMD_VIDEO_START_CAPTURE:
-            case MAV_CMD_VIDEO_STOP_CAPTURE:
                 if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
-                    qCDebug(YuneecCameraLog) << "Good response for" << command;
-                    //-- Faster feedback for start/stop video
-                    if(command == MAV_CMD_VIDEO_START_CAPTURE) {
-                        _handleVideoRunning(VIDEO_CAPTURE_STATUS_RUNNING);
-                        _captureStatusTimer.start(5000);
-                    } else if(command == MAV_CMD_VIDEO_STOP_CAPTURE) {
-                        _handleVideoRunning(VIDEO_CAPTURE_STATUS_STOPPED);
-                    }
+                    qCDebug(YuneecCameraLog) << "Good settings response for" << command;
                     _startTimer(MAV_CMD_REQUEST_CAMERA_SETTINGS, 500);
                 } else {
                     //-- The camera didn't take it. There isn't much what we can do.
                     //   Sound an error to let the user know. Whatever setting was
                     //   being changed has not been changed and the UI will reflect
                     //   that. There is no good reason for this to fail.
-                    qCDebug(YuneecCameraLog) << "Bad or no response for" << command;
+                    qCDebug(YuneecCameraLog) << "Bad or no settings response for" << command;
+                    _errorSound.setLoopCount(2);
+                    _errorSound.play();
+                }
+                break;
+            case MAV_CMD_IMAGE_START_CAPTURE:
+            case MAV_CMD_VIDEO_START_CAPTURE:
+            case MAV_CMD_VIDEO_STOP_CAPTURE:
+                if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
+                    qCDebug(YuneecCameraLog) << "Good capture response for" << command;
+                    //-- Faster feedback for start/stop video
+                    if(command == MAV_CMD_VIDEO_START_CAPTURE) {
+                        _handleVideoRunning(VIDEO_CAPTURE_STATUS_RUNNING);
+                        _captureStatusTimer.start(5000);
+                    } else if(command == MAV_CMD_VIDEO_STOP_CAPTURE) {
+                        _handleVideoRunning(VIDEO_CAPTURE_STATUS_STOPPED);
+                    } else if(command == MAV_CMD_IMAGE_START_CAPTURE) {
+                        //-- Good feedback
+                        _cameraSound.setLoopCount(1);
+                        _cameraSound.play();
+                    }
+                } else {
+                    //-- The camera didn't take it. There isn't much what we can do.
+                    //   Sound an error to let the user know. Whatever setting was
+                    //   being changed has not been changed and the UI will reflect
+                    //   that. There is no good reason for this to fail.
+                    qCDebug(YuneecCameraLog) << "Bad or no capture response for" << command;
                     _errorSound.setLoopCount(2);
                     _errorSound.play();
                 }
