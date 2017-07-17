@@ -291,6 +291,9 @@ private slots:
 private:
 
     void _handleGlobalPositionInt(const mavlink_message_t& message);
+    void _handleGPSRawInt(const mavlink_message_t& message);
+
+    bool _isTelemetryStreaming() const;
 
     enum class State {
         Idle,
@@ -308,6 +311,8 @@ private:
     QUdpSocket*             _socket = nullptr;
     QHostAddress            _udpHost;
     static constexpr int    _udpPort = 16060;
+
+    float                   _lastHdop = 1.f;
 };
 
 /// AirMap server communication support.
