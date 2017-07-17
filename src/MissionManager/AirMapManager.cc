@@ -589,13 +589,37 @@ void AirMapTelemetry::vehicleMavlinkMessageReceived(const mavlink_message_t& mes
     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
         _handleGlobalPositionInt(message);
         break;
+    case MAVLINK_MSG_ID_GPS_RAW_INT:
+        _handleGPSRawInt(message);
+        break;
     }
 
 }
 
+bool AirMapTelemetry::_isTelemetryStreaming() const
+{
+    return _state == State::Streaming && !_udpHost.isNull();
+}
+
+void AirMapTelemetry::_handleGPSRawInt(const mavlink_message_t& message)
+{
+    if (!_isTelemetryStreaming()) {
+        return;
+    }
+
+    mavlink_gps_raw_int_t gps_raw;
+    mavlink_msg_gps_raw_int_decode(&message, &gps_raw);
+
+    if (gps_raw.eph == UINT16_MAX) {
+        _lastHdop = 1.f;
+    } else {
+        _lastHdop = gps_raw.eph / 100.f;
+    }
+}
+
 void AirMapTelemetry::_handleGlobalPositionInt(const mavlink_message_t& message)
 {
-    if (_state != State::Streaming || _udpHost.isNull()) {
+    if (!_isTelemetryStreaming()) {
         return;
     }
 
@@ -630,21 +654,38 @@ void AirMapTelemetry::_handleGlobalPositionInt(const mavlink_message_t& message)
     packetHeaderLength += sizeof(iv);
 
     // write payload
+    // Position message
     airmap::telemetry::Position position;
     position.set_timestamp(QDateTime::currentMSecsSinceEpoch());
     position.set_latitude((double) globalPosition.lat / 1e7);
     position.set_longitude((double) globalPosition.lon / 1e7);
     position.set_altitude_msl((float) globalPosition.alt / 1000.f);
     position.set_altitude_agl((float) globalPosition.relative_alt / 1000.f);
-    position.set_horizontal_accuracy(1.);
+    position.set_horizontal_accuracy(_lastHdop);
 
     uint16_t msgID = 1; // Position: 1, Attitude: 2, Speed: 3, Barometer: 4
     uint16_t msgLength = position.ByteSize();
-    qToBigEndian(msgID, payload);
-    qToBigEndian(msgLength, payload+sizeof(msgID));
+    qToBigEndian(msgID, payload+payloadLength);
+    qToBigEndian(msgLength, payload+payloadLength+sizeof(msgID));
     payloadLength += sizeof(msgID) + sizeof(msgLength);
     position.SerializeToArray(payload+payloadLength, msgLength);
     payloadLength += msgLength;
+
+    // Speed message
+    airmap::telemetry::Speed speed;
+    speed.set_timestamp(QDateTime::currentMSecsSinceEpoch());
+    speed.set_velocity_x(globalPosition.vx / 100.f);
+    speed.set_velocity_y(globalPosition.vy / 100.f);
+    speed.set_velocity_z(globalPosition.vz / 100.f);
+
+    msgID = 3; // Position: 1, Attitude: 2, Speed: 3, Barometer: 4
+    msgLength = speed.ByteSize();
+    qToBigEndian(msgID, payload+payloadLength);
+    qToBigEndian(msgLength, payload+payloadLength+sizeof(msgID));
+    payloadLength += sizeof(msgID) + sizeof(msgLength);
+    speed.SerializeToArray(payload+payloadLength, msgLength);
+    payloadLength += msgLength;
+
 
     // pad to 16 bytes if necessary
     int padding = 16 - (payloadLength % 16);
