@@ -296,7 +296,7 @@ QString MainWindow::_getWindowGeometryKey()
 #ifndef __mobile__
 MAVLinkDecoder* MainWindow::_mavLinkDecoderInstance(void)
 {
-    if (_mavlinkDecoder) {
+    if (!_mavlinkDecoder) {
         _mavlinkDecoder = new MAVLinkDecoder(qgcApp()->toolbox()->mavlinkProtocol());
         connect(_mavlinkDecoder, &MAVLinkDecoder::valueChanged, this, &MainWindow::valueChanged);
     }
