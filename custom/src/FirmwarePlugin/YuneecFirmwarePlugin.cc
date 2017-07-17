@@ -93,7 +93,7 @@ const QVariantList& YuneecFirmwarePlugin::cameraList(const Vehicle* vehicle)
             13.3056,    // sensorWidth
             8.656,      // sensorHeight
             5472,       // imageWidth
-            3080,       // imageHeight
+            3648,       // imageHeight
             8.29,       // focalLength
             true,       // true: landscape orientation
             true,       // true: camera is fixed orientation
