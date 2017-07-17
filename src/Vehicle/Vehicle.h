@@ -866,6 +866,7 @@ private:
     AutoPilotPlugin*    _autopilotPlugin;
     MAVLinkProtocol*    _mavlink;
     bool                _soloFirmware;
+    QGCToolbox*         _toolbox;
     SettingsManager*    _settingsManager;
 
     QList<LinkInterface*> _links;
