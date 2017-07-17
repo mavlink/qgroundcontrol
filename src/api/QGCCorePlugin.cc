@@ -232,3 +232,12 @@ QQmlApplicationEngine* QGCCorePlugin::createRootWindow(QObject *parent)
     pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainWindowNative.qml")));
     return pEngine;
 }
+
+bool QGCCorePlugin::mavlinkMessage(Vehicle* vehicle, LinkInterface* link, mavlink_message_t message)
+{
+    Q_UNUSED(vehicle);
+    Q_UNUSED(link);
+    Q_UNUSED(message);
+
+    return true;
+}
