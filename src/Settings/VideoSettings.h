@@ -21,6 +21,7 @@ public:
 
     Q_PROPERTY(Fact* videoSource        READ videoSource        CONSTANT)
     Q_PROPERTY(Fact* udpPort            READ udpPort            CONSTANT)
+    Q_PROPERTY(Fact* tcpUrl             READ tcpUrl             CONSTANT)
     Q_PROPERTY(Fact* rtspUrl            READ rtspUrl            CONSTANT)
     Q_PROPERTY(Fact* aspectRatio        READ aspectRatio        CONSTANT)
     Q_PROPERTY(Fact* gridLines          READ gridLines          CONSTANT)
@@ -31,6 +32,7 @@ public:
     Fact* videoSource       (void);
     Fact* udpPort           (void);
     Fact* rtspUrl           (void);
+    Fact* tcpUrl            (void);
     Fact* aspectRatio       (void);
     Fact* gridLines         (void);
     Fact* showRecControl    (void);
@@ -42,6 +44,7 @@ public:
     static const char* videoSourceName;
     static const char* udpPortName;
     static const char* rtspUrlName;
+    static const char* tcpUrlName;
     static const char* videoAspectRatioName;
     static const char* videoGridLinesName;
     static const char* showRecControlName;
@@ -52,9 +55,11 @@ public:
     static const char* videoDisabled;
     static const char* videoSourceUDP;
     static const char* videoSourceRTSP;
+    static const char* videoSourceTCP;
 
 private:
     SettingsFact* _videoSourceFact;
+    SettingsFact* _tcpUrlFact;
     SettingsFact* _udpPortFact;
     SettingsFact* _rtspUrlFact;
     SettingsFact* _videoAspectRatioFact;
