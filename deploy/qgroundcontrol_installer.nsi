@@ -44,9 +44,9 @@ InstallDir "$PROGRAMFILES\${APPNAME}"
 SetCompressor /SOLID /FINAL lzma
 
 !define MUI_HEADERIMAGE
-!define MUI_HEADERIMAGE_BITMAP "installheader.bmp";
-!define MUI_ICON "WindowsQGC.ico";
-!define MUI_UNICON "WindowsQGC.ico";
+!define MUI_HEADERIMAGE_BITMAP "${HEADER_BITMAP}";
+!define MUI_ICON "${INSTALLER_ICON}";
+!define MUI_UNICON "${INSTALLER_ICON}";
 
 !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
 !insertmacro MUI_PAGE_DIRECTORY
