@@ -175,16 +175,6 @@ TyphoonHQuickInterface::thermalImagePresent()
 }
 
 //-----------------------------------------------------------------------------
-CameraControl*
-TyphoonHQuickInterface::cameraControl()
-{
-    if(_pHandler) {
-        return _pHandler->cameraControl();
-    }
-    return NULL;
-}
-
-//-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::_m4StateChanged()
 {

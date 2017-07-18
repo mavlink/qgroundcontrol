@@ -10,12 +10,14 @@
 #include "FirmwarePlugin.h"
 #include "PX4FirmwarePlugin.h"
 
+class YuneecCameraManager;
+
 class YuneecFirmwarePlugin : public PX4FirmwarePlugin
 {
     Q_OBJECT
 
 public:
-    YuneecFirmwarePlugin(void);
+    YuneecFirmwarePlugin();
 
     // FirmwarePlugin overrides
 
@@ -30,9 +32,12 @@ public:
     void                batteryConsumptionData              (Vehicle* vehicle, int& mAhBattery, double& hoverAmps, double& cruiseAmps) const final;
     bool                vehicleYawsToNextWaypointInMission  (const Vehicle* vehicle) const final;
     QString             internalParameterMetaDataFile       (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QString(":/typhoonh/YuneecParameterFactMetaData.xml"); }
+    QGCCameraManager*   cameraManager                       (Vehicle *vehicle) override final;
+    QGCCameraControl*   createCameraControl                 (const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = NULL) override final;
 
 private:
-    QVariantList        _toolBarIndicators;
+    QVariantList            _toolBarIndicators;
+    YuneecCameraManager*    _cameraManager;
 
     static QVariantList _cameraList;        ///< Yuneec camera list
 };

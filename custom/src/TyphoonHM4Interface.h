@@ -12,11 +12,8 @@
 
 #include "m4def.h"
 #include "m4util.h"
-#include "CameraControl.h"
 
 #include "Vehicle.h"
-
-class CameraControl;
 
 //-----------------------------------------------------------------------------
 // M4 Handler
@@ -41,7 +38,6 @@ public:
     bool    sendPassThroughMessage  (QByteArray message);
 
     Vehicle*            vehicle         () { return _vehicle; }
-    CameraControl*      cameraControl   () { return _cameraControl; }
     QList<uint16_t>     rawChannels     () { return _rawChannels; }
     int                 calChannel      (int index);
 
@@ -160,7 +156,6 @@ private:
     ControllerLocation      _controllerLocation;
     bool                    _binding;
     Vehicle*                _vehicle;
-    CameraControl*          _cameraControl;
     TyphoonHQuickInterface::M4State     _m4State;
     QString                 _currentConnection;
     bool                    _armed;
