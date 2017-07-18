@@ -852,7 +852,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 //-- Previous Image
-                Image {
+                QGCColoredImage {
                     anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left:       parent.left
@@ -864,6 +864,7 @@ Rectangle {
                     mipmap:             true
                     smooth:             true
                     visible:            _mediaIndex > 0
+                    color:              qgcPal.text
                     MouseArea {
                         anchors.fill:   parent
                         onClicked: {
@@ -875,7 +876,7 @@ Rectangle {
                     }
                 }
                 //-- Next Image
-                Image {
+                QGCColoredImage {
                     anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right:      parent.right
@@ -887,6 +888,7 @@ Rectangle {
                     mipmap:             true
                     smooth:             true
                     visible:            _mediaIndex < (_mediaModel.length - 1)
+                    color:              qgcPal.text
                     MouseArea {
                         anchors.fill:   parent
                         onClicked: {
