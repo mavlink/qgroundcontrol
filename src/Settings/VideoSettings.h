@@ -59,8 +59,8 @@ public:
 
 private:
     SettingsFact* _videoSourceFact;
-    SettingsFact* _tcpUrlFact;
     SettingsFact* _udpPortFact;
+    SettingsFact* _tcpUrlFact;
     SettingsFact* _rtspUrlFact;
     SettingsFact* _videoAspectRatioFact;
     SettingsFact* _gridLinesFact;
