@@ -84,6 +84,8 @@ void GeoFenceController::_signalAll(void)
     emit polygonEnabledChanged(polygonEnabled());
     emit polygonSupportedChanged(polygonSupported());
     emit dirtyChanged(dirty());
+    emit paramsChanged(params());
+    emit paramLabelsChanged(paramLabels());
 }
 
 void GeoFenceController::managerVehicleChanged(Vehicle* managerVehicle)
