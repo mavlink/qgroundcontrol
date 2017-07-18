@@ -27,6 +27,7 @@ public:
 
 private slots:
     void                _factChanged        (QVariant value);
+    void                _containerRawValueChanged(const QVariant value);
     void                _paramWriteTimeout  ();
     void                _paramRequestTimeout();
 

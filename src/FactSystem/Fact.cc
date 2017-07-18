@@ -92,7 +92,7 @@ void Fact::forceSetRawValue(const QVariant& value)
     }
 }
 
-void Fact::setRawValue(const QVariant& value, bool skipSignal)
+void Fact::setRawValue(const QVariant& value)
 {
     if (_metaData) {
         QVariant    typedValue;
@@ -102,10 +102,8 @@ void Fact::setRawValue(const QVariant& value, bool skipSignal)
             if (typedValue != _rawValue) {
                 _rawValue.setValue(typedValue);
                 _sendValueChangedSignal(cookedValue());
-                if(!skipSignal) {
-                    emit _containerRawValueChanged(rawValue());
-                    emit rawValueChanged(_rawValue);
-                }
+                emit _containerRawValueChanged(rawValue());
+                emit rawValueChanged(_rawValue);
             }
         }
     } else {
