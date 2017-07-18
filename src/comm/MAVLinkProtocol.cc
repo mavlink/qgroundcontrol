@@ -40,6 +40,29 @@
 #include "MultiVehicleManager.h"
 #include "SettingsManager.h"
 
+/***************************************************************************************************/
+// TODO: repalce hard coded MAVLink signing key
+
+// magic for versioning of the structure
+#define SIGNING_KEY_MAGIC 0x3852fcd1
+
+// structure stored in persistent memory
+typedef struct {
+    uint32_t magic;
+    uint64_t timestamp;
+    uint8_t secret_key[32];
+} signing_key_t;
+
+static const signing_key_t mavlink_secret_key = {
+    SIGNING_KEY_MAGIC,
+    1420070400, // 1st January 2015
+    {
+        0xce, 0x39, 0x7e, 0x07, 0x27, 0x6c, 0xc8, 0xa1, 0xd9, 0x88, 0x76, 0x92, 0x8a, 0x9a, 0xab, 0xbb,
+        0x72, 0x7b, 0x9f, 0xbe, 0xee, 0xb7, 0x32, 0x71, 0xc6, 0x0c, 0x9c, 0xa1, 0x8a, 0x16, 0x14, 0xe3
+    } // plain text hex key ce397e07276cc8a1d98876928a9aabbb727b9fbeeeb73271c60c9ca18a1614e3
+};
+/***************************************************************************************************/
+
 Q_DECLARE_METATYPE(mavlink_message_t)
 
 QGC_LOGGING_CATEGORY(MAVLinkProtocolLog, "MAVLinkProtocolLog")
@@ -228,9 +251,11 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                         link->writeBytesSafe((const char*)buffer, len);
 
                         mavlink_signing_t& signing = link->signing;
-                        memcpy(signing.secret_key, setupSigning.secret_key, 32);
+//                        memcpy(signing.secret_key, setupSigning.secret_key, 32);
+                        memcpy(signing.secret_key, mavlink_secret_key.secret_key, 32);
                         signing.link_id = (uint8_t)mavlinkChannel;
-                        signing.timestamp = setupSigning.initial_timestamp;
+//                        signing.timestamp = setupSigning.initial_timestamp;
+                        signing.timestamp = mavlink_secret_key.timestamp;
                         signing.flags = MAVLINK_SIGNING_FLAG_SIGN_OUTGOING;
                         signing.accept_unsigned_callback = accept_unsigned_callback;
 
