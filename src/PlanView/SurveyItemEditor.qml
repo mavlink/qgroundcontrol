@@ -463,9 +463,13 @@ Rectangle {
                     Layout.fillWidth:       true
                 }
 
-                QGCLabel { text: qsTr("Entry") }
+                QGCLabel {
+                    text: qsTr("Entry")
+                    visible: ScreenTools.isMobile
+                }
                 FactComboBox {
                     fact:                   missionItem.gridEntryLocation
+                    visible:                ScreenTools.isMobile
                     indexModel:             false
                     Layout.fillWidth:       true
                 }
@@ -574,9 +578,13 @@ Rectangle {
                 fact:                   missionItem.turnaroundDist
                 Layout.fillWidth:       true
             }
-            QGCLabel { text: qsTr("Entry") }
+            QGCLabel {
+                text: qsTr("Entry")
+                visible: ScreenTools.isMobile
+            }
             FactComboBox {
                 fact:                   missionItem.gridEntryLocation
+                visible:                ScreenTools.isMobile
                 indexModel:             false
                 Layout.fillWidth:       true
             }
