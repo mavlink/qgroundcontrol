@@ -465,11 +465,11 @@ Rectangle {
 
                 QGCLabel {
                     text: qsTr("Entry")
-                    visible: ScreenTools.isMobile
+                    visible: !windRoseButton.visible
                 }
                 FactComboBox {
                     fact:                   missionItem.gridEntryLocation
-                    visible:                ScreenTools.isMobile
+                    visible:                !windRoseButton.visible
                     indexModel:             false
                     Layout.fillWidth:       true
                 }
@@ -580,11 +580,11 @@ Rectangle {
             }
             QGCLabel {
                 text: qsTr("Entry")
-                visible: ScreenTools.isMobile
+                visible: !windRoseButton.visible
             }
             FactComboBox {
                 fact:                   missionItem.gridEntryLocation
-                visible:                ScreenTools.isMobile
+                visible:                !windRoseButton.visible
                 indexModel:             false
                 Layout.fillWidth:       true
             }
