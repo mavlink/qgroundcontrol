@@ -254,8 +254,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 //                        memcpy(signing.secret_key, setupSigning.secret_key, 32);
                         memcpy(signing.secret_key, mavlink_secret_key.secret_key, 32);
                         signing.link_id = (uint8_t)mavlinkChannel;
-//                        signing.timestamp = setupSigning.initial_timestamp;
-                        signing.timestamp = mavlink_secret_key.timestamp;
+                        signing.timestamp = setupSigning.initial_timestamp;
                         signing.flags = MAVLINK_SIGNING_FLAG_SIGN_OUTGOING;
                         signing.accept_unsigned_callback = accept_unsigned_callback;
 
