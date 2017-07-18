@@ -34,7 +34,7 @@
 /**
  * @file px4_custom_mode.h
  * PX4 custom flight modes
- *
+ * Copied from PX4 2017-07-08 - https://github.com/PX4/Firmware/blob/master/src/modules/commander/px4_custom_mode.h#L45
  */
 
 #ifndef PX4_CUSTOM_MODE_H_
@@ -50,8 +50,8 @@ enum PX4_CUSTOM_MAIN_MODE {
 	PX4_CUSTOM_MAIN_MODE_ACRO,
 	PX4_CUSTOM_MAIN_MODE_OFFBOARD,
 	PX4_CUSTOM_MAIN_MODE_STABILIZED,
-    PX4_CUSTOM_MAIN_MODE_RATTITUDE,
-    PX4_CUSTOM_MAIN_MODE_SIMPLE
+	PX4_CUSTOM_MAIN_MODE_RATTITUDE,
+	PX4_CUSTOM_MAIN_MODE_SIMPLE /* unused, but reserved for future use */
 };
 
 enum PX4_CUSTOM_SUB_MODE_AUTO {

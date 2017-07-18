@@ -240,8 +240,9 @@ FlightMap {
         anchorPoint.y:  sourceItem.anchorPointY
 
         sourceItem: MissionItemIndexLabel {
-            checked: true
-            label:   qsTr("G", "Goto here waypoint") // second string is translator's hint.
+            checked:    true
+            index:      -1
+            label:      qsTr("Goto here", "Goto here waypoint")
         }
     }    
 
@@ -260,7 +261,7 @@ FlightMap {
         anchors.fill: parent
 
         onClicked: {
-            if (guidedActionsController.showGotoLocation) {
+            if (guidedActionsController.showGotoLocation && !guidedActionsController.guidedUIVisible) {
                 _gotoHereCoordinate = flightMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
                 guidedActionsController.confirmAction(guidedActionsController.actionGoto, _gotoHereCoordinate)
             }

@@ -542,6 +542,7 @@ QGCView {
             id:                 guidedActionsController
             missionController:  _missionController
             confirmDialog:      guidedActionConfirm
+            actionList:         guidedActionList
             altitudeSlider:     _altitudeSlider
             z:                  _flightVideoPipControl.z + 1
 
