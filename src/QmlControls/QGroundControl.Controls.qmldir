@@ -25,6 +25,7 @@ MissionItemMapVisual    1.0 MissionItemMapVisual.qml
 MissionItemStatus       1.0 MissionItemStatus.qml
 ModeSwitchDisplay       1.0 ModeSwitchDisplay.qml
 MultiRotorMotorDisplay  1.0 MultiRotorMotorDisplay.qml
+NoMouseThroughRectangle 1.0 NoMouseThroughRectangle.qml
 ParameterEditor         1.0 ParameterEditor.qml
 ParameterEditorDialog   1.0 ParameterEditorDialog.qml
 PlanToolBar             1.0 PlanToolBar.qml

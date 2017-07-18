@@ -688,8 +688,8 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     mavlink_global_position_int_t globalPositionInt;
     mavlink_msg_global_position_int_decode(&message, &globalPositionInt);
 
-    // ArduPilot sends bogus GLOBAL_POSITION_INT messages with lat/lat/alt 0/0/0 even when it has not gps signal
-    if (globalPositionInt.lat == 0 && globalPositionInt.lon == 0 && globalPositionInt.alt == 0) {
+    // ArduPilot sends bogus GLOBAL_POSITION_INT messages with lat/lat 0/0 even when it has not gps signal
+    if (globalPositionInt.lat == 0 && globalPositionInt.lon == 0) {
         return;
     }
 
@@ -723,6 +723,7 @@ void Vehicle::_setCapabilities(uint64_t capabilityBits)
         _supportsMissionItemInt = true;
     }
     _vehicleCapabilitiesKnown = true;
+    emit capabilitiesKnownChanged(true);
 
     qCDebug(VehicleLog) << QString("Vehicle %1 MISSION_ITEM_INT").arg(_supportsMissionItemInt ? QStringLiteral("supports") : QStringLiteral("does not support"));
 }
@@ -795,7 +796,7 @@ void Vehicle::_handleHilActuatorControls(mavlink_message_t &message)
 
 void Vehicle::_handleCommandAck(mavlink_message_t& message)
 {
-    bool showError = true;
+    bool showError = false;
 
     mavlink_command_ack_t ack;
     mavlink_msg_command_ack_decode(&message, &ack);

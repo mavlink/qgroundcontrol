@@ -50,7 +50,14 @@ void CameraSectionTest::init(void)
                                            MissionItem(0, MAV_CMD_IMAGE_START_CAPTURE, MAV_FRAME_MISSION, 0, 48, 0, NAN, NAN, NAN, NAN, true, false),
                                            this);
     _validDistanceItem = new SimpleMissionItem(_offlineVehicle,
-                                               MissionItem(0, MAV_CMD_DO_SET_CAM_TRIGG_DIST, MAV_FRAME_MISSION, 72, 0, 0, 0, 0, 0, 0, true, false),
+                                               MissionItem(0,
+                                                           MAV_CMD_DO_SET_CAM_TRIGG_DIST,
+                                                           MAV_FRAME_MISSION,
+                                                           72,              // trigger distance
+                                                           0,               // not shutter integration
+                                                           1,               // trigger immediately
+                                                           0, 0, 0, 0,
+                                                           true, false),
                                                this);
     _validStartVideoItem = new SimpleMissionItem(_offlineVehicle,
                                                  MissionItem(0,                             // sequence number
@@ -729,15 +736,15 @@ void CameraSectionTest::_testScanForPhotoIntervalDistanceSection(void)
     _commonScanTest(_cameraSection);
 
     /*
-    MAV_CMD_DO_SET_CAM_TRIGG_DIST	Mission command to set CAM_TRIGG_DIST for this flight
-    Mission Param #1	Camera trigger distance (meters)
-    Mission Param #2	Empty
-    Mission Param #3	Empty
+    MAV_CMD_DO_SET_CAM_TRIGG_DIST	Mission command to set camera trigger distance for this flight. The camera is trigerred each time this distance is exceeded. This command can also be used to set the shutter integration time for the camera.
+    Mission Param #1	Camera trigger distance (meters). 0 to stop triggering.
+    Mission Param #2	Camera shutter integration time (milliseconds). -1 or 0 to ignore
+    Mission Param #3	Trigger camera once immediately. (0 = no trigger, 1 = trigger)
     Mission Param #4	Empty
     Mission Param #5	Empty
     Mission Param #6	Empty
     Mission Param #7	Empty
-*/
+    */
 
     SimpleMissionItem* newValidDistanceItem = new SimpleMissionItem(_offlineVehicle, this);
     newValidDistanceItem->missionItem() = _validDistanceItem->missionItem();
@@ -769,7 +776,7 @@ void CameraSectionTest::_testScanForPhotoIntervalDistanceSection(void)
     visualItems.clear();
 
     invalidSimpleItem.missionItem() = _validDistanceItem->missionItem();
-    invalidSimpleItem.missionItem().setParam3(1);    // must be 0
+    invalidSimpleItem.missionItem().setParam3(0);    // must be 1
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);

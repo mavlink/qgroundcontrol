@@ -76,7 +76,8 @@ PX4FirmwarePlugin::PX4FirmwarePlugin(void)
         { PX4_CUSTOM_MAIN_MODE_RATTITUDE,   0,                                      true,   true,   true },
         { PX4_CUSTOM_MAIN_MODE_ALTCTL,      0,                                      true,   true,   true },
         { PX4_CUSTOM_MAIN_MODE_POSCTL,      0,                                      true,   true,   true },
-        { PX4_CUSTOM_MAIN_MODE_SIMPLE,      0,                                      true,   false,  true },
+        // simple can't be set by the user right now
+        { PX4_CUSTOM_MAIN_MODE_SIMPLE,      0,                                      false,   false,  true },
         { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,        true,   true,   true },
         { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,       true,   true,   true },
         { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,           true,   true,   true },
@@ -460,12 +461,15 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 
 void PX4FirmwarePlugin::startMission(Vehicle* vehicle)
 {
-    if (!_armVehicleAndValidate(vehicle)) {
-        qgcApp()->showMessage(tr("Unable to start mission: Vehicle failed to arm."));
-        return;
-    }
 
-    _setFlightModeAndValidate(vehicle, missionFlightMode());
+    if (_setFlightModeAndValidate(vehicle, missionFlightMode())) {
+        if (!_armVehicleAndValidate(vehicle)) {
+            qgcApp()->showMessage(tr("Unable to start mission: Vehicle rejected arming."));
+            return;
+        }
+    } else {
+        qgcApp()->showMessage(tr("Unable to start mission: Vehicle not ready."));
+    }
 }
 
 void PX4FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
