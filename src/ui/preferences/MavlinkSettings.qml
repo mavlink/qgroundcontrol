@@ -15,6 +15,7 @@ import QtQuick.Dialogs          1.2
 
 import QGroundControl                       1.0
 import QGroundControl.FactSystem            1.0
+import QGroundControl.FactControls          1.0
 import QGroundControl.Controls              1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
@@ -147,6 +148,23 @@ Rectangle {
                         checked:    QGroundControl.isVersionCheckEnabled
                         onClicked: {
                             QGroundControl.isVersionCheckEnabled = checked
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Mavlink 2 signing key
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        FactCheckBox {
+                            id:                 signingKeyCheckBox
+                            anchors.baseline:   signingKeyField.baseline
+                            fact:               QGroundControl.settingsManager.appSettings.mavlink2Signing
+                            text:               qsTr("MAVLink 2 Signing Key:")
+                        }
+                        FactTextField {
+                            id:         signingKeyField
+                            fact:       QGroundControl.settingsManager.appSettings.mavlink2SigningKey
+                            width:      _valueWidth
+                            enabled:    signingKeyCheckBox.checked
                         }
                     }
                 }

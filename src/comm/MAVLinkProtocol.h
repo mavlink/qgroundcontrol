@@ -28,6 +28,7 @@
 class LinkManager;
 class MultiVehicleManager;
 class QGCApplication;
+class AppSettings;
 
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkProtocolLog)
 
@@ -180,6 +181,7 @@ private:
 
     LinkManager*            _linkMgr;
     MultiVehicleManager*    _multiVehicleManager;
+    AppSettings*            _appSettings;
 };
 
 #endif // MAVLINKPROTOCOL_H_
