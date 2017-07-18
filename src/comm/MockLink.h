@@ -216,6 +216,9 @@ private:
 
     MAV_AUTOPILOT       _firmwareType;
     MAV_TYPE            _vehicleType;
+    double              _vehicleLatitude;
+    double              _vehicleLongitude;
+    double              _vehicleAltitude;
 
     MockLinkFileServer* _fileServer;
 
@@ -236,9 +239,9 @@ private:
     uint32_t    _logDownloadCurrentOffset;  ///< Current offset we are sending from
     uint32_t    _logDownloadBytesRemaining; ///< Number of bytes still to send, 0 = send inactive
 
-    static float        _vehicleLatitude;
-    static float        _vehicleLongitude;
-    static float        _vehicleAltitude;
+    static double       _defaultVehicleLatitude;
+    static double       _defaultVehicleLongitude;
+    static double       _defaultVehicleAltitude;
     static int          _nextVehicleSystemId;
     static const char*  _failParam;
 };
