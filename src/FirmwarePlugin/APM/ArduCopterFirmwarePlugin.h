@@ -73,7 +73,7 @@ public:
     QString missionFlightMode                   (void) const override { return QString("Auto"); }
     QString rtlFlightMode                       (void) const override { return QString("RTL"); }
     QString landFlightMode                      (void) const override { return QString("Land"); }
-    QString takeControlFlightMode               (void) const override { return QString("Stablize"); }
+    QString takeControlFlightMode               (void) const override { return QString("Loiter"); }
     bool    vehicleYawsToNextWaypointInMission  (const Vehicle* vehicle) const final;
     QString autoDisarmParameter                 (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
     void    startMission                        (Vehicle* vehicle) override;
