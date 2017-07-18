@@ -194,16 +194,17 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
 //    receiveMutex.lock();
     mavlink_message_t message;
-    mavlink_status_t status;
 
     int mavlinkChannel = link->mavlinkChannel();
+    // the channel mavlink status is needed in other to be able to parse the signed packages
+    mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
 
     static int nonmavlinkCount = 0;
     static bool checkedUserNonMavlink = false;
     static bool warnedUserNonMavlink = false;
 
     for (int position = 0; position < b.size(); position++) {
-        unsigned int decodeState = mavlink_parse_char(mavlinkChannel, (uint8_t)(b[position]), &message, &status);
+        unsigned int decodeState = mavlink_parse_char(mavlinkChannel, (uint8_t)(b[position]), &message, mavlinkStatus);
 
         if (decodeState == 0 && !link->decodedFirstMavlinkPacket())
         {
