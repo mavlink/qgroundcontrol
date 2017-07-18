@@ -27,6 +27,7 @@ QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicl
     connect(&_paramWriteTimer,   &QTimer::timeout, this, &QGCCameraParamIO::_paramWriteTimeout);
     connect(&_paramRequestTimer, &QTimer::timeout, this, &QGCCameraParamIO::_paramRequestTimeout);
     connect(_fact, &Fact::rawValueChanged, this, &QGCCameraParamIO::_factChanged);
+    connect(_fact, &Fact::_containerRawValueChanged, this, &QGCCameraParamIO::_containerRawValueChanged);
 }
 
 //-----------------------------------------------------------------------------
@@ -43,10 +44,18 @@ void
 QGCCameraParamIO::_factChanged(QVariant value)
 {
     Q_UNUSED(value);
-    qCDebug(CameraIOLog) << "Fact" << _fact->name() << "changed";
-    _sendParameter();
+    qCDebug(CameraIOLog) << "UI Fact" << _fact->name() << "changed";
     //-- TODO: Do we really want to update the UI now or only when we receive the ACK?
     _control->factChanged(_fact);
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraParamIO::_containerRawValueChanged(const QVariant value)
+{
+    Q_UNUSED(value);
+    qCDebug(CameraIOLog) << "Send Fact" << _fact->name() << "changed";
+    _sendParameter();
 }
 
 //-----------------------------------------------------------------------------
@@ -146,7 +155,7 @@ QGCCameraParamIO::handleParamAck(const mavlink_param_ext_ack_t& ack)
 {
     _paramWriteTimer.stop();
     if(ack.param_result == PARAM_ACK_ACCEPTED) {
-        _fact->setRawValue(_valueFromMessage(ack.param_value, ack.param_type), true);
+        _fact->_containerSetRawValue(_valueFromMessage(ack.param_value, ack.param_type));
     }
     if(ack.param_result == PARAM_ACK_IN_PROGRESS) {
         //-- Wait a bit longer for this one
@@ -166,7 +175,7 @@ void
 QGCCameraParamIO::handleParamValue(const mavlink_param_ext_value_t& value)
 {
     _paramRequestTimer.stop();
-    _fact->setRawValue(_valueFromMessage(value.param_value, value.param_type), true);
+    _fact->_containerSetRawValue(_valueFromMessage(value.param_value, value.param_type));
     _paramRequestReceived = true;
     qCDebug(CameraIOLog) << QString("handleParamValue() %1 %2").arg(_fact->name()).arg(_fact->rawValueString());
 }

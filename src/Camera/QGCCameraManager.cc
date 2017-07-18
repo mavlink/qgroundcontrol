@@ -50,22 +50,30 @@ QGCCameraManager::_vehicleReady(bool ready)
 void
 QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
-    switch (message.msgid) {
-        case MAVLINK_MSG_ID_HEARTBEAT:
-            _handleHeartbeat(message);
-            break;
-        case MAVLINK_MSG_ID_CAMERA_INFORMATION:
-            _handleCameraInfo(message);
-            break;
-        case MAVLINK_MSG_ID_CAMERA_SETTINGS:
-            _handleCameraSettings(message);
-            break;
-        case MAVLINK_MSG_ID_PARAM_EXT_ACK:
-            _handleParamAck(message);
-            break;
-        case MAVLINK_MSG_ID_PARAM_EXT_VALUE:
-            _handleParamValue(message);
-            break;
+    if(message.sysid == _vehicle->id()) {
+        switch (message.msgid) {
+            case MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS:
+                _handleCaptureStatus(message);
+                break;
+            case MAVLINK_MSG_ID_STORAGE_INFORMATION:
+                _handleStorageInfo(message);
+                break;
+            case MAVLINK_MSG_ID_HEARTBEAT:
+                _handleHeartbeat(message);
+                break;
+            case MAVLINK_MSG_ID_CAMERA_INFORMATION:
+                _handleCameraInfo(message);
+                break;
+            case MAVLINK_MSG_ID_CAMERA_SETTINGS:
+                _handleCameraSettings(message);
+                break;
+            case MAVLINK_MSG_ID_PARAM_EXT_ACK:
+                _handleParamAck(message);
+                break;
+            case MAVLINK_MSG_ID_PARAM_EXT_VALUE:
+                _handleParamValue(message);
+                break;
+        }
     }
 }
 
@@ -117,6 +125,30 @@ QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
     if(pCamera) {
         _cameras.append(pCamera);
         emit camerasChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_handleCaptureStatus(const mavlink_message_t &message)
+{
+    QGCCameraControl* pCamera = _findCamera(message.compid);
+    if(pCamera) {
+        mavlink_camera_capture_status_t cap;
+        mavlink_msg_camera_capture_status_decode(&message, &cap);
+        pCamera->handleCaptureStatus(cap);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_handleStorageInfo(const mavlink_message_t& message)
+{
+    QGCCameraControl* pCamera = _findCamera(message.compid);
+    if(pCamera) {
+        mavlink_storage_information_t st;
+        mavlink_msg_storage_information_decode(&message, &st);
+        pCamera->handleStorageInfo(st);
     }
 }
 

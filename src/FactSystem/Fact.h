@@ -112,7 +112,7 @@ public:
     /// Returns the values as a string with full 18 digit precision if float/double.
     QString rawValueStringFullPrecision(void) const;
 
-    void setRawValue        (const QVariant& value, bool skipSignal = false);
+    void setRawValue        (const QVariant& value);
     void setCookedValue     (const QVariant& value);
     void setEnumIndex       (int index);
     void setEnumStringValue (const QString& value);
@@ -135,6 +135,8 @@ public:
     void setMetaData(FactMetaData* metaData);
     
     FactMetaData* metaData() { return _metaData; }
+
+    //-- Value coming from Vehicle. This does NOT send a _containerRawValueChanged signal.
     void _containerSetRawValue(const QVariant& value);
     
     /// Generally you should not change the name of a fact. But if you know what you are doing, you can.
@@ -161,7 +163,7 @@ signals:
     
     /// Signalled when property has been changed by a call to the property write accessor
     ///
-    /// This signal is meant for use by Fact container implementations.
+    /// This signal is meant for use by Fact container implementations. Used to send changed values to vehicle.
     void _containerRawValueChanged(const QVariant& value);
     
 protected:

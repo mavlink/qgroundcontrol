@@ -62,7 +62,7 @@ class QGCCameraControl : public FactGroup
     Q_OBJECT
 public:
     QGCCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = NULL);
-    ~QGCCameraControl();
+    virtual ~QGCCameraControl();
 
     //-- cam_mode
     enum CameraMode {
@@ -71,7 +71,15 @@ public:
         CAMERA_MODE_VIDEO = 1,
     };
 
+    //-- Video Capture Status
+    enum VideoStatus {
+        VIDEO_CAPTURE_STATUS_STOPPED = 0,
+        VIDEO_CAPTURE_STATUS_RUNNING,
+        VIDEO_CAPTURE_STATUS_UNDEFINED
+    };
+
     Q_ENUMS(CameraMode)
+    Q_ENUMS(VideoStatus)
 
     Q_PROPERTY(int          version             READ version            NOTIFY infoChanged)
     Q_PROPERTY(QString      modelName           READ modelName          NOTIFY infoChanged)
@@ -86,57 +94,82 @@ public:
     Q_PROPERTY(bool         photosInVideoMode   READ photosInVideoMode  NOTIFY infoChanged)
     Q_PROPERTY(bool         videoInPhotoMode    READ videoInPhotoMode   NOTIFY infoChanged)
     Q_PROPERTY(bool         isBasic             READ isBasic            NOTIFY infoChanged)
+    Q_PROPERTY(quint32      storageFree         READ storageFree        NOTIFY storageFreeChanged)
+    Q_PROPERTY(QString      storageFreeStr      READ storageFreeStr     NOTIFY storageFreeChanged)
+    Q_PROPERTY(quint32      storageTotal        READ storageTotal       NOTIFY storageTotalChanged)
 
     Q_PROPERTY(QStringList  activeSettings      READ activeSettings                             NOTIFY activeSettingsChanged)
+    Q_PROPERTY(VideoStatus  videoStatus         READ videoStatus                                NOTIFY videoStatusChanged)
     Q_PROPERTY(CameraMode   cameraMode          READ cameraMode         WRITE   setCameraMode   NOTIFY cameraModeChanged)
 
-    Q_INVOKABLE void setVideoMode   ();
-    Q_INVOKABLE void setPhotoMode   ();
-    Q_INVOKABLE void toggleMode     ();
-    Q_INVOKABLE void takePhoto      ();
-    Q_INVOKABLE void startVideo     ();
-    Q_INVOKABLE void stopVideo      ();
-    Q_INVOKABLE void resetSettings  ();
-    Q_INVOKABLE void formatCard     (int id = 1);
+    Q_INVOKABLE virtual void setVideoMode   ();
+    Q_INVOKABLE virtual void setPhotoMode   ();
+    Q_INVOKABLE virtual void toggleMode     ();
+    Q_INVOKABLE virtual bool takePhoto      ();
+    Q_INVOKABLE virtual bool startVideo     ();
+    Q_INVOKABLE virtual bool stopVideo      ();
+    Q_INVOKABLE virtual bool toggleVideo    ();
+    Q_INVOKABLE virtual void resetSettings  ();
+    Q_INVOKABLE virtual void formatCard     (int id = 1);
 
-    int         version             () { return _version; }
-    QString     modelName           () { return _modelName; }
-    QString     vendor              () { return _vendor; }
-    QString     firmwareVersion     ();
-    qreal       focalLength         () { return (qreal)_info.focal_length; }
-    QSizeF      sensorSize          () { return QSizeF(_info.sensor_size_h, _info.sensor_size_v); }
-    QSize       resolution          () { return QSize(_info.resolution_h, _info.resolution_v); }
-    bool        capturesVideo       () { return true  /*_info.flags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO*/ ; }
-    bool        capturesPhotos      () { return true  /*_info.flags & CAMERA_CAP_FLAGS_CAPTURE_PHOTO*/ ; }
-    bool        hasModes            () { return true  /*_info.flags & CAMERA_CAP_FLAGS_HAS_MODES*/ ; }
-    bool        photosInVideoMode   () { return true  /*_info.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_PHOTO_IN_VIDEO_MODE*/ ; }
-    bool        videoInPhotoMode    () { return false /*_info.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_PHOTO_MODE*/ ; }
+    virtual int         version             () { return _version; }
+    virtual QString     modelName           () { return _modelName; }
+    virtual QString     vendor              () { return _vendor; }
+    virtual QString     firmwareVersion     ();
+    virtual qreal       focalLength         () { return (qreal)_info.focal_length; }
+    virtual QSizeF      sensorSize          () { return QSizeF(_info.sensor_size_h, _info.sensor_size_v); }
+    virtual QSize       resolution          () { return QSize(_info.resolution_h, _info.resolution_v); }
+    virtual bool        capturesVideo       () { return _info.flags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO; }
+    virtual bool        capturesPhotos      () { return _info.flags & CAMERA_CAP_FLAGS_CAPTURE_IMAGE; }
+    virtual bool        hasModes            () { return _info.flags & CAMERA_CAP_FLAGS_HAS_MODES; }
+    virtual bool        photosInVideoMode   () { return _info.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE; }
+    virtual bool        videoInPhotoMode    () { return _info.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE; }
 
-    int         compID              () { return _compID; }
-    bool        isBasic             () { return _settings.size() == 0; }
-    CameraMode  cameraMode          () { return _cameraMode; }
-    QStringList activeSettings      () { return _activeSettings; }
+    virtual int         compID              () { return _compID; }
+    virtual bool        isBasic             () { return _settings.size() == 0; }
+    virtual VideoStatus videoStatus         ();
+    virtual CameraMode  cameraMode          () { return _cameraMode; }
+    virtual QStringList activeSettings      () { return _activeSettings; }
+    virtual quint32     storageFree         () { return _storageFree;  }
+    virtual QString     storageFreeStr      ();
+    virtual quint32     storageTotal        () { return _storageTotal; }
 
-    void        setCameraMode       (CameraMode mode);
+    virtual void        setCameraMode       (CameraMode mode);
 
-    void        handleSettings      (const mavlink_camera_settings_t& settings);
-    void        handleParamAck      (const mavlink_param_ext_ack_t& ack);
-    void        handleParamValue    (const mavlink_param_ext_value_t& value);
-    void        factChanged         (Fact* pFact);
+    virtual void        handleSettings      (const mavlink_camera_settings_t& settings);
+    virtual void        handleCaptureStatus (const mavlink_camera_capture_status_t& capStatus);
+    virtual void        handleParamAck      (const mavlink_param_ext_ack_t& ack);
+    virtual void        handleParamValue    (const mavlink_param_ext_value_t& value);
+    virtual void        handleStorageInfo   (const mavlink_storage_information_t& st);
+    virtual void        factChanged         (Fact* pFact);
 
 signals:
     void    infoChanged                     ();
+    void    videoStatusChanged              ();
     void    cameraModeChanged               ();
     void    activeSettingsChanged           ();
+    void    storageFreeChanged              ();
+    void    storageTotalChanged             ();
+    void    dataReady                       (QByteArray data);
+
+protected:
+    virtual void    _setVideoStatus         (VideoStatus status);
+    virtual void    _setCameraMode          (CameraMode mode);
 
 private slots:
+    void    _initWhenReady                  ();
     void    _requestCameraSettings          ();
     void    _requestAllParameters           ();
+    void    _requestCaptureStatus           ();
+    void    _requestStorageInfo             ();
+    void    _downloadFinished               ();
+    void    _mavCommandResult               (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
+    void    _dataReady                      (QByteArray data);
 
 private:
     bool    _handleLocalization             (QByteArray& bytes);
     bool    _replaceLocaleStrings           (const QDomNode node, QByteArray& bytes);
-    bool    _loadCameraDefinitionFile       (const QString& file);
+    bool    _loadCameraDefinitionFile       (QByteArray& bytes);
     bool    _loadConstants                  (const QDomNodeList nodeList);
     bool    _loadSettings                   (const QDomNodeList nodeList);
     void    _processRanges                  ();
@@ -146,20 +179,26 @@ private:
     bool    _loadRanges                     (QDomNode option, const QString factName, QString paramValue);
     void    _updateActiveList               ();
     void    _updateRanges                   (Fact* pFact);
+    void    _httpRequest                    (const QString& url);
 
     QStringList     _loadExclusions         (QDomNode option);
     QString         _getParamName           (const char* param_id);
 
-private:
+protected:
     Vehicle*                            _vehicle;
     int                                 _compID;
     mavlink_camera_information_t        _info;
     int                                 _version;
+    uint32_t                            _storageFree;
+    uint32_t                            _storageTotal;
+    QNetworkAccessManager*              _netManager;
     QString                             _modelName;
     QString                             _vendor;
     CameraMode                          _cameraMode;
+    VideoStatus                         _video_status;
     QStringList                         _activeSettings;
     QStringList                         _settings;
+    QTimer                              _captureStatusTimer;
     QList<QGCCameraOptionExclusion*>    _valueExclusions;
     QList<QGCCameraOptionRange*>        _optionRanges;
     QMap<QString, QStringList>          _originalOptNames;

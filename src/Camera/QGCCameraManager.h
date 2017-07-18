@@ -23,7 +23,7 @@ class QGCCameraManager : public QObject
     Q_OBJECT
 public:
     QGCCameraManager(Vehicle* vehicle);
-    ~QGCCameraManager();
+    virtual ~QGCCameraManager();
 
     Q_PROPERTY(QmlObjectListModel*  cameras             READ cameras            NOTIFY camerasChanged)
     Q_PROPERTY(QString              controllerSource    READ controllerSource   NOTIFY controllerSourceChanged)
@@ -33,24 +33,26 @@ public:
     //-- Camera controller source (QML)
     virtual QString             controllerSource    ();
 
-private slots:
-    void    _vehicleReady           (bool ready);
-    void    _mavlinkMessageReceived (const mavlink_message_t& message);
-
 signals:
     void    camerasChanged          ();
     void    controllerSourceChanged ();
 
-private:
+protected slots:
+    void    _vehicleReady           (bool ready);
+    void    _mavlinkMessageReceived (const mavlink_message_t& message);
+
+protected:
     QGCCameraControl* _findCamera   (int id);
     void    _requestCameraInfo      (int compID);
     void    _handleHeartbeat        (const mavlink_message_t& message);
     void    _handleCameraInfo       (const mavlink_message_t& message);
+    void    _handleStorageInfo      (const mavlink_message_t& message);
     void    _handleCameraSettings   (const mavlink_message_t& message);
     void    _handleParamAck         (const mavlink_message_t& message);
     void    _handleParamValue       (const mavlink_message_t& message);
+    void    _handleCaptureStatus    (const mavlink_message_t& message);
 
-private:
+protected:
     Vehicle*            _vehicle;
     bool                _vehicleReadyState;
     int                 _cameraCount;
