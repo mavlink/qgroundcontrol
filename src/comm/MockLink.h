@@ -192,6 +192,7 @@ private:
     void _sendRCChannels(void);
     void _paramRequestListWorker(void);
     void _logDownloadWorker(void);
+    void _sendADSBVehicles(void);
 
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
 

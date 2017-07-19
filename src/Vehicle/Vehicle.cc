@@ -31,6 +31,7 @@
 #include "SettingsManager.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCCorePlugin.h"
+#include "ADSBVehicle.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -600,9 +601,11 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
         _handleCameraFeedback(message);
         break;
-
     case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
         _handleCameraImageCaptured(message);
+        break;
+    case MAVLINK_MSG_ID_ADSB_VEHICLE:
+        _handleADSBVehicle(message);
         break;
 
     case MAVLINK_MSG_ID_SERIAL_CONTROL:
@@ -2620,6 +2623,22 @@ bool Vehicle::autoDisarm(void)
     }
 
     return false;
+}
+
+void Vehicle::_handleADSBVehicle(const mavlink_message_t& message)
+{
+    mavlink_adsb_vehicle_t adsbVehicle;
+
+    mavlink_msg_adsb_vehicle_decode(&message, &adsbVehicle);
+    if (adsbVehicle.flags | ADSB_FLAGS_VALID_COORDS) {
+        if (_adsbICAOMap.contains(adsbVehicle.ICAO_address)) {
+            _adsbICAOMap[adsbVehicle.ICAO_address]->update(adsbVehicle);
+        } else {
+            ADSBVehicle* vehicle = new ADSBVehicle(adsbVehicle, this);
+            _adsbICAOMap[adsbVehicle.ICAO_address] = vehicle;
+            _adsbVehicles.append(vehicle);
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
