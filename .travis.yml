@@ -187,9 +187,9 @@ after_success:
   - if [ "${TRAVIS_TAG}" ]; then
         GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrol;
     elif [ "${TRAVIS_BRANCH}" = "master" ]; then
-	GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrolbeta;
+        GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrolbeta;
     else
-	GOOGLE_PLAY_PKG=none;
+        GOOGLE_PLAY_PKG=none;
     fi
   - if [[ "${SPEC}" = "android-g++" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_PKG}" != "none" ]]; then
         pip install --user google-api-python-client PyOpenSSL &&
