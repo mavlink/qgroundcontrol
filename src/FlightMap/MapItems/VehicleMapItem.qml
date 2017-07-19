@@ -32,15 +32,17 @@ MapQuickItem {
     property real   _uavSize:       ScreenTools.defaultFontPixelHeight * 5
     property real   _adsbSize:      ScreenTools.defaultFontPixelHeight * 1.5
     property var    _map:           map
+    property bool   _multiVehicle:  QGroundControl.multiVehicleManager.vehicles.count > 1
 
     sourceItem: Item {
-        id:     vehicleItem
-        width:  vehicleIcon.width
-        height: vehicleIcon.height
+        id:         vehicleItem
+        width:      vehicleIcon.width
+        height:     vehicleIcon.height
+        opacity:    vehicle ? (vehicle.active ? 1.0 : 0.5) : 1.0
 
         Image {
             id:                 vehicleIcon
-            source:             _adsbVehicle ? "/qmlimages/adsbVehicle.svg" : (map.isSatelliteMap ? vehicle.vehicleImageOpaque : vehicle.vehicleImageOutline)
+            source:             _adsbVehicle ? "/qmlimages/adsbVehicle.svg" : vehicle.vehicleImageOpaque
             mipmap:             true
             width:              size
             sourceSize.width:   size
@@ -57,11 +59,15 @@ MapQuickItem {
             anchors.top:                parent.bottom
             anchors.horizontalCenter:   parent.horizontalCenter
             map:                        _map
-            text:                       altText
+            text:                       vehicleLabelText
             font.pointSize:             ScreenTools.smallFontPointSize
-            visible:                    !isNaN(altitude)
+            visible:                    _adsbVehicle ? !isNaN(altitude) : _multiVehicle
 
-            property string altText: visible ? QGroundControl.metersToAppSettingsDistanceUnits(altitude).toFixed(0) + " " + QGroundControl.appSettingsDistanceUnitsString : ""
+            property string vehicleLabelText: visible ?
+                                                  (_adsbVehicle ?
+                                                       QGroundControl.metersToAppSettingsDistanceUnits(altitude).toFixed(0) + " " + QGroundControl.appSettingsDistanceUnitsString :
+                                                       (_multiVehicle ? qsTr("Vehicle %1").arg(vehicle.id) : "")) :
+                                                  ""
 
         }
     }
