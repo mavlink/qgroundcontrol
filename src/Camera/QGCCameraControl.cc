@@ -115,14 +115,7 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     , _cameraMode(CAMERA_MODE_UNDEFINED)
     , _video_status(VIDEO_CAPTURE_STATUS_UNDEFINED)
 {
-    memcpy(&_info, &info, sizeof(mavlink_camera_information_t));
-    connect(this, &QGCCameraControl::dataReady, this, &QGCCameraControl::_dataReady);
-    if(1 /*_info.cam_definition_uri[0]*/) {
-        //-- Process camera definition file
-        _httpRequest("http://www.grubba.com/e90.xml");
-    } else {
-        _initWhenReady();
-    }
+    _processCameraInfo(info);
 }
 
 //-----------------------------------------------------------------------------
@@ -136,6 +129,21 @@ QGCCameraControl::~QGCCameraControl()
     }
     if(_netManager) {
         delete _netManager;
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::_processCameraInfo(const mavlink_camera_information_t* info)
+{
+    memcpy(&_info, &info, sizeof(mavlink_camera_information_t));
+    connect(this, &QGCCameraControl::dataReady, this, &QGCCameraControl::_dataReady);
+    if(_info.cam_definition_uri[0]) {
+        //-- Process camera definition file
+        const char* url = (const char*)info->cam_definition_uri;
+        _httpRequest(url);
+    } else {
+        _initWhenReady();
     }
 }
 
