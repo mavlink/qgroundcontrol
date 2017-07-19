@@ -47,6 +47,9 @@
         <file alias="wifi.svg">src/AutoPilotPlugins/Common/Images/wifi.svg</file>
         <file alias="arrow-down.png">src/QmlControls/arrow-down.png</file>
 		<file alias="camera.svg">resources/camera.svg</file>
+        <file alias="camera_photo.svg">src/Camera/images/camera_photo.svg</file>
+        <file alias="camera_settings.svg">src/Camera/images/camera_settings.svg</file>
+        <file alias="camera_video.svg">src/Camera/images/camera_video.svg</file>
         <file alias="check.png">src/QmlControls/check.png</file>
         <file alias="FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
         <file alias="FlightModesComponentIcon.png">src/AutoPilotPlugins/PX4/Images/FlightModesComponentIcon.png</file>

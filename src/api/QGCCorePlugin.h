@@ -36,16 +36,16 @@ public:
     QGCCorePlugin(QGCApplication* app, QGCToolbox* toolbox);
     ~QGCCorePlugin();
 
-    Q_PROPERTY(QVariantList settingsPages       READ settingsPages      NOTIFY settingsPagesChanged)
-    Q_PROPERTY(int          defaultSettings     READ defaultSettings    CONSTANT)
-    Q_PROPERTY(QGCOptions*  options             READ options            CONSTANT)
+    Q_PROPERTY(QVariantList     settingsPages           READ settingsPages          NOTIFY settingsPagesChanged)
+    Q_PROPERTY(int              defaultSettings         READ defaultSettings        CONSTANT)
+    Q_PROPERTY(QGCOptions*      options                 READ options                CONSTANT)
 
-    Q_PROPERTY(bool         showTouchAreas      READ showTouchAreas     WRITE setShowTouchAreas    NOTIFY showTouchAreasChanged)
-    Q_PROPERTY(bool         showAdvancedUI      READ showAdvancedUI     WRITE setShowAdvancedUI    NOTIFY showAdvancedUIChanged)
-    Q_PROPERTY(QString                  showAdvancedUIMessage           READ showAdvancedUIMessage          CONSTANT)
+    Q_PROPERTY(bool             showTouchAreas          READ showTouchAreas         WRITE setShowTouchAreas    NOTIFY showTouchAreasChanged)
+    Q_PROPERTY(bool             showAdvancedUI          READ showAdvancedUI         WRITE setShowAdvancedUI    NOTIFY showAdvancedUIChanged)
+    Q_PROPERTY(QString          showAdvancedUIMessage   READ showAdvancedUIMessage  CONSTANT)
 
-    Q_PROPERTY(QString      brandImageIndoor    READ brandImageIndoor   CONSTANT)
-    Q_PROPERTY(QString      brandImageOutdoor   READ brandImageOutdoor  CONSTANT)
+    Q_PROPERTY(QString          brandImageIndoor        READ brandImageIndoor       CONSTANT)
+    Q_PROPERTY(QString          brandImageOutdoor       READ brandImageOutdoor      CONSTANT)
 
     /// The list of settings under the Settings Menu
     /// @return A list of QGCSettings

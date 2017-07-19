@@ -104,7 +104,7 @@ public:
     static void savePolygon(QmlObjectListModel& list,           ///< List which contains vertices
                             QJsonArray&         polygonArray);  ///< Array to save into
 
-    static bool parseEnum(const QJsonObject& jsonObject, QStringList& enumStrings, QStringList& enumValues, QString& errorString);
+    static bool parseEnum(const QJsonObject& jsonObject, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName = QString());
 
     /// Returns NaN if the value is null, or it not the double value
     static double possibleNaNJsonValue(const QJsonValue& value);
