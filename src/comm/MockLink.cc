@@ -161,6 +161,7 @@ void MockLink::_run1HzTasks(void)
 {
     if (_mavlinkStarted && _connected) {
         _sendVibration();
+        _sendADSBVehicles();
         if (!qgcApp()->runningUnitTests()) {
             // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
             _sendRCChannels();
@@ -1267,4 +1268,27 @@ void MockLink::_logDownloadWorker(void)
             qWarning() << "MockLink::_logDownloadWorker open failed" << file.errorString();
         }
     }
+}
+
+void MockLink::_sendADSBVehicles(void)
+{
+    mavlink_message_t responseMsg;
+    mavlink_msg_adsb_vehicle_pack_chan(_vehicleSystemId,
+                                       _vehicleComponentId,
+                                       _mavlinkChannel,
+                                       &responseMsg,
+                                       12345,                           // ICAO address
+                                       (_vehicleLatitude + 0.001) * qPow(10.0, 7.0),
+                                       (_vehicleLongitude + 0.001) * qPow(10.0, 7.0),
+                                       ADSB_ALTITUDE_TYPE_GEOMETRIC,
+                                       100 * 1000,                      // Altitude in millimeters
+                                       10 * 100,                        // Heading in centidegress
+                                       0, 0,                            // Horizontal/Vertical velocity
+                                       "N1234500",                      // Callsign
+                                       ADSB_EMITTER_TYPE_ROTOCRAFT,
+                                       1,                               // Seconds since last communication
+                                       ADSB_FLAGS_VALID_COORDS | ADSB_FLAGS_VALID_ALTITUDE | ADSB_FLAGS_VALID_HEADING | ADSB_FLAGS_VALID_CALLSIGN | ADSB_FLAGS_SIMULATED,
+                                       0);                              // Squawk code
+
+    respondWithMavlinkMessage(responseMsg);
 }
