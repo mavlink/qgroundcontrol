@@ -44,8 +44,6 @@ public:
     ///     Signals removeAllCompleted when done
     virtual void removeAll(void);
 
-    virtual bool rallyPointsSupported(void) const { return false; }
-
     QList<QGeoCoordinate> points(void) const { return _rgPoints; }
 
     virtual QString editorQml(void) const { return QStringLiteral("qrc:/FirmwarePlugin/RallyPointEditor.qml"); }

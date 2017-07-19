@@ -17,8 +17,6 @@
 #include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "APMParameterMetaData.h"
-#include "APMGeoFenceManager.h"
-#include "APMRallyPointManager.h"
 
 #include <QAbstractSocket>
 
@@ -93,8 +91,6 @@ public:
     QString             internalParameterMetaDataFile   (Vehicle* vehicle) final;
     void                getParameterMetaDataVersionInfo (const QString& metaDataFile, int& majorVersion, int& minorVersion) final { APMParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion); }
     QObject*            loadParameterMetaData           (const QString& metaDataFile) final;
-    GeoFenceManager*    newGeoFenceManager              (Vehicle* vehicle) final { return new APMGeoFenceManager(vehicle); }
-    RallyPointManager*  newRallyPointManager            (Vehicle* vehicle) final { return new APMRallyPointManager(vehicle); }
     QString             brandImageIndoor                (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
     QString             brandImageOutdoor               (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
 
