@@ -333,13 +333,13 @@ Rectangle {
                             onActivated: {
                                 saveItems();
                                 QGroundControl.mavlinkLogManager.windSpeed = windItems.get(index).value
-                                console.log('Set Wind: ' + windItems.get(index).value)
+                                //console.log('Set Wind: ' + windItems.get(index).value)
                             }
                             Component.onCompleted: {
                                 for(var i = 0; i < windItems.count; i++) {
                                     if(windItems.get(i).value === QGroundControl.mavlinkLogManager.windSpeed) {
                                         windCombo.currentIndex = i;
-                                        console.log('Wind: ' + windItems.get(i).value)
+                                        //console.log('Wind: ' + windItems.get(i).value)
                                         break;
                                     }
                                 }
@@ -370,13 +370,13 @@ Rectangle {
                             onActivated: {
                                 saveItems();
                                 QGroundControl.mavlinkLogManager.rating = ratingItems.get(index).value
-                                console.log('Set Rating: ' + ratingItems.get(index).value)
+                                //console.log('Set Rating: ' + ratingItems.get(index).value)
                             }
                             Component.onCompleted: {
                                 for(var i = 0; i < ratingItems.count; i++) {
                                     if(ratingItems.get(i).value === QGroundControl.mavlinkLogManager.rating) {
                                         ratingCombo.currentIndex = i;
-                                        console.log('Rating: ' + ratingItems.get(i).value)
+                                        //console.log('Rating: ' + ratingItems.get(i).value)
                                         break;
                                     }
                                 }

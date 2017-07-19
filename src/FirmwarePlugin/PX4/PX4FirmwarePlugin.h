@@ -25,6 +25,7 @@ class PX4FirmwarePlugin : public FirmwarePlugin
 
 public:
     PX4FirmwarePlugin(void);
+    ~PX4FirmwarePlugin();
 
     // Overrides from FirmwarePlugin
 
@@ -68,6 +69,8 @@ public:
     QString             brandImageOutdoor               (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/PX4/BrandImage"); }
     bool                vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const override;
     QString             autoDisarmParameter             (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("COM_DISARM_LAND"); }
+    QGCCameraManager*   cameraManager                   (Vehicle* vehicle) override;
+    QGCCameraControl*   createCameraControl             (const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = NULL) override;
 
 protected:
     typedef struct {
@@ -80,6 +83,7 @@ protected:
     } FlightModeInfo_t;
 
     QList<FlightModeInfo_t> _flightModeInfoList;
+    QGCCameraManager*       _cameraManager;
 
     // Use these constants to set flight modes using setFlightMode method. Don't use hardcoded string names since the
     // names may change.

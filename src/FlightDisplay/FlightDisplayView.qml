@@ -52,6 +52,8 @@ QGCView {
     property alias  _altitudeSlider:        altitudeSlider
 
 
+    readonly property var       _dynamicCameras:        _activeVehicle ? _activeVehicle.dynamicCameras : null
+    readonly property bool      _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     readonly property bool      isBackgroundDark:       _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
     readonly property real      _defaultRoll:           0
     readonly property real      _defaultPitch:          0
@@ -370,7 +372,7 @@ QGCView {
             anchors.right:      _flightVideo.right
             height:             ScreenTools.defaultFontPixelHeight * 2
             width:              height
-            visible:            QGroundControl.videoManager.videoReceiver.videoRunning && QGroundControl.settingsManager.videoSettings.showRecControl.rawValue
+            visible:            QGroundControl.videoManager.videoReceiver.videoRunning && QGroundControl.settingsManager.videoSettings.showRecControl.rawValue && !_isCamera
             opacity:            0.75
 
             Rectangle {

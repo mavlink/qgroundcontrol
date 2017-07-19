@@ -64,6 +64,7 @@ public:
     Q_PROPERTY(double       increment               READ increment                                          CONSTANT)
     Q_PROPERTY(bool         typeIsString            READ typeIsString                                       CONSTANT)
     Q_PROPERTY(bool         typeIsBool              READ typeIsBool                                         CONSTANT)
+    Q_PROPERTY(bool         hasControl              READ hasControl                                         CONSTANT)
 
     /// Convert and validate value
     ///     @param convertOnly true: validate type conversion only, false: validate against meta data as well
@@ -106,6 +107,7 @@ public:
     double          increment               (void) const;
     bool            typeIsString            (void) const { return type() == FactMetaData::valueTypeString; }
     bool            typeIsBool              (void) const { return type() == FactMetaData::valueTypeBool; }
+    bool            hasControl              (void) const;
 
     /// Returns the values as a string with full 18 digit precision if float/double.
     QString rawValueStringFullPrecision(void) const;
@@ -132,12 +134,17 @@ public:
     /// Sets the meta data associated with the Fact.
     void setMetaData(FactMetaData* metaData);
     
+    FactMetaData* metaData() { return _metaData; }
+
+    //-- Value coming from Vehicle. This does NOT send a _containerRawValueChanged signal.
     void _containerSetRawValue(const QVariant& value);
     
     /// Generally you should not change the name of a fact. But if you know what you are doing, you can.
     void _setName(const QString& name) { _name = name; }
 
-    
+    /// Generally this is done during parsing. But if you know what you are doing, you can.
+    void setEnumInfo(const QStringList& strings, const QVariantList& values);
+
 signals:
     void bitmaskStringsChanged(void);
     void bitmaskValuesChanged(void);
@@ -156,7 +163,7 @@ signals:
     
     /// Signalled when property has been changed by a call to the property write accessor
     ///
-    /// This signal is meant for use by Fact container implementations.
+    /// This signal is meant for use by Fact container implementations. Used to send changed values to vehicle.
     void _containerRawValueChanged(const QVariant& value);
     
 protected:

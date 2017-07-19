@@ -84,8 +84,7 @@ void CameraSectionTest::init(void)
                                                                   MAV_FRAME_MISSION,
                                                                   0,                               // camera id = 0, all cameras
                                                                   CameraSection::CameraModePhoto,
-                                                                  NAN,                             // Audio off/on
-                                                                  NAN, NAN, NAN, NAN,              // param 4-7 reserved
+                                                                  NAN, NAN, NAN, NAN, NAN,         // param 3-7 reserved
                                                                   true,                            // autocontinue
                                                                   false),                          // isCurrentItem
                                                       this);
@@ -95,8 +94,7 @@ void CameraSectionTest::init(void)
                                                                   MAV_FRAME_MISSION,
                                                                   0,                               // camera id = 0, all cameras
                                                                   CameraSection::CameraModeVideo,
-                                                                  NAN,                             // Audio off/on
-                                                                  NAN, NAN, NAN, NAN,              // param 4-7 reserved
+                                                                  NAN, NAN, NAN, NAN, NAN,         // param 3-7 reserved
                                                                   true,                            // autocontinue
                                                                   false),                          // isCurrentItem
                                                       this);
@@ -677,13 +675,12 @@ void CameraSectionTest::_testScanForCameraModeSection(void)
     MAV_CMD_SET_CAMERA_MODE
     Mission Param #1	Camera ID (0 for all cameras, 1 for first, 2 for second, etc.)
     Mission Param #2	Camera mode (0: photo mode, 1: video mode)
-    Mission Param #3	Audio recording enabled (0: off 1: on)
-    Mission Param #4	Reserved (all remaining params)
+    Mission Param #3	Reserved (all remaining params)
     */
 
     // Mode command but incorrect settings
     SimpleMissionItem invalidSimpleItem(_offlineVehicle, _validCameraPhotoModeItem->missionItem());
-    invalidSimpleItem.missionItem().setParam3(1);   // Audio should be NaN
+    invalidSimpleItem.missionItem().setParam3(1);   // Param3 should be NaN
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
