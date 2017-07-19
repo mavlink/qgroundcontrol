@@ -7,12 +7,7 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef Vehicle_H
-#define Vehicle_H
+#pragma once
 
 #include <QObject>
 #include <QGeoCoordinate>
@@ -676,8 +671,8 @@ public:
     const QVariantList& toolBarIndicators   ();
     const QVariantList& cameraList          (void) const;
 
-    bool capabilitiesKnown(void) const { return _vehicleCapabilitiesKnown; }
-    bool supportsMissionItemInt(void) const { return _supportsMissionItemInt; }
+    bool capabilitiesKnown      (void) const { return _vehicleCapabilitiesKnown; }
+    uint64_t capabilityBits     (void) const { return _capabilityBits; }    // Change signalled by capabilityBitsChanged
 
     /// @true: When flying a mission the vehicle is always facing towards the next waypoint
     bool vehicleYawsToNextWaypointInMission(void) const;
@@ -719,6 +714,8 @@ signals:
     void firmwareTypeChanged(void);
     void vehicleTypeChanged(void);
     void capabilitiesKnownChanged(bool capabilitiesKnown);
+    void initialPlanRequestCompleted(void);
+    void capabilityBitsChanged(uint64_t capabilityBits);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -914,7 +911,7 @@ private:
     int             _telemetryLNoise;
     int             _telemetryRNoise;
     bool            _vehicleCapabilitiesKnown;
-    bool            _supportsMissionItemInt;
+    uint64_t        _capabilityBits;
 
     typedef struct {
         int     component;
@@ -1055,4 +1052,3 @@ private:
     static const char* _joystickEnabledSettingsKey;
 
 };
-#endif
