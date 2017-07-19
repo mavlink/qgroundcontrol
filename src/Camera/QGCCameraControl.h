@@ -155,7 +155,6 @@ signals:
 protected:
     virtual void    _setVideoStatus         (VideoStatus status);
     virtual void    _setCameraMode          (CameraMode mode);
-    virtual void    _processCameraInfo      (const mavlink_camera_information_t* info);
 
 private slots:
     void    _initWhenReady                  ();
