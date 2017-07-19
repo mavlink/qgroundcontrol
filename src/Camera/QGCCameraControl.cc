@@ -407,6 +407,12 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                 _setVideoStatus(VIDEO_CAPTURE_STATUS_STOPPED);
                 break;
         }
+    } else {
+        if(noReponseFromVehicle) {
+            qCDebug(CameraControlLog) << "No response for" << command;
+        } else {
+            qCDebug(CameraControlLog) << "Bad response for" << command;
+        }
     }
 }
 
