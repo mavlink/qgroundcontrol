@@ -145,7 +145,10 @@ void JoystickSDL::_close(void) {
 
         if (SDL_JoystickInstanceID(sdlJoystick) != -1) {
             qCDebug(JoystickLog) << "\tID:" << SDL_JoystickInstanceID(sdlJoystick);
-            SDL_JoystickClose(sdlJoystick);
+            // This segfaults so often, and I've spent so much time trying to find the cause and fix it
+            // I think this might be an SDL bug
+            // We are much more stable just commenting this out
+            //SDL_JoystickClose(sdlJoystick);
         }
     }
 
