@@ -39,11 +39,10 @@ GeoFenceController::GeoFenceController(PlanMasterController* masterController, Q
     : PlanElementController(masterController, parent)
     , _geoFenceManager(_managerVehicle->geoFenceManager())
     , _dirty(false)
-    , _mapPolygon(this)
     , _itemsRequested(false)
 {
-    connect(_mapPolygon.qmlPathModel(), &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
-    connect(_mapPolygon.qmlPathModel(), &QmlObjectListModel::dirtyChanged, this, &GeoFenceController::_polygonDirtyChanged);
+    connect(&_polygons, &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
+    connect(&_circles,  &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
 
     managerVehicleChanged(_managerVehicle);
 }
@@ -118,6 +117,10 @@ void GeoFenceController::managerVehicleChanged(Vehicle* managerVehicle)
 
 bool GeoFenceController::load(const QJsonObject& json, QString& errorString)
 {
+    Q_UNUSED(json);
+    Q_UNUSED(errorString);
+
+#if 0
     QString errorStr;
     QString errorMessage = tr("GeoFence: %1");
 
@@ -135,12 +138,15 @@ bool GeoFenceController::load(const QJsonObject& json, QString& errorString)
     setDirty(false);
 
     _signalAll();
+#endif
 
     return true;
 }
 
 void  GeoFenceController::save(QJsonObject& json)
 {
+    Q_UNUSED(json);
+#if 0
     json[JsonHelper::jsonVersionKey] = 1;
 
     if (_breachReturnPoint.isValid()) {
@@ -150,12 +156,14 @@ void  GeoFenceController::save(QJsonObject& json)
     }
 
     _mapPolygon.saveToJson(json);
+#endif
 }
 
 void GeoFenceController::removeAll(void)
-{
+{    
     setBreachReturnPoint(QGeoCoordinate());
-    _mapPolygon.clear();
+    _polygons.clearAndDeleteContents();
+    _circles.clearAndDeleteContents();
 }
 
 void GeoFenceController::removeAllFromVehicle(void)
@@ -189,8 +197,7 @@ void GeoFenceController::sendToVehicle(void)
         qCWarning(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while syncInProgress";
     } else {
         qCDebug(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle";
-        _geoFenceManager->sendToVehicle(_breachReturnPoint, _mapPolygon.pathModel());
-        _mapPolygon.setDirty(false);
+        _geoFenceManager->sendToVehicle(_breachReturnPoint, _polygons, _circles);
         setDirty(false);
     }
 }
@@ -211,7 +218,14 @@ void GeoFenceController::setDirty(bool dirty)
     if (dirty != _dirty) {
         _dirty = dirty;
         if (!dirty) {
-            _mapPolygon.setDirty(dirty);
+            for (int i=0; i<_polygons.count(); i++) {
+                QGCFencePolygon* polygon = _polygons.value<QGCFencePolygon*>(i);
+                polygon->setDirty(false);
+            }
+            for (int i=0; i<_circles.count(); i++) {
+                QGCFenceCircle* circle = _circles.value<QGCFenceCircle*>(i);
+                circle->setDirty(false);
+            }
         }
         emit dirtyChanged(dirty);
     }
@@ -264,13 +278,21 @@ void GeoFenceController::_setDirty(void)
     setDirty(true);
 }
 
-void GeoFenceController::_setPolygonFromManager(const QList<QGeoCoordinate>& polygon)
+void GeoFenceController::_setFenceFromManager(const QList<QGCFencePolygon>& polygons,
+                                              const QList<QGCFenceCircle>&  circles)
 {
-    _mapPolygon.clear();
-    for (int i=0; i<polygon.count(); i++) {
-        _mapPolygon.appendVertex(polygon[i]);
+    _polygons.clearAndDeleteContents();
+    _circles.clearAndDeleteContents();
+
+    for (int i=0; i<polygons.count(); i++) {
+        _polygons.append(new QGCFencePolygon(polygons[i], this));
     }
-    _mapPolygon.setDirty(false);
+
+    for (int i=0; i<circles.count(); i++) {
+        _circles.append(new QGCMapCircle(circles[i], this));
+    }
+
+    setDirty(false);
 }
 
 void GeoFenceController::_setReturnPointFromManager(QGeoCoordinate breachReturnPoint)
@@ -279,13 +301,13 @@ void GeoFenceController::_setReturnPointFromManager(QGeoCoordinate breachReturnP
     emit breachReturnPointChanged(_breachReturnPoint);
 }
 
-void GeoFenceController::_managerLoadComplete(const QGeoCoordinate& breachReturn, const QList<QGeoCoordinate>& polygon)
+void GeoFenceController::_managerLoadComplete(void)
 {
     // Fly view always reloads on _loadComplete
     // Plan view only reloads on _loadComplete if specifically requested
     if (!_editMode || _itemsRequested) {
-        _setReturnPointFromManager(breachReturn);
-        _setPolygonFromManager(polygon);
+        _setReturnPointFromManager(_geoFenceManager->breachReturnPoint());
+        _setFenceFromManager(_geoFenceManager->polygons(), _geoFenceManager->circles());
         setDirty(false);
         _signalAll();
         emit loadComplete();
@@ -311,7 +333,7 @@ void GeoFenceController::_managerRemoveAllComplete(bool error)
 
 bool GeoFenceController::containsItems(void) const
 {
-    return _mapPolygon.count() > 2;
+    return _polygons.count() > 0 || _circles.count() > 0;
 }
 
 void GeoFenceController::_updateContainsItems(void)
@@ -339,8 +361,92 @@ bool GeoFenceController::showPlanFromManagerVehicle(void)
             // Fake a _loadComplete with the current items
             qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle: sync complete simulate signal";
             _itemsRequested = true;
-            _managerLoadComplete(_geoFenceManager->breachReturnPoint(), _geoFenceManager->polygon());
+            _managerLoadComplete();
             return false;
         }
+    }
+}
+
+void GeoFenceController::addInclusionPolygon(QGeoCoordinate topLeft, QGeoCoordinate bottomRight)
+{
+    QGeoCoordinate topRight(topLeft.latitude(), bottomRight.longitude());
+    QGeoCoordinate bottomLeft(bottomRight.latitude(), topLeft.longitude());
+
+    double halfWidthMeters = topLeft.distanceTo(topRight) / 2.0;
+    double halfHeightMeters = topLeft.distanceTo(bottomLeft) / 2.0;
+
+    QGeoCoordinate centerLeftEdge = topLeft.atDistanceAndAzimuth(halfHeightMeters, 180);
+    QGeoCoordinate centerTopEdge = topLeft.atDistanceAndAzimuth(halfWidthMeters, 90);
+    QGeoCoordinate center(centerLeftEdge.latitude(), centerTopEdge.longitude());
+
+    // Initial polygon is inset to take 3/4s of viewport with max width/height of 3000 meters
+    halfWidthMeters =   qMin(halfWidthMeters * 0.75, 1500.0);
+    halfHeightMeters =  qMin(halfHeightMeters * 0.75, 1500.0);
+
+    // Initial polygon has max width and height of 3000 meters
+    topLeft =           center.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 0);
+    topRight =          center.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 0);
+    bottomLeft =        center.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 180);
+    bottomRight =       center.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 180);
+
+    QGCFencePolygon* polygon = new QGCFencePolygon(true /* inclusion */, this);
+    polygon->appendVertex(topLeft);
+    polygon->appendVertex(topRight);
+    polygon->appendVertex(bottomRight);
+    polygon->appendVertex(bottomLeft);
+    _polygons.append(polygon);
+
+    clearAllInteractive();
+    polygon->setInteractive(true);
+}
+
+void GeoFenceController::addInclusionCircle(QGeoCoordinate topLeft, QGeoCoordinate bottomRight)
+{
+    QGeoCoordinate topRight(topLeft.latitude(), bottomRight.longitude());
+    QGeoCoordinate bottomLeft(bottomRight.latitude(), topLeft.longitude());
+
+    // Initial radius is inset to take 3/4s of viewport and max of 1500 meters
+    double halfWidthMeters = topLeft.distanceTo(topRight) / 2.0;
+    double halfHeightMeters = topLeft.distanceTo(bottomLeft) / 2.0;
+    double radius = qMin(qMin(halfWidthMeters, halfHeightMeters) * 0.75, 1500.0);
+
+    QGeoCoordinate centerLeftEdge = topLeft.atDistanceAndAzimuth(halfHeightMeters, 180);
+    QGeoCoordinate centerTopEdge = topLeft.atDistanceAndAzimuth(halfWidthMeters, 90);
+    QGeoCoordinate center(centerLeftEdge.latitude(), centerTopEdge.longitude());
+
+    QGCFenceCircle* circle = new QGCFenceCircle(center, radius, true /* inclusion */, this);
+    _circles.append(circle);
+
+    clearAllInteractive();
+    circle->setInteractive(true);
+}
+
+void GeoFenceController::deletePolygon(int index)
+{
+    if (index < 0 || index > _polygons.count() - 1) {
+        return;
+    }
+
+    QGCFencePolygon* polygon = qobject_cast<QGCFencePolygon*>(_polygons.removeAt(index));
+    polygon->deleteLater();
+}
+
+void GeoFenceController::deleteCircle(int index)
+{
+    if (index < 0 || index > _circles.count() - 1) {
+        return;
+    }
+
+    QGCFenceCircle* circle = qobject_cast<QGCFenceCircle*>(_circles.removeAt(index));
+    circle->deleteLater();
+}
+
+void GeoFenceController::clearAllInteractive(void)
+{
+    for (int i=0; i<_polygons.count(); i++) {
+        _polygons.value<QGCFencePolygon*>(i)->setInteractive(false);
+    }
+    for (int i=0; i<_circles.count(); i++) {
+        _circles.value<QGCFenceCircle*>(i)->setInteractive(false);
     }
 }

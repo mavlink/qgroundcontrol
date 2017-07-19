@@ -7,12 +7,7 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef Vehicle_H
-#define Vehicle_H
+#pragma once
 
 #include <QObject>
 #include <QGeoCoordinate>
@@ -718,6 +713,7 @@ signals:
     void defaultHoverSpeedChanged(double hoverSpeed);
     void firmwareTypeChanged(void);
     void vehicleTypeChanged(void);
+    void initialPlanRequestCompleted();
     void capabilitiesKnownChanged(bool capabilitiesKnown);
 
     void messagesReceivedChanged    ();
@@ -1055,4 +1051,3 @@ private:
     static const char* _joystickEnabledSettingsKey;
 
 };
-#endif
