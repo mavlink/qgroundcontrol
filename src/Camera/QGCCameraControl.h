@@ -60,6 +60,7 @@ public:
 class QGCCameraControl : public FactGroup
 {
     Q_OBJECT
+    friend class QGCCameraParamIO;
 public:
     QGCCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = NULL);
     virtual ~QGCCameraControl();
@@ -142,6 +143,7 @@ public:
     virtual void        handleParamValue    (const mavlink_param_ext_value_t& value);
     virtual void        handleStorageInfo   (const mavlink_storage_information_t& st);
     virtual void        factChanged         (Fact* pFact);
+    virtual void        paramLoadCompleted  () {;}
 
 signals:
     void    infoChanged                     ();
@@ -165,6 +167,7 @@ private slots:
     void    _downloadFinished               ();
     void    _mavCommandResult               (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
     void    _dataReady                      (QByteArray data);
+    void    _paramDone                      ();
 
 private:
     bool    _handleLocalization             (QByteArray& bytes);

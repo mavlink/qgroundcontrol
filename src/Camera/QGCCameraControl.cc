@@ -117,9 +117,9 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
 {
     memcpy(&_info, &info, sizeof(mavlink_camera_information_t));
     connect(this, &QGCCameraControl::dataReady, this, &QGCCameraControl::_dataReady);
-    if(_info.cam_definition_uri[0]) {
+    const char* url = (const char*)info->cam_definition_uri;
+    if(url[0] != 0) {
         //-- Process camera definition file
-        const char* url = (const char*)info->cam_definition_uri;
         _httpRequest(url);
     } else {
         _initWhenReady();
@@ -1114,6 +1114,21 @@ QGCCameraControl::_dataReady(QByteArray data)
     if(data.size()) {
         qCDebug(CameraControlLog) << "Parsing camera definition";
         _loadCameraDefinitionFile(data);
+    } else {
+        qCDebug(CameraControlLog) << "No camera definition";
     }
     _initWhenReady();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::_paramDone()
+{
+    foreach(QString param, _paramIO.keys()) {
+        if(!_paramIO[param]->paramDone()) {
+            return;
+        }
+    }
+    //-- All parameters loaded (or timed out)
+    paramLoadCompleted();
 }
