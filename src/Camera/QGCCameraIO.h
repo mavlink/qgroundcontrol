@@ -24,6 +24,7 @@ public:
     void        handleParamAck          (const mavlink_param_ext_ack_t& ack);
     void        handleParamValue        (const mavlink_param_ext_value_t& value);
     void        setParamRequest         ();
+    bool        paramDone               () { return _done; }
 
 private slots:
     void                _factChanged        (QVariant value);
@@ -46,5 +47,6 @@ private:
     mavlink_message_t   _msg;
     QTimer              _paramWriteTimer;
     QTimer              _paramRequestTimer;
+    bool                _done;
 };
 
