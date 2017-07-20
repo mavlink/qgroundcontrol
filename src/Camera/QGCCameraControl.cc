@@ -11,6 +11,7 @@
 #include "VideoManager.h"
 #include "QGCMapEngine.h"
 
+#include <QDir>
 #include <QDomDocument>
 #include <QDomNodeList>
 
