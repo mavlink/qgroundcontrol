@@ -15,6 +15,7 @@
 ADSBVehicle::ADSBVehicle(mavlink_adsb_vehicle_t& adsbVehicle, QObject* parent)
     : QObject       (parent)
     , _icaoAddress  (adsbVehicle.ICAO_address)
+    , _callsign     (adsbVehicle.callsign)
     , _altitude     (NAN)
     , _heading      (NAN)
 {
@@ -37,7 +38,14 @@ void ADSBVehicle::update(mavlink_adsb_vehicle_t& adsbVehicle)
         return;
     }
 
-    QGeoCoordinate newCoordinate(adsbVehicle.lat / qPow(10.0, 7.0), adsbVehicle.lon / qPow(10.0, 7.0));
+    QString currCallsign(adsbVehicle.callsign);
+
+    if (currCallsign != _callsign) {
+        _callsign = currCallsign;
+        emit callsignChanged(_callsign);
+    }
+
+    QGeoCoordinate newCoordinate(adsbVehicle.lat / 1e7, adsbVehicle.lon / 1e7);
     if (newCoordinate != _coordinate) {
         _coordinate = newCoordinate;
         emit coordinateChanged(_coordinate);
@@ -45,7 +53,7 @@ void ADSBVehicle::update(mavlink_adsb_vehicle_t& adsbVehicle)
 
     double newAltitude = NAN;
     if (adsbVehicle.flags | ADSB_FLAGS_VALID_ALTITUDE) {
-        newAltitude = (double)adsbVehicle.altitude / 1000.0;
+        newAltitude = (double)adsbVehicle.altitude / 1e3;
     }
     if (!(qIsNaN(newAltitude) && qIsNaN(_altitude)) && !qFuzzyCompare(newAltitude, _altitude)) {
         _altitude = newAltitude;
