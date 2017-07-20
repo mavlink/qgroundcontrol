@@ -172,7 +172,6 @@ void GeoFenceManager::_planManagerLoadComplete(bool removeAllRequested)
                 break;
             }
             QGCFenceCircle circle(QGeoCoordinate(item->param5(), item->param6()), item->param1(), command == MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION /* inclusion */);
-            circle.setInclusion(command == MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION);
             _circles.append(circle);
         } else {
             emit error(UnsupportedCommand, tr("GeoFence load: Unsupported command %1").arg(item->command()));

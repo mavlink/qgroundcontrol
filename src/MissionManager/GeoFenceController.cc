@@ -247,7 +247,7 @@ void GeoFenceController::_setFenceFromManager(const QList<QGCFencePolygon>& poly
     }
 
     for (int i=0; i<circles.count(); i++) {
-        _circles.append(new QGCMapCircle(circles[i], this));
+        _circles.append(new QGCFenceCircle(circles[i], this));
     }
 
     setDirty(false);
