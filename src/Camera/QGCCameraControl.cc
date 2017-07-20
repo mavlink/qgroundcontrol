@@ -1130,5 +1130,5 @@ QGCCameraControl::_paramDone()
         }
     }
     //-- All parameters loaded (or timed out)
-    paramLoadCompleted();
+    emit parametersReady();
 }

@@ -143,7 +143,6 @@ public:
     virtual void        handleParamValue    (const mavlink_param_ext_value_t& value);
     virtual void        handleStorageInfo   (const mavlink_storage_information_t& st);
     virtual void        factChanged         (Fact* pFact);
-    virtual void        paramLoadCompleted  () {;}
 
 signals:
     void    infoChanged                     ();
@@ -153,6 +152,7 @@ signals:
     void    storageFreeChanged              ();
     void    storageTotalChanged             ();
     void    dataReady                       (QByteArray data);
+    void    parametersReady                 ();
 
 protected:
     virtual void    _setVideoStatus         (VideoStatus status);
