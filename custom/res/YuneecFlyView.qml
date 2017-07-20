@@ -89,7 +89,7 @@ Item {
 
     function showFullSDCardMessage() {
         showSimpleAlert(
-            qsTr("MicroSD Card in Camera if Full"),
+            qsTr("MicroSD Card in Camera is Full"),
             qsTr("No images will be captured or videos recorded."))
     }
 
