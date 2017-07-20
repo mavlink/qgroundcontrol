@@ -757,6 +757,7 @@ Rectangle {
                     height:             (_mediaHeight + 8) * 4
                     anchors.centerIn:   parent
                     delegate:           mediaDelegate
+                    cacheBuffer:        height * 4
                 }
                 QGCLabel {
                     text:       qsTr("No Images")
@@ -781,6 +782,8 @@ Rectangle {
             height:     _mediaHeight
             fillMode:   Image.PreserveAspectFit
             source:     "file://" + modelData
+            sourceSize.width: width
+            //asynchronous:     true
             MouseArea {
                 anchors.fill:   parent
                 onClicked: {
@@ -802,7 +805,7 @@ Rectangle {
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
-                    rootLoader.sourceComponent = null
+                    rootLoader.sourceComponent = mediaPlayerComponent
                 }
             }
             Rectangle {
@@ -824,8 +827,8 @@ Rectangle {
             }
             Rectangle {
                 id:                 mediaViewRect
-                width:              mediaContent.width   + 75
-                height:             mediaContent.height  + 75
+                width:              mediaContent.width   + 120
+                height:             mediaContent.height  + 80
                 radius:             ScreenTools.defaultFontPixelWidth
                 color:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
                 border.width:       1
