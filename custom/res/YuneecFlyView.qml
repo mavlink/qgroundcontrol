@@ -45,13 +45,13 @@ Item {
     property bool   _cameraPresent:     _camera && _camera.cameraMode !== QGCCameraControl.CAMERA_MODE_UNDEFINED
     property bool   _noSdCard:          _camera && _camera.storageTotal === 0
 
-    property var    _expModeFact:       null
-    property var    _evFact:            null
-    property var    _isoFact:           null
-    property var    _shutterFact:       null
-    property var    _wbFact:            null
-    property var    _meteringFact:      null
-    property var    _videoResFact:      null
+    property var    _expModeFact:       _camera && _camera.exposureMode
+    property var    _evFact:            _camera && _camera.ev
+    property var    _isoFact:           _camera && _camera.iso
+    property var    _shutterFact:       _camera && _camera.shutterSpeed
+    property var    _wbFact:            _camera && _camera.wb
+    property var    _meteringFact:      _camera && _camera.meteringMode
+    property var    _videoResFact:      _camera && _camera.videores
 
     property string _currentAEMode:     _expModeFact  ? _expModeFact.enumStringValue : _naString
     property bool   _cameraAutoMode:    _expModeFact  ? _expModeFact.rawValue === 0 : true
@@ -83,22 +83,6 @@ Item {
         showSimpleAlert(
             qsTr("No MicroSD Card in Camera"),
             qsTr("No images will be captured or videos recorded."))
-    }
-
-    Timer {
-        id:         couldNotFindASignal
-        interval:   10000
-        running:    true;
-        repeat:     false;
-        onTriggered: {
-            _expModeFact    = _camera ? _camera.getFact('CAM_EXPMODE') : null
-            _evFact         = _camera ? _camera.getFact('CAM_EV') : null
-            _isoFact        = _camera ? _camera.getFact('CAM_ISO') : null
-            _shutterFact    = _camera ? _camera.getFact('CAM_SHUTTERSPD') : null
-            _wbFact         = _camera ? _camera.getFact('CAM_WBMODE') : null
-            _meteringFact   = _camera ? _camera.getFact('CAM_METERING') : null
-            _videoResFact   = _camera ? _camera.getFact('CAM_VIDRES') : null
-        }
     }
 
     Timer {

@@ -21,23 +21,38 @@ class YuneecCameraControl : public QGCCameraControl
 public:
     YuneecCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = NULL);
 
-    Q_PROPERTY(QString      gimbalVersion   READ    gimbalVersion                               NOTIFY gimbalVersionChanged)
-    Q_PROPERTY(bool         gimbalCalOn     READ    gimbalCalOn                                 NOTIFY gimbalCalOnChanged)
-    Q_PROPERTY(int          gimbalProgress  READ    gimbalProgress                              NOTIFY gimbalProgressChanged)
-    Q_PROPERTY(quint32      recordTime      READ    recordTime                                  NOTIFY recordTimeChanged)
-    Q_PROPERTY(QString      recordTimeStr   READ    recordTimeStr                               NOTIFY recordTimeChanged)
+    Q_PROPERTY(QString      gimbalVersion   READ    gimbalVersion       NOTIFY gimbalVersionChanged)
+    Q_PROPERTY(bool         gimbalCalOn     READ    gimbalCalOn         NOTIFY gimbalCalOnChanged)
+    Q_PROPERTY(int          gimbalProgress  READ    gimbalProgress      NOTIFY gimbalProgressChanged)
+    Q_PROPERTY(quint32      recordTime      READ    recordTime          NOTIFY recordTimeChanged)
+    Q_PROPERTY(QString      recordTimeStr   READ    recordTimeStr       NOTIFY recordTimeChanged)
+    Q_PROPERTY(Fact*        exposureMode    READ    exposureMode        NOTIFY factsLoaded)
+    Q_PROPERTY(Fact*        ev              READ    ev                  NOTIFY factsLoaded)
+    Q_PROPERTY(Fact*        iso             READ    iso                 NOTIFY factsLoaded)
+    Q_PROPERTY(Fact*        shutterSpeed    READ    shutterSpeed        NOTIFY factsLoaded)
+    Q_PROPERTY(Fact*        wb              READ    wb                  NOTIFY factsLoaded)
+    Q_PROPERTY(Fact*        meteringMode    READ    meteringMode        NOTIFY factsLoaded)
+    Q_PROPERTY(Fact*        videoRes        READ    videoRes            NOTIFY factsLoaded)
 
     Q_INVOKABLE void calibrateGimbal();
 
     bool        takePhoto           () override;
     bool        startVideo          () override;
     bool        stopVideo           () override;
+    void        paramLoadCompleted  () override;
 
     QString     gimbalVersion       () { return _gimbalVersion; }
     bool        gimbalCalOn         () { return _gimbalCalOn; }
     int         gimbalProgress      () { return _gimbalProgress; }
     quint32     recordTime          () { return _recordTime; }
     QString     recordTimeStr       ();
+    Fact*       exposureMode        ();
+    Fact*       ev                  ();
+    Fact*       iso                 ();
+    Fact*       shutterSpeed        ();
+    Fact*       wb                  ();
+    Fact*       meteringMode        ();
+    Fact*       videoRes            ();
 
 private slots:
     void    _recTimerHandler        ();
@@ -49,6 +64,7 @@ signals:
     void    gimbalProgressChanged   ();
     void    gimbalCalOnChanged      ();
     void    recordTimeChanged       ();
+    void    factsLoaded             ();
 
 protected:
     void    _setVideoStatus         (VideoStatus status) override;
@@ -70,4 +86,5 @@ private:
     QTimer                  _recTimer;
     QTime                   _recTime;
     uint32_t                _recordTime;
+    bool                    _paramComplete;
 };

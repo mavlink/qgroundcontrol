@@ -20,6 +20,7 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     , _gimbalCalOn(false)
     , _gimbalProgress(0)
     , _recordTime(0)
+    , _paramComplete(false)
 {
 
     _cameraSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/wav/camera.wav"));
@@ -47,6 +48,66 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
         MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES,     // Command id
         true,                                       // ShowError
         1);                                         // Request gimbal version
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::paramLoadCompleted()
+{
+    if(_paramComplete) {
+        qCDebug(YuneecCameraLog) << "All parameters loaded.";
+        _paramComplete = true;
+        emit factsLoaded();
+    }
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+YuneecCameraControl::exposureMode()
+{
+    return _paramComplete ? getFact("CAM_EXPMODE") : NULL;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+YuneecCameraControl::ev()
+{
+    return _paramComplete ? getFact("CAM_EV") : NULL;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+YuneecCameraControl::iso()
+{
+    return _paramComplete ? getFact("CAM_ISO") : NULL;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+YuneecCameraControl::shutterSpeed()
+{
+    return _paramComplete ? getFact("CAM_SHUTTERSPD") : NULL;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+YuneecCameraControl::wb()
+{
+    return _paramComplete ? getFact("CAM_WBMODE") : NULL;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+YuneecCameraControl::meteringMode()
+{
+    return _paramComplete ? getFact("CAM_METERING") : NULL;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+YuneecCameraControl::videoRes()
+{
+    return _paramComplete ? getFact("CAM_VIDRES") : NULL;
 }
 
 //-----------------------------------------------------------------------------
