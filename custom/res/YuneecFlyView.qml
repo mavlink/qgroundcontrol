@@ -44,6 +44,7 @@ Item {
     property bool   _cameraVideoMode:   _camera ?  _camera.cameraMode === QGCCameraControl.CAMERA_MODE_VIDEO : false
     property bool   _cameraPresent:     _camera && _camera.cameraMode !== QGCCameraControl.CAMERA_MODE_UNDEFINED
     property bool   _noSdCard:          _camera && _camera.storageTotal === 0
+    property bool   _fullSD:            _camera && _camera.storageTotal !== 0 && _camera.storageFree < (250 * 1024) // We get kiB from the camera
 
     property var    _expModeFact:       _camera && _camera.exposureMode
     property var    _evFact:            _camera && _camera.ev
@@ -51,7 +52,7 @@ Item {
     property var    _shutterFact:       _camera && _camera.shutterSpeed
     property var    _wbFact:            _camera && _camera.wb
     property var    _meteringFact:      _camera && _camera.meteringMode
-    property var    _videoResFact:      _camera && _camera.videores
+    property var    _videoResFact:      _camera && _camera.videoRes
 
     property string _currentAEMode:     _expModeFact  ? _expModeFact.enumStringValue : _naString
     property bool   _cameraAutoMode:    _expModeFact  ? _expModeFact.rawValue === 0 : true
@@ -66,12 +67,13 @@ Item {
     property string _distanceStr:       isNaN(_distance) ? "0" : _distance.toFixed(0) + ' ' + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "")
     property real   _heading:           _activeVehicle   ? _activeVehicle.heading.rawValue : 0
 
-    property real   _distance:          0.0
-    property bool   _noSdCardMsgShown:  false
-    property bool   _showAttitude:      false
-    property int    _eggCount:          0
-    property string _messageTitle:      ""
-    property string _messageText:       ""
+    property real   _distance:              0.0
+    property bool   _noSdCardMsgShown:      false
+    property bool   _fullSdCardMsgShown:    false
+    property bool   _showAttitude:          false
+    property int    _eggCount:              0
+    property string _messageTitle:          ""
+    property string _messageText:           ""
 
     function showSimpleAlert(title, message) {
         _messageTitle   = title;
@@ -82,6 +84,12 @@ Item {
     function showNoSDCardMessage() {
         showSimpleAlert(
             qsTr("No MicroSD Card in Camera"),
+            qsTr("No images will be captured or videos recorded."))
+    }
+
+    function showFullSDCardMessage() {
+        showSimpleAlert(
+            qsTr("MicroSD Card in Camera if Full"),
             qsTr("No images will be captured or videos recorded."))
     }
 
@@ -289,7 +297,7 @@ Item {
         }
     }
 
-    //-- Handle no MicroSD card loaded in camera
+    //-- Handle MicroSD card loaded in camera
     Connections {
         target: _camera
         onStorageTotalChanged: {
@@ -299,7 +307,23 @@ Item {
                     _noSdCardMsgShown = true;
                 }
             } else {
-                rootLoader.sourceComponent = null
+                _noSdCardMsgShown = false;
+                if(rootLoader.sourceComponent === simpleAlert) {
+                    rootLoader.sourceComponent = null
+                }
+            }
+        }
+        onStorageFreeChanged: {
+            if(_fullSD) {
+                if(!_fullSdCardMsgShown) {
+                    showFullSDCardMessage();
+                    _fullSdCardMsgShown = true;
+                }
+            } else {
+                _fullSdCardMsgShown = false;
+                if(rootLoader.sourceComponent === simpleAlert) {
+                    rootLoader.sourceComponent = null
+                }
             }
         }
     }
@@ -377,8 +401,9 @@ Item {
             //-- SD Card
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; }
             QGCLabel { text: qsTr("SD:"); anchors.verticalCenter: parent.verticalCenter;}
-            QGCLabel { text: _camera ? _camera.storageFreeStr : ""; anchors.verticalCenter: parent.verticalCenter; visible: !_noSdCard}
+            QGCLabel { text: _camera ? _camera.storageFreeStr : ""; anchors.verticalCenter: parent.verticalCenter; visible: !_noSdCard && !_fullSD}
             QGCLabel { text: qsTr("NONE"); color: qgcPal.colorOrange; anchors.verticalCenter: parent.verticalCenter; visible: _noSdCard}
+            QGCLabel { text: qsTr("FULL"); color: qgcPal.colorOrange; anchors.verticalCenter: parent.verticalCenter; visible: _fullSD}
         }
     }
 

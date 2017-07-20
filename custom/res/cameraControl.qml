@@ -154,10 +154,14 @@ Rectangle {
                         if(_camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) {
                             _camera.stopVideo()
                         } else {
-                            _camera.startVideo()
+                            if(!_fullSD) {
+                                _camera.startVideo()
+                            }
                         }
                     } else {
-                        _camera.takePhoto()
+                        if(!_fullSD) {
+                            _camera.takePhoto()
+                        }
                     }
                 }
             }

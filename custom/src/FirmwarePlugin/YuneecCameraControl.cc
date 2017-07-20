@@ -36,6 +36,7 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
 
     connect(&_recTimer, &QTimer::timeout, this, &YuneecCameraControl::_recTimerHandler);
     connect(_vehicle,   &Vehicle::mavlinkMessageReceived, this, &YuneecCameraControl::_mavlinkMessageReceived);
+    connect(this,       &QGCCameraControl::parametersReady, this, &YuneecCameraControl::_parametersReady);
 
     TyphoonHPlugin* pPlug = dynamic_cast<TyphoonHPlugin*>(qgcApp()->toolbox()->corePlugin());
     if(pPlug && pPlug->handler()) {
@@ -52,9 +53,9 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
 
 //-----------------------------------------------------------------------------
 void
-YuneecCameraControl::paramLoadCompleted()
+YuneecCameraControl::_parametersReady()
 {
-    if(_paramComplete) {
+    if(!_paramComplete) {
         qCDebug(YuneecCameraLog) << "All parameters loaded.";
         _paramComplete = true;
         emit factsLoaded();
@@ -65,6 +66,7 @@ YuneecCameraControl::paramLoadCompleted()
 Fact*
 YuneecCameraControl::exposureMode()
 {
+    qDebug() << "Get CAM_EXPMODE";
     return _paramComplete ? getFact("CAM_EXPMODE") : NULL;
 }
 

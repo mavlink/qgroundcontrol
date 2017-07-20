@@ -39,7 +39,6 @@ public:
     bool        takePhoto           () override;
     bool        startVideo          () override;
     bool        stopVideo           () override;
-    void        paramLoadCompleted  () override;
 
     QString     gimbalVersion       () { return _gimbalVersion; }
     bool        gimbalCalOn         () { return _gimbalCalOn; }
@@ -58,6 +57,7 @@ private slots:
     void    _recTimerHandler        ();
     void    _mavlinkMessageReceived (const mavlink_message_t& message);
     void    _switchStateChanged     (int swId, int oldState, int newState);
+    void    _parametersReady        ();
 
 signals:
     void    gimbalVersionChanged    ();
