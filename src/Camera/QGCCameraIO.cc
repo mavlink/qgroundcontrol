@@ -19,6 +19,7 @@ QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicl
     , _vehicle(vehicle)
     , _sentRetries(0)
     , _requestRetries(0)
+    , _done(false)
 {
     _paramWriteTimer.setSingleShot(true);
     _paramWriteTimer.setInterval(3000);
@@ -177,6 +178,10 @@ QGCCameraParamIO::handleParamValue(const mavlink_param_ext_value_t& value)
     _paramRequestTimer.stop();
     _fact->_containerSetRawValue(_valueFromMessage(value.param_value, value.param_type));
     _paramRequestReceived = true;
+    if(!_done) {
+        _done = true;
+        _control->_paramDone();
+    }
     qCDebug(CameraIOLog) << QString("handleParamValue() %1 %2").arg(_fact->name()).arg(_fact->rawValueString());
 }
 
@@ -224,6 +229,10 @@ QGCCameraParamIO::_paramRequestTimeout()
 {
     if(++_requestRetries > 3) {
         qCWarning(CameraIOLog) << "No response for param request:" << _fact->name();
+        if(!_done) {
+            _done = true;
+            _control->_paramDone();
+        }
     } else {
         //-- Request it again
         qCDebug(CameraIOLog) << "Param request retry:" << _fact->name();
