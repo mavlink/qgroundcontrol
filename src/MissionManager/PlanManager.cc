@@ -51,7 +51,7 @@ void PlanManager::_writeMissionItemsWorker(void)
 
     emit progressPct(0);
 
-    qCDebug(PlanManagerLog) << "writeMissionItems count:" << _writeMissionItems.count();
+    qCDebug(PlanManagerLog) << QStringLiteral("writeMissionItems %1 count:").arg(_planTypeString()) << _writeMissionItems.count();
 
     // Prime write list
     for (int i=0; i<_writeMissionItems.count(); i++) {
@@ -78,7 +78,7 @@ void PlanManager::writeMissionItems(const QList<MissionItem*>& missionItems)
     }
 
     if (inProgress()) {
-        qCDebug(PlanManagerLog) << "writeMissionItems called while transaction in progress";
+        qCDebug(PlanManagerLog) << QStringLiteral("writeMissionItems %1 called while transaction in progress").arg(_planTypeString());
         return;
     }
 
@@ -109,7 +109,7 @@ void PlanManager::writeMissionItems(const QList<MissionItem*>& missionItems)
 /// This begins the write sequence with the vehicle. This may be called during a retry.
 void PlanManager::_writeMissionCount(void)
 {
-    qCDebug(PlanManagerLog) << "_writeMissionCount count:_retryCount" << _writeMissionItems.count() << _retryCount;
+    qCDebug(PlanManagerLog) << QStringLiteral("_writeMissionCount %1 count:_retryCount").arg(_planTypeString()) << _writeMissionItems.count() << _retryCount;
 
     mavlink_message_t message;
 
@@ -133,10 +133,10 @@ void PlanManager::loadFromVehicle(void)
         return;
     }
 
-    qCDebug(PlanManagerLog) << "loadFromVehicle read sequence";
+    qCDebug(PlanManagerLog) << QStringLiteral("loadFromVehicle %1 read sequence").arg(_planTypeString());
 
     if (inProgress()) {
-        qCDebug(PlanManagerLog) << "loadFromVehicle called while transaction in progress";
+        qCDebug(PlanManagerLog) << QStringLiteral("loadFromVehicle %1 called while transaction in progress").arg(_planTypeString());
         return;
     }
 
@@ -150,7 +150,7 @@ void PlanManager::loadFromVehicle(void)
 /// Internal call to request list of mission items. May be called during a retry sequence.
 void PlanManager::_requestList(void)
 {
-    qCDebug(PlanManagerLog) << "_requestList _planType:_retryCount" << _planType << _retryCount;
+    qCDebug(PlanManagerLog) << QStringLiteral("_requestList %1 _planType:_retryCount").arg(_planTypeString()) << _planType << _retryCount;
 
     mavlink_message_t message;
 
@@ -178,7 +178,7 @@ void PlanManager::_ackTimeout(void)
 
     switch (_expectedAck) {
     case AckNone:
-        qCWarning(PlanManagerLog) << "_ackTimeout timeout with AckNone";
+        qCWarning(PlanManagerLog) << QStringLiteral("_ackTimeout %1 timeout with AckNone").arg(_planTypeString());
         _sendError(InternalError, "Internal error occurred during Mission Item communication: _ackTimeOut:_expectedAck == AckNone");
         break;
     case AckMissionCount:
@@ -188,7 +188,7 @@ void PlanManager::_ackTimeout(void)
             _finishTransaction(false);
         } else {
             _retryCount++;
-            qCDebug(PlanManagerLog) << "Retrying REQUEST_LIST retry Count" << _retryCount;
+            qCDebug(PlanManagerLog) << QStringLiteral("Retrying %1 REQUEST_LIST retry Count").arg(_planTypeString()) << _retryCount;
             _requestList();
         }
         break;
@@ -199,7 +199,7 @@ void PlanManager::_ackTimeout(void)
             _finishTransaction(false);
         } else {
             _retryCount++;
-            qCDebug(PlanManagerLog) << "Retrying MISSION_REQUEST retry Count" << _retryCount;
+            qCDebug(PlanManagerLog) << QStringLiteral("Retrying %1 MISSION_REQUEST retry Count").arg(_planTypeString()) << _retryCount;
             _requestNextMissionItem();
         }
         break;
@@ -216,7 +216,7 @@ void PlanManager::_ackTimeout(void)
                 _finishTransaction(false);
             } else {
                 _retryCount++;
-                qCDebug(PlanManagerLog) << "Retrying MISSION_COUNT retry Count" << _retryCount;
+                qCDebug(PlanManagerLog) << QStringLiteral("Retrying %1 MISSION_COUNT retry Count").arg(_planTypeString()) << _retryCount;
                 _writeMissionCount();
             }
         } else {
@@ -233,7 +233,7 @@ void PlanManager::_ackTimeout(void)
             _finishTransaction(false);
         } else {
             _retryCount++;
-            qCDebug(PlanManagerLog) << "Retrying MISSION_CLEAR_ALL retry Count" << _retryCount;
+            qCDebug(PlanManagerLog) << QStringLiteral("Retrying %1 MISSION_CLEAR_ALL retry Count").arg(_planTypeString()) << _retryCount;
             _removeAllWorker();
         }
         break;
@@ -267,7 +267,7 @@ bool PlanManager::_checkForExpectedAck(AckType_t receivedAck)
         } else {
             // We just warn in this case, this could be crap left over from a previous transaction or the vehicle going bonkers.
             // Whatever it is we let the ack timeout handle any error output to the user.
-            qCDebug(PlanManagerLog) << QString("Out of sequence ack expected:received %1:%2").arg(_ackTypeToString(_expectedAck)).arg(_ackTypeToString(receivedAck));
+            qCDebug(PlanManagerLog) << QString("Out of sequence ack expected:received %1:%2 %1").arg(_ackTypeToString(_expectedAck)).arg(_ackTypeToString(receivedAck)).arg(_planTypeString());
         }
         return false;
     }
@@ -302,7 +302,7 @@ void PlanManager::_handleMissionCount(const mavlink_message_t& message)
     if (missionCount.mission_type != _planType) {
         // if there was a previous transaction with a different mission_type, it can happen that we receive
         // a stale message here, for example when the MAV ran into a timeout and sent a message twice
-        qCDebug(PlanManagerLog) << "_handleMissionCount Incorrect mission_type received expected:actual" << _planType << missionCount.mission_type;
+        qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionCount %1 Incorrect mission_type received expected:actual").arg(_planTypeString()) << _planType << missionCount.mission_type;
         return;
     }
 
@@ -310,7 +310,7 @@ void PlanManager::_handleMissionCount(const mavlink_message_t& message)
         return;
     }
 
-    qCDebug(PlanManagerLog) << "_handleMissionCount count:" << missionCount.count;
+    qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionCount %1 count:").arg(_planTypeString()) << missionCount.count;
 
     _retryCount = 0;
 
@@ -332,10 +332,10 @@ void PlanManager::_requestNextMissionItem(void)
         return;
     }
 
-    qCDebug(PlanManagerLog) << "_requestNextMissionItem sequenceNumber:retry" << _itemIndicesToRead[0] << _retryCount;
+    qCDebug(PlanManagerLog) << QStringLiteral("_requestNextMissionItem %1 sequenceNumber:retry").arg(_planTypeString()) << _itemIndicesToRead[0] << _retryCount;
 
     mavlink_message_t message;
-    if (_vehicle->capabilityBits() && MAV_PROTOCOL_CAPABILITY_MISSION_INT) {
+    if (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_INT) {
         mavlink_msg_mission_request_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                                   qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
                                                   _dedicatedLink->mavlinkChannel(),
@@ -421,12 +421,12 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message, bool miss
         if (_vehicle->apmFirmware() && seq ==  0 && _planType == MAV_MISSION_TYPE_MISSION) {
             ardupilotHomePositionUpdate = true;
         } else {
-            qCDebug(PlanManagerLog) << "_handleMissionItem dropping spurious item seq:command:current" << seq << command << isCurrentItem;
+            qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionItem %1 dropping spurious item seq:command:current").arg(_planTypeString()) << seq << command << isCurrentItem;
             return;
         }
     }
 
-    qCDebug(PlanManagerLog) << "_handleMissionItem seq:command:current:ardupilotHomePositionUpdate" << seq << command << isCurrentItem << ardupilotHomePositionUpdate;
+    qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionItem %1 seq:command:current:ardupilotHomePositionUpdate").arg(_planTypeString()) << seq << command << isCurrentItem << ardupilotHomePositionUpdate;
 
     if (ardupilotHomePositionUpdate) {
         QGeoCoordinate newHomePosition(param5, param6, param7);
@@ -458,7 +458,7 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message, bool miss
 
         _missionItems.append(item);
     } else {
-        qCDebug(PlanManagerLog) << "_handleMissionItem mission item received item index which was not requested, disregrarding:" << seq;
+        qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionItem %1 mission item received item index which was not requested, disregrarding:").arg(_planTypeString()) << seq;
         // We have to put the ack timeout back since it was removed above
         _startAckTimeout(AckMissionItem);
         return;
@@ -489,7 +489,7 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
     if (missionRequest.mission_type != _planType) {
         // if there was a previous transaction with a different mission_type, it can happen that we receive
         // a stale message here, for example when the MAV ran into a timeout and sent a message twice
-        qCDebug(PlanManagerLog) << "_handleMissionRequest Incorrect mission_type received expected:actual" << _planType << missionRequest.mission_type;
+        qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 Incorrect mission_type received expected:actual").arg(_planTypeString()) << _planType << missionRequest.mission_type;
         return;
     }
     
@@ -497,7 +497,7 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
         return;
     }
 
-    qCDebug(PlanManagerLog) << "_handleMissionRequest sequenceNumber" << missionRequest.seq;
+    qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequenceNumber").arg(_planTypeString()) << missionRequest.seq;
 
     if (missionRequest.seq > _writeMissionItems.count() - 1) {
         _sendError(RequestRangeError, QString("Vehicle requested item outside range, count:request %1:%2. Send to Vehicle failed.").arg(_writeMissionItems.count()).arg(missionRequest.seq));
@@ -509,13 +509,13 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
 
     _lastMissionRequest = missionRequest.seq;
     if (!_itemIndicesToWrite.contains(missionRequest.seq)) {
-        qCDebug(PlanManagerLog) << "_handleMissionRequest sequence number requested which has already been sent, sending again:" << missionRequest.seq;
+        qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequence number requested which has already been sent, sending again:").arg(_planTypeString()) << missionRequest.seq;
     } else {
         _itemIndicesToWrite.removeOne(missionRequest.seq);
     }
     
     MissionItem* item = _writeMissionItems[missionRequest.seq];
-    qCDebug(PlanManagerLog) << "_handleMissionRequest sequenceNumber:command" << missionRequest.seq << item->command();
+    qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequenceNumber:command").arg(_planTypeString()) << missionRequest.seq << item->command();
 
     mavlink_message_t   messageOut;
     if (missionItemInt) {
@@ -572,7 +572,7 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
     if (missionAck.mission_type != _planType) {
         // if there was a previous transaction with a different mission_type, it can happen that we receive
         // a stale message here, for example when the MAV ran into a timeout and sent a message twice
-        qCDebug(PlanManagerLog) << "_handleMissionAck Incorrect mission_type received expected:actual" << _planType << missionAck.mission_type;
+        qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionAck %1 Incorrect mission_type received expected:actual").arg(_planTypeString()) << _planType << missionAck.mission_type;
         return;
     }
 
@@ -587,7 +587,7 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
         return;
     }
 
-    qCDebug(PlanManagerLog) << "_handleMissionAck type:" << _missionResultToString((MAV_MISSION_RESULT)missionAck.type);
+    qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionAck %1 type:").arg(_planTypeString()) << _missionResultToString((MAV_MISSION_RESULT)missionAck.type);
 
     switch (savedExpectedAck) {
     case AckNone:
@@ -608,7 +608,7 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
         // MISSION_REQUEST is expected, or MISSION_ACK to end sequence
         if (missionAck.type == MAV_MISSION_ACCEPTED) {
             if (_itemIndicesToWrite.count() == 0) {
-                qCDebug(PlanManagerLog) << "_handleMissionAck write sequence complete";
+                qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionAck write sequence complete").arg(_planTypeString());
                 _finishTransaction(true);
             } else {
                 _sendError(MissingRequestsError, QString("Vehicle did not request all items during write sequence, missed count %1.").arg(_itemIndicesToWrite.count()));
@@ -629,7 +629,7 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
     case AckGuidedItem:
         // MISSION_REQUEST is expected, or MISSION_ACK to end sequence
         if (missionAck.type == MAV_MISSION_ACCEPTED) {
-            qCDebug(PlanManagerLog) << "_handleMissionAck guided mode item accepted";
+            qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionAck %1 guided mode item accepted").arg(_planTypeString());
             _finishTransaction(true);
         } else {
             _sendError(VehicleError, QString("Vehicle returned error: %1. %2Vehicle did not accept guided item.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
@@ -678,7 +678,7 @@ void PlanManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 
 void PlanManager::_sendError(ErrorCode_t errorCode, const QString& errorMsg)
 {
-    qCDebug(PlanManagerLog) << "Sending error" << errorCode << errorMsg;
+    qCDebug(PlanManagerLog) << QStringLiteral("Sending %1 error").arg(_planTypeString()) << errorCode << errorMsg;
 
     emit error(errorCode, errorMsg);
 }
@@ -697,7 +697,7 @@ QString PlanManager::_ackTypeToString(AckType_t ackType)
     case AckGuidedItem:
         return QString("Guided Mode Item");
     default:
-        qWarning(PlanManagerLog) << "Fell off end of switch statement";
+        qWarning(PlanManagerLog) << QStringLiteral("Fell off end of switch statement %1").arg(_planTypeString());
         return QString("QGC Internal Error");
     }
 }
@@ -797,7 +797,7 @@ QString PlanManager::_missionResultToString(MAV_MISSION_RESULT result)
         resultString = QString("Not accepting any mission commands (MAV_MISSION_DENIED)");
         break;
     default:
-        qWarning(PlanManagerLog) << "Fell off end of switch statement";
+        qWarning(PlanManagerLog) << QStringLiteral("Fell off end of switch statement %1").arg(_planTypeString());
         resultString = QString("QGC Internal Error");
     }
 
@@ -817,7 +817,7 @@ void PlanManager::_finishTransaction(bool success)
     _transactionInProgress = TransactionNone;
     if (currentTransactionType != TransactionNone) {
         _transactionInProgress = TransactionNone;
-        qDebug() << "inProgressChanged";
+        qCDebug(PlanManagerLog) << QStringLiteral("inProgressChanged %1").arg(_planTypeString());
         emit inProgressChanged(false);
     }
 
@@ -868,13 +868,13 @@ void PlanManager::_handleMissionCurrent(const mavlink_message_t& message)
     mavlink_msg_mission_current_decode(&message, &missionCurrent);
 
     if (missionCurrent.seq != _currentMissionIndex) {
-        qCDebug(PlanManagerLog) << "_handleMissionCurrent currentIndex:" << missionCurrent.seq;
+        qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionCurrent %1 currentIndex:").arg(_planTypeString()) << missionCurrent.seq;
         _currentMissionIndex = missionCurrent.seq;
         emit currentIndexChanged(_currentMissionIndex);
     }
 
     if (_vehicle->flightMode() == _vehicle->missionFlightMode() && _currentMissionIndex != _lastCurrentIndex) {
-        qCDebug(PlanManagerLog) << "_handleMissionCurrent lastCurrentIndex:" << _currentMissionIndex;
+        qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionCurrent %1 lastCurrentIndex:").arg(_planTypeString()) << _currentMissionIndex;
         _lastCurrentIndex = _currentMissionIndex;
         emit lastCurrentIndexChanged(_lastCurrentIndex);
     }
@@ -907,7 +907,7 @@ void PlanManager::removeAll(void)
         return;
     }
 
-    qCDebug(PlanManagerLog) << "removeAll";
+    qCDebug(PlanManagerLog) << QStringLiteral("removeAll").arg(_planTypeString());
 
     _clearAndDeleteMissionItems();
 
@@ -948,4 +948,19 @@ void PlanManager::_connectToMavlink(void)
 void PlanManager::_disconnectFromMavlink(void)
 {
     disconnect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &PlanManager::_mavlinkMessageReceived);
+}
+
+QString PlanManager::_planTypeString(void)
+{
+    switch (_planType) {
+    case MAV_MISSION_TYPE_MISSION:
+        return QStringLiteral("T:Mission");
+    case MAV_MISSION_TYPE_FENCE:
+        return QStringLiteral("T:GeoFence");
+    case MAV_MISSION_TYPE_RALLY:
+        return QStringLiteral("T:Rally");
+    default:
+        qWarning() << "Unknown plan type" << _planType;
+        return QStringLiteral("T:Unknown");
+    }
 }

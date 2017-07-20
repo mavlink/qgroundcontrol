@@ -127,6 +127,7 @@ protected:
     void _removeAllWorker(void);
     void _connectToMavlink(void);
     void _disconnectFromMavlink(void);
+    QString _planTypeString(void);
 
 protected:
     Vehicle*            _vehicle;
