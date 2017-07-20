@@ -199,6 +199,7 @@ FlightMap {
         delegate: VehicleMapItem {
             coordinate:     object.coordinate
             altitude:       object.altitude
+            callsign:       object.callsign
             heading:        object.heading
             map:            flightMap
             z:              QGroundControl.zOrderVehicles
