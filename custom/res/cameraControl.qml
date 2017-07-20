@@ -108,12 +108,12 @@ Rectangle {
                     source:             (_cameraModeUndefined || _cameraVideoMode) ? "/typhoonh/img/camera_switch_video_mode.svg" : "/typhoonh/img/camera_switch_photo_mode.svg"
                     fillMode:           Image.PreserveAspectFit
                     sourceSize.height:  height
-                    color:              _cameraModeUndefined ? qgcPal.text : qgcPal.colorGreen
+                    color:              _cameraModeUndefined ? qgcPal.text : (_camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING ? qgcPal.colorRed : qgcPal.colorGreen)
                 }
             }
             MouseArea {
                 anchors.fill:   parent
-                enabled:        !_cameraModeUndefined
+                enabled:        !_cameraModeUndefined && _camera.videoStatus !== QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
                 onClicked: {
                     rootLoader.sourceComponent = null
                     _camera.toggleMode()
