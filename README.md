@@ -49,7 +49,7 @@ You need to install Qt as described below instead of using pre-built packages fr
     * Windows: Make sure to install VS 2015 32 bit package.
 
 ###### Install additional packages:
-* Ubuntu: sudo apt-get install espeak libespeak-dev libudev-dev libsdl2-dev
+* Ubuntu: sudo apt-get install espeak libespeak-dev libudev-dev libsdl2-dev libgstreamer-plugins-base1.0-dev
 * Fedora: sudo dnf install espeak espeak-devel SDL2-devel SDL2 systemd-devel
 * Arch Linux: pacman -Sy espeak
 * Windows: [USB Driver](http://www.pixhawk.org/firmware/downloads) to connect to Pixhawk/PX4Flow/3DR Radio
