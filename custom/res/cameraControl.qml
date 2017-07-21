@@ -270,7 +270,7 @@ Rectangle {
             }
             Rectangle {
                 id:     camSettingsRect
-                width:  mainWindow.width  * 0.45
+                width:  mainWindow.width  * 0.65
                 height: mainWindow.height * 0.65
                 radius: ScreenTools.defaultFontPixelWidth
                 color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
