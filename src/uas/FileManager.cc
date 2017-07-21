@@ -239,6 +239,7 @@ void FileManager::_writeAckResponse(Request* writeAck)
 {
     if(_writeOffset + _writeSize >= _writeFileSize){
         _closeUploadSession(true /* success */);
+        return;
     }
 
     if (writeAck->hdr.session != _activeSession) {
