@@ -1278,8 +1278,8 @@ void MockLink::_sendADSBVehicles(void)
                                        _mavlinkChannel,
                                        &responseMsg,
                                        12345,                           // ICAO address
-                                       (_vehicleLatitude + 0.001) * qPow(10.0, 7.0),
-                                       (_vehicleLongitude + 0.001) * qPow(10.0, 7.0),
+                                       (_vehicleLatitude + 0.001) * 1e7,
+                                       (_vehicleLongitude + 0.001) * 1e7,
                                        ADSB_ALTITUDE_TYPE_GEOMETRIC,
                                        100 * 1000,                      // Altitude in millimeters
                                        10 * 100,                        // Heading in centidegress
