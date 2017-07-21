@@ -2631,11 +2631,21 @@ bool Vehicle::autoDisarm(void)
 void Vehicle::_handleADSBVehicle(const mavlink_message_t& message)
 {
     mavlink_adsb_vehicle_t adsbVehicle;
+    static const int maxTimeSinceLastSeen = 10;
 
     mavlink_msg_adsb_vehicle_decode(&message, &adsbVehicle);
     if (adsbVehicle.flags | ADSB_FLAGS_VALID_COORDS) {
         if (_adsbICAOMap.contains(adsbVehicle.ICAO_address)) {
-            _adsbICAOMap[adsbVehicle.ICAO_address]->update(adsbVehicle);
+            if (adsbVehicle.tslc > maxTimeSinceLastSeen) {
+                ADSBVehicle* vehicle = _adsbICAOMap[adsbVehicle.ICAO_address];
+                _adsbVehicles.removeOne(vehicle);
+                _adsbICAOMap.remove(adsbVehicle.ICAO_address);
+                vehicle->deleteLater();
+            } else {
+                if (adsbVehicle.tslc <= maxTimeSinceLastSeen) {
+                    _adsbICAOMap[adsbVehicle.ICAO_address]->update(adsbVehicle);
+                }
+            }
         } else {
             ADSBVehicle* vehicle = new ADSBVehicle(adsbVehicle, this);
             _adsbICAOMap[adsbVehicle.ICAO_address] = vehicle;
