@@ -374,12 +374,22 @@ QGCView {
             visible:            _videoReceiver && _videoReceiver.videoRunning && QGroundControl.settingsManager.videoSettings.showRecControl.rawValue
             opacity:            0.75
 
+            readonly property string recordBtnBackground: "BackgroundName"
+
             Rectangle {
+                id:                 recordBtnBackground
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 width:              height
                 radius:             QGroundControl.videoManager && _videoReceiver && _videoReceiver.recording ? 0 : height
                 color:              "red"
+
+                SequentialAnimation on visible {
+                    running:        QGroundControl.videoManager && QGroundControl.videoManager.videoReceiver && QGroundControl.videoManager.videoReceiver.recording
+                    loops:          Animation.Infinite
+                    PropertyAnimation { to: false; duration: 1000 }
+                    PropertyAnimation { to: true;  duration: 1000 }
+                }
             }
 
             QGCColoredImage {
@@ -389,13 +399,23 @@ QGCView {
                 width:                      height * 0.625
                 sourceSize.width:           width
                 source:                     "/qmlimages/CameraIcon.svg"
+                visible:                    recordBtnBackground.visible
                 fillMode:                   Image.PreserveAspectFit
                 color:                      "white"
             }
 
             MouseArea {
                 anchors.fill:   parent
-                onClicked:      _videoReceiver && _videoReceiver.recording ? _videoReceiver.stopRecording() : _videoReceiver.startRecording()
+                onClicked: {
+                    if (QGroundControl.videoManager && QGroundControl.videoManager.videoReceiver) {
+                        if (QGroundControl.videoManager.videoReceiver.recording) {
+                            QGroundControl.videoManager.videoReceiver.stopRecording()
+                            recordBtnBackground.visible = true
+                        } else {
+                            QGroundControl.videoManager.videoReceiver.startRecording()
+                        }
+                    }
+                }
             }
         }
 
