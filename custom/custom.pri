@@ -200,19 +200,19 @@ AndroidBuild {
         QKEYSTORE_FILE = $$(KEYSTORE_FILE)
         QKEYSTORE_USER = $$(KEYSTORE_USER)
         QKEYSTORE_PWD  = $$(KEYSTORE_PWD)
-        ifEmpty(QKEYSTORE_FILE) {
+        isEmpty(QKEYSTORE_FILE) {
             error(Please, define the location of the keystore file. export KEYSTORE_FILE=/path/to/your.keystore)
         }
-        ifEmpty(QKEYSTORE_USER) {
+        isEmpty(QKEYSTORE_USER) {
             error(Please, define the user name of yout keystore file. export KEYSTORE_USER=johndoe)
         }
-        ifEmpty(QKEYSTORE_PWD) {
+        isEmpty(QKEYSTORE_PWD) {
             error(Please, define the password of your keystore file. export KEYSTORE_PWD=password)
         }
         QMAKE_POST_LINK = echo Start post link for App Store Build
         QMAKE_POST_LINK += && mkdir -p $${DESTDIR}/package
         QMAKE_POST_LINK += && make install INSTALL_ROOT=$${DESTDIR}/android-build/
-        QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/androiddeployqt --input android-libDataPilot.so-deployment-settings.json --output $${DESTDIR}/android-build --deployment bundled --gradle --sign $$(QKEYSTORE_FILE) $$(KEYSTORE_USER) --storepass $$(QKEYSTORE_PWD)
+        QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/androiddeployqt --input android-libDataPilot.so-deployment-settings.json --output $${DESTDIR}/android-build --deployment bundled --gradle --sign $$(KEYSTORE_FILE) $$(KEYSTORE_USER) --storepass $$(KEYSTORE_PWD)
         QMAKE_POST_LINK += && cp $${DESTDIR}/android-build/build/outputs/apk/android-build-release-signed.apk $${DESTDIR}/package/DataPilot.apk &&
     }
 }
