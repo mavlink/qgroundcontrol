@@ -183,15 +183,18 @@ private:
     void    _updateActiveList               ();
     void    _updateRanges                   (Fact* pFact);
     void    _httpRequest                    (const QString& url);
+    void    _handleDefinitionFile           (const QString& url);
 
     QStringList     _loadExclusions         (QDomNode option);
     QString         _getParamName           (const char* param_id);
+    QString         _cacheFile              ();
 
 protected:
     Vehicle*                            _vehicle;
     int                                 _compID;
     mavlink_camera_information_t        _info;
     int                                 _version;
+    bool                                _cached;
     uint32_t                            _storageFree;
     uint32_t                            _storageTotal;
     QNetworkAccessManager*              _netManager;
