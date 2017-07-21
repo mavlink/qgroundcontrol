@@ -1918,10 +1918,14 @@ void Vehicle::_missionLoadComplete(void)
 {
     // After the initial mission request completes we ask for the geofence
     if (!_geoFenceManagerInitialRequestSent) {
-        qCDebug(VehicleLog) << "_missionLoadComplete requesting geofence";
         _geoFenceManagerInitialRequestSent = true;
-        qCDebug(VehicleLog) << "_missionLoadComplete requesting geoFence";
-        _geoFenceManager->loadFromVehicle();
+        if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_FENCE) {
+            qCDebug(VehicleLog) << "_missionLoadComplete requesting GeoFence";
+            _geoFenceManager->loadFromVehicle();
+        } else {
+            qCDebug(VehicleLog) << "_missionLoadComplete GeoFence not supported skipping";
+            _geoFenceLoadComplete();
+        }
     }
 }
 
@@ -1929,10 +1933,14 @@ void Vehicle::_geoFenceLoadComplete(void)
 {
     // After geofence request completes we ask for the rally points
     if (!_rallyPointManagerInitialRequestSent) {
-        qCDebug(VehicleLog) << "_missionLoadComplete requesting rally points";
         _rallyPointManagerInitialRequestSent = true;
-        qCDebug(VehicleLog) << "_missionLoadComplete requesting rally points";
-        _rallyPointManager->loadFromVehicle();
+        if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_RALLY) {
+            qCDebug(VehicleLog) << "_missionLoadComplete requesting Rally Points";
+            _rallyPointManager->loadFromVehicle();
+        } else {
+            qCDebug(VehicleLog) << "_missionLoadComplete Rally Points not supported skipping";
+            _rallyPointLoadComplete();
+        }
     }
 }
 
