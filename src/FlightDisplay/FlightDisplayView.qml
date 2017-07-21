@@ -44,6 +44,7 @@ QGCView {
     property var    _rallyPointController:  _planMasterController.rallyPointController
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property var    _videoReceiver:         QGroundControl.videoManager.videoReceiver
+    property bool   _recordingVideo:        _videoReceiver && _videoReceiver.recording
     property bool   _mainIsMap:             QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
     property bool   _isPipVisible:          QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
     property real   _savedZoomLevel:        0
@@ -381,11 +382,11 @@ QGCView {
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 width:              height
-                radius:             QGroundControl.videoManager && _videoReceiver && _videoReceiver.recording ? 0 : height
+                radius:             _recordingVideo ? 0 : height
                 color:              "red"
 
                 SequentialAnimation on visible {
-                    running:        QGroundControl.videoManager && QGroundControl.videoManager.videoReceiver && QGroundControl.videoManager.videoReceiver.recording
+                    running:        _recordingVideo
                     loops:          Animation.Infinite
                     PropertyAnimation { to: false; duration: 1000 }
                     PropertyAnimation { to: true;  duration: 1000 }
@@ -407,12 +408,13 @@ QGCView {
             MouseArea {
                 anchors.fill:   parent
                 onClicked: {
-                    if (QGroundControl.videoManager && QGroundControl.videoManager.videoReceiver) {
-                        if (QGroundControl.videoManager.videoReceiver.recording) {
-                            QGroundControl.videoManager.videoReceiver.stopRecording()
+                    if (_videoReceiver) {
+                        if (_recordingVideo) {
+                            _videoReceiver.stopRecording()
+                            // reset blinking animation
                             recordBtnBackground.visible = true
                         } else {
-                            QGroundControl.videoManager.videoReceiver.startRecording()
+                            _videoReceiver.startRecording()
                         }
                     }
                 }
