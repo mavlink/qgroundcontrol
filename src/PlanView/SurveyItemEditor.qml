@@ -30,15 +30,15 @@ Rectangle {
     property real   _fieldWidth:        ScreenTools.defaultFontPixelWidth * 10.5
     property var    _cameraList:        [ qsTr("Manual Grid (no camera specs)"), qsTr("Custom Camera Grid") ]
     property var    _vehicle:           QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
-    property var    _vehicleCameraList: _vehicle.staticCcameraList
+    property var    _vehicleCameraList: _vehicle.staticCameraList
 
     readonly property int _gridTypeManual:          0
     readonly property int _gridTypeCustomCamera:    1
     readonly property int _gridTypeCamera:          2
 
     Component.onCompleted: {
-        for (var i=0; i<_vehicle.staticCcameraList.length; i++) {
-            _cameraList.push(_vehicle.staticCcameraList[i].name)
+        for (var i=0; i<_vehicle.staticCameraList.length; i++) {
+            _cameraList.push(_vehicle.staticCameraList[i].name)
         }
         gridTypeCombo.model = _cameraList
         if (missionItem.manualGrid.value) {
