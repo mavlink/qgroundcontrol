@@ -243,6 +243,9 @@ public:
 
     const QString& flightID() const { return _currentFlightId; }
 
+public slots:
+    void endFlight();
+
 signals:
     void networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
     void flightPermitStatusChanged();
@@ -254,6 +257,7 @@ private:
     enum class State {
         Idle,
         FlightUpload,
+        FlightEnd,
     };
 
     State                               _state = State::Idle;
@@ -369,6 +373,7 @@ private:
     QTimer                  _updateTimer;
 
     Vehicle*                _vehicle = nullptr; ///< current vehicle
+    bool                    _vehicleWasInMissionMode = false; ///< true if the vehicle was in mission mode when arming
 };
 
 #endif
