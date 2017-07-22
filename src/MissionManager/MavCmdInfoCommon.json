@@ -974,7 +974,7 @@
             "description":  "Set camera photo, video, audio modes.",
             "category":     "Camera",
             "param1": {
-                "label":            "Rserved",
+                "label":            "Reserved",
                 "default":          0,
                 "decimalPlaces":    0
             },
@@ -992,7 +992,7 @@
             "description":  "Start taking one or more photos.",
             "category":     "Camera",
             "param1": {
-                "label":            "Rserved",
+                "label":            "Reserved",
                 "default":          0,
                 "decimalPlaces":    0
             },
@@ -1015,7 +1015,7 @@
             "description":  "Stop taking photos.",
             "category":     "Camera",
             "param1": {
-                "label":            "Rserved",
+                "label":            "Reserved",
                 "default":          0,
                 "decimalPlaces":    0
             }
@@ -1028,7 +1028,7 @@
             "description":  "Start video capture.",
             "category":     "Camera",
             "param1": {
-                "label":            "Rserved",
+                "label":            "Reserved",
                 "default":          0,
                 "decimalPlaces":    0
             }
@@ -1040,7 +1040,7 @@
             "description":  "Stop video capture.",
             "category":     "Camera",
             "param1": {
-                "label":            "Rserved",
+                "label":            "Reserved",
                 "default":          0,
                 "decimalPlaces":    0
             }
