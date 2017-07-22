@@ -667,6 +667,7 @@ Rectangle {
                     height:         _mediaHeight * 6
                     fillMode:       Image.PreserveAspectFit
                     source:         "file://" + _mediaModel[_mediaIndex]
+                    cache:          false
                     anchors.centerIn:   parent
                 }
                 QGCLabel {
