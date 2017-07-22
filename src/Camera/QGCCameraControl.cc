@@ -11,6 +11,8 @@
 #include "VideoManager.h"
 #include "QGCMapEngine.h"
 
+#include <QDir>
+#include <QStandardPaths>
 #include <QDomDocument>
 #include <QDomNodeList>
 
@@ -109,6 +111,7 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     , _vehicle(vehicle)
     , _compID(compID)
     , _version(0)
+    , _cached(false)
     , _storageFree(0)
     , _storageTotal(0)
     , _netManager(NULL)
@@ -117,10 +120,9 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
 {
     memcpy(&_info, &info, sizeof(mavlink_camera_information_t));
     connect(this, &QGCCameraControl::dataReady, this, &QGCCameraControl::_dataReady);
-    const char* url = (const char*)info->cam_definition_uri;
-    if(url[0] != 0) {
+    if(info->cam_definition_uri[0] != 0) {
         //-- Process camera definition file
-        _httpRequest(url);
+        _handleDefinitionFile(info->cam_definition_uri);
     } else {
         _initWhenReady();
     }
@@ -250,7 +252,7 @@ QGCCameraControl::takePhoto()
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_IMAGE_START_CAPTURE,                // Command id
             false,                                      // ShowError
-            0,                                          // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
+            0,                                          // Reserved (Set to 0)
             0,                                          // Duration between two consecutive pictures (in seconds--ignored if single image)
             1);                                         // Number of images to capture total - 0 for unlimited capture
         //-- Capture local image as well
@@ -277,7 +279,7 @@ QGCCameraControl::startVideo()
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_VIDEO_START_CAPTURE,                // Command id
             true,                                       // ShowError
-            0,                                          // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
+            0,                                          // Reserved (Set to 0)
             0);                                         // CAMERA_CAPTURE_STATUS Frequency
         return true;
     }
@@ -294,7 +296,7 @@ QGCCameraControl::stopVideo()
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_VIDEO_STOP_CAPTURE,                 // Command id
             true,                                       // ShowError
-            0);                                         // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
+            0);                                         // Reserved (Set to 0)
         return true;
     }
     return false;
@@ -311,7 +313,7 @@ QGCCameraControl::setVideoMode()
             _compID,                                // Target component
             MAV_CMD_SET_CAMERA_MODE,                // Command id
             true,                                   // ShowError
-            0,                                      // Camera ID (0 for all, 1 for first, 2 for second, etc.) ==> TODO: Remove
+            0,                                      // Reserved (Set to 0)
             CAMERA_MODE_VIDEO);                     // Camera mode (0: photo, 1: video)
         _setCameraMode(CAMERA_MODE_VIDEO);
     }
@@ -328,7 +330,7 @@ QGCCameraControl::setPhotoMode()
             _compID,                                // Target component
             MAV_CMD_SET_CAMERA_MODE,                // Command id
             true,                                   // ShowError
-            0,                                      // Camera ID (0 for all, 1 for first, 2 for second, etc.) ==> TODO: Remove
+            0,                                      // Reserved (Set to 0)
             CAMERA_MODE_PHOTO);                     // Camera mode (0: photo, 1: video)
         _setCameraMode(CAMERA_MODE_PHOTO);
     }
@@ -343,7 +345,6 @@ QGCCameraControl::resetSettings()
         _compID,                                // Target component
         MAV_CMD_RESET_CAMERA_SETTINGS,          // Command id
         true,                                   // ShowError
-        0,                                      // Camera ID (0 for all, 1 for first, 2 for second, etc.) ==> TODO: Remove
         1);                                     // Do Reset
 }
 
@@ -370,7 +371,6 @@ QGCCameraControl::_requestCaptureStatus()
         _compID,                                // target component
         MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS,  // command id
         false,                                  // showError
-        0,                                      // Storage ID ("All" for now)
         1);                                     // Do Request
 }
 
@@ -431,6 +431,7 @@ QGCCameraControl::_setVideoStatus(VideoStatus status)
 bool
 QGCCameraControl::_loadCameraDefinitionFile(QByteArray& bytes)
 {
+    QByteArray originalData(bytes);
     //-- Handle localization
     if(!_handleLocalization(bytes)) {
         return false;
@@ -454,6 +455,17 @@ QGCCameraControl::_loadCameraDefinitionFile(QByteArray& bytes)
     if(!paramElements.size() || !_loadSettings(paramElements)) {
         qWarning() <<  "Unable to load camera parameters from camera definition";
         return false;
+    }
+    //-- If this is new, cache it
+    if(!_cached) {
+        QString cacheFile = _cacheFile();
+        qCDebug(CameraControlLog) << "Saving camera definition file" << cacheFile;
+        QFile file(cacheFile);
+        if (!file.open(QIODevice::WriteOnly)) {
+            qWarning() << QString("Could not save cache file %1. Error: %2").arg(cacheFile).arg(file.errorString());
+        } else {
+            file.write(originalData);
+        }
     }
     return true;
 }
@@ -882,7 +894,6 @@ QGCCameraControl::_requestCameraSettings()
             _compID,                                // Target component
             MAV_CMD_REQUEST_CAMERA_SETTINGS,        // command id
             false,                                  // showError
-            0,                                      // Camera ID (0 for all, 1 for first, 2 for second, etc.) ==> TODO: Remove
             1);                                     // Do Request
     }
 }
@@ -1062,6 +1073,49 @@ QGCCameraControl::_loadNameValue(QDomNode option, const QString factName, FactMe
                    << " error:" << errorString;
     }
     return true;
+}
+
+//-----------------------------------------------------------------------------
+QString
+QGCCameraControl::_cacheFile()
+{
+    QString cacheFile;
+    cacheFile.sprintf("%s/%s_%s_%03d.xml",
+        qgcApp()->toolbox()->settingsManager()->appSettings()->parameterSavePath().toStdString().c_str(),
+        _info.vendor_name,
+        _info.model_name,
+        _info.cam_definition_version);
+    return cacheFile;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::_handleDefinitionFile(const QString &url)
+{
+    //-- First check and see if we have it cached
+    QString cacheFile = _cacheFile();
+    QFile xmlFile(cacheFile);
+    if (!xmlFile.exists()) {
+        qCDebug(CameraControlLog) << "No camera definition file cached";
+        _httpRequest(url);
+        return;
+    }
+    if (!xmlFile.open(QIODevice::ReadOnly)) {
+        qWarning() << "Could not read cached camera definition file:" << cacheFile;
+        _httpRequest(url);
+        return;
+    }
+    QByteArray bytes = xmlFile.readAll();
+    QDomDocument doc;
+    if(!doc.setContent(bytes, false)) {
+        qWarning() << "Could not parse cached camera definition file:" << cacheFile;
+        _httpRequest(url);
+        return;
+    }
+    //-- We have it
+    qCDebug(CameraControlLog) << "Using cached camera definition file:" << cacheFile;
+    _cached = true;
+    emit dataReady(bytes);
 }
 
 //-----------------------------------------------------------------------------
