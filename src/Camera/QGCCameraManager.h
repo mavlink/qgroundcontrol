@@ -55,7 +55,6 @@ protected:
 protected:
     Vehicle*            _vehicle;
     bool                _vehicleReadyState;
-    int                 _cameraCount;
     int                 _currentTask;
     QmlObjectListModel  _cameras;
     QMap<int, bool>     _cameraInfoRequested;

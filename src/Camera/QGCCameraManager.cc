@@ -14,7 +14,6 @@ QGC_LOGGING_CATEGORY(CameraManagerLog, "CameraManagerLog")
 QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
     : _vehicle(vehicle)
     , _vehicleReadyState(false)
-    , _cameraCount(0)
     , _currentTask(0)
 {
     qCDebug(CameraManagerLog) << "QGCCameraManager Created";
@@ -109,7 +108,7 @@ QGCCameraManager::_findCamera(int id)
             }
         }
     }
-    qWarning() << "Camera id not found:" << id;
+    qWarning() << "Camera component id not found:" << id;
     return NULL;
 }
 
@@ -120,7 +119,6 @@ QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
     mavlink_camera_information_t info;
     mavlink_msg_camera_information_decode(&message, &info);
     qCDebug(CameraManagerLog) << "_handleCameraInfo:" << (const char*)(void*)&info.model_name[0] << (const char*)(void*)&info.vendor_name[0];
-    _cameraCount = info.camera_count;
     QGCCameraControl* pCamera = _vehicle->firmwarePlugin()->createCameraControl(&info, _vehicle, message.compid, this);
     if(pCamera) {
         _cameras.append(pCamera);
@@ -198,7 +196,6 @@ QGCCameraManager::_requestCameraInfo(int compID)
             compID,                                 // target component
             MAV_CMD_REQUEST_CAMERA_INFORMATION,     // command id
             false,                                  // showError
-            0,                                      // Camera ID (0 for all, 1 for first, 2 for second, etc.)
             1);                                     // Do Request
     }
 }

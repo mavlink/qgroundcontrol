@@ -120,10 +120,9 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
 {
     memcpy(&_info, &info, sizeof(mavlink_camera_information_t));
     connect(this, &QGCCameraControl::dataReady, this, &QGCCameraControl::_dataReady);
-    const char* url = (const char*)info->cam_definition_uri;
-    if(url[0] != 0) {
+    if(info->cam_definition_uri[0] != 0) {
         //-- Process camera definition file
-        _handleDefinitionFile(url);
+        _handleDefinitionFile(info->cam_definition_uri);
     } else {
         _initWhenReady();
     }
@@ -253,7 +252,7 @@ QGCCameraControl::takePhoto()
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_IMAGE_START_CAPTURE,                // Command id
             false,                                      // ShowError
-            0,                                          // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
+            0,                                          // Reserved (Set to 0)
             0,                                          // Duration between two consecutive pictures (in seconds--ignored if single image)
             1);                                         // Number of images to capture total - 0 for unlimited capture
         //-- Capture local image as well
@@ -280,7 +279,7 @@ QGCCameraControl::startVideo()
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_VIDEO_START_CAPTURE,                // Command id
             true,                                       // ShowError
-            0,                                          // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
+            0,                                          // Reserved (Set to 0)
             0);                                         // CAMERA_CAPTURE_STATUS Frequency
         return true;
     }
@@ -297,7 +296,7 @@ QGCCameraControl::stopVideo()
             MAV_COMP_ID_CAMERA,                         // Target component
             MAV_CMD_VIDEO_STOP_CAPTURE,                 // Command id
             true,                                       // ShowError
-            0);                                         // Camera ID (0 for all cameras), 1 for first, 2 for second, etc.
+            0);                                         // Reserved (Set to 0)
         return true;
     }
     return false;
@@ -314,7 +313,7 @@ QGCCameraControl::setVideoMode()
             _compID,                                // Target component
             MAV_CMD_SET_CAMERA_MODE,                // Command id
             true,                                   // ShowError
-            0,                                      // Camera ID (0 for all, 1 for first, 2 for second, etc.) ==> TODO: Remove
+            0,                                      // Reserved (Set to 0)
             CAMERA_MODE_VIDEO);                     // Camera mode (0: photo, 1: video)
         _setCameraMode(CAMERA_MODE_VIDEO);
     }
@@ -331,7 +330,7 @@ QGCCameraControl::setPhotoMode()
             _compID,                                // Target component
             MAV_CMD_SET_CAMERA_MODE,                // Command id
             true,                                   // ShowError
-            0,                                      // Camera ID (0 for all, 1 for first, 2 for second, etc.) ==> TODO: Remove
+            0,                                      // Reserved (Set to 0)
             CAMERA_MODE_PHOTO);                     // Camera mode (0: photo, 1: video)
         _setCameraMode(CAMERA_MODE_PHOTO);
     }
@@ -346,7 +345,6 @@ QGCCameraControl::resetSettings()
         _compID,                                // Target component
         MAV_CMD_RESET_CAMERA_SETTINGS,          // Command id
         true,                                   // ShowError
-        0,                                      // Camera ID (0 for all, 1 for first, 2 for second, etc.) ==> TODO: Remove
         1);                                     // Do Reset
 }
 
@@ -373,7 +371,6 @@ QGCCameraControl::_requestCaptureStatus()
         _compID,                                // target component
         MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS,  // command id
         false,                                  // showError
-        0,                                      // Storage ID ("All" for now)
         1);                                     // Do Request
 }
 
@@ -897,7 +894,6 @@ QGCCameraControl::_requestCameraSettings()
             _compID,                                // Target component
             MAV_CMD_REQUEST_CAMERA_SETTINGS,        // command id
             false,                                  // showError
-            0,                                      // Camera ID (0 for all, 1 for first, 2 for second, etc.) ==> TODO: Remove
             1);                                     // Do Request
     }
 }
