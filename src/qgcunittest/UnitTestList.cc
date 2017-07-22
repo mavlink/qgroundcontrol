@@ -52,6 +52,7 @@ UT_REGISTER_TEST(MissionControllerTest)
 UT_REGISTER_TEST(MissionManagerTest)
 UT_REGISTER_TEST(RadioConfigTest)
 UT_REGISTER_TEST(TCPLinkTest)
+UT_REGISTER_TEST(FileManagerTest)
 UT_REGISTER_TEST(ParameterManagerTest)
 UT_REGISTER_TEST(MissionCommandTreeTest)
 UT_REGISTER_TEST(LogDownloadTest)
@@ -68,9 +69,6 @@ UT_REGISTER_TEST(QGCMapPolygonTest)
 
 // FIXME: Temporarily disabled until this can be stabilized
 //UT_REGISTER_TEST(MainWindowTest)
-
-// Onboard file support has been removed until it can be make to work correctly
-//UT_REGISTER_TEST(FileManagerTest)
 
 // Needs to be update for latest updates
 //UT_REGISTER_TEST(MavlinkLogTest)
