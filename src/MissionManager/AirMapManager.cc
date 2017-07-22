@@ -525,8 +525,33 @@ void AirMapFlightManager::createFlight(const QList<MissionItem*>& missionItems)
 
     //qCDebug(AirMapManagerLog) << root;
     _networking.post(url, QJsonDocument(root).toJson(), true, true);
+
+    _flightPermitStatus = AirspaceAuthorization::PermitPending;
+    emit flightPermitStatusChanged();
 }
 
+void AirMapFlightManager::endFlight()
+{
+    if (_currentFlightId.length() == 0) {
+        return;
+    }
+    if (_state != State::Idle) {
+        qCWarning(AirMapManagerLog) << "AirMapFlightManager::endFlight: State not idle";
+        return;
+    }
+
+    qCDebug(AirMapManagerLog) << "ending flight";
+
+    _state = State::FlightEnd;
+
+    QUrl url(QString("https://api.airmap.com/flight/v2/%1/end").arg(_currentFlightId));
+    // to kill the flight, use: https://api.airmap.com/flight/v2/%1/delete (otherwise same query)
+
+    _networking.post(url, QByteArray(), false, true);
+
+    _flightPermitStatus = AirspaceAuthorization::PermitUnknown;
+    emit flightPermitStatusChanged();
+}
 
 void AirMapFlightManager::_parseJson(QJsonParseError parseError, QJsonDocument doc)
 {
@@ -543,6 +568,12 @@ void AirMapFlightManager::_parseJson(QJsonParseError parseError, QJsonDocument d
             _state = State::Idle;
         }
             break;
+
+        case State::FlightEnd:
+            _currentFlightId = "";
+            _state = State::Idle;
+            break;
+
         default:
             qCDebug(AirMapManagerLog) << "Error: wrong state";
             break;
@@ -552,6 +583,10 @@ void AirMapFlightManager::_parseJson(QJsonParseError parseError, QJsonDocument d
 void AirMapFlightManager::_error(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage)
 {
     qCWarning(AirMapManagerLog) << "AirMapFlightManager::_error" << code << serverErrorMessage;
+    if (_state == State::FlightUpload) {
+        _flightPermitStatus = AirspaceAuthorization::PermitUnknown;
+        emit flightPermitStatusChanged();
+    }
     _state = State::Idle;
     emit networkError(code, errorString, serverErrorMessage);
 }
@@ -758,7 +793,7 @@ void AirMapTelemetry::startTelemetryStream(const QString& flightID)
 
     qCInfo(AirMapManagerLog) << "Starting Telemetry stream with flightID" << flightID;
 
-    QUrl url(QString("https://api.airmap.com//flight/v2/%1/start-comm").arg(flightID));
+    QUrl url(QString("https://api.airmap.com/flight/v2/%1/start-comm").arg(flightID));
 
     _networking.post(url, QByteArray(), false, true);
     _state = State::StartCommunication;
@@ -776,7 +811,7 @@ void AirMapTelemetry::stopTelemetryStream()
     }
     qCInfo(AirMapManagerLog) << "Stopping Telemetry stream with flightID" << _flightID;
 
-    QUrl url(QString("https://api.airmap.com//flight/v2/%1/end-comm").arg(_flightID));
+    QUrl url(QString("https://api.airmap.com/flight/v2/%1/end-comm").arg(_flightID));
 
     _networking.post(url, QByteArray(), false, true);
     _state = State::EndCommunication;
@@ -844,8 +879,14 @@ void AirMapManager::_vehicleArmedChanged(bool armed)
     }
     if (armed) {
         _telemetry.startTelemetryStream(_flightManager.flightID());
+        _vehicleWasInMissionMode = _vehicle->flightMode() == _vehicle->missionFlightMode();
     } else {
         _telemetry.stopTelemetryStream();
+        // end the flight if we were in mission mode during arming or disarming
+        // TODO: needs to be improved. for instance if we do RTL and then want to continue the mission...
+        if (_vehicleWasInMissionMode || _vehicle->flightMode() == _vehicle->missionFlightMode()) {
+            _flightManager.endFlight();
+        }
     }
 }
 
