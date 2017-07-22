@@ -311,7 +311,7 @@ public:
     Q_PROPERTY(int                  telemetryLNoise         READ telemetryLNoise                                        NOTIFY telemetryLNoiseChanged)
     Q_PROPERTY(int                  telemetryRNoise         READ telemetryRNoise                                        NOTIFY telemetryRNoiseChanged)
     Q_PROPERTY(QVariantList         toolBarIndicators       READ toolBarIndicators                                      CONSTANT)
-    Q_PROPERTY(QVariantList         staticCcameraList       READ staticCcameraList                                      CONSTANT)
+    Q_PROPERTY(QVariantList         staticCameraList        READ staticCameraList                                       CONSTANT)
     Q_PROPERTY(QGCCameraManager*    dynamicCameras          READ dynamicCameras                                         NOTIFY dynamicCamerasChanged)
 
     /// true: Vehicle is flying, false: Vehicle is on ground
@@ -673,7 +673,7 @@ public:
     QString vehicleImageCompass () const;
 
     const QVariantList&         toolBarIndicators   ();
-    const QVariantList&         staticCcameraList   (void) const;
+    const QVariantList&         staticCameraList    (void) const;
 
     QGCCameraManager*           dynamicCameras      () { return _cameras; }
 
