@@ -383,8 +383,12 @@ void PlanMasterController::removeAllFromVehicle(void)
 {
     if (!offline()) {
         _missionController.removeAllFromVehicle();
-        _geoFenceController.removeAllFromVehicle();
-        _rallyPointController.removeAllFromVehicle();
+        if (_geoFenceController.supported()) {
+            _geoFenceController.removeAllFromVehicle();
+        }
+        if (_rallyPointController.supported()) {
+            _rallyPointController.removeAllFromVehicle();
+        }
         setDirty(false);
     } else {
         qWarning() << "PlanMasterController::removeAllFromVehicle called while offline";
