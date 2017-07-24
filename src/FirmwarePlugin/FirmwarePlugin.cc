@@ -392,6 +392,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       false,
                                       0,
                                       this);
+        _cameraList.append(QVariant::fromValue(metaData));
 
         metaData = new CameraMetaData(tr("Canon EOS-M 22mm"),
                                       22.3,

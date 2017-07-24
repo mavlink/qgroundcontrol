@@ -21,21 +21,21 @@ class QGCCameraParamIO : public QObject
 public:
     QGCCameraParamIO(QGCCameraControl* control, Fact* fact, Vehicle* vehicle);
 
-    void        handleParamAck          (const mavlink_param_ext_ack_t& ack);
-    void        handleParamValue        (const mavlink_param_ext_value_t& value);
-    void        setParamRequest         ();
-    bool        paramDone               () { return _done; }
+    void        handleParamAck              (const mavlink_param_ext_ack_t& ack);
+    void        handleParamValue            (const mavlink_param_ext_value_t& value);
+    void        setParamRequest             ();
+    void        sendChange                  ();
+    bool        paramDone                   () { return _done; }
 
 private slots:
-    void                _factChanged        (QVariant value);
-    void                _containerRawValueChanged(const QVariant value);
-    void                _paramWriteTimeout  ();
-    void                _paramRequestTimeout();
+    void        _paramWriteTimeout          ();
+    void        _paramRequestTimeout        ();
+    void        _factChanged                (QVariant value);
+    void        _containerRawValueChanged   (const QVariant value);
 
 private:
-    void                _sendParameter      ();
-    QVariant            _valueFromMessage   (const char* value, uint8_t param_type);
-    MAV_PARAM_TYPE      _factTypeToMavType  (FactMetaData::ValueType_t factType);
+    void        _sendParameter              ();
+    QVariant    _valueFromMessage           (const char* value, uint8_t param_type);
 
 private:
     QGCCameraControl*   _control;
@@ -44,9 +44,10 @@ private:
     int                 _sentRetries;
     int                 _requestRetries;
     bool                _paramRequestReceived;
-    mavlink_message_t   _msg;
     QTimer              _paramWriteTimer;
     QTimer              _paramRequestTimer;
     bool                _done;
+    MAV_PARAM_TYPE      _mavParamType;
+    MAVLinkProtocol*    _pMavlink;
 };
 

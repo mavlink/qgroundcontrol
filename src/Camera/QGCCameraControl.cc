@@ -118,8 +118,16 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     , _cameraMode(CAMERA_MODE_UNDEFINED)
     , _video_status(VIDEO_CAPTURE_STATUS_UNDEFINED)
 {
-    memcpy(&_info, &info, sizeof(mavlink_camera_information_t));
+    memcpy(&_info, info, sizeof(mavlink_camera_information_t));
     connect(this, &QGCCameraControl::dataReady, this, &QGCCameraControl::_dataReady);
+    _vendor = QString((const char*)(void*)&info->vendor_name[0]);
+    _modelName = QString((const char*)(void*)&info->model_name[0]);
+    int ver = (int)_info.cam_definition_version;
+    _cacheFile.sprintf("%s/%s_%s_%03d.xml",
+        qgcApp()->toolbox()->settingsManager()->appSettings()->parameterSavePath().toStdString().c_str(),
+        _vendor.toStdString().c_str(),
+        _modelName.toStdString().c_str(),
+        ver);
     if(info->cam_definition_uri[0] != 0) {
         //-- Process camera definition file
         _handleDefinitionFile(info->cam_definition_uri);
@@ -131,12 +139,6 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
 //-----------------------------------------------------------------------------
 QGCCameraControl::~QGCCameraControl()
 {
-    //-- Clear param IO queue (if any)
-    foreach(QString paramName, _paramIO.keys()) {
-        if(_paramIO[paramName]) {
-            delete _paramIO[paramName];
-        }
-    }
     if(_netManager) {
         delete _netManager;
     }
@@ -458,11 +460,10 @@ QGCCameraControl::_loadCameraDefinitionFile(QByteArray& bytes)
     }
     //-- If this is new, cache it
     if(!_cached) {
-        QString cacheFile = _cacheFile();
-        qCDebug(CameraControlLog) << "Saving camera definition file" << cacheFile;
-        QFile file(cacheFile);
+        qCDebug(CameraControlLog) << "Saving camera definition file" << _cacheFile;
+        QFile file(_cacheFile);
         if (!file.open(QIODevice::WriteOnly)) {
-            qWarning() << QString("Could not save cache file %1. Error: %2").arg(cacheFile).arg(file.errorString());
+            qWarning() << QString("Could not save cache file %1. Error: %2").arg(_cacheFile).arg(file.errorString());
         } else {
             file.write(originalData);
         }
@@ -1076,44 +1077,30 @@ QGCCameraControl::_loadNameValue(QDomNode option, const QString factName, FactMe
 }
 
 //-----------------------------------------------------------------------------
-QString
-QGCCameraControl::_cacheFile()
-{
-    QString cacheFile;
-    cacheFile.sprintf("%s/%s_%s_%03d.xml",
-        qgcApp()->toolbox()->settingsManager()->appSettings()->parameterSavePath().toStdString().c_str(),
-        _info.vendor_name,
-        _info.model_name,
-        _info.cam_definition_version);
-    return cacheFile;
-}
-
-//-----------------------------------------------------------------------------
 void
 QGCCameraControl::_handleDefinitionFile(const QString &url)
 {
     //-- First check and see if we have it cached
-    QString cacheFile = _cacheFile();
-    QFile xmlFile(cacheFile);
+    QFile xmlFile(_cacheFile);
     if (!xmlFile.exists()) {
         qCDebug(CameraControlLog) << "No camera definition file cached";
         _httpRequest(url);
         return;
     }
     if (!xmlFile.open(QIODevice::ReadOnly)) {
-        qWarning() << "Could not read cached camera definition file:" << cacheFile;
+        qWarning() << "Could not read cached camera definition file:" << _cacheFile;
         _httpRequest(url);
         return;
     }
     QByteArray bytes = xmlFile.readAll();
     QDomDocument doc;
     if(!doc.setContent(bytes, false)) {
-        qWarning() << "Could not parse cached camera definition file:" << cacheFile;
+        qWarning() << "Could not parse cached camera definition file:" << _cacheFile;
         _httpRequest(url);
         return;
     }
     //-- We have it
-    qCDebug(CameraControlLog) << "Using cached camera definition file:" << cacheFile;
+    qCDebug(CameraControlLog) << "Using cached camera definition file:" << _cacheFile;
     _cached = true;
     emit dataReady(bytes);
 }
