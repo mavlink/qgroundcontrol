@@ -1372,7 +1372,7 @@ void MissionController::_initAllVisualItems(void)
         _settingsItem->setIsCurrentItem(true);
     }
 
-    if (!_editMode && _managerVehicle->homePosition().isValid()) {
+    if (_managerVehicle->homePosition().isValid()) {
         _settingsItem->setCoordinate(_managerVehicle->homePosition());
     }
 
