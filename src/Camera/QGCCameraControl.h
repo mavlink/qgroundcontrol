@@ -67,9 +67,9 @@ public:
 
     //-- cam_mode
     enum CameraMode {
-        CAMERA_MODE_UNDEFINED = -1,
-        CAMERA_MODE_PHOTO = 0,
-        CAMERA_MODE_VIDEO = 1,
+        CAM_MODE_UNDEFINED = -1,
+        CAM_MODE_PHOTO = 0,
+        CAM_MODE_VIDEO = 1,
     };
 
     //-- Video Capture Status

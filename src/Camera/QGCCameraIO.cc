@@ -93,7 +93,6 @@ QGCCameraParamIO::_containerRawValueChanged(const QVariant value)
 void
 QGCCameraParamIO::_sendParameter()
 {
-    qDebug() << "_sendParameter()" << _fact->name();
     //-- TODO: We should use something other than mavlink_param_union_t for PARAM_EXT_SET
     mavlink_param_ext_set_t     p;
     mavlink_param_union_t       union_value;
@@ -139,7 +138,6 @@ QGCCameraParamIO::_sendParameter()
         &p);
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
     _paramWriteTimer.start();
-    qDebug() << "_sendParameter()" << _fact->name() << "sent";
 }
 
 //-----------------------------------------------------------------------------
