@@ -115,11 +115,19 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     , _storageFree(0)
     , _storageTotal(0)
     , _netManager(NULL)
-    , _cameraMode(CAMERA_MODE_UNDEFINED)
+    , _cameraMode(CAM_MODE_UNDEFINED)
     , _video_status(VIDEO_CAPTURE_STATUS_UNDEFINED)
 {
-    memcpy(&_info, &info, sizeof(mavlink_camera_information_t));
+    memcpy(&_info, info, sizeof(mavlink_camera_information_t));
     connect(this, &QGCCameraControl::dataReady, this, &QGCCameraControl::_dataReady);
+    _vendor = QString((const char*)(void*)&info->vendor_name[0]);
+    _modelName = QString((const char*)(void*)&info->model_name[0]);
+    int ver = (int)_info.cam_definition_version;
+    _cacheFile.sprintf("%s/%s_%s_%03d.xml",
+        qgcApp()->toolbox()->settingsManager()->appSettings()->parameterSavePath().toStdString().c_str(),
+        _vendor.toStdString().c_str(),
+        _modelName.toStdString().c_str(),
+        ver);
     if(info->cam_definition_uri[0] != 0) {
         //-- Process camera definition file
         _handleDefinitionFile(info->cam_definition_uri);
@@ -131,12 +139,6 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
 //-----------------------------------------------------------------------------
 QGCCameraControl::~QGCCameraControl()
 {
-    //-- Clear param IO queue (if any)
-    foreach(QString paramName, _paramIO.keys()) {
-        if(_paramIO[paramName]) {
-            delete _paramIO[paramName];
-        }
-    }
     if(_netManager) {
         delete _netManager;
     }
@@ -198,9 +200,9 @@ void
 QGCCameraControl::setCameraMode(CameraMode mode)
 {
     qCDebug(CameraControlLog) << "setCameraMode(" << mode << ")";
-    if(mode == CAMERA_MODE_VIDEO) {
+    if(mode == CAM_MODE_VIDEO) {
         setVideoMode();
-    } else if(mode == CAMERA_MODE_PHOTO) {
+    } else if(mode == CAM_MODE_PHOTO) {
         setPhotoMode();
     } else {
         qCDebug(CameraControlLog) << "setCameraMode() Invalid mode:" << mode;
@@ -220,9 +222,9 @@ QGCCameraControl::_setCameraMode(CameraMode mode)
 void
 QGCCameraControl::toggleMode()
 {
-    if(cameraMode() == CAMERA_MODE_PHOTO) {
+    if(cameraMode() == CAM_MODE_PHOTO) {
         setVideoMode();
-    } else if(cameraMode() == CAMERA_MODE_VIDEO) {
+    } else if(cameraMode() == CAM_MODE_VIDEO) {
         setPhotoMode();
     }
 }
@@ -244,7 +246,7 @@ QGCCameraControl::takePhoto()
 {
     qCDebug(CameraControlLog) << "takePhoto()";
     //-- Check if camera can capture photos or if it can capture it while in Video Mode
-    if(!capturesPhotos() || (cameraMode() == CAMERA_MODE_VIDEO && !photosInVideoMode())) {
+    if(!capturesPhotos() || (cameraMode() == CAM_MODE_VIDEO && !photosInVideoMode())) {
         return false;
     }
     if(capturesPhotos()) {
@@ -271,7 +273,7 @@ QGCCameraControl::startVideo()
 {
     qCDebug(CameraControlLog) << "startVideo()";
     //-- Check if camera can capture videos or if it can capture it while in Photo Mode
-    if(!capturesVideo() || (cameraMode() == CAMERA_MODE_PHOTO && !videoInPhotoMode())) {
+    if(!capturesVideo() || (cameraMode() == CAM_MODE_PHOTO && !videoInPhotoMode())) {
         return false;
     }
     if(videoStatus() != VIDEO_CAPTURE_STATUS_RUNNING) {
@@ -306,7 +308,7 @@ QGCCameraControl::stopVideo()
 void
 QGCCameraControl::setVideoMode()
 {
-    if(hasModes() && _cameraMode != CAMERA_MODE_VIDEO) {
+    if(hasModes() && _cameraMode != CAM_MODE_VIDEO) {
         qCDebug(CameraControlLog) << "setVideoMode()";
         //-- Use basic MAVLink message
         _vehicle->sendMavCommand(
@@ -314,8 +316,8 @@ QGCCameraControl::setVideoMode()
             MAV_CMD_SET_CAMERA_MODE,                // Command id
             true,                                   // ShowError
             0,                                      // Reserved (Set to 0)
-            CAMERA_MODE_VIDEO);                     // Camera mode (0: photo, 1: video)
-        _setCameraMode(CAMERA_MODE_VIDEO);
+            CAM_MODE_VIDEO);                     // Camera mode (0: photo, 1: video)
+        _setCameraMode(CAM_MODE_VIDEO);
     }
 }
 
@@ -323,7 +325,7 @@ QGCCameraControl::setVideoMode()
 void
 QGCCameraControl::setPhotoMode()
 {
-    if(hasModes() && _cameraMode != CAMERA_MODE_PHOTO) {
+    if(hasModes() && _cameraMode != CAM_MODE_PHOTO) {
         qCDebug(CameraControlLog) << "setPhotoMode()";
         //-- Use basic MAVLink message
         _vehicle->sendMavCommand(
@@ -331,8 +333,8 @@ QGCCameraControl::setPhotoMode()
             MAV_CMD_SET_CAMERA_MODE,                // Command id
             true,                                   // ShowError
             0,                                      // Reserved (Set to 0)
-            CAMERA_MODE_PHOTO);                     // Camera mode (0: photo, 1: video)
-        _setCameraMode(CAMERA_MODE_PHOTO);
+            CAM_MODE_PHOTO);                     // Camera mode (0: photo, 1: video)
+        _setCameraMode(CAM_MODE_PHOTO);
     }
 }
 
@@ -458,11 +460,10 @@ QGCCameraControl::_loadCameraDefinitionFile(QByteArray& bytes)
     }
     //-- If this is new, cache it
     if(!_cached) {
-        QString cacheFile = _cacheFile();
-        qCDebug(CameraControlLog) << "Saving camera definition file" << cacheFile;
-        QFile file(cacheFile);
+        qCDebug(CameraControlLog) << "Saving camera definition file" << _cacheFile;
+        QFile file(_cacheFile);
         if (!file.open(QIODevice::WriteOnly)) {
-            qWarning() << QString("Could not save cache file %1. Error: %2").arg(cacheFile).arg(file.errorString());
+            qWarning() << QString("Could not save cache file %1. Error: %2").arg(_cacheFile).arg(file.errorString());
         } else {
             file.write(originalData);
         }
@@ -758,14 +759,17 @@ QGCCameraControl::_updateActiveList()
             }
         }
     }
-    qCDebug(CameraControlLogVerbose) << "Excluding" << exclusionList;
-    _activeSettings.clear();
+    QStringList active;
     foreach(QString key, _settings) {
         if(!exclusionList.contains(key)) {
-            _activeSettings.append(key);
+            active.append(key);
         }
     }
-    emit activeSettingsChanged();
+    if(active != _activeSettings) {
+        qCDebug(CameraControlLogVerbose) << "Excluding" << exclusionList;
+        _activeSettings = active;
+        emit activeSettingsChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -864,18 +868,20 @@ QGCCameraControl::_updateRanges(Fact* pFact)
                 //-- If this value (and condition) triggers a change in the target range
                 if(pRange->value == option && _processCondition(pRange->condition)) {
                     //-- Set limited range set
-                    pTFact->setEnumInfo(pRange->optNames, pRange->optVariants);
-                    emit pTFact->enumStringsChanged();
-                    emit pTFact->enumValuesChanged();
-                    qCDebug(CameraControlLogVerbose) << "Limited:" << pRange->targetParam << pRange->optNames;
+                    if(pTFact->enumStrings() != pRange->optNames) {
+                        pTFact->setEnumInfo(pRange->optNames, pRange->optVariants);
+                        emit pTFact->enumsChanged();
+                        qCDebug(CameraControlLogVerbose) << "Limited:" << pRange->targetParam << pRange->optNames;
+                    }
                     changedList << pRange->targetParam;
                 } else {
                     if(!resetList.contains(pRange->targetParam)) {
-                        //-- Restore full option set
-                        pTFact->setEnumInfo(_originalOptNames[pRange->targetParam], _originalOptValues[pRange->targetParam]);
-                        emit pTFact->enumStringsChanged();
-                        emit pTFact->enumValuesChanged();
-                        qCDebug(CameraControlLogVerbose) << "Full:" << pRange->targetParam << _originalOptNames[pRange->targetParam];
+                        if(pTFact->enumStrings() != _originalOptNames[pRange->targetParam]) {
+                            //-- Restore full option set
+                            pTFact->setEnumInfo(_originalOptNames[pRange->targetParam], _originalOptValues[pRange->targetParam]);
+                            emit pTFact->enumsChanged();
+                            qCDebug(CameraControlLogVerbose) << "Full:" << pRange->targetParam << _originalOptNames[pRange->targetParam];
+                        }
                         resetList << pRange->targetParam;
                     }
                 }
@@ -1076,44 +1082,30 @@ QGCCameraControl::_loadNameValue(QDomNode option, const QString factName, FactMe
 }
 
 //-----------------------------------------------------------------------------
-QString
-QGCCameraControl::_cacheFile()
-{
-    QString cacheFile;
-    cacheFile.sprintf("%s/%s_%s_%03d.xml",
-        qgcApp()->toolbox()->settingsManager()->appSettings()->parameterSavePath().toStdString().c_str(),
-        _info.vendor_name,
-        _info.model_name,
-        _info.cam_definition_version);
-    return cacheFile;
-}
-
-//-----------------------------------------------------------------------------
 void
 QGCCameraControl::_handleDefinitionFile(const QString &url)
 {
     //-- First check and see if we have it cached
-    QString cacheFile = _cacheFile();
-    QFile xmlFile(cacheFile);
+    QFile xmlFile(_cacheFile);
     if (!xmlFile.exists()) {
         qCDebug(CameraControlLog) << "No camera definition file cached";
         _httpRequest(url);
         return;
     }
     if (!xmlFile.open(QIODevice::ReadOnly)) {
-        qWarning() << "Could not read cached camera definition file:" << cacheFile;
+        qWarning() << "Could not read cached camera definition file:" << _cacheFile;
         _httpRequest(url);
         return;
     }
     QByteArray bytes = xmlFile.readAll();
     QDomDocument doc;
     if(!doc.setContent(bytes, false)) {
-        qWarning() << "Could not parse cached camera definition file:" << cacheFile;
+        qWarning() << "Could not parse cached camera definition file:" << _cacheFile;
         _httpRequest(url);
         return;
     }
     //-- We have it
-    qCDebug(CameraControlLog) << "Using cached camera definition file:" << cacheFile;
+    qCDebug(CameraControlLog) << "Using cached camera definition file:" << _cacheFile;
     _cached = true;
     emit dataReady(bytes);
 }

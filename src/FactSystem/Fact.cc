@@ -203,8 +203,7 @@ int Fact::enumIndex(void)
         }
         // Current value is not in list, add it manually
         _metaData->addEnumInfo(QString("Unknown: %1").arg(rawValue().toString()), rawValue());
-        emit enumStringsChanged();
-        emit enumValuesChanged();
+        emit enumsChanged();
         return index;
     } else {
         qWarning() << kMissingMetadata;

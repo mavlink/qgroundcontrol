@@ -67,9 +67,9 @@ public:
 
     //-- cam_mode
     enum CameraMode {
-        CAMERA_MODE_UNDEFINED = -1,
-        CAMERA_MODE_PHOTO = 0,
-        CAMERA_MODE_VIDEO = 1,
+        CAM_MODE_UNDEFINED = -1,
+        CAM_MODE_PHOTO = 0,
+        CAM_MODE_VIDEO = 1,
     };
 
     //-- Video Capture Status
@@ -187,7 +187,6 @@ private:
 
     QStringList     _loadExclusions         (QDomNode option);
     QString         _getParamName           (const char* param_id);
-    QString         _cacheFile              ();
 
 protected:
     Vehicle*                            _vehicle;
@@ -200,6 +199,7 @@ protected:
     QNetworkAccessManager*              _netManager;
     QString                             _modelName;
     QString                             _vendor;
+    QString                             _cacheFile;
     CameraMode                          _cameraMode;
     VideoStatus                         _video_status;
     QStringList                         _activeSettings;

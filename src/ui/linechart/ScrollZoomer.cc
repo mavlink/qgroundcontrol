@@ -369,6 +369,9 @@ void ScrollZoomer::layoutScrollBars(const QRect &rect)
         hScrollBar->setGeometry(x, y, w, hdim);
     }
     if ( vScrollBar && vScrollBar->isVisible() ) {
+        //-- TODO: What is this "pos"? It only gets
+        //   assigned but never used within this
+        //   scope.
         int pos = yAxis();
         if ( vScrollBarPosition() == OppositeToScale )
             pos = oppositeAxis(pos);

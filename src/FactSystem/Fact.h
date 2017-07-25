@@ -41,9 +41,9 @@ public:
     Q_PROPERTY(QString      defaultValueString      READ cookedDefaultValueString                           CONSTANT)
     Q_PROPERTY(bool         defaultValueAvailable   READ defaultValueAvailable                              CONSTANT)
     Q_PROPERTY(int          enumIndex               READ enumIndex              WRITE setEnumIndex          NOTIFY valueChanged)
-    Q_PROPERTY(QStringList  enumStrings             READ enumStrings                                        NOTIFY enumStringsChanged)
+    Q_PROPERTY(QStringList  enumStrings             READ enumStrings                                        NOTIFY enumsChanged)
     Q_PROPERTY(QString      enumStringValue         READ enumStringValue        WRITE setEnumStringValue    NOTIFY valueChanged)
-    Q_PROPERTY(QVariantList enumValues              READ enumValues                                         NOTIFY enumValuesChanged)
+    Q_PROPERTY(QVariantList enumValues              READ enumValues                                         NOTIFY enumsChanged)
     Q_PROPERTY(QString      group                   READ group                                              CONSTANT)
     Q_PROPERTY(QString      longDescription         READ longDescription                                    CONSTANT)
     Q_PROPERTY(QVariant     max                     READ cookedMax                                          CONSTANT)
@@ -148,8 +148,7 @@ public:
 signals:
     void bitmaskStringsChanged(void);
     void bitmaskValuesChanged(void);
-    void enumStringsChanged(void);
-    void enumValuesChanged(void);
+    void enumsChanged(void);
     void sendValueChangedSignalsChanged(bool sendValueChangedSignals);
 
     /// QObject Property System signal for value property changes
