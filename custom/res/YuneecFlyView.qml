@@ -41,8 +41,8 @@ Item {
     property var    _dynamicCameras:    _activeVehicle ? _activeVehicle.dynamicCameras : null
     property bool   _isCamera:          _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
-    property bool   _cameraVideoMode:   _camera ?  _camera.cameraMode === QGCCameraControl.CAMERA_MODE_VIDEO : false
-    property bool   _cameraPresent:     _camera && _camera.cameraMode !== QGCCameraControl.CAMERA_MODE_UNDEFINED
+    property bool   _cameraVideoMode:   _camera ?  _camera.cameraMode === QGCCameraControl.CAM_MODE_VIDEO : false
+    property bool   _cameraPresent:     _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED
     property bool   _noSdCard:          _camera && _camera.storageTotal === 0
     property bool   _fullSD:            _camera && _camera.storageTotal !== 0 && _camera.storageFree < (250 * 1024) // We get kiB from the camera
 

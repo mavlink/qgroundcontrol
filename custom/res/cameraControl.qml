@@ -17,6 +17,7 @@
 import QtQuick              2.4
 import QtPositioning        5.2
 import QtQuick.Layouts      1.2
+import QtQuick.Controls     1.4
 import QtQuick.Dialogs      1.2
 import QtGraphicalEffects   1.0
 
@@ -55,8 +56,8 @@ Rectangle {
     property var  _camera:                  _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
     property bool _communicationLost:       _activeVehicle ? _activeVehicle.connectionLost : false
     property bool _emptySD:                 _camera && _camera.storageTotal === 0
-    property bool _cameraVideoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode  === QGCCameraControl.CAMERA_MODE_VIDEO)
-    property bool _cameraPhotoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode  === QGCCameraControl.CAMERA_MODE_PHOTO)
+    property bool _cameraVideoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode  === QGCCameraControl.CAM_MODE_VIDEO)
+    property bool _cameraPhotoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode  === QGCCameraControl.CAM_MODE_PHOTO)
     property bool _cameraModeUndefined:     !_cameraPhotoMode && !_cameraVideoMode
 
     property real _mediaWidth:              128
@@ -194,7 +195,7 @@ Rectangle {
             sourceSize.width:   width
             source:             "qrc:/typhoonh/img/mediaPlay.svg"
             fillMode:           Image.PreserveAspectFit
-            color:              (!_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAMERA_MODE_UNDEFINED) ? qgcPal.text : qgcPal.colorGrey
+            color:              (!_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED) ? qgcPal.text : qgcPal.colorGrey
             anchors.horizontalCenter: parent.horizontalCenter
             MouseArea {
                 anchors.fill:   parent
@@ -218,11 +219,11 @@ Rectangle {
             sourceSize.width:   width
             source:             "qrc:/typhoonh/img/sliders.svg"
             fillMode:           Image.PreserveAspectFit
-            color:              (!_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAMERA_MODE_UNDEFINED) ? qgcPal.text : qgcPal.colorGrey
+            color:              (!_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED) ? qgcPal.text : qgcPal.colorGrey
             anchors.horizontalCenter: parent.horizontalCenter
             MouseArea {
                 anchors.fill:   parent
-                enabled:        !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAMERA_MODE_UNDEFINED
+                enabled:        !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED
                 onClicked: {
                     if(rootLoader.sourceComponent === null) {
                         rootLoader.sourceComponent = cameraSettingsComponent

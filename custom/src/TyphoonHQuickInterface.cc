@@ -170,8 +170,13 @@ TyphoonHQuickInterface::_videoRunningChanged()
 bool
 TyphoonHQuickInterface::thermalImagePresent()
 {
+#if defined(QGC_GST_STREAMING)
     bool res = _videoReceiver && _videoReceiver->running();
     return res;
+#else
+#warning Video Streaming Not Enabled for Yuneec Build!
+    return false;
+#endif
 }
 
 //-----------------------------------------------------------------------------
