@@ -24,7 +24,6 @@ public:
     void        handleParamAck              (const mavlink_param_ext_ack_t& ack);
     void        handleParamValue            (const mavlink_param_ext_value_t& value);
     void        setParamRequest             ();
-    void        sendChange                  ();
     bool        paramDone                   () { return _done; }
 
 private slots:

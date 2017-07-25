@@ -594,7 +594,6 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
             QGCCameraParamIO* pIO = new QGCCameraParamIO(this, pFact, _vehicle);
             _paramIO[factName] = pIO;
             _addFact(pFact, factName);
-            pFact->setSendValueChangedSignals(false);
         }
     }
     if(_nameToFactMetaDataMap.size() > 0) {
