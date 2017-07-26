@@ -28,5 +28,10 @@
     "shortDescription": "Pilot Gain",
     "type":             "int16",
     "units":            "%"
+},
+{
+    "name":             "input hold",
+    "shortDescription": "Input Hold",
+    "type":             "int16"
 }
 ]
