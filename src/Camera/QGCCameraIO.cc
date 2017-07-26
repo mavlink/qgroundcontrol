@@ -21,6 +21,7 @@ QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicl
     , _requestRetries(0)
     , _done(false)
 {
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     _paramWriteTimer.setSingleShot(true);
     _paramWriteTimer.setInterval(1000);
     _paramRequestTimer.setSingleShot(true);
@@ -94,10 +95,10 @@ void
 QGCCameraParamIO::_sendParameter()
 {
     //-- TODO: We should use something other than mavlink_param_union_t for PARAM_EXT_SET
-    mavlink_param_ext_set_t     p;
+    mavlink_param_ext_set_t p;
+    memset(&p, 0, sizeof(mavlink_param_ext_set_t));
     mavlink_param_union_t       union_value;
     mavlink_message_t           msg;
-    memset(&p, 0, sizeof(mavlink_param_ext_set_t));
     FactMetaData::ValueType_t factType = _fact->type();
     p.param_type = _mavParamType;
     switch (factType) {
@@ -247,6 +248,9 @@ QGCCameraParamIO::_paramRequestTimeout()
     } else {
         //-- Request it again
         qCDebug(CameraIOLog) << "Param request retry:" << _fact->name();
+        char param_id[MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN + 1];
+        memset(param_id, 0, sizeof(param_id));
+        strncpy(param_id, _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN);
         mavlink_message_t msg;
         mavlink_msg_param_ext_request_read_pack_chan(
             _pMavlink->getSystemId(),
@@ -255,7 +259,7 @@ QGCCameraParamIO::_paramRequestTimeout()
             &msg,
             _vehicle->id(),
             _control->compID(),
-            _fact->name().toStdString().c_str(),
+            param_id,
             -1);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
         _paramRequestTimer.start();
