@@ -210,6 +210,8 @@ void ArduSubFirmwarePlugin::_handleNamedValueFloat(mavlink_message_t* message)
         _infoFactGroup.getFact("lights 2")->setRawValue(value.value * 100);
     } else if (name == "PilotGain") {
         _infoFactGroup.getFact("pilot gain")->setRawValue(value.value * 100);
+    } else if (name == "InputHold") {
+        _infoFactGroup.getFact("input hold")->setRawValue(value.value);
     }
 }
 
@@ -236,6 +238,7 @@ const char* APMSubmarineFactGroup::_tetherTurnsFactName = "tether turns";
 const char* APMSubmarineFactGroup::_lightsLevel1FactName = "lights 1";
 const char* APMSubmarineFactGroup::_lightsLevel2FactName = "lights 2";
 const char* APMSubmarineFactGroup::_pilotGainFactName = "pilot gain";
+const char* APMSubmarineFactGroup::_inputHoldFactName = "input hold";
 
 APMSubmarineFactGroup::APMSubmarineFactGroup(QObject* parent)
     : FactGroup(300, ":/json/Vehicle/SubmarineFact.json", parent)
@@ -244,12 +247,14 @@ APMSubmarineFactGroup::APMSubmarineFactGroup(QObject* parent)
     , _lightsLevel1Fact  (0, _lightsLevel1FactName,  FactMetaData::valueTypeDouble)
     , _lightsLevel2Fact  (0, _lightsLevel2FactName,  FactMetaData::valueTypeDouble)
     , _pilotGainFact     (0, _pilotGainFactName,     FactMetaData::valueTypeDouble)
+    , _inputHoldFact     (0, _inputHoldFactName,     FactMetaData::valueTypeDouble)
 {
     _addFact(&_camTiltFact,       _camTiltFactName);
     _addFact(&_tetherTurnsFact,   _tetherTurnsFactName);
     _addFact(&_lightsLevel1Fact,  _lightsLevel1FactName);
     _addFact(&_lightsLevel2Fact,  _lightsLevel2FactName);
     _addFact(&_pilotGainFact,     _pilotGainFactName);
+    _addFact(&_inputHoldFact,     _inputHoldFactName);
 
     // Start out as not available "--.--"
     _camTiltFact.setRawValue       (std::numeric_limits<float>::quiet_NaN());
@@ -257,6 +262,7 @@ APMSubmarineFactGroup::APMSubmarineFactGroup(QObject* parent)
     _lightsLevel1Fact.setRawValue  (std::numeric_limits<float>::quiet_NaN());
     _lightsLevel2Fact.setRawValue  (std::numeric_limits<float>::quiet_NaN());
     _pilotGainFact.setRawValue     (std::numeric_limits<float>::quiet_NaN());
+    _inputHoldFact.setRawValue     (std::numeric_limits<float>::quiet_NaN());
 }
 
 QString ArduSubFirmwarePlugin::vehicleImageOpaque(const Vehicle* vehicle) const
