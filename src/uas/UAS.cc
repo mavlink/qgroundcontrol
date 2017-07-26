@@ -139,9 +139,9 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
 
 #ifndef __mobile__
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, &fileManager, &FileManager::receiveMessage);
+    color = UASInterface::getNextColor();
 #endif
 
-    color = UASInterface::getNextColor();
 }
 
 /**

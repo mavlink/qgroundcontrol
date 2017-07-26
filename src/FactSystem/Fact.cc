@@ -31,7 +31,7 @@ Fact::Fact(QObject* parent)
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
 
-    // Better sage than sorry on object ownership
+    // Better safe than sorry on object ownership
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
