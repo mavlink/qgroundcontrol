@@ -946,8 +946,14 @@ void MockLink::_sendGpsRawInt(void)
                                       UINT16_MAX, UINT16_MAX,                // HDOP/VDOP not known
                                       UINT16_MAX,                            // velocity not known
                                       UINT16_MAX,                            // course over ground not known
-                                      8);                                    // satellite count
-    respondWithMavlinkMessage(msg);
+                                      8,                                     // satellite count
+                                      //-- Extension
+                                      0,                                    // Altitude (above WGS84, EGM96 ellipsoid), in meters * 1000 (positive for up).
+                                      0,                                    // Position uncertainty in meters * 1000 (positive for up).
+                                      0,                                    // Altitude uncertainty in meters * 1000 (positive for up).
+                                      0,                                    // Speed uncertainty in meters * 1000 (positive for up).
+                                      0);                                   // Heading / track uncertainty in degrees * 1e5.
+        respondWithMavlinkMessage(msg);
 }
 
 void MockLink::_sendStatusTextMessages(void)

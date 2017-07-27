@@ -17,6 +17,8 @@
 #include <QtQml>
 #include <QQmlEngine>
 
+static const char* kMissingMetadata = "Meta data pointer missing";
+
 Fact::Fact(QObject* parent)
     : QObject(parent)
     , _componentId(-1)
@@ -29,7 +31,7 @@ Fact::Fact(QObject* parent)
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
 
-    // Better sage than sorry on object ownership
+    // Better safe than sorry on object ownership
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
@@ -86,7 +88,7 @@ void Fact::forceSetRawValue(const QVariant& value)
             emit rawValueChanged(_rawValue);
         }
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
     }
 }
 
@@ -105,7 +107,7 @@ void Fact::setRawValue(const QVariant& value)
             }
         }
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
     }
 }
 
@@ -114,7 +116,7 @@ void Fact::setCookedValue(const QVariant& value)
     if (_metaData) {
         setRawValue(_metaData->cookedTranslator()(value));
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
     }
 }
 
@@ -126,7 +128,7 @@ void Fact::setEnumStringValue(const QString& value)
             setCookedValue(_metaData->enumValues()[index]);
         }
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
     }
 }
 
@@ -135,7 +137,7 @@ void Fact::setEnumIndex(int index)
     if (_metaData) {
         setCookedValue(_metaData->enumValues()[index]);
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
     }
 }
 
@@ -162,7 +164,7 @@ QVariant Fact::cookedValue(void) const
     if (_metaData) {
         return _metaData->rawTranslator()(_rawValue);
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return _rawValue;
     }
 }
@@ -175,7 +177,7 @@ QString Fact::enumStringValue(void)
             return _metaData->enumStrings()[enumIndex];
         }
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
     }
 
     return QString();
@@ -183,23 +185,28 @@ QString Fact::enumStringValue(void)
 
 int Fact::enumIndex(void)
 {
+    static const double accuracy = 1.0 / 1000000.0;
     if (_metaData) {
         int index = 0;
-
         foreach (QVariant enumValue, _metaData->enumValues()) {
             if (enumValue == rawValue()) {
                 return index;
             }
+            //-- Float comparissons don't always work
+            if(type() == FactMetaData::valueTypeFloat || type() == FactMetaData::valueTypeDouble) {
+                double diff = fabs(enumValue.toDouble() - rawValue().toDouble());
+                if(diff < accuracy) {
+                    return index;
+                }
+            }
             index ++;
         }
-
         // Current value is not in list, add it manually
         _metaData->addEnumInfo(QString("Unknown: %1").arg(rawValue().toString()), rawValue());
-        emit enumStringsChanged();
-        emit enumValuesChanged();
+        emit enumsChanged();
         return index;
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
     }
 
     return -1;
@@ -210,7 +217,7 @@ QStringList Fact::enumStrings(void) const
     if (_metaData) {
         return _metaData->enumStrings();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QStringList();
     }
 }
@@ -220,8 +227,17 @@ QVariantList Fact::enumValues(void) const
     if (_metaData) {
         return _metaData->enumValues();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QVariantList();
+    }
+}
+
+void Fact::setEnumInfo(const QStringList& strings, const QVariantList& values)
+{
+    if (_metaData) {
+        return _metaData->setEnumInfo(strings, values);
+    } else {
+        qWarning() << kMissingMetadata;
     }
 }
 
@@ -230,7 +246,7 @@ QStringList Fact::bitmaskStrings(void) const
     if (_metaData) {
         return _metaData->bitmaskStrings();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QStringList();
     }
 }
@@ -240,7 +256,7 @@ QVariantList Fact::bitmaskValues(void) const
     if (_metaData) {
         return _metaData->bitmaskValues();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QVariantList();
     }
 }
@@ -314,7 +330,7 @@ QVariant Fact::rawDefaultValue(void) const
         }
         return _metaData->rawDefaultValue();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QVariant(0);
     }
 }
@@ -327,7 +343,7 @@ QVariant Fact::cookedDefaultValue(void) const
         }
         return _metaData->cookedDefaultValue();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QVariant(0);
     }
 }
@@ -347,7 +363,7 @@ QString Fact::shortDescription(void) const
     if (_metaData) {
         return _metaData->shortDescription();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QString();
     }
 }
@@ -357,7 +373,7 @@ QString Fact::longDescription(void) const
     if (_metaData) {
         return _metaData->longDescription();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QString();
     }
 }
@@ -367,7 +383,7 @@ QString Fact::rawUnits(void) const
     if (_metaData) {
         return _metaData->rawUnits();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QString();
     }
 }
@@ -377,7 +393,7 @@ QString Fact::cookedUnits(void) const
     if (_metaData) {
         return _metaData->cookedUnits();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QString();
     }
 }
@@ -387,7 +403,7 @@ QVariant Fact::rawMin(void) const
     if (_metaData) {
         return _metaData->rawMin();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QVariant(0);
     }
 }
@@ -397,7 +413,7 @@ QVariant Fact::cookedMin(void) const
     if (_metaData) {
         return _metaData->cookedMin();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QVariant(0);
     }
 }
@@ -412,7 +428,7 @@ QVariant Fact::rawMax(void) const
     if (_metaData) {
         return _metaData->rawMax();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QVariant(0);
     }
 }
@@ -422,7 +438,7 @@ QVariant Fact::cookedMax(void) const
     if (_metaData) {
         return _metaData->cookedMax();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QVariant(0);
     }
 }
@@ -437,7 +453,7 @@ bool Fact::minIsDefaultForType(void) const
     if (_metaData) {
         return _metaData->minIsDefaultForType();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return false;
     }
 }
@@ -447,7 +463,7 @@ bool Fact::maxIsDefaultForType(void) const
     if (_metaData) {
         return _metaData->maxIsDefaultForType();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return false;
     }
 }
@@ -457,7 +473,7 @@ int Fact::decimalPlaces(void) const
     if (_metaData) {
         return _metaData->decimalPlaces();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return FactMetaData::defaultDecimalPlaces;
     }
 }
@@ -467,7 +483,7 @@ QString Fact::group(void) const
     if (_metaData) {
         return _metaData->group();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QString();
     }
 }
@@ -487,7 +503,7 @@ bool Fact::valueEqualsDefault(void) const
             return false;
         }
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return false;
     }
 }
@@ -497,7 +513,7 @@ bool Fact::defaultValueAvailable(void) const
     if (_metaData) {
         return _metaData->defaultValueAvailable();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return false;
     }
 }
@@ -512,7 +528,7 @@ QString Fact::validate(const QString& cookedValue, bool convertOnly)
         
         return errorString;
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return QString("Internal error: Meta data pointer missing");
     }
 }
@@ -522,7 +538,7 @@ bool Fact::rebootRequired(void) const
     if (_metaData) {
         return _metaData->rebootRequired();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
         return false;
     }
 }
@@ -562,7 +578,7 @@ QString Fact::enumOrValueString(void)
             return cookedValueString();
         }
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
     }
     return QString();
 }
@@ -572,7 +588,17 @@ double Fact::increment(void) const
     if (_metaData) {
         return _metaData->increment();
     } else {
-        qWarning() << "Meta data pointer missing";
+        qWarning() << kMissingMetadata;
     }
     return std::numeric_limits<double>::quiet_NaN();
+}
+
+bool Fact::hasControl(void) const
+{
+    if (_metaData) {
+        return _metaData->hasControl();
+    } else {
+        qWarning() << kMissingMetadata;
+        return false;
+    }
 }

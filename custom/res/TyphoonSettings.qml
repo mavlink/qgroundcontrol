@@ -12,13 +12,15 @@ import QtQuick.Layouts          1.2
 import QtGraphicalEffects       1.0
 
 import QGroundControl                       1.0
-import QGroundControl.FactSystem            1.0
-import QGroundControl.FactControls          1.0
+import QGroundControl.Controllers           1.0
 import QGroundControl.Controls              1.0
-import QGroundControl.ScreenTools           1.0
+import QGroundControl.FactControls          1.0
+import QGroundControl.FactSystem            1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Palette               1.0
-import QGroundControl.Controllers           1.0
+import QGroundControl.ScreenTools           1.0
+import QGroundControl.Vehicle               1.0
+
 import TyphoonHQuickInterface               1.0
 import TyphoonHQuickInterface.Widgets       1.0
 
@@ -30,6 +32,10 @@ QGCView {
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
     property var    _activeVehicle:   QGroundControl.multiVehicleManager.activeVehicle
+    property var    _dynamicCameras:  _activeVehicle ? _activeVehicle.dynamicCameras : null
+    property bool   _isCamera:        _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
+    property var    _camera:          _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
+
     property real   _buttonWidth:     ScreenTools.defaultFontPixelWidth * 16
     property real   _textWidth:       ScreenTools.defaultFontPixelWidth * 40
     property bool   _importAction:    false
@@ -198,9 +204,9 @@ QGCView {
                 QGCLabel { text: qsTr("%1 Version:").arg(QGroundControl.appName) }
                 QGCLabel { text: QGroundControl.qgcVersion }
                 QGCLabel { text: qsTr("Camera Version:") }
-                QGCLabel { text: (_activeVehicle && TyphoonHQuickInterface.cameraControl) ? TyphoonHQuickInterface.cameraControl.firmwareVersion : "" }
+                QGCLabel { text: _camera ? _camera.firmwareVersion : "" }
                 QGCLabel { text: qsTr("Gimbal Version:") }
-                QGCLabel { text: (_activeVehicle && TyphoonHQuickInterface.cameraControl) ? TyphoonHQuickInterface.cameraControl.gimbalVersion : "" }
+                QGCLabel { text: _camera ? _camera.gimbalVersion : "" }
                 QGCLabel { text: qsTr("Flight Controller Version:") }
                 QGCLabel { text: firmwareVersion() }
             }

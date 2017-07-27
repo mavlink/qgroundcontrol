@@ -11,7 +11,6 @@
 #include "VideoReceiver.h"
 
 class TyphoonHM4Interface;
-class CameraControl;
 
 //-----------------------------------------------------------------------------
 // Vehicle List
@@ -105,7 +104,6 @@ public:
     Q_PROPERTY(double           speed           READ    altitude            NOTIFY controllerLocationChanged)
     Q_PROPERTY(double           gpsCount        READ    gpsCount            NOTIFY controllerLocationChanged)
     Q_PROPERTY(double           gpsAccuracy     READ    gpsAccuracy         NOTIFY controllerLocationChanged)
-    Q_PROPERTY(CameraControl*   cameraControl   READ    cameraControl       CONSTANT)
     Q_PROPERTY(QVariantList     ssidList        READ    ssidList            NOTIFY ssidListChanged)
     Q_PROPERTY(bool             scanningWiFi    READ    scanningWiFi        NOTIFY scanningWiFiChanged)
     Q_PROPERTY(bool             bindingWiFi     READ    bindingWiFi         NOTIFY bindingWiFiChanged)
@@ -176,8 +174,6 @@ public:
     QString     m4StateStr          ();
     QString     connectedSSID       ();
     QString     connectedCamera     ();
-
-    CameraControl* cameraControl    ();
 
 #if defined(__androidx86__)
     bool        hardwareGPS         () { return true; }

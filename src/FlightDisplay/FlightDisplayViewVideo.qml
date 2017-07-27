@@ -8,23 +8,25 @@
  ****************************************************************************/
 
 
-import QtQuick                      2.3
-import QtQuick.Controls             1.2
+import QtQuick                          2.3
+import QtQuick.Controls                 1.2
 
-import QGroundControl               1.0
-import QGroundControl.FlightDisplay 1.0
-import QGroundControl.FlightMap     1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Vehicle       1.0
-import QGroundControl.Controllers   1.0
-
+import QGroundControl                   1.0
+import QGroundControl.FlightDisplay     1.0
+import QGroundControl.FlightMap         1.0
+import QGroundControl.ScreenTools       1.0
+import QGroundControl.Controls          1.0
+import QGroundControl.Palette           1.0
+import QGroundControl.Vehicle           1.0
+import QGroundControl.Controllers       1.0
 
 Item {
     id: root
-    property double _ar:            QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
-    property bool   _showGrid:      QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
+    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+    property double _ar:                QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
+    property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
+    property var    _dynamicCameras:    _activeVehicle ? _activeVehicle.dynamicCameras : null
+    property bool   _connected:         _activeVehicle ? !_activeVehicle.connectionLost : false
     Rectangle {
         id:             noVideo
         anchors.fill:   parent
@@ -89,5 +91,14 @@ Item {
                 visible: _showGrid
             }
         }
+    }
+    //-- Camera Controller
+    Loader {
+        source:                 _dynamicCameras ? _dynamicCameras.controllerSource : ""
+        visible:                !_mainIsMap && _dynamicCameras && _dynamicCameras.cameras.count && _connected
+        anchors.right:          parent.right
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+        anchors.bottom:         parent.bottom
+        anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * 2
     }
 }

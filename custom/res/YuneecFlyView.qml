@@ -15,13 +15,13 @@ import QtPositioning        5.2
 import QtGraphicalEffects   1.0
 
 import QGroundControl                       1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.Palette               1.0
-import QGroundControl.MultiVehicleManager   1.0
-import QGroundControl.ScreenTools           1.0
 import QGroundControl.Controllers           1.0
-import QGroundControl.CameraControl         1.0
+import QGroundControl.Controls              1.0
 import QGroundControl.FlightMap             1.0
+import QGroundControl.MultiVehicleManager   1.0
+import QGroundControl.Palette               1.0
+import QGroundControl.ScreenTools           1.0
+import QGroundControl.Vehicle               1.0
 
 import TyphoonHQuickInterface               1.0
 
@@ -31,25 +31,49 @@ Item {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     readonly property string scaleState:    "topMode"
+    readonly property string _naString:     qsTr('N/A')
+
+    property real   _indicatorDiameter: ScreenTools.defaultFontPixelWidth * 16
+    property var    _sepColor:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property real   _indicatorDiameter: ScreenTools.defaultFontPixelWidth * 16
-    property real   _distance:          0.0
-    property bool   _noSdCardMsgShown:  false
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.connectionLost : false
-    property var    _camController:     TyphoonHQuickInterface.cameraControl
-    property var    _sepColor:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
-    property bool   _cameraAutoMode:    _camController ? _camController.aeMode === CameraControl.AE_MODE_AUTO : false;
-    property bool   _cameraVideoMode:   _camController ? _camController.cameraMode === CameraControl.CAMERA_MODE_VIDEO : false
-    property bool   _cameraPresent:     _camController && _camController.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED
-    property bool   _noSdCard:          TyphoonHQuickInterface.cameraControl.sdTotal === 0
-    property string _altitude:          _activeVehicle ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0"
+    property var    _dynamicCameras:    _activeVehicle ? _activeVehicle.dynamicCameras : null
+    property bool   _isCamera:          _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
+    property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
+    property bool   _cameraVideoMode:   _camera ?  _camera.cameraMode === QGCCameraControl.CAM_MODE_VIDEO : false
+    property bool   _cameraPresent:     _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED
+    property bool   _noSdCard:          _camera && _camera.storageTotal === 0
+    property bool   _fullSD:            _camera && _camera.storageTotal !== 0 && _camera.storageFree > 0 && _camera.storageFree < 250 // We get kiB from the camera
+
+    property var    _expModeFact:       _camera && _camera.exposureMode
+    property var    _evFact:            _camera && _camera.ev
+    property var    _isoFact:           _camera && _camera.iso
+    property var    _shutterFact:       _camera && _camera.shutterSpeed
+    property var    _wbFact:            _camera && _camera.wb
+    property var    _meteringFact:      _camera && _camera.meteringMode
+    property var    _videoResFact:      _camera && _camera.videoRes
+
+    property string _currentAEMode:     _expModeFact  ? _expModeFact.enumStringValue : _naString
+    property bool   _cameraAutoMode:    _expModeFact  ? _expModeFact.rawValue === 0 : true
+    property string _currentEV:         _evFact       ? _evFact.enumStringValue : '0'
+    property string _currentISO:        _isoFact      ? _isoFact.enumStringValue : _naString
+    property string _currentShutter:    _shutterFact  ? _shutterFact.enumStringValue : _naString
+    property string _currentWB:         _wbFact       ? _wbFact.enumStringValue : _naString
+    property string _currentMetering:   _meteringFact ? _meteringFact.enumStringValue : _naString
+    property string _currentVideoRes:   _videoResFact ? _videoResFact.enumStringValue : _naString
+
+    property string _altitude:          _activeVehicle   ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0"
     property string _distanceStr:       isNaN(_distance) ? "0" : _distance.toFixed(0) + ' ' + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "")
-    property real   _heading:           _activeVehicle ? _activeVehicle.heading.rawValue : 0
-    property bool   _showAttitude:      false
-    property int    _eggCount:          0
-    property string _messageTitle:      ""
-    property string _messageText:       ""
+    property real   _heading:           _activeVehicle   ? _activeVehicle.heading.rawValue : 0
+
+    property real   _distance:              0.0
+    property bool   _noSdCardMsgShown:      false
+    property bool   _fullSdCardMsgShown:    false
+    property bool   _showAttitude:          false
+    property int    _eggCount:              0
+    property string _messageTitle:          ""
+    property string _messageText:           ""
 
     function showSimpleAlert(title, message) {
         _messageTitle   = title;
@@ -60,6 +84,12 @@ Item {
     function showNoSDCardMessage() {
         showSimpleAlert(
             qsTr("No MicroSD Card in Camera"),
+            qsTr("No images will be captured or videos recorded."))
+    }
+
+    function showFullSDCardMessage() {
+        showSimpleAlert(
+            qsTr("MicroSD Card in Camera is Full"),
             qsTr("No images will be captured or videos recorded."))
     }
 
@@ -259,7 +289,6 @@ Item {
     Connections {
         target: TyphoonHQuickInterface
         onThermalImagePresentChanged: {
-            console.log('onThermalImagePresentChanged')
             if(TyphoonHQuickInterface.thermalImagePresent) {
                 rootVideoLoader.sourceComponent = thermalImage
             } else {
@@ -268,25 +297,33 @@ Item {
         }
     }
 
-    //-- Handle no MicroSD card loaded in camera
+    //-- Handle MicroSD card loaded in camera
     Connections {
-        target: TyphoonHQuickInterface.cameraControl
-        onCameraModeChanged: {
-            if(TyphoonHQuickInterface.cameraControl.cameraMode !== CameraControl.CAMERA_MODE_UNDEFINED) {
-                if(!_noSdCardMsgShown && _noSdCard) {
-                    showNoSDCardMessage();
-                    _noSdCardMsgShown = true;
-                }
-            }
-        }
-        onSdTotalChanged: {
+        target: _camera
+        onStorageTotalChanged: {
             if(_noSdCard) {
                 if(!_noSdCardMsgShown) {
                     showNoSDCardMessage();
                     _noSdCardMsgShown = true;
                 }
             } else {
-                rootLoader.sourceComponent = null
+                _noSdCardMsgShown = false;
+                if(rootLoader.sourceComponent === simpleAlert) {
+                    rootLoader.sourceComponent = null
+                }
+            }
+        }
+        onStorageFreeChanged: {
+            if(_fullSD) {
+                if(!_fullSdCardMsgShown) {
+                    showFullSDCardMessage();
+                    _fullSdCardMsgShown = true;
+                }
+            } else {
+                _fullSdCardMsgShown = false;
+                if(rootLoader.sourceComponent === simpleAlert) {
+                    rootLoader.sourceComponent = null
+                }
             }
         }
     }
@@ -309,7 +346,7 @@ Item {
             anchors.centerIn: parent
             //-- AE
             QGCLabel { text: qsTr("AE:"); anchors.verticalCenter: parent.verticalCenter;}
-            QGCLabel { text: _cameraAutoMode ? qsTr("Auto") : qsTr("Manual"); anchors.verticalCenter: parent.verticalCenter;}
+            QGCLabel { text: _currentAEMode; anchors.verticalCenter: parent.verticalCenter;}
             //-- EV
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
             QGCLabel {
@@ -318,19 +355,19 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter;
             }
             QGCLabel {
-                text: _camController ? ( _camController.currentEV < _camController.evList.length ? _camController.evList[_camController.currentEV] : "0") : "0"
+                text:   _currentEV
                 visible: _cameraAutoMode;
                 anchors.verticalCenter: parent.verticalCenter;
             }
             //-- ISO
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: !_cameraAutoMode; }
             QGCLabel {
-                text: qsTr("ISO:");
+                text:    qsTr("ISO:");
                 visible: !_cameraAutoMode;
                 anchors.verticalCenter: parent.verticalCenter;
             }
             QGCLabel {
-                text: _camController ? _camController.isoList[_camController.currentIso] : "";
+                text:    _currentISO
                 visible: !_cameraAutoMode;
                 anchors.verticalCenter: parent.verticalCenter;
             }
@@ -342,30 +379,31 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter;
             }
             QGCLabel {
-                text: _camController ? (_camController.shutterList.length > _camController.currentShutter ? _camController.shutterList[_camController.currentShutter] : "") : ""
+                text:    _currentShutter
                 visible: !_cameraAutoMode;
                 anchors.verticalCenter: parent.verticalCenter;
             }
             //-- WB
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; }
             QGCLabel { text: qsTr("WB:"); anchors.verticalCenter: parent.verticalCenter;}
-            QGCLabel { text: _camController ? _camController.wbList[_camController.currentWB] : ""; anchors.verticalCenter: parent.verticalCenter; }
+            QGCLabel { text: _currentWB; anchors.verticalCenter: parent.verticalCenter; }
             //-- Metering
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
             QGCLabel { text: qsTr("Metering:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
-            QGCLabel { text: _camController ? (_camController.meteringList[_camController.currentMetering] ? _camController.meteringList[_camController.currentMetering] : "" ) : ""; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
+            QGCLabel { text: _currentMetering; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
             //-- Video Res
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode; }
             QGCLabel {
-                text: _camController ? (_camController.videoResList.length > _camController.currentVideoRes ? _camController.videoResList[_camController.currentVideoRes] : "") : ""
+                text:   _currentVideoRes
                 visible: _cameraVideoMode;
                 anchors.verticalCenter: parent.verticalCenter;
             }
             //-- SD Card
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; }
             QGCLabel { text: qsTr("SD:"); anchors.verticalCenter: parent.verticalCenter;}
-            QGCLabel { text: _camController ? _camController.sdFreeStr : ""; anchors.verticalCenter: parent.verticalCenter; visible: !_noSdCard}
+            QGCLabel { text: _camera ? _camera.storageFreeStr : ""; anchors.verticalCenter: parent.verticalCenter; visible: !_noSdCard && !_fullSD}
             QGCLabel { text: qsTr("NONE"); color: qgcPal.colorOrange; anchors.verticalCenter: parent.verticalCenter; visible: _noSdCard}
+            QGCLabel { text: qsTr("FULL"); color: qgcPal.colorOrange; anchors.verticalCenter: parent.verticalCenter; visible: _fullSD}
         }
     }
 
@@ -399,7 +437,7 @@ Item {
 
     //-- Camera Control
     Loader {
-        visible:                !_mainIsMap && TyphoonHQuickInterface.cameraControl // && _cameraPresent
+        visible:                !_mainIsMap
         source:                 _mainIsMap ? "" : "/typhoonh/cameraControl.qml"
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth

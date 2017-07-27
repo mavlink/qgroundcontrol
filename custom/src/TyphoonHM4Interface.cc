@@ -89,7 +89,6 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     , _sendRxInfoEnd(false)
     , _binding(false)
     , _vehicle(NULL)
-    , _cameraControl(NULL)
     , _m4State(TyphoonHQuickInterface::M4_STATE_NONE)
     , _armed(false)
     , _rcTime(0)
@@ -98,7 +97,6 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     , _softReboot(false)
 {
     pTyphoonHandler = this;
-    _cameraControl = new CameraControl(this);
     _rxchannelInfoIndex = 2;
     _channelNumIndex    = 6;
     _commPort = new M4SerialComm(this);
@@ -120,9 +118,6 @@ TyphoonHM4Interface::~TyphoonHM4Interface()
     emit destroyed();
     if(_commPort) {
         delete _commPort;
-    }
-    if(_cameraControl) {
-        delete _cameraControl;
     }
     pTyphoonHandler = NULL;
 }
@@ -222,7 +217,6 @@ TyphoonHM4Interface::_vehicleReady(bool ready)
                 qCWarning(YuneecLog) << "Booted with an armed vehicle!";
             } else {
                 qCDebug(YuneecLog) << "_vehicleReady( YES )";
-                _cameraControl->setVehicle(_vehicle);
                 //-- If we have not received RC messages yet and the M4 is running, wait a bit longer
                 if(_m4State == TyphoonHQuickInterface::M4_STATE_RUN && !_rcActive) {
                     qCDebug(YuneecLog) << "In RUN mode but no RC yet";
@@ -329,7 +323,6 @@ TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
         qCDebug(YuneecLog) << "_vehicleRemoved()";
         disconnect(_vehicle, &Vehicle::mavlinkMessageReceived,  this, &TyphoonHM4Interface::_mavlinkMessageReceived);
         disconnect(_vehicle, &Vehicle::armedChanged,            this, &TyphoonHM4Interface::_armedChanged);
-        _cameraControl->setVehicle(NULL);
         _vehicle = NULL;
         _rcActive = false;
         emit rcActiveChanged();
@@ -1538,19 +1531,6 @@ TyphoonHM4Interface::_switchChanged(m4Packet& packet)
     switchChanged.oldState  = (int)commandValues[2];
     emit switchStateChanged(switchChanged.hwId, switchChanged.oldState, switchChanged.newState);
     qCDebug(YuneecLog) << "Switches:" << switchChanged.hwId << switchChanged.newState << switchChanged.oldState;
-    //-- On Button Down
-    if(switchChanged.newState == 1) {
-        switch(switchChanged.hwId) {
-            case Yuneec::BUTTON_CAMERA_SHUTTER:
-                _cameraControl->takePhoto();
-                break;
-            case Yuneec::BUTTON_VIDEO_SHUTTER:
-                _cameraControl->toggleVideo();
-                break;
-            default:
-                break;
-        }
-    }
 }
 
 //-----------------------------------------------------------------------------

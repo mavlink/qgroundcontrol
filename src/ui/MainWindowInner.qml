@@ -246,8 +246,8 @@ Item {
             currentPopUp.close()
         }
         if(oldIndicator !== dropItem) {
-            console.log(oldIndicator)
-            console.log(dropItem)
+            //console.log(oldIndicator)
+            //console.log(dropItem)
             indicatorDropdown.centerX = centerX
             indicatorDropdown.sourceComponent = dropItem
             indicatorDropdown.visible = true

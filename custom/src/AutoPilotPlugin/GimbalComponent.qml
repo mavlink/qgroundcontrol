@@ -16,6 +16,7 @@ import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
+import QGroundControl.Vehicle       1.0
 
 import TyphoonHQuickInterface       1.0
 
@@ -31,7 +32,10 @@ SetupPage {
 
             FactPanelController { id: controller; factPanel: gimbalPage.viewPanel }
 
-            property var _activeVehicle:  QGroundControl.multiVehicleManager.activeVehicle
+            property var    _activeVehicle:   QGroundControl.multiVehicleManager.activeVehicle
+            property var    _dynamicCameras:  _activeVehicle ? _activeVehicle.dynamicCameras : null
+            property bool   _isCamera:        _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
+            property var    _camera:          _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
 
             ColumnLayout {
                 id:                 settingsColumn
@@ -65,8 +69,8 @@ SetupPage {
                             orientation:    Qt.Horizontal
                             minimumValue:   0
                             maximumValue:   100
-                            value:          TyphoonHQuickInterface.cameraControl.gimbalProgress
-                            visible:        TyphoonHQuickInterface.cameraControl.gimbalCalOn
+                            value:          _camera.gimbalProgress
+                            visible:        _camera.gimbalCalOn
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
                     }
@@ -77,8 +81,8 @@ SetupPage {
                 }
                 QGCButton {
                     text:       "Start Gimbal Calibration"
-                    enabled:    _activeVehicle && !TyphoonHQuickInterface.cameraControl.gimbalCalOn
-                    onClicked:  TyphoonHQuickInterface.cameraControl.calibrateGimbal()
+                    enabled:    _camera && !_camera.gimbalCalOn
+                    onClicked:  _camera.calibrateGimbal()
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
             }

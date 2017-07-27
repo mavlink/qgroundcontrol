@@ -113,7 +113,6 @@ SOURCES += \
 
 !DesktopPlanner {
     SOURCES += \
-        $$PWD/src/CameraControl.cc \
         $$PWD/src/m4serial.cc \
         $$PWD/src/m4util.cc \
         $$PWD/src/TyphoonHM4Interface.cc \
@@ -130,7 +129,6 @@ HEADERS += \
 
 !DesktopPlanner {
     HEADERS += \
-        $$PWD/src/CameraControl.h \
         $$PWD/src/m4channeldata.h \
         $$PWD/src/m4def.h \
         $$PWD/src/m4serial.h \
@@ -172,6 +170,8 @@ HEADERS+= \
     $$PWD/src/AutoPilotPlugin/GimbalComponent.h \
     $$PWD/src/AutoPilotPlugin/ChannelComponent.h \
     $$PWD/src/AutoPilotPlugin/HealthComponent.h \
+    $$PWD/src/FirmwarePlugin/YuneecCameraControl.h \
+    $$PWD/src/FirmwarePlugin/YuneecCameraManager.h \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePlugin.h \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePluginFactory.h
 
@@ -180,6 +180,8 @@ SOURCES += \
     $$PWD/src/AutoPilotPlugin/GimbalComponent.cc \
     $$PWD/src/AutoPilotPlugin/ChannelComponent.cc \
     $$PWD/src/AutoPilotPlugin/HealthComponent.cc \
+    $$PWD/src/FirmwarePlugin/YuneecCameraControl.cc \
+    $$PWD/src/FirmwarePlugin/YuneecCameraManager.cc \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePlugin.cc \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePluginFactory.cc
 

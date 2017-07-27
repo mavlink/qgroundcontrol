@@ -7,11 +7,14 @@
 
 #include "YuneecFirmwarePlugin.h"
 #include "YuneecAutoPilotPlugin.h"
+#include "YuneecCameraManager.h"
+#include "YuneecCameraControl.h"
 #include "CameraMetaData.h"
 
 QVariantList YuneecFirmwarePlugin::_cameraList;
 
-YuneecFirmwarePlugin::YuneecFirmwarePlugin(void)
+YuneecFirmwarePlugin::YuneecFirmwarePlugin()
+    : _cameraManager(NULL)
 {
     for (int i=0; i<_flightModeInfoList.count(); i++) {
         FlightModeInfo_t& info = _flightModeInfoList[i];
@@ -142,3 +145,24 @@ bool YuneecFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* veh
         return PX4FirmwarePlugin::vehicleYawsToNextWaypointInMission(vehicle);
     }
 }
+
+QGCCameraManager*
+YuneecFirmwarePlugin::cameraManager(Vehicle *vehicle)
+{
+    if(!_cameraManager) {
+        _cameraManager = new YuneecCameraManager(vehicle);
+    }
+    return _cameraManager;
+}
+
+QGCCameraControl*
+YuneecFirmwarePlugin::createCameraControl(const mavlink_camera_information_t* info, Vehicle *vehicle, int compID, QObject* parent)
+{
+    /*
+    char* dst = (char*)(void*)&info->cam_definition_uri[0];
+    const char* url = "http://www.grubba.com/e90.xml";
+    memcpy(dst, url, strlen(url) + 1);
+    */
+    return new YuneecCameraControl(info, vehicle, compID, parent);
+}
+

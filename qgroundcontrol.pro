@@ -333,6 +333,7 @@ INCLUDEPATH += \
     src \
     src/api \
     src/AnalyzeView \
+    src/Camera \
     src/AutoPilotPlugins \
     src/FlightDisplay \
     src/FlightMap \
@@ -485,6 +486,9 @@ HEADERS += \
     src/AnalyzeView/ExifParser.h \
     src/AnalyzeView/ULogParser.h \
     src/AnalyzeView/PX4LogParser.h \
+    src/Camera/QGCCameraControl.h \
+    src/Camera/QGCCameraIO.h \
+    src/Camera/QGCCameraManager.h \
     src/CmdLineOptParser.h \
     src/FirmwarePlugin/PX4/px4_custom_mode.h \
     src/FlightDisplay/VideoManager.h \
@@ -666,6 +670,9 @@ SOURCES += \
     src/AnalyzeView/ExifParser.cc \
     src/AnalyzeView/ULogParser.cc \
     src/AnalyzeView/PX4LogParser.cc \
+    src/Camera/QGCCameraControl.cc \
+    src/Camera/QGCCameraIO.cc \
+    src/Camera/QGCCameraManager.cc \
     src/CmdLineOptParser.cc \
     src/FlightDisplay/VideoManager.cc \
     src/FlightMap/Widgets/ValuesWidgetController.cc \

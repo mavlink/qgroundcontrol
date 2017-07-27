@@ -19,7 +19,6 @@ import QGroundControl.Palette               1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Controllers           1.0
-import QGroundControl.CameraControl         1.0
 import QGroundControl.FlightMap             1.0
 
 import TyphoonHQuickInterface               1.0
