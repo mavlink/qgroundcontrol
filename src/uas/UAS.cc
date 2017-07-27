@@ -131,12 +131,6 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
     _firmwarePluginManager(firmwarePluginManager)
 {
 
-    for (unsigned int i = 0; i<255;++i)
-    {
-        componentID[i] = -1;
-        componentMulti[i] = false;
-    }
-
 #ifndef __mobile__
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, &fileManager, &FileManager::receiveMessage);
     color = UASInterface::getNextColor();
@@ -210,10 +204,11 @@ void UAS::receiveMessage(mavlink_message_t message)
         }
 
         // Store component ID
-        if (componentID[message.msgid] == -1)
+        if (!componentID.contains(message.msgid))
         {
             // Prefer the first component
             componentID[message.msgid] = message.compid;
+            componentMulti[message.msgid] = false;
         }
         else
         {
@@ -225,7 +220,9 @@ void UAS::receiveMessage(mavlink_message_t message)
             }
         }
 
-        if (componentMulti[message.msgid] == true) multiComponentSourceDetected = true;
+        if (componentMulti[message.msgid] == true) {
+            multiComponentSourceDetected = true;
+        }
 
 
         switch (message.msgid)

@@ -348,8 +348,9 @@ protected:
 
     virtual void processParamValueMsg(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue);
 
-    int componentID[256];
-    bool componentMulti[256];
+    QMap<int, int>componentID;
+    QMap<int, bool>componentMulti;
+
     bool connectionLost; ///< Flag indicates a timed out connection
     quint64 connectionLossTime; ///< Time the connection was interrupted
     quint64 lastVoltageWarning; ///< Time at which the last voltage warning occurred
