@@ -113,6 +113,7 @@
         <file alias="scale_end.png">src/FlightMap/Images/scale_end.png</file>
         <file alias="scaleLight.png">src/FlightMap/Images/scaleLight.png</file>
         <file alias="scale_endLight.png">src/FlightMap/Images/scale_endLight.png</file>
+        <file alias="adsbVehicle.svg">src/FlightMap/Images/adsbVehicle.svg</file>
         <file alias="vehicleArrowOutline.svg">src/FlightMap/Images/vehicleArrowOutline.svg</file>
         <file alias="vehicleArrowOpaque.svg">src/FlightMap/Images/vehicleArrowOpaque.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>

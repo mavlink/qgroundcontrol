@@ -64,6 +64,7 @@ Item {
     readonly property string orbitMessage:              qsTr("Orbit the vehicle around the current location.")
     readonly property string landAbortMessage:          qsTr("Abort the landing sequence.")
     readonly property string pauseMessage:              qsTr("Pause the vehicle at it's current position.")
+    readonly property string mvPauseMessage:            qsTr("Pause all vehicles at their current position.")
 
     readonly property int actionRTL:                1
     readonly property int actionLand:               2
@@ -81,6 +82,8 @@ Item {
     readonly property int actionResumeMission:      14
     readonly property int actionResumeMissionReady: 15
     readonly property int actionPause:              16
+    readonly property int actionMVPause:            17
+    readonly property int actionMVStartMission:     18
 
     property bool showEmergenyStop:     !_hideEmergenyStop && _activeVehicle && _vehicleArmed && _vehicleFlying
     property bool showArm:              _activeVehicle && !_vehicleArmed
@@ -90,7 +93,7 @@ Item {
     property bool showLand:             _activeVehicle && _activeVehicle.guidedModeSupported && _vehicleArmed && !_activeVehicle.fixedWing && !_vehicleInLandMode
     property bool showStartMission:     _activeVehicle && _missionAvailable && !_missionActive && !_vehicleFlying
     property bool showContinueMission:  _activeVehicle && _missionAvailable && !_missionActive && _vehicleFlying && (_currentMissionIndex < missionController.visualItems.count - 1)
-    property bool showResumeMission:    _activeVehicle && !_vehicleFlying && _missionAvailable && _resumeMissionIndex > 0 && (_resumeMissionIndex < missionController.visualItems.count - 2)
+    property bool showResumeMission:    _activeVehicle && !_vehicleArmed && _vehicleWasFlying && _missionAvailable && _resumeMissionIndex > 0 && (_resumeMissionIndex < missionController.visualItems.count - 2)
     property bool showPause:            _activeVehicle && _vehicleArmed && _activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused
     property bool showChangeAlt:        (_activeVehicle && _vehicleFlying) && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
     property bool showOrbit:            !_hideOrbit && _activeVehicle && _vehicleFlying && _activeVehicle.orbitModeSupported && _vehicleArmed && !_missionActive
@@ -114,6 +117,7 @@ Item {
     property int    _resumeMissionIndex:    missionController.resumeMissionIndex
     property bool   _hideEmergenyStop:      !QGroundControl.corePlugin.options.guidedBarShowEmergencyStop
     property bool   _hideOrbit:             !QGroundControl.corePlugin.options.guidedBarShowOrbit
+    property bool   _vehicleWasFlying:      false
 
     // This is a temporary hack to debug a problem with RTL and Pause being disabled at the wrong time
 
@@ -128,7 +132,6 @@ Item {
     Component.onCompleted: _outputState()
     on_ActiveVehicleChanged: _outputState()
     on_VehicleArmedChanged: _outputState()
-    on_VehicleFlyingChanged: _outputState()
     on_VehicleInRTLModeChanged: _outputState()
     on_VehiclePausedChanged: _outputState()
     on__FlightModeChanged: _outputState()
@@ -136,6 +139,15 @@ Item {
     on__PauseVehicleSupportedChanged: _outputState()
 
     // End of hack
+
+    on_VehicleFlyingChanged: {
+        _outputState()
+        if (!_vehicleFlying) {
+            // We use _vehicleWasFLying to help trigger Resume Mission only if the vehicle actually flew and came back down.
+            // Otherwise it may trigger during the Start Mission sequence due to signal ordering or armed and resume mission index.
+            _vehicleWasFlying = true
+        }
+    }
 
     property var    _actionData
 
@@ -185,6 +197,11 @@ Item {
             confirmDialog.title = startMissionTitle
             confirmDialog.message = startMissionMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showStartMission })
+            break;
+        case actionMVStartMission:
+            confirmDialog.title = startMissionTitle
+            confirmDialog.message = startMissionMessage
+            confirmDialog.hideTrigger = true
             break;
         case actionContinueMission:
             confirmDialog.title = continueMissionTitle
@@ -242,6 +259,11 @@ Item {
             confirmDialog.message = pauseMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showPause })
             break;
+        case actionMVPause:
+            confirmDialog.title = pauseTitle
+            confirmDialog.message = mvPauseMessage
+            confirmDialog.hideTrigger = true
+            break;
         default:
             console.warn("Unknown actionCode", actionCode)
             return
@@ -265,11 +287,19 @@ Item {
             missionController.resumeMission(missionController.resumeMissionIndex)
             break
         case actionResumeMissionReady:
+            _vehicleWasFlying = false
             _activeVehicle.startMission()
             break
         case actionStartMission:
         case actionContinueMission:
             _activeVehicle.startMission()
+            break
+        case actionMVStartMission:
+            var rgVehicle = QGroundControl.multiVehicleManager.vehicles
+            for (var i=0; i<rgVehicle.count; i++) {
+                var vehicle = rgVehicle.get(i)
+                vehicle.startMission()
+            }
             break
         case actionArm:
             _activeVehicle.armed = true
@@ -297,6 +327,13 @@ Item {
             break
         case actionPause:
             _activeVehicle.pauseVehicle()
+            break
+        case actionMVPause:
+            var rgVehicle = QGroundControl.multiVehicleManager.vehicles
+            for (var i=0; i<rgVehicle.count; i++) {
+                var vehicle = rgVehicle.get(i)
+                vehicle.pauseVehicle()
+            }
             break
         default:
             console.warn(qsTr("Internal error: unknown actionCode"), actionCode)
