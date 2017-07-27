@@ -63,6 +63,20 @@ YuneecCameraControl::_parametersReady()
 }
 
 //-----------------------------------------------------------------------------
+QString
+YuneecCameraControl::firmwareVersion()
+{
+    if(_version.isEmpty()) {
+        char cntry = (_info.firmware_version >> 24) & 0xFF;
+        int  build = (_info.firmware_version >> 16) & 0xFF;
+        int  minor = (_info.firmware_version >>  8) & 0xFF;
+        int  major = _info.firmware_version & 0xFF;
+        _version.sprintf("%d.%d.%d_%c", major, minor, build, cntry);
+    }
+    return _version;
+}
+
+//-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::exposureMode()
 {

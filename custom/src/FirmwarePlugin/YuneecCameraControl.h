@@ -39,6 +39,7 @@ public:
     bool        takePhoto           () override;
     bool        startVideo          () override;
     bool        stopVideo           () override;
+    QString     firmwareVersion     () override;
 
     QString     gimbalVersion       () { return _gimbalVersion; }
     bool        gimbalCalOn         () { return _gimbalCalOn; }
@@ -87,4 +88,5 @@ private:
     QTime                   _recTime;
     uint32_t                _recordTime;
     bool                    _paramComplete;
+    QString                 _version;
 };

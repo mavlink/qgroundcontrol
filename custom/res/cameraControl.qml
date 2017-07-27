@@ -278,6 +278,12 @@ Rectangle {
                 border.width:   1
                 border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
                 anchors.centerIn: parent
+                MouseArea {
+                    anchors.fill:   parent
+                    onWheel:        { wheel.accepted = true; }
+                    onPressed:      { mouse.accepted = true; }
+                    onReleased:     { mouse.accepted = true; }
+                }
                 QGCLabel {
                     id:                 cameraSettingsLabel
                     text:               _cameraVideoMode ? "Video Settings" : "Camera Settings"
