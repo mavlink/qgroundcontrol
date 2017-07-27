@@ -176,6 +176,13 @@ bool QGCCorePlugin::adjustSettingMetaData(FactMetaData& metaData)
         metaData.setRawDefaultValue(true);
         return true;
 #endif
+#if defined(__ios__)
+    } else if (metaData.name() == AppSettings::savePathName) {
+        QString appName = qgcApp()->applicationName();
+        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        metaData.setRawDefaultValue(rootDir.filePath(appName));
+        return false;
+#endif
     }
     return true; // Show setting in ui
 }
@@ -224,4 +231,13 @@ QQmlApplicationEngine* QGCCorePlugin::createRootWindow(QObject *parent)
     pEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
     pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainWindowNative.qml")));
     return pEngine;
+}
+
+bool QGCCorePlugin::mavlinkMessage(Vehicle* vehicle, LinkInterface* link, mavlink_message_t message)
+{
+    Q_UNUSED(vehicle);
+    Q_UNUSED(link);
+    Q_UNUSED(message);
+
+    return true;
 }

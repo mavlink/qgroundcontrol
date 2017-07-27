@@ -198,7 +198,7 @@ void QGCUASFileView::_commandComplete(void)
         _currentCommand = commandNone;
         _setAllButtonsEnabled(true);
         statusText = "Download complete";
-    } else if (_currentCommand == commandDownload) {
+    } else if (_currentCommand == commandUpload) {
         _currentCommand = commandNone;
         _setAllButtonsEnabled(true);
         statusText = "Upload complete";
