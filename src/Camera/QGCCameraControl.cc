@@ -118,6 +118,7 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     , _cameraMode(CAM_MODE_UNDEFINED)
     , _video_status(VIDEO_CAPTURE_STATUS_UNDEFINED)
 {
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     memcpy(&_info, info, sizeof(mavlink_camera_information_t));
     connect(this, &QGCCameraControl::dataReady, this, &QGCCameraControl::_dataReady);
     _vendor = QString((const char*)(void*)&info->vendor_name[0]);
@@ -533,6 +534,7 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
         }
         //-- Build metadata
         FactMetaData* metaData = new FactMetaData(factType, factName, this);
+        QQmlEngine::setObjectOwnership(metaData, QQmlEngine::CppOwnership);
         metaData->setShortDescription(description);
         metaData->setLongDescription(description);
         //-- Options (enums)
@@ -560,6 +562,7 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
                 if(exclusions.size()) {
                     qCDebug(CameraControlLogVerbose) << "New exclusions:" << factName << optValue << exclusions;
                     QGCCameraOptionExclusion* pExc = new QGCCameraOptionExclusion(this, factName, optValue, exclusions);
+                    QQmlEngine::setObjectOwnership(pExc, QQmlEngine::CppOwnership);
                     _valueExclusions.append(pExc);
                 }
                 //-- Check for range rules
@@ -589,9 +592,11 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
         } else {
             _nameToFactMetaDataMap[factName] = metaData;
             Fact* pFact = new Fact(_compID, factName, factType, this);
+            QQmlEngine::setObjectOwnership(pFact, QQmlEngine::CppOwnership);
             pFact->setMetaData(metaData);
             pFact->_containerSetRawValue(metaData->rawDefaultValue());
             QGCCameraParamIO* pIO = new QGCCameraParamIO(this, pFact, _vehicle);
+            QQmlEngine::setObjectOwnership(pIO, QQmlEngine::CppOwnership);
             _paramIO[factName] = pIO;
             _addFact(pFact, factName);
         }
@@ -695,8 +700,12 @@ void
 QGCCameraControl::_requestAllParameters()
 {
     //-- Reset receive list
-    foreach(QString pramName, _paramIO.keys()) {
-        _paramIO[pramName]->setParamRequest();
+    foreach(QString paramName, _paramIO.keys()) {
+        if(_paramIO[paramName]) {
+            _paramIO[paramName]->setParamRequest();
+        } else {
+            qCritical() << "QGCParamIO is NULL" << paramName;
+        }
     }
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_message_t msg;
@@ -729,7 +738,11 @@ QGCCameraControl::handleParamAck(const mavlink_param_ext_ack_t& ack)
         qCWarning(CameraControlLog) << "Received PARAM_EXT_ACK for unknown param:" << paramName;
         return;
     }
-    _paramIO[paramName]->handleParamAck(ack);
+    if(_paramIO[paramName]) {
+        _paramIO[paramName]->handleParamAck(ack);
+    } else {
+        qCritical() << "QGCParamIO is NULL" << paramName;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -741,7 +754,11 @@ QGCCameraControl::handleParamValue(const mavlink_param_ext_value_t& value)
         qCWarning(CameraControlLog) << "Received PARAM_EXT_VALUE for unknown param:" << paramName;
         return;
     }
-    _paramIO[paramName]->handleParamValue(value);
+    if(_paramIO[paramName]) {
+        _paramIO[paramName]->handleParamValue(value);
+    } else {
+        qCritical() << "QGCParamIO is NULL" << paramName;
+    }
 }
 
 //-----------------------------------------------------------------------------
