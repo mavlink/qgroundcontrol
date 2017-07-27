@@ -66,6 +66,7 @@ Item {
     property string _altitude:          _activeVehicle   ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0"
     property string _distanceStr:       isNaN(_distance) ? "0" : _distance.toFixed(0) + ' ' + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "")
     property real   _heading:           _activeVehicle   ? _activeVehicle.heading.rawValue : 0
+    property bool   _st16GPS:           false
 
     property real   _distance:              0.0
     property bool   _noSdCardMsgShown:      false
@@ -134,6 +135,7 @@ Item {
                 if(TyphoonHQuickInterface.latitude == 0.0 && TyphoonHQuickInterface.longitude == 0.0) {
                     //-- Unless you really are in the middle of the Atlantic, this means we don't have location.
                     _distance = 0.0
+                    _st16GPS = false
                 } else {
                     var gcs = QtPositioning.coordinate(TyphoonHQuickInterface.latitude, TyphoonHQuickInterface.longitude, TyphoonHQuickInterface.altitude)
                     var veh = _activeVehicle.coordinate;
@@ -143,6 +145,7 @@ Item {
                         _distance = 0;
                     if(_distance < 0)
                         _distance = 0;
+                    _st16GPS = true
                 }
             }
         }
@@ -530,9 +533,10 @@ Item {
                 text:   qsTr("D:")
             }
             QGCLabel {
-                text:   _distanceStr
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignRight
+                text:               _st16GPS ? _distanceStr : qsTr("NO GPS")
+                color:              _st16GPS ? qgcPal.text : qgcPal.colorOrange
+                Layout.fillWidth:   true
+                horizontalAlignment: _st16GPS ? Text.AlignRight : Text.AlignHCenter
             }
             //-- Vertical Speed
             QGCLabel {
