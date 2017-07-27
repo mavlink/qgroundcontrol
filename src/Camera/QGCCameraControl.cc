@@ -193,7 +193,7 @@ QGCCameraControl::videoStatus()
 QString
 QGCCameraControl::storageFreeStr()
 {
-    return QGCMapEngine::bigSizeToString((quint64)_storageFree * 1024);
+    return QGCMapEngine::bigSizeToString((quint64)_storageFree * 1024 * 1024);
 }
 
 //-----------------------------------------------------------------------------
