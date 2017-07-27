@@ -225,9 +225,9 @@ Item {
                     RotationAnimation on rotation {
                         id:             connectionRotation
                         loops:          Animation.Infinite
-                        from:           0
-                        to:             360
-                        duration:       500
+                        from:           360
+                        to:             0
+                        duration:       740
                         running:        TyphoonHQuickInterface.bindingWiFi
                     }
                 }
@@ -283,9 +283,9 @@ Item {
                         RotationAnimation on rotation {
                             id:             imageRotation
                             loops:          1
-                            from:           0
-                            to:             360
-                            duration:       500
+                            from:           360
+                            to:             0
+                            duration:       750
                             running:        false
                         }
                         MouseArea {
