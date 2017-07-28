@@ -2826,6 +2826,9 @@ void Vehicle::sendPlan(QString planFile)
 QString Vehicle::_getVehicleFactFileName(MAV_TYPE vehicleType)
 {
     switch (vehicleType) {
+        case MAV_TYPE_SUBMARINE:
+            return QString(":/json/Vehicle/ArduSubVehicleFact.json");
+
         default:
             return QString(":/json/Vehicle/VehicleFact.json");
     }
