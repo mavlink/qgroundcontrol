@@ -35,7 +35,13 @@ APMSubMode::APMSubMode(uint32_t mode, bool settable) :
     QMap<uint32_t,QString> enumToString;
     enumToString.insert(MANUAL, "Manual");
     enumToString.insert(STABILIZE, "Stabilize");
+    enumToString.insert(ACRO, "Acro");
     enumToString.insert(ALT_HOLD,  "Depth Hold");
+    enumToString.insert(AUTO, "Auto");
+    enumToString.insert(GUIDED, "Guided");
+    enumToString.insert(CIRCLE, "Circle");
+    enumToString.insert(SURFACE, "Surface");
+    enumToString.insert(POSHOLD, "Position Hold");
 
     setEnumToStringMapping(enumToString);
 }
@@ -46,7 +52,13 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
     QList<APMCustomMode> supportedFlightModes;
     supportedFlightModes << APMSubMode(APMSubMode::MANUAL ,true);
     supportedFlightModes << APMSubMode(APMSubMode::STABILIZE ,true);
+    supportedFlightModes << APMSubMode(APMSubMode::ACRO ,true);
     supportedFlightModes << APMSubMode(APMSubMode::ALT_HOLD  ,true);
+    supportedFlightModes << APMSubMode(APMSubMode::AUTO ,true);
+    supportedFlightModes << APMSubMode(APMSubMode::GUIDED ,true);
+    supportedFlightModes << APMSubMode(APMSubMode::CIRCLE ,true);
+    supportedFlightModes << APMSubMode(APMSubMode::SURFACE ,false);
+    supportedFlightModes << APMSubMode(APMSubMode::POSHOLD ,true);
     setSupportedModes(supportedFlightModes);
 
     if (!_remapParamNameIntialized) {
