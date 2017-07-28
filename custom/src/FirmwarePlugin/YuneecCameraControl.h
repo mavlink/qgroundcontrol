@@ -27,6 +27,7 @@ public:
     Q_PROPERTY(qreal        gimbalRoll      READ    gimbalRoll          NOTIFY gimbalRollChanged)
     Q_PROPERTY(qreal        gimbalPitch     READ    gimbalPitch         NOTIFY gimbalPitchChanged)
     Q_PROPERTY(qreal        gimbalYaw       READ    gimbalYaw           NOTIFY gimbalYawChanged)
+    Q_PROPERTY(bool         gimbalData      READ    gimbalData          NOTIFY gimbalDataChanged)
     Q_PROPERTY(quint32      recordTime      READ    recordTime          NOTIFY recordTimeChanged)
     Q_PROPERTY(QString      recordTimeStr   READ    recordTimeStr       NOTIFY recordTimeChanged)
     Q_PROPERTY(Fact*        exposureMode    READ    exposureMode        NOTIFY factsLoaded)
@@ -52,6 +53,7 @@ public:
     qreal       gimbalRoll          () { return _gimbalRoll;}
     qreal       gimbalPitch         () { return _gimbalPitch; }
     qreal       gimbalYaw           () { return _gimbalYaw; }
+    bool        gimbalData          () { return _gimbalData; }
     Fact*       exposureMode        ();
     Fact*       ev                  ();
     Fact*       iso                 ();
@@ -75,6 +77,7 @@ signals:
     void    gimbalRollChanged       ();
     void    gimbalPitchChanged      ();
     void    gimbalYawChanged        ();
+    void    gimbalDataChanged       ();
 
 protected:
     void    _setVideoStatus         (VideoStatus status) override;
@@ -93,6 +96,7 @@ private:
     float                   _gimbalRoll;
     float                   _gimbalPitch;
     float                   _gimbalYaw;
+    bool                    _gimbalData;
     QString                 _gimbalVersion;
     QSoundEffect            _cameraSound;
     QSoundEffect            _videoSound;

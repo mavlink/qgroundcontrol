@@ -22,6 +22,7 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     , _gimbalRoll(0.0f)
     , _gimbalPitch(0.0f)
     , _gimbalYaw(0.0f)
+    , _gimbalData(false)
     , _recordTime(0)
     , _paramComplete(false)
 {
@@ -280,6 +281,10 @@ YuneecCameraControl::_handleGimbalOrientation(const mavlink_message_t& message)
     if(fabs(_gimbalYaw - o.yaw) > 0.5) {
         _gimbalYaw = o.yaw;
         emit gimbalYawChanged();
+    }
+    if(!_gimbalData) {
+        _gimbalData = true;
+        emit gimbalDataChanged();
     }
 }
 
