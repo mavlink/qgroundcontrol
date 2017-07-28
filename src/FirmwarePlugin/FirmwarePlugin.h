@@ -272,8 +272,8 @@ public:
     /// TODO: This should go into QGCCameraManager
     virtual const QVariantList& cameraList(const Vehicle* vehicle);
 
-    /// Vehicle camera manager. Returns NULL if not supported.
-    virtual QGCCameraManager* cameraManager(Vehicle *vehicle);
+    /// Creates vehicle camera manager. Returns NULL if not supported.
+    virtual QGCCameraManager* createCameraManager(Vehicle *vehicle);
 
     /// Camera control. Returns NULL if not supported.
     virtual QGCCameraControl* createCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = NULL);

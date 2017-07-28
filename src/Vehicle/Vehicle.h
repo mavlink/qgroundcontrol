@@ -693,6 +693,9 @@ public:
     void _setLanding(bool landing);
     void _setHomePosition(QGeoCoordinate& homeCoord);
 
+    /// Vehicle is about to be deleted
+    void prepareDelete();
+
 signals:
     void allLinksInactive(Vehicle* vehicle);
     void coordinateChanged(QGeoCoordinate coordinate);
