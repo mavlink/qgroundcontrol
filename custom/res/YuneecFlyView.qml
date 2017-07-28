@@ -67,6 +67,7 @@ Item {
     property string _distanceStr:       isNaN(_distance) ? "0" : _distance.toFixed(0) + ' ' + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "")
     property real   _heading:           _activeVehicle   ? _activeVehicle.heading.rawValue : 0
     property bool   _st16GPS:           false
+    property real   _gimbalPitch:       _camera ? -_camera.gimbalPitch : 0
 
     property real   _distance:              0.0
     property bool   _noSdCardMsgShown:      false
@@ -440,12 +441,63 @@ Item {
 
     //-- Camera Control
     Loader {
+        id:                     camControlLoader
         visible:                !_mainIsMap
         source:                 _mainIsMap ? "" : "/typhoonh/cameraControl.qml"
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.top:            parent.top
         anchors.topMargin:      ScreenTools.defaultFontPixelHeight
+    }
+
+    //-- Gimbal Indicator
+    Rectangle {
+        width:              gimbalIndicator.width  * 0.5
+        height:             gimbalIndicator.height + (ScreenTools.defaultFontPixelHeight * 0.5)
+        anchors.centerIn:   gimbalIndicator
+        color:              Qt.rgba(0,0,0,0.5)
+        radius:             ScreenTools.defaultFontPixelWidth * 0.5
+        visible:            camControlLoader.visible
+    }
+    Item {
+        id:                  gimbalIndicator
+        width:               ScreenTools.defaultFontPixelWidth * 6
+        height:              camControlLoader.height * 0.75
+        visible:             camControlLoader.visible
+        anchors.verticalCenter: camControlLoader.verticalCenter
+        anchors.right:       camControlLoader.left
+        anchors.rightMargin: ScreenTools.defaultFontPixelWidth * 0.25
+        Image {
+            height:             parent.height * 0.9
+            anchors.centerIn:   parent
+            source:             "/typhoonh/img/gimbalPitch.svg"
+            fillMode:           Image.PreserveAspectFit
+            sourceSize.height:  height
+            Rectangle {
+                width:          ScreenTools.defaultFontPixelWidth * 2
+                height:         width
+                radius:         width * 0.5
+                color:          _gimbalPitch < 0 ? qgcPal.colorRed : qgcPal.colorGreen
+                y:              (parent.height * _gimbalPitch / 105) + (parent.height * 0.15) - ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+        }
+    }
+    Rectangle {
+        width:              ScreenTools.defaultFontPixelWidth * 5
+        height:             gimbalLabel.height * 1.5
+        anchors.top:        gimbalIndicator.bottom
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.5
+        anchors.horizontalCenter: gimbalIndicator.horizontalCenter
+        color:              Qt.rgba(0,0,0,0.5)
+        radius:             ScreenTools.defaultFontPixelWidth * 0.5
+        visible:            camControlLoader.visible
+        QGCLabel {
+            id:             gimbalLabel
+            text:           _gimbalPitch ? -_gimbalPitch.toFixed(0) : 0
+            color:          "white"
+            anchors.centerIn: parent
+        }
     }
 
     //-- Vehicle Status

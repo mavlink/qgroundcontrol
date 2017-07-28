@@ -24,6 +24,9 @@ public:
     Q_PROPERTY(QString      gimbalVersion   READ    gimbalVersion       NOTIFY gimbalVersionChanged)
     Q_PROPERTY(bool         gimbalCalOn     READ    gimbalCalOn         NOTIFY gimbalCalOnChanged)
     Q_PROPERTY(int          gimbalProgress  READ    gimbalProgress      NOTIFY gimbalProgressChanged)
+    Q_PROPERTY(qreal        gimbalRoll      READ    gimbalRoll          NOTIFY gimbalRollChanged)
+    Q_PROPERTY(qreal        gimbalPitch     READ    gimbalPitch         NOTIFY gimbalPitchChanged)
+    Q_PROPERTY(qreal        gimbalYaw       READ    gimbalYaw           NOTIFY gimbalYawChanged)
     Q_PROPERTY(quint32      recordTime      READ    recordTime          NOTIFY recordTimeChanged)
     Q_PROPERTY(QString      recordTimeStr   READ    recordTimeStr       NOTIFY recordTimeChanged)
     Q_PROPERTY(Fact*        exposureMode    READ    exposureMode        NOTIFY factsLoaded)
@@ -46,6 +49,9 @@ public:
     int         gimbalProgress      () { return _gimbalProgress; }
     quint32     recordTime          () { return _recordTime; }
     QString     recordTimeStr       ();
+    qreal       gimbalRoll          () { return _gimbalRoll;}
+    qreal       gimbalPitch         () { return _gimbalPitch; }
+    qreal       gimbalYaw           () { return _gimbalYaw; }
     Fact*       exposureMode        ();
     Fact*       ev                  ();
     Fact*       iso                 ();
@@ -66,6 +72,9 @@ signals:
     void    gimbalCalOnChanged      ();
     void    recordTimeChanged       ();
     void    factsLoaded             ();
+    void    gimbalRollChanged       ();
+    void    gimbalPitchChanged      ();
+    void    gimbalYawChanged        ();
 
 protected:
     void    _setVideoStatus         (VideoStatus status) override;
@@ -74,12 +83,16 @@ protected:
 private:
     void    _handleCommandAck       (const mavlink_message_t& message);
     void    _handleGimbalVersion    (const mavlink_message_t& message);
+    void    _handleGimbalOrientation(const mavlink_message_t& message);
     void    _handleGimbalResult     (uint16_t result, uint8_t progress);
 
 private:
     Vehicle*                _vehicle;
     bool                    _gimbalCalOn;
     int                     _gimbalProgress;
+    float                   _gimbalRoll;
+    float                   _gimbalPitch;
+    float                   _gimbalYaw;
     QString                 _gimbalVersion;
     QSoundEffect            _cameraSound;
     QSoundEffect            _videoSound;

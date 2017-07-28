@@ -19,6 +19,9 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     , _vehicle(vehicle)
     , _gimbalCalOn(false)
     , _gimbalProgress(0)
+    , _gimbalRoll(0.0f)
+    , _gimbalPitch(0.0f)
+    , _gimbalYaw(0.0f)
     , _recordTime(0)
     , _paramComplete(false)
 {
@@ -234,8 +237,12 @@ YuneecCameraControl::_mavlinkMessageReceived(const mavlink_message_t& message)
         case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
             _handleGimbalVersion(message);
             break;
+        case MAVLINK_MSG_ID_MOUNT_ORIENTATION:
+            _handleGimbalOrientation(message);
+            break;
         case MAVLINK_MSG_ID_COMMAND_ACK:
             _handleCommandAck(message);
+            break;
     }
 }
 
@@ -254,6 +261,26 @@ YuneecCameraControl::_handleGimbalVersion(const mavlink_message_t& message)
     _gimbalVersion.sprintf("%d.%d.%d", major, minor, patch);
     qCDebug(YuneecCameraLog) << _gimbalVersion;
     emit gimbalVersionChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::_handleGimbalOrientation(const mavlink_message_t& message)
+{
+    mavlink_mount_orientation_t o;
+    mavlink_msg_mount_orientation_decode(&message, &o);
+    if(fabs(_gimbalRoll - o.roll) > 0.5) {
+        _gimbalRoll = o.roll;
+        emit gimbalRollChanged();
+    }
+    if(fabs(_gimbalPitch - o.pitch) > 0.5) {
+        _gimbalPitch = o.pitch;
+        emit gimbalPitchChanged();
+    }
+    if(fabs(_gimbalYaw - o.yaw) > 0.5) {
+        _gimbalYaw = o.yaw;
+        emit gimbalYawChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------
