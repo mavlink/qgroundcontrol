@@ -229,7 +229,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(&_mapTrajectoryTimer, &QTimer::timeout, this, &Vehicle::_addNewMapTrajectoryPoint);
 
     // Create camera manager instance
-    _cameras = _firmwarePlugin->cameraManager(this);
+    _cameras = _firmwarePlugin->createCameraManager(this);
     emit dynamicCamerasChanged();
 }
 
@@ -406,6 +406,16 @@ Vehicle::~Vehicle()
     delete _mav;
     _mav = NULL;
 
+}
+
+void Vehicle::prepareDelete()
+{
+    if(_cameras) {
+        delete _cameras;
+        _cameras = NULL;
+        emit dynamicCamerasChanged();
+        qApp->processEvents();
+    }
 }
 
 void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant value)

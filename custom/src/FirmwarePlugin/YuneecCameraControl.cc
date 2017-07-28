@@ -209,7 +209,13 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
         } else {
             _recTimer.stop();
             emit recordTimeChanged();
-            _videoSound.setLoopCount(2);
+            if(oldStatus == VIDEO_CAPTURE_STATUS_UNDEFINED) {
+                //-- System just booted and it's ready
+                _videoSound.setLoopCount(1);
+            } else {
+                //-- Stop recording
+                _videoSound.setLoopCount(2);
+            }
             _videoSound.play();
             //-- Stop recording local stream
             if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {

@@ -492,7 +492,7 @@ Item {
                         transform: Rotation {
                             origin.x:       yawIndicator.width  / 2
                             origin.y:       yawIndicator.height / 2
-                            angle:          _gimbalYaw + 90
+                            angle:          _gimbalYaw
                         }
                     }
                 }

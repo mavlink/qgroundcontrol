@@ -860,7 +860,7 @@ void MissionManager::_finishTransaction(bool success)
     _transactionInProgress = TransactionNone;
     if (currentTransactionType != TransactionNone) {
         _transactionInProgress = TransactionNone;
-        qDebug() << "inProgressChanged";
+        //qDebug() << "inProgressChanged";
         emit inProgressChanged(false);
     }
 

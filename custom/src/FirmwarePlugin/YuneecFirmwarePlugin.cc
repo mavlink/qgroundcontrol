@@ -14,7 +14,6 @@
 QVariantList YuneecFirmwarePlugin::_cameraList;
 
 YuneecFirmwarePlugin::YuneecFirmwarePlugin()
-    : _cameraManager(NULL)
 {
     for (int i=0; i<_flightModeInfoList.count(); i++) {
         FlightModeInfo_t& info = _flightModeInfoList[i];
@@ -147,12 +146,9 @@ bool YuneecFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* veh
 }
 
 QGCCameraManager*
-YuneecFirmwarePlugin::cameraManager(Vehicle *vehicle)
+YuneecFirmwarePlugin::createCameraManager(Vehicle *vehicle)
 {
-    if(!_cameraManager) {
-        _cameraManager = new YuneecCameraManager(vehicle);
-    }
-    return _cameraManager;
+    return new YuneecCameraManager(vehicle);
 }
 
 QGCCameraControl*
