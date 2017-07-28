@@ -35,8 +35,7 @@ PX4FirmwarePluginInstanceData::PX4FirmwarePluginInstanceData(QObject* parent)
 }
 
 PX4FirmwarePlugin::PX4FirmwarePlugin(void)
-    : _cameraManager(NULL)
-    , _manualFlightMode(tr("Manual"))
+    : _manualFlightMode(tr("Manual"))
     , _acroFlightMode(tr("Acro"))
     , _stabilizedFlightMode(tr("Stabilized"))
     , _rattitudeFlightMode(tr("Rattitude"))
@@ -129,8 +128,6 @@ PX4FirmwarePlugin::PX4FirmwarePlugin(void)
 
 PX4FirmwarePlugin::~PX4FirmwarePlugin()
 {
-    if(_cameraManager)
-        delete _cameraManager;
 }
 
 AutoPilotPlugin* PX4FirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
@@ -558,12 +555,9 @@ bool PX4FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicl
     return true;
 }
 
-QGCCameraManager* PX4FirmwarePlugin::cameraManager(Vehicle* vehicle)
+QGCCameraManager* PX4FirmwarePlugin::createCameraManager(Vehicle* vehicle)
 {
-    if(!_cameraManager) {
-        _cameraManager = new QGCCameraManager(vehicle);
-    }
-    return _cameraManager;
+    return new QGCCameraManager(vehicle);
 }
 
 QGCCameraControl* PX4FirmwarePlugin::createCameraControl(const mavlink_camera_information_t* info, Vehicle *vehicle, int compID, QObject* parent)
