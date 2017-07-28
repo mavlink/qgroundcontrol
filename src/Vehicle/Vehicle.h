@@ -38,6 +38,7 @@ class ParameterManager;
 class JoystickManager;
 class UASMessage;
 class SettingsManager;
+class ADSBVehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -282,7 +283,6 @@ public:
     Q_PROPERTY(bool        supportsThrottleModeCenterZero   READ supportsThrottleModeCenterZero                         CONSTANT)
     Q_PROPERTY(bool                 supportsJSButton        READ supportsJSButton                                       CONSTANT)
     Q_PROPERTY(bool                 supportsRadio           READ supportsRadio                                          CONSTANT)
-    Q_PROPERTY(bool               supportsCalibratePressure READ supportsCalibratePressure                              CONSTANT)
     Q_PROPERTY(bool               supportsMotorInterference READ supportsMotorInterference                              CONSTANT)
     Q_PROPERTY(bool                 autoDisconnect          MEMBER _autoDisconnect                                      NOTIFY autoDisconnectChanged)
     Q_PROPERTY(QString              prearmError             READ prearmError            WRITE setPrearmError            NOTIFY prearmErrorChanged)
@@ -312,6 +312,7 @@ public:
     Q_PROPERTY(int                  telemetryRNoise         READ telemetryRNoise                                        NOTIFY telemetryRNoiseChanged)
     Q_PROPERTY(QVariantList         toolBarIndicators       READ toolBarIndicators                                      CONSTANT)
     Q_PROPERTY(QVariantList         cameraList              READ cameraList                                             CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  adsbVehicles            READ adsbVehicles                                           CONSTANT)
 
     /// true: Vehicle is flying, false: Vehicle is on ground
     Q_PROPERTY(bool flying READ flying NOTIFY flyingChanged)
@@ -519,7 +520,6 @@ public:
     bool supportsThrottleModeCenterZero(void) const;
     bool supportsRadio(void) const;
     bool supportsJSButton(void) const;
-    bool supportsCalibratePressure(void) const;
     bool supportsMotorInterference(void) const;
 
     void setGuidedMode(bool guidedMode);
@@ -529,6 +529,7 @@ public:
 
     QmlObjectListModel* trajectoryPoints(void) { return &_mapTrajectoryList; }
     QmlObjectListModel* cameraTriggerPoints(void) { return &_cameraTriggerPoints; }
+    QmlObjectListModel* adsbVehicles(void) { return &_adsbVehicles; }
 
     int  flowImageIndex() { return _flowImageIndex; }
 
@@ -675,6 +676,7 @@ public:
     const QVariantList& toolBarIndicators   ();
     const QVariantList& cameraList          (void) const;
 
+    bool capabilitiesKnown(void) const { return _vehicleCapabilitiesKnown; }
     bool supportsMissionItemInt(void) const { return _supportsMissionItemInt; }
 
     /// @true: When flying a mission the vehicle is always facing towards the next waypoint
@@ -683,6 +685,8 @@ public:
     /// The vehicle is responsible for making the initial request for the Plan.
     /// @return: true: initial request is complete, false: initial request is still in progress;
     bool initialPlanRequestComplete(void) const { return _initialPlanRequestComplete; }
+
+    void forceInitialPlanRequestComplete(void) { _initialPlanRequestComplete = true; }
 
     void _setFlying(bool flying);
     void _setLanding(bool landing);
@@ -714,6 +718,7 @@ signals:
     void defaultHoverSpeedChanged(double hoverSpeed);
     void firmwareTypeChanged(void);
     void vehicleTypeChanged(void);
+    void capabilitiesKnownChanged(bool capabilitiesKnown);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -834,6 +839,7 @@ private:
     void _handleScaledPressure3(mavlink_message_t& message);
     void _handleCameraFeedback(const mavlink_message_t& message);
     void _handleCameraImageCaptured(const mavlink_message_t& message);
+    void _handleADSBVehicle(const mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _geoFenceManagerError(int errorCode, const QString& errorMsg);
     void _rallyPointManagerError(int errorCode, const QString& errorMsg);
@@ -864,6 +870,7 @@ private:
     AutoPilotPlugin*    _autopilotPlugin;
     MAVLinkProtocol*    _mavlink;
     bool                _soloFirmware;
+    QGCToolbox*         _toolbox;
     SettingsManager*    _settingsManager;
 
     QList<LinkInterface*> _links;
@@ -971,6 +978,9 @@ private:
     static const int    _mapTrajectoryMsecsBetweenPoints = 1000;
 
     QmlObjectListModel  _cameraTriggerPoints;
+
+    QmlObjectListModel              _adsbVehicles;
+    QMap<uint32_t, ADSBVehicle*>    _adsbICAOMap;
 
     // Toolbox references
     FirmwarePluginManager*      _firmwarePluginManager;

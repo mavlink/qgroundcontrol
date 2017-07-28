@@ -25,6 +25,9 @@ public:
     Q_PROPERTY(Fact* autoConnectPX4Flow     READ autoConnectPX4Flow     CONSTANT)
     Q_PROPERTY(Fact* autoConnectRTKGPS      READ autoConnectRTKGPS      CONSTANT)
     Q_PROPERTY(Fact* autoConnectLibrePilot  READ autoConnectLibrePilot  CONSTANT)
+    Q_PROPERTY(Fact* udpListenPort          READ udpListenPort          CONSTANT)   ///< Port to listen on for UDP autoconnect
+    Q_PROPERTY(Fact* udpTargetHostIP        READ udpTargetHostIP        CONSTANT)   ///< Target host IP for UDP autoconnect, empty string for none
+    Q_PROPERTY(Fact* udpTargetHostPort      READ udpTargetHostPort      CONSTANT)   ///< Target host post for UDP autoconnect
 
     Fact* autoConnectUDP        (void);
     Fact* autoConnectPixhawk    (void);
@@ -32,6 +35,9 @@ public:
     Fact* autoConnectPX4Flow    (void);
     Fact* autoConnectRTKGPS     (void);
     Fact* autoConnectLibrePilot (void);
+    Fact* udpListenPort         (void);
+    Fact* udpTargetHostIP       (void);
+    Fact* udpTargetHostPort     (void);
 
     static const char* autoConnectSettingsGroupName;
 
@@ -41,6 +47,9 @@ public:
     static const char* autoConnectPX4FlowSettingsName;
     static const char* autoConnectRTKGPSSettingsName;
     static const char* autoConnectLibrePilotSettingsName;
+    static const char* udpListenPortName;
+    static const char* udpTargetHostIPName;
+    static const char* udpTargetHostPortName;
 
 private:
     SettingsFact* _autoConnectUDPFact;
@@ -49,6 +58,9 @@ private:
     SettingsFact* _autoConnectPX4FlowFact;
     SettingsFact* _autoConnectRTKGPSFact;
     SettingsFact* _autoConnectLibrePilotFact;
+    SettingsFact* _udpListenPortFact;
+    SettingsFact* _udpTargetHostIPFact;
+    SettingsFact* _udpTargetHostPortFact;
 
     static const char* _settingsGroup;
 };

@@ -238,22 +238,19 @@ void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                           << "group: " << group;
 
                 Q_ASSERT(!rawMetaData);
-                rawMetaData = new APMFactMetaDataRaw();
                 if (_vehicleTypeToParametersMap[currentCategory].contains(name)) {
-                    // We can't trust the meta dafa since we have dups
-                    qCWarning(APMParameterMetaDataLog) << "Duplicate parameter found:" << name;
-                    badMetaData = true;
+                    qCDebug(APMParameterMetaDataLog) << "Duplicate parameter found:" << name;
+                    rawMetaData = _vehicleTypeToParametersMap[currentCategory][name];
                 } else {
-                    qCDebug(APMParameterMetaDataVerboseLog) << "inserting metadata for field" << name;
+                    rawMetaData = new APMFactMetaDataRaw();
                     _vehicleTypeToParametersMap[currentCategory][name] = rawMetaData;
-                    rawMetaData->name = name;
-                    rawMetaData->group = group;
-                    rawMetaData->shortDescription = shortDescription;
-                    rawMetaData->longDescription = longDescription;
-
                     groupMembers[group] << name;
                 }
-
+                qCDebug(APMParameterMetaDataVerboseLog) << "inserting metadata for field" << name;
+                rawMetaData->name = name;
+                rawMetaData->group = group;
+                rawMetaData->shortDescription = shortDescription;
+                rawMetaData->longDescription = longDescription;
             } else {
                 // We should be getting meta data now
                 if (xmlState.top() != XmlStateFoundParameter) {

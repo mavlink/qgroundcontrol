@@ -24,6 +24,8 @@
     "shortDescription": "Angle for parallel lines of grid.",
     "type":             "double",
     "units":            "deg",
+    "min":              -360.0,
+    "max":              360.0,
     "decimalPlaces":    1,
     "defaultValue":     0
 },
@@ -59,18 +61,20 @@
     "shortDescription": "Amount of overlap between images in the forward facing direction.",
     "type":             "double",
     "decimalPlaces":    0,
+    "min":              0,
     "max":              85,
     "units":            "%",
-    "defaultValue":     10
+    "defaultValue":     70
 },
 {
     "name":             "SideOverlap",
     "shortDescription": "Amount of overlap between images in the side facing direction.",
     "type":             "double",
     "decimalPlaces":    0,
+    "min":              0,
     "max":              85,
     "units":            "%",
-    "defaultValue":     10
+    "defaultValue":     70
 },
 {
     "name":             "CameraSensorWidth",
@@ -128,7 +132,7 @@
     "name":             "CameraTriggerInTurnaround",
     "shortDescription": "Camera continues taking images in turnarounds.",
     "type":             "bool",
-    "defaultValue":     false
+    "defaultValue":     true
 },
 {
     "name":             "HoverAndCapture",
@@ -153,5 +157,13 @@
     "shortDescription": "Camera selected for Survey.",
     "type":             "string",
     "defaultValue":     ""
+},
+{
+    "name":             "GridEntryLocation",
+    "shortDescription": "Location for entry point into survey area",
+    "type":             "uint32",
+    "enumStrings":      "Position 1, Position 2, Position 3, Position 4",
+    "enumValues":       "0,1,2,3",
+    "defaultValue":     0
 }
 ]

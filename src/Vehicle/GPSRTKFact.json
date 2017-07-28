@@ -1,0 +1,36 @@
+[
+{
+    "name":             "connected",
+    "shortDescription": "Connected",
+    "type":             "bool"
+},
+{
+    "name":             "currentAccuracy",
+    "shortDescription": "Current Accuracy",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+},
+{
+    "name":             "currentDuration",
+    "shortDescription": "Current Duration",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "s"
+},
+{
+    "name":             "valid",
+    "shortDescription": "Survey-in Valid",
+    "type":             "bool"
+},
+{
+    "name":             "active",
+    "shortDescription": "Survey-in Active",
+    "type":             "bool"
+},
+{
+    "name":             "numSatellites",
+    "shortDescription": "Number of Satellites",
+    "type":             "int32"
+}
+]

@@ -49,7 +49,7 @@
 #include "CustomCommandWidgetController.h"
 #include "ESP8266ComponentController.h"
 #include "ScreenToolsController.h"
-#include "QFileDialogController.h"
+#include "QGCFileDialogController.h"
 #include "RCChannelMonitorController.h"
 #include "SyslinkComponentController.h"
 #include "AutoPilotPlugin.h"
@@ -79,6 +79,7 @@
 #include "QGCMapPolygon.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
+#include "QGCCorePlugin.h"
 
 #ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
@@ -138,18 +139,6 @@ static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
 
     return qmlGlobal;
 }
-
-#ifdef __android__
-// breakpad support
-#include "client/linux/handler/exception_handler.h"
-
-static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* /*context*/, bool succeeded)
-{
-    qDebug() << "dumpCallback" << succeeded << descriptor.path();
-    return succeeded;
-}
-#endif
-
 
 /**
  * @brief Constructor for the main application.
@@ -323,13 +312,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
-
-#ifdef __android__
-    std::string pathAsStr = toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString().toStdString();
-    qDebug() << "dump location" << QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
-    google_breakpad::MinidumpDescriptor descriptor(pathAsStr);
-    google_breakpad::ExceptionHandler eh(descriptor, NULL, dumpCallback, NULL, true, -1);
-#endif
 }
 
 void QGCApplication::_shutdown(void)
@@ -364,8 +346,6 @@ void QGCApplication::_initCommon(void)
 
     qmlRegisterUncreatableType<CoordinateVector>    ("QGroundControl",                  1, 0, "CoordinateVector",       "Reference only");
     qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel",     "Reference only");
-    qmlRegisterUncreatableType<VideoReceiver>       ("QGroundControl",                  1, 0, "VideoReceiver",          "Reference only");
-    qmlRegisterUncreatableType<VideoSurface>        ("QGroundControl",                  1, 0, "VideoSurface",           "Reference only");
     qmlRegisterUncreatableType<MissionCommandTree>  ("QGroundControl",                  1, 0, "MissionCommandTree",     "Reference only");
 
     qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",      1, 0, "AutoPilotPlugin",        "Reference only");
@@ -382,16 +362,16 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<GeoFenceController>  ("QGroundControl.Controllers",          1, 0, "GeoFenceController",     "Reference only");
     qmlRegisterUncreatableType<RallyPointController>("QGroundControl.Controllers",          1, 0, "RallyPointController",    "Reference only");
 
-    qmlRegisterType<ParameterEditorController>          ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
-    qmlRegisterType<ESP8266ComponentController>         ("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
-    qmlRegisterType<ScreenToolsController>              ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
-    qmlRegisterType<PlanMasterController>        ("QGroundControl.Controllers", 1, 0, "PlanElemementMasterController");
-    qmlRegisterType<ValuesWidgetController>             ("QGroundControl.Controllers", 1, 0, "ValuesWidgetController");
-    qmlRegisterType<QFileDialogController>      ("QGroundControl.Controllers", 1, 0, "QFileDialogController");
-    qmlRegisterType<RCChannelMonitorController>         ("QGroundControl.Controllers", 1, 0, "RCChannelMonitorController");
-    qmlRegisterType<JoystickConfigController>           ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
-    qmlRegisterType<LogDownloadController>              ("QGroundControl.Controllers", 1, 0, "LogDownloadController");
-    qmlRegisterType<SyslinkComponentController>         ("QGroundControl.Controllers", 1, 0, "SyslinkComponentController");
+    qmlRegisterType<ParameterEditorController>      ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
+    qmlRegisterType<ESP8266ComponentController>     ("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
+    qmlRegisterType<ScreenToolsController>          ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
+    qmlRegisterType<PlanMasterController>           ("QGroundControl.Controllers", 1, 0, "PlanElemementMasterController");
+    qmlRegisterType<ValuesWidgetController>         ("QGroundControl.Controllers", 1, 0, "ValuesWidgetController");
+    qmlRegisterType<QGCFileDialogController>        ("QGroundControl.Controllers", 1, 0, "QGCFileDialogController");
+    qmlRegisterType<RCChannelMonitorController>     ("QGroundControl.Controllers", 1, 0, "RCChannelMonitorController");
+    qmlRegisterType<JoystickConfigController>       ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
+    qmlRegisterType<LogDownloadController>          ("QGroundControl.Controllers", 1, 0, "LogDownloadController");
+    qmlRegisterType<SyslinkComponentController>     ("QGroundControl.Controllers", 1, 0, "SyslinkComponentController");
 #ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
@@ -416,11 +396,7 @@ bool QGCApplication::_initForNormalAppBoot(void)
     connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
 
 #ifdef __mobile__
-    _qmlAppEngine = new QQmlApplicationEngine(this);
-    _qmlAppEngine->addImportPath("qrc:/qml");
-    _qmlAppEngine->rootContext()->setContextProperty("joystickManager", toolbox()->joystickManager());
-    _qmlAppEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
-    _qmlAppEngine->load(QUrl(QStringLiteral("qrc:/qml/MainWindowNative.qml")));
+    _qmlAppEngine = toolbox()->corePlugin()->createRootWindow(this);
 #else
     // Start the user interface
     MainWindow* mainWindow = MainWindow::_create();

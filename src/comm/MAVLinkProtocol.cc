@@ -102,7 +102,8 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
    connect(this, &MAVLinkProtocol::saveTelemetryLog,        _app, &QGCApplication::saveTelemetryLogOnMainThread);
    connect(this, &MAVLinkProtocol::checkTelemetrySavePath,  _app, &QGCApplication::checkTelemetrySavePathOnMainThread);
 
-   connect(_multiVehicleManager->vehicles(), &QmlObjectListModel::countChanged, this, &MAVLinkProtocol::_vehicleCountChanged);
+   connect(_multiVehicleManager, &MultiVehicleManager::vehicleAdded, this, &MAVLinkProtocol::_vehicleCountChanged);
+   connect(_multiVehicleManager, &MultiVehicleManager::vehicleRemoved, this, &MAVLinkProtocol::_vehicleCountChanged);
 
    emit versionCheckChanged(m_enable_version_check);
 }
@@ -327,8 +328,9 @@ void MAVLinkProtocol::enableVersionCheck(bool enabled)
     emit versionCheckChanged(enabled);
 }
 
-void MAVLinkProtocol::_vehicleCountChanged(int count)
+void MAVLinkProtocol::_vehicleCountChanged(void)
 {
+    int count = _multiVehicleManager->vehicles()->count();
     if (count == 0) {
         // Last vehicle is gone, close out logging
         _stopLogging();

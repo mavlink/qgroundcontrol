@@ -30,6 +30,7 @@ public:
     Q_PROPERTY(Fact*                gridAltitudeRelative        READ gridAltitudeRelative           CONSTANT)
     Q_PROPERTY(Fact*                gridAngle                   READ gridAngle                      CONSTANT)
     Q_PROPERTY(Fact*                gridSpacing                 READ gridSpacing                    CONSTANT)
+    Q_PROPERTY(Fact*                gridEntryLocation           READ gridEntryLocation              CONSTANT)
     Q_PROPERTY(Fact*                turnaroundDist              READ turnaroundDist                 CONSTANT)
     Q_PROPERTY(Fact*                cameraTriggerDistance       READ cameraTriggerDistance          CONSTANT)
     Q_PROPERTY(Fact*                cameraTriggerInTurnaround   READ cameraTriggerInTurnaround      CONSTANT)
@@ -42,14 +43,15 @@ public:
     Q_PROPERTY(Fact*                cameraResolutionWidth       READ cameraResolutionWidth          CONSTANT)
     Q_PROPERTY(Fact*                cameraResolutionHeight      READ cameraResolutionHeight         CONSTANT)
     Q_PROPERTY(Fact*                cameraFocalLength           READ cameraFocalLength              CONSTANT)
-    Q_PROPERTY(Fact*                fixedValueIsAltitude        READ fixedValueIsAltitude           CONSTANT)
     Q_PROPERTY(Fact*                cameraOrientationLandscape  READ cameraOrientationLandscape     CONSTANT)
+    Q_PROPERTY(Fact*                fixedValueIsAltitude        READ fixedValueIsAltitude           CONSTANT)
     Q_PROPERTY(Fact*                manualGrid                  READ manualGrid                     CONSTANT)
     Q_PROPERTY(Fact*                camera                      READ camera                         CONSTANT)
 
     Q_PROPERTY(bool                 cameraOrientationFixed      MEMBER _cameraOrientationFixed      NOTIFY cameraOrientationFixedChanged)
     Q_PROPERTY(bool                 hoverAndCaptureAllowed      READ hoverAndCaptureAllowed         CONSTANT)
     Q_PROPERTY(bool                 refly90Degrees              READ refly90Degrees WRITE setRefly90Degrees NOTIFY refly90DegreesChanged)
+    Q_PROPERTY(double               cameraMinTriggerInterval    MEMBER _cameraMinTriggerInterval    NOTIFY cameraMinTriggerIntervalChanged)
 
     Q_PROPERTY(double               timeBetweenShots            READ timeBetweenShots               NOTIFY timeBetweenShotsChanged)
     Q_PROPERTY(QVariantList         gridPoints                  READ gridPoints                     NOTIFY gridPointsChanged)
@@ -65,6 +67,7 @@ public:
     Fact* gridAltitudeRelative      (void) { return &_gridAltitudeRelativeFact; }
     Fact* gridAngle                 (void) { return &_gridAngleFact; }
     Fact* gridSpacing               (void) { return &_gridSpacingFact; }
+    Fact* gridEntryLocation         (void) { return &_gridEntryLocationFact; }
     Fact* turnaroundDist            (void) { return &_turnaroundDistFact; }
     Fact* cameraTriggerDistance     (void) { return &_cameraTriggerDistanceFact; }
     Fact* cameraTriggerInTurnaround (void) { return &_cameraTriggerInTurnaroundFact; }
@@ -93,6 +96,7 @@ public:
     // Overrides from ComplexMissionItem
 
     double              complexDistance     (void) const final { return _surveyDistance; }
+    double              additionalTimeDelay (void) const final { return _additionalFlightDelaySeconds; }
     int                 lastSequenceNumber  (void) const final;
     bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     double              greatestDistanceTo  (const QGeoCoordinate &other) const final;
@@ -127,6 +131,14 @@ public:
     void setTurnaroundDist  (double dist) { _turnaroundDistFact.setRawValue(dist); }
     void save               (QJsonArray&  missionItems) final;
 
+    // Must match json spec for GridEntryLocation
+    enum EntryLocation {
+        EntryLocationTopLeft,
+        EntryLocationTopRight,
+        EntryLocationBottomLeft,
+        EntryLocationBottomRight,
+    };
+
     static const char* jsonComplexItemTypeValue;
 
     static const char* settingsGroup;
@@ -135,6 +147,7 @@ public:
     static const char* gridAltitudeRelativeName;
     static const char* gridAngleName;
     static const char* gridSpacingName;
+    static const char* gridEntryLocationName;
     static const char* turnaroundDistName;
     static const char* cameraTriggerDistanceName;
     static const char* cameraTriggerInTurnaroundName;
@@ -153,14 +166,15 @@ public:
     static const char* cameraName;
 
 signals:
-    void gridPointsChanged              (void);
-    void cameraShotsChanged             (int cameraShots);
-    void coveredAreaChanged             (double coveredArea);
-    void cameraValueChanged             (void);
-    void gridTypeChanged                (QString gridType);
-    void timeBetweenShotsChanged        (void);
-    void cameraOrientationFixedChanged  (bool cameraOrientationFixed);
-    void refly90DegreesChanged          (bool refly90Degrees);
+    void gridPointsChanged                  (void);
+    void cameraShotsChanged                 (int cameraShots);
+    void coveredAreaChanged                 (double coveredArea);
+    void cameraValueChanged                 (void);
+    void gridTypeChanged                    (QString gridType);
+    void timeBetweenShotsChanged            (void);
+    void cameraOrientationFixedChanged      (bool cameraOrientationFixed);
+    void refly90DegreesChanged              (bool refly90Degrees);
+    void cameraMinTriggerIntervalChanged    (double cameraMinTriggerInterval);
 
 private slots:
     void _setDirty(void);
@@ -197,12 +211,17 @@ private:
     double _turnaroundDistance(void) const;
     void _convertTransectToGeo(const QList<QList<QPointF>>& transectSegmentsNED, const QGeoCoordinate& tangentOrigin, QList<QList<QGeoCoordinate>>& transectSegmentsGeo);
     bool _appendMissionItemsWorker(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, bool hasRefly, bool buildRefly);
-    void _optimizeReflySegments(void);
+    void _optimizeTransectsForShortestDistance(const QGeoCoordinate& distanceCoord, QList<QList<QGeoCoordinate>>& transects);
     void _appendGridPointsFromTransects(QList<QList<QGeoCoordinate>>& rgTransectSegments);
     qreal _ccw(QPointF pt1, QPointF pt2, QPointF pt3);
     qreal _dp(QPointF pt1, QPointF pt2);
     void _swapPoints(QList<QPointF>& points, int index1, int index2);
     QList<QPointF> _convexPolygon(const QList<QPointF>& polygon);
+    void _reverseTransectOrder(QList<QList<QGeoCoordinate>>& transects);
+    void _reverseInternalTransectPoints(QList<QList<QGeoCoordinate>>& transects);
+    void _adjustTransectsToEntryPointLocation(QList<QList<QGeoCoordinate>>& transects);
+    bool _gridAngleIsNorthSouthTransects();
+    double _clampGridAngle90(double gridAngle);
 
     int                             _sequenceNumber;
     bool                            _dirty;
@@ -215,6 +234,8 @@ private:
     bool                            _cameraOrientationFixed;
     int                             _missionCommandCount;
     bool                            _refly90Degrees;
+    double                          _additionalFlightDelaySeconds;
+    double                          _cameraMinTriggerInterval;
 
     bool            _ignoreRecalc;
     double          _surveyDistance;
@@ -230,6 +251,7 @@ private:
     SettingsFact    _gridAltitudeRelativeFact;
     SettingsFact    _gridAngleFact;
     SettingsFact    _gridSpacingFact;
+    SettingsFact    _gridEntryLocationFact;
     SettingsFact    _turnaroundDistFact;
     SettingsFact    _cameraTriggerDistanceFact;
     SettingsFact    _cameraTriggerInTurnaroundFact;
@@ -251,6 +273,7 @@ private:
     static const char* _jsonGridAltitudeRelativeKey;
     static const char* _jsonGridAngleKey;
     static const char* _jsonGridSpacingKey;
+    static const char* _jsonGridEntryLocationKey;
     static const char* _jsonTurnaroundDistKey;
     static const char* _jsonCameraTriggerDistanceKey;
     static const char* _jsonCameraTriggerInTurnaroundKey;
@@ -263,12 +286,15 @@ private:
     static const char* _jsonCameraResolutionWidthKey;
     static const char* _jsonCameraResolutionHeightKey;
     static const char* _jsonCameraFocalLengthKey;
+    static const char* _jsonCameraMinTriggerIntervalKey;
     static const char* _jsonManualGridKey;
     static const char* _jsonCameraObjectKey;
     static const char* _jsonCameraNameKey;
     static const char* _jsonCameraOrientationLandscapeKey;
     static const char* _jsonFixedValueIsAltitudeKey;
     static const char* _jsonRefly90DegreesKey;
+
+    static const int _hoverAndCaptureDelaySeconds = 1;
 };
 
 #endif

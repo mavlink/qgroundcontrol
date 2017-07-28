@@ -211,12 +211,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v4_default.px4"},
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v4_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v4_default.px4"},
-        { AutoPilotStackAPM, StableFirmware,    QuadFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-quad/ArduCopter-v4.px4"},
-        { AutoPilotStackAPM, StableFirmware,    X8Firmware,             "http://firmware.ardupilot.org/Copter/stable/PX4-octa-quad/ArduCopter-v4.px4"},
-        { AutoPilotStackAPM, StableFirmware,    HexaFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-hexa/ArduCopter-v4.px4"},
-        { AutoPilotStackAPM, StableFirmware,    OctoFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-octa/ArduCopter-v4.px4"},
-        { AutoPilotStackAPM, StableFirmware,    YFirmware,              "http://firmware.ardupilot.org/Copter/stable/PX4-tri/ArduCopter-v4.px4"},
-        { AutoPilotStackAPM, StableFirmware,    Y6Firmware,             "http://firmware.ardupilot.org/Copter/stable/PX4-y6/ArduCopter-v4.px4"},
+        { AutoPilotStackAPM, StableFirmware,    CopterFirmware,         "http://firmware.ardupilot.org/Copter/stable/PX4/ArduCopter-v4.px4"},
         { AutoPilotStackAPM, StableFirmware,    HeliFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-heli/ArduCopter-v4.px4"},
         { AutoPilotStackAPM, StableFirmware,    PlaneFirmware,          "http://firmware.ardupilot.org/Plane/stable/PX4/ArduPlane-v4.px4"},
         { AutoPilotStackAPM, StableFirmware,    RoverFirmware,          "http://firmware.ardupilot.org/Rover/stable/PX4/APMrover2-v4.px4"},
@@ -231,17 +226,35 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { SingleFirmwareMode,StableFirmware,    DefaultVehicleFirmware, _singleFirmwareURL},
     };
 
+    //////////////////////////////////// PX4FMUV3 firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgPX4FMV3FirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v3_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v3_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v3_default.px4"},
+        { AutoPilotStackAPM, StableFirmware,    CopterFirmware,         "http://firmware.ardupilot.org/Copter/stable/PX4/ArduCopter-v3.px4"},
+        { AutoPilotStackAPM, StableFirmware,    HeliFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-heli/ArduCopter-v3.px4"},
+        { AutoPilotStackAPM, StableFirmware,    PlaneFirmware,          "http://firmware.ardupilot.org/Plane/stable/PX4/ArduPlane-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    RoverFirmware,          "http://firmware.ardupilot.org/Rover/stable/PX4/APMrover2-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    SubFirmware,            "http://firmware.ardupilot.org/Sub/stable/PX4/ArduSub-v2.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      CopterFirmware,         "http://firmware.ardupilot.org/Copter/beta/PX4/ArduCopter-v3.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      HeliFirmware,           "http://firmware.ardupilot.org/Copter/beta/PX4-heli/ArduCopter-v3.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      PlaneFirmware,          "http://firmware.ardupilot.org/Plane/beta/PX4/ArduPlane-v3.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      RoverFirmware,          "http://firmware.ardupilot.org/Rover/beta/PX4/APMrover2-v3.px4"},
+        { AutoPilotStackAPM, BetaFirmware,      SubFirmware,            "http://firmware.ardupilot.org/Sub/beta/PX4/ArduSub-v3.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, CopterFirmware,         "http://firmware.ardupilot.org/Copter/latest/PX4/ArduCopter-v3.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, HeliFirmware,           "http://firmware.ardupilot.org/Copter/latest/PX4-heli/ArduCopter-v3.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, PlaneFirmware,          "http://firmware.ardupilot.org/Plane/latest/PX4/ArduPlane-v3.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, RoverFirmware,          "http://firmware.ardupilot.org/Rover/latest/PX4/APMrover2-v3.px4"},
+        { AutoPilotStackAPM, DeveloperFirmware, SubFirmware,            "http://firmware.ardupilot.org/Sub/latest/PX4/ArduSub-v3.px4"},
+        { SingleFirmwareMode,StableFirmware,    DefaultVehicleFirmware, _singleFirmwareURL},
+    };
+
     //////////////////////////////////// PX4FMUV2 firmwares //////////////////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FMV2FirmwareArray[] = {
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v2_default.px4"},
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v2_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v2_default.px4"},
-        { AutoPilotStackAPM, StableFirmware,    QuadFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-quad/ArduCopter-v2.px4"},
-        { AutoPilotStackAPM, StableFirmware,    X8Firmware,             "http://firmware.ardupilot.org/Copter/stable/PX4-octa-quad/ArduCopter-v2.px4"},
-        { AutoPilotStackAPM, StableFirmware,    HexaFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-hexa/ArduCopter-v2.px4"},
-        { AutoPilotStackAPM, StableFirmware,    OctoFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-octa/ArduCopter-v2.px4"},
-        { AutoPilotStackAPM, StableFirmware,    YFirmware,              "http://firmware.ardupilot.org/Copter/stable/PX4-tri/ArduCopter-v2.px4"},
-        { AutoPilotStackAPM, StableFirmware,    Y6Firmware,             "http://firmware.ardupilot.org/Copter/stable/PX4-y6/ArduCopter-v2.px4"},
+        { AutoPilotStackAPM, StableFirmware,    CopterFirmware,         "http://firmware.ardupilot.org/Copter/stable/PX4/ArduCopter-v2.px4"},
         { AutoPilotStackAPM, StableFirmware,    HeliFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-heli/ArduCopter-v2.px4"},
         { AutoPilotStackAPM, StableFirmware,    PlaneFirmware,          "http://firmware.ardupilot.org/Plane/stable/PX4/ArduPlane-v2.px4"},
         { AutoPilotStackAPM, StableFirmware,    RoverFirmware,          "http://firmware.ardupilot.org/Rover/stable/PX4/APMrover2-v2.px4"},
@@ -293,12 +306,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v1_default.px4"},
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v1_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v1_default.px4"},
-        { AutoPilotStackAPM, StableFirmware,    QuadFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-quad/ArduCopter-v1.px4"},
-        { AutoPilotStackAPM, StableFirmware,    X8Firmware,             "http://firmware.ardupilot.org/Copter/stable/PX4-octa-quad/ArduCopter-v1.px4"},
-        { AutoPilotStackAPM, StableFirmware,    HexaFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-hexa/ArduCopter-v1.px4"},
-        { AutoPilotStackAPM, StableFirmware,    OctoFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-octa/ArduCopter-v1.px4"},
-        { AutoPilotStackAPM, StableFirmware,    YFirmware,              "http://firmware.ardupilot.org/Copter/stable/PX4-tri/ArduCopter-v1.px4"},
-        { AutoPilotStackAPM, StableFirmware,    Y6Firmware,             "http://firmware.ardupilot.org/Copter/stable/PX4-y6/ArduCopter-v1.px4"},
+        { AutoPilotStackAPM, StableFirmware,    CopterFirmware,         "http://firmware.ardupilot.org/Copter/stable/PX4/ArduCopter-v1.px4"},
         { AutoPilotStackAPM, StableFirmware,    HeliFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-heli/ArduCopter-v1.px4"},
         { AutoPilotStackAPM, StableFirmware,    PlaneFirmware,          "http://firmware.ardupilot.org/Plane/stable/PX4/ArduPlane-v1.px4"},
         { AutoPilotStackAPM, StableFirmware,    RoverFirmware,          "http://firmware.ardupilot.org/Rover/stable/PX4/APMrover2-v1.px4"},
@@ -371,6 +379,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
     for (int i = 0; i < size; i++) {
         const FirmwareToUrlElement_t& element = rgPX4FMV4FirmwareArray[i];
         _rgPX4FMUV4Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
+    size = sizeof(rgPX4FMV3FirmwareArray)/sizeof(rgPX4FMV3FirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgPX4FMV3FirmwareArray[i];
+        _rgPX4FMUV3Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
 
     size = sizeof(rgPX4FMV2FirmwareArray)/sizeof(rgPX4FMV2FirmwareArray[0]);
@@ -456,6 +470,8 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
         return &_rgPX4FLowFirmware;
     case Bootloader::boardIDPX4FMUV2:
         return &_rgPX4FMUV2Firmware;
+    case Bootloader::boardIDPX4FMUV3:
+        return &_rgPX4FMUV3Firmware;
     case Bootloader::boardIDPX4FMUV4:
         return &_rgPX4FMUV4Firmware;
     case Bootloader::boardIDPX4FMUV4PRO:
@@ -493,9 +509,9 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
     
     if (firmwareId.firmwareType == CustomFirmware) {
         _firmwareFilename = QGCQFileDialog::getOpenFileName(NULL,                                                                // Parent to main window
-                                                           "Select Firmware File",                                              // Dialog Caption
-                                                           QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation), // Initial directory
-                                                           "Firmware Files (*.px4 *.bin *.ihx)");                               // File filter
+                                                            "Select Firmware File",                                              // Dialog Caption
+                                                            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation), // Initial directory
+                                                            "Firmware Files (*.px4 *.bin *.ihx)");                               // File filter
     } else {
         if (prgFirmware->contains(firmwareId)) {
             _firmwareFilename = prgFirmware->value(firmwareId);
@@ -737,51 +753,57 @@ void FirmwareUpgradeController::setSelectedFirmwareType(FirmwareType_t firmwareT
 
 QStringList FirmwareUpgradeController::apmAvailableVersions(void)
 {
-    QStringList list;
+    QStringList                     list;
+    QList<FirmwareVehicleType_t>    vehicleTypes;
+
+    // This allows up to force the order of the combo box display
+    vehicleTypes << CopterFirmware << HeliFirmware << PlaneFirmware << RoverFirmware << SubFirmware;
 
     _apmVehicleTypeFromCurrentVersionList.clear();
 
-    foreach (FirmwareVehicleType_t vehicleType, _apmVersionMap[_selectedFirmwareType].keys()) {
-        QString version;
+    foreach (FirmwareVehicleType_t vehicleType, vehicleTypes) {
+        if (_apmVersionMap[_selectedFirmwareType].contains(vehicleType)) {
+            QString version;
 
-        switch (vehicleType) {
-        case QuadFirmware:
-            version = "Quad - ";
-            break;
-        case X8Firmware:
-            version = "X8 - ";
-            break;
-        case HexaFirmware:
-            version = "Hexa - ";
-            break;
-        case OctoFirmware:
-            version = "Octo - ";
-            break;
-        case YFirmware:
-            version = "Y - ";
-            break;
-        case Y6Firmware:
-            version = "Y6 - ";
-            break;
-        case HeliFirmware:
-            version = "Heli - ";
-            break;
-        case CopterFirmware:
-            version = "MultiRotor - ";
-            break;
-        case SubFirmware:
-            version = "Sub - ";
-            break;
-        case PlaneFirmware:
-        case RoverFirmware:
-        case DefaultVehicleFirmware:
-            break;
+            switch (vehicleType) {
+            case QuadFirmware:
+                version = "Quad - ";
+                break;
+            case X8Firmware:
+                version = "X8 - ";
+                break;
+            case HexaFirmware:
+                version = "Hexa - ";
+                break;
+            case OctoFirmware:
+                version = "Octo - ";
+                break;
+            case YFirmware:
+                version = "Y - ";
+                break;
+            case Y6Firmware:
+                version = "Y6 - ";
+                break;
+            case HeliFirmware:
+                version = "Heli - ";
+                break;
+            case CopterFirmware:
+                version = "MultiRotor - ";
+                break;
+            case SubFirmware:
+                version = "Sub - ";
+                break;
+            case PlaneFirmware:
+            case RoverFirmware:
+            case DefaultVehicleFirmware:
+                break;
+            }
+
+            version += _apmVersionMap[_selectedFirmwareType][vehicleType];
+            _apmVehicleTypeFromCurrentVersionList.append(vehicleType);
+
+            list << version;
         }
-
-        version += _apmVersionMap[_selectedFirmwareType][vehicleType];
-        _apmVehicleTypeFromCurrentVersionList.append(vehicleType);
-
-        list << version;
     }
 
     return list;

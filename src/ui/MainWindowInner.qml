@@ -345,6 +345,13 @@ Item {
         id:                 flightView
         anchors.fill:       parent
         visible:            true
+        //-------------------------------------------------------------------------
+        //-- Loader helper for any child, no matter how deep can display an element
+        //   on top of the video window.
+        Loader {
+            id:             rootVideoLoader
+            anchors.centerIn: parent
+        }
     }
 
     Loader {

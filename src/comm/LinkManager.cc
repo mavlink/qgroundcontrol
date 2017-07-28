@@ -459,8 +459,8 @@ void LinkManager::_updateAutoConnectLinks(void)
     }
     if (!foundUDP && _autoConnectSettings->autoConnectUDP()->rawValue().toBool()) {
         qCDebug(LinkManagerLog) << "New auto-connect UDP port added";
+        // Default UDPConfiguration is set up for autoconnect
         UDPConfiguration* udpConfig = new UDPConfiguration(_defaultUPDLinkName);
-        udpConfig->setLocalPort(QGC_UDP_LOCAL_PORT);
         udpConfig->setDynamic(true);
         SharedLinkConfigurationPointer config = addConfiguration(udpConfig);
         createConnectedLink(config);

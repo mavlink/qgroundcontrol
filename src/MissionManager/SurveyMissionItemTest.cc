@@ -33,6 +33,8 @@ void SurveyMissionItemTest::init(void)
 
     _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
     _surveyItem = new SurveyMissionItem(_offlineVehicle, this);
+    _surveyItem->setTurnaroundDist(0);  // Unit test written for no turnaround distance
+    _surveyItem->setDirty(false);
     _mapPolygon = _surveyItem->mapPolygon();
 
     // It's important to check that the right signals are emitted at the right time since that drives ui change.
@@ -92,7 +94,7 @@ void SurveyMissionItemTest::_testDirty(void)
     // These facts should not change dirty bit
     rgFacts << _surveyItem->groundResolution() << _surveyItem->frontalOverlap() << _surveyItem->sideOverlap() << _surveyItem->cameraSensorWidth() << _surveyItem->cameraSensorHeight() <<
                _surveyItem->cameraResolutionWidth() << _surveyItem->cameraResolutionHeight() << _surveyItem->cameraFocalLength() << _surveyItem->cameraOrientationLandscape() <<
-                _surveyItem->fixedValueIsAltitude() << _surveyItem->camera() << _surveyItem->manualGrid();
+               _surveyItem->fixedValueIsAltitude() << _surveyItem->camera() << _surveyItem->manualGrid();
     foreach(Fact* fact, rgFacts) {
         qDebug() << fact->name();
         QVERIFY(!_surveyItem->dirty());
@@ -143,106 +145,9 @@ void SurveyMissionItemTest::_testCameraValueChanged(void)
     rgFacts.clear();
 }
 
-#if 0
-void SurveyMissionItemTest::_testAddPolygonCoordinate(void)
-{
-    QCOMPARE(_mapPolygon->count(), 0);
-
-    // First call to addPolygonCoordinate should trigger:
-    //      polygonPathChanged
-    //      dirtyChanged
-
-    _mapPolygon->appendVertex(_polyPoints[0]);
-    QVERIFY(_multiSpy->checkOnlySignalByMask(polygonPathChangedMask | dirtyChangedMask));
-
-    // Validate object data
-    QVariantList polyList = _mapPolygon->path();
-    QCOMPARE(polyList.count(), 1);
-    QCOMPARE(polyList[0].value<QGeoCoordinate>(), _polyPoints[0]);
-
-    // Reset
-    _surveyItem->setDirty(false);
-    _multiSpy->clearAllSignals();
-
-    // Second call to addPolygonCoordinate should only trigger:
-    //      polygonPathChanged
-    //      dirtyChanged
-
-    _mapPolygon->appendVertex(_polyPoints[1]);
-    QVERIFY(_multiSpy->checkOnlySignalByMask(polygonPathChangedMask | dirtyChangedMask));
-
-    polyList = _mapPolygon->path();
-    QCOMPARE(polyList.count(), 2);
-    for (int i=0; i<polyList.count(); i++) {
-        QCOMPARE(polyList[i].value<QGeoCoordinate>(), _polyPoints[i]);
-    }
-
-    _surveyItem->setDirty(false);
-    _multiSpy->clearAllSignals();
-
-    // Third call to addPolygonCoordinate should trigger:
-    //      polygonPathChanged
-    //      dirtyChanged
-    // Grid is generated for the first time on closing of polygon which triggers:
-    //      coordinateChanged - grid generates new entry coordinate
-    //      exitCoordinateChanged - grid generates new exit coordinate
-    //      specifiesCoordinateChanged - once grid entry/exit shows up specifiesCoordinate gets set to true
-    // Grid generation triggers the following signals
-    //      lastSequenceNumberChanged -  number of internal mission items changes
-    //      gridPointsChanged - grid points show up for the first time
-
-    _mapPolygon->appendVertex(_polyPoints[2]);
-    QVERIFY(_multiSpy->checkOnlySignalByMask(polygonPathChangedMask | lastSequenceNumberChangedMask | gridPointsChangedMask | coordinateChangedMask |
-                                             exitCoordinateChangedMask | specifiesCoordinateChangedMask | dirtyChangedMask));
-    int seqNum = _multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex);
-    QVERIFY(seqNum > 0);
-
-    polyList = _mapPolygon->path();
-    QCOMPARE(polyList.count(), 3);
-    for (int i=0; i<polyList.count(); i++) {
-        QCOMPARE(polyList[i].value<QGeoCoordinate>(), _polyPoints[i]);
-    }
-
-    // Test that number of waypoints is doubled when using turnaround waypoints
-    _surveyItem->setTurnaroundDist(60.0);
-    QVariantList gridPoints = _surveyItem->gridPoints();
-    _surveyItem->setTurnaroundDist(0.0);
-    QVariantList gridPointsNoT = _surveyItem->gridPoints();
-    QCOMPARE(gridPoints.count(), 2 * gridPointsNoT.count());
-
-}
-
-void SurveyMissionItemTest::_testClearPolygon(void)
-{
-    for (int i=0; i<3; i++) {
-        _mapPolygon->appendVertex(_polyPoints[i]);
-    }
-    _surveyItem->setDirty(false);
-    _multiSpy->clearAllSignals();
-
-    // Call to clearPolygon should trigger:
-    //      polygonPathChangedMask
-    //      dirtyChanged
-    //      lastSequenceNumberChangedMask
-    //      gridPointsChangedMask
-    //      dirtyChangedMask
-    //      specifiesCoordinateChangedMask
-
-    _mapPolygon->clear();
-    QVERIFY(_multiSpy->checkOnlySignalByMask(polygonPathChangedMask | lastSequenceNumberChangedMask | gridPointsChangedMask | dirtyChangedMask |
-                                             specifiesCoordinateChangedMask));
-    QVERIFY(!_multiSpy->pullBoolFromSignalIndex(specifiesCoordinateChangedIndex));
-    QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), 0);
-
-    QCOMPARE(_mapPolygon->path().count(), 0);
-    QCOMPARE(_surveyItem->gridPoints().count(), 0);
-
-    _surveyItem->setDirty(false);
-    _multiSpy->clearAllSignals();
-}
-
 void SurveyMissionItemTest::_testCameraTrigger(void)
 {
+#if 0
     QCOMPARE(_surveyItem->property("cameraTrigger").toBool(), true);
 
     // Set up a grid
@@ -273,5 +178,76 @@ void SurveyMissionItemTest::_testCameraTrigger(void)
     _surveyItem->setProperty("cameraTrigger", true);
     QVERIFY(_multiSpy->checkOnlySignalByMask(lastSequenceNumberChangedMask | dirtyChangedMask | cameraTriggerChangedMask));
     QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), lastSeq);
-}
 #endif
+}
+
+// Clamp expected grid angle from 0<->180. We don't care about opposite angles like 90/270
+double SurveyMissionItemTest::_clampGridAngle180(double gridAngle)
+{
+    if (gridAngle >= 0.0) {
+        if (gridAngle == 360.0) {
+            gridAngle = 0.0;
+        } else if (gridAngle >= 180.0) {
+            gridAngle -= 180.0;
+        }
+    } else {
+        if (gridAngle < -180.0) {
+            gridAngle += 360.0;
+        } else {
+            gridAngle += 180.0;
+        }
+    }
+    return gridAngle;
+}
+
+void SurveyMissionItemTest::_testGridAngle(void)
+{
+    QGCMapPolygon* mapPolygon = _surveyItem->mapPolygon();
+
+    for (int i=0; i<_polyPoints.count(); i++) {
+        QGeoCoordinate& vertex = _polyPoints[i];
+        mapPolygon->appendVertex(vertex);
+    }
+
+    for (double gridAngle=-360.0; gridAngle<=360.0; gridAngle++) {
+        _surveyItem->gridAngle()->setRawValue(gridAngle);
+
+        QVariantList gridPoints = _surveyItem->gridPoints();
+        QGeoCoordinate firstTransectEntry = gridPoints[0].value<QGeoCoordinate>();
+        QGeoCoordinate firstTransectExit = gridPoints[1].value<QGeoCoordinate>();
+        double azimuth = firstTransectEntry.azimuthTo(firstTransectExit);
+        //qDebug() << gridAngle << azimuth << _clampGridAngle180(gridAngle) << _clampGridAngle180(azimuth);
+        QCOMPARE((int)_clampGridAngle180(gridAngle), (int)_clampGridAngle180(azimuth));
+    }
+}
+
+void SurveyMissionItemTest::_testEntryLocation(void)
+{
+    QGCMapPolygon* mapPolygon = _surveyItem->mapPolygon();
+
+    for (int i=0; i<_polyPoints.count(); i++) {
+        QGeoCoordinate& vertex = _polyPoints[i];
+        mapPolygon->appendVertex(vertex);
+    }
+
+    for (double gridAngle=-360.0; gridAngle<=360.0; gridAngle++) {
+        _surveyItem->gridAngle()->setRawValue(gridAngle);
+
+        QList<QGeoCoordinate> rgSeenEntryCoords;
+        QList<int> rgEntryLocation;
+        rgEntryLocation << SurveyMissionItem::EntryLocationTopLeft
+                        << SurveyMissionItem::EntryLocationTopRight
+                        << SurveyMissionItem::EntryLocationBottomLeft
+                        << SurveyMissionItem::EntryLocationBottomRight;
+
+        // Validate that each entry location is unique
+        for (int i=0; i<rgEntryLocation.count(); i++) {
+            int entryLocation = rgEntryLocation[i];
+
+            _surveyItem->gridEntryLocation()->setRawValue(entryLocation);
+            QVERIFY(!rgSeenEntryCoords.contains(_surveyItem->coordinate()));
+            rgSeenEntryCoords << _surveyItem->coordinate();
+        }
+        rgSeenEntryCoords.clear();
+    }
+}

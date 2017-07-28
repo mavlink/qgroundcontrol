@@ -79,13 +79,14 @@ void SimpleMissionItemTest::init(void)
 {
     VisualMissionItemTest::init();
 
-    rgSimpleItemSignals[commandChangedIndex] =              SIGNAL(commandChanged(int));
-    rgSimpleItemSignals[frameChangedIndex] =                SIGNAL(frameChanged(int));
-    rgSimpleItemSignals[friendlyEditAllowedChangedIndex] =  SIGNAL(friendlyEditAllowedChanged(bool));
-    rgSimpleItemSignals[headingDegreesChangedIndex] =       SIGNAL(headingDegreesChanged(double));
-    rgSimpleItemSignals[rawEditChangedIndex] =              SIGNAL(rawEditChanged(bool));
-    rgSimpleItemSignals[cameraSectionChangedIndex] =        SIGNAL(rawEditChanged(bool));
-    rgSimpleItemSignals[speedSectionChangedIndex] =         SIGNAL(rawEditChanged(bool));
+    rgSimpleItemSignals[commandChangedIndex] =                          SIGNAL(commandChanged(int));
+    rgSimpleItemSignals[frameChangedIndex] =                            SIGNAL(frameChanged(int));
+    rgSimpleItemSignals[friendlyEditAllowedChangedIndex] =              SIGNAL(friendlyEditAllowedChanged(bool));
+    rgSimpleItemSignals[headingDegreesChangedIndex] =                   SIGNAL(headingDegreesChanged(double));
+    rgSimpleItemSignals[rawEditChangedIndex] =                          SIGNAL(rawEditChanged(bool));
+    rgSimpleItemSignals[cameraSectionChangedIndex] =                    SIGNAL(rawEditChanged(bool));
+    rgSimpleItemSignals[speedSectionChangedIndex] =                     SIGNAL(rawEditChanged(bool));
+    rgSimpleItemSignals[coordinateHasRelativeAltitudeChangedIndex] =    SIGNAL(coordinateHasRelativeAltitudeChanged(bool));
 
     MissionItem missionItem(1,              // sequence number
                             MAV_CMD_NAV_WAYPOINT,
@@ -231,13 +232,14 @@ void SimpleMissionItemTest::_testSignals(void)
     //      frameChanged
     //      dirtyChanged
     //      friendlyEditAllowedChanged - this signal is not very smart on when it gets sent
+    //      coordinateHasRelativeAltitudeChanged
 
     missionItem.setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
     QVERIFY(_spyVisualItem->checkNoSignals());
     QVERIFY(_spySimpleItem->checkNoSignals());
 
     missionItem.setFrame(MAV_FRAME_GLOBAL);
-    QVERIFY(_spySimpleItem->checkOnlySignalByMask(frameChangedMask | dirtyChangedMask | friendlyEditAllowedChangedMask));
+    QVERIFY(_spySimpleItem->checkOnlySignalByMask(frameChangedMask | dirtyChangedMask | friendlyEditAllowedChangedMask | coordinateHasRelativeAltitudeChangedMask));
     _spySimpleItem->clearAllSignals();
     _spyVisualItem->clearAllSignals();
 
@@ -254,6 +256,38 @@ void SimpleMissionItemTest::_testSignals(void)
     _simpleItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_LOITER_TIME);
     QVERIFY(_spySimpleItem->checkSignalsByMask(commandChangedMask));
     QVERIFY(_spyVisualItem->checkSignalsByMask(commandNameChangedMask | dirtyChangedMask | coordinateChangedMask));
+}
+
+void SimpleMissionItemTest::_testCameraSectionDirty(void)
+{
+    CameraSection* cameraSection = _simpleItem->cameraSection();
+
+    QVERIFY(!cameraSection->dirty());
+    QVERIFY(!_simpleItem->dirty());
+
+    // Dirtying the camera section should also dirty the item
+    cameraSection->setDirty(true);
+    QVERIFY(_simpleItem->dirty());
+
+    // Clearing the dirty bit from the item should also clear the dirty bit on the camera section
+    _simpleItem->setDirty(false);
+    QVERIFY(!cameraSection->dirty());
+}
+
+void SimpleMissionItemTest::_testSpeedSectionDirty(void)
+{
+    SpeedSection* speedSection = _simpleItem->speedSection();
+
+    QVERIFY(!speedSection->dirty());
+    QVERIFY(!_simpleItem->dirty());
+
+    // Dirtying the speed section should also dirty the item
+    speedSection->setDirty(true);
+    QVERIFY(_simpleItem->dirty());
+
+    // Clearing the dirty bit from the item should also clear the dirty bit on the camera section
+    _simpleItem->setDirty(false);
+    QVERIFY(!speedSection->dirty());
 }
 
 void SimpleMissionItemTest::_testCameraSection(void)

@@ -89,6 +89,16 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
 
     qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged" << activeVehicle;
 
+    if (_managerVehicle) {
+        // Disconnect old vehicle
+        disconnect(_managerVehicle->missionManager(),       &MissionManager::newMissionItemsAvailable,  this, &PlanMasterController::_loadMissionComplete);
+        disconnect(_managerVehicle->geoFenceManager(),      &GeoFenceManager::loadComplete,             this, &PlanMasterController::_loadGeoFenceComplete);
+        disconnect(_managerVehicle->rallyPointManager(),    &RallyPointManager::loadComplete,           this, &PlanMasterController::_loadRallyPointsComplete);
+        disconnect(_managerVehicle->missionManager(),       &MissionManager::sendComplete,              this, &PlanMasterController::_sendMissionComplete);
+        disconnect(_managerVehicle->geoFenceManager(),      &GeoFenceManager::sendComplete,             this, &PlanMasterController::_sendGeoFenceComplete);
+        disconnect(_managerVehicle->rallyPointManager(),    &RallyPointManager::sendComplete,           this, &PlanMasterController::_sendRallyPointsComplete);
+    }
+
     bool newOffline = false;
     if (activeVehicle == NULL) {
         // Since there is no longer an active vehicle we use the offline controller vehicle as the manager vehicle
@@ -154,6 +164,8 @@ void PlanMasterController::loadFromVehicle(void)
     } else {
         _loadGeoFence = true;
         _syncInProgress = true;
+        emit syncInProgressChanged(true);
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::loadFromVehicle _missionController.loadFromVehicle";
         _missionController.loadFromVehicle();
         setDirty(false);
     }
@@ -165,6 +177,7 @@ void PlanMasterController::_loadMissionComplete(void)
     if (_editMode && _loadGeoFence) {
         _loadGeoFence = false;
         _loadRallyPoints = true;
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadMissionComplete _geoFenceController.loadFromVehicle";
         _geoFenceController.loadFromVehicle();
         setDirty(false);
     }
@@ -174,6 +187,7 @@ void PlanMasterController::_loadGeoFenceComplete(void)
 {
     if (_editMode && _loadRallyPoints) {
         _loadRallyPoints = false;
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadGeoFenceComplete _rallyPointController.loadFromVehicle";
         _rallyPointController.loadFromVehicle();
         setDirty(false);
     }
@@ -225,6 +239,8 @@ void PlanMasterController::sendToVehicle(void)
     } else {
         qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start mission sendToVehicle";
         _sendGeoFence = true;
+        _syncInProgress = true;
+        emit syncInProgressChanged(true);
         _missionController.sendToVehicle();
         setDirty(false);
     }
@@ -243,6 +259,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         errorString = file.errorString() + QStringLiteral(" ") + filename;
+        qgcApp()->showMessage(errorMessage.arg(errorString));
         return;
     }
 
@@ -346,6 +363,7 @@ void PlanMasterController::removeAllFromVehicle(void)
         _missionController.removeAllFromVehicle();
         _geoFenceController.removeAllFromVehicle();
         _rallyPointController.removeAllFromVehicle();
+        setDirty(false);
     } else {
         qWarning() << "PlanMasterController::removeAllFromVehicle called while offline";
     }
@@ -403,6 +421,14 @@ void PlanMasterController::sendPlanToVehicle(Vehicle* vehicle, const QString& fi
 
 void PlanMasterController::_showPlanFromManagerVehicle(void)
 {
+    if (!_managerVehicle->initialPlanRequestComplete() &&
+            !_missionController.syncInProgress() &&
+            !_geoFenceController.syncInProgress() &&
+            !_rallyPointController.syncInProgress()) {
+        // Something went wrong with initial load. All controllers are idle, so just force it off
+        _managerVehicle->forceInitialPlanRequestComplete();
+    }
+
     // The crazy if structure is to handle the load propogating by itself through the system
     if (!_missionController.showPlanFromManagerVehicle()) {
         if (!_geoFenceController.showPlanFromManagerVehicle()) {

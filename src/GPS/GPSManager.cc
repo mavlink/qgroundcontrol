@@ -43,7 +43,10 @@ void GPSManager::connectGPS(const QString& device)
     //test: connect to position update
     connect(_gpsProvider, &GPSProvider::positionUpdate, this, &GPSManager::GPSPositionUpdate);
     connect(_gpsProvider, &GPSProvider::satelliteInfoUpdate, this, &GPSManager::GPSSatelliteUpdate);
+    connect(_gpsProvider, &GPSProvider::finished, this, &GPSManager::onDisconnect);
+    connect(_gpsProvider, &GPSProvider::surveyInStatus, this, &GPSManager::surveyInStatus);
 
+    emit onConnect();
 }
 
 void GPSManager::GPSPositionUpdate(GPSPositionMessage msg)
@@ -53,6 +56,7 @@ void GPSManager::GPSPositionUpdate(GPSPositionMessage msg)
 void GPSManager::GPSSatelliteUpdate(GPSSatelliteMessage msg)
 {
     qCDebug(RTKGPSLog) << QString("GPS: got satellite info update, %1 satellites").arg((int)msg.satellite_data.count);
+    emit satelliteUpdate(msg.satellite_data.count);
 }
 
 void GPSManager::cleanup()

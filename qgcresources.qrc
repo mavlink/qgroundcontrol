@@ -113,6 +113,7 @@
         <file alias="scale_end.png">src/FlightMap/Images/scale_end.png</file>
         <file alias="scaleLight.png">src/FlightMap/Images/scaleLight.png</file>
         <file alias="scale_endLight.png">src/FlightMap/Images/scale_endLight.png</file>
+        <file alias="adsbVehicle.svg">src/FlightMap/Images/adsbVehicle.svg</file>
         <file alias="vehicleArrowOutline.svg">src/FlightMap/Images/vehicleArrowOutline.svg</file>
         <file alias="vehicleArrowOpaque.svg">src/FlightMap/Images/vehicleArrowOpaque.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
@@ -139,6 +140,7 @@
         <file alias="Gears.svg">src/ui/toolbar/Images/Gears.svg</file>
         <file alias="Analyze.svg">src/ui/toolbar/Images/Analyze.svg</file>
         <file alias="Gps.svg">src/ui/toolbar/Images/Gps.svg</file>
+        <file alias="RTK.svg">src/ui/toolbar/Images/RTK.svg</file>
         <file alias="Hamburger.svg">src/ui/toolbar/Images/Hamburger.svg</file>
         <file alias="Megaphone.svg">src/ui/toolbar/Images/Megaphone.svg</file>
         <file alias="PaperPlane.svg">src/ui/toolbar/Images/PaperPlane.svg</file>

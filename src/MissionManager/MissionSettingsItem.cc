@@ -80,6 +80,10 @@ void MissionSettingsItem::setDirty(bool dirty)
 {
     if (_dirty != dirty) {
         _dirty = dirty;
+        if (!dirty) {
+            _cameraSection.setDirty(false);
+            _speedSection.setDirty(false);
+        }
         emit dirtyChanged(_dirty);
     }
 }
@@ -221,7 +225,7 @@ void MissionSettingsItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
     if (_plannedHomePositionCoordinate != coordinate) {
         // ArduPilot tends to send crap home positions at initial vehicel boot, discard them
-        if (coordinate.latitude() != 0 || coordinate.longitude() != 0) {
+        if (coordinate.isValid() && (coordinate.latitude() != 0 || coordinate.longitude() != 0)) {
             qDebug() << "Setting home position" << coordinate;
             _plannedHomePositionCoordinate = coordinate;
             emit coordinateChanged(coordinate);
@@ -267,5 +271,13 @@ double MissionSettingsItem::specifiedFlightSpeed(void)
         return _speedSection.flightSpeed()->rawValue().toDouble();
     } else {
         return std::numeric_limits<double>::quiet_NaN();
+    }
+}
+
+void MissionSettingsItem::setMissionEndRTL(bool missionEndRTL)
+{
+    if (missionEndRTL != _missionEndRTL) {
+        _missionEndRTL = missionEndRTL;
+        emit missionEndRTLChanged(missionEndRTL);
     }
 }

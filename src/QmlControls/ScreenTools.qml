@@ -109,6 +109,12 @@ Item {
         mediumFontPointSize     = defaultFontPointSize  * _screenTools.mediumFontPointRatio
         largeFontPointSize      = defaultFontPointSize  * _screenTools.largeFontPointRatio
         minTouchPixels          = Math.round(minTouchMillimeters * Screen.pixelDensity)
+        if (minTouchPixels / Screen.height > 0.15) {
+            // If using physical sizing takes up too much o fthe vertical real estate fall back to font based sizing
+            minTouchPixels      = defaultFontPixelHeight * 3
+        }
+
+        console.log(minTouchPixels / Screen.height)
         toolbarHeight           = isMobile ? minTouchPixels : defaultFontPixelHeight * 3
     }
 
@@ -146,15 +152,7 @@ Item {
                         baseSize = 14;
                     }
                 } else {
-                    //-- Mac OS
-                    if(ScreenToolsController.isMacOS)
-                        baseSize = _defaultFont.font.pointSize;
-                    //-- Linux
-                    else if(ScreenToolsController.isLinux)
-                        baseSize = _defaultFont.font.pointSize - 3.25;
-                    //-- Windows
-                    else
-                        baseSize = _defaultFont.font.pointSize;
+                    baseSize = _defaultFont.font.pointSize;
                 }
                 _appFontPointSizeFact.value = baseSize
                 //-- Release build doesn't get signal

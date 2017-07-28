@@ -11,6 +11,7 @@
 
 #include "QGCToolbox.h"
 #include "QGCPalette.h"
+#include "QGCMAVLink.h"
 
 #include <QObject>
 #include <QVariantList>
@@ -27,6 +28,9 @@ class QGCSettings;
 class QGCCorePlugin_p;
 class FactMetaData;
 class QGeoPositionInfoSource;
+class QQmlApplicationEngine;
+class Vehicle;
+class LinkInterface;
 
 class QGCCorePlugin : public QGCTool
 {
@@ -83,8 +87,15 @@ public:
     /// Allows a plugin to override the specified color name from the palette
     virtual void paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo);
 
-    /// Allows the plugin the override the default settings for the Values Widget large and small values
+    /// Allows the plugin to override the default settings for the Values Widget large and small values
     virtual void valuesWidgetDefaultSettings(QStringList& largeValues, QStringList& smallValues);
+
+    /// Allows the plugin to override the creation of the root (native) window.
+    virtual QQmlApplicationEngine* createRootWindow(QObject* parent);
+
+    /// Allows the plugin to see all mavlink traffic to a vehicle
+    /// @return true: Allow vehicle to continue processing, false: Vehicle should not process message
+    virtual bool mavlinkMessage(Vehicle* vehicle, LinkInterface* link, mavlink_message_t message);
 
     bool showTouchAreas(void) const { return _showTouchAreas; }
     bool showAdvancedUI(void) const { return _showAdvancedUI; }

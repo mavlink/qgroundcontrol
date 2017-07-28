@@ -44,6 +44,7 @@ import android.hardware.usb.*;
 import android.widget.Toast;
 import android.util.Log;
 import android.os.PowerManager;
+import android.view.WindowManager;
 //-- Text To Speech
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
@@ -123,12 +124,27 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
         m_tts = new TextToSpeech(this,this);
         PowerManager pm = (PowerManager)m_instance.getSystemService(Context.POWER_SERVICE);
         m_wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "QGroundControl");
+        if(m_wl != null) {
+            m_wl.acquire();
+            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK acquired.");
+        } else {
+            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK not acquired!!!");
+        }
+        m_instance.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     @Override
     protected void onDestroy() {
+        try {
+            if(m_wl != null) {
+                m_wl.release();
+                Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK released.");
+            }
+            m_tts.shutdown();
+        } catch(Exception e) {
+           Log.e(TAG, "Exception onDestroy()");
+        }
         super.onDestroy();
-        m_tts.shutdown();
     }
 
     public void onInit(int status) {
@@ -138,24 +154,6 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
     {
         Log.i(TAG, "Say: " + msg);
         m_tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null);
-    }
-
-    public static void keepScreenOn()
-    {
-        if(m_wl != null) {
-            m_wl.acquire();
-            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK acquired.");
-        } else {
-            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK not acquired!!!");
-        }
-    }
-
-    public static void restoreScreenOn()
-    {
-        if(m_wl != null) {
-            m_wl.release();
-            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK released.");
-        }
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////

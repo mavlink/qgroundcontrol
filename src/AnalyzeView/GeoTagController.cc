@@ -306,8 +306,15 @@ bool GeoTagWorker::triggerFiltering()
 {
     _imageIndices.clear();
     _triggerIndices.clear();
-    for(int i = 0; i < _imageTime.count() && i < _triggerList.count(); i++) {
-        _imageIndices.append(i);
+
+    if(_imageList.count() > _triggerList.count()) {             // Logging dropouts
+        qCDebug(GeotaggingLog) << "Detected missing feedback packets.";
+    } else if (_imageList.count() < _triggerList.count()) {     // Camera skipped frames
+        qCDebug(GeotaggingLog) << "Detected missing image frames.";
+    }
+
+    for(int i = 0; i < _imageList.count() && i < _triggerList.count(); i++) {
+        _imageIndices.append(_triggerList[i].imageSequence);
         _triggerIndices.append(i);
     }
 

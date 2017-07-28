@@ -27,6 +27,8 @@ private slots:
     void _testSignals(void);
     void _testEditorFacts(void);
     void _testDefaultValues(void);
+    void _testCameraSectionDirty(void);
+    void _testSpeedSectionDirty(void);
     void _testCameraSection(void);
     void _testSpeedSection(void);
 
@@ -39,17 +41,19 @@ private:
         rawEditChangedIndex,
         cameraSectionChangedIndex,
         speedSectionChangedIndex,
+        coordinateHasRelativeAltitudeChangedIndex,
         maxSignalIndex,
     };
 
     enum {
-        commandChangedMask =                1 << commandChangedIndex,
-        frameChangedMask =                  1 << frameChangedIndex,
-        friendlyEditAllowedChangedMask =    1 << friendlyEditAllowedChangedIndex,
-        headingDegreesChangedMask =         1 << headingDegreesChangedIndex,
-        rawEditChangedMask =                1 << rawEditChangedIndex,
-        cameraSectionChangedMask =          1 << cameraSectionChangedIndex,
-        speedSectionChangedMask =           1 << speedSectionChangedIndex
+        commandChangedMask =                        1 << commandChangedIndex,
+        frameChangedMask =                          1 << frameChangedIndex,
+        friendlyEditAllowedChangedMask =            1 << friendlyEditAllowedChangedIndex,
+        headingDegreesChangedMask =                 1 << headingDegreesChangedIndex,
+        rawEditChangedMask =                        1 << rawEditChangedIndex,
+        cameraSectionChangedMask =                  1 << cameraSectionChangedIndex,
+        speedSectionChangedMask =                   1 << speedSectionChangedIndex,
+        coordinateHasRelativeAltitudeChangedMask =  1 << coordinateHasRelativeAltitudeChangedIndex,
     };
 
     static const size_t cSimpleItemSignals = maxSignalIndex;

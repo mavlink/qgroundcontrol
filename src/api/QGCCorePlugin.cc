@@ -7,11 +7,13 @@
  *
  ****************************************************************************/
 
+#include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "QGCSettings.h"
 #include "FactMetaData.h"
 #include "SettingsManager.h"
+#include "AppMessages.h"
 
 #include <QtQml>
 #include <QQmlEngine>
@@ -169,10 +171,17 @@ bool QGCCorePlugin::adjustSettingMetaData(FactMetaData& metaData)
     } else if (metaData.name() == AppSettings::telemetrySaveName) {
 #if defined (__mobile__)
         metaData.setRawDefaultValue(false);
-        return false;
+        return true;
 #else
         metaData.setRawDefaultValue(true);
         return true;
+#endif
+#if defined(__ios__)
+    } else if (metaData.name() == AppSettings::savePathName) {
+        QString appName = qgcApp()->applicationName();
+        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        metaData.setRawDefaultValue(rootDir.filePath(appName));
+        return false;
 #endif
     }
     return true; // Show setting in ui
@@ -212,4 +221,23 @@ void QGCCorePlugin::valuesWidgetDefaultSettings(QStringList& largeValues, QStrin
 {
     Q_UNUSED(smallValues);
     largeValues << "Vehicle.altitudeRelative" << "Vehicle.groundSpeed" << "Vehicle.flightTime";
+}
+
+QQmlApplicationEngine* QGCCorePlugin::createRootWindow(QObject *parent)
+{
+    QQmlApplicationEngine* pEngine = new QQmlApplicationEngine(parent);
+    pEngine->addImportPath("qrc:/qml");
+    pEngine->rootContext()->setContextProperty("joystickManager", qgcApp()->toolbox()->joystickManager());
+    pEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
+    pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainWindowNative.qml")));
+    return pEngine;
+}
+
+bool QGCCorePlugin::mavlinkMessage(Vehicle* vehicle, LinkInterface* link, mavlink_message_t message)
+{
+    Q_UNUSED(vehicle);
+    Q_UNUSED(link);
+    Q_UNUSED(message);
+
+    return true;
 }

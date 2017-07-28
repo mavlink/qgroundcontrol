@@ -13,8 +13,8 @@ exists($${OUT_PWD}/qgroundcontrol.pro) {
 
 message(Qt version $$[QT_VERSION])
 
-!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 4) {
-    error("Unsupported Qt version, 5.5+ is required")
+!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 6) {
+    error("Unsupported Qt version, 5.7+ is required")
 }
 
 include(QGCCommon.pri)
@@ -27,6 +27,66 @@ DebugBuild {
     DESTDIR  = $${OUT_PWD}/debug
 } else {
     DESTDIR  = $${OUT_PWD}/release
+}
+
+#
+# OS Specific settings
+#
+
+MacBuild {
+    QMAKE_INFO_PLIST    = Custom-Info.plist
+    ICON                = $${BASEDIR}/resources/icons/macx.icns
+    OTHER_FILES        += Custom-Info.plist
+    equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
+        LIBS           += -framework ApplicationServices
+    }
+}
+
+iOSBuild {
+    BUNDLE.files        = $$files($$PWD/ios/AppIcon*.png) $$PWD/ios/QGCLaunchScreen.xib
+    QMAKE_BUNDLE_DATA  += BUNDLE
+    LIBS               += -framework AVFoundation
+    #-- Info.plist (need an "official" one for the App Store)
+    ForAppStore {
+        message(App Store Build)
+        #-- Create official, versioned Info.plist
+        APP_STORE = $$system(cd $${BASEDIR} && $${BASEDIR}/tools/update_ios_version.sh $${BASEDIR}/ios/iOSForAppStore-Info-Source.plist $${BASEDIR}/ios/iOSForAppStore-Info.plist)
+        APP_ERROR = $$find(APP_STORE, "Error")
+        count(APP_ERROR, 1) {
+            error("Error building .plist file. 'ForAppStore' builds are only possible through the official build system.")
+        }
+        QT               += qml-private
+        CONFIG           += qtquickcompiler
+        QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOSForAppStore-Info.plist
+        OTHER_FILES      += $${BASEDIR}/ios/iOSForAppStore-Info.plist
+    } else {
+        QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOS-Info.plist
+        OTHER_FILES      += $${BASEDIR}/ios/iOS-Info.plist
+    }
+    #-- TODO: Add iTunesArtwork
+}
+
+LinuxBuild {
+    CONFIG  += qesp_linux_udev
+}
+
+WindowsBuild {
+    RC_ICONS = resources/icons/qgroundcontrol.ico
+}
+
+#
+# Branding
+#
+
+QGC_APP_NAME        = "QGroundControl"
+QGC_ORG_NAME        = "QGroundControl.org"
+QGC_ORG_DOMAIN      = "org.qgroundcontrol"
+QGC_APP_DESCRIPTION = "Open source ground control app provided by QGroundControl dev team"
+QGC_APP_COPYRIGHT   = "Copyright (C) 2017 QGroundControl Development Team. All rights reserved."
+
+WindowsBuild {
+    QGC_INSTALLER_ICON          = "WindowsQGC.ico"
+    QGC_INSTALLER_HEADER_BITMAP = "installheader.bmp"
 }
 
 # Load additional config flags from user_config.pri
@@ -61,6 +121,14 @@ contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) {
         # CUSTOMHEADER = \"\\\"YourIQGCCorePluginDerivation.h\\\"\"
         include($$PWD/custom/custom.pri)
     }
+}
+
+WindowsBuild {
+    # Sets up application properties
+    QMAKE_TARGET_COMPANY        = "$${QGC_ORG_NAME}"
+    QMAKE_TARGET_DESCRIPTION    = "$${QGC_APP_DESCRIPTION}"
+    QMAKE_TARGET_COPYRIGHT      = "$${QGC_APP_COPYRIGHT}"
+    QMAKE_TARGET_PRODUCT        = "$${QGC_APP_NAME}"
 }
 
 #
@@ -181,50 +249,6 @@ ReleaseBuild {
     # We don't need the testlib console in release mode
     QT.testlib.CONFIG -= console
 }
-#
-# OS Specific settings
-#
-
-MacBuild {
-    QMAKE_INFO_PLIST    = Custom-Info.plist
-    ICON                = $${BASEDIR}/resources/icons/macx.icns
-    OTHER_FILES        += Custom-Info.plist
-equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
-    LIBS               += -framework ApplicationServices
-}
-}
-
-iOSBuild {
-    BUNDLE.files        = $$files($$PWD/ios/AppIcon*.png) $$PWD/ios/QGCLaunchScreen.xib
-    QMAKE_BUNDLE_DATA  += BUNDLE
-    LIBS               += -framework AVFoundation
-    #-- Info.plist (need an "official" one for the App Store)
-    ForAppStore {
-        message(App Store Build)
-        #-- Create official, versioned Info.plist
-        APP_STORE = $$system(cd $${BASEDIR} && $${BASEDIR}/tools/update_ios_version.sh $${BASEDIR}/ios/iOSForAppStore-Info-Source.plist $${BASEDIR}/ios/iOSForAppStore-Info.plist)
-        APP_ERROR = $$find(APP_STORE, "Error")
-        count(APP_ERROR, 1) {
-            error("Error building .plist file. 'ForAppStore' builds are only possible through the official build system.")
-        }
-        QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOSForAppStore-Info.plist
-        OTHER_FILES      += $${BASEDIR}/ios/iOSForAppStore-Info.plist
-    } else {
-        QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOS-Info.plist
-        OTHER_FILES      += $${BASEDIR}/ios/iOS-Info.plist
-    }
-    #-- TODO: Add iTunesArtwork
-}
-
-LinuxBuild {
-    CONFIG += qesp_linux_udev
-}
-
-RC_ICONS = resources/icons/qgroundcontrol.ico
-QMAKE_TARGET_COMPANY = "qgroundcontrol.org"
-QMAKE_TARGET_DESCRIPTION = "Open source ground control app provided by QGroundControl dev team"
-QMAKE_TARGET_COPYRIGHT = "Copyright (C) 2016 QGroundControl Development Team. All rights reserved."
-QMAKE_TARGET_PRODUCT = "QGroundControl"
 
 #
 # Build-specific settings
@@ -278,6 +302,15 @@ CustomBuild {
     RESOURCES += \
         $$PWD/qgroundcontrol.qrc \
         $$PWD/qgcresources.qrc
+}
+
+# On Qt 5.9 android versions there is the following bug: https://bugreports.qt.io/browse/QTBUG-61424
+# This prevents FileDialog from being used. So we have a temp hack workaround for it which just no-ops
+# the FileDialog fallback mechanism on android 5.9 builds.
+equals(QT_MAJOR_VERSION, 5):equals(QT_MINOR_VERSION, 9):AndroidBuild {
+    RESOURCES += $$PWD/HackAndroidFileDialog.qrc
+} else {
+    RESOURCES += $$PWD/HackFileDialog.qrc
 }
 
 #
@@ -345,13 +378,9 @@ FORMS += \
     src/ui/QGCMAVLinkInspector.ui \
     src/ui/QGCMAVLinkLogPlayer.ui \
     src/ui/QGCMapRCToParamDialog.ui \
-    src/ui/QGCTabbedInfoView.ui \
     src/ui/QGCUASFileView.ui \
     src/ui/QGCUASFileViewMulti.ui \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
-    src/ui/uas/UASMessageView.ui \
-    src/ui/uas/UASQuickView.ui \
-    src/ui/uas/UASQuickViewItemSelect.ui \
 }
 
 #
@@ -390,7 +419,9 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
         src/MissionManager/MissionControllerTest.h \
         src/MissionManager/MissionItemTest.h \
         src/MissionManager/MissionManagerTest.h \
+        src/MissionManager/MissionSettingsTest.h \
         src/MissionManager/PlanMasterControllerTest.h \
+        src/MissionManager/QGCMapPolygonTest.h \
         src/MissionManager/SectionTest.h \
         src/MissionManager/SimpleMissionItemTest.h \
         src/MissionManager/SpeedSectionTest.h \
@@ -423,7 +454,9 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
         src/MissionManager/MissionControllerTest.cc \
         src/MissionManager/MissionItemTest.cc \
         src/MissionManager/MissionManagerTest.cc \
+        src/MissionManager/MissionSettingsTest.cc \
         src/MissionManager/PlanMasterControllerTest.cc \
+        src/MissionManager/QGCMapPolygonTest.cc \
         src/MissionManager/SectionTest.cc \
         src/MissionManager/SimpleMissionItemTest.cc \
         src/MissionManager/SpeedSectionTest.cc \
@@ -507,7 +540,7 @@ HEADERS += \
     src/QmlControls/CoordinateVector.h \
     src/QmlControls/MavlinkQmlSingleton.h \
     src/QmlControls/ParameterEditorController.h \
-    src/QmlControls/QFileDialogController.h \
+    src/QmlControls/QGCFileDialogController.h \
     src/QmlControls/QGCImageProvider.h \
     src/QmlControls/QGroundControlQmlGlobal.h \
     src/QmlControls/QmlObjectListModel.h \
@@ -606,7 +639,6 @@ HEADERS += \
     src/ui/QGCMAVLinkInspector.h \
     src/ui/QGCMAVLinkLogPlayer.h \
     src/ui/QGCMapRCToParamDialog.h \
-    src/ui/QGCTabbedInfoView.h \
     src/ui/QGCUASFileView.h \
     src/ui/QGCUASFileViewMulti.h \
     src/ui/linechart/ChartPlot.h \
@@ -617,12 +649,6 @@ HEADERS += \
     src/ui/linechart/ScrollZoomer.h \
     src/ui/linechart/Scrollbar.h \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
-    src/ui/uas/UASMessageView.h \
-    src/ui/uas/UASQuickView.h \
-    src/ui/uas/UASQuickViewGaugeItem.h \
-    src/ui/uas/UASQuickViewItem.h \
-    src/ui/uas/UASQuickViewItemSelect.h \
-    src/ui/uas/UASQuickViewTextItem.h \
 }
 
 iOSBuild {
@@ -690,7 +716,7 @@ SOURCES += \
     src/QmlControls/AppMessages.cc \
     src/QmlControls/CoordinateVector.cc \
     src/QmlControls/ParameterEditorController.cc \
-    src/QmlControls/QFileDialogController.cc \
+    src/QmlControls/QGCFileDialogController.cc \
     src/QmlControls/QGCImageProvider.cc \
     src/QmlControls/QGroundControlQmlGlobal.cc \
     src/QmlControls/QmlObjectListModel.cc \
@@ -770,7 +796,6 @@ SOURCES += \
     src/ui/QGCMAVLinkInspector.cc \
     src/ui/QGCMAVLinkLogPlayer.cc \
     src/ui/QGCMapRCToParamDialog.cpp \
-    src/ui/QGCTabbedInfoView.cpp \
     src/ui/QGCUASFileView.cc \
     src/ui/QGCUASFileViewMulti.cc \
     src/ui/linechart/ChartPlot.cc \
@@ -781,12 +806,6 @@ SOURCES += \
     src/ui/linechart/ScrollZoomer.cc \
     src/ui/linechart/Scrollbar.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
-    src/ui/uas/UASMessageView.cc \
-    src/ui/uas/UASQuickView.cc \
-    src/ui/uas/UASQuickViewGaugeItem.cc \
-    src/ui/uas/UASQuickViewItem.cc \
-    src/ui/uas/UASQuickViewItemSelect.cc \
-    src/ui/uas/UASQuickViewTextItem.cc \
 }
 
 # Palette test widget in debug builds
@@ -809,7 +828,6 @@ HEADERS+= \
     src/AutoPilotPlugins/AutoPilotPlugin.h \
     src/AutoPilotPlugins/Common/ESP8266Component.h \
     src/AutoPilotPlugins/Common/ESP8266ComponentController.h \
-    src/AutoPilotPlugins/Common/MixersComponent.h \
     src/AutoPilotPlugins/Common/MotorComponent.h \
     src/AutoPilotPlugins/Common/RadioComponentController.h \
     src/AutoPilotPlugins/Common/SyslinkComponent.h \
@@ -818,7 +836,9 @@ HEADERS+= \
     src/FirmwarePlugin/CameraMetaData.h \
     src/FirmwarePlugin/FirmwarePlugin.h \
     src/FirmwarePlugin/FirmwarePluginManager.h \
+    src/Vehicle/ADSBVehicle.h \
     src/Vehicle/MultiVehicleManager.h \
+    src/Vehicle/GPSRTKFactGroup.h \
     src/Vehicle/Vehicle.h \
     src/VehicleSetup/VehicleComponent.h \
 
@@ -834,7 +854,6 @@ SOURCES += \
     src/AutoPilotPlugins/AutoPilotPlugin.cc \
     src/AutoPilotPlugins/Common/ESP8266Component.cc \
     src/AutoPilotPlugins/Common/ESP8266ComponentController.cc \
-    src/AutoPilotPlugins/Common/MixersComponent.cc \
     src/AutoPilotPlugins/Common/MotorComponent.cc \
     src/AutoPilotPlugins/Common/RadioComponentController.cc \
     src/AutoPilotPlugins/Common/SyslinkComponent.cc \
@@ -843,7 +862,9 @@ SOURCES += \
     src/FirmwarePlugin/CameraMetaData.cc \
     src/FirmwarePlugin/FirmwarePlugin.cc \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
+    src/Vehicle/ADSBVehicle.cc \
     src/Vehicle/MultiVehicleManager.cc \
+    src/Vehicle/GPSRTKFactGroup.cc \
     src/Vehicle/Vehicle.cc \
     src/VehicleSetup/VehicleComponent.cc \
 
@@ -1051,7 +1072,11 @@ AndroidBuild {
 # Post link configuration
 #
 
-include(QGCSetup.pri)
+contains (CONFIG, QGC_DISABLE_BUILD_SETUP) {
+    message("Disable standard build setup")
+} else {
+    include(QGCSetup.pri)
+}
 
 #
 # Installer targets

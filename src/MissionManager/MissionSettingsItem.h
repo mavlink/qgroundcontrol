@@ -26,15 +26,17 @@ class MissionSettingsItem : public ComplexMissionItem
 public:
     MissionSettingsItem(Vehicle* vehicle, QObject* parent = NULL);
 
-    Q_PROPERTY(Fact*    plannedHomePositionAltitude READ plannedHomePositionAltitude                                        CONSTANT)
-    Q_PROPERTY(bool     missionEndRTL               MEMBER _missionEndRTL                                                   NOTIFY missionEndRTLChanged)
-    Q_PROPERTY(QObject* cameraSection               READ cameraSection                                                      CONSTANT)
-    Q_PROPERTY(QObject* speedSection                READ speedSection                                                       CONSTANT)
+    Q_PROPERTY(Fact*    plannedHomePositionAltitude READ plannedHomePositionAltitude                            CONSTANT)
+    Q_PROPERTY(bool     missionEndRTL               READ missionEndRTL                  WRITE setMissionEndRTL  NOTIFY missionEndRTLChanged)
+    Q_PROPERTY(QObject* cameraSection               READ cameraSection                                          CONSTANT)
+    Q_PROPERTY(QObject* speedSection                READ speedSection                                           CONSTANT)
 
-    Fact*   plannedHomePositionAltitude (void) { return &_plannedHomePositionAltitudeFact; }
+    Fact*           plannedHomePositionAltitude (void) { return &_plannedHomePositionAltitudeFact; }
+    bool            missionEndRTL               (void) const { return _missionEndRTL; }
+    CameraSection*  cameraSection               (void) { return &_cameraSection; }
+    SpeedSection*   speedSection                (void) { return &_speedSection; }
 
-    CameraSection* cameraSection(void) { return &_cameraSection; }
-    SpeedSection* speedSection(void) { return &_speedSection; }
+    void setMissionEndRTL(bool missionEndRTL);
 
     /// Scans the loaded items for settings items
     bool scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex);
@@ -61,8 +63,8 @@ public:
     bool            isStandaloneCoordinate  (void) const final { return false; }
     bool            specifiesCoordinate     (void) const final;
     bool            specifiesAltitudeOnly   (void) const final { return false; }
-    QString         commandDescription      (void) const final { return "Mission Settings"; }
-    QString         commandName             (void) const final { return "Mission Settings"; }
+    QString         commandDescription      (void) const final { return "Mission Start"; }
+    QString         commandName             (void) const final { return "Mission Start"; }
     QString         abbreviation            (void) const final { return "H"; }
     QGeoCoordinate  coordinate              (void) const final { return _plannedHomePositionCoordinate; }
     QGeoCoordinate  exitCoordinate          (void) const final { return _plannedHomePositionCoordinate; }
@@ -72,8 +74,8 @@ public:
     void            applyNewAltitude        (double newAltitude) final { Q_UNUSED(newAltitude); /* no action */ }
     double          specifiedFlightSpeed    (void) final;
 
-    bool coordinateHasRelativeAltitude      (void) const final { return true; }
-    bool exitCoordinateHasRelativeAltitude  (void) const final { return true; }
+    bool coordinateHasRelativeAltitude      (void) const final { return false; }
+    bool exitCoordinateHasRelativeAltitude  (void) const final { return false; }
     bool exitCoordinateSameAsEntry          (void) const final { return true; }
 
     void setDirty           (bool dirty) final;

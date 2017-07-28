@@ -148,6 +148,9 @@ QGCCacheWorker::run()
                 case QGCMapTask::taskDeleteTileSet:
                     _deleteTileSet(task);
                     break;
+                case QGCMapTask::taskRenameTileSet:
+                    _renameTileSet(task);
+                    break;
                 case QGCMapTask::taskPruneCache:
                     _pruneCache(task);
                     break;
@@ -613,6 +616,22 @@ QGCCacheWorker::_deleteTileSet(QGCMapTask* mtask)
     query.exec(s);
     _updateTotals();
     task->setTileSetDeleted();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCacheWorker::_renameTileSet(QGCMapTask* mtask)
+{
+    if(!_testTask(mtask)) {
+        return;
+    }
+    QGCRenameTileSetTask* task = static_cast<QGCRenameTileSetTask*>(mtask);
+    QSqlQuery query(*_db);
+    QString s;
+    s = QString("UPDATE TileSets SET name = \"%1\" WHERE setID = %2").arg(task->newName()).arg(task->setID());
+    if(!query.exec(s)) {
+        task->setError("Error renaming tile set");
+    }
 }
 
 //-----------------------------------------------------------------------------

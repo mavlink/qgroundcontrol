@@ -72,6 +72,7 @@ A Vagrantfile is provided to build QGroundControl using the [Vagrant](https://ww
 * [Download](https://www.vagrantup.com/downloads.html) Vagrant
 * [Install](https://www.vagrantup.com/docs/getting-started/) Vagrant
 * From the root directory of the QGroundControl repository run "vagrant up"
+* To use the graphical environment run "vagrant reload"
 
 #### Additional build notes for all supported OS
 

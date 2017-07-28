@@ -41,7 +41,7 @@ Rectangle {
     readonly property string _vehicleLabel:     qsTr("Vehicle")
 
     QGCPalette { id: qgcPal }
-    QFileDialogController { id: fileController }
+    QGCFileDialogController { id: fileController }
 
     Loader {
         id:              deferedload
@@ -84,18 +84,10 @@ Rectangle {
             anchors.top:    parent ? parent.top   : undefined
             spacing:        _margin
 
-            SectionHeader {
-                id:         missionDefaultsSectionHeader
-                text:       qsTr("Mission Defaults")
-                checked:    true
-                showSpacer: false
-            }
-
             Column {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 spacing:        _margin
-                visible:        missionDefaultsSectionHeader.checked
 
                 GridLayout {
                     anchors.left:   parent.left
@@ -126,17 +118,42 @@ Rectangle {
                         enabled:            flightSpeedCheckBox.checked
                     }
                 } // GridLayout
+            }
+
+            CameraSection {
+                id:         cameraSection
+                checked:    missionItem.cameraSection.settingsSpecified
+            }
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                text:                   qsTr("Above camera commands will take affect immediately upon mission start.")
+                wrapMode:               Text.WordWrap
+                horizontalAlignment:    Text.AlignHCenter
+                font.pointSize:         ScreenTools.smallFontPointSize
+                visible:                cameraSection.checked
+            }
+
+            SectionHeader {
+                id:         missionEndHeader
+                text:       qsTr("Mission End")
+                checked:    true
+            }
+
+            Column {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        _margin
+                visible:        missionEndHeader.checked
 
                 QGCCheckBox {
-                    text:       qsTr("RTL after mission end")
+                    text:       qsTr("Return To Launch")
                     checked:    missionItem.missionEndRTL
                     onClicked:  missionItem.missionEndRTL = checked
                 }
             }
 
-            CameraSection {
-                checked: missionItem.cameraSection.settingsSpecified
-            }
 
             SectionHeader {
                 id:         vehicleInfoSectionHeader
