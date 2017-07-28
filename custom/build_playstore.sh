@@ -2,7 +2,7 @@
 
 # Note
 #
-# There is a Qt (Java) bug that once in a while a build will fail with something like this below.
+# There is a (Java) bug that once in a while a build will fail with something like this below.
 # When this happens, just run the build again.
 #
 # FAILURE: Build failed with an exception.
