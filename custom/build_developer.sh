@@ -2,7 +2,7 @@
 
 # Note
 #
-# There is a Qt (Java) bug that once in a while a build will fail with something like this below.
+# There is a (Java) bug that once in a while a build will fail with something like this below.
 # When this happens, just run the build again.
 #
 # FAILURE: Build failed with an exception.
@@ -16,22 +16,28 @@ die() {
     exit -1    
 }
 
-#-- Adjust these to your Android SDK/NDK installation
-export ANDROID_NDK_ROOT=/Users/gus/Library/Android/sdk/ndk-bundle
-export ANDROID_SDK_ROOT=/Users/gus/Library/Android/sdk
+unameOut=`uname -s`
+QTVERSION=5.9.1
+
+#-- Adjust these to your Android SDK/NDK and Qt installation
+if [ "$unameOut" = "Linux" ]; then
+    export ANDROID_NDK_ROOT=~/dpbuild/Android/Sdk/ndk-bundle
+    export ANDROID_SDK_ROOT=~/dpbuild/Android/Sdk
+    QTINSTALL=~/dpbuild/qt/$QTVERSION
+else
+    export ANDROID_NDK_ROOT=/Users/gus/Library/Android/sdk/ndk-bundle
+    export ANDROID_SDK_ROOT=/Users/gus/Library/Android/sdk
+    QTINSTALL=/Users/gus/Applications/Qt/$QTVERSION
+fi
 
 [ -d $ANDROID_NDK_ROOT ] || die "Could not locate ANDROID_NDK_ROOT"
 [ -d $ANDROID_SDK_ROOT ] || die "Could not locate ANDROID_SDK_ROOT"
-
-#-- Adjust this to where QT is installed
-QTVERSION=5.9.1
-QTINSTALL=/Users/gus/Applications/Qt/$QTVERSION
-
 [ -d $QTINSTALL ] || die "Could not locate Qt $QTVERSION installation"
 [ -e $QTINSTALL/android_x86/bin/qmake ] || die "Could not locate Qt $QTVERSION installation for Android x86"
 
 #-- The build will run in the directory below
 BUILDDIR=/tmp/datapilot_build
+[ -d $BUILDDIR ] || mkdir -p $BUILDDIR
 
 #-- No need to change anything below unless you are customizing it
 
@@ -48,7 +54,6 @@ build() {
     exit 0
 }
 
-unameOut=`uname -s`
 case "${unameOut}" in
     Linux*)     CORES=`cat /proc/cpuinfo | awk '/^processor/{print $3}' | tail -1`;;
     Darwin*)    CORES=`sysctl -n hw.ncpu`;;
