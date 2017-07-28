@@ -526,7 +526,7 @@ bool FirmwarePlugin::hasGimbal(Vehicle* vehicle, bool& rollSupported, bool& pitc
     return false;
 }
 
-QGCCameraManager* FirmwarePlugin::cameraManager(Vehicle* vehicle)
+QGCCameraManager* FirmwarePlugin::createCameraManager(Vehicle* vehicle)
 {
     Q_UNUSED(vehicle);
     return NULL;

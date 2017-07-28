@@ -191,6 +191,7 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
     emit activeVehicleAvailableChanged(false);
     emit parameterReadyVehicleAvailableChanged(false);
     emit vehicleRemoved(vehicle);
+    vehicle->prepareDelete();
 
 #if defined (__ios__) || defined(__android__)
     if(_vehicles.count() == 0) {
