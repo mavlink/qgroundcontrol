@@ -25,6 +25,8 @@
         <file alias="CogWheel.svg">res/images/CogWheel.svg</file>
         <file alias="CompassIndicator.svg">res/images/CompassIndicator.svg</file>
         <file alias="gps.svg">res/images/gps.svg</file>
+        <file alias="gimbalPitch.svg">res/images/gimbalPitch.svg</file>
+        <file alias="gimbalYaw.svg">res/images/gimbalYaw.svg</file>
         <file alias="logoWhite.svg">res/images/logoWhite.svg</file>
         <file alias="mag-cal-1-rest.svg">res/images/mag-cal-1-rest.svg</file>
         <file alias="mag-cal-1.svg">res/images/mag-cal-1.svg</file>

@@ -67,6 +67,9 @@ Item {
     property string _distanceStr:       isNaN(_distance) ? "0" : _distance.toFixed(0) + ' ' + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "")
     property real   _heading:           _activeVehicle   ? _activeVehicle.heading.rawValue : 0
     property bool   _st16GPS:           false
+    property real   _gimbalPitch:       _camera ? -_camera.gimbalPitch : 0
+    property real   _gimbalYaw:         _camera ? _camera.gimbalYaw : 0
+    property bool   _gimbalVisible:     _camera ? _camera.gimbalData && camControlLoader.visible : false
 
     property real   _distance:              0.0
     property bool   _noSdCardMsgShown:      false
@@ -440,12 +443,74 @@ Item {
 
     //-- Camera Control
     Loader {
+        id:                     camControlLoader
         visible:                !_mainIsMap
         source:                 _mainIsMap ? "" : "/typhoonh/cameraControl.qml"
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.top:            parent.top
         anchors.topMargin:      ScreenTools.defaultFontPixelHeight
+    }
+
+    //-- Gimbal Indicator
+    Item {
+        id:                     gimbalIndicator
+        width:                  gimbalCol.width
+        height:                 gimbalCol.height
+        visible:                _gimbalVisible
+        anchors.verticalCenter: camControlLoader.verticalCenter
+        anchors.right:          camControlLoader.left
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+        Column {
+            id:                 gimbalCol
+            spacing:            ScreenTools.defaultFontPixelHeight * 0.25
+            anchors.horizontalCenter: parent.horizontalCenter
+            Rectangle {
+                width:          ScreenTools.defaultFontPixelWidth * 4
+                height:         camControlLoader.height * 0.8
+                color:          Qt.rgba(1,1,1,0.55)
+                radius:         ScreenTools.defaultFontPixelWidth * 0.5
+                Image {
+                    id:                 pitchScale
+                    height:             parent.height * 0.9
+                    anchors.centerIn:   parent
+                    source:             "/typhoonh/img/gimbalPitch.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    sourceSize.height:  height
+                    smooth:             true
+                    mipmap:             true
+                    Image {
+                        id:                 yawIndicator
+                        width:              ScreenTools.defaultFontPixelWidth * 3
+                        source:             "/typhoonh/img/gimbalYaw.svg"
+                        fillMode:           Image.PreserveAspectFit
+                        sourceSize.width:   width
+                        y:                  (parent.height * _gimbalPitch / 105) + (parent.height * 0.15) - (ScreenTools.defaultFontPixelWidth * 1.5)
+                        smooth:             true
+                        mipmap:             true
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        transform: Rotation {
+                            origin.x:       yawIndicator.width  / 2
+                            origin.y:       yawIndicator.height / 2
+                            angle:          _gimbalYaw + 90
+                        }
+                    }
+                }
+            }
+            Rectangle {
+                width:              ScreenTools.defaultFontPixelWidth * 4
+                height:             gimbalLabel.height * 1.5
+                color:              Qt.rgba(1,1,1,0.55)
+                radius:             ScreenTools.defaultFontPixelWidth * 0.5
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel {
+                    id:             gimbalLabel
+                    text:           _gimbalPitch ? -_gimbalPitch.toFixed(0) : 0
+                    color:          "black"
+                    anchors.centerIn: parent
+                }
+            }
+        }
     }
 
     //-- Vehicle Status
