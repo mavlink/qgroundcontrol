@@ -1553,6 +1553,14 @@ Smaller values make the saved mag bias learn slower from flight to flight. Large
       <max>10.0</max>
       <scope>modules/ekf2</scope>
     </parameter>
+    <parameter default="1.0" name="EKF2_RNG_A_IGATE" type="FLOAT">
+      <short_desc>Gate size used for innovation consistency checks for range aid fusion</short_desc>
+      <long_desc>A lower value means HAGL needs to be more stable in order to use range finder for height estimation in range aid mode</long_desc>
+      <min>0.1</min>
+      <max>5.0</max>
+      <unit>SD</unit>
+      <scope>modules/ekf2</scope>
+    </parameter>
   </group>
   <group name="FW Attitude Control">
     <parameter default="0.4" name="FW_R_TC" type="FLOAT">
@@ -2118,7 +2126,8 @@ Smaller values make the saved mag bias learn slower from flight to flight. Large
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="15.0" name="FW_LND_HHDIST" type="FLOAT">
-      <short_desc>Landing heading hold horizontal distance</short_desc>
+      <short_desc>Landing heading hold horizontal distance.
+Set to 0 to disable heading hold</short_desc>
       <min>0</min>
       <max>30.0</max>
       <unit>m</unit>
@@ -3249,12 +3258,14 @@ by initializing the estimator to the LPE_LAT/LON parameters when global informat
       <short_desc>MAVLink system ID</short_desc>
       <min>1</min>
       <max>250</max>
+      <reboot_required>true</reboot_required>
       <scope>modules/mavlink</scope>
     </parameter>
     <parameter default="1" name="MAV_COMP_ID" type="INT32">
       <short_desc>MAVLink component ID</short_desc>
       <min>1</min>
       <max>250</max>
+      <reboot_required>true</reboot_required>
       <scope>modules/mavlink</scope>
     </parameter>
     <parameter default="0" name="MAV_PROTO_VER" type="INT32">
@@ -4115,9 +4126,9 @@ if required for the gimbal (only in AUX output mode)</short_desc>
       <decimal>1</decimal>
       <scope>modules/mc_pos_control</scope>
     </parameter>
-    <parameter default="0.5" name="MPC_LAND_SPEED" type="FLOAT">
+    <parameter default="0.7" name="MPC_LAND_SPEED" type="FLOAT">
       <short_desc>Landing descend rate</short_desc>
-      <min>0.2</min>
+      <min>0.6</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
       <scope>modules/mc_pos_control</scope>
@@ -6689,14 +6700,26 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <short_desc>Logging Mode</short_desc>
       <long_desc>Determines when to start and stop logging. By default, logging is started when arming the system, and stopped when disarming. This parameter is only for the new logger (SYS_LOGGER=1).</long_desc>
       <min>0</min>
-      <max>3</max>
+      <max>2</max>
       <reboot_required>true</reboot_required>
       <scope>modules/logger</scope>
       <values>
         <value code="1">from boot until disarm</value>
         <value code="0">when armed until disarm (default)</value>
-        <value code="3">from boot until shutdown - IMU and Baro data only (used for thermal calibration)</value>
         <value code="2">from boot until shutdown</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SDLOG_PROFILE" type="INT32">
+      <short_desc>Logging Topic Profile</short_desc>
+      <long_desc>Selects a set of topics appropriate for specific tasks. This parameter is only for the new logger (SYS_LOGGER=1).</long_desc>
+      <min>0</min>
+      <max>2</max>
+      <reboot_required>true</reboot_required>
+      <scope>modules/logger</scope>
+      <values>
+        <value code="1">thermal calibration</value>
+        <value code="0">default</value>
+        <value code="2">system identification</value>
       </values>
     </parameter>
     <parameter default="0" name="SDLOG_DIRS_MAX" type="INT32">
@@ -8038,12 +8061,27 @@ DEPRECATED, only used on V1 hardware</short_desc>
         <value code="0">Keep parameters</value>
       </values>
     </parameter>
+    <parameter default="0" name="SYS_HITL" type="INT32">
+      <short_desc>Enable HITL mode on next boot</short_desc>
+      <long_desc>While enabled the system will boot in HITL mode and not enable all sensors and checks. When disabled the same vehicle can be normally flown outdoors.</long_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+      <scope>modules/systemlib</scope>
+    </parameter>
     <parameter default="1" name="SYS_USE_IO" type="INT32">
       <short_desc>Set usage of IO board</short_desc>
       <long_desc>Can be used to use a standard startup script but with a FMU only set-up. Set to 0 to force the FMU only set-up.</long_desc>
       <min>0</min>
       <max>1</max>
       <boolean />
+      <reboot_required>true</reboot_required>
+      <scope>modules/systemlib</scope>
+    </parameter>
+    <parameter default="0" name="SYS_FMU_TASK" type="INT32">
+      <short_desc>Run the FMU as a task to reduce latency</short_desc>
+      <long_desc>If true, the FMU will run in a separate task instead of on the work queue. Set this if low latency is required, for example for racing. This is a trade-off between RAM usage and latency: running as a task, it requires a separate stack and directly polls on the control topics, whereas running on the work queue, it runs at a fixed update rate.</long_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
     <parameter default="2" name="SYS_RESTART_TYPE" type="INT32">
