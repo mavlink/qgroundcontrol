@@ -1,5 +1,5 @@
 
-name: QGroundControl
+name: qgroundcontrol
 version: '3.2+git'
 summary: Cross-platform ground control station for drones 
 description: |
