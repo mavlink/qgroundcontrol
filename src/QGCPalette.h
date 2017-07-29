@@ -89,6 +89,8 @@ public:
     DEFINE_QGC_COLOR(textFieldText,         setTextFieldText)
     DEFINE_QGC_COLOR(mapButton,             setMapButton)
     DEFINE_QGC_COLOR(mapButtonHighlight,    setMapButtonHighlight)
+    DEFINE_QGC_COLOR(mapIndicator,          setMapIndicator)
+    DEFINE_QGC_COLOR(mapIndicatorChild,     setMapIndicatorChild)
     DEFINE_QGC_COLOR(mapWidgetBorderLight,  setMapWidgetBorderLight)
     DEFINE_QGC_COLOR(mapWidgetBorderDark,   setMapWidgetBorderDark)
     DEFINE_QGC_COLOR(brandingPurple,        setBrandingPurple)
