@@ -214,6 +214,7 @@ Rectangle {
                 onActivated: {
                     if (index == _gridTypeManual) {
                         missionItem.manualGrid.value = true
+                        missionItem.fixedValueIsAltitude.value = true
                     } else if (index == _gridTypeCustomCamera) {
                         missionItem.manualGrid.value = false
                         missionItem.camera.value = gridTypeCombo.textAt(index)
