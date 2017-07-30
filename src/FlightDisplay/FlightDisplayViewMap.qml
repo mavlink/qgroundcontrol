@@ -184,8 +184,24 @@ FlightMap {
         delegate: VehicleMapItem {
             vehicle:        object
             coordinate:     object.coordinate
-            isSatellite:    flightMap.isSatelliteMap
+            map:            flightMap
             size:           _mainIsMap ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight
+            z:              QGroundControl.zOrderVehicles
+        }
+    }
+
+    // Add ADSB vehicles to the map
+    MapItemView {
+        model: _activeVehicle ? _activeVehicle.adsbVehicles : 0
+
+        property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
+        delegate: VehicleMapItem {
+            coordinate:     object.coordinate
+            altitude:       object.altitude
+            callsign:       object.callsign
+            heading:        object.heading
+            map:            flightMap
             z:              QGroundControl.zOrderVehicles
         }
     }

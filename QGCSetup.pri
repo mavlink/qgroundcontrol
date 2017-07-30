@@ -114,6 +114,8 @@ LinuxBuild {
         libQt5PrintSupport.so.5 \
         libQt5Qml.so.5 \
         libQt5Quick.so.5 \
+        libQt5QuickControls2.so.5 \
+        libQt5QuickTemplates2.so.5 \
         libQt5QuickWidgets.so.5 \
         libQt5SerialPort.so.5 \
         libQt5Sql.so.5 \

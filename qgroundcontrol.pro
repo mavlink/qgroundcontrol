@@ -556,6 +556,7 @@ HEADERS += \
     src/Settings/SettingsManager.h \
     src/Settings/UnitsSettings.h \
     src/Settings/VideoSettings.h \
+    src/Terrain.h \
     src/Vehicle/MAVLinkLogManager.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/audio/QGCAudioWorker.h \
@@ -732,6 +733,7 @@ SOURCES += \
     src/Settings/SettingsManager.cc \
     src/Settings/UnitsSettings.cc \
     src/Settings/VideoSettings.cc \
+    src/Terrain.cc \
     src/Vehicle/MAVLinkLogManager.cc \
     src/VehicleSetup/JoystickConfigController.cc \
     src/audio/QGCAudioWorker.cpp \
@@ -836,6 +838,7 @@ HEADERS+= \
     src/FirmwarePlugin/CameraMetaData.h \
     src/FirmwarePlugin/FirmwarePlugin.h \
     src/FirmwarePlugin/FirmwarePluginManager.h \
+    src/Vehicle/ADSBVehicle.h \
     src/Vehicle/MultiVehicleManager.h \
     src/Vehicle/GPSRTKFactGroup.h \
     src/Vehicle/Vehicle.h \
@@ -861,6 +864,7 @@ SOURCES += \
     src/FirmwarePlugin/CameraMetaData.cc \
     src/FirmwarePlugin/FirmwarePlugin.cc \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
+    src/Vehicle/ADSBVehicle.cc \
     src/Vehicle/MultiVehicleManager.cc \
     src/Vehicle/GPSRTKFactGroup.cc \
     src/Vehicle/Vehicle.cc \

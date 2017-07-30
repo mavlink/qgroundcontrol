@@ -30,6 +30,7 @@ QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
 MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
     : ComplexMissionItem                (vehicle, parent)
     , _plannedHomePositionAltitudeFact  (0, _plannedHomePositionAltitudeName,   FactMetaData::valueTypeDouble)
+    , _plannedHomePositionFromVehicle   (false)
     , _missionEndRTL                    (false)
     , _cameraSection                    (vehicle)
     , _speedSection                     (vehicle)
@@ -54,9 +55,10 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
     connect(&_cameraSection,    &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
     connect(&_speedSection,     &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
 
-    connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged,                        this, &MissionSettingsItem::_setDirty);
+    connect(this,               &MissionSettingsItem::terrainAltitudeChanged,           this, &MissionSettingsItem::_setHomeAltFromTerrain);
 
-    connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged, this, &MissionSettingsItem::_updateAltitudeInCoordinate);
+    connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged,                    this, &MissionSettingsItem::_setDirty);
+    connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged,                    this, &MissionSettingsItem::_updateAltitudeInCoordinate);
 
     connect(&_cameraSection,    &CameraSection::dirtyChanged,   this, &MissionSettingsItem::_sectionDirtyChanged);
     connect(&_speedSection,     &SpeedSection::dirtyChanged,    this, &MissionSettingsItem::_sectionDirtyChanged);
@@ -64,7 +66,6 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
     connect(&_cameraSection,    &CameraSection::specifyGimbalChanged,       this, &MissionSettingsItem::specifiedGimbalYawChanged);
     connect(&_cameraSection,    &CameraSection::specifiedGimbalYawChanged,  this, &MissionSettingsItem::specifiedGimbalYawChanged);
 }
-
 
 int MissionSettingsItem::lastSequenceNumber(void) const
 {
@@ -221,6 +222,12 @@ void MissionSettingsItem::_setDirty(void)
     setDirty(true);
 }
 
+void MissionSettingsItem::setHomePositionFromVehicle(const QGeoCoordinate& coordinate)
+{
+    _plannedHomePositionFromVehicle = true;
+    setCoordinate(coordinate);
+}
+
 void MissionSettingsItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
     if (_plannedHomePositionCoordinate != coordinate) {
@@ -279,5 +286,12 @@ void MissionSettingsItem::setMissionEndRTL(bool missionEndRTL)
     if (missionEndRTL != _missionEndRTL) {
         _missionEndRTL = missionEndRTL;
         emit missionEndRTLChanged(missionEndRTL);
+    }
+}
+
+void MissionSettingsItem::_setHomeAltFromTerrain(double terrainAltitude)
+{
+    if (!_plannedHomePositionFromVehicle) {
+        _plannedHomePositionAltitudeFact.setRawValue(terrainAltitude);
     }
 }

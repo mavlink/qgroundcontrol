@@ -72,7 +72,7 @@ before_install:
 
   # install ccache for osx/ios
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-        wget https://s3.amazonaws.com/px4-travis/toolchain/macos/ccache &&
+        wget --quiet https://s3.amazonaws.com/px4-travis/toolchain/macos/ccache &&
         chmod +x ccache && sudo mv ccache /usr/local/bin;
     fi
 
@@ -89,7 +89,7 @@ before_install:
 install:
   # linux dependencies: qt
   - if [ "${SPEC}" = "linux-g++-64" ]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.7.1-linux-min.tar.bz2 &&
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.7.1-linux-min.tar.bz2 &&
         tar jxf Qt5.7.1-linux-min.tar.bz2 -C /tmp &&
         export PATH=/tmp/Qt5.7-linux/5.7/gcc_64/bin:$PATH &&
         export DISPLAY=:99.0 &&
@@ -99,12 +99,12 @@ install:
 
   # android dependencies: qt, gstreamer, android-ndk
   - if [ "${SPEC}" = "android-g++" ]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.7.1-android-min.tar.bz2 &&
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.7.1-android-min.tar.bz2 &&
         tar jxf Qt5.7.1-android-min.tar.bz2 -C /tmp &&
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-armv7-1.5.2.tar.bz2 &&
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-armv7-1.5.2.tar.bz2 &&
         mkdir -p ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
         tar jxf gstreamer-1.0-android-armv7-1.5.2.tar.bz2 -C ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
-        wget http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin &&
+        wget --quiet http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin &&
         chmod +x android-ndk-r10e-linux-x86_64.bin &&
         ./android-ndk-r10e-linux-x86_64.bin > /dev/null &&
         export ANDROID_NDK_ROOT=`pwd`/android-ndk-r10e &&
@@ -115,13 +115,13 @@ install:
 
   # osx dependencies: qt, gstreamer, gstreamer-devel
   - if [ "${SPEC}" = "macx-clang" ]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.7.1-mac-clang-min.tar.bz2 &&
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.7.1-mac-clang-min.tar.bz2 &&
         tar jxf Qt5.7.1-mac-clang-min.tar.bz2 -C /tmp &&
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-1.5.2-x86_64.pkg &&
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-1.5.2-x86_64.pkg &&
         sudo installer -verboseR -pkg gstreamer-1.0-1.5.2-x86_64.pkg -target / &&
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-1.5.2-x86_64.pkg &&
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-1.5.2-x86_64.pkg &&
         sudo installer -verboseR -pkg gstreamer-1.0-devel-1.5.2-x86_64.pkg -target / &&
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2 &&
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2 &&
         sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks &&
         export QT_DIR=Qt5.7-mac-clang/5.7/clang_64 &&
         export QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins &&
@@ -132,7 +132,7 @@ install:
 
   # ios dependencies: qt, TODO: add gstreamer
   - if [ "${SPEC}" = "macx-ios-clang" ]; then
-        wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.8.0-ios-min.tar.bz2 &&
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.8.0-ios-min.tar.bz2 &&
         tar jxf Qt5.8.0-ios-min.tar.bz2 -C /tmp &&
         export IOS_CCACHE_CC=`/usr/bin/xcrun -sdk iphoneos -find clang` &&
         export IOS_CCACHE_CXX=`/usr/bin/xcrun -sdk iphoneos -find clang++` &&
@@ -145,8 +145,8 @@ before_script:
   - cd ${TRAVIS_BUILD_DIR}
 
   # grab latest PX4 parameter and airframe metadata
-  - wget http://px4-travis.s3.amazonaws.com/Firmware/master/parameters.xml -O src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml
-  - wget http://px4-travis.s3.amazonaws.com/Firmware/master/airframes.xml -O src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml
+  - wget --quiet http://px4-travis.s3.amazonaws.com/Firmware/master/parameters.xml -O src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml
+  - wget --quiet http://px4-travis.s3.amazonaws.com/Firmware/master/airframes.xml -O src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml
 
   # switch android config from installer to release if the android storepass isn't available
   - if [[ "${SPEC}" = "android-g++" && "${CONFIG}" = "installer" && -z ${ANDROID_STOREPASS} ]]; then
@@ -156,7 +156,7 @@ before_script:
   # insert QGC version in AndroidManifest.xml
   - if [ "${SPEC}" = "android-g++" ]; then
         git remote set-branches origin 'master' &&
-        git fetch origin master &&
+        git fetch --tags origin master &&
         ./tools/update_android_version.sh;
     fi
 
@@ -183,12 +183,15 @@ after_success:
   - cd ${TRAVIS_BUILD_DIR}
 
   # master development builds to beta track
-  # tagged releases first to beta track then manually move to production
   - GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrolbeta
   - if [ "${TRAVIS_TAG}" ]; then
         GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrol;
+    elif [ "${TRAVIS_BRANCH}" = "master" ]; then
+        GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrolbeta;
+    else
+        GOOGLE_PLAY_PKG=none;
     fi
-  - if [[ "${SPEC}" = "android-g++" && "${TRAVIS_PULL_REQUEST}" = "false" && "${TRAVIS_BRANCH}" = "master" ]]; then
+  - if [[ "${SPEC}" = "android-g++" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_PKG}" != "none" ]]; then
         pip install --user google-api-python-client PyOpenSSL &&
         openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
         ./tools/google_play_upload.py production ${GOOGLE_PLAY_PKG} ${SHADOW_BUILD_DIR}/release/package/QGroundControl.apk;

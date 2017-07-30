@@ -35,7 +35,7 @@ Rectangle {
         id:                     label
         anchors.top:            parent.bottom
         width:                  parent.height
-        text:                   qsTr("Altitude")
+        text:                   qsTr("Terrain Altitude")
         horizontalAlignment:    Text.AlignHCenter
         rotation:               -90
         transformOrigin:        Item.TopLeft
@@ -62,9 +62,20 @@ Rectangle {
             visible:    display
 
             property real availableHeight:  height - indicator.height
-            property bool graphAbsolute:    true
+            property bool showTerrain:      !isNaN(object.terrainPercent)
+            property real _terrainPercent:  showTerrain ? object.terrainPercent : 0
+
             readonly property bool display: object.specifiesCoordinate && !object.isStandaloneCoordinate
             readonly property real spacing: ScreenTools.defaultFontPixelWidth * ScreenTools.smallFontPointRatio
+
+            Rectangle {
+                anchors.bottom:             parent.bottom
+                anchors.horizontalCenter:   parent.horizontalCenter
+                width:                      indicator.width
+                height:                     Math.max(availableHeight * _terrainPercent, 1)
+                color:                      _terrainPercent > object.altPercent ? "red": qgcPal.text
+                visible:                    !isNaN(object.terrainPercent)
+            }
 
             MissionItemIndexLabel {
                 id:                         indicator
@@ -74,7 +85,7 @@ Rectangle {
                 checked:                    object.isCurrentItem
                 label:                      object.abbreviation.charAt(0)
                 index:                      object.sequenceNumber
-                visible:                    object.relativeAltitude ? true : (object.homePosition || graphAbsolute)
+                visible:                    object.relativeAltitude ? true : object.homePosition
             }
         }
     }
