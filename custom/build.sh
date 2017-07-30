@@ -17,6 +17,15 @@ die() {
 }
 
 unameOut=`uname -s`
+case $0 in /*) SCRIPT="$0";; *) SCRIPT="`pwd`/${0#./}";; esac
+ROOTDIR=`dirname "$SCRIPT"`
+SCRIPT=`basename "$SCRIPT"`
+
+if [ -z "$DPBUILDTYPE" ]; then
+    DPBUILDTYPE=DeveloperBuild
+fi
+
+# Qt Version
 QTVERSION=5.9.1
 
 #-- Adjust these to your Android SDK/NDK and Qt installation
@@ -45,13 +54,18 @@ clean() {
     [ -d $BUILDDIR ] && rm -rf $BUILDDIR/* && rm -rf $BUILDDIR/.*
 }
 
-build() {
-    cd $BUILDDIR && $QTINSTALL/android_x86/bin/qmake $ROOTDIR/../qgroundcontrol.pro -spec android-g++ CONFIG+=DeveloperBuild && make -j$CORES 2>&1 || exit 1 | tee build.log
+runqmake() {
+    cd $BUILDDIR && $QTINSTALL/android_x86/bin/qmake $ROOTDIR/../qgroundcontrol.pro -spec android-g++ CONFIG+=silent CONFIG+=$DPBUILDTYPE 2>&1 || exit 1 | tee qmake.log
     echo
-    echo "Package in $BUILDDIR/release/package/DataPilotDevel.apk"
-    echo "Build log in $BUILDDIR/build.log"
+    echo "  qmake log in $BUILDDIR/qmake.log"
     echo
-    exit 0
+}
+
+runmake() {
+    cd $BUILDDIR && make -j$CORES 2>&1 || exit 1 | tee build.log
+    echo
+    echo "  build log in $BUILDDIR/build.log"
+    echo
 }
 
 case "${unameOut}" in
@@ -59,9 +73,6 @@ case "${unameOut}" in
     Darwin*)    CORES=`sysctl -n hw.ncpu`;;
     *)          die "Unknwon platform: ${unameOut}"
 esac
-case $0 in /*) SCRIPT="$0";; *) SCRIPT="`pwd`/${0#./}";; esac
-ROOTDIR=`dirname "$SCRIPT"`
-SCRIPT=`basename "$SCRIPT"`
 [ -d $BUILDDIR ] || mkdir $BUILDDIR || die "Error creating $BUILDDIR"
 case "$1" in
     clean)
@@ -70,13 +81,21 @@ case "$1" in
         ;;
     rebuild)
         clean
-        build
+        runqmake
+        runmake
         ;;
     build)
-        build
+        runqmake
+        runmake
+        ;;
+    make)
+        runmake
+        ;;
+    qmake)
+        runqmake
         ;;
     *)
-        echo $"Usage: $0 {clean|build|rebuild}"
+        echo $"Usage: $0 {clean|build|rebuild|make|qmake}"
         exit 1
         ;;
 esac
