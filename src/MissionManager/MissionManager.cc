@@ -55,6 +55,7 @@ void MissionManager::_writeMissionItemsWorker(void)
     qCDebug(MissionManagerLog) << "writeMissionItems count:" << _writeMissionItems.count();
 
     // Prime write list
+    _itemIndicesToWrite.clear();
     for (int i=0; i<_writeMissionItems.count(); i++) {
         _itemIndicesToWrite << i;
     }
