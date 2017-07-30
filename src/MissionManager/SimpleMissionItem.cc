@@ -460,7 +460,7 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
                 if (!firmwareVehicle) {
                     firmwareVehicle = _vehicle;
                 }
-                bool hideWaypointHeading = (command == MAV_CMD_NAV_WAYPOINT) && (i == 4) && firmwareVehicle->firmwarePlugin()->vehicleYawsToNextWaypointInMission(firmwareVehicle);
+                bool hideWaypointHeading = (command == MAV_CMD_NAV_WAYPOINT || command == MAV_CMD_NAV_TAKEOFF) && (i == 4) && firmwareVehicle->firmwarePlugin()->vehicleYawsToNextWaypointInMission(firmwareVehicle);
                 if (hideWaypointHeading) {
                     continue;
                 }

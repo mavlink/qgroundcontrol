@@ -12,11 +12,12 @@ Canvas {
 
     signal clicked
 
-    property string label                       ///< Label to show to the side of the index indicator
-    property int    index:                  0   ///< Index to show in the indicator, 0 will show single char label instead, -1 first char of label in indicator full label to the side
+    property string label                           ///< Label to show to the side of the index indicator
+    property int    index:                  0       ///< Index to show in the indicator, 0 will show single char label instead, -1 first char of label in indicator full label to the side
     property bool   checked:                false
     property bool   small:                  false
-    property var    color:                  checked ? "green" : qgcPal.mapButtonHighlight
+    property bool   child:                  false
+    property var    color:                  checked ? "green" : (child ? qgcPal.mapIndicatorChild : qgcPal.mapIndicator)
     property real   anchorPointX:           _height / 2
     property real   anchorPointY:           _height / 2
     property bool   specifiesCoordinate:    true
