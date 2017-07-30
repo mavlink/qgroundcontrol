@@ -45,6 +45,7 @@ public:
 
     Q_PROPERTY(bool             homePosition                        READ homePosition                                                   CONSTANT)                                           ///< true: This item is being used as a home position indicator
     Q_PROPERTY(QGeoCoordinate   coordinate                          READ coordinate                         WRITE setCoordinate         NOTIFY coordinateChanged)                           ///< This is the entry point for a waypoint line into the item. For a simple item it is also the location of the item
+    Q_PROPERTY(double           terrainAltitude                     READ terrainAltitude                                                NOTIFY terrainAltitudeChanged)            ///< The altitude of terrain at the coordinate position, NaN if not known
     Q_PROPERTY(bool             coordinateHasRelativeAltitude       READ coordinateHasRelativeAltitude                                  NOTIFY coordinateHasRelativeAltitudeChanged)        ///< true: coordinate.latitude is relative to home altitude
     Q_PROPERTY(QGeoCoordinate   exitCoordinate                      READ exitCoordinate                                                 NOTIFY exitCoordinateChanged)                       ///< This is the exit point for a waypoint line coming out of the item.
     Q_PROPERTY(bool             exitCoordinateHasRelativeAltitude   READ exitCoordinateHasRelativeAltitude                              NOTIFY exitCoordinateHasRelativeAltitudeChanged)    ///< true: coordinate.latitude is relative to home altitude
@@ -72,6 +73,7 @@ public:
 
     Q_PROPERTY(double altDifference     READ altDifference      WRITE setAltDifference      NOTIFY altDifferenceChanged)        ///< Change in altitude from previous waypoint
     Q_PROPERTY(double altPercent        READ altPercent         WRITE setAltPercent         NOTIFY altPercentChanged)           ///< Percent of total altitude change in mission altitude
+    Q_PROPERTY(double terrainPercent    READ terrainPercent     WRITE setTerrainPercent     NOTIFY terrainPercentChanged)       ///< Percent of terrain altitude in mission altitude
     Q_PROPERTY(double azimuth           READ azimuth            WRITE setAzimuth            NOTIFY azimuthChanged)              ///< Azimuth to previous waypoint
     Q_PROPERTY(double distance          READ distance           WRITE setDistance           NOTIFY distanceChanged)             ///< Distance to previous waypoint
 
@@ -82,15 +84,18 @@ public:
 
     double altDifference    (void) const { return _altDifference; }
     double altPercent       (void) const { return _altPercent; }
+    double terrainPercent   (void) const { return _terrainPercent; }
     double azimuth          (void) const { return _azimuth; }
     double distance         (void) const { return _distance; }
     bool   isCurrentItem    (void) const { return _isCurrentItem; }
+    double terrainAltitude  (void) const { return _terrainAltitude; }
 
     QmlObjectListModel* childItems(void) { return &_childItems; }
 
     void setIsCurrentItem   (bool isCurrentItem);
     void setAltDifference   (double altDifference);
     void setAltPercent      (double altPercent);
+    void setTerrainPercent  (double terrainPercent);
     void setAzimuth         (double azimuth);
     void setDistance        (double distance);
 
@@ -151,6 +156,7 @@ public:
 signals:
     void altDifferenceChanged           (double altDifference);
     void altPercentChanged              (double altPercent);
+    void terrainPercentChanged          (double terrainPercent);
     void azimuthChanged                 (double azimuth);
     void commandDescriptionChanged      (void);
     void commandNameChanged             (void);
@@ -170,6 +176,7 @@ signals:
     void lastSequenceNumberChanged      (int sequenceNumber);
     void missionGimbalYawChanged        (double missionGimbalYaw);
     void missionVehicleYawChanged       (double missionVehicleYaw);
+    void terrainAltitudeChanged         (double terrainAltitude);
 
     void coordinateHasRelativeAltitudeChanged       (bool coordinateHasRelativeAltitude);
     void exitCoordinateHasRelativeAltitudeChanged   (bool exitCoordinateHasRelativeAltitude);
@@ -180,8 +187,10 @@ protected:
     bool        _isCurrentItem;
     bool        _dirty;
     bool        _homePositionSpecialCase;   ///< true: This item is being used as a ui home position indicator
+    double      _terrainAltitude;           ///< Altitude of terrain at coordinate position, NaN for not known
     double      _altDifference;             ///< Difference in altitude from previous waypoint
     double      _altPercent;                ///< Percent of total altitude change in mission
+    double      _terrainPercent;            ///< Percent of terrain altitude for coordinate
     double      _azimuth;                   ///< Azimuth to previous waypoint
     double      _distance;                  ///< Distance to previous waypoint
     QString     _editorQml;                 ///< Qml resource for editing item
@@ -192,6 +201,16 @@ protected:
 
     /// This is used to reference any subsequent mission items which do not specify a coordinate.
     QmlObjectListModel  _childItems;
+
+private slots:
+    void _updateTerrainAltitude (void);
+    void _reallyUpdateTerrainAltitude (void);
+    void _terrainDataReceived   (bool success, QList<float> altitudes);
+
+private:
+    QTimer _updateTerrainTimer;
+    double _lastLatTerrainQuery;
+    double _lastLonTerrainQuery;
 };
 
 #endif
