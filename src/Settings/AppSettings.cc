@@ -33,6 +33,7 @@ const char* AppSettings::indoorPaletteName =                            "StyleIs
 const char* AppSettings::showLargeCompassName =                         "ShowLargeCompass";
 const char* AppSettings::savePathName =                                 "SavePath";
 const char* AppSettings::autoLoadMissionsName =                         "AutoLoadMissions";
+const char* AppSettings::bypassNetworkChecksName =                      "BypassNetworkChecks";
 const char* AppSettings::mapboxTokenName =                              "MapboxToken";
 const char* AppSettings::esriTokenName =                                "EsriToken";
 const char* AppSettings::defaultFirmwareTypeName =                      "DefaultFirmwareType";
@@ -71,6 +72,7 @@ AppSettings::AppSettings(QObject* parent)
     , _showLargeCompassFact(NULL)
     , _savePathFact(NULL)
     , _autoLoadMissionsFact(NULL)
+    , _bypassNetworkChecksFact(NULL)
     , _mapboxTokenFact(NULL)
     , _esriTokenFact(NULL)
     , _defaultFirmwareTypeFact(NULL)
@@ -337,6 +339,15 @@ Fact* AppSettings::autoLoadMissions(void)
     }
 
     return _autoLoadMissionsFact;
+}
+
+Fact* AppSettings::bypassNetworkChecks(void)
+{
+    if (!_bypassNetworkChecksFact) {
+        _bypassNetworkChecksFact = _createSettingsFact(bypassNetworkChecksName);
+    }
+
+    return _bypassNetworkChecksFact;
 }
 
 Fact* AppSettings::mapboxToken(void)

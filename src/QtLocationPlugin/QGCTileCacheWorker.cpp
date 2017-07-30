@@ -52,6 +52,7 @@ QGCCacheWorker::QGCCacheWorker()
     , _defaultCount(0)
     , _lastUpdate(0)
     , _updateTimeout(SHORT_TIMEOUT)
+    , _skipNetworkChecks(false)
 {
 
 }
@@ -1053,8 +1054,23 @@ QGCCacheWorker::_createDB(QSqlDatabase* db, bool createDefault)
 
 //-----------------------------------------------------------------------------
 void
+QGCCacheWorker::setSkipNetworkChecks(bool skip)
+{
+    _skipNetworkChecks = skip;
+    if (skip) {
+        emit internetStatus(true);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 QGCCacheWorker::_testInternet()
 {
+    if (_skipNetworkChecks) {
+        emit internetStatus(true);
+        return;
+    }
+
     QTcpSocket socket;
     socket.connectToHost("8.8.8.8", 53);
     if (socket.waitForConnected(2500)) {

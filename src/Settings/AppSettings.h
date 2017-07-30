@@ -37,6 +37,7 @@ public:
     Q_PROPERTY(Fact* showLargeCompass                   READ showLargeCompass                   CONSTANT)
     Q_PROPERTY(Fact* savePath                           READ savePath                           CONSTANT)
     Q_PROPERTY(Fact* autoLoadMissions                   READ autoLoadMissions                   CONSTANT)
+    Q_PROPERTY(Fact* bypassNetworkChecks                READ bypassNetworkChecks                CONSTANT)
     Q_PROPERTY(Fact* mapboxToken                        READ mapboxToken                        CONSTANT)
     Q_PROPERTY(Fact* esriToken                          READ esriToken                          CONSTANT)
     Q_PROPERTY(Fact* defaultFirmwareType                READ defaultFirmwareType                CONSTANT)
@@ -71,6 +72,7 @@ public:
     Fact* showLargeCompass                  (void);
     Fact* savePath                          (void);
     Fact* autoLoadMissions                  (void);
+    Fact* bypassNetworkChecks               (void);
     Fact* mapboxToken                       (void);
     Fact* esriToken                         (void);
     Fact* defaultFirmwareType               (void);
@@ -103,6 +105,7 @@ public:
     static const char* showLargeCompassName;
     static const char* savePathName;
     static const char* autoLoadMissionsName;
+    static const char* bypassNetworkChecksName;
     static const char* mapboxTokenName;
     static const char* esriTokenName;
     static const char* defaultFirmwareTypeName;
@@ -149,6 +152,7 @@ private:
     SettingsFact* _showLargeCompassFact;
     SettingsFact* _savePathFact;
     SettingsFact* _autoLoadMissionsFact;
+    SettingsFact* _bypassNetworkChecksFact;
     SettingsFact* _mapboxTokenFact;
     SettingsFact* _esriTokenFact;
     SettingsFact* _defaultFirmwareTypeFact;

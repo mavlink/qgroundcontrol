@@ -111,6 +111,13 @@
     "defaultValue":     false
 },
 {
+    "name":             "BypassNetworkChecks",
+    "shortDescription": "Bypass network connectivity checks",
+    "longDescription":  "Skip checking internet connectivity for loading web based maps.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
     "name":             "BaseDeviceFontPointSize",
     "shortDescription": "Application font size",
     "longDescription":  "The point size for the default font used.",

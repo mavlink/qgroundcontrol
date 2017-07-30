@@ -145,8 +145,9 @@ QGCMapEngine::QGCMapEngine()
     qRegisterMetaType<QGCMapTask::TaskType>();
     qRegisterMetaType<QGCTile>();
     qRegisterMetaType<QList<QGCTile*>>();
-    connect(&_worker, &QGCCacheWorker::updateTotals,   this, &QGCMapEngine::_updateTotals);
-    connect(&_worker, &QGCCacheWorker::internetStatus, this, &QGCMapEngine::_internetStatus);
+    connect(&_worker, &QGCCacheWorker::updateTotals,    this,     &QGCMapEngine::_updateTotals);
+    connect(&_worker, &QGCCacheWorker::internetStatus,  this,     &QGCMapEngine::_internetStatus);
+    connect(this,     &QGCMapEngine::skipNetworkChecks, &_worker, &QGCCacheWorker::setSkipNetworkChecks);
 }
 
 //-----------------------------------------------------------------------------

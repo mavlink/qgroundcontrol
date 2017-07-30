@@ -420,11 +420,16 @@ bool QGCApplication::_initForNormalAppBoot(void)
 
     // Connect links with flag AutoconnectLink
     toolbox()->linkManager()->startAutoConnectedLinks();
-
-    if (getQGCMapEngine()->wasCacheReset()) {
+    auto mapengine = getQGCMapEngine();
+    if (mapengine->wasCacheReset()) {
         showMessage("The Offline Map Cache database has been upgraded. "
                     "Your old map cache sets have been reset.");
     }
+
+    // Connect network connectivity check bypass to map engine
+    auto skipfact = toolbox()->settingsManager()->appSettings()->bypassNetworkChecks();
+    connect(skipfact, &Fact::valueChanged, mapengine, [mapengine](QVariant value) { mapengine->skipNetworkChecks(value.toBool()); });
+    mapengine->skipNetworkChecks(skipfact->rawValue().toBool());
 
     settings.sync();
     return true;

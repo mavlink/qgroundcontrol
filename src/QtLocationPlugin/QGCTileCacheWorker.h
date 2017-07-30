@@ -73,6 +73,9 @@ private:
     quint64     _getDefaultTileSet      ();
     void        _updateTotals           ();
 
+public slots:
+    void        setSkipNetworkChecks    (bool);
+
 signals:
     void        updateTotals            (quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
     void        internetStatus          (bool active);
@@ -93,6 +96,7 @@ private:
     quint32                 _defaultCount;
     time_t                  _lastUpdate;
     int                     _updateTimeout;
+    bool                    _skipNetworkChecks;
 };
 
 #endif // QGC_TILE_CACHE_WORKER_H
