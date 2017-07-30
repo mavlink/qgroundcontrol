@@ -1,5 +1,17 @@
 [
 {
+    "name":             "lat",
+    "shortDescription": "Latitude",
+    "type":             "double",
+    "decimalPlaces":    7
+},
+{
+    "name":             "lon",
+    "shortDescription": "Longitude",
+    "type":             "double",
+    "decimalPlaces":    7
+},
+{
     "name":             "hdop",
     "shortDescription": "HDOP",
     "type":             "double",
