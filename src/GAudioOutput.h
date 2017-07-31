@@ -7,75 +7,35 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Definition of audio output
- *
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
-
-#ifndef GAUDIOOUTPUT_H
-#define GAUDIOOUTPUT_H
+#pragma once
 
 #include <QObject>
 #include <QTimer>
 #include <QThread>
 #include <QStringList>
+#include <QTextToSpeech>
 
-#include "QGCAudioWorker.h"
 #include "QGCToolbox.h"
 
 class QGCApplication;
 
-/**
- * @brief Audio Output (speech synthesizer and "beep" output)
- * This class follows the singleton design pattern
- * @see http://en.wikipedia.org/wiki/Singleton_pattern
- */
 class GAudioOutput : public QGCTool
 {
     Q_OBJECT
-
 public:
     GAudioOutput(QGCApplication* app, QGCToolbox* toolbox);
-    ~GAudioOutput();
 
-    /** @brief List available voices */
-    QStringList listVoices(void);
-    enum
-    {
-        VOICE_MALE = 0,
-        VOICE_FEMALE
-    } QGVoice;
-
-    enum AUDIO_SEVERITY
-    {
-        AUDIO_SEVERITY_EMERGENCY = 0,
-        AUDIO_SEVERITY_ALERT = 1,
-        AUDIO_SEVERITY_CRITICAL = 2,
-        AUDIO_SEVERITY_ERROR = 3,
-        AUDIO_SEVERITY_WARNING = 4,
-        AUDIO_SEVERITY_NOTICE = 5,
-        AUDIO_SEVERITY_INFO = 6,
-        AUDIO_SEVERITY_DEBUG = 7
-    };
+    static bool     getMillisecondString    (const QString& string, QString& match, int& number);
+    static QString  fixTextMessageForAudio  (const QString& string);
 
 public slots:
-    /** @brief Say this text */
-    bool say(const QString& text);
+    bool            say                     (const QString& text);
 
-signals:
-    bool textToSpeak(QString text);
-    void beepOnce();
+private slots:
+    void            _stateChanged           (QTextToSpeech::State state);
 
 protected:
-#if !defined __android__
-    QThread* thread;
-    QGCAudioWorker* worker;
-#endif
+    QTextToSpeech*  _tts;
+    QStringList     _texts;
 };
-
-#endif // AUDIOOUTPUT_H
 
