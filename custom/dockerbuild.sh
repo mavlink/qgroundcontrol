@@ -8,6 +8,5 @@ $(aws ecr get-login --region eu-central-1 --no-include-email)
 docker pull $docker_repo
 docker run -t -v `dirname $ROOTDIR`:/home/docker1000/qgroundcontrol:rw -v /tmp/datapilot_build:/tmp/datapilot_build:rw $docker_repo
 [ -L $GSTSYMLINK ] && rm $GSTSYMLINK
-echo "Debug: dockerbuild.sh reaches this line (11) and will exit with exit 0"
 [ -L $GSTSYMLINK-orig ] && mv $GSTSYMLINK-orig $GSTSYMLINK
-echo "Debug: dockerbuild.sh reaches this line (13) and will exit with exit 0"
+exit 0
