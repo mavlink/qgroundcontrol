@@ -45,15 +45,13 @@ import android.widget.Toast;
 import android.util.Log;
 import android.os.PowerManager;
 import android.view.WindowManager;
-//-- Text To Speech
 import android.os.Bundle;
-import android.speech.tts.TextToSpeech;
 
 import com.hoho.android.usbserial.driver.*;
 import org.qtproject.qt5.android.bindings.QtActivity;
 import org.qtproject.qt5.android.bindings.QtApplication;
 
-public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListener
+public class QGCActivity extends QtActivity
 {
     public  static int BAD_PORT = 0;
     private static QGCActivity m_instance;
@@ -66,7 +64,6 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
     private BroadcastReceiver m_UsbReceiver = null;
     private final static ExecutorService m_Executor = Executors.newSingleThreadExecutor();
     private static final String TAG = "QGC_QGCActivity";
-    private static TextToSpeech  m_tts;
     private static PowerManager.WakeLock m_wl;
 
     public static Context m_context;
@@ -111,17 +108,9 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
         Log.i(TAG, "Instance created");
     }
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Text To Speech
-    //  Pigback a ride for providing TTS to QGC
-    //
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        m_tts = new TextToSpeech(this,this);
         PowerManager pm = (PowerManager)m_instance.getSystemService(Context.POWER_SERVICE);
         m_wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "QGroundControl");
         if(m_wl != null) {
@@ -140,7 +129,6 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
                 m_wl.release();
                 Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK released.");
             }
-            m_tts.shutdown();
         } catch(Exception e) {
            Log.e(TAG, "Exception onDestroy()");
         }
@@ -148,12 +136,6 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
     }
 
     public void onInit(int status) {
-    }
-
-    public static void say(String msg)
-    {
-        Log.i(TAG, "Say: " + msg);
-        m_tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null);
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
