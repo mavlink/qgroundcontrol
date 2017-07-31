@@ -821,6 +821,11 @@ void Vehicle::_setMaxProtoVersion(unsigned version) {
     if (_maxProtoVersion == 0 || version < _maxProtoVersion) {
         _maxProtoVersion = version;
         emit requestProtocolVersion(_maxProtoVersion);
+
+        // Now that the protocol version is known, the mission load is safe
+        // as it will use the right MAVLink version to enable all features
+        // the vehicle supports
+        _startPlanRequest();
     }
 }
 
@@ -859,7 +864,6 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
         // We aren't going to get a response back for capabilities, so stop waiting for it before we ask for mission items
         qCDebug(VehicleLog) << "Vehicle failed to responded to MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES with error. Starting mission request.";
         _setCapabilities(0);
-        _startPlanRequest();
     }
 
     if (ack.command == MAV_CMD_REQUEST_PROTOCOL_VERSION && ack.result != MAV_RESULT_ACCEPTED) {
