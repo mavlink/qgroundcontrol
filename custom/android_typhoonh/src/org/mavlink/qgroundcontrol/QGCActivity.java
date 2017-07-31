@@ -8,7 +8,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.os.PowerManager;
-import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.WindowManager;
 
@@ -29,7 +28,8 @@ import android.os.BatteryManager;
 import org.qtproject.qt5.android.bindings.QtActivity;
 import org.qtproject.qt5.android.bindings.QtApplication;
 
-public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListener {
+public class QGCActivity extends QtActivity
+{
 
     public enum ReceiverMode {
         DISABLED,
@@ -39,7 +39,6 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
 
     private static QGCActivity m_instance;
     private static final String TAG = "DataPilot_JNI";
-    private static TextToSpeech  m_tts;
     private static PowerManager.WakeLock m_wl;
     private static WifiManager mainWifi;
     private static WifiReceiver receiverWifi;
@@ -70,7 +69,7 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
-    //  Initialize TTS and Power Management
+    //  Initialize Power Management
     //
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -78,7 +77,6 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
     public void onCreate(Bundle savedInstanceState) {
         Log.i(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
-        m_tts = new TextToSpeech(this,this);
         PowerManager pm = (PowerManager)m_instance.getSystemService(Context.POWER_SERVICE);
         m_wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "DataPilot");
         if(m_wl != null) {
@@ -134,7 +132,6 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
            Log.e(TAG, "Exception onDestroy()");
         }
         super.onDestroy();
-        m_tts.shutdown();
     }
 
     @Override
@@ -146,11 +143,6 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
     }
 
     public void onInit(int status) {
-    }
-
-    public static void say(String msg) {
-        Log.i(TAG, "Say: " + msg);
-        m_tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null);
     }
 
     public static void keepScreenOn() {
