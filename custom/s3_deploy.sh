@@ -5,8 +5,7 @@ set -e
 
 # deploy to s3
 $(aws ecr get-login --region eu-central-1 --no-include-email)
-S3_BUCKET_NAME=ffb61ecc-7202-4007-a7af-aa2819e3e046
-#08f61bbd-8958-433e-8e83-5d79160fa0be
+S3_BUCKET_NAME=08f61bbd-8958-433e-8e83-5d79160fa0be
 export AWS_CREDENTIAL_FILE=/var/lib/jenkins/.aws/credentials
 
 apk_path=/tmp/datapilot_build/release/package
