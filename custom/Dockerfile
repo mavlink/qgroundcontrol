@@ -6,7 +6,7 @@
 # From qgroundcontrol/custom 
 #
 # Build docker: docker build -t datapilot .
-# Run command: docker run -it -v `dirname $(pwd)`:/home/docker1000/qgroundcontrol:rw datapilot
+# Run command: docker run -it -v `dirname $(pwd)`:/home/docker1000/qgroundcontrol:rw -v /tmp/datapilot_build:/tmp/datapilot_build:rw datapilot
 #
 
 FROM ubuntu:16.04
@@ -28,7 +28,9 @@ USER docker1000
 
 RUN cd /home/docker1000 \
 	&& wget --no-check-certificate http://www.grubba.com/dpbuild.tgz \
-    && tar -xvzf dpbuild.tgz
+    && tar -xvzf dpbuild.tgz \
+    && rm dpbuild.tgz
 
-ENTRYPOINT ln -f -s ~/dpbuild/gstreamer-1.0-android-x86-1.5.2 . && ~/qgroundcontrol/custom/build.sh build
 WORKDIR "/home/docker1000/qgroundcontrol"
+
+ENTRYPOINT ln -f -s ~/dpbuild/gstreamer-1.0-android-x86-1.5.2 && ./custom/build.sh build
