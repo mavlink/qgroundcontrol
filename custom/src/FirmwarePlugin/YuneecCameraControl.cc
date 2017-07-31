@@ -9,6 +9,8 @@
 #include "TyphoonHPlugin.h"
 #include "TyphoonHM4Interface.h"
 #include "VideoManager.h"
+#include "SettingsManager.h"
+#include "VideoManager.h"
 
 QGC_LOGGING_CATEGORY(YuneecCameraLog, "YuneecCameraLog")
 QGC_LOGGING_CATEGORY(YuneecCameraLogVerbose, "YuneecCameraLogVerbose")
@@ -234,6 +236,29 @@ YuneecCameraControl::_setCameraMode(CameraMode mode)
     if(pFact) {
         pFact->_containerSetRawValue(QVariant((int)mode));
     }
+    //-- Adjust Aspect Ratio
+    float aspect = 1280.0f / 720.0f; // Some default
+    if(modelName().contains("E90")) {
+        //-- Photo Mode
+        if(mode == CAM_MODE_PHOTO) {
+            //-- E90 is 3:2 in Photo Mode
+            aspect = 3.0f / 2.0f;
+            qCDebug(YuneecCameraLog) << "Set Photo Aspect Ratio" << aspect;
+        //-- Video Mode
+        } else if(mode == CAM_MODE_VIDEO) {
+            qCDebug(YuneecCameraLog) << "Set Video Aspect Ratio" << aspect;
+        }
+    } else {
+        if(mode == CAM_MODE_PHOTO) {
+            //-- CGO3+ and E50 are 4:3 in Photo Mode
+            aspect = 4.0f / 3.0f;
+            qCDebug(YuneecCameraLog) << "Set Photo Aspect Ratio" << aspect;
+        //-- Video Mode
+        } else if(mode == CAM_MODE_VIDEO) {
+            qCDebug(YuneecCameraLog) << "Set Video Aspect Ratio" << aspect;
+        }
+    }
+    qgcApp()->toolbox()->settingsManager()->videoSettings()->aspectRatio()->setRawValue(aspect);
 }
 
 //-----------------------------------------------------------------------------
