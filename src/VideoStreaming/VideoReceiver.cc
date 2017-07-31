@@ -131,8 +131,8 @@ newPadCB(GstElement* element, GstPad* pad, gpointer data)
     gchar* description = gst_caps_to_string(p_caps);
     qCDebug(VideoReceiverLog) << p_caps << ", " << description;
     g_free(description);
-    GstElement* p_rtph264depay = GST_ELEMENT(data);
-    if(gst_element_link_pads(element, name, p_rtph264depay, "sink") == false)
+    GstElement* sink = GST_ELEMENT(data);
+    if(gst_element_link_pads(element, name, sink, "sink") == false)
         qCritical() << "newPadCB : failed to link elements\n";
     g_free(name);
 }
@@ -222,14 +222,16 @@ VideoReceiver::start()
 
     bool isUdp  = _uri.contains("udp://");
     bool isRtsp = _uri.contains("rtsp://");
+    bool isTCP  = _uri.contains("tcp://");
 
-    //-- For RTSP, check to see if server is there first
-    if(!_serverPresent && isRtsp) {
+    //-- For RTSP and TCP, check to see if server is there first
+    if(!_serverPresent && (isRtsp || isTCP)) {
         _timer.start(100);
         return;
     }
 
     bool running = false;
+    bool pipelineUp = false;
 
     GstElement*     dataSource  = NULL;
     GstCaps*        caps        = NULL;
@@ -247,6 +249,8 @@ VideoReceiver::start()
 
         if(isUdp) {
             dataSource = gst_element_factory_make("udpsrc", "udp-source");
+        } else if(isTCP) {
+            dataSource = gst_element_factory_make("tcpclientsrc", "tcpclient-source");
         } else {
             dataSource = gst_element_factory_make("rtspsrc", "rtsp-source");
         }
@@ -262,17 +266,24 @@ VideoReceiver::start()
                 break;
             }
             g_object_set(G_OBJECT(dataSource), "uri", qPrintable(_uri), "caps", caps, NULL);
+        } else if(isTCP) {
+            QUrl url(_uri);
+            g_object_set(G_OBJECT(dataSource), "host", qPrintable(url.host()), "port", url.port(), NULL );
         } else {
             g_object_set(G_OBJECT(dataSource), "location", qPrintable(_uri), "latency", 17, "udp-reconnect", 1, "timeout", static_cast<guint64>(5000000), NULL);
         }
 
-        if ((demux = gst_element_factory_make("rtph264depay", "rtp-h264-depacketizer")) == NULL) {
-            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('rtph264depay')";
-            break;
-        }
-
-        if(!isUdp) {
-            g_signal_connect(dataSource, "pad-added", G_CALLBACK(newPadCB), demux);
+        // Currently, we expect H264 when using anything except for TCP.  Long term we may want this to be settable
+        if (isTCP) {
+            if ((demux = gst_element_factory_make("tsdemux", "mpeg2-ts-demuxer")) == NULL) {
+                qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('tsdemux')";
+                break;
+            }
+        } else {
+            if ((demux = gst_element_factory_make("rtph264depay", "rtp-h264-depacketizer")) == NULL) {
+                qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('rtph264depay')";
+                break;
+            }
         }
 
         if ((parser = gst_element_factory_make("h264parse", "h264-parser")) == NULL) {
@@ -286,6 +297,8 @@ VideoReceiver::start()
         }
 
         if((queue = gst_element_factory_make("queue", NULL)) == NULL)  {
+            // TODO: We may want to add queue2 max-size-buffers=1 to get lower latency
+            //       We should compare gstreamer scripts to QGroundControl to determine the need
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('queue')";
             break;
         }
@@ -301,21 +314,33 @@ VideoReceiver::start()
         }
 
         gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, NULL);
+        pipelineUp = true;
 
         if(isUdp) {
             // Link the pipeline in front of the tee
             if(!gst_element_link_many(dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, NULL)) {
-                qCritical() << "Unable to link elements.";
+                qCritical() << "Unable to link UDP elements.";
                 break;
             }
+        } else if (isTCP) {
+            if(!gst_element_link(dataSource, demux)) {
+                qCritical() << "Unable to link TCP dataSource to Demux.";
+                break;
+            }
+            if(!gst_element_link_many(parser, _tee, queue, decoder, queue1, _videoSink, NULL)) {
+                qCritical() << "Unable to link TCP pipline to parser.";
+                break;
+            }
+            g_signal_connect(demux, "pad-added", G_CALLBACK(newPadCB), parser);
         } else {
+            g_signal_connect(dataSource, "pad-added", G_CALLBACK(newPadCB), demux);
             if(!gst_element_link_many(demux, parser, _tee, queue, decoder, _videoSink, NULL)) {
-                qCritical() << "Unable to link elements.";
+                qCritical() << "Unable to link RTSP elements.";
                 break;
             }
         }
 
-        dataSource = demux = parser = queue = decoder = NULL;
+        dataSource = demux = parser = queue = decoder = queue1 = NULL;
 
         GstBus* bus = NULL;
 
@@ -338,39 +363,43 @@ VideoReceiver::start()
     if (!running) {
         qCritical() << "VideoReceiver::start() failed";
 
-        if (decoder != NULL) {
-            gst_object_unref(decoder);
-            decoder = NULL;
-        }
-
-        if (parser != NULL) {
-            gst_object_unref(parser);
-            parser = NULL;
-        }
-
-        if (demux != NULL) {
-            gst_object_unref(demux);
-            demux = NULL;
-        }
-
-        if (dataSource != NULL) {
-            gst_object_unref(dataSource);
-            dataSource = NULL;
-        }
-
-        if (_tee != NULL) {
-            gst_object_unref(_tee);
-            dataSource = NULL;
-        }
-
-        if (queue != NULL) {
-            gst_object_unref(queue);
-            dataSource = NULL;
-        }
-
+        // In newer versions, the pipeline will clean up all references that are added to it
         if (_pipeline != NULL) {
             gst_object_unref(_pipeline);
             _pipeline = NULL;
+        }
+
+        // If we failed before adding items to the pipeline, then clean up
+        if (!pipelineUp) {
+            if (decoder != NULL) {
+                gst_object_unref(decoder);
+                decoder = NULL;
+            }
+
+            if (parser != NULL) {
+                gst_object_unref(parser);
+                parser = NULL;
+            }
+
+            if (demux != NULL) {
+                gst_object_unref(demux);
+                demux = NULL;
+            }
+
+            if (dataSource != NULL) {
+                gst_object_unref(dataSource);
+                dataSource = NULL;
+            }
+
+            if (_tee != NULL) {
+                gst_object_unref(_tee);
+                dataSource = NULL;
+            }
+
+            if (queue != NULL) {
+                gst_object_unref(queue);
+                dataSource = NULL;
+            }
         }
 
         _running = false;
