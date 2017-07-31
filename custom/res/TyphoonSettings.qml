@@ -144,6 +144,32 @@ QGCView {
             }
             //-----------------------------------------------------------------
             Rectangle {
+                height:         passwordRow.height * 2
+                width:          ScreenTools.defaultFontPixelWidth * 80
+                color:          qgcPal.windowShade
+                visible:        _activeVehicle
+                anchors.horizontalCenter: parent.horizontalCenter
+                Row {
+                    id:         passwordRow
+                    spacing:    ScreenTools.defaultFontPixelWidth * 4
+                    anchors.centerIn: parent
+                    QGCButton {
+                        text:   qsTr("Set Password")
+                        width:   _buttonWidth
+                        anchors.verticalCenter: parent.verticalCenter
+                        onClicked: {
+                            passwordDialog.visible = true
+                        }
+                    }
+                    QGCLabel {
+                        text:   qsTr("Set connection password")
+                        width:   _textWidth
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+            }
+            //-----------------------------------------------------------------
+            Rectangle {
                 height:         updateRow.height * 2
                 width:          ScreenTools.defaultFontPixelWidth * 80
                 color:          qgcPal.windowShade
@@ -499,6 +525,72 @@ QGCView {
             Component.onCompleted: {
                 rootLoader.width  = firmwareUpdateItem.width
                 rootLoader.height = firmwareUpdateItem.height
+            }
+        }
+    }
+    //-- Password Dialog
+    Rectangle {
+        id:         passwordDialog
+        width:      pwdCol.width  * 1.25
+        height:     pwdCol.height * 1.25
+        radius:     ScreenTools.defaultFontPixelWidth * 0.5
+        color:      qgcPal.window
+        visible:    false
+        border.width:   1
+        border.color:   qgcPal.text
+        anchors.top:    parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        Keys.onBackPressed: {
+            passwordDialog.visible = false
+        }
+        Column {
+            id:         pwdCol
+            spacing:    ScreenTools.defaultFontPixelHeight
+            anchors.centerIn: parent
+            QGCLabel {
+                text:   qsTr("Please enter password (8 to 20 characters)")
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            QGCTextField {
+                id:         passwordField
+                echoMode:   TextInput.Password
+                width:      ScreenTools.defaultFontPixelWidth * 24
+                focus:      true
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            QGCLabel {
+                text:   qsTr("Please re-enter password")
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            QGCTextField {
+                id:         passwordFieldConf
+                echoMode:   TextInput.Password
+                width:      ScreenTools.defaultFontPixelWidth * 24
+                focus:      true
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Row {
+                spacing:    ScreenTools.defaultFontPixelWidth * 4
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCButton {
+                    text:       qsTr("Ok")
+                    width:      _buttonWidth
+                    enabled:    passwordField.text.length > 7 && passwordField.text.length < 21 && passwordField.text === passwordFieldConf.text
+                    onClicked:  {
+                        Qt.inputMethod.hide();
+                        TyphoonHQuickInterface.setWiFiPassword(passwordField.text)
+                        passwordDialog.visible = false
+                    }
+                }
+                QGCButton {
+                    text:       qsTr("Cancel")
+                    width:      _buttonWidth
+                    onClicked:  {
+                        Qt.inputMethod.hide();
+                        passwordField.text = ""
+                        passwordDialog.visible = false
+                    }
+                }
             }
         }
     }

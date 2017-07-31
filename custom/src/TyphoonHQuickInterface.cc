@@ -137,6 +137,31 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
 
 //-----------------------------------------------------------------------------
 void
+TyphoonHQuickInterface::setWiFiPassword(QString pwd)
+{
+    if(_pHandler && _pHandler->vehicle()) {
+        MAVLinkProtocol* pMavlink = qgcApp()->toolbox()->mavlinkProtocol();
+        mavlink_wifi_config_ap_t config;
+        memset(&config, 0, sizeof(config));
+        //-- Password must be up to 20 characters
+        strncpy(config.password, pwd.toStdString().c_str(), 20);
+        mavlink_message_t msg;
+        mavlink_msg_wifi_config_ap_encode(
+            pMavlink->getSystemId(),
+            pMavlink->getComponentId(),
+            &msg,
+            &config);
+        _pHandler->vehicle()->sendMessageOnLink(_pHandler->vehicle()->priorityLink(), msg);
+        //-- Clear configuration
+        if(_configurations.contains(_ssid)) {
+            _configurations.remove(_ssid);
+            _saveWifiConfigurations();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 TyphoonHQuickInterface::_powerTrigger()
 {
     //-- If RC is not working
