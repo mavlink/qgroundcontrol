@@ -200,6 +200,7 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
     QGCCameraControl::_setVideoStatus(status);
     if(oldStatus != status) {
         if(status == VIDEO_CAPTURE_STATUS_RUNNING) {
+            _recordTime = 0;
             _recTime.start();
             _recTimer.start();
             _videoSound.setLoopCount(1);
@@ -210,6 +211,7 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
             }
         } else {
             _recTimer.stop();
+            _recordTime = 0;
             emit recordTimeChanged();
             if(oldStatus == VIDEO_CAPTURE_STATUS_UNDEFINED) {
                 //-- System just booted and it's ready
