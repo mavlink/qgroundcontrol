@@ -29,7 +29,11 @@ USER docker1000
 RUN cd /home/docker1000 \
 	&& wget --no-check-certificate http://www.grubba.com/dpbuild.tgz \
     && tar -xvzf dpbuild.tgz \
-    && rm dpbuild.tgz
+    && rm dpbuild.tgz \
+    && cd /home/docker1000/dpbuild/qt/5.9.1/android_x86 \
+    && wget --no-check-certificate http://www.grubba.com/qtspeech.tgz \
+    && tar -xvzf qtspeech.tgz \
+    && rm qtspeech.tgz
 
 WORKDIR "/home/docker1000/qgroundcontrol"
 
