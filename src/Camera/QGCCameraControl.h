@@ -168,6 +168,7 @@ private slots:
     void    _mavCommandResult               (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
     void    _dataReady                      (QByteArray data);
     void    _paramDone                      ();
+    void    _updateTimeout                  ();
 
 private:
     bool    _handleLocalization             (QByteArray& bytes);
@@ -205,9 +206,11 @@ protected:
     QStringList                         _activeSettings;
     QStringList                         _settings;
     QTimer                              _captureStatusTimer;
+    QTimer                              _updateTimer;
     QList<QGCCameraOptionExclusion*>    _valueExclusions;
     QList<QGCCameraOptionRange*>        _optionRanges;
     QMap<QString, QStringList>          _originalOptNames;
     QMap<QString, QVariantList>         _originalOptValues;
     QMap<QString, QGCCameraParamIO*>    _paramIO;
+    QVector<Fact*>                      _updates;
 };

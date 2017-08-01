@@ -25,6 +25,11 @@ public:
     void        handleParamValue            (const mavlink_param_ext_value_t& value);
     void        setParamRequest             ();
     bool        paramDone                   () { return _done; }
+    void        paramRequest                (bool reset = true);
+    void        sendParameter               (bool updateUI = false);
+
+    QStringList  optNames;
+    QVariantList optVariants;
 
 private slots:
     void        _paramWriteTimeout          ();
@@ -46,6 +51,7 @@ private:
     QTimer              _paramWriteTimer;
     QTimer              _paramRequestTimer;
     bool                _done;
+    bool                _updateOnSet;
     MAV_PARAM_TYPE      _mavParamType;
     MAVLinkProtocol*    _pMavlink;
 };
