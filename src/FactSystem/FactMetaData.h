@@ -125,7 +125,7 @@ public:
     void setRawUnits        (const QString& rawUnits);
     void setRebootRequired  (bool rebootRequired)               { _rebootRequired = rebootRequired; }
     void setIncrement       (double increment)                  { _increment = increment; }
-    void setHasControl      (bool bValue)                        { _hasControl = bValue; }
+    void setHasControl      (bool bValue)                       { _hasControl = bValue; }
 
     void setTranslators(Translator rawTranslator, Translator cookedTranslator);
 
