@@ -160,6 +160,8 @@ QGCCameraControl::_initWhenReady()
     }
     connect(_vehicle, &Vehicle::mavCommandResult, this, &QGCCameraControl::_mavCommandResult);
     connect(&_captureStatusTimer, &QTimer::timeout, this, &QGCCameraControl::_requestCaptureStatus);
+    connect(&_updateTimer, &QTimer::timeout, this, &QGCCameraControl::_updateTimeout);
+    _updateTimer.setSingleShot(true);
     _captureStatusTimer.setSingleShot(true);
     QTimer::singleShot(2500, this, &QGCCameraControl::_requestStorageInfo);
     _captureStatusTimer.start(2750);
@@ -871,40 +873,102 @@ QGCCameraControl::_processCondition(const QString condition)
 void
 QGCCameraControl::_updateRanges(Fact* pFact)
 {
+    QMap<Fact*, QVariant> valuesSet;
+    QMap<Fact*, QGCCameraOptionRange*> rangesSet;
+    QMap<Fact*, QString> rangesReset;
+    QStringList valuesRequested;
     QStringList changedList;
     QStringList resetList;
-    qCDebug(CameraControlLogVerbose) << "_updateRanges(" << pFact->name() << ")";
-    //-- Iterate range sets
+    //-- Iterate range sets looking for limited ranges
     foreach(QGCCameraOptionRange* pRange, _optionRanges) {
         //-- If this fact or one of its conditions is part of this range set
         if(!changedList.contains(pRange->targetParam) && (pRange->param == pFact->name() || pRange->condition.contains(pFact->name()))) {
             Fact* pRFact = getFact(pRange->param);          //-- This parameter
             Fact* pTFact = getFact(pRange->targetParam);    //-- The target parameter (the one its range is to change)
             if(pRFact && pTFact) {
+                qCDebug(CameraControlLogVerbose) << "Check new set of options for" << pTFact->name();
                 QString option = pRFact->rawValueString();  //-- This parameter value
                 //-- If this value (and condition) triggers a change in the target range
+                qCDebug(CameraControlLogVerbose) << "Range value:" << pRange->value << "Current value:" << option << "Condition:" << pRange->condition;
                 if(pRange->value == option && _processCondition(pRange->condition)) {
-                    //-- Set limited range set
                     if(pTFact->enumStrings() != pRange->optNames) {
-                        pTFact->setEnumInfo(pRange->optNames, pRange->optVariants);
-                        emit pTFact->enumsChanged();
+                        //-- Set limited range set
+                        rangesSet[pTFact] = pRange;
+                        //-- Adjust current index if outside new limts
+                        if(!pRange->optVariants.contains(pTFact->rawValue()) && _activeSettings.contains(pTFact->name())) {
+                            qCDebug(CameraControlLogVerbose) << pTFact->name() << "was" << pTFact->enumOrValueString() << "and is now" << pRange->optNames[0];
+                            //-- We need to preemt the new option
+                            valuesSet[pTFact] = pRange->optVariants[0];
+                        }
                         qCDebug(CameraControlLogVerbose) << "Limited:" << pRange->targetParam << pRange->optNames;
                     }
                     changedList << pRange->targetParam;
-                } else {
-                    if(!resetList.contains(pRange->targetParam)) {
-                        if(pTFact->enumStrings() != _originalOptNames[pRange->targetParam]) {
-                            //-- Restore full option set
-                            pTFact->setEnumInfo(_originalOptNames[pRange->targetParam], _originalOptValues[pRange->targetParam]);
-                            emit pTFact->enumsChanged();
-                            qCDebug(CameraControlLogVerbose) << "Full:" << pRange->targetParam << _originalOptNames[pRange->targetParam];
-                        }
-                        resetList << pRange->targetParam;
-                    }
                 }
             }
         }
     }
+    //-- Iterate range sets again looking for resets
+    foreach(QGCCameraOptionRange* pRange, _optionRanges) {
+        if(!changedList.contains(pRange->targetParam) && (pRange->param == pFact->name() || pRange->condition.contains(pFact->name()))) {
+            Fact* pTFact = getFact(pRange->targetParam);    //-- The target parameter (the one its range is to change)
+            if(!resetList.contains(pRange->targetParam)) {
+                if(pTFact->enumStrings() != _originalOptNames[pRange->targetParam]) {
+                    //-- Restore full option set
+                    rangesReset[pTFact] = pRange->targetParam;
+                    qCDebug(CameraControlLogVerbose) << "Restore full set:" << pRange->targetParam << _originalOptNames[pRange->targetParam];
+                    //-- Retrive the current option for this setting as the index into the options might be pointing to something else.
+                    if(!valuesRequested.contains(pTFact->name())) {
+                        valuesRequested << pTFact->name();
+                    }
+                }
+                resetList << pRange->targetParam;
+            }
+        }
+    }
+    //-- Update limited range set
+    foreach (Fact* pFact, rangesSet.keys()) {
+        pFact->setEnumInfo(rangesSet[pFact]->optNames, rangesSet[pFact]->optVariants);
+        if(!_updates.contains(pFact)) {
+            _paramIO[pFact->name()]->optNames = rangesSet[pFact]->optNames;
+            _paramIO[pFact->name()]->optVariants = rangesSet[pFact]->optVariants;
+            _updates << pFact;
+        }
+    }
+    //-- Restore full range set
+    foreach (Fact* pFact, rangesReset.keys()) {
+        pFact->setEnumInfo(_originalOptNames[rangesReset[pFact]], _originalOptValues[rangesReset[pFact]]);
+        if(!_updates.contains(pFact)) {
+            _paramIO[pFact->name()]->optNames = _originalOptNames[rangesReset[pFact]];
+            _paramIO[pFact->name()]->optVariants = _originalOptValues[rangesReset[pFact]];
+            _updates << pFact;
+        }
+    }
+    //-- Send new values where new range forced it
+    foreach(Fact* pFact, valuesSet.keys()) {
+        pFact->_containerSetRawValue(valuesSet[pFact]);
+        _paramIO[pFact->name()]->sendParameter(true);
+    }
+    //-- Update values for restored ranges
+    foreach (QString factName, valuesRequested) {
+        _paramIO[factName]->paramRequest();
+    }
+    //-- Update UI (Asynchronous state where values come back after a while)
+    if(_updates.size()) {
+        _updateTimer.start(500);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::_updateTimeout()
+{
+    //-- Update UI
+    foreach (Fact* pFact, _updates) {
+        pFact->setEnumInfo(_paramIO[pFact->name()]->optNames, _paramIO[pFact->name()]->optVariants);
+        qCDebug(CameraControlLogVerbose) << "Update enums" << pFact->name() << pFact->enumStrings();
+        emit pFact->enumsChanged();
+    }
+    _updates.clear();
 }
 
 //-----------------------------------------------------------------------------

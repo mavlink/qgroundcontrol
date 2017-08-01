@@ -20,12 +20,13 @@ QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicl
     , _sentRetries(0)
     , _requestRetries(0)
     , _done(false)
+    , _updateOnSet(false)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     _paramWriteTimer.setSingleShot(true);
-    _paramWriteTimer.setInterval(1000);
+    _paramWriteTimer.setInterval(3000);
     _paramRequestTimer.setSingleShot(true);
-    _paramRequestTimer.setInterval(2000);
+    _paramRequestTimer.setInterval(3000);
     connect(&_paramWriteTimer,   &QTimer::timeout, this, &QGCCameraParamIO::_paramWriteTimeout);
     connect(&_paramRequestTimer, &QTimer::timeout, this, &QGCCameraParamIO::_paramRequestTimeout);
     connect(_fact, &Fact::rawValueChanged, this, &QGCCameraParamIO::_factChanged);
@@ -75,7 +76,7 @@ void
 QGCCameraParamIO::_factChanged(QVariant value)
 {
     Q_UNUSED(value);
-    qCDebug(CameraControlLog) << "UI Fact" << _fact->name() << "changed";
+    qCDebug(CameraIOLog) << "UI Fact" << _fact->name() << "changed";
     //-- TODO: Do we really want to update the UI now or only when we receive the ACK?
     _control->factChanged(_fact);
 }
@@ -85,8 +86,18 @@ void
 QGCCameraParamIO::_containerRawValueChanged(const QVariant value)
 {
     Q_UNUSED(value);
-    qCDebug(CameraControlLog) << "Send Fact" << _fact->name();
+    qCDebug(CameraIOLog) << "Update Fact" << _fact->name();
     _sentRetries = 0;
+    _sendParameter();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraParamIO::sendParameter(bool updateUI)
+{
+    qCDebug(CameraIOLog) << "Send Fact" << _fact->name();
+    _sentRetries = 0;
+    _updateOnSet = updateUI;
     _sendParameter();
 }
 
@@ -147,9 +158,10 @@ QGCCameraParamIO::_paramWriteTimeout()
 {
     if(++_sentRetries > 3) {
         qCWarning(CameraIOLog) << "No response for param set:" << _fact->name();
+        _updateOnSet = false;
     } else {
         //-- Send it again
-        qCDebug(CameraIOLog) << "Param set retry:" << _fact->name();
+        qCDebug(CameraIOLog) << "Param set retry:" << _fact->name() << _sentRetries;
         _sendParameter();
         _paramWriteTimer.start();
     }
@@ -164,6 +176,10 @@ QGCCameraParamIO::handleParamAck(const mavlink_param_ext_ack_t& ack)
         QVariant val = _valueFromMessage(ack.param_value, ack.param_type);
         if(_fact->rawValue() != val) {
             _fact->_containerSetRawValue(val);
+            if(_updateOnSet) {
+                _updateOnSet = false;
+                _control->factChanged(_fact);
+            }
         }
     } else if(ack.param_result == PARAM_ACK_IN_PROGRESS) {
         //-- Wait a bit longer for this one
@@ -171,7 +187,12 @@ QGCCameraParamIO::handleParamAck(const mavlink_param_ext_ack_t& ack)
         _paramWriteTimer.start();
     } else {
         if(ack.param_result == PARAM_ACK_FAILED) {
-            qCWarning(CameraIOLog) << "Param set failed:" << _fact->name();
+            if(++_sentRetries > 3) {
+                //-- Try again
+                qCWarning(CameraIOLog) << "Param set failed:" << _fact->name() << _sentRetries;
+                _paramWriteTimer.start();
+            }
+            return;
         } else if(ack.param_result == PARAM_ACK_VALUE_UNSUPPORTED) {
             qCWarning(CameraIOLog) << "Param set unsuported:" << _fact->name();
         }
@@ -248,20 +269,31 @@ QGCCameraParamIO::_paramRequestTimeout()
     } else {
         //-- Request it again
         qCDebug(CameraIOLog) << "Param request retry:" << _fact->name();
-        char param_id[MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN + 1];
-        memset(param_id, 0, sizeof(param_id));
-        strncpy(param_id, _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN);
-        mavlink_message_t msg;
-        mavlink_msg_param_ext_request_read_pack_chan(
-            _pMavlink->getSystemId(),
-            _pMavlink->getComponentId(),
-            _vehicle->priorityLink()->mavlinkChannel(),
-            &msg,
-            _vehicle->id(),
-            _control->compID(),
-            param_id,
-            -1);
-        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+        paramRequest(false);
         _paramRequestTimer.start();
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraParamIO::paramRequest(bool reset)
+{
+    if(reset) {
+        _requestRetries = 0;
+    }
+    char param_id[MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN + 1];
+    memset(param_id, 0, sizeof(param_id));
+    strncpy(param_id, _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN);
+    mavlink_message_t msg;
+    mavlink_msg_param_ext_request_read_pack_chan(
+        _pMavlink->getSystemId(),
+        _pMavlink->getComponentId(),
+        _vehicle->priorityLink()->mavlinkChannel(),
+        &msg,
+        _vehicle->id(),
+        _control->compID(),
+        param_id,
+        -1);
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _paramRequestTimer.start();
 }
