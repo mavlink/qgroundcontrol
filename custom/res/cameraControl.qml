@@ -69,6 +69,15 @@ Rectangle {
         return (str.slice(str.lastIndexOf("/")+1))
     }
 
+    Connections {
+        target: QGroundControl.multiVehicleManager.activeVehicle
+        onConnectionLostChanged: {
+            if(_communicationLost && rootLoader.sourceComponent === cameraSettingsComponent) {
+                rootLoader.sourceComponent = null
+            }
+        }
+    }
+
     MouseArea {
         anchors.fill:   parent
         onWheel:        { wheel.accepted = true; }

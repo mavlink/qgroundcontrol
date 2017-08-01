@@ -84,8 +84,9 @@ void Fact::forceSetRawValue(const QVariant& value)
         if (_metaData->convertAndValidateRaw(value, true /* convertOnly */, typedValue, errorString)) {
             _rawValue.setValue(typedValue);
             _sendValueChangedSignal(cookedValue());
-            emit _containerRawValueChanged(rawValue());
+            //-- Must be in this order
             emit rawValueChanged(_rawValue);
+            emit _containerRawValueChanged(rawValue());
         }
     } else {
         qWarning() << kMissingMetadata;
@@ -102,8 +103,9 @@ void Fact::setRawValue(const QVariant& value)
             if (typedValue != _rawValue) {
                 _rawValue.setValue(typedValue);
                 _sendValueChangedSignal(cookedValue());
-                emit _containerRawValueChanged(rawValue());
+                //-- Must be in this order
                 emit rawValueChanged(_rawValue);
+                emit _containerRawValueChanged(rawValue());
             }
         }
     } else {
@@ -235,7 +237,7 @@ QVariantList Fact::enumValues(void) const
 void Fact::setEnumInfo(const QStringList& strings, const QVariantList& values)
 {
     if (_metaData) {
-        return _metaData->setEnumInfo(strings, values);
+        _metaData->setEnumInfo(strings, values);
     } else {
         qWarning() << kMissingMetadata;
     }
