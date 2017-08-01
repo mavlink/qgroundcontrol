@@ -65,6 +65,8 @@ Rectangle {
     property real _mediaIndex:              0
     property var  _mediaModel:              []
 
+    property string _photoPath:             "file://" + QGroundControl.settingsManager.appSettings.savePath.rawValue.toString() + "/Photo/"
+
     function baseName(str) {
         return (str.slice(str.lastIndexOf("/")+1))
     }
@@ -618,7 +620,7 @@ Rectangle {
             width:      _mediaWidth
             height:     _mediaHeight
             fillMode:   Image.PreserveAspectFit
-            source:     "file://" + modelData
+            source:     _photoPath + modelData
             sourceSize.width: width
             //asynchronous:     true
             MouseArea {
@@ -679,10 +681,10 @@ Rectangle {
                 }
                 Image {
                     id:             mediaContent
-                    width:          _mediaWidth  * 6
-                    height:         _mediaHeight * 6
+                    width:          _mediaWidth  * 7
+                    height:         _mediaHeight * 7
                     fillMode:       Image.PreserveAspectFit
-                    source:         "file://" + _mediaModel[_mediaIndex]
+                    source:         _photoPath + _mediaModel[_mediaIndex]
                     cache:          false
                     anchors.centerIn:   parent
                 }
@@ -711,7 +713,7 @@ Rectangle {
                         onClicked: {
                             if(_mediaIndex > 0) {
                                 _mediaIndex = _mediaIndex - 1;
-                                mediaContent.source = "file://" + _mediaModel[_mediaIndex]
+                                mediaContent.source = _photoPath + _mediaModel[_mediaIndex]
                             }
                         }
                     }
@@ -735,7 +737,7 @@ Rectangle {
                         onClicked: {
                             if(_mediaIndex < (_mediaModel.length - 1)) {
                                 _mediaIndex = _mediaIndex + 1;
-                                mediaContent.source = "file://" + _mediaModel[_mediaIndex]
+                                mediaContent.source = _photoPath + _mediaModel[_mediaIndex]
                             }
                         }
                     }

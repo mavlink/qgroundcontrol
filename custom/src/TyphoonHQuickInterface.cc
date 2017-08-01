@@ -665,12 +665,14 @@ TyphoonHQuickInterface::calibrationComplete()
 QStringList
 TyphoonHQuickInterface::getMediaList()
 {
-    QStringList list;
     QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
-    QDirIterator it(photoPath, QStringList() << "*.jpg", QDir::Files, QDirIterator::NoIteratorFlags);
-    while(it.hasNext()) {
-        list << it.next();
-    }
+    QDir photoDir = QDir(photoPath);
+    photoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks);
+    photoDir.setSorting(QDir::Time);
+    QStringList nameFilters;
+    nameFilters << "*.jpg" << "*.JPG";
+    photoDir.setNameFilters(nameFilters);
+    QStringList list = photoDir.entryList();
     return list;
 }
 
