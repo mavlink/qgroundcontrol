@@ -290,6 +290,7 @@ private slots:
     void    _imageUpdateDone            ();
     void    _videoRunningChanged        ();
     void    _checkUpdateStatus          ();
+    void    _forgetSSID                 ();
 
 private:
     void    _saveWifiConfigurations     ();

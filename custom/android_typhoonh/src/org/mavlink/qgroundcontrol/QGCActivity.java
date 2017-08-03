@@ -244,6 +244,25 @@ public class QGCActivity extends QtActivity
         nativeWifiDisconnected();
     }
 
+    public static void resetWifiConfiguration(String ssid) {
+        Log.i(TAG, "resetWifiConfiguration(): " + ssid);
+        List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
+        if(list != null) {
+            mainWifi.disconnect();
+            for( WifiConfiguration i : list ) {
+                if(i.SSID == ssid) {
+                    //-- Remove this SSID from "known" networks
+                    mainWifi.removeNetwork(i.networkId);
+                }
+            }
+        }
+        currentConnection = "";
+        mainWifi.saveConfiguration();
+        currentWifiRssi = 0;
+        nativeNewWifiRSSI();
+        nativeWifiDisconnected();
+    }
+
     public static void bindSSID(String ssid, String passphrase) {
         Log.i(TAG, "Bind: " + ssid + " " + passphrase);
         try {

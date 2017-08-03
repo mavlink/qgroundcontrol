@@ -140,6 +140,7 @@ void
 TyphoonHQuickInterface::setWiFiPassword(QString pwd)
 {
     if(_pHandler && _pHandler->vehicle()) {
+#if defined __android__
         MAVLinkProtocol* pMavlink = qgcApp()->toolbox()->mavlinkProtocol();
         mavlink_wifi_config_ap_t config;
         memset(&config, 0, sizeof(config));
@@ -152,12 +153,25 @@ TyphoonHQuickInterface::setWiFiPassword(QString pwd)
             &msg,
             &config);
         _pHandler->vehicle()->sendMessageOnLink(_pHandler->vehicle()->priorityLink(), msg);
-        //-- Clear configuration
-        if(_configurations.contains(_ssid)) {
-            _configurations.remove(_ssid);
-            _saveWifiConfigurations();
-        }
+        _password = pwd;
+        _configurations[_ssid] = pwd;
+        _saveWifiConfigurations();
+        //-- Give some time for message to get across
+        QTimer::singleShot(1000, this, &TyphoonHQuickInterface::_forgetSSID);
+#else
+        Q_UNUSED(pwd)
+#endif
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_forgetSSID()
+{
+    //-- Remove SSID from (Android) configuration
+    reset_jni();
+    QAndroidJniObject javaSSID = QAndroidJniObject::fromString(_ssid);
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "resetWifiConfiguration", "(Ljava/lang/String;)V", javaSSID.object<jstring>());
 }
 
 //-----------------------------------------------------------------------------
@@ -879,7 +893,7 @@ TyphoonHQuickInterface::_clearSSids()
 void
 TyphoonHQuickInterface::_newSSID(QString ssid, int rssi)
 {
-    qDebug() << "New SSID" << ssid << rssi;
+    qCDebug(YuneecLog) << "New SSID" << ssid << rssi;
 #if !defined(QT_DEBUG)
     if(ssid.startsWith("CGOET") || ssid.startsWith("E90_") || ssid.startsWith("E50_")) {
 #endif

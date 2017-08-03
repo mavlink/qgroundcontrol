@@ -548,7 +548,7 @@ QGCView {
             spacing:    ScreenTools.defaultFontPixelHeight
             anchors.centerIn: parent
             QGCLabel {
-                text:   qsTr("Please enter password (8 to 20 characters)")
+                text:   qsTr("Please enter new password (8 to 20 characters)")
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             QGCTextField {
@@ -567,6 +567,11 @@ QGCView {
                 echoMode:   TextInput.Password
                 width:      ScreenTools.defaultFontPixelWidth * 24
                 focus:      true
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            QGCLabel {
+                text:   qsTr("Once set, the connection will be closed.\nRestart the vehicle and reconnect.")
+                horizontalAlignment:      Text.AlignHCenter
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Row {
