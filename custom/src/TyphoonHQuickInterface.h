@@ -163,6 +163,7 @@ public:
     Q_INVOKABLE void manualBind         ();
     Q_INVOKABLE void startCalibration   ();
     Q_INVOKABLE void stopCalibration    ();
+    Q_INVOKABLE void setWiFiPassword    (QString pwd);
 
     Q_INVOKABLE QStringList getMediaList();
 
@@ -289,6 +290,7 @@ private slots:
     void    _imageUpdateDone            ();
     void    _videoRunningChanged        ();
     void    _checkUpdateStatus          ();
+    void    _forgetSSID                 ();
 
 private:
     void    _saveWifiConfigurations     ();

@@ -137,6 +137,45 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
 
 //-----------------------------------------------------------------------------
 void
+TyphoonHQuickInterface::setWiFiPassword(QString pwd)
+{
+    if(_pHandler && _pHandler->vehicle()) {
+#if defined __android__
+        MAVLinkProtocol* pMavlink = qgcApp()->toolbox()->mavlinkProtocol();
+        mavlink_wifi_config_ap_t config;
+        memset(&config, 0, sizeof(config));
+        //-- Password must be up to 20 characters
+        strncpy(config.password, pwd.toStdString().c_str(), 20);
+        mavlink_message_t msg;
+        mavlink_msg_wifi_config_ap_encode(
+            pMavlink->getSystemId(),
+            pMavlink->getComponentId(),
+            &msg,
+            &config);
+        _pHandler->vehicle()->sendMessageOnLink(_pHandler->vehicle()->priorityLink(), msg);
+        _password = pwd;
+        _configurations[_ssid] = pwd;
+        _saveWifiConfigurations();
+        //-- Give some time for message to get across
+        QTimer::singleShot(1000, this, &TyphoonHQuickInterface::_forgetSSID);
+#else
+        Q_UNUSED(pwd)
+#endif
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_forgetSSID()
+{
+    //-- Remove SSID from (Android) configuration
+    reset_jni();
+    QAndroidJniObject javaSSID = QAndroidJniObject::fromString(_ssid);
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "resetWifiConfiguration", "(Ljava/lang/String;)V", javaSSID.object<jstring>());
+}
+
+//-----------------------------------------------------------------------------
+void
 TyphoonHQuickInterface::_powerTrigger()
 {
     //-- If RC is not working
@@ -856,7 +895,7 @@ TyphoonHQuickInterface::_clearSSids()
 void
 TyphoonHQuickInterface::_newSSID(QString ssid, int rssi)
 {
-    qDebug() << "New SSID" << ssid << rssi;
+    qCDebug(YuneecLog) << "New SSID" << ssid << rssi;
 #if !defined(QT_DEBUG)
     if(ssid.startsWith("CGOET") || ssid.startsWith("E90_") || ssid.startsWith("E50_")) {
 #endif
