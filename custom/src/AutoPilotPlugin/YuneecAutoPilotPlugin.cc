@@ -11,6 +11,7 @@
 #include "GimbalComponent.h"
 #include "ChannelComponent.h"
 #include "HealthComponent.h"
+#include "YuneecSafetyComponent.h"
 
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
@@ -20,6 +21,7 @@ YuneecAutoPilotPlugin::YuneecAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _gimbalComponent(NULL)
     , _channelComponent(NULL)
     , _healthComponent(NULL)
+    , _yuneecSafetyComponent(NULL)
 {
     connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &YuneecAutoPilotPlugin::_advancedChanged);
 }
@@ -45,11 +47,11 @@ const QVariantList& YuneecAutoPilotPlugin::vehicleComponents(void)
             }
             _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
 
-            if(!_safetyComponent) {
-                _safetyComponent = new SafetyComponent(_vehicle, this);
-                _safetyComponent->setupTriggerSignals();
+            if(!_yuneecSafetyComponent) {
+                _yuneecSafetyComponent = new YuneecSafetyComponent(_vehicle, this);
+                _yuneecSafetyComponent->setupTriggerSignals();
             }
-            _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
+            _components.append(QVariant::fromValue((VehicleComponent*)_yuneecSafetyComponent));
 
             if(!_gimbalComponent) {
                 _gimbalComponent = new GimbalComponent(_vehicle, this);

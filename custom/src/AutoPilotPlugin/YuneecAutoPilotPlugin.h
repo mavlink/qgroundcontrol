@@ -15,6 +15,7 @@
 class GimbalComponent;
 class ChannelComponent;
 class HealthComponent;
+class YuneecSafetyComponent;
 
 /// Yuneec overrides from standard PX4AutoPilotPlugin implementation
 class YuneecAutoPilotPlugin : public PX4AutoPilotPlugin
@@ -35,4 +36,5 @@ private:
     ChannelComponent*       _channelComponent;
     HealthComponent*        _healthComponent;
     QVariantList            _components;
+    YuneecSafetyComponent*  _yuneecSafetyComponent;
 };

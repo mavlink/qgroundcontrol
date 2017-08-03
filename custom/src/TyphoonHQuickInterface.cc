@@ -169,9 +169,11 @@ void
 TyphoonHQuickInterface::_forgetSSID()
 {
     //-- Remove SSID from (Android) configuration
+#if defined __android__
     reset_jni();
     QAndroidJniObject javaSSID = QAndroidJniObject::fromString(_ssid);
     QAndroidJniObject::callStaticMethod<void>(jniClassName, "resetWifiConfiguration", "(Ljava/lang/String;)V", javaSSID.object<jstring>());
+#endif
 }
 
 //-----------------------------------------------------------------------------
