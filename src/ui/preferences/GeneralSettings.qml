@@ -355,6 +355,16 @@ QGCView {
                         }
 
                         //-----------------------------------------------------------------
+                        //-- Network Checks Bypass
+                        FactCheckBox {
+                            text:       qsTr("Bypass network connectivity checks")
+                            fact:       _bypassNetworkChecks
+                            visible:    _bypassNetworkChecks.visible
+
+                            property Fact _bypassNetworkChecks: QGroundControl.settingsManager.appSettings.bypassNetworkChecks
+                        }
+
+                        //-----------------------------------------------------------------
                         //-- Save path
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
