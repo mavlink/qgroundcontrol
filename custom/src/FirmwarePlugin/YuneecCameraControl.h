@@ -37,6 +37,7 @@ public:
     Q_PROPERTY(Fact*        wb              READ    wb                  NOTIFY factsLoaded)
     Q_PROPERTY(Fact*        meteringMode    READ    meteringMode        NOTIFY factsLoaded)
     Q_PROPERTY(Fact*        videoRes        READ    videoRes            NOTIFY factsLoaded)
+    Q_PROPERTY(QPoint       spotArea        READ    spotArea            WRITE  setSpotArea      NOTIFY spotAreaChanged)
 
     Q_INVOKABLE void calibrateGimbal();
 
@@ -61,6 +62,9 @@ public:
     Fact*       wb                  ();
     Fact*       meteringMode        ();
     Fact*       videoRes            ();
+    QPoint      spotArea            ();
+
+    void        setSpotArea         (QPoint p);
 
 private slots:
     void    _recTimerHandler        ();
@@ -78,6 +82,7 @@ signals:
     void    gimbalPitchChanged      ();
     void    gimbalYawChanged        ();
     void    gimbalDataChanged       ();
+    void    spotAreaChanged         ();
 
 protected:
     void    _setVideoStatus         (VideoStatus status) override;

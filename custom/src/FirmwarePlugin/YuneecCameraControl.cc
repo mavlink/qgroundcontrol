@@ -15,6 +15,22 @@
 QGC_LOGGING_CATEGORY(YuneecCameraLog, "YuneecCameraLog")
 QGC_LOGGING_CATEGORY(YuneecCameraLogVerbose, "YuneecCameraLogVerbose")
 
+//static const char *kCAM_AUDIOREC    = "CAM_AUDIOREC";
+//static const char *kCAM_COLORMODE   = "CAM_COLORMODE";
+static const char *kCAM_EV          = "CAM_EV";
+static const char *kCAM_EXPMODE     = "CAM_EXPMODE";
+//static const char *kCAM_FLICKER     = "CAM_FLICKER";
+static const char *kCAM_ISO         = "CAM_ISO";
+static const char *kCAM_METERING    = "CAM_METERING";
+static const char *kCAM_MODE        = "CAM_MODE";
+//static const char *kCAM_PHOTOFMT    = "CAM_PHOTOFMT";
+//static const char *kCAM_PHOTOQUAL   = "CAM_PHOTOQUAL";
+static const char *kCAM_SHUTTERSPD  = "CAM_SHUTTERSPD";
+static const char *kCAM_SPOTAREA    = "CAM_SPOTAREA";
+//static const char *kCAM_VIDFMT      = "CAM_VIDFMT";
+static const char *kCAM_VIDRES      = "CAM_VIDRES";
+static const char *kCAM_WBMODE      = "CAM_WBMODE";
+
 //-----------------------------------------------------------------------------
 YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
     : QGCCameraControl(info, vehicle, compID, parent)
@@ -87,49 +103,49 @@ Fact*
 YuneecCameraControl::exposureMode()
 {
     qDebug() << "Get CAM_EXPMODE";
-    return _paramComplete ? getFact("CAM_EXPMODE") : NULL;
+    return _paramComplete ? getFact(kCAM_EXPMODE) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::ev()
 {
-    return _paramComplete ? getFact("CAM_EV") : NULL;
+    return _paramComplete ? getFact(kCAM_EV) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::iso()
 {
-    return _paramComplete ? getFact("CAM_ISO") : NULL;
+    return _paramComplete ? getFact(kCAM_ISO) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::shutterSpeed()
 {
-    return _paramComplete ? getFact("CAM_SHUTTERSPD") : NULL;
+    return _paramComplete ? getFact(kCAM_SHUTTERSPD) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::wb()
 {
-    return _paramComplete ? getFact("CAM_WBMODE") : NULL;
+    return _paramComplete ? getFact(kCAM_WBMODE) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::meteringMode()
 {
-    return _paramComplete ? getFact("CAM_METERING") : NULL;
+    return _paramComplete ? getFact(kCAM_METERING) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::videoRes()
 {
-    return _paramComplete ? getFact("CAM_VIDRES") : NULL;
+    return _paramComplete ? getFact(kCAM_VIDRES) : NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -234,7 +250,7 @@ void
 YuneecCameraControl::_setCameraMode(CameraMode mode)
 {
     QGCCameraControl::_setCameraMode(mode);
-    Fact* pFact = getFact("CAM_MODE");
+    Fact* pFact = getFact(kCAM_MODE);
     if(pFact) {
         pFact->_containerSetRawValue(QVariant((int)mode));
     }
@@ -386,3 +402,28 @@ YuneecCameraControl::_recTimerHandler()
     _recordTime = _recTime.elapsed();
     emit recordTimeChanged();
 }
+
+//-----------------------------------------------------------------------------
+QPoint
+YuneecCameraControl::spotArea()
+{
+    Fact* pFact = getFact(kCAM_SPOTAREA);
+    if(pFact) {
+        int x = (pFact->rawValue().toUInt() >> 8) & 0xFF;
+        int y = pFact->rawValue().toUInt() & 0xFF;
+        return QPoint(x, y);
+    }
+    return QPoint(0, 0);
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::setSpotArea(QPoint p)
+{
+    Fact* pFact = getFact(kCAM_SPOTAREA);
+    if(pFact) {
+        uint16_t coords = (p.x() << 8) | p.y();
+        pFact->setRawValue(coords);
+    }
+}
+

@@ -62,6 +62,7 @@ Item {
     property string _currentWB:         _wbFact       ? _wbFact.enumStringValue : _naString
     property string _currentMetering:   _meteringFact ? _meteringFact.enumStringValue : _naString
     property string _currentVideoRes:   _videoResFact ? _videoResFact.enumStringValue : _naString
+    property bool   _isSpot:            _camera && _cameraAutoMode && _expModeFact && _expModeFact.rawValue === 2
 
     property string _altitude:          _activeVehicle   ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0"
     property string _distanceStr:       isNaN(_distance) ? "0" : _distance.toFixed(0) + ' ' + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "")
@@ -439,6 +440,28 @@ Item {
                 rootVideoLoader.height = thermalItem.height
             }
         }
+    }
+
+    //-- Spot Metering
+    MouseArea {
+        anchors.fill:   parent
+        enabled:        _isSpot
+        onClicked: {
+            _camera.spotArea = Qt.point(mouse.x, mouse.y)
+            spotMetering.x = mouse.x
+            spotMetering.y = mouse.y
+        }
+    }
+    Rectangle {
+        id:         spotMetering
+        x:          _camera ? _camera.spotArea.x : 0
+        y:          _camera ? _camera.spotArea.y : 0
+        visible:    _isSpot
+        width:      32
+        height:     32
+        color:      Qt.rgba(0,0,0,0)
+        border.color: "yellow"
+        border.width: 1
     }
 
     //-- Camera Control
