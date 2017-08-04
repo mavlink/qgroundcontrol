@@ -582,6 +582,7 @@ Rectangle {
                 visible: !windRoseButton.visible
             }
             FactComboBox {
+                id: gridAngleBox
                 fact:                   missionItem.gridEntryLocation
                 visible:                !windRoseButton.visible
                 indexModel:             false
@@ -738,6 +739,15 @@ Rectangle {
                 windRosePie.angle = angle
                 gridAngleText.text = angle
                 gridAngleText.editingFinished()
+                if(angle > -135 && angle <= -45) {
+                    gridAngleBox.activated(2) // or 3
+                } else if(angle > -45 && angle <= 45) {
+                    gridAngleBox.activated(2) // or 0
+                } else if(angle > 45 && angle <= 135) {
+                    gridAngleBox.activated(1) // or 0
+                } else if(angle > 135 || angle <= -135) {
+                    gridAngleBox.activated(1) // or 3
+                }
             }
         }
     }
