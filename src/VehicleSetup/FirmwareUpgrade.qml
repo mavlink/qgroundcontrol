@@ -21,7 +21,7 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
-QGCView {
+SetupPage {
     id:         qgcView
     viewPanel:  panel
 
@@ -30,7 +30,8 @@ QGCView {
     // a better way to hightlight them, or use less hightlights.
 
     // User visible strings
-    readonly property string title:             "FIRMWARE"
+    pageName:                                   "Firmware"
+
     readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
     readonly property string highlightSuffix:   "</font>"
     readonly property string welcomeText:       qsTr("%1 can upgrade the firmware on Pixhawk devices, SiK Radios and PX4 Flow Smart Cameras.").arg(QGroundControl.appName)
