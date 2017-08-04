@@ -64,11 +64,6 @@ void MissionManager::_writeMissionItemsWorker(void)
     _retryCount = 0;
     emit inProgressChanged(true);
     _writeMissionCount();
-
-    _currentMissionIndex = -1;
-    _lastCurrentIndex = -1;
-    emit currentIndexChanged(-1);
-    emit lastCurrentIndexChanged(-1);
 }
 
 
@@ -875,7 +870,11 @@ void MissionManager::_finishTransaction(bool success)
         break;
     case TransactionWrite:
         if (success) {
-            // Write succeeded, update internal list to be current
+            // Write succeeded, update internal list to be current            
+            _currentMissionIndex = -1;
+            _lastCurrentIndex = -1;
+            emit currentIndexChanged(-1);
+            emit lastCurrentIndexChanged(-1);
             _clearAndDeleteMissionItems();
             for (int i=0; i<_writeMissionItems.count(); i++) {
                 _missionItems.append(_writeMissionItems[i]);
@@ -896,7 +895,9 @@ void MissionManager::_finishTransaction(bool success)
 
     if (_resumeMission) {
         _resumeMission = false;
-        emit resumeMissionReady();
+        if (success) {
+            emit resumeMissionReady();
+        }
     }
 }
 
