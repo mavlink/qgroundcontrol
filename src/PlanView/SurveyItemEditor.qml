@@ -447,7 +447,7 @@ Rectangle {
                         onClicked: {
                             windRosePie.angle = Number(gridAngleText.text)
                             var cords = windRoseButton.mapToItem(_root, 0, 0)
-                            windRosePie.popup(cords.x + windRoseButton.width / 2, cords.y + windRoseButton.height / 2);
+                            windRosePie.popup(cords.x + windRoseButton.width / 2, cords.y + windRoseButton.height / 2)
                         }
                     }
                 }
@@ -550,7 +550,7 @@ Rectangle {
 
                     onClicked: {
                         var cords = manualWindRoseButton.mapToItem(_root, 0, 0)
-                        windRosePie.popup(cords.x + manualWindRoseButton.width / 2, cords.y + manualWindRoseButton.height / 2);
+                        windRosePie.popup(cords.x + manualWindRoseButton.width / 2, cords.y + manualWindRoseButton.height / 2)
                     }
                 }
             }
@@ -693,13 +693,13 @@ Rectangle {
                 var end = windRosePie.angle*Math.PI/180 + angleWidth
                 ctx.reset()
 
-                ctx.beginPath();
+                ctx.beginPath()
                 ctx.arc(x, y, (width / 3) - windRosePie.lineWidth / 2, 0, 2*Math.PI, false)
                 ctx.lineWidth = windRosePie.lineWidth
                 ctx.strokeStyle = windRosePie.colorBackground
                 ctx.stroke()
 
-                ctx.beginPath();
+                ctx.beginPath()
                 ctx.arc(x, y, (width / 3) - windRosePie.lineWidth / 2, start, end, false)
                 ctx.lineWidth = windRosePie.lineWidth
                 ctx.strokeStyle = windRosePie.colorCircle
@@ -713,9 +713,9 @@ Rectangle {
 
         function popup(x, y) {
             if (x !== undefined)
-                windRosePie.x = x - windRosePie.width / 2;
+                windRosePie.x = x - windRosePie.width / 2
             if (y !== undefined)
-                windRosePie.y = y - windRosePie.height / 2;
+                windRosePie.y = y - windRosePie.height / 2
 
             windRosePie.visible = true
             windRosePie.focus = true
@@ -728,7 +728,7 @@ Rectangle {
             acceptedButtons: Qt.LeftButton | Qt.RightButton
 
             onClicked: {
-                windRosePie.visible = false;
+                windRosePie.visible = false
                 missionItemEditorListView.interactive = true
             }
             onPositionChanged: {
@@ -737,7 +737,7 @@ Rectangle {
                 windRoseCanvas.requestPaint()
                 windRosePie.angle = angle
                 gridAngleText.text = angle
-                gridAngleText.editingFinished();
+                gridAngleText.editingFinished()
             }
         }
     }
