@@ -11,6 +11,7 @@
 #include "VideoManager.h"
 #include "SettingsManager.h"
 #include "VideoManager.h"
+#include "Settings/SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(YuneecCameraLog, "YuneecCameraLog")
 QGC_LOGGING_CATEGORY(YuneecCameraLogVerbose, "YuneecCameraLogVerbose")
@@ -102,7 +103,6 @@ YuneecCameraControl::firmwareVersion()
 Fact*
 YuneecCameraControl::exposureMode()
 {
-    qDebug() << "Get CAM_EXPMODE";
     return _paramComplete ? getFact(kCAM_EXPMODE) : NULL;
 }
 
@@ -404,13 +404,40 @@ YuneecCameraControl::_recTimerHandler()
 }
 
 //-----------------------------------------------------------------------------
+void
+YuneecCameraControl::factChanged(Fact* pFact)
+{
+    if(pFact->name() == kCAM_SPOTAREA) {
+        emit spotAreaChanged();
+    }
+    QGCCameraControl::factChanged(pFact);
+}
+
+//-----------------------------------------------------------------------------
+QSize
+YuneecCameraControl::videoSize()
+{
+    return _videoSize;
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::setVideoSize(QSize s)
+{
+    _videoSize = s;
+    emit videoSizeChanged();
+}
+
+//-----------------------------------------------------------------------------
 QPoint
 YuneecCameraControl::spotArea()
 {
     Fact* pFact = getFact(kCAM_SPOTAREA);
     if(pFact) {
-        int x = (pFact->rawValue().toUInt() >> 8) & 0xFF;
-        int y = pFact->rawValue().toUInt() & 0xFF;
+        float vw = (float)_videoSize.width();
+        float vh = (float)_videoSize.height();
+        int x = (int)((float)((pFact->rawValue().toUInt() >> 8) & 0xFF) * vw / 100.0f);
+        int y = (int)((float)(pFact->rawValue().toUInt() & 0xFF) * vh / 100.0f);
         return QPoint(x, y);
     }
     return QPoint(0, 0);
@@ -422,8 +449,15 @@ YuneecCameraControl::setSpotArea(QPoint p)
 {
     Fact* pFact = getFact(kCAM_SPOTAREA);
     if(pFact) {
-        uint16_t coords = (p.x() << 8) | p.y();
+        float vw = (float)_videoSize.width();
+        float vh = (float)_videoSize.height();
+        float fx = p.x() < 0 ? 0.0f : (float)p.x();
+        float fy = p.y() < 0 ? 0.0f : (float)p.y();
+        uint8_t x = (uint8_t)(fx / vw * 100.0f);
+        uint8_t y = (uint8_t)(fy / vh * 100.0f);
+        x = x > 100 ? 100 : x;
+        y = y > 100 ? 100 : y;
+        uint16_t coords = (x << 8) | y;
         pFact->setRawValue(coords);
     }
 }
-

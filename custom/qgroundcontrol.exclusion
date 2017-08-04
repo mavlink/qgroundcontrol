@@ -32,3 +32,4 @@
         <file alias="UdpSettings.qml">src/ui/preferences/UdpSettings.qml</file>
         <file alias="SafetyComponent.qml">src/AutoPilotPlugins/PX4/SafetyComponent.qml</file>
         <file alias="SafetyComponentSummary.qml">src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml">src/FlightDisplay/FlightDisplayViewVideo.qml</file>
