@@ -116,23 +116,23 @@ Item {
                 enabled:        isSpot
                 onClicked: {
                     _camera.spotArea = Qt.point(mouse.x, mouse.y)
-                    spotMetering.x = mouse.x - (spotSize / 2)
-                    spotMetering.y = mouse.y - (spotSize / 2)
+                    spotMetering.x = mouse.x - (spotMetering.width  / 2)
+                    spotMetering.y = mouse.y - (spotMetering.height / 2)
                 }
             }
             Image {
                 id:                 spotMetering
-                x:                  _camera ? _camera.spotArea.x - (spotSize / 2) : 0
-                y:                  _camera ? _camera.spotArea.y - (spotSize / 2) : 0
+                x:                  _camera ? _camera.spotArea.x - (width  / 2) : 0
+                y:                  _camera ? _camera.spotArea.y - (height / 2) : 0
                 visible:            isSpot
-                width:              spotSize
-                height:             spotSize
+                width:              _camera ? _camera.videoSize.width / 24 : 0
+                height:             width * 0.66666
                 antialiasing:       true
                 mipmap:             true
                 smooth:             true
                 source:             "/typhoonh/img/spotArea.svg"
                 fillMode:           Image.PreserveAspectFit
-                sourceSize.height:  height
+                sourceSize.width:   width
             }
             Image {
                 id:                 centerMetering
