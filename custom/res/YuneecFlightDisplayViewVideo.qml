@@ -51,6 +51,7 @@ Item {
         }
     }
     Rectangle {
+        id:             videoRect
         anchors.fill:   parent
         color:          "black"
         visible:        QGroundControl.videoManager.videoReceiver.videoRunning
@@ -125,8 +126,8 @@ Item {
                 x:                  _camera ? _camera.spotArea.x - (width  / 2) : 0
                 y:                  _camera ? _camera.spotArea.y - (height / 2) : 0
                 visible:            isSpot
-                width:              _camera ? _camera.videoSize.width / 24 : 0
-                height:             width * 0.66666
+                height:             videoContent.height / 16
+                width:              height * 1.5
                 antialiasing:       true
                 mipmap:             true
                 smooth:             true
