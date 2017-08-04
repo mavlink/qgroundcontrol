@@ -442,7 +442,7 @@ Rectangle {
                         id:                     windRoseButton
                         anchors.verticalCenter: angleText.verticalCenter
                         iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
-                        visible:                _vehicle.fixedWing && !ScreenTools.isMobile
+                        visible:                _vehicle.fixedWing
 
                         onClicked: {
                             var cords = windRoseButton.mapToItem(_root, 0, 0)
@@ -465,11 +465,9 @@ Rectangle {
 
                 QGCLabel {
                     text: qsTr("Entry")
-                    visible: !windRoseButton.visible
                 }
                 FactComboBox {
                     fact:                   missionItem.gridEntryLocation
-                    visible:                !windRoseButton.visible
                     indexModel:             false
                     Layout.fillWidth:       true
                 }
@@ -547,7 +545,7 @@ Rectangle {
                     anchors.verticalCenter: manualAngleText.verticalCenter
                     Layout.columnSpan:      1
                     iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
-                    visible:                _vehicle.fixedWing && !ScreenTools.isMobile
+                    visible:                _vehicle.fixedWing
 
                     onClicked: {
                         var cords = manualWindRoseButton.mapToItem(_root, 0, 0)
