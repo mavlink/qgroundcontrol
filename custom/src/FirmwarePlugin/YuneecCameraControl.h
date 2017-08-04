@@ -119,4 +119,5 @@ private:
     bool                    _paramComplete;
     QString                 _version;
     QSize                   _videoSize;
+    bool                    _isE90;
 };

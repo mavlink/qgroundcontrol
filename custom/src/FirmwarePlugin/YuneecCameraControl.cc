@@ -44,6 +44,7 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     , _gimbalData(false)
     , _recordTime(0)
     , _paramComplete(false)
+    , _isE90(false)
 {
 
     _cameraSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/wav/camera.wav"));
@@ -82,6 +83,7 @@ YuneecCameraControl::_parametersReady()
         qCDebug(YuneecCameraLog) << "All parameters loaded.";
         _paramComplete = true;
         emit factsLoaded();
+        _isE90 = modelName().contains("E90");
     }
 }
 
@@ -249,6 +251,9 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
 void
 YuneecCameraControl::_setCameraMode(CameraMode mode)
 {
+    //-- TODO: This has to come from the firmware.
+    //   A video stream info message should contain the
+    //   proper aspect ratio to use.
     QGCCameraControl::_setCameraMode(mode);
     Fact* pFact = getFact(kCAM_MODE);
     if(pFact) {
@@ -256,7 +261,7 @@ YuneecCameraControl::_setCameraMode(CameraMode mode)
     }
     //-- Adjust Aspect Ratio
     float aspect = 1280.0f / 720.0f; // Some default
-    if(modelName().contains("E90")) {
+    if(_isE90) {
         //-- Photo Mode
         if(mode == CAM_MODE_PHOTO) {
             //-- E90 is 3:2 in Photo Mode
@@ -432,13 +437,15 @@ YuneecCameraControl::setVideoSize(QSize s)
 QPoint
 YuneecCameraControl::spotArea()
 {
-    Fact* pFact = getFact(kCAM_SPOTAREA);
-    if(pFact) {
-        float vw = (float)_videoSize.width();
-        float vh = (float)_videoSize.height();
-        int x = (int)((float)((pFact->rawValue().toUInt() >> 8) & 0xFF) * vw / 100.0f);
-        int y = (int)((float)(pFact->rawValue().toUInt() & 0xFF) * vh / 100.0f);
-        return QPoint(x, y);
+    if(_isE90) {
+        Fact* pFact = getFact(kCAM_SPOTAREA);
+        if(pFact) {
+            float vw = (float)_videoSize.width();
+            float vh = (float)_videoSize.height();
+            int x = (int)((float)((pFact->rawValue().toUInt() >> 8) & 0xFF) * vw / 100.0f);
+            int y = (int)((float)(pFact->rawValue().toUInt() & 0xFF) * vh / 100.0f);
+            return QPoint(x, y);
+        }
     }
     return QPoint(0, 0);
 }
@@ -447,17 +454,19 @@ YuneecCameraControl::spotArea()
 void
 YuneecCameraControl::setSpotArea(QPoint p)
 {
-    Fact* pFact = getFact(kCAM_SPOTAREA);
-    if(pFact) {
-        float vw = (float)_videoSize.width();
-        float vh = (float)_videoSize.height();
-        float fx = p.x() < 0 ? 0.0f : (float)p.x();
-        float fy = p.y() < 0 ? 0.0f : (float)p.y();
-        uint8_t x = (uint8_t)(fx / vw * 100.0f);
-        uint8_t y = (uint8_t)(fy / vh * 100.0f);
-        x = x > 100 ? 100 : x;
-        y = y > 100 ? 100 : y;
-        uint16_t coords = (x << 8) | y;
-        pFact->setRawValue(coords);
+    if(_isE90) {
+        Fact* pFact = getFact(kCAM_SPOTAREA);
+        if(pFact) {
+            float vw = (float)_videoSize.width();
+            float vh = (float)_videoSize.height();
+            float fx = p.x() < 0 ? 0.0f : (float)p.x();
+            float fy = p.y() < 0 ? 0.0f : (float)p.y();
+            uint8_t x = (uint8_t)(fx / vw * 100.0f);
+            uint8_t y = (uint8_t)(fy / vh * 100.0f);
+            x = x > 100 ? 100 : x;
+            y = y > 100 ? 100 : y;
+            uint16_t coords = (x << 8) | y;
+            pFact->setRawValue(coords);
+        }
     }
 }
