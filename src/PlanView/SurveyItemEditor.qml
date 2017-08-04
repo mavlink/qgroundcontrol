@@ -445,6 +445,7 @@ Rectangle {
                         visible:                _vehicle.fixedWing
 
                         onClicked: {
+                            windRosePie.angle = Number(gridAngleText.text)
                             var cords = windRoseButton.mapToItem(_root, 0, 0)
                             windRosePie.popup(cords.x + windRoseButton.width / 2, cords.y + windRoseButton.height / 2);
                         }
@@ -677,7 +678,7 @@ Rectangle {
         property string colorCircle: qgcPal.windowShade
         property string colorBackground: qgcPal.colorGrey
         property real lineWidth: windRoseButton.width / 3
-        property real angle: 0
+        property real angle: Number(gridAngleText.text)
 
         Canvas {
             id: windRoseCanvas
