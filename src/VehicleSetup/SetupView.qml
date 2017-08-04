@@ -56,23 +56,13 @@ Rectangle {
     function showFirmwarePanel()
     {
         if (!ScreenTools.isMobile) {
-            if (QGroundControl.multiVehicleManager.activeVehicleAvailable && QGroundControl.multiVehicleManager.activeVehicle.armed) {
-                _messagePanelText = _armedVehicleText
-                panelLoader.setSourceComponent(messagePanelComponent)
-            } else {
-                panelLoader.setSource("FirmwareUpgrade.qml")
-            }
+            panelLoader.setSource("FirmwareUpgrade.qml")
         }
     }
 
     function showJoystickPanel()
     {
-        if (QGroundControl.multiVehicleManager.activeVehicleAvailable && QGroundControl.multiVehicleManager.activeVehicle.armed) {
-            _messagePanelText = _armedVehicleText
-            panelLoader.setSourceComponent(messagePanelComponent)
-        } else {
-            panelLoader.setSource("JoystickConfig.qml")
-        }
+        panelLoader.setSource("JoystickConfig.qml")
     }
 
     function showParametersPanel()
@@ -87,24 +77,19 @@ Rectangle {
 
     function showVehicleComponentPanel(vehicleComponent)
     {
-        if (QGroundControl.multiVehicleManager.activeVehicle.armed && !vehicleComponent.allowSetupWhileArmed) {
-            _messagePanelText = _armedVehicleText
+        var autopilotPlugin = QGroundControl.multiVehicleManager.activeVehicle.autopilot
+        var prereq = autopilotPlugin.prerequisiteSetup(vehicleComponent)
+        if (prereq !== "") {
+            //-- TODO: This cannot be translated when built this way.
+            _messagePanelText = prereq + " setup must be completed prior to " + vehicleComponent.name + " setup."
             panelLoader.setSourceComponent(messagePanelComponent)
         } else {
-            var autopilotPlugin = QGroundControl.multiVehicleManager.activeVehicle.autopilot
-            var prereq = autopilotPlugin.prerequisiteSetup(vehicleComponent)
-            if (prereq !== "") {
-                //-- TODO: This cannot be trasnlated when built this way.
-                _messagePanelText = prereq + " setup must be completed prior to " + vehicleComponent.name + " setup."
-                panelLoader.setSourceComponent(messagePanelComponent)
-            } else {
-                panelLoader.setSource(vehicleComponent.setupSource, vehicleComponent)
-                for(var i = 0; i < componentRepeater.count; i++) {
-                    var obj = componentRepeater.itemAt(i);
-                    if (obj.text === vehicleComponent.name) {
-                        obj.checked = true;
-                        break;
-                    }
+            panelLoader.setSource(vehicleComponent.setupSource, vehicleComponent)
+            for(var i = 0; i < componentRepeater.count; i++) {
+                var obj = componentRepeater.itemAt(i);
+                if (obj.text === vehicleComponent.name) {
+                    obj.checked = true;
+                    break;
                 }
             }
         }
@@ -170,6 +155,7 @@ Rectangle {
             }
         }
     }
+
     Component {
         id: missingParametersVehicleSummaryComponent
 
