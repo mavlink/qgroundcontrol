@@ -58,6 +58,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _copyResult(0)
     , _updateProgress(0)
     , _updateDone(false)
+    , _selectedCount(0)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
 }
@@ -83,6 +84,7 @@ created_greater_than(const QFileInfo &f1, const QFileInfo &f2)
 void
 TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
 {
+    qmlRegisterType<TyphoonMediaItem>("TyphoonMediaItem", 1,0, "TyphoonMediaItem");
     _pHandler = pHandler;
     if(_pHandler) {
         connect(_pHandler, &TyphoonHM4Interface::m4StateChanged,               this, &TyphoonHQuickInterface::_m4StateChanged);
@@ -703,9 +705,82 @@ TyphoonHQuickInterface::calibrationComplete()
 }
 
 //-----------------------------------------------------------------------------
-QStringList
-TyphoonHQuickInterface::getMediaList()
+QQmlListProperty<TyphoonMediaItem>
+TyphoonHQuickInterface::mediaList()
 {
+    return QQmlListProperty<TyphoonMediaItem>(
+        this, this,
+        &TyphoonHQuickInterface::appendMediaItem,
+        &TyphoonHQuickInterface::mediaCount,
+        &TyphoonHQuickInterface::mediaItem,
+        &TyphoonHQuickInterface::clearMediaItems
+        );
+}
+
+//-----------------------------------------------------------------------------
+TyphoonMediaItem*
+TyphoonHQuickInterface::mediaItem(int index)
+{
+    if(index >= 0 && _mediaList.size() && index < _mediaList.size()) {
+        return _mediaList.at(index);
+    }
+    return NULL;
+}
+
+//-----------------------------------------------------------------------------
+int
+TyphoonHQuickInterface::mediaCount()
+{
+    return _mediaList.size();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::clearMediaItems()
+{
+    return _mediaList.clear();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::appendMediaItem(TyphoonMediaItem* p)
+{
+    _mediaList.append(p);
+}
+
+//-----------------------------------------------------------------------------
+TyphoonMediaItem*
+TyphoonHQuickInterface::mediaItem(QQmlListProperty<TyphoonMediaItem>* list, int i)
+{
+    return reinterpret_cast<TyphoonHQuickInterface*>(list->data)->mediaItem(i);
+}
+
+//-----------------------------------------------------------------------------
+int
+TyphoonHQuickInterface::mediaCount(QQmlListProperty<TyphoonMediaItem>* list)
+{
+    return reinterpret_cast<TyphoonHQuickInterface*>(list->data)->mediaCount();
+}
+
+void
+TyphoonHQuickInterface::appendMediaItem(QQmlListProperty<TyphoonMediaItem>* list, TyphoonMediaItem* p)
+{
+    reinterpret_cast<TyphoonHQuickInterface*>(list->data)->appendMediaItem(p);
+}
+
+void
+TyphoonHQuickInterface::clearMediaItems(QQmlListProperty<TyphoonMediaItem>* list)
+{
+    reinterpret_cast<TyphoonHQuickInterface*>(list->data)->clearMediaItems();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::refreshMeadiaList()
+{
+    clearMediaItems();
+    _selectedCount = 0;
+    emit selectedCountChanged();
     QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
     QDir photoDir = QDir(photoPath);
     photoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks);
@@ -714,7 +789,46 @@ TyphoonHQuickInterface::getMediaList()
     nameFilters << "*.jpg" << "*.JPG";
     photoDir.setNameFilters(nameFilters);
     QStringList list = photoDir.entryList();
-    return list;
+    foreach (QString fileName, list) {
+        TyphoonMediaItem* pItem = new TyphoonMediaItem(this, fileName);
+        appendMediaItem(pItem);
+    }
+    emit mediaListChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::selectAllMedia(bool selected)
+{
+    for(int i = 0; i < _mediaList.size(); i++) {
+        if(_mediaList[i]) {
+            TyphoonMediaItem* pItem = qobject_cast<TyphoonMediaItem*>(_mediaList[i]);
+            if(pItem) {
+                pItem->setSelected(selected);
+            }
+        }
+    }
+}
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::deleteSelectedMedia()
+{
+    QStringList toDelete;
+    for(int i = 0; i < _mediaList.size(); i++) {
+        if(_mediaList[i]) {
+            TyphoonMediaItem* pItem = qobject_cast<TyphoonMediaItem*>(_mediaList[i]);
+            if(pItem && pItem->selected()) {
+                toDelete << pItem->fileName();
+                pItem->setSelected(false);
+            }
+        }
+    }
+    QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo/");
+    foreach (QString fileName, toDelete) {
+        QString filePath = photoPath + fileName;
+        QFile::remove(filePath);
+    }
+    refreshMeadiaList();
 }
 
 //-----------------------------------------------------------------------------
@@ -1111,4 +1225,18 @@ TyphoonHQuickInterface::_checkUpdateStatus()
             emit updateAlert();
         }
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonMediaItem::setSelected (bool sel)
+{
+    _selected = sel;
+    emit selectedChanged();
+    if(sel) {
+        _parent->_selectedCount++;
+    } else {
+        _parent->_selectedCount--;
+    }
+    emit _parent->selectedCountChanged();
 }

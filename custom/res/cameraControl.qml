@@ -32,6 +32,7 @@ import QGroundControl.Vehicle           1.0
 
 import TyphoonHQuickInterface           1.0
 import TyphoonHQuickInterface.Widgets   1.0
+import TyphoonMediaItem                 1.0
 
 Rectangle {
     id:     mainRect
@@ -63,9 +64,13 @@ Rectangle {
     property real _mediaWidth:              128
     property real _mediaHeight:             72
     property real _mediaIndex:              0
-    property var  _mediaModel:              []
 
+    //-- Media Player
+    property color  _rectColor:             qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
     property string _photoPath:             "file://" + QGroundControl.settingsManager.appSettings.savePath.rawValue.toString() + "/Photo/"
+    property bool   _selectMode:            false
+    property bool   _hasSelection:          TyphoonHQuickInterface.selectedCount > 0
+    property bool   _hasPhotos:             TyphoonHQuickInterface.mediaList.length > 0
 
     function baseName(str) {
         return (str.slice(str.lastIndexOf("/")+1))
@@ -573,10 +578,10 @@ Rectangle {
             }
             Rectangle {
                 id:                 mediaPlayerRect
-                width:              mediaPlayerGrid.width  + 60
-                height:             mediaPlayerGrid.height + 60
+                width:              mediaPlayerGrid.width  + (ScreenTools.defaultFontPixelHeight * 2)
+                height:             mediaPlayerGrid.height + (ScreenTools.defaultFontPixelHeight * 5)
                 radius:             ScreenTools.defaultFontPixelWidth
-                color:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
+                color:              _rectColor
                 border.width:       1
                 border.color:       qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
                 anchors.centerIn:   parent
@@ -586,28 +591,95 @@ Rectangle {
                     onPressed:      { mouse.accepted = true; }
                     onReleased:     { mouse.accepted = true; }
                 }
+                QGCLabel {
+                    anchors.top:            parent.top
+                    anchors.topMargin:      ScreenTools.defaultFontPixelHeight
+                    anchors.left:           parent.left
+                    anchors.leftMargin:     ScreenTools.defaultFontPixelHeight * 2
+                    height:                 buttonRow.height
+                    verticalAlignment:      Text.AlignVCenter
+                    text:                   qsTr("Local Storage")
+                }
+                Row {
+                    id:                     buttonRow
+                    spacing:                ScreenTools.defaultFontPixelWidth
+                    anchors.top:            parent.top
+                    anchors.topMargin:      ScreenTools.defaultFontPixelHeight
+                    anchors.right:          parent.right
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelHeight * 2
+                    QGCButton {
+                        text:           qsTr('Delete Selected')
+                        width:          ScreenTools.defaultFontPixelWidth * 15
+                        visible:        _selectMode
+                        enabled:        _hasSelection
+                        onClicked: {
+                            confirmDeleteAll.open()
+                        }
+                        MessageDialog {
+                            id:                 confirmDeleteAll
+                            title:              qsTr("Delete All Images")
+                            text:               qsTr("Confirm deleting selected images?")
+                            standardButtons:    StandardButton.Ok | StandardButton.Cancel
+                            onAccepted: {
+                                TyphoonHQuickInterface.deleteSelectedMedia()
+                                confirmDeleteAll.close()
+                            }
+                        }
+                    }
+                    QGCButton {
+                        text:           _hasSelection ? qsTr('Select None') : qsTr('Select All')
+                        width:          ScreenTools.defaultFontPixelWidth * 15
+                        enabled:        _hasPhotos
+                        visible:        _selectMode
+                        onClicked: {
+                            if(!_hasSelection) {
+                                _selectMode = true
+                            }
+                            TyphoonHQuickInterface.selectAllMedia(!_hasSelection)
+                        }
+                    }
+                    QGCButton {
+                        text:           qsTr('Select')
+                        width:          ScreenTools.defaultFontPixelWidth * 15
+                        checked:        _selectMode && _hasPhotos
+                        checkable:      true
+                        enabled:        _hasPhotos
+                        onClicked:      {
+                            if(_selectMode) {
+                                // Clear selection
+                                TyphoonHQuickInterface.selectAllMedia(false)
+                                _selectMode = false
+                            } else {
+                                _selectMode = true
+                            }
+                        }
+                    }
+                }
                 GridView {
                     id:                 mediaPlayerGrid
                     clip:               true
-                    model:              _mediaModel
+                    model:              TyphoonHQuickInterface.mediaList
                     cellWidth:          _mediaWidth  + 8
                     cellHeight:         _mediaHeight + 8
-                    width:              (_mediaWidth  + 8) * 4
+                    width:              (_mediaWidth  + 8) * 5
                     height:             (_mediaHeight + 8) * 4
-                    anchors.centerIn:   parent
                     delegate:           mediaDelegate
                     cacheBuffer:        height * 4
+                    anchors.bottom:     parent.bottom
+                    anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight
+                    anchors.horizontalCenter:   parent.horizontalCenter
                 }
                 QGCLabel {
                     text:       qsTr("No Images")
-                    visible:    _mediaModel.length < 1
+                    visible:    TyphoonHQuickInterface.mediaList.length < 1
                     anchors.centerIn: parent
                 }
             }
             Component.onCompleted: {
+                _selectMode = false
+                TyphoonHQuickInterface.refreshMeadiaList()
                 rootLoader.width  = mediaPlayerItem.width
                 rootLoader.height = mediaPlayerItem.height
-                _mediaModel = TyphoonHQuickInterface.getMediaList()
             }
             Keys.onBackPressed: {
                 rootLoader.sourceComponent = null
@@ -616,18 +688,32 @@ Rectangle {
     }
     Component {
         id: mediaDelegate
-        Image {
-            width:      _mediaWidth
-            height:     _mediaHeight
-            fillMode:   Image.PreserveAspectFit
-            source:     _photoPath + modelData
-            sourceSize.width: width
-            //asynchronous:     true
-            MouseArea {
-                anchors.fill:   parent
-                onClicked: {
-                    _mediaIndex = index
-                    rootLoader.sourceComponent = mediaViewComponent
+        Rectangle {
+            width:          _mediaWidth
+            height:         _mediaHeight
+            color:          Qt.rgba(0,0,0,0)
+            border.color:   _selectMode ? (_mediaItem && _mediaItem.selected ? qgcPal.colorGreen : qgcPal.colorGrey) : _rectColor
+            border.width:   _selectMode ? (_mediaItem && _mediaItem.selected ? 2 : 1) : 0
+            property var _mediaItem: _hasPhotos ? TyphoonHQuickInterface.mediaList[index] : null
+            Image {
+                anchors.fill:       parent
+                anchors.margins:    2
+                fillMode:           Image.PreserveAspectFit
+                source:             _mediaItem ? _photoPath + _mediaItem.fileName : ""
+                sourceSize.width:   width
+                opacity:            _selectMode && _mediaItem && !_mediaItem.selected ? 0.5 : 1
+                MouseArea {
+                    anchors.fill:   parent
+                    onClicked: {
+                        if(_selectMode) {
+                            if(_mediaItem) {
+                                _mediaItem.selected = !_mediaItem.selected
+                            }
+                        } else {
+                            _mediaIndex = index
+                            rootLoader.sourceComponent = mediaViewComponent
+                        }
+                    }
                 }
             }
         }
@@ -641,6 +727,7 @@ Rectangle {
             width:  mainWindow.width
             height: mainWindow.height
             anchors.centerIn: parent
+            property var _mediaItem: _hasPhotos ? TyphoonHQuickInterface.mediaList[_mediaIndex] : null
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
@@ -684,7 +771,7 @@ Rectangle {
                     width:          _mediaWidth  * 7
                     height:         _mediaHeight * 7
                     fillMode:       Image.PreserveAspectFit
-                    source:         _photoPath + _mediaModel[_mediaIndex]
+                    source:         _mediaItem ? _photoPath + _mediaItem.fileName : ""
                     cache:          false
                     anchors.centerIn:   parent
                 }
@@ -713,7 +800,6 @@ Rectangle {
                         onClicked: {
                             if(_mediaIndex > 0) {
                                 _mediaIndex = _mediaIndex - 1;
-                                mediaContent.source = _photoPath + _mediaModel[_mediaIndex]
                             }
                         }
                     }
@@ -730,14 +816,13 @@ Rectangle {
                     fillMode:           Image.PreserveAspectFit
                     mipmap:             true
                     smooth:             true
-                    visible:            _mediaIndex < (_mediaModel.length - 1)
+                    visible:            _mediaIndex < (TyphoonHQuickInterface.mediaList.length - 1)
                     color:              qgcPal.text
                     MouseArea {
                         anchors.fill:   parent
                         onClicked: {
-                            if(_mediaIndex < (_mediaModel.length - 1)) {
+                            if(_mediaIndex < (TyphoonHQuickInterface.mediaList.length - 1)) {
                                 _mediaIndex = _mediaIndex + 1;
-                                mediaContent.source = _photoPath + _mediaModel[_mediaIndex]
                             }
                         }
                     }

@@ -10,7 +10,10 @@
 #include "TyphoonHCommon.h"
 #include "VideoReceiver.h"
 
+#include <QQmlListProperty>
+
 class TyphoonHM4Interface;
+class TyphoonHQuickInterface;
 
 //-----------------------------------------------------------------------------
 // Vehicle List
@@ -64,10 +67,47 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+// Media List
+class TyphoonMediaItem : public QObject
+{
+    Q_OBJECT
+public:
+    TyphoonMediaItem()
+        : _parent(NULL)
+        , _selected(false)
+    {
+    }
+    TyphoonMediaItem(TyphoonHQuickInterface* parent, QString fileName)
+        : QObject((QObject*)parent)
+        , _parent(parent)
+        , _fileName(fileName)
+        , _selected(false)
+    {
+    }
+
+    Q_PROPERTY(QString  fileName    READ fileName                       CONSTANT)
+    Q_PROPERTY(bool     selected    READ selected   WRITE setSelected   NOTIFY selectedChanged)
+
+    QString     fileName    () { return _fileName; }
+    bool        selected    () { return _selected; }
+
+    void        setSelected (bool sel);
+
+signals:
+    void        selectedChanged ();
+
+protected:
+    TyphoonHQuickInterface*     _parent;
+    QString                     _fileName;
+    bool                        _selected;
+};
+
+//-----------------------------------------------------------------------------
 // QtQuick Interface (UI)
 class TyphoonHQuickInterface : public QObject
 {
     Q_OBJECT
+    friend class TyphoonMediaItem;
 public:
     TyphoonHQuickInterface(QObject* parent = NULL);
     ~TyphoonHQuickInterface();
@@ -165,8 +205,6 @@ public:
     Q_INVOKABLE void stopCalibration    ();
     Q_INVOKABLE void setWiFiPassword    (QString pwd);
 
-    Q_INVOKABLE QStringList getMediaList();
-
     //-- Android image update
     Q_INVOKABLE bool checkForUpdate     ();
     Q_INVOKABLE void updateSystemImage  ();
@@ -230,8 +268,26 @@ public:
     int         updateProgress      () { return _updateProgress; }
     bool        updateDone          () { return _updateDone; }
     bool        updating            () { return _pFileCopy != NULL; }
-
     VideoReceiver*  videoReceiver   () { return _videoReceiver; }
+
+    //-- Media Player
+    Q_PROPERTY(QQmlListProperty<TyphoonMediaItem> mediaList READ mediaList NOTIFY mediaListChanged)
+    Q_PROPERTY(int selectedCount READ selectedCount NOTIFY selectedCountChanged)
+    QQmlListProperty<TyphoonMediaItem> mediaList();
+    Q_INVOKABLE void refreshMeadiaList      ();
+    Q_INVOKABLE void selectAllMedia         (bool selected);
+    Q_INVOKABLE void deleteSelectedMedia    ();
+    void                appendMediaItem     (TyphoonMediaItem* mediaItem);
+    TyphoonMediaItem*   mediaItem           (int index);
+    int                 mediaCount          ();
+    void                clearMediaItems     ();
+    int                 selectedCount       () { return _selectedCount; }
+
+private:
+    static void appendMediaItem(QQmlListProperty<TyphoonMediaItem>*, TyphoonMediaItem*);
+    static TyphoonMediaItem* mediaItem(QQmlListProperty<TyphoonMediaItem>*, int);
+    static int mediaCount(QQmlListProperty<TyphoonMediaItem>*);
+    static void clearMediaItems(QQmlListProperty<TyphoonMediaItem>*);
 
 signals:
     void    m4StateChanged              ();
@@ -260,6 +316,9 @@ signals:
     void    updatingChanged             ();
     void    thermalImagePresentChanged  ();
     void    updateAlert                 ();
+    void    mediaListChanged            ();
+    void    mediaSelectionChanged       ();
+    void    selectedCountChanged        ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -324,4 +383,6 @@ private:
     QString                 _updateError;
     int                     _updateProgress;
     bool                    _updateDone;
+    QVector<TyphoonMediaItem*>  _mediaList;
+    int                     _selectedCount;
 };
