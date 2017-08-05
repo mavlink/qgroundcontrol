@@ -113,7 +113,7 @@ Item {
 
     Timer {
         id:         toggleTimer
-        interval:   1000
+        interval:   500
         onTriggered: {
             toggleTimer.stop()
             parent._eggCount = 0
@@ -121,10 +121,11 @@ Item {
     }
 
     function indicatorClicked() {
+        var count = _showAttitude ? 5 : 15
         vehicleStatus.visible = !vehicleStatus.visible
         _eggCount++
         toggleTimer.restart()
-        if (_eggCount == 8) {
+        if (_eggCount === count) {
             vehicleStatus.visible = true
             _showAttitude = !_showAttitude
         }
