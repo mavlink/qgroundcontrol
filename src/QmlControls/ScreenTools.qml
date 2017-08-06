@@ -56,6 +56,7 @@ Item {
     property bool isAndroid:        ScreenToolsController.isAndroid
     property bool isiOS:            ScreenToolsController.isiOS
     property bool isMobile:         ScreenToolsController.isMobile
+    property bool isWindows:        ScreenToolsController.isWindows
     property bool isDebug:          ScreenToolsController.isDebug
     property bool isTinyScreen:     (Screen.width / Screen.pixelDensity) < 120 // 120mm
     property bool isShortScreen:    ScreenToolsController.isMobile && ((Screen.height / Screen.width) < 0.6) // Nexus 7 for example

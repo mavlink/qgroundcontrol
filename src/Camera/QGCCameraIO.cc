@@ -187,7 +187,7 @@ QGCCameraParamIO::handleParamAck(const mavlink_param_ext_ack_t& ack)
         _paramWriteTimer.start();
     } else {
         if(ack.param_result == PARAM_ACK_FAILED) {
-            if(++_sentRetries > 3) {
+            if(++_sentRetries < 3) {
                 //-- Try again
                 qCWarning(CameraIOLog) << "Param set failed:" << _fact->name() << _sentRetries;
                 _paramWriteTimer.start();
