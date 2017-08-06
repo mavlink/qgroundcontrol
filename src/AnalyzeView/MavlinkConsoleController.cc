@@ -12,7 +12,8 @@
 #include "UAS.h"
 
 MavlinkConsoleController::MavlinkConsoleController()
-    : _cursor_home_pos{-1},
+    : QStringListModel(),
+      _cursor_home_pos{-1},
       _cursor{0},
       _vehicle{nullptr}
 {
@@ -35,7 +36,7 @@ MavlinkConsoleController::sendCommand(QString command)
     command.append("\n");
     _sendSerialData(qPrintable(command));
     _cursor_home_pos = -1;
-    _cursor = _console_text.length();
+    _cursor = rowCount();
 }
 
 void
@@ -49,9 +50,10 @@ MavlinkConsoleController::_setActiveVehicle(Vehicle* vehicle)
 
     if (_vehicle) {
         _incoming_buffer.clear();
-        _console_text.clear();
-        emit cursorChanged(0);
-        emit textChanged(_console_text);
+        // Reset the model
+        setStringList(QStringList());
+        _cursor = 0;
+        _cursor_home_pos = -1;
         _uas_connections << connect(_vehicle, &Vehicle::mavlinkSerialControl, this, &MavlinkConsoleController::_receiveData);
     }
 }
@@ -64,17 +66,27 @@ MavlinkConsoleController::_receiveData(uint8_t device, uint8_t, uint16_t, uint32
 
     // Append incoming data and parse for ANSI codes
     _incoming_buffer.append(data);
-    auto old_size = _console_text.size();
-    _processANSItext();
-    auto new_size = _console_text.size();
+    while(!_incoming_buffer.isEmpty()) {
+        bool newline = false;
+        int idx = _incoming_buffer.indexOf('\n');
+        if (idx == -1) {
+            // Read the whole incoming buffer
+            idx = _incoming_buffer.size();
+        } else {
+            newline = true;
+        }
 
-    // Update QML and cursor
-    if (old_size > new_size) {
-        // Rewind back so we don't get a warning to stderr
-        emit cursorChanged(new_size);
+        QByteArray fragment = _incoming_buffer.mid(0, idx);
+        if (_processANSItext(fragment)) {
+            writeLine(_cursor, fragment);
+            if (newline)
+                _cursor++;
+            _incoming_buffer.remove(0, idx + (newline ? 1 : 0));
+        } else {
+            // ANSI processing failed, need more data
+            return;
+        }
     }
-    emit textChanged(_console_text);
-    emit cursorChanged(new_size);
 }
 
 void
@@ -109,18 +121,16 @@ MavlinkConsoleController::_sendSerialData(QByteArray data, bool close)
     }
 }
 
-void
-MavlinkConsoleController::_processANSItext()
+bool
+MavlinkConsoleController::_processANSItext(QByteArray &line)
 {
-    int i; // Position into the parsed buffer
-
     // Iterate over the incoming buffer to parse off known ANSI control codes
-    for (i = 0; i < _incoming_buffer.size(); i++) {
-        if (_incoming_buffer.at(i) == '\x1B') {
-            // For ANSI codes we expect at most 4 incoming chars
-            if (i < _incoming_buffer.size() - 3 && _incoming_buffer.at(i+1) == '[') {
+    for (int i = 0; i < line.size(); i++) {
+        if (line.at(i) == '\x1B') {
+            // For ANSI codes we expect at least 3 incoming chars
+            if (i < line.size() - 2 && line.at(i+1) == '[') {
                 // Parse ANSI code
-                switch(_incoming_buffer.at(i+2)) {
+                switch(line.at(i+2)) {
                     default:
                         continue;
                     case 'H':
@@ -134,40 +144,51 @@ MavlinkConsoleController::_processANSItext()
                         break;
                     case 'K':
                         // Erase the current line to the end
-                    {
-                        auto next_lf = _console_text.indexOf('\n', _cursor);
-                        if (next_lf > 0)
-                            _console_text.remove(_cursor, next_lf + 1 - _cursor);
-                    }
+                        if (_cursor < rowCount()) {
+                            setData(index(_cursor), "");
+                        }
                         break;
                     case '2':
-                        // Erase everything and rewind to home
-                        if (_incoming_buffer.at(i+3) == 'J' && _cursor_home_pos != -1) {
-                            // Keep newlines so textedit doesn't scroll annoyingly
-                            int newlines = _console_text.mid(_cursor_home_pos).count('\n');
-                            _console_text.remove(_cursor_home_pos, _console_text.size());
-                            _console_text.append(QByteArray(newlines, '\n'));
-                            _cursor = _cursor_home_pos;
+                        // Check for sufficient buffer size
+                        if ( i >= line.size() - 3)
+                            return false;
+
+                        if (line.at(i+3) == 'J' && _cursor_home_pos != -1) {
+                            // Erase everything and rewind to home
+                            bool blocked = blockSignals(true);
+                            for (int j = _cursor_home_pos; j < rowCount(); j++)
+                                setData(index(j), "");
+                            blockSignals(blocked);
+                            QVector<int> roles;
+                            roles.reserve(2);
+                            roles.append(Qt::DisplayRole);
+                            roles.append(Qt::EditRole);
+                            emit dataChanged(index(_cursor), index(rowCount()), roles);
                         }
                         // Even if we didn't understand this ANSI code, remove the 4th char
-                        _incoming_buffer.remove(i+3,1);
+                        line.remove(i+3,1);
                         break;
                 }
                 // Remove the parsed ANSI code and decrement the bufferpos
-                _incoming_buffer.remove(i, 3);
+                line.remove(i, 3);
                 i--;
             } else {
                 // We can reasonably expect a control code was fragemented
                 // Stop parsing here and wait for it to come in
-                break;
+                return false;
             }
         }
     }
+    return true;
+}
 
-    // Insert the new data and increment the write cursor
-    _console_text.insert(_cursor, _incoming_buffer.left(i));
-    _cursor += i;
-
-    // Remove written data from the incoming buffer
-    _incoming_buffer.remove(0, i);
+void
+MavlinkConsoleController::writeLine(int line, const QByteArray &text)
+{
+    auto rc = rowCount();
+    if (line >= rc) {
+        insertRows(rc, 1 + line - rc);
+    }
+    auto idx = index(line);
+    setData(idx, data(idx, Qt::DisplayRole).toString() + text);
 }
