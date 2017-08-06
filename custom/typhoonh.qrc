@@ -3,6 +3,7 @@
         <file alias="QGroundControl/Controls/MainToolBar.qml">res/MainToolBar.qml</file>
         <file alias="QGroundControl/Controls/VehicleRotationCal.qml">res/VehicleRotationCal.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml">res/YuneecFlightDisplayViewVideo.qml</file>
+        <file alias="QGroundControl/Controls/QGCButton.qml">res/YuneecButton.qml</file>
     </qresource>
     <qresource prefix="/qmlimages">
         <file alias="PaperPlane.svg">res/images/Y-Logo.svg</file>
