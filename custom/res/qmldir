@@ -4,3 +4,4 @@ OnOffSwitch                 1.0     OnOffSwitch.qml
 SSIDButton                  1.0     SSIDButton.qml
 ST16Analog                  1.0     ST16Analog.qml
 SwitchCal                   1.0     SwitchCal.qml
+CameraMenu                  1.0     CameraMenu.qml
