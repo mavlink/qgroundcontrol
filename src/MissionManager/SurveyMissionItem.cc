@@ -1122,10 +1122,12 @@ int SurveyMissionItem::_appendWaypointToMission(QList<MissionItem*>& items, int 
     double  altitude =          _gridAltitudeFact.rawValue().toDouble();
     bool    altitudeRelative =  _gridAltitudeRelativeFact.rawValue().toBool();
 
+    bool gate = (cameraTrigger == CameraTriggerOn) || (cameraTrigger == CameraTriggerOff);
+
     qCDebug(SurveyMissionItemLog) << "_appendWaypointToMission seq:trigger" << seqNum << (cameraTrigger != CameraTriggerNone);
 
     MissionItem* item = new MissionItem(seqNum++,
-                                        MAV_CMD_NAV_WAYPOINT,
+                                        (gate) ? MAV_CMD_CONDITION_GATE : MAV_CMD_NAV_WAYPOINT,
                                         altitudeRelative ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,
                                         cameraTrigger == CameraTriggerHoverAndCapture ? _hoverAndCaptureDelaySeconds : 0,  // Hold time (delay for hover and capture to settle vehicle before image is taken)
                                         0.0, 0.0,
@@ -1146,7 +1148,7 @@ int SurveyMissionItem::_appendWaypointToMission(QList<MissionItem*>& items, int 
                                MAV_FRAME_MISSION,
                                cameraTrigger == CameraTriggerOn ? _triggerDistance() : 0,
                                0,                                           // shutter integration (ignore)
-                               cameraTrigger == CameraTriggerOn ? 1 : 0,    // trigger immediately when starting
+                               1,                          // trigger immediately when starting and stopping
                                0, 0, 0, 0,                                  // param 4-7 unused
                                true,                                        // autoContinue
                                false,                                       // isCurrentItem
