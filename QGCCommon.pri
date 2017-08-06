@@ -135,6 +135,7 @@ exists ($$PWD/.git) {
         message(QGroundControl $${GIT_VERSION})
     }
 } else {
+    message("Version not set (.git not found). $$PWD")
     GIT_VERSION     = None
     VERSION         = 0.0.0   # Marker to indicate out-of-tree build
     MAC_VERSION     = 0.0.0
