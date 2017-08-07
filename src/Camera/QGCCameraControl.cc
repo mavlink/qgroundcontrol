@@ -873,7 +873,6 @@ QGCCameraControl::_processCondition(const QString condition)
 void
 QGCCameraControl::_updateRanges(Fact* pFact)
 {
-    QMap<Fact*, QVariant> valuesSet;
     QMap<Fact*, QGCCameraOptionRange*> rangesSet;
     QMap<Fact*, QString> rangesReset;
     QStringList valuesRequested;
@@ -894,11 +893,10 @@ QGCCameraControl::_updateRanges(Fact* pFact)
                     if(pTFact->enumStrings() != pRange->optNames) {
                         //-- Set limited range set
                         rangesSet[pTFact] = pRange;
-                        //-- Adjust current index if outside new limts
+                        //-- Get setting if current index is outside new limts
                         if(!pRange->optVariants.contains(pTFact->rawValue()) && _activeSettings.contains(pTFact->name())) {
-                            qCDebug(CameraControlLogVerbose) << pTFact->name() << "was" << pTFact->enumOrValueString() << "and is now" << pRange->optNames[0];
                             //-- We need to preemt the new option
-                            valuesSet[pTFact] = pRange->optVariants[0];
+                            valuesRequested << pTFact->name();
                         }
                         qCDebug(CameraControlLogVerbose) << "Limited:" << pRange->targetParam << pRange->optNames;
                     }
@@ -943,12 +941,7 @@ QGCCameraControl::_updateRanges(Fact* pFact)
             _updates << pFact;
         }
     }
-    //-- Send new values where new range forced it
-    foreach(Fact* pFact, valuesSet.keys()) {
-        pFact->_containerSetRawValue(valuesSet[pFact]);
-        _paramIO[pFact->name()]->sendParameter(true);
-    }
-    //-- Update values for restored ranges
+    //-- Update values for restored/limited ranges
     foreach (QString factName, valuesRequested) {
         _paramIO[factName]->paramRequest();
     }
