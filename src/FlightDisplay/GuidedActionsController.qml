@@ -32,58 +32,61 @@ Item {
     property var actionList
     property var altitudeSlider
 
-    readonly property string emergencyStopTitle:    qsTr("Emergency Stop")
-    readonly property string armTitle:              qsTr("Arm")
-    readonly property string disarmTitle:           qsTr("Disarm")
-    readonly property string rtlTitle:              qsTr("RTL")
-    readonly property string takeoffTitle:          qsTr("Takeoff")
-    readonly property string landTitle:             qsTr("Land")
-    readonly property string startMissionTitle:     qsTr("Start Mission")
-    readonly property string continueMissionTitle:  qsTr("Continue Mission")
-    readonly property string resumeMissionTitle:    qsTr("Resume Mission")
-    readonly property string pauseTitle:            qsTr("Pause")
-    readonly property string changeAltTitle:        qsTr("Change Altitude")
-    readonly property string orbitTitle:            qsTr("Orbit")
-    readonly property string landAbortTitle:        qsTr("Land Abort")
-    readonly property string setWaypointTitle:      qsTr("Set Waypoint")
-    readonly property string gotoTitle:             qsTr("Goto Location")
+    readonly property string emergencyStopTitle:            qsTr("Emergency Stop")
+    readonly property string armTitle:                      qsTr("Arm")
+    readonly property string disarmTitle:                   qsTr("Disarm")
+    readonly property string rtlTitle:                      qsTr("RTL")
+    readonly property string takeoffTitle:                  qsTr("Takeoff")
+    readonly property string landTitle:                     qsTr("Land")
+    readonly property string startMissionTitle:             qsTr("Start Mission")
+    readonly property string continueMissionTitle:          qsTr("Continue Mission")
+    readonly property string resumeMissionTitle:            qsTr("Resume Mission")
+    readonly property string resumeMissionUploadFailTitle:  qsTr("Resume FAILED")
+    readonly property string pauseTitle:                    qsTr("Pause")
+    readonly property string changeAltTitle:                qsTr("Change Altitude")
+    readonly property string orbitTitle:                    qsTr("Orbit")
+    readonly property string landAbortTitle:                qsTr("Land Abort")
+    readonly property string setWaypointTitle:              qsTr("Set Waypoint")
+    readonly property string gotoTitle:                     qsTr("Goto Location")
 
-    readonly property string armMessage:                qsTr("Arm the vehicle.")
-    readonly property string disarmMessage:             qsTr("Disarm the vehicle")
-    readonly property string emergencyStopMessage:      qsTr("WARNING: This will stop all motors. If vehicle is currently in air it will crash.")
-    readonly property string takeoffMessage:            qsTr("Takeoff from ground and hold position.")
-    readonly property string startMissionMessage:       qsTr("Takeoff from ground and start the current mission.")
-    readonly property string continueMissionMessage:    qsTr("Continue the mission from the current waypoint.")
-             property string resumeMissionMessage:      qsTr("Resume the current mission. This will re-generate the mission from waypoint %1, takeoff and continue the mission.").arg(_resumeMissionIndex)
-    readonly property string resumeMissionReadyMessage: qsTr("Review the modified mission. Confirm if you want to takeoff and begin mission.")
-    readonly property string landMessage:               qsTr("Land the vehicle at the current position.")
-    readonly property string rtlMessage:                qsTr("Return to the home position of the vehicle.")
-    readonly property string changeAltMessage:          qsTr("Change the altitude of the vehicle up or down.")
-    readonly property string gotoMessage:               qsTr("Move the vehicle to the location clicked on the map.")
-             property string setWaypointMessage:        qsTr("Adjust current waypoint to %1.").arg(_actionData)
-    readonly property string orbitMessage:              qsTr("Orbit the vehicle around the current location.")
-    readonly property string landAbortMessage:          qsTr("Abort the landing sequence.")
-    readonly property string pauseMessage:              qsTr("Pause the vehicle at it's current position.")
-    readonly property string mvPauseMessage:            qsTr("Pause all vehicles at their current position.")
+    readonly property string armMessage:                        qsTr("Arm the vehicle.")
+    readonly property string disarmMessage:                     qsTr("Disarm the vehicle")
+    readonly property string emergencyStopMessage:              qsTr("WARNING: This will stop all motors. If vehicle is currently in air it will crash.")
+    readonly property string takeoffMessage:                    qsTr("Takeoff from ground and hold position.")
+    readonly property string startMissionMessage:               qsTr("Takeoff from ground and start the current mission.")
+    readonly property string continueMissionMessage:            qsTr("Continue the mission from the current waypoint.")
+             property string resumeMissionMessage:              qsTr("Resume the current mission. This will re-generate the mission from waypoint %1, takeoff and continue the mission.").arg(_resumeMissionIndex)
+             property string resumeMissionUploadFailMessage:    qsTr("Upload of resume mission failed. Confirm to retry upload")
+    readonly property string resumeMissionReadyMessage:         qsTr("Review the modified mission. Confirm if you want to takeoff and begin mission.")
+    readonly property string landMessage:                       qsTr("Land the vehicle at the current position.")
+    readonly property string rtlMessage:                        qsTr("Return to the home position of the vehicle.")
+    readonly property string changeAltMessage:                  qsTr("Change the altitude of the vehicle up or down.")
+    readonly property string gotoMessage:                       qsTr("Move the vehicle to the location clicked on the map.")
+             property string setWaypointMessage:                qsTr("Adjust current waypoint to %1.").arg(_actionData)
+    readonly property string orbitMessage:                      qsTr("Orbit the vehicle around the current location.")
+    readonly property string landAbortMessage:                  qsTr("Abort the landing sequence.")
+    readonly property string pauseMessage:                      qsTr("Pause the vehicle at it's current position.")
+    readonly property string mvPauseMessage:                    qsTr("Pause all vehicles at their current position.")
 
-    readonly property int actionRTL:                1
-    readonly property int actionLand:               2
-    readonly property int actionTakeoff:            3
-    readonly property int actionArm:                4
-    readonly property int actionDisarm:             5
-    readonly property int actionEmergencyStop:      6
-    readonly property int actionChangeAlt:          7
-    readonly property int actionGoto:               8
-    readonly property int actionSetWaypoint:        9
-    readonly property int actionOrbit:              10
-    readonly property int actionLandAbort:          11
-    readonly property int actionStartMission:       12
-    readonly property int actionContinueMission:    13
-    readonly property int actionResumeMission:      14
-    readonly property int actionResumeMissionReady: 15
-    readonly property int actionPause:              16
-    readonly property int actionMVPause:            17
-    readonly property int actionMVStartMission:     18
+    readonly property int actionRTL:                        1
+    readonly property int actionLand:                       2
+    readonly property int actionTakeoff:                    3
+    readonly property int actionArm:                        4
+    readonly property int actionDisarm:                     5
+    readonly property int actionEmergencyStop:              6
+    readonly property int actionChangeAlt:                  7
+    readonly property int actionGoto:                       8
+    readonly property int actionSetWaypoint:                9
+    readonly property int actionOrbit:                      10
+    readonly property int actionLandAbort:                  11
+    readonly property int actionStartMission:               12
+    readonly property int actionContinueMission:            13
+    readonly property int actionResumeMission:              14
+    readonly property int actionResumeMissionReady:         15
+    readonly property int actionResumeMissionUploadFail:    16
+    readonly property int actionPause:                      17
+    readonly property int actionMVPause:                    18
+    readonly property int actionMVStartMission:             19
 
     property bool showEmergenyStop:     !_hideEmergenyStop && _activeVehicle && _vehicleArmed && _vehicleFlying
     property bool showArm:              _activeVehicle && !_vehicleArmed
@@ -213,6 +216,11 @@ Item {
             confirmDialog.message = resumeMissionMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showResumeMission })
             break;
+        case actionResumeMissionUploadFail:
+            confirmDialog.title = resumeMissionUploadFailTitle
+            confirmDialog.message = resumeMissionUploadFailMessage
+            confirmDialog.hideTrigger = Qt.binding(function() { return !showResumeMission })
+            break;
         case actionResumeMissionReady:
             confirmDialog.title = resumeMissionTitle
             confirmDialog.message = resumeMissionReadyMessage
@@ -284,6 +292,7 @@ Item {
             _activeVehicle.guidedModeTakeoff()
             break
         case actionResumeMission:
+        case actionResumeMissionUploadFail:
             missionController.resumeMission(missionController.resumeMissionIndex)
             break
         case actionResumeMissionReady:
