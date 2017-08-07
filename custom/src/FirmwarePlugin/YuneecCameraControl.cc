@@ -11,9 +11,26 @@
 #include "VideoManager.h"
 #include "SettingsManager.h"
 #include "VideoManager.h"
+#include "Settings/SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(YuneecCameraLog, "YuneecCameraLog")
 QGC_LOGGING_CATEGORY(YuneecCameraLogVerbose, "YuneecCameraLogVerbose")
+
+//static const char *kCAM_AUDIOREC    = "CAM_AUDIOREC";
+//static const char *kCAM_COLORMODE   = "CAM_COLORMODE";
+static const char *kCAM_EV          = "CAM_EV";
+static const char *kCAM_EXPMODE     = "CAM_EXPMODE";
+//static const char *kCAM_FLICKER     = "CAM_FLICKER";
+static const char *kCAM_ISO         = "CAM_ISO";
+static const char *kCAM_METERING    = "CAM_METERING";
+static const char *kCAM_MODE        = "CAM_MODE";
+//static const char *kCAM_PHOTOFMT    = "CAM_PHOTOFMT";
+//static const char *kCAM_PHOTOQUAL   = "CAM_PHOTOQUAL";
+static const char *kCAM_SHUTTERSPD  = "CAM_SHUTTERSPD";
+static const char *kCAM_SPOTAREA    = "CAM_SPOTAREA";
+//static const char *kCAM_VIDFMT      = "CAM_VIDFMT";
+static const char *kCAM_VIDRES      = "CAM_VIDRES";
+static const char *kCAM_WBMODE      = "CAM_WBMODE";
 
 //-----------------------------------------------------------------------------
 YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
@@ -27,6 +44,7 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     , _gimbalData(false)
     , _recordTime(0)
     , _paramComplete(false)
+    , _isE90(false)
 {
 
     _cameraSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/wav/camera.wav"));
@@ -65,6 +83,7 @@ YuneecCameraControl::_parametersReady()
         qCDebug(YuneecCameraLog) << "All parameters loaded.";
         _paramComplete = true;
         emit factsLoaded();
+        _isE90 = modelName().contains("E90");
     }
 }
 
@@ -86,50 +105,49 @@ YuneecCameraControl::firmwareVersion()
 Fact*
 YuneecCameraControl::exposureMode()
 {
-    qDebug() << "Get CAM_EXPMODE";
-    return _paramComplete ? getFact("CAM_EXPMODE") : NULL;
+    return _paramComplete ? getFact(kCAM_EXPMODE) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::ev()
 {
-    return _paramComplete ? getFact("CAM_EV") : NULL;
+    return _paramComplete ? getFact(kCAM_EV) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::iso()
 {
-    return _paramComplete ? getFact("CAM_ISO") : NULL;
+    return _paramComplete ? getFact(kCAM_ISO) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::shutterSpeed()
 {
-    return _paramComplete ? getFact("CAM_SHUTTERSPD") : NULL;
+    return _paramComplete ? getFact(kCAM_SHUTTERSPD) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::wb()
 {
-    return _paramComplete ? getFact("CAM_WBMODE") : NULL;
+    return _paramComplete ? getFact(kCAM_WBMODE) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::meteringMode()
 {
-    return _paramComplete ? getFact("CAM_METERING") : NULL;
+    return _paramComplete ? getFact(kCAM_METERING) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::videoRes()
 {
-    return _paramComplete ? getFact("CAM_VIDRES") : NULL;
+    return _paramComplete ? getFact(kCAM_VIDRES) : NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -233,14 +251,17 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
 void
 YuneecCameraControl::_setCameraMode(CameraMode mode)
 {
+    //-- TODO: This has to come from the firmware.
+    //   A video stream info message should contain the
+    //   proper aspect ratio to use.
     QGCCameraControl::_setCameraMode(mode);
-    Fact* pFact = getFact("CAM_MODE");
+    Fact* pFact = getFact(kCAM_MODE);
     if(pFact) {
         pFact->_containerSetRawValue(QVariant((int)mode));
     }
     //-- Adjust Aspect Ratio
     float aspect = 1280.0f / 720.0f; // Some default
-    if(modelName().contains("E90")) {
+    if(_isE90) {
         //-- Photo Mode
         if(mode == CAM_MODE_PHOTO) {
             //-- E90 is 3:2 in Photo Mode
@@ -385,4 +406,67 @@ YuneecCameraControl::_recTimerHandler()
 {
     _recordTime = _recTime.elapsed();
     emit recordTimeChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::factChanged(Fact* pFact)
+{
+    if(pFact->name() == kCAM_SPOTAREA) {
+        emit spotAreaChanged();
+    }
+    QGCCameraControl::factChanged(pFact);
+}
+
+//-----------------------------------------------------------------------------
+QSize
+YuneecCameraControl::videoSize()
+{
+    return _videoSize;
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::setVideoSize(QSize s)
+{
+    _videoSize = s;
+    emit videoSizeChanged();
+}
+
+//-----------------------------------------------------------------------------
+QPoint
+YuneecCameraControl::spotArea()
+{
+    if(_isE90) {
+        Fact* pFact = getFact(kCAM_SPOTAREA);
+        if(pFact) {
+            float vw = (float)_videoSize.width();
+            float vh = (float)_videoSize.height();
+            int x = (int)((float)((pFact->rawValue().toUInt() >> 8) & 0xFF) * vw / 100.0f);
+            int y = (int)((float)(pFact->rawValue().toUInt() & 0xFF) * vh / 100.0f);
+            return QPoint(x, y);
+        }
+    }
+    return QPoint(0, 0);
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::setSpotArea(QPoint p)
+{
+    if(_isE90) {
+        Fact* pFact = getFact(kCAM_SPOTAREA);
+        if(pFact) {
+            float vw = (float)_videoSize.width();
+            float vh = (float)_videoSize.height();
+            float fx = p.x() < 0 ? 0.0f : (float)p.x();
+            float fy = p.y() < 0 ? 0.0f : (float)p.y();
+            uint8_t x = (uint8_t)(fx / vw * 100.0f);
+            uint8_t y = (uint8_t)(fy / vh * 100.0f);
+            x = x > 100 ? 100 : x;
+            y = y > 100 ? 100 : y;
+            uint16_t coords = (x << 8) | y;
+            pFact->setRawValue(coords);
+        }
+    }
 }

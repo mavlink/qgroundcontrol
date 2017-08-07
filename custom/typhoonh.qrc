@@ -2,6 +2,7 @@
     <qresource prefix="/qml">
         <file alias="QGroundControl/Controls/MainToolBar.qml">res/MainToolBar.qml</file>
         <file alias="QGroundControl/Controls/VehicleRotationCal.qml">res/VehicleRotationCal.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml">res/YuneecFlightDisplayViewVideo.qml</file>
         <file alias="QGroundControl/Controls/QGCButton.qml">res/YuneecButton.qml</file>
     </qresource>
     <qresource prefix="/qmlimages">
@@ -22,6 +23,7 @@
         <file alias="camera_switch_photo.svg">res/images/camera_switch_photo.svg</file>
         <file alias="camera_switch_video_mode.svg">res/images/camera_switch_video_mode.svg</file>
         <file alias="camera_switch_video.svg">res/images/camera_switch_video.svg</file>
+        <file alias="centerArea.svg">res/images/centerArea.svg</file>
         <file alias="checkMark.svg">res/images/checkMark.svg</file>
         <file alias="CogWheel.svg">res/images/CogWheel.svg</file>
         <file alias="CompassIndicator.svg">res/images/CompassIndicator.svg</file>
@@ -53,6 +55,7 @@
         <file alias="rc_battery_charge_20.svg">res/images/rc_battery_charge_20.svg</file>
         <file alias="RightArrow.svg">res/images/RightArrow.svg</file>
         <file alias="sliders.svg">res/images/sliders.svg</file>
+        <file alias="spotArea.svg">res/images/spotArea.svg</file>
         <file alias="time.svg">res/images/time.svg</file>
         <file alias="TyphoonDown.svg">res/images/TyphoonDown.svg</file>
         <file alias="TyphoonLeft.svg">res/images/TyphoonLeft.svg</file>

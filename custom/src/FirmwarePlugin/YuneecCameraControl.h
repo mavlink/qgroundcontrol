@@ -10,6 +10,8 @@
 #include "QGCCameraControl.h"
 
 #include <QSoundEffect>
+#include <QSize>
+#include <QPoint>
 
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLog)
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLogVerbose)
@@ -37,6 +39,8 @@ public:
     Q_PROPERTY(Fact*        wb              READ    wb                  NOTIFY factsLoaded)
     Q_PROPERTY(Fact*        meteringMode    READ    meteringMode        NOTIFY factsLoaded)
     Q_PROPERTY(Fact*        videoRes        READ    videoRes            NOTIFY factsLoaded)
+    Q_PROPERTY(QPoint       spotArea        READ    spotArea            WRITE  setSpotArea      NOTIFY spotAreaChanged)
+    Q_PROPERTY(QSize        videoSize       READ    videoSize           WRITE  setVideoSize     NOTIFY videoSizeChanged)
 
     Q_INVOKABLE void calibrateGimbal();
 
@@ -44,6 +48,7 @@ public:
     bool        startVideo          () override;
     bool        stopVideo           () override;
     QString     firmwareVersion     () override;
+    void        factChanged         (Fact* pFact) override;
 
     QString     gimbalVersion       () { return _gimbalVersion; }
     bool        gimbalCalOn         () { return _gimbalCalOn; }
@@ -61,6 +66,11 @@ public:
     Fact*       wb                  ();
     Fact*       meteringMode        ();
     Fact*       videoRes            ();
+    QPoint      spotArea            ();
+    void        setSpotArea         (QPoint mouse);
+
+    QSize       videoSize           ();
+    void        setVideoSize        (QSize s);
 
 private slots:
     void    _recTimerHandler        ();
@@ -78,6 +88,8 @@ signals:
     void    gimbalPitchChanged      ();
     void    gimbalYawChanged        ();
     void    gimbalDataChanged       ();
+    void    spotAreaChanged         ();
+    void    videoSizeChanged        ();
 
 protected:
     void    _setVideoStatus         (VideoStatus status) override;
@@ -106,4 +118,6 @@ private:
     uint32_t                _recordTime;
     bool                    _paramComplete;
     QString                 _version;
+    QSize                   _videoSize;
+    bool                    _isE90;
 };

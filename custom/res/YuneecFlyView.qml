@@ -24,6 +24,7 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.Vehicle               1.0
 
 import TyphoonHQuickInterface               1.0
+import TyphoonHQuickInterface.Widgets       1.0
 
 Item {
     anchors.fill: parent
@@ -31,10 +32,10 @@ Item {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     readonly property string scaleState:    "topMode"
-    readonly property string _naString:     qsTr('N/A')
 
     property real   _indicatorDiameter: ScreenTools.defaultFontPixelWidth * 16
     property var    _sepColor:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
+    property color  _indicatorColor:    qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.connectionLost : false
@@ -54,15 +55,7 @@ Item {
     property var    _meteringFact:      _camera && _camera.meteringMode
     property var    _videoResFact:      _camera && _camera.videoRes
 
-    property string _currentAEMode:     _expModeFact  ? _expModeFact.enumStringValue : _naString
     property bool   _cameraAutoMode:    _expModeFact  ? _expModeFact.rawValue === 0 : true
-    property string _currentEV:         _evFact       ? _evFact.enumStringValue : '0'
-    property string _currentISO:        _isoFact      ? _isoFact.enumStringValue : _naString
-    property string _currentShutter:    _shutterFact  ? _shutterFact.enumStringValue : _naString
-    property string _currentWB:         _wbFact       ? _wbFact.enumStringValue : _naString
-    property string _currentMetering:   _meteringFact ? _meteringFact.enumStringValue : _naString
-    property string _currentVideoRes:   _videoResFact ? _videoResFact.enumStringValue : _naString
-
     property string _altitude:          _activeVehicle   ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0"
     property string _distanceStr:       isNaN(_distance) ? "0" : _distance.toFixed(0) + ' ' + (_activeVehicle ? _activeVehicle.altitudeRelative.units : "")
     property real   _heading:           _activeVehicle   ? _activeVehicle.heading.rawValue : 0
@@ -338,8 +331,8 @@ Item {
     //-- Camera Status
     Rectangle {
         width:          camRow.width + (ScreenTools.defaultFontPixelWidth * 3)
-        height:         camRow.height * 2
-        color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
+        height:         camRow.height * 1.25
+        color:          _indicatorColor
         visible:        !_mainIsMap && _cameraPresent && indicatorDropdown.sourceComponent === null && !messageArea.visible && !criticalMmessageArea.visible
         radius:         3
         border.width:   1
@@ -352,58 +345,63 @@ Item {
             spacing: ScreenTools.defaultFontPixelWidth
             anchors.centerIn: parent
             //-- AE
-            QGCLabel { text: qsTr("AE:"); anchors.verticalCenter: parent.verticalCenter;}
-            QGCLabel { text: _currentAEMode; anchors.verticalCenter: parent.verticalCenter;}
+            QGCLabel { text: qsTr("AE:"); anchors.verticalCenter: parent.verticalCenter; }
+            CameraMenu {
+                anchors.verticalCenter: parent.verticalCenter
+                indexModel: false
+                fact:       _expModeFact
+            }
             //-- EV
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
-            QGCLabel {
-                text: qsTr("EV:");
+            QGCLabel { text: qsTr("EV:"); visible: _cameraAutoMode; anchors.verticalCenter: parent.verticalCenter; }
+            CameraMenu {
+                anchors.verticalCenter: parent.verticalCenter
                 visible: _cameraAutoMode;
-                anchors.verticalCenter: parent.verticalCenter;
-            }
-            QGCLabel {
-                text:   _currentEV
-                visible: _cameraAutoMode;
-                anchors.verticalCenter: parent.verticalCenter;
+                indexModel: false
+                fact:       _evFact
             }
             //-- ISO
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: !_cameraAutoMode; }
-            QGCLabel {
-                text:    qsTr("ISO:");
-                visible: !_cameraAutoMode;
-                anchors.verticalCenter: parent.verticalCenter;
-            }
-            QGCLabel {
-                text:    _currentISO
-                visible: !_cameraAutoMode;
-                anchors.verticalCenter: parent.verticalCenter;
+            QGCLabel { text: qsTr("ISO:"); visible: !_cameraAutoMode; anchors.verticalCenter: parent.verticalCenter; }
+            CameraMenu {
+                anchors.verticalCenter: parent.verticalCenter
+                visible:    !_cameraAutoMode;
+                indexModel: false
+                fact:       _isoFact
             }
             //-- Shutter Speed
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; visible: !_cameraAutoMode; anchors.verticalCenter: parent.verticalCenter; }
-            QGCLabel {
-                text: qsTr("Shutter:");
-                visible: !_cameraAutoMode;
-                anchors.verticalCenter: parent.verticalCenter;
-            }
-            QGCLabel {
-                text:    _currentShutter
-                visible: !_cameraAutoMode;
-                anchors.verticalCenter: parent.verticalCenter;
+            QGCLabel {text: qsTr("Shutter:"); visible: !_cameraAutoMode; anchors.verticalCenter: parent.verticalCenter; }
+            CameraMenu {
+                anchors.verticalCenter: parent.verticalCenter
+                visible:    !_cameraAutoMode;
+                indexModel: false
+                fact:       _shutterFact
             }
             //-- WB
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; }
             QGCLabel { text: qsTr("WB:"); anchors.verticalCenter: parent.verticalCenter;}
-            QGCLabel { text: _currentWB; anchors.verticalCenter: parent.verticalCenter; }
+            CameraMenu {
+                anchors.verticalCenter: parent.verticalCenter
+                indexModel: false
+                fact:       _wbFact
+            }
             //-- Metering
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
             QGCLabel { text: qsTr("Metering:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
-            QGCLabel { text: _currentMetering; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
+            CameraMenu {
+                anchors.verticalCenter: parent.verticalCenter
+                visible:    _cameraAutoMode;
+                indexModel: false
+                fact:       _meteringFact
+            }
             //-- Video Res
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode; }
-            QGCLabel {
-                text:   _currentVideoRes
-                visible: _cameraVideoMode;
-                anchors.verticalCenter: parent.verticalCenter;
+            CameraMenu {
+                anchors.verticalCenter: parent.verticalCenter
+                visible:    _cameraVideoMode;
+                indexModel: false
+                fact:       _videoResFact
             }
             //-- SD Card
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; }
@@ -441,7 +439,6 @@ Item {
             }
         }
     }
-
     //-- Camera Control
     Loader {
         id:                     camControlLoader
@@ -459,7 +456,7 @@ Item {
         width:                  gimbalCol.width
         height:                 gimbalCol.height
         visible:                _gimbalVisible
-        anchors.verticalCenter: camControlLoader.verticalCenter
+        anchors.bottom:         camControlLoader.bottom
         anchors.right:          camControlLoader.left
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         Column {
@@ -468,7 +465,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             Rectangle {
                 width:          ScreenTools.defaultFontPixelWidth * 4
-                height:         camControlLoader.height * 0.8
+                height:         camControlLoader.height * 0.75
                 color:          Qt.rgba(1,1,1,0.55)
                 radius:         ScreenTools.defaultFontPixelWidth * 0.5
                 Image {

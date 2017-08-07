@@ -25,7 +25,6 @@ YuneecFirmwarePlugin::YuneecFirmwarePlugin()
             // No other flight modes can be set
             info.canBeSet = false;
         }
-        qDebug() << *info.name << info.canBeSet;
     }
 
     //  The following flight modes are renamed:

@@ -1,11 +1,12 @@
 <RCC>
     <qresource prefix="/qml">
         <file alias="QGroundControl/Controls/QGCToolBarButton.qml">res/QGCToolBarButton.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/CameraMenu.qml">res/CameraMenu.qml</file>
         <file alias="TyphoonHQuickInterface/Widgets/OnOffSwitch.qml">res/OnOffSwitch.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/qmldir">res/qmldir</file>
         <file alias="TyphoonHQuickInterface/Widgets/SSIDButton.qml">res/SSIDButton.qml</file>
         <file alias="TyphoonHQuickInterface/Widgets/ST16Analog.qml">res/ST16Analog.qml</file>
         <file alias="TyphoonHQuickInterface/Widgets/SwitchCal.qml">res/SwitchCal.qml</file>
-        <file alias="TyphoonHQuickInterface/Widgets/qmldir">res/qmldir</file>
     </qresource>
     <qresource prefix="/res">
         <file alias="QGCLogoFull">res/images/AppLogo.svg</file>

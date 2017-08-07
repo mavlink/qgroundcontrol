@@ -125,7 +125,7 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
             }
             //-- We want to limit at 1G
             while(totalLogSize > (1024 * 1024 * 1024) && logs.size()) {
-                qDebug() << "Removing old log file:" << logs[0].fileName();
+                //qDebug() << "Removing old log file:" << logs[0].fileName();
                 totalLogSize -= logs[0].size();
                 QFile::remove(logs[0].filePath());
                 logs.removeAt(0);
@@ -976,8 +976,8 @@ compareRSSI(const QVariant &v1, const QVariant &v2)
 {
     TyphoonSSIDItem* s1 = qobject_cast<TyphoonSSIDItem*>(qvariant_cast<QObject*>(v1));
     TyphoonSSIDItem* s2 = qobject_cast<TyphoonSSIDItem*>(qvariant_cast<QObject*>(v2));
-    qDebug() << "Sort" << s1->rssi() << s2->rssi();
-     return s1->rssi() > s2->rssi();
+    //qDebug() << "Sort" << s1->rssi() << s2->rssi();
+    return s1->rssi() > s2->rssi();
 }
 
 //-----------------------------------------------------------------------------
