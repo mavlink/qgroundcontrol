@@ -84,6 +84,7 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
                 @Override
                 public void onNewData(final byte[] dataA, int userDataA)
                 {
+                    Log.d(TAG, "UsbIoManager.Listener.onNewData: read " + dataA.length + " bytes);
                     nativeDeviceNewData(userDataA, dataA);
                 }
             };
@@ -384,8 +385,10 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
 
         UsbSerialDriver driverL = m_openedDevices.get(idA);
 
-        if (driverL == null)
+        if (driverL == null) {
+            Log.e(TAG, "startIoManager: no UsbSerialDriver found");
             return;
+        }
 
         UsbIoManager managerL = new UsbIoManager(driverL, m_Listener, m_userData.get(idA));
         m_ioManager.put(idA, managerL);
@@ -418,8 +421,10 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
     {
         UsbSerialDriver driverL = m_openedDevices.get(idA);
 
-        if (driverL == null)
+        if (driverL == null) {
+            Log.e(TAG, "setParameters: no UsbSerialDriver found");
             return false;
+        }
 
         try
         {
@@ -482,15 +487,21 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
     {
         UsbSerialDriver driverL = m_openedDevices.get(idA);
 
-        if (driverL == null)
+        if (driverL == null) {
+            Log.e(TAG, "write: no UsbSerialDriver found");
             return 0;
+        }
 
         try
         {
-            return driverL.write(sourceA, timeoutMSecA);
+            Log.d(TAG, "write: about to write " + sourceA.length + " bytes);
+            int bytesWritten = driverL.write(sourceA, timeoutMSecA);
+            Log.d(TAG, "write: successfully written " + bytesWritten + " bytes");
+            return bytesWritten;
         }
         catch(IOException eA)
         {
+            Log.d(TAG, "write: exception " + eA.getMessage());
             return 0;
         }
         /*
