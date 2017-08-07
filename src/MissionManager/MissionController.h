@@ -160,6 +160,7 @@ signals:
     void complexMissionItemNamesChanged(void);
     void resumeMissionIndexChanged(void);
     void resumeMissionReady(void);
+    void resumeMissionUploadFail(void);
     void batteryChangePointChanged(int batteryChangePoint);
     void batteriesRequiredChanged(int batteriesRequired);
     void plannedHomePositionChanged(QGeoCoordinate plannedHomePosition);
