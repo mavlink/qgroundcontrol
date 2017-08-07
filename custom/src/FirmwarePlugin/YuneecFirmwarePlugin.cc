@@ -29,10 +29,11 @@ YuneecFirmwarePlugin::YuneecFirmwarePlugin()
 
     //  The following flight modes are renamed:
     _posCtlFlightMode = tr("Angle");
-    _rtlFlightMode = tr("RTL");
+    _rtlFlightMode =    tr("RTL");
     _simpleFlightMode = tr("Smart");
     _manualFlightMode = tr("Manual (No GPS)");
     _altCtlFlightMode = tr("Manual");
+    _holdFlightMode =   tr("Auto-Position");
 }
 
 AutoPilotPlugin* YuneecFirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
