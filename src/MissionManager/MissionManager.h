@@ -88,6 +88,7 @@ signals:
     void currentIndexChanged(int currentIndex);
     void lastCurrentIndexChanged(int lastCurrentIndex);
     void resumeMissionReady(void);
+    void resumeMissionUploadFail(void);
     void progressPct(double progressPercentPct);
     void removeAllComplete              (bool error);
     void sendComplete                   (bool error);
