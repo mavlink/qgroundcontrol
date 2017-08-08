@@ -483,7 +483,7 @@ Item {
                         source:             "/typhoonh/img/gimbalYaw.svg"
                         fillMode:           Image.PreserveAspectFit
                         sourceSize.width:   width
-                        y:                  (parent.height * _gimbalPitch / 105) + (parent.height * 0.15) - (ScreenTools.defaultFontPixelWidth * 1.5)
+                        y:                  (parent.height * _pitch / 105) + (parent.height * 0.15) - (ScreenTools.defaultFontPixelWidth * 1.5)
                         smooth:             true
                         mipmap:             true
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -492,6 +492,7 @@ Item {
                             origin.y:       yawIndicator.height / 2
                             angle:          _gimbalYaw
                         }
+                        property real _pitch: _gimbalPitch > 90 ? 90 : _gimbalPitch
                     }
                 }
             }
