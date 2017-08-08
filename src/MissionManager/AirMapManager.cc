@@ -817,9 +817,66 @@ void AirMapTelemetry::stopTelemetryStream()
     _state = State::EndCommunication;
 }
 
+void AirMapTrafficAlertClient::startConnection(const QString& flightID, const QString& password)
+{
+    _flightID = flightID;
+
+    setClientId("qgc-client-id"); // TODO: random?
+    setUsername(flightID);
+    setPassword(password);
+    connectToHost();
+}
+
+void AirMapTrafficAlertClient::onError(const QMQTT::ClientError error)
+{
+    // TODO: user-facing warning
+    qWarning() << "QMQTT error" << (int)error;
+}
+
+void AirMapTrafficAlertClient::onConnected()
+{
+    // see https://developers.airmap.com/v2.0/docs/traffic-alerts
+    subscribe("uav/traffic/sa/" + _flightID, 0); // situational awareness topic
+}
+
+void AirMapTrafficAlertClient::onSubscribed(const QString& topic)
+{
+    qCDebug(AirMapManagerLog) << "subscribed" << topic;
+}
+
+void AirMapTrafficAlertClient::onReceived(const QMQTT::Message& message)
+{
+    qCDebug(AirMapManagerLog) << "traffic publish received:" << QString::fromUtf8(message.payload());
+    // looks like this:
+    // "{"traffic":[{"id":"OAW380-1501565193-airline-0081","direction":-41.20024491976423,"altitude":"5675",
+    // "latitude":"47.50335","longitude":"8.40912","recorded_time":"1501774066","ground_speed_kts":"199",
+    // "true_heading":"241","properties":{"aircraft_id":"OAW380"},"timestamp":1501774079064}]}"
+
+    QJsonParseError parseError;
+    QJsonDocument responseJson = QJsonDocument::fromJson(message.payload(), &parseError);
+    if (parseError.error != QJsonParseError::NoError) {
+        qWarning() << "QMQTT JSON parsing error" << parseError.errorString();
+        return;
+    }
+    QJsonObject rootObject = responseJson.object();
+    const QJsonArray& trafficArray = rootObject["traffic"].toArray();
+    for (int i = 0; i < trafficArray.count(); i++) {
+        const QJsonObject& trafficObject = trafficArray[i].toObject();
+        QString traffic_id = trafficObject["id"].toString();
+        float altitude = trafficObject["altitude"].toString().toFloat() * 0.3048f; // feet to meters
+        double lat = trafficObject["latitude"].toString().toDouble();
+        double lon = trafficObject["longitude"].toString().toDouble();
+        float heading = trafficObject["true_heading"].toString().toDouble(); // in deg
+        QString vehicle_id = trafficObject["properties"].toObject()["aircraft_id"].toString();
+        emit trafficUpdate(traffic_id, vehicle_id, QGeoCoordinate(lat, lon, altitude), heading);
+
+    }
+}
+
+
 AirMapManager::AirMapManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox), _airspaceRestrictionManager(_networkingData), _flightManager(_networkingData),
-      _telemetry(_networkingData)
+      _telemetry(_networkingData), _trafficAlerts("mqtt-prod.airmap.io", 8883)
 {
     _updateTimer.setInterval(2000);
     _updateTimer.setSingleShot(true);
@@ -829,7 +886,9 @@ AirMapManager::AirMapManager(QGCApplication* app, QGCToolbox* toolbox)
     connect(&_flightManager, &AirMapFlightManager::networkError, this, &AirMapManager::_networkError);
     connect(&_telemetry, &AirMapTelemetry::networkError, this, &AirMapManager::_networkError);
 
-    connect(&_flightManager, &AirMapFlightManager::flightPermitStatusChanged, this, &AirMapManager::flightPermitStatusChanged);
+    connect(&_flightManager, &AirMapFlightManager::flightPermitStatusChanged, this, &AirMapManager::_flightPermitStatusChanged);
+
+    connect(&_trafficAlerts, &AirMapTrafficAlertClient::trafficUpdate, this, &AirMapManager::trafficUpdate);
 
     qmlRegisterUncreatableType<AirspaceAuthorization>("QGroundControl", 1, 0, "AirspaceAuthorization", "Reference only");
 
@@ -838,6 +897,18 @@ AirMapManager::AirMapManager(QGCApplication* app, QGCToolbox* toolbox)
     connect(multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &AirMapManager::_activeVehicleChanged);
 
     GOOGLE_PROTOBUF_VERIFY_VERSION;
+}
+
+void AirMapManager::_flightPermitStatusChanged()
+{
+    // activate traffic alerts
+    if (_flightManager.flightPermitStatus() == AirspaceAuthorization::PermitAccepted) {
+        qCDebug(AirMapManagerLog) << "Subscribing to Traffic Alerts";
+        // since we already created the flight, we know that we have a valid login token
+        _trafficAlerts.startConnection(_flightManager.flightID(), _networkingData.login.JWTToken());
+    }
+
+    emit flightPermitStatusChanged();
 }
 
 AirMapManager::~AirMapManager()
@@ -885,6 +956,7 @@ void AirMapManager::_vehicleArmedChanged(bool armed)
         // end the flight if we were in mission mode during arming or disarming
         // TODO: needs to be improved. for instance if we do RTL and then want to continue the mission...
         if (_vehicleWasInMissionMode || _vehicle->flightMode() == _vehicle->missionFlightMode()) {
+            _trafficAlerts.disconnectFromHost();
             _flightManager.endFlight();
         }
     }

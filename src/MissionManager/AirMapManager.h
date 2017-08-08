@@ -16,6 +16,8 @@
 #include "MissionItem.h"
 #include "MultiVehicleManager.h"
 
+#include <qmqtt.h>
+
 #include <QGeoCoordinate>
 #include <QList>
 #include <QNetworkAccessManager>
@@ -319,6 +321,43 @@ private:
     float                   _lastHdop = 1.f;
 };
 
+
+class AirMapTrafficAlertClient : public QMQTT::Client
+{
+    Q_OBJECT
+public:
+    AirMapTrafficAlertClient(const QString& host, const quint16 port, QObject* parent = NULL)
+        : QMQTT::Client(host, port, QSslConfiguration::defaultConfiguration(), true, parent)
+    {
+        connect(this, &AirMapTrafficAlertClient::connected, this, &AirMapTrafficAlertClient::onConnected);
+        connect(this, &AirMapTrafficAlertClient::subscribed, this, &AirMapTrafficAlertClient::onSubscribed);
+        connect(this, &AirMapTrafficAlertClient::received, this, &AirMapTrafficAlertClient::onReceived);
+        connect(this, &AirMapTrafficAlertClient::error, this, &AirMapTrafficAlertClient::onError);
+    }
+    virtual ~AirMapTrafficAlertClient() = default;
+
+    void startConnection(const QString& flightID, const QString& password);
+
+signals:
+    void trafficUpdate(QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
+
+private slots:
+
+    void onError(const QMQTT::ClientError error);
+
+    void onConnected();
+
+    void onSubscribed(const QString& topic);
+
+    void onReceived(const QMQTT::Message& message);
+
+private:
+    QString _flightID;
+};
+
+
+
+
 /// AirMap server communication support.
 class AirMapManager : public QGCTool
 {
@@ -347,12 +386,16 @@ public:
 signals:
     void flightPermitStatusChanged();
 
+    void trafficUpdate(QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
+
 private slots:
     void _updateToROI(void);
     void _networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
 
     void _activeVehicleChanged(Vehicle* activeVehicle);
     void _vehicleArmedChanged(bool armed);
+
+    void _flightPermitStatusChanged();
 
 private:
     bool _hasAPIKey() const { return _networkingData.airmapAPIKey != ""; }
@@ -366,6 +409,7 @@ private:
     AirspaceRestrictionManager   _airspaceRestrictionManager;
     AirMapFlightManager          _flightManager;
     AirMapTelemetry              _telemetry;
+    AirMapTrafficAlertClient     _trafficAlerts;
 
     QGeoCoordinate          _roiCenter;
     double                  _roiRadius;
