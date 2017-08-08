@@ -103,9 +103,9 @@ Rectangle {
         }
         //-----------------------------------------------------------------
         QGCLabel {
-            id:         cameraLabel
-            text:       _activeVehicle ? (_camera && _camera.modelName !== "" ? _camera.modelName : _commLostStr) : _commLostStr
-            font.pointSize: ScreenTools.smallFontPointSize
+            id:             cameraLabel
+            text:           _activeVehicle ? (_camera && _camera.modelName !== "" ? _camera.modelName : _commLostStr) : _commLostStr
+            font.family:    ScreenTools.demiboldFontFamily
             anchors.horizontalCenter: parent.horizontalCenter
         }
         //-- Camera Mode
