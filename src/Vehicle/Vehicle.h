@@ -843,6 +843,8 @@ private slots:
     void _updateHobbsMeter(void);
     void _vehicleParamLoaded(bool ready);
 
+    void _trafficUpdate(QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
+
 private:
     bool _containsLink(LinkInterface* link);
     void _addLink(LinkInterface* link);
@@ -1019,6 +1021,7 @@ private:
 
     QmlObjectListModel              _adsbVehicles;
     QMap<uint32_t, ADSBVehicle*>    _adsbICAOMap;
+    QMap<QString, ADSBVehicle*>     _trafficVehicleMap;
 
     // Toolbox references
     FirmwarePluginManager*      _firmwarePluginManager;
