@@ -23,7 +23,6 @@ import QGroundControl.Controllers       1.0
 Item {
     id: root
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property double _ar:                QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
     property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
     property var    _dynamicCameras:    _activeVehicle ? _activeVehicle.dynamicCameras : null
     property bool   _connected:         _activeVehicle ? !_activeVehicle.connectionLost : false
@@ -31,7 +30,9 @@ Item {
     property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
     property var    _meteringModeFact:  _camera && _camera.meteringMode
     property var    _expModeFact:       _camera && _camera.exposureMode
+    property var    _arFact:            _camera && _camera.aspectRatio
     property bool   _cameraAutoMode:    _expModeFact  ? _expModeFact.rawValue === 0 : true
+    property double _ar:                _arFact ? _arFact.rawValue : QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
 
     property real   spotSize:           48
     property bool   isSpot:             _camera && _cameraAutoMode && _meteringModeFact && _meteringModeFact.rawValue === 2

@@ -39,6 +39,7 @@ public:
     Q_PROPERTY(Fact*        wb              READ    wb                  NOTIFY factsLoaded)
     Q_PROPERTY(Fact*        meteringMode    READ    meteringMode        NOTIFY factsLoaded)
     Q_PROPERTY(Fact*        videoRes        READ    videoRes            NOTIFY factsLoaded)
+    Q_PROPERTY(Fact*        aspectRatio     READ    aspectRatio         NOTIFY factsLoaded)
     Q_PROPERTY(QPoint       spotArea        READ    spotArea            WRITE  setSpotArea      NOTIFY spotAreaChanged)
     Q_PROPERTY(QSize        videoSize       READ    videoSize           WRITE  setVideoSize     NOTIFY videoSizeChanged)
 
@@ -49,6 +50,8 @@ public:
     bool        stopVideo           () override;
     QString     firmwareVersion     () override;
     void        factChanged         (Fact* pFact) override;
+    void        setVideoMode        () override;
+    void        setPhotoMode        () override;
 
     QString     gimbalVersion       () { return _gimbalVersion; }
     bool        gimbalCalOn         () { return _gimbalCalOn; }
@@ -66,6 +69,7 @@ public:
     Fact*       wb                  ();
     Fact*       meteringMode        ();
     Fact*       videoRes            ();
+    Fact*       aspectRatio         ();
     QPoint      spotArea            ();
     void        setSpotArea         (QPoint mouse);
 
@@ -93,7 +97,6 @@ signals:
 
 protected:
     void    _setVideoStatus         (VideoStatus status) override;
-    void    _setCameraMode          (CameraMode mode) override;
 
 private:
     void    _handleCommandAck       (const mavlink_message_t& message);

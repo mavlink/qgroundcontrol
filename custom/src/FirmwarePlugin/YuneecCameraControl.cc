@@ -16,6 +16,7 @@
 QGC_LOGGING_CATEGORY(YuneecCameraLog, "YuneecCameraLog")
 QGC_LOGGING_CATEGORY(YuneecCameraLogVerbose, "YuneecCameraLogVerbose")
 
+static const char *kCAM_ASPECTRATIO = "CAM_ASPECTRATIO";
 //static const char *kCAM_AUDIOREC    = "CAM_AUDIOREC";
 //static const char *kCAM_COLORMODE   = "CAM_COLORMODE";
 static const char *kCAM_EV          = "CAM_EV";
@@ -151,6 +152,13 @@ YuneecCameraControl::videoRes()
 }
 
 //-----------------------------------------------------------------------------
+Fact*
+YuneecCameraControl::aspectRatio()
+{
+    return _paramComplete ? getFact(kCAM_ASPECTRATIO) : NULL;
+}
+
+//-----------------------------------------------------------------------------
 QString
 YuneecCameraControl::recordTimeStr()
 {
@@ -194,6 +202,34 @@ YuneecCameraControl::stopVideo()
         _errorSound.play();
     }
     return res;
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::setVideoMode()
+{
+    if(cameraMode() != CAM_MODE_VIDEO) {
+        qCDebug(YuneecCameraLog) << "setVideoMode()";
+        Fact* pFact = getFact(kCAM_MODE);
+        if(pFact) {
+            pFact->setRawValue(CAM_MODE_VIDEO);
+            _setCameraMode(CAM_MODE_VIDEO);
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::setPhotoMode()
+{
+    if(cameraMode() != CAM_MODE_PHOTO) {
+        qCDebug(YuneecCameraLog) << "setPhotoMode()";
+        Fact* pFact = getFact(kCAM_MODE);
+        if(pFact) {
+            pFact->setRawValue(CAM_MODE_PHOTO);
+            _setCameraMode(CAM_MODE_PHOTO);
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -245,43 +281,6 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
             }
         }
     }
-}
-
-//-----------------------------------------------------------------------------
-void
-YuneecCameraControl::_setCameraMode(CameraMode mode)
-{
-    //-- TODO: This has to come from the firmware.
-    //   A video stream info message should contain the
-    //   proper aspect ratio to use.
-    QGCCameraControl::_setCameraMode(mode);
-    Fact* pFact = getFact(kCAM_MODE);
-    if(pFact) {
-        pFact->_containerSetRawValue(QVariant((int)mode));
-    }
-    //-- Adjust Aspect Ratio
-    float aspect = 1280.0f / 720.0f; // Some default
-    if(_isE90) {
-        //-- Photo Mode
-        if(mode == CAM_MODE_PHOTO) {
-            //-- E90 is 3:2 in Photo Mode
-            aspect = 3.0f / 2.0f;
-            qCDebug(YuneecCameraLog) << "Set Photo Aspect Ratio" << aspect;
-        //-- Video Mode
-        } else if(mode == CAM_MODE_VIDEO) {
-            qCDebug(YuneecCameraLog) << "Set Video Aspect Ratio" << aspect;
-        }
-    } else {
-        if(mode == CAM_MODE_PHOTO) {
-            //-- CGO3+ and E50 are 4:3 in Photo Mode
-            aspect = 4.0f / 3.0f;
-            qCDebug(YuneecCameraLog) << "Set Photo Aspect Ratio" << aspect;
-        //-- Video Mode
-        } else if(mode == CAM_MODE_VIDEO) {
-            qCDebug(YuneecCameraLog) << "Set Video Aspect Ratio" << aspect;
-        }
-    }
-    qgcApp()->toolbox()->settingsManager()->videoSettings()->aspectRatio()->setRawValue(aspect);
 }
 
 //-----------------------------------------------------------------------------
