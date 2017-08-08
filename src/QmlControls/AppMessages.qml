@@ -118,7 +118,7 @@ QGCView {
                 selectExisting: false
                 title:          qsTr("Select log save file")
                 onAcceptedForSave: {
-                    debugMessageModel.writeMessages(fileUrl);
+                    debugMessageModel.writeMessages(file);
                     visible = false;
                 }
             }
