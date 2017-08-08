@@ -153,7 +153,7 @@ QGCFlickable {
             }
 
             QGCLabel {
-                text: qsTr("Accel 2: ") + (_activeVehicle ? _activeVehicle.vibration.clipCount3.valueString : "")
+                text: qsTr("Accel 3: ") + (_activeVehicle ? _activeVehicle.vibration.clipCount3.valueString : "")
                 color: textColor
             }
         }
