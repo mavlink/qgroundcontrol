@@ -88,6 +88,7 @@ FactMetaData::FactMetaData(QObject* parent)
     , _rebootRequired(false)
     , _increment(std::numeric_limits<double>::quiet_NaN())
     , _hasControl(true)
+    , _readOnly(false)
 {
 
 }
@@ -108,6 +109,7 @@ FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
     , _rebootRequired(false)
     , _increment(std::numeric_limits<double>::quiet_NaN())
     , _hasControl(true)
+    , _readOnly(false)
 {
 
 }
@@ -135,6 +137,7 @@ FactMetaData::FactMetaData(ValueType_t type, const QString name, QObject* parent
     , _rebootRequired(false)
     , _increment(std::numeric_limits<double>::quiet_NaN())
     , _hasControl(true)
+    , _readOnly(false)
 {
 
 }
@@ -164,7 +167,7 @@ const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
     _rebootRequired         = other._rebootRequired;
     _increment              = other._increment;
     _hasControl             = other._hasControl;
-
+    _readOnly               = other._readOnly;
     return *this;
 }
 

@@ -85,8 +85,8 @@ void Fact::forceSetRawValue(const QVariant& value)
             _rawValue.setValue(typedValue);
             _sendValueChangedSignal(cookedValue());
             //-- Must be in this order
-            emit rawValueChanged(_rawValue);
             emit _containerRawValueChanged(rawValue());
+            emit rawValueChanged(_rawValue);
         }
     } else {
         qWarning() << kMissingMetadata;
@@ -104,8 +104,8 @@ void Fact::setRawValue(const QVariant& value)
                 _rawValue.setValue(typedValue);
                 _sendValueChangedSignal(cookedValue());
                 //-- Must be in this order
-                emit rawValueChanged(_rawValue);
                 emit _containerRawValueChanged(rawValue());
+                emit rawValueChanged(_rawValue);
             }
         }
     } else {
@@ -145,10 +145,12 @@ void Fact::setEnumIndex(int index)
 
 void Fact::_containerSetRawValue(const QVariant& value)
 {
-    _rawValue = value;
-    _sendValueChangedSignal(cookedValue());
-    emit vehicleUpdated(_rawValue);
-    emit rawValueChanged(_rawValue);
+    if(_rawValue != value) {
+        _rawValue = value;
+        _sendValueChangedSignal(cookedValue());
+        emit vehicleUpdated(_rawValue);
+        emit rawValueChanged(_rawValue);
+    }
 }
 
 QString Fact::name(void) const
@@ -599,6 +601,16 @@ bool Fact::hasControl(void) const
 {
     if (_metaData) {
         return _metaData->hasControl();
+    } else {
+        qWarning() << kMissingMetadata;
+        return false;
+    }
+}
+
+bool Fact::readOnly(void) const
+{
+    if (_metaData) {
+        return _metaData->readOnly();
     } else {
         qWarning() << kMissingMetadata;
         return false;

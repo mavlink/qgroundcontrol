@@ -26,7 +26,7 @@ QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicl
     _paramWriteTimer.setSingleShot(true);
     _paramWriteTimer.setInterval(3000);
     _paramRequestTimer.setSingleShot(true);
-    _paramRequestTimer.setInterval(3000);
+    _paramRequestTimer.setInterval(3500);
     connect(&_paramWriteTimer,   &QTimer::timeout, this, &QGCCameraParamIO::_paramWriteTimeout);
     connect(&_paramRequestTimer, &QTimer::timeout, this, &QGCCameraParamIO::_paramRequestTimeout);
     connect(_fact, &Fact::rawValueChanged, this, &QGCCameraParamIO::_factChanged);
@@ -76,7 +76,7 @@ void
 QGCCameraParamIO::_factChanged(QVariant value)
 {
     Q_UNUSED(value);
-    qCDebug(CameraIOLog) << "UI Fact" << _fact->name() << "changed";
+    qCDebug(CameraIOLog) << "UI Fact" << _fact->name() << "changed to" << value;
     //-- TODO: Do we really want to update the UI now or only when we receive the ACK?
     _control->factChanged(_fact);
 }
@@ -85,10 +85,12 @@ QGCCameraParamIO::_factChanged(QVariant value)
 void
 QGCCameraParamIO::_containerRawValueChanged(const QVariant value)
 {
-    Q_UNUSED(value);
-    qCDebug(CameraIOLog) << "Update Fact" << _fact->name();
-    _sentRetries = 0;
-    _sendParameter();
+    if(!_fact->readOnly()) {
+        Q_UNUSED(value);
+        qCDebug(CameraIOLog) << "Update Fact" << _fact->name();
+        _sentRetries = 0;
+        _sendParameter();
+    }
 }
 
 //-----------------------------------------------------------------------------

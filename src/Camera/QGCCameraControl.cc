@@ -31,6 +31,7 @@ static const char* kStrings         = "strings";
 static const char* kName            = "name";
 static const char* kValue           = "value";
 static const char* kControl         = "control";
+static const char* kReadOnly        = "readonly";
 static const char* kOptions         = "options";
 static const char* kOption          = "option";
 static const char* kType            = "type";
@@ -44,6 +45,7 @@ static const char* kParameterranges = "parameterranges";
 static const char* kParameterrange  = "parameterrange";
 static const char* kOriginal        = "original";
 static const char* kTranslated      = "translated";
+static const char* kReset           = "reset";
 
 //-----------------------------------------------------------------------------
 static bool
@@ -523,22 +525,38 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
             qCritical() << QString("Parameter %1 missing parameter type").arg(factName);
             return false;
         }
+        //-- Does it have a control?
+        bool control = true;
+        read_attribute(parameterNode, kControl, control);
+        //-- Is it read only?
+        bool readOnly = false;
+        read_attribute(parameterNode, kReadOnly, readOnly);
+        //-- Param type
         bool unknownType;
         FactMetaData::ValueType_t factType = FactMetaData::stringToType(type, unknownType);
         if (unknownType) {
             qCritical() << QString("Unknown type for parameter %1").arg(factName);
             return false;
         }
+        //-- Description
         QString description;
         if(!read_value(parameterNode, kDescription, description)) {
             qCritical() << QString("Parameter %1 missing parameter description").arg(factName);
             return false;
+        }
+        //-- Does it require full update on changes?
+        bool update = false;
+        read_attribute(parameterNode, kReset, update);
+        if(update) {
+            _requestUpdates << factName;
         }
         //-- Build metadata
         FactMetaData* metaData = new FactMetaData(factType, factName, this);
         QQmlEngine::setObjectOwnership(metaData, QQmlEngine::CppOwnership);
         metaData->setShortDescription(description);
         metaData->setLongDescription(description);
+        metaData->setHasControl(control);
+        metaData->setReadOnly(readOnly);
         //-- Options (enums)
         QDomElement optionElem = parameterNode.toElement();
         QDomNodeList optionsRoot = optionElem.elementsByTagName(kOptions);
@@ -875,7 +893,6 @@ QGCCameraControl::_updateRanges(Fact* pFact)
 {
     QMap<Fact*, QGCCameraOptionRange*> rangesSet;
     QMap<Fact*, QString> rangesReset;
-    QStringList valuesRequested;
     QStringList changedList;
     QStringList resetList;
     //-- Iterate range sets looking for limited ranges
@@ -885,20 +902,15 @@ QGCCameraControl::_updateRanges(Fact* pFact)
             Fact* pRFact = getFact(pRange->param);          //-- This parameter
             Fact* pTFact = getFact(pRange->targetParam);    //-- The target parameter (the one its range is to change)
             if(pRFact && pTFact) {
-                qCDebug(CameraControlLogVerbose) << "Check new set of options for" << pTFact->name();
+                //qCDebug(CameraControlLogVerbose) << "Check new set of options for" << pTFact->name();
                 QString option = pRFact->rawValueString();  //-- This parameter value
                 //-- If this value (and condition) triggers a change in the target range
-                qCDebug(CameraControlLogVerbose) << "Range value:" << pRange->value << "Current value:" << option << "Condition:" << pRange->condition;
+                //qCDebug(CameraControlLogVerbose) << "Range value:" << pRange->value << "Current value:" << option << "Condition:" << pRange->condition;
                 if(pRange->value == option && _processCondition(pRange->condition)) {
                     if(pTFact->enumStrings() != pRange->optNames) {
                         //-- Set limited range set
                         rangesSet[pTFact] = pRange;
-                        //-- Get setting if current index is outside new limts
-                        if(!pRange->optVariants.contains(pTFact->rawValue()) && _activeSettings.contains(pTFact->name())) {
-                            //-- We need to preemt the new option
-                            valuesRequested << pTFact->name();
-                        }
-                        qCDebug(CameraControlLogVerbose) << "Limited:" << pRange->targetParam << pRange->optNames;
+                        qCDebug(CameraControlLogVerbose) << "Limited set of options for:" << pRange->targetParam << pRange->optNames;
                     }
                     changedList << pRange->targetParam;
                 }
@@ -913,11 +925,7 @@ QGCCameraControl::_updateRanges(Fact* pFact)
                 if(pTFact->enumStrings() != _originalOptNames[pRange->targetParam]) {
                     //-- Restore full option set
                     rangesReset[pTFact] = pRange->targetParam;
-                    qCDebug(CameraControlLogVerbose) << "Restore full set:" << pRange->targetParam << _originalOptNames[pRange->targetParam];
-                    //-- Retrive the current option for this setting as the index into the options might be pointing to something else.
-                    if(!valuesRequested.contains(pTFact->name())) {
-                        valuesRequested << pTFact->name();
-                    }
+                    qCDebug(CameraControlLogVerbose) << "Restore full set of options for:" << pRange->targetParam << _originalOptNames[pRange->targetParam];
                 }
                 resetList << pRange->targetParam;
             }
@@ -941,9 +949,9 @@ QGCCameraControl::_updateRanges(Fact* pFact)
             _updates << pFact;
         }
     }
-    //-- Update values for restored/limited ranges
-    foreach (QString factName, valuesRequested) {
-        _paramIO[factName]->paramRequest();
+    //-- Parameter update requests
+    if(_requestUpdates.contains(pFact->name())) {
+        _requestAllParameters();
     }
     //-- Update UI (Asynchronous state where values come back after a while)
     if(_updates.size()) {
