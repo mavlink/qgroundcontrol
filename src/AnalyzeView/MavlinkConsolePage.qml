@@ -21,10 +21,12 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controllers   1.0
 
 AnalyzePage {
-    id:                 mavlinkConsolePage
-    pageComponent:      pageComponent
-    pageName:           qsTr("Mavlink Console")
-    pageDescription:    qsTr("Mavlink Console provides a connection to the vehicle's system shell.")
+    id:              mavlinkConsolePage
+    pageComponent:   pageComponent
+    pageName:        qsTr("Mavlink Console")
+    pageDescription: qsTr("Mavlink Console provides a connection to the vehicle's system shell.")
+
+    property bool loaded: false
 
     Component {
         id: pageComponent
@@ -34,28 +36,79 @@ AnalyzePage {
             height: availableHeight
             width:  availableWidth
 
-            TextArea {
-                id:                consoleEditor
+            Connections {
+                target: conController
+
+                onDataChanged: {
+                    // Keep the view in sync if the button is checked
+                    if (loaded) {
+                        if (followTail.checked) {
+                            listview.positionViewAtEnd();
+                        }
+                    }
+                }
+            }
+
+            Component {
+                id: delegateItem
+                Rectangle {
+                    color:  qgcPal.windowShade
+                    height: Math.round(ScreenTools.defaultFontPixelHeight * 0.5 + field.height)
+                    width:  listview.width
+
+                    QGCLabel {
+                        id:          field
+                        text:        display
+                        width:       parent.width
+                        wrapMode:    Text.NoWrap
+                        font.family: ScreenTools.fixedFontFamily
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+            }
+
+            QGCListView {
+                Component.onCompleted: {
+                    loaded = true
+                }
                 Layout.fillHeight: true
                 anchors.left:      parent.left
                 anchors.right:     parent.right
-                font.family:       ScreenTools.fixedFontFamily
-                font.pointSize:    ScreenTools.defaultFontPointSize
-                readOnly:          true
+                clip:              true
+                id:                listview
+                model:             conController
+                delegate:          delegateItem
 
-                cursorPosition:    conController.cursor
-                text:              conController.text
+                // Unsync the view if the user interacts
+                onMovementStarted: {
+                    followTail.checked = false
+                }
             }
 
-            QGCTextField {
-                id:              command
-                anchors.left:    parent.left
-                anchors.right:   parent.right
-                placeholderText: "Enter Commands here..."
+            RowLayout {
+                anchors.left:  parent.left
+                anchors.right: parent.right
+                QGCTextField {
+                    id:               command
+                    Layout.fillWidth: true
+                    placeholderText:  "Enter Commands here..."
+                    onAccepted: {
+                        conController.sendCommand(text)
+                        text = ""
+                    }
+                }
 
-                onAccepted: {
-                    conController.sendCommand(text)
-                    text = ""
+                QGCButton {
+                    id:        followTail
+                    text:      qsTr("Show Latest")
+                    checkable: true
+                    checked:   true
+
+                    onCheckedChanged: {
+                        if (checked && loaded) {
+                            listview.positionViewAtEnd();
+                        }
+                    }
                 }
             }
         }
