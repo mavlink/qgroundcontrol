@@ -131,6 +131,10 @@ WindowsBuild {
     QMAKE_TARGET_PRODUCT        = "$${QGC_APP_NAME}"
 }
 
+include($$PWD/libs/thirdParty/qmqtt/src/mqtt/mqtt.pri)
+HEADERS += $$PUBLIC_HEADERS $$PRIVATE_HEADERS
+
+
 #
 # Plugin configuration
 #
