@@ -213,4 +213,6 @@ protected:
     QMap<QString, QVariantList>         _originalOptValues;
     QMap<QString, QGCCameraParamIO*>    _paramIO;
     QVector<Fact*>                      _updates;
+    //-- Parameters that require a full update
+    QStringList                         _requestUpdates;
 };

@@ -98,6 +98,7 @@ public:
     QString         cookedUnits             (void) const { return _cookedUnits; }
     bool            rebootRequired          (void) const { return _rebootRequired; }
     bool            hasControl              (void) const { return _hasControl; }
+    bool            readOnly                (void) const { return _readOnly; }
 
     /// Amount to increment value when used in controls such as spin button or slider with detents.
     /// NaN for no increment available.
@@ -126,6 +127,7 @@ public:
     void setRebootRequired  (bool rebootRequired)               { _rebootRequired = rebootRequired; }
     void setIncrement       (double increment)                  { _increment = increment; }
     void setHasControl      (bool bValue)                       { _hasControl = bValue; }
+    void setReadOnly        (bool bValue)                       { _readOnly = bValue; }
 
     void setTranslators(Translator rawTranslator, Translator cookedTranslator);
 
@@ -221,6 +223,7 @@ private:
     bool            _rebootRequired;
     double          _increment;
     bool            _hasControl;
+    bool            _readOnly;
 
     // Exact conversion constants
     static const struct UnitConsts_s {
