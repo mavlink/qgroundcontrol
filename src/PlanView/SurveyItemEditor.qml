@@ -443,12 +443,12 @@ Rectangle {
                         id:                     windRoseButton
                         anchors.verticalCenter: angleText.verticalCenter
                         iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
-                        // Wind Rose is temporarily turned off until bugs are fixed
-                        visible:                false//_vehicle.fixedWing
+                        visible:                _vehicle.fixedWing
 
                         onClicked: {
+                            windRosePie.angle = Number(gridAngleText.text)
                             var cords = windRoseButton.mapToItem(_root, 0, 0)
-                            windRosePie.popup(cords.x + windRoseButton.width / 2, cords.y + windRoseButton.height / 2);
+                            windRosePie.popup(cords.x + windRoseButton.width / 2, cords.y + windRoseButton.height / 2)
                         }
                     }
                 }
@@ -465,7 +465,9 @@ Rectangle {
                     Layout.fillWidth:       true
                 }
 
-                QGCLabel { text: qsTr("Entry") }
+                QGCLabel {
+                    text: qsTr("Entry")
+                }
                 FactComboBox {
                     fact:                   missionItem.gridEntryLocation
                     indexModel:             false
@@ -545,12 +547,11 @@ Rectangle {
                     anchors.verticalCenter: manualAngleText.verticalCenter
                     Layout.columnSpan:      1
                     iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
-                    // Wind Rose is temporarily turned off until bugs are fixed
-                    visible:                false//_vehicle.fixedWing
+                    visible:                _vehicle.fixedWing
 
                     onClicked: {
                         var cords = manualWindRoseButton.mapToItem(_root, 0, 0)
-                        windRosePie.popup(cords.x + manualWindRoseButton.width / 2, cords.y + manualWindRoseButton.height / 2);
+                        windRosePie.popup(cords.x + manualWindRoseButton.width / 2, cords.y + manualWindRoseButton.height / 2)
                     }
                 }
             }
@@ -577,9 +578,14 @@ Rectangle {
                 fact:                   missionItem.turnaroundDist
                 Layout.fillWidth:       true
             }
-            QGCLabel { text: qsTr("Entry") }
+            QGCLabel {
+                text: qsTr("Entry")
+                visible: !windRoseButton.visible
+            }
             FactComboBox {
+                id: gridAngleBox
                 fact:                   missionItem.gridEntryLocation
+                visible:                !windRoseButton.visible
                 indexModel:             false
                 Layout.fillWidth:       true
             }
@@ -674,7 +680,7 @@ Rectangle {
         property string colorCircle: qgcPal.windowShade
         property string colorBackground: qgcPal.colorGrey
         property real lineWidth: windRoseButton.width / 3
-        property real angle: 0
+        property real angle: Number(gridAngleText.text)
 
         Canvas {
             id: windRoseCanvas
@@ -689,13 +695,13 @@ Rectangle {
                 var end = windRosePie.angle*Math.PI/180 + angleWidth
                 ctx.reset()
 
-                ctx.beginPath();
+                ctx.beginPath()
                 ctx.arc(x, y, (width / 3) - windRosePie.lineWidth / 2, 0, 2*Math.PI, false)
                 ctx.lineWidth = windRosePie.lineWidth
                 ctx.strokeStyle = windRosePie.colorBackground
                 ctx.stroke()
 
-                ctx.beginPath();
+                ctx.beginPath()
                 ctx.arc(x, y, (width / 3) - windRosePie.lineWidth / 2, start, end, false)
                 ctx.lineWidth = windRosePie.lineWidth
                 ctx.strokeStyle = windRosePie.colorCircle
@@ -709,12 +715,13 @@ Rectangle {
 
         function popup(x, y) {
             if (x !== undefined)
-                windRosePie.x = x - windRosePie.width / 2;
+                windRosePie.x = x - windRosePie.width / 2
             if (y !== undefined)
-                windRosePie.y = y - windRosePie.height / 2;
+                windRosePie.y = y - windRosePie.height / 2
 
-            windRosePie.visible = true;
+            windRosePie.visible = true
             windRosePie.focus = true
+            missionItemEditorListView.interactive = false
         }
 
         MouseArea {
@@ -723,15 +730,25 @@ Rectangle {
             acceptedButtons: Qt.LeftButton | Qt.RightButton
 
             onClicked: {
-                windRosePie.visible = false;
+                windRosePie.visible = false
+                missionItemEditorListView.interactive = true
             }
             onPositionChanged: {
                 var point = Qt.point(mouseX - parent.width / 2, mouseY - parent.height / 2)
                 var angle = Math.round(Math.atan2(point.y, point.x) * 180 / Math.PI)
                 windRoseCanvas.requestPaint()
                 windRosePie.angle = angle
-                gridAngleText.text = - angle
-                gridAngleText.editingFinished();
+                gridAngleText.text = angle
+                gridAngleText.editingFinished()
+                if(angle > -135 && angle <= -45) {
+                    gridAngleBox.activated(2) // or 3
+                } else if(angle > -45 && angle <= 45) {
+                    gridAngleBox.activated(2) // or 0
+                } else if(angle > 45 && angle <= 135) {
+                    gridAngleBox.activated(1) // or 0
+                } else if(angle > 135 || angle <= -135) {
+                    gridAngleBox.activated(1) // or 3
+                }
             }
         }
     }
