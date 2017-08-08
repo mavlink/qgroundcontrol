@@ -68,22 +68,22 @@ class APMSubMode : public APMCustomMode
 public:
     enum Mode {
         STABILIZE         = 0,   // Hold level position
-        RESERVED_1        = 1,
+        ACRO              = 1,   // Manual angular rate, throttle
         ALT_HOLD          = 2,   // Depth hold
-        RESERVED_3        = 3,
-        RESERVED_4        = 4,
+        AUTO              = 3,   // Full auto to waypoint
+        GUIDED            = 4,   // Full auto to coordinate/direction
         RESERVED_5        = 5,
         RESERVED_6        = 6,
-        RESERVED_7        = 7,
+        CIRCLE            = 7,   // Auto circling
         RESERVED_8        = 8,
-        RESERVED_9        = 9,
+        SURFACE           = 9,   // Auto return to surface
         RESERVED_10       = 10,
         RESERVED_11       = 11,
         RESERVED_12       = 12,
         RESERVED_13       = 13,
         RESERVED_14       = 14,
         RESERVED_15       = 15,
-        RESERVED_16       = 16,
+        POSHOLD           = 16,  // Hold position
         RESERVED_17       = 17,
         RESERVED_18       = 18,
         MANUAL            = 19
