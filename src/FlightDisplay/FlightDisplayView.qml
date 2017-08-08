@@ -104,8 +104,9 @@ QGCView {
     }
 
     Connections {
-        target:                 _missionController
-        onResumeMissionReady:   guidedActionsController.confirmAction(guidedActionsController.actionResumeMissionReady)
+        target:                     _missionController
+        onResumeMissionReady:       guidedActionsController.confirmAction(guidedActionsController.actionResumeMissionReady)
+        onResumeMissionUploadFail:  guidedActionsController.confirmAction(guidedActionsController.actionResumeMissionUploadFail)
     }
 
     MessageDialog {
