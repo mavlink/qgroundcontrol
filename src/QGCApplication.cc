@@ -671,3 +671,8 @@ void QGCApplication::qmlAttemptWindowClose(void)
 {
     QMetaObject::invokeMethod(_rootQmlObject(), "attemptWindowClose");
 }
+
+bool QGCApplication::isInternetAvailable()
+{
+    return getQGCMapEngine()->isInternetActive();
+}
