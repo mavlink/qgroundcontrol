@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 
+#include "MissionCommandUIInfo.h"
 #include "MissionController.h"
 #include "MultiVehicleManager.h"
 #include "MissionManager.h"
@@ -25,6 +26,7 @@
 #include "MissionSettingsItem.h"
 #include "QGCQGeoCoordinate.h"
 #include "PlanMasterController.h"
+#include "KML.h"
 
 #ifndef __mobile__
 #include "MainWindow.h"
@@ -254,6 +256,44 @@ bool MissionController::_convertToMissionItems(QmlObjectListModel* visualMission
     }
 
     return endActionSet;
+}
+
+void MissionController::convertToKMLDocument(QDomDocument& document)
+{
+    QJsonObject missionJson;
+    QmlObjectListModel* visualItems = new QmlObjectListModel();
+    QList<MissionItem*> missionItens;
+    QString error;
+    save(missionJson);
+    _loadItemsFromJson(missionJson, visualItems, error);
+    _convertToMissionItems(visualItems, missionItens, this);
+
+    float altitude = missionJson[_jsonPlannedHomePositionKey].toArray()[2].toDouble();
+
+    QString coord;
+    QStringList coords;
+    // Drop home position
+    bool dropPoint = true;
+    for(const auto& item : missionItens) {
+        if(dropPoint) {
+            dropPoint = false;
+            continue;
+        }
+        const MissionCommandUIInfo* uiInfo = \
+            qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_controllerVehicle, item->command());
+
+        if (uiInfo && uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
+            coord = QString::number(item->param6()) \
+                + "," \
+                + QString::number(item->param5()) \
+                + "," \
+                + QString::number(item->param7() + altitude);
+            coords.append(coord);
+        }
+    }
+    Kml kml;
+    kml.points(coords);
+    kml.save(document);
 }
 
 void MissionController::sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems)
