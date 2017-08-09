@@ -119,6 +119,8 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     , _netManager(NULL)
     , _cameraMode(CAM_MODE_UNDEFINED)
     , _video_status(VIDEO_CAPTURE_STATUS_UNDEFINED)
+    , _storageInfoRetries(0)
+    , _captureInfoRetries(0)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     memcpy(&_info, info, sizeof(mavlink_camera_information_t));
@@ -414,12 +416,40 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
             case MAV_CMD_VIDEO_STOP_CAPTURE:
                 _setVideoStatus(VIDEO_CAPTURE_STATUS_STOPPED);
                 break;
+            case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
+                _captureInfoRetries = 0;
+                break;
+            case MAV_CMD_REQUEST_STORAGE_INFORMATION:
+                _storageInfoRetries = 0;
+                break;
         }
     } else {
-        if(noReponseFromVehicle) {
-            qCDebug(CameraControlLog) << "No response for" << command;
+        if(noReponseFromVehicle || result == MAV_RESULT_TEMPORARILY_REJECTED || result == MAV_RESULT_FAILED) {
+            if(noReponseFromVehicle) {
+                qCDebug(CameraControlLog) << "No response for" << command;
+            } else if (result == MAV_RESULT_TEMPORARILY_REJECTED) {
+                qCDebug(CameraControlLog) << "Command temporarily rejected for" << command;
+            } else {
+                qCDebug(CameraControlLog) << "Command failed for" << command;
+            }
+            switch(command) {
+                case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
+                    if(++_captureInfoRetries < 3) {
+                        _requestCaptureStatus();
+                    } else {
+                        qCDebug(CameraControlLog) << "Giving up requesting capture status";
+                    }
+                    break;
+                case MAV_CMD_REQUEST_STORAGE_INFORMATION:
+                    if(++_storageInfoRetries < 3) {
+                        _requestStorageInfo();
+                    } else {
+                        qCDebug(CameraControlLog) << "Giving up requesting storage status";
+                    }
+                    break;
+            }
         } else {
-            qCDebug(CameraControlLog) << "Bad response for" << command;
+            qCDebug(CameraControlLog) << "Bad response for" << command << result;
         }
     }
 }
@@ -951,7 +981,7 @@ QGCCameraControl::_updateRanges(Fact* pFact)
     }
     //-- Parameter update requests
     if(_requestUpdates.contains(pFact->name())) {
-        _requestAllParameters();
+        QTimer::singleShot(250, this, &QGCCameraControl::_requestAllParameters);
     }
     //-- Update UI (Asynchronous state where values come back after a while)
     if(_updates.size()) {
@@ -1259,4 +1289,13 @@ QGCCameraControl::_paramDone()
     }
     //-- All parameters loaded (or timed out)
     emit parametersReady();
+}
+
+//-----------------------------------------------------------------------------
+bool
+QGCCameraControl::incomingParameter(Fact* pFact, QVariant& newValue)
+{
+    Q_UNUSED(pFact);
+    Q_UNUSED(newValue);
+    return true;
 }
