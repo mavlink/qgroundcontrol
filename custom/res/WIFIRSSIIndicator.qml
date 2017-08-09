@@ -381,6 +381,12 @@ Item {
                     Keys.onBackPressed: {
                         timeoutDialog.visible = false
                     }
+                    MouseArea {
+                        anchors.fill:   parent
+                        onWheel:        { wheel.accepted = true; }
+                        onPressed:      { mouse.accepted = true; }
+                        onReleased:     { mouse.accepted = true; }
+                    }
                     Column {
                         id:         timeoutCol
                         spacing:    ScreenTools.defaultFontPixelHeight
@@ -412,6 +418,12 @@ Item {
                     anchors.centerIn:   parent
                     Keys.onBackPressed: {
                         authErrorDialog.visible = false
+                    }
+                    MouseArea {
+                        anchors.fill:   parent
+                        onWheel:        { wheel.accepted = true; }
+                        onPressed:      { mouse.accepted = true; }
+                        onReleased:     { mouse.accepted = true; }
                     }
                     Column {
                         id:         badPpwdCol
@@ -445,6 +457,12 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     Keys.onBackPressed: {
                         passwordDialog.visible = false
+                    }
+                    MouseArea {
+                        anchors.fill:   parent
+                        onWheel:        { wheel.accepted = true; }
+                        onPressed:      { mouse.accepted = true; }
+                        onReleased:     { mouse.accepted = true; }
                     }
                     Column {
                         id:         pwdCol

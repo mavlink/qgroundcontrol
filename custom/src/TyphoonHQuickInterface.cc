@@ -155,8 +155,8 @@ TyphoonHQuickInterface::setWiFiPassword(QString pwd)
             &msg,
             &config);
         _pHandler->vehicle()->sendMessageOnLink(_pHandler->vehicle()->priorityLink(), msg);
-        _password = pwd;
-        _configurations[_ssid] = pwd;
+        _password.clear();
+        _configurations.remove(_ssid);
         _saveWifiConfigurations();
         //-- Give some time for message to get across
         QTimer::singleShot(1000, this, &TyphoonHQuickInterface::_forgetSSID);
