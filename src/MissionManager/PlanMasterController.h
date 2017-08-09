@@ -43,6 +43,7 @@ public:
     ///< kml file extension for missions
     Q_PROPERTY(QStringList  loadNameFilters     READ loadNameFilters                    CONSTANT)                       ///< File filter list loading plan files
     Q_PROPERTY(QStringList  saveNameFilters     READ saveNameFilters                    CONSTANT)                       ///< File filter list saving plan files
+    Q_PROPERTY(QStringList  saveKmlFilters      READ saveKmlFilters                     CONSTANT)                       ///< File filter list saving KML files
 
     /// Should be called immediately upon Component.onCompleted.
     ///     @param editMode true: controller being used in Plan view, false: controller being used in Fly view
@@ -60,6 +61,7 @@ public:
     Q_INVOKABLE void sendToVehicle(void);
     Q_INVOKABLE void loadFromFile(const QString& filename);
     Q_INVOKABLE void saveToFile(const QString& filename);
+    Q_INVOKABLE void saveToKml(const QString& filename);
     Q_INVOKABLE void removeAll(void);                       ///< Removes all from controller only, synce required to remove from vehicle
     Q_INVOKABLE void removeAllFromVehicle(void);            ///< Removes all from vehicle and controller
 
@@ -73,8 +75,10 @@ public:
     bool        dirty           (void) const;
     void        setDirty        (bool dirty);
     QString     fileExtension   (void) const;
+    QString     kmlFileExtension(void) const;
     QStringList loadNameFilters (void) const;
     QStringList saveNameFilters (void) const;
+    QStringList saveKmlFilters  (void) const;
 
     Vehicle* controllerVehicle(void) { return _controllerVehicle; }
     Vehicle* managerVehicle(void) { return _managerVehicle; }
