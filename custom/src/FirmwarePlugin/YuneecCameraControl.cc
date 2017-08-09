@@ -469,3 +469,37 @@ YuneecCameraControl::setSpotArea(QPoint p)
         }
     }
 }
+
+//-----------------------------------------------------------------------------
+bool
+YuneecCameraControl::incomingParameter(Fact* pFact, QVariant& newValue)
+{
+    //-- Shutter Speed and ISO may come as actual measured values as opposed to
+    //   one of the predefined values in the "set". We need to "snap" it to the
+    //   nearest value in those cases.
+    //-- Ignore shutter speed and ISO if in Auto Exposure mode
+    if(pFact->name() == kCAM_SHUTTERSPD) {
+        QMap<double, double> values;
+        foreach(QVariant v, pFact->enumValues()) {
+            double diff = fabs(newValue.toDouble() - v.toDouble());
+            values[diff] = v.toDouble();
+        }
+        QVariant v = values.first();
+        if(newValue != v) {
+            qCDebug(YuneecCameraLog) << "Shutter speed adjusted:" << newValue.toDouble() << "==>" << v.toDouble();
+            newValue = v;
+        }
+    } else if(pFact->name() == kCAM_ISO) {
+        QMap<uint32_t, uint32_t> values;
+        foreach(QVariant v, pFact->enumValues()) {
+            uint32_t diff = abs(newValue.toInt() - v.toInt());
+            values[diff] = v.toUInt();
+        }
+        QVariant v = values.first();
+        if(newValue != v) {
+            qCDebug(YuneecCameraLog) << "ISO adjusted:" << newValue.toUInt() << "==>" << v.toUInt();
+            newValue = v;
+        }
+    }
+    return true;
+}

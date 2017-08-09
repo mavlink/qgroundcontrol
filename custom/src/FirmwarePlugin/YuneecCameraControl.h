@@ -52,6 +52,7 @@ public:
     void        factChanged         (Fact* pFact) override;
     void        setVideoMode        () override;
     void        setPhotoMode        () override;
+    bool        incomingParameter   (Fact* pFact, QVariant& newValue) override;
 
     QString     gimbalVersion       () { return _gimbalVersion; }
     bool        gimbalCalOn         () { return _gimbalCalOn; }
