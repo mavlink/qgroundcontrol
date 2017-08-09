@@ -211,7 +211,10 @@ void
 QGCCameraParamIO::handleParamValue(const mavlink_param_ext_value_t& value)
 {
     _paramRequestTimer.stop();
-    _fact->_containerSetRawValue(_valueFromMessage(value.param_value, value.param_type));
+    QVariant newValue = _valueFromMessage(value.param_value, value.param_type);
+    if(_control->incomingParameter(_fact, newValue)) {
+        _fact->_containerSetRawValue(newValue);
+    }
     _paramRequestReceived = true;
     if(!_done) {
         _done = true;
