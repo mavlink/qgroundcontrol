@@ -142,7 +142,11 @@ public:
     virtual void        handleParamAck      (const mavlink_param_ext_ack_t& ack);
     virtual void        handleParamValue    (const mavlink_param_ext_value_t& value);
     virtual void        handleStorageInfo   (const mavlink_storage_information_t& st);
+
+    //-- Notify controller a parameter has changed
     virtual void        factChanged         (Fact* pFact);
+    //-- Allow controller to modify or invalidate incoming parameter
+    virtual bool        incomingParameter   (Fact* pFact, QVariant& newValue);
 
 signals:
     void    infoChanged                     ();
@@ -213,6 +217,8 @@ protected:
     QMap<QString, QVariantList>         _originalOptValues;
     QMap<QString, QGCCameraParamIO*>    _paramIO;
     QVector<Fact*>                      _updates;
+    int                                 _storageInfoRetries;
+    int                                 _captureInfoRetries;
     //-- Parameters that require a full update
     QStringList                         _requestUpdates;
 };
