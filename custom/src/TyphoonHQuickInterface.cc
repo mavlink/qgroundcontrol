@@ -1231,12 +1231,14 @@ TyphoonHQuickInterface::_checkUpdateStatus()
 void
 TyphoonMediaItem::setSelected (bool sel)
 {
-    _selected = sel;
-    emit selectedChanged();
-    if(sel) {
-        _parent->_selectedCount++;
-    } else {
-        _parent->_selectedCount--;
+    if(_selected != sel) {
+        _selected = sel;
+        emit selectedChanged();
+        if(sel) {
+            _parent->_selectedCount++;
+        } else {
+            _parent->_selectedCount--;
+        }
+        emit _parent->selectedCountChanged();
     }
-    emit _parent->selectedCountChanged();
 }

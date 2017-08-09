@@ -639,10 +639,8 @@ Rectangle {
                         }
                     }
                     QGCButton {
-                        text:           qsTr('Select')
+                        text:           _selectMode ? qsTr('Cancel') : qsTr('Select')
                         width:          ScreenTools.defaultFontPixelWidth * 15
-                        checked:        _selectMode && _hasPhotos
-                        checkable:      true
                         enabled:        _hasPhotos
                         onClicked:      {
                             if(_selectMode) {
