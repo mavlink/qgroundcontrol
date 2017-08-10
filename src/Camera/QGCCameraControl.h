@@ -166,6 +166,7 @@ private slots:
     void    _initWhenReady                  ();
     void    _requestCameraSettings          ();
     void    _requestAllParameters           ();
+    void    _requestParamUpdates            ();
     void    _requestCaptureStatus           ();
     void    _requestStorageInfo             ();
     void    _downloadFinished               ();
@@ -219,4 +220,5 @@ protected:
     int                                 _captureInfoRetries;
     //-- Parameters that require a full update
     QMap<QString, QStringList>          _requestUpdates;
+    QStringList                         _updatesToRequest;
 };
