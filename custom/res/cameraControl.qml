@@ -47,7 +47,7 @@ Rectangle {
 
     readonly property string _commLostStr: qsTr("NO CAMERA")
 
-    property real _spacers:                 ScreenTools.defaultFontPixelHeight * 0.5
+    property real _spacers:                 ScreenTools.defaultFontPixelHeight * 0.35
     property real _labelFieldWidth:         ScreenTools.defaultFontPixelWidth * 30
     property real _editFieldWidth:          ScreenTools.defaultFontPixelWidth * 30
 
@@ -184,6 +184,11 @@ Rectangle {
             }
         }
         //-- Recording Time
+        Item {
+            width:  1
+            height: ScreenTools.defaultFontPixelHeight * 0.15
+            visible: _cameraVideoMode
+        }
         QGCLabel {
             text: (_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _camera.recordTimeStr : "00:00:00"
             visible: _cameraVideoMode
