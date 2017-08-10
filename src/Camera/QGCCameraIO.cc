@@ -21,6 +21,7 @@ QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicl
     , _requestRetries(0)
     , _done(false)
     , _updateOnSet(false)
+    , _forceUIUpdate(false)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     _paramWriteTimer.setSingleShot(true);
@@ -75,10 +76,12 @@ QGCCameraParamIO::setParamRequest()
 void
 QGCCameraParamIO::_factChanged(QVariant value)
 {
-    Q_UNUSED(value);
-    qCDebug(CameraIOLog) << "UI Fact" << _fact->name() << "changed to" << value;
-    //-- TODO: Do we really want to update the UI now or only when we receive the ACK?
-    _control->factChanged(_fact);
+    if(!_forceUIUpdate) {
+        Q_UNUSED(value);
+        qCDebug(CameraIOLog) << "UI Fact" << _fact->name() << "changed to" << value;
+        //-- TODO: Do we really want to update the UI now or only when we receive the ACK?
+        _control->factChanged(_fact);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -216,6 +219,11 @@ QGCCameraParamIO::handleParamValue(const mavlink_param_ext_value_t& value)
         _fact->_containerSetRawValue(newValue);
     }
     _paramRequestReceived = true;
+    if(_forceUIUpdate) {
+        emit _fact->rawValueChanged(_fact->rawValue());
+        emit _fact->valueChanged(_fact->rawValue());
+        _forceUIUpdate = false;
+    }
     if(!_done) {
         _done = true;
         _control->_paramDone();
@@ -285,7 +293,9 @@ QGCCameraParamIO::paramRequest(bool reset)
 {
     if(reset) {
         _requestRetries = 0;
+        _forceUIUpdate  = true;
     }
+    qCDebug(CameraIOLog) << "Request parameter:" << _fact->name();
     char param_id[MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN + 1];
     memset(param_id, 0, sizeof(param_id));
     strncpy(param_id, _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN);
