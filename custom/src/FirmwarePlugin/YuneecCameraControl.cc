@@ -6,6 +6,7 @@
  */
 
 #include "YuneecCameraControl.h"
+#include "QGCCameraIO.h"
 #include "TyphoonHPlugin.h"
 #include "TyphoonHM4Interface.h"
 #include "VideoManager.h"
@@ -488,6 +489,10 @@ YuneecCameraControl::incomingParameter(Fact* pFact, QVariant& newValue)
         if(newValue != v) {
             qCDebug(YuneecCameraLog) << "Shutter speed adjusted:" << newValue.toDouble() << "==>" << v.toDouble();
             newValue = v;
+            if(!_updatesToSend.contains(pFact->name())) {
+                _updatesToSend << pFact->name();
+            }
+            QTimer::singleShot(100, this, &YuneecCameraControl::_sendUpdates);
         }
     } else if(pFact->name() == kCAM_ISO) {
         QMap<uint32_t, uint32_t> values;
@@ -499,7 +504,26 @@ YuneecCameraControl::incomingParameter(Fact* pFact, QVariant& newValue)
         if(newValue != v) {
             qCDebug(YuneecCameraLog) << "ISO adjusted:" << newValue.toUInt() << "==>" << v.toUInt();
             newValue = v;
+            if(!_updatesToSend.contains(pFact->name())) {
+                _updatesToSend << pFact->name();
+            }
+            QTimer::singleShot(100, this, &YuneecCameraControl::_sendUpdates);
         }
     }
     return true;
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::_sendUpdates()
+{
+    //-- Get current exposure mode
+    Fact* pFact = getFact(kCAM_EXPMODE);
+    //-- Only reactively update values in Manual Exposure mode
+    if(pFact && pFact->rawValue() == 1) {
+        foreach(QString param, _updatesToSend) {
+            _paramIO[param]->sendParameter();
+        }
+    }
+    _updatesToSend.clear();
 }
