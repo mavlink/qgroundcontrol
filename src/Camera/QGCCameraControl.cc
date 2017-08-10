@@ -984,9 +984,24 @@ QGCCameraControl::_updateRanges(Fact* pFact)
     //-- Parameter update requests
     if(_requestUpdates.contains(pFact->name())) {
         foreach(QString param, _requestUpdates[pFact->name()]) {
-            _paramIO[param]->paramRequest();
+            if(!_updatesToRequest.contains(param)) {
+                _updatesToRequest << param;
+            }
         }
     }
+    if(_updatesToRequest.size()) {
+        QTimer::singleShot(500, this, &QGCCameraControl::_requestParamUpdates);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::_requestParamUpdates()
+{
+    foreach(QString param, _updatesToRequest) {
+        _paramIO[param]->paramRequest();
+    }
+    _updatesToRequest.clear();
 }
 
 //-----------------------------------------------------------------------------
