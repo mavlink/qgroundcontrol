@@ -166,13 +166,13 @@ private slots:
     void    _initWhenReady                  ();
     void    _requestCameraSettings          ();
     void    _requestAllParameters           ();
+    void    _requestParamUpdates            ();
     void    _requestCaptureStatus           ();
     void    _requestStorageInfo             ();
     void    _downloadFinished               ();
     void    _mavCommandResult               (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
     void    _dataReady                      (QByteArray data);
     void    _paramDone                      ();
-    void    _updateTimeout                  ();
 
 private:
     bool    _handleLocalization             (QByteArray& bytes);
@@ -191,6 +191,7 @@ private:
     void    _handleDefinitionFile           (const QString& url);
 
     QStringList     _loadExclusions         (QDomNode option);
+    QStringList     _loadUpdates            (QDomNode option);
     QString         _getParamName           (const char* param_id);
 
 protected:
@@ -210,15 +211,14 @@ protected:
     QStringList                         _activeSettings;
     QStringList                         _settings;
     QTimer                              _captureStatusTimer;
-    QTimer                              _updateTimer;
     QList<QGCCameraOptionExclusion*>    _valueExclusions;
     QList<QGCCameraOptionRange*>        _optionRanges;
     QMap<QString, QStringList>          _originalOptNames;
     QMap<QString, QVariantList>         _originalOptValues;
     QMap<QString, QGCCameraParamIO*>    _paramIO;
-    QVector<Fact*>                      _updates;
     int                                 _storageInfoRetries;
     int                                 _captureInfoRetries;
     //-- Parameters that require a full update
-    QStringList                         _requestUpdates;
+    QMap<QString, QStringList>          _requestUpdates;
+    QStringList                         _updatesToRequest;
 };

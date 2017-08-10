@@ -54,5 +54,6 @@ private:
     bool                _updateOnSet;
     MAV_PARAM_TYPE      _mavParamType;
     MAVLinkProtocol*    _pMavlink;
+    bool                _forceUIUpdate;
 };
 

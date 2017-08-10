@@ -19,33 +19,34 @@
 QGC_LOGGING_CATEGORY(CameraControlLog, "CameraControlLog")
 QGC_LOGGING_CATEGORY(CameraControlLogVerbose, "CameraControlLogVerbose")
 
-static const char* kDefnition       = "definition";
-static const char* kParameters      = "parameters";
-static const char* kParameter       = "parameter";
-static const char* kVersion         = "version";
-static const char* kModel           = "model";
-static const char* kVendor          = "vendor";
-static const char* kLocalization    = "localization";
-static const char* kLocale          = "locale";
-static const char* kStrings         = "strings";
-static const char* kName            = "name";
-static const char* kValue           = "value";
-static const char* kControl         = "control";
-static const char* kReadOnly        = "readonly";
-static const char* kOptions         = "options";
-static const char* kOption          = "option";
-static const char* kType            = "type";
-static const char* kDefault         = "default";
-static const char* kDescription     = "description";
-static const char* kExclusions      = "exclusions";
-static const char* kExclusion       = "exclude";
-static const char* kRoption         = "roption";
 static const char* kCondition       = "condition";
-static const char* kParameterranges = "parameterranges";
-static const char* kParameterrange  = "parameterrange";
+static const char* kControl         = "control";
+static const char* kDefault         = "default";
+static const char* kDefnition       = "definition";
+static const char* kDescription     = "description";
+static const char* kExclusion       = "exclude";
+static const char* kExclusions      = "exclusions";
+static const char* kLocale          = "locale";
+static const char* kLocalization    = "localization";
+static const char* kModel           = "model";
+static const char* kName            = "name";
+static const char* kOption          = "option";
+static const char* kOptions         = "options";
 static const char* kOriginal        = "original";
+static const char* kParameter       = "parameter";
+static const char* kParameterrange  = "parameterrange";
+static const char* kParameterranges = "parameterranges";
+static const char* kParameters      = "parameters";
+static const char* kReadOnly        = "readonly";
+static const char* kRoption         = "roption";
+static const char* kStrings         = "strings";
 static const char* kTranslated      = "translated";
-static const char* kReset           = "reset";
+static const char* kType            = "type";
+static const char* kUpdate          = "update";
+static const char* kUpdates         = "updates";
+static const char* kValue           = "value";
+static const char* kVendor          = "vendor";
+static const char* kVersion         = "version";
 
 //-----------------------------------------------------------------------------
 static bool
@@ -164,8 +165,6 @@ QGCCameraControl::_initWhenReady()
     }
     connect(_vehicle, &Vehicle::mavCommandResult, this, &QGCCameraControl::_mavCommandResult);
     connect(&_captureStatusTimer, &QTimer::timeout, this, &QGCCameraControl::_requestCaptureStatus);
-    connect(&_updateTimer, &QTimer::timeout, this, &QGCCameraControl::_updateTimeout);
-    _updateTimer.setSingleShot(true);
     _captureStatusTimer.setSingleShot(true);
     QTimer::singleShot(2500, this, &QGCCameraControl::_requestStorageInfo);
     _captureStatusTimer.start(2750);
@@ -574,11 +573,11 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
             qCritical() << QString("Parameter %1 missing parameter description").arg(factName);
             return false;
         }
-        //-- Does it require full update on changes?
-        bool update = false;
-        read_attribute(parameterNode, kReset, update);
-        if(update) {
-            _requestUpdates << factName;
+        //-- Check for updates
+        QStringList updates = _loadUpdates(parameterNode);
+        if(updates.size()) {
+            qCDebug(CameraControlLogVerbose) << "Parameter" << factName << "requires updates for:" << updates;
+            _requestUpdates[factName] = updates;
         }
         //-- Build metadata
         FactMetaData* metaData = new FactMetaData(factType, factName, this);
@@ -925,6 +924,7 @@ QGCCameraControl::_updateRanges(Fact* pFact)
     QMap<Fact*, QString> rangesReset;
     QStringList changedList;
     QStringList resetList;
+    QStringList updates;
     //-- Iterate range sets looking for limited ranges
     foreach(QGCCameraOptionRange* pRange, _optionRanges) {
         //-- If this fact or one of its conditions is part of this range set
@@ -940,7 +940,6 @@ QGCCameraControl::_updateRanges(Fact* pFact)
                     if(pTFact->enumStrings() != pRange->optNames) {
                         //-- Set limited range set
                         rangesSet[pTFact] = pRange;
-                        qCDebug(CameraControlLogVerbose) << "Limited set of options for:" << pRange->targetParam << pRange->optNames;
                     }
                     changedList << pRange->targetParam;
                 }
@@ -955,51 +954,54 @@ QGCCameraControl::_updateRanges(Fact* pFact)
                 if(pTFact->enumStrings() != _originalOptNames[pRange->targetParam]) {
                     //-- Restore full option set
                     rangesReset[pTFact] = pRange->targetParam;
-                    qCDebug(CameraControlLogVerbose) << "Restore full set of options for:" << pRange->targetParam << _originalOptNames[pRange->targetParam];
                 }
                 resetList << pRange->targetParam;
             }
         }
     }
     //-- Update limited range set
-    foreach (Fact* pFact, rangesSet.keys()) {
-        pFact->setEnumInfo(rangesSet[pFact]->optNames, rangesSet[pFact]->optVariants);
-        if(!_updates.contains(pFact)) {
-            _paramIO[pFact->name()]->optNames = rangesSet[pFact]->optNames;
-            _paramIO[pFact->name()]->optVariants = rangesSet[pFact]->optVariants;
-            _updates << pFact;
+    foreach (Fact* f, rangesSet.keys()) {
+        f->setEnumInfo(rangesSet[f]->optNames, rangesSet[f]->optVariants);
+        if(!updates.contains(f->name())) {
+            _paramIO[f->name()]->optNames = rangesSet[f]->optNames;
+            _paramIO[f->name()]->optVariants = rangesSet[f]->optVariants;
+            emit f->enumsChanged();
+            qCDebug(CameraControlLogVerbose) << "Limited set of options for:" << f->name() << rangesSet[f]->optNames;;
+            updates << f->name();
         }
     }
     //-- Restore full range set
-    foreach (Fact* pFact, rangesReset.keys()) {
-        pFact->setEnumInfo(_originalOptNames[rangesReset[pFact]], _originalOptValues[rangesReset[pFact]]);
-        if(!_updates.contains(pFact)) {
-            _paramIO[pFact->name()]->optNames = _originalOptNames[rangesReset[pFact]];
-            _paramIO[pFact->name()]->optVariants = _originalOptValues[rangesReset[pFact]];
-            _updates << pFact;
+    foreach (Fact* f, rangesReset.keys()) {
+        f->setEnumInfo(_originalOptNames[rangesReset[f]], _originalOptValues[rangesReset[f]]);
+        if(!updates.contains(f->name())) {
+            _paramIO[f->name()]->optNames = _originalOptNames[rangesReset[f]];
+            _paramIO[f->name()]->optVariants = _originalOptValues[rangesReset[f]];
+            emit f->enumsChanged();
+            qCDebug(CameraControlLogVerbose) << "Restore full set of options for:" << f->name() << _originalOptNames[f->name()];
+            updates << f->name();
         }
     }
     //-- Parameter update requests
     if(_requestUpdates.contains(pFact->name())) {
-        QTimer::singleShot(250, this, &QGCCameraControl::_requestAllParameters);
+        foreach(QString param, _requestUpdates[pFact->name()]) {
+            if(!_updatesToRequest.contains(param)) {
+                _updatesToRequest << param;
+            }
+        }
     }
-    //-- Update UI (Asynchronous state where values come back after a while)
-    if(_updates.size()) {
-        _updateTimer.start(500);
+    if(_updatesToRequest.size()) {
+        QTimer::singleShot(500, this, &QGCCameraControl::_requestParamUpdates);
     }
 }
 
 //-----------------------------------------------------------------------------
 void
-QGCCameraControl::_updateTimeout()
+QGCCameraControl::_requestParamUpdates()
 {
-    //-- Update UI
-    foreach (Fact* pFact, _updates) {
-        pFact->setEnumInfo(_paramIO[pFact->name()]->optNames, _paramIO[pFact->name()]->optVariants);
-        qCDebug(CameraControlLogVerbose) << "Update enums" << pFact->name() << pFact->enumStrings();
-        emit pFact->enumsChanged();
+    foreach(QString param, _updatesToRequest) {
+        _paramIO[param]->paramRequest();
     }
-    _updates.clear();
+    _updatesToRequest.clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -1082,7 +1084,7 @@ QGCCameraControl::_loadExclusions(QDomNode option)
     QDomElement optionElem = option.toElement();
     QDomNodeList excRoot = optionElem.elementsByTagName(kExclusions);
     if(excRoot.size()) {
-        //-- Iterate options
+        //-- Iterate exclusions
         QDomNode node = excRoot.item(0);
         QDomElement elem = node.toElement();
         QDomNodeList exclusions = elem.elementsByTagName(kExclusion);
@@ -1094,6 +1096,28 @@ QGCCameraControl::_loadExclusions(QDomNode option)
         }
     }
     return exclusionList;
+}
+
+//-----------------------------------------------------------------------------
+QStringList
+QGCCameraControl::_loadUpdates(QDomNode option)
+{
+    QStringList updateList;
+    QDomElement optionElem = option.toElement();
+    QDomNodeList updateRoot = optionElem.elementsByTagName(kUpdates);
+    if(updateRoot.size()) {
+        //-- Iterate updates
+        QDomNode node = updateRoot.item(0);
+        QDomElement elem = node.toElement();
+        QDomNodeList updates = elem.elementsByTagName(kUpdate);
+        for(int i = 0; i < updates.size(); i++) {
+            QString update = updates.item(i).toElement().text();
+            if(!update.isEmpty()) {
+                updateList << update;
+            }
+        }
+    }
+    return updateList;
 }
 
 //-----------------------------------------------------------------------------
