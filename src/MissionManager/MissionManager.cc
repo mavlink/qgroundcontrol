@@ -27,6 +27,50 @@ MissionManager::MissionManager(Vehicle* vehicle)
 
 }
 
+MissionManager::~MissionManager()
+{
+
+}
+void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoCoord, bool altChangeOnly)
+{
+    if (inProgress()) {
+        qCDebug(MissionManagerLog) << "writeArduPilotGuidedMissionItem called while transaction in progress";
+        return;
+    }
+
+    _transactionInProgress = TransactionWrite;
+
+    mavlink_message_t       messageOut;
+    mavlink_mission_item_t  missionItem;
+
+    memset(&missionItem, 8, sizeof(missionItem));
+    missionItem.target_system =     _vehicle->id();
+    missionItem.target_component =  _vehicle->defaultComponentId();
+    missionItem.seq =               0;
+    missionItem.command =           MAV_CMD_NAV_WAYPOINT;
+    missionItem.param1 =            0;
+    missionItem.param2 =            0;
+    missionItem.param3 =            0;
+    missionItem.param4 =            0;
+    missionItem.x =                 gotoCoord.latitude();
+    missionItem.y =                 gotoCoord.longitude();
+    missionItem.z =                 gotoCoord.altitude();
+    missionItem.frame =             MAV_FRAME_GLOBAL_RELATIVE_ALT;
+    missionItem.current =           altChangeOnly ? 3 : 2;
+    missionItem.autocontinue =      true;
+
+    _dedicatedLink = _vehicle->priorityLink();
+    mavlink_msg_mission_item_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                         _dedicatedLink->mavlinkChannel(),
+                                         &messageOut,
+                                         &missionItem);
+
+    _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+    _startAckTimeout(AckGuidedItem);
+    emit inProgressChanged(true);
+}
+
 void MissionManager::generateResumeMission(int resumeIndex)
 {
     if (_vehicle->isOfflineEditingVehicle()) {
