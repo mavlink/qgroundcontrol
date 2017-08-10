@@ -82,6 +82,7 @@ private slots:
     void    _mavlinkMessageReceived (const mavlink_message_t& message);
     void    _switchStateChanged     (int swId, int oldState, int newState);
     void    _parametersReady        ();
+    void    _sendUpdates            ();
 
 signals:
     void    gimbalVersionChanged    ();
@@ -124,4 +125,5 @@ private:
     QString                 _version;
     QSize                   _videoSize;
     bool                    _isE90;
+    QStringList             _updatesToSend;
 };
