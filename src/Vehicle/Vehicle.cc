@@ -116,7 +116,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _telemetryRNoise(0)
     , _maxProtoVersion(0)
     , _vehicleCapabilitiesKnown(false)
-    , _supportsMissionItemInt(false)
+    , _capabilityBits(0)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _initialPlanRequestComplete(false)
@@ -281,7 +281,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _defaultCruiseSpeed(_settingsManager->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
     , _defaultHoverSpeed(_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
     , _vehicleCapabilitiesKnown(true)
-    , _supportsMissionItemInt(false)
+    , _capabilityBits(_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? 0 : MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _initialPlanRequestComplete(false)
@@ -350,11 +350,11 @@ void Vehicle::_commonInit(void)
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
 
     // GeoFenceManager needs to access ParameterManager so make sure to create after
-    _geoFenceManager = _firmwarePlugin->newGeoFenceManager(this);
+    _geoFenceManager = new GeoFenceManager(this);
     connect(_geoFenceManager, &GeoFenceManager::error,          this, &Vehicle::_geoFenceManagerError);
     connect(_geoFenceManager, &GeoFenceManager::loadComplete,   this, &Vehicle::_geoFenceLoadComplete);
 
-    _rallyPointManager = _firmwarePlugin->newRallyPointManager(this);
+    _rallyPointManager = new RallyPointManager(this);
     connect(_rallyPointManager, &RallyPointManager::error,          this, &Vehicle::_rallyPointManagerError);
     connect(_rallyPointManager, &RallyPointManager::loadComplete,   this, &Vehicle::_rallyPointLoadComplete);
 
@@ -416,6 +416,12 @@ void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant value)
 {
     _firmwareType = static_cast<MAV_AUTOPILOT>(value.toInt());
     emit firmwareTypeChanged();
+    if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        _capabilityBits = 0;
+    } else {
+        _capabilityBits = MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY;
+    }
+    emit capabilityBitsChanged(_capabilityBits);
 }
 
 void Vehicle::_offlineVehicleTypeSettingChanged(QVariant value)
@@ -749,11 +755,10 @@ void Vehicle::_handleAltitude(mavlink_message_t& message)
 
 void Vehicle::_setCapabilities(uint64_t capabilityBits)
 {
-    if (capabilityBits & MAV_PROTOCOL_CAPABILITY_MISSION_INT) {
-        _supportsMissionItemInt = true;
-    }
+    _capabilityBits = capabilityBits;
     _vehicleCapabilitiesKnown = true;
     emit capabilitiesKnownChanged(true);
+    emit capabilityBitsChanged(_capabilityBits);
 
     // This should potentially be turned into a user-facing warning
     // if the general experience after deployment is that users want MAVLink 2
@@ -762,7 +767,13 @@ void Vehicle::_setCapabilities(uint64_t capabilityBits)
         qCDebug(VehicleLog) << QString("Vehicle does support MAVLink 2 but the link does not allow for it.");
     }
 
-    qCDebug(VehicleLog) << QString("Vehicle %1 MISSION_ITEM_INT").arg(_supportsMissionItemInt ? QStringLiteral("supports") : QStringLiteral("does not support"));
+    QString supports("supports");
+    QString doesNotSupport("does not support");
+
+    qCDebug(VehicleLog) << QString("Vehicle %1 Mavlink 2.0").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_MAVLINK2 ? supports : doesNotSupport);
+    qCDebug(VehicleLog) << QString("Vehicle %1 MISSION_ITEM_INT").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_MISSION_INT ? supports : doesNotSupport);
+    qCDebug(VehicleLog) << QString("Vehicle %1 GeoFence").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_MISSION_FENCE ? supports : doesNotSupport);
+    qCDebug(VehicleLog) << QString("Vehicle %1 RallyPoints").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_MISSION_RALLY ? supports : doesNotSupport);
 }
 
 void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& message)
@@ -1908,8 +1919,13 @@ void Vehicle::_missionLoadComplete(void)
     // After the initial mission request completes we ask for the geofence
     if (!_geoFenceManagerInitialRequestSent) {
         _geoFenceManagerInitialRequestSent = true;
-        qCDebug(VehicleLog) << "_missionLoadComplete requesting geoFence";
-        _geoFenceManager->loadFromVehicle();
+        if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_FENCE) {
+            qCDebug(VehicleLog) << "_missionLoadComplete requesting GeoFence";
+            _geoFenceManager->loadFromVehicle();
+        } else {
+            qCDebug(VehicleLog) << "_missionLoadComplete GeoFence not supported skipping";
+            _geoFenceLoadComplete();
+        }
     }
 }
 
@@ -1918,15 +1934,23 @@ void Vehicle::_geoFenceLoadComplete(void)
     // After geofence request completes we ask for the rally points
     if (!_rallyPointManagerInitialRequestSent) {
         _rallyPointManagerInitialRequestSent = true;
-        qCDebug(VehicleLog) << "_missionLoadComplete requesting rally points";
-        _rallyPointManager->loadFromVehicle();
+        if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_RALLY) {
+            qCDebug(VehicleLog) << "_missionLoadComplete requesting Rally Points";
+            _rallyPointManager->loadFromVehicle();
+        } else {
+            qCDebug(VehicleLog) << "_missionLoadComplete Rally Points not supported skipping";
+            _rallyPointLoadComplete();
+        }
     }
 }
 
 void Vehicle::_rallyPointLoadComplete(void)
 {
     qCDebug(VehicleLog) << "_missionLoadComplete _initialPlanRequestComplete = true";
-    _initialPlanRequestComplete = true;
+    if (!_initialPlanRequestComplete) {
+        _initialPlanRequestComplete = true;
+        emit initialPlanRequestCompleted();
+    }
 }
 
 void Vehicle::_parametersReady(bool parametersReady)
