@@ -130,8 +130,7 @@ Item {
                 }
                 TyphoonHQuickInterface.bindWIFI(_selectedSSID, password)
                 _selectedSSID = ""
-                passwordField.text = ""
-                passwordDialog.visible = false
+                passwordLoader.sourceComponent = null
             }
 
             Connections {
@@ -329,7 +328,7 @@ Item {
                                         if(TyphoonHQuickInterface.isWifiConfigured(_selectedSSID)) {
                                             connectWifi("")
                                         } else {
-                                            passwordDialog.visible = true
+                                            passwordLoader.sourceComponent = passwordDialog
                                         }
                                     }
                                 }
@@ -443,64 +442,75 @@ Item {
                         }
                     }
                 }
-                //-- Password Dialog
-                Rectangle {
-                    id:         passwordDialog
-                    width:      pwdCol.width  * 1.25
-                    height:     pwdCol.height * 1.25
-                    radius:     ScreenTools.defaultFontPixelWidth * 0.5
-                    color:      qgcPal.window
-                    visible:    false
-                    border.width:   1
-                    border.color:   qgcPal.text
+                Loader {
+                    id:             passwordLoader
                     anchors.top:    parent.top
                     anchors.horizontalCenter: parent.horizontalCenter
-                    Keys.onBackPressed: {
-                        passwordDialog.visible = false
-                    }
-                    MouseArea {
-                        anchors.fill:   parent
-                        onWheel:        { wheel.accepted = true; }
-                        onPressed:      { mouse.accepted = true; }
-                        onReleased:     { mouse.accepted = true; }
-                    }
-                    Column {
-                        id:         pwdCol
-                        spacing:    ScreenTools.defaultFontPixelHeight
-                        anchors.centerIn: parent
-                        QGCLabel {
-                            text:   qsTr("Please enter password for ") + _selectedSSID
-                            anchors.horizontalCenter: parent.horizontalCenter
+                }
+                //-- Password Dialog
+                Component {
+                    id:  passwordDialog
+                    Rectangle {
+                        id:         pwdRect
+                        width:      pwdCol.width  * 1.25
+                        height:     pwdCol.height * 1.25
+                        radius:     ScreenTools.defaultFontPixelWidth * 0.5
+                        color:      qgcPal.window
+                        border.width:   1
+                        border.color:   qgcPal.text
+                        Keys.onBackPressed: {
+                            passwordLoader.sourceComponent = null
                         }
-                        QGCTextField {
-                            id:         passwordField
-                            echoMode:   TextInput.Password
-                            width:      ScreenTools.defaultFontPixelWidth * 20
-                            focus:      true
-                            anchors.horizontalCenter: parent.horizontalCenter
+                        MouseArea {
+                            anchors.fill:   parent
+                            onWheel:        { wheel.accepted = true; }
+                            onPressed:      { mouse.accepted = true; }
+                            onReleased:     { mouse.accepted = true; }
                         }
-                        Row {
-                            spacing:    ScreenTools.defaultFontPixelWidth * 4
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            QGCButton {
-                                text:       qsTr("Ok")
-                                width:      _labelWidth
-                                enabled:    passwordField.text.length > 7
-                                onClicked:  {
-                                    Qt.inputMethod.hide();
-                                    connectWifi(passwordField.text)
+                        Column {
+                            id:         pwdCol
+                            spacing:    ScreenTools.defaultFontPixelHeight
+                            anchors.centerIn: parent
+                            QGCLabel {
+                                text:   qsTr("Please enter password for ") + _selectedSSID
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                            QGCTextField {
+                                id:         passwordField
+                                echoMode:   TextInput.Password
+                                width:      ScreenTools.defaultFontPixelWidth * 20
+                                focus:      true
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                            Row {
+                                spacing:    ScreenTools.defaultFontPixelWidth * 4
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                QGCButton {
+                                    text:       qsTr("Ok")
+                                    width:      _labelWidth
+                                    enabled:    passwordField.text.length > 7
+                                    onClicked:  {
+                                        Qt.inputMethod.hide();
+                                        var pwd = passwordField.text;
+                                        passwordField.text = ""
+                                        connectWifi(pwd)
+                                    }
+                                }
+                                QGCButton {
+                                    text:       qsTr("Cancel")
+                                    width:      _labelWidth
+                                    onClicked:  {
+                                        Qt.inputMethod.hide();
+                                        ssidGroup.current = null
+                                        passwordField.text = ""
+                                        passwordLoader.sourceComponent = null
+                                    }
                                 }
                             }
-                            QGCButton {
-                                text:       qsTr("Cancel")
-                                width:      _labelWidth
-                                onClicked:  {
-                                    Qt.inputMethod.hide();
-                                    ssidGroup.current = null
-                                    passwordField.text = ""
-                                    passwordDialog.visible = false
-                                }
-                            }
+                        }
+                        Component.onCompleted: {
+                            passwordLoader.width  = pwdRect.width
+                            passwordLoader.height = pwdRect.height
                         }
                     }
                 }
