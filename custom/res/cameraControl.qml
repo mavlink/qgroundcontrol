@@ -196,8 +196,7 @@ Rectangle {
         }
         Item {
             width:  1
-            height: ScreenTools.defaultFontPixelHeight * 0.15
-            visible: !_cameraVideoMode
+            height: ScreenTools.defaultFontPixelHeight * _cameraVideoMode ? 0.075 : 0.15
         }
         Rectangle {
             height: 1
