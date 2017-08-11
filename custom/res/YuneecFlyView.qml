@@ -330,6 +330,7 @@ Item {
 
     //-- Camera Status
     Rectangle {
+        id:             camStatus
         width:          camRow.width + (ScreenTools.defaultFontPixelWidth * 3)
         height:         camRow.height * 1.25
         color:          _indicatorColor
@@ -410,6 +411,31 @@ Item {
             QGCLabel { text: qsTr("NONE"); color: qgcPal.colorOrange; anchors.verticalCenter: parent.verticalCenter; visible: _noSdCard}
             QGCLabel { text: qsTr("FULL"); color: qgcPal.colorOrange; anchors.verticalCenter: parent.verticalCenter; visible: _fullSD}
         }
+    }
+
+    //-- OBS
+    Rectangle {
+        id:             obdIndicator
+        width:          ScreenTools.defaultFontPixelWidth  * 30
+        height:         ScreenTools.defaultFontPixelHeight * 1.5
+        color:          _indicatorColor
+        visible:        !_mainIsMap && TyphoonHQuickInterface.obsState && TyphoonHQuickInterface.distSensorMax !== 0 && !messageArea.visible && !criticalMmessageArea.visible
+        //visible:        !_mainIsMap && distMax !== 0 && !messageArea.visible && !criticalMmessageArea.visible
+        radius:         3
+        border.width:   1
+        border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
+        anchors.top:    camStatus.bottom
+        anchors.topMargin: ScreenTools.defaultFontPixelHeight * 0.5
+        anchors.horizontalCenter: parent.horizontalCenter
+        Rectangle {
+            width:      ScreenTools.defaultFontPixelHeight
+            height:     width
+            radius:     width * 0.5
+            color:      obdIndicator.distCur > 0.95 ? qgcPal.colorGreen : (obdIndicator.distCur > 0.75 ? qgcPal.colorOrange : qgcPal.colorRed)
+            anchors.verticalCenter: parent.verticalCenter
+            x:          (obdIndicator.distCur * (parent.width - width))
+        }
+        property real distCur: TyphoonHQuickInterface.distSensorMax ? TyphoonHQuickInterface.distSensorCur / TyphoonHQuickInterface.distSensorMax : 0
     }
 
     Component {

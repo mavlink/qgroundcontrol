@@ -290,6 +290,10 @@ TyphoonHM4Interface::_mavlinkMessageReceived(const mavlink_message_t& message)
                 _rcTimer.start(1000);
             }
         }
+    } else if(message.msgid == MAVLINK_MSG_ID_DISTANCE_SENSOR) {
+        mavlink_distance_sensor_t dist;
+        mavlink_msg_distance_sensor_decode(&message, &dist);
+        emit distanceSensor((int)dist.min_distance, (int)dist.max_distance, (int)dist.current_distance);
     }
 }
 

@@ -114,6 +114,7 @@ signals:
     void    calibrationCompleteChanged          ();
     void    calibrationStateChanged             ();
     void    rcActiveChanged                     ();
+    void    distanceSensor                      (int minDist, int maxDist, int curDist);
     //-- WIFI
     void    newWifiSSID                         (QString ssid, int rssi);
     void    newWifiRSSI                         ();

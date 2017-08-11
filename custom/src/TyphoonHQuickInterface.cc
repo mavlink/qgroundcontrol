@@ -59,6 +59,10 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _updateProgress(0)
     , _updateDone(false)
     , _selectedCount(0)
+    , _distSensorMin(0)
+    , _distSensorMax(0)
+    , _distSensorCur(0)
+    , _obsState(false)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
 }
@@ -103,6 +107,7 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(_pHandler, &TyphoonHM4Interface::calibrationStateChanged,      this, &TyphoonHQuickInterface::_calibrationStateChanged);
         connect(_pHandler, &TyphoonHM4Interface::calibrationCompleteChanged,   this, &TyphoonHQuickInterface::_calibrationCompleteChanged);
         connect(_pHandler, &TyphoonHM4Interface::rcActiveChanged,              this, &TyphoonHQuickInterface::_rcActiveChanged);
+        connect(_pHandler, &TyphoonHM4Interface::distanceSensor,               this, &TyphoonHQuickInterface::_distanceSensor);
         connect(&_scanTimer,    &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
         connect(&_flightTimer,  &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
         connect(&_powerTimer,   &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
@@ -191,13 +196,24 @@ TyphoonHQuickInterface::_powerTrigger()
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::_switchStateChanged(int swId, int /*oldState*/, int newState)
+TyphoonHQuickInterface::_switchStateChanged(int swId, int newState, int /*oldState*/)
 {
+    //qDebug() << "Switch:" << swId << newState;
     if(swId == Yuneec::BUTTON_POWER) {
-        if(newState) {
+        //-- Pressed is 0
+        if(newState == 0) {
             _powerTimer.start(1000);
         } else {
             _powerTimer.stop();
+        }
+    } else if(swId == Yuneec::BUTTON_OBS) {
+        //-- On is position 3 (index 2)
+        if(newState == 2 && !_obsState) {
+            _obsState = true;
+            emit obsStateChanged();
+        } else if(_obsState) {
+            _obsState = false;
+            emit obsStateChanged();
         }
     }
 }
@@ -1224,6 +1240,24 @@ TyphoonHQuickInterface::_checkUpdateStatus()
         if(lastCheck.daysTo(now) > 29) {
             emit updateAlert();
         }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_distanceSensor(int minDist, int maxDist, int curDist)
+{
+    if(_distSensorMin != minDist) {
+        _distSensorMin = minDist;
+        emit distSensorMinChanged();
+    }
+    if(_distSensorMax != maxDist) {
+        _distSensorMax = maxDist;
+        emit distSensorMaxChanged();
+    }
+    if(_distSensorCur != curDist) {
+        _distSensorCur = curDist;
+        emit distSensorCurChanged();
     }
 }
 
