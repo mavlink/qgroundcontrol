@@ -110,6 +110,7 @@ public:
     bool loadTextFile(QFile& file, QString& errorString);
 
     // Overrides from PlanElementController
+    bool supported                  (void) const final { return true; };
     void start                      (bool editMode) final;
     void save                       (QJsonObject& json) final;
     bool load                       (const QJsonObject& json, QString& errorString) final;
