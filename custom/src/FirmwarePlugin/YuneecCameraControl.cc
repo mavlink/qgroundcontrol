@@ -437,15 +437,13 @@ YuneecCameraControl::setVideoSize(QSize s)
 QPoint
 YuneecCameraControl::spotArea()
 {
-    if(_isE90) {
-        Fact* pFact = getFact(kCAM_SPOTAREA);
-        if(pFact) {
-            float vw = (float)_videoSize.width();
-            float vh = (float)_videoSize.height();
-            int x = (int)((float)((pFact->rawValue().toUInt() >> 8) & 0xFF) * vw / 100.0f);
-            int y = (int)((float)(pFact->rawValue().toUInt() & 0xFF) * vh / 100.0f);
-            return QPoint(x, y);
-        }
+    Fact* pFact = getFact(kCAM_SPOTAREA);
+    if(pFact) {
+        float vw = (float)_videoSize.width();
+        float vh = (float)_videoSize.height();
+        int x = (int)((float)((pFact->rawValue().toUInt() >> 8) & 0xFF) * vw / 100.0f);
+        int y = (int)((float)(pFact->rawValue().toUInt() & 0xFF) * vh / 100.0f);
+        return QPoint(x, y);
     }
     return QPoint(0, 0);
 }
@@ -454,20 +452,18 @@ YuneecCameraControl::spotArea()
 void
 YuneecCameraControl::setSpotArea(QPoint p)
 {
-    if(_isE90) {
-        Fact* pFact = getFact(kCAM_SPOTAREA);
-        if(pFact) {
-            float vw = (float)_videoSize.width();
-            float vh = (float)_videoSize.height();
-            float fx = p.x() < 0 ? 0.0f : (float)p.x();
-            float fy = p.y() < 0 ? 0.0f : (float)p.y();
-            uint8_t x = (uint8_t)(fx / vw * 100.0f);
-            uint8_t y = (uint8_t)(fy / vh * 100.0f);
-            x = x > 100 ? 100 : x;
-            y = y > 100 ? 100 : y;
-            uint16_t coords = (x << 8) | y;
-            pFact->setRawValue(coords);
-        }
+    Fact* pFact = getFact(kCAM_SPOTAREA);
+    if(pFact) {
+        float vw = (float)_videoSize.width();
+        float vh = (float)_videoSize.height();
+        float fx = p.x() < 0 ? 0.0f : (float)p.x();
+        float fy = p.y() < 0 ? 0.0f : (float)p.y();
+        uint8_t x = (uint8_t)(fx / vw * 100.0f);
+        uint8_t y = (uint8_t)(fy / vh * 100.0f);
+        x = x > 100 ? 100 : x;
+        y = y > 100 ? 100 : y;
+        uint16_t coords = (x << 8) | y;
+        pFact->setRawValue(coords);
     }
 }
 
