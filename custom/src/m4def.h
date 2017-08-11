@@ -298,6 +298,7 @@ enum {
         ACTION_TYPE_FEEDBACK            = 3,
         ACTION_TYPE_ONEKEY_TAKEOFF      = 6,
 
+        BUTTON_OBS                      = 33,
         BUTTON_POWER                    = 51,
         BUTTON_CAMERA_SHUTTER           = 53,
         BUTTON_VIDEO_SHUTTER            = 54,

@@ -189,6 +189,11 @@ public:
     Q_PROPERTY(VideoReceiver*   videoReceiver       READ    videoReceiver       CONSTANT)
     Q_PROPERTY(bool             thermalImagePresent READ    thermalImagePresent NOTIFY thermalImagePresentChanged)
 
+    Q_PROPERTY(int              distSensorMin       READ    distSensorMin       NOTIFY distSensorMinChanged)
+    Q_PROPERTY(int              distSensorMax       READ    distSensorMax       NOTIFY distSensorMaxChanged)
+    Q_PROPERTY(int              distSensorCur       READ    distSensorCur       NOTIFY distSensorCurChanged)
+    Q_PROPERTY(bool             obsState            READ    obsState            NOTIFY obsStateChanged)
+
     Q_INVOKABLE void enterBindMode      ();
     Q_INVOKABLE void initM4             ();
     Q_INVOKABLE void startScan          (int delay = 0);
@@ -270,6 +275,11 @@ public:
     bool        updating            () { return _pFileCopy != NULL; }
     VideoReceiver*  videoReceiver   () { return _videoReceiver; }
 
+    int         distSensorMin       () { return _distSensorMin; }
+    int         distSensorMax       () { return _distSensorMax; }
+    int         distSensorCur       () { return _distSensorCur; }
+    bool        obsState            () { return _obsState; }
+
     //-- Media Player
     Q_PROPERTY(QQmlListProperty<TyphoonMediaItem> mediaList READ mediaList NOTIFY mediaListChanged)
     Q_PROPERTY(int selectedCount READ selectedCount NOTIFY selectedCountChanged)
@@ -319,6 +329,10 @@ signals:
     void    mediaListChanged            ();
     void    mediaSelectionChanged       ();
     void    selectedCountChanged        ();
+    void    distSensorMinChanged        ();
+    void    distSensorMaxChanged        ();
+    void    distSensorCurChanged        ();
+    void    obsStateChanged             ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -338,7 +352,7 @@ private slots:
     void    _flightUpdate               ();
     void    _powerTrigger               ();
     void    _rawChannelsChanged         ();
-    void    _switchStateChanged         (int swId, int oldState, int newState);
+    void    _switchStateChanged         (int swId, int newState, int oldState);
     void    _exportData                 ();
     void    _importMissions             ();
     void    _calibrationCompleteChanged ();
@@ -350,6 +364,7 @@ private slots:
     void    _videoRunningChanged        ();
     void    _checkUpdateStatus          ();
     void    _forgetSSID                 ();
+    void    _distanceSensor             (int minDist, int maxDist, int curDist);
 
 private:
     void    _saveWifiConfigurations     ();
@@ -385,4 +400,8 @@ private:
     bool                    _updateDone;
     QVector<TyphoonMediaItem*>  _mediaList;
     int                     _selectedCount;
+    int                     _distSensorMin;
+    int                     _distSensorMax;
+    int                     _distSensorCur;
+    bool                    _obsState;
 };
