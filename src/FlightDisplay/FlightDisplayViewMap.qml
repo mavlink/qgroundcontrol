@@ -206,19 +206,11 @@ FlightMap {
         }
     }
 
-    // Add the mission item visuals to the map
-    Repeater {
-        model: _mainIsMap ? _missionController.visualItems : 0
-
-        delegate: MissionItemMapVisual {
-            map:        flightMap
-            onClicked:  guidedActionsController.confirmAction(guidedActionsController.actionSetWaypoint, Math.max(object.sequenceNumber, 1))
-        }
-    }
-
-    // Add lines between waypoints
-    MissionLineView {
-        model:  _mainIsMap ? _missionController.waypointLines : 0
+    // Add the items associated with the flight place to the map
+    PlanMapItems {
+        map:                flightMap
+        largeMapView:       _mainIsMap
+        masterController:   _planMasterController
     }
 
     GeoFenceMapVisuals {

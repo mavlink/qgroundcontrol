@@ -27,5 +27,6 @@ MissionItemIndicator        1.0 MissionItemIndicator.qml
 MissionItemIndicatorDrag    1.0 MissionItemIndicatorDrag.qml
 MissionItemView             1.0 MissionItemView.qml
 MissionLineView             1.0 MissionLineView.qml
+PlanMapItems                1.0 PlanMapItems.qml
 PolygonEditor               1.0 PolygonEditor.qml
 VehicleMapItem              1.0 VehicleMapItem.qml
