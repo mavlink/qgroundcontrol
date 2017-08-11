@@ -30,32 +30,51 @@ Item {
 
     property var    _breachReturnPointComponent
     property var    _mouseAreaComponent
-    property var    _circleComponent
-    property var    _mapPolygon:                    myGeoFenceController.mapPolygon
-    property bool   _interactive:                   interactive
-    property bool   _circleSupported:               myGeoFenceController.circleRadiusFact !== null
-    property bool   _circleEnabled:                 myGeoFenceController.circleEnabled
-    property real   _circleRadius:                  _circleSupported ? myGeoFenceController.circleRadiusFact.rawValue : 0
-    property bool   _polygonSupported:              myGeoFenceController.polygonSupported
-    property bool   _polygonEnabled:                myGeoFenceController.polygonEnabled
+    property var    _polygons:                  myGeoFenceController.polygons
+    property var    _circles:                   myGeoFenceController.circles
+
+    function addPolygon(inclusionPolygon) {
+        // Initial polygon is inset to take 2/3rds space
+        var rect = Qt.rect(map.centerViewport.x, map.centerViewport.y, map.centerViewport.width, map.centerViewport.height)
+        rect.x += (rect.width * 0.25) / 2
+        rect.y += (rect.height * 0.25) / 2
+        rect.width *= 0.75
+        rect.height *= 0.75
+
+        var centerCoord =       map.toCoordinate(Qt.point(rect.x + (rect.width / 2), rect.y + (rect.height / 2)),   false /* clipToViewPort */)
+        var topLeftCoord =      map.toCoordinate(Qt.point(rect.x, rect.y),                                          false /* clipToViewPort */)
+        var topRightCoord =     map.toCoordinate(Qt.point(rect.x + rect.width, rect.y),                             false /* clipToViewPort */)
+        var bottomLeftCoord =   map.toCoordinate(Qt.point(rect.x, rect.y + rect.height),                            false /* clipToViewPort */)
+        var bottomRightCoord =  map.toCoordinate(Qt.point(rect.x + rect.width, rect.y + rect.height),               false /* clipToViewPort */)
+
+        // Initial polygon has max width and height of 3000 meters
+        var halfWidthMeters =   Math.min(topLeftCoord.distanceTo(topRightCoord), 3000) / 2
+        var halfHeightMeters =  Math.min(topLeftCoord.distanceTo(bottomLeftCoord), 3000) / 2
+        topLeftCoord =      centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 0)
+        topRightCoord =     centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 0)
+        bottomLeftCoord =   centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 180)
+        bottomRightCoord =  centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 180)
+
+        console.log(map.center)
+        console.log(topLeftCoord)
+        console.log(bottomRightCoord)
+
+        if (inclusionPolygon) {
+            myGeoFenceController.addInclusion(topLeftCoord, bottomRightCoord)
+        } else {
+            myGeoFenceController.addExclusion(topLeftCoord, bottomRightCoord)
+        }
+    }
 
     Component.onCompleted: {
-        _circleComponent = circleComponent.createObject(map)
-        map.addMapItem(_circleComponent)
         _breachReturnPointComponent = breachReturnPointComponent.createObject(map)
         map.addMapItem(_breachReturnPointComponent)
         _mouseAreaComponent = mouseAreaComponent.createObject(map)
     }
 
     Component.onDestruction: {
-        _circleComponent.destroy()
         _breachReturnPointComponent.destroy()
         _mouseAreaComponent.destroy()
-    }
-
-    Connections {
-        target:                     myGeoFenceController
-        onAddInitialFencePolygon:   mapPolygonVisuals.addInitialPolygon()
     }
 
     // Mouse area to capture breach return point coordinate
@@ -69,28 +88,29 @@ Item {
         }
     }
 
-    QGCMapPolygonVisuals {
-        id:             mapPolygonVisuals
-        mapControl:     map
-        mapPolygon:     _mapPolygon
-        interactive:    _interactive
-        borderWidth:    2
-        borderColor:    "orange"
-        visible:        _polygonSupported && (planView || _polygonEnabled)
+    Instantiator {
+        model: _polygons
+
+        delegate : QGCMapPolygonVisuals {
+            mapControl:         map
+            mapPolygon:         object
+            borderWidth:        object.inclusion ? 2 : 0
+            borderColor:        "orange"
+            interiorColor:      object.inclusion ? "transparent" : "orange"
+            interiorOpacity:    object.inclusion ? 1: 0.2
+        }
     }
 
-    // GeoFence circle
-    Component {
-        id: circleComponent
+    Instantiator {
+        model: _circles
 
-        MapCircle {
-            z:              QGroundControl.zOrderMapItems
-            border.width:   2
-            border.color:   "orange"
-            color:          "transparent"
-            center:         homePosition ? homePosition : QtPositioning.coordinate()
-            radius:         _circleRadius
-            visible:        _circleSupported && _circleRadius > 0 && (planView || _circleEnabled)
+        delegate : QGCMapCircleVisuals {
+            mapControl:         map
+            mapCircle:          object
+            borderWidth:        object.inclusion ? 2 : 0
+            borderColor:        "orange"
+            interiorColor:      object.inclusion ? "transparent" : "orange"
+            interiorOpacity:    object.inclusion ? 1: 0.2
         }
     }
 

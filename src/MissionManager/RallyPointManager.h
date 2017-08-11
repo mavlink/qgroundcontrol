@@ -29,6 +29,9 @@ public:
     RallyPointManager(Vehicle* vehicle);
     ~RallyPointManager();
     
+    /// Returns true if GeoFence is supported by this vehicle
+    virtual bool supported(void) const;
+
     /// Returns true if the manager is currently communicating with the vehicle
     virtual bool inProgress(void) const { return false; }
 
@@ -43,8 +46,6 @@ public:
     /// Remove all rally points from the vehicle
     ///     Signals removeAllCompleted when done
     virtual void removeAll(void);
-
-    virtual bool rallyPointsSupported(void) const { return false; }
 
     QList<QGeoCoordinate> points(void) const { return _rgPoints; }
 
