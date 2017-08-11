@@ -98,9 +98,13 @@ private:
     int _writeSequenceCount;    ///< Numbers of items about to be written
     int _writeSequenceIndex;    ///< Current index being reqested
     
-    typedef QMap<uint16_t, mavlink_mission_item_t>   MissionList_t;
-    MissionList_t   _missionItems;
-    
+    typedef QMap<uint16_t, mavlink_mission_item_t>   MissionItemList_t;
+
+    MAV_MISSION_TYPE    _requestType;
+    MissionItemList_t   _missionItems;
+    MissionItemList_t   _fenceItems;
+    MissionItemList_t   _rallyItems;
+
     QTimer*             _missionItemResponseTimer;
     FailureMode_t       _failureMode;
     bool                _sendHomePositionOnEmptyList;
