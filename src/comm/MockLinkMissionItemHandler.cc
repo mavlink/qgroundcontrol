@@ -70,8 +70,11 @@ bool MockLinkMissionItemHandler::handleMessage(const mavlink_message_t& msg)
         break;
 
     case MAVLINK_MSG_ID_MISSION_CLEAR_ALL:
-        // Delete all mission items
+        // Delete all plan items
         _missionItems.clear();
+        _fenceItems.clear();
+        _rallyItems.clear();
+        _sendAck(MAV_MISSION_ACCEPTED);
         break;
 
     default:
