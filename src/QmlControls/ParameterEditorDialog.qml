@@ -11,6 +11,7 @@ import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtQuick.Layouts  1.2
 
+import QGroundControl               1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controllers   1.0
@@ -28,6 +29,9 @@ QGCViewDialog {
 
     property real   _editFieldWidth:            ScreenTools.defaultFontPixelWidth * 20
     property bool   _longDescriptionAvailable:  fact.longDescription != ""
+    property bool   _editingParameter:          fact.componentId != 0
+    property bool   _allowForceSave:            QGroundControl.corePlugin.showAdvancedUI || !_editingParameter
+    property bool   _allowDefaultReset:         fact.defaultValueAvailable && (QGroundControl.corePlugin.showAdvancedUI || !_editingParameter)
 
     ParameterEditorController { id: controller; factPanel: parent }
 
@@ -49,9 +53,16 @@ QGCViewDialog {
                 hideDialog()
             } else {
                 validationError.text = errorString
-                forceSave.visible = true
+                if (_allowForceSave) {
+                    forceSave.visible = true
+                }
             }
         }
+    }
+
+    function reject() {
+        fact.valueChanged(fact.value)
+        hideDialog();
     }
 
     function bitmaskValue() {
@@ -68,7 +79,9 @@ QGCViewDialog {
     Component.onCompleted: {
         if (validate) {
             validationError.text = fact.validate(validateValue, false /* convertOnly */)
-            forceSave.visible = true
+            if (_allowForceSave) {
+                forceSave.visible = true
+            }
         }
     }
 
@@ -109,7 +122,7 @@ QGCViewDialog {
 
                 QGCButton {
                     anchors.baseline:   valueField.baseline
-                    visible:            fact.defaultValueAvailable
+                    visible:            _allowDefaultReset
                     text:               qsTr("Reset to default")
 
                     onClicked: {
@@ -195,7 +208,7 @@ QGCViewDialog {
 
                 QGCLabel {
                     text:       qsTr("Default: ") + fact.defaultValueString
-                    visible:    fact.defaultValueAvailable
+                    visible:    _allowDefaultReset
                 }
             }
 
