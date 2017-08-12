@@ -36,7 +36,7 @@ QGCTextField {
                 fact.value = text
             } else {
                 _validateString = text
-                qgcView.showDialog(validationErrorDialogComponent, qsTr("Invalid Value"), qgcView.showDialogDefaultWidth, StandardButton.Save)
+                qgcView.showDialog(validationErrorDialogComponent, qsTr("Invalid Value"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
             }
         } else {
             fact.value = text
