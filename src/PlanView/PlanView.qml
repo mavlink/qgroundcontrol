@@ -144,7 +144,7 @@ QGCView {
         }
     }
 
-    PlanElemementMasterController {
+    PlanMasterController {
         id: masterController
 
         Component.onCompleted: {
