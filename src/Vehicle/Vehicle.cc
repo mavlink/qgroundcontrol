@@ -922,6 +922,10 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
 
 void Vehicle::_handleCommandLong(mavlink_message_t& message)
 {
+#ifdef __ios__
+    Q_UNUSED(message)
+    // iOS has no serial links
+#else
     mavlink_command_long_t cmd;
     mavlink_msg_command_long_decode(&message, &cmd);
 
@@ -941,6 +945,7 @@ void Vehicle::_handleCommandLong(mavlink_message_t& message)
             }
         break;
     }
+#endif
 }
 
 void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
