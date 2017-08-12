@@ -331,12 +331,14 @@ QGCView {
         id:                 panel
         anchors.fill:       parent
 
-        Map {
-            id:                 _map
-            anchors.fill:       parent
-            center:             QGroundControl.flightMapPosition
-            visible:            false
+        FlightMap {
+            id:                         _map
+            anchors.fill:               parent
+            visible:                    false
+            allowGCSLocationCenter:     true
+            allowVehicleLocationCenter: false
             gesture.flickDeceleration:  3000
+            mapName:                    "OfflineMap"
 
             property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
 
