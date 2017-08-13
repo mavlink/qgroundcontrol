@@ -22,6 +22,7 @@ Item {
     property var    map                 ///< Map control to show items on
     property bool   largeMapView        ///< true: map takes up entire view, false: map is in small window
     property var    masterController    ///< Reference to PlanMasterController for vehicle
+    property bool   isActiveVehicle     ///< true: vehicle associated with plan is active, false: in-active
 
     property var    _map:                       map
     property var    _missionController:         masterController.missionController
@@ -35,11 +36,16 @@ Item {
 
         delegate: MissionItemMapVisual {
             map:        _map
-            onClicked:  guidedActionsController.confirmAction(guidedActionsController.actionSetWaypoint, Math.max(object.sequenceNumber, 1))
+            onClicked: {
+                if (isActiveVehicle) {
+                    // Only active vehicle supports click to change current mission item
+                    guidedActionsController.confirmAction(guidedActionsController.actionSetWaypoint, Math.max(object.sequenceNumber, 1))
+                }
+            }
         }
     }
 
-    // Waypiont lines
+    // Waypoint lines
     Instantiator {
         model: largeMapView ? _missionController.waypointLines : 0
 
