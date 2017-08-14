@@ -52,6 +52,7 @@ QGCCacheWorker::QGCCacheWorker()
     , _defaultCount(0)
     , _lastUpdate(0)
     , _updateTimeout(SHORT_TIMEOUT)
+    , _hostLookupID(0)
 {
 
 }
