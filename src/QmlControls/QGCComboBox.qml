@@ -9,6 +9,7 @@ Button {
     id: combo
 
     property real   pointSize:      ScreenTools.defaultFontPointSize    ///< Point size for button text
+    property bool   centeredLabel:  false
     property alias  model:          popupItems.model
     property alias  textRole:       popup.textRole
     property alias  currentIndex:   popup.__selectedIndex
@@ -60,10 +61,12 @@ Button {
             baselineOffset: text.y + text.baselineOffset
 
             QGCLabel {
-                id:                     text
-                anchors.verticalCenter: parent.verticalCenter
-                text:                   control.currentText
-                color:                  control._qgcPal.buttonText
+                id:                         text
+                anchors.verticalCenter:     parent.verticalCenter
+                anchors.horizontalCenter:   centeredLabel ? parent.horizontalCenter : undefined
+                text:                       control.currentText
+                color:                      control._qgcPal.buttonText
+                font.pointSize:             pointSize
             }
         }
     }
