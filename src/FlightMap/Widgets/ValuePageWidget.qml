@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 import QtQuick          2.3
 import QtQuick.Dialogs  1.2
 import QtQuick.Layouts  1.2
@@ -20,16 +19,13 @@ import QGroundControl.Controllers   1.0
 import QGroundControl.Palette       1.0
 import QGroundControl               1.0
 
-QGCFlickable {
-    id:                 _root
-    height:             Math.min(maxHeight, _smallFlow.y + _smallFlow.height)
-    contentHeight:      _smallFlow.y + _smallFlow.height
-    flickableDirection: Flickable.VerticalFlick
-    clip:               true
+/// Value page for InstrumentPanel PageView
+Column {
+    id:         _largeColumn
+    width:      pageWidth
+    spacing:    _margins
 
-    property var    qgcView
-    property color  textColor
-    property var    maxHeight
+    property bool showSettingsIcon: true
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
     property real   _margins:       ScreenTools.defaultFontPixelWidth / 2
@@ -40,7 +36,7 @@ QGCFlickable {
         id: controller
     }
 
-    function showPicker() {
+    function showSettings() {
         qgcView.showDialog(propertyPicker, qsTr("Value Widget Setup"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
     }
 
@@ -53,56 +49,17 @@ QGCFlickable {
         return false
     }
 
-    MouseArea {
-        anchors.fill:   parent
-        onClicked:      showNextPage()
-    }
-
-    Column {
-        id:         _largeColumn
-        width:      parent.width
-        spacing:    _margins
-
-        Repeater {
-            model: _activeVehicle ? controller.largeValues : 0
-            Loader {
-                sourceComponent: fact ? largeValue : undefined
-                property Fact fact: _activeVehicle.getFact(modelData.replace("Vehicle.", ""))
-            }
-        } // Repeater - Large
-    } // Column - Large
-
-    Component {
-        id: largeValue
-
-        Column {
-            width:  _largeColumn.width
-            property bool largeValue: _root.listContains(controller.altitudeProperties, fact.name)
-
-            QGCLabel {
-                width:                  parent.width
-                horizontalAlignment:    Text.AlignHCenter
-                color:                  textColor
-                fontSizeMode:           Text.HorizontalFit
-                text:                   fact.shortDescription + (fact.units ? " (" + fact.units + ")" : "")
-            }
-            QGCLabel {
-                width:                  parent.width
-                horizontalAlignment:    Text.AlignHCenter
-                font.pointSize:         ScreenTools.mediumFontPointSize * (largeValue ? 1.3 : 1.0)
-                font.family:            largeValue ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
-                fontSizeMode:           Text.HorizontalFit
-                color:                  textColor
-                text:                   fact.valueString
-            }
+    Repeater {
+        model: _activeVehicle ? controller.largeValues : 0
+        Loader {
+            sourceComponent: fact ? largeValue : undefined
+            property Fact fact: _activeVehicle.getFact(modelData.replace("Vehicle.", ""))
         }
-    }
+    } // Repeater - Large
 
     Flow {
         id:                 _smallFlow
         width:              parent.width
-        anchors.topMargin:  _margins
-        anchors.top:        _largeColumn.bottom
         layoutDirection:    Qt.LeftToRight
         spacing:            _margins
 
@@ -116,10 +73,34 @@ QGCFlickable {
     } // Flow
 
     Component {
+        id: largeValue
+
+        Column {
+            width:  _largeColumn.width
+            property bool largeValue: listContains(controller.altitudeProperties, fact.name)
+
+            QGCLabel {
+                width:                  parent.width
+                horizontalAlignment:    Text.AlignHCenter
+                fontSizeMode:           Text.HorizontalFit
+                text:                   fact.shortDescription + (fact.units ? " (" + fact.units + ")" : "")
+            }
+            QGCLabel {
+                width:                  parent.width
+                horizontalAlignment:    Text.AlignHCenter
+                font.pointSize:         ScreenTools.mediumFontPointSize * (largeValue ? 1.3 : 1.0)
+                font.family:            largeValue ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
+                fontSizeMode:           Text.HorizontalFit
+                text:                   fact.valueString
+            }
+        }
+    }
+
+    Component {
         id: smallValue
 
         Column {
-            width:  (_root.width / 2) - (_margins / 2) - 0.1
+            width:  (pageWidth / 2) - (_margins / 2) - 0.1
             clip:   true
 
             QGCLabel {
@@ -127,13 +108,11 @@ QGCFlickable {
                 horizontalAlignment:    Text.AlignHCenter
                 font.pointSize:         ScreenTools.isTinyScreen ? ScreenTools.smallFontPointSize * 0.75 : ScreenTools.smallFontPointSize
                 fontSizeMode:           Text.HorizontalFit
-                color:                  textColor
                 text:                   fact.shortDescription
             }
             QGCLabel {
                 width:                  parent.width
                 horizontalAlignment:    Text.AlignHCenter
-                color:                  textColor
                 fontSizeMode:           Text.HorizontalFit
                 text:                   fact.enumOrValueString
             }
@@ -142,7 +121,6 @@ QGCFlickable {
                 horizontalAlignment:    Text.AlignHCenter
                 font.pointSize:         ScreenTools.isTinyScreen ? ScreenTools.smallFontPointSize * 0.75 : ScreenTools.smallFontPointSize
                 fontSizeMode:           Text.HorizontalFit
-                color:                  textColor
                 text:                   fact.units
             }
         }
