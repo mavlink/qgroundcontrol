@@ -848,14 +848,14 @@ TyphoonHQuickInterface::deleteSelectedMedia()
 }
 
 //-----------------------------------------------------------------------------
-int
+bool
 TyphoonHQuickInterface::_copyFilesInPath(const QString src, const QString dst)
 {
-    int fileCount = 0;
     QDir dir(dst);
     if (!dir.exists()) {
         if(!dir.mkpath(".")) {
-            return -1;
+            _copyResult = -1;
+            return false;
         }
     }
     QDirIterator it(src, QStringList() << "*", QDir::Files, QDirIterator::NoIteratorFlags);
@@ -867,17 +867,21 @@ TyphoonHQuickInterface::_copyFilesInPath(const QString src, const QString dst)
             QFile::remove(fo.filePath());
         }
         if(!QFile::copy(fi.filePath(), fo.filePath())) {
-            return -1;
+            _copyResult = -1;
+            return false;
         }
-        fileCount++;
+        _copyResult++;
+        emit copyResultChanged();
+        qApp->processEvents();
     }
-    return fileCount;
+    return true;
 }
 
 //-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::exportData()
 {
+    _copyResult = -1;
     _copyingFiles = true;
     emit copyingFilesChanged();
     QTimer::singleShot(10, this, &TyphoonHQuickInterface::_exportData);
@@ -887,25 +891,12 @@ TyphoonHQuickInterface::exportData()
 void
 TyphoonHQuickInterface::_exportData()
 {
-    _copyResult = -1;
-    int res = _copyFilesInPath(qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath(),
-                               QStringLiteral("/storage/sdcard1/") + AppSettings::missionDirectory);
-    if(res >= 0) {
-        _copyResult = res;
-        emit copyResultChanged();
-        res = _copyFilesInPath(qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath(),
-                               QStringLiteral("/storage/sdcard1/") + AppSettings::telemetryDirectory);
-        if(res >= 0) {
-            _copyResult += res;
-            emit copyResultChanged();
-            res = _copyFilesInPath(qgcApp()->toolbox()->settingsManager()->appSettings()->logSavePath(),
-                                   QStringLiteral("/storage/sdcard1/") + AppSettings::logDirectory);
-            if(res >= 0) {
-                _copyResult += res;
-                emit copyResultChanged();
-            } else {
-                _copyResult = -1;
-            }
+    if(_copyFilesInPath(qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath(),
+                               QStringLiteral("/storage/sdcard1/") + AppSettings::missionDirectory)) {
+        if(_copyFilesInPath(qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath(),
+                               QStringLiteral("/storage/sdcard1/") + AppSettings::telemetryDirectory)) {
+            _copyFilesInPath(qgcApp()->toolbox()->settingsManager()->appSettings()->logSavePath(),
+                               QStringLiteral("/storage/sdcard1/") + AppSettings::logDirectory);
         }
     }
     _copyingFiles = false;
@@ -943,6 +934,7 @@ TyphoonHQuickInterface::_importMissions()
         }
         _copyResult++;
         emit copyResultChanged();
+        qApp->processEvents();
     }
     _copyingFiles = false;
     emit copyingFilesChanged();

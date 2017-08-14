@@ -369,7 +369,7 @@ private slots:
 private:
     void    _saveWifiConfigurations     ();
     void    _loadWifiConfigurations     ();
-    int     _copyFilesInPath            (const QString src, const QString dst);
+    bool    _copyFilesInPath            (const QString src, const QString dst);
     void    _endCopyThread              ();
     void    _enableThermalVideo         ();
 
