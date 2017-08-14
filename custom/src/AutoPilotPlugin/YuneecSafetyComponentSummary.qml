@@ -14,46 +14,26 @@ FactPanel {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; factPanel: panel }
 
-    property Fact returnAltFact:    controller.getParameterFact(-1, "RTL_RETURN_ALT")
-    property Fact descendAltFact:   controller.getParameterFact(-1, "RTL_DESCEND_ALT")
-    property Fact landDelayFact:    controller.getParameterFact(-1, "RTL_LAND_DELAY")
-    property Fact commRCLossFact:   controller.getParameterFact(-1, "COM_RC_LOSS_T")
-    property Fact lowBattAction:    controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
-    property Fact rcLossAction:     controller.getParameterFact(-1, "NAV_RCL_ACT")
-    property Fact dataLossAction:   controller.getParameterFact(-1, "NAV_DLL_ACT")
+    property Fact _returnAltFact:   controller.getParameterFact(-1, "RTL_RETURN_ALT")
+    property Fact _fenceAction:     controller.getParameterFact(-1, "GF_ACTION")
+    property Fact _fenceRadius:     controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
+    property Fact _fenceAlt:        controller.getParameterFact(-1, "GF_MAX_VER_DIST")
 
     Column {
         anchors.fill:       parent
-
         VehicleSummaryRow {
             labelText: qsTr("RTL min alt:")
-            valueText: returnAltFact ? returnAltFact.valueString + " " + returnAltFact.units : ""
+            valueText: _returnAltFact ? _returnAltFact.valueString + " " + _returnAltFact.units : ""
         }
-
         VehicleSummaryRow {
-            labelText: qsTr("RTL home alt:")
-            valueText: descendAltFact ? descendAltFact.valueString + " " + descendAltFact.units : ""
+            labelText: qsTr("Fence Radius:")
+            valueText: _fenceRadius ? _fenceRadius.valueString : ""
+            visible:   _fenceRadius ? _fenceRadius.value > 0 : false
         }
-
         VehicleSummaryRow {
-            labelText: qsTr("RC loss RTL:")
-            valueText: commRCLossFact ? commRCLossFact.valueString + " " + commRCLossFact.units : ""
+            labelText: qsTr("Max Altitude:")
+            valueText: _fenceAlt ? _fenceAlt.valueString : ""
+            visible:   _fenceAlt ? _fenceAlt.value > 0 : false
         }
-
-        VehicleSummaryRow {
-            labelText: qsTr("RC loss action:")
-            valueText: rcLossAction ? rcLossAction.enumStringValue : ""
-        }
-
-        VehicleSummaryRow {
-            labelText: qsTr("Link loss action:")
-            valueText: dataLossAction ? dataLossAction.enumStringValue : ""
-        }
-
-        VehicleSummaryRow {
-            labelText: qsTr("Low battery action:")
-            valueText: lowBattAction ? lowBattAction.enumStringValue : ""
-        }
-
     }
 }
