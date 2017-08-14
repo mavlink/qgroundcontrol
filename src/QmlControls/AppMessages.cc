@@ -60,14 +60,14 @@ AppLogModel::AppLogModel() : QStringListModel()
     connect(this, &AppLogModel::emitLog, this, &AppLogModel::threadsafeLog, contype);
 }
 
-void AppLogModel::writeMessages(const QUrl dest_file)
+void AppLogModel::writeMessages(const QString dest_file)
 {
     const QString writebuffer(stringList().join('\n').append('\n'));
 
     QtConcurrent::run([dest_file, writebuffer] {
         emit debug_model->writeStarted();
         bool success = false;
-        QFile file(dest_file.toLocalFile());
+        QFile file(dest_file);
         if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QTextStream out(&file);
             out << writebuffer;
