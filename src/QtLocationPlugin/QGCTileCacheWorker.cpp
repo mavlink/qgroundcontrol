@@ -52,6 +52,7 @@ QGCCacheWorker::QGCCacheWorker()
     , _defaultCount(0)
     , _lastUpdate(0)
     , _updateTimeout(SHORT_TIMEOUT)
+    , _hostLookupID(0)
 {
 
 }
@@ -73,6 +74,9 @@ QGCCacheWorker::setDatabaseFile(const QString& path)
 void
 QGCCacheWorker::quit()
 {
+    if(_hostLookupID) {
+        QHostInfo::abortHostLookup(_hostLookupID);
+    }
     _mutex.lock();
     while(_taskQueue.count()) {
         QGCMapTask* task = _taskQueue.dequeue();
@@ -1055,12 +1059,24 @@ QGCCacheWorker::_createDB(QSqlDatabase* db, bool createDefault)
 void
 QGCCacheWorker::_testInternet()
 {
-    QTcpSocket socket;
-    socket.connectToHost("www.github.com", 80);
-    if (socket.waitForConnected(2500)) {
-        qCDebug(QGCTileCacheLog) << "Yes Internet Access";
-        emit internetStatus(true);
-        return;
+    if(!_hostLookupID) {
+        _hostLookupID = QHostInfo::lookupHost("www.github.com", this, SLOT(_lookupReady(QHostInfo)));
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCacheWorker::_lookupReady(QHostInfo info)
+{
+    _hostLookupID = 0;
+    if(info.error() == QHostInfo::NoError && info.addresses().size()) {
+        QTcpSocket socket;
+        socket.connectToHost(info.addresses().first(), 80);
+        if (socket.waitForConnected(2000)) {
+            qCDebug(QGCTileCacheLog) << "Yes Internet Access";
+            emit internetStatus(true);
+            return;
+        }
     }
     qWarning() << "No Internet Access";
     emit internetStatus(false);
