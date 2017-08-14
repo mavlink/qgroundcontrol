@@ -293,10 +293,14 @@ QGCView {
                     }
                     QGCLabel {
                         text: {
-                            if(_importAction) {
-                                return qsTr("Importing ") + TyphoonHQuickInterface.copyResult.toString() + qsTr(" files")
+                            if(TyphoonHQuickInterface.copyResult > 0) {
+                                if(_importAction) {
+                                    return qsTr("Importing ") + TyphoonHQuickInterface.copyResult.toString() + qsTr(" files")
+                                } else {
+                                    return qsTr("Exporting ") + TyphoonHQuickInterface.copyResult.toString() + qsTr(" files")
+                                }
                             } else {
-                                return qsTr("Exporting ") + TyphoonHQuickInterface.copyResult.toString() + qsTr(" files")
+                                return qsTr("Searching files...")
                             }
                         }
                         color:          qgcPal.alertText
