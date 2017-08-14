@@ -40,6 +40,7 @@ public:
     ~QGCCorePlugin();
 
     Q_PROPERTY(QVariantList settingsPages       READ settingsPages      NOTIFY settingsPagesChanged)
+    Q_PROPERTY(QVariantList instrumentPages     READ instrumentPages    NOTIFY instrumentPagesChanged)
     Q_PROPERTY(int          defaultSettings     READ defaultSettings    CONSTANT)
     Q_PROPERTY(QGCOptions*  options             READ options            CONSTANT)
 
@@ -53,6 +54,10 @@ public:
     /// The list of settings under the Settings Menu
     /// @return A list of QGCSettings
     virtual QVariantList& settingsPages(void);
+
+    /// The list of PageWidget pages shown in the instrument panel
+    /// @return A list of QmlPageInfo
+    virtual QVariantList& instrumentPages(void);
 
     /// The default settings panel to show
     /// @return The settings index
@@ -107,6 +112,7 @@ public:
 
 signals:
     void settingsPagesChanged   (void);
+    void instrumentPagesChanged (void);
     void showTouchAreasChanged  (bool showTouchAreas);
     void showAdvancedUIChanged  (bool showAdvancedUI);
 
