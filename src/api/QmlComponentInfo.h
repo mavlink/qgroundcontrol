@@ -12,13 +12,13 @@
 #include <QObject>
 #include <QUrl>
 
-/// Represents a
-class QmlPageInfo : public QObject
+/// Represents a Qml component which can be loaded from a resource.
+class QmlComponentInfo : public QObject
 {
     Q_OBJECT
 
 public:
-    QmlPageInfo(QString title, QUrl url, QUrl icon = QUrl(), QObject* parent = NULL);
+    QmlComponentInfo(QString title, QUrl url, QUrl icon = QUrl(), QObject* parent = NULL);
 
     Q_PROPERTY(QString  title   READ title  CONSTANT)   ///< Title for page
     Q_PROPERTY(QUrl     url     READ url    CONSTANT)   ///< Qml source code

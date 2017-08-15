@@ -226,6 +226,12 @@ FlightMap {
         }
     }
 
+    // Allow custom builds to add map items
+    CustomMapItems {
+        map:            flightMap
+        largeMapView:   _mainIsMap
+    }
+
     GeoFenceMapVisuals {
         map:                    flightMap
         myGeoFenceController:   _geoFenceController
