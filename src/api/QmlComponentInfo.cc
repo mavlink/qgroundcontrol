@@ -7,9 +7,9 @@
  *
  ****************************************************************************/
 
-#include "QmlPageInfo.h"
+#include "QmlComponentInfo.h"
 
-QmlPageInfo::QmlPageInfo(QString title, QUrl url, QUrl icon, QObject* parent)
+QmlComponentInfo::QmlComponentInfo(QString title, QUrl url, QUrl icon, QObject* parent)
     : QObject   (parent)
     , _title    (title)
     , _url      (url)
