@@ -66,7 +66,7 @@ QGCView {
         }
 
         QGCLabel {
-            anchors.margins:        _defaultTextWidth * 2
+            anchors.margins:        defaultTextWidth * 2
             anchors.fill:           parent
             verticalAlignment:      Text.AlignVCenter
             horizontalAlignment:    Text.AlignHCenter
