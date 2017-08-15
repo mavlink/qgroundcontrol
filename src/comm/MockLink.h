@@ -13,6 +13,7 @@
 
 #include <QMap>
 #include <QLoggingCategory>
+#include <QGeoCoordinate>
 
 #include "MockLinkMissionItemHandler.h"
 #include "MockLinkFileServer.h"
@@ -193,6 +194,7 @@ private:
     void _paramRequestListWorker(void);
     void _logDownloadWorker(void);
     void _sendADSBVehicles(void);
+    void _moveADSBVehicle(void);
 
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
 
@@ -239,6 +241,9 @@ private:
     QString _logDownloadFilename;           ///< Filename for log download which is in progress
     uint32_t    _logDownloadCurrentOffset;  ///< Current offset we are sending from
     uint32_t    _logDownloadBytesRemaining; ///< Number of bytes still to send, 0 = send inactive
+
+    QGeoCoordinate  _adsbVehicleCoordinate;
+    double          _adsbAngle;
 
     static double       _defaultVehicleLatitude;
     static double       _defaultVehicleLongitude;

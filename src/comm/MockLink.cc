@@ -73,6 +73,7 @@ MockLink::MockLink(SharedLinkConfigurationPointer& config)
     , _currentParamRequestListParamIndex    (-1)
     , _logDownloadCurrentOffset             (0)
     , _logDownloadBytesRemaining            (0)
+    , _adsbAngle                            (0)
 {
     MockConfiguration* mockConfig = qobject_cast<MockConfiguration*>(_config.data());
     _firmwareType = mockConfig->firmwareType();
@@ -92,6 +93,9 @@ MockLink::MockLink(SharedLinkConfigurationPointer& config)
     moveToThread(this);
 
     _loadParams();
+
+    _adsbVehicleCoordinate = QGeoCoordinate(_vehicleLatitude, _vehicleLongitude).atDistanceAndAzimuth(1000, _adsbAngle);
+    _adsbVehicleCoordinate.setAltitude(100);
 }
 
 MockLink::~MockLink(void)
@@ -1272,23 +1276,27 @@ void MockLink::_logDownloadWorker(void)
 
 void MockLink::_sendADSBVehicles(void)
 {
+    _adsbAngle += 2;
+    _adsbVehicleCoordinate = QGeoCoordinate(_vehicleLatitude, _vehicleLongitude).atDistanceAndAzimuth(500, _adsbAngle);
+    _adsbVehicleCoordinate.setAltitude(100);
+
     mavlink_message_t responseMsg;
     mavlink_msg_adsb_vehicle_pack_chan(_vehicleSystemId,
                                        _vehicleComponentId,
                                        _mavlinkChannel,
                                        &responseMsg,
-                                       12345,                           // ICAO address
-                                       (_vehicleLatitude + 0.001) * 1e7,
-                                       (_vehicleLongitude + 0.001) * 1e7,
+                                       12345,                                       // ICAO address
+                                       _adsbVehicleCoordinate.latitude() * 1e7,
+                                       _adsbVehicleCoordinate.longitude() * 1e7,
                                        ADSB_ALTITUDE_TYPE_GEOMETRIC,
-                                       100 * 1000,                      // Altitude in millimeters
-                                       10 * 100,                        // Heading in centidegress
-                                       0, 0,                            // Horizontal/Vertical velocity
-                                       "N1234500",                      // Callsign
+                                       _adsbVehicleCoordinate.altitude() * 1000,    // Altitude in millimeters
+                                       10 * 100,                                    // Heading in centidegress
+                                       0, 0,                                        // Horizontal/Vertical velocity
+                                       "N1234500",                                  // Callsign
                                        ADSB_EMITTER_TYPE_ROTOCRAFT,
-                                       1,                               // Seconds since last communication
+                                       1,                                           // Seconds since last communication
                                        ADSB_FLAGS_VALID_COORDS | ADSB_FLAGS_VALID_ALTITUDE | ADSB_FLAGS_VALID_HEADING | ADSB_FLAGS_VALID_CALLSIGN | ADSB_FLAGS_SIMULATED,
-                                       0);                              // Squawk code
+                                       0);                                          // Squawk code
 
     respondWithMavlinkMessage(responseMsg);
 }
