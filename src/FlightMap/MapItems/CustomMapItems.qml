@@ -32,7 +32,7 @@ Item {
                 if (controlUrl != "") {
                     var component = Qt.createComponent(controlUrl);
                     if (component.status == Component.Ready) {
-                        _customObject = _customComponent.createObject(map, { "vehicle": vehicle });
+                        _customObject = component.createObject(map, { "customMapObject": object })
                         if (_customObject) {
                             map.addMapItem(_customObject)
                         }
