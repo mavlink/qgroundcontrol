@@ -46,6 +46,7 @@
         <file alias="mediaBack.svg">res/images/mediaBack.svg</file>
         <file alias="mediaPlay.svg">res/images/mediaPlay.svg</file>
         <file alias="odometer.svg">res/images/odometer.svg</file>
+        <file alias="obsArc.svg">res/images/obsArc.svg</file>
         <file alias="rc.svg">res/images/rc.svg</file>
         <file alias="rc_battery_back.svg">res/images/rc_battery_back.svg</file>
         <file alias="rc_battery_charge_100.svg">res/images/rc_battery_charge_100.svg</file>

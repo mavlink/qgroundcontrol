@@ -414,28 +414,43 @@ Item {
     }
 
     //-- OBS
-    Rectangle {
+    Item {
         id:             obdIndicator
         width:          ScreenTools.defaultFontPixelWidth  * 30
-        height:         ScreenTools.defaultFontPixelHeight * 1.5
-        color:          _indicatorColor
-        visible:        !_mainIsMap && TyphoonHQuickInterface.obsState && TyphoonHQuickInterface.distSensorMax !== 0 && !messageArea.visible && !criticalMmessageArea.visible
-        //visible:        !_mainIsMap && distMax !== 0 && !messageArea.visible && !criticalMmessageArea.visible
-        radius:         3
-        border.width:   1
-        border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
+        height:         width * 0.2
+        visible:        !_mainIsMap && TyphoonHQuickInterface.obsState && TyphoonHQuickInterface.distSensorMax !== 0 && obdIndicator.distCur < 1.0 && !messageArea.visible && !criticalMmessageArea.visible
+        //visible:        !_mainIsMap && TyphoonHQuickInterface.distSensorMax !== 0 && obdIndicator.distCur < 1.0 && !messageArea.visible && !criticalMmessageArea.visible
         anchors.top:    camStatus.bottom
         anchors.topMargin: ScreenTools.defaultFontPixelHeight * 0.5
         anchors.horizontalCenter: parent.horizontalCenter
+        QGCColoredImage {
+            anchors.fill:       parent
+            source:             "/typhoonh/img/obsArc.svg"
+            fillMode:           Image.Stretch
+            sourceSize.width:   width
+            color:              obdIndicator.distCur > 0.75 ? qgcPal.colorGreen : (obdIndicator.distCur > 0.25 ? qgcPal.colorOrange : qgcPal.colorRed)
+        }
         Rectangle {
-            width:      ScreenTools.defaultFontPixelHeight
-            height:     width
-            radius:     width * 0.5
-            color:      obdIndicator.distCur > 0.95 ? qgcPal.colorGreen : (obdIndicator.distCur > 0.75 ? qgcPal.colorOrange : qgcPal.colorRed)
-            anchors.verticalCenter: parent.verticalCenter
-            x:          (obdIndicator.distCur * (parent.width - width))
+            id:             obsRect
+            height:         ScreenTools.defaultFontPixelWidth  * 10
+            width:          ScreenTools.defaultFontPixelHeight * 2
+            anchors.top:    parent.top
+            anchors.topMargin: ScreenTools.defaultFontPixelHeight * 0.5
+            anchors.horizontalCenter: parent.horizontalCenter
+            gradient: Gradient {
+                GradientStop { position: 0;     color: Qt.rgba(0.5, 0, 0, 0.25) }
+                GradientStop { position: 0.25;  color: Qt.rgba(0.5, 0, 0, 1) }
+                GradientStop { position: 0.75;  color: Qt.rgba(0.5, 0, 0, 1) }
+                GradientStop { position: 1;     color: Qt.rgba(0.5, 0, 0, 0.25) }
+            }
+            rotation: 90
+        }
+        QGCLabel {
+            text:   obdIndicator.distValue.toFixed(1) + (_activeVehicle ? _activeVehicle.flightDistance.units : "")
+            anchors.centerIn: obsRect
         }
         property real distCur: TyphoonHQuickInterface.distSensorMax ? TyphoonHQuickInterface.distSensorCur / TyphoonHQuickInterface.distSensorMax : 0
+        property real distValue: QGroundControl.metersToAppSettingsDistanceUnits(TyphoonHQuickInterface.distSensorCur / 100);
     }
 
     Component {

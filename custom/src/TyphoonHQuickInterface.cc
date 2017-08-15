@@ -1239,6 +1239,7 @@ TyphoonHQuickInterface::_checkUpdateStatus()
 void
 TyphoonHQuickInterface::_distanceSensor(int minDist, int maxDist, int curDist)
 {
+    //qDebug() << minDist << maxDist << curDist;
     if(_distSensorMin != minDist) {
         _distSensorMin = minDist;
         emit distSensorMinChanged();
