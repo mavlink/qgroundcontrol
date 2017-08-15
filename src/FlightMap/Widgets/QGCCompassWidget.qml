@@ -31,6 +31,7 @@ Item {
     property real _sizeRatio:   ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
     property int  _fontSize:    ScreenTools.defaultFontPointSize * _sizeRatio
     property real _heading:     vehicle ? vehicle.heading.rawValue : 0
+    property real _headingWind: vehicle ? vehicle.wind.direction.rawValue : 0
 
     width:                  size
     height:                 size
@@ -60,6 +61,25 @@ Item {
                 origin.y:       pointer.height / 2
                 angle:          _heading
             }
+        }
+
+        Image {
+            id:                 windPointer
+            source:             "/qmlimages/windPointerGreen.svg"
+            mipmap:             true
+            opacity:            0.2
+            width:              size * 0.1
+            sourceSize.width:   width
+            fillMode:           Image.PreserveAspectFit
+            smooth:             true
+            transform: Rotation {
+                origin.x: windPointer.width / 2
+                origin.y: windPointer.height / 2
+                axis { x: 0; y: 0; z: 1 } angle: _headingWind + 180
+            }
+            x: Math.sin(- _headingWind*Math.PI / 180 + Math.PI)*(borderRect.height / 2 - windPointer.height / 2) + borderRect.width / 2 - windPointer.width / 2
+            y: Math.cos(- _headingWind*Math.PI / 180 + Math.PI)*(borderRect.height / 2 - windPointer.height / 2) + borderRect.height / 2 - windPointer.height / 2
+            z: pointer.z + 1
         }
 
         Image {
