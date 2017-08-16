@@ -83,6 +83,7 @@ private slots:
     void    _switchStateChanged     (int swId, int oldState, int newState);
     void    _parametersReady        ();
     void    _sendUpdates            ();
+    void    _delayedStartVideo      ();
 
 signals:
     void    gimbalVersionChanged    ();
