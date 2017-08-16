@@ -391,7 +391,7 @@ SetupPage {
                         id:             levelButton
                         width:          _buttonWidth
                         text:           qsTr("Level Horizon")
-                        indicatorGreen: sens_board_x_off.value != 0 || sens_board_y_off != 0 | sens_board_z_off != 0
+                        indicatorGreen: sens_board_x_off.value != 0 || sens_board_y_off.value != 0 || sens_board_z_off.value != 0
                         enabled:        cal_acc0_id.value != 0 && cal_gyro0_id.value != 0
                         visible:        QGroundControl.corePlugin.options.showSensorCalibrationLevel
 
