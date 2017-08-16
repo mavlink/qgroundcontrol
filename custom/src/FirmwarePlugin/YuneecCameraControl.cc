@@ -172,8 +172,8 @@ YuneecCameraControl::takePhoto()
 {
     bool res = QGCCameraControl::takePhoto();
     if(res) {
-        _videoSound.setLoopCount(1);
-        _videoSound.play();
+        _cameraSound.setLoopCount(1);
+        _cameraSound.play();
     } else {
         _errorSound.setLoopCount(1);
         _errorSound.play();
