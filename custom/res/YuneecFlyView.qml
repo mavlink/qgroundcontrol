@@ -506,9 +506,11 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             Rectangle {
                 width:          ScreenTools.defaultFontPixelWidth * 4
-                height:         camControlLoader.height * 0.75
-                color:          Qt.rgba(1,1,1,0.55)
+                height:         camControlLoader.height * 0.65
+                color:          _indicatorColor
                 radius:         ScreenTools.defaultFontPixelWidth * 0.5
+                border.width:   1
+                border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
                 Image {
                     id:                 pitchScale
                     height:             parent.height * 0.9
@@ -540,13 +542,15 @@ Item {
             Rectangle {
                 width:              ScreenTools.defaultFontPixelWidth * 4
                 height:             gimbalLabel.height * 1.5
-                color:              Qt.rgba(1,1,1,0.55)
+                color:              _indicatorColor
                 radius:             ScreenTools.defaultFontPixelWidth * 0.5
+                border.width:       1
+                border.color:       qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel {
                     id:             gimbalLabel
                     text:           _gimbalPitch ? -_gimbalPitch.toFixed(0) : 0
-                    color:          "black"
+                    color:          qgcPal.text
                     anchors.centerIn: parent
                 }
             }
