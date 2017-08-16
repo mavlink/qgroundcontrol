@@ -389,12 +389,26 @@ YuneecCameraControl::_switchStateChanged(int swId, int oldState, int newState)
                 takePhoto();
                 break;
             case Yuneec::BUTTON_VIDEO_SHUTTER:
-                toggleVideo();
+                //-- If already in video mode, simply toggle on/off
+                if(cameraMode() == CAM_MODE_VIDEO) {
+                    toggleVideo();
+                } else {
+                    //-- Must switch to video first
+                    setVideoMode();
+                    QTimer::singleShot(2500, this, &YuneecCameraControl::_delayedStartVideo);
+                }
                 break;
             default:
                 break;
         }
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::_delayedStartVideo()
+{
+    startVideo();
 }
 
 //-----------------------------------------------------------------------------
