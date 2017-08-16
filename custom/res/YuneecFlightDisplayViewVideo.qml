@@ -84,71 +84,71 @@ Item {
                     });
                 }
             }
-            Rectangle {
-                color:  Qt.rgba(1,1,1,0.5)
-                height: parent.height
-                width:  1
-                x:      parent.width * 0.33
-                visible: _showGrid
+        }
+        Rectangle {
+            color:  Qt.rgba(1,1,1,0.5)
+            height: videoRect.height
+            width:  1
+            x:      videoRect.width * 0.33
+            visible: _showGrid
+        }
+        Rectangle {
+            color:  Qt.rgba(1,1,1,0.5)
+            height: videoRect.height
+            width:  1
+            x:      videoRect.width * 0.66
+            visible: _showGrid
+        }
+        Rectangle {
+            color:  Qt.rgba(1,1,1,0.5)
+            width:  videoRect.width
+            height: 1
+            y:      videoRect.height * 0.33
+            visible: _showGrid
+        }
+        Rectangle {
+            color:  Qt.rgba(1,1,1,0.5)
+            width:  videoRect.width
+            height: 1
+            y:      videoRect.height * 0.66
+            visible: _showGrid
+        }
+        //-- Spot Metering
+        MouseArea {
+            anchors.fill:   videoRect
+            enabled:        isSpot
+            onClicked: {
+                _camera.spotArea = Qt.point(mouse.x, mouse.y)
+                spotMetering.x = mouse.x - (spotMetering.width  / 2)
+                spotMetering.y = mouse.y - (spotMetering.height / 2)
             }
-            Rectangle {
-                color:  Qt.rgba(1,1,1,0.5)
-                height: parent.height
-                width:  1
-                x:      parent.width * 0.66
-                visible: _showGrid
-            }
-            Rectangle {
-                color:  Qt.rgba(1,1,1,0.5)
-                width:  parent.width
-                height: 1
-                y:      parent.height * 0.33
-                visible: _showGrid
-            }
-            Rectangle {
-                color:  Qt.rgba(1,1,1,0.5)
-                width:  parent.width
-                height: 1
-                y:      parent.height * 0.66
-                visible: _showGrid
-            }
-            //-- Spot Metering
-            MouseArea {
-                anchors.fill:   parent
-                enabled:        isSpot
-                onClicked: {
-                    _camera.spotArea = Qt.point(mouse.x, mouse.y)
-                    spotMetering.x = mouse.x - (spotMetering.width  / 2)
-                    spotMetering.y = mouse.y - (spotMetering.height / 2)
-                }
-            }
-            Image {
-                id:                 spotMetering
-                x:                  _camera ? _camera.spotArea.x - (width  / 2) : 0
-                y:                  _camera ? _camera.spotArea.y - (height / 2) : 0
-                visible:            isSpot
-                height:             videoContent.height / 16
-                width:              height * 1.5
-                antialiasing:       true
-                mipmap:             true
-                smooth:             true
-                source:             "/typhoonh/img/spotArea.svg"
-                fillMode:           Image.PreserveAspectFit
-                sourceSize.width:   width
-            }
-            Image {
-                id:                 centerMetering
-                anchors.centerIn:   parent
-                visible:            isCenter
-                height:             spotSize * 1.5
-                width:              height * 1.5
-                antialiasing:       true
-                mipmap:             true
-                smooth:             true
-                source:             "/typhoonh/img/centerArea.svg"
-                fillMode:           Image.PreserveAspectFit
-                sourceSize.height:  height
-            }
+        }
+        Image {
+            id:                 spotMetering
+            x:                  _camera ? _camera.spotArea.x - (width  / 2) : 0
+            y:                  _camera ? _camera.spotArea.y - (height / 2) : 0
+            visible:            isSpot
+            height:             videoContent.height / 16
+            width:              height * 1.5
+            antialiasing:       true
+            mipmap:             true
+            smooth:             true
+            source:             "/typhoonh/img/spotArea.svg"
+            fillMode:           Image.PreserveAspectFit
+            sourceSize.width:   width
+        }
+        Image {
+            id:                 centerMetering
+            anchors.centerIn:   videoRect
+            visible:            isCenter
+            height:             spotSize * 1.5
+            width:              height * 1.5
+            antialiasing:       true
+            mipmap:             true
+            smooth:             true
+            source:             "/typhoonh/img/centerArea.svg"
+            fillMode:           Image.PreserveAspectFit
+            sourceSize.height:  height
         }
     }
     //-- Camera Controller
