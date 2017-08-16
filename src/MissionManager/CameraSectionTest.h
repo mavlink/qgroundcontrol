@@ -72,5 +72,6 @@ private:
     SimpleMissionItem*  _validStopTimeItem;
     SimpleMissionItem*  _validCameraPhotoModeItem;
     SimpleMissionItem*  _validCameraVideoModeItem;
+    SimpleMissionItem*  _validCameraSurveyPhotoModeItem;
     SimpleMissionItem*  _validTakePhotoItem;
 };
