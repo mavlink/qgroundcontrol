@@ -162,7 +162,7 @@ protected:
     virtual void    _setVideoStatus         (VideoStatus status);
     virtual void    _setCameraMode          (CameraMode mode);
 
-private slots:
+protected slots:
     void    _initWhenReady                  ();
     void    _requestCameraSettings          ();
     void    _requestAllParameters           ();
