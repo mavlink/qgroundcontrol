@@ -507,7 +507,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                 continue;
             }
 
-            if (_autoconnectConfigurationsContainsPort(portInfo.systemLocation())) {
+            if (_autoconnectConfigurationsContainsPort(portInfo.systemLocation()) || _autoConnectRTKPort == portInfo.systemLocation()) {
                 qCDebug(LinkManagerVerboseLog) << "Skipping existing autoconnect" << portInfo.systemLocation();
             } else if (!_autoconnectWaitList.contains(portInfo.systemLocation())) {
                 // We don't connect to the port the first time we see it. The ability to correctly detect whether we
@@ -545,7 +545,8 @@ void LinkManager::_updateAutoConnectLinks(void)
 #ifndef __mobile__
                 case QGCSerialPortInfo::BoardTypeRTKGPS:
                     if (_autoConnectSettings->autoConnectRTKGPS()->rawValue().toBool() && !_toolbox->gpsManager()->connected()) {
-                        qCDebug(LinkManagerLog) << "RTK GPS auto-connected";
+                        qCDebug(LinkManagerLog) << "RTK GPS auto-connected" << portInfo.portName().trimmed();
+                        _autoConnectRTKPort = portInfo.systemLocation();
                         _toolbox->gpsManager()->connectGPS(portInfo.systemLocation());
                     }
                     break;
@@ -610,6 +611,14 @@ void LinkManager::_updateAutoConnectLinks(void)
             }
         }
     }
+
+    // Check for RTK GPS connection gone
+    if (!_autoConnectRTKPort.isEmpty() && !currentPorts.contains(_autoConnectRTKPort)) {
+        qCDebug(LinkManagerLog) << "RTK GPS disconnected" << _autoConnectRTKPort;
+        _toolbox->gpsManager()->disconnectGPS();
+        _autoConnectRTKPort.clear();
+    }
+
 #endif
 #endif // NO_SERIAL_LINK
 }
