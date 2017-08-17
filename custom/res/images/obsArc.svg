@@ -1,9 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 21.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 width="216px" height="72px" viewBox="0 0 216 72" style="enable-background:new 0 0 216 72;" xml:space="preserve">
+	 width="144px" height="72px" viewBox="0 0 144 72" style="enable-background:new 0 0 144 72;" xml:space="preserve">
 <style type="text/css">
-	.st0{fill:none;stroke:#FFFFFF;stroke-width:8;stroke-linecap:round;stroke-miterlimit:10;}
+	.st0{fill:none;}
+	.st1{opacity:0.8;fill:url(#SVGID_1_);enable-background:new    ;}
+	.st2{fill:url(#SVGID_2_);}
+	.st3{fill:url(#SVGID_3_);}
+	.st4{fill:#00A0E9;}
+	.st5{fill:none;stroke:#00A0E9;stroke-miterlimit:10;}
 </style>
-<path class="st0" d="M5.4,57.266c56.711-56.711,148.489-56.711,205.2,0"/>
+<path class="st0" d="M72.344,20.652c-23.049,0-43.129,12.716-53.605,31.516c-0.03,0.053-0.057,0.108-0.087,0.162l54.039,30.34
+	l53.013-30.93C115.162,33.177,95.216,20.652,72.344,20.652z"/>
+<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="72.0005" y1="-90.3948" x2="72.0005" y2="70.6691" gradientTransform="matrix(1 0 0 -1 0 72)">
+	<stop  offset="0.15" style="stop-color:#0E0C18"/>
+	<stop  offset="1" style="stop-color:#3C3E4A"/>
+</linearGradient>
+<path class="st1" d="M18.715,52.098c10.461-18.774,30.512-31.472,53.53-31.472c22.841,0,42.759,12.507,53.285,31.044l16.67-9.726
+	C128.326,17.682,102.195,1.331,72.245,1.331c-30.269,0-56.638,16.7-70.395,41.388c-0.017,0.03-0.032,0.062-0.049,0.092l16.828,9.448
+	C18.658,52.206,18.686,52.151,18.715,52.098z"/>
+<path class="st0" d="M72.063,24.075c-21.877,0-40.94,11.998-51.005,29.764L72.41,82.67l50.345-29.374
+	C112.612,35.829,93.716,24.075,72.063,24.075z"/>
+<radialGradient id="SVGID_2_" cx="71.0303" cy="-14.2528" r="74.1312" gradientTransform="matrix(0.8861 0 0 -0.8706 9.2757 69.5849)" gradientUnits="userSpaceOnUse">
+	<stop  offset="0" style="stop-color:#5C258D"/>
+	<stop  offset="0.8949" style="stop-color:#B2FEFA"/>
+	<stop  offset="0.9919" style="stop-color:#0ED2F7"/>
+</radialGradient>
+<path class="st2" d="M72.219,23.103c22.151,0,41.481,11.813,51.858,29.368l4.979-2.854c-11.374-19.231-32.567-32.163-56.837-32.163
+	c-24.533,0-45.921,13.214-57.202,32.791l5.025,2.772C30.337,35.161,49.839,23.103,72.219,23.103z"/>
+<path class="st0" d="M72.092,17.529c-24.328,0-45.538,13.338-56.724,33.099L72.439,82.67l56.012-32.68
+	C117.172,30.581,96.157,17.529,72.092,17.529z"/>
+<radialGradient id="SVGID_3_" cx="72.0697" cy="-15.4073" r="82.4125" gradientTransform="matrix(0.8641 0 0 -0.8632 9.9695 69.1203)" gradientUnits="userSpaceOnUse">
+	<stop  offset="0" style="stop-color:#5C258D"/>
+	<stop  offset="0.8949" style="stop-color:#3498DB"/>
+	<stop  offset="0.9919" style="stop-color:#2C3E50"/>
+</radialGradient>
+<path class="st3" d="M72.245,17.507c24.006,0,44.969,13.005,56.22,32.346l5.384-3.138c-12.332-21.188-35.301-35.434-61.604-35.434
+	c-16.755,0-32.159,5.781-44.322,15.454c-2.037,1.62-3.984,3.35-5.83,5.18c-4.631,4.59-8.63,9.813-11.866,15.526l5.435,3.048
+	C26.819,30.798,47.977,17.507,72.245,17.507z"/>
+<g>
+	<rect x="37.172" y="20.676" transform="matrix(0.866 -0.5 0.5 0.866 -6.6533 22.0761)" class="st4" width="1.389" height="5.554"/>
+	
+		<rect x="103.122" y="22.756" transform="matrix(0.4999 -0.8661 0.8661 0.4999 32.6505 103.4462)" class="st4" width="5.554" height="1.389"/>
+	<rect x="37.172" y="20.676" transform="matrix(0.866 -0.5 0.5 0.866 -6.6533 22.0761)" class="st4" width="1.389" height="5.554"/>
+	<rect x="71.19" y="11.563" class="st4" width="1.388" height="5.554"/>
+</g>
+<path class="st5" d="M128.451,49.854c-11.25-19.328-32.21-32.324-56.213-32.324c-24.265,0-45.42,13.282-56.577,32.96"/>
+<path class="st0" d="M72.211,17.518c24.019,0,44.993,13.028,56.25,32.401l5.387-3.143c-12.339-21.224-35.32-35.494-61.637-35.494
+	c-16.764,0-32.177,5.79-44.346,15.48c-2.038,1.623-3.986,3.356-5.833,5.189c-4.634,4.597-8.635,9.83-11.872,15.552l5.437,3.053
+	C26.762,30.831,47.931,17.518,72.211,17.518z"/>
 </svg>

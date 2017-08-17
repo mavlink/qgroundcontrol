@@ -416,26 +416,26 @@ Item {
     //-- OBS
     Item {
         id:             obdIndicator
-        width:          ScreenTools.defaultFontPixelWidth  * 30
-        height:         width * 0.2
+        width:          ScreenTools.defaultFontPixelWidth  * 34
+        height:         width * 0.5
         visible:        !_mainIsMap && TyphoonHQuickInterface.obsState && TyphoonHQuickInterface.distSensorMax !== 0 && obdIndicator.distCur < 1.0 && !messageArea.visible && !criticalMmessageArea.visible
         //visible:        !_mainIsMap && TyphoonHQuickInterface.distSensorMax !== 0 && obdIndicator.distCur < 1.0 && !messageArea.visible && !criticalMmessageArea.visible
         anchors.top:    camStatus.bottom
         anchors.topMargin: ScreenTools.defaultFontPixelHeight * 0.5
         anchors.horizontalCenter: parent.horizontalCenter
-        QGCColoredImage {
+        Image {
             anchors.fill:       parent
             source:             "/typhoonh/img/obsArc.svg"
             fillMode:           Image.Stretch
             sourceSize.width:   width
-            color:              obdIndicator.distCur > 0.75 ? qgcPal.colorGreen : (obdIndicator.distCur > 0.25 ? qgcPal.colorOrange : qgcPal.colorRed)
+            //color:              obdIndicator.distCur > 0.75 ? qgcPal.colorGreen : (obdIndicator.distCur > 0.25 ? qgcPal.colorOrange : qgcPal.colorRed)
         }
         Rectangle {
             id:             obsRect
             height:         ScreenTools.defaultFontPixelWidth  * 10
             width:          ScreenTools.defaultFontPixelHeight * 2
             anchors.top:    parent.top
-            anchors.topMargin: ScreenTools.defaultFontPixelHeight * 0.5
+            anchors.topMargin: ScreenTools.defaultFontPixelHeight * 3
             anchors.horizontalCenter: parent.horizontalCenter
             gradient: Gradient {
                 GradientStop { position: 0;     color: Qt.rgba(0.5, 0, 0, 0.25) }
