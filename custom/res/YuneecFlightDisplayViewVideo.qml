@@ -36,7 +36,7 @@ Item {
 
     property real   spotSize:           48
     property bool   isSpot:             _camera && _cameraAutoMode && _meteringModeFact && _meteringModeFact.rawValue === 2
-    property bool   isCenter:           _camera && _cameraAutoMode && _meteringModeFact && _meteringModeFact.rawValue === 1
+    property bool   isCenter:           _camera && _cameraAutoMode && _meteringModeFact && _meteringModeFact.rawValue === 0
 
     Rectangle {
         id:             noVideo
