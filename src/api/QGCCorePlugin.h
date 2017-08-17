@@ -12,6 +12,7 @@
 #include "QGCToolbox.h"
 #include "QGCPalette.h"
 #include "QGCMAVLink.h"
+#include "QmlObjectListModel.h"
 
 #include <QObject>
 #include <QVariantList>
@@ -31,7 +32,7 @@ class QGeoPositionInfoSource;
 class QQmlApplicationEngine;
 class Vehicle;
 class LinkInterface;
-
+class QmlObjectListModel;
 class QGCCorePlugin : public QGCTool
 {
     Q_OBJECT
@@ -39,20 +40,24 @@ public:
     QGCCorePlugin(QGCApplication* app, QGCToolbox* toolbox);
     ~QGCCorePlugin();
 
-    Q_PROPERTY(QVariantList settingsPages       READ settingsPages      NOTIFY settingsPagesChanged)
-    Q_PROPERTY(int          defaultSettings     READ defaultSettings    CONSTANT)
-    Q_PROPERTY(QGCOptions*  options             READ options            CONSTANT)
-
-    Q_PROPERTY(bool         showTouchAreas      READ showTouchAreas     WRITE setShowTouchAreas    NOTIFY showTouchAreasChanged)
-    Q_PROPERTY(bool         showAdvancedUI      READ showAdvancedUI     WRITE setShowAdvancedUI    NOTIFY showAdvancedUIChanged)
-    Q_PROPERTY(QString                  showAdvancedUIMessage           READ showAdvancedUIMessage          CONSTANT)
-
-    Q_PROPERTY(QString      brandImageIndoor    READ brandImageIndoor   CONSTANT)
-    Q_PROPERTY(QString      brandImageOutdoor   READ brandImageOutdoor  CONSTANT)
+    Q_PROPERTY(QVariantList         settingsPages           READ settingsPages                                  NOTIFY settingsPagesChanged)
+    Q_PROPERTY(QVariantList         instrumentPages         READ instrumentPages                                NOTIFY instrumentPagesChanged)
+    Q_PROPERTY(int                  defaultSettings         READ defaultSettings                                CONSTANT)
+    Q_PROPERTY(QGCOptions*          options                 READ options                                        CONSTANT)
+    Q_PROPERTY(bool                 showTouchAreas          READ showTouchAreas         WRITE setShowTouchAreas NOTIFY showTouchAreasChanged)
+    Q_PROPERTY(bool                 showAdvancedUI          READ showAdvancedUI         WRITE setShowAdvancedUI NOTIFY showAdvancedUIChanged)
+    Q_PROPERTY(QString              showAdvancedUIMessage   READ showAdvancedUIMessage                          CONSTANT)
+    Q_PROPERTY(QString              brandImageIndoor        READ brandImageIndoor                               CONSTANT)
+    Q_PROPERTY(QString              brandImageOutdoor       READ brandImageOutdoor                              CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  customMapItems          READ customMapItems                                 CONSTANT)
 
     /// The list of settings under the Settings Menu
     /// @return A list of QGCSettings
     virtual QVariantList& settingsPages(void);
+
+    /// The list of PageWidget pages shown in the instrument panel
+    /// @return A list of QmlPageInfo
+    virtual QVariantList& instrumentPages(void);
 
     /// The default settings panel to show
     /// @return The settings index
@@ -97,6 +102,10 @@ public:
     /// @return true: Allow vehicle to continue processing, false: Vehicle should not process message
     virtual bool mavlinkMessage(Vehicle* vehicle, LinkInterface* link, mavlink_message_t message);
 
+    /// Allows custom builds to add custom items to the FlightMap. Objects put into QmlObjectListModel
+    /// should derive from QmlComponentInfo and set the url property.
+    virtual QmlObjectListModel* customMapItems(void);
+
     bool showTouchAreas(void) const { return _showTouchAreas; }
     bool showAdvancedUI(void) const { return _showAdvancedUI; }
     void setShowTouchAreas(bool show);
@@ -107,6 +116,7 @@ public:
 
 signals:
     void settingsPagesChanged   (void);
+    void instrumentPagesChanged (void);
     void showTouchAreasChanged  (bool showTouchAreas);
     void showAdvancedUIChanged  (bool showAdvancedUI);
 

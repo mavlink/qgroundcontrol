@@ -7,15 +7,13 @@
  *
  ****************************************************************************/
 
-#include "QGCSettings.h"
+#include "QmlComponentInfo.h"
 
-/// @file
-///     @brief Core Plugin Interface for QGroundControl. Settings element.
-///     @author Gus Grubba <mavlink@grubba.com>
-
-QGCSettings::QGCSettings(QString title, QUrl url, QUrl icon)
-    : _title(title)
-    , _url(url)
-    , _icon(icon)
+QmlComponentInfo::QmlComponentInfo(QString title, QUrl url, QUrl icon, QObject* parent)
+    : QObject   (parent)
+    , _title    (title)
+    , _url      (url)
+    , _icon     (icon)
 {
+
 }

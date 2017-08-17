@@ -390,12 +390,12 @@ FORMS += \
 HEADERS += \
     src/api/QGCCorePlugin.h \
     src/api/QGCOptions.h \
-    src/api/QGCSettings.h \
+    src/api/QmlComponentInfo.h \
 
 SOURCES += \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
-    src/api/QGCSettings.cc \
+    src/api/QmlComponentInfo.cc \
 
 #
 # Unit Test specific configuration goes here (requires full debug build with all plugins)

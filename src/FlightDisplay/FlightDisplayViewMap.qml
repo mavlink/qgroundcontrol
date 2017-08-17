@@ -39,6 +39,7 @@ FlightMap {
     property var    flightWidgets
     property var    rightPanelWidth
     property var    qgcView                             ///< QGCView control which contains this map
+    property var    multiVehicleView                    ///< true: multi-vehicle view, false: single vehicle view
 
     property rect   centerViewport:             Qt.rect(0, 0, width, height)
 
@@ -206,11 +207,29 @@ FlightMap {
         }
     }
 
-    // Add the items associated with the flight place to the map
-    PlanMapItems {
-        map:                flightMap
-        largeMapView:       _mainIsMap
-        masterController:   _planMasterController
+    // Add the items associated with each vehicles flight plan to the map
+    Repeater {
+        model: QGroundControl.multiVehicleManager.vehicles
+
+        PlanMapItems {
+            map:                flightMap
+            largeMapView:       _mainIsMap
+            masterController:   masterController
+            isActiveVehicle:    _vehicle.active
+
+            property var _vehicle: object
+
+            PlanMasterController {
+                id: masterController
+                Component.onCompleted: startStaticActiveVehicle(object)
+            }
+        }
+    }
+
+    // Allow custom builds to add map items
+    CustomMapItems {
+        map:            flightMap
+        largeMapView:   _mainIsMap
     }
 
     GeoFenceMapVisuals {

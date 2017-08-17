@@ -27,6 +27,7 @@ Rectangle {
     border.width:   1
     border.color:   _isSatellite ? qgcPal.mapWidgetBorderLight : qgcPal.mapWidgetBorderDark
 
+    property var    _qgcView:           qgcView
     property real   _innerRadius:       (width - (_topBottomMargin * 3)) / 4
     property real   _outerRadius:       _innerRadius + _topBottomMargin
     property real   _defaultSize:       ScreenTools.defaultFontPixelHeight * (9)
@@ -59,24 +60,6 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
     }
 
-    Image {
-        id:                         gearThingy
-        anchors.bottomMargin:       _topBottomMargin
-        anchors.bottom:             parent.bottom
-        anchors.horizontalCenter:   parent.horizontalCenter
-        source:                     qgcPal.globalTheme == QGCPalette.Light ? "/res/gear-black.svg" : "/res/gear-white.svg"
-        mipmap:                     true
-        opacity:                    0.5
-        width:                      root.height * 0.15
-        sourceSize.width:           width
-        fillMode:                   Image.PreserveAspectFit
-    }
-
-    MouseArea {
-        anchors.fill:   parent
-        onClicked:      _valuesWidget.showPicker()
-    }
-
     Item {
         id:                 _valuesItem
         anchors.topMargin:  ScreenTools.defaultFontPixelHeight / 4
@@ -89,17 +72,13 @@ Rectangle {
             color:          qgcPal.window
         }
 
-        InstrumentSwipeView {
+        PageView {
             id:                 _valuesWidget
             anchors.margins:    1
             anchors.left:       parent.left
             anchors.right:      parent.right
-            qgcView:            root.qgcView
-            textColor:          qgcPal.text
-            backgroundColor:    qgcPal.window
+            qgcView:            root._qgcView
             maxHeight:          _availableValueHeight
         }
     }
-
-
 }
