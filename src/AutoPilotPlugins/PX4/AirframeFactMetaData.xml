@@ -3,48 +3,6 @@
   <version>1</version>
   <airframe_version_major>1</airframe_version_major>
   <airframe_version_minor>1</airframe_version_minor>
-  <airframe_group image="HelicopterCoaxial" name="Coaxial Helicopter">
-    <airframe id="15001" maintainer="Emmanuel Roussel" name="Esky (Big) Lama v4">
-      <class>Copter</class>
-      <maintainer>Emmanuel Roussel</maintainer>
-      <type>Coaxial Helicopter</type>
-      <output name="MAIN1">Left swashplate servomotor, pitch axis</output>
-      <output name="MAIN2">Right swashplate servomotor, roll axis</output>
-      <output name="MAIN3">Upper rotor (CCW)</output>
-      <output name="MAIN4">Lower rotor (CW)</output>
-    </airframe>
-  </airframe_group>
-  <airframe_group image="AirframeUnknown" name="Dodecarotor cox">
-    <airframe id="24001" maintainer="William Peale &lt;develop707@gmail.com&gt;" name="Generic Dodecarotor cox geometry">
-      <class>Copter</class>
-      <maintainer>William Peale &lt;develop707@gmail.com&gt;</maintainer>
-      <type>Dodecarotor cox</type>
-      <output name="MAIN1">motor 1</output>
-      <output name="MAIN2">motor 2</output>
-      <output name="MAIN3">motor 3</output>
-      <output name="MAIN4">motor 4</output>
-      <output name="MAIN5">motor 5</output>
-      <output name="MAIN6">motor 6</output>
-      <output name="AUX1">motor 7</output>
-      <output name="AUX2">motor 8</output>
-      <output name="AUX3">motor 9</output>
-      <output name="AUX4">motor 10</output>
-      <output name="AUX5">motor 11</output>
-      <output name="AUX6">motor 12</output>
-    </airframe>
-  </airframe_group>
-  <airframe_group image="Helicopter" name="Helicopter">
-    <airframe id="16001" maintainer="Bart Slinger &lt;bartslinger@gmail.com&gt;" name="Blade 130X">
-      <class>Copter</class>
-      <maintainer>Bart Slinger &lt;bartslinger@gmail.com&gt;</maintainer>
-      <type>Helicopter</type>
-      <output name="MAIN1">main motor</output>
-      <output name="MAIN2">front swashplate servo</output>
-      <output name="MAIN3">right swashplate servo</output>
-      <output name="MAIN4">left swashplate servo</output>
-      <output name="MAIN5">tail-rotor servo</output>
-    </airframe>
-  </airframe_group>
   <airframe_group image="HexaRotorPlus" name="Hexarotor +">
     <airframe id="7001" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Generic Hexarotor + geometry">
       <class>Copter</class>
@@ -344,41 +302,6 @@
       <type>Simulation</type>
     </airframe>
   </airframe_group>
-  <airframe_group image="YPlus" name="Tricopter Y+">
-    <airframe id="14001" maintainer="Trent Lukaczyk &lt;aerialhedgehog@gmail.com&gt;" name="Generic Tricopter Y+ Geometry">
-      <class>Copter</class>
-      <maintainer>Trent Lukaczyk &lt;aerialhedgehog@gmail.com&gt;</maintainer>
-      <type>Tricopter Y+</type>
-      <output name="MAIN1">motor 1</output>
-      <output name="MAIN2">motor 2</output>
-      <output name="MAIN3">motor 3</output>
-      <output name="MAIN4">yaw servo</output>
-    </airframe>
-  </airframe_group>
-  <airframe_group image="YMinus" name="Tricopter Y-">
-    <airframe id="14002" maintainer="Trent Lukaczyk &lt;aerialhedgehog@gmail.com&gt;" name="Generic Tricopter Y- Geometry">
-      <class>Copter</class>
-      <maintainer>Trent Lukaczyk &lt;aerialhedgehog@gmail.com&gt;</maintainer>
-      <type>Tricopter Y-</type>
-      <output name="MAIN1">motor 1</output>
-      <output name="MAIN2">motor 2</output>
-      <output name="MAIN3">motor 3</output>
-      <output name="MAIN4">yaw servo</output>
-    </airframe>
-  </airframe_group>
-  <airframe_group image="FlyingWing" name="Flying Wing">
-    <airframe id="3030" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;" name="IO Camflyer">
-      <class>Plane</class>
-      <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
-      <type>Flying Wing</type>
-      <url>https://pixhawk.org/platforms/planes/bormatec_camflyer_q</url>
-      <output name="MAIN1">left aileron</output>
-      <output name="MAIN2">right aileron</output>
-      <output name="MAIN4">throttle</output>
-      <output name="AUX1">feed-through of RC AUX1 channel</output>
-      <output name="AUX2">feed-through of RC AUX2 channel</output>
-      <output name="AUX3">feed-through of RC AUX3 channel</output>
-    </airframe>
     <airframe id="3031" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;" name="Phantom FPV Flying Wing">
       <class>Plane</class>
       <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
