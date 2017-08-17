@@ -103,6 +103,7 @@ protected:
     void    _setVideoStatus         (VideoStatus status) override;
 
 private:
+    void    _handleHeartBeat        (const mavlink_message_t& message);
     void    _handleCommandAck       (const mavlink_message_t& message);
     void    _handleGimbalVersion    (const mavlink_message_t& message);
     void    _handleGimbalOrientation(const mavlink_message_t& message);
@@ -128,4 +129,5 @@ private:
     QSize                   _videoSize;
     bool                    _isE90;
     QStringList             _updatesToSend;
+    bool                    _inMissionMode;
 };
