@@ -155,7 +155,8 @@ SetupPage {
 
             Component.onCompleted: {
                 var usingUDP = controller.usingUDPLink()
-                if (usingUDP) {
+                var isSub = QGroundControl.multiVehicleManager.activeVehicle.sub;
+                if (usingUDP && !isSub) {
                     showMessage("Sensor Calibration", "Performing sensor calibration over a WiFi connection can be unreliable. If you run into problems try using a direct USB connection instead.", StandardButton.Ok)
                 }
             }
