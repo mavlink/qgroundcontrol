@@ -241,6 +241,7 @@
       <class>Copter</class>
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Quadrotor asymmetric</type>
+      <url>https://docs.px4.io/en/framebuild_multicopter/spedix_s250_pixracer.html</url>
       <output name="MAIN1">motor1 (front right: CCW)</output>
       <output name="MAIN2">motor2 (back left: CCW)</output>
       <output name="MAIN3">motor3 (front left: CW)</output>
@@ -342,11 +343,6 @@
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Simulation</type>
     </airframe>
-    <airframe id="1003" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="HIL Quadcopter +">
-      <class>Copter</class>
-      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
-      <type>Simulation</type>
-    </airframe>
   </airframe_group>
   <airframe_group image="YPlus" name="Tricopter Y+">
     <airframe id="14001" maintainer="Trent Lukaczyk &lt;aerialhedgehog@gmail.com&gt;" name="Generic Tricopter Y+ Geometry">
@@ -411,7 +407,7 @@
       <class>Plane</class>
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Flying Wing</type>
-      <url>https://pixhawk.org/platforms/planes/z-84_wing_wing</url>
+      <url>https://docs.px4.io/en/framebuild_plane/wing_wing_z84.html</url>
       <output name="MAIN1">left aileron</output>
       <output name="MAIN2">right aileron</output>
       <output name="MAIN4">throttle</output>
@@ -474,32 +470,12 @@
       <output name="MAIN2">elevator</output>
       <output name="MAIN3">rudder</output>
       <output name="MAIN4">throttle</output>
+      <output name="MAIN5">flaps</output>
+      <output name="MAIN6">gear</output>
     </airframe>
   </airframe_group>
   <airframe_group image="Plane" name="Standard Plane">
-    <airframe id="2100" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Multiplex Easystar">
-      <class>Plane</class>
-      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
-      <type>Standard Plane</type>
-      <output name="MAIN1">aileron</output>
-      <output name="MAIN2">elevator</output>
-      <output name="MAIN3">rudder</output>
-      <output name="MAIN4">throttle</output>
-    </airframe>
-    <airframe id="2101" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Standard AERT Plane">
-      <class>Plane</class>
-      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
-      <type>Standard Plane</type>
-      <output name="MAIN1">aileron</output>
-      <output name="MAIN2">elevator</output>
-      <output name="MAIN3">rudder</output>
-      <output name="MAIN4">throttle</output>
-      <output name="MAIN5">flaps</output>
-      <output name="AUX1">feed-through of RC AUX1 channel</output>
-      <output name="AUX2">feed-through of RC AUX2 channel</output>
-      <output name="AUX3">feed-through of RC AUX3 channel</output>
-    </airframe>
-    <airframe id="2102" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Skywalker (3DR Aero)">
+    <airframe id="2100" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Standard Plane">
       <class>Plane</class>
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Standard Plane</type>
@@ -508,30 +484,7 @@
       <output name="MAIN3">throttle</output>
       <output name="MAIN4">rudder</output>
       <output name="MAIN5">flaps</output>
-      <output name="AUX1">feed-through of RC AUX1 channel</output>
-      <output name="AUX2">feed-through of RC AUX2 channel</output>
-      <output name="AUX3">feed-through of RC AUX3 channel</output>
-    </airframe>
-    <airframe id="2103" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Skyhunter 1800">
-      <class>Plane</class>
-      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
-      <type>Standard Plane</type>
-      <output name="MAIN1">aileron</output>
-      <output name="MAIN2">elevator</output>
-      <output name="MAIN4">throttle</output>
-      <output name="AUX1">feed-through of RC AUX1 channel</output>
-      <output name="AUX2">feed-through of RC AUX2 channel</output>
-      <output name="AUX3">feed-through of RC AUX3 channel</output>
-    </airframe>
-    <airframe id="2104" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Standard AETR Plane">
-      <class>Plane</class>
-      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
-      <type>Standard Plane</type>
-      <output name="MAIN1">aileron</output>
-      <output name="MAIN2">elevator</output>
-      <output name="MAIN3">throttle</output>
-      <output name="MAIN4">rudder</output>
-      <output name="MAIN5">flaps</output>
+      <output name="MAIN6">gear</output>
       <output name="AUX1">feed-through of RC AUX1 channel</output>
       <output name="AUX2">feed-through of RC AUX2 channel</output>
       <output name="AUX3">feed-through of RC AUX3 channel</output>

@@ -43,7 +43,7 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol) :
     connect(protocol, &MAVLinkProtocol::messageReceived, this, &MAVLinkDecoder::receiveMessage);
     connect(this, &MAVLinkDecoder::finish, this, &QThread::quit);
 
-    start(LowPriority);
+    start(LowestPriority);
 }
 
 /**

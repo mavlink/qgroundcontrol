@@ -7,12 +7,7 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef Vehicle_H
-#define Vehicle_H
+#pragma once
 
 #include <QObject>
 #include <QGeoCoordinate>
@@ -38,6 +33,7 @@ class ParameterManager;
 class JoystickManager;
 class UASMessage;
 class SettingsManager;
+class ADSBVehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -112,18 +108,24 @@ class VehicleGPSFactGroup : public FactGroup
 public:
     VehicleGPSFactGroup(QObject* parent = NULL);
 
+    Q_PROPERTY(Fact* lat                READ lat                CONSTANT)
+    Q_PROPERTY(Fact* lon                READ lon                CONSTANT)
     Q_PROPERTY(Fact* hdop               READ hdop               CONSTANT)
     Q_PROPERTY(Fact* vdop               READ vdop               CONSTANT)
     Q_PROPERTY(Fact* courseOverGround   READ courseOverGround   CONSTANT)
     Q_PROPERTY(Fact* count              READ count              CONSTANT)
     Q_PROPERTY(Fact* lock               READ lock               CONSTANT)
 
+    Fact* lat               (void) { return &_latFact; }
+    Fact* lon               (void) { return &_lonFact; }
     Fact* hdop              (void) { return &_hdopFact; }
     Fact* vdop              (void) { return &_vdopFact; }
     Fact* courseOverGround  (void) { return &_courseOverGroundFact; }
     Fact* count             (void) { return &_countFact; }
     Fact* lock              (void) { return &_lockFact; }
 
+    static const char* _latFactName;
+    static const char* _lonFactName;
     static const char* _hdopFactName;
     static const char* _vdopFactName;
     static const char* _courseOverGroundFactName;
@@ -131,6 +133,8 @@ public:
     static const char* _lockFactName;
 
 private:
+    Fact        _latFact;
+    Fact        _lonFact;
     Fact        _hdopFact;
     Fact        _vdopFact;
     Fact        _courseOverGroundFact;
@@ -311,6 +315,7 @@ public:
     Q_PROPERTY(int                  telemetryRNoise         READ telemetryRNoise                                        NOTIFY telemetryRNoiseChanged)
     Q_PROPERTY(QVariantList         toolBarIndicators       READ toolBarIndicators                                      CONSTANT)
     Q_PROPERTY(QVariantList         cameraList              READ cameraList                                             CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  adsbVehicles            READ adsbVehicles                                           CONSTANT)
 
     /// true: Vehicle is flying, false: Vehicle is on ground
     Q_PROPERTY(bool flying READ flying NOTIFY flyingChanged)
@@ -527,6 +532,7 @@ public:
 
     QmlObjectListModel* trajectoryPoints(void) { return &_mapTrajectoryList; }
     QmlObjectListModel* cameraTriggerPoints(void) { return &_cameraTriggerPoints; }
+    QmlObjectListModel* adsbVehicles(void) { return &_adsbVehicles; }
 
     int  flowImageIndex() { return _flowImageIndex; }
 
@@ -594,6 +600,9 @@ public:
     int             telemetryLNoise         () { return _telemetryLNoise; }
     int             telemetryRNoise         () { return _telemetryRNoise; }
     bool            autoDisarm              ();
+    /// Get the maximum MAVLink protocol version supported
+    /// @return the maximum version
+    unsigned        maxProtoVersion         () const { return _maxProtoVersion; }
 
     Fact* roll              (void) { return &_rollFact; }
     Fact* heading           (void) { return &_headingFact; }
@@ -627,6 +636,10 @@ public:
     ///     @param showError true: Display error to user if command failed, false:  no error shown
     /// Signals: mavCommandResult on success or failure
     void sendMavCommand(int component, MAV_CMD command, bool showError, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
+
+    /// Same as sendMavCommand but available from Qml.
+    Q_INVOKABLE void sendCommand(int component, int command, bool showError, double param1 = 0.0f, double param2 = 0.0f, double param3 = 0.0f, double param4 = 0.0f, double param5 = 0.0f, double param6 = 0.0f, double param7 = 0.0f)
+        { sendMavCommand(component, (MAV_CMD)command, showError, param1, param2, param3, param4, param5, param6, param7); }
 
     int firmwareMajorVersion(void) const { return _firmwareMajorVersion; }
     int firmwareMinorVersion(void) const { return _firmwareMinorVersion; }
@@ -673,8 +686,8 @@ public:
     const QVariantList& toolBarIndicators   ();
     const QVariantList& cameraList          (void) const;
 
-    bool capabilitiesKnown(void) const { return _vehicleCapabilitiesKnown; }
-    bool supportsMissionItemInt(void) const { return _supportsMissionItemInt; }
+    bool capabilitiesKnown      (void) const { return _vehicleCapabilitiesKnown; }
+    uint64_t capabilityBits     (void) const { return _capabilityBits; }    // Change signalled by capabilityBitsChanged
 
     /// @true: When flying a mission the vehicle is always facing towards the next waypoint
     bool vehicleYawsToNextWaypointInMission(void) const;
@@ -688,6 +701,7 @@ public:
     void _setFlying(bool flying);
     void _setLanding(bool landing);
     void _setHomePosition(QGeoCoordinate& homeCoord);
+    void _setMaxProtoVersion (unsigned version);
 
 signals:
     void allLinksInactive(Vehicle* vehicle);
@@ -716,6 +730,8 @@ signals:
     void firmwareTypeChanged(void);
     void vehicleTypeChanged(void);
     void capabilitiesKnownChanged(bool capabilitiesKnown);
+    void initialPlanRequestCompleted(void);
+    void capabilityBitsChanged(uint64_t capabilityBits);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -771,8 +787,11 @@ signals:
     ///     @param noResponseFromVehicle true: vehicle did not respond to command, false: vehicle responsed, MAV_RESULT in result
     void mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
 
-    // Mavlink Serial Data
+    // MAVlink Serial Data
     void mavlinkSerialControl(uint8_t device, uint8_t flags, uint16_t timeout, uint32_t baudrate, QByteArray data);
+
+    // MAVLink protocol version
+    void requestProtocolVersion(unsigned version);
 
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
@@ -825,7 +844,9 @@ private:
     void _handleVibration(mavlink_message_t& message);
     void _handleExtendedSysState(mavlink_message_t& message);
     void _handleCommandAck(mavlink_message_t& message);
+    void _handleCommandLong(mavlink_message_t& message);
     void _handleAutopilotVersion(LinkInterface* link, mavlink_message_t& message);
+    void _handleProtocolVersion(LinkInterface* link, mavlink_message_t& message);
     void _handleHilActuatorControls(mavlink_message_t& message);
     void _handleGpsRawInt(mavlink_message_t& message);
     void _handleGlobalPositionInt(mavlink_message_t& message);
@@ -836,6 +857,7 @@ private:
     void _handleScaledPressure3(mavlink_message_t& message);
     void _handleCameraFeedback(const mavlink_message_t& message);
     void _handleCameraImageCaptured(const mavlink_message_t& message);
+    void _handleADSBVehicle(const mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _geoFenceManagerError(int errorCode, const QString& errorMsg);
     void _rallyPointManagerError(int errorCode, const QString& errorMsg);
@@ -866,6 +888,7 @@ private:
     AutoPilotPlugin*    _autopilotPlugin;
     MAVLinkProtocol*    _mavlink;
     bool                _soloFirmware;
+    QGCToolbox*         _toolbox;
     SettingsManager*    _settingsManager;
 
     QList<LinkInterface*> _links;
@@ -908,8 +931,9 @@ private:
     uint32_t        _telemetryTXBuffer;
     int             _telemetryLNoise;
     int             _telemetryRNoise;
+    unsigned        _maxProtoVersion;
     bool            _vehicleCapabilitiesKnown;
-    bool            _supportsMissionItemInt;
+    uint64_t        _capabilityBits;
 
     typedef struct {
         int     component;
@@ -973,6 +997,9 @@ private:
     static const int    _mapTrajectoryMsecsBetweenPoints = 1000;
 
     QmlObjectListModel  _cameraTriggerPoints;
+
+    QmlObjectListModel              _adsbVehicles;
+    QMap<uint32_t, ADSBVehicle*>    _adsbICAOMap;
 
     // Toolbox references
     FirmwarePluginManager*      _firmwarePluginManager;
@@ -1047,4 +1074,3 @@ private:
     static const char* _joystickEnabledSettingsKey;
 
 };
-#endif

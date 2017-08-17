@@ -359,7 +359,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
 
     /////////////////////////////// 3dr radio firmwares ///////////////////////////////////////
     FirmwareToUrlElement_t rg3DRRadioFirmwareArray[] = {
-        { ThreeDRRadio, StableFirmware, DefaultVehicleFirmware, "http://firmware.ardupilot.org/SiK/stable/radio~hm_trp.ihx"}
+        { ThreeDRRadio, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/SiK/stable/radio~hm_trp.ihx"}
     };
 
     // populate hashes now

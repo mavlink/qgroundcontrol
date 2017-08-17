@@ -58,6 +58,7 @@ void RallyPointController::managerVehicleChanged(Vehicle* managerVehicle)
 {
     if (_managerVehicle) {
         _rallyPointManager->disconnect(this);
+        _managerVehicle->disconnect(this);
         _managerVehicle = NULL;
         _rallyPointManager = NULL;
     }
@@ -74,7 +75,9 @@ void RallyPointController::managerVehicleChanged(Vehicle* managerVehicle)
     connect(_rallyPointManager, &RallyPointManager::removeAllComplete,  this, &RallyPointController::_managerRemoveAllComplete);
     connect(_rallyPointManager, &RallyPointManager::inProgressChanged,  this, &RallyPointController::syncInProgressChanged);
 
-    emit rallyPointsSupportedChanged(rallyPointsSupported());
+    connect(_managerVehicle,    &Vehicle::capabilityBitsChanged,        this, &RallyPointController::supportedChanged);
+
+    emit supportedChanged(supported());
 }
 
 bool RallyPointController::load(const QJsonObject& json, QString& errorString)
@@ -234,9 +237,9 @@ void RallyPointController::addPoint(QGeoCoordinate point)
     setDirty(true);
 }
 
-bool RallyPointController::rallyPointsSupported(void) const
+bool RallyPointController::supported(void) const
 {
-    return _rallyPointManager->rallyPointsSupported();
+    return (_managerVehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_RALLY) && (_managerVehicle->maxProtoVersion() >= 200);
 }
 
 void RallyPointController::removePoint(QObject* rallyPoint)

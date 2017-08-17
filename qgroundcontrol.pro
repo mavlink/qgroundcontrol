@@ -390,12 +390,12 @@ FORMS += \
 HEADERS += \
     src/api/QGCCorePlugin.h \
     src/api/QGCOptions.h \
-    src/api/QGCSettings.h \
+    src/api/QmlComponentInfo.h \
 
 SOURCES += \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
-    src/api/QGCSettings.cc \
+    src/api/QmlComponentInfo.cc \
 
 #
 # Unit Test specific configuration goes here (requires full debug build with all plugins)
@@ -509,7 +509,11 @@ HEADERS += \
     src/MissionManager/MissionManager.h \
     src/MissionManager/MissionSettingsItem.h \
     src/MissionManager/PlanElementController.h \
+    src/MissionManager/PlanManager.h \
     src/MissionManager/PlanMasterController.h \
+    src/MissionManager/QGCFenceCircle.h \
+    src/MissionManager/QGCFencePolygon.h \
+    src/MissionManager/QGCMapCircle.h \
     src/MissionManager/QGCMapPolygon.h \
     src/MissionManager/RallyPoint.h \
     src/MissionManager/RallyPointController.h \
@@ -556,6 +560,7 @@ HEADERS += \
     src/Settings/SettingsManager.h \
     src/Settings/UnitsSettings.h \
     src/Settings/VideoSettings.h \
+    src/Terrain.h \
     src/Vehicle/MAVLinkLogManager.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/audio/QGCAudioWorker.h \
@@ -688,7 +693,11 @@ SOURCES += \
     src/MissionManager/MissionManager.cc \
     src/MissionManager/MissionSettingsItem.cc \
     src/MissionManager/PlanElementController.cc \
+    src/MissionManager/PlanManager.cc \
     src/MissionManager/PlanMasterController.cc \
+    src/MissionManager/QGCFenceCircle.cc \
+    src/MissionManager/QGCFencePolygon.cc \
+    src/MissionManager/QGCMapCircle.cc \
     src/MissionManager/QGCMapPolygon.cc \
     src/MissionManager/RallyPoint.cc \
     src/MissionManager/RallyPointController.cc \
@@ -732,6 +741,7 @@ SOURCES += \
     src/Settings/SettingsManager.cc \
     src/Settings/UnitsSettings.cc \
     src/Settings/VideoSettings.cc \
+    src/Terrain.cc \
     src/Vehicle/MAVLinkLogManager.cc \
     src/VehicleSetup/JoystickConfigController.cc \
     src/audio/QGCAudioWorker.cpp \
@@ -836,6 +846,7 @@ HEADERS+= \
     src/FirmwarePlugin/CameraMetaData.h \
     src/FirmwarePlugin/FirmwarePlugin.h \
     src/FirmwarePlugin/FirmwarePluginManager.h \
+    src/Vehicle/ADSBVehicle.h \
     src/Vehicle/MultiVehicleManager.h \
     src/Vehicle/GPSRTKFactGroup.h \
     src/Vehicle/Vehicle.h \
@@ -861,6 +872,7 @@ SOURCES += \
     src/FirmwarePlugin/CameraMetaData.cc \
     src/FirmwarePlugin/FirmwarePlugin.cc \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
+    src/Vehicle/ADSBVehicle.cc \
     src/Vehicle/MultiVehicleManager.cc \
     src/Vehicle/GPSRTKFactGroup.cc \
     src/Vehicle/Vehicle.cc \
@@ -902,9 +914,7 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMSensorsComponentController.h \
         src/AutoPilotPlugins/APM/APMTuningComponent.h \
         src/FirmwarePlugin/APM/APMFirmwarePlugin.h \
-        src/FirmwarePlugin/APM/APMGeoFenceManager.h \
         src/FirmwarePlugin/APM/APMParameterMetaData.h \
-        src/FirmwarePlugin/APM/APMRallyPointManager.h \
         src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h \
         src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h \
         src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h \
@@ -929,9 +939,7 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMSensorsComponentController.cc \
         src/AutoPilotPlugins/APM/APMTuningComponent.cc \
         src/FirmwarePlugin/APM/APMFirmwarePlugin.cc \
-        src/FirmwarePlugin/APM/APMGeoFenceManager.cc \
         src/FirmwarePlugin/APM/APMParameterMetaData.cc \
-        src/FirmwarePlugin/APM/APMRallyPointManager.cc \
         src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.cc \
         src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.cc \
         src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.cc \
@@ -970,7 +978,6 @@ PX4FirmwarePlugin {
         src/AutoPilotPlugins/PX4/SensorsComponent.h \
         src/AutoPilotPlugins/PX4/SensorsComponentController.h \
         src/FirmwarePlugin/PX4/PX4FirmwarePlugin.h \
-        src/FirmwarePlugin/PX4/PX4GeoFenceManager.h \
         src/FirmwarePlugin/PX4/PX4ParameterMetaData.h \
 
     SOURCES += \
@@ -991,7 +998,6 @@ PX4FirmwarePlugin {
         src/AutoPilotPlugins/PX4/SensorsComponent.cc \
         src/AutoPilotPlugins/PX4/SensorsComponentController.cc \
         src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc \
-        src/FirmwarePlugin/PX4/PX4GeoFenceManager.cc \
         src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc \
 }
 

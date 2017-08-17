@@ -27,6 +27,7 @@ public:
     PlanElementController(PlanMasterController* masterController, QObject* parent = NULL);
     ~PlanElementController();
     
+    Q_PROPERTY(bool supported       READ supported                      NOTIFY supportedChanged)        ///< true: Element is supported by Vehicle
     Q_PROPERTY(bool containsItems   READ containsItems                  NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
     Q_PROPERTY(bool syncInProgress  READ syncInProgress                 NOTIFY syncInProgressChanged)   ///< true: information is currently being saved/sent, false: no active save/send in progress
     Q_PROPERTY(bool dirty           READ dirty          WRITE setDirty  NOTIFY dirtyChanged)            ///< true: unsaved/sent changes are present, false: no changes since last save/send
@@ -41,10 +42,11 @@ public:
     virtual void removeAll                  (void) = 0;     ///< Removes all from controller only
     virtual bool showPlanFromManagerVehicle (void) = 0;     /// true: controller is waiting for the current load to complete
 
-    virtual bool    containsItems  (void) const = 0;
-    virtual bool    syncInProgress (void) const = 0;
-    virtual bool    dirty          (void) const = 0;
-    virtual void    setDirty       (bool dirty) = 0;
+    virtual bool    supported       (void) const = 0;
+    virtual bool    containsItems   (void) const = 0;
+    virtual bool    syncInProgress  (void) const = 0;
+    virtual bool    dirty           (void) const = 0;
+    virtual void    setDirty        (bool dirty) = 0;
 
     /// Sends the current plan element to the vehicle
     ///     Signals sendComplete when done
@@ -58,6 +60,7 @@ public:
     virtual void managerVehicleChanged(Vehicle* managerVehicle) = 0;
 
 signals:
+    void supportedChanged       (bool supported);
     void containsItemsChanged   (bool containsItems);
     void syncInProgressChanged  (bool syncInProgress);
     void dirtyChanged           (bool dirty);

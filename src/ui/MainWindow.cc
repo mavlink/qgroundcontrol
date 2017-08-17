@@ -313,10 +313,6 @@ void MainWindow::_buildCommonWidgets(void)
 
     // Populate widget menu
     for (int i = 0, end = ARRAY_SIZE(rgDockWidgetNames); i < end; i++) {
-        if (i == ONBOARD_FILES) {
-            // Temporarily removed until twe can fix all the problems with it
-            continue;
-        }
 
         const char* pDockWidgetName = rgDockWidgetNames[i];
 
@@ -333,11 +329,6 @@ void MainWindow::_buildCommonWidgets(void)
 /// Shows or hides the specified dock widget, creating if necessary
 void MainWindow::_showDockWidget(const QString& name, bool show)
 {
-    if (name == rgDockWidgetNames[ONBOARD_FILES]) {
-        // Temporarily disabled due to bugs
-        return;
-    }
-
     // Create the inner widget if we need to
     if (!_mapName2DockWidget.contains(name)) {
         if(!_createInnerDockWidget(name)) {

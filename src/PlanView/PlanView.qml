@@ -144,7 +144,7 @@ QGCView {
         }
     }
 
-    PlanElemementMasterController {
+    PlanMasterController {
         id: masterController
 
         Component.onCompleted: {
@@ -335,7 +335,7 @@ QGCView {
                         }
                         break
                     case _layerRallyPoints:
-                        if (_rallyPointController.rallyPointsSupported) {
+                        if (_rallyPointController.supported) {
                             _rallyPointController.addPoint(coordinate)
                         }
                         break
@@ -366,7 +366,7 @@ QGCView {
                     VehicleMapItem {
                     vehicle:        object
                     coordinate:     object.coordinate
-                    isSatellite:    editorMap.isSatelliteMap
+                    map:            editorMap
                     size:           ScreenTools.defaultFontPixelHeight * 3
                     z:              QGroundControl.zOrderMapItems - 1
                 }

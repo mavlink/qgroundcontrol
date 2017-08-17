@@ -66,6 +66,7 @@ Item {
     readonly property string orbitMessage:                      qsTr("Orbit the vehicle around the current location.")
     readonly property string landAbortMessage:                  qsTr("Abort the landing sequence.")
     readonly property string pauseMessage:                      qsTr("Pause the vehicle at it's current position.")
+    readonly property string mvPauseMessage:                    qsTr("Pause all vehicles at their current position.")
 
     readonly property int actionRTL:                        1
     readonly property int actionLand:                       2
@@ -84,6 +85,8 @@ Item {
     readonly property int actionResumeMissionReady:         15
     readonly property int actionResumeMissionUploadFail:    16
     readonly property int actionPause:                      17
+    readonly property int actionMVPause:                    18
+    readonly property int actionMVStartMission:             19
 
     property bool showEmergenyStop:     !_hideEmergenyStop && _activeVehicle && _vehicleArmed && _vehicleFlying
     property bool showArm:              _activeVehicle && !_vehicleArmed
@@ -119,8 +122,8 @@ Item {
     property bool   _hideOrbit:             !QGroundControl.corePlugin.options.guidedBarShowOrbit
     property bool   _vehicleWasFlying:      false
 
-    // This is a temporary hack to debug a problem with RTL and Pause being disabled at the wrong time
-
+    //Handy code for debugging state problems
+    /*
     property bool __guidedModeSupported: _activeVehicle ? _activeVehicle.guidedModeSupported : false
     property bool __pauseVehicleSupported: _activeVehicle ? _activeVehicle.pauseVehicleSupported : false
     property bool __flightMode: _flightMode
@@ -137,11 +140,10 @@ Item {
     on__FlightModeChanged: _outputState()
     on__GuidedModeSupportedChanged: _outputState()
     on__PauseVehicleSupportedChanged: _outputState()
-
-    // End of hack
+    */
 
     on_VehicleFlyingChanged: {
-        _outputState()
+        //_outputState()
         if (!_vehicleFlying) {
             // We use _vehicleWasFLying to help trigger Resume Mission only if the vehicle actually flew and came back down.
             // Otherwise it may trigger during the Start Mission sequence due to signal ordering or armed and resume mission index.
@@ -197,6 +199,11 @@ Item {
             confirmDialog.title = startMissionTitle
             confirmDialog.message = startMissionMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showStartMission })
+            break;
+        case actionMVStartMission:
+            confirmDialog.title = startMissionTitle
+            confirmDialog.message = startMissionMessage
+            confirmDialog.hideTrigger = true
             break;
         case actionContinueMission:
             confirmDialog.title = continueMissionTitle
@@ -259,6 +266,11 @@ Item {
             confirmDialog.message = pauseMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showPause })
             break;
+        case actionMVPause:
+            confirmDialog.title = pauseTitle
+            confirmDialog.message = mvPauseMessage
+            confirmDialog.hideTrigger = true
+            break;
         default:
             console.warn("Unknown actionCode", actionCode)
             return
@@ -290,6 +302,13 @@ Item {
         case actionContinueMission:
             _activeVehicle.startMission()
             break
+        case actionMVStartMission:
+            var rgVehicle = QGroundControl.multiVehicleManager.vehicles
+            for (var i=0; i<rgVehicle.count; i++) {
+                var vehicle = rgVehicle.get(i)
+                vehicle.startMission()
+            }
+            break
         case actionArm:
             _activeVehicle.armed = true
             break
@@ -316,6 +335,13 @@ Item {
             break
         case actionPause:
             _activeVehicle.pauseVehicle()
+            break
+        case actionMVPause:
+            var rgVehicle = QGroundControl.multiVehicleManager.vehicles
+            for (var i=0; i<rgVehicle.count; i++) {
+                var vehicle = rgVehicle.get(i)
+                vehicle.pauseVehicle()
+            }
             break
         default:
             console.warn(qsTr("Internal error: unknown actionCode"), actionCode)

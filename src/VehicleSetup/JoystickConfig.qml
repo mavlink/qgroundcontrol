@@ -27,6 +27,8 @@ SetupPage {
     pageName:           qsTr("Joystick")
     pageDescription:    qsTr("Joystick Setup is used to configure a calibrate joysticks.")
 
+    readonly property real _maxButtons: 16
+
     Connections {
         target: joystickManager
         onAvailableJoysticksChanged: {
@@ -560,7 +562,7 @@ SetupPage {
 
                             Repeater {
                                 id:     buttonActionRepeater
-                                model:  _activeJoystick ? _activeJoystick.totalButtonCount : 0
+                                model:  _activeJoystick ? Math.min(_activeJoystick.totalButtonCount, _maxButtons) : 0
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
@@ -627,7 +629,7 @@ SetupPage {
 
                             Repeater {
                                 id:     jsButtonActionRepeater
-                                model:  _activeJoystick ? _activeJoystick.totalButtonCount : 0
+                                model:  _activeJoystick ? Math.min(_activeJoystick.totalButtonCount, _maxButtons) : 0
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth

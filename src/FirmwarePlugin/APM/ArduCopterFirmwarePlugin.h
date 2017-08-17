@@ -67,13 +67,12 @@ public:
     int     remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
     bool    multiRotorCoaxialMotors             (Vehicle* vehicle) final;
     bool    multiRotorXConfig                   (Vehicle* vehicle) final;
-    QString geoFenceRadiusParam                 (Vehicle* vehicle) final;
     QString offlineEditingParamFile             (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Copter.OfflineEditing.params"); }
     QString pauseFlightMode                     (void) const override { return QString("Brake"); }
     QString missionFlightMode                   (void) const override { return QString("Auto"); }
     QString rtlFlightMode                       (void) const override { return QString("RTL"); }
     QString landFlightMode                      (void) const override { return QString("Land"); }
-    QString takeControlFlightMode               (void) const override { return QString("Stablize"); }
+    QString takeControlFlightMode               (void) const override { return QString("Loiter"); }
     bool    vehicleYawsToNextWaypointInMission  (const Vehicle* vehicle) const final;
     QString autoDisarmParameter                 (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
     void    startMission                        (Vehicle* vehicle) override;

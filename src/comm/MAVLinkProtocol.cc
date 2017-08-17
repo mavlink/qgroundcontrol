@@ -55,6 +55,8 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app, QGCToolbox* toolbox)
     , m_enable_version_check(true)
     , versionMismatchIgnore(false)
     , systemId(255)
+    , _current_version(100)
+    , _radio_version_mismatch_count(0)
     , _logSuspendError(false)
     , _logSuspendReplay(false)
     , _vehicleWasArmed(false)
@@ -73,6 +75,24 @@ MAVLinkProtocol::~MAVLinkProtocol()
 {
     storeSettings();
     _closeLogFile();
+}
+
+void MAVLinkProtocol::setVersion(unsigned version)
+{
+    QList<LinkInterface*> links = _linkMgr->links();
+
+    for (int i = 0; i < links.length(); i++) {
+        mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(links[i]->mavlinkChannel());
+
+        // Set flags for version
+        if (version < 200) {
+            mavlinkStatus->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+        } else {
+            mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+        }
+    }
+
+    _current_version = version;
 }
 
 void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
@@ -133,7 +153,7 @@ void MAVLinkProtocol::storeSettings()
     // Parameter interface settings
 }
 
-void MAVLinkProtocol::resetMetadataForLink(const LinkInterface *link)
+void MAVLinkProtocol::resetMetadataForLink(LinkInterface *link)
 {
     int channel = link->mavlinkChannel();
     totalReceiveCounter[channel] = 0;
@@ -141,6 +161,7 @@ void MAVLinkProtocol::resetMetadataForLink(const LinkInterface *link)
     totalErrorCounter[channel] = 0;
     currReceiveCounter[channel] = 0;
     currLossCounter[channel] = 0;
+    link->setDecodedFirstMavlinkPacket(false);
 }
 
 /**
@@ -175,9 +196,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
         if (decodeState == 0 && !link->decodedFirstMavlinkPacket())
         {
             nonmavlinkCount++;
-            if (nonmavlinkCount > 2000 && !warnedUserNonMavlink)
+            if (nonmavlinkCount > 1000 && !warnedUserNonMavlink)
             {
-                //2000 bytes with no mavlink message. Are we connected to a mavlink capable device?
+                // 500 bytes with no mavlink message. Are we connected to a mavlink capable device?
                 if (!checkedUserNonMavlink)
                 {
                     link->requestReset();
@@ -186,20 +207,27 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 else
                 {
                     warnedUserNonMavlink = true;
-                    emit protocolStatusMessage(tr("MAVLink Protocol"), tr("There is a MAVLink Version or Baud Rate Mismatch. "
-                                                                          "Please check if the baud rates of %1 and your autopilot are the same.").arg(qgcApp()->applicationName()));
+                    // Disconnect the link since its some other device and
+                    // QGC clinging on to it and feeding it data might have unintended
+                    // side effects (e.g. if its a modem)
+                    qDebug() << "disconnected link" << link->getName() << "as it contained no MAVLink data";
+                    QMetaObject::invokeMethod(_linkMgr, "disconnectLink", Q_ARG( LinkInterface*, link ) );
+                    return;
                 }
             }
         }
         if (decodeState == 1)
         {
             if (!link->decodedFirstMavlinkPacket()) {
+                link->setDecodedFirstMavlinkPacket(true);
                 mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
                 if (!(mavlinkStatus->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1) && (mavlinkStatus->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)) {
                     qDebug() << "Switching outbound to mavlink 2.0 due to incoming mavlink 2.0 packet:" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
                     mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+
+                    // Set all links to v2
+                    setVersion(200);
                 }
-                link->setDecodedFirstMavlinkPacket(true);
             }
 
             // Log data
@@ -244,6 +272,26 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 mavlink_heartbeat_t heartbeat;
                 mavlink_msg_heartbeat_decode(&message, &heartbeat);
                 emit vehicleHeartbeatInfo(link, message.sysid, message.compid, heartbeat.mavlink_version, heartbeat.autopilot, heartbeat.type);
+            }
+
+            // Detect if we are talking to an old radio not supporting v2
+            mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
+            if (message.msgid == MAVLINK_MSG_ID_RADIO_STATUS) {
+                if ((mavlinkStatus->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1)
+                && !(mavlinkStatus->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)) {
+
+                    _radio_version_mismatch_count++;
+                }
+            }
+
+            if (_radio_version_mismatch_count == 5) {
+                // Warn the user if the radio continues to send v1 while the link uses v2
+                emit protocolStatusMessage(tr("MAVLink Protocol"), tr("Detected radio still using MAVLink v1.0 on a link with MAVLink v2.0 enabled. Please upgrade the radio firmware."));
+                // Ensure the warning can't get stuck
+                _radio_version_mismatch_count++;
+                // Flick link back to v1
+                qDebug() << "Switching outbound to mavlink 1.0 due to incoming mavlink 1.0 packet:" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
+                mavlinkStatus->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
             }
 
             // Increase receive counter
@@ -334,6 +382,9 @@ void MAVLinkProtocol::_vehicleCountChanged(void)
     if (count == 0) {
         // Last vehicle is gone, close out logging
         _stopLogging();
+        // Reset protocol version handling
+        _current_version = 0;
+        _radio_version_mismatch_count = 0;
     }
 }
 
