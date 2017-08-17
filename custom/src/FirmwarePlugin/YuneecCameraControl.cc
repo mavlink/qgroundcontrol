@@ -13,6 +13,7 @@
 #include "SettingsManager.h"
 #include "VideoManager.h"
 #include "Settings/SettingsManager.h"
+#include "px4_custom_mode.h"
 
 QGC_LOGGING_CATEGORY(YuneecCameraLog, "YuneecCameraLog")
 QGC_LOGGING_CATEGORY(YuneecCameraLogVerbose, "YuneecCameraLogVerbose")
@@ -47,6 +48,7 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     , _recordTime(0)
     , _paramComplete(false)
     , _isE90(false)
+    , _inMissionMode(false)
 {
 
     _cameraSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/wav/camera.wav"));
@@ -298,6 +300,9 @@ YuneecCameraControl::_mavlinkMessageReceived(const mavlink_message_t& message)
         case MAVLINK_MSG_ID_COMMAND_ACK:
             _handleCommandAck(message);
             break;
+        case MAVLINK_MSG_ID_HEARTBEAT:
+            _handleHeartBeat(message);
+        break;
     }
 }
 
@@ -339,6 +344,30 @@ YuneecCameraControl::_handleGimbalOrientation(const mavlink_message_t& message)
     if(!_gimbalData) {
         _gimbalData = true;
         emit gimbalDataChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::_handleHeartBeat(const mavlink_message_t& message)
+{
+    if(message.compid == _vehicle->defaultComponentId()) {
+        mavlink_heartbeat_t hb;
+        mavlink_msg_heartbeat_decode(&message, &hb);
+        px4_custom_mode *cm = (px4_custom_mode *)(void *)&hb.custom_mode;
+        //-- Transition out of mission mode
+        if (cm->sub_mode != PX4_CUSTOM_SUB_MODE_AUTO_MISSION && _inMissionMode)
+        {
+            qCDebug(YuneecCameraLog) << "Transition out of mission mode.";
+            _inMissionMode = false;
+            _requestAllParameters();
+        }
+        //-- Transition into mission mode
+        else if (cm->sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_MISSION && !_inMissionMode)
+        {
+            qCDebug(YuneecCameraLog) << "Transition into mission mode.";
+            _inMissionMode = true;
+        }
     }
 }
 
