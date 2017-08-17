@@ -13,18 +13,19 @@
 #include "MissionCommandUIInfo.h"
 
 CameraSectionTest::CameraSectionTest(void)
-    : _spyCamera(NULL)
-    , _spySection(NULL)
-    , _cameraSection(NULL)
-    , _validGimbalItem(NULL)
-    , _validDistanceItem(NULL)
-    , _validTimeItem(NULL)
-    , _validStartVideoItem(NULL)
-    , _validStopVideoItem(NULL)
-    , _validStopDistanceItem(NULL)
-    , _validStopTimeItem(NULL)
-    , _validCameraPhotoModeItem(NULL)
-    , _validCameraVideoModeItem(NULL)
+    : _spyCamera                        (NULL)
+    , _spySection                       (NULL)
+    , _cameraSection                    (NULL)
+    , _validGimbalItem                  (NULL)
+    , _validDistanceItem                (NULL)
+    , _validTimeItem                    (NULL)
+    , _validStartVideoItem              (NULL)
+    , _validStopVideoItem               (NULL)
+    , _validStopDistanceItem            (NULL)
+    , _validStopTimeItem                (NULL)
+    , _validCameraPhotoModeItem         (NULL)
+    , _validCameraVideoModeItem         (NULL)
+    , _validCameraSurveyPhotoModeItem   (NULL)
 {
     
 }
@@ -83,7 +84,7 @@ void CameraSectionTest::init(void)
                                                                   MAV_CMD_SET_CAMERA_MODE,
                                                                   MAV_FRAME_MISSION,
                                                                   0,                               // Reserved (Set to 0)
-                                                                  CameraSection::CameraModePhoto,
+                                                                  CAMERA_MODE_IMAGE,
                                                                   NAN, NAN, NAN, NAN, NAN,         // param 3-7 reserved
                                                                   true,                            // autocontinue
                                                                   false),                          // isCurrentItem
@@ -93,11 +94,21 @@ void CameraSectionTest::init(void)
                                                                   MAV_CMD_SET_CAMERA_MODE,
                                                                   MAV_FRAME_MISSION,
                                                                   0,                               // Reserved (Set to 0)
-                                                                  CameraSection::CameraModeVideo,
+                                                                  CAMERA_MODE_VIDEO,
                                                                   NAN, NAN, NAN, NAN, NAN,         // param 3-7 reserved
                                                                   true,                            // autocontinue
                                                                   false),                          // isCurrentItem
                                                       this);
+    _validCameraSurveyPhotoModeItem = new SimpleMissionItem(_offlineVehicle,
+                                                            MissionItem(0,                          // sequence number
+                                                                        MAV_CMD_SET_CAMERA_MODE,
+                                                                        MAV_FRAME_MISSION,
+                                                                        0,                          // Reserved (Set to 0)
+                                                                        CAMERA_MODE_IMAGE_SURVEY,
+                                                                        NAN, NAN, NAN, NAN, NAN,    // param 3-7 reserved
+                                                                        true,                       // autocontinue
+                                                                        false),                     // isCurrentItem
+                                                            this);
     _validTakePhotoItem = new SimpleMissionItem(_offlineVehicle,
                                                 MissionItem(0,
                                                             MAV_CMD_IMAGE_START_CAPTURE,
@@ -125,6 +136,7 @@ void CameraSectionTest::cleanup(void)
     delete _validTakePhotoItem;
     delete _validCameraPhotoModeItem;
     delete _validCameraVideoModeItem;
+    delete _validCameraSurveyPhotoModeItem;
     SectionTest::cleanup();
 }
 
@@ -453,7 +465,7 @@ void CameraSectionTest::_testAppendSectionItems(void)
     // Test specifyCameraMode
 
     _cameraSection->setSpecifyCameraMode(true);
-    _cameraSection->cameraMode()->setRawValue(CameraSection::CameraModePhoto);
+    _cameraSection->cameraMode()->setRawValue(CAMERA_MODE_IMAGE);
     _cameraSection->appendSectionItems(rgMissionItems, this, seqNum);
     QCOMPARE(rgMissionItems.count(), 1);
     QCOMPARE(seqNum, 1);
@@ -463,11 +475,21 @@ void CameraSectionTest::_testAppendSectionItems(void)
     seqNum = 0;
 
     _cameraSection->setSpecifyCameraMode(true);
-    _cameraSection->cameraMode()->setRawValue(CameraSection::CameraModeVideo);
+    _cameraSection->cameraMode()->setRawValue(CAMERA_MODE_VIDEO);
     _cameraSection->appendSectionItems(rgMissionItems, this, seqNum);
     QCOMPARE(rgMissionItems.count(), 1);
     QCOMPARE(seqNum, 1);
     _missionItemsEqual(*rgMissionItems[0], _validCameraVideoModeItem->missionItem());
+    _cameraSection->setSpecifyCameraMode(false);
+    rgMissionItems.clear();
+    seqNum = 0;
+
+    _cameraSection->setSpecifyCameraMode(true);
+    _cameraSection->cameraMode()->setRawValue(CAMERA_MODE_IMAGE_SURVEY);
+    _cameraSection->appendSectionItems(rgMissionItems, this, seqNum);
+    QCOMPARE(rgMissionItems.count(), 1);
+    QCOMPARE(seqNum, 1);
+    _missionItemsEqual(*rgMissionItems[0], _validCameraSurveyPhotoModeItem->missionItem());
     _cameraSection->setSpecifyCameraMode(false);
     rgMissionItems.clear();
     seqNum = 0;
@@ -539,7 +561,7 @@ void CameraSectionTest::_testAppendSectionItems(void)
     _cameraSection->cameraAction()->setRawValue(CameraSection::TakePhotosIntervalTime);
     _cameraSection->cameraPhotoIntervalTime()->setRawValue(_validTimeItem->missionItem().param2());
     _cameraSection->setSpecifyCameraMode(true);
-    _cameraSection->cameraMode()->setRawValue(CameraSection::CameraModePhoto);
+    _cameraSection->cameraMode()->setRawValue(CAMERA_MODE_IMAGE);
     _cameraSection->appendSectionItems(rgMissionItems, this, seqNum);
     QCOMPARE(rgMissionItems.count(), 3);
     QCOMPARE(seqNum, 3);
@@ -995,7 +1017,7 @@ void CameraSectionTest::_resetSection(void)
     _cameraSection->cameraPhotoIntervalTime()->setRawValue(0);
     _cameraSection->cameraPhotoIntervalDistance()->setRawValue(0);
     _cameraSection->cameraAction()->setRawValue(CameraSection::CameraActionNone);
-    _cameraSection->cameraMode()->setRawValue(CameraSection::CameraModePhoto);
+    _cameraSection->cameraMode()->setRawValue(CAMERA_MODE_IMAGE);
     _cameraSection->setSpecifyCameraMode(false);
 }
 
