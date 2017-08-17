@@ -258,39 +258,48 @@ Item {
                 border.color:       qgcPal.text
                 visible:            !TyphoonHQuickInterface.bindingWiFi
                 anchors.centerIn:   parent
-                Row {
-                    spacing:    ScreenTools.defaultFontPixelWidth
-                    height:     scanningIcon.height
+                Column {
+                    spacing:            ScreenTools.defaultFontPixelHeight * 0.5
                     anchors.top:        parent.top
                     anchors.topMargin:  ScreenTools.defaultFontPixelHeight
                     anchors.horizontalCenter: parent.horizontalCenter
-                    QGCLabel {
-                        text:           qsTr("Select Vehicle to Connect")
-                        anchors.verticalCenter: parent.verticalCenter
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        height:     scanningIcon.height
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCLabel {
+                            text:           qsTr("Select Vehicle to Connect")
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QGCColoredImage {
+                            id:                 scanningIcon
+                            height:             ScreenTools.defaultFontPixelHeight * 2
+                            width:              height
+                            source:             "/qmlimages/MapSync.svg"
+                            sourceSize.height:  height
+                            fillMode:           Image.PreserveAspectFit
+                            mipmap:             true
+                            smooth:             true
+                            color:              qgcPal.buttonText
+                            anchors.verticalCenter: parent.verticalCenter
+                            RotationAnimation on rotation {
+                                id:             imageRotation
+                                loops:          1
+                                from:           360
+                                to:             0
+                                duration:       750
+                                running:        false
+                            }
+                            MouseArea {
+                                anchors.fill:   parent
+                                onClicked:      TyphoonHQuickInterface.startScan();
+                            }
+                        }
                     }
-                    QGCColoredImage {
-                        id:                 scanningIcon
-                        height:             ScreenTools.defaultFontPixelHeight * 2
-                        width:              height
-                        source:             "/qmlimages/MapSync.svg"
-                        sourceSize.height:  height
-                        fillMode:           Image.PreserveAspectFit
-                        mipmap:             true
-                        smooth:             true
-                        color:              qgcPal.buttonText
-                        anchors.verticalCenter: parent.verticalCenter
-                        RotationAnimation on rotation {
-                            id:             imageRotation
-                            loops:          1
-                            from:           360
-                            to:             0
-                            duration:       750
-                            running:        false
-                        }
-                        MouseArea {
-                            anchors.fill:   parent
-                            onClicked:      TyphoonHQuickInterface.startScan();
-                        }
+                    QGCLabel {
+                        text:  qsTr("It may take up to 60 seconds for the vehicle WiFi to appear.")
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
                     }
                 }
                 QGCFlickable {
