@@ -84,6 +84,7 @@ private slots:
     void    _parametersReady        ();
     void    _sendUpdates            ();
     void    _delayedStartVideo      ();
+    void    _delayedTakePhoto       ();
 
 signals:
     void    gimbalVersionChanged    ();
