@@ -37,4 +37,5 @@ RUN cd /home/docker1000 \
 
 WORKDIR "/home/docker1000/qgroundcontrol"
 
-ENTRYPOINT ln -f -s ~/dpbuild/gstreamer-1.0-android-x86-1.5.2 && ./custom/build.sh build
+ENTRYPOINT ["/home/docker1000/qgroundcontrol/custom/entrypoint.sh"]
+CMD ["developer"]
