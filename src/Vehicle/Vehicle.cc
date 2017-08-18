@@ -33,6 +33,7 @@
 #include "QGCCorePlugin.h"
 #include "ADSBVehicle.h"
 #include "QGCCameraManager.h"
+#include "AirMapController.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -131,6 +132,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _rallyPointManager(NULL)
     , _rallyPointManagerInitialRequestSent(false)
     , _parameterManager(NULL)
+    , _airMapController(NULL)
     , _armed(false)
     , _base_mode(0)
     , _custom_mode(0)
@@ -249,6 +251,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     _cameras = _firmwarePlugin->createCameraManager(this);
     emit dynamicCamerasChanged();
 
+    _airMapController = new AirMapController(this);
     connect(qgcApp()->toolbox()->airMapManager(), &AirMapManager::trafficUpdate, this, &Vehicle::_trafficUpdate);
 }
 
@@ -308,6 +311,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _rallyPointManager(NULL)
     , _rallyPointManagerInitialRequestSent(false)
     , _parameterManager(NULL)
+    , _airMapController(NULL)
     , _armed(false)
     , _base_mode(0)
     , _custom_mode(0)
