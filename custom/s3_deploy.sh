@@ -9,7 +9,7 @@ S3_BUCKET_NAME=08f61bbd-8958-433e-8e83-5d79160fa0be
 export AWS_CREDENTIAL_FILE=/var/lib/jenkins/.aws/credentials
 
 apk_path=/tmp/datapilot_build/release/package
-prefix="DataPilotDevel-"
+prefix="DataPilot-"
 suffix=".apk"
 build=$(git --git-dir .git rev-list master --first-parent --count)
 filename=$(ls $apk_path | grep $prefix | grep $suffix | grep $build )
