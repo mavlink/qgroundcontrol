@@ -13,6 +13,7 @@
 #include "JsonHelper.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
+#include "AirMapSettings.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
 
@@ -344,7 +345,7 @@ void AirspaceRestrictionManager::updateROI(const QGeoCoordinate& center, double 
 
 void AirspaceRestrictionManager::_parseAirspaceJson(QJsonParseError parseError, QJsonDocument airspaceDoc)
 {
-
+    Q_UNUSED(parseError);
     QJsonObject rootObject = airspaceDoc.object();
 
     switch(_state) {
@@ -637,7 +638,7 @@ void AirMapFlightManager::_sendBriefingRequest()
 
 void AirMapFlightManager::_parseJson(QJsonParseError parseError, QJsonDocument doc)
 {
-
+    Q_UNUSED(parseError);
     QJsonObject rootObject = doc.object();
 
     switch(_state) {
@@ -899,7 +900,7 @@ void AirMapTelemetry::_handleGlobalPositionInt(const mavlink_message_t& message)
     uint8_t* key = (uint8_t*)_key.data();
 
     uint8_t iv[16];
-    for (int i = 0; i < sizeof(iv); ++i) {
+    for (size_t i = 0; i < sizeof(iv); ++i) {
         iv[i] = (uint8_t)(qrand() & 0xff); // TODO: should use a secure random source
     }
 
@@ -967,8 +968,8 @@ void AirMapTelemetry::_handleGlobalPositionInt(const mavlink_message_t& message)
 
 void AirMapTelemetry::_parseJson(QJsonParseError parseError, QJsonDocument doc)
 {
+    Q_UNUSED(parseError);
     QJsonObject rootObject = doc.object();
-
     switch(_state) {
         case State::StartCommunication:
         {
@@ -1189,18 +1190,12 @@ void AirMapManager::_vehicleArmedChanged(bool armed)
     }
 }
 
-
 void AirMapManager::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
-
-    _networkingData.airmapAPIKey = toolbox->settingsManager()->appSettings()->airMapKey()->rawValueString();
-
-    // TODO: set login credentials from config
-    QString clientID = "";
-    QString userName = "";
-    QString password = "";
-    _networkingData.login.setCredentials(clientID, userName, password);
+    AirMapSettings* ap = toolbox->settingsManager()->airMapSettings();
+    _networkingData.airmapAPIKey = ap->apiKey()->rawValueString();
+    _networkingData.login.setCredentials(ap->clientID()->rawValueString(), ap->userName()->rawValueString(), ap->password()->rawValueString());
 }
 
 void AirMapManager::setROI(QGeoCoordinate& center, double radiusMeters)
