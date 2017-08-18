@@ -18,6 +18,7 @@ AirMapController::AirMapController(QObject* parent)
     : QObject(parent)
     , _manager(qgcApp()->toolbox()->airMapManager())
 {
+    connect(_manager, &AirMapManager::flightPermitStatusChanged, this, &AirMapController::flightPermitStatusChanged);
 }
 
 AirMapController::~AirMapController()

@@ -29,10 +29,17 @@ public:
     Q_PROPERTY(QmlObjectListModel*  polygons    READ polygons   CONSTANT)   ///< List of PolygonAirspaceRestriction objects
     Q_PROPERTY(QmlObjectListModel*  circles     READ circles    CONSTANT)   ///< List of CircularAirspaceRestriction objects
 
+    Q_PROPERTY(AirspaceAuthorization::PermitStatus  flightPermitStatus    READ flightPermitStatus   NOTIFY flightPermitStatusChanged)   ///< state of flight permission
+
     Q_INVOKABLE void setROI(QGeoCoordinate center, double radius) { _manager->setROI(center, radius); }
 
     QmlObjectListModel* polygons(void) { return _manager->polygonRestrictions(); }
     QmlObjectListModel* circles(void) { return _manager->circularRestrictions(); }
+
+    AirspaceAuthorization::PermitStatus flightPermitStatus() const { return _manager->flightPermitStatus(); }
+
+signals:
+    void flightPermitStatusChanged();
 
 private:
     AirMapManager*      _manager;
