@@ -255,17 +255,51 @@ signals:
 private slots:
     void _parseJson(QJsonParseError parseError, QJsonDocument doc);
     void _error(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+
+    void _sendBriefingRequest();
 private:
+
+    /**
+     * upload flight stored in _flight
+     */
+    void _uploadFlight();
+
+    /**
+     * implementation of endFlight()
+     */
+    void _endFlight(const QString& flightID);
+
     enum class State {
         Idle,
+        GetPilotID,
         FlightUpload,
+        FlightBrief,
+        FlightSubmit,
+        FlightPolling, // poll & check for approval
         FlightEnd,
+        EndFirstFlight, // get a list of open flights & end the first one (because there can only be 1 active at a time)
     };
+    struct Flight {
+        QList<QGeoCoordinate> coords;
+        QGeoCoordinate takeoffCoord;
+        float maxAltitude = 0;
+
+        void reset() {
+            coords.clear();
+            maxAltitude = 0;
+        }
+    };
+    Flight                              _flight; ///< flight pending to be uploaded
 
     State                               _state = State::Idle;
     AirMapNetworking                    _networking;
     QString                             _currentFlightId; ///< Flight ID, empty if there is none
+    QString                             _pendingFlightId; ///< current flight ID, not necessarily accepted yet (once accepted, it's equal to _currentFlightId)
+    QString                             _pendingFlightPlan; ///< current flight plan, waiting to be submitted
     AirspaceAuthorization::PermitStatus _flightPermitStatus = AirspaceAuthorization::PermitUnknown;
+    QString                             _pilotID; ///< Pilot ID in the form "auth0|abc123"
+    bool                                _noFlightCreatedYet = true;
+    QTimer                              _pollTimer; ///< timer to poll for approval check
 };
 
 /// class to send telemetry data to AirMap
@@ -316,7 +350,7 @@ private:
     uint32_t                _seqNum = 1;
     QUdpSocket*             _socket = nullptr;
     QHostAddress            _udpHost;
-    static constexpr int    _udpPort = 16060;
+    static constexpr int    _udpPort = 32003;
 
     float                   _lastHdop = 1.f;
 };
