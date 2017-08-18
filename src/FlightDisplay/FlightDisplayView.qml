@@ -614,4 +614,50 @@ QGCView {
             visible:            false
         }
     }
+
+    //-- AirMap Indicator
+    Rectangle {
+        id:             airMapIndicator
+        width:          airMapRow.width + (ScreenTools.defaultFontPixelWidth * 3)
+        height:         airMapRow.height * 1.25
+        color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
+        visible:        _mainIsMap && flightPermit && flightPermit !== AirspaceAuthorization.PermitUnknown && !messageArea.visible && !criticalMmessageArea.visible
+        radius:         3
+        border.width:   1
+        border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
+        anchors.top:    parent.top
+        anchors.topMargin: ScreenTools.toolbarHeight + (ScreenTools.defaultFontPixelHeight * 0.25)
+        anchors.horizontalCenter: parent.horizontalCenter
+        Row {
+            id: airMapRow
+            spacing: ScreenTools.defaultFontPixelWidth
+            anchors.centerIn: parent
+            QGCLabel { text: qsTr("AirMap:"); anchors.verticalCenter: parent.verticalCenter; }
+            QGCLabel {
+                text: {
+                    if(airMapIndicator.flightPermit) {
+                        if(airMapIndicator.flightPermit === AirspaceAuthorization.PermitPending)
+                            return qsTr("Approval Pending")
+                        if(airMapIndicator.flightPermit === AirspaceAuthorization.PermitAccepted)
+                            return qsTr("Flight Approved")
+                        if(airMapIndicator.flightPermit === AirspaceAuthorization.PermitRejected)
+                            return qsTr("Flight Denied")
+                    }
+                    return ""
+                }
+                color: {
+                    if(airMapIndicator.flightPermit) {
+                        if(airMapIndicator.flightPermit === AirspaceAuthorization.PermitPending)
+                            return qgcPal.colorOrange
+                        if(airMapIndicator.flightPermit === AirspaceAuthorization.PermitAccepted)
+                            return qgcPal.colorGreen
+                    }
+                    return qgcPal.colorRed
+                }
+                anchors.verticalCenter: parent.verticalCenter;
+            }
+        }
+        property var  flightPermit: _activeVehicle ? _activeVehicle.airMapController.flightPermitStatus : null
+    }
+
 }

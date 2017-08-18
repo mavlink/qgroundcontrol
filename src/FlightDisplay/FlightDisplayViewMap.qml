@@ -58,7 +58,9 @@ FlightMap {
     // Track last known map position and zoom from Fly view in settings
     onZoomLevelChanged: QGroundControl.flightMapZoom = zoomLevel
     onCenterChanged: {
-        airMapController.setROI(center, 5000)
+        if(_activeVehicle) {
+            _activeVehicle.airMapController.setROI(center, 5000)
+        }
         QGroundControl.flightMapPosition = center
     }
 
@@ -328,14 +330,8 @@ FlightMap {
     }
 
     // AirMap overlap support
-
-    AirMapController {
-        id: airMapController
-    }
-
     MapItemView {
-        model: airMapController.circles
-
+        model:      _activeVehicle ? _activeVehicle.airMapController.circles : []
         delegate: MapCircle {
             center:         object.center
             radius:         object.radius
@@ -346,8 +342,7 @@ FlightMap {
     }
 
     MapItemView {
-        model: airMapController.polygons
-
+        model:      _activeVehicle ? _activeVehicle.airMapController.polygons : []
         delegate: MapPolygon {
             border.color:   "white"
             color:          "yellow"
