@@ -32,6 +32,7 @@ Item {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     readonly property string scaleState:    "topMode"
+    readonly property string noGPS:         qsTr("NO GPS")
 
     property real   _indicatorDiameter: ScreenTools.defaultFontPixelWidth * 16
     property var    _sepColor:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
@@ -46,6 +47,7 @@ Item {
     property bool   _cameraPresent:     _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED
     property bool   _noSdCard:          _camera && _camera.storageTotal === 0
     property bool   _fullSD:            _camera && _camera.storageTotal !== 0 && _camera.storageFree > 0 && _camera.storageFree < 250 // We get kiB from the camera
+    property bool   _isVehicleGps:      _activeVehicle && _activeVehicle.gps.count.rawValue > 1 && activeVehicle.gps.hdop.rawValue < 1.4
 
     property var    _expModeFact:       _camera && _camera.exposureMode
     property var    _evFact:            _camera && _camera.ev
@@ -614,6 +616,27 @@ Item {
                 Layout.fillWidth:  true
                 Layout.columnSpan: 5
             }
+            //-- Latitude
+            QGCLabel {
+                text:       qsTr("Lat:")
+            }
+            QGCLabel {
+                text:       _isVehicleGps ? _activeVehicle.latitude.toFixed(6) : noGPS
+                color:      _isVehicleGps ? qgcPal.text : qgcPal.colorOrange
+                Layout.fillWidth:   true
+                horizontalAlignment: _isVehicleGps ? Text.AlignRight : Text.AlignHCenter
+            }
+            //-- Longitude
+            QGCLabel {
+                text:       qsTr("Lon:")
+            }
+            QGCLabel {
+                text:       _isVehicleGps ? _activeVehicle.longitude.toFixed(6) : noGPS
+                color:      _isVehicleGps ? qgcPal.text : qgcPal.colorOrange
+                Layout.fillWidth:   true
+                horizontalAlignment: _isVehicleGps ? Text.AlignRight : Text.AlignHCenter
+            }
+            Item { width: 1; height: 1; }
             //-- Altitude
             QGCLabel {
                 text:       qsTr("H:")
@@ -642,7 +665,7 @@ Item {
                 text:   qsTr("D:")
             }
             QGCLabel {
-                text:               _st16GPS ? _distanceStr : qsTr("NO GPS")
+                text:               _st16GPS ? _distanceStr : noGPS
                 color:              _st16GPS ? qgcPal.text : qgcPal.colorOrange
                 Layout.fillWidth:   true
                 horizontalAlignment: _st16GPS ? Text.AlignRight : Text.AlignHCenter
