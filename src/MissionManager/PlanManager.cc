@@ -18,6 +18,7 @@
 #include "QGCApplication.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
+#include "AirMapManager.h"
 
 QGC_LOGGING_CATEGORY(PlanManagerLog, "PlanManagerLog")
 
@@ -76,6 +77,13 @@ void PlanManager::writeMissionItems(const QList<MissionItem*>& missionItems)
     if (inProgress()) {
         qCDebug(PlanManagerLog) << QStringLiteral("writeMissionItems %1 called while transaction in progress").arg(_planTypeString());
         return;
+    }
+
+    if (_planType == MAV_MISSION_TYPE_MISSION) {
+        AirMapManager *airmapManager = qgcApp()->toolbox()->airMapManager();
+        if(airmapManager) {
+            airmapManager->createFlight(missionItems);
+        }
     }
 
     _clearAndDeleteWriteMissionItems();
