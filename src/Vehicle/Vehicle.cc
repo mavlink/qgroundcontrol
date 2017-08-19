@@ -55,6 +55,7 @@ const char* Vehicle::_altitudeRelativeFactName =    "altitudeRelative";
 const char* Vehicle::_altitudeAMSLFactName =        "altitudeAMSL";
 const char* Vehicle::_flightDistanceFactName =      "flightDistance";
 const char* Vehicle::_flightTimeFactName =          "flightTime";
+const char* Vehicle::_distanceToHomeFactName =      "distanceToHome";
 
 const char* Vehicle::_gpsFactGroupName =        "gps";
 const char* Vehicle::_batteryFactGroupName =    "battery";
@@ -160,6 +161,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _altitudeAMSLFact     (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
     , _flightDistanceFact   (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
     , _flightTimeFact       (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
+    , _distanceToHomeFact   (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
     , _gpsFactGroup(this)
     , _batteryFactGroup(this)
     , _windFactGroup(this)
@@ -325,6 +327,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _altitudeAMSLFact     (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
     , _flightDistanceFact   (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
     , _flightTimeFact       (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
+    , _distanceToHomeFact   (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
     , _gpsFactGroup(this)
     , _batteryFactGroup(this)
     , _windFactGroup(this)
@@ -337,6 +340,9 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
 void Vehicle::_commonInit(void)
 {
     _firmwarePlugin = _firmwarePluginManager->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
+
+    connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceToHome);
+    connect(this, &Vehicle::homePositionChanged,    this, &Vehicle::_updateDistanceToHome);
 
     _missionManager = new MissionManager(this);
     connect(_missionManager, &MissionManager::error,                    this, &Vehicle::_missionManagerError);
@@ -376,6 +382,7 @@ void Vehicle::_commonInit(void)
     _addFact(&_altitudeAMSLFact,        _altitudeAMSLFactName);
     _addFact(&_flightDistanceFact,      _flightDistanceFactName);
     _addFact(&_flightTimeFact,          _flightTimeFactName);
+    _addFact(&_distanceToHomeFact,      _distanceToHomeFactName);
 
     _addFactGroup(&_gpsFactGroup,       _gpsFactGroupName);
     _addFactGroup(&_batteryFactGroup,   _batteryFactGroupName);
@@ -2795,6 +2802,15 @@ void Vehicle::_handleADSBVehicle(const mavlink_message_t& message)
             _adsbICAOMap[adsbVehicle.ICAO_address] = vehicle;
             _adsbVehicles.append(vehicle);
         }
+    }
+}
+
+void Vehicle::_updateDistanceToHome(void)
+{
+    if (coordinate().isValid() && homePosition().isValid()) {
+        _distanceToHomeFact.setRawValue(coordinate().distanceTo(homePosition()));
+    } else {
+        _distanceToHomeFact.setRawValue(qQNaN());
     }
 }
 

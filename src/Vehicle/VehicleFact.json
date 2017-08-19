@@ -63,6 +63,13 @@
     "units":            "m"
 },
 {
+    "name":             "distanceToHome",
+    "shortDescription": "Distance to Home",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+},
+{
     "name":             "flightTime",
     "shortDescription": "Flight Time",
     "type":             "elapsedSeconds",
