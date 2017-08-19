@@ -747,7 +747,9 @@ void SurveyMissionItem::_generateGrid(void)
     _setSurveyDistance(surveyDistance);
 
     if (cameraShots == 0 && _triggerCamera()) {
-        cameraShots = (int)ceil(surveyDistance / _triggerDistance());
+        cameraShots = (int)floor(surveyDistance / _triggerDistance());
+        // Take into account immediate camera trigger at waypoint entry
+        cameraShots++;
     }
     _setCameraShots(cameraShots);
 
@@ -1065,7 +1067,9 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
     // Calc camera shots here if there are no images in turnaround
     if (_triggerCamera() && !_imagesEverywhere()) {
         for (int i=0; i<resultLines.count(); i++) {
-            cameraShots += (int)ceil(resultLines[i].length() / _triggerDistance());
+            cameraShots += (int)floor(resultLines[i].length() / _triggerDistance());
+            // Take into account immediate camera trigger at waypoint entry
+            cameraShots++;
         }
     }
 
