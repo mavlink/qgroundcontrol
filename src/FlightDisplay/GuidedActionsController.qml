@@ -125,8 +125,7 @@ Item {
     property bool __pauseVehicleSupported: _activeVehicle ? _activeVehicle.pauseVehicleSupported : false
     property bool __flightMode: _flightMode
 
-    /*
-      Leaving this code in for use while debugging
+    // Hack debugging code
     function _outputState() {
         //console.log(qsTr("_activeVehicle(%1) _vehicleArmed(%2) guidedModeSupported(%3) _vehicleFlying(%4) _vehicleInRTLMode(%5) pauseVehicleSupported(%6) _vehiclePaused(%7) _flightMode(%8)").arg(_activeVehicle ? 1 : 0).arg(_vehicleArmed ? 1 : 0).arg(__guidedModeSupported ? 1 : 0).arg(_vehicleFlying ? 1 : 0).arg(_vehicleInRTLMode ? 1 : 0).arg(__pauseVehicleSupported ? 1 : 0).arg(_vehiclePaused ? 1 : 0).arg(_flightMode))
     }
@@ -140,11 +139,25 @@ Item {
     on__GuidedModeSupportedChanged: _outputState()
     on__PauseVehicleSupportedChanged: _outputState()
 
+    on_CurrentMissionIndexChanged: console.log("_currentMissionIndex", _currentMissionIndex)
+    on_ResumeMissionIndexChanged: console.log("_resumeMissionIndex", _resumeMissionIndex)
+    onShowResumeMissionChanged: {
+        console.log("showResumeMission", showResumeMission)
+        _outputState()
+    }
+    onShowStartMissionChanged: {
+        console.log("showStartMission", showStartMission)
+        _outputState()
+    }
+    onShowContinueMissionChanged: {
+        console.log("showContinueMission", showContinueMission)
+        _outputState()
+    }
+
     // End of hack
-    */
 
     on_VehicleFlyingChanged: {
-        //_outputState()
+        _outputState()
         if (!_vehicleFlying) {
             // We use _vehicleWasFLying to help trigger Resume Mission only if the vehicle actually flew and came back down.
             // Otherwise it may trigger during the Start Mission sequence due to signal ordering or armed and resume mission index.
@@ -152,8 +165,6 @@ Item {
         }
     }
     property var    _actionData
-
-    on_CurrentMissionIndexChanged: console.log("_currentMissionIndex", _currentMissionIndex)
 
     on_FlightModeChanged: {
         _vehiclePaused =        _activeVehicle ? _flightMode === _activeVehicle.pauseFlightMode : false
