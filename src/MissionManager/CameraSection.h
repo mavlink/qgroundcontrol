@@ -57,6 +57,7 @@ public:
     void setSpecifyGimbal       (bool specifyGimbal);
     void setSpecifyCameraMode   (bool specifyCameraMode);
 
+    ///< Signals specifiedGimbalYawChanged
     ///< @return The gimbal yaw specified by this item, NaN if not specified
     double specifiedGimbalYaw(void) const;
 
