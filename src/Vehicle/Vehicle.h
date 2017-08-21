@@ -284,6 +284,7 @@ public:
     Q_PROPERTY(bool                 sub                     READ sub                                                    NOTIFY vehicleTypeChanged)
     Q_PROPERTY(bool                 supportsManualControl   READ supportsManualControl                                  CONSTANT)
     Q_PROPERTY(bool        supportsThrottleModeCenterZero   READ supportsThrottleModeCenterZero                         CONSTANT)
+    Q_PROPERTY(bool                supportsNegativeThrust   READ supportsNegativeThrust                                 CONSTANT)
     Q_PROPERTY(bool                 supportsJSButton        READ supportsJSButton                                       CONSTANT)
     Q_PROPERTY(bool                 supportsRadio           READ supportsRadio                                          CONSTANT)
     Q_PROPERTY(bool               supportsMotorInterference READ supportsMotorInterference                              CONSTANT)
@@ -522,6 +523,7 @@ public:
 
     bool supportsManualControl(void) const;
     bool supportsThrottleModeCenterZero(void) const;
+    bool supportsNegativeThrust(void) const;
     bool supportsRadio(void) const;
     bool supportsJSButton(void) const;
     bool supportsMotorInterference(void) const;

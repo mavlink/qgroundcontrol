@@ -463,7 +463,7 @@ void Joystick::run(void)
 
             // Adjust throttle to 0:1 range
             if (_throttleMode == ThrottleModeCenterZero && _activeVehicle->supportsThrottleModeCenterZero()) {
-                if (!_negativeThrust) {
+                if (!_activeVehicle->supportsNegativeThrust() || !_negativeThrust) {
                     throttle = std::max(0.0f, throttle);
                 }
             } else {

@@ -455,6 +455,7 @@ SetupPage {
                                 }
 
                                 QGCCheckBox {
+                                    visible:        _activeVehicle.supportsNegativeThrust
                                     id:             negativeThrust
                                     text:           qsTr("Allow negative Thrust")
                                     checked:        _activeJoystick ? _activeJoystick.negativeThrust : false

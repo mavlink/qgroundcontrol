@@ -129,6 +129,12 @@ bool FirmwarePlugin::supportsThrottleModeCenterZero(void)
     return true;
 }
 
+bool FirmwarePlugin::supportsNegativeThrust(void)
+{
+    // By default, this is not supported
+    return false;
+}
+
 bool FirmwarePlugin::supportsManualControl(void)
 {
     return false;
