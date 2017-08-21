@@ -119,6 +119,11 @@ private:
     QString _password;
 };
 
+/**
+ * @class AirMapNetworking
+ * Handles networking requests (GET & POST), with login if required.
+ * There can only be one active request per object instance.
+ */
 class AirMapNetworking : public QObject
 {
     Q_OBJECT
@@ -155,6 +160,11 @@ public:
 
     const AirMapLogin& getLogin() const { return _networkingData.login; }
 
+    /**
+     * abort the current request (_requestFinished() or _requestError() will not be emitted)
+     */
+    void abort();
+
 signals:
     /// signal when the request finished (get or post). All requests are assumed to return JSON.
     void finished(QJsonParseError parseError, QJsonDocument document);
@@ -180,6 +190,8 @@ private:
         bool requiresLogin;
     };
     PendingRequest _pendingRequest;
+
+    QNetworkReply* _currentNetworkReply = nullptr;
 };
 
 
@@ -251,6 +263,11 @@ public:
     void setSitaPilotRegistrationId(const QString& sitaPilotRegistrationId) {
         _sitaPilotRegistrationId = sitaPilotRegistrationId;
     }
+
+    /**
+     * abort the current operation
+     */
+    void abort();
 
 public slots:
     void endFlight();
@@ -441,6 +458,7 @@ private slots:
 
     void _flightPermitStatusChanged();
 
+    void _settingsChanged();
 private:
     bool _hasAPIKey() const { return _networkingData.airmapAPIKey != ""; }
 
