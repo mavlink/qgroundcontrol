@@ -55,6 +55,7 @@ public:
     void    guidedModeChangeAltitude                (Vehicle* vehicle, double altitudeChange) final;
     int     remapParamNameHigestMinorVersionNumber  (int majorVersionNumber) const final;
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
+    bool supportsNegativeThrust(void) final;
 
 private:
     static bool _remapParamNameIntialized;
