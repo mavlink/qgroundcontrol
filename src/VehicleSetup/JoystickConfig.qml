@@ -296,7 +296,7 @@ SetupPage {
                         Connections {
                             target: _activeJoystick
 
-                            onManualControl: throttleLoader.item.axisValue = (-2*throttle+1)*32768.0
+                            onManualControl: throttleLoader.item.axisValue = _activeJoystick.negativeThrust ? -throttle*32768.0 : (-2*throttle+1)*32768.0
                         }
                     }
                 } // Column - Attitude Control labels
