@@ -84,7 +84,7 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
                 @Override
                 public void onNewData(final byte[] dataA, int userDataA)
                 {
-                    Log.d(TAG, "UsbIoManager.Listener.onNewData: read " + dataA.length + " bytes);
+                    Log.d(TAG, "UsbIoManager.Listener.onNewData: read " + dataA.length + " bytes");
                     nativeDeviceNewData(userDataA, dataA);
                 }
             };
@@ -494,7 +494,7 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
 
         try
         {
-            Log.d(TAG, "write: about to write " + sourceA.length + " bytes);
+            Log.d(TAG, "write: about to write " + sourceA.length + " bytes");
             int bytesWritten = driverL.write(sourceA, timeoutMSecA);
             Log.d(TAG, "write: successfully written " + bytesWritten + " bytes");
             return bytesWritten;
