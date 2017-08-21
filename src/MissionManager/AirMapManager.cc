@@ -177,6 +177,7 @@ void AirMapNetworking::post(QUrl url, const QByteArray& postData, bool isJsonDat
     }
 
     connect(networkReply, &QNetworkReply::finished, this, &AirMapNetworking::_requestFinished);
+    _currentNetworkReply = networkReply;
 }
 
 void AirMapNetworking::_loginSuccess()
@@ -196,6 +197,16 @@ void AirMapNetworking::_loginFailure(QNetworkReply::NetworkError networkError, c
     disconnect(&_networkingData.login, &AirMapLogin::loginSuccess, this, &AirMapNetworking::_loginSuccess);
     disconnect(&_networkingData.login, &AirMapLogin::loginFailure, this, &AirMapNetworking::_loginFailure);
     emit error(networkError, errorString, serverErrorMessage);
+}
+
+void AirMapNetworking::abort()
+{
+    if (_currentNetworkReply) {
+        disconnect(_currentNetworkReply, &QNetworkReply::finished, this, &AirMapNetworking::_requestFinished);
+        _currentNetworkReply->abort();
+        _currentNetworkReply = nullptr;
+    }
+    _pendingRequest.type = RequestType::None;
 }
 
 void AirMapNetworking::get(QUrl url, bool requiresLogin)
@@ -230,11 +241,13 @@ void AirMapNetworking::get(QUrl url, bool requiresLogin)
     }
 
     connect(networkReply, &QNetworkReply::finished, this, &AirMapNetworking::_requestFinished);
+    _currentNetworkReply = networkReply;
 }
 
 void AirMapNetworking::_requestFinished(void)
 {
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
+    _currentNetworkReply = nullptr;
 
     // When an error occurs we still end up here
     if (reply->error() != QNetworkReply::NoError) {
@@ -622,6 +635,14 @@ void AirMapFlightManager::endFlight()
     emit flightPermitStatusChanged();
 }
 
+void AirMapFlightManager::abort()
+{
+    _state = State::Idle;
+    _networking.abort();
+    _flightPermitStatus = AirspaceAuthorization::PermitUnknown;
+    emit flightPermitStatusChanged();
+}
+
 void AirMapFlightManager::_endFlight(const QString& flightID)
 {
     qCDebug(AirMapManagerLog) << "ending flight" << flightID;
@@ -1001,6 +1022,7 @@ void AirMapTelemetry::_parseJson(QJsonParseError parseError, QJsonDocument doc)
                 delete _socket;
                 _socket = nullptr;
             }
+            _key = "";
             _state = State::Idle;
             break;
         default:
@@ -1198,6 +1220,31 @@ void AirMapManager::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
     AirMapSettings* ap = toolbox->settingsManager()->airMapSettings();
+    _networkingData.airmapAPIKey = ap->apiKey()->rawValueString();
+    _networkingData.login.setCredentials(ap->clientID()->rawValueString(), ap->userName()->rawValueString(), ap->password()->rawValueString());
+    _flightManager.setSitaPilotRegistrationId(ap->sitaUserReg()->rawValueString());
+    _flightManager.setSitaUavRegistrationId(ap->sitaUavReg()->rawValueString());
+
+    connect(ap->apiKey(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
+    connect(ap->clientID(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
+    connect(ap->userName(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
+    connect(ap->password(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
+
+    connect(ap->sitaUserReg(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
+    connect(ap->sitaUavReg(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
+}
+
+void AirMapManager::_settingsChanged()
+{
+    qCDebug(AirMapManagerLog) << "AirMap settings changed";
+
+    // reset the states
+    _flightManager.abort();
+    _flightManager.endFlight();
+    _telemetry.stopTelemetryStream();
+    _trafficAlerts.disconnectFromHost();
+
+    AirMapSettings* ap = _toolbox->settingsManager()->airMapSettings();
     _networkingData.airmapAPIKey = ap->apiKey()->rawValueString();
     _networkingData.login.setCredentials(ap->clientID()->rawValueString(), ap->userName()->rawValueString(), ap->password()->rawValueString());
     _flightManager.setSitaPilotRegistrationId(ap->sitaUserReg()->rawValueString());
