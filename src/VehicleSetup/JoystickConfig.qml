@@ -458,9 +458,9 @@ SetupPage {
                                     visible:        _activeVehicle.supportsNegativeThrust
                                     id:             negativeThrust
                                     text:           qsTr("Allow negative Thrust")
+                                    enabled:        _activeJoystick.negativeThrust = _activeVehicle.supportsNegativeThrust
                                     checked:        _activeJoystick ? _activeJoystick.negativeThrust : false
-
-                                    onClicked: _activeJoystick.negativeThrust = checked
+                                    onClicked:      _activeJoystick.negativeThrust = checked
                                 }
                             }
 
