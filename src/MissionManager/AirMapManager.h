@@ -245,6 +245,13 @@ public:
 
     const QString& flightID() const { return _currentFlightId; }
 
+    void setSitaUavRegistrationId(const QString& sitaUavRegistrationId) {
+        _sitaUavRegistrationId = sitaUavRegistrationId;
+    }
+    void setSitaPilotRegistrationId(const QString& sitaPilotRegistrationId) {
+        _sitaPilotRegistrationId = sitaPilotRegistrationId;
+    }
+
 public slots:
     void endFlight();
 
@@ -300,6 +307,9 @@ private:
     QString                             _pilotID; ///< Pilot ID in the form "auth0|abc123"
     bool                                _noFlightCreatedYet = true;
     QTimer                              _pollTimer; ///< timer to poll for approval check
+
+    QString                             _sitaUavRegistrationId;
+    QString                             _sitaPilotRegistrationId;
 };
 
 /// class to send telemetry data to AirMap

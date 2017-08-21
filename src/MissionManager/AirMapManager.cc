@@ -569,8 +569,12 @@ void AirMapFlightManager::_uploadFlight()
     root.insert("buffer", 2);
 
     QJsonObject flightFeatures;
-    flightFeatures.insert("sita_uav_registration_id", ""); // TODO
-    flightFeatures.insert("sita_pilot_registration_id", ""); // TODO
+    if (_sitaUavRegistrationId != "") {
+        flightFeatures.insert("sita_uav_registration_id", _sitaUavRegistrationId);
+    }
+    if (_sitaPilotRegistrationId != "") {
+        flightFeatures.insert("sita_pilot_registration_id", _sitaPilotRegistrationId);
+    }
     root.insert("flight_features", flightFeatures);
 
     root.insert("takeoff_latitude", _flight.takeoffCoord.latitude());
@@ -1196,6 +1200,8 @@ void AirMapManager::setToolbox(QGCToolbox* toolbox)
     AirMapSettings* ap = toolbox->settingsManager()->airMapSettings();
     _networkingData.airmapAPIKey = ap->apiKey()->rawValueString();
     _networkingData.login.setCredentials(ap->clientID()->rawValueString(), ap->userName()->rawValueString(), ap->password()->rawValueString());
+    _flightManager.setSitaPilotRegistrationId(ap->sitaUserReg()->rawValueString());
+    _flightManager.setSitaUavRegistrationId(ap->sitaUavReg()->rawValueString());
 }
 
 void AirMapManager::setROI(QGeoCoordinate& center, double radiusMeters)
