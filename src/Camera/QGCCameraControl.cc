@@ -404,8 +404,8 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                 if(isBasic()) {
                     _requestCameraSettings();
                 } else {
-                    _requestAllParameters();
-                    QTimer::singleShot(2000, this, &QGCCameraControl::_requestCameraSettings);
+                    QTimer::singleShot(500, this, &QGCCameraControl::_requestAllParameters);
+                    QTimer::singleShot(2500, this, &QGCCameraControl::_requestCameraSettings);
                 }
                 break;
             case MAV_CMD_VIDEO_START_CAPTURE:
