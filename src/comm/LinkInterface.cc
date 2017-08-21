@@ -28,6 +28,7 @@ LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config)
     , _enableRateCollection(false)
     , _decodedFirstMavlinkPacket(false)
 {
+    memset(&signing, 0, sizeof(mavlink_signing_t));
     _config->setLink(this);
 
     // Initialize everything for the data rate calculation buffers.
