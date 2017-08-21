@@ -168,6 +168,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _bluetoothAvailable(false)
 {
     _app = this;
+    memset(&m_mavlink_status, 0, sizeof(m_mavlink_status));
 
     // This prevents usage of QQuickWidget to fail since it doesn't support native widget siblings
 #ifndef __android__
