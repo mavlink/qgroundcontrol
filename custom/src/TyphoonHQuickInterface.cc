@@ -558,6 +558,28 @@ TyphoonHQuickInterface::updateSystemImage()
 }
 
 //-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::endThis()
+{
+#if defined __android__
+    qCDebug(YuneecLog) << "Exit DataPilot";
+    reset_jni();
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "endThis", "()V");
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::factoryTest()
+{
+#if defined __android__
+    qCDebug(YuneecLog) << "Exit to Factory Test";
+    reset_jni();
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "launchFactoryTest", "()V");
+#endif
+}
+
+//-----------------------------------------------------------------------------
 #define READ_CHUNK_SIZE 1024 * 1024 * 4
 void
 TyphoonHFileCopy::startCopy()

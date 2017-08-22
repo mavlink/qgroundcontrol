@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.WindowManager;
 
 import java.util.List;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.BroadcastReceiver;
@@ -46,6 +47,7 @@ public class QGCActivity extends QtActivity
     private static String currentConnection;
     private static int currentWifiRssi = 0;
     private static float batteryLevel = 0.0f;
+    private static boolean letItExit = false;
 
     // WiFi: https://stackoverflow.com/questions/36098871/how-to-search-and-connect-to-a-specific-wifi-network-in-android-programmatically/36099552#36099552
 
@@ -136,9 +138,11 @@ public class QGCActivity extends QtActivity
 
     @Override
     protected void onStop() {
-        Intent intent = new Intent();
-        intent.setClassName("com.android.launcher", "com.android.launcher2.Launcher");
-        startActivity(intent);
+        if(!letItExit) {
+            Intent intent = new Intent();
+            intent.setClassName("com.android.launcher", "com.android.launcher2.Launcher");
+            startActivity(intent);
+        }
         super.onStop();
     }
 
@@ -149,6 +153,25 @@ public class QGCActivity extends QtActivity
     }
 
     public static void restoreScreenOn() {
+    }
+
+    public static void endThis() {
+        letItExit = true;
+        Intent intent = new Intent();
+        intent.setClassName("com.android.launcher", "com.android.launcher2.Launcher");
+        m_instance.startActivity(intent);
+        m_instance.finish();
+    }
+
+    public static void launchFactoryTest() {
+        Intent launchIntent = m_instance.getPackageManager().getLaunchIntentForPackage("com.yuneec.flightcontrolmodetest");
+        if (launchIntent != null) {
+            letItExit = true;
+            m_instance.startActivity(launchIntent);
+            m_instance.finish();
+        } else {
+            Log.i(TAG, "com.yuneec.flightcontrolmodetest not found.");
+        }
     }
 
     private boolean isYuneecInstalled() {

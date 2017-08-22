@@ -56,7 +56,7 @@ QGCView {
         Column {
             id:                 settingsColumn
             width:              qgcView.width
-            spacing:            ScreenTools.defaultFontPixelHeight
+            spacing:            ScreenTools.defaultFontPixelHeight * 0.5
             anchors.margins:    ScreenTools.defaultFontPixelWidth
             anchors.centerIn:   parent
             //-----------------------------------------------------------------
@@ -217,9 +217,35 @@ QGCView {
                     }
                 }
             }
+            //-----------------------------------------------------------------
+            Rectangle {
+                height:         factoryRow.height * 2
+                width:          ScreenTools.defaultFontPixelWidth * 80
+                color:          qgcPal.windowShade
+                visible:        QGroundControl.corePlugin.showAdvancedUI
+                anchors.horizontalCenter: parent.horizontalCenter
+                Row {
+                    id:         factoryRow
+                    spacing:    ScreenTools.defaultFontPixelWidth * 4
+                    anchors.centerIn: parent
+                    QGCButton {
+                        text:   qsTr("Factory Test")
+                        width:   _buttonWidth
+                        anchors.verticalCenter: parent.verticalCenter
+                        onClicked: {
+                            TyphoonHQuickInterface.factoryTest()
+                        }
+                    }
+                    QGCLabel {
+                        text:   qsTr("Enter Factory Test")
+                        width:   _textWidth
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+            }
             Item {
                 width:  1
-                height: ScreenTools.defaultFontPixelHeight
+                height: ScreenTools.defaultFontPixelHeight * 0.5
             }
             GridLayout {
                 anchors.margins:    ScreenTools.defaultFontPixelHeight
