@@ -251,6 +251,10 @@ Vehicle::Vehicle(LinkInterface*             link,
     _cameras = _firmwarePlugin->createCameraManager(this);
     emit dynamicCamerasChanged();
 
+    connect(&_adsbTimer, &QTimer::timeout, this, &Vehicle::_adsbTimerTimeout);
+    _adsbTimer.setSingleShot(false);
+    _adsbTimer.start(1000);
+
     _airMapController = new AirMapController(this);
     connect(qgcApp()->toolbox()->airMapManager(), &AirMapManager::trafficUpdate, this, &Vehicle::_trafficUpdate);
 }
@@ -2928,7 +2932,6 @@ void Vehicle::_trafficUpdate(QString traffic_id, QString vehicle_id, QGeoCoordin
     Q_UNUSED(vehicle_id);
     // qDebug() << "traffic update:" << traffic_id << vehicle_id << heading << location;
     // TODO: filter based on minimum altitude?
-    // TODO: remove a vehicle after a timeout?
     if (_trafficVehicleMap.contains(traffic_id)) {
         _trafficVehicleMap[traffic_id]->update(location, heading);
     } else {
@@ -2937,6 +2940,20 @@ void Vehicle::_trafficUpdate(QString traffic_id, QString vehicle_id, QGeoCoordin
         _adsbVehicles.append(vehicle);
     }
 
+}
+void Vehicle::_adsbTimerTimeout()
+{
+    // TODO: take into account _adsbICAOMap as well? Needs to be tested, especially the timeout
+
+    for (auto it = _trafficVehicleMap.begin(); it != _trafficVehicleMap.end();) {
+        if (it.value()->expired()) {
+            _adsbVehicles.removeOne(it.value());
+            delete it.value();
+            it = _trafficVehicleMap.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
