@@ -551,7 +551,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel {
                     id:             gimbalLabel
-                    text:           _gimbalPitch ? -_gimbalPitch.toFixed(0) : 0
+                    text:           _gimbalPitch ? _gimbalPitch.toFixed(0) : 0
                     color:          qgcPal.text
                     anchors.centerIn: parent
                 }
