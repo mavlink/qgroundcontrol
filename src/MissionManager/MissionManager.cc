@@ -1076,12 +1076,13 @@ void MissionManager::generateResumeMission(int resumeIndex)
             foundCameraStartStop = true;
             break;
         case MAV_CMD_IMAGE_START_CAPTURE:
-            // Only keep the first of these commands that are found
-            if (foundCameraStartStop) {
-                resumeMission.removeAt(prefixCommandCount);
-            }
             if (resumeItem->param3() != 0) {
-                // Remove commands which do no trigger by time
+                // Remove commands which do not trigger by time
+                resumeMission.removeAt(prefixCommandCount);
+                break;
+            }
+            if (foundCameraStartStop) {
+                // Only keep the first of these commands that are found
                 resumeMission.removeAt(prefixCommandCount);
             }
             foundCameraStartStop = true;
