@@ -63,8 +63,13 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _distSensorMax(0)
     , _distSensorCur(0)
     , _obsState(false)
+    , _isFactoryApp(false)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
+#if defined __android__
+    reset_jni();
+    _isFactoryApp = (bool)QAndroidJniObject::callStaticMethod<jboolean>(jniClassName, "isFactoryAppInstalled");
+#endif
 }
 
 //-----------------------------------------------------------------------------

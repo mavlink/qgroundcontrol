@@ -174,6 +174,16 @@ public class QGCActivity extends QtActivity
         }
     }
 
+    public static boolean isFactoryAppInstalled() {
+        try {
+            PackageManager pm = m_instance.getPackageManager();
+            pm.getPackageInfo("com.yuneec.flightcontrolmodetest", 0);
+            return true;
+        } catch (NameNotFoundException e) {
+            return false;
+        }
+    }
+
     private boolean isYuneecInstalled() {
         /*
         try {

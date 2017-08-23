@@ -222,7 +222,7 @@ QGCView {
                 height:         factoryRow.height * 2
                 width:          ScreenTools.defaultFontPixelWidth * 80
                 color:          qgcPal.windowShade
-                visible:        QGroundControl.corePlugin.showAdvancedUI
+                visible:        QGroundControl.corePlugin.showAdvancedUI && TyphoonHQuickInterface.isFactoryApp
                 anchors.horizontalCenter: parent.horizontalCenter
                 Row {
                     id:         factoryRow
