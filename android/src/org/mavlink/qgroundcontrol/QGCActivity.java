@@ -84,7 +84,7 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
                 @Override
                 public void onNewData(final byte[] dataA, int userDataA)
                 {
-                    Log.d(TAG, "UsbIoManager.Listener.onNewData: read " + dataA.length + " bytes");
+                    // IK: Log.d(TAG, "UsbIoManager.Listener.onNewData: read " + dataA.length + " bytes");
                     nativeDeviceNewData(userDataA, dataA);
                 }
             };
@@ -199,13 +199,13 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
         //  MAKE SURE WE HAVE ENTRIES
         if (m_devices.size() <= 0)
         {
-            //Log.e(TAG, "No USB devices found");
+            // Log.e(TAG, "No USB devices found");
             return null;
         }
 
         if (m_openedDevices == null)
         {
-            Log.e(TAG, "m_openedDevices is null");
+            // Log.e(TAG, "m_openedDevices is null");
             return null;
         }
 
@@ -494,9 +494,9 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
 
         try
         {
-            Log.d(TAG, "write: about to write " + sourceA.length + " bytes");
+            // Log.d(TAG, "write: about to write " + sourceA.length + " bytes");
             int bytesWritten = driverL.write(sourceA, timeoutMSecA);
-            Log.d(TAG, "write: successfully written " + bytesWritten + " bytes");
+            // Log.d(TAG, "write: successfully written " + bytesWritten + " bytes");
             return bytesWritten;
         }
         catch(IOException eA)
