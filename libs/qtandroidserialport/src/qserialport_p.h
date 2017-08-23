@@ -48,9 +48,14 @@
 //
 
 #include "qserialport.h"
+#include "private/qringbuffer_p.h"
+
+
+#include <QDebug>
 
 QT_BEGIN_NAMESPACE
 
+  
 class QGCRingBuffer
 {
 public:
@@ -318,8 +323,8 @@ public:
     int timeoutValue(int msecs, int elapsed);
 
     qint64 readBufferMaxSize;
-    QGCRingBuffer readBuffer;
-    QGCRingBuffer writeBuffer;
+    QRingBuffer readBuffer;
+    QRingBuffer writeBuffer;
     QSerialPort::SerialPortError error;
     QString systemLocation;
     qint32 inputBaudRate;
