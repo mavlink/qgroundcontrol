@@ -1006,7 +1006,6 @@ void MissionManager::generateResumeMission(int resumeIndex)
     }
     resumeIndex = qMax(0, resumeIndex);
 
-    int seqNum = 0;
     QList<MissionItem*> resumeMission;
 
     QList<MAV_CMD> includedResumeCommands;
@@ -1029,7 +1028,6 @@ void MissionManager::generateResumeMission(int resumeIndex)
                            << MAV_CMD_NAV_TAKEOFF;
 
     bool addHomePosition = _vehicle->firmwarePlugin()->sendHomePositionToVehicle();
-    int setCurrentIndex = addHomePosition ? 1 : 0;
 
     int prefixCommandCount = 0;
     for (int i=0; i<_missionItems.count(); i++) {
@@ -1039,8 +1037,7 @@ void MissionManager::generateResumeMission(int resumeIndex)
                 prefixCommandCount++;
             }
             MissionItem* newItem = new MissionItem(*oldItem, this);
-            newItem->setIsCurrentItem( i == setCurrentIndex);
-            newItem->setSequenceNumber(seqNum++);
+            newItem->setIsCurrentItem(false);
             resumeMission.append(newItem);
         }
     }
@@ -1095,6 +1092,14 @@ void MissionManager::generateResumeMission(int resumeIndex)
 
         prefixCommandCount--;
     }
+
+    // Adjust sequence numbers and current item
+    int seqNum = 0;
+    for (int i=0; i<resumeMission.count(); i++) {
+        resumeMission[i]->setSequenceNumber(seqNum++);
+    }
+    int setCurrentIndex = addHomePosition ? 1 : 0;
+    resumeMission[setCurrentIndex]->setIsCurrentItem(true);
 
     // Send to vehicle
     _clearAndDeleteWriteMissionItems();
