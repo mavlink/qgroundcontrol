@@ -156,6 +156,7 @@ public:
     Q_PROPERTY(QString          flightTime      READ    flightTime          NOTIFY flightTimeChanged)
     Q_PROPERTY(bool             copyingFiles    READ    copyingFiles        NOTIFY copyingFilesChanged)
     Q_PROPERTY(int              copyResult      READ    copyResult          NOTIFY copyResultChanged)
+    Q_PROPERTY(bool             isFactoryApp    READ    isFactoryApp        CONSTANT)
 
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
 
@@ -245,6 +246,7 @@ public:
     int         copyResult          () { return _copyResult; }
     bool        wifiAlertEnabled    () { return _wifiAlertEnabled; }
     bool        rcActive            ();
+    bool        isFactoryApp        () { return _isFactoryApp; }
 
     void        init                (TyphoonHM4Interface* pHandler);
     void        setWifiAlertEnabled (bool enabled) { _wifiAlertEnabled = enabled; emit wifiAlertEnabledChanged(); }
@@ -406,4 +408,5 @@ private:
     int                     _distSensorMax;
     int                     _distSensorCur;
     bool                    _obsState;
+    bool                    _isFactoryApp;
 };
