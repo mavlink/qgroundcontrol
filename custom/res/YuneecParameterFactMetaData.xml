@@ -2010,7 +2010,6 @@ but also ignore less noise</short_desc>
         <value code="0">None</value>
         <value code="3">Return to Launch</value>
         <value code="2">Loiter</value>
-        <value code="4">Flight terminate</value>
       </values>
     </parameter>
     <parameter default="0" name="GF_ALTMODE" type="INT32">
