@@ -443,7 +443,7 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         return true;
     } else if (metaData.name() == AppSettings::telemetrySaveName) {
         metaData.setRawDefaultValue(true);
-        return false;
+        return true;
     } else if (metaData.name() == AppSettings::appFontPointSizeName) {
 #if defined(__androidx86__)
         int defaultFontPointSize = 16;
