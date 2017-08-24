@@ -36,6 +36,9 @@ public:
     Q_PROPERTY(Fact* indoorPalette                      READ indoorPalette                      CONSTANT)
     Q_PROPERTY(Fact* showLargeCompass                   READ showLargeCompass                   CONSTANT)
     Q_PROPERTY(Fact* savePath                           READ savePath                           CONSTANT)
+    Q_PROPERTY(Fact* userBrandImageIndoor               READ userBrandImageIndoor               CONSTANT)
+    Q_PROPERTY(Fact* userBrandImageOutdoor              READ userBrandImageOutdoor              CONSTANT)
+    Q_PROPERTY(Fact* userBrandImageLinked               READ userBrandImageLinked               CONSTANT)
     Q_PROPERTY(Fact* autoLoadMissions                   READ autoLoadMissions                   CONSTANT)
     Q_PROPERTY(Fact* mapboxToken                        READ mapboxToken                        CONSTANT)
     Q_PROPERTY(Fact* esriToken                          READ esriToken                          CONSTANT)
@@ -71,6 +74,9 @@ public:
     Fact* indoorPalette                     (void);
     Fact* showLargeCompass                  (void);
     Fact* savePath                          (void);
+    Fact* userBrandImageIndoor              (void);
+    Fact* userBrandImageOutdoor             (void);
+    Fact* userBrandImageLinked              (void);
     Fact* autoLoadMissions                  (void);
     Fact* mapboxToken                       (void);
     Fact* esriToken                         (void);
@@ -103,6 +109,9 @@ public:
     static const char* indoorPaletteName;
     static const char* showLargeCompassName;
     static const char* savePathName;
+    static const char* userBrandImageIndoorName;
+    static const char* userBrandImageOutdoorName;
+    static const char* userBrandImageLinkedName;
     static const char* autoLoadMissionsName;
     static const char* mapboxTokenName;
     static const char* esriTokenName;
@@ -150,6 +159,9 @@ private:
     SettingsFact* _indoorPaletteFact;
     SettingsFact* _showLargeCompassFact;
     SettingsFact* _savePathFact;
+    SettingsFact* _userBrandImageIndoorFact;
+    SettingsFact* _userBrandImageOutdoorFact;
+    SettingsFact* _userBrandImageLinkedFact;
     SettingsFact* _autoLoadMissionsFact;
     SettingsFact* _mapboxTokenFact;
     SettingsFact* _esriTokenFact;

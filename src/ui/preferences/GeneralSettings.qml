@@ -34,6 +34,9 @@ QGCView {
 
     property Fact _percentRemainingAnnounce:    QGroundControl.settingsManager.appSettings.batteryPercentRemainingAnnounce
     property Fact _savePath:                    QGroundControl.settingsManager.appSettings.savePath
+    property Fact _userBrandImageIndoor:        QGroundControl.settingsManager.appSettings.userBrandImageIndoor
+    property Fact _userBrandImageOutdoor:       QGroundControl.settingsManager.appSettings.userBrandImageOutdoor
+    property Fact _userBrandImageLinked:        QGroundControl.settingsManager.appSettings.userBrandImageLinked
     property Fact _appFontPointSize:            QGroundControl.settingsManager.appSettings.appFontPointSize
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
@@ -651,6 +654,130 @@ QGCView {
                                 width:              _editFieldWidth
                                 fact:               QGroundControl.settingsManager.videoSettings.recordingFormat
                                 anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                    }
+                }
+
+                //-----------------------------------------------------------------
+                //-- Custom Brand Image
+                Item {
+                    width:                      _qgcView.width * 0.8
+                    height:                     userBrandImageLabel.height
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    !ScreenTools.isMobile
+                    QGCLabel {
+                        id:             userBrandImageLabel
+                        text:           qsTr("Brand Image")
+                        font.family:    ScreenTools.demiboldFontFamily
+                    }
+                }
+                Rectangle {
+                    height:                     userBrandImageCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:                      _qgcView.width * 0.8
+                    color:                      qgcPal.windowShade
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    !ScreenTools.isMobile
+
+                    Column {
+                        id:         userBrandImageCol
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        anchors.centerIn: parent
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    _userBrandImageIndoor.visible
+
+                            QGCLabel {
+                                anchors.baseline:   userBrandImageIndoorBrowse.baseline
+                                width:              _labelWidth*1.5
+                                text:               qsTr("Indoor Brand Image Path:")
+                            }
+                            QGCTextField {
+                                anchors.baseline:   userBrandImageIndoorBrowse.baseline
+                                readOnly:           true
+                                width:              _editFieldWidth
+                                text:               QGroundControl.settingsManager.appSettings.userBrandImageIndoor.valueString.replace("file:///","")
+                            }
+                            QGCButton {
+                                id:         userBrandImageIndoorBrowse
+                                text:       "Browse"
+                                onClicked:  userBrandImageIndoorBrowseDialog.openForLoad()
+
+                                QGCFileDialog {
+                                    id:             userBrandImageIndoorBrowseDialog
+                                    qgcView:        _qgcView
+                                    title:          qsTr("Choose custom brand image file:")
+                                    folder:         _userBrandImageIndoor.rawValue.replace("file:///","")
+                                    selectExisting: true
+                                    selectFolder:   false
+
+                                    onAcceptedForLoad: {
+                                        _userBrandImageIndoor.rawValue = "file:///" + file
+                                        if(_userBrandImageLinked.value) {
+                                            _userBrandImageOutdoor.rawValue = _userBrandImageIndoor.rawValue
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    _userBrandImageOutdoor.visible
+                            enabled:    !_userBrandImageLinked.value
+
+                            QGCLabel {
+                                anchors.baseline:   userBrandImageOutdoorBrowse.baseline
+                                width:              _labelWidth*1.5
+                                text:               qsTr("Outdoor Brand Image Path:")
+                            }
+                            QGCTextField {
+                                anchors.baseline:   userBrandImageOutdoorBrowse.baseline
+                                readOnly:           true
+                                width:              _editFieldWidth
+                                text:               QGroundControl.settingsManager.appSettings.userBrandImageOutdoor.valueString.replace("file:///","")
+                            }
+                            QGCButton {
+                                id:         userBrandImageOutdoorBrowse
+                                text:       "Browse"
+                                onClicked:  userBrandImageOutdoorBrowseDialog.openForLoad()
+
+                                QGCFileDialog {
+                                    id:             userBrandImageOutdoorBrowseDialog
+                                    qgcView:        _qgcView
+                                    title:          qsTr("Choose custom brand image file:")
+                                    folder:         _userBrandImageOutdoor.rawValue.replace("file:///","")
+                                    selectExisting: true
+                                    selectFolder:   false
+
+                                    onAcceptedForLoad: _userBrandImageOutdoor.rawValue = "file:///" + file
+                                }
+                            }
+                        }
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    _userBrandImageIndoor.visible
+
+                            FactCheckBox {
+                                text:       qsTr("Link Brand Images")
+                                width:      _labelWidth*1.5
+                                visible:    _userBrandImageLinked.visible
+                                fact:       _userBrandImageLinked
+                                onClicked: {
+                                    if(_userBrandImageLinked.value) {
+                                        _userBrandImageOutdoor.rawValue = _userBrandImageIndoor.rawValue
+                                    }
+                                }
+                            }
+
+                            QGCButton {
+                                id:         userBrandImageReset
+                                text:       "Reset Default Brand Image"
+                                onClicked:  {
+                                    _userBrandImageIndoor.rawValue = ""
+                                    _userBrandImageOutdoor.rawValue = ""
+                                }
                             }
                         }
                     }
