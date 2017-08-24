@@ -63,7 +63,8 @@ Item {
     }
 
     function showSettingsView() {
-        resetCustomDialog()
+        mainWindow.enableToolbar()
+        rootLoader.sourceComponent = null
         if(currentPopUp) {
             currentPopUp.close()
         }
@@ -78,7 +79,8 @@ Item {
     }
 
     function showSetupView() {
-        resetCustomDialog()
+        mainWindow.enableToolbar()
+        rootLoader.sourceComponent = null
         if(currentPopUp) {
             currentPopUp.close()
         }
@@ -93,7 +95,8 @@ Item {
     }
 
     function showPlanView() {
-        resetCustomDialog()
+        mainWindow.enableToolbar()
+        rootLoader.sourceComponent = null
         if(currentPopUp) {
             currentPopUp.close()
         }
@@ -107,7 +110,8 @@ Item {
     }
 
     function showFlyView() {
-        resetCustomDialog()
+        mainWindow.enableToolbar()
+        rootLoader.sourceComponent = null
         if(currentPopUp) {
             currentPopUp.close()
         }
@@ -118,7 +122,8 @@ Item {
     }
 
     function showAnalyzeView() {
-        resetCustomDialog()
+        mainWindow.enableToolbar()
+        rootLoader.sourceComponent = null
         if(currentPopUp) {
             currentPopUp.close()
         }
@@ -146,20 +151,6 @@ Item {
         } else {
             mainWindow.reallyClose()
         }
-    }
-
-    function showCustomDialog(dlg) {
-        rootLoader.sourceComponent = dlg
-    }
-
-    function closeCustomDialog() {
-        mainWindow.enableToolbar()
-        rootLoader.sourceComponent = null
-    }
-
-    function resetCustomDialog() {
-        rootLoader.sourceComponent = null
-        mainWindow.enableToolbar()
     }
 
     MessageDialog {
@@ -237,7 +228,8 @@ Item {
     }
 
     function showMessageArea() {
-        mainWindow.resetCustomDialog()
+        mainWindow.enableToolbar()
+        rootLoader.sourceComponent = null
         var currentlyVisible = messageArea.visible
         if(currentPopUp) {
             currentPopUp.close()
@@ -258,7 +250,8 @@ Item {
     }
 
     function showPopUp(dropItem, centerX) {
-        mainWindow.resetCustomDialog()
+        mainWindow.enableToolbar()
+        rootLoader.sourceComponent = null
         var oldIndicator = indicatorDropdown.sourceComponent
         if(currentPopUp) {
             currentPopUp.close()
