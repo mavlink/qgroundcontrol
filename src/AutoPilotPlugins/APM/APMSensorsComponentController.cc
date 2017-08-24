@@ -588,11 +588,7 @@ void APMSensorsComponentController::nextClicked(void)
                                       &msg,
                                       0,    // command
                                       1,    // result
-                                      0,    // progress
-    //-- TODO: This below is new and I don't know what it is nor have to time to deal with it
-                                      0,    // int32_t result_param2
-                                      0,    // uint8_t target_system
-                                      0);   // uint8_t target_component
+                                      0);   // progress
 
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 
