@@ -573,7 +573,7 @@ QGCView {
 
             /// Close all dialogs
             function closeAll() {
-                rootLoader.sourceComponent  = null
+                mainWindow.resetCustomDialog()
                 guidedActionConfirm.visible = false
                 guidedActionList.visible    = false
                 altitudeSlider.visible      = false

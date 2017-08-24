@@ -63,7 +63,7 @@ Item {
     }
 
     function showSettingsView() {
-        rootLoader.sourceComponent = null
+        resetCustomDialog()
         if(currentPopUp) {
             currentPopUp.close()
         }
@@ -78,7 +78,7 @@ Item {
     }
 
     function showSetupView() {
-        rootLoader.sourceComponent = null
+        resetCustomDialog()
         if(currentPopUp) {
             currentPopUp.close()
         }
@@ -93,7 +93,7 @@ Item {
     }
 
     function showPlanView() {
-        rootLoader.sourceComponent = null
+        resetCustomDialog()
         if(currentPopUp) {
             currentPopUp.close()
         }
@@ -107,7 +107,7 @@ Item {
     }
 
     function showFlyView() {
-        rootLoader.sourceComponent = null
+        resetCustomDialog()
         if(currentPopUp) {
             currentPopUp.close()
         }
@@ -118,7 +118,7 @@ Item {
     }
 
     function showAnalyzeView() {
-        rootLoader.sourceComponent = null
+        resetCustomDialog()
         if(currentPopUp) {
             currentPopUp.close()
         }
@@ -146,6 +146,20 @@ Item {
         } else {
             mainWindow.reallyClose()
         }
+    }
+
+    function showCustomDialog(dlg) {
+        rootLoader.sourceComponent = dlg
+    }
+
+    function closeCustomDialog() {
+        mainWindow.enableToolbar()
+        rootLoader.sourceComponent = null
+    }
+
+    function resetCustomDialog() {
+        rootLoader.sourceComponent = null
+        mainWindow.enableToolbar()
     }
 
     MessageDialog {
@@ -223,7 +237,7 @@ Item {
     }
 
     function showMessageArea() {
-        rootLoader.sourceComponent = null
+        mainWindow.resetCustomDialog()
         var currentlyVisible = messageArea.visible
         if(currentPopUp) {
             currentPopUp.close()
@@ -244,7 +258,7 @@ Item {
     }
 
     function showPopUp(dropItem, centerX) {
-        rootLoader.sourceComponent = null
+        mainWindow.resetCustomDialog()
         var oldIndicator = indicatorDropdown.sourceComponent
         if(currentPopUp) {
             currentPopUp.close()
