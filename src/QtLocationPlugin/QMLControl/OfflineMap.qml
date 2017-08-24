@@ -958,7 +958,7 @@ QGCView {
                 visible:        !ScreenTools.isMobile
                 onClicked: {
                     QGroundControl.mapEngineManager.importAction = QGCMapEngineManager.ActionNone
-                    rootLoader.sourceComponent = importDialog
+                    mainWindow.showCustomDialog(importDialog)
                 }
             }
             QGCButton {
@@ -1032,7 +1032,7 @@ QGCView {
                 onClicked: {
                     showList();
                     if(QGroundControl.mapEngineManager.exportSets()) {
-                        rootLoader.sourceComponent = exportToDiskProgress
+                        mainWindow.showCustomDialog(exportToDiskProgress)
                     }
                 }
             }
@@ -1090,7 +1090,7 @@ QGCView {
                         visible:        !QGroundControl.mapEngineManager.exporting
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: {
-                            rootLoader.sourceComponent = null
+                            mainWindow.closeCustomDialog()
                         }
                     }
                 }
@@ -1173,7 +1173,7 @@ QGCView {
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: {
                             showList();
-                            rootLoader.sourceComponent = null
+                            mainWindow.closeCustomDialog()
                         }
                     }
                     Row {
@@ -1186,7 +1186,7 @@ QGCView {
                             onClicked: {
                                 if(!QGroundControl.mapEngineManager.importSets()) {
                                     showList();
-                                    rootLoader.sourceComponent = null
+                                    mainWindow.closeCustomDialog()
                                 }
                             }
                         }
@@ -1195,7 +1195,7 @@ QGCView {
                             width:          _bigButtonSize * 1.25
                             onClicked: {
                                 showList();
-                                rootLoader.sourceComponent = null
+                                mainWindow.closeCustomDialog()
                             }
                         }
                     }
