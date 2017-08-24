@@ -958,7 +958,7 @@ QGCView {
                 visible:        !ScreenTools.isMobile
                 onClicked: {
                     QGroundControl.mapEngineManager.importAction = QGCMapEngineManager.ActionNone
-                    mainWindow.showCustomDialog(importDialog)
+                    rootLoader.sourceComponent = importDialog
                 }
             }
             QGCButton {
@@ -1032,7 +1032,7 @@ QGCView {
                 onClicked: {
                     showList();
                     if(QGroundControl.mapEngineManager.exportSets()) {
-                        mainWindow.showCustomDialog(exportToDiskProgress)
+                        rootLoader.sourceComponent = exportToDiskProgress
                     }
                 }
             }
@@ -1090,7 +1090,8 @@ QGCView {
                         visible:        !QGroundControl.mapEngineManager.exporting
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: {
-                            mainWindow.closeCustomDialog()
+                            mainWindow.enableToolbar()
+                            rootLoader.sourceComponent = null
                         }
                     }
                 }
@@ -1173,7 +1174,8 @@ QGCView {
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: {
                             showList();
-                            mainWindow.closeCustomDialog()
+                            mainWindow.enableToolbar()
+                            rootLoader.sourceComponent = null
                         }
                     }
                     Row {
@@ -1186,7 +1188,8 @@ QGCView {
                             onClicked: {
                                 if(!QGroundControl.mapEngineManager.importSets()) {
                                     showList();
-                                    mainWindow.closeCustomDialog()
+                                    mainWindow.enableToolbar()
+                                    rootLoader.sourceComponent = null
                                 }
                             }
                         }
@@ -1195,7 +1198,8 @@ QGCView {
                             width:          _bigButtonSize * 1.25
                             onClicked: {
                                 showList();
-                                mainWindow.closeCustomDialog()
+                                mainWindow.enableToolbar()
+                                rootLoader.sourceComponent = null
                             }
                         }
                     }
