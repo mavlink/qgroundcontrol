@@ -36,8 +36,6 @@ const char* AppSettings::autoLoadMissionsName =                         "AutoLoa
 const char* AppSettings::mapboxTokenName =                              "MapboxToken";
 const char* AppSettings::esriTokenName =                                "EsriToken";
 const char* AppSettings::defaultFirmwareTypeName =                      "DefaultFirmwareType";
-const char* AppSettings::mavlink2SigningName =                          "Mavlink2Signing";
-const char* AppSettings::mavlink2SigningKeyName =                       "Mavlink2SigningKey";
 
 const char* AppSettings::parameterFileExtension =   "params";
 const char* AppSettings::planFileExtension =        "plan";
@@ -56,28 +54,26 @@ const char* AppSettings::videoDirectory =           "Video";
 
 AppSettings::AppSettings(QObject* parent)
     : SettingsGroup(appSettingsGroupName, QString() /* root settings group */, parent)
-    , _offlineEditingFirmwareTypeFact       (NULL)
-    , _offlineEditingVehicleTypeFact        (NULL)
-    , _offlineEditingCruiseSpeedFact        (NULL)
-    , _offlineEditingHoverSpeedFact         (NULL)
-    , _offlineEditingAscentSpeedFact        (NULL)
-    , _offlineEditingDescentSpeedFact       (NULL)
-    , _batteryPercentRemainingAnnounceFact  (NULL)
-    , _defaultMissionItemAltitudeFact       (NULL)
-    , _telemetrySaveFact                    (NULL)
-    , _telemetrySaveNotArmedFact            (NULL)
-    , _audioMutedFact                       (NULL)
-    , _virtualJoystickFact                  (NULL)
-    , _appFontPointSizeFact                 (NULL)
-    , _indoorPaletteFact                    (NULL)
-    , _showLargeCompassFact                 (NULL)
-    , _savePathFact                         (NULL)
-    , _autoLoadMissionsFact                 (NULL)
-    , _mapboxTokenFact                      (NULL)
-    , _esriTokenFact                        (NULL)
-    , _defaultFirmwareTypeFact              (NULL)
-    , _mavlink2Signing                      (NULL)
-    , _mavlink2SigningKey                   (NULL)
+    , _offlineEditingFirmwareTypeFact(NULL)
+    , _offlineEditingVehicleTypeFact(NULL)
+    , _offlineEditingCruiseSpeedFact(NULL)
+    , _offlineEditingHoverSpeedFact(NULL)
+    , _offlineEditingAscentSpeedFact(NULL)
+    , _offlineEditingDescentSpeedFact(NULL)
+    , _batteryPercentRemainingAnnounceFact(NULL)
+    , _defaultMissionItemAltitudeFact(NULL)
+    , _telemetrySaveFact(NULL)
+    , _telemetrySaveNotArmedFact(NULL)
+    , _audioMutedFact(NULL)
+    , _virtualJoystickFact(NULL)
+    , _appFontPointSizeFact(NULL)
+    , _indoorPaletteFact(NULL)
+    , _showLargeCompassFact(NULL)
+    , _savePathFact(NULL)
+    , _autoLoadMissionsFact(NULL)
+    , _mapboxTokenFact(NULL)
+    , _esriTokenFact(NULL)
+    , _defaultFirmwareTypeFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
@@ -391,22 +387,4 @@ Fact* AppSettings::defaultFirmwareType(void)
     }
 
     return _defaultFirmwareTypeFact;
-}
-
-Fact* AppSettings::mavlink2Signing(void)
-{
-    if (!_mavlink2Signing) {
-        _mavlink2Signing = _createSettingsFact(mavlink2SigningName);
-    }
-
-    return _mavlink2Signing;
-}
-
-Fact* AppSettings::mavlink2SigningKey(void)
-{
-    if (!_mavlink2SigningKey) {
-        _mavlink2SigningKey = _createSettingsFact(mavlink2SigningKeyName);
-    }
-
-    return _mavlink2SigningKey;
 }
