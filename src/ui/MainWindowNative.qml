@@ -19,6 +19,9 @@ Window {
     id:         _rootWindow
     visible:    true
 
+    width: 1280
+    height: 780
+
     property bool _forceClose: false
 
     onClosing: {

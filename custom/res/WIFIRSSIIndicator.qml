@@ -33,8 +33,8 @@ Item {
     property bool _isAP:        _hasWifi && !TyphoonHQuickInterface.isTyphoon
 
     function hideWiFiManagement() {
-        rootLoader.sourceComponent = null
         mainWindow.enableToolbar()
+        rootLoader.sourceComponent = null
     }
 
     Component {
@@ -84,7 +84,6 @@ Item {
                     text:   "Link Management"
                     onClicked: {
                         rootLoader.sourceComponent = wifiManagement
-                        mainWindow.disableToolbar()
                         if(mainWindow.currentPopUp) {
                             mainWindow.currentPopUp.close()
                         }
@@ -167,6 +166,7 @@ Item {
                 rootLoader.width  = wifiManagementItem.width
                 rootLoader.height = wifiManagementItem.height
                 Qt.inputMethod.hide();
+                mainWindow.disableToolbar()
             }
 
             MouseArea {
@@ -574,11 +574,10 @@ Item {
                 var centerX = mapToItem(toolBar, x, y).x + (width / 2)
                 mainWindow.showPopUp(wifiRSSIInfo, centerX)
             } else {
-                rootLoader.sourceComponent = wifiManagement
-                mainWindow.disableToolbar()
                 if(mainWindow.currentPopUp) {
                     mainWindow.currentPopUp.close()
                 }
+                rootLoader.sourceComponent = wifiManagement
             }
         }
     }

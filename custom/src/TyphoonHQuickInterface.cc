@@ -6,6 +6,8 @@
  */
 
 #include "QGCApplication.h"
+#include "MultiVehicleManager.h"
+#include "Vehicle.h"
 #include "AppSettings.h"
 #include "SettingsManager.h"
 #include "MAVLinkLogManager.h"
@@ -22,10 +24,13 @@
 #include <QtAndroidExtras/QtAndroidExtras>
 #include <QtAndroidExtras/QAndroidJniObject>
 extern const char* jniClassName;
+#else
+#include <QDesktopServices>
 #endif
 
 static const char* kWifiConfig  = "WifiConfig";
 static const char* kUpdateCheck = "YuneecUpdateCheck";
+static const char* kFirstRun    = "FirstRun";
 
 #if defined __android__
 static const char* kUpdateFile = "/storage/sdcard1/update.zip";
@@ -43,6 +48,10 @@ reset_jni()
     }
 }
 #endif
+
+#define FIRMWARE_FORCE_UPDATE_MAJOR 1
+#define FIRMWARE_FORCE_UPDATE_MINOR 1
+#define FIRMWARE_FORCE_UPDATE_PATCH 0
 
 //-----------------------------------------------------------------------------
 TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
@@ -64,6 +73,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _distSensorCur(0)
     , _obsState(false)
     , _isFactoryApp(false)
+    , _updateShown(false)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
 #if defined __android__
@@ -113,9 +123,10 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(_pHandler, &TyphoonHM4Interface::calibrationCompleteChanged,   this, &TyphoonHQuickInterface::_calibrationCompleteChanged);
         connect(_pHandler, &TyphoonHM4Interface::rcActiveChanged,              this, &TyphoonHQuickInterface::_rcActiveChanged);
         connect(_pHandler, &TyphoonHM4Interface::distanceSensor,               this, &TyphoonHQuickInterface::_distanceSensor);
-        connect(&_scanTimer,    &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
-        connect(&_flightTimer,  &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
-        connect(&_powerTimer,   &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
+        connect(getQGCMapEngine(), &QGCMapEngine::internetUpdated,             this, &TyphoonHQuickInterface::_internetUpdated);
+        connect(&_scanTimer,       &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
+        connect(&_flightTimer,     &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
+        connect(&_powerTimer,      &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
         _flightTimer.setSingleShot(false);
         _powerTimer.setSingleShot(true);
         _loadWifiConfigurations();
@@ -142,9 +153,87 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
             }
         }
         _enableThermalVideo();
-        //-- Give some time (15s) and check to see if we need to check for updates.
-        QTimer::singleShot(15000, this, &TyphoonHQuickInterface::_checkUpdateStatus);
     }
+}
+
+//-----------------------------------------------------------------------------
+bool
+TyphoonHQuickInterface::shouldWeShowUpdate()
+{
+    //-- Only show once per session
+    if(_updateShown) {
+        return false;
+    }
+    bool res = false;
+    QSettings settings;
+    bool firstRun = !settings.contains(kFirstRun);
+    //-- If this is the first run, show it.
+    if(firstRun) {
+        settings.setValue(kFirstRun, false);
+        qWarning() << "First run. Force update dialog";
+        res = true;
+        //-- Reset update timer
+        settings.setValue(kUpdateCheck, QDate::currentDate());
+    } else {
+        //-- If we have Internet, reset timer
+        if(getQGCMapEngine()->isInternetActive()) {
+            settings.setValue(kUpdateCheck, QDate::currentDate());
+        } else {
+            QDate lastCheck = settings.value(kUpdateCheck, QDate::currentDate()).toDate();
+            QDate now = QDate::currentDate();
+            if(lastCheck.daysTo(now) > 29) {
+                //-- Reset update timer
+                settings.setValue(kUpdateCheck, QDate::currentDate());
+                //-- It's been too long
+                qWarning() << "Too long since last Internet connection. Force update dialog";
+                res = true;
+            }
+        }
+    }
+    //-- Check firmware version (if any)
+    if(!res) {
+        Vehicle* v = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+        if(v) {
+            uint32_t frver = FIRMWARE_FORCE_UPDATE_MAJOR << 16 | FIRMWARE_FORCE_UPDATE_MINOR << 8 | FIRMWARE_FORCE_UPDATE_PATCH;
+            uint32_t fmver = v->firmwareCustomMajorVersion() << 16 | v->firmwareCustomMinorVersion() << 8 | v->firmwareCustomPatchVersion();
+            if(frver >= fmver) {
+                //-- Reset update timer
+                settings.setValue(kUpdateCheck, QDate::currentDate());
+                //-- Show it as this is the shipping version
+                qWarning() << "Firmware version is shipping version. Force update dialog";
+                res = true;
+            }
+        }
+    }
+    _updateShown = res;
+    return res;
+}
+
+//-----------------------------------------------------------------------------
+bool
+TyphoonHQuickInterface::isInternet()
+{
+    return getQGCMapEngine()->isInternetActive();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_internetUpdated()
+{
+    emit isInternetChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::launchBroswer(QString url)
+{
+#if defined __android__
+    reset_jni();
+    QAndroidJniObject javaSSID = QAndroidJniObject::fromString(url);
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "launchBrowser", "(Ljava/lang/String;)V", javaSSID.object<jstring>());
+#else
+    QDesktopServices::openUrl(QUrl(url));
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1243,23 +1332,6 @@ TyphoonHQuickInterface::_saveWifiConfigurations()
         i++;
      }
     settings.endGroup();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::_checkUpdateStatus()
-{
-    QSettings settings;
-    //-- If we have Internet, reset timer
-    if(getQGCMapEngine()->isInternetActive()) {
-        settings.setValue(kUpdateCheck, QDate::currentDate());
-    } else {
-        QDate lastCheck = settings.value(kUpdateCheck, QDate::currentDate()).toDate();
-        QDate now = QDate::currentDate();
-        if(lastCheck.daysTo(now) > 29) {
-            emit updateAlert();
-        }
-    }
 }
 
 //-----------------------------------------------------------------------------

@@ -80,6 +80,7 @@ Rectangle {
         target: QGroundControl.multiVehicleManager.activeVehicle
         onConnectionLostChanged: {
             if(_communicationLost && rootLoader.sourceComponent === cameraSettingsComponent) {
+                mainWindow.enableToolbar()
                 rootLoader.sourceComponent = null
             }
         }
@@ -132,6 +133,7 @@ Rectangle {
                 anchors.fill:   parent
                 enabled:        !_cameraModeUndefined && _camera.videoStatus !== QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
                 onClicked: {
+                    mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
                     _camera.toggleMode()
                 }
@@ -166,6 +168,7 @@ Rectangle {
                 anchors.fill:   parent
                 enabled:        true //!_cameraModeUndefined
                 onClicked: {
+                    mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
                     if(_cameraVideoMode) {
                         if(_camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) {
@@ -220,11 +223,7 @@ Rectangle {
             MouseArea {
                 anchors.fill:   parent
                 onClicked: {
-                    if(rootLoader.sourceComponent === null) {
-                        rootLoader.sourceComponent = mediaPlayerComponent
-                    } else {
-                        rootLoader.sourceComponent = null
-                    }
+                    rootLoader.sourceComponent = mediaPlayerComponent
                 }
             }
         }
@@ -245,11 +244,7 @@ Rectangle {
                 anchors.fill:   parent
                 enabled:        !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED
                 onClicked: {
-                    if(rootLoader.sourceComponent === null) {
-                        rootLoader.sourceComponent = cameraSettingsComponent
-                    } else {
-                        rootLoader.sourceComponent = null
-                    }
+                    rootLoader.sourceComponent = cameraSettingsComponent
                 }
             }
         }
@@ -269,6 +264,7 @@ Rectangle {
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
+                    mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
                 }
             }
@@ -469,6 +465,7 @@ Rectangle {
                 rootLoader.height = cameraSettingsRect.height
             }
             Keys.onBackPressed: {
+                mainWindow.enableToolbar()
                 rootLoader.sourceComponent = null
             }
         }
@@ -537,7 +534,10 @@ Rectangle {
                         text:           qsTr("Close")
                         width:          ScreenTools.defaultFontPixelWidth  * 10
                         height:         ScreenTools.defaultFontPixelHeight * 2
-                        onClicked:      rootLoader.sourceComponent = null
+                        onClicked: {
+                            mainWindow.enableToolbar()
+                            rootLoader.sourceComponent = null
+                        }
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                 }
@@ -560,6 +560,7 @@ Rectangle {
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
+                    mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
                 }
             }
@@ -684,6 +685,7 @@ Rectangle {
                 rootLoader.height = mediaPlayerItem.height
             }
             Keys.onBackPressed: {
+                mainWindow.enableToolbar()
                 rootLoader.sourceComponent = null
             }
         }
@@ -835,6 +837,7 @@ Rectangle {
                 rootLoader.height = mediaViewItem.height
             }
             Keys.onBackPressed: {
+                mainWindow.enableToolbar()
                 rootLoader.sourceComponent = null
             }
         }

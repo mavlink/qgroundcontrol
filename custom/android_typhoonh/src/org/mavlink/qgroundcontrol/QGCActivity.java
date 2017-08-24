@@ -18,6 +18,7 @@ import android.content.IntentFilter;
 import android.content.BroadcastReceiver;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -231,6 +232,18 @@ public class QGCActivity extends QtActivity
 
     public static float getBatteryLevel() {
         return batteryLevel;
+    }
+
+    public static void launchBrowser(String url) {
+        Log.i(TAG, "launchBrowser(): " + url);
+        Intent launchIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        if (launchIntent != null) {
+            letItExit = true;
+            m_instance.startActivity(launchIntent);
+            m_instance.finish();
+        } else {
+            Log.e(TAG, "Error launching browser.");
+        }
     }
 
     public static void findWifiConfig() {

@@ -89,6 +89,7 @@
         <file alias="YuneecSafetyComponent.qml">src/AutoPilotPlugin/YuneecSafetyComponent.qml</file>
         <file alias="YuneecSafetyComponentSummary.qml">src/AutoPilotPlugin/YuneecSafetyComponentSummary.qml</file>
         <file alias="TyphoonSettings.qml">res/TyphoonSettings.qml</file>
+        <file alias="UpdateDialog.qml">res/UpdateDialog.qml</file>
         <file alias="WIFIRSSIIndicator.qml">res/WIFIRSSIIndicator.qml</file>
         <file alias="YGPSIndicator.qml">res/YGPSIndicator.qml</file>
         <file alias="YuneecFlyView.qml">res/YuneecFlyView.qml</file>
