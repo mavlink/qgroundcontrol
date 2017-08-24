@@ -26,7 +26,6 @@
 #include <QMetaType>
 #include <QDir>
 #include <QFileInfo>
-#include <QCryptographicHash>
 
 #include "MAVLinkProtocol.h"
 #include "UASInterface.h"
@@ -46,16 +45,6 @@ QGC_LOGGING_CATEGORY(MAVLinkProtocolLog, "MAVLinkProtocolLog")
 
 const char* MAVLinkProtocol::_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file
 const char* MAVLinkProtocol::_logFileExtension = "mavlink";             ///< Extension for log files
-
-static mavlink_signing_streams_t signing_streams;
-
-extern "C" {
-static bool accept_unsigned_callback(const mavlink_status_t *status, uint32_t msgId)
-{
-    Q_UNUSED(status);
-    return msgId == MAVLINK_MSG_ID_RADIO_STATUS;
-}
-}
 
 /**
  * The default constructor will create a new MAVLink object sending heartbeats at
@@ -78,7 +67,6 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app, QGCToolbox* toolbox)
     memset(&totalErrorCounter, 0, sizeof(totalErrorCounter));
     memset(&currReceiveCounter, 0, sizeof(currReceiveCounter));
     memset(&currLossCounter, 0, sizeof(currLossCounter));
-    memset(&signing_streams, 0, sizeof(signing_streams));
 }
 
 MAVLinkProtocol::~MAVLinkProtocol()
@@ -93,7 +81,6 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
 
    _linkMgr =               _toolbox->linkManager();
    _multiVehicleManager =   _toolbox->multiVehicleManager();
-   _appSettings =           _toolbox->settingsManager()->appSettings();
 
    qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
 
@@ -174,17 +161,16 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
 //    receiveMutex.lock();
     mavlink_message_t message;
+    mavlink_status_t status;
 
     int mavlinkChannel = link->mavlinkChannel();
-    // the channel mavlink status is needed in other to be able to parse the signed packages
-    mavlink_status_t* mavlinkStatus =  mavlink_get_channel_status(mavlinkChannel);
 
     static int nonmavlinkCount = 0;
     static bool checkedUserNonMavlink = false;
     static bool warnedUserNonMavlink = false;
 
     for (int position = 0; position < b.size(); position++) {
-        unsigned int decodeState = mavlink_parse_char(mavlinkChannel, (uint8_t)(b[position]), &message, mavlinkStatus);
+        unsigned int decodeState = mavlink_parse_char(mavlinkChannel, (uint8_t)(b[position]), &message, &status);
 
         if (decodeState == 0 && !link->decodedFirstMavlinkPacket())
         {
@@ -208,48 +194,10 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
         if (decodeState == 1)
         {
             if (!link->decodedFirstMavlinkPacket()) {
+                mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
                 if (!(mavlinkStatus->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1) && (mavlinkStatus->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)) {
                     qDebug() << "Switching outbound to mavlink 2.0 due to incoming mavlink 2.0 packet:" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
                     mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
-                    // Set all links to v2
-                    // setVersion needs to be re-instated on merge
-                    // setVersion(200);
-                    // Setup mavlink 2 signing
-                    //-- Check if signing is enabled
-                    if (_appSettings->mavlink2Signing()->rawValue().toBool()) {
-                        mavlink_setup_signing_t setupSigning;
-                        //-- Get saved signature seed
-                        QString key = _appSettings->mavlink2SigningKey()->rawValue().toString();
-                        if(key.isEmpty()) {
-                            qWarning() << "MAVLink signing key is empty";
-                        }
-                        setupSigning.target_system = message.sysid;
-                        setupSigning.target_component = message.compid;
-                        setupSigning.initial_timestamp = QDateTime(QDate(2015, 1, 1)).msecsTo(QDateTime::currentDateTimeUtc()) * 100;
-                        memcpy(setupSigning.secret_key, QCryptographicHash::hash(key.toUtf8(), QCryptographicHash::Sha256).data(), 32);
-
-                        mavlink_message_t msg;
-                        mavlink_msg_setup_signing_encode(
-                                    getSystemId(),
-                                    getComponentId(),
-                                    &msg,
-                                    &setupSigning);
-                        uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
-                        int len = mavlink_msg_to_send_buffer(buffer, &msg);
-                        // Send twice in case of lossy connection
-                        link->writeBytesSafe((const char*)buffer, len);
-                        link->writeBytesSafe((const char*)buffer, len);
-
-                        mavlink_signing_t& signing = link->signing;
-                        memcpy(signing.secret_key, setupSigning.secret_key, 32);
-                        signing.link_id = (uint8_t)mavlinkChannel;
-                        signing.timestamp = setupSigning.initial_timestamp;
-                        signing.flags = MAVLINK_SIGNING_FLAG_SIGN_OUTGOING;
-                        signing.accept_unsigned_callback = accept_unsigned_callback;
-
-                        mavlinkStatus->signing = &signing;
-                        mavlinkStatus->signing_streams = &signing_streams;
-                    }
                 }
                 link->setDecodedFirstMavlinkPacket(true);
             }
@@ -414,7 +362,7 @@ void MAVLinkProtocol::_startLogging(void)
     }
 #ifdef __mobile__
     //-- Mobile build don't write to /tmp unless told to do so
-    if (!_appSettings->telemetrySave()->rawValue().toBool()) {
+    if (!_app->toolbox()->settingsManager()->appSettings()->telemetrySave()->rawValue().toBool()) {
         return;
     }
 #endif
@@ -442,8 +390,8 @@ void MAVLinkProtocol::_stopLogging(void)
 {
     if (_tempLogFile.isOpen()) {
         if (_closeLogFile()) {
-            if ((_vehicleWasArmed || _appSettings->telemetrySaveNotArmed()->rawValue().toBool()) &&
-                _appSettings->telemetrySave()->rawValue().toBool()) {
+            if ((_vehicleWasArmed || _app->toolbox()->settingsManager()->appSettings()->telemetrySaveNotArmed()->rawValue().toBool()) &&
+                _app->toolbox()->settingsManager()->appSettings()->telemetrySave()->rawValue().toBool()) {
                 emit saveTelemetryLog(_tempLogFile.fileName());
             } else {
                 QFile::remove(_tempLogFile.fileName());
@@ -491,3 +439,4 @@ void MAVLinkProtocol::deleteTempLogFiles(void)
         QFile::remove(fileInfo.filePath());
     }
 }
+

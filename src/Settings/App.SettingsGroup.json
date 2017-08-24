@@ -162,17 +162,5 @@
     "shortDescription": "Default firmware type for flashing",
     "type":             "uint32",
     "defaultValue":     12
-},
-{
-    "name":             "Mavlink2Signing",
-    "shortDescription": "Use MAVLink 2.0 Signing",
-    "type":             "bool",
-    "defaultValue":     false
-},
-{
-    "name":             "Mavlink2SigningKey",
-    "shortDescription": "MAVLink 2.0 signing key",
-    "type":             "string",
-    "defaultValue":     ""
 }
 ]

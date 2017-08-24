@@ -14,12 +14,11 @@ import QtQuick.Controls.Styles  1.4
 import QtQuick.Dialogs          1.2
 
 import QGroundControl                       1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.FactControls          1.0
 import QGroundControl.FactSystem            1.0
+import QGroundControl.Controls              1.0
+import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Palette               1.0
-import QGroundControl.ScreenTools           1.0
 
 Rectangle {
     id:             __mavlinkRoot
@@ -148,28 +147,6 @@ Rectangle {
                         checked:    QGroundControl.isVersionCheckEnabled
                         onClicked: {
                             QGroundControl.isVersionCheckEnabled = checked
-                        }
-                    }
-                    //-----------------------------------------------------------------
-                    //-- Mavlink 2 signing key
-                    Row {
-                        spacing:  ScreenTools.defaultFontPixelWidth
-                        FactCheckBox {
-                            id:                 signingKeyCheckBox
-                            fact:               _mavlink2Signing
-                            text:               qsTr("MAVLink 2 Signing Key:")
-                            width:              _labelWidth
-                            visible:            _mavlink2Signing.visible
-                            anchors.verticalCenter: parent.verticalCenter
-                            property Fact _mavlink2Signing: QGroundControl.settingsManager.appSettings.mavlink2Signing
-                        }
-                        FactTextField {
-                            id:                 signingKeyField
-                            fact:               _mavlink2SigningKey
-                            enabled:            signingKeyCheckBox.checked
-                            visible:            _mavlink2SigningKey.visible
-                            anchors.verticalCenter: parent.verticalCenter
-                            property Fact _mavlink2SigningKey: QGroundControl.settingsManager.appSettings.mavlink2SigningKey
                         }
                     }
                 }
