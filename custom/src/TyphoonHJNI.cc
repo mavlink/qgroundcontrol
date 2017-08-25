@@ -21,7 +21,7 @@
 #include <QtAndroidExtras/QtAndroidExtras>
 #include <QtAndroidExtras/QAndroidJniObject>
 
-const char* jniClassName = "org/mavlink/qgroundcontrol/QGCActivity";
+const char* jniClassName = "com/yuneec/datapilot/QGCActivity";
 
 //-----------------------------------------------------------------------------
 void

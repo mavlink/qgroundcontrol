@@ -500,7 +500,10 @@ QGCMapEngine::testInternet()
 void
 QGCMapEngine::_internetStatus(bool active)
 {
-    _isInternetActive = active;
+    if(_isInternetActive != active) {
+        _isInternetActive = active;
+        emit internetUpdated();
+    }
 }
 
 // Resolution math: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale

@@ -1,4 +1,4 @@
-package org.mavlink.qgroundcontrol;
+package com.yuneec.datapilot;
 
 import android.app.Activity;
 import android.app.AlertDialog;
