@@ -164,7 +164,7 @@ Rectangle {
             }
             MouseArea {
                 anchors.fill:   parent
-                enabled:        true //!_cameraModeUndefined
+                enabled:        !_emptySD
                 onClicked: {
                     rootLoader.sourceComponent = null
                     if(_cameraVideoMode) {
