@@ -590,6 +590,24 @@ Rectangle {
                 Layout.fillWidth:       true
             }
 
+            FactCheckBox {
+                text:               qsTr("Hover and capture image")
+                fact:               missionItem.hoverAndCapture
+                visible:            missionItem.hoverAndCaptureAllowed
+                Layout.columnSpan:  2
+                onClicked: {
+                    if (checked) {
+                        missionItem.cameraTriggerInTurnaround.rawValue = false
+                    }
+                }
+            }
+
+            FactCheckBox {
+                text:               qsTr("Take images in turnarounds")
+                fact:               missionItem.cameraTriggerInTurnaround
+                enabled:            !missionItem.hoverAndCapture.rawValue
+                Layout.columnSpan:  2
+            }
 
             QGCCheckBox {
                 text:               qsTr("Refly at 90 degree offset")

@@ -342,8 +342,6 @@ QGCView {
 
             property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
 
-            plugin: Plugin { name: "QGroundControl" }
-
             MapRectangle {
                 id:             mapBoundary
                 border.width:   2

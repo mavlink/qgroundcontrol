@@ -90,9 +90,24 @@ void MissionManager::generateResumeMission(int resumeIndex)
         }
     }
 
-    resumeIndex = qMin(resumeIndex, _missionItems.count() - 1);
+    // Be anal about crap input
+    resumeIndex = qMax(0, qMin(resumeIndex, _missionItems.count() - 1));
 
-    int seqNum = 0;
+    // Adjust resume index to be a location based command
+    const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_vehicle, _missionItems[resumeIndex]->command());
+    if (!uiInfo || uiInfo->isStandaloneCoordinate() || !uiInfo->specifiesCoordinate()) {
+        // We have to back up to the last command which the vehicle flies through
+        while (--resumeIndex > 0) {
+            uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_vehicle, _missionItems[resumeIndex]->command());
+            if (uiInfo && (uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate())) {
+                // Found it
+                break;
+            }
+
+        }
+    }
+    resumeIndex = qMax(0, resumeIndex);
+
     QList<MissionItem*> resumeMission;
 
     QList<MAV_CMD> includedResumeCommands;
@@ -110,113 +125,84 @@ void MissionManager::generateResumeMission(int resumeIndex)
                            << MAV_CMD_IMAGE_STOP_CAPTURE
                            << MAV_CMD_VIDEO_START_CAPTURE
                            << MAV_CMD_VIDEO_STOP_CAPTURE
-                           << MAV_CMD_DO_CHANGE_SPEED;
-    if (_vehicle->fixedWing() && _vehicle->px4Firmware()) {
-        includedResumeCommands << MAV_CMD_NAV_TAKEOFF;
-    }
+                           << MAV_CMD_DO_CHANGE_SPEED
+                           << MAV_CMD_SET_CAMERA_MODE
+                           << MAV_CMD_NAV_TAKEOFF;
 
     bool addHomePosition = _vehicle->firmwarePlugin()->sendHomePositionToVehicle();
-    int setCurrentIndex = addHomePosition ? 1 : 0;
 
-    int resumeCommandCount = 0;
+    int prefixCommandCount = 0;
     for (int i=0; i<_missionItems.count(); i++) {
         MissionItem* oldItem = _missionItems[i];
         if ((i == 0 && addHomePosition) || i >= resumeIndex || includedResumeCommands.contains(oldItem->command())) {
             if (i < resumeIndex) {
-                resumeCommandCount++;
+                prefixCommandCount++;
             }
             MissionItem* newItem = new MissionItem(*oldItem, this);
-            newItem->setIsCurrentItem( i == setCurrentIndex);
-            newItem->setSequenceNumber(seqNum++);
+            newItem->setIsCurrentItem(false);
             resumeMission.append(newItem);
         }
     }
+    prefixCommandCount = qMax(0, qMin(prefixCommandCount, resumeMission.count()));  // Anal prevention against crashes
 
     // De-dup and remove no-ops from the commands which were added to the front of the mission
     bool foundROI = false;
-    bool foundCamTrigDist = false;
-    QList<int> imageStartCameraIds;
-    QList<int> imageStopCameraIds;
-    QList<int> videoStartCameraIds;
-    QList<int> videoStopCameraIds;
-    while (resumeIndex >= 0) {
-        MissionItem* resumeItem = resumeMission[resumeIndex];
+    bool foundCameraSetMode = false;
+    bool foundCameraStartStop = false;
+    prefixCommandCount--;   // Change from count to array index
+    while (prefixCommandCount >= 0) {
+        MissionItem* resumeItem = resumeMission[prefixCommandCount];
         switch (resumeItem->command()) {
+        case MAV_CMD_SET_CAMERA_MODE:
+            // Only keep the last one
+            if (foundCameraSetMode) {
+                resumeMission.removeAt(prefixCommandCount);
+            }
+            foundCameraSetMode = true;
+            break;
         case MAV_CMD_DO_SET_ROI:
             // Only keep the last one
             if (foundROI) {
-                resumeMission.removeAt(resumeIndex);
+                resumeMission.removeAt(prefixCommandCount);
             }
             foundROI = true;
             break;
         case MAV_CMD_DO_SET_CAM_TRIGG_DIST:
-            // Only keep the last one
-            if (foundCamTrigDist) {
-                resumeMission.removeAt(resumeIndex);
+        case MAV_CMD_IMAGE_STOP_CAPTURE:
+        case MAV_CMD_VIDEO_START_CAPTURE:
+        case MAV_CMD_VIDEO_STOP_CAPTURE:
+            // Only keep the first of these commands that are found
+            if (foundCameraStartStop) {
+                resumeMission.removeAt(prefixCommandCount);
             }
-            foundCamTrigDist = true;
+            foundCameraStartStop = true;
             break;
         case MAV_CMD_IMAGE_START_CAPTURE:
-        {
-            // FIXME: Handle single image capture
-            int cameraId = resumeItem->param1();
-
-            if (resumeItem->param3() == 1) {
-                // This is an individual image capture command, remove it
-                resumeMission.removeAt(resumeIndex);
+            if (resumeItem->param3() != 0) {
+                // Remove commands which do not trigger by time
+                resumeMission.removeAt(prefixCommandCount);
                 break;
             }
-            // If we already found an image stop, then all image start/stop commands are useless
-            // De-dup repeated image start commands
-            // Otherwise keep only the last image start
-            if (imageStopCameraIds.contains(cameraId) || imageStartCameraIds.contains(cameraId)) {
-                resumeMission.removeAt(resumeIndex);
+            if (foundCameraStartStop) {
+                // Only keep the first of these commands that are found
+                resumeMission.removeAt(prefixCommandCount);
             }
-            if (!imageStopCameraIds.contains(cameraId)) {
-                imageStopCameraIds.append(cameraId);
-            }
-        }
-            break;
-        case MAV_CMD_IMAGE_STOP_CAPTURE:
-        {
-            int cameraId = resumeItem->param1();
-            // Image stop only matters to kill all previous image starts
-            if (!imageStopCameraIds.contains(cameraId)) {
-                imageStopCameraIds.append(cameraId);
-            }
-            resumeMission.removeAt(resumeIndex);
-        }
-            break;
-        case MAV_CMD_VIDEO_START_CAPTURE:
-        {
-            int cameraId = resumeItem->param1();
-            // If we've already found a video stop, then all video start/stop commands are useless
-            // De-dup repeated video start commands
-            // Otherwise keep only the last video start
-            if (videoStopCameraIds.contains(cameraId) || videoStopCameraIds.contains(cameraId)) {
-                resumeMission.removeAt(resumeIndex);
-            }
-            if (!videoStopCameraIds.contains(cameraId)) {
-                videoStopCameraIds.append(cameraId);
-            }
-        }
-            break;
-        case MAV_CMD_VIDEO_STOP_CAPTURE:
-        {
-            int cameraId = resumeItem->param1();
-            // Video stop only matters to kill all previous video starts
-            if (!videoStopCameraIds.contains(cameraId)) {
-                videoStopCameraIds.append(cameraId);
-            }
-            resumeMission.removeAt(resumeIndex);
-        }
+            foundCameraStartStop = true;
             break;
         default:
             break;
         }
 
-        resumeIndex--;
+        prefixCommandCount--;
     }
+
+    // Adjust sequence numbers and current item
+    int seqNum = 0;
+    for (int i=0; i<resumeMission.count(); i++) {
+        resumeMission[i]->setSequenceNumber(seqNum++);
+    }
+    int setCurrentIndex = addHomePosition ? 1 : 0;
+    resumeMission[setCurrentIndex]->setIsCurrentItem(true);
 
     // Send to vehicle
     _clearAndDeleteWriteMissionItems();
