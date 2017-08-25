@@ -415,31 +415,45 @@ YuneecCameraControl::_switchStateChanged(int swId, int oldState, int newState)
     if(newState == 1) {
         switch(swId) {
             case Yuneec::BUTTON_CAMERA_SHUTTER:
-                if(cameraMode() == CAM_MODE_VIDEO) {
-                    //-- Can camera capture images in video mode?
-                    if(photosInVideoMode()) {
-                        takePhoto();
-                    } else {
-                        //-- Must switch to photo mode first
-                        setPhotoMode();
-                        QTimer::singleShot(2500, this, &YuneecCameraControl::_delayedTakePhoto);
-                    }
-                } else if(cameraMode() == CAM_MODE_PHOTO) {
-                    takePhoto();
-                } else {
+                //-- Do we have storage (in kb)?
+                if(storageTotal() == 0 || storageFree() < 250) {
                     //-- Undefined camera state
                     _errorSound.setLoopCount(1);
                     _errorSound.play();
+                } else {
+                    if(cameraMode() == CAM_MODE_VIDEO) {
+                        //-- Can camera capture images in video mode?
+                        if(photosInVideoMode()) {
+                            takePhoto();
+                        } else {
+                            //-- Must switch to photo mode first
+                            setPhotoMode();
+                            QTimer::singleShot(2500, this, &YuneecCameraControl::_delayedTakePhoto);
+                        }
+                    } else if(cameraMode() == CAM_MODE_PHOTO) {
+                        takePhoto();
+                    } else {
+                        //-- Undefined camera state
+                        _errorSound.setLoopCount(1);
+                        _errorSound.play();
+                    }
                 }
                 break;
             case Yuneec::BUTTON_VIDEO_SHUTTER:
-                //-- If already in video mode, simply toggle on/off
-                if(cameraMode() == CAM_MODE_VIDEO) {
-                    toggleVideo();
+                //-- Do we have storage (in kb)?
+                if(storageTotal() == 0 || storageFree() < 250) {
+                    //-- Undefined camera state
+                    _errorSound.setLoopCount(1);
+                    _errorSound.play();
                 } else {
-                    //-- Must switch to video mode first
-                    setVideoMode();
-                    QTimer::singleShot(2500, this, &YuneecCameraControl::_delayedStartVideo);
+                    //-- If already in video mode, simply toggle on/off
+                    if(cameraMode() == CAM_MODE_VIDEO) {
+                        toggleVideo();
+                    } else {
+                        //-- Must switch to video mode first
+                        setVideoMode();
+                        QTimer::singleShot(2500, this, &YuneecCameraControl::_delayedStartVideo);
+                    }
                 }
                 break;
             default:
