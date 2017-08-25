@@ -107,6 +107,7 @@ private slots:
 
 signals:
     void updateTotals           (quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
+    void internetUpdated        ();
 
 private:
     void _wipeOldCaches         ();

@@ -573,6 +573,7 @@ QGCView {
 
             /// Close all dialogs
             function closeAll() {
+                mainWindow.enableToolbar()
                 rootLoader.sourceComponent  = null
                 guidedActionConfirm.visible = false
                 guidedActionList.visible    = false

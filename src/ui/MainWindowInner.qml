@@ -63,6 +63,7 @@ Item {
     }
 
     function showSettingsView() {
+        mainWindow.enableToolbar()
         rootLoader.sourceComponent = null
         if(currentPopUp) {
             currentPopUp.close()
@@ -78,6 +79,7 @@ Item {
     }
 
     function showSetupView() {
+        mainWindow.enableToolbar()
         rootLoader.sourceComponent = null
         if(currentPopUp) {
             currentPopUp.close()
@@ -93,6 +95,7 @@ Item {
     }
 
     function showPlanView() {
+        mainWindow.enableToolbar()
         rootLoader.sourceComponent = null
         if(currentPopUp) {
             currentPopUp.close()
@@ -107,6 +110,7 @@ Item {
     }
 
     function showFlyView() {
+        mainWindow.enableToolbar()
         rootLoader.sourceComponent = null
         if(currentPopUp) {
             currentPopUp.close()
@@ -118,6 +122,7 @@ Item {
     }
 
     function showAnalyzeView() {
+        mainWindow.enableToolbar()
         rootLoader.sourceComponent = null
         if(currentPopUp) {
             currentPopUp.close()
@@ -223,6 +228,7 @@ Item {
     }
 
     function showMessageArea() {
+        mainWindow.enableToolbar()
         rootLoader.sourceComponent = null
         var currentlyVisible = messageArea.visible
         if(currentPopUp) {
@@ -244,6 +250,7 @@ Item {
     }
 
     function showPopUp(dropItem, centerX) {
+        mainWindow.enableToolbar()
         rootLoader.sourceComponent = null
         var oldIndicator = indicatorDropdown.sourceComponent
         if(currentPopUp) {
