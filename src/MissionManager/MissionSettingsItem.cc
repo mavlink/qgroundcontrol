@@ -63,8 +63,8 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
     connect(&_cameraSection,    &CameraSection::dirtyChanged,   this, &MissionSettingsItem::_sectionDirtyChanged);
     connect(&_speedSection,     &SpeedSection::dirtyChanged,    this, &MissionSettingsItem::_sectionDirtyChanged);
 
-    connect(&_cameraSection,    &CameraSection::specifyGimbalChanged,       this, &MissionSettingsItem::specifiedGimbalYawChanged);
     connect(&_cameraSection,    &CameraSection::specifiedGimbalYawChanged,  this, &MissionSettingsItem::specifiedGimbalYawChanged);
+    connect(&_speedSection,     &SpeedSection::specifiedFlightSpeedChanged, this, &MissionSettingsItem::specifiedFlightSpeedChanged);
 }
 
 int MissionSettingsItem::lastSequenceNumber(void) const

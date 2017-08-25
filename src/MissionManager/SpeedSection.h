@@ -27,6 +27,10 @@ public:
     Fact*   flightSpeed             (void) { return &_flightSpeedFact; }
     void    setSpecifyFlightSpeed   (bool specifyFlightSpeed);
 
+    ///< Signals specifiedFlightSpeedChanged
+    ///< @return The flight speed specified by this item, NaN if not specified
+    double specifiedFlightSpeed(void) const;
+
     // Overrides from Section
     bool available          (void) const override { return _available; }
     bool dirty              (void) const override { return _dirty; }
@@ -38,10 +42,12 @@ public:
     bool settingsSpecified  (void) const override;
 
 signals:
-    void specifyFlightSpeedChanged(bool specifyFlightSpeed);
+    void specifyFlightSpeedChanged      (bool specifyFlightSpeed);
+    void specifiedFlightSpeedChanged    (double flightSpeed);
 
 private slots:
-    void _setDirty(void);
+    void _setDirty                  (void);
+    void _updateSpecifiedFlightSpeed(void);
 
 private:
     bool    _available;
