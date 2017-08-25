@@ -1090,6 +1090,7 @@ QGCView {
                         visible:        !QGroundControl.mapEngineManager.exporting
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: {
+                            mainWindow.enableToolbar()
                             rootLoader.sourceComponent = null
                         }
                     }
@@ -1173,6 +1174,7 @@ QGCView {
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: {
                             showList();
+                            mainWindow.enableToolbar()
                             rootLoader.sourceComponent = null
                         }
                     }
@@ -1186,6 +1188,7 @@ QGCView {
                             onClicked: {
                                 if(!QGroundControl.mapEngineManager.importSets()) {
                                     showList();
+                                    mainWindow.enableToolbar()
                                     rootLoader.sourceComponent = null
                                 }
                             }
@@ -1195,6 +1198,7 @@ QGCView {
                             width:          _bigButtonSize * 1.25
                             onClicked: {
                                 showList();
+                                mainWindow.enableToolbar()
                                 rootLoader.sourceComponent = null
                             }
                         }
