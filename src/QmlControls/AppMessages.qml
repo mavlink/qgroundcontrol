@@ -24,6 +24,8 @@ QGCView {
 
     property bool loaded: false
 
+    property var _qgcView: qgcView
+
     QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
     Component {
@@ -117,6 +119,7 @@ QGCView {
                 nameFilters:    [qsTr("Log files (*.txt)"), qsTr("All Files (*)")]
                 selectExisting: false
                 title:          qsTr("Select log save file")
+                qgcView:        _qgcView
                 onAcceptedForSave: {
                     debugMessageModel.writeMessages(file);
                     visible = false;

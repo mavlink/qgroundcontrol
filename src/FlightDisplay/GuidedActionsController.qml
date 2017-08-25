@@ -122,8 +122,8 @@ Item {
     property bool   _hideOrbit:             !QGroundControl.corePlugin.options.guidedBarShowOrbit
     property bool   _vehicleWasFlying:      false
 
-    //Handy code for debugging state problems
     /*
+    //Handy code for debugging state problems
     property bool __guidedModeSupported: _activeVehicle ? _activeVehicle.guidedModeSupported : false
     property bool __pauseVehicleSupported: _activeVehicle ? _activeVehicle.pauseVehicleSupported : false
     property bool __flightMode: _flightMode
@@ -140,6 +140,23 @@ Item {
     on__FlightModeChanged: _outputState()
     on__GuidedModeSupportedChanged: _outputState()
     on__PauseVehicleSupportedChanged: _outputState()
+
+    on_CurrentMissionIndexChanged: console.log("_currentMissionIndex", _currentMissionIndex)
+    on_ResumeMissionIndexChanged: console.log("_resumeMissionIndex", _resumeMissionIndex)
+    onShowResumeMissionChanged: {
+        console.log("showResumeMission", showResumeMission)
+        _outputState()
+    }
+    onShowStartMissionChanged: {
+        console.log("showStartMission", showStartMission)
+        _outputState()
+    }
+    onShowContinueMissionChanged: {
+        console.log("showContinueMission", showContinueMission)
+        _outputState()
+    }
+
+    // End of hack
     */
 
     on_VehicleFlyingChanged: {
@@ -150,10 +167,7 @@ Item {
             _vehicleWasFlying = true
         }
     }
-
     property var    _actionData
-
-    on_CurrentMissionIndexChanged: console.log("_currentMissionIndex", _currentMissionIndex)
 
     on_FlightModeChanged: {
         _vehiclePaused =        _flightMode === _activeVehicle.pauseFlightMode
