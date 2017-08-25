@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <manifest 
-    package="org.mavlink.qgroundcontrol" 
+    package="com.yuneec.datapilot" 
     xmlns:android="http://schemas.android.com/apk/res/android" 
     android:versionName="3.0.0-243-gd759437" 
     android:versionCode="300243" android:installLocation="auto">
@@ -12,7 +12,7 @@
         <!-- Qt Original Activity:  org.qtproject.qt5.android.bindings.QtActivity -->
         <activity 
             android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|locale|fontScale|keyboard|keyboardHidden|navigation" 
-            android:name="org.mavlink.qgroundcontrol.QGCActivity" 
+            android:name="com.yuneec.datapilot.QGCActivity" 
             android:label="-- %%INSERT_APP_NAME%% --" 
             android:screenOrientation="sensorLandscape" 
             android:launchMode="singleInstance" 
