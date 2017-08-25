@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 major=1
-minor=0
-patch=$(git --git-dir .git rev-list master --first-parent --count)
+minor=1
+first_build=3500
+patch=$(($(git rev-list master --first-parent --count) - $first_build))
 
 VERSIONCODE=$(($major*100000000))
 VERSIONCODE=$(($(($minor*100000)) + $VERSIONCODE))

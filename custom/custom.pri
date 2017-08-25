@@ -4,12 +4,15 @@ message("Adding Yuneec Typhoon H520 plugin")
 #   Major and minor versions are defined here (manually)
 
 DATA_PILOT_VER_MAJOR = 1
-DATA_PILOT_VER_MINOR = 0
+DATA_PILOT_VER_MINOR = 1
+DATA_PILOT_VER_FIRST_BUILD = 3500
 
 #   Build number is automatic
 
 DATA_PILOT_VER_BUILD = $$system(git --git-dir ../.git rev-list master --first-parent --count)
+DATA_PILOT_VER_BUILD = $$system("echo $(($$DATA_PILOT_VER_BUILD - $$DATA_PILOT_VER_FIRST_BUILD))")
 DATA_PILOT_VERSION = $${DATA_PILOT_VER_MAJOR}.$${DATA_PILOT_VER_MINOR}.$${DATA_PILOT_VER_BUILD}
+
 DEFINES -= GIT_VERSION=\"\\\"$$GIT_VERSION\\\"\"
 DEFINES += GIT_VERSION=\"\\\"$$DATA_PILOT_VERSION\\\"\"
 
