@@ -157,6 +157,7 @@ public:
     Q_PROPERTY(bool             copyingFiles    READ    copyingFiles        NOTIFY copyingFilesChanged)
     Q_PROPERTY(int              copyResult      READ    copyResult          NOTIFY copyResultChanged)
     Q_PROPERTY(bool             isFactoryApp    READ    isFactoryApp        CONSTANT)
+    Q_PROPERTY(bool             isUpdaterApp    READ    isUpdaterApp        CONSTANT)
     Q_PROPERTY(bool             isInternet      READ    isInternet          NOTIFY isInternetChanged)
 
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
@@ -214,6 +215,7 @@ public:
     Q_INVOKABLE void factoryTest        ();
     Q_INVOKABLE void endThis            ();
     Q_INVOKABLE void launchBroswer      (QString url);
+    Q_INVOKABLE void launchUpdater      ();
     Q_INVOKABLE bool shouldWeShowUpdate ();
 
     //-- Android image update
@@ -250,6 +252,7 @@ public:
     bool        wifiAlertEnabled    () { return _wifiAlertEnabled; }
     bool        rcActive            ();
     bool        isFactoryApp        () { return _isFactoryApp; }
+    bool        isUpdaterApp        () { return _isUpdaterApp; }
     bool        isInternet          ();
 
     void        init                (TyphoonHM4Interface* pHandler);
@@ -413,5 +416,6 @@ private:
     int                     _distSensorCur;
     bool                    _obsState;
     bool                    _isFactoryApp;
+    bool                    _isUpdaterApp;
     bool                    _updateShown;
 };

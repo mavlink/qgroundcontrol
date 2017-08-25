@@ -24,7 +24,6 @@ Item {
     id: dlgRoot
     anchors.fill: parent
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
-    property string yuneecURL: "https://www.yuneec.com/"
     MouseArea {
         anchors.fill:   parent
         onWheel:        { wheel.accepted = true; }
@@ -84,10 +83,10 @@ to ensure that you have all the latest fixes for the best possible user experien
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             QGCLabel {
-                text:           qsTr("Please connect to the Internet and navigate to:\n") + dlgRoot.yuneecURL
+                text:           qsTr("Updater app not installed.")
                 color:          qgcPal.alertText
                 width:          updateDialogRect.width * 0.75
-                visible:        !TyphoonHQuickInterface.isInternet
+                visible:        !TyphoonHQuickInterface.isUpdaterApp
                 font.family:    ScreenTools.demiboldFontFamily
                 font.pointSize: ScreenTools.largeFontPointSize
                 horizontalAlignment: Text.AlignHCenter
@@ -100,15 +99,15 @@ to ensure that you have all the latest fixes for the best possible user experien
                     text:           qsTr("Update")
                     width:          ScreenTools.defaultFontPixelWidth  * 16
                     height:         ScreenTools.defaultFontPixelHeight * 2
-                    visible:        TyphoonHQuickInterface.isInternet
+                    visible:        TyphoonHQuickInterface.isUpdaterApp
                     onClicked: {
-                        TyphoonHQuickInterface.launchBroswer(dlgRoot.yuneecURL)
+                        TyphoonHQuickInterface.launchUpdater()
                         mainWindow.enableToolbar()
                         rootLoader.sourceComponent = null
                     }
                 }
                 QGCButton {
-                    text:           TyphoonHQuickInterface.isInternet ? qsTr("Cancel") : qsTr("Close")
+                    text:           TyphoonHQuickInterface.isUpdaterApp ? qsTr("Cancel") : qsTr("Close")
                     width:          ScreenTools.defaultFontPixelWidth  * 16
                     height:         ScreenTools.defaultFontPixelHeight * 2
                     onClicked: {

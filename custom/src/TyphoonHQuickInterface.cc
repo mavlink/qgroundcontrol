@@ -73,12 +73,14 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _distSensorCur(0)
     , _obsState(false)
     , _isFactoryApp(false)
+    , _isUpdaterApp(false)
     , _updateShown(false)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
 #if defined __android__
     reset_jni();
     _isFactoryApp = (bool)QAndroidJniObject::callStaticMethod<jboolean>(jniClassName, "isFactoryAppInstalled");
+    _isUpdaterApp = (bool)QAndroidJniObject::callStaticMethod<jboolean>(jniClassName, "isUpdaterAppInstalled");
 #endif
 }
 
@@ -202,7 +204,11 @@ TyphoonHQuickInterface::shouldWeShowUpdate()
                 //-- Show it as this is the shipping version
                 qWarning() << "Firmware version is shipping version. Force update dialog";
                 res = true;
+            } else {
+                qCDebug(YuneecLog) << "Firmware version OK" << FIRMWARE_FORCE_UPDATE_MAJOR << FIRMWARE_FORCE_UPDATE_MINOR << FIRMWARE_FORCE_UPDATE_PATCH << " : " << v->firmwareCustomMajorVersion() << v->firmwareCustomMinorVersion() << v->firmwareCustomPatchVersion();
             }
+        } else {
+            qWarning() << "Vehicle not available when checking version.";
         }
     }
     _updateShown = res;
@@ -233,6 +239,16 @@ TyphoonHQuickInterface::launchBroswer(QString url)
     QAndroidJniObject::callStaticMethod<void>(jniClassName, "launchBrowser", "(Ljava/lang/String;)V", javaSSID.object<jstring>());
 #else
     QDesktopServices::openUrl(QUrl(url));
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::launchUpdater()
+{
+#if defined __android__
+    reset_jni();
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "launchUpdater", "()V");
 #endif
 }
 

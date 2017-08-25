@@ -106,21 +106,6 @@ public class QGCActivity extends QtActivity
         filter.addAction(WifiManager.RSSI_CHANGED_ACTION);
         registerReceiver(receiverWifi, filter);
         findWifiConfig();
-        //-- Don't allow to run if the Yuneec app is running
-        if(isYuneecInstalled()) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Incompatible Application Error");
-            builder
-                .setCancelable(false)
-                .setMessage("Flymode is installed.\nPlease remove it before running DataPilot")
-                .setPositiveButton("Close", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog,int id) {
-                        QGCActivity.this.finish();
-                    }
-                });
-            AlertDialog alertDialog = builder.create();
-            alertDialog.show();
-        }
     }
 
     @Override
@@ -165,38 +150,40 @@ public class QGCActivity extends QtActivity
     }
 
     public static void launchFactoryTest() {
-        Intent launchIntent = m_instance.getPackageManager().getLaunchIntentForPackage("com.yuneec.flightcontrolmodetest");
+        m_instance.launchApp("com.yuneec.flightcontrolmodetest");
+    }
+
+    public static void launchUpdater() {
+        m_instance.launchApp("com.yuneec.updater");
+    }
+
+    public static void launchApp(String app) {
+        Intent launchIntent = m_instance.getPackageManager().getLaunchIntentForPackage(app);
         if (launchIntent != null) {
             letItExit = true;
             m_instance.startActivity(launchIntent);
             m_instance.finish();
         } else {
-            Log.i(TAG, "com.yuneec.flightcontrolmodetest not found.");
+            Log.i(TAG, app + " not found.");
         }
     }
 
     public static boolean isFactoryAppInstalled() {
-        try {
-            PackageManager pm = m_instance.getPackageManager();
-            pm.getPackageInfo("com.yuneec.flightcontrolmodetest", 0);
-            return true;
-        } catch (NameNotFoundException e) {
-            return false;
-        }
+        return m_instance.isAppInstalled("com.yuneec.flightcontrolmodetest");
     }
 
-    private boolean isYuneecInstalled() {
-        /*
+    public static boolean isUpdaterAppInstalled() {
+        return m_instance.isAppInstalled("com.yuneec.updater");
+    }
+
+    public static boolean isAppInstalled(String app) {
         try {
             PackageManager pm = m_instance.getPackageManager();
-            pm.getPackageInfo("com.yuneec.flightmode", 0);
+            pm.getPackageInfo(app, 0);
             return true;
         } catch (NameNotFoundException e) {
             return false;
         }
-        */
-        //-- For now, allow them to coexist
-        return false;
     }
 
     public static void updateImage() {

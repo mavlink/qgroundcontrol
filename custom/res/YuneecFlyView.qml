@@ -183,6 +183,11 @@ Item {
                 }
             }
         }
+        onFirmwareCustomVersionChanged: {
+            if(TyphoonHQuickInterface.shouldWeShowUpdate()) {
+                rootLoader.sourceComponent = updateDialog
+            }
+        }
     }
 
     Connections {
@@ -192,14 +197,6 @@ Item {
             _noSdCardMsgShown = false;
             //-- And comm lost dialog if open
             connectionLostDisarmedDialog.close()
-        }
-        onParameterReadyVehicleAvailableChanged: {
-            if(QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable) {
-                console.log('Should we show the update dialog?')
-                if(TyphoonHQuickInterface.shouldWeShowUpdate()) {
-                    rootLoader.sourceComponent = updateDialog
-                }
-            }
         }
     }
 
