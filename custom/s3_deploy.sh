@@ -11,7 +11,8 @@ export AWS_CREDENTIAL_FILE=/var/lib/jenkins/.aws/credentials
 apk_path=/tmp/datapilot_build/release/package
 prefix="DataPilot-"
 suffix=".apk"
-build=$(git --git-dir .git rev-list master --first-parent --count)
+FIRST_BUILD=3500
+build=$(($(git rev-list master --first-parent --count) - $FIRST_BUILD))
 filename=$(ls $apk_path | grep $prefix | grep $suffix | grep $build )
 
 if [[ $(ls $apk_path | grep $filename | wc -l) -eq 1 ]]; then
