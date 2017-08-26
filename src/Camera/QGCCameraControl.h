@@ -76,11 +76,23 @@ public:
     enum VideoStatus {
         VIDEO_CAPTURE_STATUS_STOPPED = 0,
         VIDEO_CAPTURE_STATUS_RUNNING,
-        VIDEO_CAPTURE_STATUS_UNDEFINED
+        VIDEO_CAPTURE_STATUS_LAST,
+        VIDEO_CAPTURE_STATUS_UNDEFINED = 255
+    };
+
+    //-- Photo Capture Status
+    enum PhotoStatus {
+        PHOTO_CAPTURE_IDLE = 0,
+        PHOTO_CAPTURE_IN_PROGRESS,
+        PHOTO_CAPTURE_INTERVAL_IDLE,
+        PHOTO_CAPTURE_INTERVAL_IN_PROGRESS,
+        PHOTO_CAPTURE_LAST,
+        PHOTO_CAPTURE_STATUS_UNDEFINED = 255
     };
 
     Q_ENUMS(CameraMode)
     Q_ENUMS(VideoStatus)
+    Q_ENUMS(PhotoStatus)
 
     Q_PROPERTY(int          version             READ version            NOTIFY infoChanged)
     Q_PROPERTY(QString      modelName           READ modelName          NOTIFY infoChanged)
@@ -101,6 +113,7 @@ public:
 
     Q_PROPERTY(QStringList  activeSettings      READ activeSettings                             NOTIFY activeSettingsChanged)
     Q_PROPERTY(VideoStatus  videoStatus         READ videoStatus                                NOTIFY videoStatusChanged)
+    Q_PROPERTY(PhotoStatus  photoStatus         READ photoStatus                                NOTIFY photoStatusChanged)
     Q_PROPERTY(CameraMode   cameraMode          READ cameraMode         WRITE   setCameraMode   NOTIFY cameraModeChanged)
 
     Q_INVOKABLE virtual void setVideoMode   ();
@@ -129,6 +142,7 @@ public:
     virtual int         compID              () { return _compID; }
     virtual bool        isBasic             () { return _settings.size() == 0; }
     virtual VideoStatus videoStatus         ();
+    virtual PhotoStatus photoStatus         ();
     virtual CameraMode  cameraMode          () { return _cameraMode; }
     virtual QStringList activeSettings      () { return _activeSettings; }
     virtual quint32     storageFree         () { return _storageFree;  }
@@ -151,6 +165,7 @@ public:
 signals:
     void    infoChanged                     ();
     void    videoStatusChanged              ();
+    void    photoStatusChanged              ();
     void    cameraModeChanged               ();
     void    activeSettingsChanged           ();
     void    storageFreeChanged              ();
@@ -160,6 +175,7 @@ signals:
 
 protected:
     virtual void    _setVideoStatus         (VideoStatus status);
+    virtual void    _setPhotoStatus         (PhotoStatus status);
     virtual void    _setCameraMode          (CameraMode mode);
 
 protected slots:
@@ -208,6 +224,7 @@ protected:
     QString                             _cacheFile;
     CameraMode                          _cameraMode;
     VideoStatus                         _video_status;
+    PhotoStatus                         _photo_status;
     QStringList                         _activeSettings;
     QStringList                         _settings;
     QTimer                              _captureStatusTimer;
