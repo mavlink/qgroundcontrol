@@ -904,7 +904,7 @@
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="72"/>
         <source>Failsafe Actions</source>
-        <translation>故障操作</translation>
+        <translation type="unfinished">故障</translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="98"/>
@@ -929,7 +929,7 @@
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="243"/>
         <source>Pilot Input:</source>
-        <translation type="unfinished">飞行输入：</translation>
+        <translation>航线输入：</translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="276"/>
