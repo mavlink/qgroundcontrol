@@ -40,6 +40,8 @@ public:
     Q_PROPERTY(Fact* mapboxToken                        READ mapboxToken                        CONSTANT)
     Q_PROPERTY(Fact* esriToken                          READ esriToken                          CONSTANT)
     Q_PROPERTY(Fact* defaultFirmwareType                READ defaultFirmwareType                CONSTANT)
+    Q_PROPERTY(Fact* mavlink2Signing                    READ mavlink2Signing                    CONSTANT)
+    Q_PROPERTY(Fact* mavlink2SigningKey                 READ mavlink2SigningKey                 CONSTANT)
 
     Q_PROPERTY(QString missionSavePath      READ missionSavePath    NOTIFY savePathsChanged)
     Q_PROPERTY(QString parameterSavePath    READ parameterSavePath  NOTIFY savePathsChanged)
@@ -74,6 +76,8 @@ public:
     Fact* mapboxToken                       (void);
     Fact* esriToken                         (void);
     Fact* defaultFirmwareType               (void);
+    Fact* mavlink2Signing                   (void);
+    Fact* mavlink2SigningKey                (void);
 
     QString missionSavePath     (void);
     QString parameterSavePath   (void);
@@ -106,6 +110,8 @@ public:
     static const char* mapboxTokenName;
     static const char* esriTokenName;
     static const char* defaultFirmwareTypeName;
+    static const char* mavlink2SigningName;
+    static const char* mavlink2SigningKeyName;
 
     // Application wide file extensions
     static const char* parameterFileExtension;
@@ -152,6 +158,8 @@ private:
     SettingsFact* _mapboxTokenFact;
     SettingsFact* _esriTokenFact;
     SettingsFact* _defaultFirmwareTypeFact;
+    SettingsFact* _mavlink2Signing;
+    SettingsFact* _mavlink2SigningKey;
 };
 
 #endif

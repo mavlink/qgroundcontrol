@@ -124,6 +124,9 @@ public:
     bool connect(void);
     bool disconnect(void);
 
+    /// Signing structure for mavlink 2 signing
+    mavlink_signing_t signing;
+
 public slots:
 
     /**
