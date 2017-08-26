@@ -120,6 +120,7 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     , _netManager(NULL)
     , _cameraMode(CAM_MODE_UNDEFINED)
     , _video_status(VIDEO_CAPTURE_STATUS_UNDEFINED)
+    , _photo_status(PHOTO_CAPTURE_STATUS_UNDEFINED)
     , _storageInfoRetries(0)
     , _captureInfoRetries(0)
 {
@@ -195,6 +196,13 @@ QGCCameraControl::videoStatus()
 }
 
 //-----------------------------------------------------------------------------
+QGCCameraControl::PhotoStatus
+QGCCameraControl::photoStatus()
+{
+    return _photo_status;
+}
+
+//-----------------------------------------------------------------------------
 QString
 QGCCameraControl::storageFreeStr()
 {
@@ -252,7 +260,7 @@ QGCCameraControl::takePhoto()
 {
     qCDebug(CameraControlLog) << "takePhoto()";
     //-- Check if camera can capture photos or if it can capture it while in Video Mode
-    if(!capturesPhotos() || (cameraMode() == CAM_MODE_VIDEO && !photosInVideoMode())) {
+    if(!capturesPhotos() || (cameraMode() == CAM_MODE_VIDEO && !photosInVideoMode()) || photoStatus() != PHOTO_CAPTURE_IDLE) {
         return false;
     }
     if(capturesPhotos()) {
@@ -263,6 +271,7 @@ QGCCameraControl::takePhoto()
             0,                                          // Reserved (Set to 0)
             0,                                          // Duration between two consecutive pictures (in seconds--ignored if single image)
             1);                                         // Number of images to capture total - 0 for unlimited capture
+        _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
         //-- Capture local image as well
         QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
         QDir().mkpath(photoPath);
@@ -398,7 +407,10 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
     if(_vehicle->id() != vehicleId || compID() != component) {
         return;
     }
-    if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
+    if(!noReponseFromVehicle && result == MAV_RESULT_IN_PROGRESS) {
+        //-- Do Nothing
+        qCDebug(CameraControlLog) << "In progress response for" << command;
+    }else if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
         switch(command) {
             case MAV_CMD_RESET_CAMERA_SETTINGS:
                 if(isBasic()) {
@@ -414,6 +426,7 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                 break;
             case MAV_CMD_VIDEO_STOP_CAPTURE:
                 _setVideoStatus(VIDEO_CAPTURE_STATUS_STOPPED);
+                _captureStatusTimer.start(1000);
                 break;
             case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
                 _captureInfoRetries = 0;
@@ -460,6 +473,16 @@ QGCCameraControl::_setVideoStatus(VideoStatus status)
     if(_video_status != status) {
         _video_status = status;
         emit videoStatusChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::_setPhotoStatus(PhotoStatus status)
+{
+    if(_photo_status != status) {
+        _photo_status = status;
+        emit photoStatusChanged();
     }
 }
 
@@ -1069,7 +1092,10 @@ QGCCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap
         emit storageFreeChanged();
     }
     //-- Video Capture Status
-    _setVideoStatus((VideoStatus)cap.video_status);
+    uint8_t vs = cap.video_status < (uint8_t)VIDEO_CAPTURE_STATUS_LAST ? cap.video_status : (uint8_t)VIDEO_CAPTURE_STATUS_UNDEFINED;
+    uint8_t ps = cap.image_status < (uint8_t)PHOTO_CAPTURE_LAST ? cap.image_status : (uint8_t)PHOTO_CAPTURE_STATUS_UNDEFINED;
+    _setVideoStatus((VideoStatus)vs);
+    _setPhotoStatus((PhotoStatus)ps);
     //-- Keep asking for it once in a while when recording
     if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
         _captureStatusTimer.start(5000);

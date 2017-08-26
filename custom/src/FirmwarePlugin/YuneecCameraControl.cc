@@ -415,8 +415,8 @@ YuneecCameraControl::_switchStateChanged(int swId, int oldState, int newState)
     if(newState == 1) {
         switch(swId) {
             case Yuneec::BUTTON_CAMERA_SHUTTER:
-                //-- Do we have storage (in kb)?
-                if(storageTotal() == 0 || storageFree() < 250) {
+                //-- Do we have storage (in kb) and is camera idle?
+                if((storageTotal() == 0 || storageFree() < 250) && photoStatus() != PHOTO_CAPTURE_IDLE) {
                     //-- Undefined camera state
                     _errorSound.setLoopCount(1);
                     _errorSound.play();
@@ -426,9 +426,15 @@ YuneecCameraControl::_switchStateChanged(int swId, int oldState, int newState)
                         if(photosInVideoMode()) {
                             takePhoto();
                         } else {
-                            //-- Must switch to photo mode first
-                            setPhotoMode();
-                            QTimer::singleShot(2500, this, &YuneecCameraControl::_delayedTakePhoto);
+                            //-- Are we recording video?
+                            if(videoStatus() != VIDEO_CAPTURE_STATUS_STOPPED) {
+                                _errorSound.setLoopCount(1);
+                                _errorSound.play();
+                            } else {
+                                //-- Must switch to photo mode first
+                                setPhotoMode();
+                                QTimer::singleShot(2500, this, &YuneecCameraControl::_delayedTakePhoto);
+                            }
                         }
                     } else if(cameraMode() == CAM_MODE_PHOTO) {
                         takePhoto();
@@ -440,8 +446,8 @@ YuneecCameraControl::_switchStateChanged(int swId, int oldState, int newState)
                 }
                 break;
             case Yuneec::BUTTON_VIDEO_SHUTTER:
-                //-- Do we have storage (in kb)?
-                if(storageTotal() == 0 || storageFree() < 250) {
+                //-- Do we have storage (in kb) and is camera idle?
+                if((storageTotal() == 0 || storageFree() < 250) && photoStatus() != PHOTO_CAPTURE_IDLE) {
                     //-- Undefined camera state
                     _errorSound.setLoopCount(1);
                     _errorSound.play();
