@@ -131,7 +131,7 @@ Rectangle {
             }
             MouseArea {
                 anchors.fill:   parent
-                enabled:        !_cameraModeUndefined && _camera.videoStatus !== QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING || _cameraPhotoIdle
+                enabled:        !_cameraModeUndefined && _camera.videoStatus !== QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING && _cameraPhotoIdle
                 onClicked: {
                     rootLoader.sourceComponent = null
                     _camera.toggleMode()
