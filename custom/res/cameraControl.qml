@@ -57,8 +57,9 @@ Rectangle {
     property var  _camera:                  _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
     property bool _communicationLost:       _activeVehicle ? _activeVehicle.connectionLost : false
     property bool _emptySD:                 _camera && _camera.storageTotal === 0
-    property bool _cameraVideoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode  === QGCCameraControl.CAM_MODE_VIDEO)
-    property bool _cameraPhotoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode  === QGCCameraControl.CAM_MODE_PHOTO)
+    property bool _cameraVideoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode   === QGCCameraControl.CAM_MODE_VIDEO)
+    property bool _cameraPhotoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode   === QGCCameraControl.CAM_MODE_PHOTO)
+    property bool _cameraPhotoIdle:         !_communicationLost && (_emptySD ? false : _camera && _camera.photoStatus  === QGCCameraControl.PHOTO_CAPTURE_IDLE)
     property bool _cameraModeUndefined:     !_cameraPhotoMode && !_cameraVideoMode
 
     property real _mediaWidth:              128
@@ -130,7 +131,7 @@ Rectangle {
             }
             MouseArea {
                 anchors.fill:   parent
-                enabled:        !_cameraModeUndefined && _camera.videoStatus !== QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+                enabled:        !_cameraModeUndefined && _camera.videoStatus !== QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING || _cameraPhotoIdle
                 onClicked: {
                     rootLoader.sourceComponent = null
                     _camera.toggleMode()
