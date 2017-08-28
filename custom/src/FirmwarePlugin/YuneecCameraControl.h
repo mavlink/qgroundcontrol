@@ -54,6 +54,7 @@ public:
     void        setPhotoMode        () override;
     bool        incomingParameter   (Fact* pFact, QVariant& newValue) override;
     bool        validateParameter   (Fact* pFact, QVariant& newValue) override;
+    void        handleCaptureStatus (const mavlink_camera_capture_status_t& capStatus) override;
 
     QString     gimbalVersion       () { return _gimbalVersion; }
     bool        gimbalCalOn         () { return _gimbalCalOn; }
