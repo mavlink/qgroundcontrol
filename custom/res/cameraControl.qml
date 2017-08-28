@@ -154,6 +154,26 @@ Rectangle {
                 color:      _cameraModeUndefined ? qgcPal.colorGrey : ( _cameraVideoMode ? qgcPal.colorRed : "white" )
                 visible:    !pauseVideo.visible
                 anchors.centerIn:   parent
+                QGCColoredImage {
+                    height:             parent.height * 0.75
+                    width:              height
+                    source:             "/qmlimages/MapSync.svg"
+                    sourceSize.height:  height
+                    fillMode:           Image.PreserveAspectFit
+                    mipmap:             true
+                    smooth:             true
+                    color:              qgcPal.colorBlue
+                    visible:            _cameraPhotoMode && !_cameraPhotoIdle
+                    anchors.centerIn:   parent
+                    RotationAnimation on rotation {
+                        id:             connectionRotation
+                        loops:          Animation.Infinite
+                        from:           360
+                        to:             0
+                        duration:       740
+                        running:        _cameraPhotoMode && !_cameraPhotoIdle
+                    }
+                }
             }
             Rectangle {
                 id:         pauseVideo

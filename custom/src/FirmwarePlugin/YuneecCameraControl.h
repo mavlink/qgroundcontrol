@@ -53,6 +53,7 @@ public:
     void        setVideoMode        () override;
     void        setPhotoMode        () override;
     bool        incomingParameter   (Fact* pFact, QVariant& newValue) override;
+    bool        validateParameter   (Fact* pFact, QVariant& newValue) override;
 
     QString     gimbalVersion       () { return _gimbalVersion; }
     bool        gimbalCalOn         () { return _gimbalCalOn; }
@@ -108,6 +109,9 @@ private:
     void    _handleGimbalVersion    (const mavlink_message_t& message);
     void    _handleGimbalOrientation(const mavlink_message_t& message);
     void    _handleGimbalResult     (uint16_t result, uint8_t progress);
+
+    QVariant _validateShutterSpeed  (Fact* pFact, QVariant& newValue);
+    QVariant _validateISO           (Fact* pFact, QVariant& newValue);
 
 private:
     Vehicle*                _vehicle;
