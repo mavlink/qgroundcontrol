@@ -110,6 +110,11 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
 
         remapV3_5["FENCE_ALT_MIN"] = QStringLiteral("FENCE_DEPTH_MAX");
 
+        FirmwarePlugin::remapParamNameMap_t& remapV3_6 = _remapParamName[3][6];
+
+        remapV3_6["ARMING_VOLT_MIN"] = QStringLiteral("ARMING_MIN_VOLT");
+        remapV3_6["ARMING_VOLT2_MIN"] = QStringLiteral("ARMING_MIN_VOLT2");
+
         _remapParamNameIntialized = true;
     }
 
@@ -150,8 +155,8 @@ QList<MAV_CMD> ArduSubFirmwarePlugin::supportedMissionCommands(void)
 
 int ArduSubFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
 {
-    // Remapping supports up to 3.5
-    return majorVersionNumber == 3 ? 5 : Vehicle::versionNotSetValue;
+    // Remapping supports up to 3.6
+    return majorVersionNumber == 3 ? 6 : Vehicle::versionNotSetValue;
 }
 
 int ArduSubFirmwarePlugin::manualControlReservedButtonCount(void)
