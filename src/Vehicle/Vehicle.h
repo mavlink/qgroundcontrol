@@ -361,6 +361,8 @@ public:
     Q_PROPERTY(int      firmwareCustomMinorVersion  READ firmwareCustomMinorVersion NOTIFY firmwareCustomVersionChanged)
     Q_PROPERTY(int      firmwareCustomPatchVersion  READ firmwareCustomPatchVersion NOTIFY firmwareCustomVersionChanged)
     Q_PROPERTY(QString  gitHash                     READ gitHash                    NOTIFY gitHashChanged)
+    Q_PROPERTY(quint64  vehicleUID                  READ vehicleUID                 NOTIFY vehicleUIDChanged)
+    Q_PROPERTY(QString  vehicleUIDStr               READ vehicleUIDStr              NOTIFY vehicleUIDChanged)
 
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
@@ -643,6 +645,8 @@ public:
     static const int versionNotSetValue = -1;
 
     QString gitHash(void) const { return _gitHash; }
+    quint64 vehicleUID(void) const { return _uid; }
+    QString vehicleUIDStr();
 
     bool soloFirmware(void) const { return _soloFirmware; }
     void setSoloFirmware(bool soloFirmware);
@@ -754,6 +758,7 @@ signals:
     void firmwareVersionChanged(void);
     void firmwareCustomVersionChanged(void);
     void gitHashChanged(QString hash);
+    void vehicleUIDChanged();
 
     /// New RC channel values
     ///     @param channelCount Number of available channels, cMaxRcChannels max
@@ -1008,6 +1013,7 @@ private:
     FIRMWARE_VERSION_TYPE _firmwareVersionType;
 
     QString _gitHash;
+    quint64 _uid;
 
     int _lastAnnouncedLowBatteryPercent;
 
