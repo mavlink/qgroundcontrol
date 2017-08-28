@@ -501,6 +501,20 @@ YuneecCameraControl::factChanged(Fact* pFact)
         emit spotAreaChanged();
     }
     QGCCameraControl::factChanged(pFact);
+    //-- When one of these parameters changes
+    if(pFact->name() == kCAM_EV ||
+        pFact->name() == kCAM_EXPMODE ||
+        pFact->name() == kCAM_ISO ||
+        pFact->name() == kCAM_METERING ||
+        pFact->name() == kCAM_MODE ||
+        pFact->name() == kCAM_SHUTTERSPD ||
+        pFact->name() == kCAM_WBMODE) {
+        //-- Disable shutter button
+        _setPhotoStatus(PHOTO_CAPTURE_STATUS_UNDEFINED);
+        //-- Request capture status to reset shutter
+        _captureInfoRetries = 0;
+        _captureStatusTimer.start(1000);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -561,12 +575,7 @@ YuneecCameraControl::incomingParameter(Fact* pFact, QVariant& newValue)
     //   nearest value in those cases.
     //-- Ignore shutter speed and ISO if in Auto Exposure mode
     if(pFact->name() == kCAM_SHUTTERSPD) {
-        QMap<double, double> values;
-        foreach(QVariant v, pFact->enumValues()) {
-            double diff = fabs(newValue.toDouble() - v.toDouble());
-            values[diff] = v.toDouble();
-        }
-        QVariant v = values.first();
+        QVariant v = _validateShutterSpeed(pFact, newValue);
         if(newValue != v) {
             qCDebug(YuneecCameraLog) << "Shutter speed adjusted:" << newValue.toDouble() << "==>" << v.toDouble();
             newValue = v;
@@ -576,12 +585,7 @@ YuneecCameraControl::incomingParameter(Fact* pFact, QVariant& newValue)
             QTimer::singleShot(100, this, &YuneecCameraControl::_sendUpdates);
         }
     } else if(pFact->name() == kCAM_ISO) {
-        QMap<uint32_t, uint32_t> values;
-        foreach(QVariant v, pFact->enumValues()) {
-            uint32_t diff = abs(newValue.toInt() - v.toInt());
-            values[diff] = v.toUInt();
-        }
-        QVariant v = values.first();
+        QVariant v = _validateISO(pFact, newValue);
         if(newValue != v) {
             qCDebug(YuneecCameraLog) << "ISO adjusted:" << newValue.toUInt() << "==>" << v.toUInt();
             newValue = v;
@@ -592,6 +596,42 @@ YuneecCameraControl::incomingParameter(Fact* pFact, QVariant& newValue)
         }
     }
     return true;
+}
+
+//-----------------------------------------------------------------------------
+bool
+YuneecCameraControl::validateParameter(Fact* pFact, QVariant& newValue)
+{
+    if(pFact->name() == kCAM_SHUTTERSPD) {
+        return _validateShutterSpeed(pFact, newValue) == newValue;
+    } else if(pFact->name() == kCAM_ISO) {
+        return _validateISO(pFact, newValue) == newValue;
+    }
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+QVariant
+YuneecCameraControl::_validateShutterSpeed(Fact* pFact, QVariant& newValue)
+{
+    QMap<double, double> values;
+    foreach(QVariant v, pFact->enumValues()) {
+        double diff = fabs(newValue.toDouble() - v.toDouble());
+        values[diff] = v.toDouble();
+    }
+    return values.first();
+}
+
+//-----------------------------------------------------------------------------
+QVariant
+YuneecCameraControl::_validateISO(Fact* pFact, QVariant& newValue)
+{
+    QMap<uint32_t, uint32_t> values;
+    foreach(QVariant v, pFact->enumValues()) {
+        uint32_t diff = abs(newValue.toInt() - v.toInt());
+        values[diff] = v.toUInt();
+    }
+    return values.first();
 }
 
 //-----------------------------------------------------------------------------
