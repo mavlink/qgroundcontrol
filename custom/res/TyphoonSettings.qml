@@ -261,6 +261,8 @@ QGCView {
                 QGCLabel { text: _camera ? _camera.gimbalVersion : "" }
                 QGCLabel { text: qsTr("Flight Controller Version:") }
                 QGCLabel { text: firmwareVersion() }
+                QGCLabel { text: qsTr("Vehicle ID:") }
+                QGCLabel { text: _activeVehicle ? _activeVehicle.vehicleUIDStr : "" }
             }
         }
     }
