@@ -110,6 +110,9 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(void)
         remapV3_8["SERVO13_REVERSED"] = QStringLiteral("RC13_REVERSED");
         remapV3_8["SERVO14_REVERSED"] = QStringLiteral("RC14_REVERSED");
 
+        remapV3_8["ARMING_VOLT_MIN"] = QStringLiteral("ARMING_MIN_VOLT");
+        remapV3_8["ARMING_VOLT2_MIN"] = QStringLiteral("ARMING_MIN_VOLT2");
+
         _remapParamNameIntialized = true;
     }
 }
