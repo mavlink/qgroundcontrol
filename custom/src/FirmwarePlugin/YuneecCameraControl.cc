@@ -647,3 +647,16 @@ YuneecCameraControl::_sendUpdates()
     }
     _updatesToSend.clear();
 }
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap)
+{
+    QGCCameraControl::handleCaptureStatus(cap);
+    //-- Update recording time
+    if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
+        _recordTime = cap.recording_time_ms;
+        _recTime = _recTime.addMSecs(_recTime.elapsed() - cap.recording_time_ms);
+        emit recordTimeChanged();
+    }
+}
