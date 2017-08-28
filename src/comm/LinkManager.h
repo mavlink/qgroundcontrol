@@ -217,6 +217,7 @@ private:
     QList<SharedLinkInterfacePointer>       _sharedLinks;
     QList<SharedLinkConfigurationPointer>   _sharedConfigurations;
     QList<SharedLinkConfigurationPointer>   _sharedAutoconnectConfigurations;
+    QString                                 _autoConnectRTKPort;
     QmlObjectListModel                      _qmlConfigurations;
 
     QMap<QString, int>  _autoconnectWaitList;   ///< key: QGCSerialPortInfo.systemLocation, value: wait count
