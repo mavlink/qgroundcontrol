@@ -161,6 +161,8 @@ public:
     virtual void        factChanged         (Fact* pFact);
     //-- Allow controller to modify or invalidate incoming parameter
     virtual bool        incomingParameter   (Fact* pFact, QVariant& newValue);
+    //-- Allow controller to modify or invalidate parameter change
+    virtual bool        validateParameter   (Fact* pFact, QVariant& newValue);
 
 signals:
     void    infoChanged                     ();

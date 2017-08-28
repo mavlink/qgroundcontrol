@@ -204,7 +204,9 @@ QGCCameraParamIO::handleParamAck(const mavlink_param_ext_ack_t& ack)
         //-- If UI changed and value was not set, restore UI
         QVariant val = _valueFromMessage(ack.param_value, ack.param_type);
         if(_fact->rawValue() != val) {
-            _fact->_containerSetRawValue(val);
+            if(_control->validateParameter(_fact, val)) {
+                _fact->_containerSetRawValue(val);
+            }
         }
     }
 }
