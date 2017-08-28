@@ -272,6 +272,7 @@ QGCCameraControl::takePhoto()
             0,                                          // Duration between two consecutive pictures (in seconds--ignored if single image)
             1);                                         // Number of images to capture total - 0 for unlimited capture
         _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
+        _captureInfoRetries = 0;
         //-- Capture local image as well
         QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
         QDir().mkpath(photoPath);
@@ -384,6 +385,7 @@ QGCCameraControl::formatCard(int id)
 void
 QGCCameraControl::_requestCaptureStatus()
 {
+    qCDebug(CameraControlLog) << "_requestCaptureStatus()";
     _vehicle->sendMavCommand(
         _compID,                                // target component
         MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS,  // command id
@@ -445,16 +447,23 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                 qCDebug(CameraControlLog) << "Command failed for" << command;
             }
             switch(command) {
+                case MAV_CMD_IMAGE_START_CAPTURE:
+                    if(++_captureInfoRetries < 5) {
+                        _captureStatusTimer.start(1000);
+                    } else {
+                        qCDebug(CameraControlLog) << "Giving up requesting capture status";
+                    }
+                    break;
                 case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
                     if(++_captureInfoRetries < 3) {
-                        _requestCaptureStatus();
+                        _captureStatusTimer.start(500);
                     } else {
                         qCDebug(CameraControlLog) << "Giving up requesting capture status";
                     }
                     break;
                 case MAV_CMD_REQUEST_STORAGE_INFORMATION:
                     if(++_storageInfoRetries < 3) {
-                        _requestStorageInfo();
+                        QTimer::singleShot(500, this, &QGCCameraControl::_requestStorageInfo);
                     } else {
                         qCDebug(CameraControlLog) << "Giving up requesting storage status";
                     }
@@ -1344,6 +1353,15 @@ QGCCameraControl::_paramDone()
 //-----------------------------------------------------------------------------
 bool
 QGCCameraControl::incomingParameter(Fact* pFact, QVariant& newValue)
+{
+    Q_UNUSED(pFact);
+    Q_UNUSED(newValue);
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+bool
+QGCCameraControl::validateParameter(Fact* pFact, QVariant& newValue)
 {
     Q_UNUSED(pFact);
     Q_UNUSED(newValue);
