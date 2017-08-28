@@ -292,7 +292,7 @@ YuneecCameraControl::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
     switch (message.msgid) {
         case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
-            _handleGimbalVersion(message);
+            _handleHardwareVersion(message);
             break;
         case MAVLINK_MSG_ID_MOUNT_ORIENTATION:
             _handleGimbalOrientation(message);
@@ -308,19 +308,18 @@ YuneecCameraControl::_mavlinkMessageReceived(const mavlink_message_t& message)
 
 //-----------------------------------------------------------------------------
 void
-YuneecCameraControl::_handleGimbalVersion(const mavlink_message_t& message)
+YuneecCameraControl::_handleHardwareVersion(const mavlink_message_t& message)
 {
-    if (message.compid != MAV_COMP_ID_GIMBAL) {
-        return;
-    }
     mavlink_autopilot_version_t gimbal_version;
     mavlink_msg_autopilot_version_decode(&message, &gimbal_version);
-    int major = (gimbal_version.flight_sw_version >> (8 * 3)) & 0xFF;
-    int minor = (gimbal_version.flight_sw_version >> (8 * 2)) & 0xFF;
-    int patch = (gimbal_version.flight_sw_version >> (8 * 1)) & 0xFF;
-    _gimbalVersion.sprintf("%d.%d.%d", major, minor, patch);
-    qCDebug(YuneecCameraLog) << _gimbalVersion;
-    emit gimbalVersionChanged();
+    if (message.compid == MAV_COMP_ID_GIMBAL) {
+        int major = (gimbal_version.flight_sw_version >> (8 * 3)) & 0xFF;
+        int minor = (gimbal_version.flight_sw_version >> (8 * 2)) & 0xFF;
+        int patch = (gimbal_version.flight_sw_version >> (8 * 1)) & 0xFF;
+        _gimbalVersion.sprintf("%d.%d.%d", major, minor, patch);
+        qCDebug(YuneecCameraLog) << _gimbalVersion;
+        emit gimbalVersionChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------

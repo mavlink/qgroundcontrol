@@ -147,6 +147,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _firmwareCustomPatchVersion(versionNotSetValue)
     , _firmwareVersionType(FIRMWARE_VERSION_TYPE_OFFICIAL)
     , _gitHash(versionNotSetValue)
+    , _uid(0)
     , _lastAnnouncedLowBatteryPercent(100)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
@@ -310,6 +311,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _firmwareCustomPatchVersion(versionNotSetValue)
     , _firmwareVersionType(FIRMWARE_VERSION_TYPE_OFFICIAL)
     , _gitHash(versionNotSetValue)
+    , _uid(0)
     , _lastAnnouncedLowBatteryPercent(100)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
@@ -745,6 +747,9 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
     mavlink_autopilot_version_t autopilotVersion;
     mavlink_msg_autopilot_version_decode(&message, &autopilotVersion);
 
+    _uid = (quint64)autopilotVersion.uid;
+    emit vehicleUIDChanged();
+
     if (autopilotVersion.flight_sw_version != 0) {
         int majorVersion, minorVersion, patchVersion;
         FIRMWARE_VERSION_TYPE versionType;
@@ -778,6 +783,22 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
 
     _setCapabilities(autopilotVersion.capabilities);
     _startPlanRequest();
+}
+
+QString Vehicle::vehicleUIDStr()
+{
+    QString uid;
+    uint8_t* pUid = (uint8_t*)(void*)&_uid;
+    uid.sprintf("%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
+        pUid[0] & 0xff,
+        pUid[1] & 0xff,
+        pUid[2] & 0xff,
+        pUid[3] & 0xff,
+        pUid[4] & 0xff,
+        pUid[5] & 0xff,
+        pUid[6] & 0xff,
+        pUid[7] & 0xff);
+    return uid;
 }
 
 void Vehicle::_handleHilActuatorControls(mavlink_message_t &message)

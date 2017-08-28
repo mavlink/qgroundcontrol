@@ -107,7 +107,7 @@ protected:
 private:
     void    _handleHeartBeat        (const mavlink_message_t& message);
     void    _handleCommandAck       (const mavlink_message_t& message);
-    void    _handleGimbalVersion    (const mavlink_message_t& message);
+    void    _handleHardwareVersion    (const mavlink_message_t& message);
     void    _handleGimbalOrientation(const mavlink_message_t& message);
     void    _handleGimbalResult     (uint16_t result, uint8_t progress);
 
