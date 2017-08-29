@@ -147,6 +147,13 @@ public:
     bool        missionWaypointsOnly           () const final { return true; }
     bool        multiVehicleEnabled            () const final { return false; }
 
+#if defined(__planner__)
+    //-- TODO: Desktop Planner is a native QML build. We don't yet have a
+    //   file dialog for it.
+    bool        showOfflineMapExport           () const final { return false; }
+    bool        showOfflineMapImport           () const final { return false; }
+#endif
+
 private slots:
     void _advancedChanged(bool advanced);
 
@@ -297,13 +304,13 @@ TyphoonHPlugin::settingsPages()
                 QUrl::fromUserInput("qrc:/res/gear-white.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pGeneral));
+#if !defined (__planner__)
         if(!_pOfflineMaps) {
             _pOfflineMaps = new QGCSettings(tr("Offline Maps"),
                 QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"),
                 QUrl::fromUserInput("qrc:/typhoonh/img/mapIcon.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pOfflineMaps));
-#if !defined (__planner__)
         if (_showAdvancedUI) {
             if(!_pMAVLink) {
                 _pMAVLink = new QGCSettings(tr("MAVLink"),
@@ -441,9 +448,19 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         metaData.setRawDefaultValue(25);
         metaData.setRawMax(121.92); // 400 feet
         return true;
+#if defined (__planner__)
+    } else if (metaData.name() == AppSettings::batteryPercentRemainingAnnounceSettingsName) {
+        return false;
+    } else if (metaData.name() == AppSettings::telemetrySaveNotArmedName) {
+        return false;
+#endif
     } else if (metaData.name() == AppSettings::telemetrySaveName) {
         metaData.setRawDefaultValue(false);
+#if defined (__planner__)
+        return false;
+#else
         return true;
+#endif
     } else if (metaData.name() == AppSettings::appFontPointSizeName) {
 #if defined(__androidx86__)
         int defaultFontPointSize = 16;

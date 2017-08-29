@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/qml">
         <file alias="QGroundControl/Controls/QGCToolBarButton.qml">res/QGCToolBarButton.qml</file>
+        <file alias="QGroundControl/Controls/QGCButton.qml">res/YuneecButton.qml</file>
         <file alias="TyphoonHQuickInterface/Widgets/CameraMenu.qml">res/CameraMenu.qml</file>
         <file alias="TyphoonHQuickInterface/Widgets/OnOffSwitch.qml">res/OnOffSwitch.qml</file>
         <file alias="TyphoonHQuickInterface/Widgets/qmldir">res/qmldir</file>
