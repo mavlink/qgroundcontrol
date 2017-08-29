@@ -205,7 +205,7 @@ public class QGCActivity extends QtActivity implements TextToSpeech.OnInitListen
 
         if (m_openedDevices == null)
         {
-            // Log.e(TAG, "m_openedDevices is null");
+            Log.e(TAG, "m_openedDevices is null");
             return null;
         }
 
