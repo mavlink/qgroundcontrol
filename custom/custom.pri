@@ -174,10 +174,14 @@ HEADERS+= \
     $$PWD/src/AutoPilotPlugin/ChannelComponent.h \
     $$PWD/src/AutoPilotPlugin/HealthComponent.h \
     $$PWD/src/AutoPilotPlugin/YuneecSafetyComponent.h \
-    $$PWD/src/FirmwarePlugin/YuneecCameraControl.h \
-    $$PWD/src/FirmwarePlugin/YuneecCameraManager.h \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePlugin.h \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePluginFactory.h \
+
+!DesktopPlanner {
+    HEADERS+= \
+        $$PWD/src/FirmwarePlugin/YuneecCameraControl.h \
+        $$PWD/src/FirmwarePlugin/YuneecCameraManager.h \
+}
 
 SOURCES += \
     $$PWD/src/AutoPilotPlugin/YuneecAutoPilotPlugin.cc \
@@ -185,10 +189,14 @@ SOURCES += \
     $$PWD/src/AutoPilotPlugin/ChannelComponent.cc \
     $$PWD/src/AutoPilotPlugin/HealthComponent.cc \
     $$PWD/src/AutoPilotPlugin/YuneecSafetyComponent.cc \
-    $$PWD/src/FirmwarePlugin/YuneecCameraControl.cc \
-    $$PWD/src/FirmwarePlugin/YuneecCameraManager.cc \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePlugin.cc \
     $$PWD/src/FirmwarePlugin/YuneecFirmwarePluginFactory.cc \
+
+!DesktopPlanner {
+    SOURCES += \
+        $$PWD/src/FirmwarePlugin/YuneecCameraControl.cc \
+        $$PWD/src/FirmwarePlugin/YuneecCameraManager.cc \
+}
 
 #-------------------------------------------------------------------------------------
 # Android

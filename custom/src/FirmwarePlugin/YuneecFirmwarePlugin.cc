@@ -145,12 +145,15 @@ bool YuneecFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* veh
     }
 }
 
+#if !defined (__planner__)
 QGCCameraManager*
 YuneecFirmwarePlugin::createCameraManager(Vehicle *vehicle)
 {
     return new YuneecCameraManager(vehicle);
 }
+#endif
 
+#if !defined (__planner__)
 QGCCameraControl*
 YuneecFirmwarePlugin::createCameraControl(const mavlink_camera_information_t* info, Vehicle *vehicle, int compID, QObject* parent)
 {
@@ -161,4 +164,4 @@ YuneecFirmwarePlugin::createCameraControl(const mavlink_camera_information_t* in
     */
     return new YuneecCameraControl(info, vehicle, compID, parent);
 }
-
+#endif
