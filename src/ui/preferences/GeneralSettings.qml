@@ -294,7 +294,8 @@ QGCView {
                         //-----------------------------------------------------------------
                         //-- Battery talker
                         Row {
-                            spacing: ScreenTools.defaultFontPixelWidth
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    QGroundControl.settingsManager.appSettings.batteryPercentRemainingAnnounce.visible
                             QGCCheckBox {
                                 id:                 announcePercentCheckbox
                                 text:               qsTr("Announce battery lower than:")
