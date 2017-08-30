@@ -238,7 +238,9 @@ TyphoonHQuickInterface::thermalImagePresent()
     bool res = _videoReceiver && _videoReceiver->running();
     return res;
 #else
+#if !defined(WIN32)
 #warning Video Streaming Not Enabled for Yuneec Build!
+#endif
     return false;
 #endif
 }
