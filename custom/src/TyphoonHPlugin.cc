@@ -274,6 +274,14 @@ TyphoonHPlugin::setToolbox(QGCToolbox* toolbox)
     qmlRegisterSingletonType<TyphoonHQuickInterface>("TyphoonHQuickInterface", 1, 0, "TyphoonHQuickInterface", typhoonHQuickInterfaceSingletonFactory);
     _pHandler->init();
 #endif
+    //-- Save current version
+    QString versionPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/version");
+    QFile f(versionPath);
+    f.open(QIODevice::WriteOnly);
+    if(f.isOpen()){
+        QTextStream s(&f);
+        s << qgcApp()->applicationVersion();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -466,8 +474,12 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         int defaultFontPointSize = 16;
         metaData.setRawDefaultValue(defaultFontPointSize);
 #elif defined(__mobile__)
-        //-- This is for when using Mac OS to simulate the ST16 (Development only)
+        //-- This is for when using Desktop to simulate the ST16 (Development only)
+#if defined(WIN32)
+        int defaultFontPointSize = 8;
+#else
         int defaultFontPointSize = 10;
+#endif
         metaData.setRawDefaultValue(defaultFontPointSize);
 #endif
         return false;
