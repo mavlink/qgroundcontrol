@@ -5,6 +5,7 @@
         <parameters name="ArduSub">
 <param humanName="Depth reading at surface" name="ArduSub:SURFACE_DEPTH" documentation="The depth the external pressure sensor will read when the vehicle is considered at the surface (in centimeters)" user="Standard">
 <field name="Range">-100 0</field>
+<field name="Units">cm</field>
 </param>
 <param humanName="Eeprom format version number" name="ArduSub:SYSID_SW_MREV" documentation="This value is incremented when changes are made to the eeprom format" user="Advanced">
 <field name="ReadOnly">True</field>
@@ -23,10 +24,6 @@
 <field name="Range">1 255</field>
 </param>
 <param humanName="My ground station number" name="ArduSub:SYSID_MYGCS" documentation="Allows restricting radio overrides to only come from my ground station" user="Advanced">
-<values>
-<value code="255">Mission Planner and DroidPlanner</value>
-<value code=" 252"> AP Planner 2</value>
-</values>
 </param>
 <param humanName="Throttle filter cutoff" name="ArduSub:PILOT_THR_FILT" documentation="Throttle filter cutoff (Hz) - active whenever altitude control is inactive - 0 to disable" user="Advanced">
 <field name="Range">0 10</field>
@@ -129,6 +126,7 @@
 <value code=" 1">Face next waypoint</value>
 <value code=" 2">Face next waypoint except RTL</value>
 <value code=" 3">Face along GPS course</value>
+<value code=" 4">Correct crosstrack error</value>
 </values>
 </param>
 <param humanName="Pilot maximum vertical speed" name="ArduSub:PILOT_VELZ_MAX" documentation="The maximum vertical velocity the pilot may request in cm/s" user="Standard">
@@ -882,7 +880,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -948,7 +946,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -1016,7 +1014,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -1082,7 +1080,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -1150,7 +1148,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -1216,7 +1214,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -1284,7 +1282,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -1350,7 +1348,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -1418,7 +1416,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -1484,7 +1482,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -1552,7 +1550,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -1618,7 +1616,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -1686,7 +1684,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -1752,7 +1750,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -1820,7 +1818,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -1886,7 +1884,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -1954,7 +1952,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -2020,7 +2018,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -2088,7 +2086,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -2154,7 +2152,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -2222,7 +2220,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -2288,7 +2286,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -2356,7 +2354,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -2422,7 +2420,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -2490,7 +2488,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -2556,7 +2554,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -2624,7 +2622,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -2690,7 +2688,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -2758,7 +2756,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -2824,7 +2822,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -2892,7 +2890,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
@@ -2958,7 +2956,7 @@
 <value code="45">trim_roll_dec</value>
 <value code="46">trim_pitch_inc</value>
 <value code="47">trim_pitch_dec</value>
-<value code="48">input_hold_toggle</value>
+<value code="48">input_hold_set</value>
 <value code="49">roll_pitch_toggle</value>
 <value code="51">relay_1_on</value>
 <value code="52">relay_1_off</value>
