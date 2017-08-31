@@ -41,7 +41,7 @@ public:
         THROW       = 18,
         AVOID_ADSB  = 19,
         GUIDED_NOGPS= 20,
-        SMART_RTL   = 21,   //Smart Return to Launch
+        SAFE_RTL   = 21,   //Safe Return to Launch
     };
     static const int modeCount = 22;
 
