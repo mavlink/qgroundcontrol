@@ -67,7 +67,6 @@ Item {
             id:                 windPointer
             source:             "/qmlimages/windPointerGreen.svg"
             mipmap:             true
-            opacity:            0.2
             width:              size * 0.1
             sourceSize.width:   width
             fillMode:           Image.PreserveAspectFit
