@@ -41,8 +41,9 @@ public:
         THROW       = 18,
         AVOID_ADSB  = 19,
         GUIDED_NOGPS= 20,
+        SMART_RTL   = 21,   //Smart Return to Launch
     };
-    static const int modeCount = 21;
+    static const int modeCount = 22;
 
     APMCopterMode(uint32_t mode, bool settable);
 };
