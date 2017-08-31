@@ -91,7 +91,7 @@ Column {
                 font.pointSize:         ScreenTools.mediumFontPointSize * (largeValue ? 1.3 : 1.0)
                 font.family:            largeValue ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
                 fontSizeMode:           Text.HorizontalFit
-                text:                   fact.valueString
+                text:                   fact.enumOrValueString
             }
         }
     }
