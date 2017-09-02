@@ -436,7 +436,7 @@ YuneecCameraControl::_switchStateChanged(int swId, int oldState, int newState)
         switch(swId) {
             case Yuneec::BUTTON_CAMERA_SHUTTER:
                 //-- Do we have storage (in kb) and is camera idle?
-                if((storageTotal() == 0 || storageFree() < 250) && photoStatus() != PHOTO_CAPTURE_IDLE) {
+                if(storageTotal() == 0 || storageFree() < 250 || photoStatus() != PHOTO_CAPTURE_IDLE) {
                     //-- Undefined camera state
                     _errorSound.setLoopCount(1);
                     _errorSound.play();
@@ -467,7 +467,7 @@ YuneecCameraControl::_switchStateChanged(int swId, int oldState, int newState)
                 break;
             case Yuneec::BUTTON_VIDEO_SHUTTER:
                 //-- Do we have storage (in kb) and is camera idle?
-                if((storageTotal() == 0 || storageFree() < 250) && photoStatus() != PHOTO_CAPTURE_IDLE) {
+                if(storageTotal() == 0 || storageFree() < 250 || photoStatus() != PHOTO_CAPTURE_IDLE) {
                     //-- Undefined camera state
                     _errorSound.setLoopCount(1);
                     _errorSound.play();
