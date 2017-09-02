@@ -910,7 +910,7 @@ TyphoonHQuickInterface::_copyFilesInPath(const QString src, const QString dst)
 void
 TyphoonHQuickInterface::exportData()
 {
-    _copyResult = -1;
+    _copyResult = 0;
     _copyingFiles = true;
     emit copyingFilesChanged();
     QTimer::singleShot(10, this, &TyphoonHQuickInterface::_exportData);
