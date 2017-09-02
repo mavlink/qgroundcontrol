@@ -37,6 +37,9 @@ QGCView {
     QGCPalette      { id: qgcPal }
 
     function getCalText() {
+        if(_activeVehicle) {
+            return qsTr("Vehicle must be powered off and unbound for RC Calibration.")
+        }
         if(TyphoonHQuickInterface.m4State === TyphoonHQuickInterface.M4_STATE_FACTORY_CAL) {
             return qsTr("Move all switches to their limits. Leave them in their middle position.")
         }
@@ -117,7 +120,7 @@ QGCView {
                         anchors.horizontalCenter:   parent.horizontalCenter
                         QGCButton {
                             text:       "Start Calibration"
-                            enabled:    TyphoonHQuickInterface.calibrationComplete && TyphoonHQuickInterface.m4State !== TyphoonHQuickInterface.M4_STATE_FACTORY_CAL
+                            enabled:    !_activeVehicle && TyphoonHQuickInterface.calibrationComplete && TyphoonHQuickInterface.m4State !== TyphoonHQuickInterface.M4_STATE_FACTORY_CAL
                             width:      ScreenTools.defaultFontPixelWidth * 18
                             onClicked: {
                                 confirmCal.open()
@@ -125,7 +128,7 @@ QGCView {
                         }
                         QGCButton {
                             text:       "Stop Calibration"
-                            enabled:    TyphoonHQuickInterface.calibrationComplete && TyphoonHQuickInterface.m4State === TyphoonHQuickInterface.M4_STATE_FACTORY_CAL
+                            enabled:    !_activeVehicle && TyphoonHQuickInterface.calibrationComplete && TyphoonHQuickInterface.m4State === TyphoonHQuickInterface.M4_STATE_FACTORY_CAL
                             width:      ScreenTools.defaultFontPixelWidth * 18
                             onClicked: {
                                 TyphoonHQuickInterface.stopCalibration()
