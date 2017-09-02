@@ -61,9 +61,11 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
 
     _recTimer.setSingleShot(false);
     _recTimer.setInterval(333);
+    _gimbalTimer.setSingleShot(true);
 
-    connect(&_recTimer, &QTimer::timeout, this, &YuneecCameraControl::_recTimerHandler);
-    connect(_vehicle,   &Vehicle::mavlinkMessageReceived, this, &YuneecCameraControl::_mavlinkMessageReceived);
+    connect(&_recTimer,     &QTimer::timeout, this, &YuneecCameraControl::_recTimerHandler);
+    connect(&_gimbalTimer,  &QTimer::timeout, this, &YuneecCameraControl::_gimbalCalTimeout);
+    connect(_vehicle,   &Vehicle::mavlinkMessageReceived,   this, &YuneecCameraControl::_mavlinkMessageReceived);
     connect(this,       &QGCCameraControl::parametersReady, this, &YuneecCameraControl::_parametersReady);
 
     TyphoonHPlugin* pPlug = dynamic_cast<TyphoonHPlugin*>(qgcApp()->toolbox()->corePlugin());
@@ -389,6 +391,8 @@ YuneecCameraControl::_handleGimbalResult(uint16_t result, uint8_t progress)
 {
     if(_gimbalCalOn) {
         if(progress == 255) {
+            _gimbalTimer.stop();
+            _gimbalProgress = 100;
             _gimbalCalOn = false;
             emit gimbalCalOnChanged();
         }
@@ -400,9 +404,26 @@ YuneecCameraControl::_handleGimbalResult(uint16_t result, uint8_t progress)
     }
     if(progress < 255) {
         _gimbalProgress = progress;
+        if(progress == 99) {
+            _gimbalTimer.stop();
+            _gimbalTimer.start(5000);
+        }
     }
     emit gimbalProgressChanged();
     qCDebug(YuneecCameraLog) << "Gimbal Calibration" << QDateTime::currentDateTime().toString() << result << progress;
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::_gimbalCalTimeout()
+{
+    if(_gimbalProgress == 99) {
+        qCDebug(YuneecCameraLog) << "Gimbal Calibration End Timeout";
+        _gimbalProgress = 100;
+        _gimbalCalOn = false;
+        emit gimbalProgressChanged();
+        emit gimbalCalOnChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------
