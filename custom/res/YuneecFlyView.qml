@@ -537,7 +537,7 @@ Item {
                             origin.y:       yawIndicator.height / 2
                             angle:          _gimbalYaw
                         }
-                        property real _pitch: _gimbalPitch > 90 ? 90 : _gimbalPitch
+                        property real _pitch: _gimbalPitch < -15 ? -15  : (_gimbalPitch > 90 ? 90 : _gimbalPitch)
                     }
                 }
             }
