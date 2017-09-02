@@ -87,6 +87,7 @@ private slots:
     void    _sendUpdates            ();
     void    _delayedStartVideo      ();
     void    _delayedTakePhoto       ();
+    void    _gimbalCalTimeout       ();
 
 signals:
     void    gimbalVersionChanged    ();
@@ -126,6 +127,7 @@ private:
     QSoundEffect            _cameraSound;
     QSoundEffect            _videoSound;
     QSoundEffect            _errorSound;
+    QTimer                  _gimbalTimer;
     QTimer                  _recTimer;
     QTime                   _recTime;
     uint32_t                _recordTime;
