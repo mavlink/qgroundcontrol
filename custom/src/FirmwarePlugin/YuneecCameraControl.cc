@@ -582,6 +582,7 @@ YuneecCameraControl::setSpotArea(QPoint p)
         x = x > 100 ? 100 : x;
         y = y > 100 ? 100 : y;
         uint16_t coords = (x << 8) | y;
+        qCDebug(YuneecCameraLog) << "Set Spot X:" << x << "Y:" << y;
         pFact->setRawValue(coords);
     }
 }

@@ -118,9 +118,12 @@ Item {
             anchors.fill:   videoRect
             enabled:        isSpot
             onClicked: {
-                _camera.spotArea = Qt.point(mouse.x, mouse.y)
-                spotMetering.x = mouse.x - (spotMetering.width  / 2)
-                spotMetering.y = mouse.y - (spotMetering.height / 2)
+                //-- Constrain to within video region
+                if(mouse.x >= videoContent.x && mouse.x < (videoContent.width + videoContent.x)) {
+                    _camera.spotArea = Qt.point(mouse.x - videoContent.x, mouse.y)
+                    spotMetering.x = mouse.x - (spotMetering.width  / 2)
+                    spotMetering.y = mouse.y - (spotMetering.height / 2)
+                }
             }
         }
         Image {
