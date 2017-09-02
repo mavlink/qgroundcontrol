@@ -47,7 +47,7 @@ Item {
     property bool   _cameraPresent:     _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED
     property bool   _noSdCard:          _camera && _camera.storageTotal === 0
     property bool   _fullSD:            _camera && _camera.storageTotal !== 0 && _camera.storageFree > 0 && _camera.storageFree < 250 // We get kiB from the camera
-    property bool   _isVehicleGps:      _activeVehicle && _activeVehicle.gps.count.rawValue > 1 && activeVehicle.gps.hdop.rawValue < 1.4
+    property bool   _isVehicleGps:      _activeVehicle && _activeVehicle.gps && _activeVehicle.gps.count.rawValue > 1 && activeVehicle.gps.hdop.rawValue < 1.4
 
     property var    _expModeFact:       _camera && _camera.exposureMode
     property var    _evFact:            _camera && _camera.ev
