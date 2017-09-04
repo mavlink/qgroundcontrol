@@ -28,6 +28,7 @@ import TyphoonHQuickInterface.Widgets       1.0
 
 Item {
     anchors.fill: parent
+    visible:    !QGroundControl.videoManager.fullScreen
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
