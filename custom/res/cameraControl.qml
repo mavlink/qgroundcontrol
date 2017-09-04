@@ -35,11 +35,12 @@ import TyphoonHQuickInterface.Widgets   1.0
 import TyphoonMediaItem                 1.0
 
 Rectangle {
-    id:     mainRect
-    height: mainCol.height
-    width:  _indicatorDiameter
-    radius: ScreenTools.defaultFontPixelWidth * 0.5
-    color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
+    id:         mainRect
+    height:     mainCol.height
+    width:      _indicatorDiameter
+    visible:    !QGroundControl.videoManager.fullScreen
+    radius:     ScreenTools.defaultFontPixelWidth * 0.5
+    color:      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
     border.width:   1
     border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
 

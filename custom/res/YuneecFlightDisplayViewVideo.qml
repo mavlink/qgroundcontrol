@@ -50,6 +50,12 @@ Item {
             font.pointSize:     _mainIsMap ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
             anchors.centerIn:   parent
         }
+        MouseArea {
+            anchors.fill: parent
+            onDoubleClicked: {
+                QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
+            }
+        }
     }
     Rectangle {
         id:             videoRect
@@ -90,47 +96,51 @@ Item {
             height: videoRect.height
             width:  1
             x:      videoRect.width * 0.33
-            visible: _showGrid
+            visible: _showGrid && !QGroundControl.videoManager.fullScreen
         }
         Rectangle {
             color:  Qt.rgba(1,1,1,0.5)
             height: videoRect.height
             width:  1
             x:      videoRect.width * 0.66
-            visible: _showGrid
+            visible: _showGrid && !QGroundControl.videoManager.fullScreen
         }
         Rectangle {
             color:  Qt.rgba(1,1,1,0.5)
             width:  videoRect.width
             height: 1
             y:      videoRect.height * 0.33
-            visible: _showGrid
+            visible: _showGrid && !QGroundControl.videoManager.fullScreen
         }
         Rectangle {
             color:  Qt.rgba(1,1,1,0.5)
             width:  videoRect.width
             height: 1
             y:      videoRect.height * 0.66
-            visible: _showGrid
+            visible: _showGrid && !QGroundControl.videoManager.fullScreen
         }
-        //-- Spot Metering
         MouseArea {
             anchors.fill:   videoRect
-            enabled:        isSpot
             onClicked: {
-                //-- Constrain to within video region
-                if(mouse.x >= videoContent.x && mouse.x < (videoContent.width + videoContent.x)) {
-                    _camera.spotArea = Qt.point(mouse.x - videoContent.x, mouse.y)
-                    spotMetering.x = mouse.x - (spotMetering.width  / 2)
-                    spotMetering.y = mouse.y - (spotMetering.height / 2)
+                //-- Spot Metering
+                if(isSpot) {
+                    //-- Constrain to within video region
+                    if(mouse.x >= videoContent.x && mouse.x < (videoContent.width + videoContent.x)) {
+                        _camera.spotArea = Qt.point(mouse.x - videoContent.x, mouse.y)
+                        spotMetering.x = mouse.x - (spotMetering.width  / 2)
+                        spotMetering.y = mouse.y - (spotMetering.height / 2)
+                    }
                 }
+            }
+            onDoubleClicked: {
+                QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
             }
         }
         Image {
             id:                 spotMetering
             x:                  _camera ? _camera.spotArea.x - (width  / 2) : 0
             y:                  _camera ? _camera.spotArea.y - (height / 2) : 0
-            visible:            isSpot
+            visible:            isSpot && !QGroundControl.videoManager.fullScreen
             height:             videoContent.height / 16
             width:              height * 1.5
             antialiasing:       true
@@ -143,7 +153,7 @@ Item {
         Image {
             id:                 centerMetering
             anchors.centerIn:   videoRect
-            visible:            isCenter
+            visible:            isCenter && !QGroundControl.videoManager.fullScreen
             height:             spotSize * 1.5
             width:              height * 1.5
             antialiasing:       true
@@ -157,7 +167,7 @@ Item {
     //-- Camera Controller
     Loader {
         source:                 _dynamicCameras ? _dynamicCameras.controllerSource : ""
-        visible:                !_mainIsMap && _dynamicCameras && _dynamicCameras.cameras.count && _connected
+        visible:                !_mainIsMap && _dynamicCameras && _dynamicCameras.cameras.count && _connected && !QGroundControl.videoManager.fullScreen
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.bottom:         parent.bottom
