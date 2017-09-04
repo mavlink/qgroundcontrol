@@ -39,6 +39,12 @@ Item {
             font.pointSize:     _mainIsMap ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
             anchors.centerIn:   parent
         }
+        MouseArea {
+            anchors.fill: parent
+            onDoubleClicked: {
+                QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
+            }
+        }
     }
     Rectangle {
         anchors.fill:   parent
@@ -67,35 +73,41 @@ Item {
                 height: parent.height
                 width:  1
                 x:      parent.width * 0.33
-                visible: _showGrid
+                visible: _showGrid && !QGroundControl.videoManager.fullScreen
             }
             Rectangle {
                 color:  Qt.rgba(1,1,1,0.5)
                 height: parent.height
                 width:  1
                 x:      parent.width * 0.66
-                visible: _showGrid
+                visible: _showGrid && !QGroundControl.videoManager.fullScreen
             }
             Rectangle {
                 color:  Qt.rgba(1,1,1,0.5)
                 width:  parent.width
                 height: 1
                 y:      parent.height * 0.33
-                visible: _showGrid
+                visible: _showGrid && !QGroundControl.videoManager.fullScreen
             }
             Rectangle {
                 color:  Qt.rgba(1,1,1,0.5)
                 width:  parent.width
                 height: 1
                 y:      parent.height * 0.66
-                visible: _showGrid
+                visible: _showGrid && !QGroundControl.videoManager.fullScreen
+            }
+        }
+        MouseArea {
+            anchors.fill: parent
+            onDoubleClicked: {
+                QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
             }
         }
     }
     //-- Camera Controller
     Loader {
-        source:                 _dynamicCameras ? _dynamicCameras.controllerSource : ""
-        visible:                !_mainIsMap && _dynamicCameras && _dynamicCameras.cameras.count && _connected
+        source:                 QGroundControl.videoManager.fullScreen ? "" : (_dynamicCameras ? _dynamicCameras.controllerSource : "")
+        visible:                !_mainIsMap && _dynamicCameras && _dynamicCameras.cameras.count && _connected && !QGroundControl.videoManager.fullScreen
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.bottom:         parent.bottom

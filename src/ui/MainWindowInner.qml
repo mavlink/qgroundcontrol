@@ -204,7 +204,7 @@ Item {
     property var messageQueue: []
 
     function showMessage(message) {
-        if(criticalMmessageArea.visible) {
+        if(criticalMmessageArea.visible || QGroundControl.videoManager.fullScreen) {
             messageQueue.push(message)
         } else {
             criticalMessageText.text = message
@@ -271,6 +271,7 @@ Item {
     MainToolBar {
         id:                 toolBar
         height:             ScreenTools.toolbarHeight
+        visible:            !QGroundControl.videoManager.fullScreen
         anchors.left:       parent.left
         anchors.right:      parent.right
         anchors.top:        parent.top
@@ -593,7 +594,7 @@ Item {
     //-- Loader helper for any child, no matter how deep can display an element
     //   in the middle of the main window.
     Loader {
-        id: rootLoader
+        id:         rootLoader
         anchors.centerIn: parent
     }
 
