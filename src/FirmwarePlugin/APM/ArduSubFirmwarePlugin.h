@@ -101,33 +101,33 @@ public:
     ArduSubFirmwarePlugin(void);
 
     // Overrides from FirmwarePlugin
-    int manualControlReservedButtonCount(void);
+    int manualControlReservedButtonCount(void) final;
 
     int defaultJoystickTXMode(void) final { return 3; }
 
-    bool supportsThrottleModeCenterZero(void);
+    bool supportsThrottleModeCenterZero(void) final;
 
-    bool supportsManualControl(void);
+    bool supportsManualControl(void) final;
 
-    bool supportsRadio(void);
+    bool supportsRadio(void) final;
 
-    bool supportsJSButton(void);
+    bool supportsJSButton(void) final;
 
-    bool supportsMotorInterference(void);
+    bool supportsMotorInterference(void) final;
 
     /// Return the resource file which contains the vehicle icon used in the flight view when the view is dark (Satellite for instance)
-    virtual QString vehicleImageOpaque(const Vehicle* vehicle) const override;
+    virtual QString vehicleImageOpaque(const Vehicle* vehicle) const final;
 
     /// Return the resource file which contains the vehicle icon used in the flight view when the view is light (Map for instance)
-    virtual QString vehicleImageOutline(const Vehicle* vehicle) const override;
+    virtual QString vehicleImageOutline(const Vehicle* vehicle) const final;
 
-    QString brandImageIndoor(const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
-    QString brandImageOutdoor(const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
+    QString brandImageIndoor(const Vehicle* vehicle) const final{ Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
+    QString brandImageOutdoor(const Vehicle* vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
     int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
     const QVariantList& toolBarIndicators(const Vehicle* vehicle) final;
-    bool  adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message);
-    virtual QMap<QString, FactGroup*>* factGroups(void);
+    bool  adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) final;
+    virtual QMap<QString, FactGroup*>* factGroups(void) final;
 
 
 private:
