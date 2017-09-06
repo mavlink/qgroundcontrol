@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "APMFirmwarePlugin.h"
 #include "APMAutoPilotPlugin.h"
 #include "QGCMAVLink.h"
@@ -18,6 +14,7 @@
 #include "APMFlightModesComponentController.h"
 #include "APMAirframeComponentController.h"
 #include "APMSensorsComponentController.h"
+#include "MissionManager.h"
 
 #include <QTcpSocket>
 
@@ -159,9 +156,13 @@ AutoPilotPlugin* APMFirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
     return new APMAutoPilotPlugin(vehicle, vehicle);
 }
 
-bool APMFirmwarePlugin::isCapable(const Vehicle* /*vehicle*/, FirmwareCapabilities capabilities)
+bool APMFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities)
 {
-    return (capabilities & (SetFlightModeCapability | PauseVehicleCapability)) == capabilities;
+    Q_UNUSED(vehicle);
+
+    uint32_t vehicleCapabilities = SetFlightModeCapability | GuidedModeCapability | PauseVehicleCapability;
+
+    return (capabilities & vehicleCapabilities) == capabilities;
 }
 
 QList<VehicleComponent*> APMFirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
@@ -725,12 +726,6 @@ bool APMFirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
     return vehicle->flightMode() == "Guided";
 }
 
-void APMFirmwarePlugin::pauseVehicle(Vehicle* vehicle)
-{
-    // Best we can do in this case
-    vehicle->setFlightMode("Loiter");
-}
-
 void APMFirmwarePlugin::_soloVideoHandshake(Vehicle* vehicle)
 {
     Q_UNUSED(vehicle);
@@ -818,4 +813,70 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
     default:
         return QString();
     }
+}
+
+void APMFirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
+{
+    if (guidedMode) {
+        _setFlightModeAndValidate(vehicle, "Guided");
+    } else {
+        pauseVehicle(vehicle);
+    }
+}
+
+void APMFirmwarePlugin::pauseVehicle(Vehicle* vehicle)
+{
+    _setFlightModeAndValidate(vehicle, pauseFlightMode());
+}
+
+void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
+{
+    if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to go to location, vehicle position not known."));
+        return;
+    }
+
+
+    setGuidedMode(vehicle, true);
+
+    QGeoCoordinate coordWithAltitude = gotoCoord;
+    coordWithAltitude.setAltitude(vehicle->altitudeRelative()->rawValue().toDouble());
+    vehicle->missionManager()->writeArduPilotGuidedMissionItem(coordWithAltitude, false /* altChangeOnly */);
+}
+
+void APMFirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
+{
+    _setFlightModeAndValidate(vehicle, rtlFlightMode());
+}
+
+void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange)
+{
+    if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to change altitude, vehicle altitude not known."));
+        return;
+    }
+
+    setGuidedMode(vehicle, true);
+
+    mavlink_message_t msg;
+    mavlink_set_position_target_local_ned_t cmd;
+
+    memset(&cmd, 0, sizeof(cmd));
+
+    cmd.target_system = vehicle->id();
+    cmd.target_component = vehicle->defaultComponentId();
+    cmd.coordinate_frame = MAV_FRAME_LOCAL_OFFSET_NED;
+    cmd.type_mask = 0xFFF8; // Only x/y/z valid
+    cmd.x = 0.0f;
+    cmd.y = 0.0f;
+    cmd.z = -(altitudeChange);
+
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_set_position_target_local_ned_encode_chan(mavlink->getSystemId(),
+                                                          mavlink->getComponentId(),
+                                                          vehicle->priorityLink()->mavlinkChannel(),
+                                                          &msg,
+                                                          &cmd);
+
+    vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
 }
