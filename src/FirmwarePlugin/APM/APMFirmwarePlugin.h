@@ -74,12 +74,18 @@ public:
     QList<MAV_CMD> supportedMissionCommands(void) final;
 
     AutoPilotPlugin*    autopilotPlugin                 (Vehicle* vehicle) final;
-    bool                isCapable                       (const Vehicle *vehicle, FirmwareCapabilities capabilities) override;
+    bool                isCapable                       (const Vehicle *vehicle, FirmwareCapabilities capabilities) final;
+    void                setGuidedMode                   (Vehicle* vehicle, bool guidedMode) final;
+    void                guidedModeGotoLocation          (Vehicle* vehicle, const QGeoCoordinate& gotoCoord) final;
     QStringList         flightModes                     (Vehicle* vehicle) final;
     QString             flightMode                      (uint8_t base_mode, uint32_t custom_mode) const final;
     bool                setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
     bool                isGuidedMode                    (const Vehicle* vehicle) const final;
-    void                pauseVehicle                    (Vehicle* vehicle) override;
+    QString             rtlFlightMode                   (void) const final { return QString("RTL"); }
+    QString             missionFlightMode               (void) const final { return QString("Auto"); }
+    void                pauseVehicle                    (Vehicle* vehicle) final;
+    void                guidedModeRTL                   (Vehicle* vehicle) final;
+    void                guidedModeChangeAltitude        (Vehicle* vehicle, double altitudeChange) override;
     int                 manualControlReservedButtonCount(void) override;
     bool                adjustIncomingMavlinkMessage    (Vehicle* vehicle, mavlink_message_t* message) override;
     void                adjustOutgoingMavlinkMessage    (Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message) final;
