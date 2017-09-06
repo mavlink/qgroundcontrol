@@ -13,6 +13,8 @@ Button {
     property bool   _showHighlight:     (pressed | hovered | checked) && !__forceHoverOff
     property bool   _showBorder:        _qgcPal.globalTheme === QGCPalette.Light
 
+    property var altColor
+
     // This fixes the issue with button hover where if a Button is near the edge oa QQuickWidget you can
     // move the mouse fast enough such that the MouseArea does not trigger an onExited. This is turn
     // cause the hover property to not be cleared correctly.
@@ -62,7 +64,7 @@ Button {
                 implicitHeight: ScreenTools.implicitButtonHeight
                 border.width:   _showBorder ? 1: 0
                 border.color:   _qgcPal.buttonText
-                color:          _showHighlight ?
+                color:          altColor ? altColor : _showHighlight ?
                                     control._qgcPal.buttonHighlight :
                                     (primary ? control._qgcPal.primaryButton : control._qgcPal.button)
             }
