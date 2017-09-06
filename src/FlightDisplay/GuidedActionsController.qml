@@ -101,7 +101,7 @@ Item {
     property bool showChangeAlt:        (_activeVehicle && _vehicleFlying) && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
     property bool showOrbit:            !_hideOrbit && _activeVehicle && _vehicleFlying && _activeVehicle.orbitModeSupported && _vehicleArmed && !_missionActive
     property bool showLandAbort:        _activeVehicle && _vehicleFlying && _activeVehicle.fixedWing && _vehicleLanding
-    property bool showGotoLocation:     _activeVehicle && _activeVehicle.guidedMode && _vehicleFlying
+    property bool showGotoLocation:     _activeVehicle && _vehicleFlying
 
     property bool guidedUIVisible:      guidedActionConfirm.visible || guidedActionList.visible
 

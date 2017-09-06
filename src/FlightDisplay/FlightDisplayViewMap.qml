@@ -261,7 +261,7 @@ FlightMap {
     // GoTo here waypoint
     MapQuickItem {
         coordinate:     _gotoHereCoordinate
-        visible:        _activeVehicle && _activeVehicle.guidedMode && _gotoHereCoordinate.isValid
+        visible:        _activeVehicle && _activeVehicle.guidedModeSupported && _gotoHereCoordinate.isValid
         z:              QGroundControl.zOrderMapItems
         anchorPoint.x:  sourceItem.anchorPointX
         anchorPoint.y:  sourceItem.anchorPointY
