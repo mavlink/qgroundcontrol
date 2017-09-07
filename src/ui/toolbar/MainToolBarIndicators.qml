@@ -92,6 +92,7 @@ Item {
         visible:                x > indicatorRow.width && !_communicationLost
         fillMode:               Image.PreserveAspectFit
         source:                 _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
+        mipmap:                 true
 
         property bool   _outdoorPalette:        qgcPal.globalTheme === QGCPalette.Light
         property bool   _corePluginBranding:    QGroundControl.corePlugin.brandImageIndoor.length != 0
