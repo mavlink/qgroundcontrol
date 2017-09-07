@@ -31,7 +31,7 @@ static const char *kCAM_MODE        = "CAM_MODE";
 //static const char *kCAM_PHOTOQUAL   = "CAM_PHOTOQUAL";
 static const char *kCAM_SHUTTERSPD  = "CAM_SHUTTERSPD";
 static const char *kCAM_SPOTAREA    = "CAM_SPOTAREA";
-//static const char *kCAM_VIDFMT      = "CAM_VIDFMT";
+static const char *kCAM_VIDFMT      = "CAM_VIDFMT";
 static const char *kCAM_VIDRES      = "CAM_VIDRES";
 static const char *kCAM_WBMODE      = "CAM_WBMODE";
 
@@ -264,6 +264,14 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
             _recTimer.start();
             _videoSound.setLoopCount(1);
             _videoSound.play();
+            //-- Exclude parameters that cannot be changed while recording
+            if(_activeSettings.contains(kCAM_VIDRES)) {
+                _activeSettings.removeOne(kCAM_VIDRES);
+            }
+            if(_activeSettings.contains(kCAM_VIDFMT)) {
+                _activeSettings.removeOne(kCAM_VIDFMT);
+            }
+            emit activeSettingsChanged();
             //-- Start recording local stream as well
             //if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
             //    qgcApp()->toolbox()->videoManager()->videoReceiver()->startRecording();
@@ -278,6 +286,29 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
             } else {
                 //-- Stop recording
                 _videoSound.setLoopCount(2);
+                {
+                    //-- Restore parameter list
+                    QStringList exclusionList;
+                    foreach(QGCCameraOptionExclusion* param, _valueExclusions) {
+                        Fact* pFact = getFact(param->param);
+                        if(pFact) {
+                            QString option = pFact->rawValueString();
+                            if(param->value == option) {
+                                exclusionList << param->exclusions;
+                            }
+                        }
+                    }
+                    QStringList active;
+                    foreach(QString key, _settings) {
+                        if(!exclusionList.contains(key)) {
+                            active.append(key);
+                        }
+                    }
+                    if(active != _activeSettings) {
+                        _activeSettings = active;
+                        emit activeSettingsChanged();
+                    }
+                }
             }
             _videoSound.play();
             //-- Stop recording local stream

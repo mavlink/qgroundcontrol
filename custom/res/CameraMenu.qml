@@ -10,6 +10,7 @@ import QGroundControl.ScreenTools 1.0
 QGCComboBox {
     property Fact fact: Fact { }
     property bool indexModel: true  ///< true: model must be specifed, selected index is fact value, false: use enum meta data
+    QGCPalette { id: _qgcPal }
     model: fact ? fact.enumStrings : []
     currentIndex: fact ? (indexModel ? fact.value : fact.enumIndex) : 0
     onActivated: {
