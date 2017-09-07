@@ -49,6 +49,7 @@ Item {
     property bool   _noSdCard:          _camera && _camera.storageTotal === 0
     property bool   _fullSD:            _camera && _camera.storageTotal !== 0 && _camera.storageFree > 0 && _camera.storageFree < 250 // We get kiB from the camera
     property bool   _isVehicleGps:      _activeVehicle && _activeVehicle.gps && _activeVehicle.gps.count.rawValue > 1 && activeVehicle.gps.hdop.rawValue < 1.4
+    property bool   _recordingVideo:    _cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
 
     property var    _expModeFact:       _camera && _camera.exposureMode
     property var    _evFact:            _camera && _camera.ev
@@ -405,6 +406,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 visible:    _cameraVideoMode;
                 indexModel: false
+                enabled:    !_recordingVideo
                 fact:       _videoResFact
             }
             //-- SD Card

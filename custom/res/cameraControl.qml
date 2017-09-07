@@ -62,6 +62,7 @@ Rectangle {
     property bool _cameraPhotoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode   === QGCCameraControl.CAM_MODE_PHOTO)
     property bool _cameraPhotoIdle:         !_communicationLost && (_emptySD ? false : _camera && _camera.photoStatus  === QGCCameraControl.PHOTO_CAPTURE_IDLE)
     property bool _cameraModeUndefined:     !_cameraPhotoMode && !_cameraVideoMode
+    property bool _recordingVideo:          _cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
 
     property real _mediaWidth:              128
     property real _mediaHeight:             72
@@ -430,6 +431,7 @@ Rectangle {
                                 text:       qsTr("Reset")
                                 onClicked:  resetPrompt.open()
                                 width:      _editFieldWidth
+                                enabled:    !_recordingVideo
                                 anchors.verticalCenter: parent.verticalCenter
                                 MessageDialog {
                                     id:                 resetPrompt
@@ -461,7 +463,7 @@ Rectangle {
                             }
                             QGCButton {
                                 text:       qsTr("Format")
-                                enabled:     !_emptySD
+                                enabled:    !_emptySD && !_recordingVideo
                                 onClicked:  formatPrompt.open()
                                 width:      _editFieldWidth
                                 anchors.verticalCenter: parent.verticalCenter
