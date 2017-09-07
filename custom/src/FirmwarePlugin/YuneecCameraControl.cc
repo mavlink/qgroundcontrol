@@ -475,7 +475,13 @@ YuneecCameraControl::_switchStateChanged(int swId, int oldState, int newState)
                     if(cameraMode() == CAM_MODE_VIDEO) {
                         //-- Can camera capture images in video mode?
                         if(photosInVideoMode()) {
-                            takePhoto();
+                            //-- Can't take photos while video is being recorded
+                            if(videoStatus() != VIDEO_CAPTURE_STATUS_STOPPED) {
+                                _errorSound.setLoopCount(1);
+                                _errorSound.play();
+                            } else {
+                                takePhoto();
+                            }
                         } else {
                             //-- Are we recording video?
                             if(videoStatus() != VIDEO_CAPTURE_STATUS_STOPPED) {
