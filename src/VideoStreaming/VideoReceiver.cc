@@ -181,6 +181,7 @@ VideoReceiver::_timeout()
     //   found to be working, only then we actually start the stream.
     QUrl url(_uri);
     _socket = new QTcpSocket;
+    _socket->setProxy(QNetworkProxy::NoProxy);
     connect(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &VideoReceiver::_socketError);
     connect(_socket, &QTcpSocket::connected, this, &VideoReceiver::_connected);
     //qCDebug(VideoReceiverLog) << "Trying to connect to:" << url.host() << url.port();
