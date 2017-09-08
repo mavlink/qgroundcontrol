@@ -16,10 +16,10 @@
 
 *   Disable settings that cannot be changed while video is being recorded
 
- - Video Resolution
- - Video Format (for the E90)
- - Reset Camera
- - Format SD Card
+    * Video Resolution
+    * Video Format (for the E90)
+    * Reset Camera
+    * Format SD Card
 
 ### v1.1.21 - Sep 4 2017
 
