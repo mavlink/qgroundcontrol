@@ -463,7 +463,7 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         return false;
 #endif
     } else if (metaData.name() == AppSettings::telemetrySaveName) {
-        metaData.setRawDefaultValue(false);
+        metaData.setRawDefaultValue(true);
 #if defined (__planner__)
         return false;
 #else
