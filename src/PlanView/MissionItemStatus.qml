@@ -84,8 +84,8 @@ Rectangle {
                 small:                      true
                 checked:                    object.isCurrentItem
                 label:                      object.abbreviation.charAt(0)
-                index:                      object.sequenceNumber
-                visible:                    object.relativeAltitude ? true : object.homePosition
+                index:                      object.abbreviation.charAt(0) > 'A' && object.abbreviation.charAt(0) < 'z' ? -1 : object.sequenceNumber
+                visible:                    true
             }
         }
     }
