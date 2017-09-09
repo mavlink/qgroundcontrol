@@ -77,16 +77,24 @@ Rectangle {
 
         Item { width: 1; height: _spacer }
 
-        FactTextFieldGrid {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            factList:       [ missionItem.landingHeading, missionItem.landingAltitude]
-        }
-
         GridLayout {
             anchors.left:    parent.left
             anchors.right:   parent.right
             columns:         2
+
+                QGCLabel { text: missionItem.landingHeading.name }
+
+                FactTextField {
+                    Layout.fillWidth:   true
+                    fact:               missionItem.landingHeading
+                }
+
+                QGCLabel { text: missionItem.landingAltitude.name }
+
+                FactTextField {
+                    Layout.fillWidth:   true
+                    fact:               missionItem.landingAltitude
+                }
 
             QGCRadioButton {
                 id:                     useLandingDistance
