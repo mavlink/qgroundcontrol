@@ -44,8 +44,8 @@
     "defaultValue":     0.0
 },
 {
-    "name":             "Fall rate",
-    "shortDescription": "Fall rate between landing and loiter altitude.",
+    "name":             "Descent rate",
+    "shortDescription": "Descent rate between landing and loiter altitude.",
     "type":             "double",
     "units":            "%",
     "min":              0.1,
