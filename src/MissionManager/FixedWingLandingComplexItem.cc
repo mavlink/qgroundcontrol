@@ -25,7 +25,7 @@ const char* FixedWingLandingComplexItem::_landingHeadingName =          "Landing
 const char* FixedWingLandingComplexItem::_loiterAltitudeName =          "Loiter altitude";
 const char* FixedWingLandingComplexItem::_loiterRadiusName =            "Loiter radius";
 const char* FixedWingLandingComplexItem::_landingAltitudeName =         "Landing altitude";
-const char* FixedWingLandingComplexItem::_fallRateName =                "Fall rate";
+const char* FixedWingLandingComplexItem::_fallRateName =                "Descent rate";
 
 const char* FixedWingLandingComplexItem::_jsonLoiterCoordinateKey =         "loiterCoordinate";
 const char* FixedWingLandingComplexItem::_jsonLoiterRadiusKey =             "loiterRadius";
