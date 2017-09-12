@@ -20,7 +20,7 @@
 class VisualMissionItemTest : public UnitTest
 {
     Q_OBJECT
-    
+
 public:
     VisualMissionItemTest(void);
 
