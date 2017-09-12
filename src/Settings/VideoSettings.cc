@@ -27,6 +27,7 @@ const char* VideoSettings::videoGridLinesName =     "VideoGridLines";
 const char* VideoSettings::showRecControlName =     "ShowRecControl";
 const char* VideoSettings::recordingFormatName =    "RecordingFormat";
 const char* VideoSettings::maxVideoSizeName =       "MaxVideoSize";
+const char* VideoSettings::rtspTimeoutName =        "RtspTimeout";
 
 const char* VideoSettings::videoSourceNoVideo =     "No Video Available";
 const char* VideoSettings::videoDisabled =          "Video Stream Disabled";
@@ -43,6 +44,7 @@ VideoSettings::VideoSettings(QObject* parent)
     , _showRecControlFact(NULL)
     , _recordingFormatFact(NULL)
     , _maxVideoSizeFact(NULL)
+    , _rtspTimeoutFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
@@ -152,4 +154,13 @@ Fact* VideoSettings::maxVideoSize(void)
     }
 
     return _maxVideoSizeFact;
+}
+
+Fact* VideoSettings::rtspTimeout(void)
+{
+    if (!_rtspTimeoutFact) {
+        _rtspTimeoutFact = _createSettingsFact(rtspTimeoutName);
+    }
+
+    return _rtspTimeoutFact;
 }
