@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.29 - Sep 12 2017
+
+*   Fixed changelog deploy
+
 ### v1.1.25 - Sep 8 2017
 
 *   Adding changelog
