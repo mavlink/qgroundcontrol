@@ -22,7 +22,7 @@ import QGroundControl.Palette               1.0
 Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    width:          ScreenTools.defaultFontPixelWidth * 16
+    width:          ScreenTools.defaultFontPixelWidth * 12
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property var    _flightModes:   []

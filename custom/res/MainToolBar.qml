@@ -84,7 +84,7 @@ Rectangle {
         anchors.left:           parent.left
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        spacing:                ScreenTools.defaultFontPixelWidth * (ScreenTools.isMobile ? 5.5 : 3.25)
+        spacing:                ScreenTools.defaultFontPixelWidth * (ScreenTools.isMobile ? 6.25 : 3.25)
 
         QGCToolBarButton {
             id:                 homeButton
@@ -178,7 +178,7 @@ Rectangle {
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * 2
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        spacing:                ScreenTools.defaultFontPixelWidth * 2
+        spacing:                ScreenTools.defaultFontPixelWidth * 1.5
 
         Rectangle {
             height:             parent.height * 0.75
@@ -186,6 +186,14 @@ Rectangle {
             color:              qgcPal.text
             opacity:            0.5
             anchors.verticalCenter: parent.verticalCenter
+        }
+
+        Loader {
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+            visible:            ScreenTools.isMobile
+            source:             "/typhoonh/OBSIndicator.qml"
         }
 
         Loader {
@@ -216,15 +224,6 @@ Rectangle {
             anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
             visible:            ScreenTools.isMobile
             source:             "/typhoonh/WIFIRSSIIndicator.qml"
-        }
-
-        Image {
-            source:             qgcPal.globalTheme === QGCPalette.Light ? "/typhoonh/img/YuneecBrandImageBlack.svg" : "/typhoonh/img/YuneecBrandImage.svg"
-            visible:            !ScreenTools.isMobile
-            height:             parent.height * 0.35
-            sourceSize.height:  height
-            fillMode:           Image.PreserveAspectFit
-            anchors.verticalCenter: parent.verticalCenter
         }
 
     }

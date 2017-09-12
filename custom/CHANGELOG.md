@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.32 - Sep 12 2017
+
+*   Added OBS indicator to the toolbar (flashes green when active)
+
 ### v1.1.31 - Sep 12 2017
 
 *   Increased video stream timeout from 2 to 10 seconds (holding last frame before giving up)

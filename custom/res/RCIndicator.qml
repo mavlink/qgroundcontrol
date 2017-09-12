@@ -170,14 +170,6 @@ Item {
                 ColorAnimation { from: qgcPal.text;     to: qgcPal.colorRed; duration: 750 }
             }
         }
-        ColorAnimation {
-            target:     rcIcon
-            property:   "color"
-            from:       qgcPal.colorRed
-            to:         qgcPal.colorOrange
-            duration:   1000
-            loops:      Animation.Infinite
-        }
         Column {
             anchors.verticalCenter: parent.verticalCenter
             SignalStrength {
