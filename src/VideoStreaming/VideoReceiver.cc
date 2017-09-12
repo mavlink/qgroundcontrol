@@ -768,12 +768,13 @@ VideoReceiver::_updateTimer()
             }
         }
         if(_videoRunning) {
+            uint32_t timeout = qgcApp()->toolbox()->settingsManager()->videoSettings()->rtspTimeout()->rawValue().toUInt();
             time_t elapsed = 0;
             time_t lastFrame = _videoSurface->lastFrame();
             if(lastFrame != 0) {
                 elapsed = time(0) - _videoSurface->lastFrame();
             }
-            if(elapsed > 2 && _videoSurface) {
+            if(elapsed > (time_t)timeout && _videoSurface) {
                 stop();
             }
         } else {

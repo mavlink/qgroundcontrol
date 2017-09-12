@@ -1,6 +1,11 @@
 ## DataPilot Release Changelog
 
-### v1.1.29 - Sep 12 2017
+### v1.1.31 - Sep 12 2017
+
+*   Increased video stream timeout from 2 to 10 seconds (holding last frame before giving up)
+*   Keep requesting image capture status while camera reports busy
+
+### v1.1.30 - Sep 12 2017
 
 *   Fixed changelog deploy
 

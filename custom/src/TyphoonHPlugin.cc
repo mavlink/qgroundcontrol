@@ -432,8 +432,12 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
     } else if (metaData.name() == VideoSettings::videoAspectRatioName) {
         metaData.setRawDefaultValue(1.777777);
         return false;
-        //-- Default Palette
+    } else if (metaData.name() == VideoSettings::rtspTimeoutName) {
+        //-- Wait 10 seconds before giving up on video
+        metaData.setRawDefaultValue(10);
+        return false;
      } else if (metaData.name() == AppSettings::indoorPaletteName) {
+        //-- Default Palette
         QVariant outdoorPalette;
 #if defined (__mobile__) && !defined(__planner__)
         outdoorPalette = 0;
