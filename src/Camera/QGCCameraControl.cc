@@ -1100,7 +1100,7 @@ QGCCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap
         _storageFree = cap.available_capacity;
         emit storageFreeChanged();
     }
-    //-- Video Capture Status
+    //-- Video/Image Capture Status
     uint8_t vs = cap.video_status < (uint8_t)VIDEO_CAPTURE_STATUS_LAST ? cap.video_status : (uint8_t)VIDEO_CAPTURE_STATUS_UNDEFINED;
     uint8_t ps = cap.image_status < (uint8_t)PHOTO_CAPTURE_LAST ? cap.image_status : (uint8_t)PHOTO_CAPTURE_STATUS_UNDEFINED;
     _setVideoStatus((VideoStatus)vs);
@@ -1108,6 +1108,9 @@ QGCCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap
     //-- Keep asking for it once in a while when recording
     if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
         _captureStatusTimer.start(5000);
+    //-- Same while image capture is busy
+    } else if(photoStatus() != PHOTO_CAPTURE_IDLE) {
+        _captureStatusTimer.start(1000);
     }
 }
 
