@@ -441,6 +441,7 @@ Rectangle {
                                     onNo: resetPrompt.close()
                                     onYes: {
                                         _camera.resetSettings()
+                                        QGroundControl.settingsManager.videoSettings.gridLines.rawValue = false
                                         resetPrompt.close()
                                     }
                                 }
