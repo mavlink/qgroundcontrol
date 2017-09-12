@@ -451,8 +451,10 @@ Item {
             rotation: 90
         }
         QGCLabel {
-            text:   obdIndicator.distValue.toFixed(1) + (_activeVehicle ? _activeVehicle.flightDistance.units : "")
-            anchors.centerIn: obsRect
+            text:               obdIndicator.distValue.toFixed(1) + (_activeVehicle ? _activeVehicle.flightDistance.units : "")
+            color:              "white"
+            font.family:        ScreenTools.demiboldFontFamily
+            anchors.centerIn:   obsRect
         }
         property real distCur: TyphoonHQuickInterface.distSensorMax ? TyphoonHQuickInterface.distSensorCur / TyphoonHQuickInterface.distSensorMax : 0
         property real distValue: QGroundControl.metersToAppSettingsDistanceUnits(TyphoonHQuickInterface.distSensorCur / 100);
