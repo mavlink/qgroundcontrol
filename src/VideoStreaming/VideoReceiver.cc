@@ -774,7 +774,7 @@ VideoReceiver::_updateTimer()
             if(lastFrame != 0) {
                 elapsed = time(0) - _videoSurface->lastFrame();
             }
-            if(elapsed > timeout && _videoSurface) {
+            if(elapsed > (time_t)timeout && _videoSurface) {
                 stop();
             }
         } else {
