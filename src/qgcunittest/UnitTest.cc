@@ -394,7 +394,7 @@ void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot)
 
     // Wait for plan request to complete
     if (!_vehicle->initialPlanRequestComplete()) {
-        QSignalSpy spyPlan(_vehicle, SIGNAL(initialPlanRequestCompleted()));
+        QSignalSpy spyPlan(_vehicle, SIGNAL(initialPlanRequestCompleteChanged(bool)));
         QCOMPARE(spyPlan.wait(10000), true);
     }
 }

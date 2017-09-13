@@ -1959,7 +1959,7 @@ void Vehicle::_rallyPointLoadComplete(void)
     qCDebug(VehicleLog) << "_missionLoadComplete _initialPlanRequestComplete = true";
     if (!_initialPlanRequestComplete) {
         _initialPlanRequestComplete = true;
-        emit initialPlanRequestCompleted();
+        emit initialPlanRequestCompleteChanged(true);
     }
 }
 
@@ -2811,6 +2811,18 @@ void Vehicle::_updateDistanceToHome(void)
         _distanceToHomeFact.setRawValue(qQNaN());
     }
 }
+
+void Vehicle::forceInitialPlanRequestComplete(void)
+{
+    _initialPlanRequestComplete = true;
+    emit initialPlanRequestCompleteChanged(true);
+}
+
+void Vehicle::sendPlan(QString planFile)
+{
+    PlanMasterController::sendPlanToVehicle(this, planFile);
+}
+
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------

@@ -316,6 +316,7 @@ public:
     Q_PROPERTY(QVariantList         toolBarIndicators       READ toolBarIndicators                                      CONSTANT)
     Q_PROPERTY(QVariantList         cameraList              READ cameraList                                             CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  adsbVehicles            READ adsbVehicles                                           CONSTANT)
+    Q_PROPERTY(bool              initialPlanRequestComplete READ initialPlanRequestComplete                             NOTIFY initialPlanRequestCompleteChanged)
 
     /// true: Vehicle is flying, false: Vehicle is on ground
     Q_PROPERTY(bool flying READ flying NOTIFY flyingChanged)
@@ -428,6 +429,7 @@ public:
     Q_INVOKABLE void clearMessages();
 
     Q_INVOKABLE void triggerCamera(void);
+    Q_INVOKABLE void sendPlan(QString planFile);
 
 #if 0
     // Temporarily removed, waiting for new command implementation
@@ -698,7 +700,7 @@ public:
     /// @return: true: initial request is complete, false: initial request is still in progress;
     bool initialPlanRequestComplete(void) const { return _initialPlanRequestComplete; }
 
-    void forceInitialPlanRequestComplete(void) { _initialPlanRequestComplete = true; }
+    void forceInitialPlanRequestComplete(void);
 
     void _setFlying(bool flying);
     void _setLanding(bool landing);
@@ -732,7 +734,7 @@ signals:
     void firmwareTypeChanged(void);
     void vehicleTypeChanged(void);
     void capabilitiesKnownChanged(bool capabilitiesKnown);
-    void initialPlanRequestCompleted(void);
+    void initialPlanRequestCompleteChanged(bool initialPlanRequestComplete);
     void capabilityBitsChanged(uint64_t capabilityBits);
 
     void messagesReceivedChanged    ();
