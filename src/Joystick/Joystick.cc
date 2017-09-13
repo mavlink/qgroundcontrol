@@ -55,6 +55,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     , _rgButtonValues(NULL)
     , _lastButtonBits(0)
     , _throttleMode(ThrottleModeCenterZero)
+    , _negativeThrust(false)
     , _exponential(0)
     , _accumulator(false)
     , _deadband(false)
@@ -462,7 +463,9 @@ void Joystick::run(void)
 
             // Adjust throttle to 0:1 range
             if (_throttleMode == ThrottleModeCenterZero && _activeVehicle->supportsThrottleModeCenterZero()) {
-                throttle = std::max(0.0f, throttle);
+                if (!_activeVehicle->supportsNegativeThrust() || !_negativeThrust) {
+                    throttle = std::max(0.0f, throttle);
+                }
             } else {
                 throttle = (throttle + 1.0f) / 2.0f;
             }
@@ -685,6 +688,22 @@ void Joystick::setThrottleMode(int mode)
 
     _saveSettings();
     emit throttleModeChanged(_throttleMode);
+}
+
+bool Joystick::negativeThrust(void)
+{
+    return _negativeThrust;
+}
+
+void Joystick::setNegativeThrust(bool allowNegative)
+{
+    if (_negativeThrust == allowNegative) {
+        return;
+    }
+    _negativeThrust = allowNegative;
+
+    _saveSettings();
+    emit negativeThrustChanged(_negativeThrust);
 }
 
 float Joystick::exponential(void)
