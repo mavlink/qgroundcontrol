@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.33 - Sep 13 2017
+
+*   Link video stream timeout with MAVLink connection timeout.
+
 ### v1.1.32 - Sep 12 2017
 
 *   Added OBS indicator to the toolbar (flashes green when active)

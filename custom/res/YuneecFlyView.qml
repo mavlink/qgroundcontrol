@@ -243,6 +243,8 @@ Item {
         onTriggered: {
             //-- Vehicle is gone
             if(_activeVehicle) {
+                //-- Let video stream close
+                QGroundControl.settingsManager.videoSettings.rtspTimeout.rawValue = 1
                 if(!_activeVehicle.armed) {
                     //-- If it wasn't already set to auto-disconnect
                     if(!_activeVehicle.autoDisconnect) {
@@ -271,6 +273,8 @@ Item {
                 connectionTimer.stop();
                 rootLoader.sourceComponent = null
                 mainWindow.enableToolbar()
+                //-- Reset stream timeout
+                QGroundControl.settingsManager.videoSettings.rtspTimeout.rawValue = 60
             } else {
                 if(_activeVehicle && !_activeVehicle.autoDisconnect) {
                     //-- Communication lost
