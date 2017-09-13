@@ -93,10 +93,11 @@ SetupPage {
                             spacing: _margins / 2
 
                             QGCLabel {
-                                id:                 gcsEnableLabel
-                                width:              failsafeSettings._labelWidth
-                                anchors.baseline:   gcsEnableCombo.baseline
-                                text:               qsTr("GCS Heartbeat:")
+                                id:                     gcsEnableLabel
+                                width:                  failsafeSettings._labelWidth
+                                anchors.verticalCenter: gcsEnableCombo.verticalCenter
+                                text:                   qsTr("GCS Heartbeat:")
+                                wrapMode:               Text.Wrap
                             }
 
                             FactComboBox {
@@ -111,10 +112,11 @@ SetupPage {
                             spacing: _margins / 2
 
                             QGCLabel {
-                                id:                 leakEnableLabel
-                                width:              failsafeSettings._labelWidth
-                                anchors.baseline:   leakEnableCombo.baseline
-                                text:               qsTr("Leak:")
+                                id:                     leakEnableLabel
+                                width:                  failsafeSettings._labelWidth
+                                anchors.verticalCenter: leakEnableCombo.verticalCenter
+                                text:                   qsTr("Leak:")
+                                wrapMode:               Text.Wrap
                             }
 
                             FactComboBox {
@@ -160,10 +162,11 @@ SetupPage {
                             visible: !_firmware34
 
                             QGCLabel {
-                                id:                 batteryEnableLabel
-                                width:              failsafeSettings._labelWidth
-                                anchors.baseline:   batteryEnableCombo.baseline
-                                text:               qsTr("Battery:")
+                                id:                     batteryEnableLabel
+                                width:                  failsafeSettings._labelWidth
+                                anchors.verticalCenter: batteryEnableCombo.verticalCenter
+                                text:                   qsTr("Battery:")
+                                wrapMode:               Text.Wrap
                             }
 
                             FactComboBox {
@@ -207,10 +210,11 @@ SetupPage {
                             visible: !_firmware34
 
                             QGCLabel {
-                                id:                 ekfEnableLabel
-                                width:              failsafeSettings._labelWidth
-                                anchors.baseline:   ekfEnableCombo.baseline
-                                text:               qsTr("EKF:")
+                                id:                     ekfEnableLabel
+                                width:                  failsafeSettings._labelWidth
+                                anchors.verticalCenter: ekfEnableCombo.verticalCenter
+                                text:                   qsTr("EKF:")
+                                wrapMode:               Text.Wrap
                             }
 
                             FactComboBox {
@@ -240,10 +244,11 @@ SetupPage {
                             visible: !_firmware34
 
                             QGCLabel {
-                                id:                 pilotEnableLabel
-                                width:              failsafeSettings._labelWidth
-                                anchors.baseline:   pilotEnableCombo.baseline
-                                text:               qsTr("Pilot Input:")
+                                id:                     pilotEnableLabel
+                                width:                  failsafeSettings._labelWidth
+                                anchors.verticalCenter: pilotEnableCombo.verticalCenter
+                                text:                   qsTr("Pilot Input:")
+                                wrapMode:               Text.Wrap
                             }
 
                             FactComboBox {
@@ -273,10 +278,11 @@ SetupPage {
                             spacing: _margins / 2
 
                             QGCLabel {
-                                id:                 temperatureEnableLabel
-                                width:              failsafeSettings._labelWidth
-                                anchors.baseline:   temperatureEnableCombo.baseline
-                                text:               qsTr("Internal Temperature:")
+                                id:                     temperatureEnableLabel
+                                width:                  failsafeSettings._labelWidth
+                                anchors.verticalCenter: temperatureEnableCombo.verticalCenter
+                                text:                   qsTr("Internal Temperature:")
+                                wrapMode:               Text.Wrap
                             }
 
                             FactComboBox {
@@ -305,10 +311,11 @@ SetupPage {
                             spacing: _margins / 2
 
                             QGCLabel {
-                                id:                 pressureEnableLabel
-                                width:              failsafeSettings._labelWidth
-                                anchors.baseline:   pressureEnableCombo.baseline
-                                text:               qsTr("Internal Pressure:")
+                                id:                     pressureEnableLabel
+                                width:                  failsafeSettings._labelWidth
+                                anchors.verticalCenter: pressureEnableCombo.verticalCenter
+                                text:                   qsTr("Internal Pressure:")
+                                wrapMode:               Text.Wrap
                             }
 
                             FactComboBox {
