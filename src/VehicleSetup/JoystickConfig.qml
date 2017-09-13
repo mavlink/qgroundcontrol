@@ -296,7 +296,7 @@ SetupPage {
                         Connections {
                             target: _activeJoystick
 
-                            onManualControl: throttleLoader.item.axisValue = (-2*throttle+1)*32768.0
+                            onManualControl: throttleLoader.item.axisValue = _activeJoystick.negativeThrust ? -throttle*32768.0 : (-2*throttle+1)*32768.0
                         }
                     }
                 } // Column - Attitude Control labels
@@ -452,6 +452,15 @@ SetupPage {
                                     checked:        _activeJoystick ? _activeJoystick.throttleMode == 1 : false
 
                                     onClicked: _activeJoystick.throttleMode = 1
+                                }
+
+                                QGCCheckBox {
+                                    visible:        _activeVehicle.supportsNegativeThrust
+                                    id:             negativeThrust
+                                    text:           qsTr("Allow negative Thrust")
+                                    enabled:        _activeJoystick.negativeThrust = _activeVehicle.supportsNegativeThrust
+                                    checked:        _activeJoystick ? _activeJoystick.negativeThrust : false
+                                    onClicked:      _activeJoystick.negativeThrust = checked
                                 }
                             }
 
