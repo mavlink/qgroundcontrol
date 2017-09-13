@@ -433,8 +433,8 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         metaData.setRawDefaultValue(1.777777);
         return false;
     } else if (metaData.name() == VideoSettings::rtspTimeoutName) {
-        //-- Wait 10 seconds before giving up on video
-        metaData.setRawDefaultValue(10);
+        //-- Wait 60 seconds before giving up on video
+        metaData.setRawDefaultValue(60);
         return false;
      } else if (metaData.name() == AppSettings::indoorPaletteName) {
         //-- Default Palette
