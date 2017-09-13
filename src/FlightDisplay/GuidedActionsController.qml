@@ -92,7 +92,7 @@ Item {
     property bool showArm:              _activeVehicle && !_vehicleArmed
     property bool showDisarm:           _activeVehicle && _vehicleArmed && !_vehicleFlying
     property bool showRTL:              _activeVehicle && _vehicleArmed && _activeVehicle.guidedModeSupported && _vehicleFlying && !_vehicleInRTLMode
-    property bool showTakeoff:          _activeVehicle && _activeVehicle.guidedModeSupported && !_vehicleFlying  && !_activeVehicle.fixedWing
+    property bool showTakeoff:          _activeVehicle && _activeVehicle.takeoffVehicleSupported && !_vehicleFlying
     property bool showLand:             _activeVehicle && _activeVehicle.guidedModeSupported && _vehicleArmed && !_activeVehicle.fixedWing && !_vehicleInLandMode
     property bool showStartMission:     _activeVehicle && _missionAvailable && !_missionActive && !_vehicleFlying
     property bool showContinueMission:  _activeVehicle && _missionAvailable && !_missionActive && _vehicleFlying && (_currentMissionIndex < missionController.visualItems.count - 1)

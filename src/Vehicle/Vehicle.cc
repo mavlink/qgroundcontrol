@@ -2094,18 +2094,7 @@ bool Vehicle::multiRotor(void) const
 
 bool Vehicle::vtol(void) const
 {
-    switch (vehicleType()) {
-    case MAV_TYPE_VTOL_DUOROTOR:
-    case MAV_TYPE_VTOL_QUADROTOR:
-    case MAV_TYPE_VTOL_TILTROTOR:
-    case MAV_TYPE_VTOL_RESERVED2:
-    case MAV_TYPE_VTOL_RESERVED3:
-    case MAV_TYPE_VTOL_RESERVED4:
-    case MAV_TYPE_VTOL_RESERVED5:
-        return true;
-    default:
-        return false;
-    }
+    return _firmwarePlugin->isVtol(this);
 }
 
 bool Vehicle::supportsManualControl(void) const
@@ -2222,6 +2211,11 @@ bool Vehicle::pauseVehicleSupported(void) const
 bool Vehicle::orbitModeSupported() const
 {
     return _firmwarePlugin->isCapable(this, FirmwarePlugin::OrbitModeCapability);
+}
+
+bool Vehicle::takeoffVehicleSupported() const
+{
+    return _firmwarePlugin->isCapable(this, FirmwarePlugin::TakeoffVehicleCapability);
 }
 
 void Vehicle::guidedModeRTL(void)
