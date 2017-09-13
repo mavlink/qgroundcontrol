@@ -57,7 +57,6 @@ public:
 
     // Overrides from FirmwarePlugin
     void    guidedModeLand                      (Vehicle* vehicle) final;
-    void    guidedModeTakeoff                   (Vehicle* vehicle) final;
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
     int     remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
     bool    multiRotorCoaxialMotors             (Vehicle* vehicle) final;
@@ -68,13 +67,10 @@ public:
     QString takeControlFlightMode               (void) const override { return QString("Loiter"); }
     bool    vehicleYawsToNextWaypointInMission  (const Vehicle* vehicle) const final;
     QString autoDisarmParameter                 (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
-    void    startMission                        (Vehicle* vehicle) override;
 
 private:
     static bool _remapParamNameIntialized;
     static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
-
-    bool _guidedModeTakeoff(Vehicle* vehicle);
 };
 
 #endif
