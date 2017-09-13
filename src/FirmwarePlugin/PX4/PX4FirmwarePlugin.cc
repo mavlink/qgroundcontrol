@@ -227,11 +227,12 @@ bool PX4FirmwarePlugin::supportsManualControl(void)
 
 bool PX4FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities)
 {
-    if (vehicle->multiRotor()) {
-        return (capabilities & (MavCmdPreflightStorageCapability | GuidedModeCapability | SetFlightModeCapability | PauseVehicleCapability /*| OrbitModeCapability still NYI*/)) == capabilities;
-    } else {
-        return (capabilities & (MavCmdPreflightStorageCapability | GuidedModeCapability | SetFlightModeCapability | PauseVehicleCapability)) == capabilities;
+    int available = MavCmdPreflightStorageCapability | SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability;
+    if (vehicle->multiRotor() || vehicle->vtol()) {
+        available |= TakeoffVehicleCapability;
     }
+
+    return (capabilities & available) == capabilities;
 }
 
 void PX4FirmwarePlugin::initializeVehicle(Vehicle* vehicle)
