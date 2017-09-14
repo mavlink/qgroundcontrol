@@ -671,6 +671,7 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
             qWarning() << QStringLiteral("Duplicate fact name:") << factName;
             delete metaData;
         } else {
+            qCDebug(CameraControlLog) << "New parameter:" << factName;
             _nameToFactMetaDataMap[factName] = metaData;
             Fact* pFact = new Fact(_compID, factName, factType, this);
             QQmlEngine::setObjectOwnership(pFact, QQmlEngine::CppOwnership);
