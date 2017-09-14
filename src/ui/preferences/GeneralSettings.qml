@@ -36,7 +36,6 @@ QGCView {
     property Fact _savePath:                    QGroundControl.settingsManager.appSettings.savePath
     property Fact _userBrandImageIndoor:        QGroundControl.settingsManager.appSettings.userBrandImageIndoor
     property Fact _userBrandImageOutdoor:       QGroundControl.settingsManager.appSettings.userBrandImageOutdoor
-    property Fact _userBrandImageLinked:        QGroundControl.settingsManager.appSettings.userBrandImageLinked
     property Fact _appFontPointSize:            QGroundControl.settingsManager.appSettings.appFontPointSize
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
@@ -713,19 +712,13 @@ QGCView {
                                     selectExisting: true
                                     selectFolder:   false
 
-                                    onAcceptedForLoad: {
-                                        _userBrandImageIndoor.rawValue = "file:///" + file
-                                        if(_userBrandImageLinked.value) {
-                                            _userBrandImageOutdoor.rawValue = _userBrandImageIndoor.rawValue
-                                        }
-                                    }
+                                    onAcceptedForLoad: _userBrandImageIndoor.rawValue = "file:///" + file
                                 }
                             }
                         }
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
                             visible:    _userBrandImageOutdoor.visible
-                            enabled:    !_userBrandImageLinked.value
 
                             QGCLabel {
                                 anchors.baseline:   userBrandImageOutdoorBrowse.baseline
@@ -758,18 +751,6 @@ QGCView {
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
                             visible:    _userBrandImageIndoor.visible
-
-                            FactCheckBox {
-                                text:       qsTr("Link Brand Images")
-                                width:      _labelWidth*1.5
-                                visible:    _userBrandImageLinked.visible
-                                fact:       _userBrandImageLinked
-                                onClicked: {
-                                    if(_userBrandImageLinked.value) {
-                                        _userBrandImageOutdoor.rawValue = _userBrandImageIndoor.rawValue
-                                    }
-                                }
-                            }
 
                             QGCButton {
                                 id:         userBrandImageReset
