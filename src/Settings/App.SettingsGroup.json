@@ -158,13 +158,6 @@
     "defaultValue":     ""
 },
 {
-    "name":             "UserBrandImageLinked",
-    "shortDescription": "Link indoor/outdoor brand images",
-    "longDescription":  "Boolean option to use same image for indoor and outdoor brand images",
-    "type":             "bool",
-    "defaultValue":     true
-},
-{
     "name":             "MapboxToken",
     "shortDescription": "Access token to Mapbox maps",
     "longDescription":  "Your personal access token for Mapbox maps",

@@ -34,7 +34,6 @@ const char* AppSettings::showLargeCompassName =                         "ShowLar
 const char* AppSettings::savePathName =                                 "SavePath";
 const char* AppSettings::userBrandImageIndoorName =                     "UserBrandImageIndoor";
 const char* AppSettings::userBrandImageOutdoorName =                    "UserBrandImageOutdoor";
-const char* AppSettings::userBrandImageLinkedName =                     "UserBrandImageLinked";
 const char* AppSettings::autoLoadMissionsName =                         "AutoLoadMissions";
 const char* AppSettings::mapboxTokenName =                              "MapboxToken";
 const char* AppSettings::esriTokenName =                                "EsriToken";
@@ -76,7 +75,6 @@ AppSettings::AppSettings(QObject* parent)
     , _savePathFact(NULL)
     , _userBrandImageIndoorFact(NULL)
     , _userBrandImageOutdoorFact(NULL)
-    , _userBrandImageLinkedFact(NULL)
     , _autoLoadMissionsFact(NULL)
     , _mapboxTokenFact(NULL)
     , _esriTokenFact(NULL)
@@ -353,15 +351,6 @@ Fact* AppSettings::userBrandImageOutdoor(void)
     }
 
     return _userBrandImageOutdoorFact;
-}
-
-Fact* AppSettings::userBrandImageLinked(void)
-{
-    if (!_userBrandImageLinkedFact) {
-        _userBrandImageLinkedFact = _createSettingsFact(userBrandImageLinkedName);
-    }
-
-    return _userBrandImageLinkedFact;
 }
 
 Fact* AppSettings::autoLoadMissions(void)
