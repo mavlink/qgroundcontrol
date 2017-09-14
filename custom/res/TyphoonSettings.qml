@@ -147,7 +147,7 @@ QGCView {
                 height:         passwordRow.height * 2
                 width:          ScreenTools.defaultFontPixelWidth * 80
                 color:          qgcPal.windowShade
-                visible:        _activeVehicle
+                visible:        _activeVehicle && (_camera && !_camera.isCGOET)
                 anchors.horizontalCenter: parent.horizontalCenter
                 Row {
                     id:         passwordRow

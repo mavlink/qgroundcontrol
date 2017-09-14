@@ -117,7 +117,7 @@ YuneecCameraControl::firmwareVersion()
 Fact*
 YuneecCameraControl::exposureMode()
 {
-    return _paramComplete ? getFact(kCAM_EXPMODE) : NULL;
+    return (_paramComplete && !_isCGOET) ? getFact(kCAM_EXPMODE) : NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -131,28 +131,28 @@ YuneecCameraControl::ev()
 Fact*
 YuneecCameraControl::iso()
 {
-    return _paramComplete ? getFact(kCAM_ISO) : NULL;
+    return (_paramComplete && !_isCGOET) ? getFact(kCAM_ISO) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::shutterSpeed()
 {
-    return _paramComplete ? getFact(kCAM_SHUTTERSPD) : NULL;
+    return (_paramComplete && !_isCGOET) ? getFact(kCAM_SHUTTERSPD) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::wb()
 {
-    return _paramComplete ? getFact(kCAM_WBMODE) : NULL;
+    return (_paramComplete && !_isCGOET) ? getFact(kCAM_WBMODE) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::meteringMode()
 {
-    return _paramComplete ? getFact(kCAM_METERING) : NULL;
+    return (_paramComplete && !_isCGOET) ? getFact(kCAM_METERING) : NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -710,12 +710,14 @@ YuneecCameraControl::_validateISO(Fact* pFact, QVariant& newValue)
 void
 YuneecCameraControl::_sendUpdates()
 {
-    //-- Get current exposure mode
-    Fact* pFact = getFact(kCAM_EXPMODE);
-    //-- Only reactively update values in Manual Exposure mode
-    if(pFact && pFact->rawValue() == 1) {
-        foreach(QString param, _updatesToSend) {
-            _paramIO[param]->sendParameter();
+    if(!_isCGOET) {
+        //-- Get current exposure mode
+        Fact* pFact = getFact(kCAM_EXPMODE);
+        //-- Only reactively update values in Manual Exposure mode
+        if(pFact && pFact->rawValue() == 1) {
+            foreach(QString param, _updatesToSend) {
+                _paramIO[param]->sendParameter();
+            }
         }
     }
     _updatesToSend.clear();
