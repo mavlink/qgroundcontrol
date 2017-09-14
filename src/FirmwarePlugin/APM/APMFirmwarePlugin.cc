@@ -15,6 +15,7 @@
 #include "APMAirframeComponentController.h"
 #include "APMSensorsComponentController.h"
 #include "MissionManager.h"
+#include "ParameterManager.h"
 
 #include <QTcpSocket>
 
@@ -158,11 +159,18 @@ AutoPilotPlugin* APMFirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
 
 bool APMFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities)
 {
-    Q_UNUSED(vehicle);
+    uint32_t available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability;
+    if (vehicle->multiRotor()) {
+        available |= TakeoffVehicleCapability;
+    } else if (vehicle->fixedWing()) {
+        // Quad plane supports takeoff
+        if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("Q_ENABLE")) &&
+            vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("Q_ENABLE"))->rawValue().toBool()) {
+            available |= TakeoffVehicleCapability;
+        }
+    }
 
-    uint32_t vehicleCapabilities = SetFlightModeCapability | GuidedModeCapability | PauseVehicleCapability;
-
-    return (capabilities & vehicleCapabilities) == capabilities;
+    return (capabilities & available) == capabilities;
 }
 
 QList<VehicleComponent*> APMFirmwarePlugin::componentsForVehicle(AutoPilotPlugin* vehicle)
@@ -879,4 +887,89 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
                                                           &cmd);
 
     vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
+}
+
+bool APMFirmwarePlugin::isVtol(const Vehicle* vehicle) const
+{
+    if (vehicle->fixedWing()) {
+        if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("Q_ENABLE")) &&
+            vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("Q_ENABLE"))->rawValue().toBool()) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
+{
+    _guidedModeTakeoff(vehicle);
+}
+
+bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle)
+{
+    QString takeoffAltParam(vehicle->vtol() ? QStringLiteral("Q_RTL_ALT") : QStringLiteral("PILOT_TKOFF_ALT"));
+    float paramDivisor = vehicle->vtol() ? 1.0 : 100.0; // PILOT_TAKEOFF_ALT is in centimeters
+
+    float takeoffAlt = 0;
+    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, takeoffAltParam)) {
+        Fact* takeoffAltFact = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, takeoffAltParam);
+        takeoffAlt = takeoffAltFact->rawValue().toDouble();
+    }
+    if (takeoffAlt <= 0) {
+        takeoffAlt = 2.5;
+    } else {
+        takeoffAlt /= paramDivisor;   // centimeters -> meters
+    }
+
+    if (!_setFlightModeAndValidate(vehicle, "Guided")) {
+        qgcApp()->showMessage(tr("Unable to takeoff: Vehicle failed to change to Guided mode."));
+        return false;
+    }
+
+    // FIXME: Is this needed?
+    if (!_armVehicleAndValidate(vehicle)) {
+        qgcApp()->showMessage(tr("Unable to takeoff: Vehicle failed to arm."));
+        return false;
+    }
+
+    vehicle->sendMavCommand(vehicle->defaultComponentId(),
+                            MAV_CMD_NAV_TAKEOFF,
+                            true, // show error
+                            0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                            takeoffAlt);
+
+    return true;
+}
+
+// FIXME: Review for a better way to do this
+void APMFirmwarePlugin::startMission(Vehicle* vehicle)
+{
+    double currentAlt = vehicle->altitudeRelative()->rawValue().toDouble();
+
+    if (!vehicle->flying()) {
+        if (_guidedModeTakeoff(vehicle)) {
+
+            // Wait for vehicle to get off ground before switching to auto (10 seconds)
+            bool didTakeoff = false;
+            for (int i=0; i<100; i++) {
+                if (vehicle->altitudeRelative()->rawValue().toDouble() >= currentAlt + 1.0) {
+                    didTakeoff = true;
+                    break;
+                }
+                QGC::SLEEP::msleep(100);
+                qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+            }
+
+            if (!didTakeoff) {
+                qgcApp()->showMessage(QStringLiteral("Unable to start mission. Vehicle takeoff failed."));
+                return;
+            }
+        }
+    }
+
+    if (!_setFlightModeAndValidate(vehicle, missionFlightMode())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to start mission. Vehicle failed to change to auto."));
+        return;
+    }
 }

@@ -74,9 +74,12 @@ public:
     QList<MAV_CMD> supportedMissionCommands(void) final;
 
     AutoPilotPlugin*    autopilotPlugin                 (Vehicle* vehicle) final;
-    bool                isCapable                       (const Vehicle *vehicle, FirmwareCapabilities capabilities) final;
+    bool                isVtol                          (const Vehicle* vehicle) const final;
+    bool                isCapable                       (const Vehicle *vehicle, FirmwareCapabilities capabilities) override;
     void                setGuidedMode                   (Vehicle* vehicle, bool guidedMode) final;
+    void                guidedModeTakeoff               (Vehicle* vehicle) final;
     void                guidedModeGotoLocation          (Vehicle* vehicle, const QGeoCoordinate& gotoCoord) final;
+    void                startMission                    (Vehicle* vehicle) final;
     QStringList         flightModes                     (Vehicle* vehicle) final;
     QString             flightMode                      (uint8_t base_mode, uint32_t custom_mode) const final;
     bool                setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
@@ -120,7 +123,8 @@ private:
     bool _handleIncomingStatusText(Vehicle* vehicle, mavlink_message_t* message);
     void _handleIncomingHeartbeat(Vehicle* vehicle, mavlink_message_t* message);
     void _handleOutgoingParamSet(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
-    void _soloVideoHandshake(Vehicle* vehicle);
+    void _soloVideoHandshake(Vehicle* vehicle);    
+    bool _guidedModeTakeoff(Vehicle* vehicle);
 
     // Any instance data here must be global to all vehicles
     // Vehicle specific data should go into APMFirmwarePluginInstanceData

@@ -160,45 +160,6 @@ void ArduCopterFirmwarePlugin::guidedModeLand(Vehicle* vehicle)
     _setFlightModeAndValidate(vehicle, "Land");
 }
 
-void ArduCopterFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
-{
-    _guidedModeTakeoff(vehicle);
-}
-
-bool ArduCopterFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle)
-{
-    QString takeoffAltParam("PILOT_TKOFF_ALT");
-
-    float takeoffAlt = 0;
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, takeoffAltParam)) {
-        Fact* takeoffAltFact = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, takeoffAltParam);
-        takeoffAlt = takeoffAltFact->rawValue().toDouble();
-    }
-    if (takeoffAlt <= 0) {
-        takeoffAlt = 2.5;
-    } else {
-        takeoffAlt /= 100;   // centimeters -> meters
-    }
-
-    if (!_setFlightModeAndValidate(vehicle, "Guided")) {
-        qgcApp()->showMessage(tr("Unable to takeoff: Vehicle failed to change to Guided mode."));
-        return false;
-    }
-
-    if (!_armVehicleAndValidate(vehicle)) {
-        qgcApp()->showMessage(tr("Unable to takeoff: Vehicle failed to arm."));
-        return false;
-    }
-
-    vehicle->sendMavCommand(vehicle->defaultComponentId(),
-                            MAV_CMD_NAV_TAKEOFF,
-                            true, // show error
-                            0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                            takeoffAlt);
-
-    return true;
-}
-
 bool ArduCopterFirmwarePlugin::multiRotorCoaxialMotors(Vehicle* vehicle)
 {
     Q_UNUSED(vehicle);
@@ -221,36 +182,5 @@ bool ArduCopterFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle*
         }
     }
     return true;
-}
-
-void ArduCopterFirmwarePlugin::startMission(Vehicle* vehicle)
-{
-    double currentAlt = vehicle->altitudeRelative()->rawValue().toDouble();
-
-    if (!vehicle->flying()) {
-        if (_guidedModeTakeoff(vehicle)) {
-
-            // Wait for vehicle to get off ground before switching to auto (10 seconds)
-            bool didTakeoff = false;
-            for (int i=0; i<100; i++) {
-                if (vehicle->altitudeRelative()->rawValue().toDouble() >= currentAlt + 1.0) {
-                    didTakeoff = true;
-                    break;
-                }
-                QGC::SLEEP::msleep(100);
-                qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
-            }
-
-            if (!didTakeoff) {
-                qgcApp()->showMessage(QStringLiteral("Unable to start mission. Vehicle takeoff failed."));
-                return;
-            }
-        }
-    }
-
-    if (!_setFlightModeAndValidate(vehicle, missionFlightMode())) {
-        qgcApp()->showMessage(QStringLiteral("Unable to start mission. Vehicle failed to change to auto."));
-        return;
-    }
 }
 
