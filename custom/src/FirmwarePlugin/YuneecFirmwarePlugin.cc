@@ -159,7 +159,7 @@ YuneecFirmwarePlugin::createCameraControl(const mavlink_camera_information_t* in
 {
     /*
     char* dst = (char*)(void*)&info->cam_definition_uri[0];
-    const char* url = "http://www.grubba.com/e90.xml";
+    const char* url = "http://www.grubba.com/cgoet.xml";
     memcpy(dst, url, strlen(url) + 1);
     */
     return new YuneecCameraControl(info, vehicle, compID, parent);

@@ -227,6 +227,7 @@ TyphoonHQuickInterface::_switchStateChanged(int swId, int newState, int /*oldSta
 void
 TyphoonHQuickInterface::_videoRunningChanged()
 {
+    qCDebug(YuneecLog) << "TyphoonHQuickInterface::_videoRunningChanged()";
     emit thermalImagePresentChanged();
 }
 
@@ -683,7 +684,8 @@ TyphoonHQuickInterface::connectedSSID()
     if(ssid.startsWith("\"")) ssid.remove(0,1);
     if(ssid.endsWith("\""))   ssid.remove(ssid.size()-1,1);
 #else
-    ssid = "CIA Headquarters";
+    //ssid = "CIA Headquarters";
+    ssid = "CGOET CIA Headquarters";
 #endif
     return ssid;
 }

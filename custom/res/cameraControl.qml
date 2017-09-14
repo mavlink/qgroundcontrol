@@ -364,27 +364,36 @@ Rectangle {
                                     Row {
                                         spacing:        ScreenTools.defaultFontPixelWidth
                                         anchors.horizontalCenter: parent.horizontalCenter
+                                        property var    _fact:      _camera.getFact(modelData)
+                                        property bool   _isBool:    _fact.typeIsBool
+                                        property bool   _isCombo:   !_isBool && _fact.enumStrings.length > 1
+                                        property bool   _isEdit:    !_isBool && _fact.enumStrings.length < 2
+                                        Component.onCompleted: {
+                                            console.log('New Parameter: ' + _fact.shortDescription + " Enums: " + _fact.enumStrings.length)
+                                        }
                                         QGCLabel {
-                                            text:       _camera.getFact(modelData).shortDescription
+                                            text:       parent._fact.shortDescription
                                             width:      _labelFieldWidth
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
                                         FactComboBox {
-                                            width:      !_isBool ? _editFieldWidth : 0
-                                            fact:       _camera.getFact(modelData)
+                                            width:      parent._isCombo ? _editFieldWidth : 0
+                                            fact:       parent._fact
                                             indexModel: false
-                                            visible:    !_isBool
+                                            visible:    parent._isCombo
                                             anchors.verticalCenter: parent.verticalCenter
-                                            property bool _isBool: _camera.getFact(modelData).typeIsBool
+                                        }
+                                        FactTextField {
+                                            width:      parent._isEdit ? _editFieldWidth : 0
+                                            fact:       parent._fact
+                                            visible:    parent._isEdit
                                         }
                                         OnOffSwitch {
-                                            width:      _isBool ? _editFieldWidth : 0
-                                            checked:    _fact ? _fact.value : false
-                                            onClicked:  _fact.value = checked ? 1 : 0
-                                            visible:    _isBool
+                                            width:      parent._isBool ? _editFieldWidth : 0
+                                            checked:    parent._fact ? parent._fact.value : false
+                                            onClicked:  parent._fact.value = checked ? 1 : 0
+                                            visible:    parent._isBool
                                             anchors.verticalCenter: parent.verticalCenter
-                                            property var _fact:     _camera.getFact(modelData)
-                                            property bool _isBool:  _fact.typeIsBool
                                         }
                                     }
                                     Rectangle {

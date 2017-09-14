@@ -20,6 +20,8 @@ import QGroundControl.Palette           1.0
 import QGroundControl.Vehicle           1.0
 import QGroundControl.Controllers       1.0
 
+import TyphoonHQuickInterface           1.0
+
 Item {
     id: root
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
@@ -162,6 +164,21 @@ Item {
             source:             "/typhoonh/img/centerArea.svg"
             fillMode:           Image.PreserveAspectFit
             sourceSize.height:  height
+        }
+    }
+    Item {
+        id:                 thermalItem
+        anchors.centerIn:   parent
+        width:              height * 1.333333
+        height:             mainWindow.height * 0.85
+        visible:            !_mainIsMap && TyphoonHQuickInterface.thermalImagePresent
+        QGCVideoBackground {
+            id:             thermalVideo
+            anchors.fill:   parent
+            receiver:       TyphoonHQuickInterface.videoReceiver
+            display:        TyphoonHQuickInterface.videoReceiver.videoSurface
+            visible:        TyphoonHQuickInterface.videoReceiver.videoRunning
+            opacity:        0.75
         }
     }
     //-- Camera Controller

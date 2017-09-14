@@ -42,6 +42,8 @@ public:
     Q_PROPERTY(Fact*        aspectRatio     READ    aspectRatio         NOTIFY factsLoaded)
     Q_PROPERTY(QPoint       spotArea        READ    spotArea            WRITE  setSpotArea      NOTIFY spotAreaChanged)
     Q_PROPERTY(QSize        videoSize       READ    videoSize           WRITE  setVideoSize     NOTIFY videoSizeChanged)
+    Q_PROPERTY(bool         isCGOET         READ    isCGOET             NOTIFY isCGOETChanged)
+    Q_PROPERTY(bool         paramComplete   READ    paramComplete       NOTIFY factsLoaded)
 
     Q_INVOKABLE void calibrateGimbal();
 
@@ -79,6 +81,9 @@ public:
     QSize       videoSize           ();
     void        setVideoSize        (QSize s);
 
+    bool        isCGOET             () { return _isCGOET; }
+    bool        paramComplete       () { return _paramComplete; }
+
 private slots:
     void    _recTimerHandler        ();
     void    _mavlinkMessageReceived (const mavlink_message_t& message);
@@ -101,6 +106,7 @@ signals:
     void    gimbalDataChanged       ();
     void    spotAreaChanged         ();
     void    videoSizeChanged        ();
+    void    isCGOETChanged          ();
 
 protected:
     void    _setVideoStatus         (VideoStatus status) override;
@@ -135,6 +141,7 @@ private:
     QString                 _version;
     QSize                   _videoSize;
     bool                    _isE90;
+    bool                    _isCGOET;
     QStringList             _updatesToSend;
     bool                    _inMissionMode;
 };

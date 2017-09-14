@@ -48,6 +48,7 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     , _recordTime(0)
     , _paramComplete(false)
     , _isE90(false)
+    , _isCGOET(false)
     , _inMissionMode(false)
 {
 
@@ -79,6 +80,12 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
         MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES,     // Command id
         true,                                       // ShowError
         1);                                         // Request gimbal version
+    //-- Camera Type
+    _isE90   = modelName().contains("E90");
+    _isCGOET = modelName().contains("CGOET");
+    if(_isCGOET) {
+        emit isCGOETChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -86,10 +93,9 @@ void
 YuneecCameraControl::_parametersReady()
 {
     if(!_paramComplete) {
-        qCDebug(YuneecCameraLog) << "All parameters loaded.";
+        qCDebug(YuneecCameraLog) << "All parameters loaded for" << modelName();
         _paramComplete = true;
         emit factsLoaded();
-        _isE90 = modelName().contains("E90");
     }
 }
 
@@ -118,7 +124,7 @@ YuneecCameraControl::exposureMode()
 Fact*
 YuneecCameraControl::ev()
 {
-    return _paramComplete ? getFact(kCAM_EV) : NULL;
+    return (_paramComplete && !_isCGOET) ? getFact(kCAM_EV) : NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -153,7 +159,7 @@ YuneecCameraControl::meteringMode()
 Fact*
 YuneecCameraControl::videoRes()
 {
-    return _paramComplete ? getFact(kCAM_VIDRES) : NULL;
+    return (_paramComplete && !_isCGOET) ? getFact(kCAM_VIDRES) : NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -265,13 +271,15 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
             _videoSound.setLoopCount(1);
             _videoSound.play();
             //-- Exclude parameters that cannot be changed while recording
-            if(_activeSettings.contains(kCAM_VIDRES)) {
-                _activeSettings.removeOne(kCAM_VIDRES);
+            if(!_isCGOET) {
+                if(_activeSettings.contains(kCAM_VIDRES)) {
+                    _activeSettings.removeOne(kCAM_VIDRES);
+                }
+                if(_activeSettings.contains(kCAM_VIDFMT)) {
+                    _activeSettings.removeOne(kCAM_VIDFMT);
+                }
+                emit activeSettingsChanged();
             }
-            if(_activeSettings.contains(kCAM_VIDFMT)) {
-                _activeSettings.removeOne(kCAM_VIDFMT);
-            }
-            emit activeSettingsChanged();
             //-- Start recording local stream as well
             //if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
             //    qgcApp()->toolbox()->videoManager()->videoReceiver()->startRecording();
@@ -554,8 +562,10 @@ YuneecCameraControl::_recTimerHandler()
 void
 YuneecCameraControl::factChanged(Fact* pFact)
 {
-    if(pFact->name() == kCAM_SPOTAREA) {
-        emit spotAreaChanged();
+    if(!_isCGOET) {
+        if(pFact->name() == kCAM_SPOTAREA) {
+            emit spotAreaChanged();
+        }
     }
     QGCCameraControl::factChanged(pFact);
     //-- When one of these parameters changes
@@ -593,13 +603,15 @@ YuneecCameraControl::setVideoSize(QSize s)
 QPoint
 YuneecCameraControl::spotArea()
 {
-    Fact* pFact = getFact(kCAM_SPOTAREA);
-    if(pFact) {
-        float vw = (float)_videoSize.width();
-        float vh = (float)_videoSize.height();
-        int x = (int)((float)((pFact->rawValue().toUInt() >> 8) & 0xFF) * vw / 100.0f);
-        int y = (int)((float)(pFact->rawValue().toUInt() & 0xFF) * vh / 100.0f);
-        return QPoint(x, y);
+    if(!_isCGOET && _paramComplete) {
+        Fact* pFact = getFact(kCAM_SPOTAREA);
+        if(pFact) {
+            float vw = (float)_videoSize.width();
+            float vh = (float)_videoSize.height();
+            int x = (int)((float)((pFact->rawValue().toUInt() >> 8) & 0xFF) * vw / 100.0f);
+            int y = (int)((float)(pFact->rawValue().toUInt() & 0xFF) * vh / 100.0f);
+            return QPoint(x, y);
+        }
     }
     return QPoint(0, 0);
 }
@@ -608,19 +620,21 @@ YuneecCameraControl::spotArea()
 void
 YuneecCameraControl::setSpotArea(QPoint p)
 {
-    Fact* pFact = getFact(kCAM_SPOTAREA);
-    if(pFact) {
-        float vw = (float)_videoSize.width();
-        float vh = (float)_videoSize.height();
-        float fx = p.x() < 0 ? 0.0f : (float)p.x();
-        float fy = p.y() < 0 ? 0.0f : (float)p.y();
-        uint8_t x = (uint8_t)(fx / vw * 100.0f);
-        uint8_t y = (uint8_t)(fy / vh * 100.0f);
-        x = x > 100 ? 100 : x;
-        y = y > 100 ? 100 : y;
-        uint16_t coords = (x << 8) | y;
-        qCDebug(YuneecCameraLog) << "Set Spot X:" << x << "Y:" << y;
-        pFact->setRawValue(coords);
+    if(!_isCGOET && _paramComplete) {
+        Fact* pFact = getFact(kCAM_SPOTAREA);
+        if(pFact) {
+            float vw = (float)_videoSize.width();
+            float vh = (float)_videoSize.height();
+            float fx = p.x() < 0 ? 0.0f : (float)p.x();
+            float fy = p.y() < 0 ? 0.0f : (float)p.y();
+            uint8_t x = (uint8_t)(fx / vw * 100.0f);
+            uint8_t y = (uint8_t)(fy / vh * 100.0f);
+            x = x > 100 ? 100 : x;
+            y = y > 100 ? 100 : y;
+            uint16_t coords = (x << 8) | y;
+            qCDebug(YuneecCameraLog) << "Set Spot X:" << x << "Y:" << y;
+            pFact->setRawValue(coords);
+        }
     }
 }
 
