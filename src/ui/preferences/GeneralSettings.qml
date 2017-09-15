@@ -34,9 +34,9 @@ QGCView {
 
     property Fact _percentRemainingAnnounce:    QGroundControl.settingsManager.appSettings.batteryPercentRemainingAnnounce
     property Fact _savePath:                    QGroundControl.settingsManager.appSettings.savePath
-    property Fact _userBrandImageIndoor:        QGroundControl.settingsManager.appSettings.userBrandImageIndoor
-    property Fact _userBrandImageOutdoor:       QGroundControl.settingsManager.appSettings.userBrandImageOutdoor
     property Fact _appFontPointSize:            QGroundControl.settingsManager.appSettings.appFontPointSize
+    property Fact _userBrandImageIndoor:        QGroundControl.settingsManager.brandImageSettings.userBrandImageIndoor
+    property Fact _userBrandImageOutdoor:       QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoor
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 15
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
     property Fact _mapProvider:                 QGroundControl.settingsManager.flightMapSettings.mapProvider
@@ -697,7 +697,7 @@ QGCView {
                                 anchors.baseline:   userBrandImageIndoorBrowse.baseline
                                 readOnly:           true
                                 width:              _editFieldWidth
-                                text:               QGroundControl.settingsManager.appSettings.userBrandImageIndoor.valueString.replace("file:///","")
+                                text:               _userBrandImageIndoor.valueString.replace("file:///","")
                             }
                             QGCButton {
                                 id:         userBrandImageIndoorBrowse
@@ -729,7 +729,7 @@ QGCView {
                                 anchors.baseline:   userBrandImageOutdoorBrowse.baseline
                                 readOnly:           true
                                 width:              _editFieldWidth
-                                text:               QGroundControl.settingsManager.appSettings.userBrandImageOutdoor.valueString.replace("file:///","")
+                                text:               _userBrandImageOutdoor.valueString.replace("file:///","")
                             }
                             QGCButton {
                                 id:         userBrandImageOutdoorBrowse
