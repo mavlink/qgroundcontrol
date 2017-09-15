@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.34 - Sep 15 2017
+
+*   Disable settings when image capture is busy.
+
 ### v1.1.33 - Sep 13 2017
 
 *   Link video stream timeout with MAVLink connection timeout.
