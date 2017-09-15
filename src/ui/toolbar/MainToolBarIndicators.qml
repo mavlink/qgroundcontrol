@@ -100,8 +100,22 @@ Item {
         property string _userBrandImageOutdoor: QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoor.value
         property bool   _userBrandingIndoor:    _userBrandImageIndoor.length != 0
         property bool   _userBrandingOutdoor:   _userBrandImageOutdoor.length != 0
-        property string _brandImageIndoor:      _userBrandingIndoor ? _userBrandImageIndoor : (_userBrandingOutdoor ? _userBrandImageOutdoor : (_corePluginBranding ? QGroundControl.corePlugin.brandImageIndoor : (_activeVehicle ? _activeVehicle.brandImageIndoor : "") ) )
-        property string _brandImageOutdoor:     _userBrandingOutdoor ? _userBrandImageOutdoor : (_userBrandingIndoor ? _userBrandImageIndoor : (_corePluginBranding ? QGroundControl.corePlugin.brandImageOutdoor : (_activeVehicle ? _activeVehicle.brandImageOutdoor : "") ) )
+        property string _brandImageIndoor:      _userBrandingIndoor ?
+                                                    _userBrandImageIndoor : (_userBrandingOutdoor ?
+                                                        _userBrandImageOutdoor : (_corePluginBranding ?
+                                                            QGroundControl.corePlugin.brandImageIndoor : (_activeVehicle ?
+                                                                _activeVehicle.brandImageIndoor : ""
+                                                            )
+                                                        )
+                                                    )
+        property string _brandImageOutdoor:     _userBrandingOutdoor ?
+                                                    _userBrandImageOutdoor : (_userBrandingIndoor ?
+                                                        _userBrandImageIndoor : (_corePluginBranding ?
+                                                            QGroundControl.corePlugin.brandImageOutdoor : (_activeVehicle ?
+                                                                _activeVehicle.brandImageOutdoor : ""
+                                                            )
+                                                        )
+                                                    )
     }
 
     Row {
