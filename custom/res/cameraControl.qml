@@ -14,12 +14,12 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick              2.4
-import QtPositioning        5.2
-import QtQuick.Layouts      1.2
-import QtQuick.Controls     1.4
-import QtQuick.Dialogs      1.2
-import QtGraphicalEffects   1.0
+import QtQuick                  2.4
+import QtPositioning            5.2
+import QtQuick.Layouts          1.2
+import QtQuick.Controls         1.4
+import QtQuick.Dialogs          1.2
+import QtGraphicalEffects       1.0
 
 import QGroundControl                   1.0
 import QGroundControl.Controls          1.0
@@ -74,6 +74,8 @@ Rectangle {
     property bool   _selectMode:            false
     property bool   _hasSelection:          TyphoonHQuickInterface.selectedCount > 0
     property bool   _hasPhotos:             TyphoonHQuickInterface.mediaList.length > 0
+
+    property var    qgcView:                null
 
     function baseName(str) {
         return (str.slice(str.lastIndexOf("/")+1))
@@ -366,11 +368,9 @@ Rectangle {
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         property var    _fact:      _camera.getFact(modelData)
                                         property bool   _isBool:    _fact.typeIsBool
-                                        property bool   _isCombo:   !_isBool && _fact.enumStrings.length > 1
-                                        property bool   _isEdit:    !_isBool && _fact.enumStrings.length < 2
-                                        Component.onCompleted: {
-                                            console.log('New Parameter: ' + _fact.shortDescription + " Enums: " + _fact.enumStrings.length)
-                                        }
+                                        property bool   _isCombo:   !_isBool && _fact.enumStrings.length > 0
+                                        property bool   _isSlider:  _fact && !isNaN(_fact.increment)
+                                        property bool   _isEdit:    !_isBool && !_isSlider && _fact.enumStrings.length < 1
                                         QGCLabel {
                                             text:       parent._fact.shortDescription
                                             width:      _labelFieldWidth
@@ -383,10 +383,25 @@ Rectangle {
                                             visible:    parent._isCombo
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
-                                        FactTextField {
+                                        YTextField {
                                             width:      parent._isEdit ? _editFieldWidth : 0
                                             fact:       parent._fact
                                             visible:    parent._isEdit
+                                        }
+                                        YSlider {
+                                            width:          parent._isSlider ? _editFieldWidth : 0
+                                            maximumValue:   parent._fact.max
+                                            minimumValue:   parent._fact.min
+                                            stepSize:       parent._fact.increment
+                                            visible:        parent._isSlider
+                                            updateValueWhileDragging:   false
+                                            anchors.verticalCenter:     parent.verticalCenter
+                                            Component.onCompleted: {
+                                                value = parent._fact.value
+                                            }
+                                            onValueChanged: {
+                                                parent._fact.value = value
+                                            }
                                         }
                                         OnOffSwitch {
                                             width:      parent._isBool ? _editFieldWidth : 0
