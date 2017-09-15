@@ -665,7 +665,7 @@ QGCView {
                     height:                     userBrandImageLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
-                    visible:                    !ScreenTools.isMobile
+                    visible:                    QGroundControl.settingsManager.brandImageSettings.visible && !ScreenTools.isMobile
                     QGCLabel {
                         id:             userBrandImageLabel
                         text:           qsTr("Brand Image")
@@ -678,7 +678,7 @@ QGCView {
                     color:                      qgcPal.windowShade
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
-                    visible:                    !ScreenTools.isMobile
+                    visible:                    QGroundControl.settingsManager.brandImageSettings.visible && !ScreenTools.isMobile
 
                     Column {
                         id:         userBrandImageCol
