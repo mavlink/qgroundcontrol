@@ -398,6 +398,67 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
     return convertOk && errorString.isEmpty();
 }
 
+bool FactMetaData::clampValue(const QVariant& cookedValue, QVariant& typedValue)
+{
+    bool convertOk = false;
+    switch (type()) {
+    case FactMetaData::valueTypeInt8:
+    case FactMetaData::valueTypeInt16:
+    case FactMetaData::valueTypeInt32:
+        typedValue = QVariant(cookedValue.toInt(&convertOk));
+        if (convertOk) {
+            if (cookedMin() > typedValue) {
+                typedValue = cookedMin();
+            } else if(typedValue > cookedMax()) {
+                typedValue = cookedMax();
+            }
+        }
+        break;
+    case FactMetaData::valueTypeUint8:
+    case FactMetaData::valueTypeUint16:
+    case FactMetaData::valueTypeUint32:
+        typedValue = QVariant(cookedValue.toUInt(&convertOk));
+        if (convertOk) {
+            if (cookedMin() > typedValue) {
+                typedValue = cookedMin();
+            } else if(typedValue > cookedMax()) {
+                typedValue = cookedMax();
+            }
+        }
+        break;
+    case FactMetaData::valueTypeFloat:
+        typedValue = QVariant(cookedValue.toFloat(&convertOk));
+        if (convertOk) {
+            if (cookedMin() > typedValue) {
+                typedValue = cookedMin();
+            } else if(typedValue > cookedMax()) {
+                typedValue = cookedMax();
+            }
+        }
+        break;
+    case FactMetaData::valueTypeElapsedTimeInSeconds:
+    case FactMetaData::valueTypeDouble:
+        typedValue = QVariant(cookedValue.toDouble(&convertOk));
+        if (convertOk) {
+            if (cookedMin() > typedValue) {
+                typedValue = cookedMin();
+            } else if(typedValue > cookedMax()) {
+                typedValue = cookedMax();
+            }
+        }
+        break;
+    case FactMetaData::valueTypeString:
+        convertOk = true;
+        typedValue = QVariant(cookedValue.toString());
+        break;
+    case FactMetaData::valueTypeBool:
+        convertOk = true;
+        typedValue = QVariant(cookedValue.toBool());
+        break;
+    }
+    return convertOk;
+}
+
 void FactMetaData::setBitmaskInfo(const QStringList& strings, const QVariantList& values)
 {
     if (strings.count() != values.count()) {
