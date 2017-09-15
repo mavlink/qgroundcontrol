@@ -24,8 +24,8 @@ Item {
 
     signal  activated()
     signal  hideIt(bool state)
-    signal  bigger()
-    signal  smaller()
+    signal  grow()
+    signal  shrink()
 
     MouseArea {
         anchors.fill: parent
@@ -36,20 +36,20 @@ Item {
     }
 
     QGCButton {
-        id: largerButton
+        id: growButton
         visible: !isHidden
         anchors.left: parent.left
-        anchors.bottom: smallerButton.top
+        anchors.bottom: shrinkButton.top
         height: 20
         width: height
         anchors.margins: 5
         text: "+"
         opacity: 0.5
-        onClicked: pip.bigger()
+        onClicked: pip.grow()
     }
 
     QGCButton {
-        id: smallerButton
+        id: shrinkButton
         visible: !isHidden
         anchors.left: parent.left
         anchors.bottom: closePIP.top
@@ -58,7 +58,7 @@ Item {
         anchors.margins: 5
         text: "-"
         opacity: 0.5
-        onClicked: pip.smaller()
+        onClicked: pip.shrink()
     }
 
     //-- PIP Corner Indicator
