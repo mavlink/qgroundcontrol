@@ -37,7 +37,7 @@ Item {
 
     QGCButton {
         id: growButton
-        visible: !isHidden
+        visible: !isHidden && !ScreenTools.isShortScreen && !ScreenTools.isTinyScreen
         anchors.left: parent.left
         anchors.bottom: shrinkButton.top
         height: 20
@@ -50,7 +50,7 @@ Item {
 
     QGCButton {
         id: shrinkButton
-        visible: !isHidden
+        visible: !isHidden && !ScreenTools.isShortScreen && !ScreenTools.isTinyScreen
         anchors.left: parent.left
         anchors.bottom: closePIP.top
         height: 20
