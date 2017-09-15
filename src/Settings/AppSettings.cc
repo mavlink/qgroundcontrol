@@ -32,8 +32,6 @@ const char* AppSettings::appFontPointSizeName =                         "BaseDev
 const char* AppSettings::indoorPaletteName =                            "StyleIsDark";
 const char* AppSettings::showLargeCompassName =                         "ShowLargeCompass";
 const char* AppSettings::savePathName =                                 "SavePath";
-const char* AppSettings::userBrandImageIndoorName =                     "UserBrandImageIndoor";
-const char* AppSettings::userBrandImageOutdoorName =                    "UserBrandImageOutdoor";
 const char* AppSettings::autoLoadMissionsName =                         "AutoLoadMissions";
 const char* AppSettings::mapboxTokenName =                              "MapboxToken";
 const char* AppSettings::esriTokenName =                                "EsriToken";
@@ -73,8 +71,6 @@ AppSettings::AppSettings(QObject* parent)
     , _indoorPaletteFact(NULL)
     , _showLargeCompassFact(NULL)
     , _savePathFact(NULL)
-    , _userBrandImageIndoorFact(NULL)
-    , _userBrandImageOutdoorFact(NULL)
     , _autoLoadMissionsFact(NULL)
     , _mapboxTokenFact(NULL)
     , _esriTokenFact(NULL)
@@ -333,24 +329,6 @@ QString AppSettings::videoSavePath(void)
     }
 
     return fullPath;
-}
-
-Fact* AppSettings::userBrandImageIndoor(void)
-{
-    if (!_userBrandImageIndoorFact) {
-        _userBrandImageIndoorFact = _createSettingsFact(userBrandImageIndoorName);
-    }
-
-    return _userBrandImageIndoorFact;
-}
-
-Fact* AppSettings::userBrandImageOutdoor(void)
-{
-    if (!_userBrandImageOutdoorFact) {
-        _userBrandImageOutdoorFact = _createSettingsFact(userBrandImageOutdoorName);
-    }
-
-    return _userBrandImageOutdoorFact;
 }
 
 Fact* AppSettings::autoLoadMissions(void)

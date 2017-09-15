@@ -21,6 +21,7 @@ SettingsManager::SettingsManager(QGCApplication* app, QGCToolbox* toolbox)
     , _flightMapSettings    (NULL)
     , _rtkSettings          (NULL)
     , _guidedSettings       (NULL)
+    , _brandImageSettings   (NULL)
 {
 
 }
@@ -38,4 +39,5 @@ void SettingsManager::setToolbox(QGCToolbox *toolbox)
     _flightMapSettings =    new FlightMapSettings(this);
     _rtkSettings =          new RTKSettings(this);
     _guidedSettings =       new GuidedSettings(this);
+    _brandImageSettings =   new BrandImageSettings(this);
 }

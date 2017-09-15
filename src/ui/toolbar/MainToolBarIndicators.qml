@@ -96,8 +96,8 @@ Item {
 
         property bool   _outdoorPalette:        qgcPal.globalTheme === QGCPalette.Light
         property bool   _corePluginBranding:    QGroundControl.corePlugin.brandImageIndoor.length != 0
-        property string _userBrandImageIndoor:  QGroundControl.settingsManager.appSettings.userBrandImageIndoor.value
-        property string _userBrandImageOutdoor: QGroundControl.settingsManager.appSettings.userBrandImageOutdoor.value
+        property string _userBrandImageIndoor:  QGroundControl.settingsManager.brandImageSettings.userBrandImageIndoor.value
+        property string _userBrandImageOutdoor: QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoor.value
         property bool   _userBrandingIndoor:    _userBrandImageIndoor.length != 0
         property bool   _userBrandingOutdoor:   _userBrandImageOutdoor.length != 0
         property string _brandImageIndoor:      _userBrandingIndoor ? _userBrandImageIndoor : (_userBrandingOutdoor ? _userBrandImageOutdoor : (_corePluginBranding ? QGroundControl.corePlugin.brandImageIndoor : (_activeVehicle ? _activeVehicle.brandImageIndoor : "") ) )

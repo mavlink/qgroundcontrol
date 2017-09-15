@@ -554,6 +554,7 @@ HEADERS += \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
     src/Settings/AppSettings.h \
     src/Settings/AutoConnectSettings.h \
+    src/Settings/BrandImageSettings.h \
     src/Settings/FlightMapSettings.h \
     src/Settings/GuidedSettings.h \
     src/Settings/RTKSettings.h \
@@ -736,6 +737,7 @@ SOURCES += \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
     src/Settings/AppSettings.cc \
     src/Settings/AutoConnectSettings.cc \
+    src/Settings/BrandImageSettings.cc \
     src/Settings/FlightMapSettings.cc \
     src/Settings/GuidedSettings.cc \
     src/Settings/RTKSettings.cc \
