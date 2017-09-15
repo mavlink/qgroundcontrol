@@ -266,7 +266,7 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             MouseArea {
                 anchors.fill:   parent
-                enabled:        !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED
+                enabled:        !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED && _cameraPhotoIdle
                 onClicked: {
                     if(rootLoader.sourceComponent === null) {
                         rootLoader.sourceComponent = cameraSettingsComponent
