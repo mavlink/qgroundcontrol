@@ -14,6 +14,7 @@
 #include <QObject>
 #include <QDir>
 #include <QTimer>
+#include <QQueue>
 
 #include "UASInterface.h"
 #include "QGCLoggingCategory.h"
@@ -200,7 +201,8 @@ private:
     void _sendResetCommand(void);
     void _closeDownloadSession(bool success);
     void _closeUploadSession(bool success);
-	void _downloadWorker(const QString& from, const QDir& downloadDir, bool readFile);
+    void _downloadWorker(const QString& from, const QDir& downloadDir, bool readFile);
+    void _requestMissingData();
     
     static QString errorString(uint8_t errorCode);
 
@@ -225,7 +227,14 @@ private:
     uint32_t    _writeFileSize;             ///< Size of file being uploaded
     QByteArray  _writeFileAccumulator;      ///< Holds file being uploaded
     
+    struct MissingData {
+        uint32_t offset;
+        uint32_t size;
+    };
     uint32_t    _downloadOffset;            ///< current download offset
+    uint32_t    _missingDownloadedBytes;    ///< number of missing bytes for burst download
+    QQueue<MissingData> _missingData;       ///< missing chunks of downloaded file (for burst downloads)
+    bool        _downloadingMissingParts;   ///< true if we are currently downloading missing parts
     QByteArray  _readFileAccumulator;       ///< Holds file being downloaded
     QDir        _readFileDownloadDir;       ///< Directory to download file to
     QString     _readFileDownloadFilename;  ///< Filename (no path) for download file
