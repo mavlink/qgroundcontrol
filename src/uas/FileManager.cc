@@ -406,6 +406,9 @@ void FileManager::receiveMessage(mavlink_message_t message)
         } else if (request->hdr.req_opcode == kCmdCreateFile) {
             _emitErrorMessage(tr("Nak received creating file, error: %1").arg(errorString(request->data[0])));
             return;
+        } else if (request->hdr.req_opcode == kCmdCreateDirectory) {
+            _emitErrorMessage(tr("Nak received creating directory, error: %1").arg(errorString(request->data[0])));
+            return;
         } else {
             // Generic Nak handling
             if (request->hdr.req_opcode == kCmdReadFile || request->hdr.req_opcode == kCmdBurstReadFile) {
@@ -581,6 +584,24 @@ void FileManager::uploadPath(const QString& toPath, const QFileInfo& uploadFile)
     request.hdr.offset = 0;
     request.hdr.size = 0;
     _fillRequestWithString(&request, toPath + "/" + uploadFile.fileName());
+    _sendRequest(&request);
+}
+
+void FileManager::createDirectory(const QString& directory)
+{
+    if(_currentOperation != kCOIdle){
+        _emitErrorMessage(tr("UAS File manager busy. Try again later"));
+        return;
+    }
+
+    _currentOperation = kCOCreateDir;
+
+    Request request;
+    request.hdr.session = 0;
+    request.hdr.opcode = kCmdCreateDirectory;
+    request.hdr.offset = 0;
+    request.hdr.size = 0;
+    _fillRequestWithString(&request, directory);
     _sendRequest(&request);
 }
 
