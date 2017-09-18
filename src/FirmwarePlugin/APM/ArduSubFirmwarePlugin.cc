@@ -231,3 +231,14 @@ APMSubmarineFactGroup::APMSubmarineFactGroup(QObject* parent)
     _lightsLevel2Fact.setRawValue  (std::numeric_limits<float>::quiet_NaN());
     _pilotGainFact.setRawValue     (std::numeric_limits<float>::quiet_NaN());
 }
+
+QString ArduSubFirmwarePlugin::vehicleImageOpaque(const Vehicle* vehicle) const
+{
+    Q_UNUSED(vehicle);
+    return QStringLiteral("/qmlimages/subVehicleArrowOpaque.png");
+}
+
+QString ArduSubFirmwarePlugin::vehicleImageOutline(const Vehicle* vehicle) const
+{
+    return vehicleImageOpaque(vehicle);
+}
