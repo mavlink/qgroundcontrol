@@ -42,7 +42,9 @@ public:
     
     /// Timeout in msecs to wait for an Ack time come back. This is public so we can write unit tests which wait long enough
     /// for the FileManager to timeout.
-    static const int ackTimerTimeoutMsecs = 10000;
+    static const int ackTimerTimeoutMsecs = 50;
+
+    static const int ackTimerMaxRetries = 6;
 
 	/// Downloads the specified file.
 	///     @param from File to download from UAS, fully qualified path
@@ -186,6 +188,7 @@ private:
     void _emitErrorMessage(const QString& msg);
     void _emitListEntry(const QString& entry);
     void _sendRequest(Request* request);
+    void _sendRequestNoAck(Request* request);
     void _fillRequestWithString(Request* request, const QString& str);
     void _openAckResponse(Request* openAck);
     void _downloadAckResponse(Request* readAck, bool readFile);
@@ -203,11 +206,12 @@ private:
 
     OperationState  _currentOperation;              ///< Current operation of state machine
     QTimer          _ackTimer;                      ///< Used to signal a timeout waiting for an ack
+    int             _ackNumTries;                   ///< current number of tries
     
     Vehicle*        _vehicle;
     LinkInterface*  _dedicatedLink; ///< Link to use for communication
     
-    uint16_t _lastOutgoingSeqNumber; ///< Sequence number sent in last outgoing packet
+    Request  _lastOutgoingRequest; ///< contains the last outgoing packet
 
     unsigned    _listOffset;    ///< offset for the current List operation
     QString     _listPath;      ///< path for the current List operation

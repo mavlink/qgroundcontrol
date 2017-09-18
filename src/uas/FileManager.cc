@@ -26,12 +26,13 @@ FileManager::FileManager(QObject* parent, Vehicle* vehicle)
     , _currentOperation(kCOIdle)
     , _vehicle(vehicle)
     , _dedicatedLink(NULL)
-    , _lastOutgoingSeqNumber(0)
     , _activeSession(0)
     , _systemIdQGC(0)
 {
     connect(&_ackTimer, &QTimer::timeout, this, &FileManager::_ackTimeout);
     
+    _lastOutgoingRequest.hdr.seqNumber = 0;
+
     _systemIdServer = _vehicle->id();
     
     // Make sure we don't have bad structure packing
@@ -303,7 +304,7 @@ void FileManager::receiveMessage(mavlink_message_t message)
     if (message.msgid != MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL) {
         return;
     }
-	
+
     mavlink_file_transfer_protocol_t data;
     mavlink_msg_file_transfer_protocol_decode(&message, &data);
 	
@@ -314,15 +315,22 @@ void FileManager::receiveMessage(mavlink_message_t message)
     }
     
     Request* request = (Request*)&data.payload[0];
+
+    uint16_t incomingSeqNumber = request->hdr.seqNumber;
     
+    // Make sure we have a good sequence number
+    uint16_t expectedSeqNumber = _lastOutgoingRequest.hdr.seqNumber + 1;
+
+    // ignore old/reordered packets (handle wrap-around properly)
+    if ((uint16_t)((expectedSeqNumber - 1) - incomingSeqNumber) < (std::numeric_limits<uint16_t>::max()/2)) {
+        qDebug() << "Received old packet: expected seq:" << expectedSeqNumber << "got:" << incomingSeqNumber;
+        return;
+    }
+
     _clearAckTimeout();
     
 	qCDebug(FileManagerLog) << "receiveMessage" << request->hdr.opcode;
 	
-    uint16_t incomingSeqNumber = request->hdr.seqNumber;
-    
-    // Make sure we have a good sequence number
-    uint16_t expectedSeqNumber = _lastOutgoingSeqNumber + 1;
     if (incomingSeqNumber != expectedSeqNumber) {
         switch (_currentOperation) {
             case kCOBurst:
@@ -353,7 +361,7 @@ void FileManager::receiveMessage(mavlink_message_t message)
     }
     
     // Move past the incoming sequence number for next request
-    _lastOutgoingSeqNumber = incomingSeqNumber;
+    _lastOutgoingRequest.hdr.seqNumber = incomingSeqNumber;
 
     if (request->hdr.opcode == kRspAck) {
         switch (request->hdr.req_opcode) {
@@ -541,7 +549,7 @@ void FileManager::_downloadWorker(const QString& from, const QDir& downloadDir, 
 void FileManager::uploadPath(const QString& toPath, const QFileInfo& uploadFile)
 {
     if(_currentOperation != kCOIdle){
-        _emitErrorMessage(tr("UAS File manager busy.  Try again later"));
+        _emitErrorMessage(tr("UAS File manager busy. Try again later"));
         return;
     }
 
@@ -664,7 +672,8 @@ void FileManager::_setupAckTimeout(void)
 
     Q_ASSERT(!_ackTimer.isActive());
 
-    _ackTimer.setSingleShot(true);
+    _ackNumTries = 0;
+    _ackTimer.setSingleShot(false);
     _ackTimer.start(ackTimerTimeoutMsecs);
 }
 
@@ -680,6 +689,26 @@ void FileManager::_ackTimeout(void)
 {
     qCDebug(FileManagerLog) << "_ackTimeout";
     
+    if (++_ackNumTries <= ackTimerMaxRetries) {
+        qCDebug(FileManagerLog) << "ack timeout - retrying";
+        if (_currentOperation == kCOBurst) {
+            // for burst downloads try to initiate a new burst
+            Request request;
+            request.hdr.session = _activeSession;
+            request.hdr.opcode = kCmdBurstReadFile;
+            request.hdr.offset = _downloadOffset;
+            request.hdr.size = 0;
+            request.hdr.seqNumber = ++_lastOutgoingRequest.hdr.seqNumber;
+
+            _sendRequestNoAck(&request);
+        } else {
+            _sendRequestNoAck(&_lastOutgoingRequest);
+        }
+        return;
+    }
+
+    _clearAckTimeout();
+
     // Make sure to set _currentOperation state before emitting error message. Code may respond
     // to error message signal by sending another command, which will fail if state is not back
     // to idle. FileView UI works this way with the List command.
@@ -710,8 +739,11 @@ void FileManager::_ackTimeout(void)
             break;
 			
         default:
+        {
+            OperationState currentOperation = _currentOperation;
             _currentOperation = kCOIdle;
-            _emitErrorMessage(QString("Timeout waiting for ack: Command failed (%1)").arg(_currentOperation));
+            _emitErrorMessage(QString("Timeout waiting for ack: Command failed (%1)").arg(currentOperation));
+        }
             break;
     }
 }
@@ -740,19 +772,28 @@ void FileManager::_emitListEntry(const QString& entry)
 void FileManager::_sendRequest(Request* request)
 {
 
-    mavlink_message_t message;
-
     _setupAckTimeout();
     
-    _lastOutgoingSeqNumber++;
-
-    request->hdr.seqNumber = _lastOutgoingSeqNumber;
+    request->hdr.seqNumber = ++_lastOutgoingRequest.hdr.seqNumber;
+    // store the current request
+    if (request->hdr.size <= sizeof(request->data)) {
+        memcpy(&_lastOutgoingRequest, request, sizeof(RequestHeader) + request->hdr.size);
+    } else {
+        qCCritical(FileManagerLog) << "request length too long:" << request->hdr.size;
+    }
     
     qCDebug(FileManagerLog) << "_sendRequest opcode:" << request->hdr.opcode << "seqNumber:" << request->hdr.seqNumber;
     
     if (_systemIdQGC == 0) {
         _systemIdQGC = qgcApp()->toolbox()->mavlinkProtocol()->getSystemId();
     }
+    _sendRequestNoAck(request);
+}
+
+/// @brief Sends the specified Request out to the UAS, without ack timeout handling
+void FileManager::_sendRequestNoAck(Request* request)
+{
+    mavlink_message_t message;
 
     // Unit testing code can end up here without _dedicateLink set since it tests inidividual commands.
     LinkInterface* link;
