@@ -18,6 +18,13 @@
 #include "UASInterface.h"
 #include "QGCLoggingCategory.h"
 
+#ifdef __GNUC__
+  #define PACKED_STRUCT( __Declaration__ ) __Declaration__ __attribute__((packed))
+#else
+  #define PACKED_STRUCT( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop) )
+#endif
+
+
 Q_DECLARE_LOGGING_CATEGORY(FileManagerLog)
 
 class Vehicle;
@@ -80,9 +87,11 @@ private slots:
 	void _ackTimeout(void);
 
 private:
-    /// @brief This is the fixed length portion of the protocol data. Trying to pack structures across differing compilers is
-    /// questionable, so we pad the structure ourselves to 32 bit alignment which should get us what we want.
-    struct RequestHeader
+    /// @brief This is the fixed length portion of the protocol data.
+    /// This needs to be packed, because it's typecasted from mavlink_file_transfer_protocol_t.payload, which starts
+    /// at a 3 byte offset, causing an unaligned access to seq_number and offset
+    PACKED_STRUCT(
+    typedef struct _RequestHeader
         {
             uint16_t    seqNumber;      ///< sequence number for message
             uint8_t     session;        ///< Session id for read and write commands
@@ -92,11 +101,12 @@ private:
             uint8_t     burstComplete;  ///< Only used if req_opcode=kCmdBurstReadFile - 1: set of burst packets complete, 0: More burst packets coming.
             uint8_t     padding;        ///< 32 bit aligment padding
             uint32_t    offset;         ///< Offsets for List and Read commands
-        };
+        }) RequestHeader;
 
-    struct Request
+    PACKED_STRUCT(
+    typedef struct _Request
     {
-        struct RequestHeader hdr;
+        RequestHeader hdr;
 
         // We use a union here instead of just casting (uint32_t)&payload[0] to not break strict aliasing rules
         union {
@@ -110,7 +120,7 @@ private:
             // Length of file chunk written by write command
             uint32_t writeFileLength;
         };
-    };
+    }) Request;
 
     enum Opcode
 	{
