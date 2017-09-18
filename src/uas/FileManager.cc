@@ -27,6 +27,8 @@ FileManager::FileManager(QObject* parent, Vehicle* vehicle)
     , _vehicle(vehicle)
     , _dedicatedLink(NULL)
     , _activeSession(0)
+    , _missingDownloadedBytes(0)
+    , _downloadingMissingParts(false)
     , _systemIdQGC(0)
 {
     connect(&_ackTimer, &QTimer::timeout, this, &FileManager::_ackTimeout);
@@ -56,6 +58,9 @@ void FileManager::_openAckResponse(Request* openAck)
 
     _downloadOffset = 0;            // Start reading at beginning of file
     _readFileAccumulator.clear();   // Start with an empty file
+    _missingDownloadedBytes = 0;
+    _downloadingMissingParts = false;
+    _missingData.clear();
 
     Request request;
     request.hdr.session = _activeSession;
@@ -67,15 +72,54 @@ void FileManager::_openAckResponse(Request* openAck)
     _sendRequest(&request);
 }
 
+/// request the next missing part of a (partially) downloaded file
+void FileManager::_requestMissingData()
+{
+    if (_missingData.empty()) {
+        _downloadingMissingParts = false;
+        _missingDownloadedBytes = 0;
+        // there might be more data missing at the end
+        if ((uint32_t)_readFileAccumulator.length() != _downloadFileSize) {
+            _downloadOffset = _readFileAccumulator.length();
+            qCDebug(FileManagerLog) << QString("_requestMissingData: missing parts done, downloadOffset(%1) downloadFileSize(%2)")
+                    .arg(_downloadOffset).arg(_downloadFileSize);
+        } else {
+            _closeDownloadSession(true);
+            return;
+        }
+    } else {
+        qCDebug(FileManagerLog) << QString("_requestMissingData: offset(%1) size(%2)").arg(_missingData.head().offset).arg(_missingData.head().size);
+
+        _downloadOffset = _missingData.head().offset;
+    }
+
+    Request request;
+    _currentOperation = kCORead;
+    request.hdr.session = _activeSession;
+    request.hdr.opcode = kCmdReadFile;
+    request.hdr.offset = _downloadOffset;
+    request.hdr.size = sizeof(request.data);
+
+    _sendRequest(&request);
+}
+
 /// Closes out a download session by writing the file and doing cleanup.
 ///     @param success true: successful download completion, false: error during download
 void FileManager::_closeDownloadSession(bool success)
 {
-    qCDebug(FileManagerLog) << QString("_closeDownloadSession: success(%1)").arg(success);
+    qCDebug(FileManagerLog) << QString("_closeDownloadSession: success(%1) missingBytes(%2)").arg(success).arg(_missingDownloadedBytes);
     
     _currentOperation = kCOIdle;
     
     if (success) {
+        if (_missingDownloadedBytes > 0 || (uint32_t)_readFileAccumulator.length() < _downloadFileSize) {
+            // we're not done yet: request the missing parts individually (either we had missing parts or
+            // the last (few) packets right before the EOF got dropped)
+            _downloadingMissingParts = true;
+            _requestMissingData();
+            return;
+        }
+
         QString downloadFilePath = _readFileDownloadDir.absoluteFilePath(_readFileDownloadFilename);
 
         QFile file(downloadFilePath);
@@ -130,21 +174,51 @@ void FileManager::_downloadAckResponse(Request* readAck, bool readFile)
     }
 
     if (readAck->hdr.offset != _downloadOffset) {
-        _closeDownloadSession(false /* failure */);
-        _emitErrorMessage(tr("Download: Offset returned (%1) differs from offset requested/expected (%2)").arg(readAck->hdr.offset).arg(_downloadOffset));
-        return;
+        if (readFile) {
+            _closeDownloadSession(false /* failure */);
+            _emitErrorMessage(tr("Download: Offset returned (%1) differs from offset requested/expected (%2)").arg(readAck->hdr.offset).arg(_downloadOffset));
+            return;
+        } else { // burst
+            if (readAck->hdr.offset < _downloadOffset) { // old data: ignore it
+                _setupAckTimeout();
+                return;
+            }
+            // keep track of missing data chunks
+            MissingData missingData;
+            missingData.offset = _downloadOffset;
+            missingData.size = readAck->hdr.offset - _downloadOffset;
+            _missingData.push_back(missingData);
+            _missingDownloadedBytes += readAck->hdr.offset - _downloadOffset;
+            qCDebug(FileManagerLog) << QString("_downloadAckResponse: missing data: offset(%1) size(%2)").arg(missingData.offset).arg(missingData.size);
+            _downloadOffset = readAck->hdr.offset;
+            _readFileAccumulator.resize(_downloadOffset); // placeholder for the missing data
+        }
     }
     
     qCDebug(FileManagerLog) << QString("_downloadAckResponse: offset(%1) size(%2) burstComplete(%3)").arg(readAck->hdr.offset).arg(readAck->hdr.size).arg(readAck->hdr.burstComplete);
 
-	_downloadOffset += readAck->hdr.size;
-    _readFileAccumulator.append((const char*)readAck->data, readAck->hdr.size);
+    if (_downloadingMissingParts) {
+        Q_ASSERT(_missingData.head().offset == _downloadOffset);
+        _missingDownloadedBytes -= readAck->hdr.size;
+        _readFileAccumulator.replace(_downloadOffset, readAck->hdr.size, (const char*)readAck->data, readAck->hdr.size);
+        if (_missingData.head().size <= readAck->hdr.size) {
+            _missingData.pop_front();
+        } else {
+            _missingData.head().size -= readAck->hdr.size;
+            _missingData.head().offset += readAck->hdr.size;
+        }
+    } else {
+        _downloadOffset += readAck->hdr.size;
+        _readFileAccumulator.append((const char*)readAck->data, readAck->hdr.size);
+    }
     
     if (_downloadFileSize != 0) {
-        emit commandProgress(100 * ((float)_readFileAccumulator.length() / (float)_downloadFileSize));
+        emit commandProgress(100 * ((float)(_readFileAccumulator.length() - _missingDownloadedBytes) / (float)_downloadFileSize));
     }
 
-    if (readFile || readAck->hdr.burstComplete) {
+    if (_downloadingMissingParts) {
+        _requestMissingData();
+    } else if (readFile || readAck->hdr.burstComplete) {
         // Possibly still more data to read, send next read request
 
         Request request;
@@ -164,6 +238,7 @@ void FileManager::_downloadAckResponse(Request* readAck, bool readFile)
 void FileManager::_listAckResponse(Request* listAck)
 {
     if (listAck->hdr.offset != _listOffset) {
+        // this is a real error (directory listing is synchronous), no need to retransmit
         _currentOperation = kCOIdle;
         _emitErrorMessage(tr("List: Offset returned (%1) differs from offset requested (%2)").arg(listAck->hdr.offset).arg(_listOffset));
         return;
@@ -332,8 +407,11 @@ void FileManager::receiveMessage(mavlink_message_t message)
 	qCDebug(FileManagerLog) << "receiveMessage" << request->hdr.opcode;
 	
     if (incomingSeqNumber != expectedSeqNumber) {
+        bool doAbort = true;
         switch (_currentOperation) {
-            case kCOBurst:
+            case kCOBurst: // burst download drops are handled in _downloadAckResponse()
+                doAbort = false;
+                break;
             case kCORead:
                 _closeDownloadSession(false /* failure */);
                 break;
@@ -356,8 +434,10 @@ void FileManager::receiveMessage(mavlink_message_t message)
                 break;
         }
         
-        _emitErrorMessage(tr("Bad sequence number on received message: expected(%1) received(%2)").arg(expectedSeqNumber).arg(incomingSeqNumber));
-        return;
+        if (doAbort) {
+            _emitErrorMessage(tr("Bad sequence number on received message: expected(%1) received(%2)").arg(expectedSeqNumber).arg(incomingSeqNumber));
+            return;
+        }
     }
     
     // Move past the incoming sequence number for next request
