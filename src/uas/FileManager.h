@@ -61,6 +61,9 @@ public:
     /// Upload the specified file to the specified location
     void uploadPath(const QString& toPath, const QFileInfo& uploadFile);
     
+    /// Create a remote directory
+    void createDirectory(const QString& directory);
+
 signals:
     // Signals associated with the listDirectory method
     
@@ -174,6 +177,7 @@ private:
 			kCOBurst,		// waiting for Burst response
             kCOWrite,       // waiting for Write response
             kCOCreate,      // waiting for Create response
+            kCOCreateDir,   // waiting for Create Directory response
         };
     
     bool _sendOpcodeOnlyCmd(uint8_t opcode, OperationState newOpState);
