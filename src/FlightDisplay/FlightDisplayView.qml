@@ -311,23 +311,8 @@ QGCView {
             onHideIt: {
                 setPipVisibility(!state)
             }
-            onGrow: {
-                if (_pipSize >= 825) {
-                    return
-                }
-
-                _pipSize += 50
-                _flightVideoPipControl.width = _pipSize
-                _flightVideoPipControl.height= _pipSize * (9/16)
-            }
-            onShrink: {
-                if (_pipSize <= 225) {
-                    return
-                }
-
-                _pipSize -= 50
-                _flightVideoPipControl.width = _pipSize
-                _flightVideoPipControl.height= _pipSize * (9/16)
+            onNewWidth: {
+                _pipSize = newWidth
             }
         }
 
