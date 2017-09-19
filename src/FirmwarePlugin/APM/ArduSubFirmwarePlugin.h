@@ -107,8 +107,6 @@ public:
 
     bool supportsThrottleModeCenterZero(void) final;
 
-    bool supportsManualControl(void) final;
-
     bool supportsRadio(void) final;
 
     bool supportsJSButton(void) final;

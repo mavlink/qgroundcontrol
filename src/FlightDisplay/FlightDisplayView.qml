@@ -92,12 +92,6 @@ QGCView {
         QGroundControl.saveBoolGlobalSetting(_PIPVisibleKey, state)
     }
 
-    function px4JoystickCheck() {
-        if ( _activeVehicle && !_activeVehicle.supportsManualControl && (QGroundControl.settingsManager.appSettings.virtualJoystick.value || _activeVehicle.joystickEnabled)) {
-            px4JoystickSupport.open()
-        }
-    }
-
     PlanMasterController {
         id:                     masterController
         Component.onCompleted:  start(false /* editMode */)
@@ -109,28 +103,8 @@ QGCView {
         onResumeMissionUploadFail:  guidedActionsController.confirmAction(guidedActionsController.actionResumeMissionUploadFail)
     }
 
-    MessageDialog {
-        id:     px4JoystickSupport
-        text:   qsTr("Joystick support requires MAVLink MANUAL_CONTROL support. ") +
-                qsTr("The firmware you are running does not normally support this. ") +
-                qsTr("It will only work if you have modified the firmware to add MANUAL_CONTROL support.")
-    }
-
-    Connections {
-        target:                 QGroundControl.multiVehicleManager
-        onActiveVehicleChanged: px4JoystickCheck()
-    }
-
-    Connections {
-        target:         QGroundControl.settingsManager.appSettings.virtualJoystick
-        onValueChanged: px4JoystickCheck()
-    }
-
-    onActiveVehicleJoystickEnabledChanged: px4JoystickCheck()
-
     Component.onCompleted: {
         setStates()
-        px4JoystickCheck()
         if(QGroundControl.corePlugin.options.flyViewOverlay.toString().length) {
             flyViewOverlay.source = QGroundControl.corePlugin.options.flyViewOverlay
         }

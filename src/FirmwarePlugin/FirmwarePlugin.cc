@@ -135,11 +135,6 @@ bool FirmwarePlugin::supportsNegativeThrust(void)
     return false;
 }
 
-bool FirmwarePlugin::supportsManualControl(void)
-{
-    return false;
-}
-
 bool FirmwarePlugin::supportsRadio(void)
 {
     return true;
