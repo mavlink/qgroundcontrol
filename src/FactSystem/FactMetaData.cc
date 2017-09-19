@@ -240,6 +240,8 @@ QVariant FactMetaData::_minForType(void) const
         return QVariant(0);
     case valueTypeElapsedTimeInSeconds:
         return QVariant(0.0);
+    case valueTypeCustom:
+        return QVariant();
     }
     
     // Make windows compiler happy, even switch is full cased
@@ -270,6 +272,8 @@ QVariant FactMetaData::_maxForType(void) const
         return QVariant();
     case valueTypeBool:
         return QVariant(1);
+    case valueTypeCustom:
+        return QVariant();
     }
     
     // Make windows compiler happy, even switch is full cased
@@ -327,6 +331,10 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
     case FactMetaData::valueTypeBool:
         convertOk = true;
         typedValue = QVariant(rawValue.toBool());
+        break;
+    case FactMetaData::valueTypeCustom:
+        convertOk = true;
+        typedValue = QVariant(rawValue.toByteArray());
         break;
     }
     
@@ -388,6 +396,10 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
     case FactMetaData::valueTypeBool:
         convertOk = true;
         typedValue = QVariant(cookedValue.toBool());
+        break;
+    case FactMetaData::valueTypeCustom:
+        convertOk = true;
+        typedValue = QVariant(cookedValue.toByteArray());
         break;
     }
 
@@ -454,6 +466,10 @@ bool FactMetaData::clampValue(const QVariant& cookedValue, QVariant& typedValue)
     case FactMetaData::valueTypeBool:
         convertOk = true;
         typedValue = QVariant(cookedValue.toBool());
+        break;
+    case FactMetaData::valueTypeCustom:
+        convertOk = true;
+        typedValue = QVariant(cookedValue.toByteArray());
         break;
     }
     return convertOk;
@@ -693,7 +709,8 @@ FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, 
                      << QStringLiteral("Double")
                      << QStringLiteral("String")
                      << QStringLiteral("Bool")
-                     << QStringLiteral("ElapsedSeconds");
+                     << QStringLiteral("ElapsedSeconds")
+                     << QStringLiteral("Custom");
 
     knownTypes << valueTypeUint8
                << valueTypeInt8
@@ -705,7 +722,8 @@ FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, 
                << valueTypeDouble
                << valueTypeString
                << valueTypeBool
-               << valueTypeElapsedTimeInSeconds;
+               << valueTypeElapsedTimeInSeconds
+               << valueTypeCustom;
 
     for (int i=0; i<knownTypeStrings.count(); i++) {
         if (knownTypeStrings[i].compare(typeString, Qt::CaseInsensitive) == 0) {
@@ -736,6 +754,9 @@ size_t FactMetaData::typeToSize(ValueType_t type)
 
     case valueTypeDouble:
         return 8;
+
+    case valueTypeCustom:
+        return MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN;
 
     default:
         qWarning() << "Unsupported fact value type" << type;
