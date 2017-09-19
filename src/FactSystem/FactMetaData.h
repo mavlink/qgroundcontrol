@@ -41,6 +41,7 @@ public:
         valueTypeString,
         valueTypeBool,
         valueTypeElapsedTimeInSeconds,  // Internally stored as double, valueString displays as HH:MM:SS
+        valueTypeCustom,                // Internally stored as a QByteArray
     } ValueType_t;
 
     typedef QVariant (*Translator)(const QVariant& from);

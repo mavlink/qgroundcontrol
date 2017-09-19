@@ -603,6 +603,10 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
             qCritical() << QString("Unknown type for parameter %1").arg(factName);
             return false;
         }
+        //-- By definition, custom types do not have control
+        if(factType == FactMetaData::valueTypeCustom) {
+            control = false;
+        }
         //-- Description
         QString description;
         if(!read_value(parameterNode, kDescription, description)) {
