@@ -2097,11 +2097,6 @@ bool Vehicle::vtol(void) const
     return _firmwarePlugin->isVtol(this);
 }
 
-bool Vehicle::supportsManualControl(void) const
-{
-    return _firmwarePlugin->supportsManualControl();
-}
-
 bool Vehicle::supportsThrottleModeCenterZero(void) const
 {
     return _firmwarePlugin->supportsThrottleModeCenterZero();
