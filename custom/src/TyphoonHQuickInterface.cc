@@ -1107,6 +1107,7 @@ TyphoonHQuickInterface::_enableThermalVideo()
 {
     //-- Are we connected to a CGO-ET?
     if(!_videoReceiver && connectedSSID().startsWith("CGOET")) {
+        qCDebug(YuneecLog) << "Creating thermal image receiver";
         _videoReceiver = new VideoReceiver(this);
         _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:8554/live"));
         connect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);

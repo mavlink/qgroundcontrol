@@ -19,21 +19,18 @@ QGC_LOGGING_CATEGORY(YuneecCameraLog, "YuneecCameraLog")
 QGC_LOGGING_CATEGORY(YuneecCameraLogVerbose, "YuneecCameraLogVerbose")
 
 static const char *kCAM_ASPECTRATIO = "CAM_ASPECTRATIO";
-//static const char *kCAM_AUDIOREC    = "CAM_AUDIOREC";
-//static const char *kCAM_COLORMODE   = "CAM_COLORMODE";
 static const char *kCAM_EV          = "CAM_EV";
 static const char *kCAM_EXPMODE     = "CAM_EXPMODE";
-//static const char *kCAM_FLICKER     = "CAM_FLICKER";
 static const char *kCAM_ISO         = "CAM_ISO";
 static const char *kCAM_METERING    = "CAM_METERING";
 static const char *kCAM_MODE        = "CAM_MODE";
-//static const char *kCAM_PHOTOFMT    = "CAM_PHOTOFMT";
-//static const char *kCAM_PHOTOQUAL   = "CAM_PHOTOQUAL";
 static const char *kCAM_SHUTTERSPD  = "CAM_SHUTTERSPD";
 static const char *kCAM_SPOTAREA    = "CAM_SPOTAREA";
 static const char *kCAM_VIDFMT      = "CAM_VIDFMT";
 static const char *kCAM_VIDRES      = "CAM_VIDRES";
 static const char *kCAM_WBMODE      = "CAM_WBMODE";
+static const char *kCAM_IRTEMPMAX   = "CAM_IRTEMPMAX";
+static const char *kCAM_IRTEMPMIN   = "CAM_IRTEMPMIN";
 
 //-----------------------------------------------------------------------------
 YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
@@ -167,6 +164,21 @@ Fact*
 YuneecCameraControl::aspectRatio()
 {
     return _paramComplete ? getFact(kCAM_ASPECTRATIO) : NULL;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+YuneecCameraControl::minTemp()
+{
+    qDebug() << "YuneecCameraControl::minTemp()" << _paramComplete << _isCGOET;
+    return (_paramComplete && _isCGOET) ? getFact(kCAM_IRTEMPMIN) : NULL;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+YuneecCameraControl::maxTemp()
+{
+    return (_paramComplete && _isCGOET) ? getFact(kCAM_IRTEMPMAX) : NULL;
 }
 
 //-----------------------------------------------------------------------------

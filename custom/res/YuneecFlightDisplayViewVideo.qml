@@ -35,6 +35,8 @@ Item {
     property var    _arFact:            _camera && _camera.aspectRatio
     property bool   _cameraAutoMode:    _expModeFact  ? _expModeFact.rawValue === 0 : true
     property double _ar:                _arFact ? _arFact.rawValue : QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
+    property var    _tempMinFact:       _camera && _camera.minTemp
+    property var    _tempMaxFact:       _camera && _camera.maxTemp
 
     property real   spotSize:           48
     property bool   isSpot:             _camera && _cameraAutoMode && _meteringModeFact && _meteringModeFact.rawValue === 2
@@ -166,20 +168,90 @@ Item {
             sourceSize.height:  height
         }
     }
+    //-- Thermal Image
     Item {
         id:                 thermalItem
         anchors.centerIn:   parent
         width:              height * 1.333333
-        height:             mainWindow.height * 0.85
-        visible:            !_mainIsMap && TyphoonHQuickInterface.thermalImagePresent
+        height:             parent.height
+        visible:            !_mainIsMap && TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver
         QGCVideoBackground {
             id:             thermalVideo
             anchors.fill:   parent
             receiver:       TyphoonHQuickInterface.videoReceiver
-            display:        TyphoonHQuickInterface.videoReceiver.videoSurface
-            visible:        TyphoonHQuickInterface.videoReceiver.videoRunning
-            opacity:        0.75
+            display:        TyphoonHQuickInterface.videoReceiver ? TyphoonHQuickInterface.videoReceiver.videoSurface : null
+            visible:        TyphoonHQuickInterface.videoReceiver ? TyphoonHQuickInterface.videoReceiver.videoRunning : null
+            opacity:        0.85
         }
+    }
+    //-- Color Bar
+    Rectangle {
+        id:                 colorBar
+        anchors.left:       thermalItem.left
+        anchors.leftMargin: ScreenTools.defaultFontPixelHeight * -4
+        anchors.verticalCenter: parent.verticalCenter
+        width:              height * 0.075
+        height:             thermalItem.height * 0.65
+        visible:            thermalItem.visible
+        color:              Qt.rgba(0,0,0,0)
+        border.width:       1
+        border.color:       qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
+        Image {
+            anchors.fill:   parent
+            anchors.margins: 1
+            antialiasing:   true
+            mipmap:         true
+            smooth:         true
+            source:         "/typhoonh/img/flir-Fusion.png"
+            fillMode:       Image.Stretch
+            sourceSize.height:  height
+        }
+    }
+    Rectangle {
+        id:             maxTemp
+        height:         ScreenTools.defaultFontPixelWidth  * 8
+        width:          ScreenTools.defaultFontPixelHeight * 2
+        visible:        _tempMaxFact !== null
+        anchors.top:    colorBar.top
+        anchors.topMargin: ScreenTools.defaultFontPixelHeight * -4
+        anchors.horizontalCenter: colorBar.horizontalCenter
+        gradient: Gradient {
+            GradientStop { position: 0;     color: Qt.rgba(0.5, 0, 0, 0.25) }
+            GradientStop { position: 0.25;  color: Qt.rgba(0.5, 0, 0, 1) }
+            GradientStop { position: 0.75;  color: Qt.rgba(0.5, 0, 0, 1) }
+            GradientStop { position: 1;     color: Qt.rgba(0.5, 0, 0, 0.25) }
+        }
+        rotation: 90
+    }
+    QGCLabel {
+        text:               _tempMaxFact ? _tempMaxFact.rawValue + '°C' : ""
+        color:              "white"
+        visible:            _tempMaxFact !== null
+        font.family:        ScreenTools.demiboldFontFamily
+        anchors.centerIn:   maxTemp
+    }
+    Rectangle {
+        id:             minTemp
+        height:         ScreenTools.defaultFontPixelWidth  * 8
+        width:          ScreenTools.defaultFontPixelHeight * 2
+        visible:        _tempMinFact !== null
+        anchors.bottom: colorBar.bottom
+        anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * -4
+        anchors.horizontalCenter: colorBar.horizontalCenter
+        gradient: Gradient {
+            GradientStop { position: 0;     color: Qt.rgba(0, 0, 0.5, 0.25) }
+            GradientStop { position: 0.25;  color: Qt.rgba(0, 0, 0.5, 1) }
+            GradientStop { position: 0.75;  color: Qt.rgba(0, 0, 0.5, 1) }
+            GradientStop { position: 1;     color: Qt.rgba(0, 0, 0.5, 0.25) }
+        }
+        rotation: 90
+    }
+    QGCLabel {
+        text:               _tempMinFact ? _tempMinFact.rawValue + '°C' : ""
+        color:              "white"
+        visible:            _tempMinFact !== null
+        font.family:        ScreenTools.demiboldFontFamily
+        anchors.centerIn:   minTemp
     }
     //-- Camera Controller
     Loader {

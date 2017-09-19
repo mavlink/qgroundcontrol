@@ -45,6 +45,9 @@ public:
     Q_PROPERTY(bool         isCGOET         READ    isCGOET             NOTIFY isCGOETChanged)
     Q_PROPERTY(bool         paramComplete   READ    paramComplete       NOTIFY factsLoaded)
 
+    Q_PROPERTY(Fact*        minTemp         READ    minTemp             NOTIFY factsLoaded)
+    Q_PROPERTY(Fact*        maxTemp         READ    maxTemp             NOTIFY factsLoaded)
+
     Q_INVOKABLE void calibrateGimbal();
 
     bool        takePhoto           () override;
@@ -75,6 +78,8 @@ public:
     Fact*       meteringMode        ();
     Fact*       videoRes            ();
     Fact*       aspectRatio         ();
+    Fact*       minTemp             ();
+    Fact*       maxTemp             ();
     QPoint      spotArea            ();
     void        setSpotArea         (QPoint mouse);
 
