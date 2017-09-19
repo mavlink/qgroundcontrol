@@ -170,7 +170,6 @@ YuneecCameraControl::aspectRatio()
 Fact*
 YuneecCameraControl::minTemp()
 {
-    qDebug() << "YuneecCameraControl::minTemp()" << _paramComplete << _isCGOET;
     return (_paramComplete && _isCGOET) ? getFact(kCAM_IRTEMPMIN) : NULL;
 }
 
