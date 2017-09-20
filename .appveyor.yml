@@ -15,7 +15,7 @@ environment:
 install:
   - git submodule update --init --recursive
   - call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
-  - set PATH=C:\Qt\Tools\QtCreator\bin;C:\Qt\5.8\msvc2015\bin;%PATH%
+  - set PATH=C:\Qt\Tools\QtCreator\bin;C:\Qt\5.9.1\msvc2015\bin;%PATH%
   - mkdir %LOCALAPPDATA%\QtProject && copy test\qtlogging.ini %LOCALAPPDATA%\QtProject\
   - ps: |
       Write-Host "Installing GStreamer..." -ForegroundColor Cyan
