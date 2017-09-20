@@ -88,7 +88,7 @@ QGCViewDialog {
 	// set focus to the text field when becoming visible (in case of an Enum,
 	// the valueField is not visible, but it's not an issue because the combo
 	// box cannot have a focus)
-	onVisibleChanged: if (visible) valueField.forceActiveFocus()
+	onVisibleChanged: if (visible && !ScreenTools.isMobile) valueField.forceActiveFocus()
 
     QGCFlickable {
         anchors.fill:       parent
