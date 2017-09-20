@@ -36,9 +36,22 @@ MockLinkFileServer::MockLinkFileServer(uint8_t systemIdServer, uint8_t component
     _errMode(errModeNone),
     _systemIdServer(systemIdServer),
     _componentIdServer(componentIdServer),
-    _mockLink(mockLink)
+    _mockLink(mockLink),
+    _lastReplyValid(false),
+    _lastReplySequence(0),
+    _randomDropsEnabled(false)
 {
+    srand(0); // make sure unit tests are deterministic
+}
 
+void MockLinkFileServer::ensureNullTemination(FileManager::Request* request)
+{
+    if (request->hdr.size < sizeof(request->data)) {
+        request->data[request->hdr.size] = '\0';
+
+    } else {
+        request->data[sizeof(request->data)-1] = '\0';
+    }
 }
 
 /// @brief Handles List command requests. Only supports root folder paths.
@@ -50,6 +63,8 @@ void MockLinkFileServer::_listCommand(uint8_t senderSystemId, uint8_t senderComp
     FileManager::Request  ackResponse;
     QString                     path;
     uint16_t                    outgoingSeqNumber = _nextSeqNumber(seqNumber);
+
+    ensureNullTemination(request);
 
     // We only support root path
     path = (char *)&request->data[0];
@@ -103,6 +118,8 @@ void MockLinkFileServer::_openCommand(uint8_t senderSystemId, uint8_t senderComp
     QString                     path;
     uint16_t                    outgoingSeqNumber = _nextSeqNumber(seqNumber);
     
+    ensureNullTemination(request);
+
     size_t cchPath = strnlen((char *)request->data, sizeof(request->data));
     Q_ASSERT(cchPath != sizeof(request->data));
     Q_UNUSED(cchPath); // Fix initialized-but-not-referenced warning on release builds
@@ -270,8 +287,23 @@ void MockLinkFileServer::handleFTPMessage(const mavlink_message_t& message)
     if (requestFTP.target_system != _systemIdServer) {
         return;
     }
-    
+
     FileManager::Request* request = (FileManager::Request*)&requestFTP.payload[0];
+
+	if (_randomDropsEnabled) {
+	    if (rand() % 3 == 0) {
+	        qDebug() << "FileServer: Random drop of incoming packet";
+	        return;
+	    }
+	}
+
+	if (_lastReplyValid && request->hdr.seqNumber + 1 == _lastReplySequence) {
+	    // this is the same request as the one we replied to last. It means the (n)ack got lost, and the GCS
+	    // resent the request
+	    qDebug() << "FileServer: resending response";
+	    _mockLink->respondWithMavlinkMessage(_lastReply);
+	    return;
+	}
 
     uint16_t incomingSeqNumber = request->hdr.seqNumber;
     uint16_t outgoingSeqNumber = _nextSeqNumber(incomingSeqNumber);
@@ -361,20 +393,27 @@ void MockLinkFileServer::_sendNak(uint8_t targetSystemId, uint8_t targetComponen
 /// @brief Emits a Request through the messageReceived signal.
 void MockLinkFileServer::_sendResponse(uint8_t targetSystemId, uint8_t targetComponentId, FileManager::Request* request, uint16_t seqNumber)
 {
-    mavlink_message_t   mavlinkMessage;
-    
     request->hdr.seqNumber = seqNumber;
+    _lastReplySequence = seqNumber;
+    _lastReplyValid = true;
     
     mavlink_msg_file_transfer_protocol_pack_chan(_systemIdServer,    // System ID
                                                  0,                  // Component ID
                                                  _mockLink->mavlinkChannel(),
-                                                 &mavlinkMessage,    // Mavlink Message to pack into
+                                                 &_lastReply,    // Mavlink Message to pack into
                                                  0,                  // Target network
                                                  targetSystemId,
                                                  targetComponentId,
                                                  (uint8_t*)request); // Payload
+
+	if (_randomDropsEnabled) {
+	    if (rand() % 3 == 0) {
+	        qDebug() << "FileServer: Random drop of outgoing packet";
+	        return;
+	    }
+	}
     
-    _mockLink->respondWithMavlinkMessage(mavlinkMessage);
+    _mockLink->respondWithMavlinkMessage(_lastReply);
 }
 
 /// @brief Generates the next sequence number given an incoming sequence number. Handles generating
