@@ -20,6 +20,8 @@
 #include <QDir>
 #include <QDebug>
 
+static const char* kInvalidConverstion = "Internal Error: No support for string parameters";
+
 QGC_LOGGING_CATEGORY(PX4ParameterMetaDataLog, "PX4ParameterMetaDataLog")
 
 PX4ParameterMetaData::PX4ParameterMetaData(void)
@@ -57,12 +59,16 @@ QVariant PX4ParameterMetaData::_stringToTypedVariant(const QString& string, Fact
         convertTo = QVariant::Double;
         break;
     case FactMetaData::valueTypeString:
-        qWarning() << "Internal Error: No support for string parameters";
+        qWarning() << kInvalidConverstion;
         convertTo = QVariant::String;
         break;
     case FactMetaData::valueTypeBool:
-        qWarning() << "Internal Error: No support for string parameters";
+        qWarning() << kInvalidConverstion;
         convertTo = QVariant::Bool;
+        break;
+    case FactMetaData::valueTypeCustom:
+        qWarning() << kInvalidConverstion;
+        convertTo = QVariant::ByteArray;
         break;
     }
     
