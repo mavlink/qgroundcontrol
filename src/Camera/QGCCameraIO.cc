@@ -83,7 +83,6 @@ QGCCameraParamIO::_factChanged(QVariant value)
     if(!_forceUIUpdate) {
         Q_UNUSED(value);
         qCDebug(CameraIOLog) << "UI Fact" << _fact->name() << "changed to" << value;
-        //-- TODO: Do we really want to update the UI now or only when we receive the ACK?
         _control->factChanged(_fact);
     }
 }
@@ -94,7 +93,7 @@ QGCCameraParamIO::_containerRawValueChanged(const QVariant value)
 {
     if(!_fact->readOnly()) {
         Q_UNUSED(value);
-        qCDebug(CameraIOLog) << "Update Fact" << _fact->name();
+        qCDebug(CameraIOLog) << "Update Fact from camera" << _fact->name();
         _sentRetries = 0;
         _sendParameter();
     }
