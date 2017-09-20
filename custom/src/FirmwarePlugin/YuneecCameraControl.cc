@@ -31,6 +31,7 @@ static const char *kCAM_VIDRES      = "CAM_VIDRES";
 static const char *kCAM_WBMODE      = "CAM_WBMODE";
 static const char *kCAM_IRTEMPMAX   = "CAM_IRTEMPMAX";
 static const char *kCAM_IRTEMPMIN   = "CAM_IRTEMPMIN";
+static const char *kCAM_TEMPSTATUS  = "CAM_TEMPSTATUS";
 
 //-----------------------------------------------------------------------------
 YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
@@ -47,8 +48,10 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     , _isE90(false)
     , _isCGOET(false)
     , _inMissionMode(false)
+    , _irValid(false)
 {
 
+    memset(&_cgoetTempStatus, 0, sizeof(udp_ctrl_cam_lepton_area_temp_t));
     _cameraSound.setSource(QUrl::fromUserInput("qrc:/typhoonh/wav/camera.wav"));
     _cameraSound.setLoopCount(1);
     _cameraSound.setVolume(0.9);
@@ -60,9 +63,11 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     _recTimer.setSingleShot(false);
     _recTimer.setInterval(333);
     _gimbalTimer.setSingleShot(true);
+    _irStatusTimer.setSingleShot(true);
 
     connect(&_recTimer,     &QTimer::timeout, this, &YuneecCameraControl::_recTimerHandler);
     connect(&_gimbalTimer,  &QTimer::timeout, this, &YuneecCameraControl::_gimbalCalTimeout);
+    connect(&_irStatusTimer,&QTimer::timeout, this, &YuneecCameraControl::_irStatusTimeout);
     connect(_vehicle,   &Vehicle::mavlinkMessageReceived,   this, &YuneecCameraControl::_mavlinkMessageReceived);
     connect(this,       &QGCCameraControl::parametersReady, this, &YuneecCameraControl::_parametersReady);
 
@@ -478,6 +483,15 @@ YuneecCameraControl::_gimbalCalTimeout()
 
 //-----------------------------------------------------------------------------
 void
+YuneecCameraControl::_irStatusTimeout()
+{
+    if(_paramIO.contains(kCAM_TEMPSTATUS)) {
+        _paramIO[kCAM_TEMPSTATUS]->paramRequest();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 YuneecCameraControl::_switchStateChanged(int swId, int oldState, int newState)
 {
     Q_UNUSED(oldState);
@@ -576,6 +590,33 @@ YuneecCameraControl::factChanged(Fact* pFact)
     if(!_isCGOET) {
         if(pFact->name() == kCAM_SPOTAREA) {
             emit spotAreaChanged();
+        }
+    } else {
+        if(pFact->name() == kCAM_TEMPSTATUS) {
+            memcpy(&_cgoetTempStatus, pFact->rawValue().toByteArray().data(), sizeof(udp_ctrl_cam_lepton_area_temp_t));
+            QString temp;
+            temp.sprintf("IR Temperature Status\n" \
+                     "Locked Max: %d°C Min: %d°C\n" \
+                     "All    Center: %d°C Max: %d°C Min: %d°C\n" \
+                     "Custom Center: %d°C Max: %d°C Min: %d°C\n",
+                     _cgoetTempStatus.locked_max_temp,
+                     _cgoetTempStatus.locked_min_temp,
+                     _cgoetTempStatus.all_area.center_val,
+                     _cgoetTempStatus.all_area.max_val,
+                     _cgoetTempStatus.all_area.min_val,
+                     _cgoetTempStatus.custom_area.center_val,
+                     _cgoetTempStatus.custom_area.max_val,
+                     _cgoetTempStatus.custom_area.min_val);
+            qCDebug(YuneecCameraLog) << temp;
+            //-- Keep requesting it
+            if(!_irValid) {
+                _irStatusTimer.setSingleShot(false);
+                _irStatusTimer.setInterval(1000);
+                _irStatusTimer.start();
+                _irValid = true;
+            }
+            emit irTempChanged();
+            return;
         }
     }
     QGCCameraControl::factChanged(pFact);

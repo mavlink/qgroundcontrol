@@ -37,6 +37,7 @@ Item {
     property double _ar:                _arFact ? _arFact.rawValue : QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
     property var    _tempMinFact:       _camera && _camera.minTemp
     property var    _tempMaxFact:       _camera && _camera.maxTemp
+    property real   _minLabel:          ScreenTools.defaultFontPixelWidth * 8
 
     property real   spotSize:           48
     property bool   isSpot:             _camera && _cameraAutoMode && _meteringModeFact && _meteringModeFact.rawValue === 2
@@ -173,7 +174,7 @@ Item {
         id:                 thermalItem
         anchors.centerIn:   parent
         width:              height * 1.333333
-        height:             parent.height
+        height:             parent.height * 0.9
         visible:            !_mainIsMap && TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver
         QGCVideoBackground {
             id:             thermalVideo
@@ -182,6 +183,35 @@ Item {
             display:        TyphoonHQuickInterface.videoReceiver ? TyphoonHQuickInterface.videoReceiver.videoSurface : null
             visible:        TyphoonHQuickInterface.videoReceiver ? TyphoonHQuickInterface.videoReceiver.videoRunning : null
             opacity:        0.85
+        }
+        Image {
+            id:                 centerTemp
+            anchors.centerIn:   thermalVideo
+            visible:            thermalItem.visible && _camera && _camera.irValid
+            height:             spotSize * 1.5
+            width:              height * 1.5
+            antialiasing:       true
+            mipmap:             true
+            smooth:             true
+            source:             "/typhoonh/img/spotArea.svg"
+            fillMode:           Image.PreserveAspectFit
+            sourceSize.height:  height
+            Rectangle {
+                id:                 tempRect
+                height:             ScreenTools.defaultFontPixelHeight * 2
+                width:              Math.max(tempLabel.width * 1.5, _minLabel)
+                visible:            _camera && _camera.irValid
+                color:              Qt.rgba(0.5, 0, 0, 0.85)
+                radius:             ScreenTools.defaultFontPixelWidth * 0.5
+                anchors.centerIn:   parent
+            }
+            QGCLabel {
+                id:                 tempLabel
+                text:               _camera ? _camera.irCenterTemp.toFixed(1) + '°C' : ""
+                color:              "white"
+                font.family:        ScreenTools.demiboldFontFamily
+                anchors.centerIn:   tempRect
+            }
         }
     }
     //-- Color Bar
@@ -192,7 +222,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width:              height * 0.075
         height:             thermalItem.height * 0.65
-        visible:            thermalItem.visible
+        visible:            thermalItem.visible && _camera && _camera.irValid
         color:              Qt.rgba(0,0,0,0)
         border.width:       1
         border.color:       qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
@@ -208,50 +238,40 @@ Item {
         }
     }
     Rectangle {
-        id:             maxTemp
-        height:         ScreenTools.defaultFontPixelWidth  * 8
-        width:          ScreenTools.defaultFontPixelHeight * 2
-        visible:        _tempMaxFact !== null
-        anchors.top:    colorBar.top
-        anchors.topMargin: ScreenTools.defaultFontPixelHeight * -4
+        height:             ScreenTools.defaultFontPixelHeight * 2
+        width:              Math.max(maxTempLabel.width * 1.5, _minLabel)
+        visible:            _camera && _camera.irValid
+        color:              Qt.rgba(0.5, 0, 0, 0.85)
+        radius:             ScreenTools.defaultFontPixelWidth * 0.5
+        anchors.top:        colorBar.top
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * -2.25
         anchors.horizontalCenter: colorBar.horizontalCenter
-        gradient: Gradient {
-            GradientStop { position: 0;     color: Qt.rgba(0.5, 0, 0, 0.25) }
-            GradientStop { position: 0.25;  color: Qt.rgba(0.5, 0, 0, 1) }
-            GradientStop { position: 0.75;  color: Qt.rgba(0.5, 0, 0, 1) }
-            GradientStop { position: 1;     color: Qt.rgba(0.5, 0, 0, 0.25) }
+        QGCLabel {
+            id:                 maxTempLabel
+            text:               _camera ? _camera.irMaxTemp.toFixed(1) + '°C' : ""
+            color:              "white"
+            visible:            _camera && _camera.irValid
+            font.family:        ScreenTools.demiboldFontFamily
+            anchors.centerIn:   parent
         }
-        rotation: 90
-    }
-    QGCLabel {
-        text:               _tempMaxFact ? _tempMaxFact.rawValue + '°C' : ""
-        color:              "white"
-        visible:            _tempMaxFact !== null
-        font.family:        ScreenTools.demiboldFontFamily
-        anchors.centerIn:   maxTemp
     }
     Rectangle {
-        id:             minTemp
-        height:         ScreenTools.defaultFontPixelWidth  * 8
-        width:          ScreenTools.defaultFontPixelHeight * 2
-        visible:        _tempMinFact !== null
-        anchors.bottom: colorBar.bottom
-        anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * -4
+        height:             ScreenTools.defaultFontPixelHeight * 2
+        width:              Math.max(minTempLabel.width * 1.5, _minLabel)
+        visible:            _camera && _camera.irValid
+        color:              Qt.rgba(0, 0, 0.5, 0.85)
+        radius:             ScreenTools.defaultFontPixelWidth * 0.5
+        anchors.bottom:     colorBar.bottom
+        anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * -2.25
         anchors.horizontalCenter: colorBar.horizontalCenter
-        gradient: Gradient {
-            GradientStop { position: 0;     color: Qt.rgba(0, 0, 0.5, 0.25) }
-            GradientStop { position: 0.25;  color: Qt.rgba(0, 0, 0.5, 1) }
-            GradientStop { position: 0.75;  color: Qt.rgba(0, 0, 0.5, 1) }
-            GradientStop { position: 1;     color: Qt.rgba(0, 0, 0.5, 0.25) }
+        QGCLabel {
+            id:                 minTempLabel
+            text:               _camera ? _camera.irMinTemp.toFixed(1) + '°C' : ""
+            color:              "white"
+            visible:            _camera && _camera.irValid
+            font.family:        ScreenTools.demiboldFontFamily
+            anchors.centerIn:   parent
         }
-        rotation: 90
-    }
-    QGCLabel {
-        text:               _tempMinFact ? _tempMinFact.rawValue + '°C' : ""
-        color:              "white"
-        visible:            _tempMinFact !== null
-        font.family:        ScreenTools.demiboldFontFamily
-        anchors.centerIn:   minTemp
     }
     //-- Camera Controller
     Loader {

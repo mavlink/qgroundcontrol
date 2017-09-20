@@ -37,7 +37,7 @@ import TyphoonMediaItem                 1.0
 Rectangle {
     id:         mainRect
     height:     mainCol.height
-    width:      _indicatorDiameter
+    width:      _isThermal ? _indicatorDiameter * 0.85 : _indicatorDiameter
     visible:    !QGroundControl.videoManager.fullScreen
     radius:     ScreenTools.defaultFontPixelWidth * 0.5
     color:      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
@@ -63,6 +63,7 @@ Rectangle {
     property bool _cameraPhotoIdle:         !_communicationLost && (_emptySD ? false : _camera && _camera.photoStatus  === QGCCameraControl.PHOTO_CAPTURE_IDLE)
     property bool _cameraModeUndefined:     !_cameraPhotoMode && !_cameraVideoMode
     property bool _recordingVideo:          _cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+    property bool _isThermal:               TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver
 
     property real _mediaWidth:              128
     property real _mediaHeight:             72

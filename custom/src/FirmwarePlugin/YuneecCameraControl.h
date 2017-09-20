@@ -16,6 +16,23 @@
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLog)
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLogVerbose)
 
+//-- Temperature Status (CGOET)
+typedef struct
+{
+    int32_t center_val;
+    int32_t max_val;
+    int32_t min_val;
+    int32_t avg_val;
+} udp_ctrl_cam_area_temp_t;
+
+typedef struct
+{
+    int32_t  locked_max_temp;
+    int32_t  locked_min_temp;
+    udp_ctrl_cam_area_temp_t all_area;
+    udp_ctrl_cam_area_temp_t custom_area;
+} udp_ctrl_cam_lepton_area_temp_t;
+
 //-----------------------------------------------------------------------------
 class YuneecCameraControl : public QGCCameraControl
 {
@@ -47,6 +64,12 @@ public:
 
     Q_PROPERTY(Fact*        minTemp         READ    minTemp             NOTIFY factsLoaded)
     Q_PROPERTY(Fact*        maxTemp         READ    maxTemp             NOTIFY factsLoaded)
+
+    Q_PROPERTY(qreal        irCenterTemp    READ    irCenterTemp        NOTIFY irTempChanged)
+    Q_PROPERTY(qreal        irAvergaeTemp   READ    irAvergaeTemp       NOTIFY irTempChanged)
+    Q_PROPERTY(qreal        irMinTemp       READ    irMinTemp           NOTIFY irTempChanged)
+    Q_PROPERTY(qreal        irMaxTemp       READ    irMaxTemp           NOTIFY irTempChanged)
+    Q_PROPERTY(bool         irValid         READ    irValid             NOTIFY irTempChanged)
 
     Q_INVOKABLE void calibrateGimbal();
 
@@ -89,6 +112,12 @@ public:
     bool        isCGOET             () { return _isCGOET; }
     bool        paramComplete       () { return _paramComplete; }
 
+    qreal       irCenterTemp        () { return (qreal)_cgoetTempStatus.all_area.center_val / 100.0; }
+    qreal       irAvergaeTemp       () { return (qreal)_cgoetTempStatus.all_area.avg_val / 100.0; }
+    qreal       irMinTemp           () { return (qreal)_cgoetTempStatus.all_area.min_val / 100.0; }
+    qreal       irMaxTemp           () { return (qreal)_cgoetTempStatus.all_area.max_val / 100.0; }
+    bool        irValid             () { return _irValid; }
+
 private slots:
     void    _recTimerHandler        ();
     void    _mavlinkMessageReceived (const mavlink_message_t& message);
@@ -98,6 +127,7 @@ private slots:
     void    _delayedStartVideo      ();
     void    _delayedTakePhoto       ();
     void    _gimbalCalTimeout       ();
+    void    _irStatusTimeout        ();
 
 signals:
     void    gimbalVersionChanged    ();
@@ -112,6 +142,7 @@ signals:
     void    spotAreaChanged         ();
     void    videoSizeChanged        ();
     void    isCGOETChanged          ();
+    void    irTempChanged           ();
 
 protected:
     void    _setVideoStatus         (VideoStatus status) override;
@@ -138,6 +169,7 @@ private:
     QSoundEffect            _cameraSound;
     QSoundEffect            _videoSound;
     QSoundEffect            _errorSound;
+    QTimer                  _irStatusTimer;
     QTimer                  _gimbalTimer;
     QTimer                  _recTimer;
     QTime                   _recTime;
@@ -149,4 +181,6 @@ private:
     bool                    _isCGOET;
     QStringList             _updatesToSend;
     bool                    _inMissionMode;
+    bool                    _irValid;
+    udp_ctrl_cam_lepton_area_temp_t _cgoetTempStatus;
 };
