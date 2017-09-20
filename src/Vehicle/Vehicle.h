@@ -282,7 +282,6 @@ public:
     Q_PROPERTY(bool                 vtol                    READ vtol                                                   NOTIFY vehicleTypeChanged)
     Q_PROPERTY(bool                 rover                   READ rover                                                  NOTIFY vehicleTypeChanged)
     Q_PROPERTY(bool                 sub                     READ sub                                                    NOTIFY vehicleTypeChanged)
-    Q_PROPERTY(bool                 supportsManualControl   READ supportsManualControl                                  CONSTANT)
     Q_PROPERTY(bool        supportsThrottleModeCenterZero   READ supportsThrottleModeCenterZero                         CONSTANT)
     Q_PROPERTY(bool                supportsNegativeThrust   READ supportsNegativeThrust                                 CONSTANT)
     Q_PROPERTY(bool                 supportsJSButton        READ supportsJSButton                                       CONSTANT)
@@ -515,7 +514,6 @@ public:
     bool rover(void) const;
     bool sub(void) const;
 
-    bool supportsManualControl(void) const;
     bool supportsThrottleModeCenterZero(void) const;
     bool supportsNegativeThrust(void) const;
     bool supportsRadio(void) const;

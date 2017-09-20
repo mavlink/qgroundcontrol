@@ -163,10 +163,6 @@ public:
     /// Typically supported rover.
     virtual bool supportsNegativeThrust(void);
 
-    /// Returns true if the firmware supports the use of the MAVlink "MANUAL_CONTROL" message.
-    /// By default, this returns false unless overridden in the firmware plugin.
-    virtual bool supportsManualControl(void);
-
     /// Returns true if the firmware supports the use of the RC radio and requires the RC radio
     /// setup page. Returns true by default.
     virtual bool supportsRadio(void);
