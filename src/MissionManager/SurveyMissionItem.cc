@@ -116,7 +116,8 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
     // If the user hasn't changed turnaround from the default (which is a fixed wing default) and we are multi-rotor set the multi-rotor default.
     // NULL check since object creation during unit testing passes NULL for vehicle
     if (_vehicle && _vehicle->multiRotor() && _turnaroundDistFact.rawValue().toDouble() == _turnaroundDistFact.rawDefaultValue().toDouble()) {
-        _turnaroundDistFact.setRawValue(5);
+        // Note this is set to 10 meters to work around a problem with PX4 Pro turnaround behavior. Don't change unless firmware gets better as well.
+        _turnaroundDistFact.setRawValue(10);
     }
 
     // We override the grid altitude to the mission default
