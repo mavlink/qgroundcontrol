@@ -111,8 +111,3 @@ bool ArduRoverFirmwarePlugin::supportsNegativeThrust(void)
 {
     return true;
 }
-
-bool ArduRoverFirmwarePlugin::supportsManualControl(void)
-{
-    return true;
-}
