@@ -84,10 +84,15 @@ void FactGroup::_addFact(Fact* fact, const QString& name)
         return;
     }
 
-    fact->setSendValueChangedSignals(_updateRateMSecs == 0);
-    if (_nameToFactMetaDataMap.contains(name)) {
-        fact->setMetaData(_nameToFactMetaDataMap[name]);
+    if (!_nameToFactMetaDataMap.contains(name)) {
+        qWarning() << "No metadata for fact:" << name;
+        return;
     }
+
+    fact->setMetaData(_nameToFactMetaDataMap[name]);
+
+    fact->setSendValueChangedSignals(_updateRateMSecs == 0);
+
     _nameToFactMap[name] = fact;
 }
 
