@@ -32,6 +32,7 @@
 #include "QGCQGeoCoordinate.h"
 #include "QGCCorePlugin.h"
 #include "ADSBVehicle.h"
+#include "QGCCameraManager.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -118,6 +119,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _maxProtoVersion(0)
     , _vehicleCapabilitiesKnown(false)
     , _capabilityBits(0)
+    , _cameras(NULL)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _initialPlanRequestComplete(false)
@@ -150,6 +152,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _firmwareCustomPatchVersion(versionNotSetValue)
     , _firmwareVersionType(FIRMWARE_VERSION_TYPE_OFFICIAL)
     , _gitHash(versionNotSetValue)
+    , _uid(0)
     , _lastAnnouncedLowBatteryPercent(100)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
@@ -237,6 +240,10 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     _mapTrajectoryTimer.setInterval(_mapTrajectoryMsecsBetweenPoints);
     connect(&_mapTrajectoryTimer, &QTimer::timeout, this, &Vehicle::_addNewMapTrajectoryPoint);
+
+    // Create camera manager instance
+    _cameras = _firmwarePlugin->createCameraManager(this);
+    emit dynamicCamerasChanged();
 }
 
 // Disconnected Vehicle for offline editing
@@ -284,6 +291,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _defaultHoverSpeed(_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
     , _vehicleCapabilitiesKnown(true)
     , _capabilityBits(_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? 0 : MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY)
+    , _cameras(NULL)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _initialPlanRequestComplete(false)
@@ -316,6 +324,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _firmwareCustomPatchVersion(versionNotSetValue)
     , _firmwareVersionType(FIRMWARE_VERSION_TYPE_OFFICIAL)
     , _gitHash(versionNotSetValue)
+    , _uid(0)
     , _lastAnnouncedLowBatteryPercent(100)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
@@ -417,6 +426,16 @@ Vehicle::~Vehicle()
     delete _mav;
     _mav = NULL;
 
+}
+
+void Vehicle::prepareDelete()
+{
+    if(_cameras) {
+        delete _cameras;
+        _cameras = NULL;
+        emit dynamicCamerasChanged();
+        qApp->processEvents();
+    }
 }
 
 void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant value)
@@ -790,6 +809,9 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
     mavlink_autopilot_version_t autopilotVersion;
     mavlink_msg_autopilot_version_decode(&message, &autopilotVersion);
 
+    _uid = (quint64)autopilotVersion.uid;
+    emit vehicleUIDChanged();
+
     if (autopilotVersion.flight_sw_version != 0) {
         int majorVersion, minorVersion, patchVersion;
         FIRMWARE_VERSION_TYPE versionType;
@@ -847,6 +869,22 @@ void Vehicle::_setMaxProtoVersion(unsigned version) {
         // the vehicle supports
         _startPlanRequest();
     }
+}
+
+QString Vehicle::vehicleUIDStr()
+{
+    QString uid;
+    uint8_t* pUid = (uint8_t*)(void*)&_uid;
+    uid.sprintf("%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
+        pUid[0] & 0xff,
+        pUid[1] & 0xff,
+        pUid[2] & 0xff,
+        pUid[3] & 0xff,
+        pUid[4] & 0xff,
+        pUid[5] & 0xff,
+        pUid[6] & 0xff,
+        pUid[7] & 0xff);
+    return uid;
 }
 
 void Vehicle::_handleHilActuatorControls(mavlink_message_t &message)
@@ -2736,7 +2774,7 @@ const QVariantList& Vehicle::toolBarIndicators()
     return emptyList;
 }
 
-const QVariantList& Vehicle::cameraList(void) const
+const QVariantList& Vehicle::staticCameraList(void) const
 {
     if (_firmwarePlugin) {
         return _firmwarePlugin->cameraList(this);

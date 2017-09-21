@@ -25,8 +25,8 @@ Rectangle {
     property var _activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
     property real _vehicleAltitude:     _activeVehicle ? _activeVehicle.altitudeRelative.rawValue : 0
     property bool _fixedWing:           _activeVehicle ? _activeVehicle.fixedWing : false
-    property real _sliderMaxAlt:        _fixedWing ? _guidedSettings.fixedWingMaximumAltitude.rawValue : _guidedSettings.vehicleMaximumAltitude.rawValue
-    property real _sliderMinAlt:        _fixedWing ? _guidedSettings.fixedWingMinimumAltitude.rawValue : _guidedSettings.vehicleMinimumAltitude.rawValue
+    property real _sliderMaxAlt:        _guidedSettings ? (_fixedWing ? _guidedSettings.fixedWingMaximumAltitude.rawValue : _guidedSettings.vehicleMaximumAltitude.rawValue) : 0
+    property real _sliderMinAlt:        _guidedSettings ? (_fixedWing ? _guidedSettings.fixedWingMinimumAltitude.rawValue : _guidedSettings.vehicleMinimumAltitude.rawValue) : 0
 
     function reset() {
         altSlider.value = 0
