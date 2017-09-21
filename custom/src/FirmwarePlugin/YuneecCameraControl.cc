@@ -595,23 +595,17 @@ YuneecCameraControl::factChanged(Fact* pFact)
         if(pFact->name() == kCAM_TEMPSTATUS) {
             memcpy(&_cgoetTempStatus, pFact->rawValue().toByteArray().data(), sizeof(udp_ctrl_cam_lepton_area_temp_t));
             QString temp;
-            temp.sprintf("IR Temperature Status\n" \
-                     "Locked Max: %d°C Min: %d°C\n" \
-                     "All    Center: %d°C Max: %d°C Min: %d°C\n" \
-                     "Custom Center: %d°C Max: %d°C Min: %d°C\n",
+            temp.sprintf("IR Temperature Status: Locked Max: %d°C Min: %d°C All: Center: %d°C Max: %d°C Min: %d°C",
                      _cgoetTempStatus.locked_max_temp,
                      _cgoetTempStatus.locked_min_temp,
                      _cgoetTempStatus.all_area.center_val,
                      _cgoetTempStatus.all_area.max_val,
-                     _cgoetTempStatus.all_area.min_val,
-                     _cgoetTempStatus.custom_area.center_val,
-                     _cgoetTempStatus.custom_area.max_val,
-                     _cgoetTempStatus.custom_area.min_val);
+                     _cgoetTempStatus.all_area.min_val);
             qCDebug(YuneecCameraLog) << temp;
             //-- Keep requesting it
             if(!_irValid) {
                 _irStatusTimer.setSingleShot(false);
-                _irStatusTimer.setInterval(1000);
+                _irStatusTimer.setInterval(2000);
                 _irStatusTimer.start();
                 _irValid = true;
             }
