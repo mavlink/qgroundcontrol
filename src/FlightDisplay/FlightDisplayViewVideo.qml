@@ -105,13 +105,4 @@ Item {
             }
         }
     }
-    //-- Camera Controller
-    Loader {
-        source:                 QGroundControl.videoManager.fullScreen ? "" : (_dynamicCameras ? _dynamicCameras.controllerSource : "")
-        visible:                !_mainIsMap && _dynamicCameras && _dynamicCameras.cameras.count && _connected && !QGroundControl.videoManager.fullScreen
-        anchors.right:          parent.right
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-        anchors.bottom:         parent.bottom
-        anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * 2
-    }
 }
