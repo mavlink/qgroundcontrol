@@ -692,8 +692,6 @@ public:
     uint64_t capabilityBits     (void) const { return _capabilityBits; }    // Change signalled by capabilityBitsChanged
     QGCCameraManager*           dynamicCameras      () { return _cameras; }
 
-    bool capabilitiesKnown(void) const { return _vehicleCapabilitiesKnown; }
-
     /// @true: When flying a mission the vehicle is always facing towards the next waypoint
     bool vehicleYawsToNextWaypointInMission(void) const;
 
