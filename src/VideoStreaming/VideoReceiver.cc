@@ -126,7 +126,7 @@ newPadCB(GstElement* element, GstPad* pad, gpointer data)
 {
     gchar* name;
     name = gst_pad_get_name(pad);
-    g_print("A new pad %s was created\n", name);
+    //g_print("A new pad %s was created\n", name);
     GstCaps* p_caps = gst_pad_get_pad_template_caps (pad);
     gchar* description = gst_caps_to_string(p_caps);
     qCDebug(VideoReceiverLog) << p_caps << ", " << description;
@@ -493,7 +493,7 @@ VideoReceiver::_handleEOS() {
     } else if(_recording && _sink->removing) {
         _shutdownRecordingBranch();
     } else {
-        qCritical() << "VideoReceiver: Unexpected EOS!";
+        qWarning() << "VideoReceiver: Unexpected EOS!";
         _shutdownPipeline();
     }
 }
@@ -798,12 +798,16 @@ VideoReceiver::_updateTimer()
             }
         }
         if(_videoRunning) {
+            uint32_t timeout = 1;
+            if(qgcApp()->toolbox() && qgcApp()->toolbox()->settingsManager()) {
+                timeout = qgcApp()->toolbox()->settingsManager()->videoSettings()->rtspTimeout()->rawValue().toUInt();
+            }
             time_t elapsed = 0;
             time_t lastFrame = _videoSurface->lastFrame();
             if(lastFrame != 0) {
                 elapsed = time(0) - _videoSurface->lastFrame();
             }
-            if(elapsed > 2 && _videoSurface) {
+            if(elapsed > (time_t)timeout && _videoSurface) {
                 stop();
             }
         } else {

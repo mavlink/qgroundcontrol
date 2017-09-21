@@ -105,7 +105,7 @@ Item {
         anchors.left:           gpsIcon.right
 
         QGCLabel {
-            anchors.horizontalCenter:   numSatValue.horizontalCenter
+            anchors.horizontalCenter:   parent.horizontalCenter
             color:                      qgcPal.buttonText
             text:                       QGroundControl.gpsRtk.numSatellites.value
         }

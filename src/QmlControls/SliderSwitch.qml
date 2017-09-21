@@ -71,7 +71,7 @@ Rectangle {
         property bool dragActive:   drag.active
         property real _dragOffset:  1
 
-        Component.onCompleted: console.log(height, ScreenTools.minTouchPixels)
+        //Component.onCompleted: console.log(height, ScreenTools.minTouchPixels)
 
         onPressed: {
             mouse.x

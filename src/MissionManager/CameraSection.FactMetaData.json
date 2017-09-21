@@ -47,10 +47,10 @@
 },
 {
     "name":             "CameraMode",
-    "shortDescription": "Specify whether the camera should switch to photo or video mode",
+    "shortDescription": "Specify whether the camera should switch to Photo, Video or Survey mode",
     "type":             "uint32",
-    "enumStrings":      "Photo,Video",
-    "enumValues":       "0,1",
+    "enumStrings":      "Photo,Video,Survey",
+    "enumValues":       "0,1,2",
     "defaultValue":     0
 }
 ]

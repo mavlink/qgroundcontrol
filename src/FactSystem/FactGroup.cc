@@ -24,13 +24,29 @@ FactGroup::FactGroup(int updateRateMsecs, const QString& metaDataFile, QObject* 
     : QObject(parent)
     , _updateRateMSecs(updateRateMsecs)
 {
+    _setupTimer();
+    _nameToFactMetaDataMap = FactMetaData::createMapFromJsonFile(metaDataFile, this);
+}
+
+FactGroup::FactGroup(int updateRateMsecs, QObject* parent)
+    : QObject(parent)
+    , _updateRateMSecs(updateRateMsecs)
+{
+    _setupTimer();
+}
+
+void FactGroup::_loadFromJsonArray(const QJsonArray jsonArray)
+{
+    _nameToFactMetaDataMap = FactMetaData::createMapFromJsonArray(jsonArray, this);
+}
+
+void FactGroup::_setupTimer()
+{
     if (_updateRateMSecs > 0) {
         connect(&_updateTimer, &QTimer::timeout, this, &FactGroup::_updateAllValues);
         _updateTimer.setSingleShot(false);
         _updateTimer.start(_updateRateMSecs);
     }
-
-    _loadMetaData(metaDataFile);
 }
 
 Fact* FactGroup::getFact(const QString& name)
@@ -106,9 +122,4 @@ void FactGroup::_updateAllValues(void)
     foreach(Fact* fact, _nameToFactMap) {
         fact->sendDeferredValueChangedSignal();
     }
-}
-
-void FactGroup::_loadMetaData(const QString& jsonFilename)
-{
-    _nameToFactMetaDataMap = FactMetaData::createMapFromJsonFile(jsonFilename, this);
 }

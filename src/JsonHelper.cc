@@ -111,13 +111,36 @@ bool JsonHelper::validateKeyTypes(const QJsonObject& jsonObject, const QStringLi
     return true;
 }
 
-bool JsonHelper::parseEnum(const QJsonObject& jsonObject, QStringList& enumStrings, QStringList& enumValues, QString& errorString)
+bool JsonHelper::parseEnum(const QJsonObject& jsonObject, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName)
 {
-    enumStrings = jsonObject.value(_enumStringsJsonKey).toString().split(",", QString::SkipEmptyParts);
-    enumValues = jsonObject.value(_enumValuesJsonKey).toString().split(",", QString::SkipEmptyParts);
+    if(jsonObject.value(_enumStringsJsonKey).isArray()) {
+        // "enumStrings": ["Auto" , "Manual", "Shutter Priority", "Aperture Priority"],
+        QJsonArray jArray = jsonObject.value(_enumStringsJsonKey).toArray();
+        for(int i = 0; i < jArray.count(); ++i) {
+            enumStrings << jArray.at(i).toString();
+        }
+    } else {
+        // "enumStrings": "Auto,Manual,Shutter Priority,Aperture Priority",
+        enumStrings = jsonObject.value(_enumStringsJsonKey).toString().split(",", QString::SkipEmptyParts);
+    }
+
+    if(jsonObject.value(_enumValuesJsonKey).isArray()) {
+        // "enumValues": [0, 1, 2, 3, 4, 5],
+        QJsonArray jArray = jsonObject.value(_enumValuesJsonKey).toArray();
+        // This should probably be a variant list and not a string list.
+        for(int i = 0; i < jArray.count(); ++i) {
+            if(jArray.at(i).isString())
+                enumValues << jArray.at(i).toString();
+            else
+                enumValues << QString::number(jArray.at(i).toDouble());
+        }
+    } else {
+        // "enumValues": "0,1,2,3,4,5",
+        enumValues = jsonObject.value(_enumValuesJsonKey).toString().split(",", QString::SkipEmptyParts);
+    }
 
     if (enumStrings.count() != enumValues.count()) {
-        errorString = QObject::tr("enum strings/values count mismatch strings:values %1:%2").arg(enumStrings.count()).arg(enumValues.count());
+        errorString = QObject::tr("enum strings/values count mismatch in %3 strings:values %1:%2").arg(enumStrings.count()).arg(enumValues.count()).arg(valueName);
         return false;
     }
 

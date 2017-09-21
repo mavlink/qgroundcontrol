@@ -76,5 +76,14 @@
     "min":              100,
     "units":            "MB",
     "defaultValue":     2048
+},
+{
+    "name":             "RtspTimeout",
+    "shortDescription": "RTSP Video Timeout",
+    "longDescription":  "How long to wait before assuming RTSP link is gone.",
+    "type":             "uint32",
+    "min":              1,
+    "units":            "s",
+    "defaultValue":     2
 }
 ]

@@ -955,7 +955,7 @@ QGCView {
             QGCButton {
                 text:           qsTr("Import")
                 width:          _buttonSize
-                visible:        !ScreenTools.isMobile
+                visible:        QGroundControl.corePlugin.options.showOfflineMapImport
                 onClicked: {
                     QGroundControl.mapEngineManager.importAction = QGCMapEngineManager.ActionNone
                     rootLoader.sourceComponent = importDialog
@@ -964,7 +964,7 @@ QGCView {
             QGCButton {
                 text:           qsTr("Export")
                 width:          _buttonSize
-                visible:        !ScreenTools.isMobile
+                visible:        QGroundControl.corePlugin.options.showOfflineMapExport
                 enabled:        QGroundControl.mapEngineManager.tileSets.count > 1
                 onClicked:      showExport()
             }
@@ -1090,6 +1090,7 @@ QGCView {
                         visible:        !QGroundControl.mapEngineManager.exporting
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: {
+                            mainWindow.enableToolbar()
                             rootLoader.sourceComponent = null
                         }
                     }
@@ -1173,6 +1174,7 @@ QGCView {
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: {
                             showList();
+                            mainWindow.enableToolbar()
                             rootLoader.sourceComponent = null
                         }
                     }
@@ -1186,6 +1188,7 @@ QGCView {
                             onClicked: {
                                 if(!QGroundControl.mapEngineManager.importSets()) {
                                     showList();
+                                    mainWindow.enableToolbar()
                                     rootLoader.sourceComponent = null
                                 }
                             }
@@ -1195,6 +1198,7 @@ QGCView {
                             width:          _bigButtonSize * 1.25
                             onClicked: {
                                 showList();
+                                mainWindow.enableToolbar()
                                 rootLoader.sourceComponent = null
                             }
                         }
