@@ -872,6 +872,7 @@ private:
     void _startPlanRequest(void);
     void _setupAutoDisarmSignalling(void);
     void _setCapabilities(uint64_t capabilityBits);
+    QString _getVehicleFactFileName(MAV_TYPE vehicleType);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;

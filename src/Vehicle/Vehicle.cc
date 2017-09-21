@@ -70,7 +70,7 @@ Vehicle::Vehicle(LinkInterface*             link,
                  MAV_TYPE                   vehicleType,
                  FirmwarePluginManager*     firmwarePluginManager,
                  JoystickManager*           joystickManager)
-    : FactGroup(_vehicleUIUpdateRateMSecs, ":/json/Vehicle/VehicleFact.json")
+    : FactGroup(_vehicleUIUpdateRateMSecs, _getVehicleFactFileName(vehicleType))
     , _id(vehicleId)
     , _defaultComponentId(defaultComponentId)
     , _active(false)
@@ -244,7 +244,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
                  MAV_TYPE                   vehicleType,
                  FirmwarePluginManager*     firmwarePluginManager,
                  QObject*                   parent)
-    : FactGroup(_vehicleUIUpdateRateMSecs, ":/json/Vehicle/VehicleFact.json", parent)
+    : FactGroup(_vehicleUIUpdateRateMSecs, _getVehicleFactFileName(vehicleType), parent)
     , _id(0)
     , _defaultComponentId(MAV_COMP_ID_ALL)
     , _active(false)
@@ -2817,6 +2817,17 @@ void Vehicle::sendPlan(QString planFile)
     PlanMasterController::sendPlanToVehicle(this, planFile);
 }
 
+// Return appropriate Vehicle Fact json file for a given vehicle type
+QString Vehicle::_getVehicleFactFileName(MAV_TYPE vehicleType)
+{
+    switch (vehicleType) {
+        case MAV_TYPE_SUBMARINE:
+            return QString(":/json/Vehicle/ArduSubVehicleFact.json");
+
+        default:
+            return QString(":/json/Vehicle/VehicleFact.json");
+    }
+}
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
