@@ -28,13 +28,6 @@ QGCCameraManager::~QGCCameraManager()
 }
 
 //-----------------------------------------------------------------------------
-QString
-QGCCameraManager::controllerSource()
-{
-    return QStringLiteral("/qml/CameraControl.qml");
-}
-
-//-----------------------------------------------------------------------------
 void
 QGCCameraManager::_vehicleReady(bool ready)
 {
