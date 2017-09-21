@@ -283,9 +283,9 @@ void MissionController::convertToKMLDocument(QDomDocument& document)
             qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_controllerVehicle, item->command());
 
         if (uiInfo && uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
-            coord = QString::number(item->param6()) \
+            coord = QString::number(item->param6(),'g',10) \
                 + "," \
-                + QString::number(item->param5()) \
+                + QString::number(item->param5(),'g',10) \
                 + "," \
                 + QString::number(item->param7() + altitude);
             coords.append(coord);
