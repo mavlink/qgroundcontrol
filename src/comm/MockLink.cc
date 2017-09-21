@@ -870,7 +870,10 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
                                       &commandAck,
                                       request.command,
                                       commandResult,
-                                      0);
+                                      0,    // progress
+                                      0,    // result_param2
+                                      0,    // target_system
+                                      0);   // target_component
     respondWithMavlinkMessage(commandAck);
 }
 
