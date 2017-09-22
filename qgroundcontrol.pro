@@ -42,7 +42,7 @@ MacBuild {
     }
 }
 
-iOSBuild {worker
+iOSBuild {
     BUNDLE.files        = $$files($$PWD/ios/AppIcon*.png) $$PWD/ios/QGCLaunchScreen.xib
     QMAKE_BUNDLE_DATA  += BUNDLE
     LIBS               += -framework AVFoundation
