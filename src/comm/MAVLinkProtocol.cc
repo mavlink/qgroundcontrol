@@ -382,8 +382,6 @@ void MAVLinkProtocol::_vehicleCountChanged(void)
     if (count == 0) {
         // Last vehicle is gone, close out logging
         _stopLogging();
-        // Reset protocol version handling
-        _current_version = 0;
         _radio_version_mismatch_count = 0;
     }
 }
