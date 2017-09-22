@@ -132,8 +132,16 @@ public:
         CalibrationStateRag,
     };
 
+    enum ThermalViewMode {
+        ThermalOff = 0,
+        ThermalBlend,
+        ThermalFull,
+        ThermalPIP,
+    };
+
     Q_ENUMS(M4State)
     Q_ENUMS(CalibrationState)
+    Q_ENUMS(ThermalViewMode)
 
     Q_PROPERTY(M4State          m4State         READ    m4State             NOTIFY m4StateChanged)
     Q_PROPERTY(QString          m4StateStr      READ    m4StateStr          NOTIFY m4StateChanged)
@@ -189,6 +197,7 @@ public:
 
     Q_PROPERTY(VideoReceiver*   videoReceiver       READ    videoReceiver       CONSTANT)
     Q_PROPERTY(bool             thermalImagePresent READ    thermalImagePresent NOTIFY thermalImagePresentChanged)
+    Q_PROPERTY(ThermalViewMode  thermalMode         READ    thermalMode         WRITE  setThermalMode   NOTIFY thermalModeChanged)
 
     Q_PROPERTY(int              distSensorMin       READ    distSensorMin       NOTIFY distSensorMinChanged)
     Q_PROPERTY(int              distSensorMax       READ    distSensorMax       NOTIFY distSensorMaxChanged)
@@ -278,6 +287,8 @@ public:
     bool        updateDone          () { return _updateDone; }
     bool        updating            () { return _pFileCopy != NULL; }
     VideoReceiver*  videoReceiver   () { return _videoReceiver; }
+    ThermalViewMode thermalMode     () { return _thermalMode; }
+    void        setThermalMode      (ThermalViewMode mode);
 
     int         distSensorMin       () { return _distSensorMin; }
     int         distSensorMax       () { return _distSensorMax; }
@@ -337,6 +348,7 @@ signals:
     void    distSensorMaxChanged        ();
     void    distSensorCurChanged        ();
     void    obsStateChanged             ();
+    void    thermalModeChanged          ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -385,6 +397,7 @@ private:
     TyphoonHM4Interface*    _pHandler;
     TyphoonHFileCopy*       _pFileCopy;
     VideoReceiver*          _videoReceiver;
+    ThermalViewMode         _thermalMode;
     QMap<QString, QString>  _configurations;
     QVariantList            _ssidList;
     QString                 _ssid;

@@ -356,6 +356,29 @@ Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
                         //-------------------------------------------
                         //-- Camera Settings
+                        Row {
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            visible:        _camera && _camera.isCGOET
+                            property var thermalModes: [qsTr("Off"), qsTr("Blend"), qsTr("Full"), qsTr("Picture In Picture")]
+                            QGCLabel {
+                                text:       qsTr("Thermal View Mode")
+                                width:      _labelFieldWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QGCComboBox {
+                                width:          _editFieldWidth
+                                model:          parent.thermalModes
+                                currentIndex:   TyphoonHQuickInterface.thermalMode
+                                onActivated:    TyphoonHQuickInterface.thermalMode = index
+                            }
+                        }
+                        Rectangle {
+                            color:      qgcPal.button
+                            height:     1
+                            width:      cameraSettingsCol.width
+                            visible:    _camera && _camera.isCGOET
+                        }
                         Repeater {
                             model:      _camera ? _camera.activeSettings : []
                             Item {
@@ -467,6 +490,7 @@ Rectangle {
                                     onYes: {
                                         _camera.resetSettings()
                                         QGroundControl.settingsManager.videoSettings.gridLines.rawValue = false
+                                        TyphoonHQuickInterface.thermalMode = TyphoonHQuickInterface.ThermalBlend
                                         resetPrompt.close()
                                     }
                                 }

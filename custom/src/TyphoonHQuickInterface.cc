@@ -50,6 +50,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _pHandler(NULL)
     , _pFileCopy(NULL)
     , _videoReceiver(NULL)
+    , _thermalMode(ThermalBlend)
     , _scanEnabled(false)
     , _scanningWiFi(false)
     , _bindingWiFi(false)
@@ -1284,6 +1285,14 @@ TyphoonHQuickInterface::_distanceSensor(int minDist, int maxDist, int curDist)
         _distSensorCur = curDist;
         emit distSensorCurChanged();
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::setThermalMode(ThermalViewMode mode)
+{
+    _thermalMode = mode;
+    emit thermalModeChanged();
 }
 
 //-----------------------------------------------------------------------------

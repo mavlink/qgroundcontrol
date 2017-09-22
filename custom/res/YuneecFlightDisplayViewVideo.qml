@@ -172,22 +172,43 @@ Item {
     //-- Thermal Image
     Item {
         id:                 thermalItem
-        anchors.centerIn:   parent
         width:              height * 1.333333
-        height:             parent.height * 0.9
-        visible:            !_mainIsMap && TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver
+        height:             TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalPIP ? ScreenTools.defaultFontPixelHeight * 20 : parent.height * 0.9
+        anchors.centerIn:   parent
+        visible:            !_mainIsMap && TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver && TyphoonHQuickInterface.thermalMode !== TyphoonHQuickInterface.ThermalOff
+        function pipOrNot() {
+            if(TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalPIP) {
+                console.log('Pip Mode')
+                anchors.centerIn    = undefined
+                anchors.top         = parent.top
+                anchors.topMargin   = ScreenTools.defaultFontPixelHeight * 5
+                anchors.left        = parent.left
+                anchors.leftMargin  = ScreenTools.defaultFontPixelWidth * 10
+            } else {
+                console.log('Non Pip Mode')
+                anchors.top         = undefined
+                anchors.topMargin   = undefined
+                anchors.left        = undefined
+                anchors.leftMargin  = undefined
+                anchors.centerIn    = parent
+            }
+        }
+        Connections {
+            target:                 TyphoonHQuickInterface
+            onThermalModeChanged:   thermalItem.pipOrNot()
+        }
         QGCVideoBackground {
             id:             thermalVideo
             anchors.fill:   parent
             receiver:       TyphoonHQuickInterface.videoReceiver
             display:        TyphoonHQuickInterface.videoReceiver ? TyphoonHQuickInterface.videoReceiver.videoSurface : null
             visible:        TyphoonHQuickInterface.videoReceiver ? TyphoonHQuickInterface.videoReceiver.videoRunning : null
-            opacity:        0.85
+            opacity:        TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend ? 0.85 : 1.0
         }
         Image {
             id:                 centerTemp
             anchors.centerIn:   thermalVideo
-            visible:            thermalItem.visible && _camera && _camera.irValid
+            visible:            thermalItem.visible && _camera && _camera.irValid && TyphoonHQuickInterface.thermalMode !== TyphoonHQuickInterface.ThermalPIP
             height:             spotSize * 1.5
             width:              height * 1.5
             antialiasing:       true
@@ -219,10 +240,11 @@ Item {
         id:                 colorBar
         anchors.left:       thermalItem.left
         anchors.leftMargin: ScreenTools.defaultFontPixelHeight * -4
-        anchors.verticalCenter: parent.verticalCenter
-        width:              height * 0.075
-        height:             thermalItem.height * 0.65
-        visible:            thermalItem.visible && _camera && _camera.irValid
+        anchors.top:        parent.top
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 6
+        width:              ScreenTools.defaultFontPixelWidth  * 4
+        height:             thermalItem.height * 0.6
+        visible:            thermalItem.visible && _camera && _camera.irValid && TyphoonHQuickInterface.thermalMode !== TyphoonHQuickInterface.ThermalPIP
         color:              Qt.rgba(0,0,0,0)
         border.width:       1
         border.color:       qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
@@ -240,7 +262,7 @@ Item {
     Rectangle {
         height:             ScreenTools.defaultFontPixelHeight * 2
         width:              Math.max(maxTempLabel.width * 1.5, _minLabel)
-        visible:            _camera && _camera.irValid
+        visible:            colorBar.visible
         color:              Qt.rgba(0.5, 0, 0, 0.85)
         radius:             ScreenTools.defaultFontPixelWidth * 0.5
         anchors.top:        colorBar.top
@@ -258,7 +280,7 @@ Item {
     Rectangle {
         height:             ScreenTools.defaultFontPixelHeight * 2
         width:              Math.max(minTempLabel.width * 1.5, _minLabel)
-        visible:            _camera && _camera.irValid
+        visible:            colorBar.visible
         color:              Qt.rgba(0, 0, 0.5, 0.85)
         radius:             ScreenTools.defaultFontPixelWidth * 0.5
         anchors.bottom:     colorBar.bottom
@@ -272,14 +294,5 @@ Item {
             font.family:        ScreenTools.demiboldFontFamily
             anchors.centerIn:   parent
         }
-    }
-    //-- Camera Controller
-    Loader {
-        source:                 _dynamicCameras ? _dynamicCameras.controllerSource : ""
-        visible:                !_mainIsMap && _dynamicCameras && _dynamicCameras.cameras.count && _connected && !QGroundControl.videoManager.fullScreen
-        anchors.right:          parent.right
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-        anchors.bottom:         parent.bottom
-        anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * 2
     }
 }
