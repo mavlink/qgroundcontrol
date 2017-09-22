@@ -283,11 +283,11 @@ void MissionController::convertToKMLDocument(QDomDocument& document)
             qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_controllerVehicle, item->command());
 
         if (uiInfo && uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
-            coord = QString::number(item->param6()) \
+            coord = QString::number(item->param6(),'f',7) \
                 + "," \
-                + QString::number(item->param5()) \
+                + QString::number(item->param5(),'f',7) \
                 + "," \
-                + QString::number(item->param7() + altitude);
+                + QString::number(item->param7() + altitude,'f',2);
             coords.append(coord);
         }
     }
