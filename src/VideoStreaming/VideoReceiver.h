@@ -83,6 +83,7 @@ private slots:
     void _updateTimer               ();
 #if defined(QGC_GST_STREAMING)
     void _timeout                   ();
+    void _checkVideoStorage         ();
     void _connected                 ();
     void _socketError               (QAbstractSocket::SocketError socketError);
     void _handleError               ();
@@ -116,7 +117,6 @@ private:
     void                        _detachRecordingBranch  (GstPadProbeInfo* info);
     void                        _shutdownRecordingBranch();
     void                        _shutdownPipeline       ();
-    void                        _cleanupOldVideos       ();
     void                        _setVideoSink           (GstElement* sink);
 
     GstElement*     _pipeline;
@@ -128,6 +128,9 @@ private:
     QTimer          _timer;
     QTcpSocket*     _socket;
     bool            _serverPresent;
+
+    //-- Check disk usage periodically
+    QTimer          _videoStorageTimer;
 
 #endif
 

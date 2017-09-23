@@ -24,6 +24,7 @@
 #include <QDir>
 #include <QDateTime>
 #include <QSysInfo>
+#include <QStorageInfo>
 
 QGC_LOGGING_CATEGORY(VideoReceiverLog, "VideoReceiverLog")
 
@@ -78,6 +79,7 @@ VideoReceiver::VideoReceiver(QObject* parent)
     connect(this, &VideoReceiver::msgStateChangedReceived, this, &VideoReceiver::_handleStateChanged);
     connect(&_frameTimer, &QTimer::timeout, this, &VideoReceiver::_updateTimer);
     _frameTimer.start(1000);
+    connect(&_videoStorageTimer, &QTimer::timeout, this, &VideoReceiver::_checkVideoStorage);
 #endif
 }
 
@@ -547,8 +549,9 @@ VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
 //-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
 void
-VideoReceiver::_cleanupOldVideos()
+VideoReceiver::_checkVideoStorage()
 {
+    //-- Calculate size of saved videos on disk
     QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
     QDir videoDir = QDir(savePath);
     videoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
@@ -561,22 +564,31 @@ VideoReceiver::_cleanupOldVideos()
     videoDir.setNameFilters(nameFilters);
     //-- get the list of videos stored
     QFileInfoList vidList = videoDir.entryInfoList();
-    if(!vidList.isEmpty()) {
-        uint64_t total   = 0;
-        //-- Settings are stored using MB
-        uint64_t maxSize = (qgcApp()->toolbox()->settingsManager()->videoSettings()->maxVideoSize()->rawValue().toUInt() * 1024 * 1024);
-        //-- Compute total used storage
-        for(int i = 0; i < vidList.size(); i++) {
-            total += vidList[i].size();
-        }
-        //-- Remove old movies until max size is satisfied.
-        while(total >= maxSize && !vidList.isEmpty()) {
-            total -= vidList.last().size();
-            qCDebug(VideoReceiverLog) << "Removing old video file:" << vidList.last().filePath();
-            QFile file (vidList.last().filePath());
-            file.remove();
-            vidList.removeLast();
-        }
+    //-- Settings are stored using MB
+    uint64_t maxSize = qgcApp()->toolbox()->settingsManager()->videoSettings()->maxVideoSize()->rawValue().toUInt();
+    //-- Compute total used storage
+    uint64_t total   = 0;
+    for(int i = 0; i < vidList.size(); i++) {
+        total += vidList[i].size();
+    }
+    //-- Display storage limit warning if video storage < maxSize (B)
+    if(total > maxSize * 1024 * 1024) {
+        //-- Measure remaining disk space
+        QStorageInfo storage = QStorageInfo::root();
+        storage.refresh();
+        QString shortMessage = "Video Storage Limit Reached";
+        QString fullMessage  = QString("Video Storage Limit Reached"
+                                     " (Limit: %1 MB, Free: %2 MB)")
+                                     .arg(maxSize)
+                                     .arg(storage.bytesAvailable()/1024/1024);
+        //-- Display yellow warning
+        qgcApp()->showMessage(fullMessage);
+        //-- Announce the disk space problem
+        qgcApp()->toolbox()->audioOutput()->say(shortMessage);
+        //-- Stop checking once we've displayed the error
+        _videoStorageTimer.stop();
+    } else {
+        _videoStorageTimer.start(10000);
     }
 }
 #endif
@@ -618,7 +630,7 @@ VideoReceiver::startRecording(void)
     }
 
     //-- Disk usage maintenance
-    _cleanupOldVideos();
+    _videoStorageTimer.start(0);
 
     _sink           = new Sink();
     _sink->teepad   = gst_element_get_request_pad(_tee, "src_%u");
@@ -675,6 +687,8 @@ VideoReceiver::stopRecording(void)
     }
     // Wait for data block before unlinking
     gst_pad_add_probe(_sink->teepad, GST_PAD_PROBE_TYPE_IDLE, _unlinkCallBack, this, NULL);
+    // Stop checking disk use
+    _videoStorageTimer.stop();
 #endif
 }
 
