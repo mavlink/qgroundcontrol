@@ -300,7 +300,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         text:                   _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
         enabled:                !_controllerSyncInProgress
-        visible:                !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible
+        visible:                !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible && missionItems.count > 1
         primary:                _controllerDirty
         onClicked:              planMasterController.upload()
 
