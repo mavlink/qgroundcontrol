@@ -60,6 +60,7 @@ Item {
     property var    _wbFact:            _camera && _camera.wb
     property var    _meteringFact:      _camera && _camera.meteringMode
     property var    _videoResFact:      _camera && _camera.videoRes
+    property var    _isCGOET:           _camera && _camera.isCGOET
 
     property bool   _cameraAutoMode:    _expModeFact  ? _expModeFact.rawValue === 0 : true
     property string _altitude:          _activeVehicle   ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0"
@@ -296,17 +297,6 @@ Item {
         }
     }
 
-    Connections {
-        target: TyphoonHQuickInterface
-        onThermalImagePresentChanged: {
-            if(TyphoonHQuickInterface.thermalImagePresent) {
-                rootVideoLoader.sourceComponent = thermalImage
-            } else {
-                rootVideoLoader.sourceComponent = null
-            }
-        }
-    }
-
     //-- Handle MicroSD card loaded in camera
     Connections {
         target: _camera
@@ -344,7 +334,7 @@ Item {
         width:          camRow.width + (ScreenTools.defaultFontPixelWidth * 3)
         height:         camRow.height * 1.25
         color:          _indicatorColor
-        visible:        !_mainIsMap && _cameraPresent && indicatorDropdown.sourceComponent === null && !messageArea.visible && !criticalMmessageArea.visible
+        visible:        !_mainIsMap && _cameraPresent && indicatorDropdown.sourceComponent === null && !messageArea.visible && !criticalMmessageArea.visible && !_isCGOET && _camera.paramComplete
         radius:         3
         border.width:   1
         border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
@@ -472,33 +462,6 @@ Item {
         property real distValue: QGroundControl.metersToAppSettingsDistanceUnits(TyphoonHQuickInterface.distSensorCur / 100);
     }
 
-    Component {
-        id: thermalImage
-        Item {
-            id:                 thermalItem
-            anchors.centerIn:   parent
-            width:              height * 1.333333
-            height:             mainWindow.height * 0.75
-            visible:            !_mainIsMap
-            QGCVideoBackground {
-                id:             thermalVideo
-                anchors.fill:   parent
-                receiver:       TyphoonHQuickInterface.videoReceiver
-                display:        TyphoonHQuickInterface.videoReceiver.videoSurface
-                visible:        TyphoonHQuickInterface.videoReceiver.videoRunning
-            }
-            /*
-            MouseArea {
-                anchors.fill:   parent
-                onClicked:      thermalVideo.visible = !thermalVideo.visible
-            }
-            */
-            Component.onCompleted: {
-                rootVideoLoader.width  = thermalItem.width
-                rootVideoLoader.height = thermalItem.height
-            }
-        }
-    }
     //-- Camera Control
     Loader {
         id:                     camControlLoader

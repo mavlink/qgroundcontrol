@@ -768,7 +768,10 @@ VideoReceiver::_updateTimer()
             }
         }
         if(_videoRunning) {
-            uint32_t timeout = qgcApp()->toolbox()->settingsManager()->videoSettings()->rtspTimeout()->rawValue().toUInt();
+            uint32_t timeout = 1;
+            if(qgcApp()->toolbox() && qgcApp()->toolbox()->settingsManager()) {
+                timeout = qgcApp()->toolbox()->settingsManager()->videoSettings()->rtspTimeout()->rawValue().toUInt();
+            }
             time_t elapsed = 0;
             time_t lastFrame = _videoSurface->lastFrame();
             if(lastFrame != 0) {

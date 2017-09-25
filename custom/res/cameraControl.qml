@@ -14,12 +14,12 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick              2.4
-import QtPositioning        5.2
-import QtQuick.Layouts      1.2
-import QtQuick.Controls     1.4
-import QtQuick.Dialogs      1.2
-import QtGraphicalEffects   1.0
+import QtQuick                  2.4
+import QtPositioning            5.2
+import QtQuick.Layouts          1.2
+import QtQuick.Controls         1.4
+import QtQuick.Dialogs          1.2
+import QtGraphicalEffects       1.0
 
 import QGroundControl                   1.0
 import QGroundControl.Controls          1.0
@@ -37,7 +37,7 @@ import TyphoonMediaItem                 1.0
 Rectangle {
     id:         mainRect
     height:     mainCol.height
-    width:      _indicatorDiameter
+    width:      _isThermal ? _indicatorDiameter * 0.85 : _indicatorDiameter
     visible:    !QGroundControl.videoManager.fullScreen
     radius:     ScreenTools.defaultFontPixelWidth * 0.5
     color:      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
@@ -63,6 +63,7 @@ Rectangle {
     property bool _cameraPhotoIdle:         !_communicationLost && (_emptySD ? false : _camera && _camera.photoStatus  === QGCCameraControl.PHOTO_CAPTURE_IDLE)
     property bool _cameraModeUndefined:     !_cameraPhotoMode && !_cameraVideoMode
     property bool _recordingVideo:          _cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+    property bool _isThermal:               TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver
 
     property real _mediaWidth:              128
     property real _mediaHeight:             72
@@ -74,6 +75,8 @@ Rectangle {
     property bool   _selectMode:            false
     property bool   _hasSelection:          TyphoonHQuickInterface.selectedCount > 0
     property bool   _hasPhotos:             TyphoonHQuickInterface.mediaList.length > 0
+
+    property var    qgcView:                null
 
     function baseName(str) {
         return (str.slice(str.lastIndexOf("/")+1))
@@ -353,6 +356,29 @@ Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
                         //-------------------------------------------
                         //-- Camera Settings
+                        Row {
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            visible:        _camera && _camera.isCGOET
+                            property var thermalModes: [qsTr("Off"), qsTr("Blend"), qsTr("Full"), qsTr("Picture In Picture")]
+                            QGCLabel {
+                                text:       qsTr("Thermal View Mode")
+                                width:      _labelFieldWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QGCComboBox {
+                                width:          _editFieldWidth
+                                model:          parent.thermalModes
+                                currentIndex:   TyphoonHQuickInterface.thermalMode
+                                onActivated:    TyphoonHQuickInterface.thermalMode = index
+                            }
+                        }
+                        Rectangle {
+                            color:      qgcPal.button
+                            height:     1
+                            width:      cameraSettingsCol.width
+                            visible:    _camera && _camera.isCGOET
+                        }
                         Repeater {
                             model:      _camera ? _camera.activeSettings : []
                             Item {
@@ -364,27 +390,49 @@ Rectangle {
                                     Row {
                                         spacing:        ScreenTools.defaultFontPixelWidth
                                         anchors.horizontalCenter: parent.horizontalCenter
+                                        property var    _fact:      _camera.getFact(modelData)
+                                        property bool   _isBool:    _fact.typeIsBool
+                                        property bool   _isCombo:   !_isBool && _fact.enumStrings.length > 0
+                                        property bool   _isSlider:  _fact && !isNaN(_fact.increment)
+                                        property bool   _isEdit:    !_isBool && !_isSlider && _fact.enumStrings.length < 1
                                         QGCLabel {
-                                            text:       _camera.getFact(modelData).shortDescription
+                                            text:       parent._fact.shortDescription
                                             width:      _labelFieldWidth
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
                                         FactComboBox {
-                                            width:      !_isBool ? _editFieldWidth : 0
-                                            fact:       _camera.getFact(modelData)
+                                            width:      parent._isCombo ? _editFieldWidth : 0
+                                            fact:       parent._fact
                                             indexModel: false
-                                            visible:    !_isBool
+                                            visible:    parent._isCombo
                                             anchors.verticalCenter: parent.verticalCenter
-                                            property bool _isBool: _camera.getFact(modelData).typeIsBool
+                                        }
+                                        YTextField {
+                                            width:      parent._isEdit ? _editFieldWidth : 0
+                                            fact:       parent._fact
+                                            visible:    parent._isEdit
+                                        }
+                                        YSlider {
+                                            width:          parent._isSlider ? _editFieldWidth : 0
+                                            maximumValue:   parent._fact.max
+                                            minimumValue:   parent._fact.min
+                                            stepSize:       parent._fact.increment
+                                            visible:        parent._isSlider
+                                            updateValueWhileDragging:   false
+                                            anchors.verticalCenter:     parent.verticalCenter
+                                            Component.onCompleted: {
+                                                value = parent._fact.value
+                                            }
+                                            onValueChanged: {
+                                                parent._fact.value = value
+                                            }
                                         }
                                         OnOffSwitch {
-                                            width:      _isBool ? _editFieldWidth : 0
-                                            checked:    _fact ? _fact.value : false
-                                            onClicked:  _fact.value = checked ? 1 : 0
-                                            visible:    _isBool
+                                            width:      parent._isBool ? _editFieldWidth : 0
+                                            checked:    parent._fact ? parent._fact.value : false
+                                            onClicked:  parent._fact.value = checked ? 1 : 0
+                                            visible:    parent._isBool
                                             anchors.verticalCenter: parent.verticalCenter
-                                            property var _fact:     _camera.getFact(modelData)
-                                            property bool _isBool:  _fact.typeIsBool
                                         }
                                     }
                                     Rectangle {
@@ -442,6 +490,7 @@ Rectangle {
                                     onYes: {
                                         _camera.resetSettings()
                                         QGroundControl.settingsManager.videoSettings.gridLines.rawValue = false
+                                        TyphoonHQuickInterface.thermalMode = TyphoonHQuickInterface.ThermalBlend
                                         resetPrompt.close()
                                     }
                                 }

@@ -50,6 +50,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _pHandler(NULL)
     , _pFileCopy(NULL)
     , _videoReceiver(NULL)
+    , _thermalMode(ThermalBlend)
     , _scanEnabled(false)
     , _scanningWiFi(false)
     , _bindingWiFi(false)
@@ -227,6 +228,7 @@ TyphoonHQuickInterface::_switchStateChanged(int swId, int newState, int /*oldSta
 void
 TyphoonHQuickInterface::_videoRunningChanged()
 {
+    qCDebug(YuneecLog) << "TyphoonHQuickInterface::_videoRunningChanged()";
     emit thermalImagePresentChanged();
 }
 
@@ -683,7 +685,8 @@ TyphoonHQuickInterface::connectedSSID()
     if(ssid.startsWith("\"")) ssid.remove(0,1);
     if(ssid.endsWith("\""))   ssid.remove(ssid.size()-1,1);
 #else
-    ssid = "CIA Headquarters";
+    //ssid = "CIA Headquarters";
+    ssid = "CGOET CIA Headquarters";
 #endif
     return ssid;
 }
@@ -1105,6 +1108,7 @@ TyphoonHQuickInterface::_enableThermalVideo()
 {
     //-- Are we connected to a CGO-ET?
     if(!_videoReceiver && connectedSSID().startsWith("CGOET")) {
+        qCDebug(YuneecLog) << "Creating thermal image receiver";
         _videoReceiver = new VideoReceiver(this);
         _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:8554/live"));
         connect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);
@@ -1281,6 +1285,14 @@ TyphoonHQuickInterface::_distanceSensor(int minDist, int maxDist, int curDist)
         _distSensorCur = curDist;
         emit distSensorCurChanged();
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::setThermalMode(ThermalViewMode mode)
+{
+    _thermalMode = mode;
+    emit thermalModeChanged();
 }
 
 //-----------------------------------------------------------------------------

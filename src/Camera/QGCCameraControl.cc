@@ -28,6 +28,8 @@ static const char* kExclusion       = "exclude";
 static const char* kExclusions      = "exclusions";
 static const char* kLocale          = "locale";
 static const char* kLocalization    = "localization";
+static const char* kMax             = "max";
+static const char* kMin             = "min";
 static const char* kModel           = "model";
 static const char* kName            = "name";
 static const char* kOption          = "option";
@@ -39,9 +41,11 @@ static const char* kParameterranges = "parameterranges";
 static const char* kParameters      = "parameters";
 static const char* kReadOnly        = "readonly";
 static const char* kRoption         = "roption";
+static const char* kStep            = "step";
 static const char* kStrings         = "strings";
 static const char* kTranslated      = "translated";
 static const char* kType            = "type";
+static const char* kUnit            = "unit";
 static const char* kUpdate          = "update";
 static const char* kUpdates         = "updates";
 static const char* kValue           = "value";
@@ -599,6 +603,10 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
             qCritical() << QString("Unknown type for parameter %1").arg(factName);
             return false;
         }
+        //-- By definition, custom types do not have control
+        if(factType == FactMetaData::valueTypeCustom) {
+            control = false;
+        }
         //-- Description
         QString description;
         if(!read_value(parameterNode, kDescription, description)) {
@@ -671,6 +679,62 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
             qWarning() << QStringLiteral("Duplicate fact name:") << factName;
             delete metaData;
         } else {
+            {
+                //-- Check for Min Value
+                QString attr;
+                if(read_attribute(parameterNode, kMin, attr)) {
+                    QVariant typedValue;
+                    QString  errorString;
+                    if (metaData->convertAndValidateRaw(attr, true /* convertOnly */, typedValue, errorString)) {
+                        metaData->setRawMin(typedValue);
+                    } else {
+                        qWarning() << "Invalid min value for" << factName
+                                   << " type:"  << metaData->type()
+                                   << " value:" << attr
+                                   << " error:" << errorString;
+                    }
+                }
+            }
+            {
+                //-- Check for Max Value
+                QString attr;
+                if(read_attribute(parameterNode, kMax, attr)) {
+                    QVariant typedValue;
+                    QString  errorString;
+                    if (metaData->convertAndValidateRaw(attr, true /* convertOnly */, typedValue, errorString)) {
+                        metaData->setRawMax(typedValue);
+                    } else {
+                        qWarning() << "Invalid max value for" << factName
+                                   << " type:"  << metaData->type()
+                                   << " value:" << attr
+                                   << " error:" << errorString;
+                    }
+                }
+            }
+            {
+                //-- Check for Step Value
+                QString attr;
+                if(read_attribute(parameterNode, kStep, attr)) {
+                    QVariant typedValue;
+                    QString  errorString;
+                    if (metaData->convertAndValidateRaw(attr, true /* convertOnly */, typedValue, errorString)) {
+                        metaData->setIncrement(typedValue.toDouble());
+                    } else {
+                        qWarning() << "Invalid step value for" << factName
+                                   << " type:"  << metaData->type()
+                                   << " value:" << attr
+                                   << " error:" << errorString;
+                    }
+                }
+            }
+            {
+                //-- Check for Units
+                QString attr;
+                if(read_attribute(parameterNode, kUnit, attr)) {
+                    metaData->setRawUnits(attr);
+                }
+            }
+            qCDebug(CameraControlLog) << "New parameter:" << factName;
             _nameToFactMetaDataMap[factName] = metaData;
             Fact* pFact = new Fact(_compID, factName, factType, this);
             QQmlEngine::setObjectOwnership(pFact, QQmlEngine::CppOwnership);

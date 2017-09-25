@@ -20,6 +20,8 @@ import QGroundControl.Palette           1.0
 import QGroundControl.Vehicle           1.0
 import QGroundControl.Controllers       1.0
 
+import TyphoonHQuickInterface           1.0
+
 Item {
     id: root
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
@@ -33,6 +35,9 @@ Item {
     property var    _arFact:            _camera && _camera.aspectRatio
     property bool   _cameraAutoMode:    _expModeFact  ? _expModeFact.rawValue === 0 : true
     property double _ar:                _arFact ? _arFact.rawValue : QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
+    property var    _tempMinFact:       _camera && _camera.minTemp
+    property var    _tempMaxFact:       _camera && _camera.maxTemp
+    property real   _minLabel:          ScreenTools.defaultFontPixelWidth * 8
 
     property real   spotSize:           48
     property bool   isSpot:             _camera && _cameraAutoMode && _meteringModeFact && _meteringModeFact.rawValue === 2
@@ -164,13 +169,130 @@ Item {
             sourceSize.height:  height
         }
     }
-    //-- Camera Controller
-    Loader {
-        source:                 _dynamicCameras ? _dynamicCameras.controllerSource : ""
-        visible:                !_mainIsMap && _dynamicCameras && _dynamicCameras.cameras.count && _connected && !QGroundControl.videoManager.fullScreen
-        anchors.right:          parent.right
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-        anchors.bottom:         parent.bottom
-        anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * 2
+    //-- Thermal Image
+    Item {
+        id:                 thermalItem
+        width:              height * 1.333333
+        height:             TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalPIP ? ScreenTools.defaultFontPixelHeight * 20 : parent.height * 0.9
+        anchors.centerIn:   parent
+        visible:            !_mainIsMap && TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver && TyphoonHQuickInterface.thermalMode !== TyphoonHQuickInterface.ThermalOff
+        function pipOrNot() {
+            if(TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalPIP) {
+                console.log('Pip Mode')
+                anchors.centerIn    = undefined
+                anchors.top         = parent.top
+                anchors.topMargin   = ScreenTools.defaultFontPixelHeight * 5
+                anchors.left        = parent.left
+                anchors.leftMargin  = ScreenTools.defaultFontPixelWidth * 10
+            } else {
+                console.log('Non Pip Mode')
+                anchors.top         = undefined
+                anchors.topMargin   = undefined
+                anchors.left        = undefined
+                anchors.leftMargin  = undefined
+                anchors.centerIn    = parent
+            }
+        }
+        Connections {
+            target:                 TyphoonHQuickInterface
+            onThermalModeChanged:   thermalItem.pipOrNot()
+        }
+        QGCVideoBackground {
+            id:             thermalVideo
+            anchors.fill:   parent
+            receiver:       TyphoonHQuickInterface.videoReceiver
+            display:        TyphoonHQuickInterface.videoReceiver ? TyphoonHQuickInterface.videoReceiver.videoSurface : null
+            visible:        TyphoonHQuickInterface.videoReceiver ? TyphoonHQuickInterface.videoReceiver.videoRunning : null
+            opacity:        TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend ? 0.85 : 1.0
+        }
+        Image {
+            id:                 centerTemp
+            anchors.centerIn:   thermalVideo
+            visible:            thermalItem.visible && _camera && _camera.irValid && TyphoonHQuickInterface.thermalMode !== TyphoonHQuickInterface.ThermalPIP
+            height:             spotSize * 1.5
+            width:              height * 1.5
+            antialiasing:       true
+            mipmap:             true
+            smooth:             true
+            source:             "/typhoonh/img/spotArea.svg"
+            fillMode:           Image.PreserveAspectFit
+            sourceSize.height:  height
+            Rectangle {
+                id:                 tempRect
+                height:             ScreenTools.defaultFontPixelHeight * 2
+                width:              Math.max(tempLabel.width * 1.5, _minLabel)
+                visible:            _camera && _camera.irValid
+                color:              Qt.rgba(0.5, 0, 0, 0.85)
+                radius:             ScreenTools.defaultFontPixelWidth * 0.5
+                anchors.centerIn:   parent
+            }
+            QGCLabel {
+                id:                 tempLabel
+                text:               _camera ? _camera.irCenterTemp.toFixed(1) + '°C' : ""
+                color:              "white"
+                font.family:        ScreenTools.demiboldFontFamily
+                anchors.centerIn:   tempRect
+            }
+        }
+    }
+    //-- Color Bar
+    Rectangle {
+        id:                 colorBar
+        anchors.left:       thermalItem.left
+        anchors.leftMargin: ScreenTools.defaultFontPixelHeight * -4
+        anchors.top:        parent.top
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 6
+        width:              ScreenTools.defaultFontPixelWidth  * 4
+        height:             thermalItem.height * 0.6
+        visible:            thermalItem.visible && _camera && _camera.irValid && TyphoonHQuickInterface.thermalMode !== TyphoonHQuickInterface.ThermalPIP
+        color:              Qt.rgba(0,0,0,0)
+        border.width:       1
+        border.color:       qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
+        Image {
+            anchors.fill:   parent
+            anchors.margins: 1
+            antialiasing:   true
+            mipmap:         true
+            smooth:         true
+            source:         "/typhoonh/img/flir-Fusion.png"
+            fillMode:       Image.Stretch
+            sourceSize.height:  height
+        }
+    }
+    Rectangle {
+        height:             ScreenTools.defaultFontPixelHeight * 2
+        width:              Math.max(maxTempLabel.width * 1.5, _minLabel)
+        visible:            colorBar.visible
+        color:              Qt.rgba(0.5, 0, 0, 0.85)
+        radius:             ScreenTools.defaultFontPixelWidth * 0.5
+        anchors.top:        colorBar.top
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * -2.25
+        anchors.horizontalCenter: colorBar.horizontalCenter
+        QGCLabel {
+            id:                 maxTempLabel
+            text:               _camera ? _camera.irMaxTemp.toFixed(1) + '°C' : ""
+            color:              "white"
+            visible:            _camera && _camera.irValid
+            font.family:        ScreenTools.demiboldFontFamily
+            anchors.centerIn:   parent
+        }
+    }
+    Rectangle {
+        height:             ScreenTools.defaultFontPixelHeight * 2
+        width:              Math.max(minTempLabel.width * 1.5, _minLabel)
+        visible:            colorBar.visible
+        color:              Qt.rgba(0, 0, 0.5, 0.85)
+        radius:             ScreenTools.defaultFontPixelWidth * 0.5
+        anchors.bottom:     colorBar.bottom
+        anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * -2.25
+        anchors.horizontalCenter: colorBar.horizontalCenter
+        QGCLabel {
+            id:                 minTempLabel
+            text:               _camera ? _camera.irMinTemp.toFixed(1) + '°C' : ""
+            color:              "white"
+            visible:            _camera && _camera.irValid
+            font.family:        ScreenTools.demiboldFontFamily
+            anchors.centerIn:   parent
+        }
     }
 }

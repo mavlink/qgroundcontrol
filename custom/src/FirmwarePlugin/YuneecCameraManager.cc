@@ -13,10 +13,3 @@ YuneecCameraManager::YuneecCameraManager(Vehicle *vehicle)
     : QGCCameraManager(vehicle)
 {
 }
-
-//-----------------------------------------------------------------------------
-QString
-YuneecCameraManager::controllerSource()
-{
-    return QStringLiteral("");
-}

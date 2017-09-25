@@ -1,7 +1,9 @@
 Module TyphoonHQuickInterface.Widgets
 
+CameraMenu                  1.0     CameraMenu.qml
 OnOffSwitch                 1.0     OnOffSwitch.qml
 SSIDButton                  1.0     SSIDButton.qml
 ST16Analog                  1.0     ST16Analog.qml
 SwitchCal                   1.0     SwitchCal.qml
-CameraMenu                  1.0     CameraMenu.qml
+YSlider                     1.0     YSlider.qml
+YTextField                  1.0     YTextField.qml

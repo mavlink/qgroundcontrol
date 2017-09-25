@@ -15,5 +15,4 @@ class YuneecCameraManager : public QGCCameraManager
     Q_OBJECT
 public:
     YuneecCameraManager(Vehicle* vehicle);
-    QString controllerSource        ();
 };
