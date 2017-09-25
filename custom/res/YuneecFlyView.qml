@@ -45,11 +45,13 @@ Item {
     property bool   _isCamera:          _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
     property bool   _cameraVideoMode:   _camera ?  _camera.cameraMode === QGCCameraControl.CAM_MODE_VIDEO : false
+    property bool   _cameraPhotoMode:   _camera ?  _camera.cameraMode === QGCCameraControl.CAM_MODE_PHOTO : false
     property bool   _cameraPresent:     _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED
     property bool   _noSdCard:          _camera && _camera.storageTotal === 0
     property bool   _fullSD:            _camera && _camera.storageTotal !== 0 && _camera.storageFree > 0 && _camera.storageFree < 250 // We get kiB from the camera
     property bool   _isVehicleGps:      _activeVehicle && _activeVehicle.gps && _activeVehicle.gps.count.rawValue > 1 && activeVehicle.gps.hdop.rawValue < 1.4
     property bool   _recordingVideo:    _cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+    property bool   _cameraIdle:        !_cameraPhotoMode || _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE
 
     property var    _expModeFact:       _camera && _camera.exposureMode
     property var    _evFact:            _camera && _camera.ev
@@ -349,6 +351,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 indexModel: false
                 fact:       _expModeFact
+                enabled:    _cameraIdle
             }
             //-- EV
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
@@ -358,6 +361,7 @@ Item {
                 visible: _cameraAutoMode;
                 indexModel: false
                 fact:       _evFact
+                enabled:    _cameraIdle
             }
             //-- ISO
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: !_cameraAutoMode; }
@@ -367,6 +371,7 @@ Item {
                 visible:    !_cameraAutoMode;
                 indexModel: false
                 fact:       _isoFact
+                enabled:    _cameraIdle
             }
             //-- Shutter Speed
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; visible: !_cameraAutoMode; anchors.verticalCenter: parent.verticalCenter; }
@@ -376,6 +381,7 @@ Item {
                 visible:    !_cameraAutoMode;
                 indexModel: false
                 fact:       _shutterFact
+                enabled:    _cameraIdle
             }
             //-- WB
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; }
@@ -384,6 +390,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 indexModel: false
                 fact:       _wbFact
+                enabled:    _cameraIdle
             }
             //-- Metering
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
@@ -393,6 +400,7 @@ Item {
                 visible:    _cameraAutoMode;
                 indexModel: false
                 fact:       _meteringFact
+                enabled:    _cameraIdle
             }
             //-- Video Res
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode; }
