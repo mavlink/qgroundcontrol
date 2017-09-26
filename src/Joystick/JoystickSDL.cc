@@ -65,7 +65,7 @@ QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicl
 
             qCDebug(JoystickLog) << "\t" << name << "axes:" << axisCount << "buttons:" << buttonCount << "hats:" << hatCount << "isGC:" << isGameController;
 
-            // Check for joysticks with duplicate names and differentiate the keys when neccessary.
+            // Check for joysticks with duplicate names and differentiate the keys when necessary.
             // This is required when using an Xbox 360 wireless receiver that always identifies as
             // 4 individual joysticks, regardless of how many joysticks are actually connected to the
             // receiver. Using GUID does not help, all of these devices present the same GUID.
