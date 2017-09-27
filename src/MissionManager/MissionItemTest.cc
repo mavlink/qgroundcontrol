@@ -297,7 +297,7 @@ void MissionItemTest::_testLoadFromJsonV1(void)
     QString     errorString;
     QJsonObject jsonObject = _createV1Json();
 
-    // V1 format has param 1-4 in seperate items instead of in params array
+    // V1 format has param 1-4 in separate items instead of in params array
 
     QStringList removeKeys;
     removeKeys << MissionItem::_jsonParam1Key << MissionItem::_jsonParam2Key << MissionItem::_jsonParam3Key << MissionItem::_jsonParam4Key;
