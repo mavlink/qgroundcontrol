@@ -354,3 +354,13 @@ void QGCMapPolygon::setInteractive(bool interactive)
         emit interactiveChanged(interactive);
     }
 }
+
+QGeoCoordinate QGCMapPolygon::vertexCoordinate(int vertex) const
+{
+    if (vertex >= 0 && vertex < _polygonPath.count()) {
+        return _polygonPath[vertex].value<QGeoCoordinate>();
+    } else {
+        qWarning() << "QGCMapPolygon::vertexCoordinate bad vertex requested";
+        return QGeoCoordinate();
+    }
+}
