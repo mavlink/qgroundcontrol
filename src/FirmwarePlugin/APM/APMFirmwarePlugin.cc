@@ -162,12 +162,10 @@ bool APMFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities c
     uint32_t available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability;
     if (vehicle->multiRotor()) {
         available |= TakeoffVehicleCapability;
-    } else if (vehicle->fixedWing()) {
-        // Quad plane supports takeoff
-        if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("Q_ENABLE")) &&
-            vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("Q_ENABLE"))->rawValue().toBool()) {
-            available |= TakeoffVehicleCapability;
-        }
+    } else if (vehicle->fixedWing() || vehicle->vtol()) {
+        // Due to the way ArduPilot marks a vtol aircraft, we don't know if something is a vtol at initial connection.
+        // So we always enabled takeoff for fixed wing.
+        available |= TakeoffVehicleCapability;
     }
 
     return (capabilities & available) == capabilities;
@@ -908,6 +906,11 @@ void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
 
 bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle)
 {
+    if (!vehicle->multiRotor() && !vehicle->vtol()) {
+        qgcApp()->showMessage(tr("Vehicle does not support guided takeoff"));
+        return false;
+    }
+
     QString takeoffAltParam(vehicle->vtol() ? QStringLiteral("Q_RTL_ALT") : QStringLiteral("PILOT_TKOFF_ALT"));
     float paramDivisor = vehicle->vtol() ? 1.0 : 100.0; // PILOT_TAKEOFF_ALT is in centimeters
 
@@ -965,6 +968,8 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
                 qgcApp()->showMessage(QStringLiteral("Unable to start mission. Vehicle takeoff failed."));
                 return;
             }
+        } else {
+            return;
         }
     }
 
