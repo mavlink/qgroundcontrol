@@ -55,6 +55,9 @@ public:
     /// Returns the path in a list of QGeoCoordinate's format
     QList<QGeoCoordinate> coordinateList(void) const;
 
+    /// Returns the QGeoCoordinate for the vertex specified
+    QGeoCoordinate vertexCoordinate(int vertex) const;
+
     /// Saves the polygon to the json object.
     ///     @param json Json object to save to
     void saveToJson(QJsonObject& json);
