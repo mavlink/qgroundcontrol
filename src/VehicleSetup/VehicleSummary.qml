@@ -127,10 +127,14 @@ Rectangle {
                                 height:                 width
                                 radius:                 width / 2
                                 color:                  modelData.setupComplete ? "#00d932" : "red"
-                                visible:                modelData.requiresSetup
+                                visible:                modelData.requiresSetup && modelData.setupSource != ""
                             }
+
                             onClicked : {
-                                setupView.showVehicleComponentPanel(modelData)
+                                console.log(modelData.setupSource)
+                                if (modelData.setupSource != "") {
+                                    setupView.showVehicleComponentPanel(modelData)
+                                }
                             }
                         }
                         // Summary Qml
