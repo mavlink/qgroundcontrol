@@ -112,7 +112,7 @@ QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
 {
     mavlink_camera_information_t info;
     mavlink_msg_camera_information_decode(&message, &info);
-    qCDebug(CameraManagerLog) << "_handleCameraInfo:" << (const char*)(void*)&info.model_name[0] << (const char*)(void*)&info.vendor_name[0];
+    qCDebug(CameraManagerLog) << "_handleCameraInfo:" << (const char*)(void*)&info.model_name[0] << (const char*)(void*)&info.vendor_name[0] << "Comp ID:" << message.compid;
     QGCCameraControl* pCamera = _vehicle->firmwarePlugin()->createCameraControl(&info, _vehicle, message.compid, this);
     if(pCamera) {
         QQmlEngine::setObjectOwnership(pCamera, QQmlEngine::CppOwnership);
