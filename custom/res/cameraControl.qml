@@ -77,6 +77,7 @@ Rectangle {
     property bool   _hasPhotos:             TyphoonHQuickInterface.mediaList.length > 0
 
     property var    qgcView:                null
+    property var    currentFact:            null
 
     function baseName(str) {
         return (str.slice(str.lastIndexOf("/")+1))
@@ -288,10 +289,18 @@ Rectangle {
     Component {
         id: cameraSettingsComponent
         Item {
-            id:     cameraSettingsRect
+            id:     camSettingsItem
             width:  mainWindow.width
             height: mainWindow.height
             anchors.centerIn: parent
+            function showEditFact(fact) {
+                currentFact = fact
+                factEdit.visible = true
+            }
+            function hideEditFact() {
+                factEdit.visible = false
+                currentFact = null
+            }
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
@@ -299,21 +308,22 @@ Rectangle {
                 }
             }
             Rectangle {
-                id:             ccamSettingsShadow
+                id:             camSettingsShadow
                 anchors.fill:   camSettingsRect
                 radius:         camSettingsRect.radius
                 color:          qgcPal.window
                 visible:        false
             }
             DropShadow {
-                anchors.fill:       ccamSettingsShadow
+                id:                 camSettingsDS
+                anchors.fill:       camSettingsShadow
                 visible:            camSettingsRect.visible
                 horizontalOffset:   4
                 verticalOffset:     4
                 radius:             32.0
                 samples:            65
                 color:              Qt.rgba(0,0,0,0.75)
-                source:             ccamSettingsShadow
+                source:             camSettingsShadow
             }
             Rectangle {
                 id:     camSettingsRect
@@ -407,10 +417,14 @@ Rectangle {
                                             visible:    parent._isCombo
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
-                                        YTextField {
-                                            width:      parent._isEdit ? _editFieldWidth : 0
-                                            fact:       parent._fact
+                                        QGCButton {
                                             visible:    parent._isEdit
+                                            width:      parent._isEdit ? _editFieldWidth : 0
+                                            text:       parent._fact.valueString
+                                            onClicked: {
+                                                //console.log(parent._fact.shortDescription)
+                                                showEditFact(parent._fact)
+                                            }
                                         }
                                         YSlider {
                                             width:          parent._isSlider ? _editFieldWidth : 0
@@ -538,9 +552,52 @@ Rectangle {
                     }
                 }
             }
+            Rectangle {
+                id:             factEdit
+                visible:        false
+                color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
+                anchors.fill:   parent
+                MouseArea {
+                    anchors.fill:   parent
+                    onWheel:        { wheel.accepted = true; }
+                    onPressed:      { mouse.accepted = true; }
+                    onReleased:     { mouse.accepted = true; }
+                }
+                Rectangle {
+                    width:      factEditCol.width  * 1.25
+                    height:     factEditCol.height * 1.25
+                    color:      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
+                    border.width:       1
+                    border.color:       qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
+                    anchors.top:        parent.top
+                    anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 8
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Column {
+                        id:             factEditCol
+                        spacing:        ScreenTools.defaultFontPixelHeight
+                        anchors.centerIn: parent
+                        QGCLabel {
+                            text:       currentFact ? currentFact.shortDescription : ""
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        YTextField {
+                            width:      _editFieldWidth
+                            fact:       currentFact
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        QGCButton {
+                            text: qsTr("Close")
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            onClicked: {
+                                hideEditFact()
+                            }
+                        }
+                    }
+                }
+            }
             Component.onCompleted: {
-                rootLoader.width  = cameraSettingsRect.width
-                rootLoader.height = cameraSettingsRect.height
+                rootLoader.width  = camSettingsItem.width
+                rootLoader.height = camSettingsItem.height
             }
             Keys.onBackPressed: {
                 rootLoader.sourceComponent = null
