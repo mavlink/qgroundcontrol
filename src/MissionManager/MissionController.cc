@@ -18,6 +18,7 @@
 #include "SimpleMissionItem.h"
 #include "SurveyMissionItem.h"
 #include "FixedWingLandingComplexItem.h"
+#include "StructureScanComplexItem.h"
 #include "JsonHelper.h"
 #include "ParameterManager.h"
 #include "QGroundControlQmlGlobal.h"
@@ -60,6 +61,7 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
     , _itemsRequested(false)
     , _surveyMissionItemName(tr("Survey"))
     , _fwLandingMissionItemName(tr("Fixed Wing Landing"))
+    , _structureScanMissionItemName(tr("Structure Scan"))
     , _appSettings(qgcApp()->toolbox()->settingsManager()->appSettings())
     , _progressPct(0)
 {
@@ -283,11 +285,11 @@ void MissionController::convertToKMLDocument(QDomDocument& document)
             qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_controllerVehicle, item->command());
 
         if (uiInfo && uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
-            coord = QString::number(item->param6()) \
+            coord = QString::number(item->param6(),'f',7) \
                 + "," \
-                + QString::number(item->param5()) \
+                + QString::number(item->param5(),'f',7) \
                 + "," \
-                + QString::number(item->param7() + altitude);
+                + QString::number(item->param7() + altitude,'f',2);
             coords.append(coord);
         }
     }
@@ -379,6 +381,8 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
         }
     } else if (itemName == _fwLandingMissionItemName) {
         newItem = new FixedWingLandingComplexItem(_controllerVehicle, _visualItems);
+    } else if (itemName == _structureScanMissionItemName) {
+        newItem = new StructureScanComplexItem(_controllerVehicle, _visualItems);
     } else {
         qWarning() << "Internal error: Unknown complex item:" << itemName;
         return sequenceNumber;
@@ -1475,6 +1479,7 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
         ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(visualItem);
         if (complexItem) {
             connect(complexItem, &ComplexMissionItem::complexDistanceChanged,       this, &MissionController::_recalcMissionFlightStatus);
+            connect(complexItem, &ComplexMissionItem::greatestDistanceToChanged,    this, &MissionController::_recalcMissionFlightStatus);
             connect(complexItem, &ComplexMissionItem::additionalTimeDelayChanged,   this, &MissionController::_recalcMissionFlightStatus);
         } else {
             qWarning() << "ComplexMissionItem not found";
@@ -1768,6 +1773,9 @@ QStringList MissionController::complexMissionItemNames(void) const
     complexItems.append(_surveyMissionItemName);
     if (_controllerVehicle->fixedWing()) {
         complexItems.append(_fwLandingMissionItemName);
+    }
+    if (_controllerVehicle->multiRotor() || _controllerVehicle->vtol()) {
+        complexItems.append(_structureScanMissionItemName);
     }
 
     return complexItems;

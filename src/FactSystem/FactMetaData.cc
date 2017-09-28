@@ -68,6 +68,7 @@ const char* FactMetaData::_shortDescriptionJsonKey =    "shortDescription";
 const char* FactMetaData::_longDescriptionJsonKey =     "longDescription";
 const char* FactMetaData::_unitsJsonKey =               "units";
 const char* FactMetaData::_defaultValueJsonKey =        "defaultValue";
+const char* FactMetaData::_mobileDefaultValueJsonKey =  "mobileDefaultValue";
 const char* FactMetaData::_minJsonKey =                 "min";
 const char* FactMetaData::_maxJsonKey =                 "max";
 const char* FactMetaData::_hasControlJsonKey =          "control";
@@ -971,9 +972,17 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QObjec
     if (json.contains(_unitsJsonKey)) {
         metaData->setRawUnits(json[_unitsJsonKey].toString());
     }
+#ifdef __mobile__
+    if (json.contains(_mobileDefaultValueJsonKey)) {
+        metaData->setRawDefaultValue(json[_mobileDefaultValueJsonKey].toVariant());
+    } else if (json.contains(_defaultValueJsonKey)) {
+        metaData->setRawDefaultValue(json[_defaultValueJsonKey].toVariant());
+    }
+#else
     if (json.contains(_defaultValueJsonKey)) {
         metaData->setRawDefaultValue(json[_defaultValueJsonKey].toVariant());
     }
+#endif
     if (json.contains(_minJsonKey)) {
         QVariant typedValue;
         QString errorString;
