@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.36 - Sep 28 2017
+
+*   Changed edit fields in CGOET settings
+
 ### v1.1.35 - Sep 25 2017
 
 *   Preliminary support for the CGOET
