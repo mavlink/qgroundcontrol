@@ -1434,3 +1434,11 @@ QGCCameraControl::validateParameter(Fact* pFact, QVariant& newValue)
     Q_UNUSED(newValue);
     return true;
 }
+
+//-----------------------------------------------------------------------------
+QStringList
+QGCCameraControl::activeSettings()
+{
+    qCDebug(CameraControlLog) << "Active:" << _activeSettings;
+    return _activeSettings;
+}

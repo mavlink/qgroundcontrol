@@ -34,14 +34,15 @@ Column {
     property var    _dynamicCameras:        _activeVehicle ? _activeVehicle.dynamicCameras : null
     property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property bool   _cameraModeUndefined:   _isCamera ? _dynamicCameras.cameras.get(0).cameraMode === QGCCameraControl.CAMERA_MODE_UNDEFINED : true
-    property bool   _cameraVideoMode:       _isCamera ? _dynamicCameras.cameras.get(0).cameraMode === QGCCameraControl.CAMERA_MODE_VIDEO : false
-    property bool   _cameraPhotoMode:       _isCamera ? _dynamicCameras.cameras.get(0).cameraMode === QGCCameraControl.CAMERA_MODE_PHOTO : false
+    property bool   _cameraVideoMode:       _isCamera ? _dynamicCameras.cameras.get(0).cameraMode === 1 : false
+    property bool   _cameraPhotoMode:       _isCamera ? _dynamicCameras.cameras.get(0).cameraMode === 0 : false
     property var    _camera:                _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
     property real   _spacers:               ScreenTools.defaultFontPixelHeight * 0.5
     property real   _labelFieldWidth:       ScreenTools.defaultFontPixelWidth * 30
     property real   _editFieldWidth:        ScreenTools.defaultFontPixelWidth * 30
     property bool   _communicationLost:     _activeVehicle ? _activeVehicle.connectionLost : false
     property bool   _hasModes:              _isCamera && _camera && _camera.hasModes
+    property bool   _videoRecording:        _camera && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
 
     function showSettings() {
         qgcView.showDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
@@ -66,23 +67,26 @@ Column {
     }
     //-- Camera Mode (visible only if camera has modes)
     Rectangle {
-        width:      _hasModes ? ScreenTools.defaultFontPixelWidth *  12 : 0
-        height:     _hasModes ? ScreenTools.defaultFontPixelWidth *   4 : 0
-        color:      qgcPal.window
+        width:      _hasModes ? ScreenTools.defaultFontPixelWidth * 8 : 0
+        height:     _hasModes ? ScreenTools.defaultFontPixelWidth * 4 : 0
+        color:      qgcPal.button
         radius:     height * 0.5
         visible:    _hasModes
         anchors.horizontalCenter: parent.horizontalCenter
         //-- Video Mode
         Rectangle {
-            width:  parent.height * 0.9
-            height: parent.height * 0.9
-            color:  qgcPal.windowShadeDark
+            width:  parent.height
+            height: parent.height
+            color:  _cameraVideoMode ? qgcPal.window : qgcPal.button
             radius: height * 0.5
             anchors.left: parent.left
-            anchors.leftMargin: 4
+            border.color: qgcPal.text
+            border.width: _cameraVideoMode ? 1 : 0
             anchors.verticalCenter: parent.verticalCenter
             QGCColoredImage {
-                anchors.fill:       parent
+                height:             parent.height * 0.5
+                width:              height
+                anchors.centerIn:   parent
                 source:             "/qmlimages/camera_video.svg"
                 fillMode:           Image.PreserveAspectFit
                 sourceSize.height:  height
@@ -98,15 +102,18 @@ Column {
         }
         //-- Photo Mode
         Rectangle {
-            width:  parent.height * 0.9
-            height: parent.height * 0.9
-            color:  qgcPal.windowShade
+            width:  parent.height
+            height: parent.height
+            color:  _cameraPhotoMode ? qgcPal.window : qgcPal.button
             radius: height * 0.5
             anchors.right: parent.right
-            anchors.rightMargin: 4
+            border.color: qgcPal.text
+            border.width: _cameraPhotoMode ? 1 : 0
             anchors.verticalCenter: parent.verticalCenter
             QGCColoredImage {
-                anchors.fill:       parent
+                height:             parent.height * 0.5
+                width:              height
+                anchors.centerIn:   parent
                 source:             "/qmlimages/camera_photo.svg"
                 fillMode:           Image.PreserveAspectFit
                 sourceSize.height:  height
@@ -132,9 +139,9 @@ Column {
         border.width: 3
         anchors.horizontalCenter: parent.horizontalCenter
         Rectangle {
-            width:      parent.width * 0.75
+            width:      parent.width * (_videoRecording ? 0.5 : 0.75)
             height:     width
-            radius:     width * 0.5
+            radius:     _videoRecording ? 0 : width * 0.5
             color:      _cameraModeUndefined ? qgcPal.colorGrey : qgcPal.colorRed
             anchors.centerIn:   parent
         }
@@ -143,7 +150,7 @@ Column {
             enabled:        !_cameraModeUndefined
             onClicked: {
                 if(_cameraVideoMode) {
-                    //-- Start/Stop Video
+                    _camera.toggleVideo()
                 } else {
                     _camera.takePhoto()
                 }
@@ -246,7 +253,7 @@ Column {
                                 standardButtons:    StandardButton.Yes | StandardButton.No
                                 onNo: resetPrompt.close()
                                 onYes: {
-                                    // TODO
+                                    _camera.resetSettings()
                                     resetPrompt.close()
                                 }
                             }
@@ -264,7 +271,6 @@ Column {
                         }
                         QGCButton {
                             text:       qsTr("Format")
-                            enabled:    false
                             onClicked:  formatPrompt.open()
                             width:      _editFieldWidth
                             anchors.verticalCenter: parent.verticalCenter
@@ -275,7 +281,7 @@ Column {
                                 standardButtons:    StandardButton.Yes | StandardButton.No
                                 onNo: formatPrompt.close()
                                 onYes: {
-                                    // TODO
+                                    _camera.formatCard()
                                     formatPrompt.close()
                                 }
                             }
