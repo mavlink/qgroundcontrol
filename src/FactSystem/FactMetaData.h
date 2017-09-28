@@ -260,6 +260,7 @@ private:
     static const char*  _longDescriptionJsonKey;
     static const char*  _unitsJsonKey;
     static const char*  _defaultValueJsonKey;
+    static const char*  _mobileDefaultValueJsonKey;
     static const char*  _minJsonKey;
     static const char*  _maxJsonKey;
     static const char* _hasControlJsonKey;

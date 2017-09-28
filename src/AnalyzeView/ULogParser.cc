@@ -36,7 +36,7 @@ int ULogParser::sizeOfType(QString& typeName)
         return 1;
     }
 
-    qWarning() << "Unkown type in ULog : " << typeName;
+    qWarning() << "Unknown type in ULog : " << typeName;
     return 0;
 }
 
