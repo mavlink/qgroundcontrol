@@ -181,6 +181,7 @@
         <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>
         <file alias="SimpleItemEditor.qml">src/PlanView/SimpleItemEditor.qml</file>
         <file alias="StructureScanEditor.qml">src/PlanView/StructureScanEditor.qml</file>
+        <file alias="SurveyItemEditor.qml">src/PlanView/SurveyItemEditor.qml</file>
         <file alias="FWLandingPatternEditor.qml">src/PlanView/FWLandingPatternEditor.qml</file>
         <file alias="MissionSettingsEditor.qml">src/PlanView/MissionSettingsEditor.qml</file>
         <file alias="TcpSettings.qml">src/ui/preferences/TcpSettings.qml</file>
