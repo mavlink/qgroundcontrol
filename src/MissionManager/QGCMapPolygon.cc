@@ -44,7 +44,7 @@ void QGCMapPolygon::_init(void)
 {
     connect(&_polygonModel, &QmlObjectListModel::dirtyChanged, this, &QGCMapPolygon::_polygonModelDirtyChanged);
     connect(&_polygonModel, &QmlObjectListModel::countChanged, this, &QGCMapPolygon::_polygonModelCountChanged);
-    connect(&_polygonModel, &QmlObjectListModel::countChanged, this, &QGCMapPolygon::_updateCenter);
+    connect(this, &QGCMapPolygon::pathChanged, this, &QGCMapPolygon::_updateCenter);
 }
 
 const QGCMapPolygon& QGCMapPolygon::operator=(const QGCMapPolygon& other)
@@ -89,13 +89,7 @@ void QGCMapPolygon::adjustVertex(int vertexIndex, const QGeoCoordinate coordinat
         // When dragging center we don't signal path changed until add vertices are updated
         emit pathChanged();
     }
-
     _polygonModel.value<QGCQGeoCoordinate*>(vertexIndex)->setCoordinate(coordinate);
-
-    if (!_ignoreCenterUpdates) {
-        _updateCenter();
-    }
-
     setDirty(true);
 }
 
@@ -284,8 +278,6 @@ void QGCMapPolygon::removeVertex(int vertexIndex)
 
     _polygonPath.removeAt(vertexIndex);
     emit pathChanged();
-
-    _updateCenter();
 }
 
 void QGCMapPolygon::_polygonModelCountChanged(int count)
