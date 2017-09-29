@@ -971,23 +971,12 @@
             "id":           530,
             "rawName":      "MAV_CMD_SET_CAMERA_MODE",
             "friendlyName": "Set camera modes" ,
-            "description":  "Set camera photo, video, audio modes.",
+            "description":  "Set camera photo, video modes.",
             "category":     "Camera",
-            "param1": {
-                "label":            "Camera id",
-                "default":          0,
-                "decimalPlaces":    0
-            },
             "param2": {
                 "label":            "Mode",
-                "enumStrings":      "Take photos,Record video",
-                "enumValues":       "0,1",
-                "default":          0
-            },
-            "param3": {
-                "label":            "Audio",
-                "enumStrings":      "Recording disabled,Recording enabled",
-                "enumValues":       "0,1",
+                "enumStrings":      "Take photos,Record video,Survey photo mode",
+                "enumValues":       "0,1,2",
                 "default":          0
             }
         },
@@ -998,7 +987,7 @@
             "description":  "Start taking one or more photos.",
             "category":     "Camera",
             "param1": {
-                "label":            "Camera id",
+                "label":            "Reserved",
                 "default":          0,
                 "decimalPlaces":    0
             },
@@ -1021,7 +1010,7 @@
             "description":  "Stop taking photos.",
             "category":     "Camera",
             "param1": {
-                "label":            "Camera id",
+                "label":            "Reserved",
                 "default":          0,
                 "decimalPlaces":    0
             }
@@ -1034,7 +1023,7 @@
             "description":  "Start video capture.",
             "category":     "Camera",
             "param1": {
-                "label":            "Camera id",
+                "label":            "Reserved",
                 "default":          0,
                 "decimalPlaces":    0
             }
@@ -1046,7 +1035,7 @@
             "description":  "Stop video capture.",
             "category":     "Camera",
             "param1": {
-                "label":            "Camera id",
+                "label":            "Reserved",
                 "default":          0,
                 "decimalPlaces":    0
             }

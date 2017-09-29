@@ -120,10 +120,9 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
         MissionItem* item = new MissionItem(nextSequenceNumber++,
                                             MAV_CMD_SET_CAMERA_MODE,
                                             MAV_FRAME_MISSION,
-                                            0,                                      // camera id, all cameras
+                                            0,                                      // Reserved (Set to 0)
                                             _cameraModeFact.rawValue().toDouble(),
-                                            NAN,                                    // Audio off/on
-                                            NAN, NAN, NAN, NAN,                     // param 4-7 reserved
+                                            NAN, NAN, NAN, NAN, NAN,                // param 3-7 reserved
                                             true,                                   // autoContinue
                                             false,                                  // isCurrentItem
                                             missionItemParent);
@@ -153,7 +152,7 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
             item = new MissionItem(nextSequenceNumber++,
                                    MAV_CMD_IMAGE_START_CAPTURE,
                                    MAV_FRAME_MISSION,
-                                   0,                                               // Camera ID, all cameras
+                                   0,                                               // Reserved (Set to 0)
                                    _cameraPhotoIntervalTimeFact.rawValue().toInt(), // Interval
                                    0,                                               // Unlimited photo count
                                    NAN, NAN, NAN, NAN,                              // param 4-7 reserved
@@ -179,7 +178,7 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
             item = new MissionItem(nextSequenceNumber++,
                                    MAV_CMD_VIDEO_START_CAPTURE,
                                    MAV_FRAME_MISSION,
-                                   0,                           // camera id = 0, all cameras
+                                   0,                           // Reserved (Set to 0)
                                    0,                           // No CAMERA_CAPTURE_STATUS streaming
                                    NAN, NAN, NAN, NAN, NAN,     // param 3-7 reserved
                                    true,                        // autoContinue
@@ -191,7 +190,7 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
             item = new MissionItem(nextSequenceNumber++,
                                    MAV_CMD_VIDEO_STOP_CAPTURE,
                                    MAV_FRAME_MISSION,
-                                   0,                               // Camera ID, all cameras
+                                   0,                               // Reserved (Set to 0)
                                    NAN, NAN, NAN, NAN, NAN, NAN,    // param 2-7 reserved
                                    true,                            // autoContinue
                                    false,                           // isCurrentItem
@@ -211,7 +210,7 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
             item = new MissionItem(nextSequenceNumber++,
                                    MAV_CMD_IMAGE_STOP_CAPTURE,
                                    MAV_FRAME_MISSION,
-                                   0,                               // camera id, all cameras
+                                   0,                               // Reserved (Set to 0)
                                    NAN, NAN, NAN, NAN, NAN, NAN,    // param 2-7 reserved
                                    true,                            // autoContinue
                                    false,                           // isCurrentItem
@@ -222,7 +221,7 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
             item = new MissionItem(nextSequenceNumber++,
                                    MAV_CMD_IMAGE_START_CAPTURE,
                                    MAV_FRAME_MISSION,
-                                   0,                           // camera id = 0, all cameras
+                                   0,                           // Reserved (Set to 0)
                                    0,                           // Interval (none)
                                    1,                           // Take 1 photo
                                    NAN, NAN, NAN, NAN,          // param 4-7 reserved
@@ -394,7 +393,7 @@ bool CameraSection::_scanSetCameraMode(QmlObjectListModel* visualItems, int scan
         MissionItem& missionItem = item->missionItem();
         if ((MAV_CMD)item->command() == MAV_CMD_SET_CAMERA_MODE) {
             // We specifically don't test param 5/6/7 since we don't have NaN persistence for those fields
-            if (missionItem.param1() == 0 && (missionItem.param2() == 0 || missionItem.param2() == 1) && qIsNaN(missionItem.param3())) {
+            if (missionItem.param1() == 0 && (missionItem.param2() == CAMERA_MODE_IMAGE || missionItem.param2() == CAMERA_MODE_VIDEO || missionItem.param2() == CAMERA_MODE_IMAGE_SURVEY) && qIsNaN(missionItem.param3())) {
                 setSpecifyCameraMode(true);
                 cameraMode()->setRawValue(missionItem.param2());
                 visualItems->removeAt(scanIndex)->deleteLater();
