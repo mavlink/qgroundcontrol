@@ -35,10 +35,12 @@ public:
     Q_PROPERTY(bool             isGStreamer         READ    isGStreamer                                 NOTIFY isGStreamerChanged)
     Q_PROPERTY(QString          videoSourceID       READ    videoSourceID                               NOTIFY videoSourceIDChanged)
     Q_PROPERTY(bool             uvcEnabled          READ    uvcEnabled                                  CONSTANT)
+    Q_PROPERTY(bool             fullScreen          READ    fullScreen      WRITE   setfullScreen       NOTIFY fullScreenChanged)
     Q_PROPERTY(VideoReceiver*   videoReceiver       READ    videoReceiver                               CONSTANT)
 
     bool        hasVideo            ();
     bool        isGStreamer         ();
+    bool        fullScreen          () { return _fullScreen; }
     QString     videoSourceID       () { return _videoSourceID; }
 
     VideoReceiver*  videoReceiver   () { return _videoReceiver; }
@@ -49,6 +51,8 @@ public:
     bool        uvcEnabled          ();
 #endif
 
+    void        setfullScreen       (bool f) { _fullScreen = f; emit fullScreenChanged(); }
+
     // Override from QGCTool
     void        setToolbox          (QGCToolbox *toolbox);
 
@@ -56,6 +60,7 @@ signals:
     void hasVideoChanged            ();
     void isGStreamerChanged         ();
     void videoSourceIDChanged       ();
+    void fullScreenChanged          ();
 
 private slots:
     void _videoSourceChanged        ();
@@ -70,6 +75,7 @@ private:
     VideoReceiver*  _videoReceiver;
     VideoSettings*  _videoSettings;
     QString         _videoSourceID;
+    bool            _fullScreen;
 };
 
 #endif

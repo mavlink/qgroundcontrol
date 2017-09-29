@@ -138,18 +138,16 @@ void QmlObjectListModel::clear(void)
 QObject* QmlObjectListModel::removeAt(int i)
 {
     QObject* removedObject = _objectList[i];
-
-    // Look for a dirtyChanged signal on the object
-    if (_objectList[i]->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)")) != -1) {
-        if (!_skipDirtyFirstItem || i != 0) {
-            QObject::disconnect(_objectList[i], SIGNAL(dirtyChanged(bool)), this, SLOT(_childDirtyChanged(bool)));
+    if(removedObject) {
+        // Look for a dirtyChanged signal on the object
+        if (_objectList[i]->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)")) != -1) {
+            if (!_skipDirtyFirstItem || i != 0) {
+                QObject::disconnect(_objectList[i], SIGNAL(dirtyChanged(bool)), this, SLOT(_childDirtyChanged(bool)));
+            }
         }
     }
-    
     removeRows(i, 1);
-    
     setDirty(true);
-    
     return removedObject;
 }
 

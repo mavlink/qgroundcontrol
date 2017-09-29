@@ -54,6 +54,8 @@ QGCView {
     property alias  _altitudeSlider:        altitudeSlider
 
 
+    readonly property var       _dynamicCameras:        _activeVehicle ? _activeVehicle.dynamicCameras : null
+    readonly property bool      _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     readonly property bool      isBackgroundDark:       _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
     readonly property real      _defaultRoll:           0
     readonly property real      _defaultPitch:          0
@@ -196,7 +198,7 @@ QGCView {
             z:  _mainIsMap ? _panel.z + 1 : _panel.z + 2
             anchors.left:   _panel.left
             anchors.bottom: _panel.bottom
-            visible:        _mainIsMap || _isPipVisible
+            visible:        _mainIsMap || _isPipVisible && !QGroundControl.videoManager.fullScreen
             width:          _mainIsMap ? _panel.width  : _pipSize
             height:         _mainIsMap ? _panel.height : _pipSize * (9/16)
             states: [
@@ -275,7 +277,7 @@ QGCView {
             anchors.left:       _panel.left
             anchors.bottom:     _panel.bottom
             anchors.margins:    ScreenTools.defaultFontPixelHeight
-            visible:            QGroundControl.videoManager.hasVideo
+            visible:            QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen
             isHidden:           !_isPipVisible
             isDark:             isBackgroundDark
             onActivated: {
@@ -327,7 +329,7 @@ QGCView {
             qgcView:            root
             useLightColors:     isBackgroundDark
             missionController:  _missionController
-            visible:            singleVehicleView.checked
+            visible:            singleVehicleView.checked && !QGroundControl.videoManager.fullScreen
         }
 
         //-------------------------------------------------------------------------
@@ -335,6 +337,7 @@ QGCView {
         Loader {
             id:                 flyViewOverlay
             z:                  flightDisplayViewWidgets.z + 1
+            visible:            !QGroundControl.videoManager.fullScreen
             height:             ScreenTools.availableHeight
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
@@ -351,7 +354,7 @@ QGCView {
             anchors.right:      _flightVideo.right
             height:             ScreenTools.defaultFontPixelHeight * 2
             width:              height
-            visible:            _videoReceiver && _videoReceiver.videoRunning && QGroundControl.settingsManager.videoSettings.showRecControl.rawValue && _flightVideo.visible
+            visible:            _videoReceiver && _videoReceiver.videoRunning && QGroundControl.settingsManager.videoSettings.showRecControl.rawValue && _flightVideo.visible && !_isCamera && !QGroundControl.videoManager.fullScreen
             opacity:            0.75
 
             readonly property string recordBtnBackground: "BackgroundName"
@@ -401,14 +404,13 @@ QGCView {
         }
 
         MultiVehicleList {
-            anchors.margins:            _margins
-            anchors.top:                singleMultiSelector.bottom
-            anchors.right:              parent.right
-            anchors.bottom:             parent.bottom
-            width:                      ScreenTools.defaultFontPixelWidth * 30
-            visible:                    !singleVehicleView.checked
-            z:                          _panel.z + 4
-            guidedActionsController:    _guidedController
+            anchors.margins:    _margins
+            anchors.top:        singleMultiSelector.bottom
+            anchors.right:      parent.right
+            anchors.bottom:     parent.bottom
+            width:              ScreenTools.defaultFontPixelWidth * 30
+            visible:            !singleVehicleView.checked && !QGroundControl.videoManager.fullScreen
+            z:                  _panel.z + 4
         }
 
         //-- Virtual Joystick
@@ -417,7 +419,7 @@ QGCView {
             z:                          _panel.z + 5
             width:                      parent.width  - (_flightVideoPipControl.width / 2)
             height:                     Math.min(ScreenTools.availableHeight * 0.25, ScreenTools.defaultFontPixelWidth * 16)
-            visible:                    _virtualJoystick ? _virtualJoystick.value : false
+            visible:                    (_virtualJoystick ? _virtualJoystick.value : false) && !QGroundControl.videoManager.fullScreen
             anchors.bottom:             _flightVideoPipControl.top
             anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
             anchors.horizontalCenter:   flightDisplayViewWidgets.horizontalCenter
@@ -430,7 +432,7 @@ QGCView {
         }
 
         ToolStrip {
-            visible:            _activeVehicle ? _activeVehicle.guidedModeSupported : true
+            visible:            (_activeVehicle ? _activeVehicle.guidedModeSupported : true) && !QGroundControl.videoManager.fullScreen
             id:                 toolStrip
             anchors.leftMargin: ScreenTools.defaultFontPixelWidth
             anchors.left:       _panel.left
@@ -572,6 +574,7 @@ QGCView {
 
             /// Close all dialogs
             function closeAll() {
+                mainWindow.enableToolbar()
                 rootLoader.sourceComponent  = null
                 guidedActionConfirm.visible = false
                 guidedActionList.visible    = false

@@ -61,6 +61,7 @@ public:
      * @return The next color in the color map. The map holds 20 colors and starts from the beginning
      *         if the colors are exceeded.
      */
+#if !defined(__mobile__)
     static QColor getNextColor() {
         /* Create color map */
         static QList<QColor> colors = QList<QColor>()
@@ -91,6 +92,7 @@ public:
         nextColor++;
         return colors[nextColor];//return the next color
    }
+#endif
 
     virtual QMap<int, QString> getComponents() = 0;
 

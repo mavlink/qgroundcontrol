@@ -34,12 +34,6 @@ public:
     };    
     Q_ENUMS(CameraAction)
 
-    enum CameraMode {
-        CameraModePhoto,
-        CameraModeVideo
-    };
-    Q_ENUMS(CameraMode)
-
     Q_PROPERTY(bool     specifyGimbal                   READ specifyGimbal                  WRITE setSpecifyGimbal              NOTIFY specifyGimbalChanged)
     Q_PROPERTY(Fact*    gimbalPitch                     READ gimbalPitch                                                        CONSTANT)
     Q_PROPERTY(Fact*    gimbalYaw                       READ gimbalYaw                                                          CONSTANT)
