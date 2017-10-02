@@ -20,6 +20,7 @@
 #include "MAVLinkProtocol.h"
 #include "UASMessageHandler.h"
 #include "SettingsFact.h"
+#include <AirspaceManagement.h>
 
 class UAS;
 class UASInterface;
@@ -36,6 +37,7 @@ class SettingsManager;
 class ADSBVehicle;
 class QGCCameraManager;
 class AirMapController;
+class AirspaceController;
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -322,6 +324,8 @@ public:
     Q_PROPERTY(QGCCameraManager*    dynamicCameras          READ dynamicCameras                                         NOTIFY dynamicCamerasChanged)
     Q_PROPERTY(QString              hobbsMeter              READ hobbsMeter                                             NOTIFY hobbsMeterChanged)
     Q_PROPERTY(AirMapController*    airMapController        READ airMapController                                       CONSTANT)
+    Q_PROPERTY(AirspaceAuthorization::PermitStatus  flightPermitStatus    READ flightPermitStatus                       NOTIFY flightPermitStatusChanged)   ///< state of flight permission
+    Q_PROPERTY(AirspaceController*   airspaceController     READ airspaceController                                     CONSTANT)
 
     // Vehicle state used for guided control
     Q_PROPERTY(bool flying                  READ flying NOTIFY flyingChanged)                               ///< Vehicle is flying
@@ -537,7 +541,7 @@ public:
     QmlObjectListModel* cameraTriggerPoints(void) { return &_cameraTriggerPoints; }
     QmlObjectListModel* adsbVehicles(void) { return &_adsbVehicles; }
 
-    AirMapController* airMapController() { return _airMapController; }
+    AirspaceController* airspaceController() { return _airspaceController; }
 
     int  flowImageIndex() { return _flowImageIndex; }
 
@@ -718,6 +722,11 @@ public:
     /// Vehicle is about to be deleted
     void prepareDelete();
 
+    AirspaceAuthorization::PermitStatus flightPermitStatus() const
+        { return _airspaceManagerPerVehicle ? _airspaceManagerPerVehicle->flightPermitStatus() : AirspaceAuthorization::PermitUnknown; }
+
+    AirspaceManagerPerVehicle* airspaceManager() const { return _airspaceManagerPerVehicle; }
+
 signals:
     void allLinksInactive(Vehicle* vehicle);
     void coordinateChanged(QGeoCoordinate coordinate);
@@ -749,6 +758,8 @@ signals:
     void capabilitiesKnownChanged(bool capabilitiesKnown);
     void initialPlanRequestCompleteChanged(bool initialPlanRequestComplete);
     void capabilityBitsChanged(uint64_t capabilityBits);
+    void flightPermitStatusChanged();
+
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -997,7 +1008,8 @@ private:
 
     ParameterManager*   _parameterManager;
 
-    AirMapController*   _airMapController;
+    AirspaceController*   _airspaceController;
+    AirspaceManagerPerVehicle* _airspaceManagerPerVehicle;
 
     bool    _armed;         ///< true: vehicle is armed
     uint8_t _base_mode;     ///< base_mode from HEARTBEAT

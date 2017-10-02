@@ -18,7 +18,6 @@
 #include "QGCApplication.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
-#include "AirMapManager.h"
 
 QGC_LOGGING_CATEGORY(PlanManagerLog, "PlanManagerLog")
 
@@ -80,9 +79,10 @@ void PlanManager::writeMissionItems(const QList<MissionItem*>& missionItems)
     }
 
     if (_planType == MAV_MISSION_TYPE_MISSION) {
-        AirMapManager *airmapManager = qgcApp()->toolbox()->airMapManager();
-        if(airmapManager) {
-            airmapManager->createFlight(missionItems);
+        // upload the flight to the airspace management backend
+        AirspaceManagerPerVehicle* airspaceManager = _vehicle->airspaceManager();
+        if (airspaceManager) {
+            airspaceManager->createFlight(missionItems);
         }
     }
 

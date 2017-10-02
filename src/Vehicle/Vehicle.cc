@@ -34,6 +34,7 @@
 #include "ADSBVehicle.h"
 #include "QGCCameraManager.h"
 #include "AirMapController.h"
+#include "AirspaceController.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -132,7 +133,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _rallyPointManager(NULL)
     , _rallyPointManagerInitialRequestSent(false)
     , _parameterManager(NULL)
-    , _airMapController(NULL)
+    , _airspaceController(NULL)
+    , _airspaceManagerPerVehicle(NULL)
     , _armed(false)
     , _base_mode(0)
     , _custom_mode(0)
@@ -255,8 +257,17 @@ Vehicle::Vehicle(LinkInterface*             link,
     _adsbTimer.setSingleShot(false);
     _adsbTimer.start(1000);
 
-    _airMapController = new AirMapController(this);
-    connect(qgcApp()->toolbox()->airMapManager(), &AirMapManager::trafficUpdate, this, &Vehicle::_trafficUpdate);
+    _airspaceController = new AirspaceController(this);
+
+    AirspaceManager* airspaceManager = _toolbox->airspaceManager();
+    if (airspaceManager) {
+        _airspaceManagerPerVehicle = airspaceManager->instantiateVehicle(*this);
+        if (_airspaceManagerPerVehicle) {
+            connect(_airspaceManagerPerVehicle, &AirspaceManagerPerVehicle::trafficUpdate, this, &Vehicle::_trafficUpdate);
+            connect(_airspaceManagerPerVehicle, &AirspaceManagerPerVehicle::flightPermitStatusChanged, this, &Vehicle::flightPermitStatusChanged);
+        }
+    }
+
 }
 
 // Disconnected Vehicle for offline editing
@@ -315,7 +326,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _rallyPointManager(NULL)
     , _rallyPointManagerInitialRequestSent(false)
     , _parameterManager(NULL)
-    , _airMapController(NULL)
+    , _airspaceController(NULL)
+    , _airspaceManagerPerVehicle(NULL)
     , _armed(false)
     , _base_mode(0)
     , _custom_mode(0)
@@ -445,6 +457,9 @@ Vehicle::~Vehicle()
     delete _mav;
     _mav = NULL;
 
+    if (_airspaceManagerPerVehicle) {
+        delete _airspaceManagerPerVehicle;
+    }
 }
 
 void Vehicle::prepareDelete()

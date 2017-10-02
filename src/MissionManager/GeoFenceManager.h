@@ -13,7 +13,7 @@
 #include <QObject>
 #include <QGeoCoordinate>
 
-#include "AirMapManager.h"
+#include "AirspaceManagement.h"
 #include "QGCLoggingCategory.h"
 #include "FactSystem.h"
 #include "PlanManager.h"
@@ -97,7 +97,7 @@ private:
     bool                    _firstParamLoadComplete;
     QList<QGCFencePolygon>  _sendPolygons;
     QList<QGCFenceCircle>   _sendCircles;
-    AirMapManager*         _airmapManager;
+    AirspaceManager*         _airspaceManager;
 };
 
 #endif

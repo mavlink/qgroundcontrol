@@ -7,21 +7,14 @@
  *
  ****************************************************************************/
 
-#include "AirMapController.h"
-#include "AirMapManager.h"
+#include "AirspaceController.h"
+#include "AirspaceManagement.h"
 #include "QGCApplication.h"
 #include "QGCQGeoCoordinate.h"
 
-QGC_LOGGING_CATEGORY(AirMapControllerLog, "AirMapControllerLog")
-
-AirMapController::AirMapController(QObject* parent)
+AirspaceController::AirspaceController(QObject* parent)
     : QObject(parent)
-    , _manager(qgcApp()->toolbox()->airMapManager())
+    , _manager(qgcApp()->toolbox()->airspaceManager())
 {
-    connect(_manager, &AirMapManager::flightPermitStatusChanged, this, &AirMapController::flightPermitStatusChanged);
 }
 
-AirMapController::~AirMapController()
-{
-
-}
