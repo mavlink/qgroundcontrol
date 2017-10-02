@@ -102,29 +102,28 @@ Item {
             Layout.alignment:   Qt.AlignHCenter
             visible:            QGroundControl.settingsManager.videoSettings.showRecControl.rawValue
             Rectangle {
-                id:                 recordBtnBackground
+                id:                 recordBtn
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 width:              height
                 radius:             _recordingVideo ? 0 : height
                 color:              (_videoRunning && _streamingEnabled) ? "red" : "gray"
+                QGCColoredImage {
+                    anchors.top:                parent.top
+                    anchors.bottom:             parent.bottom
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    width:                      height * 0.625
+                    sourceSize.width:           width
+                    source:                     "/qmlimages/CameraIcon.svg"
+                    fillMode:                   Image.PreserveAspectFit
+                    color:                      "white"
+                }
                 SequentialAnimation on opacity {
                     running:        _recordingVideo
                     loops:          Animation.Infinite
                     PropertyAnimation { to: 0.5; duration: 500 }
                     PropertyAnimation { to: 1.0; duration: 500 }
                 }
-            }
-            QGCColoredImage {
-                anchors.top:                parent.top
-                anchors.bottom:             parent.bottom
-                anchors.horizontalCenter:   parent.horizontalCenter
-                width:                      height * 0.625
-                sourceSize.width:           width
-                source:                     "/qmlimages/CameraIcon.svg"
-                visible:                    recordBtnBackground.visible
-                fillMode:                   Image.PreserveAspectFit
-                color:                      "white"
             }
             MouseArea {
                 anchors.fill:   parent
@@ -133,7 +132,7 @@ Item {
                     if (_recordingVideo) {
                         _videoReceiver.stopRecording()
                         // reset blinking animation
-                        recordBtnBackground.opacity = 1
+                        recordBtn.opacity = 1
                     } else {
                         _videoReceiver.startRecording()
                     }
