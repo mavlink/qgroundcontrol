@@ -505,7 +505,9 @@ HEADERS += \
     src/MG.h \
     src/MissionManager/CameraCalc.h \
     src/MissionManager/AirMapController.h \
+    src/MissionManager/AirspaceController.h \
     src/MissionManager/AirMapManager.h \
+    src/MissionManager/AirspaceManagement.h \
     src/MissionManager/CameraSection.h \
     src/MissionManager/CameraSpec.h \
     src/MissionManager/ComplexMissionItem.h \
@@ -712,7 +714,9 @@ SOURCES += \
     src/LogCompressor.cc \
     src/MissionManager/CameraCalc.cc \
     src/MissionManager/AirMapController.cc \
+    src/MissionManager/AirspaceController.cc \
     src/MissionManager/AirMapManager.cc \
+    src/MissionManager/AirspaceManagement.cc \
     src/MissionManager/CameraSection.cc \
     src/MissionManager/CameraSpec.cc \
     src/MissionManager/ComplexMissionItem.cc \

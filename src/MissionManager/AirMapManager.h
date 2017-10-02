@@ -15,6 +15,7 @@
 #include "QmlObjectListModel.h"
 #include "MissionItem.h"
 #include "MultiVehicleManager.h"
+#include "AirspaceManagement.h"
 
 #include <qmqtt.h>
 
@@ -31,44 +32,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(AirMapManagerLog)
 
-
-class AirspaceRestriction : public QObject
-{
-    Q_OBJECT
-
-public:
-    AirspaceRestriction(QObject* parent = NULL);
-};
-
-class PolygonAirspaceRestriction : public AirspaceRestriction
-{
-    Q_OBJECT
-
-public:
-    PolygonAirspaceRestriction(const QVariantList& polygon, QObject* parent = NULL);
-
-    Q_PROPERTY(QVariantList polygon MEMBER _polygon CONSTANT)
-
-    const QVariantList& getPolygon() const { return _polygon; }
-
-private:
-    QVariantList    _polygon;
-};
-
-class CircularAirspaceRestriction : public AirspaceRestriction
-{
-    Q_OBJECT
-
-public:
-    CircularAirspaceRestriction(const QGeoCoordinate& center, double radius, QObject* parent = NULL);
-
-    Q_PROPERTY(QGeoCoordinate   center MEMBER _center CONSTANT)
-    Q_PROPERTY(double           radius MEMBER _radius CONSTANT)
-
-private:
-    QGeoCoordinate  _center;
-    double          _radius;
-};
 
 
 class AirMapLogin : public QObject
@@ -165,6 +128,8 @@ public:
      */
     void abort();
 
+    bool hasAPIKey() const { return _networkingData.airmapAPIKey != ""; }
+
 signals:
     /// signal when the request finished (get or post). All requests are assumed to return JSON.
     void finished(QJsonParseError parseError, QJsonDocument document);
@@ -196,16 +161,13 @@ private:
 
 
 /// class to download polygons from AirMap
-class AirspaceRestrictionManager : public QObject
+class AirMapRestrictionManager : public AirspaceRestrictionProvider
 {
     Q_OBJECT
 public:
-    AirspaceRestrictionManager(AirMapNetworking::SharedData& sharedData);
+    AirMapRestrictionManager(AirMapNetworking::SharedData& sharedData);
 
-    void updateROI(const QGeoCoordinate& center, double radiusMeters);
-
-    QmlObjectListModel* polygonRestrictions(void) { return &_polygonList; }
-    QmlObjectListModel* circularRestrictions(void) { return &_circleList; }
+    void setROI(const QGeoCoordinate& center, double radiusMeters) override;
 
 signals:
     void networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
@@ -223,25 +185,8 @@ private:
     State                   _state = State::Idle;
     int                     _numAwaitingItems = 0;
     AirMapNetworking        _networking;
-
-    QmlObjectListModel      _polygonList;
-    QmlObjectListModel      _circleList;
-    QList<PolygonAirspaceRestriction*> _nextPolygonList;
-    QList<CircularAirspaceRestriction*> _nextcircleList;
 };
 
-
-class AirspaceAuthorization : public QObject {
-    Q_OBJECT
-public:
-    enum PermitStatus {
-        PermitUnknown = 0,
-        PermitPending,
-        PermitAccepted,
-        PermitRejected,
-    };
-    Q_ENUMS(PermitStatus);
-};
 
 /// class to upload a flight
 class AirMapFlightManager : public QObject
@@ -344,6 +289,8 @@ public:
 
     void stopTelemetryStream();
 
+    bool isTelemetryStreaming() const;
+
 signals:
     void networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
 
@@ -359,8 +306,6 @@ private:
 
     void _handleGlobalPositionInt(const mavlink_message_t& message);
     void _handleGPSRawInt(const mavlink_message_t& message);
-
-    bool _isTelemetryStreaming() const;
 
     enum class State {
         Idle,
@@ -418,68 +363,74 @@ private:
 
 
 
+/// AirMap per vehicle management class.
+class AirMapManagerPerVehicle : public AirspaceManagerPerVehicle
+{
+    Q_OBJECT
+public:
+    AirMapManagerPerVehicle(AirMapNetworking::SharedData& sharedData, const Vehicle& vehicle, QGCToolbox& toolbox);
+    virtual ~AirMapManagerPerVehicle() = default;
 
-/// AirMap server communication support.
-class AirMapManager : public QGCTool
+
+    void createFlight(const QList<MissionItem*>& missionItems) override;
+
+    AirspaceAuthorization::PermitStatus flightPermitStatus() const override;
+
+    void startTelemetryStream() override;
+
+    void stopTelemetryStream() override;
+
+    bool isTelemetryStreaming() const override;
+
+signals:
+    void networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+
+public slots:
+    void endFlight() override;
+
+    void settingsChanged();
+
+protected slots:
+    virtual void vehicleMavlinkMessageReceived(const mavlink_message_t& message) override;
+private slots:
+    void _flightPermitStatusChanged();
+private:
+    AirMapNetworking             _networking;
+
+    AirMapFlightManager          _flightManager;
+    AirMapTelemetry              _telemetry;
+    AirMapTrafficAlertClient     _trafficAlerts;
+
+    QGCToolbox&                  _toolbox;
+};
+
+
+class AirMapManager : public AirspaceManager
 {
     Q_OBJECT
     
 public:
     AirMapManager(QGCApplication* app, QGCToolbox* toolbox);
-    ~AirMapManager();
-
-    /// Set the ROI for airspace information
-    ///     @param center Center coordinate for ROI
-    ///     @param radiusMeters Radius in meters around center which is of interest
-    void setROI(QGeoCoordinate& center, double radiusMeters);
-
-    /// Send flight path to AirMap
-    void createFlight(const QList<MissionItem*>& missionItems);
-
-
-    QmlObjectListModel* polygonRestrictions(void) { return _airspaceRestrictionManager.polygonRestrictions(); }
-    QmlObjectListModel* circularRestrictions(void) { return _airspaceRestrictionManager.circularRestrictions(); }
+    virtual ~AirMapManager() = default;
 
     void setToolbox(QGCToolbox* toolbox) override;
 
-    AirspaceAuthorization::PermitStatus flightPermitStatus() const { return _flightManager.flightPermitStatus(); }
+    AirspaceManagerPerVehicle* instantiateVehicle(const Vehicle& vehicle) override;
+
+    AirspaceRestrictionProvider* instantiateRestrictionProvider() override;
+
+    QString name() const override { return "AirMap"; }
 
 signals:
-    void flightPermitStatusChanged();
-
-    void trafficUpdate(QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
+    void settingsChanged();
 
 private slots:
-    void _updateToROI(void);
     void _networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
-
-    void _activeVehicleChanged(Vehicle* activeVehicle);
-    void _vehicleArmedChanged(bool armed);
-
-    void _flightPermitStatusChanged();
 
     void _settingsChanged();
 private:
-    bool _hasAPIKey() const { return _networkingData.airmapAPIKey != ""; }
-
-    /**
-     * A new vehicle got connected, listen to its state
-     */
-    void _connectVehicle(Vehicle* vehicle);
 
     AirMapNetworking::SharedData _networkingData;
-    AirspaceRestrictionManager   _airspaceRestrictionManager;
-    AirMapFlightManager          _flightManager;
-    AirMapTelemetry              _telemetry;
-    AirMapTrafficAlertClient     _trafficAlerts;
-
-    QGeoCoordinate          _roiCenter;
-    double                  _roiRadius;
-
-    QTimer                  _updateTimer;
-
-    Vehicle*                _vehicle = nullptr; ///< current vehicle
-    bool                    _vehicleWasInMissionMode = false; ///< true if the vehicle was in mission mode when arming
 };
 
 #endif

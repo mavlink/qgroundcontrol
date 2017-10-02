@@ -21,7 +21,7 @@ GeoFenceManager::GeoFenceManager(Vehicle* vehicle)
     : _vehicle                  (vehicle)
     , _planManager              (vehicle, MAV_MISSION_TYPE_FENCE)
     , _firstParamLoadComplete   (false)
-    , _airmapManager            (qgcApp()->toolbox()->airMapManager())
+    , _airspaceManager            (qgcApp()->toolbox()->airspaceManager())
 {
     connect(&_planManager, &PlanManager::inProgressChanged,         this, &GeoFenceManager::inProgressChanged);
     connect(&_planManager, &PlanManager::error,                     this, &GeoFenceManager::error);
@@ -100,31 +100,6 @@ void GeoFenceManager::sendToVehicle(const QGeoCoordinate&   breachReturn,
                                             this);                      // parent
         fenceItems.append(item);
     }
-
-    // send AirMap polygons
-    const QmlObjectListModel& airmapPolygons = *_airmapManager->polygonRestrictions();
-    for (int i = 0; i < airmapPolygons.count(); ++i) {
-        PolygonAirspaceRestriction *polygon = (PolygonAirspaceRestriction*)airmapPolygons[i];
-        int polygonCount = polygon->getPolygon().count() - 1; // last vertex is equal to the first
-        for (int j = 0; j < polygonCount; ++j) {
-            const QGeoCoordinate& vertex = polygon->getPolygon()[j].value<QGeoCoordinate>();
-
-            MissionItem* item = new MissionItem(0,
-                                                MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION,
-                                                MAV_FRAME_GLOBAL,
-                                                polygonCount,    // vertex count
-                                                0, 0, 0,            // param 2-4 unused
-                                                vertex.latitude(),
-                                                vertex.longitude(),
-                                                0,                  // param 7 unused
-                                                false,              // autocontinue
-                                                false,              // isCurrentItem
-                                                this);              // parent
-            fenceItems.append(item);
-        }
-    }
-    // TODO: circles too
-
 
     _planManager.writeMissionItems(fenceItems);
 

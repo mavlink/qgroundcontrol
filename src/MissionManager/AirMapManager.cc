@@ -290,16 +290,22 @@ void AirMapNetworking::_requestFinished(void)
 
 
 
-AirspaceRestrictionManager::AirspaceRestrictionManager(AirMapNetworking::SharedData& sharedData)
+AirMapRestrictionManager::AirMapRestrictionManager(AirMapNetworking::SharedData& sharedData)
     : _networking(sharedData)
 {
-    connect(&_networking, &AirMapNetworking::finished, this, &AirspaceRestrictionManager::_parseAirspaceJson);
-    connect(&_networking, &AirMapNetworking::error, this, &AirspaceRestrictionManager::_error);
+    connect(&_networking, &AirMapNetworking::finished, this, &AirMapRestrictionManager::_parseAirspaceJson);
+    connect(&_networking, &AirMapNetworking::error, this, &AirMapRestrictionManager::_error);
 }
 
-void AirspaceRestrictionManager::updateROI(const QGeoCoordinate& center, double radiusMeters)
+void AirMapRestrictionManager::setROI(const QGeoCoordinate& center, double radiusMeters)
 {
+    if (!_networking.hasAPIKey()) {
+        qCDebug(AirMapManagerLog) << "API key not set. Not updating Airspace";
+        return;
+    }
+
     if (_state != State::Idle) {
+        qCWarning(AirMapManagerLog) << "AirMapRestrictionManager::updateROI: state not idle";
         return;
     }
 
@@ -340,6 +346,9 @@ void AirspaceRestrictionManager::updateROI(const QGeoCoordinate& center, double 
 //    polygonJson["coordinates"] = rgPolygon;
 //    QJsonDocument polygonJsonDoc(polygonJson);
 
+    _polygonList.clear();
+    _circleList.clear();
+
     // Build up the http query
 
     QUrlQuery airspaceQuery;
@@ -356,7 +365,7 @@ void AirspaceRestrictionManager::updateROI(const QGeoCoordinate& center, double 
     _networking.get(airMapAirspaceUrl);
 }
 
-void AirspaceRestrictionManager::_parseAirspaceJson(QJsonParseError parseError, QJsonDocument airspaceDoc)
+void AirMapRestrictionManager::_parseAirspaceJson(QJsonParseError parseError, QJsonDocument airspaceDoc)
 {
     Q_UNUSED(parseError);
     QJsonObject rootObject = airspaceDoc.object();
@@ -378,7 +387,11 @@ void AirspaceRestrictionManager::_parseAirspaceJson(QJsonParseError parseError, 
                 _networking.get(url);
             }
             _numAwaitingItems = advisorySet.size();
-            _state = State::RetrieveItems;
+            if (_numAwaitingItems > 0) {
+                _state = State::RetrieveItems;
+            } else {
+                _state = State::Idle;
+            }
         }
             break;
 
@@ -392,7 +405,41 @@ void AirspaceRestrictionManager::_parseAirspaceJson(QJsonParseError parseError, 
                 QString airspaceName(airspaceObject["name"].toString());
                 const QJsonObject& airspaceGeometry(airspaceObject["geometry"].toObject());
                 QString geometryType(airspaceGeometry["type"].toString());
+
+                const QJsonObject& airspaceProperties(airspaceObject["properties"].toObject());
+                bool enabled = airspaceProperties["enabled"].toBool(true);
+                if (!enabled) {
+                    continue;
+                }
+
                 qCDebug(AirMapManagerLog) << "Airspace ID:" << airspaceId << "name:" << airspaceName << "type:" << airspaceType << "geometry:" << geometryType;
+
+                // filter by start and end time
+                const QJsonValue& effectiveStart(airspaceProperties["effective_start"]);
+                QDateTime now = QDateTime::currentDateTimeUtc();
+                if (!effectiveStart.isNull()) {
+                    QDateTime d = QDateTime::fromString(effectiveStart.toString(), Qt::ISODate);
+                    if (d > now.addSecs(3600)) {
+                        qCDebug(AirMapManagerLog) << "effective start filter";
+                        continue;
+                    }
+                }
+                const QJsonValue& effectiveEnd(airspaceProperties["effective_end"]);
+                if (!effectiveEnd.isNull()) {
+                    QDateTime d = QDateTime::fromString(effectiveEnd.toString(), Qt::ISODate);
+                    if (d < now.addSecs(-3600)) {
+                        qCDebug(AirMapManagerLog) << "effective end filter";
+                        continue;
+                    }
+                }
+
+                int authorizationLevel = (int)(airspaceProperties["authorization_level"].toDouble(3.)+0.5);
+                // 1 == green
+                if (authorizationLevel <= 1 || authorizationLevel > 3) {
+                    qCDebug(AirMapManagerLog) << "auth level filter";
+                    continue;
+                }
+
 
                 if (geometryType == "Polygon") {
 
@@ -405,10 +452,27 @@ void AirspaceRestrictionManager::_parseAirspaceJson(QJsonParseError parseError, 
                             polygon.append(QVariant::fromValue(((QGCQGeoCoordinate*)list[i])->coordinate()));
                         }
                         list.clearAndDeleteContents();
-                        _nextPolygonList.append(new PolygonAirspaceRestriction(polygon));
+                        _polygonList.append(new PolygonAirspaceRestriction(polygon));
                     } else {
                         //TODO
                         qWarning() << errorString;
+                    }
+
+                } else if (geometryType == "MultiPolygon") {
+                    // TODO: it's possible (?) that polygons contain holes. These need to be rendered properly
+                    const QJsonArray& polygonArray = airspaceGeometry["coordinates"].toArray();
+                    for (int polygonIdx = 0; polygonIdx < polygonArray.count(); polygonIdx++) {
+                        const QJsonArray& airspaceCoordinates(polygonArray[polygonIdx].toArray()[0].toArray());
+                        QString errorString;
+                        QmlObjectListModel list;
+                        if (JsonHelper::loadPolygon(airspaceCoordinates, list, this, errorString)) {
+                            QVariantList polygon;
+                            for (int i = 0; i < list.count(); ++i) {
+                                polygon.append(QVariant::fromValue(((QGCQGeoCoordinate*)list[i])->coordinate()));
+                            }
+                            list.clearAndDeleteContents();
+                            _polygonList.append(new PolygonAirspaceRestriction(polygon));
+                        }
                     }
 
                 } else {
@@ -418,18 +482,8 @@ void AirspaceRestrictionManager::_parseAirspaceJson(QJsonParseError parseError, 
             }
 
             if (--_numAwaitingItems == 0) {
-                _polygonList.clearAndDeleteContents();
-                _circleList.clearAndDeleteContents();
-                for (const auto& circle : _nextcircleList) {
-                    _circleList.append(circle);
-                }
-                _nextcircleList.clear();
-                for (const auto& polygon : _nextPolygonList) {
-                    _polygonList.append(polygon);
-                }
-                _nextPolygonList.clear();
-
                 _state = State::Idle;
+                emit requestDone(true);
             }
         }
             break;
@@ -453,15 +507,15 @@ void AirspaceRestrictionManager::_parseAirspaceJson(QJsonParseError parseError, 
 //    }
 }
 
-void AirspaceRestrictionManager::_error(QNetworkReply::NetworkError code, const QString& errorString,
+void AirMapRestrictionManager::_error(QNetworkReply::NetworkError code, const QString& errorString,
         const QString& serverErrorMessage)
 {
-    qCWarning(AirMapManagerLog) << "AirspaceRestrictionManager::_error" << code << serverErrorMessage;
+    qCWarning(AirMapManagerLog) << "AirMapRestrictionManager::_error" << code << serverErrorMessage;
 
     if (_state == State::RetrieveItems) {
         if (--_numAwaitingItems == 0) {
             _state = State::Idle;
-            // TODO: handle properly: update _polygonList...
+            emit requestDone(false);
         }
     } else {
         _state = State::Idle;
@@ -775,7 +829,7 @@ void AirMapFlightManager::_parseJson(QJsonParseError parseError, QJsonDocument d
             }
 
             if (authorizationsArray.size() == 0) {
-                // FIXME: AirMap did not finish the integration yet, thus the array is just empty
+                // if we don't get any authorizations, we assume it's accepted
                 accepted = true;
             }
 
@@ -884,14 +938,14 @@ void AirMapTelemetry::vehicleMavlinkMessageReceived(const mavlink_message_t& mes
 
 }
 
-bool AirMapTelemetry::_isTelemetryStreaming() const
+bool AirMapTelemetry::isTelemetryStreaming() const
 {
     return _state == State::Streaming && !_udpHost.isNull();
 }
 
 void AirMapTelemetry::_handleGPSRawInt(const mavlink_message_t& message)
 {
-    if (!_isTelemetryStreaming()) {
+    if (!isTelemetryStreaming()) {
         return;
     }
 
@@ -907,7 +961,7 @@ void AirMapTelemetry::_handleGPSRawInt(const mavlink_message_t& message)
 
 void AirMapTelemetry::_handleGlobalPositionInt(const mavlink_message_t& message)
 {
-    if (!_isTelemetryStreaming()) {
+    if (!isTelemetryStreaming()) {
         return;
     }
 
@@ -916,7 +970,7 @@ void AirMapTelemetry::_handleGlobalPositionInt(const mavlink_message_t& message)
 
     qDebug() << "Got position from vehicle:" << globalPosition.lat << "," << globalPosition.lon;
 
-    // documentation: https://developers.airmap.com/docs/telemetry-2
+    // documentation: https://developers.airmap.com/docs/sending-telemetry
 
     uint8_t output[512]; // assume the whole packet is not longer than this
     uint8_t payload[512];
@@ -1128,102 +1182,101 @@ void AirMapTrafficAlertClient::onReceived(const QMQTT::Message& message)
 }
 
 
-AirMapManager::AirMapManager(QGCApplication* app, QGCToolbox* toolbox)
-    : QGCTool(app, toolbox), _airspaceRestrictionManager(_networkingData), _flightManager(_networkingData),
-      _telemetry(_networkingData), _trafficAlerts("mqtt-prod.airmap.io", 8883)
+AirMapManagerPerVehicle::AirMapManagerPerVehicle(AirMapNetworking::SharedData& sharedData, const Vehicle& vehicle,
+        QGCToolbox& toolbox)
+    : AirspaceManagerPerVehicle(vehicle), _networking(sharedData),
+    _flightManager(sharedData), _telemetry(sharedData), _trafficAlerts("mqtt-prod.airmap.io", 8883),
+    _toolbox(toolbox)
 {
-    _updateTimer.setInterval(2000);
-    _updateTimer.setSingleShot(true);
-    connect(&_updateTimer, &QTimer::timeout, this, &AirMapManager::_updateToROI);
-
-    connect(&_airspaceRestrictionManager, &AirspaceRestrictionManager::networkError, this, &AirMapManager::_networkError);
-    connect(&_flightManager, &AirMapFlightManager::networkError, this, &AirMapManager::_networkError);
-    connect(&_telemetry, &AirMapTelemetry::networkError, this, &AirMapManager::_networkError);
-
-    connect(&_flightManager, &AirMapFlightManager::flightPermitStatusChanged, this, &AirMapManager::_flightPermitStatusChanged);
-
-    connect(&_trafficAlerts, &AirMapTrafficAlertClient::trafficUpdate, this, &AirMapManager::trafficUpdate);
-
-    qmlRegisterUncreatableType<AirspaceAuthorization>("QGroundControl", 1, 0, "AirspaceAuthorization", "Reference only");
-
-    MultiVehicleManager* multiVehicleManager = toolbox->multiVehicleManager();
-    _connectVehicle(multiVehicleManager->activeVehicle());
-    connect(multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &AirMapManager::_activeVehicleChanged);
-
-    GOOGLE_PROTOBUF_VERIFY_VERSION;
+    connect(&_flightManager, &AirMapFlightManager::flightPermitStatusChanged,
+            this, &AirMapManagerPerVehicle::flightPermitStatusChanged);
+    connect(&_flightManager, &AirMapFlightManager::flightPermitStatusChanged,
+            this, &AirMapManagerPerVehicle::_flightPermitStatusChanged);
+    connect(&_flightManager, &AirMapFlightManager::networkError, this, &AirMapManagerPerVehicle::networkError);
+    connect(&_telemetry, &AirMapTelemetry::networkError, this, &AirMapManagerPerVehicle::networkError);
+    connect(&_trafficAlerts, &AirMapTrafficAlertClient::trafficUpdate, this, &AirspaceManagerPerVehicle::trafficUpdate);
+    settingsChanged();
 }
 
-void AirMapManager::_flightPermitStatusChanged()
+void AirMapManagerPerVehicle::createFlight(const QList<MissionItem*>& missionItems)
+{
+    if (!_networking.hasAPIKey()) {
+        qCDebug(AirMapManagerLog) << "API key not set. Will not create a flight";
+        return;
+    }
+    _flightManager.createFlight(missionItems);
+}
+
+AirspaceAuthorization::PermitStatus AirMapManagerPerVehicle::flightPermitStatus() const
+{
+    return _flightManager.flightPermitStatus();
+}
+
+void AirMapManagerPerVehicle::startTelemetryStream()
+{
+    if (_flightManager.flightID() != "") {
+        _telemetry.startTelemetryStream(_flightManager.flightID());
+    }
+}
+
+void AirMapManagerPerVehicle::stopTelemetryStream()
+{
+    _telemetry.stopTelemetryStream();
+}
+
+bool AirMapManagerPerVehicle::isTelemetryStreaming() const
+{
+    return _telemetry.isTelemetryStreaming();
+}
+
+void AirMapManagerPerVehicle::endFlight()
+{
+    _flightManager.endFlight();
+    _trafficAlerts.disconnectFromHost();
+}
+
+void AirMapManagerPerVehicle::settingsChanged()
+{
+    AirMapSettings* ap = _toolbox.settingsManager()->airMapSettings();
+    _flightManager.setSitaPilotRegistrationId(ap->sitaUserReg()->rawValueString());
+    _flightManager.setSitaUavRegistrationId(ap->sitaUavReg()->rawValueString());
+
+    // reset the states
+    _flightManager.abort();
+    _flightManager.endFlight();
+    _telemetry.stopTelemetryStream();
+    _trafficAlerts.disconnectFromHost();
+}
+
+void AirMapManagerPerVehicle::vehicleMavlinkMessageReceived(const mavlink_message_t& message)
+{
+    if (isTelemetryStreaming()) {
+        _telemetry.vehicleMavlinkMessageReceived(message);
+    }
+}
+
+void AirMapManagerPerVehicle::_flightPermitStatusChanged()
 {
     // activate traffic alerts
     if (_flightManager.flightPermitStatus() == AirspaceAuthorization::PermitAccepted) {
         qCDebug(AirMapManagerLog) << "Subscribing to Traffic Alerts";
         // since we already created the flight, we know that we have a valid login token
-        _trafficAlerts.startConnection(_flightManager.flightID(), _networkingData.login.JWTToken());
-    }
-
-    emit flightPermitStatusChanged();
-}
-
-AirMapManager::~AirMapManager()
-{
-
-}
-
-void AirMapManager::_activeVehicleChanged(Vehicle* activeVehicle)
-{
-    _connectVehicle(activeVehicle);
-}
-
-void AirMapManager::_connectVehicle(Vehicle* vehicle)
-{
-    if (vehicle == _vehicle) {
-        return;
-    }
-    if (_vehicle) {
-        disconnect(_vehicle, &Vehicle::mavlinkMessageReceived, &_telemetry, &AirMapTelemetry::vehicleMavlinkMessageReceived);
-        disconnect(_vehicle, &Vehicle::armedChanged, this, &AirMapManager::_vehicleArmedChanged);
-
-        _telemetry.stopTelemetryStream();
-    }
-
-    _vehicle = vehicle;
-    if (vehicle) {
-        connect(vehicle, &Vehicle::mavlinkMessageReceived, &_telemetry, &AirMapTelemetry::vehicleMavlinkMessageReceived);
-        connect(vehicle, &Vehicle::armedChanged, this, &AirMapManager::_vehicleArmedChanged);
-
-        _vehicleArmedChanged(vehicle->armed());
+        _trafficAlerts.startConnection(_flightManager.flightID(), _networking.JWTLoginToken());
     }
 }
 
-void AirMapManager::_vehicleArmedChanged(bool armed)
+AirMapManager::AirMapManager(QGCApplication* app, QGCToolbox* toolbox)
+    : AirspaceManager(app, toolbox)
 {
-    if (_flightManager.flightID().length() == 0) {
-        qCDebug(AirMapManagerLog) << "No Flight ID. Will not update telemetry state";
-        return;
-    }
-    if (armed) {
-        _telemetry.startTelemetryStream(_flightManager.flightID());
-        _vehicleWasInMissionMode = _vehicle->flightMode() == _vehicle->missionFlightMode();
-    } else {
-        _telemetry.stopTelemetryStream();
-        // end the flight if we were in mission mode during arming or disarming
-        // TODO: needs to be improved. for instance if we do RTL and then want to continue the mission...
-        if (_vehicleWasInMissionMode || _vehicle->flightMode() == _vehicle->missionFlightMode()) {
-            _trafficAlerts.disconnectFromHost();
-            _flightManager.endFlight();
-        }
-    }
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
 }
 
 void AirMapManager::setToolbox(QGCToolbox* toolbox)
 {
-    QGCTool::setToolbox(toolbox);
+    AirspaceManager::setToolbox(toolbox);
     AirMapSettings* ap = toolbox->settingsManager()->airMapSettings();
     _networkingData.airmapAPIKey = ap->apiKey()->rawValueString();
     _networkingData.login.setCredentials(ap->clientID()->rawValueString(), ap->userName()->rawValueString(), ap->password()->rawValueString());
-    _flightManager.setSitaPilotRegistrationId(ap->sitaUserReg()->rawValueString());
-    _flightManager.setSitaUavRegistrationId(ap->sitaUavReg()->rawValueString());
 
     connect(ap->apiKey(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     connect(ap->clientID(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
@@ -1238,33 +1291,11 @@ void AirMapManager::_settingsChanged()
 {
     qCDebug(AirMapManagerLog) << "AirMap settings changed";
 
-    // reset the states
-    _flightManager.abort();
-    _flightManager.endFlight();
-    _telemetry.stopTelemetryStream();
-    _trafficAlerts.disconnectFromHost();
-
     AirMapSettings* ap = _toolbox->settingsManager()->airMapSettings();
     _networkingData.airmapAPIKey = ap->apiKey()->rawValueString();
     _networkingData.login.setCredentials(ap->clientID()->rawValueString(), ap->userName()->rawValueString(), ap->password()->rawValueString());
-    _flightManager.setSitaPilotRegistrationId(ap->sitaUserReg()->rawValueString());
-    _flightManager.setSitaUavRegistrationId(ap->sitaUavReg()->rawValueString());
-}
 
-void AirMapManager::setROI(QGeoCoordinate& center, double radiusMeters)
-{
-    _roiCenter = center;
-    _roiRadius = radiusMeters;
-    _updateTimer.start();
-}
-
-void AirMapManager::_updateToROI(void)
-{
-    if (!_hasAPIKey()) {
-        qCDebug(AirMapManagerLog) << "API key not set. Not updating Airspace";
-        return;
-    }
-    _airspaceRestrictionManager.updateROI(_roiCenter, _roiRadius);
+    emit settingsChanged();
 }
 
 void AirMapManager::_networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage)
@@ -1283,32 +1314,18 @@ void AirMapManager::_networkError(QNetworkReply::NetworkError code, const QStrin
     }
 }
 
-void AirMapManager::createFlight(const QList<MissionItem*>& missionItems)
+AirspaceManagerPerVehicle* AirMapManager::instantiateVehicle(const Vehicle& vehicle)
 {
-    if (!_hasAPIKey()) {
-        qCDebug(AirMapManagerLog) << "API key not set. Will not create a flight";
-        return;
-    }
-    _flightManager.createFlight(missionItems);
+    AirMapManagerPerVehicle* manager = new AirMapManagerPerVehicle(_networkingData, vehicle, *_toolbox);
+    connect(manager, &AirMapManagerPerVehicle::networkError, this, &AirMapManager::_networkError);
+    connect(this, &AirMapManager::settingsChanged, manager, &AirMapManagerPerVehicle::settingsChanged);
+    return manager;
 }
 
-AirspaceRestriction::AirspaceRestriction(QObject* parent)
-    : QObject(parent)
+AirspaceRestrictionProvider* AirMapManager::instantiateRestrictionProvider()
 {
-
+    AirMapRestrictionManager* restrictionManager = new AirMapRestrictionManager(_networkingData);
+    connect(restrictionManager, &AirMapRestrictionManager::networkError, this, &AirMapManager::_networkError);
+    return restrictionManager;
 }
 
-PolygonAirspaceRestriction::PolygonAirspaceRestriction(const QVariantList& polygon, QObject* parent)
-    : AirspaceRestriction(parent)
-    , _polygon(polygon)
-{
-
-}
-
-CircularAirspaceRestriction::CircularAirspaceRestriction(const QGeoCoordinate& center, double radius, QObject* parent)
-    : AirspaceRestriction(parent)
-    , _center(center)
-    , _radius(radius)
-{
-
-}
