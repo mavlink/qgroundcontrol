@@ -916,9 +916,9 @@ void Vehicle::_handleHilActuatorControls(mavlink_message_t &message)
 
 void Vehicle::_handleCommandLong(mavlink_message_t& message)
 {
-#ifdef __ios__
+#ifdef NO_SERIAL_LINK
+    // If not using serial link, bail out.
     Q_UNUSED(message)
-    // iOS has no serial links
 #else
     mavlink_command_long_t cmd;
     mavlink_msg_command_long_decode(&message, &cmd);
