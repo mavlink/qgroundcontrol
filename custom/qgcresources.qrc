@@ -65,12 +65,14 @@
 		<file alias="compassInstrumentDial.svg">../src/FlightMap/Images/compassInstrumentDial.svg</file>
 		<file alias="crossHair.svg">../src/FlightMap/Images/crossHair.svg</file>
 		<file alias="PiP.svg">../src/FlightMap/Images/PiP.svg</file>
+		<file alias="pipResize.svg">../src/FlightMap/Images/pipResize.svg</file>
 		<file alias="rollDialWhite.svg">../src/FlightMap/Images/rollDialWhite.svg</file>
 		<file alias="rollPointerWhite.svg">../src/FlightMap/Images/rollPointerWhite.svg</file>
 		<file alias="scale.png">../src/FlightMap/Images/scale.png</file>
 		<file alias="scale_end.png">../src/FlightMap/Images/scale_end.png</file>
 		<file alias="scaleLight.png">../src/FlightMap/Images/scaleLight.png</file>
 		<file alias="scale_endLight.png">../src/FlightMap/Images/scale_endLight.png</file>
+		<file alias="adsbVehicle.svg">../src/FlightMap/Images/adsbVehicle.svg</file>
 		<file alias="vehicleArrowOutline.svg">../src/FlightMap/Images/vehicleArrowOutline.svg</file>
 		<file alias="vehicleArrowOpaque.svg">../src/FlightMap/Images/vehicleArrowOpaque.svg</file>
 		<file alias="ZoomPlus.svg">../src/FlightMap/Images/ZoomPlus.svg</file>
@@ -116,6 +118,7 @@
 		<file alias="ArrowDirection.svg">../src/AutoPilotPlugins/Common/Images/ArrowDirection.svg</file>
 		<file alias="ArrowCW.svg">../src/AutoPilotPlugins/Common/Images/ArrowCW.svg</file>
 		<file alias="ArrowCCW.svg">../src/AutoPilotPlugins/Common/Images/ArrowCCW.svg</file>
+		<file alias="subVehicleArrowOpaque.png">../src/FlightMap/Images/sub.png</file>
 	</qresource>
 	<qresource prefix="/res">
 		<file alias="action.svg">../resources/action.svg</file>
