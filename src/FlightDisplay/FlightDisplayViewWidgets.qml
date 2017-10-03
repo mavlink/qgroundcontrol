@@ -42,8 +42,7 @@ Item {
         if(ScreenTools.isMobile) {
             return ScreenTools.isTinyScreen ? mainWindow.width * 0.2 : mainWindow.width * 0.15
         }
-        var w = mainWindow.width * 0.15
-        return Math.min(w, 200)
+        return ScreenTools.defaultFontPixelWidth * 30
     }
 
     function _setInstrumentWidget() {
@@ -63,7 +62,9 @@ Item {
                     break;
                 }
             } else {
-                var useAlternateInstruments = QGroundControl.settingsManager.appSettings.virtualJoystick.value || ScreenTools.isTinyScreen
+                // Note: We currently show alternate instruments all the time. This is a trial change for daily builds.
+                // Leaving non-alternate code in for now in case the trial fails.
+                var useAlternateInstruments = true//QGroundControl.settingsManager.appSettings.virtualJoystick.value || ScreenTools.isTinyScreen
                 if(useAlternateInstruments) {
                     instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
                     instrumentsLoader.state  = "topMode"

@@ -32,7 +32,50 @@ QGCView {
 
     property real _margins: ScreenTools.defaultFontPixelHeight / 2
 
+    property bool visibleWhileArmed: false
+
+    property bool vehicleArmed: QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.armed : false
+
+    onVehicleArmedChanged: {
+        if (visibleWhileArmed) {
+            return
+        }
+
+        if (vehicleArmed) {
+            disabledWhileArmed.visible = true
+            setupView.viewPanel.enabled = false
+        } else {
+            disabledWhileArmed.visible = false
+            setupView.viewPanel.enabled = true
+        }
+    }
+
     QGCPalette { id: qgcPal; colorGroupEnabled: setupPanel.enabled }
+
+    // Overlay to display when vehicle is armed and the setup page needs
+    // to be disabled
+    Item {
+        id: disabledWhileArmed
+        visible: false
+        z: 9999
+        anchors.fill: parent
+        Rectangle {
+            anchors.fill: parent
+            color: "black"
+            opacity: 0.5
+        }
+
+        QGCLabel {
+            anchors.margins:        defaultTextWidth * 2
+            anchors.fill:           parent
+            verticalAlignment:      Text.AlignVCenter
+            horizontalAlignment:    Text.AlignHCenter
+            wrapMode:               Text.WordWrap
+            font.pointSize:         ScreenTools.largeFontPointSize
+            color:                  "red"
+            text:                   "Setup disabled while the vehicle is armed"
+        }
+    }
 
     QGCViewPanel {
         id:             setupPanel
@@ -68,7 +111,6 @@ QGCView {
                 id:                 pageLoader
                 anchors.topMargin:  _margins
                 anchors.top:        headingColumn.bottom
-
             }
         }
     }

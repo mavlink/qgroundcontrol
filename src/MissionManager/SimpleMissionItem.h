@@ -140,6 +140,7 @@ private slots:
     void _updateLastSequenceNumber          (void);
     void _rebuildFacts                      (void);
 
+
 private:
     void _connectSignals        (void);
     void _setupMetaData         (void);

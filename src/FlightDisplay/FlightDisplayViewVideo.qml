@@ -22,16 +22,17 @@ import QGroundControl.Controllers       1.0
 
 Item {
     id: root
-    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property double _ar:                QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
     property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
+    property var    _videoReceiver:     QGroundControl.videoManager.videoReceiver
+    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property var    _dynamicCameras:    _activeVehicle ? _activeVehicle.dynamicCameras : null
     property bool   _connected:         _activeVehicle ? !_activeVehicle.connectionLost : false
     Rectangle {
         id:             noVideo
         anchors.fill:   parent
         color:          Qt.rgba(0,0,0,0.75)
-        visible:        !QGroundControl.videoManager.videoReceiver.videoRunning
+        visible:        !(_videoReceiver && _videoReceiver.videoRunning)
         QGCLabel {
             text:               qsTr("WAITING FOR VIDEO")
             font.family:        ScreenTools.demiboldFontFamily
@@ -49,20 +50,20 @@ Item {
     Rectangle {
         anchors.fill:   parent
         color:          "black"
-        visible:        QGroundControl.videoManager.videoReceiver.videoRunning
+        visible:        _videoReceiver && _videoReceiver.videoRunning
         QGCVideoBackground {
             id:             videoContent
             height:         parent.height
             width:          _ar != 0.0 ? height * _ar : parent.width
             anchors.centerIn: parent
-            receiver:       QGroundControl.videoManager.videoReceiver
-            display:        QGroundControl.videoManager.videoReceiver.videoSurface
-            visible:        QGroundControl.videoManager.videoReceiver.videoRunning
+            receiver:       _videoReceiver
+            display:        _videoReceiver && _videoReceiver.videoSurface
+            visible:        _videoReceiver && _videoReceiver.videoRunning
             Connections {
-                target:         QGroundControl.videoManager.videoReceiver
+                target:         _videoReceiver
                 onImageFileChanged: {
                     videoContent.grabToImage(function(result) {
-                        if (!result.saveToFile(QGroundControl.videoManager.videoReceiver.imageFile)) {
+                        if (!result.saveToFile(_videoReceiver.imageFile)) {
                             console.error('Error capturing video frame');
                         }
                     });
@@ -103,14 +104,5 @@ Item {
                 QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
             }
         }
-    }
-    //-- Camera Controller
-    Loader {
-        source:                 QGroundControl.videoManager.fullScreen ? "" : (_dynamicCameras ? _dynamicCameras.controllerSource : "")
-        visible:                !_mainIsMap && _dynamicCameras && _dynamicCameras.cameras.count && _connected && !QGroundControl.videoManager.fullScreen
-        anchors.right:          parent.right
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-        anchors.bottom:         parent.bottom
-        anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * 2
     }
 }

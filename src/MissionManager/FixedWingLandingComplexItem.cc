@@ -20,11 +20,12 @@ QGC_LOGGING_CATEGORY(FixedWingLandingComplexItemLog, "FixedWingLandingComplexIte
 
 const char* FixedWingLandingComplexItem::jsonComplexItemTypeValue = "fwLandingPattern";
 
-const char* FixedWingLandingComplexItem::_loiterToLandDistanceName =    "Landing distance";
+const char* FixedWingLandingComplexItem::_loiterToLandDistanceName =    "Landing dist";
 const char* FixedWingLandingComplexItem::_landingHeadingName =          "Landing heading";
 const char* FixedWingLandingComplexItem::_loiterAltitudeName =          "Loiter altitude";
 const char* FixedWingLandingComplexItem::_loiterRadiusName =            "Loiter radius";
 const char* FixedWingLandingComplexItem::_landingAltitudeName =         "Landing altitude";
+const char* FixedWingLandingComplexItem::_fallRateName =                "Descent rate";
 
 const char* FixedWingLandingComplexItem::_jsonLoiterCoordinateKey =         "loiterCoordinate";
 const char* FixedWingLandingComplexItem::_jsonLoiterRadiusKey =             "loiterRadius";
@@ -32,6 +33,7 @@ const char* FixedWingLandingComplexItem::_jsonLoiterClockwiseKey =          "loi
 const char* FixedWingLandingComplexItem::_jsonLoiterAltitudeRelativeKey =   "loiterAltitudeRelative";
 const char* FixedWingLandingComplexItem::_jsonLandingCoordinateKey =        "landCoordinate";
 const char* FixedWingLandingComplexItem::_jsonLandingAltitudeRelativeKey =  "landAltitudeRelative";
+const char* FixedWingLandingComplexItem::_jsonFallRateKey =                 "fallRate";
 
 QMap<QString, FactMetaData*> FixedWingLandingComplexItem::_metaDataMap;
 
@@ -46,6 +48,7 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, QObje
     , _loiterRadiusFact     (0, _loiterRadiusName,          FactMetaData::valueTypeDouble)
     , _landingHeadingFact   (0, _landingHeadingName,        FactMetaData::valueTypeDouble)
     , _landingAltitudeFact  (0, _landingAltitudeName,       FactMetaData::valueTypeDouble)
+    , _fallRateFact         (0, _fallRateName,              FactMetaData::valueTypeDouble)
     , _loiterClockwise(true)
     , _loiterAltitudeRelative(true)
     , _landingAltitudeRelative(true)
@@ -61,12 +64,14 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, QObje
     _loiterRadiusFact.setMetaData       (_metaDataMap[_loiterRadiusName]);
     _landingHeadingFact.setMetaData     (_metaDataMap[_landingHeadingName]);
     _landingAltitudeFact.setMetaData    (_metaDataMap[_landingAltitudeName]);
+    _fallRateFact.setMetaData           (_metaDataMap[_fallRateName]);
 
     _landingDistanceFact.setRawValue    (_landingDistanceFact.rawDefaultValue());
     _loiterAltitudeFact.setRawValue     (_loiterAltitudeFact.rawDefaultValue());
     _loiterRadiusFact.setRawValue       (_loiterRadiusFact.rawDefaultValue());
     _landingHeadingFact.setRawValue     (_landingHeadingFact.rawDefaultValue());
     _landingAltitudeFact.setRawValue    (_landingAltitudeFact.rawDefaultValue());
+    _fallRateFact.setRawValue           (_fallRateFact.rawDefaultValue());
 
     connect(&_loiterAltitudeFact,       &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_updateLoiterCoodinateAltitudeFromFact);
     connect(&_landingAltitudeFact,      &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_updateLandingCoodinateAltitudeFromFact);

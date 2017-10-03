@@ -158,8 +158,9 @@ void ParameterEditorController::setRCToParam(const QString& paramName)
 void ParameterEditorController::_updateParameters(void)
 {
     QObjectList newParameterList;
+    QStringList searchItems = _searchText.split(' ', QString::SkipEmptyParts);
 
-    if (_searchText.isEmpty()) {
+    if (searchItems.isEmpty()) {
         const QMap<int, QMap<QString, QStringList> >& groupMap = _vehicle->parameterManager()->getGroupMap();
         foreach (const QString& parameter, groupMap[_currentComponentId][_currentGroup]) {
             newParameterList.append(_vehicle->parameterManager()->getParameter(_currentComponentId, parameter));
@@ -167,9 +168,17 @@ void ParameterEditorController::_updateParameters(void)
     } else {
         foreach(const QString &parameter, _vehicle->parameterManager()->parameterNames(_vehicle->defaultComponentId())) {
             Fact* fact = _vehicle->parameterManager()->getParameter(_vehicle->defaultComponentId(), parameter);
-            if (fact->name().contains(_searchText, Qt::CaseInsensitive) ||
-                    fact->shortDescription().contains(_searchText, Qt::CaseInsensitive) ||
-                    fact->longDescription().contains(_searchText, Qt::CaseInsensitive)) {
+            bool matched = true;
+
+            // all of the search items must match in order for the parameter to be added to the list
+            for (const auto& searchItem : searchItems) {
+                if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
+                        !fact->shortDescription().contains(searchItem, Qt::CaseInsensitive) &&
+                        !fact->longDescription().contains(searchItem, Qt::CaseInsensitive)) {
+                    matched = false;
+                }
+            }
+            if (matched) {
                 newParameterList.append(fact);
             }
         }

@@ -72,7 +72,7 @@ private:
     
     /// @brief This is the amount of time to wait to allow the FileManager enough time to timeout waiting for an Ack.
     /// As such it must be larger than the Ack Timeout used by the FileManager.
-    static const int _ackTimerTimeoutMsecs = FileManager::ackTimerTimeoutMsecs * 2;
+    static const int _ackTimerTimeoutMsecs = FileManager::ackTimerMaxRetries * FileManager::ackTimerTimeoutMsecs * 2;
     
     QStringList _fileListReceived;
 };

@@ -32,7 +32,7 @@ void QGCMapPolygonTest::init(void)
     _rgModelSignals[modelCountChangedIndex] = SIGNAL(countChanged(int));
     _rgModelSignals[modelDirtyChangedIndex] = SIGNAL(dirtyChanged(bool));
 
-    _mapPolygon = new QGCMapPolygon(this, this);
+    _mapPolygon = new QGCMapPolygon(this);
     _pathModel = _mapPolygon->qmlPathModel();
     QVERIFY(_pathModel);
 

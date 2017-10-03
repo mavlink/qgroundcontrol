@@ -588,7 +588,10 @@ void APMSensorsComponentController::nextClicked(void)
                                       &msg,
                                       0,    // command
                                       1,    // result
-                                      0);   // progress
+                                      0,    // progress
+                                      0,    // result_param2
+                                      0,    // target_system
+                                      0);   // target_component
 
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 

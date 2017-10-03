@@ -127,6 +127,9 @@ void FileManagerTest::_listTest(void)
     Q_ASSERT(_fileManager);
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
+
+    // test the automatic retry behavior by enabling random drops
+    _fileServer->enableRandromDrops(true);
     
     // FileManager::listDirectory signalling as follows:
     //  Emits a listEntry signal for each list entry
@@ -192,6 +195,8 @@ void FileManagerTest::_listTest(void)
         _multiSpy->clearAllSignals();
         _fileServer->setErrorMode(MockLinkFileServer::errModeNone);
     }
+
+    _fileServer->enableRandromDrops(false);
 }
 
 #if 0
