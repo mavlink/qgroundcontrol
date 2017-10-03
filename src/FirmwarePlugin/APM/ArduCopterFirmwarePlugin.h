@@ -41,8 +41,9 @@ public:
         THROW       = 18,
         AVOID_ADSB  = 19,
         GUIDED_NOGPS= 20,
+        SAFE_RTL   = 21,   //Safe Return to Launch
     };
-    static const int modeCount = 21;
+    static const int modeCount = 22;
 
     APMCopterMode(uint32_t mode, bool settable);
 };
@@ -55,34 +56,21 @@ public:
     ArduCopterFirmwarePlugin(void);
 
     // Overrides from FirmwarePlugin
-    bool    isCapable                           (const Vehicle *vehicle, FirmwareCapabilities capabilities) final;
-    void    setGuidedMode                       (Vehicle* vehicle, bool guidedMode) final;
-    void    pauseVehicle                        (Vehicle* vehicle) final;
-    void    guidedModeRTL                       (Vehicle* vehicle) final;
     void    guidedModeLand                      (Vehicle* vehicle) final;
-    void    guidedModeTakeoff                   (Vehicle* vehicle) final;
-    void    guidedModeGotoLocation              (Vehicle* vehicle, const QGeoCoordinate& gotoCoord) final;
-    void    guidedModeChangeAltitude            (Vehicle* vehicle, double altitudeChange) final;
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
     int     remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
     bool    multiRotorCoaxialMotors             (Vehicle* vehicle) final;
     bool    multiRotorXConfig                   (Vehicle* vehicle) final;
-    QString geoFenceRadiusParam                 (Vehicle* vehicle) final;
     QString offlineEditingParamFile             (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Copter.OfflineEditing.params"); }
     QString pauseFlightMode                     (void) const override { return QString("Brake"); }
-    QString missionFlightMode                   (void) const override { return QString("Auto"); }
-    QString rtlFlightMode                       (void) const override { return QString("RTL"); }
     QString landFlightMode                      (void) const override { return QString("Land"); }
-    QString takeControlFlightMode               (void) const override { return QString("Stablize"); }
+    QString takeControlFlightMode               (void) const override { return QString("Loiter"); }
     bool    vehicleYawsToNextWaypointInMission  (const Vehicle* vehicle) const final;
     QString autoDisarmParameter                 (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
-    void    startMission                        (Vehicle* vehicle) override;
 
 private:
     static bool _remapParamNameIntialized;
     static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
-
-    bool _guidedModeTakeoff(Vehicle* vehicle);
 };
 
 #endif

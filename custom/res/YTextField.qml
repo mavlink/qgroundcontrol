@@ -17,17 +17,21 @@ QGCTextField {
 
     property Fact   fact:       null
 
-    // At this point all Facts are numeric
-    inputMethodHints: ((fact && fact.typeIsString) || ScreenTools.isiOS) ?
-                          Qt.ImhNone :                // iOS numeric keyboard has no done button, we can't use it
-                          Qt.ImhFormattedNumbersOnly  // Forces use of virtual numeric keyboard
-
-    onEditingFinished: {
+    function completeEditing() {
         if (ScreenTools.isMobile) {
             // Toss focus on mobile after Done on virtual keyboard. Prevent strange interactions.
             focus = false
         }
         fact.rawValue = fact.clamp(text)
         text = fact.valueString
+    }
+
+    // At this point all Facts are numeric
+    inputMethodHints: ((fact && fact.typeIsString) || ScreenTools.isiOS) ?
+                          Qt.ImhNone :                // iOS numeric keyboard has no done button, we can't use it
+                          Qt.ImhFormattedNumbersOnly  // Forces use of virtual numeric keyboard
+
+    onEditingFinished: {
+        completeEditing()
     }
 }

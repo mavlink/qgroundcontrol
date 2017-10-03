@@ -26,16 +26,12 @@ public:
     virtual ~QGCCameraManager();
 
     Q_PROPERTY(QmlObjectListModel*  cameras             READ cameras            NOTIFY camerasChanged)
-    Q_PROPERTY(QString              controllerSource    READ controllerSource   NOTIFY controllerSourceChanged)
 
     //-- Return a list of cameras provided by this vehicle
     virtual QmlObjectListModel* cameras             () { return &_cameras; }
-    //-- Camera controller source (QML)
-    virtual QString             controllerSource    ();
 
 signals:
     void    camerasChanged          ();
-    void    controllerSourceChanged ();
 
 protected slots:
     void    _vehicleReady           (bool ready);

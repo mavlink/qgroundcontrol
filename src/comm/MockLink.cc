@@ -33,11 +33,13 @@ QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "MockLinkVerboseLog")
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-float           MockLink::_vehicleLatitude =        47.633033f;
-float           MockLink::_vehicleLongitude =       -122.08794f;
-float           MockLink::_vehicleAltitude =        3.5f;
-int             MockLink::_nextVehicleSystemId =    128;
-const char*     MockLink::_failParam =              "COM_FLTMODE6";
+// Vehicle position is set close to default Gazebo vehicle location. This allows for multi-vehicle
+// testing of a gazebo vehicle and a mocklink vehicle
+double      MockLink::_defaultVehicleLatitude =     47.397f;
+double      MockLink::_defaultVehicleLongitude =    8.5455f;
+double      MockLink::_defaultVehicleAltitude =     488.056f;
+int         MockLink::_nextVehicleSystemId =        128;
+const char* MockLink::_failParam =                  "COM_FLTMODE6";
 
 const char* MockConfiguration::_firmwareTypeKey =   "FirmwareType";
 const char* MockConfiguration::_vehicleTypeKey =    "VehicleType";
@@ -45,29 +47,33 @@ const char* MockConfiguration::_sendStatusTextKey = "SendStatusText";
 const char* MockConfiguration::_failureModeKey =    "FailureMode";
 
 MockLink::MockLink(SharedLinkConfigurationPointer& config)
-    : LinkInterface(config)
-    , _missionItemHandler(this, qgcApp()->toolbox()->mavlinkProtocol())
-    , _name("MockLink")
-    , _connected(false)
-    , _mavlinkChannel(0)
-    , _vehicleSystemId(_nextVehicleSystemId++)
-    , _vehicleComponentId(MAV_COMP_ID_AUTOPILOT1)
-    , _inNSH(false)
-    , _mavlinkStarted(true)
-    , _mavBaseMode(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED)
-    , _mavState(MAV_STATE_STANDBY)
-    , _firmwareType(MAV_AUTOPILOT_PX4)
-    , _vehicleType(MAV_TYPE_QUADROTOR)
-    , _fileServer(NULL)
-    , _sendStatusText(false)
-    , _apmSendHomePositionOnEmptyList(false)
-    , _failureMode(MockConfiguration::FailNone)
-    , _sendHomePositionDelayCount(10)   // No home position for 4 seconds
-    , _sendGPSPositionDelayCount(100)   // No gps lock for 5 seconds
+    : LinkInterface                         (config)
+    , _missionItemHandler                   (this, qgcApp()->toolbox()->mavlinkProtocol())
+    , _name                                 ("MockLink")
+    , _connected                            (false)
+    , _mavlinkChannel                       (0)
+    , _vehicleSystemId                      (_nextVehicleSystemId++)
+    , _vehicleComponentId                   (MAV_COMP_ID_AUTOPILOT1)
+    , _inNSH                                (false)
+    , _mavlinkStarted                       (true)
+    , _mavBaseMode                          (MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED)
+    , _mavState                             (MAV_STATE_STANDBY)
+    , _firmwareType                         (MAV_AUTOPILOT_PX4)
+    , _vehicleType                          (MAV_TYPE_QUADROTOR)
+    , _vehicleLatitude                      (_defaultVehicleLatitude + ((_vehicleSystemId - 128) * 0.0001))     // Slight offset for each vehicle
+    , _vehicleLongitude                     (_defaultVehicleLongitude + ((_vehicleSystemId - 128) * 0.0001))
+    , _vehicleAltitude                      (_defaultVehicleAltitude)
+    , _fileServer                           (NULL)
+    , _sendStatusText                       (false)
+    , _apmSendHomePositionOnEmptyList       (false)
+    , _failureMode                          (MockConfiguration::FailNone)
+    , _sendHomePositionDelayCount           (10)    // No home position for 4 seconds
+    , _sendGPSPositionDelayCount            (100)   // No gps lock for 5 seconds
     , _currentParamRequestListComponentIndex(-1)
-    , _currentParamRequestListParamIndex(-1)
-    , _logDownloadCurrentOffset(0)
-    , _logDownloadBytesRemaining(0)
+    , _currentParamRequestListParamIndex    (-1)
+    , _logDownloadCurrentOffset             (0)
+    , _logDownloadBytesRemaining            (0)
+    , _adsbAngle                            (0)
 {
     MockConfiguration* mockConfig = qobject_cast<MockConfiguration*>(_config.data());
     _firmwareType = mockConfig->firmwareType();
@@ -87,6 +93,9 @@ MockLink::MockLink(SharedLinkConfigurationPointer& config)
     moveToThread(this);
 
     _loadParams();
+
+    _adsbVehicleCoordinate = QGeoCoordinate(_vehicleLatitude, _vehicleLongitude).atDistanceAndAzimuth(1000, _adsbAngle);
+    _adsbVehicleCoordinate.setAltitude(100);
 }
 
 MockLink::~MockLink(void)
@@ -156,6 +165,7 @@ void MockLink::_run1HzTasks(void)
 {
     if (_mavlinkStarted && _connected) {
         _sendVibration();
+        _sendADSBVehicles();
         if (!qgcApp()->runningUnitTests()) {
             // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
             _sendRCChannels();
@@ -860,7 +870,10 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
                                       &commandAck,
                                       request.command,
                                       commandResult,
-                                      0);
+                                      0,    // progress
+                                      0,    // result_param2
+                                      0,    // target_system
+                                      0);   // target_component
     respondWithMavlinkMessage(commandAck);
 }
 
@@ -886,7 +899,7 @@ void MockLink::_respondWithAutopilotVersion(void)
                                             _vehicleComponentId,
                                             _mavlinkChannel,
                                             &msg,
-                                            0,                               // capabilities,
+                                            MAV_PROTOCOL_CAPABILITY_MAVLINK2 | (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? 0 : MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY),
                                             flightVersion,                   // flight_sw_version,
                                             0,                               // middleware_sw_version,
                                             0,                               // os_sw_version,
@@ -1268,4 +1281,31 @@ void MockLink::_logDownloadWorker(void)
             qWarning() << "MockLink::_logDownloadWorker open failed" << file.errorString();
         }
     }
+}
+
+void MockLink::_sendADSBVehicles(void)
+{
+    _adsbAngle += 2;
+    _adsbVehicleCoordinate = QGeoCoordinate(_vehicleLatitude, _vehicleLongitude).atDistanceAndAzimuth(500, _adsbAngle);
+    _adsbVehicleCoordinate.setAltitude(100);
+
+    mavlink_message_t responseMsg;
+    mavlink_msg_adsb_vehicle_pack_chan(_vehicleSystemId,
+                                       _vehicleComponentId,
+                                       _mavlinkChannel,
+                                       &responseMsg,
+                                       12345,                                       // ICAO address
+                                       _adsbVehicleCoordinate.latitude() * 1e7,
+                                       _adsbVehicleCoordinate.longitude() * 1e7,
+                                       ADSB_ALTITUDE_TYPE_GEOMETRIC,
+                                       _adsbVehicleCoordinate.altitude() * 1000,    // Altitude in millimeters
+                                       10 * 100,                                    // Heading in centidegress
+                                       0, 0,                                        // Horizontal/Vertical velocity
+                                       "N1234500",                                  // Callsign
+                                       ADSB_EMITTER_TYPE_ROTOCRAFT,
+                                       1,                                           // Seconds since last communication
+                                       ADSB_FLAGS_VALID_COORDS | ADSB_FLAGS_VALID_ALTITUDE | ADSB_FLAGS_VALID_HEADING | ADSB_FLAGS_VALID_CALLSIGN | ADSB_FLAGS_SIMULATED,
+                                       0);                                          // Squawk code
+
+    respondWithMavlinkMessage(responseMsg);
 }

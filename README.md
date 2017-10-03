@@ -39,12 +39,12 @@ QGroundControl builds are supported for OSX, Linux, Windows, iOS and Android. QG
 * Windows: Vista or higher, 32 bit, [Visual Studio 2015 compiler](http://www.visualstudio.com/downloads/download-visual-studio-vs#d-express-windows-desktop)
 * iOS: 8.0 and higher
 * Android: Jelly Bean (4.1) and higher. Standard QGC is built against ndk version 19.
-* Qt version: 5.7.1 ONLY
+* Qt version: 5.9.1 ONLY
 
 ###### Install QT
 You need to install Qt as described below instead of using pre-built packages from say, a Linux distribution, because QGroundControl needs access to private Qt headers.
 * Download the [Qt installer](http://www.qt.io/download-open-source)
-    * Make sure to install Qt version **5.7.1** NOT 5.4.x, 5.6.x, 5.8.x, etc. 
+    * Make sure to install Qt version **5.9.1**. You will also need to install the Qt Speech package.
     * Ubuntu: Set the downloaded file to executable using:`chmod +x`. Install to default location for use with ./qgroundcontrol-start.sh. If you install Qt to a non-default location you will need to modify qgroundcontrol-start.sh in order to run downloaded builds.
     * Windows: Make sure to install VS 2015 32 bit package.
 
@@ -59,10 +59,10 @@ You need to install Qt as described below instead of using pre-built packages fr
 
 * Launch Qt Creator and open the `qgroundcontrol.pro` project.
 * Select the appropriate kit for your needs:
-    * OSX: Desktop Qt 5.7.1 clang 64 bit
-    * Ubuntu: Desktop Qt 5.7.1 GCC bit
-    * Windows: Desktop Qt 5.7.1 MSVC2015 32bit
-    * Android: Android for armeabi-v7a (GCC 4.9, Qt 5.7.1)
+    * OSX: Desktop Qt 5.9.1 clang 64 bit
+    * Ubuntu: Desktop Qt 5.9.1 GCC bit
+    * Windows: Desktop Qt 5.9.1 MSVC2015 32bit
+    * Android: Android for armeabi-v7a (GCC 4.9, Qt 5.9.1)
 * Note: iOS builds must be built using xCode: http://doc.qt.io/qt-5/ios-support.html. Use Qt Creator to generate the XCode project (*Run Qmake* from the context menu).
 
 #### Vagrant

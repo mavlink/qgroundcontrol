@@ -52,6 +52,7 @@ public:
     Q_PROPERTY(QString waypointsFileExtension   MEMBER waypointsFileExtension   CONSTANT)
     Q_PROPERTY(QString parameterFileExtension   MEMBER parameterFileExtension   CONSTANT)
     Q_PROPERTY(QString telemetryFileExtension   MEMBER telemetryFileExtension   CONSTANT)
+    Q_PROPERTY(QString kmlFileExtension         MEMBER kmlFileExtension         CONSTANT)
     Q_PROPERTY(QString logFileExtension         MEMBER logFileExtension         CONSTANT)
 
     Fact* offlineEditingFirmwareType        (void);
@@ -115,6 +116,7 @@ public:
     static const char* fenceFileExtension;
     static const char* rallyPointFileExtension;
     static const char* telemetryFileExtension;
+    static const char* kmlFileExtension;
     static const char* logFileExtension;
 
     // Child directories of savePath for specific file types

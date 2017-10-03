@@ -27,6 +27,8 @@ SetupPage {
     pageName:           qsTr("Joystick")
     pageDescription:    qsTr("Joystick Setup is used to configure a calibrate joysticks.")
 
+    readonly property real _maxButtons: 16
+
     Connections {
         target: joystickManager
         onAvailableJoysticksChanged: {
@@ -294,7 +296,7 @@ SetupPage {
                         Connections {
                             target: _activeJoystick
 
-                            onManualControl: throttleLoader.item.axisValue = (-2*throttle+1)*32768.0
+                            onManualControl: throttleLoader.item.axisValue = _activeJoystick.negativeThrust ? -throttle*32768.0 : (-2*throttle+1)*32768.0
                         }
                     }
                 } // Column - Attitude Control labels
@@ -451,6 +453,15 @@ SetupPage {
 
                                     onClicked: _activeJoystick.throttleMode = 1
                                 }
+
+                                QGCCheckBox {
+                                    visible:        _activeVehicle.supportsNegativeThrust
+                                    id:             negativeThrust
+                                    text:           qsTr("Allow negative Thrust")
+                                    enabled:        _activeJoystick.negativeThrust = _activeVehicle.supportsNegativeThrust
+                                    checked:        _activeJoystick ? _activeJoystick.negativeThrust : false
+                                    onClicked:      _activeJoystick.negativeThrust = checked
+                                }
                             }
 
                             Column {
@@ -560,7 +571,7 @@ SetupPage {
 
                             Repeater {
                                 id:     buttonActionRepeater
-                                model:  _activeJoystick ? _activeJoystick.totalButtonCount : 0
+                                model:  _activeJoystick ? Math.min(_activeJoystick.totalButtonCount, _maxButtons) : 0
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
@@ -627,7 +638,7 @@ SetupPage {
 
                             Repeater {
                                 id:     jsButtonActionRepeater
-                                model:  _activeJoystick ? _activeJoystick.totalButtonCount : 0
+                                model:  _activeJoystick ? Math.min(_activeJoystick.totalButtonCount, _maxButtons) : 0
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth

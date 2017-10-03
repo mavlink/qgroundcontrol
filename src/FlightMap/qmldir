@@ -5,7 +5,6 @@ FlightMap           1.0 FlightMap.qml
 QGCVideoBackground  1.0 QGCVideoBackground.qml
 
 # Widgets
-CameraWidget            1.0 CameraWidget.qml
 CenterMapDropButton     1.0 CenterMapDropButton.qml
 CenterMapDropPanel      1.0 CenterMapDropPanel.qml
 CompassRing             1.0 CompassRing.qml
@@ -17,18 +16,14 @@ QGCAttitudeHUD          1.0 QGCAttitudeHUD.qml
 QGCAttitudeWidget       1.0 QGCAttitudeWidget.qml
 QGCCompassWidget        1.0 QGCCompassWidget.qml
 QGCPitchIndicator       1.0 QGCPitchIndicator.qml
-ValuesWidget            1.0 ValuesWidget.qml
-VehicleHealthWidget     1.0 VehicleHealthWidget.qml
-VibrationWidget         1.0 VibrationWidget.qml
 
 # Map items
 CameraTriggerIndicator      1.0 CameraTriggerIndicator.qml
+CustomMapItems              1.0 CustomMapItems.qml
 MissionItemIndicator        1.0 MissionItemIndicator.qml
 MissionItemIndicatorDrag    1.0 MissionItemIndicatorDrag.qml
 MissionItemView             1.0 MissionItemView.qml
 MissionLineView             1.0 MissionLineView.qml
+PlanMapItems                1.0 PlanMapItems.qml
 PolygonEditor               1.0 PolygonEditor.qml
 VehicleMapItem              1.0 VehicleMapItem.qml
-
-# Editor controls
-QGCMapPolygonControls  1.0 QGCMapPolygonControls.qml
