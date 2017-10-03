@@ -1,6 +1,6 @@
 ## DataPilot Release Changelog
 
-### v1.1.37 - Oct 02 2017
+### v1.1.39 - Oct 02 2017
 
 *   Temperature readings from "Custom" area instead of "Full Area". This is until we have a proper Custom/Full toggle function.
 *   Fixed issue with editing camera parameters (ET Only)
