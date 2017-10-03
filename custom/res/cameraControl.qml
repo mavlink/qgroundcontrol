@@ -77,7 +77,6 @@ Rectangle {
     property bool   _hasPhotos:             TyphoonHQuickInterface.mediaList.length > 0
 
     property var    qgcView:                null
-    property var    currentFact:            null
 
     function baseName(str) {
         return (str.slice(str.lastIndexOf("/")+1))
@@ -137,7 +136,7 @@ Rectangle {
             }
             MouseArea {
                 anchors.fill:   parent
-                enabled:        !_cameraModeUndefined && _camera.videoStatus !== QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING && _cameraPhotoIdle
+                enabled:        !_cameraModeUndefined && _camera && _camera.videoStatus !== QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING && _cameraPhotoIdle
                 onClicked: {
                     rootLoader.sourceComponent = null
                     _camera.toggleMode()
@@ -294,12 +293,12 @@ Rectangle {
             height: mainWindow.height
             anchors.centerIn: parent
             function showEditFact(fact) {
-                currentFact = fact
+                factEdit.fact = fact
                 factEdit.visible = true
             }
             function hideEditFact() {
                 factEdit.visible = false
-                currentFact = null
+                factEdit.fact = null
             }
             MouseArea {
                 anchors.fill: parent
@@ -422,7 +421,7 @@ Rectangle {
                                             width:      parent._isEdit ? _editFieldWidth : 0
                                             text:       parent._fact.valueString
                                             onClicked: {
-                                                //console.log(parent._fact.shortDescription)
+                                                console.log(parent._fact.shortDescription)
                                                 showEditFact(parent._fact)
                                             }
                                         }
@@ -557,6 +556,7 @@ Rectangle {
                 visible:        false
                 color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
                 anchors.fill:   parent
+                property var fact: null
                 MouseArea {
                     anchors.fill:   parent
                     onWheel:        { wheel.accepted = true; }
@@ -577,18 +577,21 @@ Rectangle {
                         spacing:        ScreenTools.defaultFontPixelHeight
                         anchors.centerIn: parent
                         QGCLabel {
-                            text:       currentFact ? currentFact.shortDescription : ""
+                            text:       factEdit.fact ? factEdit.fact.shortDescription : ""
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
                         YTextField {
+                            id:         factEditor
                             width:      _editFieldWidth
-                            fact:       currentFact
+                            fact:       factEdit.fact
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
                         QGCButton {
                             text: qsTr("Close")
                             anchors.horizontalCenter: parent.horizontalCenter
                             onClicked: {
+                                console.log('Done with ' + factEdit.fact.shortDescription)
+                                factEditor.completeEditing()
                                 hideEditFact()
                             }
                         }
