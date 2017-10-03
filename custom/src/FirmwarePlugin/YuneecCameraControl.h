@@ -112,10 +112,10 @@ public:
     bool        isCGOET             () { return _isCGOET; }
     bool        paramComplete       () { return _paramComplete; }
 
-    qreal       irCenterTemp        () { return (qreal)_cgoetTempStatus.all_area.center_val / 100.0; }
-    qreal       irAvergaeTemp       () { return (qreal)_cgoetTempStatus.all_area.avg_val / 100.0; }
-    qreal       irMinTemp           () { return (qreal)_cgoetTempStatus.all_area.min_val / 100.0; }
-    qreal       irMaxTemp           () { return (qreal)_cgoetTempStatus.all_area.max_val / 100.0; }
+    qreal       irCenterTemp        () { return (qreal)_cgoetTempStatus.custom_area.center_val / 100.0; }
+    qreal       irAvergaeTemp       () { return (qreal)_cgoetTempStatus.custom_area.avg_val / 100.0; }
+    qreal       irMinTemp           () { return (qreal)_cgoetTempStatus.custom_area.min_val / 100.0; }
+    qreal       irMaxTemp           () { return (qreal)_cgoetTempStatus.custom_area.max_val / 100.0; }
     bool        irValid             () { return _irValid; }
 
 private slots:
