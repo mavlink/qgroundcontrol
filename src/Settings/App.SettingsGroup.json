@@ -104,6 +104,13 @@
     "defaultValue":     false
 },
 {
+    "name":             "GstreamerDebugLevel",
+    "shortDescription": "Video streaming debug",
+    "longDescription":  "Sets the environment variable GST_DEBUG for all pipeline elements on boot.",
+    "type":             "uint8",
+    "defaultValue":     0
+},
+{
     "name":             "AutoLoadMissions",
     "shortDescription": "AutoLoad mission on vehicle connect",
     "longDescription":  "Automatically load a mission file named AutoLoad#.mission when a vehicle with id # connects.",
