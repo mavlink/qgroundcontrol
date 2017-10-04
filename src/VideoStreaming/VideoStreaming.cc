@@ -101,7 +101,7 @@ int start_logger(const char *app_name)
 }
 #endif
 
-void initializeVideoStreaming(int &argc, char* argv[])
+void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debuglevel)
 {
 #if defined(QGC_GST_STREAMING)
     #ifdef __macos__
@@ -119,12 +119,19 @@ void initializeVideoStreaming(int &argc, char* argv[])
         QString currentDir = QCoreApplication::applicationDirPath();
         qgcputenv("GST_PLUGIN_PATH", currentDir, "/gstreamer-plugins");
     #endif
+
+
         // Initialize GStreamer
-        #ifdef ANDDROID_GST_DEBUG
-        start_logger("gst_log");
-        qputenv("GST_DEBUG", "*:4");
-        qputenv("GST_DEBUG_NO_COLOR", "1");
-        #endif
+        if (logpath) {
+            if (debuglevel) {
+                qputenv("GST_DEBUG", debuglevel);
+            }
+            qputenv("GST_DEBUG_NO_COLOR", "1");
+            qputenv("GST_DEBUG_FILE", QString("%1/%2").arg(logpath).arg("gstreamer-log.txt").toUtf8());
+            qputenv("GST_DEBUG_DUMP_DOT_DIR", logpath);
+        }
+
+
         GError* error = NULL;
         if (!gst_init_check(&argc, &argv, &error)) {
             qCritical() << "gst_init_check() failed: " << error->message;
