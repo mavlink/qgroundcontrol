@@ -75,7 +75,16 @@
     "type":             "uint32",
     "min":              100,
     "units":            "MB",
-    "defaultValue":     2048
+    "defaultValue":     10240,
+    "mobileDefaultValue":   2048
+},
+{
+    "name":             "EnableStorageLimit",
+    "shortDescription": "Enable/Disable Limits on Storage Usage",
+    "longDescription":  "When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.",
+    "type":             "bool",
+    "defaultValue":     false,
+    "mobileDefaultValue":   true
 },
 {
     "name":             "RtspTimeout",
