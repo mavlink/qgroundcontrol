@@ -28,6 +28,7 @@ const char* VideoSettings::videoGridLinesName =     "VideoGridLines";
 const char* VideoSettings::showRecControlName =     "ShowRecControl";
 const char* VideoSettings::recordingFormatName =    "RecordingFormat";
 const char* VideoSettings::maxVideoSizeName =       "MaxVideoSize";
+const char* VideoSettings::enableStorageLimitName = "EnableStorageLimit";
 const char* VideoSettings::rtspTimeoutName =        "RtspTimeout";
 
 const char* VideoSettings::videoSourceNoVideo =     "No Video Available";
@@ -47,6 +48,7 @@ VideoSettings::VideoSettings(QObject* parent)
     , _showRecControlFact(NULL)
     , _recordingFormatFact(NULL)
     , _maxVideoSizeFact(NULL)
+    , _enableStorageLimitFact(NULL)
     , _rtspTimeoutFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -167,6 +169,15 @@ Fact* VideoSettings::maxVideoSize(void)
     }
 
     return _maxVideoSizeFact;
+}
+
+Fact* VideoSettings::enableStorageLimit(void)
+{
+    if (!_enableStorageLimitFact) {
+        _enableStorageLimitFact = _createSettingsFact(enableStorageLimitName);
+    }
+
+    return _enableStorageLimitFact;
 }
 
 Fact* VideoSettings::rtspTimeout(void)
