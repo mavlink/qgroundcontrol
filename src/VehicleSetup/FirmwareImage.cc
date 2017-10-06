@@ -238,7 +238,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
 
     uint32_t firmwareBoardId = (uint32_t)px4Json.value(_jsonBoardIdKey).toInt();
     uint32_t actualBoardId = _boardId == Bootloader::boardIDPX4FMUV3 ? Bootloader::boardIDPX4FMUV2 : _boardId;;
-    if (firmwareBoardId != actualBoardId) {
+    if (!isCompatible(actualBoardId, firmwareBoardId)) {
         emit statusMessage(QString("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardId).arg(_boardId));
         return false;
     }
