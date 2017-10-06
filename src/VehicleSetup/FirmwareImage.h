@@ -56,6 +56,22 @@ public:
     /// @return true: block retrieved
     bool ihxGetBlock(uint16_t index, uint16_t& address, QByteArray& bytes) const;
     
+    /// @return true: actual boardId is compatible with firmware boardId
+    bool isCompatible(uint32_t boardId, uint32_t firmwareId) {
+        bool result = false;
+        if (boardId == firmwareId ) {
+            result = true;
+        }
+        switch(boardId) {
+        case 33: // AUAVX2.1 is compatible with px4-v2/v3
+            if (firmwareId == 9) result = true;
+            break;
+        default:
+            break;
+        }
+        return result;
+    }
+
 signals:
     void errorMessage(const QString& errorString);
     void statusMessage(const QString& warningtring);
