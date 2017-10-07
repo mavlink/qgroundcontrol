@@ -482,15 +482,7 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 
 void PX4FirmwarePlugin::startMission(Vehicle* vehicle)
 {
-
-    if (_setFlightModeAndValidate(vehicle, missionFlightMode())) {
-        if (!_armVehicleAndValidate(vehicle)) {
-            qgcApp()->showMessage(tr("Unable to start mission: Vehicle rejected arming."));
-            return;
-        }
-    } else {
-        qgcApp()->showMessage(tr("Unable to start mission: Vehicle not ready."));
-    }
+    vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true, 0.0f, 0.0f);
 }
 
 void PX4FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
