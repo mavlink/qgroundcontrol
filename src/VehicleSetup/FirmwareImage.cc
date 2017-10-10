@@ -194,6 +194,24 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
     return true;
 }
 
+bool FirmwareImage::isCompatible(uint32_t boardId, uint32_t firmwareId) {
+    bool result = false;
+    if (boardId == firmwareId ) {
+        result = true;
+    }
+    switch(boardId) {
+    case Bootloader::boardIDAUAVX2_1: // AUAVX2.1 is compatible with px4-v2/v3
+        if (firmwareId == 9) result = true;
+        break;
+    case Bootloader::boardIDPX4FMUV3:
+        if (firmwareId == 9) result = true;
+        break;
+    default:
+        break;
+    }
+    return result;
+}
+
 bool FirmwareImage::_px4Load(const QString& imageFilename)
 {
     _imageSize = 0;
@@ -237,8 +255,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     }
 
     uint32_t firmwareBoardId = (uint32_t)px4Json.value(_jsonBoardIdKey).toInt();
-    uint32_t actualBoardId = _boardId == Bootloader::boardIDPX4FMUV3 ? Bootloader::boardIDPX4FMUV2 : _boardId;;
-    if (firmwareBoardId != actualBoardId) {
+    if (!isCompatible(_boardId, firmwareBoardId)) {
         emit statusMessage(QString("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardId).arg(_boardId));
         return false;
     }
