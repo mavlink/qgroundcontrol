@@ -119,6 +119,8 @@ void TCPLink::_disconnect(void)
     if (_socket) {
         _socketIsConnected = false;
         _socket->deleteLater(); // Make sure delete happens on correct thread
+        _socket->disconnectFromHost(); // Disconnect tcp
+        _socket->waitForDisconnected();        
         _socket = NULL;
         emit disconnected();
     }
