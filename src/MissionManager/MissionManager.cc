@@ -40,6 +40,8 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
 
     _transactionInProgress = TransactionWrite;
 
+    _connectToMavlink();
+
     mavlink_message_t       messageOut;
     mavlink_mission_item_t  missionItem;
 
