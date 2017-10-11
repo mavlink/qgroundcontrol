@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.40 - Oct 11 2017
+
+*   Merge upstream changes and fixes
+
 ### v1.1.39 - Oct 02 2017
 
 *   Temperature readings from "Custom" area instead of "Full Area". This is until we have a proper Custom/Full toggle function.
