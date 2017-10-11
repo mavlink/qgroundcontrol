@@ -38,7 +38,6 @@ PlanManager::PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType)
     _ackTimeoutTimer->setInterval(_ackTimeoutMilliseconds);
     
     connect(_ackTimeoutTimer, &QTimer::timeout, this, &PlanManager::_ackTimeout);
-    connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &PlanManager::_mavlinkMessageReceived);
 }
 
 PlanManager::~PlanManager()
@@ -63,6 +62,7 @@ void PlanManager::_writeMissionItemsWorker(void)
     _transactionInProgress = TransactionWrite;
     _retryCount = 0;
     emit inProgressChanged(true);
+    _connectToMavlink();
     _writeMissionCount();
 }
 
@@ -139,6 +139,7 @@ void PlanManager::loadFromVehicle(void)
     _retryCount = 0;
     _transactionInProgress = TransactionRead;
     emit inProgressChanged(true);
+    _connectToMavlink();
     _requestList();
 }
 
@@ -802,6 +803,7 @@ QString PlanManager::_missionResultToString(MAV_MISSION_RESULT result)
 void PlanManager::_finishTransaction(bool success)
 {
     emit progressPct(1);
+    _disconnectFromMavlink();
 
     _itemIndicesToRead.clear();
     _itemIndicesToWrite.clear();
@@ -890,6 +892,7 @@ void PlanManager::_removeAllWorker(void)
 
     emit progressPct(0);
 
+    _connectToMavlink();
     _dedicatedLink = _vehicle->priorityLink();
     mavlink_msg_mission_clear_all_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                             qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
@@ -939,6 +942,16 @@ void PlanManager::_clearAndDeleteWriteMissionItems(void)
         _writeMissionItems[i]->deleteLater();
     }
     _writeMissionItems.clear();
+}
+
+void PlanManager::_connectToMavlink(void)
+{
+    connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &PlanManager::_mavlinkMessageReceived);
+}
+
+void PlanManager::_disconnectFromMavlink(void)
+{
+    disconnect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &PlanManager::_mavlinkMessageReceived);
 }
 
 QString PlanManager::_planTypeString(void)

@@ -56,6 +56,9 @@ public:
     /// @return true: block retrieved
     bool ihxGetBlock(uint16_t index, uint16_t& address, QByteArray& bytes) const;
     
+    /// @return true: actual boardId is compatible with firmware boardId
+    bool isCompatible(uint32_t boardId, uint32_t firmwareId);
+
 signals:
     void errorMessage(const QString& errorString);
     void statusMessage(const QString& warningtring);

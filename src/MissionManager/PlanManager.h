@@ -126,6 +126,8 @@ protected:
     void _clearAndDeleteWriteMissionItems(void);
     QString _lastMissionReqestString(MAV_MISSION_RESULT result);
     void _removeAllWorker(void);
+    void _connectToMavlink(void);
+    void _disconnectFromMavlink(void);
     QString _planTypeString(void);
 
 protected:
