@@ -1136,6 +1136,7 @@ TyphoonHQuickInterface::_wifiConnected()
 void
 TyphoonHQuickInterface::_wifiDisconnected()
 {
+    qCDebug(YuneecLog) << "TyphoonHQuickInterface::_wifiDisconnected()";
     emit connectedSSIDChanged();
     emit wifiConnectedChanged();
     if(_videoReceiver) {
@@ -1143,6 +1144,7 @@ TyphoonHQuickInterface::_wifiDisconnected()
         disconnect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);
         delete _videoReceiver;
         _videoReceiver = NULL;
+        emit thermalImagePresentChanged();
     }
 }
 

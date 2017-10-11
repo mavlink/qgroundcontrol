@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.41 - Oct 11 2017
+
+*   When switching from the ET to some other camera, DataPilot was not "forgetting" the thermal image.
+
 ### v1.1.40 - Oct 11 2017
 
 *   Merge upstream changes and fixes
