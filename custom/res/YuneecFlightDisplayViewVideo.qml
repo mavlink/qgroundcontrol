@@ -254,7 +254,7 @@ Item {
             antialiasing:   true
             mipmap:         true
             smooth:         true
-            source:         "/typhoonh/img/flir-Fusion.png"
+            source:         _camera ? _camera.palettetBar : ""
             fillMode:       Image.Stretch
             sourceSize.height:  height
         }

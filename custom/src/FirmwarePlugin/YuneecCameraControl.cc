@@ -29,9 +29,26 @@ static const char *kCAM_SPOTAREA    = "CAM_SPOTAREA";
 static const char *kCAM_VIDFMT      = "CAM_VIDFMT";
 static const char *kCAM_VIDRES      = "CAM_VIDRES";
 static const char *kCAM_WBMODE      = "CAM_WBMODE";
+
+static const char *kCAM_IRPALETTE   = "CAM_IRPALETTE";
 static const char *kCAM_IRTEMPMAX   = "CAM_IRTEMPMAX";
 static const char *kCAM_IRTEMPMIN   = "CAM_IRTEMPMIN";
 static const char *kCAM_TEMPSTATUS  = "CAM_TEMPSTATUS";
+
+static const char *kPaleteBars[]    =
+{
+    "Fusion",
+    "Rainbow",
+    "Globow",
+    "IceFire",
+    "IronBlack",
+    "WhiteHot",
+    "BlackHot",
+    "Rain",
+    "Iron",
+    "GrayRed",
+    "GrayFusion"
+};
 
 //-----------------------------------------------------------------------------
 YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
@@ -611,6 +628,8 @@ YuneecCameraControl::factChanged(Fact* pFact)
             }
             emit irTempChanged();
             return;
+        } else if(pFact->name() == kCAM_IRPALETTE) {
+            emit palettetBarChanged();
         }
     }
     QGCCameraControl::factChanged(pFact);
@@ -780,4 +799,19 @@ YuneecCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& 
         _recTime = _recTime.addMSecs(_recTime.elapsed() - cap.recording_time_ms);
         emit recordTimeChanged();
     }
+}
+
+//-----------------------------------------------------------------------------
+QUrl
+YuneecCameraControl::palettetBar()
+{
+    QString barStr = kPaleteBars[0];
+    if(_isCGOET) {
+        Fact* pFact = getFact(kCAM_IRPALETTE);
+        if(pFact && pFact->rawValue().toUInt() < 11) {
+            barStr = kPaleteBars[pFact->rawValue().toUInt()];
+        }
+    }
+    QString urlStr = QString("qrc:/typhoonh/img/flir-%1.png").arg(barStr);
+    return QUrl::fromUserInput(urlStr);
 }

@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.42 - Oct 12 2017
+
+*   Added proper palette bars to UI.
+
 ### v1.1.41 - Oct 11 2017
 
 *   When switching from the ET to some other camera, DataPilot was not "forgetting" the thermal image.

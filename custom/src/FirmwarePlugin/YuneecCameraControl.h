@@ -69,6 +69,7 @@ public:
     Q_PROPERTY(qreal        irAvergaeTemp   READ    irAvergaeTemp       NOTIFY irTempChanged)
     Q_PROPERTY(qreal        irMinTemp       READ    irMinTemp           NOTIFY irTempChanged)
     Q_PROPERTY(qreal        irMaxTemp       READ    irMaxTemp           NOTIFY irTempChanged)
+    Q_PROPERTY(QUrl         palettetBar     READ    palettetBar         NOTIFY palettetBarChanged)
     Q_PROPERTY(bool         irValid         READ    irValid             NOTIFY irTempChanged)
 
     Q_INVOKABLE void calibrateGimbal();
@@ -117,6 +118,7 @@ public:
     qreal       irMinTemp           () { return (qreal)_cgoetTempStatus.custom_area.min_val / 100.0; }
     qreal       irMaxTemp           () { return (qreal)_cgoetTempStatus.custom_area.max_val / 100.0; }
     bool        irValid             () { return _irValid; }
+    QUrl        palettetBar         ();
 
 private slots:
     void    _recTimerHandler        ();
@@ -143,6 +145,7 @@ signals:
     void    videoSizeChanged        ();
     void    isCGOETChanged          ();
     void    irTempChanged           ();
+    void    palettetBarChanged      ();
 
 protected:
     void    _setVideoStatus         (VideoStatus status) override;
