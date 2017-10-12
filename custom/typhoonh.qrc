@@ -28,7 +28,17 @@
         <file alias="checkMark.svg">res/images/checkMark.svg</file>
         <file alias="CogWheel.svg">res/images/CogWheel.svg</file>
         <file alias="CompassIndicator.svg">res/images/CompassIndicator.svg</file>
+        <file alias="flir-BlackHot.png">res/images/flir-BlackHot.png</file>
         <file alias="flir-Fusion.png">res/images/flir-Fusion.png</file>
+        <file alias="flir-Globow.png">res/images/flir-Globow.png</file>
+        <file alias="flir-GrayFusion.png">res/images/flir-GrayFusion.png</file>
+        <file alias="flir-GrayRed.png">res/images/flir-GrayRed.png</file>
+        <file alias="flir-IceFire.png">res/images/flir-IceFire.png</file>
+        <file alias="flir-Iron.png">res/images/flir-Iron.png</file>
+        <file alias="flir-IronBlack.png">res/images/flir-IronBlack.png</file>
+        <file alias="flir-Rain.png">res/images/flir-Rain.png</file>
+        <file alias="flir-Rainbow.png">res/images/flir-Rainbow.png</file>
+        <file alias="flir-WhiteHot.png">res/images/flir-WhiteHot.png</file>
         <file alias="gps.svg">res/images/gps.svg</file>
         <file alias="gimbalPitch.svg">res/images/gimbalPitch.svg</file>
         <file alias="gimbalYaw.svg">res/images/gimbalYaw.svg</file>
