@@ -115,6 +115,9 @@ YuneecCameraControl::_parametersReady()
         qCDebug(YuneecCameraLog) << "All parameters loaded for" << modelName();
         _paramComplete = true;
         emit factsLoaded();
+        if(!_irValid) {
+            _irStatusTimer.start(100);
+        }
     }
 }
 
@@ -510,7 +513,7 @@ void
 YuneecCameraControl::_irStatusTimeout()
 {
     if(_paramIO.contains(kCAM_TEMPSTATUS)) {
-        _paramIO[kCAM_TEMPSTATUS]->paramRequest();
+        _paramIO[kCAM_TEMPSTATUS]->paramRequest(false);
     }
 }
 
