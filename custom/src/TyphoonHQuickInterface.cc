@@ -150,6 +150,12 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         }
         //-- Give some time (15s) and check to see if we need to check for updates.
         QTimer::singleShot(15000, this, &TyphoonHQuickInterface::_checkUpdateStatus);
+        //-- Thermal video surface must be created before UI
+        if(!_videoReceiver) {
+            _videoReceiver = new VideoReceiver(this);
+            _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:8554/live"));
+            connect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);
+        }
     }
 }
 
@@ -1176,11 +1182,8 @@ TyphoonHQuickInterface::_authenticationError()
 void
 TyphoonHQuickInterface::_enableThermalVideo()
 {
-    if(!_videoReceiver) {
-        qCDebug(YuneecLog) << "Creating thermal image receiver";
-        _videoReceiver = new VideoReceiver(this);
-        _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:8554/live"));
-        connect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);
+    if(_videoReceiver) {
+        qCDebug(YuneecLog) << "Starting thermal image receiver";
         _videoReceiver->start();
         emit thermalImagePresentChanged();
     }
@@ -1209,9 +1212,6 @@ TyphoonHQuickInterface::_wifiDisconnected()
     emit wifiConnectedChanged();
     if(_videoReceiver) {
         _videoReceiver->stop();
-        disconnect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);
-        delete _videoReceiver;
-        _videoReceiver = NULL;
         emit thermalImagePresentChanged();
     }
 }
