@@ -115,6 +115,9 @@ YuneecCameraControl::_parametersReady()
         qCDebug(YuneecCameraLog) << "All parameters loaded for" << modelName();
         _paramComplete = true;
         emit factsLoaded();
+        if(!_irValid) {
+            _irStatusTimer.start(100);
+        }
     }
 }
 
@@ -186,6 +189,13 @@ Fact*
 YuneecCameraControl::aspectRatio()
 {
     return _paramComplete ? getFact(kCAM_ASPECTRATIO) : NULL;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+YuneecCameraControl::irPalette()
+{
+    return (_paramComplete && _isCGOET) ? getFact(kCAM_IRPALETTE) : NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -503,7 +513,7 @@ void
 YuneecCameraControl::_irStatusTimeout()
 {
     if(_paramIO.contains(kCAM_TEMPSTATUS)) {
-        _paramIO[kCAM_TEMPSTATUS]->paramRequest();
+        _paramIO[kCAM_TEMPSTATUS]->paramRequest(false);
     }
 }
 
@@ -622,7 +632,7 @@ YuneecCameraControl::factChanged(Fact* pFact)
             //-- Keep requesting it
             if(!_irValid) {
                 _irStatusTimer.setSingleShot(false);
-                _irStatusTimer.setInterval(2000);
+                _irStatusTimer.setInterval(1000);
                 _irStatusTimer.start();
                 _irValid = true;
             }

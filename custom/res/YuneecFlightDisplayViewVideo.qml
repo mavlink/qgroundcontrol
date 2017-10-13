@@ -35,8 +35,6 @@ Item {
     property var    _arFact:            _camera && _camera.aspectRatio
     property bool   _cameraAutoMode:    _expModeFact  ? _expModeFact.rawValue === 0 : true
     property double _ar:                _arFact ? _arFact.rawValue : QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
-    property var    _tempMinFact:       _camera && _camera.minTemp
-    property var    _tempMaxFact:       _camera && _camera.maxTemp
     property real   _minLabel:          ScreenTools.defaultFontPixelWidth * 8
 
     property real   spotSize:           48
@@ -175,7 +173,7 @@ Item {
         width:              height * 1.333333
         height:             TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalPIP ? ScreenTools.defaultFontPixelHeight * 20 : parent.height * 0.9
         anchors.centerIn:   parent
-        visible:            !_mainIsMap && TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver && TyphoonHQuickInterface.thermalMode !== TyphoonHQuickInterface.ThermalOff
+        visible:            !_mainIsMap && _camera && _camera.paramComplete && TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver && TyphoonHQuickInterface.thermalMode !== TyphoonHQuickInterface.ThermalOff
         function pipOrNot() {
             if(TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalPIP) {
                 console.log('Pip Mode')
@@ -202,7 +200,6 @@ Item {
             anchors.fill:   parent
             receiver:       TyphoonHQuickInterface.videoReceiver
             display:        TyphoonHQuickInterface.videoReceiver ? TyphoonHQuickInterface.videoReceiver.videoSurface : null
-            visible:        TyphoonHQuickInterface.videoReceiver ? TyphoonHQuickInterface.videoReceiver.videoRunning : null
             opacity:        TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend ? 0.85 : 1.0
         }
         Image {

@@ -60,6 +60,7 @@ Item {
     property var    _wbFact:            _camera && _camera.wb
     property var    _meteringFact:      _camera && _camera.meteringMode
     property var    _videoResFact:      _camera && _camera.videoRes
+    property var    _irPaletteFact:     _camera && _camera.irPalette
     property var    _isCGOET:           _camera && _camera.isCGOET
 
     property bool   _cameraAutoMode:    _expModeFact  ? _expModeFact.rawValue === 0 : true
@@ -334,7 +335,7 @@ Item {
         width:          camRow.width + (ScreenTools.defaultFontPixelWidth * 3)
         height:         camRow.height * 1.25
         color:          _indicatorColor
-        visible:        !_mainIsMap && _cameraPresent && indicatorDropdown.sourceComponent === null && !messageArea.visible && !criticalMmessageArea.visible && !_isCGOET && _camera.paramComplete
+        visible:        !_mainIsMap && _cameraPresent && indicatorDropdown.sourceComponent === null && !messageArea.visible && !criticalMmessageArea.visible && _camera.paramComplete
         radius:         3
         border.width:   1
         border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
@@ -346,70 +347,81 @@ Item {
             spacing: ScreenTools.defaultFontPixelWidth
             anchors.centerIn: parent
             //-- AE
-            QGCLabel { text: qsTr("AE:"); anchors.verticalCenter: parent.verticalCenter; }
+            QGCLabel { text: qsTr("AE:"); anchors.verticalCenter: parent.verticalCenter; visible: !_isCGOET; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
                 indexModel: false
                 fact:       _expModeFact
                 enabled:    _cameraIdle
+                 visible:   !_isCGOET
             }
             //-- EV
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
-            QGCLabel { text: qsTr("EV:"); visible: _cameraAutoMode; anchors.verticalCenter: parent.verticalCenter; }
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && !_isCGOET; }
+            QGCLabel { text: qsTr("EV:"); visible: _cameraAutoMode && !_isCGOET; anchors.verticalCenter: parent.verticalCenter; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible: _cameraAutoMode;
+                visible: _cameraAutoMode && !_isCGOET;
                 indexModel: false
                 fact:       _evFact
                 enabled:    _cameraIdle
             }
             //-- ISO
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: !_cameraAutoMode; }
-            QGCLabel { text: qsTr("ISO:"); visible: !_cameraAutoMode; anchors.verticalCenter: parent.verticalCenter; }
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: !_cameraAutoMode && !_isCGOET; }
+            QGCLabel { text: qsTr("ISO:"); visible: !_cameraAutoMode && !_isCGOET; anchors.verticalCenter: parent.verticalCenter; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible:    !_cameraAutoMode;
+                visible:    !_cameraAutoMode && !_isCGOET;
                 indexModel: false
                 fact:       _isoFact
                 enabled:    _cameraIdle
             }
             //-- Shutter Speed
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; visible: !_cameraAutoMode; anchors.verticalCenter: parent.verticalCenter; }
-            QGCLabel {text: qsTr("Shutter:"); visible: !_cameraAutoMode; anchors.verticalCenter: parent.verticalCenter; }
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; visible: !_cameraAutoMode && !_isCGOET; anchors.verticalCenter: parent.verticalCenter; }
+            QGCLabel {text: qsTr("Shutter:"); visible: !_cameraAutoMode && !_isCGOET; anchors.verticalCenter: parent.verticalCenter; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible:    !_cameraAutoMode;
+                visible:    !_cameraAutoMode && !_isCGOET;
                 indexModel: false
                 fact:       _shutterFact
                 enabled:    _cameraIdle
             }
             //-- WB
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; }
-            QGCLabel { text: qsTr("WB:"); anchors.verticalCenter: parent.verticalCenter;}
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: !_isCGOET; }
+            QGCLabel { text: qsTr("WB:"); anchors.verticalCenter: parent.verticalCenter; visible: !_isCGOET; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
                 indexModel: false
                 fact:       _wbFact
                 enabled:    _cameraIdle
+                visible:    !_isCGOET
             }
             //-- Metering
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
-            QGCLabel { text: qsTr("Metering:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && !_isCGOET; }
+            QGCLabel { text: qsTr("Metering:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && !_isCGOET; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible:    _cameraAutoMode;
+                visible:    _cameraAutoMode && !_isCGOET;
                 indexModel: false
                 fact:       _meteringFact
                 enabled:    _cameraIdle
             }
             //-- Video Res
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode; }
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode && !_isCGOET; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible:    _cameraVideoMode;
+                visible:    _cameraVideoMode && !_isCGOET;
                 indexModel: false
                 enabled:    !_recordingVideo
                 fact:       _videoResFact
+            }
+            //-- CGOET Palette
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode && _isCGOET; }
+            QGCLabel { text: qsTr("Palette:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && _isCGOET; }
+            CameraMenu {
+                anchors.verticalCenter: parent.verticalCenter
+                visible:    _isCGOET;
+                indexModel: false
+                fact:       _irPaletteFact
             }
             //-- SD Card
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; }

@@ -57,6 +57,7 @@ public:
     Q_PROPERTY(Fact*        meteringMode    READ    meteringMode        NOTIFY factsLoaded)
     Q_PROPERTY(Fact*        videoRes        READ    videoRes            NOTIFY factsLoaded)
     Q_PROPERTY(Fact*        aspectRatio     READ    aspectRatio         NOTIFY factsLoaded)
+    Q_PROPERTY(Fact*        irPalette       READ    irPalette           NOTIFY factsLoaded)
     Q_PROPERTY(QPoint       spotArea        READ    spotArea            WRITE  setSpotArea      NOTIFY spotAreaChanged)
     Q_PROPERTY(QSize        videoSize       READ    videoSize           WRITE  setVideoSize     NOTIFY videoSizeChanged)
     Q_PROPERTY(bool         isCGOET         READ    isCGOET             NOTIFY isCGOETChanged)
@@ -66,7 +67,7 @@ public:
     Q_PROPERTY(Fact*        maxTemp         READ    maxTemp             NOTIFY factsLoaded)
 
     Q_PROPERTY(qreal        irCenterTemp    READ    irCenterTemp        NOTIFY irTempChanged)
-    Q_PROPERTY(qreal        irAvergaeTemp   READ    irAvergaeTemp       NOTIFY irTempChanged)
+    Q_PROPERTY(qreal        irAverageTemp   READ    irAverageTemp       NOTIFY irTempChanged)
     Q_PROPERTY(qreal        irMinTemp       READ    irMinTemp           NOTIFY irTempChanged)
     Q_PROPERTY(qreal        irMaxTemp       READ    irMaxTemp           NOTIFY irTempChanged)
     Q_PROPERTY(QUrl         palettetBar     READ    palettetBar         NOTIFY palettetBarChanged)
@@ -102,6 +103,7 @@ public:
     Fact*       meteringMode        ();
     Fact*       videoRes            ();
     Fact*       aspectRatio         ();
+    Fact*       irPalette           ();
     Fact*       minTemp             ();
     Fact*       maxTemp             ();
     QPoint      spotArea            ();
@@ -114,9 +116,9 @@ public:
     bool        paramComplete       () { return _paramComplete; }
 
     qreal       irCenterTemp        () { return (qreal)_cgoetTempStatus.custom_area.center_val / 100.0; }
-    qreal       irAvergaeTemp       () { return (qreal)_cgoetTempStatus.custom_area.avg_val / 100.0; }
-    qreal       irMinTemp           () { return (qreal)_cgoetTempStatus.custom_area.min_val / 100.0; }
-    qreal       irMaxTemp           () { return (qreal)_cgoetTempStatus.custom_area.max_val / 100.0; }
+    qreal       irAverageTemp       () { return (qreal)_cgoetTempStatus.custom_area.avg_val / 100.0; }
+    qreal       irMinTemp           () { return (qreal)_cgoetTempStatus.all_area.min_val / 100.0; }
+    qreal       irMaxTemp           () { return (qreal)_cgoetTempStatus.all_area.max_val / 100.0; }
     bool        irValid             () { return _irValid; }
     QUrl        palettetBar         ();
 

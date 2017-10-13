@@ -10,6 +10,8 @@
 #include "SettingsManager.h"
 #include "MAVLinkLogManager.h"
 #include "QGCMapEngine.h"
+#include "QGCCameraManager.h"
+#include "YuneecCameraControl.h"
 
 #include <QDirIterator>
 #include <QtAlgorithms>
@@ -48,6 +50,7 @@ reset_jni()
 TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     : QObject(parent)
     , _pHandler(NULL)
+    , _vehicle(NULL)
     , _pFileCopy(NULL)
     , _videoReceiver(NULL)
     , _thermalMode(ThermalBlend)
@@ -107,16 +110,19 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(_pHandler, &TyphoonHM4Interface::wifiConnected,                this, &TyphoonHQuickInterface::_wifiConnected);
         connect(_pHandler, &TyphoonHM4Interface::wifiDisconnected,             this, &TyphoonHQuickInterface::_wifiDisconnected);
         connect(_pHandler, &TyphoonHM4Interface::batteryUpdate,                this, &TyphoonHQuickInterface::_batteryUpdate);
-        connect(_pHandler, &TyphoonHM4Interface::armedChanged,                 this, &TyphoonHQuickInterface::_armedChanged);
         connect(_pHandler, &TyphoonHM4Interface::rawChannelsChanged,           this, &TyphoonHQuickInterface::_rawChannelsChanged);
         connect(_pHandler, &TyphoonHM4Interface::switchStateChanged,           this, &TyphoonHQuickInterface::_switchStateChanged);
         connect(_pHandler, &TyphoonHM4Interface::calibrationStateChanged,      this, &TyphoonHQuickInterface::_calibrationStateChanged);
         connect(_pHandler, &TyphoonHM4Interface::calibrationCompleteChanged,   this, &TyphoonHQuickInterface::_calibrationCompleteChanged);
         connect(_pHandler, &TyphoonHM4Interface::rcActiveChanged,              this, &TyphoonHQuickInterface::_rcActiveChanged);
-        connect(_pHandler, &TyphoonHM4Interface::distanceSensor,               this, &TyphoonHQuickInterface::_distanceSensor);
+
+        connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded,     this, &TyphoonHQuickInterface::_vehicleAdded);
+        connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved,   this, &TyphoonHQuickInterface::_vehicleRemoved);
+
         connect(&_scanTimer,    &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
         connect(&_flightTimer,  &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
         connect(&_powerTimer,   &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
+
         _flightTimer.setSingleShot(false);
         _powerTimer.setSingleShot(true);
         _loadWifiConfigurations();
@@ -142,9 +148,79 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
                 logs.removeAt(0);
             }
         }
-        _enableThermalVideo();
         //-- Give some time (15s) and check to see if we need to check for updates.
         QTimer::singleShot(15000, this, &TyphoonHQuickInterface::_checkUpdateStatus);
+        //-- Thermal video surface must be created before UI
+        if(!_videoReceiver) {
+            _videoReceiver = new VideoReceiver(this);
+            _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:8554/live"));
+            connect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_vehicleAdded(Vehicle* vehicle)
+{
+    if(!_vehicle) {
+        qCDebug(YuneecLog) << "_vehicleAdded()";
+        _vehicle = vehicle;
+        connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &TyphoonHQuickInterface::_mavlinkMessageReceived);
+        connect(_vehicle, &Vehicle::armedChanged,           this, &TyphoonHQuickInterface::_armedChanged);
+        connect(_vehicle, &Vehicle::dynamicCamerasChanged,  this, &TyphoonHQuickInterface::_dynamicCamerasChanged);
+        _dynamicCamerasChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_vehicleRemoved(Vehicle* vehicle)
+{
+    if(_vehicle == vehicle) {
+        qCDebug(YuneecLog) << "_vehicleRemoved()";
+        disconnect(_vehicle, &Vehicle::mavlinkMessageReceived,  this, &TyphoonHQuickInterface::_mavlinkMessageReceived);
+        disconnect(_vehicle, &Vehicle::armedChanged,            this, &TyphoonHQuickInterface::_armedChanged);
+        disconnect(_vehicle, &Vehicle::dynamicCamerasChanged,   this, &TyphoonHQuickInterface::_dynamicCamerasChanged);
+        _vehicle = NULL;
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_dynamicCamerasChanged()
+{
+    //-- Keep track of camera changes
+    if(_vehicle->dynamicCameras()) {
+        connect(_vehicle->dynamicCameras(), &QGCCameraManager::camerasChanged, this, &TyphoonHQuickInterface::_camerasChanged);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_camerasChanged()
+{
+    if(_vehicle) {
+        if(_vehicle->dynamicCameras() && _vehicle->dynamicCameras()->cameras()->count()) {
+            //-- A camera has just been added. Check for CGOET
+            YuneecCameraControl* pCamera = qobject_cast<YuneecCameraControl*>((*_vehicle->dynamicCameras()->cameras())[0]);
+            if(pCamera) {
+                if(pCamera->isCGOET()) {
+                    _enableThermalVideo();
+                }
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_mavlinkMessageReceived(const mavlink_message_t& message)
+{
+    if(message.msgid == MAVLINK_MSG_ID_DISTANCE_SENSOR) {
+        mavlink_distance_sensor_t dist;
+        mavlink_msg_distance_sensor_decode(&message, &dist);
+        _distanceSensor((int)dist.min_distance, (int)dist.max_distance, (int)dist.current_distance);
     }
 }
 
@@ -152,7 +228,7 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
 void
 TyphoonHQuickInterface::setWiFiPassword(QString pwd)
 {
-    if(_pHandler && _pHandler->vehicle()) {
+    if(_pHandler && _vehicle) {
 #if defined __android__
         MAVLinkProtocol* pMavlink = qgcApp()->toolbox()->mavlinkProtocol();
         mavlink_wifi_config_ap_t config;
@@ -165,7 +241,7 @@ TyphoonHQuickInterface::setWiFiPassword(QString pwd)
             pMavlink->getComponentId(),
             &msg,
             &config);
-        _pHandler->vehicle()->sendMessageOnLink(_pHandler->vehicle()->priorityLink(), msg);
+        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
         _password.clear();
         _configurations.remove(_ssid);
         _saveWifiConfigurations();
@@ -1106,12 +1182,8 @@ TyphoonHQuickInterface::_authenticationError()
 void
 TyphoonHQuickInterface::_enableThermalVideo()
 {
-    //-- Are we connected to a CGO-ET?
-    if(!_videoReceiver && connectedSSID().startsWith("CGOET")) {
-        qCDebug(YuneecLog) << "Creating thermal image receiver";
-        _videoReceiver = new VideoReceiver(this);
-        _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:8554/live"));
-        connect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);
+    if(_videoReceiver) {
+        qCDebug(YuneecLog) << "Starting thermal image receiver";
         _videoReceiver->start();
         emit thermalImagePresentChanged();
     }
@@ -1129,7 +1201,6 @@ TyphoonHQuickInterface::_wifiConnected()
     emit bindingWiFiChanged();
     emit connectedSSIDChanged();
     emit wifiConnectedChanged();
-    _enableThermalVideo();
 }
 
 //-----------------------------------------------------------------------------
@@ -1141,9 +1212,6 @@ TyphoonHQuickInterface::_wifiDisconnected()
     emit wifiConnectedChanged();
     if(_videoReceiver) {
         _videoReceiver->stop();
-        disconnect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);
-        delete _videoReceiver;
-        _videoReceiver = NULL;
         emit thermalImagePresentChanged();
     }
 }

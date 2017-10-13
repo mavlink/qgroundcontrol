@@ -9,6 +9,7 @@
 
 #include "TyphoonHCommon.h"
 #include "VideoReceiver.h"
+#include "Vehicle.h"
 
 #include <QQmlListProperty>
 
@@ -380,7 +381,11 @@ private slots:
     void    _videoRunningChanged        ();
     void    _checkUpdateStatus          ();
     void    _forgetSSID                 ();
-    void    _distanceSensor             (int minDist, int maxDist, int curDist);
+    void    _vehicleAdded               (Vehicle* vehicle);
+    void    _vehicleRemoved             (Vehicle* vehicle);
+    void    _mavlinkMessageReceived     (const mavlink_message_t& message);
+    void    _dynamicCamerasChanged      ();
+    void    _camerasChanged             ();
 
 private:
     void    _saveWifiConfigurations     ();
@@ -390,11 +395,13 @@ private:
     void    _enableThermalVideo         ();
 
 private:
-    TyphoonSSIDItem*        _findSsid   (QString ssid, int rssi);
-    void                    _clearSSids ();
+    void                    _distanceSensor     (int minDist, int maxDist, int curDist);
+    TyphoonSSIDItem*        _findSsid           (QString ssid, int rssi);
+    void                    _clearSSids         ();
 
 private:
     TyphoonHM4Interface*    _pHandler;
+    Vehicle*                _vehicle;
     TyphoonHFileCopy*       _pFileCopy;
     VideoReceiver*          _videoReceiver;
     ThermalViewMode         _thermalMode;
