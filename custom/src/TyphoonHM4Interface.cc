@@ -90,7 +90,6 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     , _binding(false)
     , _vehicle(NULL)
     , _m4State(TyphoonHQuickInterface::M4_STATE_NONE)
-    , _armed(false)
     , _rcTime(0)
     , _rcActive(false)
     , _rcCalibrationComplete(true)
@@ -290,19 +289,7 @@ TyphoonHM4Interface::_mavlinkMessageReceived(const mavlink_message_t& message)
                 _rcTimer.start(1000);
             }
         }
-    } else if(message.msgid == MAVLINK_MSG_ID_DISTANCE_SENSOR) {
-        mavlink_distance_sensor_t dist;
-        mavlink_msg_distance_sensor_decode(&message, &dist);
-        emit distanceSensor((int)dist.min_distance, (int)dist.max_distance, (int)dist.current_distance);
     }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHM4Interface::_armedChanged(bool armed)
-{
-    _armed = armed;
-    emit armedChanged(armed);
 }
 
 //-----------------------------------------------------------------------------
@@ -310,10 +297,8 @@ void
 TyphoonHM4Interface::_vehicleAdded(Vehicle* vehicle)
 {
     if(!_vehicle) {
-        qCDebug(YuneecLog) << "_vehicleAdded()";
         _vehicle = vehicle;
         connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &TyphoonHM4Interface::_mavlinkMessageReceived);
-        connect(_vehicle, &Vehicle::armedChanged,           this, &TyphoonHM4Interface::_armedChanged);
         //-- Set the "Big Red Button" to bind mode
         _setPowerKey(Yuneec::BIND_KEY_FUNCTION_BIND);
     }
@@ -326,7 +311,6 @@ TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
     if(_vehicle == vehicle) {
         qCDebug(YuneecLog) << "_vehicleRemoved()";
         disconnect(_vehicle, &Vehicle::mavlinkMessageReceived,  this, &TyphoonHM4Interface::_mavlinkMessageReceived);
-        disconnect(_vehicle, &Vehicle::armedChanged,            this, &TyphoonHM4Interface::_armedChanged);
         _vehicle = NULL;
         _rcActive = false;
         emit rcActiveChanged();
