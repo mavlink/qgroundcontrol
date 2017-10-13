@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.43 - Oct 13 2017
+
+*   Major updates to CGOET handling
+
 ### v1.1.42 - Oct 12 2017
 
 *   Added proper palette bars to UI.
