@@ -632,7 +632,7 @@ YuneecCameraControl::factChanged(Fact* pFact)
             //-- Keep requesting it
             if(!_irValid) {
                 _irStatusTimer.setSingleShot(false);
-                _irStatusTimer.setInterval(2000);
+                _irStatusTimer.setInterval(1000);
                 _irStatusTimer.start();
                 _irValid = true;
             }
