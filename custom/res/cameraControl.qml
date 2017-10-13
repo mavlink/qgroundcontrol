@@ -265,11 +265,11 @@ Rectangle {
             sourceSize.width:   width
             source:             "qrc:/typhoonh/img/sliders.svg"
             fillMode:           Image.PreserveAspectFit
-            color:              (!_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED) ? qgcPal.text : qgcPal.colorGrey
+            color:              settingsEnabled ? qgcPal.text : qgcPal.colorGrey
             anchors.horizontalCenter: parent.horizontalCenter
             MouseArea {
                 anchors.fill:   parent
-                enabled:        !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED && _cameraPhotoIdle
+                enabled:        parent.settingsEnabled
                 onClicked: {
                     if(rootLoader.sourceComponent === null) {
                         rootLoader.sourceComponent = cameraSettingsComponent
@@ -278,6 +278,7 @@ Rectangle {
                     }
                 }
             }
+            property bool settingsEnabled: !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED && _cameraPhotoIdle && !_recordingVideo
         }
         Item {
             height:     ScreenTools.defaultFontPixelHeight

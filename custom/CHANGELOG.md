@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.44 - Oct 13 2017
+
+*   Prevent change settings while recording video
+
 ### v1.1.43 - Oct 13 2017
 
 *   Major updates to CGOET handling

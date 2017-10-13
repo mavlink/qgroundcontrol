@@ -415,7 +415,6 @@ Item {
                 fact:       _videoResFact
             }
             //-- CGOET Palette
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode && _isCGOET; }
             QGCLabel { text: qsTr("Palette:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && _isCGOET; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
