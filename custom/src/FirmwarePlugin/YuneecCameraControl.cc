@@ -190,6 +190,13 @@ YuneecCameraControl::aspectRatio()
 
 //-----------------------------------------------------------------------------
 Fact*
+YuneecCameraControl::irPalette()
+{
+    return (_paramComplete && _isCGOET) ? getFact(kCAM_IRPALETTE) : NULL;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
 YuneecCameraControl::minTemp()
 {
     return (_paramComplete && _isCGOET) ? getFact(kCAM_IRTEMPMIN) : NULL;
