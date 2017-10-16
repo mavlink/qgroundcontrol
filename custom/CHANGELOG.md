@@ -1,5 +1,12 @@
 ## DataPilot Release Changelog
 
+### v1.1.45 - Oct 16 2017
+
+*   Implemented Area/Spot ROI (CGOET)
+*   Adjusted graphics showing "Area" size (CGOET)
+*   Added a slider to control the thermal image opacity (when in Blend Mode)
+*   Turn off live video when thermal image mode is set to Full
+
 ### v1.1.44 - Oct 13 2017
 
 *   Prevent change settings while recording video
