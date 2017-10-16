@@ -58,6 +58,7 @@ public:
     Q_PROPERTY(Fact*        videoRes        READ    videoRes            NOTIFY factsLoaded)
     Q_PROPERTY(Fact*        aspectRatio     READ    aspectRatio         NOTIFY factsLoaded)
     Q_PROPERTY(Fact*        irPalette       READ    irPalette           NOTIFY factsLoaded)
+    Q_PROPERTY(Fact*        irROI           READ    irROI               NOTIFY factsLoaded)
     Q_PROPERTY(QPoint       spotArea        READ    spotArea            WRITE  setSpotArea      NOTIFY spotAreaChanged)
     Q_PROPERTY(QSize        videoSize       READ    videoSize           WRITE  setVideoSize     NOTIFY videoSizeChanged)
     Q_PROPERTY(bool         isCGOET         READ    isCGOET             NOTIFY isCGOETChanged)
@@ -106,6 +107,7 @@ public:
     Fact*       irPalette           ();
     Fact*       minTemp             ();
     Fact*       maxTemp             ();
+    Fact*       irROI               ();
     QPoint      spotArea            ();
     void        setSpotArea         (QPoint mouse);
 
@@ -117,8 +119,8 @@ public:
 
     qreal       irCenterTemp        () { return (qreal)_cgoetTempStatus.custom_area.center_val / 100.0; }
     qreal       irAverageTemp       () { return (qreal)_cgoetTempStatus.custom_area.avg_val / 100.0; }
-    qreal       irMinTemp           () { return (qreal)_cgoetTempStatus.all_area.min_val / 100.0; }
-    qreal       irMaxTemp           () { return (qreal)_cgoetTempStatus.all_area.max_val / 100.0; }
+    qreal       irMinTemp           ();
+    qreal       irMaxTemp           ();
     bool        irValid             () { return _irValid; }
     QUrl        palettetBar         ();
 
@@ -148,6 +150,7 @@ signals:
     void    isCGOETChanged          ();
     void    irTempChanged           ();
     void    palettetBarChanged      ();
+    void    irSpotROIChanged        ();
 
 protected:
     void    _setVideoStatus         (VideoStatus status) override;
@@ -187,5 +190,6 @@ private:
     QStringList             _updatesToSend;
     bool                    _inMissionMode;
     bool                    _irValid;
+    Fact*                   _irROI;
     udp_ctrl_cam_lepton_area_temp_t _cgoetTempStatus;
 };

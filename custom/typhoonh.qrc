@@ -69,6 +69,8 @@
         <file alias="rc_battery_charge_20.svg">res/images/rc_battery_charge_20.svg</file>
         <file alias="RightArrow.svg">res/images/RightArrow.svg</file>
         <file alias="sliders.svg">res/images/sliders.svg</file>
+        <file alias="spot-cross.svg">res/images/spot-cross.svg</file>
+        <file alias="spot-area-ir.svg">res/images/spot-area-ir.svg</file>
         <file alias="spotArea.svg">res/images/spotArea.svg</file>
         <file alias="time.svg">res/images/time.svg</file>
         <file alias="TyphoonDown.svg">res/images/TyphoonDown.svg</file>

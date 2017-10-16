@@ -422,6 +422,15 @@ Item {
                 indexModel: false
                 fact:       _irPaletteFact
             }
+            //-- CGOET ROI
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _isCGOET; }
+            QGCLabel { text: qsTr("ROI:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && _isCGOET; }
+            CameraMenu {
+                anchors.verticalCenter: parent.verticalCenter
+                visible:    _isCGOET;
+                indexModel: false
+                fact:       _camera ? _camera.irROI : null
+            }
             //-- SD Card
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; }
             QGCLabel { text: qsTr("SD:"); anchors.verticalCenter: parent.verticalCenter;}

@@ -37,7 +37,7 @@ import TyphoonMediaItem                 1.0
 Rectangle {
     id:         mainRect
     height:     mainCol.height
-    width:      _isThermal ? _indicatorDiameter * 0.85 : _indicatorDiameter
+    width:      _isThermal ? _indicatorDiameter * 0.75 : _indicatorDiameter
     visible:    !QGroundControl.videoManager.fullScreen
     radius:     ScreenTools.defaultFontPixelWidth * 0.5
     color:      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
@@ -389,6 +389,28 @@ Rectangle {
                             width:      cameraSettingsCol.width
                             visible:    _camera && _camera.isCGOET
                         }
+                        Row {
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            visible:        _camera && _camera.isCGOET
+                            QGCLabel {
+                                text:       qsTr("ROI")
+                                width:      _labelFieldWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            FactComboBox {
+                                width:      _editFieldWidth
+                                fact:       _camera ? _camera.irROI : null
+                                indexModel: false
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        Rectangle {
+                            color:      qgcPal.button
+                            height:     1
+                            width:      cameraSettingsCol.width
+                            visible:    _camera && _camera.isCGOET
+                        }
                         Repeater {
                             model:      _camera ? _camera.activeSettings : []
                             Item {
@@ -461,6 +483,7 @@ Rectangle {
                         //-- Screen Grid
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
+                            visible:        _camera && !_camera.isCGOET
                             anchors.horizontalCenter: parent.horizontalCenter
                             QGCLabel {
                                 text:       qsTr("Screen Grid")
@@ -478,6 +501,7 @@ Rectangle {
                             color:      qgcPal.button
                             height:     1
                             width:      cameraSettingsCol.width
+                            visible:    _camera && !_camera.isCGOET
                         }
                         //-------------------------------------------
                         //-- Reset Camera
