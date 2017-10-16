@@ -40,6 +40,7 @@ Item {
     property real   spotSize:           48
     property bool   isSpot:             _camera && _cameraAutoMode && _meteringModeFact && _meteringModeFact.rawValue === 2
     property bool   isCenter:           _camera && _cameraAutoMode && _meteringModeFact && _meteringModeFact.rawValue === 0
+    property bool   isThermal:          !_mainIsMap && _camera && _camera.irValid && _camera.paramComplete && TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver
 
     Rectangle {
         id:             noVideo
@@ -72,7 +73,17 @@ Item {
             anchors.centerIn: parent
             receiver:       QGroundControl.videoManager.videoReceiver
             display:        QGroundControl.videoManager.videoReceiver.videoSurface
-            visible:        QGroundControl.videoManager.videoReceiver.videoRunning
+
+            visible: {
+                if(QGroundControl.videoManager.videoReceiver.videoRunning) {
+                    if (isThermal && TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalFull) {
+                        return false;
+                    }
+                    return true;
+                }
+                return false;
+            }
+
             onWidthChanged: {
                 if(_camera) {
                     _camera.videoSize = Qt.size(width, height);
@@ -171,9 +182,9 @@ Item {
     Item {
         id:                 thermalItem
         width:              height * 1.333333
-        height:             TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalPIP ? ScreenTools.defaultFontPixelHeight * 20 : parent.height * 0.9
+        height:             TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalPIP ? ScreenTools.defaultFontPixelHeight * 20 : parent.height * 0.9444
         anchors.centerIn:   parent
-        visible:            !_mainIsMap && _camera && _camera.paramComplete && TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver && TyphoonHQuickInterface.thermalMode !== TyphoonHQuickInterface.ThermalOff
+        visible:            isThermal && TyphoonHQuickInterface.thermalMode !== TyphoonHQuickInterface.ThermalOff
         function pipOrNot() {
             if(TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalPIP) {
                 console.log('Pip Mode')
@@ -200,35 +211,65 @@ Item {
             anchors.fill:   parent
             receiver:       TyphoonHQuickInterface.videoReceiver
             display:        TyphoonHQuickInterface.videoReceiver ? TyphoonHQuickInterface.videoReceiver.videoSurface : null
-            opacity:        TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend ? 0.85 : 1.0
+            opacity:        TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend ? TyphoonHQuickInterface.thermalOpacity / 100 : 1.0
         }
-        Image {
-            id:                 centerTemp
-            anchors.centerIn:   thermalVideo
-            visible:            thermalItem.visible && _camera && _camera.irValid && TyphoonHQuickInterface.thermalMode !== TyphoonHQuickInterface.ThermalPIP
-            height:             spotSize * 1.5
-            width:              height * 1.5
-            antialiasing:       true
-            mipmap:             true
-            smooth:             true
-            source:             "/typhoonh/img/spotArea.svg"
-            fillMode:           Image.PreserveAspectFit
-            sourceSize.height:  height
-            Rectangle {
-                id:                 tempRect
-                height:             ScreenTools.defaultFontPixelHeight * 2
-                width:              Math.max(tempLabel.width * 1.5, _minLabel)
-                visible:            _camera && _camera.irValid
-                color:              Qt.rgba(0.5, 0, 0, 0.85)
-                radius:             ScreenTools.defaultFontPixelWidth * 0.5
-                anchors.centerIn:   parent
-            }
+    }
+    //-- Area Temperature Indicator
+    Image {
+        visible:            isThermal && _camera.irROI && _camera.irROI.rawValue === 0
+        height:             thermalItem.height * 0.25
+        antialiasing:       true
+        mipmap:             true
+        smooth:             true
+        source:             "/typhoonh/img/spot-area-ir.svg"
+        fillMode:           Image.PreserveAspectFit
+        sourceSize.height:  height
+        anchors.centerIn:   thermalItem
+        //-- Temperature
+        Rectangle {
+            id:                 aTempRect
+            height:             ScreenTools.defaultFontPixelHeight * 2
+            width:              Math.max(aTempLabel.width * 1.5, _minLabel)
+            color:              Qt.rgba(0.5, 0, 0, 0.85)
+            radius:             ScreenTools.defaultFontPixelWidth * 0.5
+            anchors.centerIn:   parent
+        }
+        QGCLabel {
+            id:                 aTempLabel
+            text:               _camera ? _camera.irAverageTemp.toFixed(1) + '°C' : ""
+            color:              "white"
+            font.family:        ScreenTools.demiboldFontFamily
+            anchors.centerIn:   aTempRect
+        }
+    }
+    //-- Spot Temperature Indicator
+    Image {
+        id:                 spotTemp
+        visible:            isThermal && _camera.irROI && _camera.irROI.rawValue !== 0
+        height:             ScreenTools.defaultFontPixelHeight * 2
+        antialiasing:       true
+        mipmap:             true
+        smooth:             true
+        source:             "/typhoonh/img/spot-cross.svg"
+        fillMode:           Image.PreserveAspectFit
+        sourceSize.height:  height
+        anchors.centerIn:   thermalItem
+        //-- Temperature
+        Rectangle {
+            id:                 sTempRect
+            height:             ScreenTools.defaultFontPixelHeight * 2
+            width:              Math.max(sTempLabel.width * 1.5, _minLabel)
+            color:              Qt.rgba(0.5, 0, 0, 0.85)
+            radius:             ScreenTools.defaultFontPixelWidth * 0.5
+            anchors.top:        parent.bottom
+            anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+            anchors.horizontalCenter: parent.horizontalCenter
             QGCLabel {
-                id:                 tempLabel
+                id:                 sTempLabel
                 text:               _camera ? _camera.irCenterTemp.toFixed(1) + '°C' : ""
                 color:              "white"
                 font.family:        ScreenTools.demiboldFontFamily
-                anchors.centerIn:   tempRect
+                anchors.centerIn:   parent
             }
         }
     }
@@ -238,9 +279,9 @@ Item {
         anchors.left:       thermalItem.left
         anchors.leftMargin: ScreenTools.defaultFontPixelHeight * -4
         anchors.top:        parent.top
-        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 6
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 6.5
         width:              ScreenTools.defaultFontPixelWidth  * 4
-        height:             thermalItem.height * 0.6
+        height:             thermalItem.height * 0.5
         visible:            thermalItem.visible && _camera && _camera.irValid && TyphoonHQuickInterface.thermalMode !== TyphoonHQuickInterface.ThermalPIP
         color:              Qt.rgba(0,0,0,0)
         border.width:       1

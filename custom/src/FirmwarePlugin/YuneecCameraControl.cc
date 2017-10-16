@@ -31,9 +31,12 @@ static const char *kCAM_VIDRES      = "CAM_VIDRES";
 static const char *kCAM_WBMODE      = "CAM_WBMODE";
 
 static const char *kCAM_IRPALETTE   = "CAM_IRPALETTE";
+static const char *kCAM_IRTEMPRENA  = "CAM_IRTEMPRENA";
 static const char *kCAM_IRTEMPMAX   = "CAM_IRTEMPMAX";
 static const char *kCAM_IRTEMPMIN   = "CAM_IRTEMPMIN";
 static const char *kCAM_TEMPSTATUS  = "CAM_TEMPSTATUS";
+
+static const char *kIR_ROI          = "ROI";
 
 static const char *kPaleteBars[]    =
 {
@@ -66,6 +69,7 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     , _isCGOET(false)
     , _inMissionMode(false)
     , _irValid(false)
+    , _irROI(NULL)
 {
 
     memset(&_cgoetTempStatus, 0, sizeof(udp_ctrl_cam_lepton_area_temp_t));
@@ -114,6 +118,23 @@ YuneecCameraControl::_parametersReady()
     if(!_paramComplete) {
         qCDebug(YuneecCameraLog) << "All parameters loaded for" << modelName();
         _paramComplete = true;
+        //-- If CGO-ET
+        if(isCGOET()) {
+            //-- Add ROI
+            FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, kIR_ROI, this);
+            QQmlEngine::setObjectOwnership(metaData, QQmlEngine::CppOwnership);
+            metaData->setShortDescription(kIR_ROI);
+            metaData->setLongDescription(kIR_ROI);
+            metaData->setRawDefaultValue(QVariant(0));
+            metaData->setHasControl(true);
+            metaData->setReadOnly(true);
+            metaData->addEnumInfo("Center Area", QVariant(0));
+            metaData->addEnumInfo("Spot", QVariant(1));
+            _irROI = new Fact(_compID, kIR_ROI, FactMetaData::valueTypeUint32, this);
+            QQmlEngine::setObjectOwnership(_irROI, QQmlEngine::CppOwnership);
+            _irROI->setMetaData(metaData);
+            _irROI->_containerSetRawValue(metaData->rawDefaultValue());
+        }
         emit factsLoaded();
         if(!_irValid) {
             _irStatusTimer.start(100);
@@ -196,6 +217,13 @@ Fact*
 YuneecCameraControl::irPalette()
 {
     return (_paramComplete && _isCGOET) ? getFact(kCAM_IRPALETTE) : NULL;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+YuneecCameraControl::irROI()
+{
+    return _irROI;
 }
 
 //-----------------------------------------------------------------------------
@@ -824,4 +852,30 @@ YuneecCameraControl::palettetBar()
     }
     QString urlStr = QString("qrc:/typhoonh/img/flir-%1.png").arg(barStr);
     return QUrl::fromUserInput(urlStr);
+}
+
+//-----------------------------------------------------------------------------
+qreal
+YuneecCameraControl::irMinTemp()
+{
+    Fact* pFact = getFact(kCAM_IRTEMPRENA);
+    if(pFact) {
+        if(pFact->rawValue().toBool()) {
+            return minTemp() ? minTemp()->rawValue().toDouble() : 0.0;
+        }
+    }
+    return (qreal)_cgoetTempStatus.all_area.min_val / 100.0;
+}
+
+//-----------------------------------------------------------------------------
+qreal
+YuneecCameraControl::irMaxTemp()
+{
+    Fact* pFact = getFact(kCAM_IRTEMPRENA);
+    if(pFact) {
+        if(pFact->rawValue().toBool()) {
+            return maxTemp() ? maxTemp()->rawValue().toDouble() : 0.0;
+        }
+    }
+    return (qreal)_cgoetTempStatus.all_area.max_val / 100.0;
 }

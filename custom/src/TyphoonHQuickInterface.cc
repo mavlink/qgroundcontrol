@@ -26,8 +26,9 @@
 extern const char* jniClassName;
 #endif
 
-static const char* kWifiConfig  = "WifiConfig";
-static const char* kUpdateCheck = "YuneecUpdateCheck";
+static const char* kWifiConfig      = "WifiConfig";
+static const char* kUpdateCheck     = "YuneecUpdateCheck";
+static const char* kThermalOpacity  = "ThermalOpacity";
 
 #if defined __android__
 static const char* kUpdateFile = "/storage/sdcard1/update.zip";
@@ -68,12 +69,15 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _distSensorCur(0)
     , _obsState(false)
     , _isFactoryApp(false)
+    , _thermalOpacity(85.0)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
 #if defined __android__
     reset_jni();
     _isFactoryApp = (bool)QAndroidJniObject::callStaticMethod<jboolean>(jniClassName, "isFactoryAppInstalled");
 #endif
+    QSettings settings;
+    _thermalOpacity = settings.value(kThermalOpacity, 85.0).toDouble();
 }
 
 //-----------------------------------------------------------------------------
@@ -1363,6 +1367,20 @@ TyphoonHQuickInterface::setThermalMode(ThermalViewMode mode)
 {
     _thermalMode = mode;
     emit thermalModeChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::setThermalOpacity(double val)
+{
+    if(val < 0.0) val = 0.0;
+    if(val > 100.0) val = 100.0;
+    if(_thermalOpacity != val) {
+        _thermalOpacity = val;
+        QSettings settings;
+        settings.setValue(kThermalOpacity, val);
+        emit thermalOpacityChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------

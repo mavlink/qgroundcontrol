@@ -41,7 +41,7 @@ Slider {
             implicitHeight: _root.sliderTouchArea
             radius:         _root.sliderTouchArea * 0.5
             Label {
-                text:               _root.value
+                text:               _root.value.toFixed(0)
                 anchors.centerIn:   parent
                 font.family:        ScreenTools.normalFontFamily
                 font.pointSize:     ScreenTools.smallFontPointSize

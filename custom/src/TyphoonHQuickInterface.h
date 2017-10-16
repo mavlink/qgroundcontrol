@@ -198,7 +198,8 @@ public:
 
     Q_PROPERTY(VideoReceiver*   videoReceiver       READ    videoReceiver       CONSTANT)
     Q_PROPERTY(bool             thermalImagePresent READ    thermalImagePresent NOTIFY thermalImagePresentChanged)
-    Q_PROPERTY(ThermalViewMode  thermalMode         READ    thermalMode         WRITE  setThermalMode   NOTIFY thermalModeChanged)
+    Q_PROPERTY(ThermalViewMode  thermalMode         READ    thermalMode         WRITE  setThermalMode       NOTIFY thermalModeChanged)
+    Q_PROPERTY(double           thermalOpacity      READ    thermalOpacity      WRITE  setThermalOpacity    NOTIFY thermalOpacityChanged)
 
     Q_PROPERTY(int              distSensorMin       READ    distSensorMin       NOTIFY distSensorMinChanged)
     Q_PROPERTY(int              distSensorMax       READ    distSensorMax       NOTIFY distSensorMaxChanged)
@@ -290,6 +291,8 @@ public:
     VideoReceiver*  videoReceiver   () { return _videoReceiver; }
     ThermalViewMode thermalMode     () { return _thermalMode; }
     void        setThermalMode      (ThermalViewMode mode);
+    double      thermalOpacity      () { return _thermalOpacity; }
+    void        setThermalOpacity   (double val);
 
     int         distSensorMin       () { return _distSensorMin; }
     int         distSensorMax       () { return _distSensorMax; }
@@ -350,6 +353,7 @@ signals:
     void    distSensorCurChanged        ();
     void    obsStateChanged             ();
     void    thermalModeChanged          ();
+    void    thermalOpacityChanged       ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -429,4 +433,5 @@ private:
     int                     _distSensorCur;
     bool                    _obsState;
     bool                    _isFactoryApp;
+    double                  _thermalOpacity;
 };
