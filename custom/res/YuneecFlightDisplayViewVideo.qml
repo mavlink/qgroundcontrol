@@ -73,7 +73,17 @@ Item {
             anchors.centerIn: parent
             receiver:       QGroundControl.videoManager.videoReceiver
             display:        QGroundControl.videoManager.videoReceiver.videoSurface
-            visible:        QGroundControl.videoManager.videoReceiver.videoRunning
+
+            visible: {
+                if(QGroundControl.videoManager.videoReceiver.videoRunning) {
+                    if (isThermal && TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalFull) {
+                        return false;
+                    }
+                    return true;
+                }
+                return false;
+            }
+
             onWidthChanged: {
                 if(_camera) {
                     _camera.videoSize = Qt.size(width, height);
