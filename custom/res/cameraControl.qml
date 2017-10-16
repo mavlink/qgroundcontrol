@@ -392,6 +392,32 @@ Rectangle {
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
+                            visible:        _camera && _camera.isCGOET && TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend
+                            QGCLabel {
+                                text:       qsTr("Blend Opacity")
+                                width:      _labelFieldWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            YSlider {
+                                width:          _editFieldWidth
+                                maximumValue:   100
+                                minimumValue:   0
+                                value:          TyphoonHQuickInterface.thermalOpacity
+                                updateValueWhileDragging: true
+                                onValueChanged: {
+                                    TyphoonHQuickInterface.thermalOpacity = value
+                                }
+                            }
+                        }
+                        Rectangle {
+                            color:      qgcPal.button
+                            height:     1
+                            width:      cameraSettingsCol.width
+                            visible:    _camera && _camera.isCGOET && TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend
+                        }
+                        Row {
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            anchors.horizontalCenter: parent.horizontalCenter
                             visible:        _camera && _camera.isCGOET
                             QGCLabel {
                                 text:       qsTr("ROI")
@@ -529,6 +555,7 @@ Rectangle {
                                         _camera.resetSettings()
                                         QGroundControl.settingsManager.videoSettings.gridLines.rawValue = false
                                         TyphoonHQuickInterface.thermalMode = TyphoonHQuickInterface.ThermalBlend
+                                        TyphoonHQuickInterface.thermalOpacity = 85
                                         resetPrompt.close()
                                     }
                                 }

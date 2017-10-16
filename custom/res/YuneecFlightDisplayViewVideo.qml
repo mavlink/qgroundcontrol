@@ -201,7 +201,7 @@ Item {
             anchors.fill:   parent
             receiver:       TyphoonHQuickInterface.videoReceiver
             display:        TyphoonHQuickInterface.videoReceiver ? TyphoonHQuickInterface.videoReceiver.videoSurface : null
-            opacity:        TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend ? 0.85 : 1.0
+            opacity:        TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend ? TyphoonHQuickInterface.thermalOpacity / 100 : 1.0
         }
     }
     //-- Area Temperature Indicator
