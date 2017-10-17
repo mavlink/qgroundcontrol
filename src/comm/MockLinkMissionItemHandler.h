@@ -88,6 +88,7 @@ private:
     void _handleMissionRequest(const mavlink_message_t& msg);
     void _handleMissionItem(const mavlink_message_t& msg);
     void _handleMissionCount(const mavlink_message_t& msg);
+    void _handleMissionClearAll(const mavlink_message_t& msg);
     void _requestNextMissionItem(int sequenceNumber);
     void _sendAck(MAV_MISSION_RESULT ackType);
     void _startMissionItemResponseTimer(void);
