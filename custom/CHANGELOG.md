@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.46 - Oct 17 2017
+
+*   Temperature Range (CGOET). Note that it needs a new CGOET firmware for it to work.
+
 ### v1.1.45 - Oct 16 2017
 
 *   Implemented Area/Spot ROI (CGOET)
