@@ -909,7 +909,8 @@ void MockLink::_respondWithAutopilotVersion(void)
                                             (uint8_t *)&customVersion,       // os_custom_version,
                                             0,                               // vendor_id,
                                             0,                               // product_id,
-                                            0);                              // uid
+                                            0,                               // uid
+                                            0);                              // uid2
     respondWithMavlinkMessage(msg);
 }
 

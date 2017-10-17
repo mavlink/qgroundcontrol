@@ -396,7 +396,6 @@ private slots:
     void    _mavlinkMessageReceived     (const mavlink_message_t& message);
     void    _dynamicCamerasChanged      ();
     void    _camerasChanged             ();
-    void    _distanceSensor             (int minDist, int maxDist, int curDist);
     void    _internetUpdated            ();
 
 private:

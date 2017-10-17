@@ -33,9 +33,7 @@ extern const char* jniClassName;
 static const char* kWifiConfig      = "WifiConfig";
 static const char* kUpdateCheck     = "YuneecUpdateCheck";
 static const char* kThermalOpacity  = "ThermalOpacity";
-static const char* kWifiConfig  = "WifiConfig";
-static const char* kUpdateCheck = "YuneecUpdateCheck";
-static const char* kFirstRun    = "FirstRun";
+static const char* kFirstRun        = "FirstRun";
 
 #if defined __android__
 static const char* kUpdateFile = "/storage/sdcard1/update.zip";
@@ -141,7 +139,6 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(&_flightTimer,  &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
         connect(&_powerTimer,   &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
 
-        connect(_pHandler, &TyphoonHM4Interface::distanceSensor,               this, &TyphoonHQuickInterface::_distanceSensor);
         connect(getQGCMapEngine(), &QGCMapEngine::internetUpdated,             this, &TyphoonHQuickInterface::_internetUpdated);
         connect(&_scanTimer,       &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
         connect(&_flightTimer,     &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
@@ -171,8 +168,6 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
                 logs.removeAt(0);
             }
         }
-        //-- Give some time (15s) and check to see if we need to check for updates.
-        QTimer::singleShot(15000, this, &TyphoonHQuickInterface::_checkUpdateStatus);
         //-- Thermal video surface must be created before UI
         if(!_videoReceiver) {
             _videoReceiver = new VideoReceiver(this);

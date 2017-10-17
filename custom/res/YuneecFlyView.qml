@@ -98,11 +98,22 @@ Item {
             qsTr("No images will be captured or videos recorded."))
     }
 
+    function indicatorClicked() {
+        var count = _showAttitude ? 5 : 15
+        vehicleStatus.visible = !vehicleStatus.visible
+        _eggCount++
+        toggleTimer.restart()
+        if (_eggCount === count) {
+            vehicleStatus.visible = true
+            _showAttitude = !_showAttitude
+        }
+    }
+
     Timer {
-        id: ssidChanged
-        interval:  5000
-        running:   false;
-        repeat:    false;
+        id:         ssidChanged
+        interval:   5000
+        running:    false;
+        repeat:     false;
         onTriggered: {
             //-- Check if we should update
             if(TyphoonHQuickInterface.shouldWeShowUpdate()) {
@@ -129,14 +140,33 @@ Item {
         }
     }
 
-    function indicatorClicked() {
-        var count = _showAttitude ? 5 : 15
-        vehicleStatus.visible = !vehicleStatus.visible
-        _eggCount++
-        toggleTimer.restart()
-        if (_eggCount === count) {
-            vehicleStatus.visible = true
-            _showAttitude = !_showAttitude
+    Timer {
+        id:         connectionTimer
+        interval:  5000
+        running:   false;
+        repeat:    false;
+        onTriggered: {
+            //-- Vehicle is gone
+            if(_activeVehicle) {
+                //-- Let video stream close
+                QGroundControl.settingsManager.videoSettings.rtspTimeout.rawValue = 1
+                if(!_activeVehicle.armed) {
+                    //-- If it wasn't already set to auto-disconnect
+                    if(!_activeVehicle.autoDisconnect) {
+                        if (guidedController.showResumeMission) {
+                            qgcView.showDialog(connectionLostBatteryResume, qsTr("Connection lost"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+                        } else {
+                            //-- Vehicle is not armed. Close connection and tell user.
+                            _activeVehicle.disconnectInactiveVehicle()
+                            connectionLostDisarmedDialog.open()
+                        }
+                    }
+                } else {
+                    //-- Vehicle is armed. Show doom dialog.
+                    rootLoader.sourceComponent = connectionLostArmed
+                    mainWindow.disableToolbar()
+                }
+            }
         }
     }
 
@@ -183,6 +213,8 @@ Item {
                 connectionTimer.stop();
                 mainWindow.enableToolbar()
                 rootLoader.sourceComponent = null
+                //-- Reset stream timeout
+                QGroundControl.settingsManager.videoSettings.rtspTimeout.rawValue = 60
             } else {
                 if(_activeVehicle && !_activeVehicle.autoDisconnect) {
                     //-- Communication lost
@@ -310,96 +342,6 @@ Item {
         text:               qsTr("Connection to vehicle has been lost and closed.")
         standardButtons:    StandardButton.Ok
         onAccepted:         connectionLostDisarmedDialog.close()
-    }
-
-    Timer {
-        id: connectionTimer
-        interval:  5000
-        running:   false;
-        repeat:    false;
-        onTriggered: {
-            //-- Vehicle is gone
-            if(_activeVehicle) {
-                //-- Let video stream close
-                QGroundControl.settingsManager.videoSettings.rtspTimeout.rawValue = 1
-                if(!_activeVehicle.armed) {
-                    //-- If it wasn't already set to auto-disconnect
-                    if(!_activeVehicle.autoDisconnect) {
-                        if (guidedController.showResumeMission) {
-                            qgcView.showDialog(connectionLostBatteryResume, qsTr("Connection lost"), qgcView.showDialogDefaultWidth, StandardButton.Close)
-                        } else {
-                            //-- Vehicle is not armed. Close connection and tell user.
-                            _activeVehicle.disconnectInactiveVehicle()
-                            connectionLostDisarmedDialog.open()
-                        }
-                    }
-                } else {
-                    //-- Vehicle is armed. Show doom dialog.
-                    rootLoader.sourceComponent = connectionLostArmed
-                    mainWindow.disableToolbar()
-                }
-            }
-        }
-    }
-
-    Connections {
-        target: QGroundControl.multiVehicleManager.activeVehicle
-        onConnectionLostChanged: {
-            if(!_communicationLost) {
-                //-- Communication regained
-                connectionTimer.stop();
-                rootLoader.sourceComponent = null
-                mainWindow.enableToolbar()
-                //-- Reset stream timeout
-                QGroundControl.settingsManager.videoSettings.rtspTimeout.rawValue = 60
-            } else {
-                if(_activeVehicle && !_activeVehicle.autoDisconnect) {
-                    //-- Communication lost
-                    connectionTimer.start();
-                }
-            }
-        }
-    }
-
-    Connections {
-        target: QGroundControl.multiVehicleManager
-        onVehicleAdded: {
-            //-- Reset No SD Card message.
-            _noSdCardMsgShown = false;
-            //-- And comm lost dialog if open
-            connectionLostDisarmedDialog.close()
-        }
-    }
-
-    //-- Handle MicroSD card loaded in camera
-    Connections {
-        target: _camera
-        onStorageTotalChanged: {
-            if(_noSdCard) {
-                if(!_noSdCardMsgShown) {
-                    showNoSDCardMessage();
-                    _noSdCardMsgShown = true;
-                }
-            } else {
-                _noSdCardMsgShown = false;
-                if(rootLoader.sourceComponent === simpleAlert) {
-                    rootLoader.sourceComponent = null
-                }
-            }
-        }
-        onStorageFreeChanged: {
-            if(_fullSD) {
-                if(!_fullSdCardMsgShown) {
-                    showFullSDCardMessage();
-                    _fullSdCardMsgShown = true;
-                }
-            } else {
-                _fullSdCardMsgShown = false;
-                if(rootLoader.sourceComponent === simpleAlert) {
-                    rootLoader.sourceComponent = null
-                }
-            }
-        }
     }
 
     //-- Camera Status
