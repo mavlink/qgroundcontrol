@@ -25,31 +25,28 @@ Item {
     property var map    ///< Map control to place item in
 
     property var _missionItem:      object
-    property var _mapPolygon:       object.mapPolygon
-    property var _gridComponent
+    property var _structurePolygon: object.structurePolygon
+    property var _flightPolygon:    object.flightPolygon
     property var _entryCoordinate
     property var _exitCoordinate
 
     signal clicked(int sequenceNumber)
 
     function _addVisualElements() {
-        _gridComponent = gridComponent.createObject(map)
         _entryCoordinate = entryPointComponent.createObject(map)
         _exitCoordinate = exitPointComponent.createObject(map)
-        map.addMapItem(_gridComponent)
         map.addMapItem(_entryCoordinate)
         map.addMapItem(_exitCoordinate)
     }
 
     function _destroyVisualElements() {
-        _gridComponent.destroy()
         _entryCoordinate.destroy()
         _exitCoordinate.destroy()
     }
 
     /// Add an initial 4 sided polygon if there is none
     function _addInitialPolygon() {
-        if (_mapPolygon.count < 3) {
+        if (_structurePolygon.count < 3) {
             // Initial polygon is inset to take 2/3rds space
             var rect = Qt.rect(map.centerViewport.x, map.centerViewport.y, map.centerViewport.width, map.centerViewport.height)
             rect.x += (rect.width * 0.25) / 2
@@ -71,10 +68,10 @@ Item {
             bottomLeftCoord =   centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 180)
             bottomRightCoord =  centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 180)
 
-            _mapPolygon.appendVertex(topLeftCoord)
-            _mapPolygon.appendVertex(topRightCoord)
-            _mapPolygon.appendVertex(bottomRightCoord)
-            _mapPolygon.appendVertex(bottomLeftCoord)
+            _structurePolygon.appendVertex(topLeftCoord)
+            _structurePolygon.appendVertex(topRightCoord)
+            _structurePolygon.appendVertex(bottomRightCoord)
+            _structurePolygon.appendVertex(bottomLeftCoord)
         }
     }
 
@@ -88,9 +85,8 @@ Item {
     }
 
     QGCMapPolygonVisuals {
-        id:                 mapPolygonVisuals
         mapControl:         map
-        mapPolygon:         _mapPolygon
+        mapPolygon:         _structurePolygon
         interactive:        _missionItem.isCurrentItem
         borderWidth:        1
         borderColor:        "black"
@@ -98,15 +94,12 @@ Item {
         interiorOpacity:    0.5
     }
 
-    // Survey grid lines
-    Component {
-        id: gridComponent
-
-        MapPolyline {
-            line.color: "white"
-            line.width: 2
-            path:       _missionItem.gridPoints
-        }
+    QGCMapPolygonVisuals {
+        mapControl:         map
+        mapPolygon:         _flightPolygon
+        interactive:        false
+        borderWidth:        2
+        borderColor:        "white"
     }
 
     // Entry point
