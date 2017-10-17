@@ -64,9 +64,6 @@ public:
     Q_PROPERTY(bool         isCGOET         READ    isCGOET             NOTIFY isCGOETChanged)
     Q_PROPERTY(bool         paramComplete   READ    paramComplete       NOTIFY factsLoaded)
 
-    Q_PROPERTY(Fact*        minTemp         READ    minTemp             NOTIFY factsLoaded)
-    Q_PROPERTY(Fact*        maxTemp         READ    maxTemp             NOTIFY factsLoaded)
-
     Q_PROPERTY(qreal        irCenterTemp    READ    irCenterTemp        NOTIFY irTempChanged)
     Q_PROPERTY(qreal        irAverageTemp   READ    irAverageTemp       NOTIFY irTempChanged)
     Q_PROPERTY(qreal        irMinTemp       READ    irMinTemp           NOTIFY irTempChanged)
@@ -105,8 +102,6 @@ public:
     Fact*       videoRes            ();
     Fact*       aspectRatio         ();
     Fact*       irPalette           ();
-    Fact*       minTemp             ();
-    Fact*       maxTemp             ();
     Fact*       irROI               ();
     QPoint      spotArea            ();
     void        setSpotArea         (QPoint mouse);

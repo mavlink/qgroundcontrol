@@ -227,20 +227,6 @@ YuneecCameraControl::irROI()
 }
 
 //-----------------------------------------------------------------------------
-Fact*
-YuneecCameraControl::minTemp()
-{
-    return (_paramComplete && _isCGOET) ? getFact(kCAM_IRTEMPMIN) : NULL;
-}
-
-//-----------------------------------------------------------------------------
-Fact*
-YuneecCameraControl::maxTemp()
-{
-    return (_paramComplete && _isCGOET) ? getFact(kCAM_IRTEMPMAX) : NULL;
-}
-
-//-----------------------------------------------------------------------------
 QString
 YuneecCameraControl::recordTimeStr()
 {
@@ -858,24 +844,40 @@ YuneecCameraControl::palettetBar()
 qreal
 YuneecCameraControl::irMinTemp()
 {
-    Fact* pFact = getFact(kCAM_IRTEMPRENA);
-    if(pFact) {
-        if(pFact->rawValue().toBool()) {
-            return minTemp() ? minTemp()->rawValue().toDouble() : 0.0;
+    Fact* pRangeEnabledFact = (_paramComplete && _isCGOET) ? getFact(kCAM_IRTEMPRENA) : NULL;
+    if(pRangeEnabledFact) {
+        //-- Is range enabled?
+        if(pRangeEnabledFact->rawValue().toBool()) {
+            Fact* pMinTempFact = getFact(kCAM_IRTEMPMIN);
+            if(pMinTempFact) {
+                return pMinTempFact->rawValue().toDouble();
+            }
+            return 0.0;
+        } else {
+            //-- Range not enabled. Return entire scene min temperature.
+            return (qreal)_cgoetTempStatus.all_area.min_val / 100.0;
         }
     }
-    return (qreal)_cgoetTempStatus.all_area.min_val / 100.0;
+    return 0.0;
 }
 
 //-----------------------------------------------------------------------------
 qreal
 YuneecCameraControl::irMaxTemp()
 {
-    Fact* pFact = getFact(kCAM_IRTEMPRENA);
-    if(pFact) {
-        if(pFact->rawValue().toBool()) {
-            return maxTemp() ? maxTemp()->rawValue().toDouble() : 0.0;
+    Fact* pRangeEnabledFact = (_paramComplete && _isCGOET) ? getFact(kCAM_IRTEMPRENA) : NULL;
+    if(pRangeEnabledFact) {
+        //-- Is range enabled?
+        if(pRangeEnabledFact->rawValue().toBool()) {
+            Fact* pMaxTempFact = getFact(kCAM_IRTEMPMAX);
+            if(pMaxTempFact) {
+                return pMaxTempFact->rawValue().toDouble();
+            }
+            return 0.0;
+        } else {
+            //-- Range not enabled. Return entire scene max temperature.
+            return (qreal)_cgoetTempStatus.all_area.max_val / 100.0;
         }
     }
-    return (qreal)_cgoetTempStatus.all_area.max_val / 100.0;
+    return 0.0;
 }
