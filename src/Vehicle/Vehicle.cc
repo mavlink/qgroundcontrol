@@ -1413,8 +1413,9 @@ void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double y
         _headingFact.setRawValue(0);
     } else {
         yaw = yaw * (180.0 / M_PI);
-        if (yaw < 0) yaw += 360;
-        _headingFact.setRawValue(yaw);
+        if (yaw < 0.0) yaw += 360.0;
+        // truncate to integer so widget never displays 360
+        _headingFact.setRawValue(trunc(yaw));
     }
 }
 
