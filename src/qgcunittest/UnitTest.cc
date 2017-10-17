@@ -391,6 +391,12 @@ void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot)
     QVERIFY(qgcApp()->toolbox()->multiVehicleManager()->parameterReadyVehicleAvailable());
     _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
     QVERIFY(_vehicle);
+
+    // Wait for plan request to complete
+    if (!_vehicle->initialPlanRequestComplete()) {
+        QSignalSpy spyPlan(_vehicle, SIGNAL(initialPlanRequestCompleteChanged(bool)));
+        QCOMPARE(spyPlan.wait(10000), true);
+    }
 }
 
 void UnitTest::_disconnectMockLink(void)

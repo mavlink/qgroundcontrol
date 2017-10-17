@@ -43,11 +43,13 @@ QGCView {
     property var    _geoFenceController:    _planMasterController.geoFenceController
     property var    _rallyPointController:  _planMasterController.rallyPointController
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
+    property var    _videoReceiver:         QGroundControl.videoManager.videoReceiver
+    property bool   _recordingVideo:        _videoReceiver && _videoReceiver.recording
     property bool   _mainIsMap:             QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
     property bool   _isPipVisible:          QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
     property real   _savedZoomLevel:        0
     property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
-    property real   _pipSize:               mainWindow.width * 0.2
+    property real   _pipSize:               flightView.width * 0.2
     property alias  _guidedController:      guidedActionsController
     property alias  _altitudeSlider:        altitudeSlider
 
@@ -92,13 +94,7 @@ QGCView {
         QGroundControl.saveBoolGlobalSetting(_PIPVisibleKey, state)
     }
 
-    function px4JoystickCheck() {
-        if ( _activeVehicle && !_activeVehicle.supportsManualControl && (QGroundControl.settingsManager.appSettings.virtualJoystick.value || _activeVehicle.joystickEnabled)) {
-            px4JoystickSupport.open()
-        }
-    }
-
-    PlanElemementMasterController {
+    PlanMasterController {
         id:                     masterController
         Component.onCompleted:  start(false /* editMode */)
     }
@@ -109,28 +105,8 @@ QGCView {
         onResumeMissionUploadFail:  guidedActionsController.confirmAction(guidedActionsController.actionResumeMissionUploadFail)
     }
 
-    MessageDialog {
-        id:     px4JoystickSupport
-        text:   qsTr("Joystick support requires MAVLink MANUAL_CONTROL support. ") +
-                qsTr("The firmware you are running does not normally support this. ") +
-                qsTr("It will only work if you have modified the firmware to add MANUAL_CONTROL support.")
-    }
-
-    Connections {
-        target:                 QGroundControl.multiVehicleManager
-        onActiveVehicleChanged: px4JoystickCheck()
-    }
-
-    Connections {
-        target:         QGroundControl.settingsManager.appSettings.virtualJoystick
-        onValueChanged: px4JoystickCheck()
-    }
-
-    onActiveVehicleJoystickEnabledChanged: px4JoystickCheck()
-
     Component.onCompleted: {
         setStates()
-        px4JoystickCheck()
         if(QGroundControl.corePlugin.options.flyViewOverlay.toString().length) {
             flyViewOverlay.source = QGroundControl.corePlugin.options.flyViewOverlay
         }
@@ -222,7 +198,7 @@ QGCView {
             z:  _mainIsMap ? _panel.z + 1 : _panel.z + 2
             anchors.left:   _panel.left
             anchors.bottom: _panel.bottom
-            visible:        _mainIsMap || _isPipVisible
+            visible:        _mainIsMap || _isPipVisible && !QGroundControl.videoManager.fullScreen
             width:          _mainIsMap ? _panel.width  : _pipSize
             height:         _mainIsMap ? _panel.height : _pipSize * (9/16)
             states: [
@@ -249,6 +225,7 @@ QGCView {
                 flightWidgets:              flightDisplayViewWidgets
                 rightPanelWidth:            ScreenTools.defaultFontPixelHeight * 9
                 qgcView:                    root
+                multiVehicleView:           !singleVehicleView.checked
                 scaleState:                 (_mainIsMap && flyViewOverlay.item) ? (flyViewOverlay.item.scaleState ? flyViewOverlay.item.scaleState : "bottomMode") : "bottomMode"
             }
         }
@@ -300,7 +277,7 @@ QGCView {
             anchors.left:       _panel.left
             anchors.bottom:     _panel.bottom
             anchors.margins:    ScreenTools.defaultFontPixelHeight
-            visible:            QGroundControl.videoManager.hasVideo
+            visible:            QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen
             isHidden:           !_isPipVisible
             isDark:             isBackgroundDark
             onActivated: {
@@ -309,6 +286,9 @@ QGCView {
             }
             onHideIt: {
                 setPipVisibility(!state)
+            }
+            onNewWidth: {
+                _pipSize = newWidth
             }
         }
 
@@ -334,7 +314,7 @@ QGCView {
 
             QGCRadioButton {
                 exclusiveGroup: multiVehicleSelectorGroup
-                text:           qsTr("Multi-Vehicle (WIP)")
+                text:           qsTr("Multi-Vehicle")
                 color:          mapPal.text
             }
         }
@@ -342,14 +322,14 @@ QGCView {
         FlightDisplayViewWidgets {
             id:                 flightDisplayViewWidgets
             z:                  _panel.z + 4
-            height:             ScreenTools.availableHeight
+            height:             ScreenTools.availableHeight - (singleMultiSelector.visible ? singleMultiSelector.height + _margins : 0)
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
             anchors.bottom:     parent.bottom
             qgcView:            root
             useLightColors:     isBackgroundDark
             missionController:  _missionController
-            visible:            singleVehicleView.checked
+            visible:            singleVehicleView.checked && !QGroundControl.videoManager.fullScreen
         }
 
         //-------------------------------------------------------------------------
@@ -357,6 +337,7 @@ QGCView {
         Loader {
             id:                 flyViewOverlay
             z:                  flightDisplayViewWidgets.z + 1
+            visible:            !QGroundControl.videoManager.fullScreen
             height:             ScreenTools.availableHeight
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
@@ -373,15 +354,25 @@ QGCView {
             anchors.right:      _flightVideo.right
             height:             ScreenTools.defaultFontPixelHeight * 2
             width:              height
-            visible:            QGroundControl.videoManager.videoReceiver.videoRunning && QGroundControl.settingsManager.videoSettings.showRecControl.rawValue && !_isCamera
+            visible:            _videoReceiver && _videoReceiver.videoRunning && QGroundControl.settingsManager.videoSettings.showRecControl.rawValue && _flightVideo.visible && !_isCamera && !QGroundControl.videoManager.fullScreen
             opacity:            0.75
 
+            readonly property string recordBtnBackground: "BackgroundName"
+
             Rectangle {
+                id:                 recordBtnBackground
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 width:              height
-                radius:             QGroundControl.videoManager && QGroundControl.videoManager.videoReceiver && QGroundControl.videoManager.videoReceiver.recording ? 0 : height
+                radius:             _recordingVideo ? 0 : height
                 color:              "red"
+
+                SequentialAnimation on visible {
+                    running:        _recordingVideo
+                    loops:          Animation.Infinite
+                    PropertyAnimation { to: false; duration: 1000 }
+                    PropertyAnimation { to: true;  duration: 1000 }
+                }
             }
 
             QGCColoredImage {
@@ -391,13 +382,24 @@ QGCView {
                 width:                      height * 0.625
                 sourceSize.width:           width
                 source:                     "/qmlimages/CameraIcon.svg"
+                visible:                    recordBtnBackground.visible
                 fillMode:                   Image.PreserveAspectFit
                 color:                      "white"
             }
 
             MouseArea {
                 anchors.fill:   parent
-                onClicked:      QGroundControl.videoManager.videoReceiver && QGroundControl.videoManager.videoReceiver.recording ? QGroundControl.videoManager.videoReceiver.stopRecording() : QGroundControl.videoManager.videoReceiver.startRecording()
+                onClicked: {
+                    if (_videoReceiver) {
+                        if (_recordingVideo) {
+                            _videoReceiver.stopRecording()
+                            // reset blinking animation
+                            recordBtnBackground.visible = true
+                        } else {
+                            _videoReceiver.startRecording()
+                        }
+                    }
+                }
             }
         }
 
@@ -407,10 +409,9 @@ QGCView {
             anchors.right:      parent.right
             anchors.bottom:     parent.bottom
             width:              ScreenTools.defaultFontPixelWidth * 30
-            visible:            !singleVehicleView.checked
+            visible:            !singleVehicleView.checked && !QGroundControl.videoManager.fullScreen
             z:                  _panel.z + 4
         }
-
 
         //-- Virtual Joystick
         Loader {
@@ -418,7 +419,7 @@ QGCView {
             z:                          _panel.z + 5
             width:                      parent.width  - (_flightVideoPipControl.width / 2)
             height:                     Math.min(ScreenTools.availableHeight * 0.25, ScreenTools.defaultFontPixelWidth * 16)
-            visible:                    _virtualJoystick ? _virtualJoystick.value : false
+            visible:                    (_virtualJoystick ? _virtualJoystick.value : false) && !QGroundControl.videoManager.fullScreen
             anchors.bottom:             _flightVideoPipControl.top
             anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
             anchors.horizontalCenter:   flightDisplayViewWidgets.horizontalCenter
@@ -431,7 +432,7 @@ QGCView {
         }
 
         ToolStrip {
-            visible:            _activeVehicle ? _activeVehicle.guidedModeSupported : true
+            visible:            (_activeVehicle ? _activeVehicle.guidedModeSupported : true) && !QGroundControl.videoManager.fullScreen
             id:                 toolStrip
             anchors.leftMargin: ScreenTools.defaultFontPixelWidth
             anchors.left:       _panel.left

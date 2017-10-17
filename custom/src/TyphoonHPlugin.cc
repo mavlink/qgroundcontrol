@@ -147,6 +147,13 @@ public:
     bool        missionWaypointsOnly           () const final { return true; }
     bool        multiVehicleEnabled            () const final { return false; }
 
+#if defined(__planner__)
+    //-- TODO: Desktop Planner is a native QML build. We don't yet have a
+    //   file dialog for it.
+    bool        showOfflineMapExport           () const final { return false; }
+    bool        showOfflineMapImport           () const final { return false; }
+#endif
+
 private slots:
     void _advancedChanged(bool advanced);
 
@@ -267,6 +274,14 @@ TyphoonHPlugin::setToolbox(QGCToolbox* toolbox)
     qmlRegisterSingletonType<TyphoonHQuickInterface>("TyphoonHQuickInterface", 1, 0, "TyphoonHQuickInterface", typhoonHQuickInterfaceSingletonFactory);
     _pHandler->init();
 #endif
+    //-- Save current version
+    QString versionPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/version");
+    QFile f(versionPath);
+    f.open(QIODevice::WriteOnly);
+    if(f.isOpen()){
+        QTextStream s(&f);
+        s << qgcApp()->applicationVersion();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -297,13 +312,13 @@ TyphoonHPlugin::settingsPages()
                 QUrl::fromUserInput("qrc:/res/gear-white.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pGeneral));
+#if !defined (__planner__)
         if(!_pOfflineMaps) {
             _pOfflineMaps = new QGCSettings(tr("Offline Maps"),
                 QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"),
                 QUrl::fromUserInput("qrc:/typhoonh/img/mapIcon.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pOfflineMaps));
-#if !defined (__planner__)
         if (_showAdvancedUI) {
             if(!_pMAVLink) {
                 _pMAVLink = new QGCSettings(tr("MAVLink"),
@@ -417,8 +432,12 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
     } else if (metaData.name() == VideoSettings::videoAspectRatioName) {
         metaData.setRawDefaultValue(1.777777);
         return false;
-        //-- Default Palette
+    } else if (metaData.name() == VideoSettings::rtspTimeoutName) {
+        //-- Wait 60 seconds before giving up on video
+        metaData.setRawDefaultValue(60);
+        return false;
      } else if (metaData.name() == AppSettings::indoorPaletteName) {
+        //-- Default Palette
         QVariant outdoorPalette;
 #if defined (__mobile__) && !defined(__planner__)
         outdoorPalette = 0;
@@ -441,16 +460,30 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         metaData.setRawDefaultValue(25);
         metaData.setRawMax(121.92); // 400 feet
         return true;
+#if defined (__planner__)
+    } else if (metaData.name() == AppSettings::batteryPercentRemainingAnnounceSettingsName) {
+        return false;
+    } else if (metaData.name() == AppSettings::telemetrySaveNotArmedName) {
+        return false;
+#endif
     } else if (metaData.name() == AppSettings::telemetrySaveName) {
         metaData.setRawDefaultValue(true);
+#if defined (__planner__)
+        return false;
+#else
         return true;
+#endif
     } else if (metaData.name() == AppSettings::appFontPointSizeName) {
 #if defined(__androidx86__)
         int defaultFontPointSize = 16;
         metaData.setRawDefaultValue(defaultFontPointSize);
 #elif defined(__mobile__)
-        //-- This is for when using Mac OS to simulate the ST16 (Development only)
+        //-- This is for when using Desktop to simulate the ST16 (Development only)
+#if defined(WIN32)
+        int defaultFontPointSize = 8;
+#else
         int defaultFontPointSize = 10;
+#endif
         metaData.setRawDefaultValue(defaultFontPointSize);
 #endif
         return false;

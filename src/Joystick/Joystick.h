@@ -72,6 +72,7 @@ public:
     Q_INVOKABLE QString getButtonAction(int button);
 
     Q_PROPERTY(int throttleMode READ throttleMode WRITE setThrottleMode NOTIFY throttleModeChanged)
+    Q_PROPERTY(bool negativeThrust READ negativeThrust WRITE setNegativeThrust NOTIFY negativeThrustChanged)
     Q_PROPERTY(float exponential READ exponential WRITE setExponential NOTIFY exponentialChanged)
     Q_PROPERTY(bool accumulator READ accumulator WRITE setAccumulator NOTIFY accumulatorChanged)
 	Q_PROPERTY(bool requiresCalibration READ requiresCalibration CONSTANT)
@@ -105,6 +106,9 @@ public:
 
     int throttleMode(void);
     void setThrottleMode(int mode);
+
+    bool negativeThrust(void);
+    void setNegativeThrust(bool allowNegative);
 
     float exponential(void);
     void setExponential(float expo);
@@ -141,6 +145,8 @@ signals:
 
     void throttleModeChanged(int mode);
 
+    void negativeThrustChanged(bool allowNegative);
+
     void exponentialChanged(float exponential);
 
     void accumulatorChanged(bool accumulator);
@@ -175,6 +181,7 @@ private:
     virtual int _getAxis(int i) = 0;
     virtual uint8_t _getHat(int hat,int i) = 0;
 
+    void _updateTXModeSettingsKey(Vehicle* activeVehicle);
     int _mapFunctionMode(int mode, int function);
     void _remapAxes(int currentMode, int newMode, int (&newMapping)[maxFunction]);
 
@@ -205,6 +212,8 @@ protected:
     quint16             _lastButtonBits;
 
     ThrottleMode_t      _throttleMode;
+
+    bool                _negativeThrust;
 
     float                _exponential;
     bool                _accumulator;

@@ -23,14 +23,14 @@ GPSManager::GPSManager(QGCApplication* app, QGCToolbox* toolbox)
 
 GPSManager::~GPSManager()
 {
-    cleanup();
+    disconnectGPS();
 }
 
 void GPSManager::connectGPS(const QString& device)
 {
     RTKSettings* rtkSettings = qgcApp()->toolbox()->settingsManager()->rtkSettings();
 
-    cleanup();
+    disconnectGPS();
     _requestGpsStop = false;
     _gpsProvider = new GPSProvider(device, true, rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(), rtkSettings->surveyInMinObservationDuration()->rawValue().toInt(), _requestGpsStop);
     _gpsProvider->start();
@@ -49,17 +49,7 @@ void GPSManager::connectGPS(const QString& device)
     emit onConnect();
 }
 
-void GPSManager::GPSPositionUpdate(GPSPositionMessage msg)
-{
-    qCDebug(RTKGPSLog) << QString("GPS: got position update: alt=%1, long=%2, lat=%3").arg(msg.position_data.alt).arg(msg.position_data.lon).arg(msg.position_data.lat);
-}
-void GPSManager::GPSSatelliteUpdate(GPSSatelliteMessage msg)
-{
-    qCDebug(RTKGPSLog) << QString("GPS: got satellite info update, %1 satellites").arg((int)msg.satellite_data.count);
-    emit satelliteUpdate(msg.satellite_data.count);
-}
-
-void GPSManager::cleanup()
+void GPSManager::disconnectGPS(void)
 {
     if (_gpsProvider) {
         _requestGpsStop = true;
@@ -72,4 +62,17 @@ void GPSManager::cleanup()
     if (_rtcmMavlink) {
         delete(_rtcmMavlink);
     }
+    _gpsProvider = NULL;
+    _rtcmMavlink = NULL;
+}
+
+
+void GPSManager::GPSPositionUpdate(GPSPositionMessage msg)
+{
+    qCDebug(RTKGPSLog) << QString("GPS: got position update: alt=%1, long=%2, lat=%3").arg(msg.position_data.alt).arg(msg.position_data.lon).arg(msg.position_data.lat);
+}
+void GPSManager::GPSSatelliteUpdate(GPSSatelliteMessage msg)
+{
+    qCDebug(RTKGPSLog) << QString("GPS: got satellite info update, %1 satellites").arg((int)msg.satellite_data.count);
+    emit satelliteUpdate(msg.satellite_data.count);
 }

@@ -5,7 +5,7 @@ set -e
 
 # deploy to s3
 $(aws ecr get-login --region eu-central-1 --no-include-email)
-S3_BUCKET_NAME=08f61bbd-8958-433e-8e83-5d79160fa0be
+S3_BUCKET_NAME=2c70f0fa-1d5f-fbbd-e789-ead53fd00456
 export AWS_CREDENTIAL_FILE=/var/lib/jenkins/.aws/credentials
 
 apk_path=/tmp/datapilot_build/release/package
@@ -34,5 +34,5 @@ s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-pu
 s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/version s3://${S3_BUCKET_NAME}/datapilot/$version/version;
 s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/hash s3://${S3_BUCKET_NAME}/datapilot/latest/hash;
 s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/hash s3://${S3_BUCKET_NAME}/datapilot/$version/hash;
-#s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/changelog s3://${S3_BUCKET_NAME}/datapilot/latest/changelog;
-#s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/changelog s3://${S3_BUCKET_NAME}/datapilot/$version/changelog;
+s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put ./custom/CHANGELOG.md s3://${S3_BUCKET_NAME}/datapilot/latest/changelog;
+s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put ./custom/CHANGELOG.md s3://${S3_BUCKET_NAME}/datapilot/$version/changelog;

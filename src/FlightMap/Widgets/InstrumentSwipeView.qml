@@ -41,6 +41,10 @@ Item {
         showPage(_currentPage)
     }
 
+    function currentPage() {
+        return _currentPage
+    }
+
     MouseArea {
         anchors.fill:   parent
         onClicked:      showNextPage()

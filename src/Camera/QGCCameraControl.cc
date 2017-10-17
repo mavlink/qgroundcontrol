@@ -28,6 +28,8 @@ static const char* kExclusion       = "exclude";
 static const char* kExclusions      = "exclusions";
 static const char* kLocale          = "locale";
 static const char* kLocalization    = "localization";
+static const char* kMax             = "max";
+static const char* kMin             = "min";
 static const char* kModel           = "model";
 static const char* kName            = "name";
 static const char* kOption          = "option";
@@ -39,9 +41,11 @@ static const char* kParameterranges = "parameterranges";
 static const char* kParameters      = "parameters";
 static const char* kReadOnly        = "readonly";
 static const char* kRoption         = "roption";
+static const char* kStep            = "step";
 static const char* kStrings         = "strings";
 static const char* kTranslated      = "translated";
 static const char* kType            = "type";
+static const char* kUnit            = "unit";
 static const char* kUpdate          = "update";
 static const char* kUpdates         = "updates";
 static const char* kValue           = "value";
@@ -120,6 +124,7 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     , _netManager(NULL)
     , _cameraMode(CAM_MODE_UNDEFINED)
     , _video_status(VIDEO_CAPTURE_STATUS_UNDEFINED)
+    , _photo_status(PHOTO_CAPTURE_STATUS_UNDEFINED)
     , _storageInfoRetries(0)
     , _captureInfoRetries(0)
 {
@@ -195,6 +200,13 @@ QGCCameraControl::videoStatus()
 }
 
 //-----------------------------------------------------------------------------
+QGCCameraControl::PhotoStatus
+QGCCameraControl::photoStatus()
+{
+    return _photo_status;
+}
+
+//-----------------------------------------------------------------------------
 QString
 QGCCameraControl::storageFreeStr()
 {
@@ -252,7 +264,7 @@ QGCCameraControl::takePhoto()
 {
     qCDebug(CameraControlLog) << "takePhoto()";
     //-- Check if camera can capture photos or if it can capture it while in Video Mode
-    if(!capturesPhotos() || (cameraMode() == CAM_MODE_VIDEO && !photosInVideoMode())) {
+    if(!capturesPhotos() || (cameraMode() == CAM_MODE_VIDEO && !photosInVideoMode()) || photoStatus() != PHOTO_CAPTURE_IDLE) {
         return false;
     }
     if(capturesPhotos()) {
@@ -263,6 +275,8 @@ QGCCameraControl::takePhoto()
             0,                                          // Reserved (Set to 0)
             0,                                          // Duration between two consecutive pictures (in seconds--ignored if single image)
             1);                                         // Number of images to capture total - 0 for unlimited capture
+        _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
+        _captureInfoRetries = 0;
         //-- Capture local image as well
         QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
         QDir().mkpath(photoPath);
@@ -375,6 +389,7 @@ QGCCameraControl::formatCard(int id)
 void
 QGCCameraControl::_requestCaptureStatus()
 {
+    qCDebug(CameraControlLog) << "_requestCaptureStatus()";
     _vehicle->sendMavCommand(
         _compID,                                // target component
         MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS,  // command id
@@ -398,7 +413,10 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
     if(_vehicle->id() != vehicleId || compID() != component) {
         return;
     }
-    if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
+    if(!noReponseFromVehicle && result == MAV_RESULT_IN_PROGRESS) {
+        //-- Do Nothing
+        qCDebug(CameraControlLog) << "In progress response for" << command;
+    }else if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
         switch(command) {
             case MAV_CMD_RESET_CAMERA_SETTINGS:
                 if(isBasic()) {
@@ -414,6 +432,7 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                 break;
             case MAV_CMD_VIDEO_STOP_CAPTURE:
                 _setVideoStatus(VIDEO_CAPTURE_STATUS_STOPPED);
+                _captureStatusTimer.start(1000);
                 break;
             case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
                 _captureInfoRetries = 0;
@@ -432,16 +451,23 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                 qCDebug(CameraControlLog) << "Command failed for" << command;
             }
             switch(command) {
+                case MAV_CMD_IMAGE_START_CAPTURE:
+                    if(++_captureInfoRetries < 5) {
+                        _captureStatusTimer.start(1000);
+                    } else {
+                        qCDebug(CameraControlLog) << "Giving up requesting capture status";
+                    }
+                    break;
                 case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
                     if(++_captureInfoRetries < 3) {
-                        _requestCaptureStatus();
+                        _captureStatusTimer.start(500);
                     } else {
                         qCDebug(CameraControlLog) << "Giving up requesting capture status";
                     }
                     break;
                 case MAV_CMD_REQUEST_STORAGE_INFORMATION:
                     if(++_storageInfoRetries < 3) {
-                        _requestStorageInfo();
+                        QTimer::singleShot(500, this, &QGCCameraControl::_requestStorageInfo);
                     } else {
                         qCDebug(CameraControlLog) << "Giving up requesting storage status";
                     }
@@ -460,6 +486,16 @@ QGCCameraControl::_setVideoStatus(VideoStatus status)
     if(_video_status != status) {
         _video_status = status;
         emit videoStatusChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::_setPhotoStatus(PhotoStatus status)
+{
+    if(_photo_status != status) {
+        _photo_status = status;
+        emit photoStatusChanged();
     }
 }
 
@@ -567,6 +603,10 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
             qCritical() << QString("Unknown type for parameter %1").arg(factName);
             return false;
         }
+        //-- By definition, custom types do not have control
+        if(factType == FactMetaData::valueTypeCustom) {
+            control = false;
+        }
         //-- Description
         QString description;
         if(!read_value(parameterNode, kDescription, description)) {
@@ -639,6 +679,62 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
             qWarning() << QStringLiteral("Duplicate fact name:") << factName;
             delete metaData;
         } else {
+            {
+                //-- Check for Min Value
+                QString attr;
+                if(read_attribute(parameterNode, kMin, attr)) {
+                    QVariant typedValue;
+                    QString  errorString;
+                    if (metaData->convertAndValidateRaw(attr, true /* convertOnly */, typedValue, errorString)) {
+                        metaData->setRawMin(typedValue);
+                    } else {
+                        qWarning() << "Invalid min value for" << factName
+                                   << " type:"  << metaData->type()
+                                   << " value:" << attr
+                                   << " error:" << errorString;
+                    }
+                }
+            }
+            {
+                //-- Check for Max Value
+                QString attr;
+                if(read_attribute(parameterNode, kMax, attr)) {
+                    QVariant typedValue;
+                    QString  errorString;
+                    if (metaData->convertAndValidateRaw(attr, true /* convertOnly */, typedValue, errorString)) {
+                        metaData->setRawMax(typedValue);
+                    } else {
+                        qWarning() << "Invalid max value for" << factName
+                                   << " type:"  << metaData->type()
+                                   << " value:" << attr
+                                   << " error:" << errorString;
+                    }
+                }
+            }
+            {
+                //-- Check for Step Value
+                QString attr;
+                if(read_attribute(parameterNode, kStep, attr)) {
+                    QVariant typedValue;
+                    QString  errorString;
+                    if (metaData->convertAndValidateRaw(attr, true /* convertOnly */, typedValue, errorString)) {
+                        metaData->setIncrement(typedValue.toDouble());
+                    } else {
+                        qWarning() << "Invalid step value for" << factName
+                                   << " type:"  << metaData->type()
+                                   << " value:" << attr
+                                   << " error:" << errorString;
+                    }
+                }
+            }
+            {
+                //-- Check for Units
+                QString attr;
+                if(read_attribute(parameterNode, kUnit, attr)) {
+                    metaData->setRawUnits(attr);
+                }
+            }
+            qCDebug(CameraControlLog) << "New parameter:" << factName;
             _nameToFactMetaDataMap[factName] = metaData;
             Fact* pFact = new Fact(_compID, factName, factType, this);
             QQmlEngine::setObjectOwnership(pFact, QQmlEngine::CppOwnership);
@@ -1068,11 +1164,17 @@ QGCCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap
         _storageFree = cap.available_capacity;
         emit storageFreeChanged();
     }
-    //-- Video Capture Status
-    _setVideoStatus((VideoStatus)cap.video_status);
+    //-- Video/Image Capture Status
+    uint8_t vs = cap.video_status < (uint8_t)VIDEO_CAPTURE_STATUS_LAST ? cap.video_status : (uint8_t)VIDEO_CAPTURE_STATUS_UNDEFINED;
+    uint8_t ps = cap.image_status < (uint8_t)PHOTO_CAPTURE_LAST ? cap.image_status : (uint8_t)PHOTO_CAPTURE_STATUS_UNDEFINED;
+    _setVideoStatus((VideoStatus)vs);
+    _setPhotoStatus((PhotoStatus)ps);
     //-- Keep asking for it once in a while when recording
     if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
         _captureStatusTimer.start(5000);
+    //-- Same while image capture is busy
+    } else if(photoStatus() != PHOTO_CAPTURE_IDLE) {
+        _captureStatusTimer.start(1000);
     }
 }
 
@@ -1322,4 +1424,21 @@ QGCCameraControl::incomingParameter(Fact* pFact, QVariant& newValue)
     Q_UNUSED(pFact);
     Q_UNUSED(newValue);
     return true;
+}
+
+//-----------------------------------------------------------------------------
+bool
+QGCCameraControl::validateParameter(Fact* pFact, QVariant& newValue)
+{
+    Q_UNUSED(pFact);
+    Q_UNUSED(newValue);
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+QStringList
+QGCCameraControl::activeSettings()
+{
+    qCDebug(CameraControlLog) << "Active:" << _activeSettings;
+    return _activeSettings;
 }

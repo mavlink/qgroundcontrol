@@ -28,6 +28,7 @@ import TyphoonHQuickInterface.Widgets       1.0
 
 Item {
     anchors.fill: parent
+    visible:    !QGroundControl.videoManager.fullScreen
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -44,10 +45,13 @@ Item {
     property bool   _isCamera:          _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
     property bool   _cameraVideoMode:   _camera ?  _camera.cameraMode === QGCCameraControl.CAM_MODE_VIDEO : false
+    property bool   _cameraPhotoMode:   _camera ?  _camera.cameraMode === QGCCameraControl.CAM_MODE_PHOTO : false
     property bool   _cameraPresent:     _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED
     property bool   _noSdCard:          _camera && _camera.storageTotal === 0
     property bool   _fullSD:            _camera && _camera.storageTotal !== 0 && _camera.storageFree > 0 && _camera.storageFree < 250 // We get kiB from the camera
-    property bool   _isVehicleGps:      _activeVehicle && _activeVehicle.gps.count.rawValue > 1 && activeVehicle.gps.hdop.rawValue < 1.4
+    property bool   _isVehicleGps:      _activeVehicle && _activeVehicle.gps && _activeVehicle.gps.count.rawValue > 1 && activeVehicle.gps.hdop.rawValue < 1.4
+    property bool   _recordingVideo:    _cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+    property bool   _cameraIdle:        !_cameraPhotoMode || _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE
 
     property var    _expModeFact:       _camera && _camera.exposureMode
     property var    _evFact:            _camera && _camera.ev
@@ -56,6 +60,8 @@ Item {
     property var    _wbFact:            _camera && _camera.wb
     property var    _meteringFact:      _camera && _camera.meteringMode
     property var    _videoResFact:      _camera && _camera.videoRes
+    property var    _irPaletteFact:     _camera && _camera.irPalette
+    property var    _isCGOET:           _camera && _camera.isCGOET
 
     property bool   _cameraAutoMode:    _expModeFact  ? _expModeFact.rawValue === 0 : true
     property string _altitude:          _activeVehicle   ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0"
@@ -164,6 +170,7 @@ Item {
         onPowerHeld: {
             if(_activeVehicle) {
                 rootLoader.sourceComponent = panicDialog
+                mainWindow.disableToolbar()
             }
         }
     }
@@ -313,6 +320,8 @@ Item {
         onTriggered: {
             //-- Vehicle is gone
             if(_activeVehicle) {
+                //-- Let video stream close
+                QGroundControl.settingsManager.videoSettings.rtspTimeout.rawValue = 1
                 if(!_activeVehicle.armed) {
                     //-- If it wasn't already set to auto-disconnect
                     if(!_activeVehicle.autoDisconnect) {
@@ -327,6 +336,67 @@ Item {
                 } else {
                     //-- Vehicle is armed. Show doom dialog.
                     rootLoader.sourceComponent = connectionLostArmed
+                    mainWindow.disableToolbar()
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: QGroundControl.multiVehicleManager.activeVehicle
+        onConnectionLostChanged: {
+            if(!_communicationLost) {
+                //-- Communication regained
+                connectionTimer.stop();
+                rootLoader.sourceComponent = null
+                mainWindow.enableToolbar()
+                //-- Reset stream timeout
+                QGroundControl.settingsManager.videoSettings.rtspTimeout.rawValue = 60
+            } else {
+                if(_activeVehicle && !_activeVehicle.autoDisconnect) {
+                    //-- Communication lost
+                    connectionTimer.start();
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: QGroundControl.multiVehicleManager
+        onVehicleAdded: {
+            //-- Reset No SD Card message.
+            _noSdCardMsgShown = false;
+            //-- And comm lost dialog if open
+            connectionLostDisarmedDialog.close()
+        }
+    }
+
+    //-- Handle MicroSD card loaded in camera
+    Connections {
+        target: _camera
+        onStorageTotalChanged: {
+            if(_noSdCard) {
+                if(!_noSdCardMsgShown) {
+                    showNoSDCardMessage();
+                    _noSdCardMsgShown = true;
+                }
+            } else {
+                _noSdCardMsgShown = false;
+                if(rootLoader.sourceComponent === simpleAlert) {
+                    rootLoader.sourceComponent = null
+                }
+            }
+        }
+        onStorageFreeChanged: {
+            if(_fullSD) {
+                if(!_fullSdCardMsgShown) {
+                    showFullSDCardMessage();
+                    _fullSdCardMsgShown = true;
+                }
+            } else {
+                _fullSdCardMsgShown = false;
+                if(rootLoader.sourceComponent === simpleAlert) {
+                    rootLoader.sourceComponent = null
                 }
             }
         }
@@ -338,7 +408,7 @@ Item {
         width:          camRow.width + (ScreenTools.defaultFontPixelWidth * 3)
         height:         camRow.height * 1.25
         color:          _indicatorColor
-        visible:        !_mainIsMap && _cameraPresent && indicatorDropdown.sourceComponent === null && !messageArea.visible && !criticalMmessageArea.visible
+        visible:        !_mainIsMap && _cameraPresent && indicatorDropdown.sourceComponent === null && !messageArea.visible && !criticalMmessageArea.visible && _camera.paramComplete
         radius:         3
         border.width:   1
         border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
@@ -350,63 +420,89 @@ Item {
             spacing: ScreenTools.defaultFontPixelWidth
             anchors.centerIn: parent
             //-- AE
-            QGCLabel { text: qsTr("AE:"); anchors.verticalCenter: parent.verticalCenter; }
+            QGCLabel { text: qsTr("AE:"); anchors.verticalCenter: parent.verticalCenter; visible: !_isCGOET; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
                 indexModel: false
                 fact:       _expModeFact
+                enabled:    _cameraIdle
+                 visible:   !_isCGOET
             }
             //-- EV
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
-            QGCLabel { text: qsTr("EV:"); visible: _cameraAutoMode; anchors.verticalCenter: parent.verticalCenter; }
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && !_isCGOET; }
+            QGCLabel { text: qsTr("EV:"); visible: _cameraAutoMode && !_isCGOET; anchors.verticalCenter: parent.verticalCenter; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible: _cameraAutoMode;
+                visible: _cameraAutoMode && !_isCGOET;
                 indexModel: false
                 fact:       _evFact
+                enabled:    _cameraIdle
             }
             //-- ISO
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: !_cameraAutoMode; }
-            QGCLabel { text: qsTr("ISO:"); visible: !_cameraAutoMode; anchors.verticalCenter: parent.verticalCenter; }
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: !_cameraAutoMode && !_isCGOET; }
+            QGCLabel { text: qsTr("ISO:"); visible: !_cameraAutoMode && !_isCGOET; anchors.verticalCenter: parent.verticalCenter; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible:    !_cameraAutoMode;
+                visible:    !_cameraAutoMode && !_isCGOET;
                 indexModel: false
                 fact:       _isoFact
+                enabled:    _cameraIdle
             }
             //-- Shutter Speed
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; visible: !_cameraAutoMode; anchors.verticalCenter: parent.verticalCenter; }
-            QGCLabel {text: qsTr("Shutter:"); visible: !_cameraAutoMode; anchors.verticalCenter: parent.verticalCenter; }
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; visible: !_cameraAutoMode && !_isCGOET; anchors.verticalCenter: parent.verticalCenter; }
+            QGCLabel {text: qsTr("Shutter:"); visible: !_cameraAutoMode && !_isCGOET; anchors.verticalCenter: parent.verticalCenter; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible:    !_cameraAutoMode;
+                visible:    !_cameraAutoMode && !_isCGOET;
                 indexModel: false
                 fact:       _shutterFact
+                enabled:    _cameraIdle
             }
             //-- WB
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; }
-            QGCLabel { text: qsTr("WB:"); anchors.verticalCenter: parent.verticalCenter;}
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: !_isCGOET; }
+            QGCLabel { text: qsTr("WB:"); anchors.verticalCenter: parent.verticalCenter; visible: !_isCGOET; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
                 indexModel: false
                 fact:       _wbFact
+                enabled:    _cameraIdle
+                visible:    !_isCGOET
             }
             //-- Metering
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
-            QGCLabel { text: qsTr("Metering:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && !_isCGOET; }
+            QGCLabel { text: qsTr("Metering:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && !_isCGOET; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible:    _cameraAutoMode;
+                visible:    _cameraAutoMode && !_isCGOET;
                 indexModel: false
                 fact:       _meteringFact
+                enabled:    _cameraIdle
             }
             //-- Video Res
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode; }
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode && !_isCGOET; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible:    _cameraVideoMode;
+                visible:    _cameraVideoMode && !_isCGOET;
                 indexModel: false
+                enabled:    !_recordingVideo
                 fact:       _videoResFact
+            }
+            //-- CGOET Palette
+            QGCLabel { text: qsTr("Palette:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && _isCGOET; }
+            CameraMenu {
+                anchors.verticalCenter: parent.verticalCenter
+                visible:    _isCGOET;
+                indexModel: false
+                fact:       _irPaletteFact
+            }
+            //-- CGOET ROI
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _isCGOET; }
+            QGCLabel { text: qsTr("ROI:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && _isCGOET; }
+            CameraMenu {
+                anchors.verticalCenter: parent.verticalCenter
+                visible:    _isCGOET;
+                indexModel: false
+                fact:       _camera ? _camera.irROI : null
             }
             //-- SD Card
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; }
@@ -450,40 +546,15 @@ Item {
             rotation: 90
         }
         QGCLabel {
-            text:   obdIndicator.distValue.toFixed(1) + (_activeVehicle ? _activeVehicle.flightDistance.units : "")
-            anchors.centerIn: obsRect
+            text:               obdIndicator.distValue.toFixed(1) + (_activeVehicle ? _activeVehicle.flightDistance.units : "")
+            color:              "white"
+            font.family:        ScreenTools.demiboldFontFamily
+            anchors.centerIn:   obsRect
         }
         property real distCur: TyphoonHQuickInterface.distSensorMax ? TyphoonHQuickInterface.distSensorCur / TyphoonHQuickInterface.distSensorMax : 0
         property real distValue: QGroundControl.metersToAppSettingsDistanceUnits(TyphoonHQuickInterface.distSensorCur / 100);
     }
 
-    Component {
-        id: thermalImage
-        Item {
-            id:                 thermalItem
-            anchors.centerIn:   parent
-            width:              height * 1.333333
-            height:             mainWindow.height * 0.75
-            visible:            !_mainIsMap
-            QGCVideoBackground {
-                id:             thermalVideo
-                anchors.fill:   parent
-                receiver:       TyphoonHQuickInterface.videoReceiver
-                display:        TyphoonHQuickInterface.videoReceiver.videoSurface
-                visible:        TyphoonHQuickInterface.videoReceiver.videoRunning
-            }
-            /*
-            MouseArea {
-                anchors.fill:   parent
-                onClicked:      thermalVideo.visible = !thermalVideo.visible
-            }
-            */
-            Component.onCompleted: {
-                rootVideoLoader.width  = thermalItem.width
-                rootVideoLoader.height = thermalItem.height
-            }
-        }
-    }
     //-- Camera Control
     Loader {
         id:                     camControlLoader
@@ -539,7 +610,7 @@ Item {
                             origin.y:       yawIndicator.height / 2
                             angle:          _gimbalYaw
                         }
-                        property real _pitch: _gimbalPitch > 90 ? 90 : _gimbalPitch
+                        property real _pitch: _gimbalPitch < -15 ? -15  : (_gimbalPitch > 90 ? 90 : _gimbalPitch)
                     }
                 }
             }

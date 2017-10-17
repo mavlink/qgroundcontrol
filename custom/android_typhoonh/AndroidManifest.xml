@@ -59,12 +59,6 @@
             <meta-data android:name="android.app.background_running" android:value="false"/>
             <!-- Background running -->
         </activity>
-        <receiver android:name=".StartQGCAtBootReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <category android:name="android.intent.category.HOME" />
-            </intent-filter>
-        </receiver>        
     </application>
     <uses-sdk android:minSdkVersion="16" android:targetSdkVersion="19"/>
 

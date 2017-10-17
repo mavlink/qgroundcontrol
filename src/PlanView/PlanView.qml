@@ -144,7 +144,7 @@ QGCView {
         }
     }
 
-    PlanElemementMasterController {
+    PlanMasterController {
         id: masterController
 
         Component.onCompleted: {
@@ -169,6 +169,7 @@ QGCView {
 
         function saveToSelectedFile() {
             fileDialog.title =          qsTr("Save Plan")
+            fileDialog.plan =           true
             fileDialog.selectExisting = false
             fileDialog.nameFilters =    masterController.saveNameFilters
             fileDialog.openForSave()
@@ -176,6 +177,14 @@ QGCView {
 
         function fitViewportToItems() {
             mapFitFunctions.fitMapViewportToMissionItems()
+        }
+
+        function saveKmlToSelectedFile() {
+            fileDialog.title =          qsTr("Save KML")
+            fileDialog.plan =           false
+            fileDialog.selectExisting = false
+            fileDialog.nameFilters =    masterController.saveKmlFilters
+            fileDialog.openForSave()
         }
     }
 
@@ -228,12 +237,13 @@ QGCView {
     QGCFileDialog {
         id:             fileDialog
         qgcView:        _qgcView
+        property var plan:           true
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
         fileExtension:  QGroundControl.settingsManager.appSettings.planFileExtension
         fileExtension2: QGroundControl.settingsManager.appSettings.missionFileExtension
 
         onAcceptedForSave: {
-            masterController.saveToFile(file)
+            plan ? masterController.saveToFile(file) : masterController.saveToKml(file)
             close()
         }
 
@@ -335,7 +345,7 @@ QGCView {
                         }
                         break
                     case _layerRallyPoints:
-                        if (_rallyPointController.rallyPointsSupported) {
+                        if (_rallyPointController.supported) {
                             _rallyPointController.addPoint(coordinate)
                         }
                         break
@@ -366,7 +376,7 @@ QGCView {
                     VehicleMapItem {
                     vehicle:        object
                     coordinate:     object.coordinate
-                    isSatellite:    editorMap.isSatelliteMap
+                    map:            editorMap
                     size:           ScreenTools.defaultFontPixelHeight * 3
                     z:              QGroundControl.zOrderMapItems - 1
                 }
@@ -630,7 +640,7 @@ QGCView {
             id:                 waypointValuesDisplay
             anchors.margins:    ScreenTools.defaultFontPixelWidth
             anchors.left:       parent.left
-            anchors.right:      rightPanel.left
+            maxWidth:           parent.width - rightPanel.width - x
             anchors.bottom:     parent.bottom
             missionItems:       _missionController.visualItems
             visible:            _editingLayer === _layerMission && !ScreenTools.isShortScreen
@@ -790,6 +800,16 @@ QGCView {
                     onClicked:  {
                         dropPanel.hide()
                         _qgcView.showDialog(removeAllPromptDialog, qsTr("Remove all"), _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                    }
+                }
+
+                QGCButton {
+                    text:               qsTr("Save KML...")
+                    Layout.fillWidth:   true
+                    enabled:            !masterController.syncInProgress
+                    onClicked: {
+                        dropPanel.hide()
+                        masterController.saveKmlToSelectedFile()
                     }
                 }
             }

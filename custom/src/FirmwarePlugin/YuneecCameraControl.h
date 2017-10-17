@@ -16,6 +16,23 @@
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLog)
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLogVerbose)
 
+//-- Temperature Status (CGOET)
+typedef struct
+{
+    int32_t center_val;
+    int32_t max_val;
+    int32_t min_val;
+    int32_t avg_val;
+} udp_ctrl_cam_area_temp_t;
+
+typedef struct
+{
+    int32_t  locked_max_temp;
+    int32_t  locked_min_temp;
+    udp_ctrl_cam_area_temp_t all_area;
+    udp_ctrl_cam_area_temp_t custom_area;
+} udp_ctrl_cam_lepton_area_temp_t;
+
 //-----------------------------------------------------------------------------
 class YuneecCameraControl : public QGCCameraControl
 {
@@ -40,8 +57,22 @@ public:
     Q_PROPERTY(Fact*        meteringMode    READ    meteringMode        NOTIFY factsLoaded)
     Q_PROPERTY(Fact*        videoRes        READ    videoRes            NOTIFY factsLoaded)
     Q_PROPERTY(Fact*        aspectRatio     READ    aspectRatio         NOTIFY factsLoaded)
+    Q_PROPERTY(Fact*        irPalette       READ    irPalette           NOTIFY factsLoaded)
+    Q_PROPERTY(Fact*        irROI           READ    irROI               NOTIFY factsLoaded)
     Q_PROPERTY(QPoint       spotArea        READ    spotArea            WRITE  setSpotArea      NOTIFY spotAreaChanged)
     Q_PROPERTY(QSize        videoSize       READ    videoSize           WRITE  setVideoSize     NOTIFY videoSizeChanged)
+    Q_PROPERTY(bool         isCGOET         READ    isCGOET             NOTIFY isCGOETChanged)
+    Q_PROPERTY(bool         paramComplete   READ    paramComplete       NOTIFY factsLoaded)
+
+    Q_PROPERTY(Fact*        minTemp         READ    minTemp             NOTIFY factsLoaded)
+    Q_PROPERTY(Fact*        maxTemp         READ    maxTemp             NOTIFY factsLoaded)
+
+    Q_PROPERTY(qreal        irCenterTemp    READ    irCenterTemp        NOTIFY irTempChanged)
+    Q_PROPERTY(qreal        irAverageTemp   READ    irAverageTemp       NOTIFY irTempChanged)
+    Q_PROPERTY(qreal        irMinTemp       READ    irMinTemp           NOTIFY irTempChanged)
+    Q_PROPERTY(qreal        irMaxTemp       READ    irMaxTemp           NOTIFY irTempChanged)
+    Q_PROPERTY(QUrl         palettetBar     READ    palettetBar         NOTIFY palettetBarChanged)
+    Q_PROPERTY(bool         irValid         READ    irValid             NOTIFY irTempChanged)
 
     Q_INVOKABLE void calibrateGimbal();
 
@@ -53,6 +84,8 @@ public:
     void        setVideoMode        () override;
     void        setPhotoMode        () override;
     bool        incomingParameter   (Fact* pFact, QVariant& newValue) override;
+    bool        validateParameter   (Fact* pFact, QVariant& newValue) override;
+    void        handleCaptureStatus (const mavlink_camera_capture_status_t& capStatus) override;
 
     QString     gimbalVersion       () { return _gimbalVersion; }
     bool        gimbalCalOn         () { return _gimbalCalOn; }
@@ -71,11 +104,25 @@ public:
     Fact*       meteringMode        ();
     Fact*       videoRes            ();
     Fact*       aspectRatio         ();
+    Fact*       irPalette           ();
+    Fact*       minTemp             ();
+    Fact*       maxTemp             ();
+    Fact*       irROI               ();
     QPoint      spotArea            ();
     void        setSpotArea         (QPoint mouse);
 
     QSize       videoSize           ();
     void        setVideoSize        (QSize s);
+
+    bool        isCGOET             () { return _isCGOET; }
+    bool        paramComplete       () { return _paramComplete; }
+
+    qreal       irCenterTemp        () { return (qreal)_cgoetTempStatus.custom_area.center_val / 100.0; }
+    qreal       irAverageTemp       () { return (qreal)_cgoetTempStatus.custom_area.avg_val / 100.0; }
+    qreal       irMinTemp           ();
+    qreal       irMaxTemp           ();
+    bool        irValid             () { return _irValid; }
+    QUrl        palettetBar         ();
 
 private slots:
     void    _recTimerHandler        ();
@@ -85,6 +132,8 @@ private slots:
     void    _sendUpdates            ();
     void    _delayedStartVideo      ();
     void    _delayedTakePhoto       ();
+    void    _gimbalCalTimeout       ();
+    void    _irStatusTimeout        ();
 
 signals:
     void    gimbalVersionChanged    ();
@@ -98,6 +147,10 @@ signals:
     void    gimbalDataChanged       ();
     void    spotAreaChanged         ();
     void    videoSizeChanged        ();
+    void    isCGOETChanged          ();
+    void    irTempChanged           ();
+    void    palettetBarChanged      ();
+    void    irSpotROIChanged        ();
 
 protected:
     void    _setVideoStatus         (VideoStatus status) override;
@@ -105,9 +158,12 @@ protected:
 private:
     void    _handleHeartBeat        (const mavlink_message_t& message);
     void    _handleCommandAck       (const mavlink_message_t& message);
-    void    _handleGimbalVersion    (const mavlink_message_t& message);
+    void    _handleHardwareVersion    (const mavlink_message_t& message);
     void    _handleGimbalOrientation(const mavlink_message_t& message);
     void    _handleGimbalResult     (uint16_t result, uint8_t progress);
+
+    QVariant _validateShutterSpeed  (Fact* pFact, QVariant& newValue);
+    QVariant _validateISO           (Fact* pFact, QVariant& newValue);
 
 private:
     Vehicle*                _vehicle;
@@ -121,6 +177,8 @@ private:
     QSoundEffect            _cameraSound;
     QSoundEffect            _videoSound;
     QSoundEffect            _errorSound;
+    QTimer                  _irStatusTimer;
+    QTimer                  _gimbalTimer;
     QTimer                  _recTimer;
     QTime                   _recTime;
     uint32_t                _recordTime;
@@ -128,6 +186,10 @@ private:
     QString                 _version;
     QSize                   _videoSize;
     bool                    _isE90;
+    bool                    _isCGOET;
     QStringList             _updatesToSend;
     bool                    _inMissionMode;
+    bool                    _irValid;
+    Fact*                   _irROI;
+    udp_ctrl_cam_lepton_area_temp_t _cgoetTempStatus;
 };

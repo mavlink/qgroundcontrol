@@ -145,20 +145,23 @@ bool YuneecFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* veh
     }
 }
 
+#if !defined (__planner__)
 QGCCameraManager*
 YuneecFirmwarePlugin::createCameraManager(Vehicle *vehicle)
 {
     return new YuneecCameraManager(vehicle);
 }
+#endif
 
+#if !defined (__planner__)
 QGCCameraControl*
 YuneecFirmwarePlugin::createCameraControl(const mavlink_camera_information_t* info, Vehicle *vehicle, int compID, QObject* parent)
 {
     /*
     char* dst = (char*)(void*)&info->cam_definition_uri[0];
-    const char* url = "http://www.grubba.com/e90.xml";
+    const char* url = "http://www.grubba.com/cgoet.xml";
     memcpy(dst, url, strlen(url) + 1);
     */
     return new YuneecCameraControl(info, vehicle, compID, parent);
 }
-
+#endif

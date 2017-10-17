@@ -70,6 +70,8 @@ public:
     /// Convert and validate value
     ///     @param convertOnly true: validate type conversion only, false: validate against meta data as well
     Q_INVOKABLE QString validate(const QString& cookedValue, bool convertOnly);
+    /// Convert and clamp value
+    Q_INVOKABLE QVariant clamp(const QString& cookedValue);
 
     QVariant        cookedValue             (void) const;   /// Value after translation
     QVariant        rawValue                (void) const { return _rawValue; }  /// value prior to translation, careful

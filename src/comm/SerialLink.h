@@ -137,6 +137,7 @@ public:
     void    requestReset();
     bool    isConnected() const;
     qint64  getConnectionSpeed() const;
+    SerialConfiguration* getSerialConfig() const { return _serialConfig; }
 
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.

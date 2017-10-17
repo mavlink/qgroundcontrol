@@ -199,8 +199,7 @@ SetupPage {
                     model:  _flatParamList
 
                     delegate: QGCButton {
-                        width:  parent.width / 2.1
-                        height: (ScreenTools.defaultFontPixelHeight * 14) / 5
+                        width:  parent.width
                         text:   name
 
                         onClicked : {

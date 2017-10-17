@@ -144,6 +144,20 @@
     "defaultValue":     ""
 },
 {
+    "name":             "UserBrandImageIndoor",
+    "shortDescription": "User-selected brand image",
+    "longDescription":  "Location in file system of user-selected brand image (indoor)",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "UserBrandImageOutdoor",
+    "shortDescription": "User-selected brand image",
+    "longDescription":  "Location in file system of user-selected brand image (outdoor)",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
     "name":             "MapboxToken",
     "shortDescription": "Access token to Mapbox maps",
     "longDescription":  "Your personal access token for Mapbox maps",

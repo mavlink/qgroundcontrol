@@ -68,6 +68,7 @@ const char* FactMetaData::_shortDescriptionJsonKey =    "shortDescription";
 const char* FactMetaData::_longDescriptionJsonKey =     "longDescription";
 const char* FactMetaData::_unitsJsonKey =               "units";
 const char* FactMetaData::_defaultValueJsonKey =        "defaultValue";
+const char* FactMetaData::_mobileDefaultValueJsonKey =  "mobileDefaultValue";
 const char* FactMetaData::_minJsonKey =                 "min";
 const char* FactMetaData::_maxJsonKey =                 "max";
 const char* FactMetaData::_hasControlJsonKey =          "control";
@@ -240,6 +241,8 @@ QVariant FactMetaData::_minForType(void) const
         return QVariant(0);
     case valueTypeElapsedTimeInSeconds:
         return QVariant(0.0);
+    case valueTypeCustom:
+        return QVariant();
     }
     
     // Make windows compiler happy, even switch is full cased
@@ -270,6 +273,8 @@ QVariant FactMetaData::_maxForType(void) const
         return QVariant();
     case valueTypeBool:
         return QVariant(1);
+    case valueTypeCustom:
+        return QVariant();
     }
     
     // Make windows compiler happy, even switch is full cased
@@ -327,6 +332,10 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
     case FactMetaData::valueTypeBool:
         convertOk = true;
         typedValue = QVariant(rawValue.toBool());
+        break;
+    case FactMetaData::valueTypeCustom:
+        convertOk = true;
+        typedValue = QVariant(rawValue.toByteArray());
         break;
     }
     
@@ -389,6 +398,10 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
         convertOk = true;
         typedValue = QVariant(cookedValue.toBool());
         break;
+    case FactMetaData::valueTypeCustom:
+        convertOk = true;
+        typedValue = QVariant(cookedValue.toByteArray());
+        break;
     }
 
     if (!convertOk) {
@@ -396,6 +409,71 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
     }
 
     return convertOk && errorString.isEmpty();
+}
+
+bool FactMetaData::clampValue(const QVariant& cookedValue, QVariant& typedValue)
+{
+    bool convertOk = false;
+    switch (type()) {
+    case FactMetaData::valueTypeInt8:
+    case FactMetaData::valueTypeInt16:
+    case FactMetaData::valueTypeInt32:
+        typedValue = QVariant(cookedValue.toInt(&convertOk));
+        if (convertOk) {
+            if (cookedMin() > typedValue) {
+                typedValue = cookedMin();
+            } else if(typedValue > cookedMax()) {
+                typedValue = cookedMax();
+            }
+        }
+        break;
+    case FactMetaData::valueTypeUint8:
+    case FactMetaData::valueTypeUint16:
+    case FactMetaData::valueTypeUint32:
+        typedValue = QVariant(cookedValue.toUInt(&convertOk));
+        if (convertOk) {
+            if (cookedMin() > typedValue) {
+                typedValue = cookedMin();
+            } else if(typedValue > cookedMax()) {
+                typedValue = cookedMax();
+            }
+        }
+        break;
+    case FactMetaData::valueTypeFloat:
+        typedValue = QVariant(cookedValue.toFloat(&convertOk));
+        if (convertOk) {
+            if (cookedMin() > typedValue) {
+                typedValue = cookedMin();
+            } else if(typedValue > cookedMax()) {
+                typedValue = cookedMax();
+            }
+        }
+        break;
+    case FactMetaData::valueTypeElapsedTimeInSeconds:
+    case FactMetaData::valueTypeDouble:
+        typedValue = QVariant(cookedValue.toDouble(&convertOk));
+        if (convertOk) {
+            if (cookedMin() > typedValue) {
+                typedValue = cookedMin();
+            } else if(typedValue > cookedMax()) {
+                typedValue = cookedMax();
+            }
+        }
+        break;
+    case FactMetaData::valueTypeString:
+        convertOk = true;
+        typedValue = QVariant(cookedValue.toString());
+        break;
+    case FactMetaData::valueTypeBool:
+        convertOk = true;
+        typedValue = QVariant(cookedValue.toBool());
+        break;
+    case FactMetaData::valueTypeCustom:
+        convertOk = true;
+        typedValue = QVariant(cookedValue.toByteArray());
+        break;
+    }
+    return convertOk;
 }
 
 void FactMetaData::setBitmaskInfo(const QStringList& strings, const QVariantList& values)
@@ -632,7 +710,8 @@ FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, 
                      << QStringLiteral("Double")
                      << QStringLiteral("String")
                      << QStringLiteral("Bool")
-                     << QStringLiteral("ElapsedSeconds");
+                     << QStringLiteral("ElapsedSeconds")
+                     << QStringLiteral("Custom");
 
     knownTypes << valueTypeUint8
                << valueTypeInt8
@@ -644,7 +723,8 @@ FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, 
                << valueTypeDouble
                << valueTypeString
                << valueTypeBool
-               << valueTypeElapsedTimeInSeconds;
+               << valueTypeElapsedTimeInSeconds
+               << valueTypeCustom;
 
     for (int i=0; i<knownTypeStrings.count(); i++) {
         if (knownTypeStrings[i].compare(typeString, Qt::CaseInsensitive) == 0) {
@@ -675,6 +755,9 @@ size_t FactMetaData::typeToSize(ValueType_t type)
 
     case valueTypeDouble:
         return 8;
+
+    case valueTypeCustom:
+        return MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN;
 
     default:
         qWarning() << "Unsupported fact value type" << type;
@@ -889,9 +972,17 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QObjec
     if (json.contains(_unitsJsonKey)) {
         metaData->setRawUnits(json[_unitsJsonKey].toString());
     }
+#ifdef __mobile__
+    if (json.contains(_mobileDefaultValueJsonKey)) {
+        metaData->setRawDefaultValue(json[_mobileDefaultValueJsonKey].toVariant());
+    } else if (json.contains(_defaultValueJsonKey)) {
+        metaData->setRawDefaultValue(json[_defaultValueJsonKey].toVariant());
+    }
+#else
     if (json.contains(_defaultValueJsonKey)) {
         metaData->setRawDefaultValue(json[_defaultValueJsonKey].toVariant());
     }
+#endif
     if (json.contains(_minJsonKey)) {
         QVariant typedValue;
         QString errorString;

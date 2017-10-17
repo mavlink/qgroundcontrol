@@ -144,7 +144,7 @@ QGCView {
                 height:         passwordRow.height * 2
                 width:          ScreenTools.defaultFontPixelWidth * 80
                 color:          qgcPal.windowShade
-                visible:        _activeVehicle
+                visible:        _activeVehicle && (_camera && !_camera.isCGOET)
                 anchors.horizontalCenter: parent.horizontalCenter
                 Row {
                     id:         passwordRow
@@ -284,6 +284,8 @@ QGCView {
                 QGCLabel { text: _camera ? _camera.gimbalVersion : "" }
                 QGCLabel { text: qsTr("Flight Controller Version:") }
                 QGCLabel { text: firmwareVersion() }
+                QGCLabel { text: qsTr("Vehicle ID:") }
+                QGCLabel { text: _activeVehicle ? _activeVehicle.vehicleUIDStr : "" }
             }
         }
     }

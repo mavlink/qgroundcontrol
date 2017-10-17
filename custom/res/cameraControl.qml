@@ -14,12 +14,12 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick              2.4
-import QtPositioning        5.2
-import QtQuick.Layouts      1.2
-import QtQuick.Controls     1.4
-import QtQuick.Dialogs      1.2
-import QtGraphicalEffects   1.0
+import QtQuick                  2.4
+import QtPositioning            5.2
+import QtQuick.Layouts          1.2
+import QtQuick.Controls         1.4
+import QtQuick.Dialogs          1.2
+import QtGraphicalEffects       1.0
 
 import QGroundControl                   1.0
 import QGroundControl.Controls          1.0
@@ -35,11 +35,12 @@ import TyphoonHQuickInterface.Widgets   1.0
 import TyphoonMediaItem                 1.0
 
 Rectangle {
-    id:     mainRect
-    height: mainCol.height
-    width:  _indicatorDiameter
-    radius: ScreenTools.defaultFontPixelWidth * 0.5
-    color:  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
+    id:         mainRect
+    height:     mainCol.height
+    width:      _isThermal ? _indicatorDiameter * 0.75 : _indicatorDiameter
+    visible:    !QGroundControl.videoManager.fullScreen
+    radius:     ScreenTools.defaultFontPixelWidth * 0.5
+    color:      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
     border.width:   1
     border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
 
@@ -57,9 +58,12 @@ Rectangle {
     property var  _camera:                  _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
     property bool _communicationLost:       _activeVehicle ? _activeVehicle.connectionLost : false
     property bool _emptySD:                 _camera && _camera.storageTotal === 0
-    property bool _cameraVideoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode  === QGCCameraControl.CAM_MODE_VIDEO)
-    property bool _cameraPhotoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode  === QGCCameraControl.CAM_MODE_PHOTO)
+    property bool _cameraVideoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode   === QGCCameraControl.CAM_MODE_VIDEO)
+    property bool _cameraPhotoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode   === QGCCameraControl.CAM_MODE_PHOTO)
+    property bool _cameraPhotoIdle:         !_communicationLost && (_emptySD ? false : _camera && _camera.photoStatus  === QGCCameraControl.PHOTO_CAPTURE_IDLE)
     property bool _cameraModeUndefined:     !_cameraPhotoMode && !_cameraVideoMode
+    property bool _recordingVideo:          _cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+    property bool _isThermal:               TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver
 
     property real _mediaWidth:              128
     property real _mediaHeight:             72
@@ -71,6 +75,8 @@ Rectangle {
     property bool   _selectMode:            false
     property bool   _hasSelection:          TyphoonHQuickInterface.selectedCount > 0
     property bool   _hasPhotos:             TyphoonHQuickInterface.mediaList.length > 0
+
+    property var    qgcView:                null
 
     function baseName(str) {
         return (str.slice(str.lastIndexOf("/")+1))
@@ -131,7 +137,7 @@ Rectangle {
             }
             MouseArea {
                 anchors.fill:   parent
-                enabled:        !_cameraModeUndefined && _camera.videoStatus !== QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+                enabled:        !_cameraModeUndefined && _camera && _camera.videoStatus !== QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING && _cameraPhotoIdle
                 onClicked: {
                     mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
@@ -155,6 +161,26 @@ Rectangle {
                 color:      _cameraModeUndefined ? qgcPal.colorGrey : ( _cameraVideoMode ? qgcPal.colorRed : "white" )
                 visible:    !pauseVideo.visible
                 anchors.centerIn:   parent
+                QGCColoredImage {
+                    height:             parent.height * 0.75
+                    width:              height
+                    source:             "/qmlimages/MapSync.svg"
+                    sourceSize.height:  height
+                    fillMode:           Image.PreserveAspectFit
+                    mipmap:             true
+                    smooth:             true
+                    color:              qgcPal.colorBlue
+                    visible:            _cameraPhotoMode && !_cameraPhotoIdle
+                    anchors.centerIn:   parent
+                    RotationAnimation on rotation {
+                        id:             connectionRotation
+                        loops:          Animation.Infinite
+                        from:           360
+                        to:             0
+                        duration:       740
+                        running:        _cameraPhotoMode && !_cameraPhotoIdle
+                    }
+                }
             }
             Rectangle {
                 id:         pauseVideo
@@ -166,7 +192,7 @@ Rectangle {
             }
             MouseArea {
                 anchors.fill:   parent
-                enabled:        true //!_cameraModeUndefined
+                enabled:        !_emptySD
                 onClicked: {
                     mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
@@ -238,15 +264,16 @@ Rectangle {
             sourceSize.width:   width
             source:             "qrc:/typhoonh/img/sliders.svg"
             fillMode:           Image.PreserveAspectFit
-            color:              (!_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED) ? qgcPal.text : qgcPal.colorGrey
+            color:              settingsEnabled ? qgcPal.text : qgcPal.colorGrey
             anchors.horizontalCenter: parent.horizontalCenter
             MouseArea {
                 anchors.fill:   parent
-                enabled:        !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED
+                enabled:        parent.settingsEnabled
                 onClicked: {
                     rootLoader.sourceComponent = cameraSettingsComponent
                 }
             }
+            property bool settingsEnabled: !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED && _cameraPhotoIdle && !_recordingVideo
         }
         Item {
             height:     ScreenTools.defaultFontPixelHeight
@@ -257,10 +284,18 @@ Rectangle {
     Component {
         id: cameraSettingsComponent
         Item {
-            id:     cameraSettingsRect
+            id:     camSettingsItem
             width:  mainWindow.width
             height: mainWindow.height
             anchors.centerIn: parent
+            function showEditFact(fact) {
+                factEdit.fact = fact
+                factEdit.visible = true
+            }
+            function hideEditFact() {
+                factEdit.visible = false
+                factEdit.fact = null
+            }
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
@@ -269,21 +304,22 @@ Rectangle {
                 }
             }
             Rectangle {
-                id:             ccamSettingsShadow
+                id:             camSettingsShadow
                 anchors.fill:   camSettingsRect
                 radius:         camSettingsRect.radius
                 color:          qgcPal.window
                 visible:        false
             }
             DropShadow {
-                anchors.fill:       ccamSettingsShadow
+                id:                 camSettingsDS
+                anchors.fill:       camSettingsShadow
                 visible:            camSettingsRect.visible
                 horizontalOffset:   4
                 verticalOffset:     4
                 radius:             32.0
                 samples:            65
                 color:              Qt.rgba(0,0,0,0.75)
-                source:             ccamSettingsShadow
+                source:             camSettingsShadow
             }
             Rectangle {
                 id:     camSettingsRect
@@ -326,6 +362,77 @@ Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
                         //-------------------------------------------
                         //-- Camera Settings
+                        Row {
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            visible:        _camera && _camera.isCGOET
+                            property var thermalModes: [qsTr("Off"), qsTr("Blend"), qsTr("Full"), qsTr("Picture In Picture")]
+                            QGCLabel {
+                                text:       qsTr("Thermal View Mode")
+                                width:      _labelFieldWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QGCComboBox {
+                                width:          _editFieldWidth
+                                model:          parent.thermalModes
+                                currentIndex:   TyphoonHQuickInterface.thermalMode
+                                onActivated:    TyphoonHQuickInterface.thermalMode = index
+                            }
+                        }
+                        Rectangle {
+                            color:      qgcPal.button
+                            height:     1
+                            width:      cameraSettingsCol.width
+                            visible:    _camera && _camera.isCGOET
+                        }
+                        Row {
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            visible:        _camera && _camera.isCGOET && TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend
+                            QGCLabel {
+                                text:       qsTr("Blend Opacity")
+                                width:      _labelFieldWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            YSlider {
+                                width:          _editFieldWidth
+                                maximumValue:   100
+                                minimumValue:   0
+                                value:          TyphoonHQuickInterface.thermalOpacity
+                                updateValueWhileDragging: true
+                                onValueChanged: {
+                                    TyphoonHQuickInterface.thermalOpacity = value
+                                }
+                            }
+                        }
+                        Rectangle {
+                            color:      qgcPal.button
+                            height:     1
+                            width:      cameraSettingsCol.width
+                            visible:    _camera && _camera.isCGOET && TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend
+                        }
+                        Row {
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            visible:        _camera && _camera.isCGOET
+                            QGCLabel {
+                                text:       qsTr("ROI")
+                                width:      _labelFieldWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            FactComboBox {
+                                width:      _editFieldWidth
+                                fact:       _camera ? _camera.irROI : null
+                                indexModel: false
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        Rectangle {
+                            color:      qgcPal.button
+                            height:     1
+                            width:      cameraSettingsCol.width
+                            visible:    _camera && _camera.isCGOET
+                        }
                         Repeater {
                             model:      _camera ? _camera.activeSettings : []
                             Item {
@@ -337,27 +444,53 @@ Rectangle {
                                     Row {
                                         spacing:        ScreenTools.defaultFontPixelWidth
                                         anchors.horizontalCenter: parent.horizontalCenter
+                                        property var    _fact:      _camera.getFact(modelData)
+                                        property bool   _isBool:    _fact.typeIsBool
+                                        property bool   _isCombo:   !_isBool && _fact.enumStrings.length > 0
+                                        property bool   _isSlider:  _fact && !isNaN(_fact.increment)
+                                        property bool   _isEdit:    !_isBool && !_isSlider && _fact.enumStrings.length < 1
                                         QGCLabel {
-                                            text:       _camera.getFact(modelData).shortDescription
+                                            text:       parent._fact.shortDescription
                                             width:      _labelFieldWidth
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
                                         FactComboBox {
-                                            width:      !_isBool ? _editFieldWidth : 0
-                                            fact:       _camera.getFact(modelData)
+                                            width:      parent._isCombo ? _editFieldWidth : 0
+                                            fact:       parent._fact
                                             indexModel: false
-                                            visible:    !_isBool
+                                            visible:    parent._isCombo
                                             anchors.verticalCenter: parent.verticalCenter
-                                            property bool _isBool: _camera.getFact(modelData).typeIsBool
+                                        }
+                                        QGCButton {
+                                            visible:    parent._isEdit
+                                            width:      parent._isEdit ? _editFieldWidth : 0
+                                            text:       parent._fact.valueString
+                                            onClicked: {
+                                                console.log(parent._fact.shortDescription)
+                                                showEditFact(parent._fact)
+                                            }
+                                        }
+                                        YSlider {
+                                            width:          parent._isSlider ? _editFieldWidth : 0
+                                            maximumValue:   parent._fact.max
+                                            minimumValue:   parent._fact.min
+                                            stepSize:       parent._fact.increment
+                                            visible:        parent._isSlider
+                                            updateValueWhileDragging:   false
+                                            anchors.verticalCenter:     parent.verticalCenter
+                                            Component.onCompleted: {
+                                                value = parent._fact.value
+                                            }
+                                            onValueChanged: {
+                                                parent._fact.value = value
+                                            }
                                         }
                                         OnOffSwitch {
-                                            width:      _isBool ? _editFieldWidth : 0
-                                            checked:    _fact ? _fact.value : false
-                                            onClicked:  _fact.value = checked ? 1 : 0
-                                            visible:    _isBool
+                                            width:      parent._isBool ? _editFieldWidth : 0
+                                            checked:    parent._fact ? parent._fact.value : false
+                                            onClicked:  parent._fact.value = checked ? 1 : 0
+                                            visible:    parent._isBool
                                             anchors.verticalCenter: parent.verticalCenter
-                                            property var _fact:     _camera.getFact(modelData)
-                                            property bool _isBool:  _fact.typeIsBool
                                         }
                                     }
                                     Rectangle {
@@ -372,6 +505,7 @@ Rectangle {
                         //-- Screen Grid
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
+                            visible:        _camera && !_camera.isCGOET
                             anchors.horizontalCenter: parent.horizontalCenter
                             QGCLabel {
                                 text:       qsTr("Screen Grid")
@@ -389,6 +523,7 @@ Rectangle {
                             color:      qgcPal.button
                             height:     1
                             width:      cameraSettingsCol.width
+                            visible:    _camera && !_camera.isCGOET
                         }
                         //-------------------------------------------
                         //-- Reset Camera
@@ -404,6 +539,7 @@ Rectangle {
                                 text:       qsTr("Reset")
                                 onClicked:  resetPrompt.open()
                                 width:      _editFieldWidth
+                                enabled:    !_recordingVideo
                                 anchors.verticalCenter: parent.verticalCenter
                                 MessageDialog {
                                     id:                 resetPrompt
@@ -413,6 +549,9 @@ Rectangle {
                                     onNo: resetPrompt.close()
                                     onYes: {
                                         _camera.resetSettings()
+                                        QGroundControl.settingsManager.videoSettings.gridLines.rawValue = false
+                                        TyphoonHQuickInterface.thermalMode = TyphoonHQuickInterface.ThermalBlend
+                                        TyphoonHQuickInterface.thermalOpacity = 85
                                         resetPrompt.close()
                                     }
                                 }
@@ -435,7 +574,7 @@ Rectangle {
                             }
                             QGCButton {
                                 text:       qsTr("Format")
-                                enabled:     !_emptySD
+                                enabled:    !_emptySD && !_recordingVideo
                                 onClicked:  formatPrompt.open()
                                 width:      _editFieldWidth
                                 anchors.verticalCenter: parent.verticalCenter
@@ -460,9 +599,56 @@ Rectangle {
                     }
                 }
             }
+            Rectangle {
+                id:             factEdit
+                visible:        false
+                color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
+                anchors.fill:   parent
+                property var fact: null
+                MouseArea {
+                    anchors.fill:   parent
+                    onWheel:        { wheel.accepted = true; }
+                    onPressed:      { mouse.accepted = true; }
+                    onReleased:     { mouse.accepted = true; }
+                }
+                Rectangle {
+                    width:      factEditCol.width  * 1.25
+                    height:     factEditCol.height * 1.25
+                    color:      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
+                    border.width:       1
+                    border.color:       qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
+                    anchors.top:        parent.top
+                    anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 8
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Column {
+                        id:             factEditCol
+                        spacing:        ScreenTools.defaultFontPixelHeight
+                        anchors.centerIn: parent
+                        QGCLabel {
+                            text:       factEdit.fact ? factEdit.fact.shortDescription : ""
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        YTextField {
+                            id:         factEditor
+                            width:      _editFieldWidth
+                            fact:       factEdit.fact
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        QGCButton {
+                            text: qsTr("Close")
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            onClicked: {
+                                console.log('Done with ' + factEdit.fact.shortDescription)
+                                factEditor.completeEditing()
+                                hideEditFact()
+                            }
+                        }
+                    }
+                }
+            }
             Component.onCompleted: {
-                rootLoader.width  = cameraSettingsRect.width
-                rootLoader.height = cameraSettingsRect.height
+                rootLoader.width  = camSettingsItem.width
+                rootLoader.height = camSettingsItem.height
             }
             Keys.onBackPressed: {
                 mainWindow.enableToolbar()

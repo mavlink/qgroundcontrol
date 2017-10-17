@@ -191,28 +191,30 @@ int Fact::enumIndex(void)
 {
     static const double accuracy = 1.0 / 1000000.0;
     if (_metaData) {
-        int index = 0;
-        foreach (QVariant enumValue, _metaData->enumValues()) {
-            if (enumValue == rawValue()) {
-                return index;
-            }
-            //-- Float comparissons don't always work
-            if(type() == FactMetaData::valueTypeFloat || type() == FactMetaData::valueTypeDouble) {
-                double diff = fabs(enumValue.toDouble() - rawValue().toDouble());
-                if(diff < accuracy) {
+        //-- Only enums have an index
+        if(_metaData->enumValues().count()) {
+            int index = 0;
+            foreach (QVariant enumValue, _metaData->enumValues()) {
+                if (enumValue == rawValue()) {
                     return index;
                 }
+                //-- Float comparissons don't always work
+                if(type() == FactMetaData::valueTypeFloat || type() == FactMetaData::valueTypeDouble) {
+                    double diff = fabs(enumValue.toDouble() - rawValue().toDouble());
+                    if(diff < accuracy) {
+                        return index;
+                    }
+                }
+                index ++;
             }
-            index ++;
+            // Current value is not in list, add it manually
+            _metaData->addEnumInfo(QString("Unknown: %1").arg(rawValue().toString()), rawValue());
+            emit enumsChanged();
+            return index;
         }
-        // Current value is not in list, add it manually
-        _metaData->addEnumInfo(QString("Unknown: %1").arg(rawValue().toString()), rawValue());
-        emit enumsChanged();
-        return index;
     } else {
         qWarning() << kMissingMetadata;
     }
-
     return -1;
 }
 
@@ -535,6 +537,22 @@ QString Fact::validate(const QString& cookedValue, bool convertOnly)
         qWarning() << kMissingMetadata;
         return QString("Internal error: Meta data pointer missing");
     }
+}
+
+QVariant Fact::clamp(const QString& cookedValue)
+{
+    if (_metaData) {
+        QVariant typedValue;
+        if(_metaData->clampValue(cookedValue, typedValue)) {
+            return typedValue;
+        } else {
+            //-- If conversion failed, return current value
+            return rawValue();
+        }
+    } else {
+        qWarning() << kMissingMetadata;
+    }
+    return QVariant();
 }
 
 bool Fact::rebootRequired(void) const

@@ -30,14 +30,13 @@ public:
     void    initM4                  ();
     QString m4StateStr              ();
     void    resetBind               ();
-    bool    armed                   () { return _armed; }
     bool    rcActive                () { return _rcActive; }
     bool    rcCalibrationComplete   () { return _rcCalibrationComplete; }
     void    startCalibration        ();
     void    stopCalibration         ();
     bool    sendPassThroughMessage  (QByteArray message);
 
-    Vehicle*            vehicle         () { return _vehicle; }
+
     QList<uint16_t>     rawChannels     () { return _rawChannels; }
     int                 calChannel      (int index);
 
@@ -60,7 +59,6 @@ private slots:
     void    _vehicleRemoved                     (Vehicle* vehicle);
     void    _vehicleReady                       (bool ready);
     void    _mavlinkMessageReceived             (const mavlink_message_t& message);
-    void    _armedChanged                       (bool armed);
     void    _initAndCheckBinding                ();
     void    _rcTimeout                          ();
 
@@ -159,7 +157,6 @@ private:
     Vehicle*                _vehicle;
     TyphoonHQuickInterface::M4State     _m4State;
     QString                 _currentConnection;
-    bool                    _armed;
     QList<uint16_t>         _rawChannels;
     uint16_t                _rawChannelsCalibration[CalibrationHwIndexMax];
     uint32_t                _rcTime;

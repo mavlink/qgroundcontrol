@@ -3,7 +3,8 @@
         <file alias="QGroundControl/Controls/MainToolBar.qml">res/MainToolBar.qml</file>
         <file alias="QGroundControl/Controls/VehicleRotationCal.qml">res/VehicleRotationCal.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml">res/YuneecFlightDisplayViewVideo.qml</file>
-        <file alias="QGroundControl/Controls/QGCButton.qml">res/YuneecButton.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/YSlider.qml">res/YSlider.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/YTextField.qml">res/YTextField.qml</file>
     </qresource>
     <qresource prefix="/qmlimages">
         <file alias="PaperPlane.svg">res/images/Y-Logo.svg</file>
@@ -27,6 +28,17 @@
         <file alias="checkMark.svg">res/images/checkMark.svg</file>
         <file alias="CogWheel.svg">res/images/CogWheel.svg</file>
         <file alias="CompassIndicator.svg">res/images/CompassIndicator.svg</file>
+        <file alias="flir-BlackHot.png">res/images/flir-BlackHot.png</file>
+        <file alias="flir-Fusion.png">res/images/flir-Fusion.png</file>
+        <file alias="flir-Globow.png">res/images/flir-Globow.png</file>
+        <file alias="flir-GrayFusion.png">res/images/flir-GrayFusion.png</file>
+        <file alias="flir-GrayRed.png">res/images/flir-GrayRed.png</file>
+        <file alias="flir-IceFire.png">res/images/flir-IceFire.png</file>
+        <file alias="flir-Iron.png">res/images/flir-Iron.png</file>
+        <file alias="flir-IronBlack.png">res/images/flir-IronBlack.png</file>
+        <file alias="flir-Rain.png">res/images/flir-Rain.png</file>
+        <file alias="flir-Rainbow.png">res/images/flir-Rainbow.png</file>
+        <file alias="flir-WhiteHot.png">res/images/flir-WhiteHot.png</file>
         <file alias="gps.svg">res/images/gps.svg</file>
         <file alias="gimbalPitch.svg">res/images/gimbalPitch.svg</file>
         <file alias="gimbalYaw.svg">res/images/gimbalYaw.svg</file>
@@ -46,6 +58,7 @@
         <file alias="mediaBack.svg">res/images/mediaBack.svg</file>
         <file alias="mediaPlay.svg">res/images/mediaPlay.svg</file>
         <file alias="odometer.svg">res/images/odometer.svg</file>
+        <file alias="obs.svg">res/images/obs.svg</file>
         <file alias="obsArc.svg">res/images/obsArc.svg</file>
         <file alias="rc.svg">res/images/rc.svg</file>
         <file alias="rc_battery_back.svg">res/images/rc_battery_back.svg</file>
@@ -56,6 +69,8 @@
         <file alias="rc_battery_charge_20.svg">res/images/rc_battery_charge_20.svg</file>
         <file alias="RightArrow.svg">res/images/RightArrow.svg</file>
         <file alias="sliders.svg">res/images/sliders.svg</file>
+        <file alias="spot-cross.svg">res/images/spot-cross.svg</file>
+        <file alias="spot-area-ir.svg">res/images/spot-area-ir.svg</file>
         <file alias="spotArea.svg">res/images/spotArea.svg</file>
         <file alias="time.svg">res/images/time.svg</file>
         <file alias="TyphoonDown.svg">res/images/TyphoonDown.svg</file>
@@ -80,18 +95,19 @@
         <file alias="BatteryIndicator.qml">res/BatteryIndicator.qml</file>
         <file alias="cameraControl.qml">res/cameraControl.qml</file>
         <file alias="ChannelComponent.qml">src/AutoPilotPlugin/ChannelComponent.qml</file>
+        <file alias="GimbalComponent.qml">src/AutoPilotPlugin/GimbalComponent.qml</file>
         <file alias="HealthComponentSummary.qml">src/AutoPilotPlugin/HealthComponentSummary.qml</file>
         <file alias="LogDownload.qml">res/LogDownload.qml</file>
-        <file alias="GimbalComponent.qml">src/AutoPilotPlugin/GimbalComponent.qml</file>
         <file alias="ModeIndicator.qml">res/ModeIndicator.qml</file>
+        <file alias="OBSIndicator.qml">res/OBSIndicator.qml</file>
         <file alias="RCCalibration.qml">res/RCCalibration.qml</file>
         <file alias="RCIndicator.qml">res/RCIndicator.qml</file>
-        <file alias="YuneecSafetyComponent.qml">src/AutoPilotPlugin/YuneecSafetyComponent.qml</file>
-        <file alias="YuneecSafetyComponentSummary.qml">src/AutoPilotPlugin/YuneecSafetyComponentSummary.qml</file>
         <file alias="TyphoonSettings.qml">res/TyphoonSettings.qml</file>
         <file alias="UpdateDialog.qml">res/UpdateDialog.qml</file>
         <file alias="WIFIRSSIIndicator.qml">res/WIFIRSSIIndicator.qml</file>
         <file alias="YGPSIndicator.qml">res/YGPSIndicator.qml</file>
         <file alias="YuneecFlyView.qml">res/YuneecFlyView.qml</file>
+        <file alias="YuneecSafetyComponent.qml">src/AutoPilotPlugin/YuneecSafetyComponent.qml</file>
+        <file alias="YuneecSafetyComponentSummary.qml">src/AutoPilotPlugin/YuneecSafetyComponentSummary.qml</file>
     </qresource>
 </RCC>

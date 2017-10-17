@@ -368,7 +368,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<ParameterEditorController>      ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
     qmlRegisterType<ESP8266ComponentController>     ("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
     qmlRegisterType<ScreenToolsController>          ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
-    qmlRegisterType<PlanMasterController>           ("QGroundControl.Controllers", 1, 0, "PlanElemementMasterController");
+    qmlRegisterType<PlanMasterController>           ("QGroundControl.Controllers", 1, 0, "PlanMasterController");
     qmlRegisterType<ValuesWidgetController>         ("QGroundControl.Controllers", 1, 0, "ValuesWidgetController");
     qmlRegisterType<QGCFileDialogController>        ("QGroundControl.Controllers", 1, 0, "QGCFileDialogController");
     qmlRegisterType<RCChannelMonitorController>     ("QGroundControl.Controllers", 1, 0, "RCChannelMonitorController");
@@ -404,11 +404,11 @@ bool QGCApplication::_initForNormalAppBoot(void)
     // Start the user interface
     MainWindow* mainWindow = MainWindow::_create();
     Q_CHECK_PTR(mainWindow);
+#endif
 
     // Now that main window is up check for lost log files
     connect(this, &QGCApplication::checkForLostLogFiles, toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
     emit checkForLostLogFiles();
-#endif
 
     // Load known link configurations
     toolbox()->linkManager()->loadLinkConfigurationList();

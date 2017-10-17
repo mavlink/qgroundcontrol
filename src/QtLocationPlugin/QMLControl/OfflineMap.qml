@@ -955,7 +955,7 @@ QGCView {
             QGCButton {
                 text:           qsTr("Import")
                 width:          _buttonSize
-                visible:        !ScreenTools.isMobile
+                visible:        QGroundControl.corePlugin.options.showOfflineMapImport
                 onClicked: {
                     QGroundControl.mapEngineManager.importAction = QGCMapEngineManager.ActionNone
                     rootLoader.sourceComponent = importDialog
@@ -964,7 +964,7 @@ QGCView {
             QGCButton {
                 text:           qsTr("Export")
                 width:          _buttonSize
-                visible:        !ScreenTools.isMobile
+                visible:        QGroundControl.corePlugin.options.showOfflineMapExport
                 enabled:        QGroundControl.mapEngineManager.tileSets.count > 1
                 onClicked:      showExport()
             }

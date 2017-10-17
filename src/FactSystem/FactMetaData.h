@@ -41,6 +41,7 @@ public:
         valueTypeString,
         valueTypeBool,
         valueTypeElapsedTimeInSeconds,  // Internally stored as double, valueString displays as HH:MM:SS
+        valueTypeCustom,                // Internally stored as a QByteArray
     } ValueType_t;
 
     typedef QVariant (*Translator)(const QVariant& from);
@@ -144,6 +145,12 @@ public:
 
     /// Same as convertAndValidateRaw except for cookedValue input
     bool convertAndValidateCooked(const QVariant& cookedValue, bool convertOnly, QVariant& typedValue, QString& errorString);
+
+    /// Converts the specified cooked value and clamps it (max/min)
+    ///     @param cookedValue Value to convert, can be string
+    ///     @param typeValue Converted value, correctly typed and clamped
+    /// @returns false: Convertion failed
+    bool clampValue(const QVariant& cookedValue, QVariant& typedValue);
 
     static const int defaultDecimalPlaces = 3;  ///< Default value for decimal places if not specified/known
     static const int unknownDecimalPlaces = -1; ///< Number of decimal places to specify is not known
@@ -253,6 +260,7 @@ private:
     static const char*  _longDescriptionJsonKey;
     static const char*  _unitsJsonKey;
     static const char*  _defaultValueJsonKey;
+    static const char*  _mobileDefaultValueJsonKey;
     static const char*  _minJsonKey;
     static const char*  _maxJsonKey;
     static const char* _hasControlJsonKey;

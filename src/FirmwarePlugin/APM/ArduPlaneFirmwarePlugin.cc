@@ -21,8 +21,8 @@ APMPlaneMode::APMPlaneMode(uint32_t mode, bool settable)
     enumToString.insert(STABILIZE,      "Stabilize");
     enumToString.insert(TRAINING,       "Training");
     enumToString.insert(ACRO,           "Acro");
-    enumToString.insert(FLY_BY_WIRE_A,  "FWB A");
-    enumToString.insert(FLY_BY_WIRE_B,  "FWB B");
+    enumToString.insert(FLY_BY_WIRE_A,  "FBW A");
+    enumToString.insert(FLY_BY_WIRE_B,  "FBW B");
     enumToString.insert(CRUISE,         "Cruise");
     enumToString.insert(AUTOTUNE,       "Autotune");
     enumToString.insert(AUTO,           "Auto");

@@ -62,7 +62,7 @@ public:
      * when reconnecting a link.
      * @param link The link to reset metadata for.
      */
-    virtual void resetMetadataForLink(const LinkInterface *link) = 0;
+    virtual void resetMetadataForLink(LinkInterface *link) = 0;
 
 public slots:
     virtual void receiveBytes(LinkInterface *link, QByteArray b) = 0;

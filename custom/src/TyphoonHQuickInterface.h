@@ -9,6 +9,7 @@
 
 #include "TyphoonHCommon.h"
 #include "VideoReceiver.h"
+#include "Vehicle.h"
 
 #include <QQmlListProperty>
 
@@ -132,8 +133,16 @@ public:
         CalibrationStateRag,
     };
 
+    enum ThermalViewMode {
+        ThermalOff = 0,
+        ThermalBlend,
+        ThermalFull,
+        ThermalPIP,
+    };
+
     Q_ENUMS(M4State)
     Q_ENUMS(CalibrationState)
+    Q_ENUMS(ThermalViewMode)
 
     Q_PROPERTY(M4State          m4State         READ    m4State             NOTIFY m4StateChanged)
     Q_PROPERTY(QString          m4StateStr      READ    m4StateStr          NOTIFY m4StateChanged)
@@ -191,6 +200,8 @@ public:
 
     Q_PROPERTY(VideoReceiver*   videoReceiver       READ    videoReceiver       CONSTANT)
     Q_PROPERTY(bool             thermalImagePresent READ    thermalImagePresent NOTIFY thermalImagePresentChanged)
+    Q_PROPERTY(ThermalViewMode  thermalMode         READ    thermalMode         WRITE  setThermalMode       NOTIFY thermalModeChanged)
+    Q_PROPERTY(double           thermalOpacity      READ    thermalOpacity      WRITE  setThermalOpacity    NOTIFY thermalOpacityChanged)
 
     Q_PROPERTY(int              distSensorMin       READ    distSensorMin       NOTIFY distSensorMinChanged)
     Q_PROPERTY(int              distSensorMax       READ    distSensorMax       NOTIFY distSensorMaxChanged)
@@ -285,6 +296,10 @@ public:
     bool        updateDone          () { return _updateDone; }
     bool        updating            () { return _pFileCopy != NULL; }
     VideoReceiver*  videoReceiver   () { return _videoReceiver; }
+    ThermalViewMode thermalMode     () { return _thermalMode; }
+    void        setThermalMode      (ThermalViewMode mode);
+    double      thermalOpacity      () { return _thermalOpacity; }
+    void        setThermalOpacity   (double val);
 
     int         distSensorMin       () { return _distSensorMin; }
     int         distSensorMax       () { return _distSensorMax; }
@@ -343,6 +358,8 @@ signals:
     void    distSensorMaxChanged        ();
     void    distSensorCurChanged        ();
     void    obsStateChanged             ();
+    void    thermalModeChanged          ();
+    void    thermalOpacityChanged       ();
     void    isInternetChanged           ();
 
 private slots:
@@ -374,6 +391,11 @@ private slots:
     void    _imageUpdateDone            ();
     void    _videoRunningChanged        ();
     void    _forgetSSID                 ();
+    void    _vehicleAdded               (Vehicle* vehicle);
+    void    _vehicleRemoved             (Vehicle* vehicle);
+    void    _mavlinkMessageReceived     (const mavlink_message_t& message);
+    void    _dynamicCamerasChanged      ();
+    void    _camerasChanged             ();
     void    _distanceSensor             (int minDist, int maxDist, int curDist);
     void    _internetUpdated            ();
 
@@ -385,13 +407,16 @@ private:
     void    _enableThermalVideo         ();
 
 private:
-    TyphoonSSIDItem*        _findSsid   (QString ssid, int rssi);
-    void                    _clearSSids ();
+    void                    _distanceSensor     (int minDist, int maxDist, int curDist);
+    TyphoonSSIDItem*        _findSsid           (QString ssid, int rssi);
+    void                    _clearSSids         ();
 
 private:
     TyphoonHM4Interface*    _pHandler;
+    Vehicle*                _vehicle;
     TyphoonHFileCopy*       _pFileCopy;
     VideoReceiver*          _videoReceiver;
+    ThermalViewMode         _thermalMode;
     QMap<QString, QString>  _configurations;
     QVariantList            _ssidList;
     QString                 _ssid;
@@ -416,6 +441,7 @@ private:
     int                     _distSensorCur;
     bool                    _obsState;
     bool                    _isFactoryApp;
+    double                  _thermalOpacity;
     bool                    _isUpdaterApp;
     bool                    _updateShown;
 };

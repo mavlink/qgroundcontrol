@@ -1322,7 +1322,7 @@ double SurveyMissionItem::timeBetweenShots(void) const
     return _cruiseSpeed == 0 ? 0 : _triggerDistance() / _cruiseSpeed;
 }
 
-void SurveyMissionItem::setMissionFlightStatus  (MissionController::MissionFlightStatus_t& missionFlightStatus)
+void SurveyMissionItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
 {
     ComplexMissionItem::setMissionFlightStatus(missionFlightStatus);
     if (!qFuzzyCompare(_cruiseSpeed, missionFlightStatus.vehicleSpeed)) {
