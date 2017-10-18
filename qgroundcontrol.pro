@@ -413,7 +413,6 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
 
     HEADERS += \
         src/AnalyzeView/LogDownloadTest.h \
-        src/audio/QGCAudioWorkerTest.h \
         src/FactSystem/FactSystemTestBase.h \
         src/FactSystem/FactSystemTestGeneric.h \
         src/FactSystem/FactSystemTestPX4.h \
@@ -449,7 +448,6 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
 
     SOURCES += \
         src/AnalyzeView/LogDownloadTest.cc \
-        src/audio/QGCAudioWorkerTest.cc \
         src/FactSystem/FactSystemTestBase.cc \
         src/FactSystem/FactSystemTestGeneric.cc \
         src/FactSystem/FactSystemTestPX4.cc \
