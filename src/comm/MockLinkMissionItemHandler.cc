@@ -70,11 +70,7 @@ bool MockLinkMissionItemHandler::handleMessage(const mavlink_message_t& msg)
         break;
 
     case MAVLINK_MSG_ID_MISSION_CLEAR_ALL:
-        // Delete all plan items
-        _missionItems.clear();
-        _fenceItems.clear();
-        _rallyItems.clear();
-        _sendAck(MAV_MISSION_ACCEPTED);
+        _handleMissionClearAll(msg);
         break;
 
     default:
@@ -82,6 +78,40 @@ bool MockLinkMissionItemHandler::handleMessage(const mavlink_message_t& msg)
     }
     
     return true;
+}
+
+void MockLinkMissionItemHandler::_handleMissionClearAll(const mavlink_message_t& msg)
+{
+
+    mavlink_mission_clear_all_t clearAll;
+
+    mavlink_msg_mission_clear_all_decode(&msg, &clearAll);
+
+    Q_ASSERT(clearAll.target_system == _mockLink->vehicleId());
+
+    _requestType = (MAV_MISSION_TYPE)clearAll.mission_type;
+    qCDebug(MockLinkMissionItemHandlerLog) << QStringLiteral("_handleMissionClearAll %1").arg(_requestType);
+
+    switch (_requestType) {
+    case MAV_MISSION_TYPE_MISSION:
+        _missionItems.clear();
+        break;
+    case MAV_MISSION_TYPE_FENCE:
+        _fenceItems.clear();
+        break;
+    case MAV_MISSION_TYPE_RALLY:
+        _rallyItems.clear();
+        break;
+    case MAV_MISSION_TYPE_ALL:
+        _missionItems.clear();
+        _fenceItems.clear();
+        _rallyItems.clear();
+        break;
+    default:
+        Q_ASSERT(false);
+    }
+
+    _sendAck(MAV_MISSION_ACCEPTED);
 }
 
 void MockLinkMissionItemHandler::_handleMissionRequestList(const mavlink_message_t& msg)

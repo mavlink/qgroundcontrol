@@ -911,7 +911,7 @@ void PlanManager::removeAll(void)
         return;
     }
 
-    qCDebug(PlanManagerLog) << QStringLiteral("removeAll").arg(_planTypeString());
+    qCDebug(PlanManagerLog) << QStringLiteral("removeAll %1").arg(_planTypeString());
 
     _clearAndDeleteMissionItems();
 
