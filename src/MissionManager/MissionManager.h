@@ -122,6 +122,7 @@ private:
     void _handleMissionRequest(const mavlink_message_t& message, bool missionItemInt);
     void _handleMissionAck(const mavlink_message_t& message);
     void _handleMissionCurrent(const mavlink_message_t& message);
+    void _handleHeartbeat(const mavlink_message_t& message);
     void _requestNextMissionItem(void);
     void _clearMissionItems(void);
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
@@ -156,6 +157,7 @@ private:
     QList<MissionItem*> _writeMissionItems;     ///< Set of mission items currently being written to vehicle
     int                 _currentMissionIndex;
     int                 _lastCurrentIndex;
+    int                 _cachedLastCurrentIndex;
 };
 
 #endif
