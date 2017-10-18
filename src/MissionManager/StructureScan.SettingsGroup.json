@@ -24,6 +24,15 @@
     "defaultValue":     25
 },
 {
+    "name":             "Scan distance",
+    "shortDescription": "Scan distance away from structure.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "defaultValue":     25
+},
+{
     "name":             "Trigger distance",
     "shortDescription": "Distance between each triggering of the camera. 0 specifies not camera trigger.",
     "type":             "double",

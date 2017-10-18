@@ -52,6 +52,9 @@ public:
     /// Returns true if the specified coordinate is within the polygon
     Q_INVOKABLE bool containsCoordinate(const QGeoCoordinate& coordinate) const;
 
+    /// Offsets the current polygon edges by the specified distance in meters
+    Q_INVOKABLE void offset(double distance);
+
     /// Returns the path in a list of QGeoCoordinate's format
     QList<QGeoCoordinate> coordinateList(void) const;
 
@@ -68,6 +71,9 @@ public:
     ///     @param errorString Error string if return is false
     /// @return true: success, false: failure (errorString set)
     bool loadFromJson(const QJsonObject& json, bool required, QString& errorString);
+
+    /// Convert polygon to NED and return (D is ignored)
+    QList<QPointF> nedPolygon(void);
 
     // Property methods
 
