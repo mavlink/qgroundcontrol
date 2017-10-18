@@ -361,7 +361,7 @@ QGCView {
                         //-- Save path
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
-                            visible:    _savePath.visible
+                            visible:    _savePath.visible && !ScreenTools.isMobile
 
                             QGCLabel {
                                 anchors.baseline:   savePathBrowse.baseline
