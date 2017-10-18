@@ -39,6 +39,11 @@
 #include "MissionSettingsTest.h"
 #include "QGCMapPolygonTest.h"
 
+#if 0
+// Temporarily disabled until I move some stuff from Stable to master
+#include "QGCAudioWorkerTest.h"
+#endif
+
 UT_REGISTER_TEST(FactSystemTestGeneric)
 UT_REGISTER_TEST(FactSystemTestPX4)
 UT_REGISTER_TEST(FileDialogTest)
@@ -63,6 +68,10 @@ UT_REGISTER_TEST(SpeedSectionTest)
 UT_REGISTER_TEST(PlanMasterControllerTest)
 UT_REGISTER_TEST(MissionSettingsTest)
 UT_REGISTER_TEST(QGCMapPolygonTest)
+#if 0
+// Temporarily disabled until I move some stuff from Stable to master
+UT_REGISTER_TEST(QGCAudioWorkerTest)
+#endif
 
 // List of unit test which are currently disabled.
 // If disabling a new test, include reason in comment.
