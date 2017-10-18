@@ -31,6 +31,7 @@ MissionManager::MissionManager(Vehicle* vehicle)
     , _lastMissionRequest(-1)
     , _currentMissionIndex(-1)
     , _lastCurrentIndex(-1)
+    , _cachedLastCurrentIndex(-1)
 {
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &MissionManager::_mavlinkMessageReceived);
     
@@ -713,6 +714,10 @@ void MissionManager::_mavlinkMessageReceived(const mavlink_message_t& message)
     case MAVLINK_MSG_ID_MISSION_CURRENT:
         _handleMissionCurrent(message);
         break;
+
+    case MAVLINK_MSG_ID_HEARTBEAT:
+        _handleHeartbeat(message);
+        break;
     }
 }
 
@@ -873,6 +878,7 @@ void MissionManager::_finishTransaction(bool success)
             // Write succeeded, update internal list to be current            
             _currentMissionIndex = -1;
             _lastCurrentIndex = -1;
+            _cachedLastCurrentIndex = -1;
             emit currentIndexChanged(-1);
             emit lastCurrentIndexChanged(-1);
             _clearAndDeleteMissionItems();
@@ -920,9 +926,26 @@ void MissionManager::_handleMissionCurrent(const mavlink_message_t& message)
         emit currentIndexChanged(_currentMissionIndex);
     }
 
-    if (_vehicle->flightMode() == _vehicle->missionFlightMode() && _currentMissionIndex != _lastCurrentIndex) {
-        qCDebug(MissionManagerLog) << "_handleMissionCurrent lastCurrentIndex:" << _currentMissionIndex;
-        _lastCurrentIndex = _currentMissionIndex;
+    if (_currentMissionIndex != _lastCurrentIndex) {
+        // We have to be careful of an RTL sequence causing a change of index to the DO_LAND_START sequence. This also triggers
+        // a flight mode change away from mission flight mode. So we only update _lastCurrentIndex when the flight mode is mission.
+        // But we can run into problems where we may get the MISSION_CURRENT message for the RTL/DO_LAND_START sequenc change prior
+        // to the HEARTBEAT message which contains the flight mode change which will cause things to work incorrectly. To fix this
+        // We force the sequencing of HEARTBEAT following by MISSION_CURRENT by caching the possible _lastCurrentIndex update until
+        // the next HEARTBEAT comes through.
+        qCDebug(MissionManagerLog) << "_handleMissionCurrent caching _lastCurrentIndex for possible update:" << _currentMissionIndex;
+        _cachedLastCurrentIndex = _currentMissionIndex;
+    }
+}
+
+void MissionManager::_handleHeartbeat(const mavlink_message_t& message)
+{
+    Q_UNUSED(message);
+
+    if (_cachedLastCurrentIndex != -1 &&  _vehicle->flightMode() == _vehicle->missionFlightMode()) {
+        qCDebug(MissionManagerLog) << "_handleHeartbeat updating lastCurrentIndex from cached value:" << _cachedLastCurrentIndex;
+        _lastCurrentIndex = _cachedLastCurrentIndex;
+        _cachedLastCurrentIndex = -1;
         emit lastCurrentIndexChanged(_lastCurrentIndex);
     }
 }
@@ -959,6 +982,7 @@ void MissionManager::removeAll(void)
 
     _currentMissionIndex = -1;
     _lastCurrentIndex = -1;
+    _cachedLastCurrentIndex = -1;
     emit currentIndexChanged(-1);
     emit lastCurrentIndexChanged(-1);
 
