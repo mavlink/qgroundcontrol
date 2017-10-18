@@ -611,6 +611,8 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     }
 
+    // This must be emitted after the vehicle processes the message. This way the vehicle state is up to date when anyone else
+    // does processing.
     emit mavlinkMessageReceived(message);
 
     _uas->receiveMessage(message);
