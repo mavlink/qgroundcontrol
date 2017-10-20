@@ -30,7 +30,7 @@
 #include "QGC.h"
 #include "MAVLinkProtocol.h"
 #include "MainWindow.h"
-#include "GAudioOutput.h"
+#include "AudioOutput.h"
 #ifndef __mobile__
 #include "QGCMAVLinkLogPlayer.h"
 #endif

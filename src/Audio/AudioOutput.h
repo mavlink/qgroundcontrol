@@ -19,11 +19,11 @@
 
 class QGCApplication;
 
-class GAudioOutput : public QGCTool
+class AudioOutput : public QGCTool
 {
     Q_OBJECT
 public:
-    GAudioOutput(QGCApplication* app, QGCToolbox* toolbox);
+    AudioOutput(QGCApplication* app, QGCToolbox* toolbox);
 
     static bool     getMillisecondString    (const QString& string, QString& match, int& number);
     static QString  fixTextMessageForAudio  (const QString& string);

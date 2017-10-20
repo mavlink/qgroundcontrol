@@ -35,7 +35,7 @@
 
 #include "QGC.h"
 #include "QGCApplication.h"
-#include "GAudioOutput.h"
+#include "AudioOutput.h"
 #include "CmdLineOptParser.h"
 #include "UDPLink.h"
 #include "LinkManager.h"
