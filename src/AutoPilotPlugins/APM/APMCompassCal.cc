@@ -117,7 +117,7 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
                                          &sphere_radius[cur_mag]);
 
                 if (qIsNaN(sphere_x[cur_mag]) || qIsNaN(sphere_y[cur_mag]) || qIsNaN(sphere_z[cur_mag])) {
-                    _emitVehicleTextMessage(QString("[cal] ERROR: NaN in sphere fit for mag %1").arg(cur_mag));
+                    _emitVehicleTextMessage(QStringLiteral("[cal] ERROR: NaN in sphere fit for mag %1").arg(cur_mag));
                     result = calibrate_return_error;
                 }
             }
@@ -134,7 +134,7 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
     if (result == calibrate_return_ok) {
         for (unsigned cur_mag=0; cur_mag<max_mags; cur_mag++) {
             if (rgCompassAvailable[cur_mag]) {
-                _emitVehicleTextMessage(QString("[cal] mag #%1 off: x:%2 y:%3 z:%4").arg(cur_mag).arg(-sphere_x[cur_mag]).arg(-sphere_y[cur_mag]).arg(-sphere_z[cur_mag]));
+                _emitVehicleTextMessage(QStringLiteral("[cal] mag #%1 off: x:%2 y:%3 z:%4").arg(cur_mag).arg(-sphere_x[cur_mag]).arg(-sphere_y[cur_mag]).arg(-sphere_z[cur_mag]));
 
                 float sensorId = 0.0f;
                 if (cur_mag == 0) {
@@ -166,7 +166,7 @@ CalWorkerThread::calibrate_return CalWorkerThread::mag_calibration_worker(detect
     mag_worker_data_t* worker_data = (mag_worker_data_t*)(data);
 
     _emitVehicleTextMessage(QStringLiteral("[cal] Rotate vehicle around the detected orientation"));
-    _emitVehicleTextMessage(QString("[cal] Continue rotation for %1 seconds").arg(worker_data->calibration_interval_perside_seconds));
+    _emitVehicleTextMessage(QStringLiteral("[cal] Continue rotation for %1 seconds").arg(worker_data->calibration_interval_perside_seconds));
 
     uint64_t calibration_deadline = QGC::groundTimeUsecs() + worker_data->calibration_interval_perside_useconds;
 
@@ -212,7 +212,7 @@ CalWorkerThread::calibrate_return CalWorkerThread::mag_calibration_worker(detect
             calibration_counter_side++;
 
             // Progress indicator for side
-            _emitVehicleTextMessage(QString("[cal] %1 side calibration: progress <%2>").arg(detect_orientation_str(orientation)).arg(progress_percentage(worker_data) +
+            _emitVehicleTextMessage(QStringLiteral("[cal] %1 side calibration: progress <%2>").arg(detect_orientation_str(orientation)).arg(progress_percentage(worker_data) +
                                                                                                                                      (unsigned)((100 / calibration_sides) * ((float)calibration_counter_side / (float)worker_data->calibration_points_perside))));
         }
 
@@ -220,10 +220,10 @@ CalWorkerThread::calibrate_return CalWorkerThread::mag_calibration_worker(detect
     }
 
     if (result == calibrate_return_ok) {
-        _emitVehicleTextMessage(QString("[cal] %1 side done, rotate to a different side").arg(detect_orientation_str(orientation)));
+        _emitVehicleTextMessage(QStringLiteral("[cal] %1 side done, rotate to a different side").arg(detect_orientation_str(orientation)));
 
         worker_data->done_count++;
-        _emitVehicleTextMessage(QString("[cal] progress <%1>").arg(progress_percentage(worker_data)));
+        _emitVehicleTextMessage(QStringLiteral("[cal] progress <%1>").arg(progress_percentage(worker_data)));
     }
 
     return result;
@@ -268,7 +268,7 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate_from_orientation(
                 strcat(pendingStr, detect_orientation_str((enum detect_orientation_return)cur_orientation));
             }
         }
-        _emitVehicleTextMessage(QString("[cal] pending:%1").arg(pendingStr));
+        _emitVehicleTextMessage(QStringLiteral("[cal] pending:%1").arg(pendingStr));
 
         _emitVehicleTextMessage(QStringLiteral("[cal] hold vehicle still on a pending side"));
         enum detect_orientation_return orient = detect_orientation();
@@ -282,12 +282,12 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate_from_orientation(
         /* inform user about already handled side */
         if (side_data_collected[orient]) {
             orientation_failures++;
-            _emitVehicleTextMessage(QString("%1 side already completed").arg(detect_orientation_str(orient)));
+            _emitVehicleTextMessage(QStringLiteral("%1 side already completed").arg(detect_orientation_str(orient)));
             _emitVehicleTextMessage(QStringLiteral("rotate to a pending side"));
             continue;
         }
 
-        _emitVehicleTextMessage(QString("[cal] %1 orientation detected").arg(detect_orientation_str(orient)));
+        _emitVehicleTextMessage(QStringLiteral("[cal] %1 orientation detected").arg(detect_orientation_str(orient)));
         orientation_failures = 0;
 
         // Call worker routine
@@ -296,7 +296,7 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate_from_orientation(
             break;
         }
 
-        _emitVehicleTextMessage(QString("[cal] %1 side done, rotate to a different side").arg(detect_orientation_str(orient)));
+        _emitVehicleTextMessage(QStringLiteral("[cal] %1 side done, rotate to a different side").arg(detect_orientation_str(orient)));
 
         // Note that this side is complete
         side_data_collected[orient] = true;
@@ -607,7 +607,7 @@ void APMCompassCal::startCalibration(void)
     connect (_vehicle, &Vehicle::mavlinkScaledImu3, this, &APMCompassCal::_handleMavlinkScaledImu3);
 
     // Simulate a start message
-    _emitVehicleTextMessage("[cal] calibration started: mag");
+    _emitVehicleTextMessage(QStringLiteral("[cal] calibration started: mag"));
 
     _calWorkerThread = new CalWorkerThread(_vehicle);
     connect(_calWorkerThread, &CalWorkerThread::vehicleTextMessage, this, &APMCompassCal::vehicleTextMessage);
@@ -650,7 +650,7 @@ void APMCompassCal::cancelCalibration(void)
     }
 
     // Simulate a cancelled message
-    _emitVehicleTextMessage("[cal] calibration cancelled");
+    _emitVehicleTextMessage(QStringLiteral("[cal] calibration cancelled"));
 }
 
 void APMCompassCal::_handleMavlinkRawImu(mavlink_message_t message)
