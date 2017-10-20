@@ -174,6 +174,12 @@ void ArduSubFirmwarePlugin::initializeStreamRates(Vehicle* vehicle) {
     vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA3,          3);
 }
 
+bool ArduSubFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities)
+{
+    Q_UNUSED(vehicle);
+    uint32_t available = SetFlightModeCapability | PauseVehicleCapability;
+    return (capabilities & available) == capabilities;
+}
 
 bool ArduSubFirmwarePlugin::supportsThrottleModeCenterZero(void)
 {
