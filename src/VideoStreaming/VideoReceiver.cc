@@ -549,33 +549,36 @@ VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
 void
 VideoReceiver::_cleanupOldVideos()
 {
-    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
-    QDir videoDir = QDir(savePath);
-    videoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
-    videoDir.setSorting(QDir::Time);
-    //-- All the movie extensions we support
-    QStringList nameFilters;
-    for(uint32_t i = 0; i < NUM_MUXES; i++) {
-        nameFilters << QString("*.") + QString(kVideoExtensions[i]);
-    }
-    videoDir.setNameFilters(nameFilters);
-    //-- get the list of videos stored
-    QFileInfoList vidList = videoDir.entryInfoList();
-    if(!vidList.isEmpty()) {
-        uint64_t total   = 0;
-        //-- Settings are stored using MB
-        uint64_t maxSize = (qgcApp()->toolbox()->settingsManager()->videoSettings()->maxVideoSize()->rawValue().toUInt() * 1024 * 1024);
-        //-- Compute total used storage
-        for(int i = 0; i < vidList.size(); i++) {
-            total += vidList[i].size();
+    //-- Only perform cleanup if storage limit is enabled
+    if(qgcApp()->toolbox()->settingsManager()->videoSettings()->enableStorageLimit()->rawValue().toBool()) {
+        QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+        QDir videoDir = QDir(savePath);
+        videoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
+        videoDir.setSorting(QDir::Time);
+        //-- All the movie extensions we support
+        QStringList nameFilters;
+        for(uint32_t i = 0; i < NUM_MUXES; i++) {
+            nameFilters << QString("*.") + QString(kVideoExtensions[i]);
         }
-        //-- Remove old movies until max size is satisfied.
-        while(total >= maxSize && !vidList.isEmpty()) {
-            total -= vidList.last().size();
-            qCDebug(VideoReceiverLog) << "Removing old video file:" << vidList.last().filePath();
-            QFile file (vidList.last().filePath());
-            file.remove();
-            vidList.removeLast();
+        videoDir.setNameFilters(nameFilters);
+        //-- get the list of videos stored
+        QFileInfoList vidList = videoDir.entryInfoList();
+        if(!vidList.isEmpty()) {
+            uint64_t total   = 0;
+            //-- Settings are stored using MB
+            uint64_t maxSize = (qgcApp()->toolbox()->settingsManager()->videoSettings()->maxVideoSize()->rawValue().toUInt() * 1024 * 1024);
+            //-- Compute total used storage
+            for(int i = 0; i < vidList.size(); i++) {
+                total += vidList[i].size();
+            }
+            //-- Remove old movies until max size is satisfied.
+            while(total >= maxSize && !vidList.isEmpty()) {
+                total -= vidList.last().size();
+                qCDebug(VideoReceiverLog) << "Removing old video file:" << vidList.last().filePath();
+                QFile file (vidList.last().filePath());
+                file.remove();
+                vidList.removeLast();
+            }
         }
     }
 }
