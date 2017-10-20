@@ -407,6 +407,7 @@ LogDownloadController::_receivedAllData()
     if(_prepareLogDownload()) {
         //-- Request Log
         _requestLogData(_downloadData->ID, 0, _downloadData->chunk_table.size()*MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
+        _timer.start(kTimeOutMilliseconds);
     } else {
         _resetSelection();
         _setDownloading(false);
