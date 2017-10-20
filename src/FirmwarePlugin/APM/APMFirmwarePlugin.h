@@ -74,7 +74,6 @@ public:
     QList<MAV_CMD> supportedMissionCommands(void) override;
 
     AutoPilotPlugin*    autopilotPlugin                 (Vehicle* vehicle) override;
-    bool                isVtol                          (const Vehicle* vehicle) const override;
     bool                isCapable                       (const Vehicle *vehicle, FirmwareCapabilities capabilities) override;
     void                setGuidedMode                   (Vehicle* vehicle, bool guidedMode) override;
     void                guidedModeTakeoff               (Vehicle* vehicle) override;
