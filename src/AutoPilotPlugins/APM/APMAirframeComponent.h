@@ -21,16 +21,16 @@ public:
     APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
     // Virtuals from VehicleComponent
-    QStringList setupCompleteChangedTriggerList(void) const final;
+    QStringList setupCompleteChangedTriggerList(void) const override;
 
     // Virtuals from VehicleComponent
-    QString name(void) const final;
-    QString description(void) const final;
-    QString iconResource(void) const final;
-    bool requiresSetup(void) const final;
-    bool setupComplete(void) const final;
-    QUrl setupSource(void) const final;
-    QUrl summaryQmlSource(void) const final;
+    QString name(void) const override;
+    QString description(void) const override;
+    QString iconResource(void) const override;
+    bool requiresSetup(void) const override;
+    bool setupComplete(void) const override;
+    QUrl setupSource(void) const override;
+    QUrl summaryQmlSource(void) const override;
 
 private:
     bool            _requiresFrameSetup; ///< true: FRAME parameter must be set
