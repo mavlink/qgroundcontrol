@@ -7,26 +7,26 @@
  *
  ****************************************************************************/
 
-#include "QGCAudioWorkerTest.h"
-#include "QGCAudioWorker.h"
+#include "AudioOutputTest.h"
+#include "AudioOutput.h"
 
-QGCAudioWorkerTest::QGCAudioWorkerTest(void)
+AudioOutputTest::AudioOutputTest(void)
 {
 
 }
 
-void QGCAudioWorkerTest::_testSpokenReplacements(void)
+void AudioOutputTest::_testSpokenReplacements(void)
 {
-    QString result = QGCAudioWorker::fixTextMessageForAudio(QStringLiteral("-10.5m, -10.5m. -10.5 m"));
+    QString result = AudioOutput::fixTextMessageForAudio(QStringLiteral("-10.5m, -10.5m. -10.5 m"));
     QCOMPARE(result, QStringLiteral(" negative 10.5 meters,  negative 10.5 meters.  negative 10.5  meters"));
-    result = QGCAudioWorker::fixTextMessageForAudio(QStringLiteral("-10m -10 m"));
+    result = AudioOutput::fixTextMessageForAudio(QStringLiteral("-10m -10 m"));
     QCOMPARE(result, QStringLiteral(" negative 10 meters  negative 10  meters"));
-    result = QGCAudioWorker::fixTextMessageForAudio(QStringLiteral("foo -10m -10 m bar"));
+    result = AudioOutput::fixTextMessageForAudio(QStringLiteral("foo -10m -10 m bar"));
     QCOMPARE(result, QStringLiteral("foo  negative 10 meters  negative 10  meters bar"));
-    result = QGCAudioWorker::fixTextMessageForAudio(QStringLiteral("-foom"));
+    result = AudioOutput::fixTextMessageForAudio(QStringLiteral("-foom"));
     QCOMPARE(result, QStringLiteral("-foom"));
-    result = QGCAudioWorker::fixTextMessageForAudio(QStringLiteral("10 moo"));
+    result = AudioOutput::fixTextMessageForAudio(QStringLiteral("10 moo"));
     QCOMPARE(result, QStringLiteral("10 moo"));
-    result = QGCAudioWorker::fixTextMessageForAudio(QStringLiteral("10moo"));
+    result = AudioOutput::fixTextMessageForAudio(QStringLiteral("10moo"));
     QCOMPARE(result, QStringLiteral("10moo"));
 }

@@ -11,12 +11,12 @@
 
 #include "UnitTest.h"
 
-class QGCAudioWorkerTest : public UnitTest
+class AudioOutputTest : public UnitTest
 {
     Q_OBJECT
 
 public:
-    QGCAudioWorkerTest(void);
+    AudioOutputTest(void);
 
 private slots:
     void _testSpokenReplacements(void);
