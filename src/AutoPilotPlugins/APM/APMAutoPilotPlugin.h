@@ -38,7 +38,7 @@ public:
     ~APMAutoPilotPlugin();
 
     // Overrides from AutoPilotPlugin
-    const QVariantList& vehicleComponents(void) final;
+    const QVariantList& vehicleComponents(void) override;
     QString prerequisiteSetup(VehicleComponent* component) const override;
 
 protected:
