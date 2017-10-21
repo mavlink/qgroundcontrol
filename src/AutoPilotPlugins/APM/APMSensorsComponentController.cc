@@ -226,7 +226,8 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
 
             _startLogCalibration();
             uint8_t compassBits = 0;
-            if (getParameterFact(FactSystem::defaultComponentId, "COMPASS_DEV_ID")->rawValue().toInt() > 0) {
+            if (getParameterFact(FactSystem::defaultComponentId, "COMPASS_DEV_ID")->rawValue().toInt() > 0 &&
+                getParameterFact(FactSystem::defaultComponentId, QStringLiteral("COMPASS_USE"))->rawValue().toBool()) {
                 compassBits |= 1 << 0;
                 qCDebug(APMSensorsComponentControllerLog) << "Performing onboard compass cal for compass 1";
             } else {
@@ -234,7 +235,8 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
                 _rgCompassCalSucceeded[0] = true;
                 _rgCompassCalFitness[0] = 0;
             }
-            if (getParameterFact(FactSystem::defaultComponentId, "COMPASS_DEV_ID2")->rawValue().toInt() > 0) {
+            if (getParameterFact(FactSystem::defaultComponentId, "COMPASS_DEV_ID2")->rawValue().toInt() > 0 &&
+                getParameterFact(FactSystem::defaultComponentId, QStringLiteral("COMPASS_USE2"))->rawValue().toBool()) {
                 compassBits |= 1 << 1;
                 qCDebug(APMSensorsComponentControllerLog) << "Performing onboard compass cal for compass 2";
             } else {
@@ -242,7 +244,8 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
                 _rgCompassCalSucceeded[1] = true;
                 _rgCompassCalFitness[1] = 0;
             }
-            if (getParameterFact(FactSystem::defaultComponentId, "COMPASS_DEV_ID3")->rawValue().toInt() > 0) {
+            if (getParameterFact(FactSystem::defaultComponentId, "COMPASS_DEV_ID3")->rawValue().toInt() > 0 &&
+                getParameterFact(FactSystem::defaultComponentId, QStringLiteral("COMPASS_USE3"))->rawValue().toBool()) {
                 compassBits |= 1 << 2;
                 qCDebug(APMSensorsComponentControllerLog) << "Performing onboard compass cal for compass 3";
             } else {
