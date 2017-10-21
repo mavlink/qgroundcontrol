@@ -202,9 +202,15 @@ UTMConverter::_compareItem(UTM_LogItem logItem1, UTM_LogItem logItem2)
 void
 UTMConverter::_handleGpsRawInt(mavlink_message_t& message)
 {
-    qDebug() << "_handleGpsRawInt()";
     _gpsRawIntMessageAvailable = true;
     if (!_globalPositionIntMessageAvailable) {
+        //-- Skip it if it's less than 250ms from last
+        double curElapsed = (_curTimeUSecs - _startDTG) / 1000000.0;
+        if(_logItems.size()) {
+            if(curElapsed - _logItems[_logItems.size()-1].time < 0.25) {
+                return;
+            }
+        }
         mavlink_gps_raw_int_t gpsRawInt;
         mavlink_msg_gps_raw_int_decode(&message, &gpsRawInt);
         if (gpsRawInt.fix_type >= GPS_FIX_TYPE_3D_FIX) {
@@ -212,16 +218,14 @@ UTMConverter::_handleGpsRawInt(mavlink_message_t& message)
             logItem.lon   = gpsRawInt.lat / (double)1E7;
             logItem.lat   = gpsRawInt.lat / (double)1E7;
             logItem.alt   = gpsRawInt.alt / 1000.0;
-            logItem.time  = (_curTimeUSecs - _startDTG) / 1000000.0;
+            logItem.time  = curElapsed;
             logItem.speed = _lastSpeed;
             if(_logItems.size()) {
                 if(!_compareItem(_logItems[_logItems.size()-1], logItem)) {
                     _logItems.append(logItem);
-                    qDebug() << "Appending";
                 }
             } else {
                 _logItems.append(logItem);
-                qDebug() << "Appending";
             }
         }
     }
@@ -240,24 +244,28 @@ UTMConverter::_handleVfrHud(mavlink_message_t& message)
 void
 UTMConverter::_handleGlobalPositionInt(mavlink_message_t& message)
 {
-    qDebug() << "_handleGlobalPositionInt()";
     _globalPositionIntMessageAvailable = true;
+    //-- Skip it if it's less than 250ms from last
+    double curElapsed = (_curTimeUSecs - _startDTG) / 1000000.0;
+    if(_logItems.size()) {
+        if(curElapsed - _logItems[_logItems.size()-1].time < 0.25) {
+            return;
+        }
+    }
     mavlink_global_position_int_t globalPositionInt;
     mavlink_msg_global_position_int_decode(&message, &globalPositionInt);
     UTM_LogItem logItem;
     logItem.lon   = globalPositionInt.lon / (double)1E7;
     logItem.lat   = globalPositionInt.lat / (double)1E7;
     logItem.alt   = globalPositionInt.alt / 1000.0;
-    logItem.time  = (_curTimeUSecs - _startDTG) / 1000000.0;
+    logItem.time  = curElapsed;
     logItem.speed = _lastSpeed;
     if(_logItems.size()) {
         if(!_compareItem(_logItems[_logItems.size()-1], logItem)) {
             _logItems.append(logItem);
-            qDebug() << "Appending";
         }
     } else {
         _logItems.append(logItem);
-        qDebug() << "Appending";
     }
 }
 
