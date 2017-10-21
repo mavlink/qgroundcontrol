@@ -73,7 +73,7 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
     // Get the latest joystick mapping
     newMap = JoystickSDL::discover(_multiVehicleManager);
 #elif defined(__android__)
-    _name2JoystickMap = JoystickAndroid::discover(_multiVehicleManager);
+    newMap = JoystickAndroid::discover(_multiVehicleManager);
 #endif
 
     if (_activeJoystick && !newMap.contains(_activeJoystick->name())) {
