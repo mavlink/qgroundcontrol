@@ -131,6 +131,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
 
     Vehicle* vehicle = new Vehicle(link, vehicleId, componentId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, _firmwarePluginManager, _joystickManager);
     connect(vehicle, &Vehicle::allLinksInactive, this, &MultiVehicleManager::_deleteVehiclePhase1);
+    connect(vehicle, &Vehicle::requestProtocolVersion, this, &MultiVehicleManager::_requestProtocolVersion);
     connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &MultiVehicleManager::_vehicleParametersReadyChanged);
 
     _vehicles.append(vehicle);
@@ -159,6 +160,30 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     }
 #endif
 
+}
+
+/// This slot is connected to the Vehicle::requestProtocolVersion signal such that the vehicle manager
+/// tries to switch MAVLink to v2 if all vehicles support it
+void MultiVehicleManager::_requestProtocolVersion(unsigned version)
+{
+    unsigned maxversion = 0;
+
+    if (_vehicles.count() == 0) {
+        _mavlinkProtocol->setVersion(version);
+        return;
+    }
+
+    for (int i=0; i<_vehicles.count(); i++) {
+
+        Vehicle *v = qobject_cast<Vehicle*>(_vehicles[i]);
+        if (v && v->maxProtoVersion() > maxversion) {
+           maxversion = v->maxProtoVersion();
+        }
+    }
+
+    if (_mavlinkProtocol->getCurrentVersion() != maxversion) {
+        _mavlinkProtocol->setVersion(maxversion);
+    }
 }
 
 /// This slot is connected to the Vehicle::allLinksDestroyed signal such that the Vehicle is deleted

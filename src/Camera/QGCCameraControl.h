@@ -144,7 +144,7 @@ public:
     virtual VideoStatus videoStatus         ();
     virtual PhotoStatus photoStatus         ();
     virtual CameraMode  cameraMode          () { return _cameraMode; }
-    virtual QStringList activeSettings      () { return _activeSettings; }
+    virtual QStringList activeSettings      ();
     virtual quint32     storageFree         () { return _storageFree;  }
     virtual QString     storageFreeStr      ();
     virtual quint32     storageTotal        () { return _storageTotal; }

@@ -28,13 +28,6 @@ QGCCameraManager::~QGCCameraManager()
 }
 
 //-----------------------------------------------------------------------------
-QString
-QGCCameraManager::controllerSource()
-{
-    return QStringLiteral("/qml/CameraControl.qml");
-}
-
-//-----------------------------------------------------------------------------
 void
 QGCCameraManager::_vehicleReady(bool ready)
 {
@@ -85,7 +78,7 @@ QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
     mavlink_msg_heartbeat_decode(&message, &heartbeat);
     //-- If this heartbeat is from a different node within the vehicle
     if(_vehicleReadyState && _vehicle->id() == message.sysid && _vehicle->defaultComponentId() != message.compid) {
-        if(!_cameraInfoRequested[message.compid]) {
+        if(!_cameraInfoRequested.contains(message.compid)) {
             _cameraInfoRequested[message.compid] = true;
             //-- Request camera info
             _requestCameraInfo(message.compid);
@@ -117,14 +110,19 @@ QGCCameraManager::_findCamera(int id)
 void
 QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
 {
-    mavlink_camera_information_t info;
-    mavlink_msg_camera_information_decode(&message, &info);
-    qCDebug(CameraManagerLog) << "_handleCameraInfo:" << (const char*)(void*)&info.model_name[0] << (const char*)(void*)&info.vendor_name[0];
-    QGCCameraControl* pCamera = _vehicle->firmwarePlugin()->createCameraControl(&info, _vehicle, message.compid, this);
-    if(pCamera) {
-        QQmlEngine::setObjectOwnership(pCamera, QQmlEngine::CppOwnership);
-        _cameras.append(pCamera);
-        emit camerasChanged();
+    //-- Have we requested it?
+    if(_cameraInfoRequested.contains(message.compid) && _cameraInfoRequested[message.compid]) {
+        //-- Flag it as done
+        _cameraInfoRequested[message.compid] = false;
+        mavlink_camera_information_t info;
+        mavlink_msg_camera_information_decode(&message, &info);
+        qCDebug(CameraManagerLog) << "_handleCameraInfo:" << (const char*)(void*)&info.model_name[0] << (const char*)(void*)&info.vendor_name[0] << "Comp ID:" << message.compid;
+        QGCCameraControl* pCamera = _vehicle->firmwarePlugin()->createCameraControl(&info, _vehicle, message.compid, this);
+        if(pCamera) {
+            QQmlEngine::setObjectOwnership(pCamera, QQmlEngine::CppOwnership);
+            _cameras.append(pCamera);
+            emit camerasChanged();
+        }
     }
 }
 

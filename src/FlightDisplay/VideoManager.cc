@@ -60,6 +60,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    connect(_videoSettings->videoSource(),   &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
    connect(_videoSettings->udpPort(),       &Fact::rawValueChanged, this, &VideoManager::_udpPortChanged);
    connect(_videoSettings->rtspUrl(),       &Fact::rawValueChanged, this, &VideoManager::_rtspUrlChanged);
+   connect(_videoSettings->tcpUrl(),        &Fact::rawValueChanged, this, &VideoManager::_tcpUrlChanged);
 
 #if defined(QGC_GST_STREAMING)
 #ifndef QGC_DISABLE_UVC
@@ -112,6 +113,13 @@ VideoManager::_rtspUrlChanged()
 }
 
 //-----------------------------------------------------------------------------
+void
+VideoManager::_tcpUrlChanged()
+{
+    _restartVideo();
+}
+
+//-----------------------------------------------------------------------------
 bool
 VideoManager::hasVideo()
 {
@@ -125,7 +133,7 @@ VideoManager::isGStreamer()
 {
 #if defined(QGC_GST_STREAMING)
     QString videoSource = _videoSettings->videoSource()->rawValue().toString();
-    return videoSource == VideoSettings::videoSourceUDP || videoSource == VideoSettings::videoSourceRTSP;
+    return videoSource == VideoSettings::videoSourceUDP || videoSource == VideoSettings::videoSourceRTSP || videoSource == VideoSettings::videoSourceTCP;
 #else
     return false;
 #endif
@@ -150,6 +158,8 @@ VideoManager::_updateSettings()
         _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
     else if (_videoSettings->videoSource()->rawValue().toString() == VideoSettings::videoSourceRTSP)
         _videoReceiver->setUri(_videoSettings->rtspUrl()->rawValue().toString());
+    else if (_videoSettings->videoSource()->rawValue().toString() == VideoSettings::videoSourceTCP)
+        _videoReceiver->setUri(QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
 }
 
 //-----------------------------------------------------------------------------

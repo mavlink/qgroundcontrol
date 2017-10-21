@@ -24,6 +24,7 @@ public:
     Q_PROPERTY(double   complexDistance     READ complexDistance    NOTIFY complexDistanceChanged)
 
     /// @return The distance covered the complex mission item in meters.
+    /// Signals complexDistanceChanged
     virtual double complexDistance(void) const = 0;
 
     /// @return Amount of additional time delay in seconds needed to fly the complex item
@@ -39,6 +40,7 @@ public:
     /// Get the point of complex mission item furthest away from a coordinate
     ///     @param other QGeoCoordinate to which distance is calculated
     /// @return the greatest distance from any point of the complex item to some coordinate
+    /// Signals greatestDistanceToChanged
     virtual double greatestDistanceTo(const QGeoCoordinate &other) const = 0;
 
     /// This mission item attribute specifies the type of the complex item.
@@ -46,6 +48,7 @@ public:
 
 signals:
     void complexDistanceChanged     (double complexDistance);
+    void greatestDistanceToChanged  (void);
     void additionalTimeDelayChanged (double additionalTimeDelay);
 };
 

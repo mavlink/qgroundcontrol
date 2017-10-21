@@ -18,6 +18,8 @@
 #include <QDebug>
 #include <QStack>
 
+static const char* kInvalidConverstion = "Internal Error: No support for string parameters";
+
 QGC_LOGGING_CATEGORY(APMParameterMetaDataLog,           "APMParameterMetaDataLog")
 QGC_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog,    "APMParameterMetaDataVerboseLog")
 
@@ -57,12 +59,16 @@ QVariant APMParameterMetaData::_stringToTypedVariant(const QString& string,
         convertTo = QVariant::Double;
         break;
     case FactMetaData::valueTypeString:
-        qWarning() << "Internal Error: No support for string parameters";
+        qWarning() << kInvalidConverstion;
         convertTo = QVariant::String;
         break;
     case FactMetaData::valueTypeBool:
-        qWarning() << "Internal Error: No support for string parameters";
+        qWarning() << kInvalidConverstion;
         convertTo = QVariant::Bool;
+        break;
+    case FactMetaData::valueTypeCustom:
+        qWarning() << kInvalidConverstion;
+        convertTo = QVariant::ByteArray;
         break;
     }
 

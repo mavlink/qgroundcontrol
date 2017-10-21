@@ -66,6 +66,7 @@ private slots:
     void _videoSourceChanged        ();
     void _udpPortChanged            ();
     void _rtspUrlChanged            ();
+    void _tcpUrlChanged             ();
 
 private:
     void _updateSettings            ();

@@ -31,7 +31,7 @@ QString APMSafetyComponent::description(void) const
 {
     switch (_vehicle->vehicleType()) {
         case MAV_TYPE_SUBMARINE:
-            return tr("Safety Setup is used to setup failsafe actions, geofence limits, leak detection, and arming checks.");
+            return tr("Safety Setup is used to setup failsafe actions, leak detection, and arming checks.");
             break;
         case MAV_TYPE_GROUND_ROVER:
         case MAV_TYPE_FIXED_WING:

@@ -24,16 +24,16 @@ Item {
 
     property var    mapControl                          ///< Map control to place item in
     property var    mapPolygon                          ///< QGCMapPolygon object
-    property bool   interactive:        true            /// true: user can manipulate polygon
+    property bool   interactive:        mapPolygon.interactive
     property color  interiorColor:      "transparent"
     property real   interiorOpacity:    1
     property int    borderWidth:        0
     property color  borderColor:        "black"
 
-    property var _polygonComponent
-    property var _dragHandlesComponent
-    property var _splitHandlesComponent
-    property var _centerDragHandleComponent
+    property var    _polygonComponent
+    property var    _dragHandlesComponent
+    property var    _splitHandlesComponent
+    property var    _centerDragHandleComponent
 
     property real _zorderDragHandle:    QGroundControl.zOrderMapItems + 3   // Highest to prevent splitting when items overlap
     property real _zorderSplitHandle:   QGroundControl.zOrderMapItems + 2
@@ -111,7 +111,7 @@ Item {
     }
 
     Component.onCompleted: {
-        mapPolygonVisuals.addVisuals()
+        addVisuals()
         if (interactive) {
             addHandles()
         }

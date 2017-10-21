@@ -68,22 +68,22 @@ class APMSubMode : public APMCustomMode
 public:
     enum Mode {
         STABILIZE         = 0,   // Hold level position
-        RESERVED_1        = 1,
+        ACRO              = 1,   // Manual angular rate, throttle
         ALT_HOLD          = 2,   // Depth hold
-        RESERVED_3        = 3,
-        RESERVED_4        = 4,
+        AUTO              = 3,   // Full auto to waypoint
+        GUIDED            = 4,   // Full auto to coordinate/direction
         RESERVED_5        = 5,
         RESERVED_6        = 6,
-        RESERVED_7        = 7,
+        CIRCLE            = 7,   // Auto circling
         RESERVED_8        = 8,
-        RESERVED_9        = 9,
+        SURFACE           = 9,   // Auto return to surface
         RESERVED_10       = 10,
         RESERVED_11       = 11,
         RESERVED_12       = 12,
         RESERVED_13       = 13,
         RESERVED_14       = 14,
         RESERVED_15       = 15,
-        RESERVED_16       = 16,
+        POSHOLD           = 16,  // Hold position
         RESERVED_17       = 17,
         RESERVED_18       = 18,
         MANUAL            = 19
@@ -101,27 +101,31 @@ public:
     ArduSubFirmwarePlugin(void);
 
     // Overrides from FirmwarePlugin
-    int manualControlReservedButtonCount(void);
+    int manualControlReservedButtonCount(void) final;
 
     int defaultJoystickTXMode(void) final { return 3; }
 
-    bool supportsThrottleModeCenterZero(void);
+    bool supportsThrottleModeCenterZero(void) final;
 
-    bool supportsManualControl(void);
+    bool supportsRadio(void) final;
 
-    bool supportsRadio(void);
+    bool supportsJSButton(void) final;
 
-    bool supportsJSButton(void);
+    bool supportsMotorInterference(void) final;
 
-    bool supportsMotorInterference(void);
+    /// Return the resource file which contains the vehicle icon used in the flight view when the view is dark (Satellite for instance)
+    virtual QString vehicleImageOpaque(const Vehicle* vehicle) const final;
 
-    QString brandImageIndoor(const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
-    QString brandImageOutdoor(const Vehicle* vehicle) const { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
+    /// Return the resource file which contains the vehicle icon used in the flight view when the view is light (Map for instance)
+    virtual QString vehicleImageOutline(const Vehicle* vehicle) const final;
+
+    QString brandImageIndoor(const Vehicle* vehicle) const final{ Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
+    QString brandImageOutdoor(const Vehicle* vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
     int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
     const QVariantList& toolBarIndicators(const Vehicle* vehicle) final;
-    bool  adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message);
-    virtual QMap<QString, FactGroup*>* factGroups(void);
+    bool  adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) final;
+    virtual QMap<QString, FactGroup*>* factGroups(void) final;
 
 
 private:

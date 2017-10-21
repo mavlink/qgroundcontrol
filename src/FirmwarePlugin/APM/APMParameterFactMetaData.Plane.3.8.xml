@@ -1013,6 +1013,7 @@
 <value code="18">Throw</value>
 <value code="19">Avoid_ADSB</value>
 <value code="20">Guided_NoGPS</value>
+<value code="21">SafeRTL</value>
 </values>
 </param>
 <param humanName="Flight Mode 2" name="ArduCopter:FLTMODE2" documentation="Flight mode when Channel 5 pwm is &gt;1230, &lt;= 1360" user="Standard">
@@ -1035,6 +1036,7 @@
 <value code="18">Throw</value>
 <value code="19">Avoid_ADSB</value>
 <value code="20">Guided_NoGPS</value>
+<value code="21">SafeRTL</value>
 </values>
 </param>
 <param humanName="Flight Mode 3" name="ArduCopter:FLTMODE3" documentation="Flight mode when Channel 5 pwm is &gt;1360, &lt;= 1490" user="Standard">
@@ -1057,6 +1059,7 @@
 <value code="18">Throw</value>
 <value code="19">Avoid_ADSB</value>
 <value code="20">Guided_NoGPS</value>
+<value code="21">SafeRTL</value>
 </values>
 </param>
 <param humanName="Flight Mode 4" name="ArduCopter:FLTMODE4" documentation="Flight mode when Channel 5 pwm is &gt;1490, &lt;= 1620" user="Standard">
@@ -1079,6 +1082,7 @@
 <value code="18">Throw</value>
 <value code="19">Avoid_ADSB</value>
 <value code="20">Guided_NoGPS</value>
+<value code="21">SafeRTL</value>
 </values>
 </param>
 <param humanName="Flight Mode 5" name="ArduCopter:FLTMODE5" documentation="Flight mode when Channel 5 pwm is &gt;1620, &lt;= 1749" user="Standard">
@@ -1101,6 +1105,7 @@
 <value code="18">Throw</value>
 <value code="19">Avoid_ADSB</value>
 <value code="20">Guided_NoGPS</value>
+<value code="21">SafeRTL</value>
 </values>
 </param>
 <param humanName="Flight Mode 6" name="ArduCopter:FLTMODE6" documentation="Flight mode when Channel 5 pwm is &gt;=1750" user="Standard">
@@ -1123,6 +1128,7 @@
 <value code="18">Throw</value>
 <value code="19">Avoid_ADSB</value>
 <value code="20">Guided_NoGPS</value>
+<value code="21">SafeRTL</value>
 </values>
 </param>
 <param humanName="Simple mode bitmask" name="ArduCopter:SIMPLE" documentation="Bitmask which holds which flight modes use simple heading mode (eg bit 0 = 1 means Flight Mode 0 uses simple mode)" user="Advanced">
@@ -6824,6 +6830,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>
@@ -6911,6 +6930,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>
@@ -6998,6 +7030,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>
@@ -7085,6 +7130,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>
@@ -7172,6 +7230,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>
@@ -7259,6 +7330,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>
@@ -7346,6 +7430,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>
@@ -7433,6 +7530,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>
@@ -7520,6 +7630,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>
@@ -7607,6 +7730,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>
@@ -7694,6 +7830,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>
@@ -7781,6 +7930,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>
@@ -7868,6 +8030,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>
@@ -7955,6 +8130,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>
@@ -8042,6 +8230,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>
@@ -8129,6 +8330,19 @@
 <value code="70">Throttle</value>
 <value code="71">TrackerYaw</value>
 <value code="72">TrackerPitch</value>
+<value code="73">ThrottleLeft</value>
+<value code="74">ThrottleRight</value>
+<value code="75">TiltMotorLeft</value>
+<value code="76">TiltMotorRight</value>
+<value code="77">ElevonLeft</value>
+<value code="78">ElevonRight</value>
+<value code="79">VtailLeft</value>
+<value code="80">VtailRight</value>
+<value code="81">Boost Throttle</value>
+<value code="82">Motor9</value>
+<value code="83">Motor10</value>
+<value code="84">Motor11</value>
+<value code="85">Motor12</value>
 </values>
 </param>
 </parameters>

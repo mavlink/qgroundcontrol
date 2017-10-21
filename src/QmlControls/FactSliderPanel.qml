@@ -111,25 +111,25 @@ Column {
                         onValueChanged: {
                             if (_loadComplete) {
                                 fact.value = value
-                                    }
-                                }
+                            }
+                        }
 
-                                activeFocusOnPress:         true
+                        activeFocusOnPress:         true
 
-                                MultiPointTouchArea {
-                                    anchors.fill: parent
+                        MultiPointTouchArea {
+                            anchors.fill: parent
 
-                                    minimumTouchPoints: 1
-                                    maximumTouchPoints: 1
-                                    mouseEnabled:       false
-                                }
+                            minimumTouchPoints: 1
+                            maximumTouchPoints: 1
+                            mouseEnabled:       false
+                        }
 
-                                // Block wheel events
-                                MouseArea {
-                                    anchors.fill: parent
-                                    acceptedButtons: Qt.NoButton
-                                    onWheel: {
-                                        wheel.accepted = true
+                        // Block wheel events
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.NoButton
+                            onWheel: {
+                                wheel.accepted = true
                             }
                         }
                     } // Slider

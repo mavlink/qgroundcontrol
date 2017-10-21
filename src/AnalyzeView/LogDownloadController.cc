@@ -173,7 +173,7 @@ LogDownloadController::_logEntry(UASInterface* uas, uint32_t time_utc, uint32_t 
     //-- Update this log record
     if(num_logs > 0) {
         //-- Skip if empty (APM first packet)
-        if(size) {
+        if(size || _vehicle->firmwareType() != MAV_AUTOPILOT_ARDUPILOTMEGA) {
             id -= _apmOneBased;
             if(id < _logEntriesModel.count()) {
                 QGCLogEntry* entry = _logEntriesModel[id];
@@ -407,6 +407,7 @@ LogDownloadController::_receivedAllData()
     if(_prepareLogDownload()) {
         //-- Request Log
         _requestLogData(_downloadData->ID, 0, _downloadData->chunk_table.size()*MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
+        _timer.start(kTimeOutMilliseconds);
     } else {
         _resetSelection();
         _setDownloading(false);
@@ -589,14 +590,14 @@ LogDownloadController::_prepareLogDownload()
     bool result = false;
     QString ftime;
     if(entry->time().date().year() < 2010) {
-        ftime = "UnknownDate";
+        ftime = tr("UnknownDate");
     } else {
-        ftime = entry->time().toString("yyyy-M-d-hh-mm-ss");
+        ftime = entry->time().toString(QStringLiteral("yyyy-M-d-hh-mm-ss"));
     }
     _downloadData = new LogDownloadData(entry);
     _downloadData->filename = QString("log_") + QString::number(entry->id()) + "_" + ftime;
     if (_vehicle->firmwareType() == MAV_AUTOPILOT_PX4) {
-        QString loggerParam("SYS_LOGGER");
+        QString loggerParam = QStringLiteral("SYS_LOGGER");
         if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, loggerParam) &&
                 _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, loggerParam)->rawValue().toInt() == 0) {
             _downloadData->filename += ".px4log";

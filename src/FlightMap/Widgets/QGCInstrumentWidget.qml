@@ -92,6 +92,37 @@ Rectangle {
                     onClicked:      _valuesWidget.showPicker()
                 }
             }
+
+            Image {
+                id:                 healthWarning
+                anchors.bottom:     outerCompass.bottom
+                anchors.left:       outerCompass.left
+                source:             "/qmlimages/Yield.svg"
+                mipmap:             true
+                visible:            _activeVehicle ? !_warningsViewed && _activeVehicle.unhealthySensors.length > 0 && _valuesWidget.currentPage() != 2 : false
+                opacity:            0.8
+                width:              outerCompass.width * 0.15
+                sourceSize.width:   width
+                fillMode:           Image.PreserveAspectFit
+
+                property bool _warningsViewed: false
+
+                MouseArea {
+                    anchors.fill:   parent
+                    hoverEnabled:   true
+                    onEntered:      healthWarning.opacity = 1
+                    onExited:       healthWarning.opacity = 0.8
+                    onClicked:      {
+                        _valuesWidget.showPage(2)
+                        healthWarning._warningsViewed = true
+                    }
+                }
+
+                Connections {
+                    target: _activeVehicle
+                    onUnhealthySensorsChanged: healthWarning._warningsViewed = false
+                }
+            }
         }
 
         Rectangle {

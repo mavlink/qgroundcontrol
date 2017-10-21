@@ -29,7 +29,7 @@ Item {
 
     property bool   _interactive:           interactive
     property var    _rallyPointsComponent
-    property bool   _rallyPointsSupported:  myRallyPointController.rallyPointsSupported
+    property bool   _rallyPointsSupported:  myRallyPointController.supported
     property var    _rallyPoints:           myRallyPointController.points
 
     Component.onCompleted: {

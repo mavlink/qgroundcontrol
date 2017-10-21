@@ -59,7 +59,7 @@ QGCFlickable {
                 anchors.right:      parent.right
                 anchors.top:        infoLabel.bottom
                 wrapMode:           Text.WordWrap
-                text:               controller.rallyPointsSupported ?
+                text:               controller.supported ?
                                         qsTr("Click in the map to add new rally points.") :
                                         qsTr("This vehicle does not support Rally Points.")
             }

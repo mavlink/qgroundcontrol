@@ -39,6 +39,7 @@ FlightMap {
     property var    flightWidgets
     property var    rightPanelWidth
     property var    qgcView                             ///< QGCView control which contains this map
+    property var    multiVehicleView                    ///< true: multi-vehicle view, false: single vehicle view
 
     property rect   centerViewport:             Qt.rect(0, 0, width, height)
 
@@ -184,25 +185,51 @@ FlightMap {
         delegate: VehicleMapItem {
             vehicle:        object
             coordinate:     object.coordinate
-            isSatellite:    flightMap.isSatelliteMap
+            map:            flightMap
             size:           _mainIsMap ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight
             z:              QGroundControl.zOrderVehicles
         }
     }
 
-    // Add the mission item visuals to the map
-    Repeater {
-        model: _mainIsMap ? _missionController.visualItems : 0
+    // Add ADSB vehicles to the map
+    MapItemView {
+        model: _activeVehicle ? _activeVehicle.adsbVehicles : 0
 
-        delegate: MissionItemMapVisual {
-            map:        flightMap
-            onClicked:  guidedActionsController.confirmAction(guidedActionsController.actionSetWaypoint, Math.max(object.sequenceNumber, 1))
+        property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
+        delegate: VehicleMapItem {
+            coordinate:     object.coordinate
+            altitude:       object.altitude
+            callsign:       object.callsign
+            heading:        object.heading
+            map:            flightMap
+            z:              QGroundControl.zOrderVehicles
         }
     }
 
-    // Add lines between waypoints
-    MissionLineView {
-        model:  _mainIsMap ? _missionController.waypointLines : 0
+    // Add the items associated with each vehicles flight plan to the map
+    Repeater {
+        model: QGroundControl.multiVehicleManager.vehicles
+
+        PlanMapItems {
+            map:                flightMap
+            largeMapView:       _mainIsMap
+            masterController:   masterController
+            isActiveVehicle:    _vehicle.active
+
+            property var _vehicle: object
+
+            PlanMasterController {
+                id: masterController
+                Component.onCompleted: startStaticActiveVehicle(object)
+            }
+        }
+    }
+
+    // Allow custom builds to add map items
+    CustomMapItems {
+        map:            flightMap
+        largeMapView:   _mainIsMap
     }
 
     GeoFenceMapVisuals {
@@ -234,7 +261,7 @@ FlightMap {
     // GoTo here waypoint
     MapQuickItem {
         coordinate:     _gotoHereCoordinate
-        visible:        _activeVehicle && _activeVehicle.guidedMode && _gotoHereCoordinate.isValid
+        visible:        _activeVehicle && _activeVehicle.guidedModeSupported && _gotoHereCoordinate.isValid
         z:              QGroundControl.zOrderMapItems
         anchorPoint.x:  sourceItem.anchorPointX
         anchorPoint.y:  sourceItem.anchorPointY

@@ -32,7 +32,7 @@ QGCView {
     property Fact   _editorDialogFact: Fact { }
     property int    _rowHeight:         ScreenTools.defaultFontPixelHeight * 2
     property int    _rowWidth:          10      // Dynamic adjusted at runtime
-    property bool   _searchFilter:      searchText.text != ""   ///< true: showing results of search
+    property bool   _searchFilter:      searchText.text.trim() != ""   ///< true: showing results of search
     property var    _searchResults              ///< List of parameter names from search results
     property bool   _showRCToParam:     !ScreenTools.isMobile && QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
 

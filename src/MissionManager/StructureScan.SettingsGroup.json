@@ -1,0 +1,44 @@
+[
+{
+    "name":             "Altitude",
+    "shortDescription": "Altitude for the bottom layer of the structure scan.",
+    "type":             "double",
+    "units":            "m",
+    "decimalPlaces":    1,
+    "defaultValue":     50
+},
+{
+    "name":             "Layers",
+    "shortDescription": "Number of scan layers.",
+    "type":             "uint32",
+    "min":              1,
+    "defaultValue":     1
+},
+{
+    "name":             "Layer distance",
+    "shortDescription": "Distance between each layer.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "defaultValue":     25
+},
+{
+    "name":             "Scan distance",
+    "shortDescription": "Scan distance away from structure.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "defaultValue":     25
+},
+{
+    "name":             "Trigger distance",
+    "shortDescription": "Distance between each triggering of the camera. 0 specifies not camera trigger.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "defaultValue":     25
+}
+]

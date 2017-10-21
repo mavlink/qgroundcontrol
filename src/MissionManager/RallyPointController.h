@@ -29,7 +29,6 @@ public:
     RallyPointController(PlanMasterController* masterController, QObject* parent = NULL);
     ~RallyPointController();
     
-    Q_PROPERTY(bool                 rallyPointsSupported    READ rallyPointsSupported                               NOTIFY rallyPointsSupportedChanged)
     Q_PROPERTY(QmlObjectListModel*  points                  READ points                                             CONSTANT)
     Q_PROPERTY(QString              editorQml               READ editorQml                                          CONSTANT)
     Q_PROPERTY(QObject*             currentRallyPoint       READ currentRallyPoint      WRITE setCurrentRallyPoint  NOTIFY currentRallyPointChanged)
@@ -37,6 +36,7 @@ public:
     Q_INVOKABLE void addPoint(QGeoCoordinate point);
     Q_INVOKABLE void removePoint(QObject* rallyPoint);
 
+    bool supported                  (void) const final;
     void save                       (QJsonObject& json) final;
     bool load                       (const QJsonObject& json, QString& errorString) final;
     void loadFromVehicle            (void) final;
@@ -50,7 +50,6 @@ public:
     void managerVehicleChanged      (Vehicle* managerVehicle) final;
     bool showPlanFromManagerVehicle (void) final;
 
-    bool                rallyPointsSupported    (void) const;
     QmlObjectListModel* points                  (void) { return &_points; }
     QString             editorQml               (void) const;
     QObject*            currentRallyPoint       (void) const { return _currentRallyPoint; }
@@ -58,7 +57,6 @@ public:
     void setCurrentRallyPoint(QObject* rallyPoint);
 
 signals:
-    void rallyPointsSupportedChanged(bool rallyPointsSupported);
     void currentRallyPointChanged(QObject* rallyPoint);
     void loadComplete(void);
 

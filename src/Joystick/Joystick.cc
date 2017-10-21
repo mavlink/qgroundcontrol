@@ -55,6 +55,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     , _rgButtonValues(NULL)
     , _lastButtonBits(0)
     , _throttleMode(ThrottleModeCenterZero)
+    , _negativeThrust(false)
     , _exponential(0)
     , _accumulator(false)
     , _deadband(false)
@@ -73,6 +74,8 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     for (int i=0; i<_totalButtonCount; i++) {
         _rgButtonValues[i] = false;
     }
+
+    _updateTXModeSettingsKey(_multiVehicleManager->activeVehicle());
 
     _loadSettings();
 
@@ -118,7 +121,7 @@ void Joystick::_setDefaultCalibration(void) {
     _saveSettings();
 }
 
-void Joystick::_activeVehicleChanged(Vehicle *activeVehicle)
+void Joystick::_updateTXModeSettingsKey(Vehicle* activeVehicle)
 {
     if(activeVehicle) {
         if(activeVehicle->fixedWing()) {
@@ -136,7 +139,16 @@ void Joystick::_activeVehicleChanged(Vehicle *activeVehicle)
             qWarning() << "No valid joystick TXmode settings key for selected vehicle";
             return;
         }
+    } else {
+        _txModeSettingsKey = NULL;
+    }
+}
 
+void Joystick::_activeVehicleChanged(Vehicle* activeVehicle)
+{
+    _updateTXModeSettingsKey(activeVehicle);
+
+    if(activeVehicle) {
         QSettings settings;
         settings.beginGroup(_settingsGroup);
         int mode = settings.value(_txModeSettingsKey, activeVehicle->firmwarePlugin()->defaultJoystickTXMode()).toInt();
@@ -151,8 +163,10 @@ void Joystick::_loadSettings(void)
 
     settings.beginGroup(_settingsGroup);
 
-    if(_txModeSettingsKey)
-        _transmitterMode = settings.value(_txModeSettingsKey, 2).toInt();
+    Vehicle* activeVehicle = _multiVehicleManager->activeVehicle();
+
+    if(_txModeSettingsKey && activeVehicle)
+        _transmitterMode = settings.value(_txModeSettingsKey, activeVehicle->firmwarePlugin()->defaultJoystickTXMode()).toInt();
 
     settings.beginGroup(_name);
 
@@ -462,7 +476,9 @@ void Joystick::run(void)
 
             // Adjust throttle to 0:1 range
             if (_throttleMode == ThrottleModeCenterZero && _activeVehicle->supportsThrottleModeCenterZero()) {
-                throttle = std::max(0.0f, throttle);
+                if (!_activeVehicle->supportsNegativeThrust() || !_negativeThrust) {
+                    throttle = std::max(0.0f, throttle);
+                }
             } else {
                 throttle = (throttle + 1.0f) / 2.0f;
             }
@@ -685,6 +701,22 @@ void Joystick::setThrottleMode(int mode)
 
     _saveSettings();
     emit throttleModeChanged(_throttleMode);
+}
+
+bool Joystick::negativeThrust(void)
+{
+    return _negativeThrust;
+}
+
+void Joystick::setNegativeThrust(bool allowNegative)
+{
+    if (_negativeThrust == allowNegative) {
+        return;
+    }
+    _negativeThrust = allowNegative;
+
+    _saveSettings();
+    emit negativeThrustChanged(_negativeThrust);
 }
 
 float Joystick::exponential(void)

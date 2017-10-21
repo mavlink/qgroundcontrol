@@ -88,6 +88,7 @@ private:
     void _handleMissionRequest(const mavlink_message_t& msg);
     void _handleMissionItem(const mavlink_message_t& msg);
     void _handleMissionCount(const mavlink_message_t& msg);
+    void _handleMissionClearAll(const mavlink_message_t& msg);
     void _requestNextMissionItem(int sequenceNumber);
     void _sendAck(MAV_MISSION_RESULT ackType);
     void _startMissionItemResponseTimer(void);
@@ -98,9 +99,13 @@ private:
     int _writeSequenceCount;    ///< Numbers of items about to be written
     int _writeSequenceIndex;    ///< Current index being reqested
     
-    typedef QMap<uint16_t, mavlink_mission_item_t>   MissionList_t;
-    MissionList_t   _missionItems;
-    
+    typedef QMap<uint16_t, mavlink_mission_item_t>   MissionItemList_t;
+
+    MAV_MISSION_TYPE    _requestType;
+    MissionItemList_t   _missionItems;
+    MissionItemList_t   _fenceItems;
+    MissionItemList_t   _rallyItems;
+
     QTimer*             _missionItemResponseTimer;
     FailureMode_t       _failureMode;
     bool                _sendHomePositionOnEmptyList;

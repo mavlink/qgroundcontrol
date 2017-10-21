@@ -129,8 +129,9 @@ bool FirmwarePlugin::supportsThrottleModeCenterZero(void)
     return true;
 }
 
-bool FirmwarePlugin::supportsManualControl(void)
+bool FirmwarePlugin::supportsNegativeThrust(void)
 {
+    // By default, this is not supported
     return false;
 }
 
@@ -429,6 +430,30 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       0,
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("Ricoh GR II"),
+                                      23.7,     // sensorWidth
+                                      15.7,     // sendsorHeight
+                                      4928,     // imageWidth
+                                      3264,     // imageHeight
+                                      18.3,     // focalLength
+                                      true,     // landscape
+                                      false,    // fixedOrientation
+                                      0,        // minTriggerInterval
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("RedEdge"),
+                                      4.8,      // sensorWidth
+                                      3.6,      // sendsorHeight
+                                      1280,     // imageWidth
+                                      960,      // imageHeight
+                                      5.5,      // focalLength
+                                      true,     // landscape
+                                      false,    // fixedOrientation
+                                      0,        // minTriggerInterval
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
     }
 
     return _cameraList;
@@ -524,6 +549,22 @@ bool FirmwarePlugin::hasGimbal(Vehicle* vehicle, bool& rollSupported, bool& pitc
     pitchSupported = false;
     yawSupported = false;
     return false;
+}
+
+bool FirmwarePlugin::isVtol(const Vehicle* vehicle) const
+{
+    switch (vehicle->vehicleType()) {
+    case MAV_TYPE_VTOL_DUOROTOR:
+    case MAV_TYPE_VTOL_QUADROTOR:
+    case MAV_TYPE_VTOL_TILTROTOR:
+    case MAV_TYPE_VTOL_RESERVED2:
+    case MAV_TYPE_VTOL_RESERVED3:
+    case MAV_TYPE_VTOL_RESERVED4:
+    case MAV_TYPE_VTOL_RESERVED5:
+        return true;
+    default:
+        return false;
+    }
 }
 
 QGCCameraManager* FirmwarePlugin::createCameraManager(Vehicle* vehicle)
