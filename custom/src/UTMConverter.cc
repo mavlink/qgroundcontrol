@@ -4,7 +4,10 @@
  */
 
 #include "UTMConverter.h"
-#include <QFileInfo>
+#include "QGCApplication.h"
+#include "LinkManager.h"
+
+#define TIMESTAMP_SIZE sizeof(quint64)
 
 const char* kLoggingHeader =
 "{\n"\
@@ -33,65 +36,63 @@ const char* kLoggingFooter =
 "}\n";
 
 //-----------------------------------------------------------------------------
-UTMConverter::UTMConverter(QObject* parent)
-    : QObject(parent)
-    , _parser(NULL)
+UTMConverter::UTMConverter()
+    : _curTimeUSecs(0)
+    , _startDTG(0)
+    , _lastSpeed(0)
+    , _gpsRawIntMessageAvailable(false)
+    , _globalPositionIntMessageAvailable(false)
+    , _mavlinkChannel(0)
 {
-    _reset();
+
 }
 
 //-----------------------------------------------------------------------------
 UTMConverter::~UTMConverter()
 {
-    if(_parser) {
-        _parser->deleteLater();
+    if(_mavlinkChannel) {
+        qgcApp()->toolbox()->linkManager()->_freeMavlinkChannel(_mavlinkChannel);
+        _mavlinkChannel = 0;
     }
 }
 
 //-----------------------------------------------------------------------------
 bool
-UTMConverter::parseLogFile(const QString& logFilename, const QString& path)
+UTMConverter::convertTelemetryFile(const QString& srcFilename, const QString& dstFilename)
 {
-    if (_utmLogFile.isOpen()) {
-        qWarning() << "Attempting to parse an already open log file.";
+    if(!_mavlinkChannel) {
+        _mavlinkChannel = qgcApp()->toolbox()->linkManager()->_reserveMavlinkChannel();
+    }
+    if (_mavlinkChannel == 0) {
+        qWarning() << "No mavlink channels available";
         return false;
     }
-    QFileInfo fi(logFilename);
-    _logFileName = QString("%1/%2.utm").arg(path).arg(fi.baseName());
-    _utmLogFile.setFileName(_logFileName);
+    //-- Open source Telemetry File
+    _logFile.setFileName(srcFilename);
+    if (!_logFile.open(QFile::ReadOnly)) {
+        qWarning() << QString("Unable to open log file: '%1', error: %2").arg(srcFilename).arg(_logFile.errorString());
+        return false;
+    }
+    //-- Create Destination UTM File
+    QFile _utmLogFile(dstFilename);
     if (!_utmLogFile.open(QFile::WriteOnly)) {
-        qWarning() << QString("Unable to create log file: '%1', error: %2").arg(_logFileName).arg(_utmLogFile.errorString());
+        qWarning() << QString("Unable to create UTM file: '%1', error: %2").arg(dstFilename).arg(_utmLogFile.errorString());
+        _logFile.close();
         return false;
     }
-    _reset();
-    _parser = new TlogParser();
-    connect(_parser, &TlogParser::completed, this, &UTMConverter::_completed);
-    connect(_parser, &TlogParser::newMavlinkMessage, this, &UTMConverter::_newMavlinkMessage);
-    if(!_parser->parseLogFile(logFilename)) {
-        return false;
+    QByteArray timestamp = _logFile.read(TIMESTAMP_SIZE);
+    _curTimeUSecs = _parseTimestamp(timestamp);
+    //-- Parse log file
+    while(true) {
+        mavlink_message_t message;
+        qint64 nextTimeUSecs = _readNextMavlinkMessage(message);
+        if(!nextTimeUSecs) {
+            break;
+        }
+        _newMavlinkMessage(_curTimeUSecs, message);
+        _curTimeUSecs = nextTimeUSecs;
     }
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-void
-UTMConverter::_reset()
-{
-    _curTimeUSecs   = 0;
-    _startDTG       = 0;
-    _lastSpeed      = 0;
-    _gpsRawIntMessageAvailable = false;
-    _globalPositionIntMessageAvailable = false;
-}
-
-//-----------------------------------------------------------------------------
-void
-UTMConverter::_completed()
-{
-    if(_parser) {
-        _parser->deleteLater();
-        _parser = NULL;
-    }
+    //-- Write UTM File
     if(_logItems.size()) {
         //-- Header
         _utmLogFile.write(kLoggingHeader);
@@ -115,16 +116,46 @@ UTMConverter::_completed()
         QString line = QString("                \"logging_start_dtg\": \"%1Z\"\n").arg(dtg.toString(Qt::ISODate));
         _utmLogFile.write(line.toLocal8Bit());
         QString footer(kLoggingFooter);
-        QFileInfo fi(_logFileName);
+        QFileInfo fi(dstFilename);
         footer.replace("###FILENAME###", fi.baseName());
         footer.replace("###FILEDATE###", QDateTime::currentDateTime().toString(Qt::ISODate));
         _utmLogFile.write(footer.toLocal8Bit());
     }
     _utmLogFile.close();
+    //-- If there was nothing, remove empty file
     if(!_logItems.size()) {
         _utmLogFile.remove();
     }
-    emit completed();
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+quint64
+UTMConverter::_readNextMavlinkMessage(mavlink_message_t& message)
+{
+    char                nextByte;
+    mavlink_status_t    status;
+    while (_logFile.getChar(&nextByte)) { // Loop over every byte
+        bool messageFound = mavlink_parse_char(_mavlinkChannel, nextByte, &message, &status);
+        if (messageFound) {
+            // Return the timestamp for the next message
+            QByteArray rawTime = _logFile.read(TIMESTAMP_SIZE);
+            return _parseTimestamp(rawTime);
+        }
+    }
+    return 0;
+}
+
+//-----------------------------------------------------------------------------
+quint64
+UTMConverter::_parseTimestamp(const QByteArray& bytes)
+{
+    quint64 timestamp = qFromBigEndian(*((quint64*)(bytes.constData())));
+    quint64 currentTimestamp = ((quint64)QDateTime::currentMSecsSinceEpoch()) * 1000;
+    if (timestamp > currentTimestamp) {
+        timestamp = qbswap(timestamp);
+    }
+    return timestamp;
 }
 
 //-----------------------------------------------------------------------------

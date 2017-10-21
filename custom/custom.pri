@@ -122,10 +122,10 @@ SOURCES += \
     SOURCES += \
         $$PWD/src/m4serial.cc \
         $$PWD/src/m4util.cc \
-        $$PWD/src/TLogParser.cc \
         $$PWD/src/TyphoonHM4Interface.cc \
         $$PWD/src/TyphoonHQuickInterface.cc \
-        $$PWD/src/UTMConverter.cc
+        $$PWD/src/UTMConverter.cc \
+        $$PWD/src/YExportFiles.cc \
 }
 
 AndroidBuild {
@@ -142,11 +142,11 @@ HEADERS += \
         $$PWD/src/m4def.h \
         $$PWD/src/m4serial.h \
         $$PWD/src/m4util.h \
-        $$PWD/src/TLogParser.h \
         $$PWD/src/TyphoonHCommon.h \
         $$PWD/src/TyphoonHM4Interface.h \
         $$PWD/src/TyphoonHQuickInterface.h \
-        $$PWD/src/UTMConverter.h
+        $$PWD/src/UTMConverter.h \
+        $$PWD/src/YExportFiles.h \
 }
 
 INCLUDEPATH += \
