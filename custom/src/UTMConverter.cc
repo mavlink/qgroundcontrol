@@ -11,29 +11,29 @@
 
 const char* kLoggingHeader =
 "{\n"\
-"    \"exchange\": {\n"\
-"        \"exchange_type\": \"flight_logging\",\n"\
-"        \"message\": {\n"\
-"            \"flight_logging\": {\n"\
-"                \"flight_logging_items\": [\n";
+"\t\"exchange\": {\n"\
+"\t\t\"exchange_type\": \"flight_logging\",\n"\
+"\t\t\"message\": {\n"\
+"\t\t\t\"flight_logging\": {\n"\
+"\t\t\t\t\"flight_logging_items\": [\n";
 
 const char* kLoggingKeys =
-"                ],\n"\
-"                \"flight_logging_keys\": [\n"\
-"                    \"timestamp\", \"gps_lon\", \"gps_lat\", \"gps_altitude\", \"speed\"\n"\
-"                ],\n"\
-"                \"altitude_system\": \"WGS84\",\n";
+"\t\t\t\t],\n"\
+"\t\t\t\t\"flight_logging_keys\": [\n"\
+"\t\t\t\t\t\"timestamp\", \"gps_lon\", \"gps_lat\", \"gps_altitude\", \"speed\"\n"\
+"\t\t\t\t],\n"\
+"\t\t\t\t\"altitude_system\": \"WGS84\",\n";
 
 const char* kLoggingFooter =
-"            },\n"\
-"            \"file\": {\n"\
-"                \"logging_type\": \"GUTMA_DX_JSON\",\n"\
-"                \"filename\": \"###FILENAME###\",\n"\
-"                \"creation_dtg\": \"###FILEDATE###Z\"\n"\
-"            },\n"\
-"           \"message_type\": \"flight_logging_submission\"\n"\
-"        }\n"\
-"    }\n"\
+"\t\t\t},\n"\
+"\t\t\t\"file\": {\n"\
+"\t\t\t\t\"logging_type\": \"GUTMA_DX_JSON\",\n"\
+"\t\t\t\t\"filename\": \"###FILENAME###\",\n"\
+"\t\t\t\t\"creation_dtg\": \"###FILEDATE###Z\"\n"\
+"\t\t\t},\n"\
+"\t\t\t\"message_type\": \"flight_logging_submission\"\n"\
+"\t\t}\n"\
+"\t}\n"\
 "}\n";
 
 //-----------------------------------------------------------------------------
@@ -81,6 +81,7 @@ UTMConverter::convertTelemetryFile(const QString& srcFilename, const QString& ds
         _logFile.close();
         return false;
     }
+    //-- TODO: Make sure the time stamp is stored in UTC
     QByteArray timestamp = _logFile.read(TIMESTAMP_SIZE);
     _curTimeUSecs = _parseTimestamp(timestamp);
     //-- Parse log file
@@ -99,7 +100,7 @@ UTMConverter::convertTelemetryFile(const QString& srcFilename, const QString& ds
         _utmLogFile.write(kLoggingHeader);
         for(int i = 0; i < _logItems.size(); i++) {
             QString line;
-            line.sprintf("                    [%.3f, %f, %f, %.3f, %.3f ]",
+            line.sprintf("\t\t\t\t\t[%.3f, %f, %f, %.3f, %.3f ]",
                 _logItems[i].time,
                 _logItems[i].lon,
                 _logItems[i].lat,
@@ -111,11 +112,10 @@ UTMConverter::convertTelemetryFile(const QString& srcFilename, const QString& ds
                 line += "\n";
             }
             _utmLogFile.write(line.toLocal8Bit());
-            qDebug() << line;
         }
         _utmLogFile.write(kLoggingKeys);
         QDateTime dtg = QDateTime::fromMSecsSinceEpoch(_startDTG / 1000);
-        QString line = QString("                \"logging_start_dtg\": \"%1Z\"\n").arg(dtg.toString(Qt::ISODate));
+        QString line = QString("\t\t\t\t\"logging_start_dtg\": \"%1Z\"\n").arg(dtg.toString(Qt::ISODate));
         _utmLogFile.write(line.toLocal8Bit());
         QString footer(kLoggingFooter);
         QFileInfo fi(dstFilename);
