@@ -4673,7 +4673,6 @@ applied to input of all axis: roll, pitch, yaw</short_desc>
 is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
       <long_desc>Applies only in AUTO modes (includes also RTL / hold / etc.)</long_desc>
       <min>1.0</min>
-      <max />
       <unit>m/s</unit>
       <decimal>2</decimal>
       <increment>1</increment>
