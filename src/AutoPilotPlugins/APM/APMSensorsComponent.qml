@@ -169,7 +169,7 @@ SetupPage {
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     spacing:        Math.round(ScreenTools.defaultFontPixelHeight / 2)
-                    visible:        sensorParams.rgCompassAvailable[index]
+                    visible:        sensorParams.rgCompassAvailable[index] && sensorParams.rgCompassUseFact[index].value
 
                     property real greenMaxThreshold:   8 * (sensorParams.rgCompassExternal[index] ? 1 : 2)
                     property real yellowMaxThreshold:  15 * (sensorParams.rgCompassExternal[index] ? 1 : 2)
