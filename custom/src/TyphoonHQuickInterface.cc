@@ -996,9 +996,10 @@ TyphoonHQuickInterface::exportData()
     _copyResult = 0;
     _copyingFiles = true;
     emit copyingFilesChanged();
-    QTimer::singleShot(10, this, &TyphoonHQuickInterface::_exportData);
+    //QTimer::singleShot(10, this, &TyphoonHQuickInterface::_exportData);
 }
 
+/*
 //-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::_exportData()
@@ -1015,7 +1016,7 @@ TyphoonHQuickInterface::_exportData()
     emit copyingFilesChanged();
     emit copyResultChanged();
 }
-
+*/
 //-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::importMission()

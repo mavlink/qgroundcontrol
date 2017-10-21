@@ -374,7 +374,6 @@ private slots:
     void    _powerTrigger               ();
     void    _rawChannelsChanged         ();
     void    _switchStateChanged         (int swId, int newState, int oldState);
-    void    _exportData                 ();
     void    _importMissions             ();
     void    _calibrationCompleteChanged ();
     void    _calibrationStateChanged    ();

@@ -25,10 +25,11 @@ const char* kLoggingKeys =
 "                \"altitude_system\": \"WGS84\",\n";
 
 const char* kLoggingFooter =
-"        \"file\": {\n"\
-"            \"logging_type\": \"GUTMA_DX_JSON\",\n"\
-"            \"filename\": \"###FILENAME###\",\n"\
-"            \"creation_dtg\": \"###FILEDATE###Z\"\n"\
+"            },\n"\
+"            \"file\": {\n"\
+"                \"logging_type\": \"GUTMA_DX_JSON\",\n"\
+"                \"filename\": \"###FILENAME###\",\n"\
+"                \"creation_dtg\": \"###FILEDATE###Z\"\n"\
 "            },\n"\
 "           \"message_type\": \"flight_logging_submission\"\n"\
 "        }\n"\
@@ -98,7 +99,7 @@ UTMConverter::convertTelemetryFile(const QString& srcFilename, const QString& ds
         _utmLogFile.write(kLoggingHeader);
         for(int i = 0; i < _logItems.size(); i++) {
             QString line;
-            line.sprintf("                %.3f, %f, %f, %.3f, %.3f ]",
+            line.sprintf("                    [%.3f, %f, %f, %.3f, %.3f ]",
                 _logItems[i].time,
                 _logItems[i].lon,
                 _logItems[i].lat,
@@ -110,6 +111,7 @@ UTMConverter::convertTelemetryFile(const QString& srcFilename, const QString& ds
                 line += "\n";
             }
             _utmLogFile.write(line.toLocal8Bit());
+            qDebug() << line;
         }
         _utmLogFile.write(kLoggingKeys);
         QDateTime dtg = QDateTime::fromMSecsSinceEpoch(_startDTG / 1000);
@@ -200,6 +202,7 @@ UTMConverter::_compareItem(UTM_LogItem logItem1, UTM_LogItem logItem2)
 void
 UTMConverter::_handleGpsRawInt(mavlink_message_t& message)
 {
+    qDebug() << "_handleGpsRawInt()";
     _gpsRawIntMessageAvailable = true;
     if (!_globalPositionIntMessageAvailable) {
         mavlink_gps_raw_int_t gpsRawInt;
@@ -209,14 +212,16 @@ UTMConverter::_handleGpsRawInt(mavlink_message_t& message)
             logItem.lon   = gpsRawInt.lat / (double)1E7;
             logItem.lat   = gpsRawInt.lat / (double)1E7;
             logItem.alt   = gpsRawInt.alt / 1000.0;
-            logItem.time  = (_curTimeUSecs / 1000000) - (_startDTG / 1000000);
+            logItem.time  = (_curTimeUSecs - _startDTG) / 1000000.0;
             logItem.speed = _lastSpeed;
             if(_logItems.size()) {
                 if(!_compareItem(_logItems[_logItems.size()-1], logItem)) {
                     _logItems.append(logItem);
+                    qDebug() << "Appending";
                 }
             } else {
                 _logItems.append(logItem);
+                qDebug() << "Appending";
             }
         }
     }
@@ -235,23 +240,24 @@ UTMConverter::_handleVfrHud(mavlink_message_t& message)
 void
 UTMConverter::_handleGlobalPositionInt(mavlink_message_t& message)
 {
+    qDebug() << "_handleGlobalPositionInt()";
     _globalPositionIntMessageAvailable = true;
-    if(!_gpsRawIntMessageAvailable) {
-        mavlink_global_position_int_t globalPositionInt;
-        mavlink_msg_global_position_int_decode(&message, &globalPositionInt);
-        UTM_LogItem logItem;
-        logItem.lon   = globalPositionInt.lon / (double)1E7;
-        logItem.lat   = globalPositionInt.lat / (double)1E7;
-        logItem.alt   = globalPositionInt.alt / 1000.0;
-        logItem.time  = (_curTimeUSecs / 1000000) - (_startDTG / 1000000);
-        logItem.speed = _lastSpeed;
-        if(_logItems.size()) {
-            if(!_compareItem(_logItems[_logItems.size()-1], logItem)) {
-                _logItems.append(logItem);
-            }
-        } else {
+    mavlink_global_position_int_t globalPositionInt;
+    mavlink_msg_global_position_int_decode(&message, &globalPositionInt);
+    UTM_LogItem logItem;
+    logItem.lon   = globalPositionInt.lon / (double)1E7;
+    logItem.lat   = globalPositionInt.lat / (double)1E7;
+    logItem.alt   = globalPositionInt.alt / 1000.0;
+    logItem.time  = (_curTimeUSecs - _startDTG) / 1000000.0;
+    logItem.speed = _lastSpeed;
+    if(_logItems.size()) {
+        if(!_compareItem(_logItems[_logItems.size()-1], logItem)) {
             _logItems.append(logItem);
+            qDebug() << "Appending";
         }
+    } else {
+        _logItems.append(logItem);
+        qDebug() << "Appending";
     }
 }
 

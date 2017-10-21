@@ -44,9 +44,9 @@ YExportFiles::run()
     QString telemetryPath = qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath();
     QString missionPath   = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
 #if defined(QT_DEBUG) && !defined (__android__)
-    QString targetPath = QStringLiteral("/tmp/") + AppSettings::logDirectory;
+    QString targetPath = QStringLiteral("/tmp/");
 #else
-    QString targetPath = QStringLiteral("/storage/sdcard1/") + AppSettings::logDirectory;
+    QString targetPath = QStringLiteral("/storage/sdcard1/");
 #endif
     _totalFiles = _filesInPath(telemetryPath);
     if(_convertToUTM) {
@@ -54,12 +54,12 @@ YExportFiles::run()
     }
     _totalFiles += _filesInPath(missionPath);
     //-- Copy Mission Files
-    if(!_cancel && _copyFilesInPath(missionPath, targetPath)) {
+    if(!_cancel && _copyFilesInPath(missionPath, QString("%1/%2").arg(targetPath).arg(AppSettings::missionDirectory))) {
         //-- Copy Telemetry Files
-        if(!_cancel && _copyFilesInPath(telemetryPath, targetPath)) {
+        if(!_cancel && _copyFilesInPath(telemetryPath, QString("%1/%2").arg(targetPath).arg(AppSettings::telemetryDirectory))) {
             //-- Save UTM files
             if(!_cancel && _convertToUTM) {
-                _convertLogsToUTM(telemetryPath, targetPath);
+                _convertLogsToUTM(telemetryPath, QString("%1/%2").arg(targetPath).arg(AppSettings::telemetryDirectory));
             }
         }
     }
@@ -114,7 +114,7 @@ YExportFiles::_convertLogsToUTM(const QString src, const QString dst)
             return false;
         }
     }
-    QDirIterator it(src, QStringList() << "*", QDir::Files, QDirIterator::NoIteratorFlags);
+    QDirIterator it(src, QStringList() << "*.tlog", QDir::Files, QDirIterator::NoIteratorFlags);
     while(it.hasNext() && !_cancel) {
         QFileInfo fi(it.next());
         QString output = dst + "/" + fi.baseName() + QStringLiteral(".utm");
