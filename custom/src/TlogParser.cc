@@ -6,7 +6,6 @@
 #include "TlogParser.h"
 #include "QGCApplication.h"
 #include "LinkManager.h"
-#include <QFileInfo>
 
 #define TIMESTAMP_SIZE sizeof(quint64)
 
@@ -31,7 +30,6 @@ TlogParser::~TlogParser()
 bool
 TlogParser::parseLogFile(const QString& logFilename)
 {
-    QFileInfo logFileInfo;
     if (_logFile.isOpen()) {
         qWarning() << "Attempting to parse an already open log file.";
         return false;
@@ -41,7 +39,6 @@ TlogParser::parseLogFile(const QString& logFilename)
         qWarning() << QString("Unable to open log file: '%1', error: %2").arg(logFilename).arg(_logFile.errorString());
         return false;
     }
-    logFileInfo.setFile(logFilename);
     QByteArray timestamp = _logFile.read(TIMESTAMP_SIZE);
     _curTimeUSecs = _parseTimestamp(timestamp);
     //-- Parse log file
@@ -78,6 +75,10 @@ quint64
 TlogParser::_parseTimestamp(const QByteArray& bytes)
 {
     quint64 timestamp = qFromBigEndian(*((quint64*)(bytes.constData())));
+    quint64 currentTimestamp = ((quint64)QDateTime::currentMSecsSinceEpoch()) * 1000;
+    if (timestamp > currentTimestamp) {
+        timestamp = qbswap(timestamp);
+    }
     return timestamp;
 }
 
