@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.48 - Oct 22 2017
+
+*   Export UTM logs
+
 ### v1.1.46 - Oct 17 2017
 
 *   Temperature Range (CGOET). Note that it needs a new CGOET firmware for it to work.
