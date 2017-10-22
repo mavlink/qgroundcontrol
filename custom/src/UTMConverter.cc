@@ -96,7 +96,7 @@ UTMConverter::convertTelemetryFile(const QString& srcFilename, const QString& ds
     while(!_cancel) {
         mavlink_message_t message;
         qint64 nextTimeUSecs = _readNextMavlinkMessage(message);
-        if(!nextTimeUSecs && _cancel) {
+        if(!nextTimeUSecs || _cancel) {
             break;
         }
         _newMavlinkMessage(_curTimeUSecs, message);
@@ -148,7 +148,7 @@ UTMConverter::_readNextMavlinkMessage(mavlink_message_t& message)
 {
     char                nextByte;
     mavlink_status_t    status;
-    while (_logFile.getChar(&nextByte)) { // Loop over every byte
+    while (_logFile.getChar(&nextByte) && !_cancel) { // Loop over every byte
         bool messageFound = mavlink_parse_char(_mavlinkChannel, nextByte, &message, &status);
         if (messageFound) {
             // Return the timestamp for the next message

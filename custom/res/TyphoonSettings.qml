@@ -298,7 +298,7 @@ QGCView {
             Rectangle {
                 id:     fileCopyDialogRect
                 width:  mainWindow.width   * 0.65
-                height: copyCol.height * 1.5
+                height: copyCol.height * 1.25
                 radius: ScreenTools.defaultFontPixelWidth
                 color:  qgcPal.alertBackground
                 border.color: qgcPal.alertBorder
@@ -307,7 +307,7 @@ QGCView {
                 Column {
                     id:                 copyCol
                     width:              fileCopyDialogRect.width
-                    spacing:            ScreenTools.defaultFontPixelHeight * 3
+                    spacing:            ScreenTools.defaultFontPixelHeight * 2
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     anchors.centerIn:   parent
                     QGCLabel {
@@ -327,7 +327,8 @@ QGCView {
                         QGCCheckBox {
                             id:                 exportUTMCheck
                             text:               qsTr("Export UTM Telemetry")
-                            checked:            true
+                            checked:            false
+                            enabled:            !TyphoonHQuickInterface.copyingFiles
                             anchors.centerIn:   parent
                         }
                     }

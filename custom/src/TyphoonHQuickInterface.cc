@@ -1001,6 +1001,7 @@ TyphoonHQuickInterface::cancelExportData()
 {
     if(_exporter) {
         _exporter->cancel();
+        _exportMessage(QString(tr("Canceling...")));
     }
 }
 
