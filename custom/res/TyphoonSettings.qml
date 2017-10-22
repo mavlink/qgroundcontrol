@@ -77,7 +77,6 @@ QGCView {
                             _importAction = true
                             rootLoader.sourceComponent = fileCopyDialog
                             mainWindow.disableToolbar()
-                            TyphoonHQuickInterface.importMission()
                         }
                     }
                     QGCLabel {
@@ -105,7 +104,6 @@ QGCView {
                             _importAction = false
                             rootLoader.sourceComponent = fileCopyDialog
                             mainWindow.disableToolbar()
-                            TyphoonHQuickInterface.exportData()
                         }
                     }
                     QGCLabel {
@@ -300,7 +298,7 @@ QGCView {
             Rectangle {
                 id:     fileCopyDialogRect
                 width:  mainWindow.width   * 0.65
-                height: copyCol.height * 1.5
+                height: copyCol.height * 1.25
                 radius: ScreenTools.defaultFontPixelWidth
                 color:  qgcPal.alertBackground
                 border.color: qgcPal.alertBorder
@@ -309,7 +307,7 @@ QGCView {
                 Column {
                     id:                 copyCol
                     width:              fileCopyDialogRect.width
-                    spacing:            ScreenTools.defaultFontPixelHeight * 3
+                    spacing:            ScreenTools.defaultFontPixelHeight * 2
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     anchors.centerIn:   parent
                     QGCLabel {
@@ -319,54 +317,71 @@ QGCView {
                         color:          qgcPal.alertText
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
+                    Rectangle {
+                        color:          qgcPal.window
+                        width:          exportUTMCheck.width  + (ScreenTools.defaultFontPixelWidth * 4)
+                        height:         exportUTMCheck.height + ScreenTools.defaultFontPixelHeight
+                        radius:         4
+                        visible:        !_importAction
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCCheckBox {
+                            id:                 exportUTMCheck
+                            text:               qsTr("Export UTM Telemetry")
+                            checked:            false
+                            enabled:            !TyphoonHQuickInterface.copyingFiles
+                            anchors.centerIn:   parent
+                        }
+                    }
+                    ProgressBar {
+                        width:          parent.width * 0.75
+                        orientation:    Qt.Horizontal
+                        minimumValue:   0
+                        maximumValue:   100
+                        value:          TyphoonHQuickInterface.updateProgress
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
                     QGCLabel {
-                        text: {
-                            if(TyphoonHQuickInterface.copyResult > 0) {
-                                if(_importAction) {
-                                    return qsTr("Importing ") + TyphoonHQuickInterface.copyResult.toString() + qsTr(" files")
+                        text:           TyphoonHQuickInterface.copyMessage
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    Row {
+                        spacing:        ScreenTools.defaultFontPixelWidth * 2
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCButton {
+                            text:           !TyphoonHQuickInterface.copyingFiles ? qsTr("Start") : qsTr("Cancel")
+                            width:          ScreenTools.defaultFontPixelWidth  * 16
+                            height:         ScreenTools.defaultFontPixelHeight * 2
+                            visible:        !_importAction
+                            enabled:        !TyphoonHQuickInterface.copyingDone
+                            onClicked: {
+                                if(TyphoonHQuickInterface.copyingFiles) {
+                                    TyphoonHQuickInterface.cancelExportData()
                                 } else {
-                                    return qsTr("Exporting ") + TyphoonHQuickInterface.copyResult.toString() + qsTr(" files")
+                                    TyphoonHQuickInterface.exportData(exportUTMCheck.checked)
                                 }
-                            } else {
-                                return qsTr("Searching files...")
                             }
                         }
-                        color:          qgcPal.alertText
-                        visible:        TyphoonHQuickInterface.copyingFiles
-                        font.family:    ScreenTools.demiboldFontFamily
-                        font.pointSize: ScreenTools.mediumFontPointSize
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCLabel {
-                        text:           TyphoonHQuickInterface.copyResult.toString() + (_importAction ? qsTr(" files imported") : qsTr(" files exported"))
-                        color:          qgcPal.alertText
-                        visible:        !TyphoonHQuickInterface.copyingFiles && TyphoonHQuickInterface.copyResult >= 0
-                        font.family:    ScreenTools.demiboldFontFamily
-                        font.pointSize: ScreenTools.mediumFontPointSize
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCLabel {
-                        text:           qsTr("Error copying files. Make sure you have a (FAT32 Formatted) microSD card loaded.");
-                        color:          qgcPal.alertText
-                        visible:        !TyphoonHQuickInterface.copyingFiles && TyphoonHQuickInterface.copyResult < 0
-                        font.family:    ScreenTools.demiboldFontFamily
-                        font.pointSize: ScreenTools.mediumFontPointSize
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCButton {
-                        text:           qsTr("Close")
-                        width:          ScreenTools.defaultFontPixelWidth  * 16
-                        height:         ScreenTools.defaultFontPixelHeight * 2
-                        visible:        !TyphoonHQuickInterface.copyingFiles
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        onClicked: {
-                            rootLoader.sourceComponent = null
-                            mainWindow.enableToolbar()
+                        QGCButton {
+                            text:           qsTr("Close")
+                            width:          ScreenTools.defaultFontPixelWidth  * 16
+                            enabled:        !TyphoonHQuickInterface.copyingFiles
+                            height:         ScreenTools.defaultFontPixelHeight * 2
+                            onClicked: {
+                                rootLoader.sourceComponent = null
+                                mainWindow.enableToolbar()
+                            }
                         }
                     }
                 }
             }
             Component.onCompleted: {
+                TyphoonHQuickInterface.initExport()
+                if(_importAction) {
+                    TyphoonHQuickInterface.importMission()
+                }
                 rootLoader.width  = fileCopyDialogItem.width
                 rootLoader.height = fileCopyDialogItem.height
             }
