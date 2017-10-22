@@ -8,6 +8,8 @@
 #include <QObject>
 #include <QThread>
 
+class UTMConverter;
+
 //-----------------------------------------------------------------------------
 class YExportFiles : public QThread
 {
@@ -25,15 +27,16 @@ protected:
 signals:
     void        copyCompleted               (quint32 totalCount, quint32 curCount);
     void        completed                   ();
-    void        error                       (QString errorMessage);
+    void        message                     (QString errorMessage);
+    void        cancelProcess               ();
 
 private slots:
 
 private:
-    bool        _convertToUTM;
-    bool        _cancel;
-    quint32     _totalFiles;
-    quint32     _curFile;
+    bool            _convertToUTM;
+    bool            _cancel;
+    quint32         _totalFiles;
+    quint32         _curFile;
 
 private:
     quint32     _filesInPath                (const QString& path);

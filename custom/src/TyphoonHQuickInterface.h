@@ -13,6 +13,7 @@
 
 #include <QQmlListProperty>
 
+class YExportFiles;
 class TyphoonHM4Interface;
 class TyphoonHQuickInterface;
 
@@ -164,7 +165,8 @@ public:
     Q_PROPERTY(qreal            rcBattery       READ    rcBattery           NOTIFY rcBatteryChanged)
     Q_PROPERTY(QString          flightTime      READ    flightTime          NOTIFY flightTimeChanged)
     Q_PROPERTY(bool             copyingFiles    READ    copyingFiles        NOTIFY copyingFilesChanged)
-    Q_PROPERTY(int              copyResult      READ    copyResult          NOTIFY copyResultChanged)
+    Q_PROPERTY(bool             copyingDone     READ    copyingDone         NOTIFY copyingDoneChanged)
+    Q_PROPERTY(QString          copyMessage     READ    copyMessage         NOTIFY copyMessageChanged)
     Q_PROPERTY(bool             isFactoryApp    READ    isFactoryApp        CONSTANT)
 
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
@@ -215,7 +217,9 @@ public:
     Q_INVOKABLE bool isWifiConfigured   (QString ssid);
     Q_INVOKABLE int  rawChannel         (int channel);
     Q_INVOKABLE int  calChannelState    (int channel);
-    Q_INVOKABLE void exportData         ();
+    Q_INVOKABLE void initExport         ();
+    Q_INVOKABLE void exportData         (bool exportUTM);
+    Q_INVOKABLE void cancelExportData   ();
     Q_INVOKABLE void importMission      ();
     Q_INVOKABLE void manualBind         ();
     Q_INVOKABLE void startCalibration   ();
@@ -251,10 +255,11 @@ public:
     bool        isTyphoon           ();
     bool        connected           ();
     bool        copyingFiles        () { return _copyingFiles; }
+    bool        copyingDone         () { return _copyingDone; }
     int         rssi                ();
     qreal       rcBattery           ();
     QString     flightTime          ();
-    int         copyResult          () { return _copyResult; }
+    QString     copyMessage         () { return _copyMessage; }
     bool        wifiAlertEnabled    () { return _wifiAlertEnabled; }
     bool        rcActive            ();
     bool        isFactoryApp        () { return _isFactoryApp; }
@@ -334,7 +339,8 @@ signals:
     void    rawChannelChanged           ();
     void    powerHeld                   ();
     void    copyingFilesChanged         ();
-    void    copyResultChanged           ();
+    void    copyingDoneChanged          ();
+    void    copyMessageChanged          ();
     void    calibrationCompleteChanged  ();
     void    calibrationStateChanged     ();
     void    wifiAlertEnabledChanged     ();
@@ -389,11 +395,13 @@ private slots:
     void    _mavlinkMessageReceived     (const mavlink_message_t& message);
     void    _dynamicCamerasChanged      ();
     void    _camerasChanged             ();
+    void    _exportCompleted            ();
+    void    _copyCompleted              (quint32 totalCount, quint32 curCount);
+    void    _exportMessage              (QString message);
 
 private:
     void    _saveWifiConfigurations     ();
     void    _loadWifiConfigurations     ();
-    bool    _copyFilesInPath            (const QString src, const QString dst);
     void    _endCopyThread              ();
     void    _enableThermalVideo         ();
 
@@ -407,6 +415,7 @@ private:
     Vehicle*                _vehicle;
     TyphoonHFileCopy*       _pFileCopy;
     VideoReceiver*          _videoReceiver;
+    YExportFiles*           _exporter;
     ThermalViewMode         _thermalMode;
     QMap<QString, QString>  _configurations;
     QVariantList            _ssidList;
@@ -420,8 +429,9 @@ private:
     bool                    _scanningWiFi;
     bool                    _bindingWiFi;
     bool                    _copyingFiles;
+    bool                    _copyingDone;
     bool                    _wifiAlertEnabled;
-    int                     _copyResult;
+    QString                 _copyMessage;
     QString                 _updateError;
     int                     _updateProgress;
     bool                    _updateDone;

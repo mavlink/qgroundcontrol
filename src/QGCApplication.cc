@@ -82,8 +82,6 @@
 #include "QGCCorePlugin.h"
 #include "QGCCameraManager.h"
 
-#include "YExportFiles.h"
-
 #ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
@@ -432,11 +430,6 @@ bool QGCApplication::_initForNormalAppBoot(void)
     }
 
     settings.sync();
-
-    YExportFiles* conv = new YExportFiles();
-    connect(conv, &YExportFiles::completed, this, QGCApplication::quit);
-    conv->exportData(true);
-
     return true;
 }
 

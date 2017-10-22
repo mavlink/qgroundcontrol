@@ -23,7 +23,6 @@ YExportFiles::YExportFiles()
 //-----------------------------------------------------------------------------
 YExportFiles::~YExportFiles()
 {
-
 }
 
 //-----------------------------------------------------------------------------
@@ -39,6 +38,14 @@ YExportFiles::exportData(bool convertToUTM)
 
 //-----------------------------------------------------------------------------
 void
+YExportFiles::cancel()
+{
+    _cancel = true;
+    emit cancelProcess();
+}
+
+//-----------------------------------------------------------------------------
+void
 YExportFiles::run()
 {
     QString telemetryPath = qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath();
@@ -48,20 +55,39 @@ YExportFiles::run()
 #else
     QString targetPath = QStringLiteral("/storage/sdcard1/");
 #endif
+    QDir destDir(targetPath);
+    if (!destDir.exists()) {
+        emit message(QString(tr("Target path missing. Make sure you have a (FAT32 Formatted) microSD card loaded.")));
+        return;
+    }
     _totalFiles = _filesInPath(telemetryPath);
     if(_convertToUTM) {
         _totalFiles *= 2;
     }
     _totalFiles += _filesInPath(missionPath);
+    emit copyCompleted(_totalFiles, 0);
+    bool ok = false;
     //-- Copy Mission Files
+    emit message(QString(tr("Copying mission files...")));
     if(!_cancel && _copyFilesInPath(missionPath, QString("%1/%2").arg(targetPath).arg(AppSettings::missionDirectory))) {
         //-- Copy Telemetry Files
+        emit message(QString(tr("Copying telemetry files...")));
         if(!_cancel && _copyFilesInPath(telemetryPath, QString("%1/%2").arg(targetPath).arg(AppSettings::telemetryDirectory))) {
             //-- Save UTM files
+            ok = true;
             if(!_cancel && _convertToUTM) {
-                _convertLogsToUTM(telemetryPath, QString("%1/%2").arg(targetPath).arg(AppSettings::telemetryDirectory));
+                emit message(QString(tr("Exporting UTM telemetry files...")));
+                if(!_convertLogsToUTM(telemetryPath, QString("%1/%2").arg(targetPath).arg(AppSettings::telemetryDirectory))) {
+                    ok = false;
+                }
             }
         }
+    }
+    if(_cancel) {
+        emit message(QString("Operation Canceled"));
+    } else if(ok) {
+        emit message(QString("%1 files exported").arg(_totalFiles));
+        emit copyCompleted(1, 1);
     }
     emit completed();
 }
@@ -82,7 +108,7 @@ YExportFiles::_copyFilesInPath(const QString src, const QString dst)
     QDir destDir(dst);
     if (!destDir.exists()) {
         if(!destDir.mkpath(".")) {
-            emit error(QString(tr("Error creating destination %1")).arg(dst));
+            emit message(QString(tr("Error creating destination %1")).arg(dst));
             return false;
         }
     }
@@ -95,7 +121,7 @@ YExportFiles::_copyFilesInPath(const QString src, const QString dst)
             QFile::remove(fo.filePath());
         }
         if(!QFile::copy(fi.filePath(), fo.filePath())) {
-            emit error(QString(tr("Error copying to %1")).arg(fo.filePath()));
+            emit message(QString(tr("Error copying to %1")).arg(fo.filePath()));
             return false;
         }
         emit copyCompleted(_totalFiles, ++_curFile);
@@ -110,7 +136,7 @@ YExportFiles::_convertLogsToUTM(const QString src, const QString dst)
     QDir destDir(dst);
     if (!destDir.exists()) {
         if(!destDir.mkpath(".")) {
-            emit error(QString(tr("Error creating destination %1")).arg(dst));
+            emit message(QString(tr("Error creating destination %1")).arg(dst));
             return false;
         }
     }
@@ -122,9 +148,10 @@ YExportFiles::_convertLogsToUTM(const QString src, const QString dst)
         if(fo.exists()) {
             QFile::remove(fo.filePath());
         }
-        UTMConverter conv;
-        if(!conv.convertTelemetryFile(fi.filePath(), fo.filePath())) {
-            emit error(QString(tr("Error converting destination %1")).arg(fo.filePath()));
+        UTMConverter converter;
+        connect(this, &YExportFiles::cancelProcess, &converter, &UTMConverter::cancel);
+        if(!converter.convertTelemetryFile(fi.filePath(), fo.filePath())) {
+            emit message(QString(tr("Error exporting %1")).arg(fo.filePath()));
             return false;
         }
         emit copyCompleted(_totalFiles, ++_curFile);

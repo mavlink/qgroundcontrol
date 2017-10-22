@@ -27,7 +27,7 @@ const char* kLoggingKeys =
 const char* kLoggingFooter =
 "\t\t\t},\n"\
 "\t\t\t\"file\": {\n"\
-"\t\t\t\t\"logging_type\": \"GUTMA_DX_JSON\",\n"\
+"\t\t\t\t\"logging_type\": \"UTM_4HZ_JSON\",\n"\
 "\t\t\t\t\"filename\": \"###FILENAME###\",\n"\
 "\t\t\t\t\"creation_dtg\": \"###FILEDATE###Z\"\n"\
 "\t\t\t},\n"\
@@ -44,6 +44,7 @@ UTMConverter::UTMConverter()
     , _gpsRawIntMessageAvailable(false)
     , _globalPositionIntMessageAvailable(false)
     , _mavlinkChannel(0)
+    , _cancel(false)
 {
 
 }
@@ -55,6 +56,13 @@ UTMConverter::~UTMConverter()
         qgcApp()->toolbox()->linkManager()->_freeMavlinkChannel(_mavlinkChannel);
         _mavlinkChannel = 0;
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+UTMConverter::cancel()
+{
+    _cancel = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -85,20 +93,23 @@ UTMConverter::convertTelemetryFile(const QString& srcFilename, const QString& ds
     QByteArray timestamp = _logFile.read(TIMESTAMP_SIZE);
     _curTimeUSecs = _parseTimestamp(timestamp);
     //-- Parse log file
-    while(true) {
+    while(!_cancel) {
         mavlink_message_t message;
         qint64 nextTimeUSecs = _readNextMavlinkMessage(message);
-        if(!nextTimeUSecs) {
+        if(!nextTimeUSecs && _cancel) {
             break;
         }
         _newMavlinkMessage(_curTimeUSecs, message);
         _curTimeUSecs = nextTimeUSecs;
     }
     //-- Write UTM File
-    if(_logItems.size()) {
+    if(!_cancel && _logItems.size()) {
         //-- Header
         _utmLogFile.write(kLoggingHeader);
         for(int i = 0; i < _logItems.size(); i++) {
+            if(_cancel) {
+                break;
+            }
             QString line;
             line.sprintf("\t\t\t\t\t[%.3f, %f, %f, %.3f, %.3f ]",
                 _logItems[i].time,
@@ -125,7 +136,7 @@ UTMConverter::convertTelemetryFile(const QString& srcFilename, const QString& ds
     }
     _utmLogFile.close();
     //-- If there was nothing, remove empty file
-    if(!_logItems.size()) {
+    if(!_logItems.size() || _cancel) {
         _utmLogFile.remove();
     }
     return true;

@@ -9,13 +9,17 @@
 #include "MAVLinkProtocol.h"
 
 //-----------------------------------------------------------------------------
-class UTMConverter
+class UTMConverter : public QObject
 {
+    Q_OBJECT
 public:
     UTMConverter();
     ~UTMConverter();
 
     bool        convertTelemetryFile        (const QString& srcFilename, const QString& dstFilename);
+
+public slots:
+    void        cancel                      ();
 
 private:
     qint64      _curTimeUSecs;
@@ -25,6 +29,7 @@ private:
     bool        _globalPositionIntMessageAvailable;
     int         _mavlinkChannel;
     QFile       _logFile;
+    bool        _cancel;
 
     typedef struct {
         double  time;
