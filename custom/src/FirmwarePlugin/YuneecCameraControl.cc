@@ -679,15 +679,21 @@ YuneecCameraControl::factChanged(Fact* pFact)
         }
     } else {
         if(pFact->name() == kCAM_TEMPSTATUS) {
-            memcpy(&_cgoetTempStatus, pFact->rawValue().toByteArray().data(), sizeof(udp_ctrl_cam_lepton_area_temp_t));
-            QString temp;
-            temp.sprintf("IR Temperature Status: Locked Max: %d°C Min: %d°C All: Center: %d°C Max: %d°C Min: %d°C",
-                     _cgoetTempStatus.locked_max_temp,
-                     _cgoetTempStatus.locked_min_temp,
-                     _cgoetTempStatus.all_area.center_val,
-                     _cgoetTempStatus.all_area.max_val,
-                     _cgoetTempStatus.all_area.min_val);
-            qCDebug(YuneecCameraLog) << temp;
+            udp_ctrl_cam_lepton_area_temp_t cgoetTempStatus;
+            memcpy(&cgoetTempStatus, pFact->rawValue().toByteArray().data(), sizeof(udp_ctrl_cam_lepton_area_temp_t));
+            //-- Ignore if bogus data
+            if(cgoetTempStatus.all_area.max_val || cgoetTempStatus.all_area.min_val || cgoetTempStatus.all_area.center_val) {
+                memcpy(&_cgoetTempStatus, &cgoetTempStatus, sizeof(udp_ctrl_cam_lepton_area_temp_t));
+                QString temp;
+                temp.sprintf("IR Temperature Status: Locked Max: %d°C Min: %d°C All: Center: %d°C Max: %d°C Min: %d°C",
+                         _cgoetTempStatus.locked_max_temp,
+                         _cgoetTempStatus.locked_min_temp,
+                         _cgoetTempStatus.all_area.center_val,
+                         _cgoetTempStatus.all_area.max_val,
+                         _cgoetTempStatus.all_area.min_val);
+                qCDebug(YuneecCameraLog) << temp;
+                emit irTempChanged();
+            }
             //-- Keep requesting it
             if(!_irValid) {
                 _irStatusTimer.setSingleShot(false);
@@ -695,7 +701,6 @@ YuneecCameraControl::factChanged(Fact* pFact)
                 _irStatusTimer.start();
                 _irValid = true;
             }
-            emit irTempChanged();
             return;
         } else if(pFact->name() == kCAM_IRPALETTE) {
             emit palettetBarChanged();
