@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.51 - Oct 23 2017
+
+*   Ignore bad temperature readings (0C when taking pictures) (CGOET)
+
 ### v1.1.50 - Oct 23 2017
 
 *   Fixed stopping time lapse using physical shutter button
