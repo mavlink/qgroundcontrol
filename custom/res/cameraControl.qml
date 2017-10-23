@@ -59,8 +59,9 @@ Rectangle {
     property bool _communicationLost:       _activeVehicle ? _activeVehicle.connectionLost : false
     property bool _emptySD:                 _camera && _camera.storageTotal === 0
     property bool _cameraVideoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode   === QGCCameraControl.CAM_MODE_VIDEO)
-    property bool _cameraPhotoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode   === QGCCameraControl.CAM_MODE_PHOTO)
+    property bool _cameraPhotoMode:         !_communicationLost && (_emptySD ? false : _camera && (_camera.cameraMode  === QGCCameraControl.CAM_MODE_PHOTO || _camera.cameraMode === QGCCameraControl.CAM_MODE_SURVEY))
     property bool _cameraPhotoIdle:         !_communicationLost && (_emptySD ? false : _camera && _camera.photoStatus  === QGCCameraControl.PHOTO_CAPTURE_IDLE)
+    property bool _cameraElapsedMode:       !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode   === QGCCameraControl.CAM_MODE_PHOTO && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE)
     property bool _cameraModeUndefined:     !_cameraPhotoMode && !_cameraVideoMode
     property bool _recordingVideo:          _cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool _isThermal:               TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver
@@ -128,7 +129,7 @@ Rectangle {
                 color:              qgcPal.text
                 QGCColoredImage {
                     anchors.fill:       parent
-                    source:             (_cameraModeUndefined || _cameraVideoMode) ? "/typhoonh/img/camera_switch_video_mode.svg" : "/typhoonh/img/camera_switch_photo_mode.svg"
+                    source:             (_cameraModeUndefined || _cameraVideoMode) ? "/typhoonh/img/camera_switch_video_mode.svg" : (_cameraElapsedMode ? "/typhoonh/img/camera_switch_elapsed_mode.svg" : "/typhoonh/img/camera_switch_photo_mode.svg")
                     fillMode:           Image.PreserveAspectFit
                     sourceSize.height:  height
                     color:              _cameraModeUndefined ? qgcPal.text : (_camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING ? qgcPal.colorRed : qgcPal.colorGreen)
@@ -160,6 +161,7 @@ Rectangle {
                 visible:    !pauseVideo.visible
                 anchors.centerIn:   parent
                 QGCColoredImage {
+                    id:                 busyIndicator
                     height:             parent.height * 0.75
                     width:              height
                     source:             "/qmlimages/MapSync.svg"
@@ -168,16 +170,27 @@ Rectangle {
                     mipmap:             true
                     smooth:             true
                     color:              qgcPal.colorBlue
-                    visible:            _cameraPhotoMode && !_cameraPhotoIdle
+                    visible: {
+                        if(_cameraPhotoMode && !_cameraPhotoIdle && !_cameraElapsedMode) {
+                            return true
+                        }
+                        return false
+                    }
                     anchors.centerIn:   parent
                     RotationAnimation on rotation {
-                        id:             connectionRotation
                         loops:          Animation.Infinite
                         from:           360
                         to:             0
                         duration:       740
-                        running:        _cameraPhotoMode && !_cameraPhotoIdle
+                        running:        busyIndicator.visible
                     }
+                }
+                QGCLabel {
+                    text:               _camera ? _camera.photoLapse.toFixed(0) + 's' : 'N/A'
+                    font.family:        ScreenTools.demiboldFontFamily
+                    color:              qgcPal.colorBlue
+                    visible:            _cameraElapsedMode
+                    anchors.centerIn:   parent
                 }
             }
             Rectangle {
@@ -185,7 +198,17 @@ Rectangle {
                 width:      parent.width * 0.5
                 height:     width
                 color:      _cameraModeUndefined ? qgcPal.colorGrey : qgcPal.colorRed
-                visible:    _cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+                visible: {
+                   if(_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) {
+                       return true
+                   }
+                   if(_cameraPhotoMode) {
+                       if(_camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IDLE || _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
+                           return true
+                       }
+                   }
+                   return false
+                }
                 anchors.centerIn:   parent
             }
             MouseArea {
@@ -202,8 +225,12 @@ Rectangle {
                             }
                         }
                     } else {
-                        if(!_fullSD) {
-                            _camera.takePhoto()
+                        if(_camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IDLE || _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
+                            _camera.stopTakePhoto()
+                        } else {
+                            if(!_fullSD) {
+                                _camera.takePhoto()
+                            }
                         }
                     }
                 }
@@ -365,7 +392,7 @@ Rectangle {
                         anchors.margins:    ScreenTools.defaultFontPixelHeight
                         anchors.horizontalCenter: parent.horizontalCenter
                         //-------------------------------------------
-                        //-- Camera Settings
+                        //-- CGOET Thermal Video Modes
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -389,6 +416,8 @@ Rectangle {
                             width:      cameraSettingsCol.width
                             visible:    _camera && _camera.isCGOET
                         }
+                        //-------------------------------------------
+                        //-- CGOET Thermal Video Opacity
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -415,6 +444,8 @@ Rectangle {
                             width:      cameraSettingsCol.width
                             visible:    _camera && _camera.isCGOET && TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend
                         }
+                        //-------------------------------------------
+                        //-- CGOET Thermal ROI
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -437,6 +468,8 @@ Rectangle {
                             width:      cameraSettingsCol.width
                             visible:    _camera && _camera.isCGOET
                         }
+                        //-------------------------------------------
+                        //-- Settings from Camera Definition File
                         Repeater {
                             model:      _camera ? _camera.activeSettings : []
                             Item {
@@ -506,6 +539,63 @@ Rectangle {
                             }
                         }
                         //-------------------------------------------
+                        //-- Time Lapse
+                        Row {
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            visible:        _cameraPhotoMode
+                            property var photoModes: [qsTr("Single"), qsTr("Time Lapse")]
+                            QGCLabel {
+                                text:       qsTr("Photo Mode")
+                                width:      _labelFieldWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QGCComboBox {
+                                width:          _editFieldWidth
+                                model:          parent.photoModes
+                                currentIndex:   _camera ? _camera.photoMode : 0
+                                onActivated:    _camera.photoMode = index
+                            }
+                        }
+                        Rectangle {
+                            color:      qgcPal.button
+                            height:     1
+                            width:      cameraSettingsCol.width
+                            visible:    _cameraPhotoMode
+                        }
+                        //-------------------------------------------
+                        //-- Time Lapse Interval
+                        Row {
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            visible:        _cameraPhotoMode && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE
+                            QGCLabel {
+                                text:       qsTr("Photo Interval (seconds)")
+                                width:      _labelFieldWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            YSlider {
+                                width:          _editFieldWidth
+                                maximumValue:   60
+                                minimumValue:   3
+                                stepSize:       1
+                                updateValueWhileDragging:   true
+                                anchors.verticalCenter:     parent.verticalCenter
+                                Component.onCompleted: {
+                                    value = _camera ? _camera.photoLapse : 0
+                                }
+                                onValueChanged: {
+                                    _camera.photoLapse = value
+                                }
+                            }
+                        }
+                        Rectangle {
+                            color:      qgcPal.button
+                            height:     1
+                            width:      cameraSettingsCol.width
+                            visible:    _cameraPhotoMode && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE
+                        }
+                        //-------------------------------------------
                         //-- Screen Grid
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
@@ -556,6 +646,9 @@ Rectangle {
                                         QGroundControl.settingsManager.videoSettings.gridLines.rawValue = false
                                         TyphoonHQuickInterface.thermalMode = TyphoonHQuickInterface.ThermalBlend
                                         TyphoonHQuickInterface.thermalOpacity = 85
+                                        _camera.photoMode = QGCCameraControl.PHOTO_CAPTURE_SINGLE
+                                        _camera.photoLapse = 5.0
+                                        _camera.photoLapseCount = 0
                                         resetPrompt.close()
                                     }
                                 }

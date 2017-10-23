@@ -74,6 +74,7 @@ public:
     Q_INVOKABLE void calibrateGimbal();
 
     bool        takePhoto           () override;
+    bool        stopTakePhoto       () override;
     bool        startVideo          () override;
     bool        stopVideo           () override;
     QString     firmwareVersion     () override;
@@ -83,6 +84,7 @@ public:
     bool        incomingParameter   (Fact* pFact, QVariant& newValue) override;
     bool        validateParameter   (Fact* pFact, QVariant& newValue) override;
     void        handleCaptureStatus (const mavlink_camera_capture_status_t& capStatus) override;
+    void        resetSettings       () override;
 
     QString     gimbalVersion       () { return _gimbalVersion; }
     bool        gimbalCalOn         () { return _gimbalCalOn; }
@@ -129,6 +131,7 @@ private slots:
     void    _delayedTakePhoto       ();
     void    _gimbalCalTimeout       ();
     void    _irStatusTimeout        ();
+    void    _resumeIrStatus         ();
 
 signals:
     void    gimbalVersionChanged    ();
