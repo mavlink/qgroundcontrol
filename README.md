@@ -27,6 +27,8 @@ git clone --recursive https://github.com/mavlink/qgroundcontrol.git
 ```
 Each time you pull new source to your repository you should run `git submodule update` to get the latest submodules as well. Since QGroundControl uses submodules, using the zip file for source download will not work. You must use git.
 
+The source code is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/COPYING.md).
+
 ### User Manual
 https://docs.qgroundcontrol.com/en/
 

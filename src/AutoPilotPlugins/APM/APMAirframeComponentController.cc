@@ -237,7 +237,7 @@ void APMAirframeComponentController::_githubJsonDownloadFinished(QString remoteF
     QGCFileDownload* downloader = new QGCFileDownload(this);
     connect(downloader, &QGCFileDownload::downloadFinished, this, &APMAirframeComponentController::_paramFileDownloadFinished);
     connect(downloader, &QGCFileDownload::error, this, &APMAirframeComponentController::_paramFileDownloadError);
-    downloader->download(json["download_url"].toString());
+    downloader->download(json[QLatin1Literal("download_url")].toString());
 }
 
 void APMAirframeComponentController::_githubJsonDownloadError(QString errorMsg)

@@ -30,7 +30,7 @@
 #include "FirmwarePluginManager.h"
 #include "MultiVehicleManager.h"
 #include "JoystickManager.h"
-#include "GAudioOutput.h"
+#include "AudioOutput.h"
 #include "UASMessageHandler.h"
 #include "FactSystem.h"
 
