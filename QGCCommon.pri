@@ -116,7 +116,7 @@ exists ($$PWD/.git) {
     GIT_TIME     = $$system(git --git-dir $$PWD/.git --work-tree $$PWD show --oneline --format=\"%ci\" -s HEAD)
 
     # determine if we're on a tag matching vX.Y.Z (stable release)
-    contains(GIT_DESCRIBE, v[0-9].[0-9].[0-9]) {
+    contains(GIT_DESCRIBE, v[0-9]+.[0-9]+.[0-9]+) {
         # release version "vX.Y.Z"
         GIT_VERSION = $${GIT_DESCRIBE}
     } else {

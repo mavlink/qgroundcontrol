@@ -27,7 +27,7 @@ const char* kLoggingKeys =
 const char* kLoggingFooter =
 "\t\t\t},\n"\
 "\t\t\t\"file\": {\n"\
-"\t\t\t\t\"logging_type\": \"UTM_4HZ_JSON\",\n"\
+"\t\t\t\t\"logging_type\": \"GUTMA_DX_JSON\",\n"\
 "\t\t\t\t\"filename\": \"###FILENAME###\",\n"\
 "\t\t\t\t\"creation_dtg\": \"###FILEDATE###Z\"\n"\
 "\t\t\t},\n"\
@@ -126,12 +126,12 @@ UTMConverter::convertTelemetryFile(const QString& srcFilename, const QString& ds
         }
         _utmLogFile.write(kLoggingKeys);
         QDateTime dtg = QDateTime::fromMSecsSinceEpoch(_startDTG / 1000);
-        QString line = QString("\t\t\t\t\"logging_start_dtg\": \"%1Z\"\n").arg(dtg.toString(Qt::ISODate));
+        QString line = QString("\t\t\t\t\"logging_start_dtg\": \"%1Z\"\n").arg(dtg.toString(Qt::ISODateWithMs));
         _utmLogFile.write(line.toLocal8Bit());
         QString footer(kLoggingFooter);
         QFileInfo fi(dstFilename);
         footer.replace("###FILENAME###", fi.baseName());
-        footer.replace("###FILEDATE###", QDateTime::currentDateTime().toString(Qt::ISODate));
+        footer.replace("###FILEDATE###", QDateTime::currentDateTime().toString(Qt::ISODateWithMs));
         _utmLogFile.write(footer.toLocal8Bit());
     }
     _utmLogFile.close();

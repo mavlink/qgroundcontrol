@@ -15,7 +15,7 @@
 
 APMPowerComponent::APMPowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent),
-    _name("Power")
+    _name(tr("Power"))
 {
 }
 

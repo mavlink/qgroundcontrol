@@ -68,8 +68,9 @@ public:
     //-- cam_mode
     enum CameraMode {
         CAM_MODE_UNDEFINED = -1,
-        CAM_MODE_PHOTO = 0,
-        CAM_MODE_VIDEO = 1,
+        CAM_MODE_PHOTO  = 0,
+        CAM_MODE_VIDEO  = 1,
+        CAM_MODE_SURVEY = 2,
     };
 
     //-- Video Capture Status
@@ -90,9 +91,16 @@ public:
         PHOTO_CAPTURE_STATUS_UNDEFINED = 255
     };
 
+    //-- Photo Capture Modes
+    enum PhotoMode {
+        PHOTO_CAPTURE_SINGLE = 0,
+        PHOTO_CAPTURE_TIMELAPSE,
+    };
+
     Q_ENUMS(CameraMode)
     Q_ENUMS(VideoStatus)
     Q_ENUMS(PhotoStatus)
+    Q_ENUMS(PhotoMode)
 
     Q_PROPERTY(int          version             READ version            NOTIFY infoChanged)
     Q_PROPERTY(QString      modelName           READ modelName          NOTIFY infoChanged)
@@ -111,15 +119,19 @@ public:
     Q_PROPERTY(QString      storageFreeStr      READ storageFreeStr     NOTIFY storageFreeChanged)
     Q_PROPERTY(quint32      storageTotal        READ storageTotal       NOTIFY storageTotalChanged)
 
-    Q_PROPERTY(QStringList  activeSettings      READ activeSettings                             NOTIFY activeSettingsChanged)
-    Q_PROPERTY(VideoStatus  videoStatus         READ videoStatus                                NOTIFY videoStatusChanged)
-    Q_PROPERTY(PhotoStatus  photoStatus         READ photoStatus                                NOTIFY photoStatusChanged)
-    Q_PROPERTY(CameraMode   cameraMode          READ cameraMode         WRITE   setCameraMode   NOTIFY cameraModeChanged)
+    Q_PROPERTY(QStringList  activeSettings      READ activeSettings                                 NOTIFY activeSettingsChanged)
+    Q_PROPERTY(VideoStatus  videoStatus         READ videoStatus                                    NOTIFY videoStatusChanged)
+    Q_PROPERTY(PhotoStatus  photoStatus         READ photoStatus                                    NOTIFY photoStatusChanged)
+    Q_PROPERTY(CameraMode   cameraMode          READ cameraMode         WRITE   setCameraMode       NOTIFY cameraModeChanged)
+    Q_PROPERTY(qreal        photoLapse          READ photoLapse         WRITE   setPhotoLapse       NOTIFY photoLapseChanged)
+    Q_PROPERTY(int          photoLapseCount     READ photoLapseCount    WRITE   setPhotoLapseCount  NOTIFY photoLapseCountChanged)
+    Q_PROPERTY(PhotoMode    photoMode           READ photoMode          WRITE   setPhotoMode        NOTIFY photoModeChanged)
 
     Q_INVOKABLE virtual void setVideoMode   ();
     Q_INVOKABLE virtual void setPhotoMode   ();
     Q_INVOKABLE virtual void toggleMode     ();
     Q_INVOKABLE virtual bool takePhoto      ();
+    Q_INVOKABLE virtual bool stopTakePhoto  ();
     Q_INVOKABLE virtual bool startVideo     ();
     Q_INVOKABLE virtual bool stopVideo      ();
     Q_INVOKABLE virtual bool toggleVideo    ();
@@ -143,6 +155,9 @@ public:
     virtual bool        isBasic             () { return _settings.size() == 0; }
     virtual VideoStatus videoStatus         ();
     virtual PhotoStatus photoStatus         ();
+    virtual PhotoMode   photoMode           () { return _photoMode; }
+    virtual qreal       photoLapse          () { return _photoLapse; }
+    virtual int         photoLapseCount     () { return _photoLapseCount; }
     virtual CameraMode  cameraMode          () { return _cameraMode; }
     virtual QStringList activeSettings      ();
     virtual quint32     storageFree         () { return _storageFree;  }
@@ -150,6 +165,9 @@ public:
     virtual quint32     storageTotal        () { return _storageTotal; }
 
     virtual void        setCameraMode       (CameraMode mode);
+    virtual void        setPhotoMode        (PhotoMode mode);
+    virtual void        setPhotoLapse       (qreal interval);
+    virtual void        setPhotoLapseCount  (int count);
 
     virtual void        handleSettings      (const mavlink_camera_settings_t& settings);
     virtual void        handleCaptureStatus (const mavlink_camera_capture_status_t& capStatus);
@@ -168,6 +186,9 @@ signals:
     void    infoChanged                     ();
     void    videoStatusChanged              ();
     void    photoStatusChanged              ();
+    void    photoModeChanged                ();
+    void    photoLapseChanged               ();
+    void    photoLapseCountChanged          ();
     void    cameraModeChanged               ();
     void    activeSettingsChanged           ();
     void    storageFreeChanged              ();
@@ -225,6 +246,9 @@ protected:
     QString                             _vendor;
     QString                             _cacheFile;
     CameraMode                          _cameraMode;
+    PhotoMode                           _photoMode;
+    qreal                               _photoLapse;
+    int                                 _photoLapseCount;
     VideoStatus                         _video_status;
     PhotoStatus                         _photo_status;
     QStringList                         _activeSettings;

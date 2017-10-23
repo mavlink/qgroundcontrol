@@ -53,14 +53,14 @@ QStringList APMSensorsComponent::setupCompleteChangedTriggerList(void) const
     QStringList triggers;
     
     // Compass triggers
-    triggers << "COMPASS_DEV_ID" << "COMPASS_DEV_ID2" << "COMPASS_DEV_ID3"
-             << "COMPASS_USE" << "COMPASS_USE2" << "COMPASS_USE3"
-             << "COMPASS_OFS_X" << "COMPASS_OFS_X" << "COMPASS_OFS_X"
-             << "COMPASS_OFS2_X" << "COMPASS_OFS2_X" << "COMPASS_OFS2_X"
-             << "COMPASS_OFS3_X" << "COMPASS_OFS3_X" << "COMPASS_OFS3_X";
+    triggers << QStringLiteral("COMPASS_DEV_ID") << QStringLiteral("COMPASS_DEV_ID2") << QStringLiteral("COMPASS_DEV_ID3")
+             << QStringLiteral("COMPASS_USE") << QStringLiteral("COMPASS_USE2") << QStringLiteral("COMPASS_USE3")
+             << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_X")
+             << QStringLiteral("COMPASS_OFS2_X") << QStringLiteral("COMPASS_OFS2_X") << QStringLiteral("COMPASS_OFS2_X")
+             << QStringLiteral("COMPASS_OFS3_X") << QStringLiteral("COMPASS_OFS3_X") << QStringLiteral("COMPASS_OFS3_X");
 
     // Accelerometer triggers
-    triggers << "INS_ACCOFFS_X" << "INS_ACCOFFS_Y" << "INS_ACCOFFS_Z";
+    triggers << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
 
     return triggers;
 }

@@ -60,9 +60,17 @@ Rectangle {
         QGCLabel {
             anchors.left:   parent.left
             anchors.right:  parent.right
-            text:           qsTr("WARNING: WORK IN PROGRESS. USE AT YOUR OWN RISK.")
+            text:           qsTr("WARNING: WORK IN PROGRESS. USE AT YOUR OWN RISK. MEANT FOR DISCUSSION ONLY. DO NOT REPORT BUGS.")
             wrapMode:       Text.WordWrap
             color:          qgcPal.warningText
+        }
+
+        QGCLabel {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            text:           qsTr("Note: Polygon respresents structure surface not vehicle flight path.")
+            wrapMode:       Text.WordWrap
+            font.pointSize: ScreenTools.smallFontPointSize
         }
 
         QGCLabel {
@@ -96,6 +104,12 @@ Rectangle {
             QGCLabel { text: qsTr("Layer distance") }
             FactTextField {
                 fact:               missionItem.layerDistance
+                Layout.fillWidth:   true
+            }
+
+            QGCLabel { text: qsTr("Scan distance") }
+            FactTextField {
+                fact:               missionItem.scanDistance
                 Layout.fillWidth:   true
             }
 

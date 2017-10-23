@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.49 - Oct 23 2017
+
+*   Time Lapse Photo
+
 ### v1.1.48 - Oct 22 2017
 
 *   Export UTM logs

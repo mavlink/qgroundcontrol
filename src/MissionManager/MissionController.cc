@@ -1546,10 +1546,9 @@ void MissionController::_managerVehicleHomePositionChanged(const QGeoCoordinate&
         } else {
             qWarning() << "First item is not MissionSettingsItem";
         }
-        if (_visualItems->count() == 1) {
-            // Don't let this trip the dirty bit
-            _visualItems->setDirty(false);
-        }
+        // Don't let this trip the dirty bit. Otherwise plan will keep getting marked dirty if vehicle home
+        // changes.
+        _visualItems->setDirty(false);
     }
 }
 

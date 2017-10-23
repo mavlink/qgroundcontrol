@@ -14,25 +14,25 @@ ULogParser::~ULogParser()
 
 int ULogParser::sizeOfType(QString& typeName)
 {
-    if (typeName == "int8_t" || typeName == "uint8_t") {
+    if (typeName == QLatin1Literal("int8_t") || typeName == QLatin1Literal("uint8_t")) {
         return 1;
 
-    } else if (typeName == "int16_t" || typeName == "uint16_t") {
+    } else if (typeName == QLatin1Literal("int16_t") || typeName == QLatin1Literal("uint16_t")) {
         return 2;
 
-    } else if (typeName == "int32_t" || typeName == "uint32_t") {
+    } else if (typeName == QLatin1Literal("int32_t") || typeName == QLatin1Literal("uint32_t")) {
         return 4;
 
-    } else if (typeName == "int64_t" || typeName == "uint64_t") {
+    } else if (typeName == QLatin1Literal("int64_t") || typeName == QLatin1Literal("uint64_t")) {
         return 8;
 
-    } else if (typeName == "float") {
+    } else if (typeName == QLatin1Literal("float")) {
         return 4;
 
-    } else if (typeName == "double") {
+    } else if (typeName == QLatin1Literal("double")) {
         return 8;
 
-    } else if (typeName == "char" || typeName == "bool") {
+    } else if (typeName == QLatin1Literal("char") || typeName == QLatin1Literal("bool")) {
         return 1;
     }
 
@@ -74,7 +74,7 @@ bool ULogParser::parseFieldFormat(QString& fields)
             QString typeNameFull = fields.mid(prevFieldEnd, spacePos - prevFieldEnd);
             QString fieldName = fields.mid(spacePos + 1, fieldEnd - spacePos - 1);
 
-            if (!fieldName.contains("_padding")) {
+            if (!fieldName.contains(QLatin1Literal("_padding"))) {
                 _cameraCaptureOffsets.insert(fieldName, offset);
                 offset += sizeOfFullType(typeNameFull);
             }
@@ -115,7 +115,7 @@ bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedb
                 QString messageName = fmt.left(posSeparator);
                 QString messageFields = fmt.mid(posSeparator + 1, header.msgSize - posSeparator - 1);
 
-                if(messageName == "camera_capture") {
+                if(messageName == QLatin1Literal("camera_capture")) {
                     parseFieldFormat(messageFields);
                 }
                 break;
@@ -129,7 +129,7 @@ bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedb
 
                 QString messageName(addLoggedMsg.msgName);
 
-                if(messageName.contains("camera_capture")) {
+                if(messageName.contains(QLatin1Literal("camera_capture"))) {
                     _cameraCaptureMsgID = addLoggedMsg.msgID;
                     geotagFound = true;
                 }
@@ -152,17 +152,17 @@ bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedb
                     // Completely dynamic parsing, so that changing/reordering the message format will not break the parser
                     GeoTagWorker::cameraFeedbackPacket feedback;
                     memset(&feedback, 0, sizeof(feedback));
-                    memcpy(&feedback.timestamp, log.data() + index + 5 + _cameraCaptureOffsets.value("timestamp"), 8);
+                    memcpy(&feedback.timestamp, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("timestamp")), 8);
                     feedback.timestamp /= 1.0e6; // to seconds
-                    memcpy(&feedback.timestampUTC, log.data() + index + 5 + _cameraCaptureOffsets.value("timestamp_utc"), 8);
+                    memcpy(&feedback.timestampUTC, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("timestamp_utc")), 8);
                     feedback.timestampUTC /= 1.0e6; // to seconds
-                    memcpy(&feedback.imageSequence, log.data() + index + 5 + _cameraCaptureOffsets.value("seq"), 4);
-                    memcpy(&feedback.latitude, log.data() + index + 5 + _cameraCaptureOffsets.value("lat"), 8);
-                    memcpy(&feedback.longitude, log.data() + index + 5 + _cameraCaptureOffsets.value("lon"), 8);
+                    memcpy(&feedback.imageSequence, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("seq")), 4);
+                    memcpy(&feedback.latitude, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("lat")), 8);
+                    memcpy(&feedback.longitude, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("lon")), 8);
                     feedback.longitude = fmod(180.0 + feedback.longitude, 360.0) - 180.0;
-                    memcpy(&feedback.altitude, log.data() + index + 5 + _cameraCaptureOffsets.value("alt"), 4);
-                    memcpy(&feedback.groundDistance, log.data() + index + 5 + _cameraCaptureOffsets.value("ground_distance"), 4);
-                    memcpy(&feedback.captureResult, log.data() + index + 5 + _cameraCaptureOffsets.value("result"), 1);
+                    memcpy(&feedback.altitude, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("alt")), 4);
+                    memcpy(&feedback.groundDistance, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("ground_distance")), 4);
+                    memcpy(&feedback.captureResult, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("result")), 1);
 
                     cameraFeedback.append(feedback);
 

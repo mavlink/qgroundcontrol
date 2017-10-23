@@ -157,6 +157,24 @@ YuneecCameraControl::firmwareVersion()
 }
 
 //-----------------------------------------------------------------------------
+void
+YuneecCameraControl::resetSettings()
+{
+    //-- Pause IR status during a reset
+    _irStatusTimer.stop();
+    QTimer::singleShot(5000, this, &YuneecCameraControl::_resumeIrStatus);
+    QGCCameraControl::resetSettings();
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::_resumeIrStatus()
+{
+    //-- Resume IR Status
+    _irStatusTimer.start();
+}
+
+//-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::exposureMode()
 {
@@ -243,6 +261,21 @@ YuneecCameraControl::takePhoto()
         _cameraSound.play();
     } else {
         _errorSound.setLoopCount(1);
+        _errorSound.play();
+    }
+    return res;
+}
+
+//-----------------------------------------------------------------------------
+bool
+YuneecCameraControl::stopTakePhoto()
+{
+    bool res = QGCCameraControl::stopTakePhoto();
+    if(res) {
+        _videoSound.setLoopCount(2);
+        _videoSound.play();
+    } else {
+        _errorSound.setLoopCount(2);
         _errorSound.play();
     }
     return res;
@@ -338,9 +371,9 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
                 emit activeSettingsChanged();
             }
             //-- Start recording local stream as well
-            //if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
-            //    qgcApp()->toolbox()->videoManager()->videoReceiver()->startRecording();
-            //}
+            if(isCGOET() && qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+                qgcApp()->toolbox()->videoManager()->videoReceiver()->startRecording();
+            }
         } else {
             _recTimer.stop();
             _recordTime = 0;
@@ -377,9 +410,9 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
             }
             _videoSound.play();
             //-- Stop recording local stream
-            //if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
-            //    qgcApp()->toolbox()->videoManager()->videoReceiver()->stopRecording();
-            //}
+            if(isCGOET() && qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+                qgcApp()->toolbox()->videoManager()->videoReceiver()->stopRecording();
+            }
         }
     }
 }
@@ -822,6 +855,9 @@ YuneecCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& 
         _recordTime = cap.recording_time_ms;
         _recTime = _recTime.addMSecs(_recTime.elapsed() - cap.recording_time_ms);
         emit recordTimeChanged();
+    } else if(photoStatus() == PHOTO_CAPTURE_INTERVAL_IDLE || photoStatus() == PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
+        _cameraSound.setLoopCount(1);
+        _cameraSound.play();
     }
 }
 
