@@ -104,10 +104,18 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
         true,                                       // ShowError
         1);                                         // Request gimbal version
     //-- Camera Type
-    _isE90   = modelName().contains("E90");
-    _isCGOET = modelName().contains("CGOET");
+    _isE90   = modelName().startsWith("E90");
+    _isCGOET = modelName().startsWith("CGOET");
     if(_isCGOET) {
         emit isCGOETChanged();
+    }
+    if(_isE90) {
+        emit isE90Changed();
+    } else {
+        //-- Make sure camera can handle interval
+        if(photoLapse() < 5.0) {
+            setPhotoLapse(5.0);
+        }
     }
 }
 
@@ -371,9 +379,9 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
                 emit activeSettingsChanged();
             }
             //-- Start recording local stream as well
-            if(isCGOET() && qgcApp()->toolbox()->videoManager()->videoReceiver()) {
-                qgcApp()->toolbox()->videoManager()->videoReceiver()->startRecording();
-            }
+            //if(isCGOET() && qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+            //    qgcApp()->toolbox()->videoManager()->videoReceiver()->startRecording();
+            //}
         } else {
             _recTimer.stop();
             _recordTime = 0;
@@ -410,9 +418,9 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
             }
             _videoSound.play();
             //-- Stop recording local stream
-            if(isCGOET() && qgcApp()->toolbox()->videoManager()->videoReceiver()) {
-                qgcApp()->toolbox()->videoManager()->videoReceiver()->stopRecording();
-            }
+            //if(isCGOET() && qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+            //    qgcApp()->toolbox()->videoManager()->videoReceiver()->stopRecording();
+            //}
         }
     }
 }
@@ -574,7 +582,7 @@ YuneecCameraControl::_switchStateChanged(int swId, int oldState, int newState)
         switch(swId) {
             case Yuneec::BUTTON_CAMERA_SHUTTER:
                 //-- Do we have storage (in kb) and is camera idle?
-                if(storageTotal() == 0 || storageFree() < 250 || photoStatus() != PHOTO_CAPTURE_IDLE) {
+                if(storageTotal() == 0 || storageFree() < 250 || (photoMode() == PHOTO_CAPTURE_SINGLE && photoStatus() != PHOTO_CAPTURE_IDLE)) {
                     //-- Undefined camera state
                     _errorSound.setLoopCount(1);
                     _errorSound.play();
@@ -601,7 +609,11 @@ YuneecCameraControl::_switchStateChanged(int swId, int oldState, int newState)
                             }
                         }
                     } else if(cameraMode() == CAM_MODE_PHOTO) {
-                        takePhoto();
+                        if(photoStatus() == PHOTO_CAPTURE_INTERVAL_IDLE || photoStatus() == PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
+                            stopTakePhoto();
+                        } else {
+                            takePhoto();
+                        }
                     } else {
                         //-- Undefined camera state
                         _errorSound.setLoopCount(1);
