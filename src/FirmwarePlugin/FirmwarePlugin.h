@@ -296,7 +296,7 @@ public:
     virtual bool isVtol(const Vehicle* vehicle) const;
 
     // FIXME: Hack workaround for non pluginize FollowMe support
-    static const char* px4FollowMeFlightMode;
+    static const QString px4FollowMeFlightMode;
 
 protected:
     // Arms the vehicle with validation and retries

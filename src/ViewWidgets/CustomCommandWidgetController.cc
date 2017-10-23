@@ -53,7 +53,7 @@ void CustomCommandWidgetController::_activeVehicleChanged(Vehicle* activeVehicle
 void CustomCommandWidgetController::selectQmlFile(void)
 {
     QSettings settings;
-    QString qmlFile = QGCQFileDialog::getOpenFileName(NULL, "Select custom Qml file", QString(), "Qml files (*.qml)");
+    QString qmlFile = QGCQFileDialog::getOpenFileName(NULL, tr("Select custom Qml file"), QString(), tr("Qml files (*.qml)"));
     if (qmlFile.isEmpty()) {
         _customQmlFile.clear();
         settings.remove(_settingsKey);

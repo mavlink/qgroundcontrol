@@ -169,7 +169,7 @@ void JoystickConfigController::nextButtonClicked(void)
     if (_currentStep == -1) {
         // Need to have enough channels
         if (_axisCount < _axisMinimum) {
-            qgcApp()->showMessage(QString("Detected %1 joystick axes. To operate PX4, you need at least %2 axes.").arg(_axisCount).arg(_axisMinimum));
+            qgcApp()->showMessage(tr("Detected %1 joystick axes. To operate PX4, you need at least %2 axes.").arg(_axisCount).arg(_axisMinimum));
             return;
         }
         _startCalibration();
@@ -595,7 +595,7 @@ void JoystickConfigController::_stopCalibration(void)
     
     _statusText->setProperty("text", "");
 
-    _nextButton->setProperty("text", "Calibrate");
+    _nextButton->setProperty("text", tr("Calibrate"));
     _nextButton->setEnabled(true);
     _cancelButton->setEnabled(false);
     _skipButton->setEnabled(false);
@@ -619,8 +619,8 @@ void JoystickConfigController::_calSave(void)
     _calState = calStateSave;
     
     _statusText->setProperty("text",
-                             "The current calibration settings are now displayed for each axis on screen.\n\n"
-                                "Click the Next button to upload calibration to board. Click Cancel if you don't want to save these values.");
+                             tr("The current calibration settings are now displayed for each axis on screen.\n\n"
+                                "Click the Next button to upload calibration to board. Click Cancel if you don't want to save these values."));
 
     _nextButton->setEnabled(true);
     _skipButton->setEnabled(false);
