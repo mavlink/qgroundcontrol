@@ -577,7 +577,7 @@ Rectangle {
                             YSlider {
                                 width:          _editFieldWidth
                                 maximumValue:   60
-                                minimumValue:   3
+                                minimumValue:   _camera ? (_camera.isE90 ? 3 : 5) : 5
                                 stepSize:       1
                                 updateValueWhileDragging:   true
                                 anchors.verticalCenter:     parent.verticalCenter

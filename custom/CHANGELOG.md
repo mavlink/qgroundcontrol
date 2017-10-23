@@ -1,5 +1,10 @@
 ## DataPilot Release Changelog
 
+### v1.1.50 - Oct 23 2017
+
+*   Fixed stopping time lapse using physical shutter button
+*   Handle minimum interval possible depending on camera used
+
 ### v1.1.49 - Oct 23 2017
 
 *   Time Lapse Photo

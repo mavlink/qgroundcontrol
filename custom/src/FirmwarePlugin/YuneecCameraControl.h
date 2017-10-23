@@ -62,6 +62,7 @@ public:
     Q_PROPERTY(QPoint       spotArea        READ    spotArea            WRITE  setSpotArea      NOTIFY spotAreaChanged)
     Q_PROPERTY(QSize        videoSize       READ    videoSize           WRITE  setVideoSize     NOTIFY videoSizeChanged)
     Q_PROPERTY(bool         isCGOET         READ    isCGOET             NOTIFY isCGOETChanged)
+    Q_PROPERTY(bool         isE90           READ    isE90               NOTIFY isE90Changed)
     Q_PROPERTY(bool         paramComplete   READ    paramComplete       NOTIFY factsLoaded)
 
     Q_PROPERTY(qreal        irCenterTemp    READ    irCenterTemp        NOTIFY irTempChanged)
@@ -112,6 +113,7 @@ public:
     void        setVideoSize        (QSize s);
 
     bool        isCGOET             () { return _isCGOET; }
+    bool        isE90               () { return _isE90; }
     bool        paramComplete       () { return _paramComplete; }
 
     qreal       irCenterTemp        () { return (qreal)_cgoetTempStatus.custom_area.center_val / 100.0; }
@@ -146,6 +148,7 @@ signals:
     void    spotAreaChanged         ();
     void    videoSizeChanged        ();
     void    isCGOETChanged          ();
+    void    isE90Changed            ();
     void    irTempChanged           ();
     void    palettetBarChanged      ();
     void    irSpotROIChanged        ();
