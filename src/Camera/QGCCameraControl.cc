@@ -52,6 +52,10 @@ static const char* kValue           = "value";
 static const char* kVendor          = "vendor";
 static const char* kVersion         = "version";
 
+static const char* kPhotoMode       = "PhotoMode";
+static const char* kPhotoLapse      = "PhotoLapse";
+static const char* kPhotoLapseCount = "PhotoLapseCount";
+
 //-----------------------------------------------------------------------------
 static bool
 read_attribute(QDomNode& node, const char* tagName, bool& target)
@@ -123,6 +127,9 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     , _storageTotal(0)
     , _netManager(NULL)
     , _cameraMode(CAM_MODE_UNDEFINED)
+    , _photoMode(PHOTO_CAPTURE_SINGLE)
+    , _photoLapse(1.0)
+    , _photoLapseCount(0)
     , _video_status(VIDEO_CAPTURE_STATUS_UNDEFINED)
     , _photo_status(PHOTO_CAPTURE_STATUS_UNDEFINED)
     , _storageInfoRetries(0)
@@ -145,6 +152,10 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     } else {
         _initWhenReady();
     }
+    QSettings settings;
+    _photoMode = (PhotoMode)settings.value(kPhotoMode, (int)PHOTO_CAPTURE_SINGLE).toInt();
+    _photoLapse = settings.value(kPhotoLapse, 1.0).toDouble();
+    _photoLapseCount = settings.value(kPhotoLapseCount, 0).toInt();
 }
 
 //-----------------------------------------------------------------------------
@@ -230,6 +241,36 @@ QGCCameraControl::setCameraMode(CameraMode mode)
 
 //-----------------------------------------------------------------------------
 void
+QGCCameraControl::setPhotoMode(PhotoMode mode)
+{
+    _photoMode = mode;
+    QSettings settings;
+    settings.setValue(kPhotoMode, (int)mode);
+    emit photoModeChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::setPhotoLapse(qreal interval)
+{
+    _photoLapse = interval;
+    QSettings settings;
+    settings.setValue(kPhotoLapse, interval);
+    emit photoLapseChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::setPhotoLapseCount(int count)
+{
+    _photoLapseCount = count;
+    QSettings settings;
+    settings.setValue(kPhotoLapseCount, count);
+    emit photoLapseCountChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
 QGCCameraControl::_setCameraMode(CameraMode mode)
 {
     _cameraMode = mode;
@@ -240,7 +281,7 @@ QGCCameraControl::_setCameraMode(CameraMode mode)
 void
 QGCCameraControl::toggleMode()
 {
-    if(cameraMode() == CAM_MODE_PHOTO) {
+    if(cameraMode() == CAM_MODE_PHOTO || cameraMode() == CAM_MODE_SURVEY) {
         setVideoMode();
     } else if(cameraMode() == CAM_MODE_VIDEO) {
         setPhotoMode();
@@ -269,12 +310,12 @@ QGCCameraControl::takePhoto()
     }
     if(capturesPhotos()) {
         _vehicle->sendMavCommand(
-            MAV_COMP_ID_CAMERA,                         // Target component
-            MAV_CMD_IMAGE_START_CAPTURE,                // Command id
-            false,                                      // ShowError
-            0,                                          // Reserved (Set to 0)
-            0,                                          // Duration between two consecutive pictures (in seconds--ignored if single image)
-            1);                                         // Number of images to capture total - 0 for unlimited capture
+            MAV_COMP_ID_CAMERA,                                         // Target component
+            MAV_CMD_IMAGE_START_CAPTURE,                                // Command id
+            false,                                                      // ShowError
+            0,                                                          // Reserved (Set to 0)
+            _photoMode == PHOTO_CAPTURE_SINGLE ? 0 : _photoLapse,       // Duration between two consecutive pictures (in seconds--ignored if single image)
+            _photoMode == PHOTO_CAPTURE_SINGLE ? 1 : _photoLapseCount); // Number of images to capture total - 0 for unlimited capture
         _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
         _captureInfoRetries = 0;
         //-- Capture local image as well
@@ -282,6 +323,27 @@ QGCCameraControl::takePhoto()
         QDir().mkpath(photoPath);
         photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
         qgcApp()->toolbox()->videoManager()->videoReceiver()->grabImage(photoPath);
+        return true;
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+bool
+QGCCameraControl::stopTakePhoto()
+{
+    qCDebug(CameraControlLog) << "stopTakePhoto()";
+    if(photoStatus() == PHOTO_CAPTURE_IDLE || (photoStatus() != PHOTO_CAPTURE_INTERVAL_IDLE && photoStatus() != PHOTO_CAPTURE_INTERVAL_IN_PROGRESS)) {
+        return false;
+    }
+    if(capturesPhotos()) {
+        _vehicle->sendMavCommand(
+            MAV_COMP_ID_CAMERA,                                         // Target component
+            MAV_CMD_IMAGE_STOP_CAPTURE,                                 // Command id
+            false,                                                      // ShowError
+            0);                                                         // Reserved (Set to 0)
+        _setPhotoStatus(PHOTO_CAPTURE_IDLE);
+        _captureInfoRetries = 0;
         return true;
     }
     return false;
@@ -353,7 +415,7 @@ QGCCameraControl::setPhotoMode()
             MAV_CMD_SET_CAMERA_MODE,                // Command id
             true,                                   // ShowError
             0,                                      // Reserved (Set to 0)
-            CAM_MODE_PHOTO);                     // Camera mode (0: photo, 1: video)
+            CAM_MODE_PHOTO);                        // Camera mode (0: photo, 1: video)
         _setCameraMode(CAM_MODE_PHOTO);
     }
 }
@@ -452,6 +514,7 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
             }
             switch(command) {
                 case MAV_CMD_IMAGE_START_CAPTURE:
+                case MAV_CMD_IMAGE_STOP_CAPTURE:
                     if(++_captureInfoRetries < 5) {
                         _captureStatusTimer.start(1000);
                     } else {
@@ -1172,9 +1235,17 @@ QGCCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap
     //-- Keep asking for it once in a while when recording
     if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
         _captureStatusTimer.start(5000);
-    //-- Same while image capture is busy
-    } else if(photoStatus() != PHOTO_CAPTURE_IDLE) {
+    //-- Same while (single) image capture is busy
+    } else if(photoStatus() != PHOTO_CAPTURE_IDLE && photoMode() == PHOTO_CAPTURE_SINGLE) {
         _captureStatusTimer.start(1000);
+    }
+    //-- Time Lapse
+    if(photoStatus() == PHOTO_CAPTURE_INTERVAL_IDLE || photoStatus() == PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
+        //-- Capture local image as well
+        QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+        QDir().mkpath(photoPath);
+        photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
+        qgcApp()->toolbox()->videoManager()->videoReceiver()->grabImage(photoPath);
     }
 }
 
