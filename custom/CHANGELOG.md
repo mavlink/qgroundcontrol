@@ -1,5 +1,10 @@
 ## DataPilot Release Changelog
 
+### v1.1.52 - Oct 23 2017
+
+*   Fix time lapse slider initialization (it was resetting when created)
+*   Skip initial double camera sound when doing time lapse
+
 ### v1.1.51 - Oct 23 2017
 
 *   Ignore bad temperature readings (0C when taking pictures) (CGOET)

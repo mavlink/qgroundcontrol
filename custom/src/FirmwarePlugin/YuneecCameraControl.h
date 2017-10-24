@@ -191,6 +191,7 @@ private:
     QStringList             _updatesToSend;
     bool                    _inMissionMode;
     bool                    _irValid;
+    bool                    _firstPhotoLapse;
     Fact*                   _irROI;
     udp_ctrl_cam_lepton_area_temp_t _cgoetTempStatus;
 };

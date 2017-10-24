@@ -69,6 +69,7 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     , _isCGOET(false)
     , _inMissionMode(false)
     , _irValid(false)
+    , _firstPhotoLapse(false)
     , _irROI(NULL)
 {
 
@@ -265,6 +266,9 @@ YuneecCameraControl::takePhoto()
 {
     bool res = QGCCameraControl::takePhoto();
     if(res) {
+        if(photoMode() == PHOTO_CAPTURE_TIMELAPSE) {
+            _firstPhotoLapse = true;
+        }
         _cameraSound.setLoopCount(1);
         _cameraSound.play();
     } else {
@@ -873,8 +877,13 @@ YuneecCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& 
         _recTime = _recTime.addMSecs(_recTime.elapsed() - cap.recording_time_ms);
         emit recordTimeChanged();
     } else if(photoStatus() == PHOTO_CAPTURE_INTERVAL_IDLE || photoStatus() == PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
-        _cameraSound.setLoopCount(1);
-        _cameraSound.play();
+        //-- Skip camera sound on first response (already did it when the user clicked it)
+        if(_firstPhotoLapse) {
+            _firstPhotoLapse = false;
+        } else {
+            _cameraSound.setLoopCount(1);
+            _cameraSound.play();
+        }
     }
 }
 
