@@ -162,9 +162,7 @@ bool APMFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities c
     uint32_t available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability;
     if (vehicle->multiRotor()) {
         available |= TakeoffVehicleCapability;
-    } else if (vehicle->fixedWing() || vehicle->vtol()) {
-        // Due to the way ArduPilot marks a vtol aircraft, we don't know if something is a vtol at initial connection.
-        // So we always enabled takeoff for fixed wing.
+    } else if (vehicle->vtol()) {
         available |= TakeoffVehicleCapability;
     }
 
@@ -885,18 +883,6 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
                                                           &cmd);
 
     vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
-}
-
-bool APMFirmwarePlugin::isVtol(const Vehicle* vehicle) const
-{
-    if (vehicle->fixedWing()) {
-        if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("Q_ENABLE")) &&
-            vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("Q_ENABLE"))->rawValue().toBool()) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
