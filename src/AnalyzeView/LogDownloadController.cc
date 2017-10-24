@@ -454,7 +454,7 @@ LogDownloadController::_findMissingData()
 
 //----------------------------------------------------------------------------------------
 void
-LogDownloadController::_requestLogData(uint8_t id, uint32_t offset, uint32_t count)
+LogDownloadController::_requestLogData(uint16_t id, uint32_t offset, uint32_t count)
 {
     if(_vehicle) {
         //-- APM "Fix"
