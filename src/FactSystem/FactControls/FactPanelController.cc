@@ -116,7 +116,7 @@ bool FactPanelController::_allParametersExists(int componentId, QStringList name
 void FactPanelController::_checkForMissingFactPanel(void)
 {
     if (!_factPanel) {
-        _showInternalError("Incorrect FactPanel Qml implementation. FactPanelController used without passing in factPanel.");
+        _showInternalError(tr("Incorrect FactPanel Qml implementation. FactPanelController used without passing in factPanel."));
     }
 }
 
@@ -141,7 +141,7 @@ bool FactPanelController::parameterExists(int componentId, const QString& name)
 
 void FactPanelController::_showInternalError(const QString& errorMsg)
 {
-    _notifyPanelErrorMsg(QString("Internal Error: %1").arg(errorMsg));
+    _notifyPanelErrorMsg(tr("Internal Error: %1").arg(errorMsg));
     qCWarning(FactPanelControllerLog) << "Internal Error" << errorMsg;
     qgcApp()->showMessage(errorMsg);
 }

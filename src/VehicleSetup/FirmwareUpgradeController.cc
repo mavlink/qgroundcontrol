@@ -167,10 +167,10 @@ void FirmwareUpgradeController::_foundBootloader(int bootloaderVersion, int boar
     _bootloaderBoardID = boardID;
     _bootloaderBoardFlashSize = flashSize;
     
-    _appendStatusLog("Connected to bootloader:");
-    _appendStatusLog(QString("  Version: %1").arg(_bootloaderVersion));
-    _appendStatusLog(QString("  Board ID: %1").arg(_bootloaderBoardID));
-    _appendStatusLog(QString("  Flash size: %1").arg(_bootloaderBoardFlashSize));
+    _appendStatusLog(tr("Connected to bootloader:"));
+    _appendStatusLog(tr("  Version: %1").arg(_bootloaderVersion));
+    _appendStatusLog(tr("  Board ID: %1").arg(_bootloaderBoardID));
+    _appendStatusLog(tr("  Flash size: %1").arg(_bootloaderBoardFlashSize));
     
     if (_startFlashWhenBootloaderFound) {
         flash(_startFlashWhenBootloaderFoundFirmwareIdentity);
@@ -518,26 +518,26 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
     QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(_bootloaderBoardID);
     
     if (!prgFirmware && firmwareId.firmwareType != CustomFirmware) {
-        _errorCancel("Attempting to flash an unknown board type, you must select 'Custom firmware file'");
+        _errorCancel(tr("Attempting to flash an unknown board type, you must select 'Custom firmware file'"));
         return;
     }
     
     if (firmwareId.firmwareType == CustomFirmware) {
         _firmwareFilename = QGCQFileDialog::getOpenFileName(NULL,                                                                // Parent to main window
-                                                            "Select Firmware File",                                              // Dialog Caption
+                                                            tr("Select Firmware File"),                                          // Dialog Caption
                                                             QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation), // Initial directory
-                                                            "Firmware Files (*.px4 *.bin *.ihx)");                               // File filter
+                                                            tr("Firmware Files (*.px4 *.bin *.ihx)"));                              // File filter
     } else {
         if (prgFirmware->contains(firmwareId)) {
             _firmwareFilename = prgFirmware->value(firmwareId);
         } else {
-            _errorCancel("Unable to find specified firmware download location");
+            _errorCancel(tr("Unable to find specified firmware download location"));
             return;
         }
     }
     
     if (_firmwareFilename.isEmpty()) {
-        _errorCancel("No firmware file selected");
+        _errorCancel(tr("No firmware file selected"));
     } else {
         _downloadFirmware();
     }
@@ -548,8 +548,8 @@ void FirmwareUpgradeController::_downloadFirmware(void)
 {
     Q_ASSERT(!_firmwareFilename.isEmpty());
     
-    _appendStatusLog("Downloading firmware...");
-    _appendStatusLog(QString(" From: %1").arg(_firmwareFilename));
+    _appendStatusLog(tr("Downloading firmware..."));
+    _appendStatusLog(tr(" From: %1").arg(_firmwareFilename));
     
     QGCFileDownload* downloader = new QGCFileDownload(this);
     connect(downloader, &QGCFileDownload::downloadFinished, this, &FirmwareUpgradeController::_firmwareDownloadFinished);
@@ -572,7 +572,7 @@ void FirmwareUpgradeController::_firmwareDownloadFinished(QString remoteFile, QS
 {
     Q_UNUSED(remoteFile);
 
-    _appendStatusLog("Download complete");
+    _appendStatusLog(tr("Download complete"));
     
     FirmwareImage* image = new FirmwareImage(this);
     
@@ -580,18 +580,18 @@ void FirmwareUpgradeController::_firmwareDownloadFinished(QString remoteFile, QS
     connect(image, &FirmwareImage::errorMessage, this, &FirmwareUpgradeController::_error);
     
     if (!image->load(localFile, _bootloaderBoardID)) {
-        _errorCancel("Image load failed");
+        _errorCancel(tr("Image load failed"));
         return;
     }
     
     // We can't proceed unless we have the bootloader
     if (!_bootloaderFound) {
-        _errorCancel("Bootloader not found");
+        _errorCancel(tr("Bootloader not found"));
         return;
     }
     
     if (_bootloaderBoardFlashSize != 0 && image->imageSize() > _bootloaderBoardFlashSize) {
-        _errorCancel(QString("Image size of %1 is too large for board flash size %2").arg(image->imageSize()).arg(_bootloaderBoardFlashSize));
+        _errorCancel(tr("Image size of %1 is too large for board flash size %2").arg(image->imageSize()).arg(_bootloaderBoardFlashSize));
         return;
     }
 
@@ -626,7 +626,7 @@ void FirmwareUpgradeController::_flashComplete(void)
     delete _image;
     _image = NULL;
     
-    _appendStatusLog("Upgrade complete", true);
+    _appendStatusLog(tr("Upgrade complete"), true);
     _appendStatusLog("------------------------------------------", false);
     emit flashComplete();
     qgcApp()->toolbox()->linkManager()->setConnectionsAllowed();
@@ -684,7 +684,7 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool criti
 void FirmwareUpgradeController::_errorCancel(const QString& msg)
 {
     _appendStatusLog(msg, false);
-    _appendStatusLog("Upgrade cancelled", true);
+    _appendStatusLog(tr("Upgrade cancelled"), true);
     _appendStatusLog("------------------------------------------", false);
     emit error();
     cancel();

@@ -142,7 +142,7 @@ bool SerialLink::_connect(void)
             }
         }
 
-        _emitLinkError(QString("Error connecting: Could not create port. %1").arg(errorString));
+        _emitLinkError(tr("Error connecting: Could not create port. %1").arg(errorString));
         return false;
     }
     return true;
@@ -212,7 +212,7 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
         qDebug() << "open failed" << _port->errorString() << _port->error() << getName() << qgcApp()->toolbox()->linkManager()->isAutoconnectLink(this);
         error = _port->error();
         errorString = _port->errorString();
-        emit communicationUpdate(getName(),"Error opening port: " + _port->errorString());
+        emit communicationUpdate(getName(), tr("Error opening port: %1").arg(_port->errorString()));
         _port->close();
         delete _port;
         _port = NULL;

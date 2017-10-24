@@ -376,7 +376,7 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_mess
 
                 if (supportedMajorNumber != -1) {
                     if (firmwareVersion.majorNumber() < supportedMajorNumber || firmwareVersion.minorNumber() < supportedMinorNumber) {
-                        qgcApp()->showMessage(QString("QGroundControl fully supports Version %1.%2 and above. You are using a version prior to that. This combination is untested, you may run into unpredictable results.").arg(supportedMajorNumber).arg(supportedMinorNumber));
+                        qgcApp()->showMessage(tr("QGroundControl fully supports Version %1.%2 and above. You are using a version prior to that. This combination is untested, you may run into unpredictable results.").arg(supportedMajorNumber).arg(supportedMinorNumber));
                     }
                 }
             }
@@ -858,7 +858,7 @@ void APMFirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
 void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange)
 {
     if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
-        qgcApp()->showMessage(QStringLiteral("Unable to change altitude, vehicle altitude not known."));
+        qgcApp()->showMessage(tr("Unable to change altitude, vehicle altitude not known."));
         return;
     }
 
@@ -965,7 +965,7 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
             }
 
             if (!didTakeoff) {
-                qgcApp()->showMessage(QStringLiteral("Unable to start mission. Vehicle takeoff failed."));
+                qgcApp()->showMessage(tr("Unable to start mission. Vehicle takeoff failed."));
                 return;
             }
         } else {
@@ -974,7 +974,7 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
     }
 
     if (!_setFlightModeAndValidate(vehicle, missionFlightMode())) {
-        qgcApp()->showMessage(QStringLiteral("Unable to start mission. Vehicle failed to change to auto."));
+        qgcApp()->showMessage(tr("Unable to start mission. Vehicle failed to change to auto."));
         return;
     }
 }

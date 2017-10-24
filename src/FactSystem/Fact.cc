@@ -208,7 +208,7 @@ int Fact::enumIndex(void)
                 index ++;
             }
             // Current value is not in list, add it manually
-            _metaData->addEnumInfo(QString("Unknown: %1").arg(rawValue().toString()), rawValue());
+            _metaData->addEnumInfo(tr("Unknown: %1").arg(rawValue().toString()), rawValue());
             emit enumsChanged();
             return index;
         }
