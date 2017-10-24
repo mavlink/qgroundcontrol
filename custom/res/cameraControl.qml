@@ -579,11 +579,9 @@ Rectangle {
                                 maximumValue:   60
                                 minimumValue:   _camera ? (_camera.isE90 ? 3 : 5) : 5
                                 stepSize:       1
+                                value:          _camera ? _camera.photoLapse : 5
                                 updateValueWhileDragging:   true
                                 anchors.verticalCenter:     parent.verticalCenter
-                                Component.onCompleted: {
-                                    value = _camera ? _camera.photoLapse : 0
-                                }
                                 onValueChanged: {
                                     _camera.photoLapse = value
                                 }
