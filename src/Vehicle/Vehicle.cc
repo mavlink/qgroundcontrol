@@ -24,7 +24,7 @@
 #include "ParameterManager.h"
 #include "QGCApplication.h"
 #include "QGCImageProvider.h"
-#include "GAudioOutput.h"
+#include "AudioOutput.h"
 #include "FollowMe.h"
 #include "MissionCommandTree.h"
 #include "QGroundControlQmlGlobal.h"
@@ -678,6 +678,8 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     }
 
+    // This must be emitted after the vehicle processes the message. This way the vehicle state is up to date when anyone else
+    // does processing.
     emit mavlinkMessageReceived(message);
 
     _uas->receiveMessage(message);
@@ -1413,8 +1415,9 @@ void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double y
         _headingFact.setRawValue(0);
     } else {
         yaw = yaw * (180.0 / M_PI);
-        if (yaw < 0) yaw += 360;
-        _headingFact.setRawValue(yaw);
+        if (yaw < 0.0) yaw += 360.0;
+        // truncate to integer so widget never displays 360
+        _headingFact.setRawValue(trunc(yaw));
     }
 }
 

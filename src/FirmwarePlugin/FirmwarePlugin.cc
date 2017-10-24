@@ -430,6 +430,30 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       0,
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("Ricoh GR II"),
+                                      23.7,     // sensorWidth
+                                      15.7,     // sendsorHeight
+                                      4928,     // imageWidth
+                                      3264,     // imageHeight
+                                      18.3,     // focalLength
+                                      true,     // landscape
+                                      false,    // fixedOrientation
+                                      0,        // minTriggerInterval
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("RedEdge"),
+                                      4.8,      // sensorWidth
+                                      3.6,      // sendsorHeight
+                                      1280,     // imageWidth
+                                      960,      // imageHeight
+                                      5.5,      // focalLength
+                                      true,     // landscape
+                                      false,    // fixedOrientation
+                                      0,        // minTriggerInterval
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
     }
 
     return _cameraList;

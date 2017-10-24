@@ -70,36 +70,36 @@ class APMFirmwarePlugin : public FirmwarePlugin
 public:
     // Overrides from FirmwarePlugin
 
-    QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle) final;
-    QList<MAV_CMD> supportedMissionCommands(void) final;
+    QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle) override;
+    QList<MAV_CMD> supportedMissionCommands(void) override;
 
-    AutoPilotPlugin*    autopilotPlugin                 (Vehicle* vehicle) final;
-    bool                isVtol                          (const Vehicle* vehicle) const final;
+    AutoPilotPlugin*    autopilotPlugin                 (Vehicle* vehicle) override;
+    bool                isVtol                          (const Vehicle* vehicle) const override;
     bool                isCapable                       (const Vehicle *vehicle, FirmwareCapabilities capabilities) override;
-    void                setGuidedMode                   (Vehicle* vehicle, bool guidedMode) final;
-    void                guidedModeTakeoff               (Vehicle* vehicle) final;
-    void                guidedModeGotoLocation          (Vehicle* vehicle, const QGeoCoordinate& gotoCoord) final;
-    void                startMission                    (Vehicle* vehicle) final;
-    QStringList         flightModes                     (Vehicle* vehicle) final;
-    QString             flightMode                      (uint8_t base_mode, uint32_t custom_mode) const final;
-    bool                setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) final;
-    bool                isGuidedMode                    (const Vehicle* vehicle) const final;
-    QString             rtlFlightMode                   (void) const final { return QString("RTL"); }
-    QString             missionFlightMode               (void) const final { return QString("Auto"); }
-    void                pauseVehicle                    (Vehicle* vehicle) final;
-    void                guidedModeRTL                   (Vehicle* vehicle) final;
+    void                setGuidedMode                   (Vehicle* vehicle, bool guidedMode) override;
+    void                guidedModeTakeoff               (Vehicle* vehicle) override;
+    void                guidedModeGotoLocation          (Vehicle* vehicle, const QGeoCoordinate& gotoCoord) override;
+    void                startMission                    (Vehicle* vehicle) override;
+    QStringList         flightModes                     (Vehicle* vehicle) override;
+    QString             flightMode                      (uint8_t base_mode, uint32_t custom_mode) const override;
+    bool                setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) override;
+    bool                isGuidedMode                    (const Vehicle* vehicle) const override;
+    QString             rtlFlightMode                   (void) const override { return QString("RTL"); }
+    QString             missionFlightMode               (void) const override { return QString("Auto"); }
+    void                pauseVehicle                    (Vehicle* vehicle) override;
+    void                guidedModeRTL                   (Vehicle* vehicle) override;
     void                guidedModeChangeAltitude        (Vehicle* vehicle, double altitudeChange) override;
     int                 manualControlReservedButtonCount(void) override;
     bool                adjustIncomingMavlinkMessage    (Vehicle* vehicle, mavlink_message_t* message) override;
-    void                adjustOutgoingMavlinkMessage    (Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message) final;
-    void                initializeVehicle               (Vehicle* vehicle) final;
-    bool                sendHomePositionToVehicle       (void) final;
-    void                addMetaDataToFact               (QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) final;
+    void                adjustOutgoingMavlinkMessage    (Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message) override;
+    void                initializeVehicle               (Vehicle* vehicle) override;
+    bool                sendHomePositionToVehicle       (void) override;
+    void                addMetaDataToFact               (QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) override;
     QString             missionCommandOverrides         (MAV_TYPE vehicleType) const override;
-    QString             getVersionParam                 (void) final { return QStringLiteral("SYSID_SW_MREV"); }
-    QString             internalParameterMetaDataFile   (Vehicle* vehicle) final;
-    void                getParameterMetaDataVersionInfo (const QString& metaDataFile, int& majorVersion, int& minorVersion) final { APMParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion); }
-    QObject*            loadParameterMetaData           (const QString& metaDataFile) final;
+    QString             getVersionParam                 (void) override { return QStringLiteral("SYSID_SW_MREV"); }
+    QString             internalParameterMetaDataFile   (Vehicle* vehicle) override;
+    void                getParameterMetaDataVersionInfo (const QString& metaDataFile, int& majorVersion, int& minorVersion) override { APMParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion); }
+    QObject*            loadParameterMetaData           (const QString& metaDataFile) override;
     QString             brandImageIndoor                (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
     QString             brandImageOutdoor               (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
 

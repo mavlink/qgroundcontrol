@@ -13,6 +13,7 @@
 #include "QGCMapEngine.h"
 #include "QGCCameraManager.h"
 #include "YuneecCameraControl.h"
+#include "YExportFiles.h"
 
 #include <QDirIterator>
 #include <QtAlgorithms>
@@ -62,13 +63,14 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _vehicle(NULL)
     , _pFileCopy(NULL)
     , _videoReceiver(NULL)
+    , _exporter(NULL)
     , _thermalMode(ThermalBlend)
     , _scanEnabled(false)
     , _scanningWiFi(false)
     , _bindingWiFi(false)
     , _copyingFiles(false)
+    , _copyingDone(false)
     , _wifiAlertEnabled(true)
-    , _copyResult(0)
     , _updateProgress(0)
     , _updateDone(false)
     , _selectedCount(0)
@@ -98,6 +100,9 @@ TyphoonHQuickInterface::~TyphoonHQuickInterface()
     _clearSSids();
     if(_videoReceiver) {
         delete _videoReceiver;
+    }
+    if(_exporter) {
+        _exporter->deleteLater();
     }
 }
 
@@ -1061,60 +1066,78 @@ TyphoonHQuickInterface::deleteSelectedMedia()
 }
 
 //-----------------------------------------------------------------------------
-bool
-TyphoonHQuickInterface::_copyFilesInPath(const QString src, const QString dst)
-{
-    QDir dir(dst);
-    if (!dir.exists()) {
-        if(!dir.mkpath(".")) {
-            _copyResult = -1;
-            return false;
-        }
-    }
-    QDirIterator it(src, QStringList() << "*", QDir::Files, QDirIterator::NoIteratorFlags);
-    while(it.hasNext()) {
-        QFileInfo fi(it.next());
-        QString output = dst + "/" + fi.fileName();
-        QFileInfo fo(output);
-        if(fo.exists()) {
-            QFile::remove(fo.filePath());
-        }
-        if(!QFile::copy(fi.filePath(), fo.filePath())) {
-            _copyResult = -1;
-            return false;
-        }
-        _copyResult++;
-        emit copyResultChanged();
-        qApp->processEvents();
-    }
-    return true;
-}
-
-//-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::exportData()
+TyphoonHQuickInterface::initExport()
 {
-    _copyResult = 0;
-    _copyingFiles = true;
+    _copyingFiles = false;
+    _updateProgress = 0;
+    _copyingDone = false;
+    _copyMessage.clear();
+    emit updateProgressChanged();
     emit copyingFilesChanged();
-    QTimer::singleShot(10, this, &TyphoonHQuickInterface::_exportData);
+    emit copyMessageChanged();
+    emit copyingDoneChanged();
 }
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::_exportData()
+TyphoonHQuickInterface::exportData(bool exportUTM)
 {
-    if(_copyFilesInPath(qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath(),
-                               QStringLiteral("/storage/sdcard1/") + AppSettings::missionDirectory)) {
-        if(_copyFilesInPath(qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath(),
-                               QStringLiteral("/storage/sdcard1/") + AppSettings::telemetryDirectory)) {
-            _copyFilesInPath(qgcApp()->toolbox()->settingsManager()->appSettings()->logSavePath(),
-                               QStringLiteral("/storage/sdcard1/") + AppSettings::logDirectory);
-        }
+    _copyingFiles = true;
+    _updateProgress = 0;
+    emit updateProgressChanged();
+    emit copyingFilesChanged();
+    _exportMessage(QString(tr("Searching files...")));
+    _exporter = new YExportFiles();
+    connect(_exporter, &YExportFiles::completed,        this, &TyphoonHQuickInterface::_exportCompleted);
+    connect(_exporter, &YExportFiles::copyCompleted,    this, &TyphoonHQuickInterface::_copyCompleted);
+    connect(_exporter, &YExportFiles::message,          this, &TyphoonHQuickInterface::_exportMessage);
+    _exportMessage(QString(tr("Copying files...")));
+    _exporter->exportData(exportUTM);
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::cancelExportData()
+{
+    if(_exporter) {
+        _exporter->cancel();
+        _exportMessage(QString(tr("Canceling...")));
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_exportCompleted()
+{
+    if(_exporter) {
+        _exporter->deleteLater();
+        _exporter = NULL;
     }
     _copyingFiles = false;
+    _copyingDone = true;
     emit copyingFilesChanged();
-    emit copyResultChanged();
+    emit copyingDoneChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_copyCompleted(quint32 totalCount, quint32 curCount)
+{
+    if(!totalCount) {
+        _updateProgress = 0;
+    } else {
+        _updateProgress = (int)((float)curCount / (float)totalCount * 100.0f);
+    }
+    emit updateProgressChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_exportMessage(QString message)
+{
+    _copyMessage = message;
+    emit copyMessageChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -1130,28 +1153,53 @@ TyphoonHQuickInterface::importMission()
 void
 TyphoonHQuickInterface::_importMissions()
 {
-    _copyResult = 0;
-    //-- See if there is a mission in the SD card
-    QDirIterator it(QStringLiteral("/storage/sdcard1"), QStringList() << "*.plan", QDir::Files, QDirIterator::Subdirectories);
-    QString missionDir = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
+#if defined(QT_DEBUG) && !defined (__android__)
+    QString sourcePath = QStringLiteral("/tmp");
+#else
+    QString sourcePath = QStringLiteral("/storage/sdcard1");
+#endif
+    QDir destDir(sourcePath);
+    if (!destDir.exists()) {
+        _exportMessage(QString(tr("Source path missing. Make sure you have a (FAT32 Formatted) microSD card loaded.")));
+        return;
+    }
+    int totalFiles = 0;
+    int curCount = 0;
+    //-- Collect Files
+    _exportMessage(QString(tr("Importing mission files...")));
+    QFileInfoList fil;
+    QDirIterator it(sourcePath, QStringList() << "*.plan", QDir::Files, QDirIterator::Subdirectories);
     while(it.hasNext()) {
         QFileInfo fi(it.next());
+        totalFiles++;
+        fil << fi;
+    }
+    _copyCompleted(totalFiles, 0);
+    QString missionDir = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
+    while(fil.size()) {
+        QFileInfo fi = fil.first();
+        fil.removeFirst();
         QString output = missionDir + "/" + fi.fileName();
         QFileInfo fo(output);
         if(fo.exists()) {
             QFile::remove(fo.filePath());
         }
         if(!QFile::copy(fi.filePath(), fo.filePath())) {
-            _copyResult = -1;
-            break;
+            _exportMessage(QString(tr("Error importing %1").arg(fi.filePath())));
+            _copyingFiles = false;
+            _copyingDone = true;
+            emit copyingFilesChanged();
+            emit copyingDoneChanged();
+            return;
         }
-        _copyResult++;
-        emit copyResultChanged();
+        _copyCompleted(totalFiles, ++curCount);
         qApp->processEvents();
     }
+    _exportMessage(QString(tr("%1 files imported").arg(totalFiles)));
     _copyingFiles = false;
+    _copyingDone = true;
     emit copyingFilesChanged();
-    emit copyResultChanged();
+    emit copyingDoneChanged();
 }
 
 //-----------------------------------------------------------------------------

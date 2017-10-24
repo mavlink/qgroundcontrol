@@ -11,19 +11,19 @@
 #include <QDebug>
 #include <QRegularExpression>
 
-#include "GAudioOutput.h"
+#include "AudioOutput.h"
 #include "QGCApplication.h"
 #include "QGC.h"
 #include "SettingsManager.h"
 
-GAudioOutput::GAudioOutput(QGCApplication* app, QGCToolbox* toolbox)
+AudioOutput::AudioOutput(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
 {
     _tts = new QTextToSpeech(this);
-    connect(_tts, &QTextToSpeech::stateChanged, this, &GAudioOutput::_stateChanged);
+    connect(_tts, &QTextToSpeech::stateChanged, this, &AudioOutput::_stateChanged);
 }
 
-bool GAudioOutput::say(const QString& inText)
+bool AudioOutput::say(const QString& inText)
 {
     bool muted = qgcApp()->toolbox()->settingsManager()->appSettings()->audioMuted()->rawValue().toBool();
     muted |= qgcApp()->runningUnitTests();
@@ -44,7 +44,7 @@ bool GAudioOutput::say(const QString& inText)
     return true;
 }
 
-void GAudioOutput::_stateChanged(QTextToSpeech::State state)
+void AudioOutput::_stateChanged(QTextToSpeech::State state)
 {
     if(state == QTextToSpeech::Ready) {
         if(_texts.size()) {
@@ -55,7 +55,7 @@ void GAudioOutput::_stateChanged(QTextToSpeech::State state)
     }
 }
 
-bool GAudioOutput::getMillisecondString(const QString& string, QString& match, int& number) {
+bool AudioOutput::getMillisecondString(const QString& string, QString& match, int& number) {
     static QRegularExpression re("([0-9]+ms)");
     QRegularExpressionMatchIterator i = re.globalMatch(string);
     while (i.hasNext()) {
@@ -69,7 +69,7 @@ bool GAudioOutput::getMillisecondString(const QString& string, QString& match, i
     return false;
 }
 
-QString GAudioOutput::fixTextMessageForAudio(const QString& string) {
+QString AudioOutput::fixTextMessageForAudio(const QString& string) {
     QString match;
     QString newNumber;
     QString result = string;
@@ -118,6 +118,33 @@ QString GAudioOutput::fixTextMessageForAudio(const QString& string) {
     if(result.contains(" ADSB ", Qt::CaseInsensitive)) {
         result.replace(" ADSB ", " Hey Dee Ess Bee ", Qt::CaseInsensitive);
     }
+
+    // Convert negative numbers
+    QRegularExpression re(QStringLiteral("(-)[0-9]*\\.?[0-9]"));
+    QRegularExpressionMatch reMatch = re.match(result);
+    while (reMatch.hasMatch()) {
+        if (!reMatch.captured(1).isNull()) {
+            // There is a negative prefix
+            qDebug() << "negative" << reMatch.captured(1) << reMatch.capturedStart(1) << reMatch.capturedEnd(1);
+            result.replace(reMatch.capturedStart(1), reMatch.capturedEnd(1) - reMatch.capturedStart(1), tr(" negative "));
+            qDebug() << result;
+        }
+        reMatch = re.match(result);
+    }
+
+    // Convert meter postfix after real number
+    re.setPattern(QStringLiteral("[0-9]*\\.?[0-9]\\s?(m)([^A-Za-z]|$)"));
+    reMatch = re.match(result);
+    while (reMatch.hasMatch()) {
+        if (!reMatch.captured(1).isNull()) {
+            // There is a meter postfix
+            qDebug() << "meters" << reMatch.captured(1) << reMatch.capturedStart(1) << reMatch.capturedEnd(1);
+            result.replace(reMatch.capturedStart(1), reMatch.capturedEnd(1) - reMatch.capturedStart(1), tr(" meters"));
+            qDebug() << result;
+        }
+        reMatch = re.match(result);
+    }
+
     int number;
     if(getMillisecondString(string, match, number) && number > 1000) {
         if(number < 60000) {

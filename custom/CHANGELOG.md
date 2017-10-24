@@ -1,5 +1,31 @@
 ## DataPilot Release Changelog
 
+### v1.1.52 - Oct 23 2017
+
+*   Fix time lapse slider initialization (it was resetting when created)
+*   Skip initial double camera sound when doing time lapse
+
+### v1.1.51 - Oct 23 2017
+
+*   Ignore bad temperature readings (0C when taking pictures) (CGOET)
+
+### v1.1.50 - Oct 23 2017
+
+*   Fixed stopping time lapse using physical shutter button
+*   Handle minimum interval possible depending on camera used
+
+### v1.1.49 - Oct 23 2017
+
+*   Time Lapse Photo
+
+### v1.1.48 - Oct 22 2017
+
+*   Export UTM logs
+
+### v1.1.46 - Oct 17 2017
+
+*   Temperature Range (CGOET). Note that it needs a new CGOET firmware for it to work.
+
 ### v1.1.45 - Oct 16 2017
 
 *   Implemented Area/Spot ROI (CGOET)

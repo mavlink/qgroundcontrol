@@ -69,6 +69,7 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     , _isCGOET(false)
     , _inMissionMode(false)
     , _irValid(false)
+    , _firstPhotoLapse(false)
     , _irROI(NULL)
 {
 
@@ -104,10 +105,18 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
         true,                                       // ShowError
         1);                                         // Request gimbal version
     //-- Camera Type
-    _isE90   = modelName().contains("E90");
-    _isCGOET = modelName().contains("CGOET");
+    _isE90   = modelName().startsWith("E90");
+    _isCGOET = modelName().startsWith("CGOET");
     if(_isCGOET) {
         emit isCGOETChanged();
+    }
+    if(_isE90) {
+        emit isE90Changed();
+    } else {
+        //-- Make sure camera can handle interval
+        if(photoLapse() < 5.0) {
+            setPhotoLapse(5.0);
+        }
     }
 }
 
@@ -154,6 +163,24 @@ YuneecCameraControl::firmwareVersion()
         _version.sprintf("%d.%d.%d_%c", major, minor, build, cntry);
     }
     return _version;
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::resetSettings()
+{
+    //-- Pause IR status during a reset
+    _irStatusTimer.stop();
+    QTimer::singleShot(5000, this, &YuneecCameraControl::_resumeIrStatus);
+    QGCCameraControl::resetSettings();
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::_resumeIrStatus()
+{
+    //-- Resume IR Status
+    _irStatusTimer.start();
 }
 
 //-----------------------------------------------------------------------------
@@ -227,20 +254,6 @@ YuneecCameraControl::irROI()
 }
 
 //-----------------------------------------------------------------------------
-Fact*
-YuneecCameraControl::minTemp()
-{
-    return (_paramComplete && _isCGOET) ? getFact(kCAM_IRTEMPMIN) : NULL;
-}
-
-//-----------------------------------------------------------------------------
-Fact*
-YuneecCameraControl::maxTemp()
-{
-    return (_paramComplete && _isCGOET) ? getFact(kCAM_IRTEMPMAX) : NULL;
-}
-
-//-----------------------------------------------------------------------------
 QString
 YuneecCameraControl::recordTimeStr()
 {
@@ -253,10 +266,28 @@ YuneecCameraControl::takePhoto()
 {
     bool res = QGCCameraControl::takePhoto();
     if(res) {
+        if(photoMode() == PHOTO_CAPTURE_TIMELAPSE) {
+            _firstPhotoLapse = true;
+        }
         _cameraSound.setLoopCount(1);
         _cameraSound.play();
     } else {
         _errorSound.setLoopCount(1);
+        _errorSound.play();
+    }
+    return res;
+}
+
+//-----------------------------------------------------------------------------
+bool
+YuneecCameraControl::stopTakePhoto()
+{
+    bool res = QGCCameraControl::stopTakePhoto();
+    if(res) {
+        _videoSound.setLoopCount(2);
+        _videoSound.play();
+    } else {
+        _errorSound.setLoopCount(2);
         _errorSound.play();
     }
     return res;
@@ -352,7 +383,7 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
                 emit activeSettingsChanged();
             }
             //-- Start recording local stream as well
-            //if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+            //if(isCGOET() && qgcApp()->toolbox()->videoManager()->videoReceiver()) {
             //    qgcApp()->toolbox()->videoManager()->videoReceiver()->startRecording();
             //}
         } else {
@@ -391,7 +422,7 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
             }
             _videoSound.play();
             //-- Stop recording local stream
-            //if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+            //if(isCGOET() && qgcApp()->toolbox()->videoManager()->videoReceiver()) {
             //    qgcApp()->toolbox()->videoManager()->videoReceiver()->stopRecording();
             //}
         }
@@ -555,7 +586,7 @@ YuneecCameraControl::_switchStateChanged(int swId, int oldState, int newState)
         switch(swId) {
             case Yuneec::BUTTON_CAMERA_SHUTTER:
                 //-- Do we have storage (in kb) and is camera idle?
-                if(storageTotal() == 0 || storageFree() < 250 || photoStatus() != PHOTO_CAPTURE_IDLE) {
+                if(storageTotal() == 0 || storageFree() < 250 || (photoMode() == PHOTO_CAPTURE_SINGLE && photoStatus() != PHOTO_CAPTURE_IDLE)) {
                     //-- Undefined camera state
                     _errorSound.setLoopCount(1);
                     _errorSound.play();
@@ -582,7 +613,11 @@ YuneecCameraControl::_switchStateChanged(int swId, int oldState, int newState)
                             }
                         }
                     } else if(cameraMode() == CAM_MODE_PHOTO) {
-                        takePhoto();
+                        if(photoStatus() == PHOTO_CAPTURE_INTERVAL_IDLE || photoStatus() == PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
+                            stopTakePhoto();
+                        } else {
+                            takePhoto();
+                        }
                     } else {
                         //-- Undefined camera state
                         _errorSound.setLoopCount(1);
@@ -648,15 +683,21 @@ YuneecCameraControl::factChanged(Fact* pFact)
         }
     } else {
         if(pFact->name() == kCAM_TEMPSTATUS) {
-            memcpy(&_cgoetTempStatus, pFact->rawValue().toByteArray().data(), sizeof(udp_ctrl_cam_lepton_area_temp_t));
-            QString temp;
-            temp.sprintf("IR Temperature Status: Locked Max: %d°C Min: %d°C All: Center: %d°C Max: %d°C Min: %d°C",
-                     _cgoetTempStatus.locked_max_temp,
-                     _cgoetTempStatus.locked_min_temp,
-                     _cgoetTempStatus.all_area.center_val,
-                     _cgoetTempStatus.all_area.max_val,
-                     _cgoetTempStatus.all_area.min_val);
-            qCDebug(YuneecCameraLog) << temp;
+            udp_ctrl_cam_lepton_area_temp_t cgoetTempStatus;
+            memcpy(&cgoetTempStatus, pFact->rawValue().toByteArray().data(), sizeof(udp_ctrl_cam_lepton_area_temp_t));
+            //-- Ignore if bogus data
+            if(cgoetTempStatus.all_area.max_val || cgoetTempStatus.all_area.min_val || cgoetTempStatus.all_area.center_val) {
+                memcpy(&_cgoetTempStatus, &cgoetTempStatus, sizeof(udp_ctrl_cam_lepton_area_temp_t));
+                QString temp;
+                temp.sprintf("IR Temperature Status: Locked Max: %d°C Min: %d°C All: Center: %d°C Max: %d°C Min: %d°C",
+                         _cgoetTempStatus.locked_max_temp,
+                         _cgoetTempStatus.locked_min_temp,
+                         _cgoetTempStatus.all_area.center_val,
+                         _cgoetTempStatus.all_area.max_val,
+                         _cgoetTempStatus.all_area.min_val);
+                qCDebug(YuneecCameraLog) << temp;
+                emit irTempChanged();
+            }
             //-- Keep requesting it
             if(!_irValid) {
                 _irStatusTimer.setSingleShot(false);
@@ -664,7 +705,6 @@ YuneecCameraControl::factChanged(Fact* pFact)
                 _irStatusTimer.start();
                 _irValid = true;
             }
-            emit irTempChanged();
             return;
         } else if(pFact->name() == kCAM_IRPALETTE) {
             emit palettetBarChanged();
@@ -836,6 +876,14 @@ YuneecCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& 
         _recordTime = cap.recording_time_ms;
         _recTime = _recTime.addMSecs(_recTime.elapsed() - cap.recording_time_ms);
         emit recordTimeChanged();
+    } else if(photoStatus() == PHOTO_CAPTURE_INTERVAL_IDLE || photoStatus() == PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
+        //-- Skip camera sound on first response (already did it when the user clicked it)
+        if(_firstPhotoLapse) {
+            _firstPhotoLapse = false;
+        } else {
+            _cameraSound.setLoopCount(1);
+            _cameraSound.play();
+        }
     }
 }
 
@@ -858,24 +906,40 @@ YuneecCameraControl::palettetBar()
 qreal
 YuneecCameraControl::irMinTemp()
 {
-    Fact* pFact = getFact(kCAM_IRTEMPRENA);
-    if(pFact) {
-        if(pFact->rawValue().toBool()) {
-            return minTemp() ? minTemp()->rawValue().toDouble() : 0.0;
+    Fact* pRangeEnabledFact = (_paramComplete && _isCGOET) ? getFact(kCAM_IRTEMPRENA) : NULL;
+    if(pRangeEnabledFact) {
+        //-- Is range enabled?
+        if(pRangeEnabledFact->rawValue().toBool()) {
+            Fact* pMinTempFact = getFact(kCAM_IRTEMPMIN);
+            if(pMinTempFact) {
+                return pMinTempFact->rawValue().toDouble();
+            }
+            return 0.0;
+        } else {
+            //-- Range not enabled. Return entire scene min temperature.
+            return (qreal)_cgoetTempStatus.all_area.min_val / 100.0;
         }
     }
-    return (qreal)_cgoetTempStatus.all_area.min_val / 100.0;
+    return 0.0;
 }
 
 //-----------------------------------------------------------------------------
 qreal
 YuneecCameraControl::irMaxTemp()
 {
-    Fact* pFact = getFact(kCAM_IRTEMPRENA);
-    if(pFact) {
-        if(pFact->rawValue().toBool()) {
-            return maxTemp() ? maxTemp()->rawValue().toDouble() : 0.0;
+    Fact* pRangeEnabledFact = (_paramComplete && _isCGOET) ? getFact(kCAM_IRTEMPRENA) : NULL;
+    if(pRangeEnabledFact) {
+        //-- Is range enabled?
+        if(pRangeEnabledFact->rawValue().toBool()) {
+            Fact* pMaxTempFact = getFact(kCAM_IRTEMPMAX);
+            if(pMaxTempFact) {
+                return pMaxTempFact->rawValue().toDouble();
+            }
+            return 0.0;
+        } else {
+            //-- Range not enabled. Return entire scene max temperature.
+            return (qreal)_cgoetTempStatus.all_area.max_val / 100.0;
         }
     }
-    return (qreal)_cgoetTempStatus.all_area.max_val / 100.0;
+    return 0.0;
 }

@@ -62,10 +62,8 @@ public:
     Q_PROPERTY(QPoint       spotArea        READ    spotArea            WRITE  setSpotArea      NOTIFY spotAreaChanged)
     Q_PROPERTY(QSize        videoSize       READ    videoSize           WRITE  setVideoSize     NOTIFY videoSizeChanged)
     Q_PROPERTY(bool         isCGOET         READ    isCGOET             NOTIFY isCGOETChanged)
+    Q_PROPERTY(bool         isE90           READ    isE90               NOTIFY isE90Changed)
     Q_PROPERTY(bool         paramComplete   READ    paramComplete       NOTIFY factsLoaded)
-
-    Q_PROPERTY(Fact*        minTemp         READ    minTemp             NOTIFY factsLoaded)
-    Q_PROPERTY(Fact*        maxTemp         READ    maxTemp             NOTIFY factsLoaded)
 
     Q_PROPERTY(qreal        irCenterTemp    READ    irCenterTemp        NOTIFY irTempChanged)
     Q_PROPERTY(qreal        irAverageTemp   READ    irAverageTemp       NOTIFY irTempChanged)
@@ -77,6 +75,7 @@ public:
     Q_INVOKABLE void calibrateGimbal();
 
     bool        takePhoto           () override;
+    bool        stopTakePhoto       () override;
     bool        startVideo          () override;
     bool        stopVideo           () override;
     QString     firmwareVersion     () override;
@@ -86,6 +85,7 @@ public:
     bool        incomingParameter   (Fact* pFact, QVariant& newValue) override;
     bool        validateParameter   (Fact* pFact, QVariant& newValue) override;
     void        handleCaptureStatus (const mavlink_camera_capture_status_t& capStatus) override;
+    void        resetSettings       () override;
 
     QString     gimbalVersion       () { return _gimbalVersion; }
     bool        gimbalCalOn         () { return _gimbalCalOn; }
@@ -105,8 +105,6 @@ public:
     Fact*       videoRes            ();
     Fact*       aspectRatio         ();
     Fact*       irPalette           ();
-    Fact*       minTemp             ();
-    Fact*       maxTemp             ();
     Fact*       irROI               ();
     QPoint      spotArea            ();
     void        setSpotArea         (QPoint mouse);
@@ -115,6 +113,7 @@ public:
     void        setVideoSize        (QSize s);
 
     bool        isCGOET             () { return _isCGOET; }
+    bool        isE90               () { return _isE90; }
     bool        paramComplete       () { return _paramComplete; }
 
     qreal       irCenterTemp        () { return (qreal)_cgoetTempStatus.custom_area.center_val / 100.0; }
@@ -134,6 +133,7 @@ private slots:
     void    _delayedTakePhoto       ();
     void    _gimbalCalTimeout       ();
     void    _irStatusTimeout        ();
+    void    _resumeIrStatus         ();
 
 signals:
     void    gimbalVersionChanged    ();
@@ -148,6 +148,7 @@ signals:
     void    spotAreaChanged         ();
     void    videoSizeChanged        ();
     void    isCGOETChanged          ();
+    void    isE90Changed            ();
     void    irTempChanged           ();
     void    palettetBarChanged      ();
     void    irSpotROIChanged        ();
@@ -190,6 +191,7 @@ private:
     QStringList             _updatesToSend;
     bool                    _inMissionMode;
     bool                    _irValid;
+    bool                    _firstPhotoLapse;
     Fact*                   _irROI;
     udp_ctrl_cam_lepton_area_temp_t _cgoetTempStatus;
 };

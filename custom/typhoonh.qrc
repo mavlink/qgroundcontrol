@@ -20,6 +20,7 @@
         <file alias="battery_plane.svg">res/images/battery_plane.svg</file>
         <file alias="bell.svg">res/images/bell.svg</file>
         <file alias="camera.svg">res/images/camera.svg</file>
+        <file alias="camera_switch_elapsed_mode.svg">res/images/camera_switch_elapsed_mode.svg</file>
         <file alias="camera_switch_photo_mode.svg">res/images/camera_switch_photo_mode.svg</file>
         <file alias="camera_switch_photo.svg">res/images/camera_switch_photo.svg</file>
         <file alias="camera_switch_video_mode.svg">res/images/camera_switch_video_mode.svg</file>
