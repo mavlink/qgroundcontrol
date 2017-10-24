@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.53 - Oct 24 2017
+
+*   Support for updater app
+
 ### v1.1.52 - Oct 23 2017
 
 *   Fix time lapse slider initialization (it was resetting when created)
