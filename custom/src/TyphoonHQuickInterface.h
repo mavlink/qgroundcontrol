@@ -168,6 +168,8 @@ public:
     Q_PROPERTY(bool             copyingDone     READ    copyingDone         NOTIFY copyingDoneChanged)
     Q_PROPERTY(QString          copyMessage     READ    copyMessage         NOTIFY copyMessageChanged)
     Q_PROPERTY(bool             isFactoryApp    READ    isFactoryApp        CONSTANT)
+    Q_PROPERTY(bool             isUpdaterApp    READ    isUpdaterApp        CONSTANT)
+    Q_PROPERTY(bool             isInternet      READ    isInternet          NOTIFY isInternetChanged)
 
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
 
@@ -227,6 +229,9 @@ public:
     Q_INVOKABLE void setWiFiPassword    (QString pwd);
     Q_INVOKABLE void factoryTest        ();
     Q_INVOKABLE void endThis            ();
+    Q_INVOKABLE void launchBroswer      (QString url);
+    Q_INVOKABLE void launchUpdater      ();
+    Q_INVOKABLE bool shouldWeShowUpdate ();
 
     //-- Android image update
     Q_INVOKABLE bool checkForUpdate     ();
@@ -263,6 +268,8 @@ public:
     bool        wifiAlertEnabled    () { return _wifiAlertEnabled; }
     bool        rcActive            ();
     bool        isFactoryApp        () { return _isFactoryApp; }
+    bool        isUpdaterApp        () { return _isUpdaterApp; }
+    bool        isInternet          ();
 
     void        init                (TyphoonHM4Interface* pHandler);
     void        setWifiAlertEnabled (bool enabled) { _wifiAlertEnabled = enabled; emit wifiAlertEnabledChanged(); }
@@ -350,7 +357,6 @@ signals:
     void    updateDoneChanged           ();
     void    updatingChanged             ();
     void    thermalImagePresentChanged  ();
-    void    updateAlert                 ();
     void    mediaListChanged            ();
     void    mediaSelectionChanged       ();
     void    selectedCountChanged        ();
@@ -360,6 +366,7 @@ signals:
     void    obsStateChanged             ();
     void    thermalModeChanged          ();
     void    thermalOpacityChanged       ();
+    void    isInternetChanged           ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -388,13 +395,13 @@ private slots:
     void    _imageUpdateError           (QString errorMsg);
     void    _imageUpdateDone            ();
     void    _videoRunningChanged        ();
-    void    _checkUpdateStatus          ();
     void    _forgetSSID                 ();
     void    _vehicleAdded               (Vehicle* vehicle);
     void    _vehicleRemoved             (Vehicle* vehicle);
     void    _mavlinkMessageReceived     (const mavlink_message_t& message);
     void    _dynamicCamerasChanged      ();
     void    _camerasChanged             ();
+    void    _internetUpdated            ();
     void    _exportCompleted            ();
     void    _copyCompleted              (quint32 totalCount, quint32 curCount);
     void    _exportMessage              (QString message);
@@ -443,4 +450,6 @@ private:
     bool                    _obsState;
     bool                    _isFactoryApp;
     double                  _thermalOpacity;
+    bool                    _isUpdaterApp;
+    bool                    _updateShown;
 };

@@ -217,6 +217,7 @@ QGCView {
             }
             //-----------------------------------------------------------------
             Rectangle {
+                id:             factoryTest
                 height:         factoryRow.height * 2
                 width:          ScreenTools.defaultFontPixelWidth * 80
                 color:          qgcPal.windowShade
@@ -236,6 +237,32 @@ QGCView {
                     }
                     QGCLabel {
                         text:   qsTr("Enter Factory Test")
+                        width:   _textWidth
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+            }
+            //-----------------------------------------------------------------
+            Rectangle {
+                height:         updaterRow.height * 2
+                width:          ScreenTools.defaultFontPixelWidth * 80
+                color:          qgcPal.windowShade
+                visible:        !factoryTest.visible && TyphoonHQuickInterface.isUpdaterApp
+                anchors.horizontalCenter: parent.horizontalCenter
+                Row {
+                    id:         updaterRow
+                    spacing:    ScreenTools.defaultFontPixelWidth * 4
+                    anchors.centerIn: parent
+                    QGCButton {
+                        text:   qsTr("Software Updater")
+                        width:   _buttonWidth
+                        anchors.verticalCenter: parent.verticalCenter
+                        onClicked: {
+                            TyphoonHQuickInterface.launchUpdater()
+                        }
+                    }
+                    QGCLabel {
+                        text:   qsTr("Launch Software Updater App")
                         width:   _textWidth
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -384,6 +411,7 @@ QGCView {
                 }
                 rootLoader.width  = fileCopyDialogItem.width
                 rootLoader.height = fileCopyDialogItem.height
+                mainWindow.disableToolbar()
             }
         }
     }
@@ -456,8 +484,8 @@ QGCView {
                             height:         ScreenTools.defaultFontPixelHeight * 2
                             onClicked: {
                                 TyphoonHQuickInterface.manualBind()
-                                rootLoader.sourceComponent = null
                                 mainWindow.enableToolbar()
+                                rootLoader.sourceComponent = null
                             }
                         }
                         QGCButton {
@@ -465,8 +493,8 @@ QGCView {
                             width:          ScreenTools.defaultFontPixelWidth  * 16
                             height:         ScreenTools.defaultFontPixelHeight * 2
                             onClicked: {
-                                rootLoader.sourceComponent = null
                                 mainWindow.enableToolbar()
+                                rootLoader.sourceComponent = null
                             }
                         }
                     }
@@ -475,6 +503,7 @@ QGCView {
             Component.onCompleted: {
                 rootLoader.width  = bindDialogItem.width
                 rootLoader.height = bindDialogItem.height
+                mainWindow.disableToolbar()
             }
         }
     }
@@ -563,8 +592,8 @@ QGCView {
                         visible:        TyphoonHQuickInterface.updateError !== ""
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: {
-                            rootLoader.sourceComponent = null
                             mainWindow.enableToolbar()
+                            rootLoader.sourceComponent = null
                         }
                     }
                 }
@@ -572,6 +601,7 @@ QGCView {
             Component.onCompleted: {
                 rootLoader.width  = firmwareUpdateItem.width
                 rootLoader.height = firmwareUpdateItem.height
+                mainWindow.disableToolbar()
             }
         }
     }

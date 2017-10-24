@@ -83,7 +83,7 @@ Item {
     function showSimpleAlert(title, message) {
         _messageTitle   = title;
         _messageText    = message;
-        rootLoader.sourceComponent = simpleAlert;
+        rootLoader.sourceComponent = simpleAlert
     }
 
     function showNoSDCardMessage() {
@@ -98,16 +98,35 @@ Item {
             qsTr("No images will be captured or videos recorded."))
     }
 
+    function indicatorClicked() {
+        var count = _showAttitude ? 5 : 15
+        vehicleStatus.visible = !vehicleStatus.visible
+        _eggCount++
+        toggleTimer.restart()
+        if (_eggCount === count) {
+            vehicleStatus.visible = true
+            _showAttitude = !_showAttitude
+        }
+    }
+
     Timer {
-        id: ssidChanged
-        interval:  5000
-        running:   false;
-        repeat:    false;
+        id:         ssidChanged
+        interval:   5000
+        running:    false;
+        repeat:     false;
         onTriggered: {
-            if(TyphoonHQuickInterface.wifiAlertEnabled) {
-                showSimpleAlert(
-                    qsTr("Connected to Standard Wi-Fi"),
-                    qsTr("The ST16 is connected to a standard Wi-Fi and not a vehicle."))
+            //-- Check if we should update
+            if(TyphoonHQuickInterface.shouldWeShowUpdate()) {
+                rootLoader.sourceComponent = updateDialog
+            } else {
+                //-- If connected to something other than a camera
+                if(ScreenTools.isAndroid && TyphoonHQuickInterface.connectedCamera === "" && TyphoonHQuickInterface.connectedSSID !== "") {
+                    if(TyphoonHQuickInterface.wifiAlertEnabled) {
+                        showSimpleAlert(
+                            qsTr("Connected to Standard Wi-Fi"),
+                            qsTr("The ST16 is connected to a standard Wi-Fi and not a vehicle."))
+                    }
+                }
             }
         }
     }
@@ -121,14 +140,33 @@ Item {
         }
     }
 
-    function indicatorClicked() {
-        var count = _showAttitude ? 5 : 15
-        vehicleStatus.visible = !vehicleStatus.visible
-        _eggCount++
-        toggleTimer.restart()
-        if (_eggCount === count) {
-            vehicleStatus.visible = true
-            _showAttitude = !_showAttitude
+    Timer {
+        id:         connectionTimer
+        interval:  5000
+        running:   false;
+        repeat:    false;
+        onTriggered: {
+            //-- Vehicle is gone
+            if(_activeVehicle) {
+                //-- Let video stream close
+                QGroundControl.settingsManager.videoSettings.rtspTimeout.rawValue = 1
+                if(!_activeVehicle.armed) {
+                    //-- If it wasn't already set to auto-disconnect
+                    if(!_activeVehicle.autoDisconnect) {
+                        if (guidedController.showResumeMission) {
+                            qgcView.showDialog(connectionLostBatteryResume, qsTr("Connection lost"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+                        } else {
+                            //-- Vehicle is not armed. Close connection and tell user.
+                            _activeVehicle.disconnectInactiveVehicle()
+                            connectionLostDisarmedDialog.open()
+                        }
+                    }
+                } else {
+                    //-- Vehicle is armed. Show doom dialog.
+                    rootLoader.sourceComponent = connectionLostArmed
+                    mainWindow.disableToolbar()
+                }
+            }
         }
     }
 
@@ -156,11 +194,7 @@ Item {
         }
         //-- Who are we connected to
         onConnectedSSIDChanged: {
-            if(ScreenTools.isAndroid && TyphoonHQuickInterface.connectedCamera === "" && TyphoonHQuickInterface.connectedSSID !== "") {
-                ssidChanged.start()
-            } else {
-                ssidChanged.stop()
-            }
+            ssidChanged.start()
         }
         //-- Big Red Button down for > 1 second
         onPowerHeld: {
@@ -169,13 +203,84 @@ Item {
                 mainWindow.disableToolbar()
             }
         }
-        //-- Check for Updates
-        onUpdateAlert: {
-            showSimpleAlert(
-                qsTr("Check For Updates"),
-                qsTr("No Internet connection. Please connect to check for updates."))
-        }
+    }
 
+    Connections {
+        target: QGroundControl.multiVehicleManager.activeVehicle
+        onConnectionLostChanged: {
+            if(!_communicationLost) {
+                //-- Communication regained
+                connectionTimer.stop();
+                mainWindow.enableToolbar()
+                rootLoader.sourceComponent = null
+                //-- Reset stream timeout
+                QGroundControl.settingsManager.videoSettings.rtspTimeout.rawValue = 60
+            } else {
+                if(_activeVehicle && !_activeVehicle.autoDisconnect) {
+                    //-- Communication lost
+                    connectionTimer.start();
+                }
+            }
+        }
+        onFirmwareCustomVersionChanged: {
+            if(TyphoonHQuickInterface.shouldWeShowUpdate()) {
+                rootLoader.sourceComponent = updateDialog
+            }
+        }
+    }
+
+    Connections {
+        target: QGroundControl.multiVehicleManager
+        onVehicleAdded: {
+            //-- Reset No SD Card message.
+            _noSdCardMsgShown = false;
+            //-- And comm lost dialog if open
+            connectionLostDisarmedDialog.close()
+        }
+    }
+
+    Connections {
+        target: TyphoonHQuickInterface
+        onThermalImagePresentChanged: {
+            if(TyphoonHQuickInterface.thermalImagePresent) {
+                rootVideoLoader.sourceComponent = thermalImage
+            } else {
+                rootVideoLoader.sourceComponent = null
+            }
+        }
+    }
+
+    //-- Handle MicroSD card loaded in camera
+    Connections {
+        target: _camera
+        onStorageTotalChanged: {
+            if(_noSdCard) {
+                if(!_noSdCardMsgShown) {
+                    showNoSDCardMessage();
+                    _noSdCardMsgShown = true;
+                }
+            } else {
+                _noSdCardMsgShown = false;
+                if(rootLoader.sourceComponent === simpleAlert) {
+                    mainWindow.enableToolbar()
+                    rootLoader.sourceComponent = null
+                }
+            }
+        }
+        onStorageFreeChanged: {
+            if(_fullSD) {
+                if(!_fullSdCardMsgShown) {
+                    showFullSDCardMessage();
+                    _fullSdCardMsgShown = true;
+                }
+            } else {
+                _fullSdCardMsgShown = false;
+                if(rootLoader.sourceComponent === simpleAlert) {
+                    mainWindow.enableToolbar()
+                    rootLoader.sourceComponent = null
+                }
+            }
+        }
     }
 
     Component.onCompleted: {
@@ -237,96 +342,6 @@ Item {
         text:               qsTr("Connection to vehicle has been lost and closed.")
         standardButtons:    StandardButton.Ok
         onAccepted:         connectionLostDisarmedDialog.close()
-    }
-
-    Timer {
-        id: connectionTimer
-        interval:  5000
-        running:   false;
-        repeat:    false;
-        onTriggered: {
-            //-- Vehicle is gone
-            if(_activeVehicle) {
-                //-- Let video stream close
-                QGroundControl.settingsManager.videoSettings.rtspTimeout.rawValue = 1
-                if(!_activeVehicle.armed) {
-                    //-- If it wasn't already set to auto-disconnect
-                    if(!_activeVehicle.autoDisconnect) {
-                        if (guidedController.showResumeMission) {
-                            qgcView.showDialog(connectionLostBatteryResume, qsTr("Connection lost"), qgcView.showDialogDefaultWidth, StandardButton.Close)
-                        } else {
-                            //-- Vehicle is not armed. Close connection and tell user.
-                            _activeVehicle.disconnectInactiveVehicle()
-                            connectionLostDisarmedDialog.open()
-                        }
-                    }
-                } else {
-                    //-- Vehicle is armed. Show doom dialog.
-                    rootLoader.sourceComponent = connectionLostArmed
-                    mainWindow.disableToolbar()
-                }
-            }
-        }
-    }
-
-    Connections {
-        target: QGroundControl.multiVehicleManager.activeVehicle
-        onConnectionLostChanged: {
-            if(!_communicationLost) {
-                //-- Communication regained
-                connectionTimer.stop();
-                rootLoader.sourceComponent = null
-                mainWindow.enableToolbar()
-                //-- Reset stream timeout
-                QGroundControl.settingsManager.videoSettings.rtspTimeout.rawValue = 60
-            } else {
-                if(_activeVehicle && !_activeVehicle.autoDisconnect) {
-                    //-- Communication lost
-                    connectionTimer.start();
-                }
-            }
-        }
-    }
-
-    Connections {
-        target: QGroundControl.multiVehicleManager
-        onVehicleAdded: {
-            //-- Reset No SD Card message.
-            _noSdCardMsgShown = false;
-            //-- And comm lost dialog if open
-            connectionLostDisarmedDialog.close()
-        }
-    }
-
-    //-- Handle MicroSD card loaded in camera
-    Connections {
-        target: _camera
-        onStorageTotalChanged: {
-            if(_noSdCard) {
-                if(!_noSdCardMsgShown) {
-                    showNoSDCardMessage();
-                    _noSdCardMsgShown = true;
-                }
-            } else {
-                _noSdCardMsgShown = false;
-                if(rootLoader.sourceComponent === simpleAlert) {
-                    rootLoader.sourceComponent = null
-                }
-            }
-        }
-        onStorageFreeChanged: {
-            if(_fullSD) {
-                if(!_fullSdCardMsgShown) {
-                    showFullSDCardMessage();
-                    _fullSdCardMsgShown = true;
-                }
-            } else {
-                _fullSdCardMsgShown = false;
-                if(rootLoader.sourceComponent === simpleAlert) {
-                    rootLoader.sourceComponent = null
-                }
-            }
-        }
     }
 
     //-- Camera Status
@@ -864,7 +879,10 @@ Item {
                         text:           qsTr("Close")
                         width:          ScreenTools.defaultFontPixelWidth  * 10
                         height:         ScreenTools.defaultFontPixelHeight * 2
-                        onClicked:      rootLoader.sourceComponent = null
+                        onClicked: {
+                            mainWindow.enableToolbar()
+                            rootLoader.sourceComponent = null
+                        }
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                 }
@@ -954,8 +972,8 @@ Item {
                                 if(_activeVehicle) {
                                     _activeVehicle.emergencyStop()
                                 }
-                                rootLoader.sourceComponent = null
                                 mainWindow.enableToolbar()
+                                rootLoader.sourceComponent = null
                             }
                         }
                         QGCButton {
@@ -963,8 +981,8 @@ Item {
                             width:          ScreenTools.defaultFontPixelWidth  * 16
                             height:         ScreenTools.defaultFontPixelHeight * 2
                             onClicked: {
-                                rootLoader.sourceComponent = null
                                 mainWindow.enableToolbar()
+                                rootLoader.sourceComponent = null
                             }
                         }
                     }
@@ -973,6 +991,7 @@ Item {
             Component.onCompleted: {
                 rootLoader.width  = panicDialogItem.width
                 rootLoader.height = panicDialogItem.height
+                mainWindow.disableToolbar()
             }
         }
     }
@@ -1051,8 +1070,16 @@ Item {
             Component.onCompleted: {
                 rootLoader.width  = connectionLostArmedItem.width
                 rootLoader.height = connectionLostArmedItem.height
+                mainWindow.disableToolbar()
             }
         }
     }
-
+    //-- Update Dialog
+    Component {
+        id: updateDialog
+        Loader {
+            anchors.fill: parent
+            source: "/typhoonh/UpdateDialog.qml"
+        }
+    }
 }

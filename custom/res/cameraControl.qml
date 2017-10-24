@@ -87,6 +87,7 @@ Rectangle {
         target: QGroundControl.multiVehicleManager.activeVehicle
         onConnectionLostChanged: {
             if(_communicationLost && rootLoader.sourceComponent === cameraSettingsComponent) {
+                mainWindow.enableToolbar()
                 rootLoader.sourceComponent = null
             }
         }
@@ -139,6 +140,7 @@ Rectangle {
                 anchors.fill:   parent
                 enabled:        !_cameraModeUndefined && _camera && _camera.videoStatus !== QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING && _cameraPhotoIdle
                 onClicked: {
+                    mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
                     _camera.toggleMode()
                 }
@@ -215,6 +217,7 @@ Rectangle {
                 anchors.fill:   parent
                 enabled:        !_emptySD
                 onClicked: {
+                    mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
                     if(_cameraVideoMode) {
                         if(_camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) {
@@ -273,11 +276,7 @@ Rectangle {
             MouseArea {
                 anchors.fill:   parent
                 onClicked: {
-                    if(rootLoader.sourceComponent === null) {
-                        rootLoader.sourceComponent = mediaPlayerComponent
-                    } else {
-                        rootLoader.sourceComponent = null
-                    }
+                    rootLoader.sourceComponent = mediaPlayerComponent
                 }
             }
         }
@@ -298,11 +297,7 @@ Rectangle {
                 anchors.fill:   parent
                 enabled:        parent.settingsEnabled
                 onClicked: {
-                    if(rootLoader.sourceComponent === null) {
-                        rootLoader.sourceComponent = cameraSettingsComponent
-                    } else {
-                        rootLoader.sourceComponent = null
-                    }
+                    rootLoader.sourceComponent = cameraSettingsComponent
                 }
             }
             property bool settingsEnabled: !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED && _cameraPhotoIdle && !_recordingVideo
@@ -331,6 +326,7 @@ Rectangle {
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
+                    mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
                 }
             }
@@ -746,6 +742,7 @@ Rectangle {
                 rootLoader.height = camSettingsItem.height
             }
             Keys.onBackPressed: {
+                mainWindow.enableToolbar()
                 rootLoader.sourceComponent = null
             }
         }
@@ -814,7 +811,10 @@ Rectangle {
                         text:           qsTr("Close")
                         width:          ScreenTools.defaultFontPixelWidth  * 10
                         height:         ScreenTools.defaultFontPixelHeight * 2
-                        onClicked:      rootLoader.sourceComponent = null
+                        onClicked: {
+                            mainWindow.enableToolbar()
+                            rootLoader.sourceComponent = null
+                        }
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                 }
@@ -837,6 +837,7 @@ Rectangle {
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
+                    mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
                 }
             }
@@ -961,6 +962,7 @@ Rectangle {
                 rootLoader.height = mediaPlayerItem.height
             }
             Keys.onBackPressed: {
+                mainWindow.enableToolbar()
                 rootLoader.sourceComponent = null
             }
         }
@@ -1112,6 +1114,7 @@ Rectangle {
                 rootLoader.height = mediaViewItem.height
             }
             Keys.onBackPressed: {
+                mainWindow.enableToolbar()
                 rootLoader.sourceComponent = null
             }
         }
