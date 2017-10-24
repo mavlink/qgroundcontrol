@@ -107,9 +107,10 @@ to ensure that you have all the latest fixes for the best possible user experien
                     }
                 }
                 QGCButton {
-                    text:           TyphoonHQuickInterface.isUpdaterApp ? qsTr("Cancel") : qsTr("Close")
+                    text:           qsTr("Close")
                     width:          ScreenTools.defaultFontPixelWidth  * 16
                     height:         ScreenTools.defaultFontPixelHeight * 2
+                    visible:        !TyphoonHQuickInterface.isUpdaterApp
                     onClicked: {
                         mainWindow.enableToolbar()
                         rootLoader.sourceComponent = null
