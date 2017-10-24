@@ -133,7 +133,7 @@ private:
     int     _mavlinkChannel;
     QTimer  _readTickTimer;      ///< Timer which signals a read of next log record
 
-    static const char* _errorTitle; ///< Title for communicatorError signals
+    QString _errorTitle; ///< Title for communicatorError signals
 
     quint64 _logCurrentTimeUSecs;   ///< The timestamp of the next message in the log file.
     quint64 _logStartTimeUSecs;     ///< The first timestamp in the current log file.

@@ -154,14 +154,14 @@ void PX4FirmwareUpgradeThreadWorker::_3drRadioForceBootloader(const QGCSerialPor
     
     port.setBaudRate(QSerialPort::Baud57600);
     
-    emit status("Putting radio into command mode");
+    emit status(tr("Putting radio into command mode"));
     
     // Wait a little while for the USB port to initialize. 3DR Radio boot is really slow.
     QGC::SLEEP::msleep(2000);
     port.open(QIODevice::ReadWrite);
     
     if (!port.isOpen()) {
-        emit error(QString("Unable to open port: %1 error: %2").arg(portInfo.systemLocation()).arg(port.errorString()));
+        emit error(tr("Unable to open port: %1 error: %2").arg(portInfo.systemLocation()).arg(port.errorString()));
         return;
     }
 
@@ -169,25 +169,25 @@ void PX4FirmwareUpgradeThreadWorker::_3drRadioForceBootloader(const QGCSerialPor
     QGC::SLEEP::msleep(2000);
     port.write("+++", 3);
     if (!port.waitForReadyRead(1500)) {
-        emit error("Unable to put radio into command mode");
+        emit error(tr("Unable to put radio into command mode"));
         return;
     }
     QByteArray bytes = port.readAll();
     if (!bytes.contains("OK")) {
         qCDebug(FirmwareUpgradeLog) << bytes;
-        emit error("Unable to put radio into command mode");
+        emit error(tr("Unable to put radio into command mode"));
         return;
     }
 
-    emit status("Rebooting radio to bootloader");
+    emit status(tr("Rebooting radio to bootloader"));
     
     port.write("AT&UPDATE\r\n");
     if (!port.waitForBytesWritten(1500)) {
-        emit error("Unable to reboot radio (bytes written)");
+        emit error(tr("Unable to reboot radio (bytes written)"));
         return;
     }
     if (!port.waitForReadyRead(1500)) {
-        emit error("Unable to reboot radio (ready read)");
+        emit error(tr("Unable to reboot radio (ready read)"));
         return;
     }
     port.close();
@@ -278,7 +278,7 @@ void PX4FirmwareUpgradeThreadWorker::_flash(void)
     qCDebug(FirmwareUpgradeLog) << "PX4FirmwareUpgradeThreadWorker::_flash";
     
     if (_erase()) {
-        emit status("Programming new version...");
+        emit status(tr("Programming new version..."));
         
         if (_bootloader->program(_bootloaderPort, _controller->image())) {
             qCDebug(FirmwareUpgradeLog) << "Program complete";
@@ -291,11 +291,11 @@ void PX4FirmwareUpgradeThreadWorker::_flash(void)
             return;
         }
         
-        emit status("Verifying program...");
+        emit status(tr("Verifying program..."));
         
         if (_bootloader->verify(_bootloaderPort, _controller->image())) {
             qCDebug(FirmwareUpgradeLog) << "Verify complete";
-            emit status("Verify complete");
+            emit status(tr("Verify complete"));
         } else {
             qCDebug(FirmwareUpgradeLog) << "Verify failed:" << _bootloader->errorString();
             emit error(_bootloader->errorString());
@@ -313,11 +313,11 @@ bool PX4FirmwareUpgradeThreadWorker::_erase(void)
     qCDebug(FirmwareUpgradeLog) << "PX4FirmwareUpgradeThreadWorker::_erase";
     
     emit eraseStarted();
-    emit status("Erasing previous program...");
+    emit status(tr("Erasing previous program..."));
     
     if (_bootloader->erase(_bootloaderPort)) {
         qCDebug(FirmwareUpgradeLog) << "Erase complete";
-        emit status("Erase complete");
+        emit status(tr("Erase complete"));
         emit eraseComplete();
         return true;
     } else {

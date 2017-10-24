@@ -18,11 +18,11 @@
 
 static FirmwarePluginFactoryRegister* _instance = NULL;
 
-const char* guided_mode_not_supported_by_vehicle = "Guided mode not supported by Vehicle.";
+const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 
 QVariantList FirmwarePlugin::_cameraList;
 
-const char* FirmwarePlugin::px4FollowMeFlightMode = "Follow Me";
+const QString FirmwarePlugin::px4FollowMeFlightMode(QObject::tr("Follow Me"));
 
 FirmwarePluginFactory::FirmwarePluginFactory(void)
 {

@@ -307,7 +307,7 @@ void UDPLink::_registerZeroconf(uint16_t port, const std::string &regType)
                                                     NULL);
     if (result != kDNSServiceErr_NoError)
     {
-        emit communicationError("UDP Link Error", "Error registering Zeroconf");
+        emit communicationError(tr("UDP Link Error"), tr("Error registering Zeroconf"));
         _dnssServiceRef = NULL;
     }
 #else

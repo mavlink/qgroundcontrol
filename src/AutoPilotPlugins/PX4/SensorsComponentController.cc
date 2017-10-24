@@ -164,7 +164,7 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
     
     switch (code) {
         case StopCalibrationSuccess:
-            _orientationCalAreaHelpText->setProperty("text", "Calibration complete");
+            _orientationCalAreaHelpText->setProperty("text", tr("Calibration complete"));
             emit resetStatusTextArea();
             if (_magCalInProgress) {
                 emit setCompassRotations();
@@ -179,7 +179,7 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
         default:
             // Assume failed
             _hideAllCalAreas();
-            qgcApp()->showMessage("Calibration failed. Calibration log will be displayed.");
+            qgcApp()->showMessage(tr("Calibration failed. Calibration log will be displayed."));
             break;
     }
     
@@ -264,7 +264,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
         QStringList parts = text.split(" ");
         if (parts.count() != 2 && parts[0].toInt() != _supportedFirmwareCalVersion) {
             _unknownFirmwareVersion = true;
-            QString msg = "Unsupported calibration firmware version, using log";
+            QString msg = tr("Unsupported calibration firmware version, using log");
             _appendStatusLog(msg);
             qDebug() << msg;
             return;
@@ -296,7 +296,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
             _orientationCalTailDownSideVisible = false;
             _orientationCalNoseDownSideVisible = false;
             
-            _orientationCalAreaHelpText->setProperty("text", "Place your vehicle into one of the Incomplete orientations shown below and hold it still");
+            _orientationCalAreaHelpText->setProperty("text", tr("Place your vehicle into one of the Incomplete orientations shown below and hold it still"));
             
             if (text == "accel") {
                 _accelCalInProgress = true;
@@ -377,9 +377,9 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
         }
         
         if (_magCalInProgress) {
-            _orientationCalAreaHelpText->setProperty("text", "Rotate the vehicle continuously as shown in the diagram until marked as Completed");
+            _orientationCalAreaHelpText->setProperty("text", tr("Rotate the vehicle continuously as shown in the diagram until marked as Completed"));
         } else {
-            _orientationCalAreaHelpText->setProperty("text", "Hold still in the current orientation");
+            _orientationCalAreaHelpText->setProperty("text", tr("Hold still in the current orientation"));
         }
         
         emit orientationCalSidesInProgressChanged();
@@ -417,7 +417,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
             _orientationCalTailDownSideRotate = false;
         }
         
-        _orientationCalAreaHelpText->setProperty("text", "Place you vehicle into one of the orientations shown below and hold it still");
+        _orientationCalAreaHelpText->setProperty("text", tr("Place you vehicle into one of the orientations shown below and hold it still"));
 
         emit orientationCalSidesInProgressChanged();
         emit orientationCalSidesDoneChanged();
@@ -426,7 +426,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
     }
 
     if (text.endsWith("side already completed")) {
-        _orientationCalAreaHelpText->setProperty("text", "Orientation already completed, place you vehicle into one of the incomplete orientations shown below and hold it still");
+        _orientationCalAreaHelpText->setProperty("text", tr("Orientation already completed, place you vehicle into one of the incomplete orientations shown below and hold it still"));
         return;
     }
     

@@ -88,7 +88,7 @@ bool Bootloader::_getCommandResponse(QextSerialPort* port, int responseTimeout)
     uint8_t response[2];
     
     if (!_read(port, response, 2, responseTimeout)) {
-        _errorString.prepend("Get Command Response: ");
+        _errorString.prepend(tr("Get Command Response: "));
         return false;
     }
     
@@ -134,7 +134,7 @@ bool Bootloader::_getPX4BoardInfo(QextSerialPort* port, uint8_t param, uint32_t&
     return true;
     
 Error:
-    _errorString.prepend("Get Board Info: ");
+    _errorString.prepend(tr("Get Board Info: "));
     return false;
 }
 
@@ -156,7 +156,7 @@ bool Bootloader::_sendCommand(QextSerialPort* port, const uint8_t cmd, int respo
     return true;
 
 Error:
-    _errorString.prepend("Send Command: ");
+    _errorString.prepend(tr("Send Command: "));
     return false;
 }
 
@@ -259,7 +259,7 @@ bool Bootloader::_ihxProgram(QextSerialPort* port, const FirmwareImage* image)
         QByteArray  bytes;
         
         if (!image->ihxGetBlock(index, flashAddress, bytes)) {
-            _errorString = QString("Unable to retrieve block from ihx: index %1").arg(index);
+            _errorString = tr("Unable to retrieve block from ihx: index %1").arg(index);
             return false;
         }
         
@@ -279,7 +279,7 @@ bool Bootloader::_ihxProgram(QextSerialPort* port, const FirmwareImage* image)
         }
         
         if (failed) {
-            _errorString = QString("Unable to set flash start address: 0x%2").arg(flashAddress, 8, 16, QLatin1Char('0'));
+            _errorString = tr("Unable to set flash start address: 0x%2").arg(flashAddress, 8, 16, QLatin1Char('0'));
             return false;
         }
         
@@ -308,7 +308,7 @@ bool Bootloader::_ihxProgram(QextSerialPort* port, const FirmwareImage* image)
                 }
             }
             if (failed) {
-                _errorString = QString("Flash failed: %1 at address 0x%2").arg(_errorString).arg(flashAddress, 8, 16, QLatin1Char('0'));
+                _errorString = tr("Flash failed: %1 at address 0x%2").arg(_errorString).arg(flashAddress, 8, 16, QLatin1Char('0'));
                 return false;
             }
             
@@ -431,7 +431,7 @@ bool Bootloader::_ihxVerifyBytes(QextSerialPort* port, const FirmwareImage* imag
         QByteArray  imageBytes;
         
         if (!image->ihxGetBlock(index, readAddress, imageBytes)) {
-            _errorString = QString("Unable to retrieve block from ihx: index %1").arg(index);
+            _errorString = tr("Unable to retrieve block from ihx: index %1").arg(index);
             return false;
         }
         
@@ -451,7 +451,7 @@ bool Bootloader::_ihxVerifyBytes(QextSerialPort* port, const FirmwareImage* imag
         }
         
         if (failed) {
-            _errorString = QString("Unable to set read start address: 0x%2").arg(readAddress, 8, 16, QLatin1Char('0'));
+            _errorString = tr("Unable to set read start address: 0x%2").arg(readAddress, 8, 16, QLatin1Char('0'));
             return false;
         }
         
@@ -490,7 +490,7 @@ bool Bootloader::_ihxVerifyBytes(QextSerialPort* port, const FirmwareImage* imag
             
             for (int i=0; i<bytesToRead; i++) {
                 if ((uint8_t)imageBytes[bytesIndex + i] != readBuf[i]) {
-                    _errorString = QString("Compare failed: expected(0x%1) actual(0x%2) at address: 0x%3").arg(imageBytes[bytesIndex + i], 2, 16, QLatin1Char('0')).arg(readBuf[i], 2, 16, QLatin1Char('0')).arg(readAddress + i, 8, 16, QLatin1Char('0'));
+                    _errorString = tr("Compare failed: expected(0x%1) actual(0x%2) at address: 0x%3").arg(imageBytes[bytesIndex + i], 2, 16, QLatin1Char('0')).arg(readBuf[i], 2, 16, QLatin1Char('0')).arg(readAddress + i, 8, 16, QLatin1Char('0'));
                     return false;
                 }
             }
@@ -597,7 +597,7 @@ bool Bootloader::getPX4BoardInfo(QextSerialPort* port, uint32_t& bootloaderVersi
     return true;
     
 Error:
-    _errorString.prepend("Get Board Info: ");
+    _errorString.prepend(tr("Get Board Info: "));
     return false;
 }
 
@@ -625,7 +625,7 @@ bool Bootloader::get3DRRadioBoardId(QextSerialPort* port, uint32_t& boardID)
     return true;
     
 Error:
-    _errorString.prepend("Get Board Id: ");
+    _errorString.prepend(tr("Get Board Id: "));
     return false;
 }
 
