@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.54 - Oct 25 2017
+
+*   Adding flight data and battery status to UTM log.
+
 ### v1.1.53 - Oct 24 2017
 
 *   Support for updater app
