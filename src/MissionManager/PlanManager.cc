@@ -634,6 +634,7 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
         break;
     }
 }
+
 /// Called when a new mavlink message for out vehicle is received
 void PlanManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
@@ -660,14 +661,6 @@ void PlanManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 
     case MAVLINK_MSG_ID_MISSION_ACK:
         _handleMissionAck(message);
-        break;
-
-    case MAVLINK_MSG_ID_MISSION_ITEM_REACHED:
-        // FIXME: NYI
-        break;
-
-    case MAVLINK_MSG_ID_MISSION_CURRENT:
-        _handleMissionCurrent(message);
         break;
     }
 }
@@ -800,7 +793,7 @@ QString PlanManager::_missionResultToString(MAV_MISSION_RESULT result)
     return resultString + lastRequestString;
 }
 
-void PlanManager::_finishTransaction(bool success)
+void PlanManager::_finishTransaction(bool success, bool apmGuidedItemWrite)
 {
     emit progressPct(1);
     _disconnectFromMavlink();
@@ -826,22 +819,27 @@ void PlanManager::_finishTransaction(bool success)
         emit newMissionItemsAvailable(false);
         break;
     case TransactionWrite:
-        if (success) {
-            // Write succeeded, update internal list to be current            
-            _currentMissionIndex = -1;
-            _lastCurrentIndex = -1;
-            emit currentIndexChanged(-1);
-            emit lastCurrentIndexChanged(-1);
-            _clearAndDeleteMissionItems();
-            for (int i=0; i<_writeMissionItems.count(); i++) {
-                _missionItems.append(_writeMissionItems[i]);
+        // No need to do anything for ArduPilot guided go to waypoint write
+        if (!apmGuidedItemWrite) {
+            if (success) {
+                // Write succeeded, update internal list to be current
+                if (_planType == MAV_MISSION_TYPE_MISSION) {
+                    _currentMissionIndex = -1;
+                    _lastCurrentIndex = -1;
+                    emit currentIndexChanged(-1);
+                    emit lastCurrentIndexChanged(-1);
+                }
+                _clearAndDeleteMissionItems();
+                for (int i=0; i<_writeMissionItems.count(); i++) {
+                    _missionItems.append(_writeMissionItems[i]);
+                }
+                _writeMissionItems.clear();
+            } else {
+                // Write failed, throw out the write list
+                _clearAndDeleteWriteMissionItems();
             }
-            _writeMissionItems.clear();
-        } else {
-            // Write failed, throw out the write list
-            _clearAndDeleteWriteMissionItems();
+            emit sendComplete(!success /* error */);
         }
-        emit sendComplete(!success /* error */);
         break;
     case TransactionRemoveAll:
         emit removeAllComplete(!success /* error */);
@@ -863,25 +861,6 @@ void PlanManager::_finishTransaction(bool success)
 bool PlanManager::inProgress(void) const
 {
     return _transactionInProgress != TransactionNone;
-}
-
-void PlanManager::_handleMissionCurrent(const mavlink_message_t& message)
-{
-    mavlink_mission_current_t missionCurrent;
-
-    mavlink_msg_mission_current_decode(&message, &missionCurrent);
-
-    if (missionCurrent.seq != _currentMissionIndex) {
-        qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionCurrent %1 currentIndex:").arg(_planTypeString()) << missionCurrent.seq;
-        _currentMissionIndex = missionCurrent.seq;
-        emit currentIndexChanged(_currentMissionIndex);
-    }
-
-    if (_vehicle->flightMode() == _vehicle->missionFlightMode() && _currentMissionIndex != _lastCurrentIndex) {
-        qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionCurrent %1 lastCurrentIndex:").arg(_planTypeString()) << _currentMissionIndex;
-        _lastCurrentIndex = _currentMissionIndex;
-        emit lastCurrentIndexChanged(_lastCurrentIndex);
-    }
 }
 
 void PlanManager::_removeAllWorker(void)
@@ -915,10 +894,12 @@ void PlanManager::removeAll(void)
 
     _clearAndDeleteMissionItems();
 
-    _currentMissionIndex = -1;
-    _lastCurrentIndex = -1;
-    emit currentIndexChanged(-1);
-    emit lastCurrentIndexChanged(-1);
+    if (_planType == MAV_MISSION_TYPE_MISSION) {
+        _currentMissionIndex = -1;
+        _lastCurrentIndex = -1;
+        emit currentIndexChanged(-1);
+        emit lastCurrentIndexChanged(-1);
+    }
 
     _transactionInProgress = TransactionRemoveAll;
     _retryCount = 0;
