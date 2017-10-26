@@ -26,8 +26,8 @@ SetupPage {
 
             sliderModel: ListModel {
                 ListElement {
-                    title:          "Roll sensitivity"
-                    description:    "Slide to the left to make roll control faster and more accurate. Slide to the right if roll oscillates or is too twitchy."
+                    title:          qsTr("Roll sensitivity")
+                    description:    qsTr("Slide to the left to make roll control faster and more accurate. Slide to the right if roll oscillates or is too twitchy.")
                     param:          "FW_R_TC"
                     min:            0.2
                     max:            0.8
@@ -35,8 +35,8 @@ SetupPage {
                 }
 
                 ListElement {
-                    title:          "Pitch sensitivity"
-                    description:    "Slide to the left to make pitch control faster and more accurate. Slide to the right if pitch oscillates or is too twitchy."
+                    title:          qsTr("Pitch sensitivity")
+                    description:    qsTr("Slide to the left to make pitch control faster and more accurate. Slide to the right if pitch oscillates or is too twitchy.")
                     param:          "FW_P_TC"
                     min:            0.2
                     max:            0.8
@@ -44,8 +44,8 @@ SetupPage {
                 }
 
                 ListElement {
-                    title:          "Cruise throttle"
-                    description:    "This is the throttle setting required to achieve the desired cruise speed. Most planes need 50-60%."
+                    title:          qsTr("Cruise throttle")
+                    description:    qsTr("This is the throttle setting required to achieve the desired cruise speed. Most planes need 50-60%.")
                     param:          "FW_THR_CRUISE"
                     min:            20
                     max:            80
@@ -53,8 +53,8 @@ SetupPage {
                 }
 
                 ListElement {
-                    title:          "Mission mode sensitivity"
-                    description:    "Slide to the left to make position control more accurate and more aggressive. Slide to the right to make flight in mission mode smoother and less twitchy."
+                    title:          qsTr("Mission mode sensitivity")
+                    description:    qsTr("Slide to the left to make position control more accurate and more aggressive. Slide to the right to make flight in mission mode smoother and less twitchy.")
                     param:          "FW_L1_PERIOD"
                     min:            12
                     max:            50
