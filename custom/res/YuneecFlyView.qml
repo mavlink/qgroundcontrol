@@ -239,17 +239,6 @@ Item {
         }
     }
 
-    Connections {
-        target: TyphoonHQuickInterface
-        onThermalImagePresentChanged: {
-            if(TyphoonHQuickInterface.thermalImagePresent) {
-                rootVideoLoader.sourceComponent = thermalImage
-            } else {
-                rootVideoLoader.sourceComponent = null
-            }
-        }
-    }
-
     //-- Handle MicroSD card loaded in camera
     Connections {
         target: _camera
