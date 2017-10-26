@@ -139,10 +139,8 @@ YuneecCameraControl::_parametersReady()
             metaData->setReadOnly(true);
             metaData->addEnumInfo("Center Area", QVariant(0));
             metaData->addEnumInfo("Spot", QVariant(1));
-            _irROI = new Fact(_compID, kIR_ROI, FactMetaData::valueTypeUint32, this);
+            _irROI = new SettingsFact("camera", metaData, this);
             QQmlEngine::setObjectOwnership(_irROI, QQmlEngine::CppOwnership);
-            _irROI->setMetaData(metaData);
-            _irROI->_containerSetRawValue(metaData->rawDefaultValue());
         }
         emit factsLoaded();
         if(!_irValid) {

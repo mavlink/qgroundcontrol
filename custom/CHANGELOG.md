@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.55 - Oct 25 2017
+
+*   Fixing thermal ROI persitency.
+
 ### v1.1.54 - Oct 25 2017
 
 *   Adding flight data and battery status to UTM log.
