@@ -144,7 +144,7 @@ Item {
 
                                 QGCLabel {
                                     anchors.baseline:   returnCombo.baseline
-                                    text:               "Return switch:"
+                                    text:               qsTr("Return switch:")
                                     color:              parent.fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[parent.fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
                                 }
 
@@ -163,7 +163,7 @@ Item {
 
                                 QGCLabel {
                                     anchors.baseline:   killCombo.baseline
-                                    text:               "Kill switch:"
+                                    text:               qsTr("Kill switch:")
                                     color:              parent.fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[parent.fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
                                 }
 
@@ -182,7 +182,7 @@ Item {
 
                                 QGCLabel {
                                     anchors.baseline:   offboardCombo.baseline
-                                    text:               "Offboard switch:"
+                                    text:               qsTr("Offboard switch:")
                                     color:              parent.fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[parent.fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
                                 }
 
@@ -202,7 +202,7 @@ Item {
 
                                 QGCLabel {
                                     anchors.baseline:   vtolCombo.baseline
-                                    text:               "VTOL mode switch:"
+                                    text:               qsTr("VTOL mode switch:")
                                     color:              parent.fact.value == 0 ? qgcPal.text : (controller.rcChannelValues[parent.fact.value - 1] >= 1500 ? "yellow" : qgcPal.text)
                                 }
 
