@@ -192,6 +192,6 @@ private:
     bool                    _inMissionMode;
     bool                    _irValid;
     bool                    _firstPhotoLapse;
-    Fact*                   _irROI;
+    SettingsFact*           _irROI;
     udp_ctrl_cam_lepton_area_temp_t _cgoetTempStatus;
 };
