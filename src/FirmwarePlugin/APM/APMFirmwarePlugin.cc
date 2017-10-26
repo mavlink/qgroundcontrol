@@ -354,6 +354,13 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_mess
                 int supportedMinorNumber = -1;
 
                 switch (vehicle->vehicleType()) {
+                case MAV_TYPE_VTOL_DUOROTOR:
+                case MAV_TYPE_VTOL_QUADROTOR:
+                case MAV_TYPE_VTOL_TILTROTOR:
+                case MAV_TYPE_VTOL_RESERVED2:
+                case MAV_TYPE_VTOL_RESERVED3:
+                case MAV_TYPE_VTOL_RESERVED4:
+                case MAV_TYPE_VTOL_RESERVED5:
                 case MAV_TYPE_FIXED_WING:
                     supportedMajorNumber = 3;
                     supportedMinorNumber = 4;
@@ -602,6 +609,13 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
         case MAV_TYPE_HELICOPTER:
             vehicle->setFirmwareVersion(3, 4, 0);
             break;
+        case MAV_TYPE_VTOL_DUOROTOR:
+        case MAV_TYPE_VTOL_QUADROTOR:
+        case MAV_TYPE_VTOL_TILTROTOR:
+        case MAV_TYPE_VTOL_RESERVED2:
+        case MAV_TYPE_VTOL_RESERVED3:
+        case MAV_TYPE_VTOL_RESERVED4:
+        case MAV_TYPE_VTOL_RESERVED5:
         case MAV_TYPE_FIXED_WING:
             vehicle->setFirmwareVersion(3, 5, 0);
             break;
@@ -774,6 +788,13 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
             }
         }
         return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.5.xml");
+    case MAV_TYPE_VTOL_DUOROTOR:
+    case MAV_TYPE_VTOL_QUADROTOR:
+    case MAV_TYPE_VTOL_TILTROTOR:
+    case MAV_TYPE_VTOL_RESERVED2:
+    case MAV_TYPE_VTOL_RESERVED3:
+    case MAV_TYPE_VTOL_RESERVED4:
+    case MAV_TYPE_VTOL_RESERVED5:
     case MAV_TYPE_FIXED_WING:
         if (majorVersion < 3) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.3.xml");
