@@ -876,7 +876,8 @@ YuneecCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& 
         emit recordTimeChanged();
     } else if(photoStatus() == PHOTO_CAPTURE_INTERVAL_IDLE || photoStatus() == PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
         //-- Skip camera sound on first response (already did it when the user clicked it)
-        if(_firstPhotoLapse) {
+        //-- Also ignore it while in mission mode
+        if(_firstPhotoLapse || _vehicle->flightMode() == _vehicle->missionFlightMode()) {
             _firstPhotoLapse = false;
         } else {
             _cameraSound.setLoopCount(1);

@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.56 - Oct 26 2017
+
+*   Don't play camera sound effect during mission.
+
 ### v1.1.55 - Oct 25 2017
 
 *   Fixing thermal ROI persitency.
