@@ -269,6 +269,7 @@ SetupPage {
                 FactComboBox {
                     Layout.minimumWidth:    _fieldWidth
                     fact:                   battCurrPin
+                    indexModel:             false
                     visible:                _showAdvanced
                 }
 
