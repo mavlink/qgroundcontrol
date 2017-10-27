@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.57 - Oct 27 2017
+
+*   CGOET Presets (First Pass) Needs updated firmware for it to work. v1.0.07 is broken.
+
 ### v1.1.56 - Oct 26 2017
 
 *   Don't play camera sound effect during mission.

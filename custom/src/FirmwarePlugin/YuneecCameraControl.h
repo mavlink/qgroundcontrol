@@ -33,6 +33,14 @@ typedef struct
     udp_ctrl_cam_area_temp_t custom_area;
 } udp_ctrl_cam_lepton_area_temp_t;
 
+typedef struct
+{
+    const char* name;
+    float       temp_min;
+    float       temp_max;
+    uint32_t    palette;
+} cgoet_presets_t;
+
 //-----------------------------------------------------------------------------
 class YuneecCameraControl : public QGCCameraControl
 {
@@ -59,6 +67,7 @@ public:
     Q_PROPERTY(Fact*        aspectRatio     READ    aspectRatio         NOTIFY factsLoaded)
     Q_PROPERTY(Fact*        irPalette       READ    irPalette           NOTIFY factsLoaded)
     Q_PROPERTY(Fact*        irROI           READ    irROI               NOTIFY factsLoaded)
+    Q_PROPERTY(Fact*        irPresets       READ    irPresets           NOTIFY factsLoaded)
     Q_PROPERTY(QPoint       spotArea        READ    spotArea            WRITE  setSpotArea      NOTIFY spotAreaChanged)
     Q_PROPERTY(QSize        videoSize       READ    videoSize           WRITE  setVideoSize     NOTIFY videoSizeChanged)
     Q_PROPERTY(bool         isCGOET         READ    isCGOET             NOTIFY isCGOETChanged)
@@ -106,6 +115,7 @@ public:
     Fact*       aspectRatio         ();
     Fact*       irPalette           ();
     Fact*       irROI               ();
+    Fact*       irPresets           ();
     QPoint      spotArea            ();
     void        setSpotArea         (QPoint mouse);
 
@@ -134,6 +144,7 @@ private slots:
     void    _gimbalCalTimeout       ();
     void    _irStatusTimeout        ();
     void    _resumeIrStatus         ();
+    void    _presetChanged          (QVariant value);
 
 signals:
     void    gimbalVersionChanged    ();
@@ -193,5 +204,6 @@ private:
     bool                    _irValid;
     bool                    _firstPhotoLapse;
     SettingsFact*           _irROI;
+    SettingsFact*           _irPresets;
     udp_ctrl_cam_lepton_area_temp_t _cgoetTempStatus;
 };

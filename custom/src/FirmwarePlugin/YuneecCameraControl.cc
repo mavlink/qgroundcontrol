@@ -37,21 +37,38 @@ static const char *kCAM_IRTEMPMIN   = "CAM_IRTEMPMIN";
 static const char *kCAM_TEMPSTATUS  = "CAM_TEMPSTATUS";
 
 static const char *kIR_ROI          = "ROI";
+static const char *kIR_PRESETS      = "Presets";
 
 static const char *kPaleteBars[]    =
 {
-    "Fusion",
-    "Rainbow",
-    "Globow",
-    "IceFire",
-    "IronBlack",
-    "WhiteHot",
-    "BlackHot",
-    "Rain",
-    "Iron",
-    "GrayRed",
-    "GrayFusion"
+    "Fusion",       //-- 0
+    "Rainbow",      //-- 1
+    "Globow",       //-- 2
+    "IceFire",      //-- 3
+    "IronBlack",    //-- 4
+    "WhiteHot",     //-- 5
+    "BlackHot",     //-- 6
+    "Rain",         //-- 7
+    "Iron",         //-- 8
+    "GrayRed",      //-- 9
+    "GrayFusion"    //-- 10
 };
+
+cgoet_presets_t cgoet_presets[] = {
+    {"Full Range",       0.0f,   0.0f, 1},
+    {"Victim/Suspect",  30.0f,  40.0f, 4},
+    {"House Fire",      65.0f, 150.0f, 5},
+    {"Evidence",        30.0f,  38.0f, 0},
+    {"Home Energy",      5.0f,  44.0f, 1},
+    {"Solar",           30.0f,  55.0f, 2},
+    {"Gases",           30.0f,  60.0f, 4},      //-- Need proper range
+    {"Electrical Leak",  0.0f,   0.0f, 1},
+    {"Warm Object",    -20.0f,  24.0f, 6},
+    {"FH2O3P Vapor",    52.0f,  63.0f, 7},
+    {"FH2O3P",           0.0f,  29.0f, 3}
+};
+
+#define PRESET_COUNT sizeof(cgoet_presets) / sizeof(cgoet_presets_t)
 
 //-----------------------------------------------------------------------------
 YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
@@ -71,6 +88,7 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     , _irValid(false)
     , _firstPhotoLapse(false)
     , _irROI(NULL)
+    , _irPresets(NULL)
 {
 
     memset(&_cgoetTempStatus, 0, sizeof(udp_ctrl_cam_lepton_area_temp_t));
@@ -129,22 +147,43 @@ YuneecCameraControl::_parametersReady()
         _paramComplete = true;
         //-- If CGO-ET
         if(isCGOET()) {
-            //-- Add ROI
-            FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, kIR_ROI, this);
-            QQmlEngine::setObjectOwnership(metaData, QQmlEngine::CppOwnership);
-            metaData->setShortDescription(kIR_ROI);
-            metaData->setLongDescription(kIR_ROI);
-            metaData->setRawDefaultValue(QVariant(0));
-            metaData->setHasControl(true);
-            metaData->setReadOnly(true);
-            metaData->addEnumInfo("Center Area", QVariant(0));
-            metaData->addEnumInfo("Spot", QVariant(1));
-            _irROI = new SettingsFact("camera", metaData, this);
-            QQmlEngine::setObjectOwnership(_irROI, QQmlEngine::CppOwnership);
+            {
+                //-- Add ROI
+                FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, kIR_ROI, this);
+                QQmlEngine::setObjectOwnership(metaData, QQmlEngine::CppOwnership);
+                metaData->setShortDescription(kIR_ROI);
+                metaData->setLongDescription(kIR_ROI);
+                metaData->setRawDefaultValue(QVariant(0));
+                metaData->setHasControl(true);
+                metaData->setReadOnly(true);
+                metaData->addEnumInfo("Center Area", QVariant(0));
+                metaData->addEnumInfo("Spot", QVariant(1));
+                _irROI = new SettingsFact("camera", metaData, this);
+                QQmlEngine::setObjectOwnership(_irROI, QQmlEngine::CppOwnership);
+            }
+            {
+                //-- Add Presets
+                FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, kIR_PRESETS, this);
+                QQmlEngine::setObjectOwnership(metaData, QQmlEngine::CppOwnership);
+                metaData->setShortDescription(kIR_PRESETS);
+                metaData->setLongDescription(kIR_PRESETS);
+                metaData->setRawDefaultValue(QVariant(0));
+                metaData->setHasControl(true);
+                metaData->setReadOnly(true);
+                for(uint32_t i = 0; i < PRESET_COUNT; i++) {
+                    metaData->addEnumInfo(QString(cgoet_presets[i].name), QVariant(i));
+                }
+                _irPresets = new SettingsFact("camera", metaData, this);
+                connect(_irPresets, &Fact::rawValueChanged, this, &YuneecCameraControl::_presetChanged);
+                QQmlEngine::setObjectOwnership(_irPresets, QQmlEngine::CppOwnership);
+            }
         }
         emit factsLoaded();
         if(!_irValid) {
             _irStatusTimer.start(100);
+        }
+        if(isCGOET()) {
+            _presetChanged(_irPresets->rawValue());
         }
     }
 }
@@ -249,6 +288,13 @@ Fact*
 YuneecCameraControl::irROI()
 {
     return _irROI;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+YuneecCameraControl::irPresets()
+{
+    return _irPresets;
 }
 
 //-----------------------------------------------------------------------------
@@ -686,13 +732,19 @@ YuneecCameraControl::factChanged(Fact* pFact)
             //-- Ignore if bogus data
             if(cgoetTempStatus.all_area.max_val || cgoetTempStatus.all_area.min_val || cgoetTempStatus.all_area.center_val) {
                 memcpy(&_cgoetTempStatus, &cgoetTempStatus, sizeof(udp_ctrl_cam_lepton_area_temp_t));
+                bool rangeEnabled = false;
+                Fact* pRangeEnabledFact = (_paramComplete && _isCGOET) ? getFact(kCAM_IRTEMPRENA) : NULL;
+                if(pRangeEnabledFact) {
+                    rangeEnabled = pRangeEnabledFact->rawValue().toUInt() > 0;
+                }
                 QString temp;
-                temp.sprintf("IR Temperature Status: Locked Max: %d°C Min: %d°C All: Center: %d°C Max: %d°C Min: %d°C",
-                         _cgoetTempStatus.locked_max_temp,
-                         _cgoetTempStatus.locked_min_temp,
-                         _cgoetTempStatus.all_area.center_val,
-                         _cgoetTempStatus.all_area.max_val,
-                         _cgoetTempStatus.all_area.min_val);
+                temp.sprintf("IR Temperature Range: %s Locked Max: %.3f°C Min: %.3f°C All: Center: %.3f°C Max: %.3f°C Min: %.3f°C",
+                         rangeEnabled ? "Enabled" : "Disabled",
+                         (float)_cgoetTempStatus.locked_max_temp / 100.0f,
+                         (float)_cgoetTempStatus.locked_min_temp / 100.0f,
+                         (float)_cgoetTempStatus.all_area.center_val / 100.0f,
+                         (float)_cgoetTempStatus.all_area.max_val / 100.0f,
+                         (float)_cgoetTempStatus.all_area.min_val / 100.0f);
                 qCDebug(YuneecCameraLog) << temp;
                 emit irTempChanged();
             }
@@ -941,4 +993,38 @@ YuneecCameraControl::irMaxTemp()
         }
     }
     return 0.0;
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::_presetChanged(QVariant value)
+{
+    if(_paramComplete && _isCGOET && value.toUInt() < PRESET_COUNT) {
+        qCDebug(YuneecCameraLog) << "Set Preset: " << cgoet_presets[value.toUInt()].name << kPaleteBars[cgoet_presets[value.toUInt()].palette] << cgoet_presets[value.toUInt()].temp_min << cgoet_presets[value.toUInt()].temp_max;
+        //-- Set Palette
+        Fact* pFact = getFact(kCAM_IRPALETTE);
+        if(pFact) {
+            pFact->setRawValue(cgoet_presets[value.toUInt()].palette);
+        }
+        //-- Deal with temperature range (if any)
+        if(cgoet_presets[value.toUInt()].temp_max != 0.0f && cgoet_presets[value.toUInt()].temp_min != 0.0f) {
+            pFact = getFact(kCAM_IRTEMPRENA);
+            if(pFact) {
+                pFact->setRawValue(QVariant(1));
+            }
+            pFact = getFact(kCAM_IRTEMPMIN);
+            if(pFact) {
+                pFact->setRawValue(QVariant(cgoet_presets[value.toUInt()].temp_min));
+            }
+            pFact = getFact(kCAM_IRTEMPMAX);
+            if(pFact) {
+                pFact->setRawValue(QVariant(cgoet_presets[value.toUInt()].temp_max));
+            }
+        } else {
+            pFact = getFact(kCAM_IRTEMPRENA);
+            if(pFact) {
+                pFact->setRawValue(QVariant(0));
+            }
+        }
+    }
 }

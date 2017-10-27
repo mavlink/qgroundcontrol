@@ -465,6 +465,30 @@ Rectangle {
                             visible:    _camera && _camera.isCGOET
                         }
                         //-------------------------------------------
+                        //-- CGOET Presets
+                        Row {
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            visible:        _camera && _camera.isCGOET
+                            QGCLabel {
+                                text:       qsTr("Presets")
+                                width:      _labelFieldWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            FactComboBox {
+                                width:      _editFieldWidth
+                                fact:       _camera ? _camera.irPresets : null
+                                indexModel: false
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        Rectangle {
+                            color:      qgcPal.button
+                            height:     1
+                            width:      cameraSettingsCol.width
+                            visible:    _camera && _camera.isCGOET
+                        }
+                        //-------------------------------------------
                         //-- Settings from Camera Definition File
                         Repeater {
                             model:      _camera ? _camera.activeSettings : []
@@ -643,6 +667,8 @@ Rectangle {
                                         _camera.photoMode = QGCCameraControl.PHOTO_CAPTURE_SINGLE
                                         _camera.photoLapse = 5.0
                                         _camera.photoLapseCount = 0
+                                        _camera.irROI = 0
+                                        _camera.irPresets = 0
                                         resetPrompt.close()
                                     }
                                 }
