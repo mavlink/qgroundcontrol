@@ -65,10 +65,6 @@ Vagrant.configure(2) do |config|
      su - vagrant -c 'cd %{project_root_dir}; tar jxf "%{qt_deps_tarball}" -C  %{qt_deps_unpack_parent_dir}'
      su - vagrant -c 'rm -rf %{shadow_build_dir}'
 
-     # grab latest PX4 parameter and airframe metadata
-     su - vagrant -c 'wget http://px4-travis.s3.amazonaws.com/Firmware/master/parameters.xml -O %{project_root_dir}/src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml'
-     su - vagrant -c 'wget http://px4-travis.s3.amazonaws.com/Firmware/master/airframes.xml -O %{project_root_dir}/src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml'
-
      su - vagrant -c 'mkdir -p %{shadow_build_dir}'
      su - vagrant -c "cd %{shadow_build_dir}; LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir} PATH=%{qt_deps_bin_unpack_dir}:\$PATH qmake -r %{pro} CONFIG+=\${CONFIG} CONFIG+=WarningsAsErrorsOn -spec %{spec}"
      su - vagrant -c "cd %{shadow_build_dir}; LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir} PATH=%{qt_deps_bin_unpack_dir}:\$PATH make -j${JOBS}"
