@@ -115,18 +115,19 @@ Item {
         running:    false;
         repeat:     false;
         onTriggered: {
-            //-- Check if we should update
-            if(TyphoonHQuickInterface.shouldWeShowUpdate()) {
-                rootLoader.sourceComponent = updateDialog
-            } else {
-                //-- If connected to something other than a camera
-                if(ScreenTools.isAndroid && TyphoonHQuickInterface.connectedCamera === "" && TyphoonHQuickInterface.connectedSSID !== "") {
-                    if(TyphoonHQuickInterface.wifiAlertEnabled) {
-                        showSimpleAlert(
-                            qsTr("Connected to Standard Wi-Fi"),
-                            qsTr("The ST16 is connected to a standard Wi-Fi and not a vehicle."))
-                    }
+            //-- If connected to something other than a camera
+            if(ScreenTools.isAndroid && TyphoonHQuickInterface.connectedCamera === "" && TyphoonHQuickInterface.connectedSSID !== "") {
+                //-- If we haven't done it already
+                if(TyphoonHQuickInterface.wifiAlertEnabled) {
+                    showSimpleAlert(
+                        qsTr("Connected to Standard Wi-Fi"),
+                        qsTr("The ST16 is connected to a standard Wi-Fi and not a vehicle."))
                 }
+            } else if(ScreenTools.isAndroid) {
+                //-- If we're using the default password, nag about it
+                //if(!TyphoonHQuickInterface.firstRun && TyphoonHQuickInterface.isDefaultPwd && rootLoader.sourceComponent !== updateDialog) {
+                //    rootLoader.sourceComponent = initialSettingsDialog
+                //}
             }
         }
     }
@@ -141,7 +142,7 @@ Item {
     }
 
     Timer {
-        id:         connectionTimer
+        id:        connectionTimer
         interval:  5000
         running:   false;
         repeat:    false;
@@ -198,7 +199,7 @@ Item {
         }
         //-- Big Red Button down for > 1 second
         onPowerHeld: {
-            if(_activeVehicle) {
+            if(_activeVehicle && !TyphoonHQuickInterface.firstRun) {
                 rootLoader.sourceComponent = panicDialog
                 mainWindow.disableToolbar()
             }
@@ -224,7 +225,9 @@ Item {
         }
         onFirmwareCustomVersionChanged: {
             if(TyphoonHQuickInterface.shouldWeShowUpdate()) {
-                rootLoader.sourceComponent = updateDialog
+                if(rootLoader.sourceComponent !== initialSettingsDialog) {
+                    rootLoader.sourceComponent = updateDialog
+                }
             }
         }
     }
@@ -236,6 +239,17 @@ Item {
             _noSdCardMsgShown = false;
             //-- And comm lost dialog if open
             connectionLostDisarmedDialog.close()
+        }
+        onParameterReadyVehicleAvailableChanged: {
+            if(QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable) {
+                //-- Check for first run
+                if(TyphoonHQuickInterface.firstRun) {
+                    rootLoader.sourceComponent = initialSettingsDialog
+                //-- Check if we should update
+                } else if(TyphoonHQuickInterface.shouldWeShowUpdate()) {
+                    rootLoader.sourceComponent = updateDialog
+                }
+            }
         }
     }
 
@@ -498,7 +512,7 @@ Item {
     //-- Camera Control
     Loader {
         id:                     camControlLoader
-        visible:                !_mainIsMap
+        visible:                !_mainIsMap && rootLoader.sourceComponent !== initialSettingsDialog
         source:                 _mainIsMap ? "" : "/typhoonh/cameraControl.qml"
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
@@ -1078,6 +1092,14 @@ Item {
         Loader {
             anchors.fill: parent
             source: "/typhoonh/UpdateDialog.qml"
+        }
+    }
+    //-- Initial Settings Dialog
+    Component {
+        id: initialSettingsDialog
+        Loader {
+            anchors.fill: parent
+            source: "/typhoonh/InitialSettings.qml"
         }
     }
 }

@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.58 - Oct 30 2017
+
+*   First time settings.
+
 ### v1.1.57 - Oct 27 2017
 
 *   CGOET Presets (First Pass) Needs updated firmware for it to work. v1.0.07 is broken.

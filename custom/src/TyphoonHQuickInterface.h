@@ -170,7 +170,9 @@ public:
     Q_PROPERTY(bool             isFactoryApp    READ    isFactoryApp        CONSTANT)
     Q_PROPERTY(bool             isUpdaterApp    READ    isUpdaterApp        CONSTANT)
     Q_PROPERTY(bool             isInternet      READ    isInternet          NOTIFY isInternetChanged)
+    Q_PROPERTY(bool             isDefaultPwd    READ    isDefaultPwd        NOTIFY isDefaultPwdChanged)
 
+    Q_PROPERTY(bool             firstRun            READ    firstRun            WRITE   setFirstRun         NOTIFY  firstRunChanged)
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
 
     Q_PROPERTY(int              J1              READ    J1                  NOTIFY rawChannelChanged)
@@ -228,10 +230,10 @@ public:
     Q_INVOKABLE void stopCalibration    ();
     Q_INVOKABLE void setWiFiPassword    (QString pwd);
     Q_INVOKABLE void factoryTest        ();
-    Q_INVOKABLE void endThis            ();
     Q_INVOKABLE void launchBroswer      (QString url);
     Q_INVOKABLE void launchUpdater      ();
     Q_INVOKABLE bool shouldWeShowUpdate ();
+    Q_INVOKABLE void restart            ();
 
     //-- Android image update
     Q_INVOKABLE bool checkForUpdate     ();
@@ -270,9 +272,12 @@ public:
     bool        isFactoryApp        () { return _isFactoryApp; }
     bool        isUpdaterApp        () { return _isUpdaterApp; }
     bool        isInternet          ();
+    bool        isDefaultPwd        ();
+    bool        firstRun            () { return _firstRun; }
 
     void        init                (TyphoonHM4Interface* pHandler);
     void        setWifiAlertEnabled (bool enabled) { _wifiAlertEnabled = enabled; emit wifiAlertEnabledChanged(); }
+    void        setFirstRun         (bool set);
 
     int         J1                  () { return rawChannel(0); }
     int         J2                  () { return rawChannel(1); }
@@ -367,6 +372,8 @@ signals:
     void    thermalModeChanged          ();
     void    thermalOpacityChanged       ();
     void    isInternetChanged           ();
+    void    isDefaultPwdChanged         ();
+    void    firstRunChanged          ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -395,7 +402,6 @@ private slots:
     void    _imageUpdateError           (QString errorMsg);
     void    _imageUpdateDone            ();
     void    _videoRunningChanged        ();
-    void    _forgetSSID                 ();
     void    _vehicleAdded               (Vehicle* vehicle);
     void    _vehicleRemoved             (Vehicle* vehicle);
     void    _mavlinkMessageReceived     (const mavlink_message_t& message);
@@ -405,6 +411,7 @@ private slots:
     void    _exportCompleted            ();
     void    _copyCompleted              (quint32 totalCount, quint32 curCount);
     void    _exportMessage              (QString message);
+    void    _restart                    ();
 
 private:
     void    _saveWifiConfigurations     ();
@@ -452,4 +459,5 @@ private:
     double                  _thermalOpacity;
     bool                    _isUpdaterApp;
     bool                    _updateShown;
+    bool                    _firstRun;
 };

@@ -437,14 +437,9 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
         metaData.setRawDefaultValue(60);
         return false;
      } else if (metaData.name() == AppSettings::indoorPaletteName) {
-        //-- Default Palette
-        QVariant outdoorPalette;
-#if defined (__mobile__) && !defined(__planner__)
-        outdoorPalette = 0;
-#else
-        outdoorPalette = 1;
-#endif
-        metaData.setRawDefaultValue(outdoorPalette);
+        //-- Default Palette (First time settings will ask the user to choose)
+        QVariant indoorPalette = 1;
+        metaData.setRawDefaultValue(indoorPalette);
         return true;
     } else if (metaData.name() == AppSettings::esriTokenName) {
         //-- This is a bogus token for now
