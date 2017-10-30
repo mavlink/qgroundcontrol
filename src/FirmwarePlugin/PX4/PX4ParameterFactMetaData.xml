@@ -9540,6 +9540,13 @@ For ESCs that support thrust reversal with a control channel please set VT_B_REV
       <max>200.0</max>
       <scope>modules/vtol_att_control</scope>
     </parameter>
+    <parameter default="0.0" name="VT_FW_ALT_ERR" type="FLOAT">
+      <short_desc>Adaptive QuadChute</short_desc>
+      <long_desc>Maximum negative altitude error, when in fixed wing the altitude drops below this copared to the altitude setpoint the vehicle will transition back to MC mode and enter failsafe RTL</long_desc>
+      <min>0.0</min>
+      <max>200.0</max>
+      <scope>modules/vtol_att_control</scope>
+    </parameter>
     <parameter default="0" name="VT_FW_QC_P" type="INT32">
       <short_desc>QuadChute Max Pitch</short_desc>
       <long_desc>Maximum pitch angle before QuadChute engages Above this the vehicle will transition back to MC mode and enter failsafe RTL</long_desc>
