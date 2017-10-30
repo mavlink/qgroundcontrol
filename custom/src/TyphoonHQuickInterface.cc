@@ -33,6 +33,7 @@ extern const char* jniClassName;
 static const char* kWifiConfig      = "WifiConfig";
 static const char* kUpdateCheck     = "YuneecUpdateCheck";
 static const char* kThermalOpacity  = "ThermalOpacity";
+static const char* kSecondRun       = "SecondRun";
 static const char* kFirstRun        = "FirstRun";
 
 #if defined __android__
@@ -82,6 +83,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _thermalOpacity(85.0)
     , _isUpdaterApp(false)
     , _updateShown(false)
+    , _firstRun(true)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
 #if defined __android__
@@ -91,6 +93,10 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
 #endif
     QSettings settings;
     _thermalOpacity = settings.value(kThermalOpacity, 85.0).toDouble();
+    _firstRun = settings.value(kFirstRun, true).toBool();
+    qCDebug(YuneecLog) << "FirstRun:" << _firstRun;
+    _loadWifiConfigurations();
+    _ssid = connectedSSID();
 }
 
 //-----------------------------------------------------------------------------
@@ -143,7 +149,6 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(&_powerTimer,   &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
         _flightTimer.setSingleShot(false);
         _powerTimer.setSingleShot(true);
-        _loadWifiConfigurations();
         //-- Make sure uLog is disabled
         qgcApp()->toolbox()->mavlinkLogManager()->setEnableAutoUpload(false);
         qgcApp()->toolbox()->mavlinkLogManager()->setEnableAutoStart(false);
@@ -180,16 +185,16 @@ bool
 TyphoonHQuickInterface::shouldWeShowUpdate()
 {
     //-- Only show once per session
-    if(_updateShown) {
+    if(_firstRun || _updateShown) {
         return false;
     }
     bool res = false;
     QSettings settings;
-    bool firstRun = !settings.contains(kFirstRun);
+    bool SecondRun = settings.value(kSecondRun, true).toBool();
     //-- If this is the first run, show it.
-    if(firstRun) {
-        settings.setValue(kFirstRun, false);
-        qWarning() << "First run. Force update dialog";
+    if(SecondRun) {
+        settings.setValue(kSecondRun, false);
+        qWarning() << "First run after settings done. Force update dialog";
         res = true;
         //-- Reset update timer
         settings.setValue(kUpdateCheck, QDate::currentDate());
@@ -237,6 +242,21 @@ bool
 TyphoonHQuickInterface::isInternet()
 {
     return getQGCMapEngine()->isInternetActive();
+}
+
+//-----------------------------------------------------------------------------
+bool
+TyphoonHQuickInterface::isDefaultPwd()
+{
+    if(_ssid.isEmpty()) {
+        qCDebug(YuneecLog) << "isDefaultPwd() No current ssid";
+        return false;
+    }
+    qCDebug(YuneecLog) << "isDefaultPwd()" << _configurations.contains(_ssid) << (_configurations.contains(_ssid) ? _configurations[_ssid] : "N/A");
+    if(_configurations.size() && _configurations.contains(_ssid)) {
+        return _configurations[_ssid] == "1234567890";
+    }
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -351,28 +371,20 @@ TyphoonHQuickInterface::setWiFiPassword(QString pwd)
             pMavlink->getComponentId(),
             &msg,
             &config);
+        //-- Send command
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
-        _password.clear();
-        _configurations.remove(_ssid);
+        _password = pwd;
+        _configurations[_ssid] = pwd;
         _saveWifiConfigurations();
-        //-- Give some time for message to get across
-        QTimer::singleShot(1000, this, &TyphoonHQuickInterface::_forgetSSID);
+        //-- Save new password (Android Configuration)
+        reset_jni();
+        QAndroidJniObject javaSSID = QAndroidJniObject::fromString(_ssid);
+        QAndroidJniObject javaPWD  = QAndroidJniObject::fromString(_password);
+        QAndroidJniObject::callStaticMethod<void>(jniClassName, "setWifiPassword", "(Ljava/lang/String;Ljava/lang/String;)V", javaSSID.object<jstring>(), javaPWD.object<jstring>());
 #else
         Q_UNUSED(pwd)
 #endif
     }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::_forgetSSID()
-{
-    //-- Remove SSID from (Android) configuration
-#if defined __android__
-    reset_jni();
-    QAndroidJniObject javaSSID = QAndroidJniObject::fromString(_ssid);
-    QAndroidJniObject::callStaticMethod<void>(jniClassName, "resetWifiConfiguration", "(Ljava/lang/String;)V", javaSSID.object<jstring>());
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -754,12 +766,21 @@ TyphoonHQuickInterface::updateSystemImage()
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::endThis()
+TyphoonHQuickInterface::restart()
 {
 #if defined __android__
-    qCDebug(YuneecLog) << "Exit DataPilot";
+    QTimer::singleShot(250, this, &TyphoonHQuickInterface::_restart);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_restart()
+{
+#if defined __android__
+    qCDebug(YuneecLog) << "Restart DataPilot";
     reset_jni();
-    QAndroidJniObject::callStaticMethod<void>(jniClassName, "endThis", "()V");
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "restartApp", "()V");
 #endif
 }
 
@@ -1351,6 +1372,7 @@ TyphoonHQuickInterface::_wifiConnected()
     _configurations[_ssid] = _password;
     _saveWifiConfigurations();
     _bindingWiFi = false;
+    emit isDefaultPwdChanged();
     emit bindingWiFiChanged();
     emit connectedSSIDChanged();
     emit wifiConnectedChanged();
@@ -1499,6 +1521,18 @@ TyphoonHQuickInterface::setThermalMode(ThermalViewMode mode)
 {
     _thermalMode = mode;
     emit thermalModeChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::setFirstRun(bool set)
+{
+    qCDebug(YuneecLog) << "Set firstRun" << set;
+    _firstRun = set;
+    QSettings settings;
+    settings.setValue(kFirstRun, set);
+    settings.setValue(kSecondRun, true);
+    emit firstRunChanged();
 }
 
 //-----------------------------------------------------------------------------

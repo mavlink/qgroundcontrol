@@ -141,14 +141,6 @@ public class QGCActivity extends QtActivity
     public static void restoreScreenOn() {
     }
 
-    public static void endThis() {
-        letItExit = true;
-        Intent intent = new Intent();
-        intent.setClassName("com.android.launcher", "com.android.launcher2.Launcher");
-        m_instance.startActivity(intent);
-        m_instance.finish();
-    }
-
     public static void launchFactoryTest() {
         m_instance.launchApp("com.yuneec.flightcontrolmodetest");
     }
@@ -166,6 +158,11 @@ public class QGCActivity extends QtActivity
         } else {
             Log.i(TAG, app + " not found.");
         }
+    }
+
+    public static void restartApp() {
+        letItExit = false;
+        m_instance.finish();
     }
 
     public static boolean isFactoryAppInstalled() {
@@ -277,23 +274,43 @@ public class QGCActivity extends QtActivity
         nativeWifiDisconnected();
     }
 
-    public static void resetWifiConfiguration(String ssid) {
+    public static void setWifiPassword(String ssid, String password) {
         Log.i(TAG, "resetWifiConfiguration(): " + ssid);
         List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
         if(list != null) {
             mainWifi.disconnect();
             for( WifiConfiguration i : list ) {
-                if(i.SSID == ssid) {
-                    //-- Remove this SSID from "known" networks
-                    mainWifi.removeNetwork(i.networkId);
+                if(i.SSID != null && i.SSID.equals("\"" + ssid + "\"")) {
+                    Log.i(TAG, "Set new password for " + ssid + " => " + password);
+                    i.preSharedKey = "\"" + password + "\"";
                 }
             }
         }
-        currentConnection = "";
         mainWifi.saveConfiguration();
-        currentWifiRssi = 0;
-        nativeNewWifiRSSI();
-        nativeWifiDisconnected();
+        //-- Disconnect
+        resetWifi();
+        //-- Reconnect using new configuration
+        reconnectSSID(ssid);
+    }
+
+    public static void reconnectSSID(String ssid) {
+        Log.i(TAG, "Reconnect: " + ssid);
+        try {
+            List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
+            for( WifiConfiguration i : list ) {
+                if(i.SSID != null && i.SSID.equals("\"" + ssid + "\"")) {
+                    currentConnection = ssid;
+                    currentWifiRssi = 0;
+                    nativeNewWifiRSSI();
+                    mainWifi.enableNetwork(i.networkId, true);
+                    mainWifi.reconnect();
+                    mainWifi.saveConfiguration();
+                    return;
+                }
+            }
+        } catch(Exception e) {
+           Log.e(TAG, "Exception reconnectSSID()");
+        }
     }
 
     public static void bindSSID(String ssid, String passphrase) {

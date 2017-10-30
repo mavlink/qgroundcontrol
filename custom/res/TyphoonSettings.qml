@@ -633,6 +633,7 @@ QGCView {
                 echoMode:   TextInput.Password
                 width:      ScreenTools.defaultFontPixelWidth * 24
                 focus:      true
+                maximumLength:  20
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             QGCLabel {
@@ -644,11 +645,7 @@ QGCView {
                 echoMode:   TextInput.Password
                 width:      ScreenTools.defaultFontPixelWidth * 24
                 focus:      true
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-            QGCLabel {
-                text:   qsTr("Once set, the connection will be closed.\nRestart the vehicle and reconnect.")
-                horizontalAlignment:      Text.AlignHCenter
+                maximumLength:  20
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Row {
@@ -662,6 +659,7 @@ QGCView {
                         Qt.inputMethod.hide();
                         TyphoonHQuickInterface.setWiFiPassword(passwordField.text)
                         passwordField.text = ""
+                        passwordFieldConf.text = ""
                         passwordDialog.visible = false
                     }
                 }
