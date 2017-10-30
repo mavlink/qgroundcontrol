@@ -512,7 +512,7 @@ Item {
     //-- Camera Control
     Loader {
         id:                     camControlLoader
-        visible:                !_mainIsMap
+        visible:                !_mainIsMap && rootLoader.sourceComponent !== initialSettingsDialog
         source:                 _mainIsMap ? "" : "/typhoonh/cameraControl.qml"
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
