@@ -182,19 +182,17 @@ Item {
     Item {
         id:                 thermalItem
         width:              height * 1.333333
-        height:             TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalPIP ? ScreenTools.defaultFontPixelHeight * 20 : parent.height * 0.9444
+        height:             TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalPIP ? ScreenTools.defaultFontPixelHeight * 16 : parent.height * 0.9444
         anchors.centerIn:   parent
         visible:            isThermal && TyphoonHQuickInterface.thermalMode !== TyphoonHQuickInterface.ThermalOff
         function pipOrNot() {
             if(TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalPIP) {
-                console.log('Pip Mode')
                 anchors.centerIn    = undefined
                 anchors.top         = parent.top
-                anchors.topMargin   = ScreenTools.defaultFontPixelHeight * 5
+                anchors.topMargin   = ScreenTools.defaultFontPixelHeight * 7
                 anchors.left        = parent.left
                 anchors.leftMargin  = ScreenTools.defaultFontPixelWidth * 10
             } else {
-                console.log('Non Pip Mode')
                 anchors.top         = undefined
                 anchors.topMargin   = undefined
                 anchors.left        = undefined
@@ -205,6 +203,9 @@ Item {
         Connections {
             target:                 TyphoonHQuickInterface
             onThermalModeChanged:   thermalItem.pipOrNot()
+        }
+        onVisibleChanged: {
+            thermalItem.pipOrNot()
         }
         QGCVideoBackground {
             id:             thermalVideo

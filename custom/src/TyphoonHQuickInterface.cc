@@ -33,6 +33,7 @@ extern const char* jniClassName;
 static const char* kWifiConfig      = "WifiConfig";
 static const char* kUpdateCheck     = "YuneecUpdateCheck";
 static const char* kThermalOpacity  = "ThermalOpacity";
+static const char* kThermalMode     = "ThermalMode";
 static const char* kSecondRun       = "SecondRun";
 static const char* kFirstRun        = "FirstRun";
 
@@ -94,7 +95,8 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
 #endif
     QSettings settings;
     _thermalOpacity = settings.value(kThermalOpacity, 85.0).toDouble();
-    _firstRun = settings.value(kFirstRun, true).toBool();
+    _thermalMode =  (ThermalViewMode)settings.value(kThermalMode, (uint32_t)ThermalBlend).toUInt();
+    _firstRun = settings.value(kThermalMode, true).toBool();
     qCDebug(YuneecLog) << "FirstRun:" << _firstRun;
     _loadWifiConfigurations();
     _ssid = connectedSSID();
@@ -1538,6 +1540,8 @@ TyphoonHQuickInterface::_distanceSensor(int minDist, int maxDist, int curDist)
 void
 TyphoonHQuickInterface::setThermalMode(ThermalViewMode mode)
 {
+    QSettings settings;
+    settings.setValue(kThermalMode, (uint32_t)mode);
     _thermalMode = mode;
     emit thermalModeChanged();
 }
