@@ -31,6 +31,7 @@ Item {
 
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 12
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 20
+    property bool _validPassword:               passwordField.text === confirmField.text && passwordField.text.length > 7 && passwordField.text.length < 21
 
     function setMetric() {
         QGroundControl.settingsManager.unitsSettings.distanceUnits.rawValue = UnitsSettings.DistanceUnitsMeters
@@ -137,6 +138,18 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
+            QGCLabel {
+                text:           qsTr("(Password must be between 8 and 20 characters)")
+                font.pointSize: ScreenTools.smallFontPointSize
+                color:          qgcPal.alertText
+                visible:        TyphoonHQuickInterface.isDefaultPwd && !_validPassword
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Item {
+                width:      1
+                visible:    TyphoonHQuickInterface.isDefaultPwd
+                height:     ScreenTools.defaultFontPixelHeight
+            }
             Row {
                 spacing:        ScreenTools.defaultFontPixelWidth * 4
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -188,7 +201,7 @@ Item {
                     text:           qsTr("Accept")
                     width:          ScreenTools.defaultFontPixelWidth  * 16
                     height:         ScreenTools.defaultFontPixelHeight * 2
-                    enabled:        TyphoonHQuickInterface.isDefaultPwd ? (passwordField.text === confirmField.text && passwordField.text.length > 7 && passwordField.text.length < 21) : true
+                    enabled:        TyphoonHQuickInterface.isDefaultPwd ? _validPassword : true
                     onClicked: {
                         restartConfirmation.open()
                     }
