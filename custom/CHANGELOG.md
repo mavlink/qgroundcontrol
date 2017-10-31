@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.60 - Oct 31 2017
+
+*   Updating presets (CGOET)
+
 ### v1.1.59 - Oct 31 2017
 
 *   Fix first run dialog corner cases

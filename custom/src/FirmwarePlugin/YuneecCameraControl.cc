@@ -61,8 +61,8 @@ cgoet_presets_t cgoet_presets[] = {
     {"Evidence",        30.0f,  38.0f, 0},
     {"Home Energy",      5.0f,  44.0f, 1},
     {"Solar",           30.0f,  55.0f, 2},
-    {"Gases",           30.0f,  60.0f, 4},      //-- Need proper range
-    {"Electrical Leak",  0.0f,   0.0f, 1},
+    {"Gases",           15.0f,  25.0f, 4},
+    {"Electrical Leak", 80.0f, 120.0f, 1},
     {"Warm Object",    -20.0f,  24.0f, 6},
     {"FH2O3P Vapor",    52.0f,  63.0f, 7},
     {"FH2O3P",           0.0f,  29.0f, 3}
