@@ -1,5 +1,10 @@
 ## DataPilot Release Changelog
 
+### v1.1.61 - Oct 31 2017
+
+*   Thermal image PIP Mode not overlapping indicators. (CGOET)
+*   Thermal image mode made persistent. (CGOET)
+
 ### v1.1.60 - Oct 31 2017
 
 *   Updating presets (CGOET)
