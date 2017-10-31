@@ -273,7 +273,7 @@ public:
     bool        isUpdaterApp        () { return _isUpdaterApp; }
     bool        isInternet          ();
     bool        isDefaultPwd        ();
-    bool        firstRun            () { return _firstRun; }
+    bool        firstRun            ();
 
     void        init                (TyphoonHM4Interface* pHandler);
     void        setWifiAlertEnabled (bool enabled) { _wifiAlertEnabled = enabled; emit wifiAlertEnabledChanged(); }
@@ -460,4 +460,5 @@ private:
     bool                    _isUpdaterApp;
     bool                    _updateShown;
     bool                    _firstRun;
+    bool                    _passwordSet;   //-- Was the password set within this session?
 };

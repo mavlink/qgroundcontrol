@@ -84,6 +84,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _isUpdaterApp(false)
     , _updateShown(false)
     , _firstRun(true)
+    , _passwordSet(false)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
 #if defined __android__
@@ -260,6 +261,13 @@ TyphoonHQuickInterface::isDefaultPwd()
 }
 
 //-----------------------------------------------------------------------------
+bool
+TyphoonHQuickInterface::firstRun()
+{
+    return _firstRun;
+}
+
+//-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::_vehicleAdded(Vehicle* vehicle)
 {
@@ -270,6 +278,14 @@ TyphoonHQuickInterface::_vehicleAdded(Vehicle* vehicle)
         connect(_vehicle, &Vehicle::armedChanged,           this, &TyphoonHQuickInterface::_armedChanged);
         connect(_vehicle, &Vehicle::dynamicCamerasChanged,  this, &TyphoonHQuickInterface::_dynamicCamerasChanged);
         _dynamicCamerasChanged();
+    }
+    if(!_passwordSet) {
+        //-- If we dind't bind to anyting, it means this isn't really a first run. We've been here before.
+        qCDebug(YuneecLog) << "Force firstRun to false";
+        _firstRun = false;
+        QSettings settings;
+        settings.setValue(kFirstRun, _firstRun);
+        emit firstRunChanged();
     }
 }
 
@@ -664,6 +680,9 @@ TyphoonHQuickInterface::bindWIFI(QString ssid, QString password)
         if(_configurations.contains(ssid)) {
             _password = _configurations[ssid];
         }
+    } else {
+        //-- This is a new binding to a new camera
+        _passwordSet = true;
     }
 #if defined __android__
     reset_jni();
