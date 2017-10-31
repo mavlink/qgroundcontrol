@@ -136,7 +136,9 @@ public:
     void forceSetRawValue(const QVariant& value);
     
     /// Sets the meta data associated with the Fact.
-    void setMetaData(FactMetaData* metaData);
+    ///     @param metaData FactMetaData for Fact
+    ///     @param setDefaultFromMetaData true: set the fact value to the default specified in the meta data
+    void setMetaData(FactMetaData* metaData, bool setDefaultFromMetaData = false);
     
     FactMetaData* metaData() { return _metaData; }
 

@@ -25,9 +25,6 @@ const char* StructureScanComplexItem::jsonComplexItemTypeValue =           "Stru
 
 const char* StructureScanComplexItem::_altitudeFactName =               "Altitude";
 const char* StructureScanComplexItem::_layersFactName =                 "Layers";
-const char* StructureScanComplexItem::_layerDistanceFactName =          "Layer distance";
-const char* StructureScanComplexItem::_cameraTriggerDistanceFactName =  "Trigger distance";
-const char* StructureScanComplexItem::_scanDistanceFactName =           "Scan distance";
 
 QMap<QString, FactMetaData*> StructureScanComplexItem::_metaDataMap;
 
@@ -41,11 +38,9 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
     , _scanDistance             (0.0)
     , _cameraShots              (0)
     , _cameraMinTriggerInterval (0)
+    , _cameraCalc               (vehicle)
     , _altitudeFact             (0, _altitudeFactName,              FactMetaData::valueTypeDouble)
     , _layersFact               (0, _layersFactName,                FactMetaData::valueTypeUint32)
-    , _layerDistanceFact        (0, _layerDistanceFactName,         FactMetaData::valueTypeDouble)
-    , _cameraTriggerDistanceFact(0, _cameraTriggerDistanceFactName, FactMetaData::valueTypeDouble)
-    , _scanDistanceFact         (0, _scanDistanceFactName,          FactMetaData::valueTypeDouble)
 {
     _editorQml = "qrc:/qml/StructureScanEditor.qml";
 
@@ -53,26 +48,16 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
         _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/StructureScan.SettingsGroup.json"), NULL /* QObject parent */);
     }
 
-    qDebug() << _metaDataMap[_altitudeFactName];
-    _altitudeFact.setMetaData               (_metaDataMap[_altitudeFactName]);
-    _layersFact.setMetaData                 (_metaDataMap[_layersFactName]);
-    _layerDistanceFact.setMetaData          (_metaDataMap[_layerDistanceFactName]);
-    _cameraTriggerDistanceFact.setMetaData  (_metaDataMap[_cameraTriggerDistanceFactName]);
-    _scanDistanceFact.setMetaData           (_metaDataMap[_scanDistanceFactName]);
+    _altitudeFact.setMetaData   (_metaDataMap[_altitudeFactName]);
+    _layersFact.setMetaData     (_metaDataMap[_layersFactName]);
 
-    _altitudeFact.setRawValue               (_altitudeFact.rawDefaultValue());
-    _layersFact.setRawValue                 (_layersFact.rawDefaultValue());
-    _layerDistanceFact.setRawValue          (_layerDistanceFact.rawDefaultValue());
-    _cameraTriggerDistanceFact.setRawValue  (_cameraTriggerDistanceFact.rawDefaultValue());
-    _scanDistanceFact.setRawValue           (_scanDistanceFact.rawDefaultValue());
+    _altitudeFact.setRawValue   (_altitudeFact.rawDefaultValue());
+    _layersFact.setRawValue     (_layersFact.rawDefaultValue());
 
     _altitudeFact.setRawValue(qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue());
 
-    connect(&_altitudeFact,                 &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
-    connect(&_layersFact,                   &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
-    connect(&_layerDistanceFact,            &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
-    connect(&_cameraTriggerDistanceFact,    &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
-    connect(&_scanDistanceFact,             &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
+    connect(&_altitudeFact, &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
+    connect(&_layersFact,   &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
 
     connect(this, &StructureScanComplexItem::altitudeRelativeChanged, this, &StructureScanComplexItem::_setDirty);
     connect(this, &StructureScanComplexItem::altitudeRelativeChanged, this, &StructureScanComplexItem::coordinateHasRelativeAltitudeChanged);
@@ -86,7 +71,7 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
 
     connect(&_flightPolygon,    &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_flightPathChanged);
 
-    connect(&_scanDistanceFact, &Fact::valueChanged,            this, &StructureScanComplexItem::_rebuildFlightPolygon);
+    connect(_cameraCalc.distanceToSurface(), &Fact::valueChanged, this, &StructureScanComplexItem::_rebuildFlightPolygon);
 }
 
 void StructureScanComplexItem::_setScanDistance(double scanDistance)
@@ -395,7 +380,7 @@ void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QO
     items.append(item);
 
     for (int layer=0; layer<_layersFact.rawValue().toInt(); layer++) {
-        double layerAltitude = baseAltitude + (layer * _layerDistanceFact.rawValue().toDouble());
+        double layerAltitude = baseAltitude + (layer * _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
 
         for (int i=0; i<_flightPolygon.count(); i++) {
             QGeoCoordinate vertexCoord = _flightPolygon.vertexCoordinate(i);
@@ -466,9 +451,9 @@ void StructureScanComplexItem::_polygonDirtyChanged(bool dirty)
     }
 }
 
-double StructureScanComplexItem::timeBetweenShots(void) const
+double StructureScanComplexItem::timeBetweenShots(void)
 {
-    return _cruiseSpeed == 0 ? 0 :_cameraTriggerDistanceFact.rawValue().toDouble() / _cruiseSpeed;
+    return _cruiseSpeed == 0 ? 0 : _cameraCalc.adjustedFootprintSide()->rawValue().toDouble() / _cruiseSpeed;
 }
 
 QGeoCoordinate StructureScanComplexItem::coordinate(void) const
@@ -505,5 +490,5 @@ void StructureScanComplexItem::rotateEntryPoint(void)
 void StructureScanComplexItem::_rebuildFlightPolygon(void)
 {
     _flightPolygon = _structurePolygon;
-    _flightPolygon.offset(_scanDistanceFact.rawValue().toDouble());
+    _flightPolygon.offset(_cameraCalc.distanceToSurface()->rawValue().toDouble());
 }
