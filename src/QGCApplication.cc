@@ -81,6 +81,7 @@
 #include "SettingsManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCCameraManager.h"
+#include "CameraCalc.h"
 
 #ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
@@ -348,6 +349,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<CoordinateVector>    ("QGroundControl",                      1, 0, "CoordinateVector",       "Reference only");
     qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                      1, 0, "QmlObjectListModel",     "Reference only");
     qmlRegisterUncreatableType<MissionCommandTree>  ("QGroundControl",                      1, 0, "MissionCommandTree",     "Reference only");
+    qmlRegisterUncreatableType<CameraCalc>          ("QGroundControl",                      1, 0, "CameraCalc",             "Reference only");
 
     qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",      1, 0, "AutoPilotPlugin",        "Reference only");
     qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",      1, 0, "VehicleComponent",       "Reference only");

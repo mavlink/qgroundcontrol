@@ -7,8 +7,7 @@
  *
  ****************************************************************************/
 
-#ifndef CameraMetaData_H
-#define CameraMetaData_H
+#pragma once
 
 #include <QObject>
 
@@ -29,15 +28,25 @@ public:
                    double           minTriggerInterval,
                    QObject*         parent = NULL);
 
-    Q_PROPERTY(QString  name                MEMBER _name                CONSTANT)   ///< Camera name
-    Q_PROPERTY(double   sensorWidth         MEMBER _sensorWidth         CONSTANT)   ///< Sensor size in millimeters
-    Q_PROPERTY(double   sensorHeight        MEMBER _sensorHeight        CONSTANT)   ///< Sensor size in millimeters
-    Q_PROPERTY(double   imageWidth          MEMBER _imageWidth          CONSTANT)   ///< Image size in pixels
-    Q_PROPERTY(double   imageHeight         MEMBER _imageHeight         CONSTANT)   ///< Image size in pixels
-    Q_PROPERTY(double   focalLength         MEMBER _focalLength         CONSTANT)   ///< Focal length in millimeters
-    Q_PROPERTY(bool     landscape           MEMBER _landscape           CONSTANT)   ///< true: camera is in landscape orientation
-    Q_PROPERTY(bool     fixedOrientation    MEMBER _fixedOrientation    CONSTANT)   ///< true: camera is in fixed orientation
-    Q_PROPERTY(double   minTriggerInterval  MEMBER _minTriggerInterval  CONSTANT)   ///< Minimum time in seconds between each photo taken, 0 for not specified
+    Q_PROPERTY(QString  name                READ name               CONSTANT)   ///< Camera name
+    Q_PROPERTY(double   sensorWidth         READ sensorWidth        CONSTANT)   ///< Sensor size in millimeters
+    Q_PROPERTY(double   sensorHeight        READ sensorHeight       CONSTANT)   ///< Sensor size in millimeters
+    Q_PROPERTY(double   imageWidth          READ imageWidth         CONSTANT)   ///< Image size in pixels
+    Q_PROPERTY(double   imageHeight         READ imageHeight        CONSTANT)   ///< Image size in pixels
+    Q_PROPERTY(double   focalLength         READ focalLength        CONSTANT)   ///< Focal length in millimeters
+    Q_PROPERTY(bool     landscape           READ landscape          CONSTANT)   ///< true: camera is in landscape orientation
+    Q_PROPERTY(bool     fixedOrientation    READ fixedOrientation   CONSTANT)   ///< true: camera is in fixed orientation
+    Q_PROPERTY(double   minTriggerInterval  READ minTriggerInterval CONSTANT)   ///< Minimum time in seconds between each photo taken, 0 for not specified
+
+    QString name                (void) const { return _name; }
+    double  sensorWidth         (void) const { return _sensorWidth; }
+    double  sensorHeight        (void) const { return _sensorHeight; }
+    double  imageWidth          (void) const { return _imageWidth; }
+    double  imageHeight         (void) const { return _imageHeight; }
+    double  focalLength         (void) const { return _focalLength; }
+    bool    landscape           (void) const { return _landscape; }
+    bool    fixedOrientation    (void) const { return _fixedOrientation; }
+    double  minTriggerInterval  (void) const { return _minTriggerInterval; }
 
 private:
     QString _name;
@@ -50,5 +59,3 @@ private:
     bool    _fixedOrientation;
     double  _minTriggerInterval;
 };
-
-#endif
