@@ -383,11 +383,12 @@ void PX4FirmwarePlugin::_mavCommandResult(int vehicleId, int component, int comm
     }
 }
 
-void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
+void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel)
 {
     QString takeoffAltParam("MIS_TAKEOFF_ALT");
 
-    if (qIsNaN(vehicle->altitudeAMSL()->rawValue().toDouble())) {
+    double vehicleAltitudeAMSL = vehicle->altitudeAMSL()->rawValue().toDouble();
+    if (qIsNaN(vehicleAltitudeAMSL)) {
         qgcApp()->showMessage(tr("Unable to takeoff, vehicle position not known."));
         return;
     }
@@ -396,7 +397,9 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
         qgcApp()->showMessage(tr("Unable to takeoff, MIS_TAKEOFF_ALT parameter missing."));
         return;
     }
-    Fact* takeoffAlt = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, takeoffAltParam);
+
+    double takeoffAltRelFromVehicle = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, takeoffAltParam)->rawValue().toDouble();
+    double takeoffAltAMSL = qMax(takeoffAltRel, takeoffAltRelFromVehicle) + vehicleAltitudeAMSL;
 
     connect(vehicle, &Vehicle::mavCommandResult, this, &PX4FirmwarePlugin::_mavCommandResult);
     vehicle->sendMavCommand(vehicle->defaultComponentId(),
@@ -405,7 +408,7 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
                             -1,                             // No pitch requested
                             0, 0,                           // param 2-4 unused
                             NAN, NAN, NAN,                  // No yaw, lat, lon
-                            vehicle->altitudeAMSL()->rawValue().toDouble() + takeoffAlt->rawValue().toDouble());
+                            takeoffAltAMSL);                // AMSL altitude
 }
 
 void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)

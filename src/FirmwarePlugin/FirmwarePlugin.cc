@@ -256,10 +256,11 @@ void FirmwarePlugin::guidedModeLand(Vehicle* vehicle)
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
-void FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
+void FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel)
 {
     // Not supported by generic vehicle
     Q_UNUSED(vehicle);
+    Q_UNUSED(takeoffAltRel);
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
