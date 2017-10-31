@@ -143,6 +143,7 @@ void CameraSpec::setDirty(bool dirty)
 
 void CameraSpec::save(QJsonObject& json) const
 {
+    Q_UNUSED(json);
 #if 0
     QJsonObject saveObject;
 
@@ -192,6 +193,8 @@ void CameraSpec::save(QJsonObject& json) const
 
 bool CameraSpec::load(const QJsonObject& complexObject, QString& errorString)
 {
+    Q_UNUSED(complexObject);
+    Q_UNUSED(errorString);
 #if 0
     QJsonObject v2Object = complexObject;
 
