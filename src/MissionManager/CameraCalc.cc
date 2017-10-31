@@ -150,6 +150,8 @@ void CameraCalc::_recalcTriggerDistance(void)
 
 void CameraCalc::save(QJsonObject& json) const
 {
+    Q_UNUSED(json);
+
 #if 0
     QJsonObject saveObject;
 
@@ -199,6 +201,8 @@ void CameraCalc::save(QJsonObject& json) const
 
 bool CameraCalc::load(const QJsonObject& complexObject, QString& errorString)
 {
+    Q_UNUSED(complexObject);
+    Q_UNUSED(errorString);
 #if 0
     QJsonObject v2Object = complexObject;
 
