@@ -1,5 +1,10 @@
 ## DataPilot Release Changelog
 
+### v1.1.59 - Oct 31 2017
+
+*   Fix first run dialog corner cases
+*   Describe new password requirements
+
 ### v1.1.58 - Oct 30 2017
 
 *   First time settings.
