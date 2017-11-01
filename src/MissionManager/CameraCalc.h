@@ -22,8 +22,8 @@ public:
 
     Q_ENUMS(CameraSpecType)
 
-    Q_PROPERTY(CameraSpecType   cameraSpecType              MEMBER _cameraSpecType          NOTIFY cameraSpecTypeChanged)
-    Q_PROPERTY(QString          knownCameraName             MEMBER _knownCameraName         NOTIFY knownCameraNameChanged)
+    Q_PROPERTY(CameraSpecType   cameraSpecType              READ cameraSpecType     WRITE setCameraSpecType     NOTIFY cameraSpecTypeChanged)
+    Q_PROPERTY(QString          knownCameraName             READ knownCameraName    WRITE setKnownCameraName    NOTIFY knownCameraNameChanged)
     Q_PROPERTY(Fact*            valueSetIsDistance          READ valueSetIsDistance         CONSTANT)                       ///< true: distance specified, resolution calculated
     Q_PROPERTY(Fact*            distanceToSurface           READ distanceToSurface          CONSTANT)                       ///< Distance to surface for image foot print calculation
     Q_PROPERTY(Fact*            imageDensity                READ imageDensity               CONSTANT)                       ///< Image density on surface (cm/px)
@@ -41,6 +41,11 @@ public:
         CameraSpecCustom,
         CameraSpecKnown
     };
+
+    CameraSpecType cameraSpecType(void) const { return _cameraSpecType; }
+    QString knownCameraName(void) const { return _knownCameraName; }
+    void setCameraSpecType(CameraSpecType cameraSpecType);
+    void setKnownCameraName(QString knownCameraName);
 
     Fact* valueSetIsDistance        (void) { return &_valueSetIsDistanceFact; }
     Fact* distanceToSurface         (void) { return &_distanceToSurfaceFact; }
@@ -99,4 +104,6 @@ private:
     static const char* _sideOverlapName;
     static const char* _adjustedFootprintSideName;
     static const char* _adjustedFootprintFrontalName;
+    static const char* _jsonCameraSpecTypeKey;
+    static const char* _jsonKnownCameraNameKey;
 };
