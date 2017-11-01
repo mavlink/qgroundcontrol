@@ -91,7 +91,7 @@ Item {
         borderWidth:        1
         borderColor:        "black"
         interiorColor:      "green"
-        interiorOpacity:    0.5
+        interiorOpacity:    0.25
     }
 
     QGCMapPolygonVisuals {
