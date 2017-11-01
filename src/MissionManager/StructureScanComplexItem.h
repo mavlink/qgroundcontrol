@@ -129,6 +129,9 @@ private:
 
     static const char* _altitudeFactName;
     static const char* _layersFactName;
+
+    static const char* _jsonCameraCalcKey;
+    static const char* _jsonAltitudeRelativeKey;
 };
 
 #endif

@@ -17,22 +17,11 @@ class CameraSpec : public QObject
 
 public:
     CameraSpec(QObject* parent = NULL);
-    CameraSpec(const QString&   name,
-               double           sensorWidth,
-               double           sensorHeight,
-               double           imageWidth,
-               double           imageHeight,
-               double           focalLength,
-               bool             landscape,
-               bool             fixedOrientation,
-               double           minTriggerInterval,
-               QObject*         parent = NULL);
     CameraSpec(const CameraSpec& other, QObject* parent);
 
     const CameraSpec& operator=(const CameraSpec& other);
 
     // These properties are persisted to Json
-    Q_PROPERTY(Fact* name               READ name               CONSTANT)   ///< Camera name
     Q_PROPERTY(Fact* sensorWidth        READ sensorWidth        CONSTANT)   ///< Sensor size in millimeters
     Q_PROPERTY(Fact* sensorHeight       READ sensorHeight       CONSTANT)   ///< Sensor size in millimeters
     Q_PROPERTY(Fact* imageWidth         READ imageWidth         CONSTANT)   ///< Image size in pixels
@@ -42,7 +31,6 @@ public:
     Q_PROPERTY(Fact* fixedOrientation   READ fixedOrientation   CONSTANT)   ///< true: camera is in fixed orientation
     Q_PROPERTY(Fact* minTriggerInterval READ minTriggerInterval CONSTANT)   ///< Minimum time in seconds between each photo taken, 0 for not specified
 
-    Fact* name              (void) { return &_nameFact; }
     Fact* sensorWidth       (void) { return &_sensorWidthFact; }
     Fact* sensorHeight      (void) { return &_sensorHeightFact; }
     Fact* imageWidth        (void) { return &_imageWidthFact; }
@@ -68,7 +56,6 @@ private:
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
-    Fact _nameFact;
     Fact _sensorWidthFact;
     Fact _sensorHeightFact;
     Fact _imageWidthFact;
@@ -78,7 +65,6 @@ private:
     Fact _fixedOrientationFact;
     Fact _minTriggerIntervalFact;
 
-    static const char* _nameName;
     static const char* _sensorWidthName;
     static const char* _sensorHeightName;
     static const char* _imageWidthName;
@@ -87,14 +73,4 @@ private:
     static const char* _landscapeName;
     static const char* _fixedOrientationName;
     static const char* _minTriggerIntervalName;
-
-    static const char* _jsonNameKey;
-    static const char* _jsonSensorWidthKey;
-    static const char* _jsonSensorHeightKey;
-    static const char* _jsonImageWidthKey;
-    static const char* _jsonImageHeightKey;
-    static const char* _jsonFocalLengthKey;
-    static const char* _jsonLandscapeKey;
-    static const char* _jsonFixedOrientationKey;
-    static const char* _jsonMinTriggerIntervalKey;
 };

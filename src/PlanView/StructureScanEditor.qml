@@ -60,7 +60,7 @@ Rectangle {
         QGCLabel {
             anchors.left:   parent.left
             anchors.right:  parent.right
-            text:           qsTr("WARNING: WORK IN PROGRESS. DO NOT FLY. NO BUG REPORTS.")
+            text:           qsTr("WORK IN PROGRESS. CAREFUL!")
             wrapMode:       Text.WordWrap
             color:          qgcPal.warningText
         }
