@@ -19,6 +19,7 @@
 #include "SurveyMissionItem.h"
 #include "FixedWingLandingComplexItem.h"
 #include "StructureScanComplexItem.h"
+#include "StructureScanComplexItem.h"
 #include "JsonHelper.h"
 #include "ParameterManager.h"
 #include "QGroundControlQmlGlobal.h"
@@ -264,11 +265,15 @@ void MissionController::convertToKMLDocument(QDomDocument& document)
 {
     QJsonObject missionJson;
     QmlObjectListModel* visualItems = new QmlObjectListModel();
-    QList<MissionItem*> missionItens;
+    QList<MissionItem*> missionItems;
     QString error;
     save(missionJson);
     _loadItemsFromJson(missionJson, visualItems, error);
-    _convertToMissionItems(visualItems, missionItens, this);
+    _convertToMissionItems(visualItems, missionItems, this);
+
+    if (missionItems.count() == 0) {
+        return;
+    }
 
     float altitude = missionJson[_jsonPlannedHomePositionKey].toArray()[2].toDouble();
 
@@ -276,7 +281,7 @@ void MissionController::convertToKMLDocument(QDomDocument& document)
     QStringList coords;
     // Drop home position
     bool dropPoint = true;
-    for(const auto& item : missionItens) {
+    for(const auto& item : missionItems) {
         if(dropPoint) {
             dropPoint = false;
             continue;
@@ -655,6 +660,15 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
                 nextSequenceNumber = landingItem->lastSequenceNumber() + 1;
                 qCDebug(MissionControllerLog) << "FW Landing Pattern load complete: nextSequenceNumber" << nextSequenceNumber;
                 visualItems->append(landingItem);
+            } else if (complexItemType == StructureScanComplexItem::jsonComplexItemTypeValue) {
+                qCDebug(MissionControllerLog) << "Loading Structure Scan: nextSequenceNumber" << nextSequenceNumber;
+                StructureScanComplexItem* structureItem = new StructureScanComplexItem(_controllerVehicle, visualItems);
+                if (!structureItem->load(itemObject, nextSequenceNumber++, errorString)) {
+                    return false;
+                }
+                nextSequenceNumber = structureItem->lastSequenceNumber() + 1;
+                qCDebug(MissionControllerLog) << "Structure Scan load complete: nextSequenceNumber" << nextSequenceNumber;
+                visualItems->append(structureItem);
             } else if (complexItemType == MissionSettingsItem::jsonComplexItemTypeValue) {
                 qCDebug(MissionControllerLog) << "Loading Mission Settings: nextSequenceNumber" << nextSequenceNumber;
                 MissionSettingsItem* settingsItem = new MissionSettingsItem(_controllerVehicle, visualItems);
