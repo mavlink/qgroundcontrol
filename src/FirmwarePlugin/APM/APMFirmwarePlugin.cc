@@ -906,30 +906,40 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
 }
 
-void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
+void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
 {
-    _guidedModeTakeoff(vehicle);
+    _guidedModeTakeoff(vehicle, altitudeRel);
 }
 
-bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle)
+bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
 {
     if (!vehicle->multiRotor() && !vehicle->vtol()) {
         qgcApp()->showMessage(tr("Vehicle does not support guided takeoff"));
         return false;
     }
 
+    double vehicleAltitudeAMSL = vehicle->altitudeAMSL()->rawValue().toDouble();
+    if (qIsNaN(vehicleAltitudeAMSL)) {
+        qgcApp()->showMessage(tr("Unable to takeoff, vehicle position not known."));
+        return false;
+    }
+
     QString takeoffAltParam(vehicle->vtol() ? QStringLiteral("Q_RTL_ALT") : QStringLiteral("PILOT_TKOFF_ALT"));
     float paramDivisor = vehicle->vtol() ? 1.0 : 100.0; // PILOT_TAKEOFF_ALT is in centimeters
 
-    float takeoffAlt = 0;
+    float takeoffAltRel = 0;
     if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, takeoffAltParam)) {
         Fact* takeoffAltFact = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, takeoffAltParam);
-        takeoffAlt = takeoffAltFact->rawValue().toDouble();
+        takeoffAltRel = takeoffAltFact->rawValue().toDouble();
     }
-    if (takeoffAlt <= 0) {
-        takeoffAlt = 2.5;
+    if (takeoffAltRel <= 0) {
+        takeoffAltRel = 2.5;
     } else {
-        takeoffAlt /= paramDivisor;   // centimeters -> meters
+        takeoffAltRel /= paramDivisor;   // centimeters -> meters
+    }
+
+    if (!qIsNaN(altitudeRel) && altitudeRel > takeoffAltRel) {
+        takeoffAltRel = altitudeRel;
     }
 
     if (!_setFlightModeAndValidate(vehicle, "Guided")) {
@@ -947,7 +957,7 @@ bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle)
                             MAV_CMD_NAV_TAKEOFF,
                             true, // show error
                             0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                            takeoffAlt);
+                            takeoffAltRel);                     // Relative altitude
 
     return true;
 }
@@ -958,7 +968,7 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
     double currentAlt = vehicle->altitudeRelative()->rawValue().toDouble();
 
     if (!vehicle->flying()) {
-        if (_guidedModeTakeoff(vehicle)) {
+        if (_guidedModeTakeoff(vehicle, qQNaN())) {
 
             // Wait for vehicle to get off ground before switching to auto (10 seconds)
             bool didTakeoff = false;
