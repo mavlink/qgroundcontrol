@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.62 - Nov 1 2017
+
+*   Fix text edit field (camera parameters)
+
 ### v1.1.61 - Oct 31 2017
 
 *   Thermal image PIP Mode not overlapping indicators. (CGOET)
