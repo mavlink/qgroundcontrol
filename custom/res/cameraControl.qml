@@ -316,6 +316,7 @@ Rectangle {
             height: mainWindow.height
             anchors.centerIn: parent
             function showEditFact(fact) {
+                factEditor.text = fact.valueString
                 factEdit.fact = fact
                 factEdit.visible = true
             }
@@ -523,7 +524,6 @@ Rectangle {
                                             width:      parent._isEdit ? _editFieldWidth : 0
                                             text:       parent._fact.valueString
                                             onClicked: {
-                                                console.log(parent._fact.shortDescription)
                                                 showEditFact(parent._fact)
                                             }
                                         }
@@ -755,7 +755,6 @@ Rectangle {
                             text: qsTr("Close")
                             anchors.horizontalCenter: parent.horizontalCenter
                             onClicked: {
-                                console.log('Done with ' + factEdit.fact.shortDescription)
                                 factEditor.completeEditing()
                                 hideEditFact()
                             }
