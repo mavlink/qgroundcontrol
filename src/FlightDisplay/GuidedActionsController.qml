@@ -208,6 +208,8 @@ Item {
             confirmDialog.title = takeoffTitle
             confirmDialog.message = takeoffMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showTakeoff })
+            altitudeSlider.reset()
+            altitudeSlider.visible = true
             break;
         case actionStartMission:
             confirmDialog.title = startMissionTitle
@@ -302,7 +304,7 @@ Item {
             _activeVehicle.guidedModeLand()
             break
         case actionTakeoff:
-            _activeVehicle.guidedModeTakeoff()
+            _activeVehicle.guidedModeTakeoff(actionData)
             break
         case actionResumeMission:
         case actionResumeMissionUploadFail:

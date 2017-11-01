@@ -76,7 +76,7 @@ public:
     AutoPilotPlugin*    autopilotPlugin                 (Vehicle* vehicle) override;
     bool                isCapable                       (const Vehicle *vehicle, FirmwareCapabilities capabilities) override;
     void                setGuidedMode                   (Vehicle* vehicle, bool guidedMode) override;
-    void                guidedModeTakeoff               (Vehicle* vehicle) override;
+    void                guidedModeTakeoff               (Vehicle* vehicle, double altitudeRel) override;
     void                guidedModeGotoLocation          (Vehicle* vehicle, const QGeoCoordinate& gotoCoord) override;
     void                startMission                    (Vehicle* vehicle) override;
     QStringList         flightModes                     (Vehicle* vehicle) override;
@@ -123,7 +123,7 @@ private:
     void _handleIncomingHeartbeat(Vehicle* vehicle, mavlink_message_t* message);
     void _handleOutgoingParamSet(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
     void _soloVideoHandshake(Vehicle* vehicle);    
-    bool _guidedModeTakeoff(Vehicle* vehicle);
+    bool _guidedModeTakeoff(Vehicle* vehicle, double altitudeRel);
 
     // Any instance data here must be global to all vehicles
     // Vehicle specific data should go into APMFirmwarePluginInstanceData
