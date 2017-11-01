@@ -64,6 +64,8 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
     , _structureScanMissionItemName(tr("Structure Scan"))
     , _appSettings(qgcApp()->toolbox()->settingsManager()->appSettings())
     , _progressPct(0)
+    , _currentPlanViewIndex(-1)
+    , _currentPlanViewItem(NULL)
 {
     _resetMissionFlightStatus();
     managerVehicleChanged(_managerVehicle);
@@ -1859,5 +1861,35 @@ void MissionController::_managerRemoveAllComplete(bool error)
     if (!error) {
         // Remove all from vehicle so we always update
         showPlanFromManagerVehicle();
+    }
+}
+
+int MissionController::currentPlanViewIndex(void) const
+{
+    return _currentPlanViewIndex;
+}
+
+VisualMissionItem* MissionController::currentPlanViewItem(void) const
+{
+    return _currentPlanViewItem;
+}
+
+void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
+{
+    if(_visualItems && (force || sequenceNumber != _currentPlanViewIndex)) {
+        _currentPlanViewItem  = NULL;
+        _currentPlanViewIndex = -1;
+        for (int i = 0; i < _visualItems->count(); i++) {
+            VisualMissionItem* pVI = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+            if (pVI && pVI->sequenceNumber() == sequenceNumber) {
+                pVI->setIsCurrentItem(true);
+                _currentPlanViewItem  = pVI;
+                _currentPlanViewIndex = sequenceNumber;
+            } else {
+                pVI->setIsCurrentItem(false);
+            }
+        }
+        emit currentPlanViewIndexChanged();
+        emit currentPlanViewItemChanged();
     }
 }
