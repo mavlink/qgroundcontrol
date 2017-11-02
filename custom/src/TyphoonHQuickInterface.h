@@ -412,6 +412,7 @@ private slots:
     void    _copyCompleted              (quint32 totalCount, quint32 curCount);
     void    _exportMessage              (QString message);
     void    _restart                    ();
+    void    _imageFileChanged           ();
 
 private:
     void    _saveWifiConfigurations     ();
