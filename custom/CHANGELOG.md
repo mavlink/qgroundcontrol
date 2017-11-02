@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.1.63 - Nov 2 2017
+
+*   Upstream merge only. Last 1.1.x version.
+
 ### v1.1.62 - Nov 1 2017
 
 *   Fix text edit field (camera parameters)
