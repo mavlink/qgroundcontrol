@@ -9,15 +9,12 @@
 		<file alias="JoystickIndicator.qml">../src/ui/toolbar/JoystickIndicator.qml</file>
 	</qresource>
 	<qresource prefix="/qml">
-		<file alias="AirframeComponent.qml">../src/AutoPilotPlugins/PX4/AirframeComponent.qml</file>
-		<file alias="AirframeComponentSummary.qml">../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
 		<file alias="AppSettings.qml">../src/ui/AppSettings.qml</file>
 		<file alias="DebugWindow.qml">../src/ui/preferences/DebugWindow.qml</file>
 		<file alias="SyslinkComponent.qml">../src/AutoPilotPlugins/Common/SyslinkComponent.qml</file>
 		<file alias="FirmwareUpgrade.qml">../src/VehicleSetup/FirmwareUpgrade.qml</file>
 		<file alias="FlightDisplayViewDummy.qml">../src/FlightDisplay/FlightDisplayViewDummy.qml</file>
 		<file alias="FlightDisplayViewUVC.qml">../src/FlightDisplay/FlightDisplayViewUVC.qml</file>
-		<file alias="FlightModesComponentSummary.qml">../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
 		<file alias="GeneralSettings.qml">../src/ui/preferences/GeneralSettings.qml</file>
 		<file alias="GeoTagPage.qml">../src/AnalyzeView/GeoTagPage.qml</file>
 		<file alias="MavlinkConsolePage.qml">../src/AnalyzeView/MavlinkConsolePage.qml</file>
@@ -30,10 +27,9 @@
 		<file alias="MockLinkSettings.qml">../src/ui/preferences/MockLinkSettings.qml</file>
 		<file alias="MotorComponent.qml">../src/AutoPilotPlugins/Common/MotorComponent.qml</file>
 		<file alias="OfflineMap.qml">../src/QtLocationPlugin/QMLControl/OfflineMap.qml</file>
-		<file alias="PowerComponent.qml">../src/AutoPilotPlugins/PX4/PowerComponent.qml</file>
-		<file alias="PowerComponentSummary.qml">../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml</file>
 		<file alias="QGroundControl/Controls/AnalyzePage.qml">../src/AnalyzeView/AnalyzePage.qml</file>
 		<file alias="QGroundControl/Controls/AppMessages.qml">../src/QmlControls/AppMessages.qml</file>
+		<file alias="QGroundControl/Controls/CameraCalc.qml">../src/PlanView/CameraCalc.qml</file>
 		<file alias="QGroundControl/Controls/CameraSection.qml">../src/PlanView/CameraSection.qml</file>
 		<file alias="QGroundControl/Controls/ClickableColor.qml">../src/QmlControls/ClickableColor.qml</file>
 		<file alias="QGroundControl/Controls/DropButton.qml">../src/QmlControls/DropButton.qml</file>
@@ -145,9 +141,6 @@
 		<file alias="QGroundControl/ScreenTools/ScreenTools.qml">../src/QmlControls/ScreenTools.qml</file>
 		<file alias="QmlTest.qml">../src/QmlControls/QmlTest.qml</file>
 		<file alias="RadioComponent.qml">../src/AutoPilotPlugins/Common/RadioComponent.qml</file>
-		<file alias="SensorsComponent.qml">../src/AutoPilotPlugins/PX4/SensorsComponent.qml</file>
-		<file alias="SensorsComponentSummary.qml">../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml</file>
-		<file alias="SensorsComponentSummaryFixedWing.qml">../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml</file>
 		<file alias="SetupParameterEditor.qml">../src/VehicleSetup/SetupParameterEditor.qml</file>
 		<file alias="SetupView.qml">../src/VehicleSetup/SetupView.qml</file>
 		<file alias="SimpleItemEditor.qml">../src/PlanView/SimpleItemEditor.qml</file>
@@ -184,6 +177,8 @@
 		<file alias="FWLandingPattern.FactMetaData.json">../src/MissionManager/FWLandingPattern.FactMetaData.json</file>
 		<file alias="USBBoardInfo.json">../src/comm/USBBoardInfo.json</file>
 		<file alias="CameraSection.FactMetaData.json">../src/MissionManager/CameraSection.FactMetaData.json</file>
+		<file alias="CameraCalc.FactMetaData.json">../src/MissionManager/CameraCalc.FactMetaData.json</file>
+		<file alias="CameraSpec.FactMetaData.json">../src/MissionManager/CameraSpec.FactMetaData.json</file>
 		<file alias="SpeedSection.FactMetaData.json">../src/MissionManager/SpeedSection.FactMetaData.json</file>
 		<file alias="MissionSettings.FactMetaData.json">../src/MissionManager/MissionSettings.FactMetaData.json</file>
 		<file alias="Vehicle/VehicleFact.json">../src/Vehicle/VehicleFact.json</file>
