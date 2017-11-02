@@ -143,6 +143,7 @@ Rectangle {
                     text:           qsTr("Vehicle yaw")
                     exclusiveGroup: yawRadiosGroup
                     checked:        !!missionItem.yawVehicleToStructure
+                    enabled:        false
                 }
 
                 QGCRadioButton
@@ -150,6 +151,7 @@ Rectangle {
                     text:           qsTr("Gimbal yaw")
                     exclusiveGroup: yawRadiosGroup
                     checked:        !missionItem.yawVehicleToStructure
+                    enabled:        false
                 }
             }
 
