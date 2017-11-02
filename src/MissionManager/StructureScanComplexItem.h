@@ -36,6 +36,7 @@ public:
     Q_PROPERTY(double           cameraMinTriggerInterval    MEMBER _cameraMinTriggerInterval    NOTIFY cameraMinTriggerIntervalChanged)
     Q_PROPERTY(QGCMapPolygon*   structurePolygon            READ structurePolygon               CONSTANT)
     Q_PROPERTY(QGCMapPolygon*   flightPolygon               READ flightPolygon                  CONSTANT)
+    Q_PROPERTY(bool             yawVehicleToStructure       MEMBER _yawVehicleToStructure       NOTIFY yawVehicleToStructureChanged)    ///< true: vehicle yaws to point to structure, false: gimbal yaws to point to structure
 
     CameraCalc* cameraCalc  (void) { return &_cameraCalc; }
     Fact* altitude          (void) { return &_altitudeFact; }
@@ -91,6 +92,7 @@ signals:
     void timeBetweenShotsChanged        (void);
     void cameraMinTriggerIntervalChanged(double cameraMinTriggerInterval);
     void altitudeRelativeChanged        (bool altitudeRelative);
+    void yawVehicleToStructureChanged   (bool yawVehicleToStructure);
 
 private slots:
     void _setDirty(void);
@@ -100,6 +102,7 @@ private slots:
     void _clearInternal(void);
     void _updateCoordinateAltitudes(void);
     void _rebuildFlightPolygon(void);
+    void _recalcCameraShots(void);
 
 private:
     void _setExitCoordinate(const QGeoCoordinate& coordinate);
@@ -121,6 +124,7 @@ private:
     double          _cameraMinTriggerInterval;
     double          _cruiseSpeed;
     CameraCalc      _cameraCalc;
+    bool            _yawVehicleToStructure;
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 
@@ -132,6 +136,7 @@ private:
 
     static const char* _jsonCameraCalcKey;
     static const char* _jsonAltitudeRelativeKey;
+    static const char* _jsonYawVehicleToStructureKey;
 };
 
 #endif
