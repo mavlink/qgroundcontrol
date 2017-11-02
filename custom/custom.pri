@@ -3,9 +3,11 @@ message("Adding Yuneec Typhoon H520 plugin")
 #-- Version control
 #   Major and minor versions are defined here (manually)
 
+#-- IMPORTANT: When changing these, make sure to update s3_deploy.sh and update_manifest.sh
+
 DATA_PILOT_VER_MAJOR = 1
-DATA_PILOT_VER_MINOR = 1
-DATA_PILOT_VER_FIRST_BUILD = 3500
+DATA_PILOT_VER_MINOR = 2
+DATA_PILOT_VER_FIRST_BUILD = 3564
 
 #   Build number is automatic
 
