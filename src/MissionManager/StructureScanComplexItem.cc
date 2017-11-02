@@ -41,7 +41,7 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
     , _cameraShots              (0)
     , _cameraMinTriggerInterval (0)
     , _cameraCalc               (vehicle)
-    , _yawVehicleToStructure    (true)
+    , _yawVehicleToStructure    (false)
     , _altitudeFact             (0, _altitudeFactName,              FactMetaData::valueTypeDouble)
     , _layersFact               (0, _layersFactName,                FactMetaData::valueTypeUint32)
 {
