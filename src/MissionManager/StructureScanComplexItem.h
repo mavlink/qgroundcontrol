@@ -16,6 +16,7 @@
 #include "SettingsFact.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapPolygon.h"
+#include "CameraCalc.h"
 
 Q_DECLARE_LOGGING_CATEGORY(StructureScanComplexItemLog)
 
@@ -26,11 +27,9 @@ class StructureScanComplexItem : public ComplexMissionItem
 public:
     StructureScanComplexItem(Vehicle* vehicle, QObject* parent = NULL);
 
+    Q_PROPERTY(CameraCalc*      cameraCalc                  READ cameraCalc                     CONSTANT)
     Q_PROPERTY(Fact*            altitude                    READ altitude                       CONSTANT)
     Q_PROPERTY(Fact*            layers                      READ layers                         CONSTANT)
-    Q_PROPERTY(Fact*            layerDistance               READ layerDistance                  CONSTANT)
-    Q_PROPERTY(Fact*            cameraTriggerDistance       READ cameraTriggerDistance          CONSTANT)
-    Q_PROPERTY(Fact*            scanDistance                READ scanDistance                   CONSTANT)
     Q_PROPERTY(bool             altitudeRelative            MEMBER _altitudeRelative            NOTIFY altitudeRelativeChanged)
     Q_PROPERTY(int              cameraShots                 READ cameraShots                    NOTIFY cameraShotsChanged)
     Q_PROPERTY(double           timeBetweenShots            READ timeBetweenShots               NOTIFY timeBetweenShotsChanged)
@@ -38,14 +37,12 @@ public:
     Q_PROPERTY(QGCMapPolygon*   structurePolygon            READ structurePolygon               CONSTANT)
     Q_PROPERTY(QGCMapPolygon*   flightPolygon               READ flightPolygon                  CONSTANT)
 
-    Fact* altitude              (void) { return &_altitudeFact; }
-    Fact* layers                (void) { return &_layersFact; }
-    Fact* layerDistance         (void) { return &_layerDistanceFact; }
-    Fact* cameraTriggerDistance (void) { return &_cameraTriggerDistanceFact; }
-    Fact* scanDistance          (void) { return &_scanDistanceFact; }
+    CameraCalc* cameraCalc  (void) { return &_cameraCalc; }
+    Fact* altitude          (void) { return &_altitudeFact; }
+    Fact* layers            (void) { return &_layersFact; }
 
     int             cameraShots     (void) const;
-    double          timeBetweenShots(void) const;
+    double          timeBetweenShots(void);
     QGCMapPolygon*  structurePolygon(void) { return &_structurePolygon; }
     QGCMapPolygon*  flightPolygon   (void) { return &_flightPolygon; }
 
@@ -123,20 +120,18 @@ private:
     double          _timeBetweenShots;
     double          _cameraMinTriggerInterval;
     double          _cruiseSpeed;
+    CameraCalc      _cameraCalc;
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 
     Fact    _altitudeFact;
     Fact    _layersFact;
-    Fact    _layerDistanceFact;
-    Fact    _cameraTriggerDistanceFact;
-    Fact    _scanDistanceFact;
 
     static const char* _altitudeFactName;
     static const char* _layersFactName;
-    static const char* _layerDistanceFactName;
-    static const char* _cameraTriggerDistanceFactName;
-    static const char* _scanDistanceFactName;
+
+    static const char* _jsonCameraCalcKey;
+    static const char* _jsonAltitudeRelativeKey;
 };
 
 #endif

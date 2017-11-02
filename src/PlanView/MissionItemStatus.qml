@@ -61,7 +61,7 @@ Rectangle {
         orientation:            ListView.Horizontal
         spacing:                0
         clip:                   true
-        currentIndex:           _currentMissionIndex
+        currentIndex:           _missionController.currentPlanViewIndex
 
         onCountChanged: {
             var calcLength = (statusListView.count + 1)*statusListView.contentItem.children[0].width

@@ -53,7 +53,7 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(const QString& title, QAction* action, 
 
 void QGCMAVLinkInspector::_vehicleAdded(Vehicle* vehicle)
 {
-    ui->systemComboBox->addItem(QString("Vehicle %1").arg(vehicle->id()), vehicle->id());
+    ui->systemComboBox->addItem(tr("Vehicle %1").arg(vehicle->id()), vehicle->id());
 
     // Add a tree for a new UAS
     addUAStoTree(vehicle->id());

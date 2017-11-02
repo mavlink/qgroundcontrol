@@ -37,16 +37,16 @@ SetupPage {
             // Help text which is shown both in the status text area prior to pressing a cal button and in the
             // pre-calibration dialog.
 
-            readonly property string orientationHelpSet:    "If the orientation is in the direction of flight, select None."
-            readonly property string orientationHelpCal:    "Before calibrating make sure orientation settings are correct. " + orientationHelpSet
-            readonly property string compassRotationText:   "If the compass or GPS module is mounted in flight direction, leave the default value (None)"
+            readonly property string orientationHelpSet:    qsTr("If the orientation is in the direction of flight, select None.")
+            readonly property string orientationHelpCal:    qsTr("Before calibrating make sure orientation settings are correct. ") + orientationHelpSet
+            readonly property string compassRotationText:   qsTr("If the compass or GPS module is mounted in flight direction, leave the default value (None)")
 
-            readonly property string compassHelp:   "For Compass calibration you will need to rotate your vehicle through a number of positions."
-            readonly property string gyroHelp:      "For Gyroscope calibration you will need to place your vehicle on a surface and leave it still."
-            readonly property string accelHelp:     "For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds."
-            readonly property string levelHelp:     "To level the horizon you need to place the vehicle in its level flight position and press OK."
+            readonly property string compassHelp:   qsTr("For Compass calibration you will need to rotate your vehicle through a number of positions.")
+            readonly property string gyroHelp:      qsTr("For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.")
+            readonly property string accelHelp:     qsTr("For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds.")
+            readonly property string levelHelp:     qsTr("To level the horizon you need to place the vehicle in its level flight position and press OK.")
 
-            readonly property string statusTextAreaDefaultText: "Start the individual calibration steps by clicking one of the buttons to the left."
+            readonly property string statusTextAreaDefaultText: qsTr("Start the individual calibration steps by clicking one of the buttons to the left.")
 
             // Used to pass help text to the preCalibrationDialog dialog
             property string preCalibrationDialogHelp
@@ -54,8 +54,8 @@ SetupPage {
             property string _postCalibrationDialogText
             property var    _postCalibrationDialogParams
 
-            readonly property string _badCompassCalText: "The calibration for Compass %1 appears to be poor. " +
-                                                         "Check the compass position within your vehicle and re-do the calibration."
+            readonly property string _badCompassCalText: qsTr("The calibration for Compass %1 appears to be poor. ") +
+                                                         qsTr("Check the compass position within your vehicle and re-do the calibration.")
 
             readonly property int sideBarH1PointSize:  ScreenTools.mediumFontPointSize
             readonly property int mainTextH1PointSize: ScreenTools.mediumFontPointSize // Seems to be unused
@@ -157,7 +157,7 @@ SetupPage {
                 var usingUDP = controller.usingUDPLink()
                 var isSub = QGroundControl.multiVehicleManager.activeVehicle.sub;
                 if (usingUDP && !isSub) {
-                    showMessage("Sensor Calibration", "Performing sensor calibration over a WiFi connection can be unreliable. If you run into problems try using a direct USB connection instead.", StandardButton.Ok)
+                    showMessage(qsTr("Sensor Calibration"), qsTr("Performing sensor calibration over a WiFi connection can be unreliable. If you run into problems try using a direct USB connection instead."), StandardButton.Ok)
                 }
             }
 
@@ -170,7 +170,7 @@ SetupPage {
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     spacing:        Math.round(ScreenTools.defaultFontPixelHeight / 2)
-                    visible:        sensorParams.rgCompassAvailable[index]
+                    visible:        sensorParams.rgCompassAvailable[index] && sensorParams.rgCompassUseFact[index].value
 
                     property real greenMaxThreshold:   8 * (sensorParams.rgCompassExternal[index] ? 1 : 2)
                     property real yellowMaxThreshold:  15 * (sensorParams.rgCompassExternal[index] ? 1 : 2)
@@ -220,16 +220,16 @@ SetupPage {
                         spacing:            Math.round(ScreenTools.defaultFontPixelHeight / 4)
 
                         QGCLabel {
-                            text: "Compass " + (index+1) + " " +
-                                  (sensorParams.rgCompassPrimary[index] ? "(primary" : "(secondary") +
+                            text: qsTr("Compass ") + (index+1) + " " +
+                                  (sensorParams.rgCompassPrimary[index] ? qsTr("(primary") : qsTr("(secondary")) +
                                   (sensorParams.rgCompassExternalParamAvailable[index] ?
-                                       (sensorParams.rgCompassExternal[index] ? ", external" : ", internal" ) :
+                                       (sensorParams.rgCompassExternal[index] ? qsTr(", external") : qsTr(", internal" )) :
                                        "") +
                                   ")"
                         }
 
                         FactCheckBox {
-                            text:       "Use Compass"
+                            text:       qsTr("Use Compass")
                             fact:       sensorParams.rgCompassUseFact[index]
                             visible:    sensorParams.rgCompassUseParamAvailable[index] && !sensorParams.rgCompassPrimary[index]
                         }
@@ -274,10 +274,10 @@ SetupPage {
                     visible: sensorParams.rgCompassAvailable[index]
 
                     QGCLabel {
-                        text: "Compass " + (index+1) + " " +
-                              (sensorParams.rgCompassPrimary[index] ? "(primary" : "(secondary") +
+                        text: qsTr("Compass ") + (index+1) + " " +
+                              (sensorParams.rgCompassPrimary[index] ? qsTr("(primary") :qsTr( "(secondary")) +
                               (sensorParams.rgCompassExternalParamAvailable[index] ?
-                                   (sensorParams.rgCompassExternal[index] ? ", external" : ", internal" ) :
+                                   (sensorParams.rgCompassExternal[index] ? qsTr(", external") : qsTr(", internal") ) :
                                    "") +
                               ")"
                     }
@@ -288,7 +288,7 @@ SetupPage {
                         spacing:            Math.round(ScreenTools.defaultFontPixelHeight / 4)
 
                         FactCheckBox {
-                            text:       "Use Compass"
+                            text:       qsTr("Use Compass")
                             fact:       sensorParams.rgCompassUseFact[index]
                             visible:    sensorParams.rgCompassUseParamAvailable[index] && !sensorParams.rgCompassPrimary[index]
                         }
@@ -389,38 +389,38 @@ SetupPage {
                                 anchors.left:   parent.left
                                 anchors.right:  parent.right
                                 wrapMode:       Text.WordWrap
-                                text:           "This is recommended for vehicles that have only an internal compass and on vehicles where there is significant interference on the compass from the motors, power wires, etc. " +
-                                                "CompassMot only works well if you have a battery current monitor because the magnetic interference is linear with current drawn. " +
-                                                "It is technically possible to set-up CompassMot using throttle but this is not recommended."
+                                text:           qsTr("This is recommended for vehicles that have only an internal compass and on vehicles where there is significant interference on the compass from the motors, power wires, etc. ") +
+                                                qsTr("CompassMot only works well if you have a battery current monitor because the magnetic interference is linear with current drawn. ") +
+                                                qsTr("It is technically possible to set-up CompassMot using throttle but this is not recommended.")
                             }
 
                             QGCLabel {
                                 anchors.left:   parent.left
                                 anchors.right:  parent.right
                                 wrapMode:       Text.WordWrap
-                                text:           "Disconnect your props, flip them over and rotate them one position around the frame. " +
-                                                "In this configuration they should push the copter down into the ground when the throttle is raised."
+                                text:           qsTr("Disconnect your props, flip them over and rotate them one position around the frame. ") +
+                                                qsTr("In this configuration they should push the copter down into the ground when the throttle is raised.")
                             }
 
                             QGCLabel {
                                 anchors.left:   parent.left
                                 anchors.right:  parent.right
                                 wrapMode:       Text.WordWrap
-                                text:           "Secure the copter (perhaps with tape) so that it does not move."
+                                text:           qsTr("Secure the copter (perhaps with tape) so that it does not move.")
                             }
 
                             QGCLabel {
                                 anchors.left:   parent.left
                                 anchors.right:  parent.right
                                 wrapMode:       Text.WordWrap
-                                text:           "Turn on your transmitter and keep throttle at zero."
+                                text:           qsTr("Turn on your transmitter and keep throttle at zero.")
                             }
 
                             QGCLabel {
                                 anchors.left:   parent.left
                                 anchors.right:  parent.right
                                 wrapMode:       Text.WordWrap
-                                text:           "Click Ok to start CompassMot calibration."
+                                text:           qsTr("Click Ok to start CompassMot calibration.")
                             }
                         } // Column
                     } // QGCFlickable

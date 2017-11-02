@@ -1,0 +1,71 @@
+[
+{
+    "name":             "Name",
+    "shortDescription": "Camera name.",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "SensorWidth",
+    "shortDescription": "Width of camera image sensor.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              1,
+    "units":            "mm",
+    "defaultValue":     6.17
+},
+{
+    "name":             "SensorHeight",
+    "shortDescription": "Height of camera image sensor.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              1,
+    "units":            "mm",
+    "defaultValue":     4.55
+},
+{
+    "name":             "ImageWidth",
+    "shortDescription": "Camera image resolution width.",
+    "type":             "uint32",
+    "min":              1,
+    "units":            "px",
+    "defaultValue":     4000
+},
+{
+    "name":             "ImageHeight",
+    "shortDescription": "Camera image resolution height.",
+    "type":             "uint32",
+    "min":              1,
+    "units":            "px",
+    "defaultValue":     3000
+},
+{
+    "name":             "FocalLength",
+    "shortDescription": "Focal length of camera lens.",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "min":              1,
+    "units":            "mm",
+    "defaultValue":     4.5
+},
+{
+    "name":             "Landscape",
+    "shortDescription": "Camera on vehicle is in landscape orientation.",
+    "type":             "bool",
+    "defaultValue":     1
+},
+{
+    "name":             "FixedOrientation",
+    "shortDescription": "Camera orientation ix fixed and cannot be changed.",
+    "type":             "bool",
+    "defaultValue":     0
+},
+{
+    "name":             "MinTriggerInterval",
+    "shortDescription": "Minimum amount of time between each camera trigger.",
+    "type":             "double",
+    "min":              0.1,
+    "units":            "secs",
+    "defaultValue":     1.0
+}
+]

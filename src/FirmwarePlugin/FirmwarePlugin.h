@@ -128,7 +128,7 @@ public:
     virtual void guidedModeLand(Vehicle* vehicle);
 
     /// Command vehicle to takeoff from current location to a firmware specific height.
-    virtual void guidedModeTakeoff(Vehicle* vehicle);
+    virtual void guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel);
 
     /// Command the vehicle to start the mission
     virtual void startMission(Vehicle* vehicle);
@@ -296,7 +296,7 @@ public:
     virtual bool isVtol(const Vehicle* vehicle) const;
 
     // FIXME: Hack workaround for non pluginize FollowMe support
-    static const char* px4FollowMeFlightMode;
+    static const QString px4FollowMeFlightMode;
 
 protected:
     // Arms the vehicle with validation and retries

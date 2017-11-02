@@ -144,10 +144,6 @@ install:
 before_script:
   - cd ${TRAVIS_BUILD_DIR}
 
-  # grab latest PX4 parameter and airframe metadata
-  - wget --quiet http://px4-travis.s3.amazonaws.com/Firmware/master/parameters.xml -O src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml
-  - wget --quiet http://px4-travis.s3.amazonaws.com/Firmware/master/airframes.xml -O src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml
-
   # switch android config from installer to release if the android storepass isn't available
   - if [[ "${SPEC}" = "android-g++" && "${CONFIG}" = "installer" && -z ${ANDROID_STOREPASS} ]]; then
         export CONFIG=release;

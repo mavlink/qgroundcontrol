@@ -162,9 +162,7 @@ bool APMFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities c
     uint32_t available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability;
     if (vehicle->multiRotor()) {
         available |= TakeoffVehicleCapability;
-    } else if (vehicle->fixedWing() || vehicle->vtol()) {
-        // Due to the way ArduPilot marks a vtol aircraft, we don't know if something is a vtol at initial connection.
-        // So we always enabled takeoff for fixed wing.
+    } else if (vehicle->vtol()) {
         available |= TakeoffVehicleCapability;
     }
 
@@ -356,6 +354,13 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_mess
                 int supportedMinorNumber = -1;
 
                 switch (vehicle->vehicleType()) {
+                case MAV_TYPE_VTOL_DUOROTOR:
+                case MAV_TYPE_VTOL_QUADROTOR:
+                case MAV_TYPE_VTOL_TILTROTOR:
+                case MAV_TYPE_VTOL_RESERVED2:
+                case MAV_TYPE_VTOL_RESERVED3:
+                case MAV_TYPE_VTOL_RESERVED4:
+                case MAV_TYPE_VTOL_RESERVED5:
                 case MAV_TYPE_FIXED_WING:
                     supportedMajorNumber = 3;
                     supportedMinorNumber = 4;
@@ -376,7 +381,7 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_mess
 
                 if (supportedMajorNumber != -1) {
                     if (firmwareVersion.majorNumber() < supportedMajorNumber || firmwareVersion.minorNumber() < supportedMinorNumber) {
-                        qgcApp()->showMessage(QString("QGroundControl fully supports Version %1.%2 and above. You are using a version prior to that. This combination is untested, you may run into unpredictable results.").arg(supportedMajorNumber).arg(supportedMinorNumber));
+                        qgcApp()->showMessage(tr("QGroundControl fully supports Version %1.%2 and above. You are using a version prior to that. This combination is untested, you may run into unpredictable results.").arg(supportedMajorNumber).arg(supportedMinorNumber));
                     }
                 }
             }
@@ -604,6 +609,13 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
         case MAV_TYPE_HELICOPTER:
             vehicle->setFirmwareVersion(3, 4, 0);
             break;
+        case MAV_TYPE_VTOL_DUOROTOR:
+        case MAV_TYPE_VTOL_QUADROTOR:
+        case MAV_TYPE_VTOL_TILTROTOR:
+        case MAV_TYPE_VTOL_RESERVED2:
+        case MAV_TYPE_VTOL_RESERVED3:
+        case MAV_TYPE_VTOL_RESERVED4:
+        case MAV_TYPE_VTOL_RESERVED5:
         case MAV_TYPE_FIXED_WING:
             vehicle->setFirmwareVersion(3, 5, 0);
             break;
@@ -776,6 +788,13 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
             }
         }
         return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.5.xml");
+    case MAV_TYPE_VTOL_DUOROTOR:
+    case MAV_TYPE_VTOL_QUADROTOR:
+    case MAV_TYPE_VTOL_TILTROTOR:
+    case MAV_TYPE_VTOL_RESERVED2:
+    case MAV_TYPE_VTOL_RESERVED3:
+    case MAV_TYPE_VTOL_RESERVED4:
+    case MAV_TYPE_VTOL_RESERVED5:
     case MAV_TYPE_FIXED_WING:
         if (majorVersion < 3) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.3.xml");
@@ -858,7 +877,7 @@ void APMFirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
 void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange)
 {
     if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
-        qgcApp()->showMessage(QStringLiteral("Unable to change altitude, vehicle altitude not known."));
+        qgcApp()->showMessage(tr("Unable to change altitude, vehicle altitude not known."));
         return;
     }
 
@@ -887,42 +906,40 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
 }
 
-bool APMFirmwarePlugin::isVtol(const Vehicle* vehicle) const
+void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
 {
-    if (vehicle->fixedWing()) {
-        if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("Q_ENABLE")) &&
-            vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("Q_ENABLE"))->rawValue().toBool()) {
-            return true;
-        }
-    }
-
-    return false;
+    _guidedModeTakeoff(vehicle, altitudeRel);
 }
 
-void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
-{
-    _guidedModeTakeoff(vehicle);
-}
-
-bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle)
+bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
 {
     if (!vehicle->multiRotor() && !vehicle->vtol()) {
         qgcApp()->showMessage(tr("Vehicle does not support guided takeoff"));
         return false;
     }
 
+    double vehicleAltitudeAMSL = vehicle->altitudeAMSL()->rawValue().toDouble();
+    if (qIsNaN(vehicleAltitudeAMSL)) {
+        qgcApp()->showMessage(tr("Unable to takeoff, vehicle position not known."));
+        return false;
+    }
+
     QString takeoffAltParam(vehicle->vtol() ? QStringLiteral("Q_RTL_ALT") : QStringLiteral("PILOT_TKOFF_ALT"));
     float paramDivisor = vehicle->vtol() ? 1.0 : 100.0; // PILOT_TAKEOFF_ALT is in centimeters
 
-    float takeoffAlt = 0;
+    float takeoffAltRel = 0;
     if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, takeoffAltParam)) {
         Fact* takeoffAltFact = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, takeoffAltParam);
-        takeoffAlt = takeoffAltFact->rawValue().toDouble();
+        takeoffAltRel = takeoffAltFact->rawValue().toDouble();
     }
-    if (takeoffAlt <= 0) {
-        takeoffAlt = 2.5;
+    if (takeoffAltRel <= 0) {
+        takeoffAltRel = 2.5;
     } else {
-        takeoffAlt /= paramDivisor;   // centimeters -> meters
+        takeoffAltRel /= paramDivisor;   // centimeters -> meters
+    }
+
+    if (!qIsNaN(altitudeRel) && altitudeRel > takeoffAltRel) {
+        takeoffAltRel = altitudeRel;
     }
 
     if (!_setFlightModeAndValidate(vehicle, "Guided")) {
@@ -940,7 +957,7 @@ bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle)
                             MAV_CMD_NAV_TAKEOFF,
                             true, // show error
                             0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                            takeoffAlt);
+                            takeoffAltRel);                     // Relative altitude
 
     return true;
 }
@@ -951,7 +968,7 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
     double currentAlt = vehicle->altitudeRelative()->rawValue().toDouble();
 
     if (!vehicle->flying()) {
-        if (_guidedModeTakeoff(vehicle)) {
+        if (_guidedModeTakeoff(vehicle, qQNaN())) {
 
             // Wait for vehicle to get off ground before switching to auto (10 seconds)
             bool didTakeoff = false;
@@ -965,7 +982,7 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
             }
 
             if (!didTakeoff) {
-                qgcApp()->showMessage(QStringLiteral("Unable to start mission. Vehicle takeoff failed."));
+                qgcApp()->showMessage(tr("Unable to start mission. Vehicle takeoff failed."));
                 return;
             }
         } else {
@@ -974,7 +991,7 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
     }
 
     if (!_setFlightModeAndValidate(vehicle, missionFlightMode())) {
-        qgcApp()->showMessage(QStringLiteral("Unable to start mission. Vehicle failed to change to auto."));
+        qgcApp()->showMessage(tr("Unable to start mission. Vehicle failed to change to auto."));
         return;
     }
 }

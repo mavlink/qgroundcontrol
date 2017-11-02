@@ -18,11 +18,11 @@
 
 static FirmwarePluginFactoryRegister* _instance = NULL;
 
-const char* guided_mode_not_supported_by_vehicle = "Guided mode not supported by Vehicle.";
+const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 
 QVariantList FirmwarePlugin::_cameraList;
 
-const char* FirmwarePlugin::px4FollowMeFlightMode = "Follow Me";
+const QString FirmwarePlugin::px4FollowMeFlightMode(QObject::tr("Follow Me"));
 
 FirmwarePluginFactory::FirmwarePluginFactory(void)
 {
@@ -256,10 +256,11 @@ void FirmwarePlugin::guidedModeLand(Vehicle* vehicle)
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
-void FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle)
+void FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel)
 {
     // Not supported by generic vehicle
     Q_UNUSED(vehicle);
+    Q_UNUSED(takeoffAltRel);
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 

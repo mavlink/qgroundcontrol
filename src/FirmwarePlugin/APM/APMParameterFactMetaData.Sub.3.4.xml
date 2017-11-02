@@ -5034,7 +5034,7 @@
 <value code=" 101">PX4</value>
 </values>
 </param>
-<param humanName="Voltage Multiplier" name="BATT2_VOLT_MULT" documentation="Used to convert the voltage of the voltage sensing pin (BATT_VOLT_PIN) to the actual battery's voltage (pin_voltage * VOLT_MULT). For the 3DR Power brick on APM2 or Pixhawk, this should be set to 10.1. For the Pixhawk with the 3DR 4in1 ESC this should be 12.02. For the PX4 using the PX4IO power supply this should be set to 1." user="Advanced">
+<param humanName="Voltage Multiplier" name="BATT2_VOLT_MULT" documentation="Used to convert the voltage of the voltage sensing pin (BATT2_VOLT_PIN) to the actual battery's voltage (pin_voltage * VOLT_MULT). For the 3DR Power brick on APM2 or Pixhawk, this should be set to 10.1. For the Pixhawk with the 3DR 4in1 ESC this should be 12.02. For the PX4 using the PX4IO power supply this should be set to 1." user="Advanced">
 </param>
 <param humanName="Amps per volt" name="BATT2_AMP_PERVOL" documentation="Number of amps that a 1V reading on the current sensor corresponds to. On the APM2 or Pixhawk using the 3DR Power brick this should be set to 17. For the Pixhawk with the 3DR 4in1 ESC this should be 17." user="Standard">
 <field name="Units">Amps/Volt</field>

@@ -195,6 +195,10 @@ void MissionCommandTreeTest::testAllTrees(void)
     // This will cause all of the variants of collapsed trees to be built
     foreach(MAV_AUTOPILOT firmwareType, firmwareList) {
         foreach (MAV_TYPE vehicleType, vehicleList) {
+            if (firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA && vehicleType == MAV_TYPE_VTOL_QUADROTOR) {
+                // VTOL in ArduPilot shows up as plane so we can test this pair
+                continue;
+            }
             qDebug() << firmwareType << vehicleType;
             Vehicle* vehicle = new Vehicle(firmwareType, vehicleType, qgcApp()->toolbox()->firmwarePluginManager());
             QVERIFY(qgcApp()->toolbox()->missionCommandTree()->getUIInfo(vehicle, MAV_CMD_NAV_WAYPOINT) != NULL);
