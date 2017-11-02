@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.0 - Nov 2 2017
+
+*   No code changes. First 1.2.0 iteration and branching.
+
 ### v1.1.63 - Nov 2 2017
 
 *   Upstream merge only. Last 1.1.x version.
