@@ -213,6 +213,18 @@ Item {
             receiver:       TyphoonHQuickInterface.videoReceiver
             display:        TyphoonHQuickInterface.videoReceiver ? TyphoonHQuickInterface.videoReceiver.videoSurface : null
             opacity:        TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend ? TyphoonHQuickInterface.thermalOpacity / 100 : 1.0
+            Connections {
+                target:         TyphoonHQuickInterface.videoReceiver
+                onImageFileChanged: {
+                    if(isThermal && TyphoonHQuickInterface.thermalMode !== TyphoonHQuickInterface.ThermalOff) {
+                        thermalVideo.grabToImage(function(result) {
+                            if (!result.saveToFile(TyphoonHQuickInterface.videoReceiver.imageFile)) {
+                                console.error('Error capturing thermal video frame');
+                            }
+                        });
+                    }
+                }
+            }
         }
     }
     //-- Area Temperature Indicator

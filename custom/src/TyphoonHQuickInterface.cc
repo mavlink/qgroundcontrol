@@ -12,6 +12,8 @@
 #include "MAVLinkLogManager.h"
 #include "QGCMapEngine.h"
 #include "QGCCameraManager.h"
+#include "VideoManager.h"
+#include "VideoReceiver.h"
 #include "YuneecCameraControl.h"
 #include "YExportFiles.h"
 
@@ -145,8 +147,9 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(_pHandler, &TyphoonHM4Interface::calibrationCompleteChanged,   this, &TyphoonHQuickInterface::_calibrationCompleteChanged);
         connect(_pHandler, &TyphoonHM4Interface::rcActiveChanged,              this, &TyphoonHQuickInterface::_rcActiveChanged);
         connect(getQGCMapEngine(), &QGCMapEngine::internetUpdated,             this, &TyphoonHQuickInterface::_internetUpdated);
-        connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded,     this, &TyphoonHQuickInterface::_vehicleAdded);
-        connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved,   this, &TyphoonHQuickInterface::_vehicleRemoved);
+        connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded,         this, &TyphoonHQuickInterface::_vehicleAdded);
+        connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved,       this, &TyphoonHQuickInterface::_vehicleRemoved);
+        connect(qgcApp()->toolbox()->videoManager()->videoReceiver(), &VideoReceiver::imageFileChanged,   this, &TyphoonHQuickInterface::_imageFileChanged);
         connect(&_scanTimer,    &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
         connect(&_flightTimer,  &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
         connect(&_powerTimer,   &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
@@ -1569,6 +1572,19 @@ TyphoonHQuickInterface::setThermalOpacity(double val)
         QSettings settings;
         settings.setValue(kThermalOpacity, val);
         emit thermalOpacityChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_imageFileChanged()
+{
+    //-- Capture thermal image as well (if any)
+    if(thermalImagePresent()) {
+        QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+        QDir().mkpath(photoPath);
+        photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + "-Thermal.jpg";
+        _videoReceiver->grabImage(photoPath);
     }
 }
 

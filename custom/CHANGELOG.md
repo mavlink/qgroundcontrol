@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.1 - Nov 2 2017
+
+*   Local thermal image capture (ST16 - CGOET)
+
 ### v1.2.0 - Nov 2 2017
 
 *   No code changes. First 1.2.0 iteration and branching.
