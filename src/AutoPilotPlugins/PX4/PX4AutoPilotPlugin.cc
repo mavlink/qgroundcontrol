@@ -140,8 +140,8 @@ void PX4AutoPilotPlugin::parametersReadyPreChecks(void)
     if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "SENS_GYRO_XOFF") ||
             _vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "COM_DL_LOSS_EN")) {
         _incorrectParameterVersion = true;
-        qgcApp()->showMessage("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
-                              "Please perform a Firmware Upgrade if you wish to use Vehicle Setup.");
+        qgcApp()->showMessage(tr("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
+                              "Please perform a Firmware Upgrade if you wish to use Vehicle Setup."));
     }
 }
 

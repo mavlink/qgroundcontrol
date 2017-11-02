@@ -89,7 +89,7 @@ void Fact::forceSetRawValue(const QVariant& value)
             emit rawValueChanged(_rawValue);
         }
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
     }
 }
 
@@ -109,7 +109,7 @@ void Fact::setRawValue(const QVariant& value)
             }
         }
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
     }
 }
 
@@ -118,7 +118,7 @@ void Fact::setCookedValue(const QVariant& value)
     if (_metaData) {
         setRawValue(_metaData->cookedTranslator()(value));
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
     }
 }
 
@@ -130,7 +130,7 @@ void Fact::setEnumStringValue(const QString& value)
             setCookedValue(_metaData->enumValues()[index]);
         }
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
     }
 }
 
@@ -139,7 +139,7 @@ void Fact::setEnumIndex(int index)
     if (_metaData) {
         setCookedValue(_metaData->enumValues()[index]);
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
     }
 }
 
@@ -168,7 +168,7 @@ QVariant Fact::cookedValue(void) const
     if (_metaData) {
         return _metaData->rawTranslator()(_rawValue);
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return _rawValue;
     }
 }
@@ -181,7 +181,7 @@ QString Fact::enumStringValue(void)
             return _metaData->enumStrings()[enumIndex];
         }
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
     }
 
     return QString();
@@ -208,12 +208,12 @@ int Fact::enumIndex(void)
                 index ++;
             }
             // Current value is not in list, add it manually
-            _metaData->addEnumInfo(QString("Unknown: %1").arg(rawValue().toString()), rawValue());
+            _metaData->addEnumInfo(tr("Unknown: %1").arg(rawValue().toString()), rawValue());
             emit enumsChanged();
             return index;
         }
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
     }
     return -1;
 }
@@ -223,7 +223,7 @@ QStringList Fact::enumStrings(void) const
     if (_metaData) {
         return _metaData->enumStrings();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QStringList();
     }
 }
@@ -233,7 +233,7 @@ QVariantList Fact::enumValues(void) const
     if (_metaData) {
         return _metaData->enumValues();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QVariantList();
     }
 }
@@ -243,7 +243,7 @@ void Fact::setEnumInfo(const QStringList& strings, const QVariantList& values)
     if (_metaData) {
         _metaData->setEnumInfo(strings, values);
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
     }
 }
 
@@ -252,7 +252,7 @@ QStringList Fact::bitmaskStrings(void) const
     if (_metaData) {
         return _metaData->bitmaskStrings();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QStringList();
     }
 }
@@ -262,7 +262,7 @@ QVariantList Fact::bitmaskValues(void) const
     if (_metaData) {
         return _metaData->bitmaskValues();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QVariantList();
     }
 }
@@ -336,7 +336,7 @@ QVariant Fact::rawDefaultValue(void) const
         }
         return _metaData->rawDefaultValue();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QVariant(0);
     }
 }
@@ -349,7 +349,7 @@ QVariant Fact::cookedDefaultValue(void) const
         }
         return _metaData->cookedDefaultValue();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QVariant(0);
     }
 }
@@ -369,7 +369,7 @@ QString Fact::shortDescription(void) const
     if (_metaData) {
         return _metaData->shortDescription();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QString();
     }
 }
@@ -379,7 +379,7 @@ QString Fact::longDescription(void) const
     if (_metaData) {
         return _metaData->longDescription();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QString();
     }
 }
@@ -389,7 +389,7 @@ QString Fact::rawUnits(void) const
     if (_metaData) {
         return _metaData->rawUnits();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QString();
     }
 }
@@ -399,7 +399,7 @@ QString Fact::cookedUnits(void) const
     if (_metaData) {
         return _metaData->cookedUnits();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QString();
     }
 }
@@ -409,7 +409,7 @@ QVariant Fact::rawMin(void) const
     if (_metaData) {
         return _metaData->rawMin();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QVariant(0);
     }
 }
@@ -419,7 +419,7 @@ QVariant Fact::cookedMin(void) const
     if (_metaData) {
         return _metaData->cookedMin();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QVariant(0);
     }
 }
@@ -434,7 +434,7 @@ QVariant Fact::rawMax(void) const
     if (_metaData) {
         return _metaData->rawMax();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QVariant(0);
     }
 }
@@ -444,7 +444,7 @@ QVariant Fact::cookedMax(void) const
     if (_metaData) {
         return _metaData->cookedMax();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QVariant(0);
     }
 }
@@ -459,7 +459,7 @@ bool Fact::minIsDefaultForType(void) const
     if (_metaData) {
         return _metaData->minIsDefaultForType();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return false;
     }
 }
@@ -469,7 +469,7 @@ bool Fact::maxIsDefaultForType(void) const
     if (_metaData) {
         return _metaData->maxIsDefaultForType();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return false;
     }
 }
@@ -479,7 +479,7 @@ int Fact::decimalPlaces(void) const
     if (_metaData) {
         return _metaData->decimalPlaces();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return FactMetaData::defaultDecimalPlaces;
     }
 }
@@ -489,14 +489,17 @@ QString Fact::group(void) const
     if (_metaData) {
         return _metaData->group();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QString();
     }
 }
 
-void Fact::setMetaData(FactMetaData* metaData)
+void Fact::setMetaData(FactMetaData* metaData, bool setDefaultFromMetaData)
 {
     _metaData = metaData;
+    if (setDefaultFromMetaData) {
+        setRawValue(rawDefaultValue());
+    }
     emit valueChanged(cookedValue());
 }
 
@@ -509,7 +512,7 @@ bool Fact::valueEqualsDefault(void) const
             return false;
         }
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return false;
     }
 }
@@ -519,7 +522,7 @@ bool Fact::defaultValueAvailable(void) const
     if (_metaData) {
         return _metaData->defaultValueAvailable();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return false;
     }
 }
@@ -534,7 +537,7 @@ QString Fact::validate(const QString& cookedValue, bool convertOnly)
         
         return errorString;
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return QString("Internal error: Meta data pointer missing");
     }
 }
@@ -550,7 +553,7 @@ QVariant Fact::clamp(const QString& cookedValue)
             return rawValue();
         }
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
     }
     return QVariant();
 }
@@ -560,7 +563,7 @@ bool Fact::rebootRequired(void) const
     if (_metaData) {
         return _metaData->rebootRequired();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return false;
     }
 }
@@ -600,7 +603,7 @@ QString Fact::enumOrValueString(void)
             return cookedValueString();
         }
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
     }
     return QString();
 }
@@ -610,7 +613,7 @@ double Fact::increment(void) const
     if (_metaData) {
         return _metaData->increment();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
     }
     return std::numeric_limits<double>::quiet_NaN();
 }
@@ -620,7 +623,7 @@ bool Fact::hasControl(void) const
     if (_metaData) {
         return _metaData->hasControl();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return false;
     }
 }
@@ -630,7 +633,7 @@ bool Fact::readOnly(void) const
     if (_metaData) {
         return _metaData->readOnly();
     } else {
-        qWarning() << kMissingMetadata;
+        qWarning() << kMissingMetadata << name();
         return false;
     }
 }

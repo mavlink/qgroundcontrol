@@ -50,7 +50,7 @@ bool QGCQuickWidget::setSource(const QUrl& qmlUrl)
             errorList += error.toString();
             errorList += "\n";
         }
-        qgcApp()->showMessage(QString("Source not ready: Status(%1)\nErrors:\n%2").arg(status()).arg(errorList));
+        qgcApp()->showMessage(tr("Source not ready: Status(%1)\nErrors:\n%2").arg(status()).arg(errorList));
         return false;
     }
     

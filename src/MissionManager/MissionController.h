@@ -74,6 +74,9 @@ public:
     Q_PROPERTY(int                  currentMissionIndex     READ currentMissionIndex        NOTIFY currentMissionIndexChanged)
     Q_PROPERTY(int                  resumeMissionIndex      READ resumeMissionIndex         NOTIFY resumeMissionIndexChanged)   ///< Returns the item index two which a mission should be resumed. -1 indicates resume mission not available.
 
+    Q_PROPERTY(int                  currentPlanViewIndex    READ currentPlanViewIndex       NOTIFY currentPlanViewIndexChanged)
+    Q_PROPERTY(VisualMissionItem*   currentPlanViewItem     READ currentPlanViewItem        NOTIFY currentPlanViewItemChanged)
+
     Q_PROPERTY(double               missionDistance         READ missionDistance            NOTIFY missionDistanceChanged)
     Q_PROPERTY(double               missionTime             READ missionTime                NOTIFY missionTimeChanged)
     Q_PROPERTY(double               missionHoverDistance    READ missionHoverDistance       NOTIFY missionHoverDistanceChanged)
@@ -103,6 +106,10 @@ public:
 
     /// Updates the altitudes of the items in the current mission to the new default altitude
     Q_INVOKABLE void applyDefaultMissionAltitude(void);
+
+    /// Sets a new current mission item (PlanView).
+    ///     @param sequenceNumber - index for new item, -1 to clear current item
+    Q_INVOKABLE void setCurrentPlanViewIndex(int sequenceNumber, bool force);
 
     /// Sends the mission items to the specified vehicle
     static void sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems);
@@ -135,10 +142,12 @@ public:
     QmlObjectListModel* waypointLines           (void) { return &_waypointLines; }
     QStringList         complexMissionItemNames (void) const;
     QGeoCoordinate      plannedHomePosition     (void) const;
+    VisualMissionItem*  currentPlanViewItem     (void) const;
     double              progressPct             (void) const { return _progressPct; }
 
-    int currentMissionIndex(void) const;
-    int resumeMissionIndex(void) const;
+    int currentMissionIndex         (void) const;
+    int resumeMissionIndex          (void) const;
+    int currentPlanViewIndex        (void) const;
 
     double  missionDistance         (void) const { return _missionFlightStatus.totalDistance; }
     double  missionTime             (void) const { return _missionFlightStatus.totalTime; }
@@ -171,6 +180,8 @@ signals:
     void plannedHomePositionChanged(QGeoCoordinate plannedHomePosition);
     void progressPctChanged(double progressPct);
     void currentMissionIndexChanged(int currentMissionIndex);
+    void currentPlanViewIndexChanged();
+    void currentPlanViewItemChanged();
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
@@ -234,6 +245,8 @@ private:
     QString                 _structureScanMissionItemName;
     AppSettings*            _appSettings;
     double                  _progressPct;
+    int                     _currentPlanViewIndex;
+    VisualMissionItem*      _currentPlanViewItem;
 
     static const char*  _settingsGroup;
 

@@ -154,7 +154,7 @@ void PX4AdvancedFlightModesController::_validateConfiguration(void)
         
         if (map < 0 || map > _channelCount) {
             _validConfiguration = false;
-            _configurationErrors += QString("%1 is set to %2. Mapping must between 0 and %3 (inclusive).\n").arg(switchParams[i]).arg(map).arg(_channelCount);
+            _configurationErrors += tr("%1 is set to %2. Mapping must between 0 and %3 (inclusive).\n").arg(switchParams[i]).arg(map).arg(_channelCount);
         }
     }
     
@@ -170,7 +170,7 @@ void PX4AdvancedFlightModesController::_validateConfiguration(void)
         for (int j=0; j<switchParams.count(); j++) {
             if (map != 0 && map == switchMappings[j]) {
                 _validConfiguration = false;
-                _configurationErrors += QString("%1 is set to same channel as %2.\n").arg(switchParams[j]).arg(attitudeParams[i]);
+                _configurationErrors += tr("%1 is set to same channel as %2.\n").arg(switchParams[j]).arg(attitudeParams[i]);
             }
         }
     }
@@ -185,7 +185,7 @@ void PX4AdvancedFlightModesController::_validateConfiguration(void)
         float threshold = getParameterFact(-1, thresholdParam)->rawValue().toFloat();
         if (threshold < 0.0f || threshold > 1.0f) {
             _validConfiguration = false;
-            _configurationErrors += QString("%1 is set to %2. Threshold must between 0.0 and 1.0 (inclusive).\n").arg(thresholdParam).arg(threshold);
+            _configurationErrors += tr("%1 is set to %2. Threshold must between 0.0 and 1.0 (inclusive).\n").arg(thresholdParam).arg(threshold);
         }
     }
 }

@@ -115,7 +115,7 @@ void QGCFileDownload::_downloadFinished(void)
         // Store downloaded file in download location
         QFile file(downloadFilename);
         if (!file.open(QIODevice::WriteOnly)) {
-            emit error(QString("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
+            emit error(tr("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
             return;
         }
 
@@ -136,13 +136,13 @@ void QGCFileDownload::_downloadError(QNetworkReply::NetworkError code)
     QString errorMsg;
     
     if (code == QNetworkReply::OperationCanceledError) {
-        errorMsg = "Download cancelled";
+        errorMsg = tr("Download cancelled");
 
     } else if (code == QNetworkReply::ContentNotFoundError) {
-        errorMsg = "Error: File Not Found";
+        errorMsg = tr("Error: File Not Found");
 
     } else {
-        errorMsg = QString("Error during download. Error: %1").arg(code);
+        errorMsg = tr("Error during download. Error: %1").arg(code);
     }
 
     emit error(errorMsg);
