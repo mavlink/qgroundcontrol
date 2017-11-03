@@ -41,7 +41,7 @@ Item {
                 return _activeVehicle.battery.percentRemaining.valueString + _activeVehicle.battery.percentRemaining.units
             }
         }
-        return "N/A"
+        return qsTr("N/A")
     }
 
     function getBatteryImage() {

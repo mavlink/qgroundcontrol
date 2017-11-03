@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.2 - Nov 2 2017
+
+*   Internal localization work. Not visible to the outside yet.
+
 ### v1.2.1 - Nov 2 2017
 
 *   Local thermal image capture (ST16 - CGOET)

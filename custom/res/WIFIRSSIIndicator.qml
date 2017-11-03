@@ -81,7 +81,7 @@ Item {
                 }
 
                 QGCButton {
-                    text:   "Link Management"
+                    text:   qsTr("Link Management")
                     onClicked: {
                         rootLoader.sourceComponent = wifiManagement
                         if(mainWindow.currentPopUp) {
@@ -560,7 +560,7 @@ Item {
     }
     QGCLabel {
         id:         wifiLabel
-        text:       "AP Wi-Fi"
+        text:       qsTr("AP WiFi")
         visible:    _isAP
         color:      qgcPal.colorOrange
         anchors.bottom: parent.bottom

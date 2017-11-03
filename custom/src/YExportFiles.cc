@@ -84,9 +84,9 @@ YExportFiles::run()
         }
     }
     if(_cancel) {
-        emit message(QString("Operation Canceled"));
+        emit message(QString(tr("Operation Canceled")));
     } else if(ok) {
-        emit message(QString("%1 files exported").arg(_totalFiles));
+        emit message(QString(tr("%1 files exported")).arg(_totalFiles));
         emit copyCompleted(1, 1);
     }
     emit completed();
