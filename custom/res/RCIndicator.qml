@@ -39,7 +39,7 @@ Item {
         if(_batteryLevel > 0.01) {
             return (_batteryLevel * 100).toFixed(0) + '%'
         }
-        return "N/A"
+        return qsTr("N/A")
     }
 
     function getBatteryImage() {
@@ -127,7 +127,7 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
 
                     QGCLabel { text: qsTr("ST16 RSSI:") }
-                    QGCLabel { text: _activeVehicle ? (_activeVehicle.rcRSSI > 100 ? 'N/A' : _activeVehicle.rcRSSI + "%") : 'N/A' }
+                    QGCLabel { text: _activeVehicle ? (_activeVehicle.rcRSSI > 100 ? qsTr('N/A') : _activeVehicle.rcRSSI + "%") : qsTr('N/A') }
                     QGCLabel { text: qsTr("ST16 Battery:") }
                     QGCLabel { text: getBatteryPercentageText() }
                     QGCLabel { text: qsTr("ST16 GPS Sat Count:") }

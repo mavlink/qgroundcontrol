@@ -31,7 +31,7 @@ FactPanel {
             model:  unhealthySensors
             VehicleSummaryRow {
                 labelText: modelData
-                valueText: "Not Ready"
+                valueText: qsTr("Not Ready")
             }
         }
     }

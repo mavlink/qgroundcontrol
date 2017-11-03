@@ -80,7 +80,7 @@ SetupPage {
                     height: ScreenTools.defaultFontPixelHeight
                 }
                 QGCButton {
-                    text:       "Start Gimbal Calibration"
+                    text:       qsTr("Start Gimbal Calibration")
                     enabled:    _camera && !_camera.gimbalCalOn
                     onClicked:  _camera.calibrateGimbal()
                     anchors.horizontalCenter: parent.horizontalCenter

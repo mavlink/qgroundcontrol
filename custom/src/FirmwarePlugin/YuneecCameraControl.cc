@@ -55,17 +55,17 @@ static const char *kPaleteBars[]    =
 };
 
 cgoet_presets_t cgoet_presets[] = {
-    {"Full Range",       0.0f,   0.0f, 1},
-    {"Victim/Suspect",  30.0f,  40.0f, 4},
-    {"House Fire",      65.0f, 150.0f, 5},
-    {"Evidence",        30.0f,  38.0f, 0},
-    {"Home Energy",      5.0f,  44.0f, 1},
-    {"Solar",           30.0f,  55.0f, 2},
-    {"Gases",           15.0f,  25.0f, 4},
-    {"Electrical Leak", 80.0f, 120.0f, 1},
-    {"Warm Object",    -20.0f,  24.0f, 6},
-    {"FH2O3P Vapor",    52.0f,  63.0f, 7},
-    {"FH2O3P",           0.0f,  29.0f, 3}
+    {QT_TRANSLATE_NOOP("CGOPresets", "Full Range"),       0.0f,   0.0f, 1},
+    {QT_TRANSLATE_NOOP("CGOPresets", "Victim/Suspect"),  30.0f,  40.0f, 4},
+    {QT_TRANSLATE_NOOP("CGOPresets", "House Fire"),      65.0f, 150.0f, 5},
+    {QT_TRANSLATE_NOOP("CGOPresets", "Evidence"),        30.0f,  38.0f, 0},
+    {QT_TRANSLATE_NOOP("CGOPresets", "Home Energy"),      5.0f,  44.0f, 1},
+    {QT_TRANSLATE_NOOP("CGOPresets", "Solar"),           30.0f,  55.0f, 2},
+    {QT_TRANSLATE_NOOP("CGOPresets", "Gases"),           15.0f,  25.0f, 4},
+    {QT_TRANSLATE_NOOP("CGOPresets", "Electrical Leak"), 80.0f, 120.0f, 1},
+    {QT_TRANSLATE_NOOP("CGOPresets", "Warm Object"),    -20.0f,  24.0f, 6},
+    {QT_TRANSLATE_NOOP("CGOPresets", "FH2O3P Vapor"),    52.0f,  63.0f, 7},
+    {QT_TRANSLATE_NOOP("CGOPresets", "FH2O3P"),           0.0f,  29.0f, 3}
 };
 
 #define PRESET_COUNT sizeof(cgoet_presets) / sizeof(cgoet_presets_t)
@@ -156,8 +156,8 @@ YuneecCameraControl::_parametersReady()
                 metaData->setRawDefaultValue(QVariant(0));
                 metaData->setHasControl(true);
                 metaData->setReadOnly(true);
-                metaData->addEnumInfo("Center Area", QVariant(0));
-                metaData->addEnumInfo("Spot", QVariant(1));
+                metaData->addEnumInfo(tr("Center Area"), QVariant(0));
+                metaData->addEnumInfo(tr("Spot"), QVariant(1));
                 _irROI = new SettingsFact("camera", metaData, this);
                 QQmlEngine::setObjectOwnership(_irROI, QQmlEngine::CppOwnership);
             }
@@ -171,7 +171,7 @@ YuneecCameraControl::_parametersReady()
                 metaData->setHasControl(true);
                 metaData->setReadOnly(true);
                 for(uint32_t i = 0; i < PRESET_COUNT; i++) {
-                    metaData->addEnumInfo(QString(cgoet_presets[i].name), QVariant(i));
+                    metaData->addEnumInfo(QString(tr(cgoet_presets[i].name)), QVariant(i));
                 }
                 _irPresets = new SettingsFact("camera", metaData, this);
                 connect(_irPresets, &Fact::rawValueChanged, this, &YuneecCameraControl::_presetChanged);
@@ -1000,7 +1000,7 @@ void
 YuneecCameraControl::_presetChanged(QVariant value)
 {
     if(_paramComplete && _isCGOET && value.toUInt() < PRESET_COUNT) {
-        qCDebug(YuneecCameraLog) << "Set Preset: " << cgoet_presets[value.toUInt()].name << kPaleteBars[cgoet_presets[value.toUInt()].palette] << cgoet_presets[value.toUInt()].temp_min << cgoet_presets[value.toUInt()].temp_max;
+        qCDebug(YuneecCameraLog) << "Set Preset: " << tr(cgoet_presets[value.toUInt()].name) << kPaleteBars[cgoet_presets[value.toUInt()].palette] << cgoet_presets[value.toUInt()].temp_min << cgoet_presets[value.toUInt()].temp_max;
         //-- Set Palette
         Fact* pFact = getFact(kCAM_IRPALETTE);
         if(pFact) {

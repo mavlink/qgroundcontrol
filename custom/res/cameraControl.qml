@@ -188,7 +188,7 @@ Rectangle {
                     }
                 }
                 QGCLabel {
-                    text:               _camera ? _camera.photoLapse.toFixed(0) + 's' : 'N/A'
+                    text:               _camera ? _camera.photoLapse.toFixed(0) + 's' : qsTr('N/A')
                     font.family:        ScreenTools.demiboldFontFamily
                     color:              qgcPal.colorBlue
                     visible:            _cameraElapsedMode
@@ -366,7 +366,7 @@ Rectangle {
                 }
                 QGCLabel {
                     id:                 cameraSettingsLabel
-                    text:               _cameraVideoMode ? "Video Settings" : "Camera Settings"
+                    text:               _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings")
                     font.family:        ScreenTools.demiboldFontFamily
                     font.pointSize:     ScreenTools.mediumFontPointSize
                     anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5

@@ -1583,7 +1583,7 @@ TyphoonHQuickInterface::_imageFileChanged()
     if(thermalImagePresent()) {
         QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
         QDir().mkpath(photoPath);
-        photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + "-Thermal.jpg";
+        photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + "-" + tr("Thermal") + ".jpg";
         _videoReceiver->grabImage(photoPath);
     }
 }

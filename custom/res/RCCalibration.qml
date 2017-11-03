@@ -119,7 +119,7 @@ QGCView {
                         spacing: ScreenTools.defaultFontPixelWidth * 4
                         anchors.horizontalCenter:   parent.horizontalCenter
                         QGCButton {
-                            text:       "Start Calibration"
+                            text:       qsTr("Start Calibration")
                             enabled:    !_activeVehicle && TyphoonHQuickInterface.calibrationComplete && TyphoonHQuickInterface.m4State !== TyphoonHQuickInterface.M4_STATE_FACTORY_CAL
                             width:      ScreenTools.defaultFontPixelWidth * 18
                             onClicked: {
@@ -127,7 +127,7 @@ QGCView {
                             }
                         }
                         QGCButton {
-                            text:       "Stop Calibration"
+                            text:       qsTr("Stop Calibration")
                             enabled:    !_activeVehicle && TyphoonHQuickInterface.calibrationComplete && TyphoonHQuickInterface.m4State === TyphoonHQuickInterface.M4_STATE_FACTORY_CAL
                             width:      ScreenTools.defaultFontPixelWidth * 18
                             onClicked: {
