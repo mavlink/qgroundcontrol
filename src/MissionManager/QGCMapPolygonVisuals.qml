@@ -34,6 +34,8 @@ Item {
     property var    _dragHandlesComponent
     property var    _splitHandlesComponent
     property var    _centerDragHandleComponent
+    property bool   _circle:                    false
+    property real   _circleRadius
 
     property real _zorderDragHandle:    QGroundControl.zOrderMapItems + 3   // Highest to prevent splitting when items overlap
     property real _zorderSplitHandle:   QGroundControl.zOrderMapItems + 2
@@ -71,35 +73,77 @@ Item {
         }
     }
 
+    /// Calculate the default/initial 4 sided polygon
+    function defaultPolygonVertices() {
+        // Initial polygon is inset to take 2/3rds space
+        var rect = Qt.rect(map.centerViewport.x, map.centerViewport.y, map.centerViewport.width, map.centerViewport.height)
+        rect.x += (rect.width * 0.25) / 2
+        rect.y += (rect.height * 0.25) / 2
+        rect.width *= 0.75
+        rect.height *= 0.75
+
+        var centerCoord =       map.toCoordinate(Qt.point(rect.x + (rect.width / 2), rect.y + (rect.height / 2)),   false /* clipToViewPort */)
+        var topLeftCoord =      map.toCoordinate(Qt.point(rect.x, rect.y),                                          false /* clipToViewPort */)
+        var topRightCoord =     map.toCoordinate(Qt.point(rect.x + rect.width, rect.y),                             false /* clipToViewPort */)
+        var bottomLeftCoord =   map.toCoordinate(Qt.point(rect.x, rect.y + rect.height),                            false /* clipToViewPort */)
+        var bottomRightCoord =  map.toCoordinate(Qt.point(rect.x + rect.width, rect.y + rect.height),               false /* clipToViewPort */)
+
+        // Initial polygon has max width and height of 3000 meters
+        var halfWidthMeters =   Math.min(topLeftCoord.distanceTo(topRightCoord), 3000) / 2
+        var halfHeightMeters =  Math.min(topLeftCoord.distanceTo(bottomLeftCoord), 3000) / 2
+        topLeftCoord =      centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 0)
+        topRightCoord =     centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 0)
+        bottomLeftCoord =   centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 180)
+        bottomRightCoord =  centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 180)
+
+        return [ topLeftCoord, topRightCoord, bottomRightCoord, bottomLeftCoord, centerCoord  ]
+    }
+
     /// Add an initial 4 sided polygon
     function addInitialPolygon() {
         if (mapPolygon.count < 3) {
-            // Initial polygon is inset to take 2/3rds space
-            var rect = Qt.rect(map.centerViewport.x, map.centerViewport.y, map.centerViewport.width, map.centerViewport.height)
-            rect.x += (rect.width * 0.25) / 2
-            rect.y += (rect.height * 0.25) / 2
-            rect.width *= 0.75
-            rect.height *= 0.75
-
-            var centerCoord =       map.toCoordinate(Qt.point(rect.x + (rect.width / 2), rect.y + (rect.height / 2)),   false /* clipToViewPort */)
-            var topLeftCoord =      map.toCoordinate(Qt.point(rect.x, rect.y),                                          false /* clipToViewPort */)
-            var topRightCoord =     map.toCoordinate(Qt.point(rect.x + rect.width, rect.y),                             false /* clipToViewPort */)
-            var bottomLeftCoord =   map.toCoordinate(Qt.point(rect.x, rect.y + rect.height),                            false /* clipToViewPort */)
-            var bottomRightCoord =  map.toCoordinate(Qt.point(rect.x + rect.width, rect.y + rect.height),               false /* clipToViewPort */)
-
-            // Initial polygon has max width and height of 3000 meters
-            var halfWidthMeters =   Math.min(topLeftCoord.distanceTo(topRightCoord), 3000) / 2
-            var halfHeightMeters =  Math.min(topLeftCoord.distanceTo(bottomLeftCoord), 3000) / 2
-            topLeftCoord =      centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 0)
-            topRightCoord =     centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 0)
-            bottomLeftCoord =   centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 180)
-            bottomRightCoord =  centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 180)
-
-            mapPolygon.appendVertex(topLeftCoord)
-            mapPolygon.appendVertex(topRightCoord)
-            mapPolygon.appendVertex(bottomRightCoord)
-            mapPolygon.appendVertex(bottomLeftCoord)
+            initialVertices = defaultPolygonVertices()
+            mapPolygon.appendVertex(initialVertices[0])
+            mapPolygon.appendVertex(initialVertices[1])
+            mapPolygon.appendVertex(initialVertices[2])
+            mapPolygon.appendVertex(initialVertices[3])
         }
+    }
+
+    /// Reset polygon back to initial default
+    function resetPolygon() {
+        var initialVertices = defaultPolygonVertices()
+        mapPolygon.clear()
+        for (var i=0; i<4; i++) {
+            mapPolygon.appendVertex(initialVertices[i])
+        }
+        _circle = false
+    }
+
+    /// Reset polygon to a circle which fits within initial polygon
+    function setCircleRadius(center, radius) {
+        var unboundCenter = center.atDistanceAndAzimuth(0, 0)
+        _circleRadius = radius
+        var segments = 16
+        var angleIncrement = 360 / segments
+        var angle = 0
+        mapPolygon.clear()
+        for (var i=0; i<segments; i++) {
+            var vertex = unboundCenter.atDistanceAndAzimuth(_circleRadius, angle)
+            mapPolygon.appendVertex(vertex)
+            angle += angleIncrement
+        }
+        _circle = true
+    }
+
+    /// Reset polygon to a circle which fits within initial polygon
+    function resetCircle() {
+        var initialVertices = defaultPolygonVertices()
+        var width = initialVertices[0].distanceTo(initialVertices[1])
+        var height = initialVertices[1].distanceTo(initialVertices[2])
+        var radius = Math.min(width, height) / 2
+        var center = initialVertices[4]
+        setCircleRadius(center, radius)
     }
 
     onInteractiveChanged: {
@@ -122,6 +166,8 @@ Item {
         removeHandles()
     }
 
+    QGCPalette { id: qgcPal }
+
     Component {
         id: polygonComponent
 
@@ -141,6 +187,7 @@ Item {
             id:             mapQuickItem
             anchorPoint.x:  dragHandle.width / 2
             anchorPoint.y:  dragHandle.height / 2
+            visible:        !_circle
 
             property int vertexIndex
 
@@ -149,7 +196,8 @@ Item {
                 width:      ScreenTools.defaultFontPixelHeight * 1.5
                 height:     width
                 radius:     width / 2
-                color:      "white"
+                border.color:      "white"
+                color:      "transparent"
                 opacity:    .50
                 z:          _zorderSplitHandle
 
@@ -208,8 +256,9 @@ Item {
         id: dragAreaComponent
 
         MissionItemIndicatorDrag {
-            id: dragArea
-            z:  _zorderDragHandle
+            id:         dragArea
+            z:          _zorderDragHandle
+            visible:    !_circle
 
             property int polygonVertex
 
@@ -219,12 +268,41 @@ Item {
 
             onItemCoordinateChanged: {
                 if (_creationComplete) {
-                    // During component creation some bad coordinate values got through which screws up polygon draw
+                    // During component creation some bad coordinate values got through which screws up draw
                     mapPolygon.adjustVertex(polygonVertex, itemCoordinate)
                 }
             }
 
+            onDragStop: adjustCircleRadius(itemCoordinate)
+
             onClicked: mapPolygon.removeVertex(polygonVertex)
+        }
+    }
+
+    Component {
+        id: centerDragHandle
+
+        MapQuickItem {
+            id:             mapQuickItem
+            anchorPoint.x:  dragHandle.width / 2
+            anchorPoint.y:  dragHandle.height / 2
+            z:              _zorderDragHandle
+
+            sourceItem: Rectangle {
+                id:         dragHandle
+                width:      ScreenTools.defaultFontPixelHeight * 1.5
+                height:     width
+                radius:     width / 2
+                color:      "white"
+                opacity:    .90
+
+                QGCLabel {
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    anchors.verticalCenter:     parent.verticalCenter
+                    text:                       "..."
+                    color:                      "black"
+                }
+            }
         }
     }
 
@@ -236,6 +314,9 @@ Item {
             anchorPoint.x:  dragHandle.width / 2
             anchorPoint.y:  dragHandle.height / 2
             z:              _zorderDragHandle
+            visible:        !_circle
+
+            property int polygonVertex
 
             sourceItem: Rectangle {
                 id:         dragHandle
@@ -261,6 +342,7 @@ Item {
                 Component.onCompleted: {
                     var dragHandle = dragHandleComponent.createObject(mapControl)
                     dragHandle.coordinate = Qt.binding(function() { return object.coordinate })
+                    dragHandle.polygonVertex = Qt.binding(function() { return index })
                     mapControl.addMapItem(dragHandle)
                     var dragArea = dragAreaComponent.createObject(mapControl, { "itemIndicator": dragHandle, "itemCoordinate": object.coordinate })
                     dragArea.polygonVertex = Qt.binding(function() { return index })
@@ -286,6 +368,75 @@ Item {
             onItemCoordinateChanged:    mapPolygon.center = itemCoordinate
             onDragStart:                mapPolygon.centerDrag = true
             onDragStop:                 mapPolygon.centerDrag = false
+            onClicked:                  menu.popup()
+
+            function setRadiusFromDialog() {
+                setCircleRadius(mapPolygon.center, radiusField.text)
+                radiusDialog.visible = false
+            }
+
+            Menu {
+                id: menu
+
+                MenuItem {
+                    text:           qsTr("Circle" )
+                    onTriggered:    resetCircle()
+                }
+
+                MenuItem {
+                    text:           qsTr("Polygon")
+                    onTriggered:    resetPolygon()
+                }
+
+                MenuItem {
+                    text:           qsTr("Set radius..." )
+                    enabled:        _circle
+                    onTriggered:    radiusDialog.visible = true
+                }
+
+                MenuItem {
+                    text:       qsTr("Load KML...")
+                    enabled:    false
+                }
+            }
+
+            Rectangle {
+                id:                 radiusDialog
+                anchors.margins:    _margin
+                anchors.left:       parent.right
+                width:              radiusColumn.width + (_margin *2)
+                height:             radiusColumn.height + (_margin *2)
+                color:              qgcPal.window
+                border.color:       qgcPal.text
+                visible:            false
+
+                Column {
+                    id:                 radiusColumn
+                    anchors.margins:    _margin
+                    anchors.left:       parent.left
+                    anchors.top:        parent.top
+                    spacing:            _margin
+
+                    QGCLabel { text: qsTr("Radius:") }
+
+                    QGCTextField {
+                        id:                 radiusField
+                        text:               _circleRadius.toFixed(2)
+                        onEditingFinished:  setRadiusFromDialog()
+                    }
+                }
+
+                QGCLabel {
+                    anchors.right:  radiusColumn.right
+                    anchors.top:    radiusColumn.top
+                    text:           "X"
+
+                    QGCMouseArea {
+                        fillItem:   parent
+                        onClicked:  setRadiusFromDialog()
+                    }
+                }
+            }
         }
     }
 
@@ -297,7 +448,7 @@ Item {
             property var dragArea
 
             Component.onCompleted: {
-                dragHandle = dragHandleComponent.createObject(mapControl)
+                dragHandle = centerDragHandle.createObject(mapControl)
                 dragHandle.coordinate = Qt.binding(function() { return mapPolygon.center })
                 mapControl.addMapItem(dragHandle)
                 dragArea = centerDragAreaComponent.createObject(mapControl, { "itemIndicator": dragHandle, "itemCoordinate": mapPolygon.center })
