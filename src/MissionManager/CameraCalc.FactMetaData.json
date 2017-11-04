@@ -12,7 +12,7 @@
     "min":              0.1,
     "units":            "m",
     "decimalPlaces":    2,
-    "defaultValue":     100.0
+    "defaultValue":     10.0
 },
 {
     "name":             "ImageDensity",
