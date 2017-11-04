@@ -240,7 +240,6 @@ void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QO
 {
     int seqNum = _sequenceNumber;
     double baseAltitude = _altitudeFact.rawValue().toDouble();
-    MissionItem* item;
 
     if (_yawVehicleToStructure) {
         MissionItem* item = new MissionItem(seqNum++,
