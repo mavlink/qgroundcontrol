@@ -4,9 +4,3 @@
 [submodule "libs/mavlink/include/mavlink/v2.0"]
 	path = libs/mavlink/include/mavlink/v2.0
 	url = https://github.com/mavlink/c_library_v2.git
-[submodule "libs/thirdParty/tiny-AES128-C"]
-	path = libs/thirdParty/tiny-AES128-C
-	url = https://github.com/bkueng/tiny-AES128-C.git
-[submodule "libs/thirdParty/qmqtt"]
-	path = libs/thirdParty/qmqtt
-	url = https://github.com/emqtt/qmqtt.git

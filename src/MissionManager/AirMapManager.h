@@ -7,8 +7,7 @@
  *
  ****************************************************************************/
 
-#ifndef AirMapManager_H
-#define AirMapManager_H
+#pragma once
 
 #include "QGCToolbox.h"
 #include "QGCLoggingCategory.h"
@@ -17,146 +16,82 @@
 #include "MultiVehicleManager.h"
 #include "AirspaceManagement.h"
 
-#include <qmqtt.h>
-
 #include <QGeoCoordinate>
 #include <QList>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
+#include <QQueue>
 #include <QTimer>
-#include <QUdpSocket>
-#include <QHostInfo>
-#include <QHostAddress>
 
-#include <stdint.h>
+#include <cstdint>
+#include <functional>
+#include <memory>
+
+#include <airmap/qt/client.h>
+#include <airmap/qt/logger.h>
+#include <airmap/qt/types.h>
+#include <airmap/traffic.h>
 
 Q_DECLARE_LOGGING_CATEGORY(AirMapManagerLog)
 
-
-
-class AirMapLogin : public QObject
+/**
+ * @class AirMapSharedState
+ * contains state & settings that need to be shared (such as login)
+ */
+class AirMapSharedState : public QObject
 {
     Q_OBJECT
 public:
-    /**
-     * @param networkManager
-     * @param APIKey AirMap API key: this is stored as a reference, and thus must live as long as this object does
-     */
-    AirMapLogin(QNetworkAccessManager& networkManager, const QString& APIKey);
+    struct Settings {
+        QString apiKey;
 
-    void setCredentials(const QString& clientID, const QString& userName, const QString& password);
+        // login credentials
+        QString clientID;
+        QString userName; ///< use anonymous login if empty
+        QString password;
+    };
+
+    void setSettings(const Settings& settings);
+    const Settings& settings() const { return _settings; }
+
+    void setClient(airmap::qt::Client* client) { _client = client; }
 
     /**
-     * check if the credentials are set (not necessarily valid)
+     * Get the current client instance. It can be NULL. If not NULL, it implies
+     * there's an API key set.
      */
-    bool hasCredentials() const { return _userName != "" && _password != ""; }
+    airmap::qt::Client* client() const { return _client; }
+
+    bool hasAPIKey() const { return _settings.apiKey != ""; }
+
+    bool isLoggedIn() const { return _loginToken != ""; }
+
+    using Callback = std::function<void(const QString& /* login_token */)>;
+
+    /**
+     * Do a request that requires user login: if not yet logged in, the request is queued and
+     * processed after successful login, otherwise it's executed directly.
+     */
+    void doRequestWithLogin(const Callback& callback);
 
     void login();
-    void logout() { _JWTToken = ""; }
 
-    /** get the JWT token. Empty if user not logged in */
-    const QString& JWTToken() const { return _JWTToken; }
+    void logout();
 
-    bool isLoggedIn() const { return _JWTToken != ""; }
+    const QString& loginToken() const { return _loginToken; }
 
 signals:
-    void loginSuccess();
-    void loginFailure(QNetworkReply::NetworkError error, const QString& errorString, const QString& serverErrorMessage);
-
-private slots:
-    void _requestFinished(void);
-    void _requestError(QNetworkReply::NetworkError code);
+    void error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
 
 private:
-    void _post(QUrl url, const QByteArray& postData);
-
-    QNetworkAccessManager& _networkManager;
+    void _processPendingRequests();
 
     bool _isLoginInProgress = false;
-    QString _JWTToken = ""; ///< JWT login token: empty when not logged in
-    const QString& _APIKey;
+    QString _loginToken; ///< login token: empty when not logged in
 
-    // login credentials
-    QString _clientID;
-    QString _userName;
-    QString _password;
-};
+    airmap::qt::Client* _client = nullptr;
 
-/**
- * @class AirMapNetworking
- * Handles networking requests (GET & POST), with login if required.
- * There can only be one active request per object instance.
- */
-class AirMapNetworking : public QObject
-{
-    Q_OBJECT
-public:
+    Settings _settings;
 
-    struct SharedData {
-        SharedData() : login(networkManager, airmapAPIKey) {}
-
-        QNetworkAccessManager networkManager;
-        QString airmapAPIKey;
-
-        AirMapLogin login;
-    };
-
-    AirMapNetworking(SharedData& networkingData);
-
-    /**
-     * send a GET request
-     * @param url
-     * @param requiresLogin set to true if the user needs to be logged in for the request
-     */
-    void get(QUrl url, bool requiresLogin = false);
-
-    /**
-     * send a POST request
-     * @param url
-     * @param postData
-     * @param isJsonData if true, content type is set to JSON, form data otherwise
-     * @param requiresLogin set to true if the user needs to be logged in for the request
-     */
-    void post(QUrl url, const QByteArray& postData, bool isJsonData = false, bool requiresLogin = false);
-
-    const QString& JWTLoginToken() const { return _networkingData.login.JWTToken(); }
-
-    const AirMapLogin& getLogin() const { return _networkingData.login; }
-
-    /**
-     * abort the current request (_requestFinished() or _requestError() will not be emitted)
-     */
-    void abort();
-
-    bool hasAPIKey() const { return _networkingData.airmapAPIKey != ""; }
-
-signals:
-    /// signal when the request finished (get or post). All requests are assumed to return JSON.
-    void finished(QJsonParseError parseError, QJsonDocument document);
-    void error(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
-
-private slots:
-    void _loginSuccess();
-    void _loginFailure(QNetworkReply::NetworkError networkError, const QString& errorString, const QString& serverErrorMessage);
-    void _requestFinished(void);
-private:
-    SharedData& _networkingData;
-
-    enum class RequestType {
-        None,
-        GET,
-        POST
-    };
-    struct PendingRequest {
-        RequestType type = RequestType::None;
-        QUrl url;
-        QByteArray postData;
-        bool isJsonData;
-        bool requiresLogin;
-    };
-    PendingRequest _pendingRequest;
-
-    QNetworkReply* _currentNetworkReply = nullptr;
+    QQueue<Callback> _pendingRequests; ///< pending requests that are processed after a successful login
 };
 
 
@@ -165,26 +100,22 @@ class AirMapRestrictionManager : public AirspaceRestrictionProvider
 {
     Q_OBJECT
 public:
-    AirMapRestrictionManager(AirMapNetworking::SharedData& sharedData);
+    AirMapRestrictionManager(AirMapSharedState& shared);
 
     void setROI(const QGeoCoordinate& center, double radiusMeters) override;
 
 signals:
-    void networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
-private slots:
-    void _parseAirspaceJson(QJsonParseError parseError, QJsonDocument airspaceDoc);
-    void _error(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+    void error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+
 private:
 
     enum class State {
         Idle,
-        RetrieveList,
         RetrieveItems,
     };
 
     State                   _state = State::Idle;
-    int                     _numAwaitingItems = 0;
-    AirMapNetworking        _networking;
+    AirMapSharedState&      _shared;
 };
 
 
@@ -193,7 +124,7 @@ class AirMapFlightManager : public QObject
 {
     Q_OBJECT
 public:
-    AirMapFlightManager(AirMapNetworking::SharedData& sharedData);
+    AirMapFlightManager(AirMapSharedState& shared);
 
     /// Send flight path to AirMap
     void createFlight(const QList<MissionItem*>& missionItems);
@@ -202,30 +133,16 @@ public:
 
     const QString& flightID() const { return _currentFlightId; }
 
-    void setSitaUavRegistrationId(const QString& sitaUavRegistrationId) {
-        _sitaUavRegistrationId = sitaUavRegistrationId;
-    }
-    void setSitaPilotRegistrationId(const QString& sitaPilotRegistrationId) {
-        _sitaPilotRegistrationId = sitaPilotRegistrationId;
-    }
-
-    /**
-     * abort the current operation
-     */
-    void abort();
-
 public slots:
     void endFlight();
 
 signals:
-    void networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+    void error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
     void flightPermitStatusChanged();
 
 private slots:
-    void _parseJson(QJsonParseError parseError, QJsonDocument doc);
-    void _error(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+    void _pollBriefing();
 
-    void _sendBriefingRequest();
 private:
 
     /**
@@ -234,9 +151,21 @@ private:
     void _uploadFlight();
 
     /**
+     * query the active flights and end the first one (because only a single flight can be active at a time).
+     */
+    void _endFirstFlight();
+
+    /**
      * implementation of endFlight()
      */
     void _endFlight(const QString& flightID);
+
+    /**
+     * check if the briefing response is valid and call _submitPendingFlightPlan() if it is.
+     */
+    void _checkForValidBriefing();
+
+    void _submitPendingFlightPlan();
 
     enum class State {
         Idle,
@@ -261,7 +190,7 @@ private:
     Flight                              _flight; ///< flight pending to be uploaded
 
     State                               _state = State::Idle;
-    AirMapNetworking                    _networking;
+    AirMapSharedState&                  _shared;
     QString                             _currentFlightId; ///< Flight ID, empty if there is none
     QString                             _pendingFlightId; ///< current flight ID, not necessarily accepted yet (once accepted, it's equal to _currentFlightId)
     QString                             _pendingFlightPlan; ///< current flight plan, waiting to be submitted
@@ -269,9 +198,6 @@ private:
     QString                             _pilotID; ///< Pilot ID in the form "auth0|abc123"
     bool                                _noFlightCreatedYet = true;
     QTimer                              _pollTimer; ///< timer to poll for approval check
-
-    QString                             _sitaUavRegistrationId;
-    QString                             _sitaPilotRegistrationId;
 };
 
 /// class to send telemetry data to AirMap
@@ -279,8 +205,8 @@ class AirMapTelemetry : public QObject
 {
     Q_OBJECT
 public:
-    AirMapTelemetry(AirMapNetworking::SharedData& sharedData);
-    virtual ~AirMapTelemetry();
+    AirMapTelemetry(AirMapSharedState& shared);
+    virtual ~AirMapTelemetry() = default;
 
     /**
      * Setup the connection to start sending telemetry
@@ -292,15 +218,10 @@ public:
     bool isTelemetryStreaming() const;
 
 signals:
-    void networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+    void error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
 
 public slots:
     void vehicleMavlinkMessageReceived(const mavlink_message_t& message);
-
-private slots:
-    void _parseJson(QJsonParseError parseError, QJsonDocument doc);
-    void _error(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
-    void _udpTelemetryHostLookup(QHostInfo info);
 
 private:
 
@@ -316,49 +237,39 @@ private:
 
     State                   _state = State::Idle;
 
-    AirMapNetworking        _networking;
-    QByteArray              _key; ///< key for AES encryption, 16 bytes
+    AirMapSharedState&      _shared;
+    std::string              _key; ///< key for AES encryption (16 bytes)
     QString                 _flightID;
-    uint32_t                _seqNum = 1;
-    QUdpSocket*             _socket = nullptr;
-    QHostAddress            _udpHost;
-    static constexpr int    _udpPort = 32003;
 
     float                   _lastHdop = 1.f;
 };
 
 
-class AirMapTrafficAlertClient : public QMQTT::Client
+class AirMapTrafficMonitor : public QObject
 {
     Q_OBJECT
 public:
-    AirMapTrafficAlertClient(const QString& host, const quint16 port, QObject* parent = NULL)
-        : QMQTT::Client(host, port, QSslConfiguration::defaultConfiguration(), true, parent)
+    AirMapTrafficMonitor(AirMapSharedState& shared)
+    : _shared(shared)
     {
-        connect(this, &AirMapTrafficAlertClient::connected, this, &AirMapTrafficAlertClient::onConnected);
-        connect(this, &AirMapTrafficAlertClient::subscribed, this, &AirMapTrafficAlertClient::onSubscribed);
-        connect(this, &AirMapTrafficAlertClient::received, this, &AirMapTrafficAlertClient::onReceived);
-        connect(this, &AirMapTrafficAlertClient::error, this, &AirMapTrafficAlertClient::onError);
     }
-    virtual ~AirMapTrafficAlertClient() = default;
+    virtual ~AirMapTrafficMonitor();
 
-    void startConnection(const QString& flightID, const QString& password);
+    void startConnection(const QString& flightID);
+
+    void stop();
 
 signals:
     void trafficUpdate(QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
 
-private slots:
-
-    void onError(const QMQTT::ClientError error);
-
-    void onConnected();
-
-    void onSubscribed(const QString& topic);
-
-    void onReceived(const QMQTT::Message& message);
+private:
+    void _update(airmap::Traffic::Update::Type type, const std::vector<airmap::Traffic::Update>& update);
 
 private:
-    QString _flightID;
+    QString                                               _flightID;
+    AirMapSharedState&                                    _shared;
+    std::shared_ptr<airmap::Traffic::Monitor>             _monitor;
+    std::shared_ptr<airmap::Traffic::Monitor::Subscriber> _subscriber;
 };
 
 
@@ -368,7 +279,7 @@ class AirMapManagerPerVehicle : public AirspaceManagerPerVehicle
 {
     Q_OBJECT
 public:
-    AirMapManagerPerVehicle(AirMapNetworking::SharedData& sharedData, const Vehicle& vehicle, QGCToolbox& toolbox);
+    AirMapManagerPerVehicle(AirMapSharedState& shared, const Vehicle& vehicle, QGCToolbox& toolbox);
     virtual ~AirMapManagerPerVehicle() = default;
 
 
@@ -388,18 +299,16 @@ signals:
 public slots:
     void endFlight() override;
 
-    void settingsChanged();
-
 protected slots:
     virtual void vehicleMavlinkMessageReceived(const mavlink_message_t& message) override;
 private slots:
     void _flightPermitStatusChanged();
 private:
-    AirMapNetworking             _networking;
+    AirMapSharedState&           _shared;
 
     AirMapFlightManager          _flightManager;
     AirMapTelemetry              _telemetry;
-    AirMapTrafficAlertClient     _trafficAlerts;
+    AirMapTrafficMonitor         _trafficMonitor;
 
     QGCToolbox&                  _toolbox;
 };
@@ -411,7 +320,7 @@ class AirMapManager : public AirspaceManager
     
 public:
     AirMapManager(QGCApplication* app, QGCToolbox* toolbox);
-    virtual ~AirMapManager() = default;
+    virtual ~AirMapManager();
 
     void setToolbox(QGCToolbox* toolbox) override;
 
@@ -421,16 +330,16 @@ public:
 
     QString name() const override { return "AirMap"; }
 
-signals:
-    void settingsChanged();
-
 private slots:
-    void _networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+    void _error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
 
     void _settingsChanged();
 private:
 
-    AirMapNetworking::SharedData _networkingData;
+    AirMapSharedState _shared;
+
+    std::shared_ptr<airmap::qt::Logger> _logger;
+    std::shared_ptr<airmap::qt::DispatchingLogger> _dispatchingLogger;
 };
 
-#endif
+

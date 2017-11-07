@@ -17,290 +17,126 @@
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
 
-#include <QNetworkAccessManager>
-#include <QUrlQuery>
-#include <QJsonDocument>
-#include <QJsonArray>
-#include <QNetworkProxy>
-#include <QSet>
-#include <QtEndian>
+#include <airmap/authenticator.h>
+#include <airmap/airspaces.h>
+#include <airmap/flight_plans.h>
+#include <airmap/flights.h>
+#include <airmap/pilots.h>
+#include <airmap/telemetry.h>
 
-extern "C" {
-#include <aes.h>
-}
-#include <airmap_telemetry.pb.h>
+using namespace airmap;
 
 QGC_LOGGING_CATEGORY(AirMapManagerLog, "AirMapManagerLog")
 
 
-AirMapLogin::AirMapLogin(QNetworkAccessManager& networkManager, const QString& APIKey)
-    : _networkManager(networkManager), _APIKey(APIKey)
-{
-}
-
-void AirMapLogin::setCredentials(const QString& clientID, const QString& userName, const QString& password)
+void AirMapSharedState::setSettings(const Settings& settings)
 {
     logout();
-    _clientID = clientID;
-    _userName = userName;
-    _password = password;
+    _settings = settings;
 }
 
-void AirMapLogin::login()
+void AirMapSharedState::doRequestWithLogin(const Callback& callback)
+{
+    if (isLoggedIn()) {
+        callback(_loginToken);
+    } else {
+        login();
+        _pendingRequests.enqueue(callback);
+    }
+}
+
+void AirMapSharedState::login()
 {
     if (isLoggedIn() || _isLoginInProgress) {
         return;
     }
     _isLoginInProgress = true;
 
-    QUrlQuery postData;
-    postData.addQueryItem(QStringLiteral("grant_type"), "password");
-    postData.addQueryItem(QStringLiteral("client_id"), _clientID);
-    postData.addQueryItem(QStringLiteral("connection"), "Username-Password-Authentication");
-    postData.addQueryItem(QStringLiteral("username"), _userName);
-    postData.addQueryItem(QStringLiteral("password"), _password);
-    postData.addQueryItem(QStringLiteral("scope"), "openid offline_access");
-    postData.addQueryItem(QStringLiteral("device"), "qgc");
+    if (_settings.userName == "") { //use anonymous login
 
-    QUrl url(QStringLiteral("https://sso.airmap.io/oauth/ro"));
+        Authenticator::AuthenticateAnonymously::Params params;
+        params.id = "";
+        _client->authenticator().authenticate_anonymously(params,
+                [this](const Authenticator::AuthenticateAnonymously::Result& result) {
+            if (!_isLoginInProgress) { // was logout() called in the meanwhile?
+                return;
+            }
+            if (result) {
+                qCDebug(AirMapManagerLog)<<"Successfully authenticated with AirMap: id="<< result.value().id.c_str();
+                _loginToken = QString::fromStdString(result.value().id);
+                _processPendingRequests();
+            } else {
+                _pendingRequests.clear();
+                try {
+                    std::rethrow_exception(result.error());
+                } catch (const std::exception& e) {
+                    // TODO: emit signal
+                    emit error("Failed to authenticate with AirMap", e.what(), "");
+                }
+            }
+        });
 
-    _post(url, postData.toString(QUrl::FullyEncoded).toUtf8());
-}
-
-void AirMapLogin::_requestFinished(void)
-{
-    QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
-    _isLoginInProgress = false;
-
-    QByteArray responseBytes = reply->readAll();
-    QJsonParseError parseError;
-    QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
-    if (parseError.error != QJsonParseError::NoError) {
-        QNetworkReply::NetworkError networkError = QNetworkReply::NetworkError::UnknownNetworkError;
-        emit loginFailure(networkError, "", "");
-        return;
-    }
-    QJsonObject rootObject = responseJson.object();
-
-    // When an error occurs we still end up here
-    if (reply->error() != QNetworkReply::NoError) {
-        QJsonValue errorDescription = rootObject.value("error_description");
-        QString serverError = "";
-        if (errorDescription.isString()) {
-            serverError = errorDescription.toString();
-        }
-        emit loginFailure(reply->error(), reply->errorString(), serverError);
-        return;
-    }
-
-    _JWTToken = rootObject["id_token"].toString();
-
-    if (_JWTToken == "") { // make sure we got a token
-        QNetworkReply::NetworkError networkError = QNetworkReply::NetworkError::AuthenticationRequiredError;
-        emit loginFailure(networkError, "", "");
-        return;
-    }
-
-    emit loginSuccess();
-}
-
-void AirMapLogin::_requestError(QNetworkReply::NetworkError code)
-{
-    Q_UNUSED(code);
-    // handled in _requestFinished()
-}
-
-void AirMapLogin::_post(QUrl url, const QByteArray& postData)
-{
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-
-    request.setRawHeader("X-API-Key", _APIKey.toUtf8());
-
-    QNetworkProxy tProxy;
-    tProxy.setType(QNetworkProxy::DefaultProxy);
-    _networkManager.setProxy(tProxy);
-
-    QNetworkReply* networkReply = _networkManager.post(request, postData);
-    if (!networkReply) {
-        QNetworkReply::NetworkError networkError = QNetworkReply::NetworkError::UnknownNetworkError;
-        emit loginFailure(networkError, "", "");
-        return;
-    }
-
-    connect(networkReply, &QNetworkReply::finished,                                                                 this, &AirMapLogin::_requestFinished);
-    connect(networkReply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &AirMapLogin::_requestError);
-}
-
-
-AirMapNetworking::AirMapNetworking(SharedData& networkingData)
-    : _networkingData(networkingData)
-{
-}
-
-void AirMapNetworking::post(QUrl url, const QByteArray& postData, bool isJsonData, bool requiresLogin)
-{
-    QNetworkRequest request(url);
-    if (isJsonData) {
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json; charset=utf-8");
     } else {
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+
+        Authenticator::AuthenticateWithPassword::Params params;
+        params.oauth.username = _settings.userName.toStdString();
+        params.oauth.password = _settings.password.toStdString();
+        params.oauth.client_id = _settings.clientID.toStdString();
+        params.oauth.device_id = "QGroundControl";
+        _client->authenticator().authenticate_with_password(params,
+                [this](const Authenticator::AuthenticateWithPassword::Result& result) {
+            if (!_isLoginInProgress) { // was logout() called in the meanwhile?
+                return;
+            }
+            if (result) {
+                qCDebug(AirMapManagerLog)<<"Successfully authenticated with AirMap: id="<< result.value().id.c_str()<<", access="
+                        <<result.value().access.c_str();
+                _loginToken = QString::fromStdString(result.value().id);
+                _processPendingRequests();
+            } else {
+                _pendingRequests.clear();
+                try {
+                    std::rethrow_exception(result.error());
+                } catch (const std::exception& e) {
+                    // TODO: proper error handling
+                    emit error("Failed to authenticate with AirMap", e.what(), "");
+                }
+            }
+        });
     }
+}
 
-    request.setRawHeader("X-API-Key", _networkingData.airmapAPIKey.toUtf8());
-
-    if (requiresLogin) {
-        if (_networkingData.login.isLoggedIn()) {
-            request.setRawHeader("Authorization", (QString("Bearer ")+_networkingData.login.JWTToken()).toUtf8());
-        } else {
-            connect(&_networkingData.login, &AirMapLogin::loginSuccess, this, &AirMapNetworking::_loginSuccess);
-            connect(&_networkingData.login, &AirMapLogin::loginFailure, this, &AirMapNetworking::_loginFailure);
-            _pendingRequest.type = RequestType::POST;
-            _pendingRequest.url = url;
-            _pendingRequest.postData = postData;
-            _pendingRequest.isJsonData = isJsonData;
-            _pendingRequest.requiresLogin = requiresLogin;
-            _networkingData.login.login();
-            return;
-        }
+void AirMapSharedState::_processPendingRequests()
+{
+    while (!_pendingRequests.isEmpty()) {
+        _pendingRequests.dequeue()(_loginToken);
     }
+}
 
-    QNetworkProxy tProxy;
-    tProxy.setType(QNetworkProxy::DefaultProxy);
-    _networkingData.networkManager.setProxy(tProxy);
+void AirMapSharedState::logout()
+{
+    _isLoginInProgress = false; // cancel if we're currently trying to login
 
-    QNetworkReply* networkReply = _networkingData.networkManager.post(request, postData);
-    if (!networkReply) {
-        QNetworkReply::NetworkError networkError = QNetworkReply::NetworkError::UnknownNetworkError;
-        emit error(networkError, "", "");
+    if (!isLoggedIn()) {
         return;
     }
+    _loginToken = "";
+    _pendingRequests.clear();
 
-    connect(networkReply, &QNetworkReply::finished, this, &AirMapNetworking::_requestFinished);
-    _currentNetworkReply = networkReply;
-}
-
-void AirMapNetworking::_loginSuccess()
-{
-    disconnect(&_networkingData.login, &AirMapLogin::loginSuccess, this, &AirMapNetworking::_loginSuccess);
-    disconnect(&_networkingData.login, &AirMapLogin::loginFailure, this, &AirMapNetworking::_loginFailure);
-
-    if (_pendingRequest.type == RequestType::GET) {
-        get(_pendingRequest.url, _pendingRequest.requiresLogin);
-    } else if (_pendingRequest.type == RequestType::POST) {
-        post(_pendingRequest.url, _pendingRequest.postData, _pendingRequest.isJsonData, _pendingRequest.requiresLogin);
-    }
-    _pendingRequest.type = RequestType::None;
-}
-void AirMapNetworking::_loginFailure(QNetworkReply::NetworkError networkError, const QString& errorString, const QString& serverErrorMessage)
-{
-    disconnect(&_networkingData.login, &AirMapLogin::loginSuccess, this, &AirMapNetworking::_loginSuccess);
-    disconnect(&_networkingData.login, &AirMapLogin::loginFailure, this, &AirMapNetworking::_loginFailure);
-    emit error(networkError, errorString, serverErrorMessage);
-}
-
-void AirMapNetworking::abort()
-{
-    if (_currentNetworkReply) {
-        disconnect(_currentNetworkReply, &QNetworkReply::finished, this, &AirMapNetworking::_requestFinished);
-        _currentNetworkReply->abort();
-        _currentNetworkReply = nullptr;
-    }
-    _pendingRequest.type = RequestType::None;
-}
-
-void AirMapNetworking::get(QUrl url, bool requiresLogin)
-{
-    QNetworkRequest request(url);
-
-    request.setRawHeader("X-API-Key", _networkingData.airmapAPIKey.toUtf8());
-
-    if (requiresLogin) {
-        if (_networkingData.login.isLoggedIn()) {
-            request.setRawHeader("Authorization", (QString("Bearer ")+_networkingData.login.JWTToken()).toUtf8());
-        } else {
-            connect(&_networkingData.login, &AirMapLogin::loginSuccess, this, &AirMapNetworking::_loginSuccess);
-            connect(&_networkingData.login, &AirMapLogin::loginFailure, this, &AirMapNetworking::_loginFailure);
-            _pendingRequest.type = RequestType::GET;
-            _pendingRequest.url = url;
-            _pendingRequest.requiresLogin = requiresLogin;
-            _networkingData.login.login();
-            return;
-        }
-    }
-
-    QNetworkProxy tProxy;
-    tProxy.setType(QNetworkProxy::DefaultProxy);
-    _networkingData.networkManager.setProxy(tProxy);
-
-    QNetworkReply* networkReply = _networkingData.networkManager.get(request);
-    if (!networkReply) {
-        QNetworkReply::NetworkError networkError = QNetworkReply::NetworkError::UnknownNetworkError;
-        emit error(networkError, "", "");
-        return;
-    }
-
-    connect(networkReply, &QNetworkReply::finished, this, &AirMapNetworking::_requestFinished);
-    _currentNetworkReply = networkReply;
-}
-
-void AirMapNetworking::_requestFinished(void)
-{
-    QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
-    _currentNetworkReply = nullptr;
-
-    // When an error occurs we still end up here
-    if (reply->error() != QNetworkReply::NoError) {
-        QByteArray responseBytes = reply->readAll();
-
-        QJsonParseError parseError;
-        QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
-        QJsonObject rootObject = responseJson.object();
-        qCDebug(AirMapManagerLog) << "Server error:" << rootObject;
-        QString serverError = "";
-        if (rootObject.contains("data")) { // eg. in case of a conflict message
-            serverError = rootObject["data"].toObject()["message"].toString();
-        } else if (rootObject.contains("error_description")) { // eg. login failure
-            serverError = rootObject["error_description"].toString();
-        } else if (rootObject.contains("message")) { // eg. api key failure
-            serverError = rootObject["message"].toString();
-        }
-        emit error(reply->error(), reply->errorString(), serverError);
-        return;
-    }
-
-    // Check for redirection
-    QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
-    if (!redirectionTarget.isNull()) {
-        QUrl redirectUrl = reply->url().resolved(redirectionTarget.toUrl());
-        get(redirectUrl);
-        reply->deleteLater();
-        return;
-    }
-
-    QByteArray responseBytes = reply->readAll();
-
-    QJsonParseError parseError;
-    QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
-    if (parseError.error != QJsonParseError::NoError) {
-        qCWarning(AirMapManagerLog) << "JSON parse error:" << parseError.errorString();
-    }
-    emit finished(parseError, responseJson);
 }
 
 
-
-AirMapRestrictionManager::AirMapRestrictionManager(AirMapNetworking::SharedData& sharedData)
-    : _networking(sharedData)
+AirMapRestrictionManager::AirMapRestrictionManager(AirMapSharedState& shared)
+    : _shared(shared)
 {
-    connect(&_networking, &AirMapNetworking::finished, this, &AirMapRestrictionManager::_parseAirspaceJson);
-    connect(&_networking, &AirMapNetworking::error, this, &AirMapRestrictionManager::_error);
+    //connect(&_networking, &AirMapNetworking::finished, this, &AirMapRestrictionManager::_parseAirspaceJson);
+    //connect(&_networking, &AirMapNetworking::error, this, &AirMapRestrictionManager::_error);
 }
 
 void AirMapRestrictionManager::setROI(const QGeoCoordinate& center, double radiusMeters)
 {
-    if (!_networking.hasAPIKey()) {
-        qCDebug(AirMapManagerLog) << "API key not set. Not updating Airspace";
+    if (!_shared.client()) {
+        qCDebug(AirMapManagerLog) << "No AirMap client instance. Not updating Airspace";
         return;
     }
 
@@ -308,233 +144,92 @@ void AirMapRestrictionManager::setROI(const QGeoCoordinate& center, double radiu
         qCWarning(AirMapManagerLog) << "AirMapRestrictionManager::updateROI: state not idle";
         return;
     }
-
-    // Build up the polygon for the query
-
-//    QJsonObject     polygonJson;
-//
-//    polygonJson["type"] = "Polygon";
-//
-//    QGeoCoordinate left =   _roiCenter.atDistanceAndAzimuth(_roiRadius, -90);
-//    QGeoCoordinate right =  _roiCenter.atDistanceAndAzimuth(_roiRadius, 90);
-//    QGeoCoordinate top =    _roiCenter.atDistanceAndAzimuth(_roiRadius, 0);
-//    QGeoCoordinate bottom = _roiCenter.atDistanceAndAzimuth(_roiRadius, 180);
-//
-//    QGeoCoordinate topLeft(top.latitude(), left.longitude());
-//    QGeoCoordinate topRight(top.latitude(), right.longitude());
-//    QGeoCoordinate bottomLeft(bottom.latitude(), left.longitude());
-//    QGeoCoordinate bottomRight(bottom.latitude(), left.longitude());
-//
-//    QJsonValue  coordValue;
-//    QJsonArray  rgVertex;
-//
-//    // GeoJson polygons are right handed and include duplicate first and last vertex
-//    JsonHelper::saveGeoJsonCoordinate(topLeft, false /* writeAltitude */, coordValue);
-//    rgVertex.append(coordValue);
-//    JsonHelper::saveGeoJsonCoordinate(bottomLeft, false /* writeAltitude */, coordValue);
-//    rgVertex.append(coordValue);
-//    JsonHelper::saveGeoJsonCoordinate(bottomRight, false /* writeAltitude */, coordValue);
-//    rgVertex.append(coordValue);
-//    JsonHelper::saveGeoJsonCoordinate(topRight, false /* writeAltitude */, coordValue);
-//    rgVertex.append(coordValue);
-//    JsonHelper::saveGeoJsonCoordinate(topLeft, false /* writeAltitude */, coordValue);
-//    rgVertex.append(coordValue);
-//
-//    QJsonArray rgPolygon;
-//    rgPolygon.append(rgVertex);
-//
-//    polygonJson["coordinates"] = rgPolygon;
-//    QJsonDocument polygonJsonDoc(polygonJson);
+    qCDebug(AirMapManagerLog) << "setting ROI";
 
     _polygonList.clear();
     _circleList.clear();
 
-    // Build up the http query
+    _state = State::RetrieveItems;
 
-    QUrlQuery airspaceQuery;
+    Airspaces::Search::Parameters params;
+    params.geometry = Geometry::point(center.latitude(), center.longitude());
+    params.buffer = radiusMeters;
+    params.full = true;
+    _shared.client()->airspaces().search(params,
+            [this](const Airspaces::Search::Result& result) {
 
-    airspaceQuery.addQueryItem(QStringLiteral("latitude"), QString::number(center.latitude(), 'f', 10));
-    airspaceQuery.addQueryItem(QStringLiteral("longitude"), QString::number(center.longitude(), 'f', 10));
-    airspaceQuery.addQueryItem(QStringLiteral("weather"), QStringLiteral("true"));
-    airspaceQuery.addQueryItem(QStringLiteral("buffer"), QString::number(radiusMeters, 'f', 0));
+        if (_state != State::RetrieveItems) return;
 
-    QUrl airMapAirspaceUrl(QStringLiteral("https://api.airmap.com/status/alpha/point"));
-    airMapAirspaceUrl.setQuery(airspaceQuery);
+        if (result) {
+            const std::vector<Airspace>& airspaces = result.value();
+            qCDebug(AirMapManagerLog)<<"Successful search: " << airspaces.size();
+            for (const auto& airspace : airspaces) {
 
-    _state = State::RetrieveList;
-    _networking.get(airMapAirspaceUrl);
-}
-
-void AirMapRestrictionManager::_parseAirspaceJson(QJsonParseError parseError, QJsonDocument airspaceDoc)
-{
-    Q_UNUSED(parseError);
-    QJsonObject rootObject = airspaceDoc.object();
-
-    switch(_state) {
-        case State::RetrieveList:
-        {
-            QSet<QString> advisorySet;
-            const QJsonArray& advisoriesArray = rootObject["data"].toObject()["advisories"].toArray();
-            for (int i=0; i< advisoriesArray.count(); i++) {
-                const QJsonObject& advisoryObject = advisoriesArray[i].toObject();
-                QString advisoryId(advisoryObject["id"].toString());
-                qCDebug(AirMapManagerLog) << "Advisory id: " << advisoryId;
-                advisorySet.insert(advisoryId);
-            }
-
-            for (const auto& advisoryId : advisorySet) {
-                QUrl url(QStringLiteral("https://api.airmap.com/airspace/v2/")+advisoryId);
-                _networking.get(url);
-            }
-            _numAwaitingItems = advisorySet.size();
-            if (_numAwaitingItems > 0) {
-                _state = State::RetrieveItems;
-            } else {
-                _state = State::Idle;
-            }
-        }
-            break;
-
-        case State::RetrieveItems:
-        {
-            const QJsonArray& airspaceArray = rootObject["data"].toArray();
-            for (int i = 0; i < airspaceArray.count(); i++) {
-                const QJsonObject& airspaceObject = airspaceArray[i].toObject();
-                QString airspaceType(airspaceObject["type"].toString());
-                QString airspaceId(airspaceObject["id"].toString());
-                QString airspaceName(airspaceObject["name"].toString());
-                const QJsonObject& airspaceGeometry(airspaceObject["geometry"].toObject());
-                QString geometryType(airspaceGeometry["type"].toString());
-
-                const QJsonObject& airspaceProperties(airspaceObject["properties"].toObject());
-                bool enabled = airspaceProperties["enabled"].toBool(true);
-                if (!enabled) {
-                    continue;
-                }
-
-                qCDebug(AirMapManagerLog) << "Airspace ID:" << airspaceId << "name:" << airspaceName << "type:" << airspaceType << "geometry:" << geometryType;
-
-                // filter by start and end time
-                const QJsonValue& effectiveStart(airspaceProperties["effective_start"]);
-                QDateTime now = QDateTime::currentDateTimeUtc();
-                if (!effectiveStart.isNull()) {
-                    QDateTime d = QDateTime::fromString(effectiveStart.toString(), Qt::ISODate);
-                    if (d > now.addSecs(3600)) {
-                        qCDebug(AirMapManagerLog) << "effective start filter";
-                        continue;
-                    }
-                }
-                const QJsonValue& effectiveEnd(airspaceProperties["effective_end"]);
-                if (!effectiveEnd.isNull()) {
-                    QDateTime d = QDateTime::fromString(effectiveEnd.toString(), Qt::ISODate);
-                    if (d < now.addSecs(-3600)) {
-                        qCDebug(AirMapManagerLog) << "effective end filter";
-                        continue;
-                    }
-                }
-
-                int authorizationLevel = (int)(airspaceProperties["authorization_level"].toDouble(3.)+0.5);
-                // 1 == green
-                if (authorizationLevel <= 1 || authorizationLevel > 3) {
-                    qCDebug(AirMapManagerLog) << "auth level filter";
-                    continue;
-                }
-
-
-                if (geometryType == "Polygon") {
-
-                    const QJsonArray& airspaceCoordinates(airspaceGeometry["coordinates"].toArray()[0].toArray());
-                    QString errorString;
-                    QmlObjectListModel list;
-                    if (JsonHelper::loadPolygon(airspaceCoordinates, list, this, errorString)) {
-                        QVariantList polygon;
-                        for (int i = 0; i < list.count(); ++i) {
-                            polygon.append(QVariant::fromValue(((QGCQGeoCoordinate*)list[i])->coordinate()));
-                        }
-                        list.clearAndDeleteContents();
-                        _polygonList.append(new PolygonAirspaceRestriction(polygon));
-                    } else {
-                        //TODO
-                        qWarning() << errorString;
-                    }
-
-                } else if (geometryType == "MultiPolygon") {
-                    // TODO: it's possible (?) that polygons contain holes. These need to be rendered properly
-                    const QJsonArray& polygonArray = airspaceGeometry["coordinates"].toArray();
-                    for (int polygonIdx = 0; polygonIdx < polygonArray.count(); polygonIdx++) {
-                        const QJsonArray& airspaceCoordinates(polygonArray[polygonIdx].toArray()[0].toArray());
-                        QString errorString;
-                        QmlObjectListModel list;
-                        if (JsonHelper::loadPolygon(airspaceCoordinates, list, this, errorString)) {
-                            QVariantList polygon;
-                            for (int i = 0; i < list.count(); ++i) {
-                                polygon.append(QVariant::fromValue(((QGCQGeoCoordinate*)list[i])->coordinate()));
+                const Geometry& geometry = airspace.geometry();
+                switch(geometry.type()) {
+                    case Geometry::Type::polygon: {
+                        const Geometry::Polygon& polygon = geometry.details_for_polygon();
+                        QVariantList polygonArray;
+                        if (polygon.size() == 1) {
+                            for (const auto& vertex : polygon[0].coordinates) {
+                                QGeoCoordinate coord;
+                                if (vertex.altitude) {
+                                    coord = QGeoCoordinate(vertex.latitude, vertex.longitude, vertex.altitude.get());
+                                } else {
+                                    coord = QGeoCoordinate(vertex.latitude, vertex.longitude);
+                                }
+                                polygonArray.append(QVariant::fromValue(coord));
                             }
-                            list.clearAndDeleteContents();
-                            _polygonList.append(new PolygonAirspaceRestriction(polygon));
+                            _polygonList.append(new PolygonAirspaceRestriction(polygonArray));
+
+                        } else {
+                            // TODO: support that?
+                            qWarning() << "Empty polygon, or Polygon with holes. Size: "<<polygon.size();
                         }
                     }
-
-                } else {
-                    // TODO: are there any circles?
-                    qWarning() << "Unknown geometry type:" << geometryType;
+                        break;
+                    case Geometry::Type::multi_polygon: {
+                        const Geometry::MultiPolygon& multiPolygon = geometry.details_for_multi_polygon();
+                        qWarning() << "multi polygon "<<multiPolygon.size();
+                        // TODO
+                    }
+                        break;
+                    case Geometry::Type::point: {
+                        const Geometry::Point& point = geometry.details_for_point();
+                        _circleList.append(new CircularAirspaceRestriction(QGeoCoordinate(point.latitude, point.longitude), 0.));
+                        // TODO: radius???
+                    }
+                        break;
+                    default:
+                        qWarning() << "unsupported geometry type: "<<(int)geometry.type();
+                        break;
                 }
+
             }
 
-            if (--_numAwaitingItems == 0) {
-                _state = State::Idle;
-                emit requestDone(true);
+        } else {
+            try {
+                std::rethrow_exception(result.error());
+            } catch (const std::exception& e) {
+                // TODO: proper error handling
+                emit error("Failed to authenticate with AirMap", e.what(), "");
             }
         }
-            break;
-        default:
-            qCDebug(AirMapManagerLog) << "Error: wrong state";
-            break;
-    }
-
-    // https://api.airmap.com/airspace/v2/search API
-//    const QJsonArray& airspaceArray = rootObject["data"].toArray();
-//    for (int i=0; i< airspaceArray.count(); i++) {
-//        const QJsonObject& airspaceObject = airspaceArray[i].toObject();
-//        QString airspaceType(airspaceObject["type"].toString());
-//        qDebug() << airspaceType;
-//        qDebug() << airspaceObject["name"].toString();
-//        QGeoCoordinate center(airspaceObject["latitude"].toDouble(), airspaceObject["longitude"].toDouble());
-//        qDebug() << center;
-//        if (airspaceType == "airport") {
-//            _circleList.append(new CircularAirspaceRestriction(center, 5000));
-//        }
-//    }
-}
-
-void AirMapRestrictionManager::_error(QNetworkReply::NetworkError code, const QString& errorString,
-        const QString& serverErrorMessage)
-{
-    qCWarning(AirMapManagerLog) << "AirMapRestrictionManager::_error" << code << serverErrorMessage;
-
-    if (_state == State::RetrieveItems) {
-        if (--_numAwaitingItems == 0) {
-            _state = State::Idle;
-            emit requestDone(false);
-        }
-    } else {
+        emit requestDone(true);
         _state = State::Idle;
-    }
-    emit networkError(code, errorString, serverErrorMessage);
+    });
 }
 
-AirMapFlightManager::AirMapFlightManager(AirMapNetworking::SharedData& sharedData)
-    : _networking(sharedData)
+AirMapFlightManager::AirMapFlightManager(AirMapSharedState& shared)
+    : _shared(shared)
 {
-    connect(&_networking, &AirMapNetworking::finished, this, &AirMapFlightManager::_parseJson);
-    connect(&_networking, &AirMapNetworking::error, this, &AirMapFlightManager::_error);
-    connect(&_pollTimer, &QTimer::timeout, this, &AirMapFlightManager::_sendBriefingRequest);
+    connect(&_pollTimer, &QTimer::timeout, this, &AirMapFlightManager::_pollBriefing);
 }
 
 void AirMapFlightManager::createFlight(const QList<MissionItem*>& missionItems)
 {
-    if (!_networking.getLogin().hasCredentials()) {
-        qCDebug(AirMapManagerLog) << "Login Credentials not set: will not send flight";
+    if (!_shared.client()) {
+        qCDebug(AirMapManagerLog) << "No AirMap client instance. Will not create a flight";
         return;
     }
 
@@ -579,9 +274,33 @@ void AirMapFlightManager::createFlight(const QList<MissionItem*>& missionItems)
 
     if (_pilotID == "") {
         // need to get the pilot id before uploading the flight
-        QUrl url(QString("https://api.airmap.com/pilot/v2/profile"));
-        _networking.get(url, true);
+        qCDebug(AirMapManagerLog) << "Getting pilot ID";
         _state = State::GetPilotID;
+        _shared.doRequestWithLogin([this](const QString& login_token) {
+            Pilots::Authenticated::Parameters params;
+            params.authorization = login_token.toStdString();
+            _shared.client()->pilots().authenticated(params, [this](const Pilots::Authenticated::Result& result) {
+
+                if (_state != State::GetPilotID) return;
+
+                if (result) {
+                    _pilotID = QString::fromStdString(result.value().id);
+                    qCDebug(AirMapManagerLog) << "Got Pilot ID:"<<_pilotID;
+                    _uploadFlight();
+                } else {
+                    _flightPermitStatus = AirspaceAuthorization::PermitUnknown;
+                    emit flightPermitStatusChanged();
+                    _state = State::Idle;
+
+                    try {
+                        std::rethrow_exception(result.error());
+                    } catch (const std::exception& e) {
+                        // TODO: proper error handling
+                        emit error("Failed to create Flight Plan", e.what(), "");
+                    }
+                }
+            });
+        });
     } else {
         _uploadFlight();
     }
@@ -590,6 +309,48 @@ void AirMapFlightManager::createFlight(const QList<MissionItem*>& missionItems)
     emit flightPermitStatusChanged();
 }
 
+void AirMapFlightManager::_endFirstFlight()
+{
+    // it could be that AirMap still has an open pending flight, but we don't know the flight ID.
+    // As there can only be one, we query the flights that end in the future, and close it if there's one.
+
+    _state = State::EndFirstFlight;
+
+    Flights::Search::Parameters params;
+    params.pilot_id = _pilotID.toStdString();
+    params.end_after = Clock::universal_time() - Hours{1};
+
+    _shared.client()->flights().search(params, [this](const Flights::Search::Result& result) {
+        if (_state != State::EndFirstFlight) return;
+
+        if (result && result.value().size() > 0) {
+
+            Q_ASSERT(_shared.loginToken() != ""); // at this point we know the user is logged in (we queried the pilot id)
+
+            Flights::EndFlight::Parameters params;
+            params.authorization = _shared.loginToken().toStdString();
+            params.id = result.value()[0].id; // pick the first flight (TODO: match the vehicle id)
+            _shared.client()->flights().end_flight(params, [this](const Flights::EndFlight::Result& result) {
+                if (_state != State::EndFirstFlight) return;
+
+                if (!result) {
+                    try {
+                        std::rethrow_exception(result.error());
+                    } catch (const std::exception& e) {
+                        // TODO: emit signal
+                        emit error("Failed to end first Flight", e.what(), "");
+                    }
+                }
+                _state = State::Idle;
+                _uploadFlight();
+            });
+
+        } else {
+            _state = State::Idle;
+            _uploadFlight();
+        }
+    });
+}
 
 void AirMapFlightManager::_uploadFlight()
 {
@@ -600,235 +361,153 @@ void AirMapFlightManager::_uploadFlight()
     }
 
     if (_noFlightCreatedYet) {
-        // it could be that AirMap still has an open pending flight, but we don't know the flight ID.
-        // As there can only be one, we query the flights that end in the future, and close it if there's one.
-        QUrlQuery flightsQuery;
-        flightsQuery.addQueryItem(QStringLiteral("pilot_id"), _pilotID);
-        QDateTime end_time = QDateTime::currentDateTime().toUTC().addSecs(-60*60);
-        flightsQuery.addQueryItem(QStringLiteral("end_after"), end_time.toString(Qt::ISODate));
-
-        QUrl flightsQueryUrl(QStringLiteral("https://api.airmap.com/flight/v2/"));
-        flightsQueryUrl.setQuery(flightsQuery);
-
-        _networking.get(flightsQueryUrl, true);
-        _state = State::EndFirstFlight;
+        _endFirstFlight();
         _noFlightCreatedYet = false;
         return;
     }
 
-
     qCDebug(AirMapManagerLog) << "uploading flight";
-
-    QJsonObject root;
-    QJsonObject geometryObject;
-    geometryObject.insert("type", "LineString");
-    QJsonArray coordinatesArray;
-    for (const auto& coord : _flight.coords) {
-        QJsonArray coordinate;
-        coordinate.push_back(coord.longitude());
-        coordinate.push_back(coord.latitude());
-        coordinatesArray.push_back(coordinate);
-    }
-
-    geometryObject.insert("coordinates", coordinatesArray);
-    root.insert("geometry", geometryObject);
-    root.insert("max_altitude_agl", _flight.maxAltitude);
-    root.insert("buffer", 2);
-
-    QJsonObject flightFeatures;
-    if (_sitaUavRegistrationId != "") {
-        flightFeatures.insert("sita_uav_registration_id", _sitaUavRegistrationId);
-    }
-    if (_sitaPilotRegistrationId != "") {
-        flightFeatures.insert("sita_pilot_registration_id", _sitaPilotRegistrationId);
-    }
-    root.insert("flight_features", flightFeatures);
-
-    root.insert("takeoff_latitude", _flight.takeoffCoord.latitude());
-    root.insert("takeoff_longitude", _flight.takeoffCoord.longitude());
-
-    QJsonArray rulesets;
-    rulesets.push_back("city_d3qzey_drone_rules");
-    rulesets.push_back("che_drone_rules");
-    rulesets.push_back("custom_kz6e55_drone_rules");
-    rulesets.push_back("che_notam");
-    rulesets.push_back("che_airmap_rules");
-    rulesets.push_back("che_nature_preserve");
-    root.insert("rulesets", rulesets);
-
-    root.insert("pilot_id", _pilotID);
-
-    QDateTime now = QDateTime::currentDateTime().toUTC();
-    QDateTime startTime = now.addSecs(5 * 60); // TODO: user configurable?
-    QDateTime endTime = now.addSecs(2 * 60 * 60);
-    root.insert("start_time", startTime.toString(Qt::ISODate));
-    root.insert("end_time", endTime.toString(Qt::ISODate));
-
-    _flight.coords.clear();
-
     _state = State::FlightUpload;
 
-    QUrl url(QStringLiteral("https://api.airmap.com/flight/v2/plan"));
+    _shared.doRequestWithLogin([this](const QString& login_token) {
 
-    qCDebug(AirMapManagerLog) << root;
-    _networking.post(url, QJsonDocument(root).toJson(), true, true);
-}
+        if (_state != State::FlightUpload) return;
 
-void AirMapFlightManager::endFlight()
-{
-    if (_currentFlightId.length() == 0) {
-        return;
-    }
-    if (_state != State::Idle) {
-        qCWarning(AirMapManagerLog) << "AirMapFlightManager::endFlight: State not idle";
-        return;
-    }
-    _endFlight(_currentFlightId);
+        FlightPlans::Create::Parameters params;
+        params.max_altitude = _flight.maxAltitude;
+        params.buffer = 2.f;
+        params.latitude = _flight.takeoffCoord.latitude();
+        params.longitude = _flight.takeoffCoord.longitude();
+        params.pilot.id = _pilotID.toStdString();
+        params.start_time = Clock::universal_time() + Minutes{5};
+        params.end_time = Clock::universal_time() + Hours{2}; // TODO: user-configurable?
+        params.rulesets = { // TODO: which ones to use?
+                "che_drone_rules",
+                "che_notam",
+                "che_airmap_rules",
+                "che_nature_preserve"
+                };
 
-    _flightPermitStatus = AirspaceAuthorization::PermitUnknown;
-    emit flightPermitStatusChanged();
-}
-
-void AirMapFlightManager::abort()
-{
-    _state = State::Idle;
-    _networking.abort();
-    _flightPermitStatus = AirspaceAuthorization::PermitUnknown;
-    emit flightPermitStatusChanged();
-}
-
-void AirMapFlightManager::_endFlight(const QString& flightID)
-{
-    qCDebug(AirMapManagerLog) << "ending flight" << flightID;
-
-    _state = State::FlightEnd;
-
-    QUrl url(QString("https://api.airmap.com/flight/v2/%1/end").arg(flightID));
-    // to kill the flight, use: https://api.airmap.com/flight/v2/%1/delete (otherwise same query)
-
-    _networking.post(url, QByteArray(), false, true);
-}
-
-void AirMapFlightManager::_sendBriefingRequest()
-{
-    QUrl url(QString("https://api.airmap.com/flight/v2/plan/%1/briefing").arg(_pendingFlightPlan));
-    _networking.get(url, true);
-}
-
-void AirMapFlightManager::_parseJson(QJsonParseError parseError, QJsonDocument doc)
-{
-    Q_UNUSED(parseError);
-    QJsonObject rootObject = doc.object();
-
-    switch(_state) {
-        case State::GetPilotID:
-        {
-            QString status = rootObject["status"].toString();
-            if (status == "success") {
-                const QJsonObject& dataObject = rootObject["data"].toObject();
-                _pilotID = dataObject["id"].toString();
-                qCDebug(AirMapManagerLog) << "Pilot ID:" << _pilotID;
-                _uploadFlight();
-            } else {
-                QNetworkReply::NetworkError networkError = QNetworkReply::NetworkError::UnknownContentError;
-                emit _error(networkError, "Failed to get the pilot ID", "");
-                _flightPermitStatus = AirspaceAuthorization::PermitUnknown;
-                emit flightPermitStatusChanged();
-                _state = State::Idle;
-            }
+        // geometry: LineString
+        Geometry::LineString lineString;
+        for (const auto& qcoord : _flight.coords) {
+            Geometry::Coordinate coord;
+            coord.latitude = qcoord.latitude();
+            coord.longitude = qcoord.longitude();
+            lineString.coordinates.push_back(coord);
         }
-            break;
-        case State::FlightUpload:
-        {
-            qCDebug(AirMapManagerLog) << "flight uploaded:" << rootObject;
-            const QJsonObject& dataObject = rootObject["data"].toObject();
-            _pendingFlightPlan = dataObject["id"].toString();
-            qCDebug(AirMapManagerLog) << "Got Flight Plan:" << _pendingFlightPlan;
 
-            QString status = rootObject["status"].toString();
-            if (status == "success") {
-                _sendBriefingRequest();
-                _state = State::FlightBrief;
+        params.geometry = Geometry(lineString);
+        params.authorization = login_token.toStdString();
+        _flight.coords.clear();
+
+        _shared.client()->flight_plans().create_by_polygon(params, [this](const FlightPlans::Create::Result& result) {
+            if (_state != State::FlightUpload) return;
+
+            if (result) {
+                _pendingFlightPlan = QString::fromStdString(result.value().id);
+                qCDebug(AirMapManagerLog) << "Flight Plan created:"<<_pendingFlightPlan;
+
+                _checkForValidBriefing();
+
             } else {
-                QNetworkReply::NetworkError networkError = QNetworkReply::NetworkError::UnknownContentError;
-                emit _error(networkError, "Failed to create the flight", "");
-                _flightPermitStatus = AirspaceAuthorization::PermitUnknown;
-                emit flightPermitStatusChanged();
-                _state = State::Idle;
+                // TODO
+                qCDebug(AirMapManagerLog) << "Flight Plan creation failed";
             }
-        }
-            break;
-        case State::FlightBrief:
-        {
-            qCDebug(AirMapManagerLog) << "flight briefing response:" << rootObject;
 
-            // check if the validations are valid
-            const QJsonObject& dataObject = rootObject["data"].toObject();
+        });
 
-            const QJsonArray& validationsArray = dataObject["validations"].toArray();
+    });
+}
+
+void AirMapFlightManager::_checkForValidBriefing()
+{
+    _state = State::FlightBrief;
+    FlightPlans::RenderBriefing::Parameters params;
+    params.authorization = _shared.loginToken().toStdString();
+    params.id = _pendingFlightPlan.toStdString();
+    _shared.client()->flight_plans().render_briefing(params, [this](const FlightPlans::RenderBriefing::Result& result) {
+        if (_state != State::FlightBrief) return;
+
+        if (result) {
             bool allValid = true;
-            for (int i = 0; i < validationsArray.count(); i++) {
-                const QJsonObject& validationObject = validationsArray[i].toObject();
-                QString authority = validationObject["authority"].toObject()["name"].toString();
-                QString status = validationObject["status"].toString();
-                QString identifier = validationObject["data"].toString();
-
-                if (status != "valid") {
-                    QNetworkReply::NetworkError networkError = QNetworkReply::NetworkError::AuthenticationRequiredError;
-                    emit _error(networkError, QString("%1 registration identifier (%2) is invalid").arg(authority).arg(identifier), "");
+            for (const auto& validation : result.value().validations) {
+                if (validation.status != FlightPlan::Briefing::Validation::Status::valid) {
+                    emit error(QString("%1 registration identifier is invalid: %2").arg(
+                        QString::fromStdString(validation.authority.name)).arg(QString::fromStdString(validation.message)), "", "");
                     allValid = false;
                 }
             }
             if (allValid) {
-                QUrl url(QString("https://api.airmap.com/flight/v2/plan/%1/submit").arg(_pendingFlightPlan));
-                _networking.post(url, QByteArray(), false, true);
-                _state = State::FlightSubmit;
+                _submitPendingFlightPlan();
             } else {
                 _flightPermitStatus = AirspaceAuthorization::PermitRejected;
                 emit flightPermitStatusChanged();
                 _state = State::Idle;
             }
-        }
-            break;
-        case State::FlightSubmit:
-        {
-            qCDebug(AirMapManagerLog) << "flight submit response:" << rootObject;
 
-            QString status = rootObject["status"].toString();
-            if (status == "success") {
-                _sendBriefingRequest();
-                const QJsonObject& dataObject = rootObject["data"].toObject();
-                _pendingFlightId = dataObject["flight_id"].toString();
-                _state = State::FlightPolling;
-            } else {
-                QNetworkReply::NetworkError networkError = QNetworkReply::NetworkError::UnknownContentError;
-                emit _error(networkError, "Failed to create the flight", "");
-                _state = State::Idle;
-            }
+        } else {
+            // TODO
         }
-            break;
+    });
+}
 
-        case State::FlightPolling:
-        {
-            qCDebug(AirMapManagerLog) << "flight polling/briefing response:" << rootObject;
-            const QJsonObject& dataObject = rootObject["data"].toObject();
-            const QJsonArray& authorizationsArray = dataObject["authorizations"].toArray();
+void AirMapFlightManager::_submitPendingFlightPlan()
+{
+    _state = State::FlightSubmit;
+    FlightPlans::Submit::Parameters params;
+    params.authorization = _shared.loginToken().toStdString();
+    params.id = _pendingFlightPlan.toStdString();
+    _shared.client()->flight_plans().submit(params, [this](const FlightPlans::Submit::Result& result) {
+        if (_state != State::FlightSubmit) return;
+
+        if (result) {
+            _pendingFlightId = QString::fromStdString(result.value().flight_id.get());
+            _state = State::FlightPolling;
+            _pollBriefing();
+
+        } else {
+            // TODO
+        }
+    });
+}
+
+void AirMapFlightManager::_pollBriefing()
+{
+    if (_state != State::FlightPolling) {
+        qCWarning(AirMapManagerLog) << "AirMapFlightManager::_pollBriefing: not in polling state";
+        return;
+    }
+
+    FlightPlans::RenderBriefing::Parameters params;
+    params.authorization = _shared.loginToken().toStdString();
+    params.id = _pendingFlightPlan.toStdString();
+    _shared.client()->flight_plans().render_briefing(params, [this](const FlightPlans::RenderBriefing::Result& result) {
+        if (_state != State::FlightPolling) return;
+
+        if (result) {
+            const FlightPlan::Briefing& briefing = result.value();
+            qCDebug(AirMapManagerLog) << "flight polling/briefing response";
             bool rejected = false;
             bool accepted = false;
             bool pending = false;
-            for (int i = 0; i < authorizationsArray.count(); i++) {
-                const QJsonObject& authorizationObject = authorizationsArray[i].toObject();
-                QString status = authorizationObject["status"].toString();
-                if (status == "accepted") {
+            for (const auto& authorization : briefing.authorizations) {
+                switch (authorization.status) {
+                case FlightPlan::Briefing::Authorization::Status::accepted:
+                case FlightPlan::Briefing::Authorization::Status::accepted_upon_submission:
                     accepted = true;
-                } else if (status == "rejected") {
+                    break;
+                case FlightPlan::Briefing::Authorization::Status::rejected:
+                case FlightPlan::Briefing::Authorization::Status::rejected_upon_submission:
                     rejected = true;
-                } else if (status == "pending") {
+                    break;
+                case FlightPlan::Briefing::Authorization::Status::pending:
                     pending = true;
+                    break;
                 }
             }
 
-            if (authorizationsArray.size() == 0) {
+            if (briefing.authorizations.size() == 0) {
                 // if we don't get any authorizations, we assume it's accepted
                 accepted = true;
             }
@@ -850,79 +529,64 @@ void AirMapFlightManager::_parseJson(QJsonParseError parseError, QJsonDocument d
                 _pollTimer.setSingleShot(true);
                 _pollTimer.start(2000);
             }
-
+        } else {
+            // TODO: error handling
         }
-            break;
+    });
+}
 
-        case State::FlightEnd:
-            _pendingFlightId = "";
-            _pendingFlightPlan = "";
-            _currentFlightId = "";
-            _state = State::Idle;
+void AirMapFlightManager::endFlight()
+{
+    if (_currentFlightId.length() == 0) {
+        return;
+    }
+    if (_state != State::Idle) {
+        qCWarning(AirMapManagerLog) << "AirMapFlightManager::endFlight: State not idle";
+        return;
+    }
+    _endFlight(_currentFlightId);
+
+    _flightPermitStatus = AirspaceAuthorization::PermitUnknown;
+    emit flightPermitStatusChanged();
+}
+
+void AirMapFlightManager::_endFlight(const QString& flightID)
+{
+    qCDebug(AirMapManagerLog) << "ending flight" << flightID;
+
+    _state = State::FlightEnd;
+
+    Q_ASSERT(_shared.loginToken() != ""); // Since we have a flight ID, we need to be logged in
+
+    Flights::EndFlight::Parameters params;
+    params.authorization = _shared.loginToken().toStdString();
+    params.id = flightID.toStdString();
+    _shared.client()->flights().end_flight(params, [this](const Flights::EndFlight::Result& result) {
+        if (_state != State::FlightEnd) return;
+
+        _state = State::Idle;
+        _pendingFlightId = "";
+        _pendingFlightPlan = "";
+        _currentFlightId = "";
+        if (result) {
             if (!_flight.coords.empty()) {
                 _uploadFlight();
             }
-            break;
-
-        case State::EndFirstFlight:
-        {
-            qCDebug(AirMapManagerLog) << "getting flights:" << rootObject;
-
-            const QJsonObject& dataObject = rootObject["data"].toObject();
-            const QJsonArray& resultsArray = dataObject["results"].toArray();
-            // first flight is the newest
-            if (resultsArray.count() > 0) {
-                const QJsonObject& flight = resultsArray[0].toObject();
-                QString flightID = flight["id"].toString();
-                _endFlight(flightID);
-            } else {
-                _uploadFlight();
+        } else {
+            try {
+                std::rethrow_exception(result.error());
+            } catch (const std::exception& e) {
+                // TODO: emit signal
+                emit error("Failed to end Flight", e.what(), "");
             }
         }
-            break;
-
-        default:
-            qCDebug(AirMapManagerLog) << "Error: wrong state";
-            break;
-    }
+    });
 }
 
-void AirMapFlightManager::_error(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage)
-{
-    qCWarning(AirMapManagerLog) << "AirMapFlightManager::_error" << code << serverErrorMessage;
-    if (_state == State::FlightUpload || _state == State::GetPilotID) {
-        _flightPermitStatus = AirspaceAuthorization::PermitUnknown;
-        emit flightPermitStatusChanged();
-    }
-    _state = State::Idle;
-    emit networkError(code, errorString, serverErrorMessage);
-}
 
-AirMapTelemetry::AirMapTelemetry(AirMapNetworking::SharedData& sharedData)
-: _networking(sharedData)
+AirMapTelemetry::AirMapTelemetry(AirMapSharedState& shared)
+: _shared(shared)
 {
-    connect(&_networking, &AirMapNetworking::finished, this, &AirMapTelemetry::_parseJson);
-    connect(&_networking, &AirMapNetworking::error, this, &AirMapTelemetry::_error);
-}
-
-AirMapTelemetry::~AirMapTelemetry()
-{
-    if (_socket) {
-        delete _socket;
-        _socket = nullptr;
-    }
-}
-void AirMapTelemetry::_udpTelemetryHostLookup(QHostInfo info)
-{
-    if (info.error() != QHostInfo::NoError || info.addresses().length() == 0) {
-        qCWarning(AirMapManagerLog) << "DNS lookup error:" << info.errorString();
-        QNetworkReply::NetworkError networkError = QNetworkReply::NetworkError::HostNotFoundError;
-        emit _error(networkError, "DNS lookup failed", "");
-        _state = State::Idle;
-        return;
-    }
-    qCDebug(AirMapManagerLog) << "Got Hosts for UDP telemetry:" << info.addresses();
-    _udpHost = info.addresses()[0];
 }
 
 void AirMapTelemetry::vehicleMavlinkMessageReceived(const mavlink_message_t& message)
@@ -940,7 +604,7 @@ void AirMapTelemetry::vehicleMavlinkMessageReceived(const mavlink_message_t& mes
 
 bool AirMapTelemetry::isTelemetryStreaming() const
 {
-    return _state == State::Streaming && !_udpHost.isNull();
+    return _state == State::Streaming;
 }
 
 void AirMapTelemetry::_handleGPSRawInt(const mavlink_message_t& message)
@@ -968,128 +632,26 @@ void AirMapTelemetry::_handleGlobalPositionInt(const mavlink_message_t& message)
     mavlink_global_position_int_t globalPosition;
     mavlink_msg_global_position_int_decode(&message, &globalPosition);
 
-    qDebug() << "Got position from vehicle:" << globalPosition.lat << "," << globalPosition.lon;
+    Telemetry::Position position{
+        milliseconds_since_epoch(Clock::universal_time()),
+        (double) globalPosition.lat / 1e7,
+        (double) globalPosition.lon / 1e7,
+        (float) globalPosition.alt / 1000.f,
+        (float) globalPosition.relative_alt / 1000.f,
+        _lastHdop
+    };
+    Telemetry::Speed speed{
+        milliseconds_since_epoch(Clock::universal_time()),
+        globalPosition.vx / 100.f,
+        globalPosition.vy / 100.f,
+        globalPosition.vz / 100.f
+    };
 
-    // documentation: https://developers.airmap.com/docs/sending-telemetry
+    Flight flight;
+    flight.id = _flightID.toStdString();
+    _shared.client()->telemetry().submit_updates(flight, _key,
+        {Telemetry::Update{position}, Telemetry::Update{speed}});
 
-    uint8_t output[512]; // assume the whole packet is not longer than this
-    uint8_t payload[512];
-    uint32_t payloadLength = 0;
-    uint32_t packetHeaderLength = 0;
-    uint8_t* key = (uint8_t*)_key.data();
-
-    uint8_t iv[16];
-    for (size_t i = 0; i < sizeof(iv); ++i) {
-        iv[i] = (uint8_t)(qrand() & 0xff); // TODO: should use a secure random source
-    }
-
-    // write packet header & set the length
-    qToBigEndian(_seqNum, output + packetHeaderLength);
-    packetHeaderLength += sizeof(_seqNum);
-    ++_seqNum;
-    QByteArray flightID = _flightID.toUtf8();
-    output[packetHeaderLength++] = flightID.length();
-    memcpy(output+packetHeaderLength, flightID.data(), flightID.length());
-    packetHeaderLength += flightID.length();
-    output[packetHeaderLength++] = 1; //encryption type = 'aes-256-cbc'
-    memcpy(output+packetHeaderLength, iv, sizeof(iv));
-    packetHeaderLength += sizeof(iv);
-
-    // write payload
-    // Position message
-    airmap::telemetry::Position position;
-    position.set_timestamp(QDateTime::currentMSecsSinceEpoch());
-    position.set_latitude((double) globalPosition.lat / 1e7);
-    position.set_longitude((double) globalPosition.lon / 1e7);
-    position.set_altitude_msl((float) globalPosition.alt / 1000.f);
-    position.set_altitude_agl((float) globalPosition.relative_alt / 1000.f);
-    position.set_horizontal_accuracy(_lastHdop);
-
-    uint16_t msgID = 1; // Position: 1, Attitude: 2, Speed: 3, Barometer: 4
-    uint16_t msgLength = position.ByteSize();
-    qToBigEndian(msgID, payload+payloadLength);
-    qToBigEndian(msgLength, payload+payloadLength+sizeof(msgID));
-    payloadLength += sizeof(msgID) + sizeof(msgLength);
-    position.SerializeToArray(payload+payloadLength, msgLength);
-    payloadLength += msgLength;
-
-    // Speed message
-    airmap::telemetry::Speed speed;
-    speed.set_timestamp(QDateTime::currentMSecsSinceEpoch());
-    speed.set_velocity_x(globalPosition.vx / 100.f);
-    speed.set_velocity_y(globalPosition.vy / 100.f);
-    speed.set_velocity_z(globalPosition.vz / 100.f);
-
-    msgID = 3; // Position: 1, Attitude: 2, Speed: 3, Barometer: 4
-    msgLength = speed.ByteSize();
-    qToBigEndian(msgID, payload+payloadLength);
-    qToBigEndian(msgLength, payload+payloadLength+sizeof(msgID));
-    payloadLength += sizeof(msgID) + sizeof(msgLength);
-    speed.SerializeToArray(payload+payloadLength, msgLength);
-    payloadLength += msgLength;
-
-
-    // pad to 16 bytes if necessary
-    int padding = 16 - (payloadLength % 16);
-    if (padding != 16) {
-        for (int i = 0; i < padding; ++i) {
-            payload[payloadLength+i] = (uint8_t)padding;
-        }
-        payloadLength += padding;
-    }
-
-    AES_CBC_encrypt_buffer(output + packetHeaderLength, payload, payloadLength, key, iv);
-
-    qDebug() << "Telemetry Position: payload len=" << payloadLength << "header len=" << packetHeaderLength << "msglen=" << msgLength;
-
-    _socket->writeDatagram((char*)output, packetHeaderLength+payloadLength, _udpHost, _udpPort);
-}
-
-void AirMapTelemetry::_parseJson(QJsonParseError parseError, QJsonDocument doc)
-{
-    Q_UNUSED(parseError);
-    QJsonObject rootObject = doc.object();
-    switch(_state) {
-        case State::StartCommunication:
-        {
-            const QJsonObject& dataObject = rootObject["data"].toObject();
-            QString key = dataObject["key"].toString(); // base64 encoded key
-
-            if (key.length() == 0) {
-                qCWarning(AirMapManagerLog) << "Did not get a valid key";
-                _state = State::Idle;
-                return;
-            }
-            _key = QByteArray::fromBase64(key.toUtf8());
-            _seqNum = 1;
-            if (!_socket) {
-                _socket = new QUdpSocket(this);
-            }
-
-            qDebug() << "AES key=" << key;
-
-            _state = State::Streaming;
-        }
-            break;
-        case State::EndCommunication:
-            if (_socket) {
-                delete _socket;
-                _socket = nullptr;
-            }
-            _key = "";
-            _state = State::Idle;
-            break;
-        default:
-            qCDebug(AirMapManagerLog) << "Error: wrong state";
-            break;
-    }
-}
-
-void AirMapTelemetry::_error(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage)
-{
-    _state = State::Idle;
-    qCWarning(AirMapManagerLog) << "AirMapTelemetry::_error" << code << serverErrorMessage;
-    emit networkError(code, errorString, serverErrorMessage);
 }
 
 void AirMapTelemetry::startTelemetryStream(const QString& flightID)
@@ -1101,15 +663,28 @@ void AirMapTelemetry::startTelemetryStream(const QString& flightID)
 
     qCInfo(AirMapManagerLog) << "Starting Telemetry stream with flightID" << flightID;
 
-    QUrl url(QString("https://api.airmap.com/flight/v2/%1/start-comm").arg(flightID));
-
-    _networking.post(url, QByteArray(), false, true);
     _state = State::StartCommunication;
     _flightID = flightID;
 
-    // do the DNS lookup concurrently
-    QString host = "api.k8s.stage.airmap.com";
-    QHostInfo::lookupHost(host, this, SLOT(_udpTelemetryHostLookup(QHostInfo)));
+    Flights::StartFlightCommunications::Parameters params;
+    params.authorization = _shared.loginToken().toStdString();
+    params.id = _flightID.toStdString();
+    _shared.client()->flights().start_flight_communications(params, [this](const Flights::StartFlightCommunications::Result& result) {
+        if (_state != State::StartCommunication) return;
+
+        if (result) {
+            _key = result.value().key;
+            _state = State::Streaming;
+        } else {
+            _state = State::Idle;
+            try {
+                std::rethrow_exception(result.error());
+            } catch (const std::exception& e) {
+                // TODO: emit signal
+                emit error("Failed to start telemetry streaming", e.what(), "");
+            }
+        }
+    });
 }
 
 void AirMapTelemetry::stopTelemetryStream()
@@ -1119,89 +694,89 @@ void AirMapTelemetry::stopTelemetryStream()
     }
     qCInfo(AirMapManagerLog) << "Stopping Telemetry stream with flightID" << _flightID;
 
-    QUrl url(QString("https://api.airmap.com/flight/v2/%1/end-comm").arg(_flightID));
-
-    _networking.post(url, QByteArray(), false, true);
     _state = State::EndCommunication;
+    Flights::EndFlightCommunications::Parameters params;
+    params.authorization = _shared.loginToken().toStdString();
+    params.id = _flightID.toStdString();
+    _shared.client()->flights().end_flight_communications(params, [this](const Flights::EndFlightCommunications::Result& result) {
+        Q_UNUSED(result);
+        if (_state != State::EndCommunication) return;
+
+        _key = "";
+        _state = State::Idle;
+    });
 }
 
-void AirMapTrafficAlertClient::startConnection(const QString& flightID, const QString& password)
+AirMapTrafficMonitor::~AirMapTrafficMonitor()
+{
+    stop();
+}
+
+void AirMapTrafficMonitor::startConnection(const QString& flightID)
 {
     _flightID = flightID;
+    auto handler = [this](const Traffic::Monitor::Result& result) {
+        if (result) {
+            _monitor = result.value();
+            _subscriber = std::make_shared<Traffic::Monitor::FunctionalSubscriber>(
+                    std::bind(&AirMapTrafficMonitor::_update, this, std::placeholders::_1,  std::placeholders::_2));
+            _monitor->subscribe(_subscriber);
+        } else {
+            try {
+                std::rethrow_exception(result.error());
+            } catch (const std::exception& e) {
+                // TODO: error
+            }
+        }
+    };
 
-    setClientId("qgc-client-id"); // TODO: random?
-    setUsername(flightID);
-    setPassword(password);
-    connectToHost();
+    Traffic::Monitor::Params params{flightID.toStdString(), _shared.loginToken().toStdString()};
+    _shared.client()->traffic().monitor(params, handler);
 }
 
-void AirMapTrafficAlertClient::onError(const QMQTT::ClientError error)
+void AirMapTrafficMonitor::_update(Traffic::Update::Type type, const std::vector<Traffic::Update>& update)
 {
-    // TODO: user-facing warning
-    qWarning() << "QMQTT error" << (int)error;
-}
+    qCDebug(AirMapManagerLog) << "Traffic update with" << update.size() << "elements";
 
-void AirMapTrafficAlertClient::onConnected()
-{
-    // see https://developers.airmap.com/v2.0/docs/traffic-alerts
-    subscribe("uav/traffic/sa/" + _flightID, 0); // situational awareness topic
-}
+    if (type != Traffic::Update::Type::situational_awareness)
+        return; // currently we're only interested in situational awareness
 
-void AirMapTrafficAlertClient::onSubscribed(const QString& topic)
-{
-    qCDebug(AirMapManagerLog) << "subscribed" << topic;
-}
-
-void AirMapTrafficAlertClient::onReceived(const QMQTT::Message& message)
-{
-    qCDebug(AirMapManagerLog) << "traffic publish received:" << QString::fromUtf8(message.payload());
-    // looks like this:
-    // "{"traffic":[{"id":"OAW380-1501565193-airline-0081","direction":-41.20024491976423,"altitude":"5675",
-    // "latitude":"47.50335","longitude":"8.40912","recorded_time":"1501774066","ground_speed_kts":"199",
-    // "true_heading":"241","properties":{"aircraft_id":"OAW380"},"timestamp":1501774079064}]}"
-
-    QJsonParseError parseError;
-    QJsonDocument responseJson = QJsonDocument::fromJson(message.payload(), &parseError);
-    if (parseError.error != QJsonParseError::NoError) {
-        qWarning() << "QMQTT JSON parsing error" << parseError.errorString();
-        return;
-    }
-    QJsonObject rootObject = responseJson.object();
-    const QJsonArray& trafficArray = rootObject["traffic"].toArray();
-    for (int i = 0; i < trafficArray.count(); i++) {
-        const QJsonObject& trafficObject = trafficArray[i].toObject();
-        QString traffic_id = trafficObject["id"].toString();
-        float altitude = trafficObject["altitude"].toString().toFloat() * 0.3048f; // feet to meters
-        double lat = trafficObject["latitude"].toString().toDouble();
-        double lon = trafficObject["longitude"].toString().toDouble();
-        float heading = trafficObject["true_heading"].toString().toDouble(); // in deg
-        QString vehicle_id = trafficObject["properties"].toObject()["aircraft_id"].toString();
-        emit trafficUpdate(traffic_id, vehicle_id, QGeoCoordinate(lat, lon, altitude), heading);
-
+    for (const auto& traffic : update) {
+        QString traffic_id = QString::fromStdString(traffic.id);
+        QString vehicle_id = QString::fromStdString(traffic.aircraft_id);
+        emit trafficUpdate(traffic_id, vehicle_id, QGeoCoordinate(traffic.latitude, traffic.longitude, traffic.altitude),
+                traffic.heading);
     }
 }
 
+void AirMapTrafficMonitor::stop()
+{
+    if (_monitor) {
+        _monitor->unsubscribe(_subscriber);
+        _subscriber.reset();
+        _monitor.reset();
+    }
+}
 
-AirMapManagerPerVehicle::AirMapManagerPerVehicle(AirMapNetworking::SharedData& sharedData, const Vehicle& vehicle,
+AirMapManagerPerVehicle::AirMapManagerPerVehicle(AirMapSharedState& shared, const Vehicle& vehicle,
         QGCToolbox& toolbox)
-    : AirspaceManagerPerVehicle(vehicle), _networking(sharedData),
-    _flightManager(sharedData), _telemetry(sharedData), _trafficAlerts("mqtt-prod.airmap.io", 8883),
+    : AirspaceManagerPerVehicle(vehicle), _shared(shared),
+    _flightManager(shared), _telemetry(shared), _trafficMonitor(shared),
     _toolbox(toolbox)
 {
     connect(&_flightManager, &AirMapFlightManager::flightPermitStatusChanged,
             this, &AirMapManagerPerVehicle::flightPermitStatusChanged);
     connect(&_flightManager, &AirMapFlightManager::flightPermitStatusChanged,
             this, &AirMapManagerPerVehicle::_flightPermitStatusChanged);
-    connect(&_flightManager, &AirMapFlightManager::networkError, this, &AirMapManagerPerVehicle::networkError);
-    connect(&_telemetry, &AirMapTelemetry::networkError, this, &AirMapManagerPerVehicle::networkError);
-    connect(&_trafficAlerts, &AirMapTrafficAlertClient::trafficUpdate, this, &AirspaceManagerPerVehicle::trafficUpdate);
-    settingsChanged();
+    //connect(&_flightManager, &AirMapFlightManager::networkError, this, &AirMapManagerPerVehicle::networkError);
+    //connect(&_telemetry, &AirMapTelemetry::networkError, this, &AirMapManagerPerVehicle::networkError);
+    connect(&_trafficMonitor, &AirMapTrafficMonitor::trafficUpdate, this, &AirspaceManagerPerVehicle::trafficUpdate);
 }
 
 void AirMapManagerPerVehicle::createFlight(const QList<MissionItem*>& missionItems)
 {
-    if (!_networking.hasAPIKey()) {
-        qCDebug(AirMapManagerLog) << "API key not set. Will not create a flight";
+    if (!_shared.client()) {
+        qCDebug(AirMapManagerLog) << "No AirMap client instance. Will not create a flight";
         return;
     }
     _flightManager.createFlight(missionItems);
@@ -1232,20 +807,7 @@ bool AirMapManagerPerVehicle::isTelemetryStreaming() const
 void AirMapManagerPerVehicle::endFlight()
 {
     _flightManager.endFlight();
-    _trafficAlerts.disconnectFromHost();
-}
-
-void AirMapManagerPerVehicle::settingsChanged()
-{
-    AirMapSettings* ap = _toolbox.settingsManager()->airMapSettings();
-    _flightManager.setSitaPilotRegistrationId(ap->sitaUserReg()->rawValueString());
-    _flightManager.setSitaUavRegistrationId(ap->sitaUavReg()->rawValueString());
-
-    // reset the states
-    _flightManager.abort();
-    _flightManager.endFlight();
-    _telemetry.stopTelemetryStream();
-    _trafficAlerts.disconnectFromHost();
+    _trafficMonitor.stop();
 }
 
 void AirMapManagerPerVehicle::vehicleMavlinkMessageReceived(const mavlink_message_t& message)
@@ -1261,22 +823,34 @@ void AirMapManagerPerVehicle::_flightPermitStatusChanged()
     if (_flightManager.flightPermitStatus() == AirspaceAuthorization::PermitAccepted) {
         qCDebug(AirMapManagerLog) << "Subscribing to Traffic Alerts";
         // since we already created the flight, we know that we have a valid login token
-        _trafficAlerts.startConnection(_flightManager.flightID(), _networking.JWTLoginToken());
+        _trafficMonitor.startConnection(_flightManager.flightID());
     }
 }
 
 AirMapManager::AirMapManager(QGCApplication* app, QGCToolbox* toolbox)
     : AirspaceManager(app, toolbox)
 {
-    GOOGLE_PROTOBUF_VERIFY_VERSION;
+    _logger = std::make_shared<qt::Logger>();
+    qt::register_types(); // TODO: still needed?
+    _logger->logging_category().setEnabled(QtDebugMsg, true);
+    _logger->logging_category().setEnabled(QtInfoMsg, true);
+    _logger->logging_category().setEnabled(QtWarningMsg, true);
+    _dispatchingLogger = std::make_shared<qt::DispatchingLogger>(_logger);
+
+    connect(&_shared, &AirMapSharedState::error, this, &AirMapManager::_error);
+}
+
+AirMapManager::~AirMapManager()
+{
+    if (_shared.client()) {
+        delete _shared.client();
+    }
 }
 
 void AirMapManager::setToolbox(QGCToolbox* toolbox)
 {
     AirspaceManager::setToolbox(toolbox);
     AirMapSettings* ap = toolbox->settingsManager()->airMapSettings();
-    _networkingData.airmapAPIKey = ap->apiKey()->rawValueString();
-    _networkingData.login.setCredentials(ap->clientID()->rawValueString(), ap->userName()->rawValueString(), ap->password()->rawValueString());
 
     connect(ap->apiKey(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     connect(ap->clientID(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
@@ -1285,6 +859,16 @@ void AirMapManager::setToolbox(QGCToolbox* toolbox)
 
     connect(ap->sitaUserReg(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     connect(ap->sitaUavReg(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
+
+    _settingsChanged();
+
+}
+
+void AirMapManager::_error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails)
+{
+    //TODO: console message & UI message
+    //qgcApp()->showMessage(QString("AirMap error: %1%2").arg(errorString).arg(errorDetails));
+    qCDebug(AirMapManagerLog) << "Caught error: "<<what<<", "<<airmapdMessage<<", "<<airmapdDetails;
 }
 
 void AirMapManager::_settingsChanged()
@@ -1292,40 +876,53 @@ void AirMapManager::_settingsChanged()
     qCDebug(AirMapManagerLog) << "AirMap settings changed";
 
     AirMapSettings* ap = _toolbox->settingsManager()->airMapSettings();
-    _networkingData.airmapAPIKey = ap->apiKey()->rawValueString();
-    _networkingData.login.setCredentials(ap->clientID()->rawValueString(), ap->userName()->rawValueString(), ap->password()->rawValueString());
 
-    emit settingsChanged();
-}
+    AirMapSharedState::Settings settings;
+    settings.apiKey = ap->apiKey()->rawValueString();
+    bool apiKeyChanged = settings.apiKey != _shared.settings().apiKey;
+    settings.clientID = ap->clientID()->rawValueString();
+    settings.userName = ap->userName()->rawValueString();
+    settings.password = ap->password()->rawValueString();
+    _shared.setSettings(settings);
 
-void AirMapManager::_networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage)
-{
-    QString errorDetails = "";
-    if (code == QNetworkReply::NetworkError::ContentOperationNotPermittedError) {
-        errorDetails = " (invalid API key?)";
-    } else if (code == QNetworkReply::NetworkError::AuthenticationRequiredError) {
-        errorDetails = " (authentication failure)";
+    // need to re-create the client if the API key changed
+    if (_shared.client() && apiKeyChanged) {
+        delete _shared.client();
+        _shared.setClient(nullptr);
     }
-    if (serverErrorMessage.length() > 0) {
-        // the errorString is a bit verbose and redundant with serverErrorMessage. So we just show the server error.
-        qgcApp()->showMessage(QString("AirMap error%1. Response from Server: %2").arg(errorDetails).arg(serverErrorMessage));
-    } else {
-        qgcApp()->showMessage(QString("AirMap error: %1%2").arg(errorString).arg(errorDetails));
+
+
+    if (!_shared.client() && settings.apiKey != "") {
+        qCDebug(AirMapManagerLog) << "Creating AirMap client";
+
+        auto credentials    = Credentials{};
+        credentials.api_key = _shared.settings().apiKey.toStdString();
+        auto configuration  = Client::default_staging_configuration(credentials);
+        qt::Client::create(configuration, _dispatchingLogger, this, [this, ap](const qt::Client::CreateResult& result) {
+            if (result) {
+                qCDebug(AirMapManagerLog) << "Successfully created airmap::qt::Client instance";
+                _shared.setClient(result.value());
+
+            } else {
+                qWarning("Failed to create airmap::qt::Client instance");
+                // TODO: user error message
+            }
+        });
     }
 }
 
 AirspaceManagerPerVehicle* AirMapManager::instantiateVehicle(const Vehicle& vehicle)
 {
-    AirMapManagerPerVehicle* manager = new AirMapManagerPerVehicle(_networkingData, vehicle, *_toolbox);
-    connect(manager, &AirMapManagerPerVehicle::networkError, this, &AirMapManager::_networkError);
-    connect(this, &AirMapManager::settingsChanged, manager, &AirMapManagerPerVehicle::settingsChanged);
+    AirMapManagerPerVehicle* manager = new AirMapManagerPerVehicle(_shared, vehicle, *_toolbox);
+    //connect(manager, &AirMapManagerPerVehicle::networkError, this, &AirMapManager::_networkError);
     return manager;
 }
 
 AirspaceRestrictionProvider* AirMapManager::instantiateRestrictionProvider()
 {
-    AirMapRestrictionManager* restrictionManager = new AirMapRestrictionManager(_networkingData);
-    connect(restrictionManager, &AirMapRestrictionManager::networkError, this, &AirMapManager::_networkError);
+    AirMapRestrictionManager* restrictionManager = new AirMapRestrictionManager(_shared);
+    //connect(restrictionManager, &AirMapRestrictionManager::networkError, this, &AirMapManager::_networkError);
+    connect(restrictionManager, &AirMapRestrictionManager::error, this, &AirMapManager::_error);
     return restrictionManager;
 }
 

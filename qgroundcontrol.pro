@@ -131,10 +131,6 @@ WindowsBuild {
     QMAKE_TARGET_PRODUCT        = "$${QGC_APP_NAME}"
 }
 
-include($$PWD/libs/thirdParty/qmqtt/src/mqtt/mqtt.pri)
-HEADERS += $$PUBLIC_HEADERS $$PRIVATE_HEADERS
-
-
 #
 # Plugin configuration
 #
@@ -592,7 +588,9 @@ HEADERS += \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
     src/AnalyzeView/LogDownloadController.h \
-    libs/thirdParty/tiny-AES128-C/aes.h \
+
+
+AIRMAPD_PATH = path_to_airmapd
 
 # Protobuf (AirMap)
 # This should be optional. As is, QGC now requires protobuf to be installed.
@@ -602,10 +600,19 @@ MacBuild {
     LIBS += \
         -L/usr/local/opt/protobuf/lib
 }
-
 LIBS += -lprotobuf
-PROTOS = src/protobuf/airmap_telemetry.proto
-include(src/protobuf/proto_compile.pri)
+
+# airmapd
+INCLUDEPATH += $${AIRMAPD_PATH}/include
+LIBS += -L$${AIRMAPD_PATH}/build/src/airmap -lairmap-qt \
+	-lairmap-mavlink \
+	-lairmap-client -lssl -lcrypto \
+	-L$${AIRMAPD_PATH}/build/vendor/fmt/fmt -lfmt \
+	-lboost_system -lboost_date_time -lboost_filesystem -lboost_program_options \
+	-lboost_unit_test_framework \
+	-L$${AIRMAPD_PATH}/build/vendor/xdg -lxdg \
+	-L$${AIRMAPD_PATH}/build/vendor/uri/src -lnetwork-uri \
+
 
 AndroidBuild {
 HEADERS += \
@@ -797,7 +804,6 @@ SOURCES += \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
     src/AnalyzeView/LogDownloadController.cc \
-    libs/thirdParty/tiny-AES128-C/aes.c \
 
 DebugBuild {
 SOURCES += \
@@ -875,7 +881,6 @@ INCLUDEPATH += \
     src/FirmwarePlugin \
     src/Vehicle \
     src/VehicleSetup \
-    libs/thirdParty/tiny-AES128-C \
 
 HEADERS+= \
     src/AutoPilotPlugins/AutoPilotPlugin.h \
