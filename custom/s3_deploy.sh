@@ -28,11 +28,22 @@ version=${version%$suffix}
 echo -n "$version" > ${apk_path}/version
 echo -n "$(sha256sum ${apk_path}/${prefix}${version}${suffix} | head -c 64)" > ${apk_path}/hash
 
-s3cmd --add-header=x-amz-meta-firmware-version:${version} -m application/octet-stream --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/$filename s3://${S3_BUCKET_NAME}/datapilot/latest/datapilot.apk;
-s3cmd --add-header=x-amz-meta-firmware-version:${version} -m application/octet-stream --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/$filename s3://${S3_BUCKET_NAME}/datapilot/$version/datapilot.apk;
-s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/version s3://${S3_BUCKET_NAME}/datapilot/latest/version;
-s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/version s3://${S3_BUCKET_NAME}/datapilot/$version/version;
-s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/hash s3://${S3_BUCKET_NAME}/datapilot/latest/hash;
-s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/hash s3://${S3_BUCKET_NAME}/datapilot/$version/hash;
-s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put ./custom/CHANGELOG.md s3://${S3_BUCKET_NAME}/datapilot/latest/changelog;
-s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put ./custom/CHANGELOG.md s3://${S3_BUCKET_NAME}/datapilot/$version/changelog;
+if [[ "$1" == "master" ]]; then
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m application/octet-stream --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/$filename s3://${S3_BUCKET_NAME}/datapilot/latest/datapilot.apk;
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m application/octet-stream --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/$filename s3://${S3_BUCKET_NAME}/datapilot/$version/datapilot.apk;
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/version s3://${S3_BUCKET_NAME}/datapilot/latest/version;
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/version s3://${S3_BUCKET_NAME}/datapilot/$version/version;
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/hash s3://${S3_BUCKET_NAME}/datapilot/latest/hash;
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/hash s3://${S3_BUCKET_NAME}/datapilot/$version/hash;
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put ./custom/CHANGELOG.md s3://${S3_BUCKET_NAME}/datapilot/latest/changelog;
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put ./custom/CHANGELOG.md s3://${S3_BUCKET_NAME}/datapilot/$version/changelog;
+else
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m application/octet-stream --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/$filename s3://${S3_BUCKET_NAME}/datapilot/$1/latest/datapilot.apk;
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m application/octet-stream --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/$filename s3://${S3_BUCKET_NAME}/datapilot/$1/$version/datapilot.apk;
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/version s3://${S3_BUCKET_NAME}/datapilot/$1/latest/version;
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/version s3://${S3_BUCKET_NAME}/datapilot/$1/$version/version;
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/hash s3://${S3_BUCKET_NAME}/datapilot/$1/latest/hash;
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put $apk_path/hash s3://${S3_BUCKET_NAME}/datapilot/$1/$version/hash;
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put ./custom/CHANGELOG.md s3://${S3_BUCKET_NAME}/datapilot/$1/latest/changelog;
+    s3cmd --add-header=x-amz-meta-firmware-version:${version} -m text/plain --acl-public --add-header='Cache-Control: public, max-age=0' put ./custom/CHANGELOG.md s3://${S3_BUCKET_NAME}/datapilot/$1/$version/changelog;
+fi
