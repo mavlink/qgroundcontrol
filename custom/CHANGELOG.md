@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.4 - Nov 7 2017
+
+*   Show "Format Complete" message
+
 ### v1.2.3 - Nov 7 2017
 
 *   No code changes: 

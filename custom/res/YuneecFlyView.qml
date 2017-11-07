@@ -79,6 +79,7 @@ Item {
     property int    _eggCount:              0
     property string _messageTitle:          ""
     property string _messageText:           ""
+    property bool   _formatComplete:        false
 
     function showSimpleAlert(title, message) {
         _messageTitle   = title;
@@ -268,7 +269,15 @@ Item {
                     mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
                 }
+                if(camControlLoader.item.formatInProgress) {
+                    _formatComplete = true
+                    showSimpleAlert(
+                        qsTr("Format MicroSD Card"),
+                        qsTr("Format Completed"))
+                }
             }
+            //-- Anything will reset this
+            camControlLoader.item.formatInProgress = false
         }
         onStorageFreeChanged: {
             if(_fullSD) {
@@ -278,11 +287,12 @@ Item {
                 }
             } else {
                 _fullSdCardMsgShown = false;
-                if(rootLoader.sourceComponent === simpleAlert) {
+                if(rootLoader.sourceComponent === simpleAlert && !_formatComplete) {
                     mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
                 }
             }
+            _formatComplete = false
         }
     }
 
