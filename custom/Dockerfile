@@ -3,7 +3,7 @@
 #
 # Author: Dario Roethlisberger <dario.roethlisberger@gmail.com>
 #
-# From qgroundcontrol/custom 
+# From qgroundcontrol/custom
 #
 # Build docker: docker build -t datapilot .
 # Run command: docker run -it -v `dirname $(pwd)`:/home/docker1000/qgroundcontrol:rw -v /tmp/datapilot_build:/tmp/datapilot_build:rw datapilot
@@ -23,8 +23,7 @@ RUN apt-get update \
 	&& apt-get clean autoclean \
 	&& rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
 
-RUN adduser --disabled-password --gecos '' --uid 1000 docker1000
-USER docker1000
+RUN mkdir -p /home/docker1000
 
 RUN cd /home/docker1000 \
 	&& wget --no-check-certificate http://www.grubba.com/dpbuild.tgz \
@@ -36,6 +35,7 @@ RUN cd /home/docker1000 \
     && rm qtspeech.tgz
 
 WORKDIR "/home/docker1000/qgroundcontrol"
+ENV HOME "/home/docker1000"
 
 ENTRYPOINT ["/home/docker1000/qgroundcontrol/custom/entrypoint.sh"]
 CMD ["developer"]
