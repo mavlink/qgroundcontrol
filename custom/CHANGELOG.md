@@ -1,5 +1,10 @@
 ## DataPilot Release Changelog
 
+### v1.2.3 - Nov 7 2017
+
+*   No code changes: 
+    Deployment of all branches to s3; the branch needs to be enabled on Jenkins
+
 ### v1.2.2 - Nov 2 2017
 
 *   Internal localization work. Not visible to the outside yet.
