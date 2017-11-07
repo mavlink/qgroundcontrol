@@ -48,6 +48,8 @@ Rectangle {
 
     readonly property string _commLostStr: qsTr("NO CAMERA")
 
+    property bool formatInProgress:         false
+
     property real _spacers:                 ScreenTools.defaultFontPixelHeight * 0.35
     property real _labelFieldWidth:         ScreenTools.defaultFontPixelWidth * 30
     property real _editFieldWidth:          ScreenTools.defaultFontPixelWidth * 30
@@ -667,8 +669,12 @@ Rectangle {
                                         _camera.photoMode = QGCCameraControl.PHOTO_CAPTURE_SINGLE
                                         _camera.photoLapse = 5.0
                                         _camera.photoLapseCount = 0
-                                        _camera.irROI = 0
-                                        _camera.irPresets = 0
+                                        if(_camera.irROI) {
+                                            _camera.irROI.value = 0
+                                        }
+                                        if(_camera.irPresets) {
+                                            _camera.irPresets.value = 0
+                                        }
                                         resetPrompt.close()
                                     }
                                 }
@@ -702,8 +708,11 @@ Rectangle {
                                     standardButtons:    StandardButton.Yes | StandardButton.No
                                     onNo: formatPrompt.close()
                                     onYes: {
+                                        formatInProgress = true
                                         _camera.formatCard()
                                         formatPrompt.close()
+                                        mainWindow.enableToolbar()
+                                        rootLoader.sourceComponent = null
                                     }
                                 }
                             }
