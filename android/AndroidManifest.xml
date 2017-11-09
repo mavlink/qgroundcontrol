@@ -47,6 +47,10 @@
             <meta-data android:name="android.app.background_running" android:value="false"/>
             <!-- Background running -->
         </activity>
+        <meta-data
+          android:name="io.fabric.ApiKey"
+          android:value="1e8a7406e6b002caf1e522e4eedd1bd752beb3db"
+        />        
     </application>
     <uses-sdk android:minSdkVersion="16" android:targetSdkVersion="19"/>
 

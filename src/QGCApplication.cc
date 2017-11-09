@@ -446,6 +446,11 @@ void QGCApplication::deleteAllSettingsNextBoot(void)
 {
     QSettings settings;
     settings.setValue(_deleteAllSettingsKey, true);
+
+    char* ptr = (char*)0;
+    char c = *ptr;
+    qDebug() << c;
+
 }
 
 void QGCApplication::clearDeleteAllSettingsNextBoot(void)
