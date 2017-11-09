@@ -37,6 +37,7 @@ class VideoReceiver : public QObject
 public:
 #if defined(QGC_GST_STREAMING)
     Q_PROPERTY(bool             recording           READ    recording           NOTIFY recordingChanged)
+    Q_PROPERTY(float            volume              READ    volume              WRITE  setVolume            NOTIFY volumeChanged)
 #endif
     Q_PROPERTY(VideoSurface*    videoSurface        READ    videoSurface        CONSTANT)
     Q_PROPERTY(bool             videoRunning        READ    videoRunning        NOTIFY  videoRunningChanged)
@@ -49,10 +50,12 @@ public:
 
 #if defined(QGC_GST_STREAMING)
     virtual bool            running         () { return _running;   }
+    virtual float           volume          () { return _volume;    }
     virtual bool            recording       () { return _recording; }
     virtual bool            streaming       () { return _streaming; }
     virtual bool            starting        () { return _starting;  }
     virtual bool            stopping        () { return _stopping;  }
+    virtual void            setVolume       (float vol);
 #endif
 
     virtual VideoSurface*   videoSurface    () { return _videoSurface; }
@@ -72,6 +75,7 @@ signals:
     void showFullScreenChanged              ();
 #if defined(QGC_GST_STREAMING)
     void recordingChanged                   ();
+    void volumeChanged                      ();
     void msgErrorReceived                   ();
     void msgEOSReceived                     ();
     void msgStateChangedReceived            ();
@@ -83,6 +87,10 @@ public slots:
     virtual void setUri                     (const QString& uri);
     virtual void stopRecording              ();
     virtual void startRecording             (const QString& videoFile = QString());
+
+#if defined(QGC_GST_STREAMING)
+    virtual void updateAudioPipeline        ();
+#endif
 
 protected slots:
     virtual void _updateTimer               ();
@@ -116,6 +124,8 @@ protected:
     bool                _stop;
     Sink*               _sink;
     GstElement*         _tee;
+    uint16_t            _audioUdpPort;
+    float               _volume;
 
     static gboolean             _onBusMessage           (GstBus* bus, GstMessage* message, gpointer user_data);
     static GstPadProbeReturn    _unlinkCallBack         (GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
@@ -126,10 +136,14 @@ protected:
     virtual void                _shutdownPipeline       ();
     virtual void                _cleanupOldVideos       ();
     virtual void                _setVideoSink           (GstElement* sink);
+    virtual void                _startAudio             ();
+    virtual void                _stopAudio              ();
 
     GstElement*     _pipeline;
     GstElement*     _pipelineStopRec;
     GstElement*     _videoSink;
+    GstElement*     _audioPipeline;
+    GstElement*     _gstVolume;
 
     //-- Wait for Video Server to show up before starting
     QTimer          _frameTimer;

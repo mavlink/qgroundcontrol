@@ -26,6 +26,7 @@
 #include <QDir>
 #include <QDateTime>
 #include <QSysInfo>
+#include <algorithm>
 
 QGC_LOGGING_CATEGORY(VideoReceiverLog, "VideoReceiverLog")
 
@@ -60,9 +61,12 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _stopping(false)
     , _sink(nullptr)
     , _tee(nullptr)
+    , _volume(0)
     , _pipeline(nullptr)
     , _pipelineStopRec(nullptr)
     , _videoSink(nullptr)
+    , _audioPipeline(nullptr)
+    , _gstVolume(nullptr)
     , _socket(nullptr)
     , _serverPresent(false)
     , _rtspTestInterval_ms(5000)
@@ -84,6 +88,7 @@ VideoReceiver::VideoReceiver(QObject* parent)
     connect(this, &VideoReceiver::msgStateChangedReceived, this, &VideoReceiver::_handleStateChanged);
     connect(&_frameTimer, &QTimer::timeout, this, &VideoReceiver::_updateTimer);
     _frameTimer.start(1000);
+    updateAudioPipeline();
 #endif
 }
 
@@ -91,6 +96,7 @@ VideoReceiver::~VideoReceiver()
 {
 #if defined(QGC_GST_STREAMING)
     stop();
+    _stopAudio();
     if(_socket) {
         delete _socket;
     }
@@ -467,6 +473,73 @@ VideoReceiver::start()
     _starting = false;
 #endif
 }
+
+#if defined(QGC_GST_STREAMING)
+void
+VideoReceiver::_startAudio()
+{
+    // Run audio
+    uint32_t port = _videoSettings->audioUdpPort()->rawValue().toUInt();
+
+    QString pipeline = QStringLiteral("udpsrc port=%1 "
+        "! application/x-rtp, media=audio, clock-rate=44100, encoding-name=L16, encoding-params=1, channels=1, payload=96 "
+        "! rtpL16depay name=rtp0 "
+        "! audioconvert "
+        "! volume volume=1.0 name=volume0 "
+        "! queue "
+        "! autoaudiosink sync=false").arg(port);
+
+    qCDebug(VideoReceiverLog) << "Opening audio pipeline: " << pipeline;
+
+    _audioPipeline = gst_parse_launch(static_cast<char*>(pipeline.arg(port).toLocal8Bit().data()) , nullptr);
+
+    if (_audioPipeline) {
+        gst_element_set_state(_audioPipeline, GST_STATE_PLAYING);
+
+        _gstVolume = gst_bin_get_by_name(GST_BIN(_audioPipeline), "volume0");
+        qCDebug(VideoReceiverLog) << "volume0:" << _gstVolume;
+        setVolume(_videoSettings->audioVolume()->rawValue().toFloat());
+    }
+}
+
+void
+VideoReceiver::updateAudioPipeline()
+{
+    _stopAudio();
+    if (_videoSettings->audioEnabled()->rawValue().toBool()) {
+        _startAudio();
+    }
+}
+
+void
+VideoReceiver::_stopAudio() {
+    qCDebug(VideoReceiverLog) << "Stopping audio pipeline";
+    if(_audioPipeline) {
+        if(_gstVolume) {
+            gst_object_unref(_gstVolume);
+            _gstVolume = nullptr;
+        }
+        gst_element_set_state(_audioPipeline, GST_STATE_NULL);
+        gst_object_unref(_audioPipeline);
+        _audioPipeline = nullptr;
+    }
+}
+
+void
+VideoReceiver::setVolume(float vol)
+{
+    // TODO: replace by std::clamp after moving to cpp17
+    vol = std::max<float>(0.0, std::min<float>(vol, 1.0));
+
+    if(_gstVolume) {
+        _volume = vol;
+        g_object_set(_gstVolume, "volume", _volume, nullptr);
+        qCDebug(VideoReceiverLog) << "Set volume:" << vol;
+    } else {
+        qCDebug(VideoReceiverLog) << "No volume control";
+    }
+}
+#endif
 
 //-----------------------------------------------------------------------------
 void
