@@ -273,8 +273,6 @@ Item {
                 }
             }
 
-            onDragStop: adjustCircleRadius(itemCoordinate)
-
             onClicked: mapPolygon.removeVertex(polygonVertex)
         }
     }
