@@ -615,66 +615,26 @@ void SurveyMissionItem::_adjustTransectsToEntryPointLocation(QList<QList<QGeoCoo
         return;
     }
 
-    // First determine what location the current entry point is at
-
-    QGeoCoordinate& firstTransectEntry = transects.first().first();
-    QGeoCoordinate& firstTransectExit = transects.first().last();
-    QGeoCoordinate& lastTransectExit = transects.last().last();
-
-    bool northSouthTransects = _gridAngleIsNorthSouthTransects();
-    bool entryPointBottom;
-    bool entryPointLeft;
-
-    qCDebug(SurveyMissionItemLog) << "Original entry point" << transects.first().first();
-    qCDebug(SurveyMissionItemLog) << "northSouthTransects" << northSouthTransects;
-
-    if (northSouthTransects) {
-        double firstTransectAzimuth = firstTransectEntry.azimuthTo(firstTransectExit);
-        qCDebug(SurveyMissionItemLog) << "firstTransectAzimuth" << firstTransectAzimuth;
-        entryPointBottom = (firstTransectAzimuth >= 0.0 && firstTransectAzimuth < 90.0) || (firstTransectAzimuth > 270.0 && firstTransectAzimuth <= 360.0);
-        qCDebug(SurveyMissionItemLog) << (entryPointBottom ? "Entry point is at bottom" : "Entry point is at top");
-
-        double entryToExitAzimuth = firstTransectEntry.azimuthTo(lastTransectExit);
-        qCDebug(SurveyMissionItemLog) << "entryToExitAzimuth" << entryToExitAzimuth;
-        entryPointLeft = entryToExitAzimuth <= 180.0;
-        qCDebug(SurveyMissionItemLog) << (entryPointLeft ? "Entry point is at left" : "Entry point is at right");
-    } else {
-        double firstTransectAzimuth = firstTransectEntry.azimuthTo(firstTransectExit);
-        qCDebug(SurveyMissionItemLog) << "firstTransectAzimuth" << firstTransectAzimuth;
-        entryPointLeft = firstTransectAzimuth <= 180.0;
-        qCDebug(SurveyMissionItemLog) << (entryPointLeft ? "Entry point is at left" : "Entry point is at right");
-
-        double entryToExitAzimuth = firstTransectEntry.azimuthTo(lastTransectExit);
-        qCDebug(SurveyMissionItemLog) << "entryToExitAzimuth" << entryToExitAzimuth;
-        entryPointBottom = (entryToExitAzimuth >= 0.0 && entryToExitAzimuth < 90.0) || (entryToExitAzimuth > 270.0 && entryToExitAzimuth <= 360.0);
-        qCDebug(SurveyMissionItemLog) << (entryPointBottom ? "Entry point is at bottom" : "Entry point is at top");
-    }
-
-    // Now adjust the transects such that the entry point matches the requested location
-
     int entryLocation = _gridEntryLocationFact.rawValue().toInt();
-    bool reverseTransects;
-    bool reversePoints;
-    if (northSouthTransects) {
-        reversePoints = ((entryLocation == EntryLocationTopLeft || entryLocation == EntryLocationTopRight) && entryPointBottom) ||
-                ((entryLocation == EntryLocationBottomLeft || entryLocation == EntryLocationBottomRight) && !entryPointBottom);
-        reverseTransects = ((entryLocation == EntryLocationTopRight || entryLocation == EntryLocationBottomRight) && entryPointLeft) ||
-                ((entryLocation == EntryLocationTopLeft || entryLocation == EntryLocationBottomLeft) && !entryPointLeft);
-    } else {
-        reverseTransects = ((entryLocation == EntryLocationTopLeft || entryLocation == EntryLocationTopRight) && entryPointBottom) ||
-                ((entryLocation == EntryLocationBottomLeft || entryLocation == EntryLocationBottomRight) && !entryPointBottom);
-        reversePoints = ((entryLocation == EntryLocationTopRight || entryLocation == EntryLocationBottomRight) && entryPointLeft) ||
-                ((entryLocation == EntryLocationTopLeft || entryLocation == EntryLocationBottomLeft) && !entryPointLeft);
+    bool reversePoints = false;
+    bool reverseTransects = false;
+
+    if (entryLocation == EntryLocationBottomLeft || entryLocation == EntryLocationBottomRight) {
+        reversePoints = true;
     }
+    if (entryLocation == EntryLocationTopRight || entryLocation == EntryLocationBottomRight) {
+        reverseTransects = true;
+    }
+
     if (reversePoints) {
         qCDebug(SurveyMissionItemLog) << "Reverse Points";
         _reverseInternalTransectPoints(transects);
     }
     if (reverseTransects) {
-        // The only way we should end up here is if there is a bug in the original grid line generation
-        qCDebug(SurveyMissionItemLog) << "Not Reverse Transects";
-        //_reverseTransectOrder(transects);
+        qCDebug(SurveyMissionItemLog) << "Reverse Transects";
+        _reverseTransectOrder(transects);
     }
+
     qCDebug(SurveyMissionItemLog) << "Modified entry point" << transects.first().first();
 }
 
@@ -965,11 +925,9 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
     // bounding box to guarantee intersection.
 
     QList<QLineF> lineList;
-    bool northSouthTransects = _gridAngleIsNorthSouthTransects();
-    int entryLocation = _gridEntryLocationFact.rawValue().toInt();
 
     // Transects are generated to be as long as the largest width/height of the bounding rect plus some fudge factor.
-    // This way they will always be guaranteed to intersect with a polyong edge no matter what angle they are rotated to.
+    // This way they will always be guaranteed to intersect with a polygon edge no matter what angle they are rotated to.
     // They are initially generated with the transects flowing from west to east and then points within the transect north to south.
     double maxWidth = qMax(boundingRect.width(), boundingRect.height()) + 100.0;
     double halfWidth = maxWidth / 2.0;
@@ -981,47 +939,6 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
 
         lineList += QLineF(_rotatePoint(QPointF(transectX, transectYTop), boundingCenter, gridAngle), _rotatePoint(QPointF(transectX, transectYBottom), boundingCenter, gridAngle));
         transectX += gridSpacing;
-    }
-
-    // Adjust the transects and points within transect according to the entry location
-    bool reversePoints = false;
-    bool reverseTransects = false;
-    if (northSouthTransects) {
-        // Transects start north and end south
-        // Internal transects points are generated north to south so they are correct
-        if (entryLocation == EntryLocationTopLeft || entryLocation == EntryLocationBottomLeft) {
-            // Transects lines start west and end east
-            // Nothing to do in this case since this is how they were initially generated
-        } else {
-            // Transects start east and end west
-            // Need to reverse order of transects
-            reverseTransects = true;
-        }
-    } else {
-        // Transects start south and end north
-        // Need to reverse transects
-        reverseTransects = true;
-        if (entryLocation == EntryLocationTopLeft || entryLocation == EntryLocationBottomLeft) {
-            // Transects start west and end east
-            // Nothing to do in this case since this is how they were initially generated
-        } else {
-            // Transects start east and end west
-            // Need to reverse order of transects
-            reverseTransects = true;
-        }
-    }
-
-    if (reversePoints) {
-        for (int i=0; i<lineList.count(); i++) {
-            lineList[i] = QLineF(lineList[i].p2(), lineList[i].p1());
-        }
-    }
-    if (reverseTransects) {
-        QList<QLineF> newLineList;
-        for (int i=0; i<lineList.count(); i++) {
-            newLineList.prepend(lineList[i]);
-        }
-        lineList = newLineList;
     }
 
     // Now intersect the lines with the polygon
