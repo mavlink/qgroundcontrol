@@ -211,6 +211,8 @@ TyphoonHM4Interface::_vehicleReady(bool ready)
 {
     if(_vehicle) {
         if(ready) {
+            //-- Update hobbs meter
+            emit _vehicle->hobbsMeterChanged();
             //-- If for some reason vehicle is armed, do nothing
             if(_vehicle->armed()) {
                 qCWarning(YuneecLog) << "Booted with an armed vehicle!";
