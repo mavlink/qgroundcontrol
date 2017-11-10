@@ -21,6 +21,10 @@ To test using a test source on localhost, you can run this command:
 ```
 gst-launch-1.0 videotestsrc pattern=ball ! x264enc ! rtph264pay ! udpsink host=127.0.0.1 port=5600
 ```
+Or this one:
+```
+gst-launch-1.0 videotestsrc ! video/x-raw,width=640,height=480 ! videoconvert ! x264enc ! rtph264pay ! udpsink host=127.0.0.1 port=5600
+```
 
 On the receiving end, if you want to test it from the command line, you can use something like:
 ```
