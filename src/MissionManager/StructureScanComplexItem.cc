@@ -21,11 +21,12 @@
 
 QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "StructureScanComplexItemLog")
 
-const char* StructureScanComplexItem::jsonComplexItemTypeValue =    "StructureScan";
-const char* StructureScanComplexItem::_altitudeFactName =           "Altitude";
-const char* StructureScanComplexItem::_layersFactName =             "Layers";
-const char* StructureScanComplexItem::_jsonCameraCalcKey =          "CameraCalc";
-const char* StructureScanComplexItem::_jsonAltitudeRelativeKey =    "altitudeRelative";
+const char* StructureScanComplexItem::jsonComplexItemTypeValue =        "StructureScan";
+const char* StructureScanComplexItem::_altitudeFactName =               "Altitude";
+const char* StructureScanComplexItem::_layersFactName =                 "Layers";
+const char* StructureScanComplexItem::_jsonCameraCalcKey =              "CameraCalc";
+const char* StructureScanComplexItem::_jsonAltitudeRelativeKey =        "altitudeRelative";
+const char* StructureScanComplexItem::_jsonYawVehicleToStructureKey =   "yawVehicleToStructure";
 
 QMap<QString, FactMetaData*> StructureScanComplexItem::_metaDataMap;
 
@@ -40,6 +41,7 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
     , _cameraShots              (0)
     , _cameraMinTriggerInterval (0)
     , _cameraCalc               (vehicle)
+    , _yawVehicleToStructure    (false)
     , _altitudeFact             (0, _altitudeFactName,              FactMetaData::valueTypeDouble)
     , _layersFact               (0, _layersFactName,                FactMetaData::valueTypeUint32)
 {
@@ -73,6 +75,10 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
     connect(&_flightPolygon,    &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_flightPathChanged);
 
     connect(_cameraCalc.distanceToSurface(), &Fact::valueChanged, this, &StructureScanComplexItem::_rebuildFlightPolygon);
+
+    connect(&_flightPolygon,                        &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_recalcCameraShots);
+    connect(_cameraCalc.adjustedFootprintSide(),    &Fact::valueChanged,            this, &StructureScanComplexItem::_recalcCameraShots);
+    connect(&_layersFact,                           &Fact::valueChanged,            this, &StructureScanComplexItem::_recalcCameraShots);
 }
 
 void StructureScanComplexItem::_setScanDistance(double scanDistance)
@@ -129,9 +135,10 @@ void StructureScanComplexItem::save(QJsonArray&  missionItems)
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
 
-    saveObject[_altitudeFactName] =         _altitudeFact.rawValue().toDouble();
-    saveObject[_jsonAltitudeRelativeKey] =  _altitudeRelative;
-    saveObject[_layersFactName] =           _layersFact.rawValue().toDouble();
+    saveObject[_altitudeFactName] =             _altitudeFact.rawValue().toDouble();
+    saveObject[_jsonAltitudeRelativeKey] =      _altitudeRelative;
+    saveObject[_layersFactName] =               _layersFact.rawValue().toDouble();
+    saveObject[_jsonYawVehicleToStructureKey] = _yawVehicleToStructure;
 
     QJsonObject cameraCalcObject;
     _cameraCalc.save(cameraCalcObject);
@@ -162,6 +169,7 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
         { _jsonAltitudeRelativeKey,                     QJsonValue::Bool,   false },
         { _layersFactName,                              QJsonValue::Double, true },
         { _jsonCameraCalcKey,                           QJsonValue::Object, true },
+        { _jsonYawVehicleToStructureKey,                QJsonValue::Bool, true },
     };
     if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
         return false;
@@ -187,6 +195,7 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
     _altitudeFact.setRawValue   (complexObject[_altitudeFactName].toDouble());
     _layersFact.setRawValue     (complexObject[_layersFactName].toDouble());
     _altitudeRelative =         complexObject[_jsonAltitudeRelativeKey].toBool(true);
+    _yawVehicleToStructure =    complexObject[_jsonYawVehicleToStructureKey].toBool(true);
 
     if (!_cameraCalc.load(complexObject[_jsonCameraCalcKey].toObject(), errorString)) {
         return false;
@@ -232,18 +241,33 @@ void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QO
     int seqNum = _sequenceNumber;
     double baseAltitude = _altitudeFact.rawValue().toDouble();
 
-    MissionItem* item = new MissionItem(seqNum++,
-                                        MAV_CMD_DO_MOUNT_CONTROL,
-                                        MAV_FRAME_MISSION,
-                                        0,                                  // Gimbal pitch
-                                        0,                                  // Gimbal roll
-                                        90,                                 // Gimbal yaw
-                                        0, 0, 0,                            // param 4-6 not used
-                                        MAV_MOUNT_MODE_MAVLINK_TARGETING,
-                                        true,                               // autoContinue
-                                        false,                              // isCurrentItem
-                                        missionItemParent);
-    items.append(item);
+    if (_yawVehicleToStructure) {
+        MissionItem* item = new MissionItem(seqNum++,
+                                            MAV_CMD_CONDITION_YAW,
+                                            MAV_FRAME_MISSION,
+                                            90.0,                               // Target angle
+                                            0,                                  // Use default turn rate
+                                            1,                                  // Clockwise turn
+                                            0,                                  // Absolute angle specified
+                                            0, 0, 0,                            // param 5-7 not used
+                                            true,                               // autoContinue
+                                            false,                              // isCurrentItem
+                                            missionItemParent);
+        items.append(item);
+    } else {
+        MissionItem* item = new MissionItem(seqNum++,
+                                            MAV_CMD_DO_MOUNT_CONTROL,
+                                            MAV_FRAME_MISSION,
+                                            0,                                  // Gimbal pitch
+                                            0,                                  // Gimbal roll
+                                            90,                                 // Gimbal yaw
+                                            0, 0, 0,                            // param 4-6 not used
+                                            MAV_MOUNT_MODE_MAVLINK_TARGETING,
+                                            true,                               // autoContinue
+                                            false,                              // isCurrentItem
+                                            missionItemParent);
+        items.append(item);
+    }
 
     for (int layer=0; layer<_layersFact.rawValue().toInt(); layer++) {
         bool addTriggerStart = true;
@@ -385,4 +409,27 @@ void StructureScanComplexItem::_rebuildFlightPolygon(void)
 {
     _flightPolygon = _structurePolygon;
     _flightPolygon.offset(_cameraCalc.distanceToSurface()->rawValue().toDouble());
+}
+
+void StructureScanComplexItem::_recalcCameraShots(void)
+{
+    if (_flightPolygon.count() < 3) {
+        _setCameraShots(0);
+        return;
+    }
+
+    // Determine the distance for each polygon traverse
+    double distance = 0;
+    for (int i=0; i<_flightPolygon.count(); i++) {
+        QGeoCoordinate coord1 = _flightPolygon.vertexCoordinate(i);
+        QGeoCoordinate coord2 = _flightPolygon.vertexCoordinate(i + 1 == _flightPolygon.count() ? 0 : i + 1);
+        distance += coord1.distanceTo(coord2);
+    }
+    if (distance == 0.0) {
+        _setCameraShots(0);
+        return;
+    }
+
+    int cameraShots = distance / _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
+    _setCameraShots(cameraShots * _layersFact.rawValue().toInt());
 }
