@@ -1,20 +1,24 @@
 buildscript {
     repositories {
         jcenter()
+        maven { url 'https://maven.fabric.io/public' }
     }
 
     dependencies {
         classpath 'com.android.tools.build:gradle:1.1.0'
+        classpath 'io.fabric.tools:gradle:1.+'
     }
 }
 
 allprojects {
     repositories {
         jcenter()
+        maven { url 'https://maven.fabric.io/public' }
     }
 }
 
 apply plugin: 'com.android.application'
+apply plugin: 'io.fabric'
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
@@ -54,4 +58,23 @@ android {
     lintOptions {
         abortOnError false
     }
+}
+
+crashlytics {
+  enableNdk true
+  /* Not sure what to put here. The path below or nothing (using the default) produce the same.
+  androidNdkOut '/Users/gus/github/builds/build-qgroundcontrol-Android_for_armeabi_v7a_GCC_4_9_Qt_5_9_1_for_Android_armv73_fc8369-Release/android-build'
+  androidNdkLibsOut '/Users/gus/github/builds/build-qgroundcontrol-Android_for_armeabi_v7a_GCC_4_9_Qt_5_9_1_for_Android_armv73_fc8369-Release/android-build/build/intermediates/exploded-aar/com.crashlytics.sdk.android/crashlytics-ndk/1.1.6/jni'
+  */
+}
+
+dependencies {
+    // Crashlytics Kit
+  compile('com.crashlytics.sdk.android:crashlytics:2.7.1@aar') {
+    transitive = true
+  }
+  // NDK Kit
+  compile('com.crashlytics.sdk.android:crashlytics-ndk:1.1.6@aar') {
+    transitive = true
+  }
 }
