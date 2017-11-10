@@ -109,6 +109,8 @@ signals:
 
 private:
 
+    static void _addPolygonToList(const airmap::Geometry::Polygon& polygon, QList<PolygonAirspaceRestriction*>& list);
+
     enum class State {
         Idle,
         RetrieveItems,
