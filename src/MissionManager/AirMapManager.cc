@@ -903,6 +903,45 @@ void AirMapManager::_error(const QString& what, const QString& airmapdMessage, c
     qCDebug(AirMapManagerLog) << "Caught error: "<<what<<", "<<airmapdMessage<<", "<<airmapdDetails;
 }
 
+void AirMapManager::requestWeatherUpdate(const QGeoCoordinate& coordinate)
+{
+    if (!_shared.client()) {
+        qCDebug(AirMapManagerLog) << "No AirMap client instance. Not updating Weather information";
+        emit weatherUpdate(false, QGeoCoordinate{}, WeatherInformation{});
+        return;
+    }
+
+    Status::GetStatus::Parameters params;
+    params.longitude = coordinate.longitude();
+    params.latitude = coordinate.latitude();
+    params.weather = true;
+
+    _shared.client()->status().get_status_by_point(params, [this, coordinate](const Status::GetStatus::Result& result) {
+
+        if (result) {
+
+            const Status::Weather& weather = result.value().weather;
+            WeatherInformation weatherUpdateInfo;
+
+            weatherUpdateInfo.condition = QString::fromStdString(weather.condition);
+            weatherUpdateInfo.icon = QString::fromStdString(weather.icon);
+            weatherUpdateInfo.windHeading = weather.wind.heading;
+            weatherUpdateInfo.windSpeed = weather.wind.speed;
+            weatherUpdateInfo.windGusting = weather.wind.gusting;
+            weatherUpdateInfo.temperature = weather.temperature;
+            weatherUpdateInfo.humidity = weather.humidity;
+            weatherUpdateInfo.visibility = weather.visibility;
+            weatherUpdateInfo.precipitation = weather.precipitation;
+            emit weatherUpdate(true, coordinate, weatherUpdateInfo);
+
+        } else {
+            // TODO: error handling
+            emit weatherUpdate(false, coordinate, WeatherInformation{});
+        }
+    });
+
+}
+
 void AirMapManager::_settingsChanged()
 {
     qCDebug(AirMapManagerLog) << "AirMap settings changed";

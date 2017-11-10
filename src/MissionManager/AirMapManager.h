@@ -349,6 +349,8 @@ public:
 
     QString name() const override { return "AirMap"; }
 
+    void requestWeatherUpdate(const QGeoCoordinate& coordinate) override;
+
 private slots:
     void _error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
 

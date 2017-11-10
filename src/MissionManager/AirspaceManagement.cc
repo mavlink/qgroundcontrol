@@ -42,6 +42,7 @@ AirspaceManager::AirspaceManager(QGCApplication* app, QGCToolbox* toolbox)
     _roiUpdateTimer.setSingleShot(true);
     connect(&_roiUpdateTimer, &QTimer::timeout, this, &AirspaceManager::_updateToROI);
     qmlRegisterUncreatableType<AirspaceAuthorization>("QGroundControl", 1, 0, "AirspaceAuthorization", "Reference only");
+    qRegisterMetaType<WeatherInformation>();
 }
 
 AirspaceManager::~AirspaceManager()
