@@ -1,5 +1,13 @@
 ## DataPilot Release Changelog
 
+### v1.2.6 - Nov 10 2017
+
+*   Add hobbs meter
+
+### v1.2.5 - Nov 8 2017
+
+*   Disable structure scan (incomplete)
+
 ### v1.2.4 - Nov 7 2017
 
 *   Show "Format Complete" message

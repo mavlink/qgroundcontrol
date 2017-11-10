@@ -142,6 +142,14 @@ QGCView {
         }
     }
 
+    Component {
+        id: noItemForKML
+
+        QGCViewMessage {
+            message:    qsTr("You need at least one item to create a KML.")
+        }
+    }
+
     PlanMasterController {
         id: masterController
 
@@ -786,6 +794,11 @@ QGCView {
                     Layout.fillWidth:   true
                     enabled:            !masterController.syncInProgress
                     onClicked: {
+                        // First point do not count
+                        if (_visualItems.count < 2) {
+                            _qgcView.showDialog(noItemForKML, qsTr("KML"), _qgcView.showDialogDefaultWidth, StandardButton.Cancel)
+                            return
+                        }
                         dropPanel.hide()
                         masterController.saveKmlToSelectedFile()
                     }

@@ -49,6 +49,11 @@ Rectangle {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
+    ExclusiveGroup {
+        id: yawRadiosGroup
+        onCurrentChanged: missionItem.yawVehicleToStructure = yawVehicleRadio.checked
+    }
+
     Column {
         id:                 editorColumn
         anchors.margins:    _margin
@@ -129,8 +134,26 @@ Rectangle {
             }
 
             QGCLabel { text: qsTr("Point camera to structure using:") }
-            QGCRadioButton { text: qsTr("Vehicle yaw"); enabled: false }
-            QGCRadioButton { text: qsTr("Gimbal yaw"); checked: true; enabled: false }
+
+            RowLayout {
+                spacing: _margin
+
+                QGCRadioButton {
+                    id:             yawVehicleRadio
+                    text:           qsTr("Vehicle yaw")
+                    exclusiveGroup: yawRadiosGroup
+                    checked:        !!missionItem.yawVehicleToStructure
+                    enabled:        false
+                }
+
+                QGCRadioButton
+                {
+                    text:           qsTr("Gimbal yaw")
+                    exclusiveGroup: yawRadiosGroup
+                    checked:        !missionItem.yawVehicleToStructure
+                    enabled:        false
+                }
+            }
 
             QGCButton {
                 text:       qsTr("Rotate entry point")

@@ -288,6 +288,8 @@ QGCView {
                 QGCLabel { text: firmwareVersion() }
                 QGCLabel { text: qsTr("Vehicle ID:") }
                 QGCLabel { text: _activeVehicle ? _activeVehicle.vehicleUIDStr : "" }
+                QGCLabel { text: qsTr("HOBBS Meter:") }
+                QGCLabel { text: _activeVehicle ? _activeVehicle.hobbsMeter : "" }
             }
         }
     }
