@@ -261,12 +261,6 @@ DebugBuild {
 }
 }
 
-!MobileBuild {
-# qextserialport should not be used by general QGroundControl code. Use QSerialPort instead. This is only
-# here to support special case Firmware Upgrade code.
-include(libs/qextserialport/src/qextserialport.pri)
-}
-
 #
 # Our QtLocation "plugin"
 #
