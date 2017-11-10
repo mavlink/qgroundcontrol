@@ -319,6 +319,7 @@ public:
     Q_PROPERTY(bool              initialPlanRequestComplete READ initialPlanRequestComplete                             NOTIFY initialPlanRequestCompleteChanged)
     Q_PROPERTY(QVariantList         staticCameraList        READ staticCameraList                                       CONSTANT)
     Q_PROPERTY(QGCCameraManager*    dynamicCameras          READ dynamicCameras                                         NOTIFY dynamicCamerasChanged)
+    Q_PROPERTY(QString              hobbsMeter              READ hobbsMeter                                             NOTIFY hobbsMeterChanged)
 
     // Vehicle state used for guided control
     Q_PROPERTY(bool flying                  READ flying NOTIFY flyingChanged)                               ///< Vehicle is flying
@@ -690,7 +691,9 @@ public:
 
     bool capabilitiesKnown      (void) const { return _vehicleCapabilitiesKnown; }
     uint64_t capabilityBits     (void) const { return _capabilityBits; }    // Change signalled by capabilityBitsChanged
+
     QGCCameraManager*           dynamicCameras      () { return _cameras; }
+    QString                     hobbsMeter          ();
 
     /// @true: When flying a mission the vehicle is always facing towards the next waypoint
     bool vehicleYawsToNextWaypointInMission(void) const;
@@ -736,6 +739,7 @@ signals:
     void firmwareTypeChanged(void);
     void vehicleTypeChanged(void);
     void dynamicCamerasChanged();
+    void hobbsMeterChanged();
     void capabilitiesKnownChanged(bool capabilitiesKnown);
     void initialPlanRequestCompleteChanged(bool initialPlanRequestComplete);
     void capabilityBitsChanged(uint64_t capabilityBits);

@@ -2873,6 +2873,25 @@ void Vehicle::sendPlan(QString planFile)
     PlanMasterController::sendPlanToVehicle(this, planFile);
 }
 
+QString Vehicle::hobbsMeter()
+{
+    static const char* HOOBS_HI = "LND_FLIGHT_T_HI";
+    static const char* HOOBS_LO = "LND_FLIGHT_T_LO";
+    //-- TODO: Does this exist on non PX4?
+    if (_parameterManager->parameterExists(FactSystem::defaultComponentId, HOOBS_HI) &&
+        _parameterManager->parameterExists(FactSystem::defaultComponentId, HOOBS_LO)) {
+        Fact* factHi = _parameterManager->getParameter(FactSystem::defaultComponentId, HOOBS_HI);
+        Fact* factLo = _parameterManager->getParameter(FactSystem::defaultComponentId, HOOBS_LO);
+        uint64_t hobbsTimeSeconds = ((uint64_t)factHi->rawValue().toUInt() << 32 | (uint64_t)factLo->rawValue().toUInt()) / 1000000;
+        int hours   = hobbsTimeSeconds / 3600;
+        int minutes = (hobbsTimeSeconds % 3600) / 60;
+        int seconds = hobbsTimeSeconds % 60;
+        QString timeStr;
+        timeStr.sprintf("%04d:%02d:%02d", hours, minutes, seconds);
+        return timeStr;
+    }
+    return QString("0000:00:00");
+}
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
