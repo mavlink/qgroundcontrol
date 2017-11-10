@@ -32,6 +32,23 @@
 
 Q_DECLARE_LOGGING_CATEGORY(AirMapManagerLog)
 
+
+/**
+ * @class LifetimeChecker
+ * Base class which helps to check if an object instance still exists.
+ * A subclass can take a weak pointer from _instance and then check if the object was deleted.
+ * This is used in callbacks that access 'this', but the instance might already be deleted (e.g. vehicle disconnect).
+ */
+class LifetimeChecker
+{
+public:
+    LifetimeChecker() : _instance(this, [](void*){}) { }
+    virtual ~LifetimeChecker() = default;
+
+protected:
+    std::shared_ptr<LifetimeChecker> _instance;
+};
+
 /**
  * @class AirMapSharedState
  * contains state & settings that need to be shared (such as login)
@@ -96,7 +113,7 @@ private:
 
 
 /// class to download polygons from AirMap
-class AirMapRestrictionManager : public AirspaceRestrictionProvider
+class AirMapRestrictionManager : public AirspaceRestrictionProvider, public LifetimeChecker
 {
     Q_OBJECT
 public:
@@ -122,7 +139,7 @@ private:
 
 
 /// class to upload a flight
-class AirMapFlightManager : public QObject
+class AirMapFlightManager : public QObject, public LifetimeChecker
 {
     Q_OBJECT
 public:
@@ -203,7 +220,7 @@ private:
 };
 
 /// class to send telemetry data to AirMap
-class AirMapTelemetry : public QObject
+class AirMapTelemetry : public QObject, public LifetimeChecker
 {
     Q_OBJECT
 public:
@@ -247,7 +264,7 @@ private:
 };
 
 
-class AirMapTrafficMonitor : public QObject
+class AirMapTrafficMonitor : public QObject, public LifetimeChecker
 {
     Q_OBJECT
 public:

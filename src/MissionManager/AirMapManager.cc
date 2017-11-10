@@ -155,9 +155,11 @@ void AirMapRestrictionManager::setROI(const QGeoCoordinate& center, double radiu
     params.geometry = Geometry::point(center.latitude(), center.longitude());
     params.buffer = radiusMeters;
     params.full = true;
+    std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->airspaces().search(params,
-            [this](const Airspaces::Search::Result& result) {
+            [this, isAlive](const Airspaces::Search::Result& result) {
 
+        if (!isAlive.lock()) return;
         if (_state != State::RetrieveItems) return;
 
         if (result) {
@@ -282,11 +284,15 @@ void AirMapFlightManager::createFlight(const QList<MissionItem*>& missionItems)
         // need to get the pilot id before uploading the flight
         qCDebug(AirMapManagerLog) << "Getting pilot ID";
         _state = State::GetPilotID;
-        _shared.doRequestWithLogin([this](const QString& login_token) {
+        std::weak_ptr<LifetimeChecker> isAlive(_instance);
+        _shared.doRequestWithLogin([this, isAlive](const QString& login_token) {
+            if (!isAlive.lock()) return;
+
             Pilots::Authenticated::Parameters params;
             params.authorization = login_token.toStdString();
-            _shared.client()->pilots().authenticated(params, [this](const Pilots::Authenticated::Result& result) {
+            _shared.client()->pilots().authenticated(params, [this, isAlive](const Pilots::Authenticated::Result& result) {
 
+                if (!isAlive.lock()) return;
                 if (_state != State::GetPilotID) return;
 
                 if (result) {
@@ -326,7 +332,9 @@ void AirMapFlightManager::_endFirstFlight()
     params.pilot_id = _pilotID.toStdString();
     params.end_after = Clock::universal_time() - Hours{1};
 
-    _shared.client()->flights().search(params, [this](const Flights::Search::Result& result) {
+    std::weak_ptr<LifetimeChecker> isAlive(_instance);
+    _shared.client()->flights().search(params, [this, isAlive](const Flights::Search::Result& result) {
+        if (!isAlive.lock()) return;
         if (_state != State::EndFirstFlight) return;
 
         if (result && result.value().size() > 0) {
@@ -336,7 +344,8 @@ void AirMapFlightManager::_endFirstFlight()
             Flights::EndFlight::Parameters params;
             params.authorization = _shared.loginToken().toStdString();
             params.id = result.value()[0].id; // pick the first flight (TODO: match the vehicle id)
-            _shared.client()->flights().end_flight(params, [this](const Flights::EndFlight::Result& result) {
+            _shared.client()->flights().end_flight(params, [this, isAlive](const Flights::EndFlight::Result& result) {
+                if (!isAlive.lock()) return;
                 if (_state != State::EndFirstFlight) return;
 
                 if (!result) {
@@ -375,8 +384,10 @@ void AirMapFlightManager::_uploadFlight()
     qCDebug(AirMapManagerLog) << "uploading flight";
     _state = State::FlightUpload;
 
-    _shared.doRequestWithLogin([this](const QString& login_token) {
+    std::weak_ptr<LifetimeChecker> isAlive(_instance);
+    _shared.doRequestWithLogin([this, isAlive](const QString& login_token) {
 
+        if (!isAlive.lock()) return;
         if (_state != State::FlightUpload) return;
 
         FlightPlans::Create::Parameters params;
@@ -407,7 +418,8 @@ void AirMapFlightManager::_uploadFlight()
         params.authorization = login_token.toStdString();
         _flight.coords.clear();
 
-        _shared.client()->flight_plans().create_by_polygon(params, [this](const FlightPlans::Create::Result& result) {
+        _shared.client()->flight_plans().create_by_polygon(params, [this, isAlive](const FlightPlans::Create::Result& result) {
+            if (!isAlive.lock()) return;
             if (_state != State::FlightUpload) return;
 
             if (result) {
@@ -432,7 +444,9 @@ void AirMapFlightManager::_checkForValidBriefing()
     FlightPlans::RenderBriefing::Parameters params;
     params.authorization = _shared.loginToken().toStdString();
     params.id = _pendingFlightPlan.toStdString();
-    _shared.client()->flight_plans().render_briefing(params, [this](const FlightPlans::RenderBriefing::Result& result) {
+    std::weak_ptr<LifetimeChecker> isAlive(_instance);
+    _shared.client()->flight_plans().render_briefing(params, [this, isAlive](const FlightPlans::RenderBriefing::Result& result) {
+        if (!isAlive.lock()) return;
         if (_state != State::FlightBrief) return;
 
         if (result) {
@@ -464,7 +478,9 @@ void AirMapFlightManager::_submitPendingFlightPlan()
     FlightPlans::Submit::Parameters params;
     params.authorization = _shared.loginToken().toStdString();
     params.id = _pendingFlightPlan.toStdString();
-    _shared.client()->flight_plans().submit(params, [this](const FlightPlans::Submit::Result& result) {
+    std::weak_ptr<LifetimeChecker> isAlive(_instance);
+    _shared.client()->flight_plans().submit(params, [this, isAlive](const FlightPlans::Submit::Result& result) {
+        if (!isAlive.lock()) return;
         if (_state != State::FlightSubmit) return;
 
         if (result) {
@@ -488,7 +504,9 @@ void AirMapFlightManager::_pollBriefing()
     FlightPlans::RenderBriefing::Parameters params;
     params.authorization = _shared.loginToken().toStdString();
     params.id = _pendingFlightPlan.toStdString();
-    _shared.client()->flight_plans().render_briefing(params, [this](const FlightPlans::RenderBriefing::Result& result) {
+    std::weak_ptr<LifetimeChecker> isAlive(_instance);
+    _shared.client()->flight_plans().render_briefing(params, [this, isAlive](const FlightPlans::RenderBriefing::Result& result) {
+        if (!isAlive.lock()) return;
         if (_state != State::FlightPolling) return;
 
         if (result) {
@@ -567,7 +585,9 @@ void AirMapFlightManager::_endFlight(const QString& flightID)
     Flights::EndFlight::Parameters params;
     params.authorization = _shared.loginToken().toStdString();
     params.id = flightID.toStdString();
-    _shared.client()->flights().end_flight(params, [this](const Flights::EndFlight::Result& result) {
+    std::weak_ptr<LifetimeChecker> isAlive(_instance);
+    _shared.client()->flights().end_flight(params, [this, isAlive](const Flights::EndFlight::Result& result) {
+        if (!isAlive.lock()) return;
         if (_state != State::FlightEnd) return;
 
         _state = State::Idle;
@@ -675,7 +695,9 @@ void AirMapTelemetry::startTelemetryStream(const QString& flightID)
     Flights::StartFlightCommunications::Parameters params;
     params.authorization = _shared.loginToken().toStdString();
     params.id = _flightID.toStdString();
-    _shared.client()->flights().start_flight_communications(params, [this](const Flights::StartFlightCommunications::Result& result) {
+    std::weak_ptr<LifetimeChecker> isAlive(_instance);
+    _shared.client()->flights().start_flight_communications(params, [this, isAlive](const Flights::StartFlightCommunications::Result& result) {
+        if (!isAlive.lock()) return;
         if (_state != State::StartCommunication) return;
 
         if (result) {
@@ -704,8 +726,10 @@ void AirMapTelemetry::stopTelemetryStream()
     Flights::EndFlightCommunications::Parameters params;
     params.authorization = _shared.loginToken().toStdString();
     params.id = _flightID.toStdString();
-    _shared.client()->flights().end_flight_communications(params, [this](const Flights::EndFlightCommunications::Result& result) {
+    std::weak_ptr<LifetimeChecker> isAlive(_instance);
+    _shared.client()->flights().end_flight_communications(params, [this, isAlive](const Flights::EndFlightCommunications::Result& result) {
         Q_UNUSED(result);
+        if (!isAlive.lock()) return;
         if (_state != State::EndCommunication) return;
 
         _key = "";
@@ -721,7 +745,9 @@ AirMapTrafficMonitor::~AirMapTrafficMonitor()
 void AirMapTrafficMonitor::startConnection(const QString& flightID)
 {
     _flightID = flightID;
-    auto handler = [this](const Traffic::Monitor::Result& result) {
+    std::weak_ptr<LifetimeChecker> isAlive(_instance);
+    auto handler = [this, isAlive](const Traffic::Monitor::Result& result) {
+        if (!isAlive.lock()) return;
         if (result) {
             _monitor = result.value();
             _subscriber = std::make_shared<Traffic::Monitor::FunctionalSubscriber>(
