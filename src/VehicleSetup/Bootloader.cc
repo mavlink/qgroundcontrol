@@ -631,5 +631,9 @@ Error:
 
 bool Bootloader::reboot(QSerialPort* port)
 {
-    return _write(port, PROTO_BOOT) && _write(port, PROTO_EOC);
+    bool success = _write(port, PROTO_BOOT) && _write(port, PROTO_EOC);
+    if (success) {
+        port->waitForBytesWritten(100);
+    }
+    return success;
 }
