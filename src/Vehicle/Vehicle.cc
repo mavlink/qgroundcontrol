@@ -2882,7 +2882,7 @@ QString Vehicle::hobbsMeter()
         _parameterManager->parameterExists(FactSystem::defaultComponentId, HOOBS_LO)) {
         Fact* factHi = _parameterManager->getParameter(FactSystem::defaultComponentId, HOOBS_HI);
         Fact* factLo = _parameterManager->getParameter(FactSystem::defaultComponentId, HOOBS_LO);
-        uint64_t hobbsTimeSeconds = ((uint64_t)factHi->rawValue().toUInt() << 32 | (uint64_t)factLo->rawValue().toUInt()) / 1000;
+        uint64_t hobbsTimeSeconds = ((uint64_t)factHi->rawValue().toUInt() << 32 | (uint64_t)factLo->rawValue().toUInt()) / 1000000;
         int hours   = hobbsTimeSeconds / 3600;
         int minutes = (hobbsTimeSeconds % 3600) / 60;
         int seconds = hobbsTimeSeconds % 60;
