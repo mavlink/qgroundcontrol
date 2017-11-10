@@ -25,8 +25,7 @@
 #include <QNetworkReply>
 #include <QPixmap>
 #include <QQuickItem>
-
-#include "qextserialport.h"
+#include <QSerialPort>
 
 #include <stdint.h>
 

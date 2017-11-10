@@ -206,9 +206,9 @@ bool PX4FirmwareUpgradeThreadWorker::_findBootloader(const QGCSerialPortInfo& po
     uint32_t boardID;
     uint32_t flashSize = 0;
     
-    _bootloaderPort = new QextSerialPort(QextSerialPort::Polling);
+    _bootloaderPort = new QSerialPort();
     if (radioMode) {
-        _bootloaderPort->setBaudRate(BAUD115200);
+        _bootloaderPort->setBaudRate(QSerialPort::Baud115200);
     }
 
     // Wait a little while for the USB port to initialize.
