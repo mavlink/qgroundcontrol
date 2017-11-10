@@ -615,66 +615,26 @@ void SurveyMissionItem::_adjustTransectsToEntryPointLocation(QList<QList<QGeoCoo
         return;
     }
 
-    // First determine what location the current entry point is at
-
-    QGeoCoordinate& firstTransectEntry = transects.first().first();
-    QGeoCoordinate& firstTransectExit = transects.first().last();
-    QGeoCoordinate& lastTransectExit = transects.last().last();
-
-    bool northSouthTransects = _gridAngleIsNorthSouthTransects();
-    bool entryPointBottom;
-    bool entryPointLeft;
-
-    qCDebug(SurveyMissionItemLog) << "Original entry point" << transects.first().first();
-    qCDebug(SurveyMissionItemLog) << "northSouthTransects" << northSouthTransects;
-
-    if (northSouthTransects) {
-        double firstTransectAzimuth = firstTransectEntry.azimuthTo(firstTransectExit);
-        qCDebug(SurveyMissionItemLog) << "firstTransectAzimuth" << firstTransectAzimuth;
-        entryPointBottom = (firstTransectAzimuth >= 0.0 && firstTransectAzimuth < 90.0) || (firstTransectAzimuth > 270.0 && firstTransectAzimuth <= 360.0);
-        qCDebug(SurveyMissionItemLog) << (entryPointBottom ? "Entry point is at bottom" : "Entry point is at top");
-
-        double entryToExitAzimuth = firstTransectEntry.azimuthTo(lastTransectExit);
-        qCDebug(SurveyMissionItemLog) << "entryToExitAzimuth" << entryToExitAzimuth;
-        entryPointLeft = entryToExitAzimuth <= 180.0;
-        qCDebug(SurveyMissionItemLog) << (entryPointLeft ? "Entry point is at left" : "Entry point is at right");
-    } else {
-        double firstTransectAzimuth = firstTransectEntry.azimuthTo(firstTransectExit);
-        qCDebug(SurveyMissionItemLog) << "firstTransectAzimuth" << firstTransectAzimuth;
-        entryPointLeft = firstTransectAzimuth <= 180.0;
-        qCDebug(SurveyMissionItemLog) << (entryPointLeft ? "Entry point is at left" : "Entry point is at right");
-
-        double entryToExitAzimuth = firstTransectEntry.azimuthTo(lastTransectExit);
-        qCDebug(SurveyMissionItemLog) << "entryToExitAzimuth" << entryToExitAzimuth;
-        entryPointBottom = (entryToExitAzimuth >= 0.0 && entryToExitAzimuth < 90.0) || (entryToExitAzimuth > 270.0 && entryToExitAzimuth <= 360.0);
-        qCDebug(SurveyMissionItemLog) << (entryPointBottom ? "Entry point is at bottom" : "Entry point is at top");
-    }
-
-    // Now adjust the transects such that the entry point matches the requested location
-
     int entryLocation = _gridEntryLocationFact.rawValue().toInt();
-    bool reverseTransects;
-    bool reversePoints;
-    if (northSouthTransects) {
-        reversePoints = ((entryLocation == EntryLocationTopLeft || entryLocation == EntryLocationTopRight) && entryPointBottom) ||
-                ((entryLocation == EntryLocationBottomLeft || entryLocation == EntryLocationBottomRight) && !entryPointBottom);
-        reverseTransects = ((entryLocation == EntryLocationTopRight || entryLocation == EntryLocationBottomRight) && entryPointLeft) ||
-                ((entryLocation == EntryLocationTopLeft || entryLocation == EntryLocationBottomLeft) && !entryPointLeft);
-    } else {
-        reverseTransects = ((entryLocation == EntryLocationTopLeft || entryLocation == EntryLocationTopRight) && entryPointBottom) ||
-                ((entryLocation == EntryLocationBottomLeft || entryLocation == EntryLocationBottomRight) && !entryPointBottom);
-        reversePoints = ((entryLocation == EntryLocationTopRight || entryLocation == EntryLocationBottomRight) && entryPointLeft) ||
-                ((entryLocation == EntryLocationTopLeft || entryLocation == EntryLocationBottomLeft) && !entryPointLeft);
+    bool reversePoints = false;
+    bool reverseTransects = false;
+
+    if (entryLocation == EntryLocationBottomLeft || entryLocation == EntryLocationBottomRight) {
+        reversePoints = true;
     }
+    if (entryLocation == EntryLocationTopRight || entryLocation == EntryLocationBottomRight) {
+        reverseTransects = true;
+    }
+
     if (reversePoints) {
         qCDebug(SurveyMissionItemLog) << "Reverse Points";
         _reverseInternalTransectPoints(transects);
     }
     if (reverseTransects) {
-        // The only way we should end up here is if there is a bug in the original grid line generation
-        qCDebug(SurveyMissionItemLog) << "Not Reverse Transects";
-        //_reverseTransectOrder(transects);
+        qCDebug(SurveyMissionItemLog) << "Reverse Transects";
+        _reverseTransectOrder(transects);
     }
+
     qCDebug(SurveyMissionItemLog) << "Modified entry point" << transects.first().first();
 }
 
@@ -957,86 +917,28 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
         polygon << polygonPoints[i];
     }
     polygon << polygonPoints[0];
-    QRectF smallBoundRect = polygon.boundingRect();
-    QPointF boundingCenter = smallBoundRect.center();
-    qCDebug(SurveyMissionItemLog) << "Bounding rect" << smallBoundRect.topLeft().x() << smallBoundRect.topLeft().y() << smallBoundRect.bottomRight().x() << smallBoundRect.bottomRight().y();
-
-    // Rotate the bounding rect around it's center to generate the larger bounding rect
-    QPolygonF boundPolygon;
-    boundPolygon << _rotatePoint(smallBoundRect.topLeft(),      boundingCenter, gridAngle);
-    boundPolygon << _rotatePoint(smallBoundRect.topRight(),     boundingCenter, gridAngle);
-    boundPolygon << _rotatePoint(smallBoundRect.bottomRight(),  boundingCenter, gridAngle);
-    boundPolygon << _rotatePoint(smallBoundRect.bottomLeft(),   boundingCenter, gridAngle);
-    boundPolygon << boundPolygon[0];
-    QRectF largeBoundRect = boundPolygon.boundingRect();
-    qCDebug(SurveyMissionItemLog) << "Rotated bounding rect" << largeBoundRect.topLeft().x() << largeBoundRect.topLeft().y() << largeBoundRect.bottomRight().x() << largeBoundRect.bottomRight().y();
+    QRectF boundingRect = polygon.boundingRect();
+    QPointF boundingCenter = boundingRect.center();
+    qCDebug(SurveyMissionItemLog) << "Bounding rect" << boundingRect.topLeft().x() << boundingRect.topLeft().y() << boundingRect.bottomRight().x() << boundingRect.bottomRight().y();
 
     // Create set of rotated parallel lines within the expanded bounding rect. Make the lines larger than the
     // bounding box to guarantee intersection.
 
     QList<QLineF> lineList;
-    bool northSouthTransects = _gridAngleIsNorthSouthTransects();
-    int entryLocation = _gridEntryLocationFact.rawValue().toInt();
 
-    if (northSouthTransects) {
-        qCDebug(SurveyMissionItemLog) << "Clamped grid angle" << gridAngle;
-        if (entryLocation == EntryLocationTopLeft || entryLocation == EntryLocationBottomLeft) {
-            // Generate transects from left to right
-            qCDebug(SurveyMissionItemLog) << "Generate left to right";
-            float x = largeBoundRect.topLeft().x() - (gridSpacing / 2);
-            while (x < largeBoundRect.bottomRight().x()) {
-                float yTop =    largeBoundRect.topLeft().y() - 10000.0;
-                float yBottom = largeBoundRect.bottomRight().y() + 10000.0;
+    // Transects are generated to be as long as the largest width/height of the bounding rect plus some fudge factor.
+    // This way they will always be guaranteed to intersect with a polygon edge no matter what angle they are rotated to.
+    // They are initially generated with the transects flowing from west to east and then points within the transect north to south.
+    double maxWidth = qMax(boundingRect.width(), boundingRect.height()) + 100.0;
+    double halfWidth = maxWidth / 2.0;
+    double transectX = boundingCenter.x() - halfWidth;
+    double transectXMax = transectX + maxWidth;
+    while (transectX < transectXMax) {
+        double transectYTop = boundingCenter.y() - halfWidth;
+        double transectYBottom = boundingCenter.y() + halfWidth;
 
-                lineList += QLineF(_rotatePoint(QPointF(x, yTop), boundingCenter, gridAngle), _rotatePoint(QPointF(x, yBottom), boundingCenter, gridAngle));
-                qCDebug(SurveyMissionItemLog) << "line(" << lineList.last().x1() << ", " << lineList.last().y1() << ")-(" << lineList.last().x2() <<", " << lineList.last().y2() << ")";
-
-                x += gridSpacing;
-            }
-        } else {
-            // Generate transects from right to left
-            qCDebug(SurveyMissionItemLog) << "Generate right to left";
-            float x = largeBoundRect.topRight().x() + (gridSpacing / 2);
-            while (x > largeBoundRect.bottomLeft().x()) {
-                float yTop =    largeBoundRect.topRight().y() - 10000.0;
-                float yBottom = largeBoundRect.bottomLeft().y() + 10000.0;
-
-                lineList += QLineF(_rotatePoint(QPointF(x, yTop), boundingCenter, gridAngle), _rotatePoint(QPointF(x, yBottom), boundingCenter, gridAngle));
-                qCDebug(SurveyMissionItemLog) << "line(" << lineList.last().x1() << ", " << lineList.last().y1() << ")-(" << lineList.last().x2() <<", " << lineList.last().y2() << ")";
-
-                x -= gridSpacing;
-            }
-        }
-    } else {
-        gridAngle = _clampGridAngle90(gridAngle - 90.0);
-        qCDebug(SurveyMissionItemLog) << "Clamped grid angle" << gridAngle;
-        if (entryLocation == EntryLocationTopLeft || entryLocation == EntryLocationTopRight) {
-            // Generate transects from top to bottom
-            qCDebug(SurveyMissionItemLog) << "Generate top to bottom";
-            float y = largeBoundRect.bottomLeft().y() + (gridSpacing / 2);
-            while (y > largeBoundRect.topRight().y()) {
-                float xLeft =   largeBoundRect.bottomLeft().x() - 10000.0;
-                float xRight =  largeBoundRect.topRight().x() + 10000.0;
-
-                lineList += QLineF(_rotatePoint(QPointF(xLeft, y), boundingCenter, gridAngle), _rotatePoint(QPointF(xRight, y), boundingCenter, gridAngle));
-                qCDebug(SurveyMissionItemLog) << "y:xLeft:xRight" << y << xLeft << xRight << "line(" << lineList.last().x1() << ", " << lineList.last().y1() << ")-(" << lineList.last().x2() <<", " << lineList.last().y2() << ")";
-
-                y -= gridSpacing;
-            }
-        } else {
-            // Generate transects from bottom to top
-            qCDebug(SurveyMissionItemLog) << "Generate bottom to top";
-            float y = largeBoundRect.topLeft().y() - (gridSpacing / 2);
-            while (y < largeBoundRect.bottomRight().y()) {
-                float xLeft =   largeBoundRect.topLeft().x() - 10000.0;
-                float xRight =  largeBoundRect.bottomRight().x() + 10000.0;
-
-                lineList += QLineF(_rotatePoint(QPointF(xLeft, y), boundingCenter, gridAngle), _rotatePoint(QPointF(xRight, y), boundingCenter, gridAngle));
-                qCDebug(SurveyMissionItemLog) << "y:xLeft:xRight" << y << xLeft << xRight << "line(" << lineList.last().x1() << ", " << lineList.last().y1() << ")-(" << lineList.last().x2() <<", " << lineList.last().y2() << ")";
-
-                y += gridSpacing;
-            }
-        }
+        lineList += QLineF(_rotatePoint(QPointF(transectX, transectYTop), boundingCenter, gridAngle), _rotatePoint(QPointF(transectX, transectYBottom), boundingCenter, gridAngle));
+        transectX += gridSpacing;
     }
 
     // Now intersect the lines with the polygon
