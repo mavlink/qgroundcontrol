@@ -2882,12 +2882,13 @@ QString Vehicle::hobbsMeter()
         _parameterManager->parameterExists(FactSystem::defaultComponentId, HOOBS_LO)) {
         Fact* factHi = _parameterManager->getParameter(FactSystem::defaultComponentId, HOOBS_HI);
         Fact* factLo = _parameterManager->getParameter(FactSystem::defaultComponentId, HOOBS_LO);
-        uint64_t hobbsTimeSeconds = ((uint64_t)factHi->rawValue().toUInt() << 32 | (uint64_t)factLo->rawValue().toUInt()) / 1000000;
+        uint64_t hobbsTimeSeconds = ((uint64_t)factHi->rawValue().toUInt() << 32 | (uint64_t)factLo->rawValue().toUInt()) / 1000;
         int hours   = hobbsTimeSeconds / 3600;
         int minutes = (hobbsTimeSeconds % 3600) / 60;
         int seconds = hobbsTimeSeconds % 60;
         QString timeStr;
         timeStr.sprintf("%04d:%02d:%02d", hours, minutes, seconds);
+        qCDebug(VehicleLog) << "Hobbs Meter:" << timeStr << "(" << factHi->rawValue().toUInt() << factLo->rawValue().toUInt() << ")";
         return timeStr;
     }
     return QString("0000:00:00");
