@@ -162,36 +162,21 @@ void AirMapRestrictionManager::setROI(const QGeoCoordinate& center, double radiu
 
         if (result) {
             const std::vector<Airspace>& airspaces = result.value();
-            qCDebug(AirMapManagerLog)<<"Successful search: " << airspaces.size();
+            qCDebug(AirMapManagerLog)<<"Successful search. Items:" << airspaces.size();
             for (const auto& airspace : airspaces) {
 
                 const Geometry& geometry = airspace.geometry();
                 switch(geometry.type()) {
                     case Geometry::Type::polygon: {
                         const Geometry::Polygon& polygon = geometry.details_for_polygon();
-                        QVariantList polygonArray;
-                        if (polygon.size() == 1) {
-                            for (const auto& vertex : polygon[0].coordinates) {
-                                QGeoCoordinate coord;
-                                if (vertex.altitude) {
-                                    coord = QGeoCoordinate(vertex.latitude, vertex.longitude, vertex.altitude.get());
-                                } else {
-                                    coord = QGeoCoordinate(vertex.latitude, vertex.longitude);
-                                }
-                                polygonArray.append(QVariant::fromValue(coord));
-                            }
-                            _polygonList.append(new PolygonAirspaceRestriction(polygonArray));
-
-                        } else {
-                            // TODO: support that?
-                            qWarning() << "Empty polygon, or Polygon with holes. Size: "<<polygon.size();
-                        }
+                        _addPolygonToList(polygon, _polygonList);
                     }
                         break;
                     case Geometry::Type::multi_polygon: {
                         const Geometry::MultiPolygon& multiPolygon = geometry.details_for_multi_polygon();
-                        qWarning() << "multi polygon "<<multiPolygon.size();
-                        // TODO
+                        for (const auto& polygon : multiPolygon) {
+                            _addPolygonToList(polygon, _polygonList);
+                        }
                     }
                         break;
                     case Geometry::Type::point: {
@@ -218,6 +203,27 @@ void AirMapRestrictionManager::setROI(const QGeoCoordinate& center, double radiu
         emit requestDone(true);
         _state = State::Idle;
     });
+}
+
+void AirMapRestrictionManager::_addPolygonToList(const airmap::Geometry::Polygon& polygon, QList<PolygonAirspaceRestriction*>& list)
+{
+    QVariantList polygonArray;
+    if (polygon.size() == 1) {
+        for (const auto& vertex : polygon[0].coordinates) {
+            QGeoCoordinate coord;
+            if (vertex.altitude) {
+                coord = QGeoCoordinate(vertex.latitude, vertex.longitude, vertex.altitude.get());
+            } else {
+                coord = QGeoCoordinate(vertex.latitude, vertex.longitude);
+            }
+            polygonArray.append(QVariant::fromValue(coord));
+        }
+        list.append(new PolygonAirspaceRestriction(polygonArray));
+
+    } else {
+        // TODO: support that?
+        qWarning() << "Empty polygon, or Polygon with holes. Size: "<<polygon.size();
+    }
 }
 
 AirMapFlightManager::AirMapFlightManager(AirMapSharedState& shared)
