@@ -21,7 +21,9 @@ import QGroundControl.FlightMap     1.0
 /// Simple Mission Item visuals
 Item {
     id: _root
-    property var map    ///< Map control to place item in
+
+    property var map        ///< Map control to place item in
+    property var qgcView    ///< QGCView to use for popping dialogs
 
     property var    _missionItem:       object
     property var    _itemVisual
