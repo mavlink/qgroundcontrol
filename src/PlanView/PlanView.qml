@@ -346,6 +346,7 @@ QGCView {
 
                 delegate: MissionItemMapVisual {
                     map:        editorMap
+                    qgcView:    _qgcView
                     onClicked:  _missionController.setCurrentPlanViewIndex(sequenceNumber, false)
                     visible:    _editingLayer == _layerMission
                 }
