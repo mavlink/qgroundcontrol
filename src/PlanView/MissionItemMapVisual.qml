@@ -21,7 +21,8 @@ import QGroundControl.Controls      1.0
 Item {
     id: _root
 
-    property var map    ///< Map control to place item in
+    property var map        ///< Map control to place item in
+    property var qgcView    ///< QGCView to use for popping dialogs
 
     signal clicked(int sequenceNumber)
 
@@ -33,7 +34,7 @@ Item {
             if (component.status === Component.Error) {
                 console.log("Error loading Qml: ", object.mapVisualQML, component.errorString())
             }
-            _visualItem = component.createObject(map, { "map": _root.map })
+            _visualItem = component.createObject(map, { "map": _root.map, "qgcView": _root.qgcView })
             _visualItem.clicked.connect(_root.clicked)
         }
     }
