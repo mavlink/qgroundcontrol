@@ -74,5 +74,10 @@
     "shortDescription": "Flight Time",
     "type":             "elapsedSeconds",
     "decimalPlaces":    1
+},
+{
+    "name":             "hobbs",
+    "shortDescription": "Hobbs Meter",
+    "type":             "string"
 }
 ]
