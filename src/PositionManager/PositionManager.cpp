@@ -62,6 +62,11 @@ void QGCPositionManager::setPositionSource(QGCPositionManager::QGCPositionSource
         disconnect(_currentSource);
     }
 
+    if (qgcApp()->runningUnitTests()) {
+        // Units test on travis fail due to lack of position source
+        return;
+    }
+
     switch(source) {
     case QGCPositionManager::Log:
         break;
