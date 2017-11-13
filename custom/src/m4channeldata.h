@@ -6,6 +6,8 @@
 
 */
 
+#pragma once
+
 #define NUM_CHANNELS    25
 #define CHANNEL_LENGTH  96
 
