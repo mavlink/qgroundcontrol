@@ -179,6 +179,41 @@ TyphoonHM4Interface::resetBind() {
 }
 
 //-----------------------------------------------------------------------------
+bool
+TyphoonHM4Interface::rcActive()
+{
+    return _rcActive;
+}
+
+//-----------------------------------------------------------------------------
+bool
+TyphoonHM4Interface::rcCalibrationComplete()
+{
+    return _rcCalibrationComplete;
+}
+
+//-----------------------------------------------------------------------------
+QList<uint16_t>
+TyphoonHM4Interface::rawChannels()
+{
+    return _rawChannels;
+}
+
+//-----------------------------------------------------------------------------
+TyphoonHQuickInterface::M4State
+TyphoonHM4Interface::m4State()
+{
+    return _m4State;
+}
+
+//-----------------------------------------------------------------------------
+const ControllerLocation&
+TyphoonHM4Interface::controllerLocation()
+{
+    return _controllerLocation;
+}
+
+//-----------------------------------------------------------------------------
 QString
 TyphoonHM4Interface::m4StateStr()
 {

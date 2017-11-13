@@ -30,18 +30,18 @@ public:
     void    initM4                  ();
     QString m4StateStr              ();
     void    resetBind               ();
-    bool    rcActive                () { return _rcActive; }
-    bool    rcCalibrationComplete   () { return _rcCalibrationComplete; }
+    bool    rcActive                ();
+    bool    rcCalibrationComplete   ();
     void    startCalibration        ();
     void    stopCalibration         ();
     bool    sendPassThroughMessage  (QByteArray message);
 
 
-    QList<uint16_t>     rawChannels     () { return _rawChannels; }
+    QList<uint16_t>     rawChannels     ();
     int                 calChannel      (int index);
 
-    TyphoonHQuickInterface::M4State     m4State             () { return _m4State; }
-    const ControllerLocation&           controllerLocation  () { return _controllerLocation; }
+    TyphoonHQuickInterface::M4State     m4State             ();
+    const ControllerLocation&           controllerLocation  ();
 
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
     static  short   byteArrayToShort(QByteArray data, int offset, bool isBigEndian = false);
