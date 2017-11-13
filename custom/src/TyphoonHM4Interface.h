@@ -10,6 +10,8 @@
 #include "TyphoonHCommon.h"
 #include "TyphoonHQuickInterface.h"
 
+#include "m4lib/m4lib.h"
+
 #include "m4def.h"
 #include "m4util.h"
 
@@ -124,6 +126,7 @@ signals:
 
 private:
     M4SerialComm* _commPort;
+    M4Lib* _m4Lib;
     enum {
         STATE_NONE,
         STATE_ENTER_BIND_ERROR,

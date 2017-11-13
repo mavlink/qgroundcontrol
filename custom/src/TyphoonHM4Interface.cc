@@ -99,6 +99,7 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     _rxchannelInfoIndex = 2;
     _channelNumIndex    = 6;
     _commPort = new M4SerialComm(this);
+    _m4Lib = new M4Lib(this);
     _timer.setSingleShot(true);
     _rcTimer.setSingleShot(true);
     connect(&_timer,   &QTimer::timeout, this, &TyphoonHM4Interface::_stateManager);
@@ -117,6 +118,9 @@ TyphoonHM4Interface::~TyphoonHM4Interface()
     emit destroyed();
     if(_commPort) {
         delete _commPort;
+    }
+    if(_m4Lib) {
+        delete _m4Lib;
     }
     pTyphoonHandler = NULL;
 }
