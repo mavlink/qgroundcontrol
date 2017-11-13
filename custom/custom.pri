@@ -119,6 +119,7 @@ WindowsBuild {
 
 SOURCES += \
     $$PWD/src/TyphoonHPlugin.cc \
+    $$PWD/src/m4lib/m4lib.cpp
 
 !DesktopPlanner {
     SOURCES += \
@@ -137,6 +138,7 @@ AndroidBuild {
 
 HEADERS += \
     $$PWD/src/TyphoonHPlugin.h \
+    $$PWD/src/m4lib/m4lib.h
 
 !DesktopPlanner {
     HEADERS += \
