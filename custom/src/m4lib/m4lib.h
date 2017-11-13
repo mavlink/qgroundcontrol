@@ -12,6 +12,7 @@ public:
     void deinit();
 
     bool write(QByteArray data, bool debug);
+    void tryRead();
 
     M4Lib(QObject* parent = NULL);
     ~M4Lib();

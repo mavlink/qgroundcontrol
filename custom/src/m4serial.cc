@@ -15,7 +15,7 @@
 
 //-----------------------------------------------------------------------------
 M4SerialComm::M4SerialComm(QObject* parent)
-    : QThread(parent)
+    : QObject(parent)
     , _fd(-1)
     , _baudrate(230400)
     , _status(SERIAL_PORT_CLOSED)
@@ -58,8 +58,6 @@ M4SerialComm::open()
         return false;
     }
     _status = SERIAL_PORT_OPEN;
-    //-- Start reading thread
-    start();
 #endif
     return true;
 }
@@ -74,9 +72,9 @@ M4SerialComm::close()
       //tcsetattr(_fd, TCSANOW, &_savedtio);
         ::close(_fd);
     }
-    if(!wait(1000)) {
-        qCDebug(YuneecLog) << "SERIAL: Timeout waiting for thread to end";
-    }
+    //if(!wait(1000)) {
+    //    qCDebug(YuneecLog) << "SERIAL: Timeout waiting for thread to end";
+    //}
     _fd = -1;
 #endif
 }
@@ -98,10 +96,10 @@ bool M4SerialComm::write(void* data, int length)
 
 //-----------------------------------------------------------------------------
 void
-M4SerialComm::run()
+M4SerialComm::tryRead()
 {
 #if defined(__androidx86__)
-    while(_status == SERIAL_PORT_OPEN) {
+    if(_status == SERIAL_PORT_OPEN) {
         uint8_t b;
         if(::read(_fd, &b, 1) == 1) {
             switch (_currentPacketStatus) {
@@ -124,7 +122,6 @@ M4SerialComm::run()
             }
         }
     }
-    qCDebug(YuneecLog) << "SERIAL: Exiting thread";
 #endif
 }
 

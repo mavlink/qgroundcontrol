@@ -45,6 +45,11 @@ bool M4Lib::write(QByteArray data, bool debug)
     return _commPort->write(data, debug);
 }
 
+void M4Lib::tryRead()
+{
+    _commPort->tryRead();
+}
+
 void M4Lib::_bytesReady(QByteArray data)
 {
     emit(bytesReady(data));

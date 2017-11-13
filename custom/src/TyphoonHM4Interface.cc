@@ -76,7 +76,7 @@ dump_data_packet(QByteArray data)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
-    : QObject(parent)
+    : QThread(parent)
     , _state(STATE_NONE)
     , _responseTryCount(0)
     , _currentChannelAdd(0)
@@ -89,6 +89,7 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     , _rcActive(false)
     , _rcCalibrationComplete(true)
     , _softReboot(false)
+    , _threadShouldStop(false)
 {
     pTyphoonHandler = this;
     _rxchannelInfoIndex = 2;
@@ -104,6 +105,7 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
 //-----------------------------------------------------------------------------
 TyphoonHM4Interface::~TyphoonHM4Interface()
 {
+    _threadShouldStop = true;
     _state = STATE_NONE;
     _exitRun();
     QThread::msleep(SEND_INTERVAL);
@@ -156,11 +158,26 @@ TyphoonHM4Interface::init(bool skipConnections)
     }
     _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
     QThread::msleep(SEND_INTERVAL);
+    // Start thread to read from serial.
+    start();
+}
+
+void
+TyphoonHM4Interface::run()
+{
+    while (!_threadShouldStop) {
+        if (_m4Lib) {
+            _m4Lib->tryRead();
+        } else {
+            QThread::msleep(10);
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHM4Interface::resetBind() {
+TyphoonHM4Interface::resetBind()
+{
     _rxBindInfoFeedback.clear();
     _exitRun();
     _unbind();

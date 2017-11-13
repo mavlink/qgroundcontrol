@@ -19,7 +19,7 @@
 
 //-----------------------------------------------------------------------------
 // M4 Handler
-class TyphoonHM4Interface : public QObject
+class TyphoonHM4Interface : public QThread
 {
     Q_OBJECT
 public:
@@ -49,6 +49,9 @@ public:
     static  short   byteArrayToShort(QByteArray data, int offset, bool isBigEndian = false);
 
     static TyphoonHM4Interface* pTyphoonHandler;
+
+    //-- From QThread
+    void        run     ();
 
 public slots:
     void    softReboot                          ();
@@ -165,4 +168,5 @@ private:
     bool                    _rcActive;
     bool                    _rcCalibrationComplete;
     bool                    _softReboot;
+    bool                    _threadShouldStop;
 };

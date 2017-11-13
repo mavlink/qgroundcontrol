@@ -10,7 +10,7 @@
 #if defined(__androidx86__)
 #include <termios.h>
 #endif
-class M4SerialComm : public QThread
+class M4SerialComm : public QObject
 {
     Q_OBJECT
 public:
@@ -21,8 +21,8 @@ public:
     void        close   ();
     bool        write   (QByteArray data, bool debug = false);
     bool        write   (void* data, int length);
-    //-- From QThread
-    void        run     ();
+    void        tryRead ();
+
 private:
     int         _openPort       (const char* port);
     int         _writePort      (void *buffer, int len);
