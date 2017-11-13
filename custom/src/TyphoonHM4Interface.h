@@ -125,7 +125,6 @@ signals:
     void    batteryUpdate                       ();
 
 private:
-    M4SerialComm* _commPort;
     M4Lib* _m4Lib;
     enum {
         STATE_NONE,

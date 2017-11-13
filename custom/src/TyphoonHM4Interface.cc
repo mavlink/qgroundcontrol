@@ -20,8 +20,6 @@
 #include "TyphoonHM4Interface.h"
 #include "TyphoonHQuickInterface.h"
 
-#include "m4serial.h"
-
 #include <QNetworkAccessManager>
 
 //-----------------------------------------------------------------------------
@@ -35,9 +33,6 @@ QGC_LOGGING_CATEGORY(YuneecLogVerbose, "YuneecLogVerbose")
 
 TyphoonHM4Interface* TyphoonHM4Interface::pTyphoonHandler = NULL;
 
-#if defined(__androidx86__)
-static const char* kUartName        = "/dev/ttyMFD0";
-#endif
 static const char* kRxInfoGroup     = "YuneecM4RxInfo";
 static const char* kmode            = "mode";
 static const char* kpanId           = "panId";
@@ -98,7 +93,6 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     pTyphoonHandler = this;
     _rxchannelInfoIndex = 2;
     _channelNumIndex    = 6;
-    _commPort = new M4SerialComm(this);
     _m4Lib = new M4Lib(this);
     _timer.setSingleShot(true);
     _rcTimer.setSingleShot(true);
@@ -116,9 +110,6 @@ TyphoonHM4Interface::~TyphoonHM4Interface()
     _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
     QThread::msleep(SEND_INTERVAL * 2);
     emit destroyed();
-    if(_commPort) {
-        delete _commPort;
-    }
     if(_m4Lib) {
         delete _m4Lib;
     }
@@ -155,14 +146,8 @@ TyphoonHM4Interface::init(bool skipConnections)
     }
     settings.endGroup();
     qCDebug(YuneecLog) << "Init M4 Handler";
-#if defined(__androidx86__)
-    if(!_commPort || !_commPort->init(kUartName, 230400) || !_commPort->open()) {
-        //-- TODO: If this ever happens, we need to do something about it
-        qCWarning(YuneecLog) << "Could not start serial communication with M4";
-    } else {
-        connect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonHM4Interface::_bytesReady);
-    }
-#endif
+    _m4Lib->init();
+    connect(_m4Lib, &M4Lib::bytesReady, this, &TyphoonHM4Interface::_bytesReady);
     _sendRxInfoEnd = false;
     if(!skipConnections) {
         connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &TyphoonHM4Interface::_vehicleAdded);
@@ -430,9 +415,10 @@ TyphoonHM4Interface::softReboot()
         qCDebug(YuneecLog) << "softReboot() -> Already bound. Skipping it...";
     } else {
         _timer.stop();
-        if(_commPort) {
-            disconnect(_commPort, &M4SerialComm::bytesReady, this, &TyphoonHM4Interface::_bytesReady);
-            delete _commPort;
+        _m4Lib->deinit();
+        if(_m4Lib) {
+            disconnect(_m4Lib, &M4Lib::bytesReady, this, &TyphoonHM4Interface::_bytesReady);
+            delete _m4Lib;
         }
         _state              = STATE_NONE;
         _responseTryCount   = 0;
@@ -443,7 +429,7 @@ TyphoonHM4Interface::softReboot()
         _rxchannelInfoIndex = 2;
         _channelNumIndex    = 6;
         QThread::msleep(SEND_INTERVAL);
-        _commPort = new M4SerialComm(this);
+        _m4Lib = new M4Lib(this);
         init(true);
     }
     //-- We just finished binding. Set the timer and see if we are indeed bound.
@@ -629,7 +615,7 @@ TyphoonHM4Interface::_exitToAwait()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_EXIT_TO_AWAIT";
     m4Command exitToAwaitCmd(Yuneec::CMD_EXIT_TO_AWAIT);
     QByteArray cmd = exitToAwaitCmd.pack();
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -644,7 +630,7 @@ TyphoonHM4Interface::_enterRun()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_ENTER_RUN";
     m4Command enterRunCmd(Yuneec::CMD_ENTER_RUN);
     QByteArray cmd = enterRunCmd.pack();
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -657,7 +643,7 @@ TyphoonHM4Interface::_exitRun()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_EXIT_RUN";
     m4Command exitRunCmd(Yuneec::CMD_EXIT_RUN);
     QByteArray cmd = exitRunCmd.pack();
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -672,7 +658,7 @@ TyphoonHM4Interface::_enterBind()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_ENTER_BIND";
     m4Command enterBindCmd(Yuneec::CMD_ENTER_BIND);
     QByteArray cmd = enterBindCmd.pack();
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -686,7 +672,7 @@ TyphoonHM4Interface::_enterFactoryCalibration()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_ENTER_FACTORY_CAL";
     m4Command enterFactoryCaliCmd(Yuneec::CMD_ENTER_FACTORY_CAL);
     QByteArray cmd = enterFactoryCaliCmd.pack();
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -699,7 +685,7 @@ TyphoonHM4Interface::_exitFactoryCalibration()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_EXIT_FACTORY_CALI";
     m4Command exitFacoryCaliCmd(Yuneec::CMD_EXIT_FACTORY_CAL);
     QByteArray cmd = exitFacoryCaliCmd.pack();
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -713,7 +699,7 @@ TyphoonHM4Interface::_sendRecvBothCh()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_RECV_BOTH_CH";
     m4Command enterRecvCmd(Yuneec::CMD_RECV_BOTH_CH);
     QByteArray cmd = enterRecvCmd.pack();
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -726,7 +712,7 @@ TyphoonHM4Interface::_exitBind()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_EXIT_BIND";
     m4Command exitBindCmd(Yuneec::CMD_EXIT_BIND);
     QByteArray cmd = exitBindCmd.pack();
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -740,7 +726,7 @@ TyphoonHM4Interface::_startBind()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_START_BIND";
     m4Message startBindMsg(Yuneec::CMD_START_BIND, Yuneec::TYPE_BIND);
     QByteArray msg = startBindMsg.pack();
-    return _commPort->write(msg, DEBUG_DATA_DUMP);
+    return _m4Lib->write(msg, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -761,7 +747,7 @@ TyphoonHM4Interface::_bind(int rxAddr)
     bindMsg.data[6] = 5; //-- Gotta love magic numbers
     bindMsg.data[7] = 15;
     QByteArray msg = bindMsg.pack();
-    return _commPort->write(msg, DEBUG_DATA_DUMP);
+    return _m4Lib->write(msg, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -782,7 +768,7 @@ TyphoonHM4Interface::_setChannelSetting()
     payload[0] = (uint8_t)(_rxBindInfoFeedback.aNum  & 0xff);
     payload[1] = (uint8_t)(_rxBindInfoFeedback.swNum & 0xff);
     QByteArray cmd = setChannelSettingCmd.pack(payload);
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -801,7 +787,7 @@ TyphoonHM4Interface::_setPowerKey(int function)
     payload.resize(1);
     payload[0] = (uint8_t)(function & 0xff);
     QByteArray cmd = setPowerKeyCmd.pack(payload);
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -815,7 +801,7 @@ TyphoonHM4Interface::_unbind()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_UNBIND";
     m4Command unbindCmd(Yuneec::CMD_UNBIND);
     QByteArray cmd = unbindCmd.pack();
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -830,7 +816,7 @@ TyphoonHM4Interface::_queryBindState()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_QUERY_BIND_STATE";
     m4Command queryBindStateCmd(Yuneec::CMD_QUERY_BIND_STATE);
     QByteArray cmd = queryBindStateCmd.pack();
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -844,7 +830,7 @@ TyphoonHM4Interface::_syncMixingDataDeleteAll()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_SYNC_MIXING_DATA_DELETE_ALL";
     m4Command syncMixingDataDeleteAllCmd(Yuneec::CMD_SYNC_MIXING_DATA_DELETE_ALL);
     QByteArray cmd = syncMixingDataDeleteAllCmd.pack();
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -869,7 +855,7 @@ TyphoonHM4Interface::_syncMixingDataAdd()
     m4Command syncMixingDataAddCmd(Yuneec::CMD_SYNC_MIXING_DATA_ADD);
     QByteArray payload((const char*)&channel_data[_currentChannelAdd], CHANNEL_LENGTH);
     QByteArray cmd = syncMixingDataAddCmd.pack(payload);
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -925,7 +911,7 @@ TyphoonHM4Interface::_sendTableDeviceLocalInfo(TableDeviceLocalInfo_t localInfo)
     payload[10] = (uint8_t)((localInfo.txAddr  & 0xff00) >> 8);
     QByteArray cmd = sendRxResInfoCmd.pack(payload);
     //qCDebug(YuneecLogVerbose) << "_sendTableDeviceLocalInfo" <<dump_data_packet(cmd);
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -961,7 +947,7 @@ TyphoonHM4Interface::_sendTableDeviceChannelInfo(TableDeviceChannelInfo_t channe
     payload[18] = channelInfo.extraType;
     QByteArray cmd = sendRxResInfoCmd.pack(payload);
     //qCDebug(YuneecLogVerbose) << "_sendTableDeviceChannelInfo" <<dump_data_packet(cmd);
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
@@ -1057,7 +1043,7 @@ TyphoonHM4Interface::_sendTableDeviceChannelNumInfo(ChannelNumType_t channelNumT
         }
         QByteArray cmd = sendRxResInfoCmd.pack(payload);
         //qCDebug(YuneecLogVerbose) << channelNumTpye <<dump_data_packet(cmd);
-        return _commPort->write(cmd, DEBUG_DATA_DUMP);
+        return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
     }
     return true;
 }
@@ -1148,7 +1134,7 @@ TyphoonHM4Interface::sendPassThroughMessage(QByteArray message)
     qCDebug(YuneecLogVerbose) << "Sending: pass through message";
     m4PassThroughCommand passThroughCommand;
     QByteArray cmd = passThroughCommand.pack(message);
-    return _commPort->write(cmd, DEBUG_DATA_DUMP);
+    return _m4Lib->write(cmd, DEBUG_DATA_DUMP);
 }
 
 //-----------------------------------------------------------------------------
