@@ -3809,6 +3809,17 @@ by initializing the estimator to the LPE_LAT/LON parameters when global informat
         <value code="6">Lockdown</value>
       </values>
     </parameter>
+    <parameter default="1" name="NAV_TRAFF_AVOID" type="INT32">
+      <short_desc>Set traffic avoidance mode</short_desc>
+      <long_desc>Enabling this will allow the system to respond to transponder data from e.g. ADSB transponders</long_desc>
+      <scope>modules/navigator</scope>
+      <values>
+        <value code="1">Warn only</value>
+        <value code="0">Disabled</value>
+        <value code="3">Land immediately</value>
+        <value code="2">Return to Land</value>
+      </values>
+    </parameter>
     <parameter default="1" name="NAV_FORCE_VT" type="INT32">
       <short_desc>Force VTOL mode takeoff and land</short_desc>
       <boolean />
