@@ -7,6 +7,7 @@
 
 QGC_LOGGING_CATEGORY(TerrainTileLog, "TerrainTileLog")
 
+const double TerrainTile::_srtm1TileSize        = 0.025;
 const char*  TerrainTile::_jsonStatusKey        = "status";
 const char*  TerrainTile::_jsonDataKey          = "data";
 const char*  TerrainTile::_jsonBoundsKey        = "bounds";
@@ -50,7 +51,7 @@ TerrainTile::TerrainTile(QJsonDocument document)
     };
     if (!JsonHelper::validateKeys(rootObject, rootVersionKeyInfoList, errorString)) {
         qCDebug(TerrainTileLog) << "Error in reading json: " << errorString;
-        return false;
+        return;
     }
 
     if (rootObject[_jsonStatusKey].toString() != "success") {
@@ -65,7 +66,7 @@ TerrainTile::TerrainTile(QJsonDocument document)
     };
     if (!JsonHelper::validateKeys(dataObject, dataVersionKeyInfoList, errorString)) {
         qCDebug(TerrainTileLog) << "Error in reading json: " << errorString;
-        return false;
+        return;
     }
 
     // Bounds
@@ -76,7 +77,7 @@ TerrainTile::TerrainTile(QJsonDocument document)
     };
     if (!JsonHelper::validateKeys(boundsObject, boundsVersionKeyInfoList, errorString)) {
         qCDebug(TerrainTileLog) << "Error in reading json: " << errorString;
-        return false;
+        return;
     }
     const QJsonArray& swArray = boundsObject[_jsonSouthWestKey].toArray();
     const QJsonArray& neArray = boundsObject[_jsonNorthEastKey].toArray();
@@ -98,7 +99,7 @@ TerrainTile::TerrainTile(QJsonDocument document)
     };
     if (!JsonHelper::validateKeys(statsObject, statsVersionKeyInfoList, errorString)) {
         qCDebug(TerrainTileLog) << "Error in reading json: " << errorString;
-        return false;
+        return;
     }
     _maxElevation = statsObject[_jsonMaxElevationKey].toInt();
     _minElevation = statsObject[_jsonMinElevationKey].toInt();
@@ -129,28 +130,33 @@ bool TerrainTile::isIn(const QGeoCoordinate& coordinate) const
         qCDebug(TerrainTileLog) << "isIn requested, but tile not valid";
         return false;
     }
-    bool ret = coord.latitude() >= _southWest.longitude() && coord.longitude() >= _southWest.longitude() &&
-               coord.latitude() <= _northEast.longitude() && coord.longitude() <= _northEast.longitude();
-    qCDebug(TerrainTileLog) << "Checking isIn: " << coord << " , in sw " << _southWest << " , ne " << _northEast << ": " << ret;
+    bool ret = coordinate.latitude() >= _southWest.longitude() && coordinate.longitude() >= _southWest.longitude() &&
+               coordinate.latitude() <= _northEast.longitude() && coordinate.longitude() <= _northEast.longitude();
+    qCDebug(TerrainTileLog) << "Checking isIn: " << coordinate << " , in sw " << _southWest << " , ne " << _northEast << ": " << ret;
     return ret;
 }
 
 float TerrainTile::elevation(const QGeoCoordinate& coordinate) const
 {
     if (_isValid) {
-        qCDebug << "elevation: " << coord << " , in sw " << _southWest << " , ne " << _northEast;
+        qCDebug(TerrainTileLog) << "elevation: " << coordinate << " , in sw " << _southWest << " , ne " << _northEast;
         // Get the index at resolution of 1 arc second
-        int indexLat = std::round((coord.latitude() - _southWest.latitude()) / _srtm1Increment);
-        int indexLon = std::round((coord.longitude() - _southWest.longitude()) / _srtm1Increment);
-        qCDebug << "indexLat:indexLon" << indexLat << indexLon; // TODO (birchera): Move this down to the next debug output, once this is all properly working.
+        int indexLat = std::round((coordinate.latitude() - _southWest.latitude()) * _gridSize / _srtm1TileSize);
+        int indexLon = std::round((coordinate.longitude() - _southWest.longitude()) * _gridSize / _srtm1TileSize);
+        qCDebug(TerrainTileLog) << "indexLat:indexLon" << indexLat << indexLon; // TODO (birchera): Move this down to the next debug output, once this is all properly working.
         Q_ASSERT(indexLat >= 0);
         Q_ASSERT(indexLat < _gridSize);
         Q_ASSERT(indexLon >= 0);
         Q_ASSERT(indexLon < _gridSize);
-        qCDebug << "elevation" << _data[indexLat][indexLon];
+        qCDebug(TerrainTileLog) << "elevation" << _data[indexLat][indexLon];
         return _data[indexLat][indexLon];
     } else {
         qCDebug(TerrainTileLog) << "Asking for elevation, but no valid data.";
         return -1.0;
     }
+}
+
+QGeoCoordinate TerrainTile::centerCoordinate(void) const
+{
+    return _southWest.atDistanceAndAzimuth(_southWest.distanceTo(_northEast) / 2.0, _southWest.azimuthTo(_northEast));
 }
