@@ -18,6 +18,8 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
+QGC_LOGGING_CATEGORY(TerrainLog, "TerrainLog")
+
 ElevationProvider::ElevationProvider(QObject* parent)
     : QObject(parent)
 {
@@ -26,7 +28,37 @@ ElevationProvider::ElevationProvider(QObject* parent)
 
 bool ElevationProvider::queryTerrainData(const QList<QGeoCoordinate>& coordinates)
 {
-    if (_state != State::Idle || coordinates.length() == 0) {
+    if (coordinates.length() == 0) {
+        return false;
+    }
+
+    bool fallBackToOnline = false;
+    QList<float> altitudes;
+    foreach (QGeoCoordinate coordinate, coordinates) {
+        QString uniqueTileId = _uniqueTileId(coordinate);
+        _tilesMutex.lock();
+        if (!_tiles.contains(uniqueTileId)) {
+            _tilesMutex.unlock();
+            fallBackToOnline = true;
+            break;
+        } else {
+            if (_tiles[uniqueTileId].isIn(coordinate)) {
+                altitudes.push_back(_tiles[uniqueTileId].elevation(coordinate));
+            } else {
+                qCDebug(TerrainLog) << "Error: coordinate not in tile region";
+                altitudes.push_back(-1.0);
+            }
+        }
+        _tilesMutex.unlock();
+    }
+
+    if (!fallBackToOnline) {
+        qCDebug(TerrainLog) << "All altitudes taken from cached data";
+        emit terrainData(true, altitudes);
+        return true;
+    }
+
+    if (_state != State::Idle) {
         return false;
     }
 
@@ -59,6 +91,27 @@ bool ElevationProvider::queryTerrainData(const QList<QGeoCoordinate>& coordinate
     return true;
 }
 
+bool ElevationProvider::cacheTerrainTiles(const QList<QGeoCoordinate>& coordinates)
+{
+    if (coordinates.length() == 0) {
+        return false;
+    }
+
+    for (const auto& coordinate : coordinates) {
+        QString uniqueTileId = _uniqueTileId(coordinate);
+        _tilesMutex.lock();
+        if (_downloadQueue.contains(uniqueTileId) || _tiles.contains(uniqueTileId)) {
+            continue
+        }
+        _downloadQueue.append(uniqueTileId.replace("-", ","));
+        _tilesMutex.unlock();
+        qCDebug(TerrainLog) << "Adding tile to download queue: " << uniqueTileId;
+    }
+
+    _downloadTiles();
+    return true;
+}
+
 void ElevationProvider::_requestFinished()
 {
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
@@ -71,7 +124,7 @@ void ElevationProvider::_requestFinished()
 
         QJsonParseError parseError;
         QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
-        qDebug() << responseJson;
+        qCDebug(TerrainLog) << "Received " <<  responseJson;
         emit terrainData(false, altitudes);
         return;
     }
@@ -95,4 +148,88 @@ void ElevationProvider::_requestFinished()
         emit terrainData(true, altitudes);
     }
     emit terrainData(false, altitudes);
+}
+
+void ElevationProvider::_requestFinishedTile()
+{
+    QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
+    _state = State::Idle;
+
+    // When an error occurs we still end up here
+    if (reply->error() != QNetworkReply::NoError) {
+        QByteArray responseBytes = reply->readAll();
+
+        QJsonParseError parseError;
+        QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
+        qCDebug(TerrainLog) << "ERROR: Received " << responseJson;
+        // TODO: Handle error in downloading data
+        return;
+    }
+
+    QByteArray responseBytes = reply->readAll();
+
+    QJsonParseError parseError;
+    QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
+    if (parseError.error != QJsonParseError::NoError) {
+        // TODO: Handle error in downloading data
+        return;
+    }
+
+    TerrainTile* tile = new TerrainTile(responseJson);
+    if (tile->isValid()) {
+        _tilesMutex.lock();
+        if (!_tiles.contains(_uniqueTileId(tile->centerCoordinate()))) {
+            _tiles.insert(_uniqueTileId(tile->centerCoordinate()), *tile);
+        } else {
+            delete tile;
+        }
+        _tilesMutex.lock();
+    }
+
+    _downloadTiles();
+}
+
+void ElevationProvider::_downloadTiles(void)
+{
+    if (_state == State::Idle && _downloadQueue.count() > 0) {
+        QUrlQuery query;
+        _tilesMutex.lock();
+        qCDebug(TerrainLog) << "Starting download for " << _downloadQueue.first();
+        query.addQueryItem(QStringLiteral("points"), _downloadQueue.first());
+        _downloadQueue.pop_front();
+        _tilesMutex.unlock();
+        QUrl url(QStringLiteral("https://api.airmap.com/elevation/stage/srtm1/carpet"));
+        url.setQuery(query);
+
+        QNetworkRequest request(url);
+
+        QNetworkProxy tProxy;
+        tProxy.setType(QNetworkProxy::DefaultProxy);
+        _networkManager.setProxy(tProxy);
+
+        QNetworkReply* networkReply = _networkManager.get(request);
+        if (!networkReply) {
+            return false;
+        }
+
+        connect(networkReply, &QNetworkReply::finished, this, &ElevationProvider::_requestFinishedTile);
+
+        _state = State::Downloading;
+    }
+}
+
+QString ElevationProvider::_uniqueTileId(const QGeoCoordinate& coordinate)
+{
+    QGeoCoordinate southEast;
+    southEast.setLatitude(floor(coordinate.latitude()*40.0)/40.0);
+    southEast.setLongitude(floor(coordinate.longitude()*40.0)/40.0);
+    QGeoCoordinate northEast;
+    northEast.setLatitude(ceil(coordinate.latitude()*40.0)/40.0);
+    northEast.setLongitude(ceil(coordinate.longitude()*40.0)/40.0);
+
+    QString ret = QString::number(southEast.latitude(), 'f', 6) + "-" + QString::number(southEast.longitude(), 'f', 6) + "-" +
+                  QString::number(northEast.latitude(), 'f', 6) + "-" + QString::number(northEast.longitude(), 'f', 6);
+    qCDebug << "Computing unique tile id for " << coordinate << ret;
+
+    return ret;
 }

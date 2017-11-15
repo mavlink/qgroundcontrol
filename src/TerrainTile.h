@@ -18,9 +18,9 @@ public:
     /**
     * Constructor from json doc with elevation data (either from file or web)
     *
-    * @param json doc
+    * @param document
     */
-    TerrainTile(QJsonDocument doc);
+    TerrainTile(QJsonDocument document);
 
     /**
     * Check for whether a coordinate lies within this tile
@@ -28,14 +28,14 @@ public:
     * @param coordinate
     * @return true if within
     */
-    bool isIn(QGeoCoordinate coord);
+    bool isIn(const QGeoCoordinate& coordinate) const;
 
     /**
     * Check whether valid data is loaded
     *
     * @return true if data is valid
     */
-    bool isValid(void) { return _isValid; }
+    bool isValid(void) const { return _isValid; }
 
     /**
     * Evaluates the elevation at the given coordinate
@@ -43,28 +43,34 @@ public:
     * @param coordinate
     * @return elevation
     */
-    float elevation(const QGeoCoordinate& coord);
+    float elevation(const QGeoCoordinate& coordinate) const;
 
     /**
     * Accessor for the minimum elevation of the tile
     *
     * @return minimum elevation
     */
-    float minElevation(void) { return _minElevation; }
+    float minElevation(void) const { return _minElevation; }
 
     /**
     * Accessor for the maximum elevation of the tile
     *
     * @return maximum elevation
     */
-    float maxElevation(void) { return _maxElevation; }
+    float maxElevation(void) const { return _maxElevation; }
 
     /**
     * Accessor for the average elevation of the tile
     *
     * @return average elevation
     */
-    float avgElevation(void) { return _avgElevation; }
+    float avgElevation(void) const { return _avgElevation; }
+
+    /// tile grid size in lat and lon
+    static const int    _gridSize = TERRAIN_TILE_SIZE;
+
+    /// grid spacing in degree
+    static const float  _srtm1Increment = 1.0 / (60.0 * 60.0);
 
 private:
     QGeoCoordinate      _southWest;                                     /// South west corner of the tile
@@ -76,8 +82,6 @@ private:
 
     float               _data[TERRAIN_TILE_SIZE][TERRAIN_TILE_SIZE];    /// elevation data
     bool                _isValid;                                       /// data loaded is valid
-    static const int    _gridSize = TERRAIN_TILE_SIZE;                  /// tile grid size in lat and lon
-    static const float  _srtm1Increment = 1.0 / (60.0 * 60.0);          /// grid spacing in degree
 
     // Json keys
     static const char*  _jsonStatusKey;

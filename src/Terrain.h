@@ -9,11 +9,14 @@
 
 #pragma once
 
+#include "TerrainTile.h"
+#include "QGCLoggingCategory.h"
+
 #include <QObject>
 #include <QGeoCoordinate>
 #include <QNetworkAccessManager>
-
-#include "TerrainCacheTileServer.h"
+#include <QHash>
+#include <QMutex>
 
 /* usage example:
     ElevationProvider *p = new ElevationProvider();
@@ -25,6 +28,7 @@
     p->queryTerrainData(coordinates);
  */
 
+Q_DECLARE_LOGGING_CATEGORY(TerrainLog)
 
 class ElevationProvider : public QObject
 {
@@ -41,24 +45,34 @@ public:
     bool queryTerrainData(const QList<QGeoCoordinate>& coordinates);
 
     /**
+     * Cache all data in rectangular region given by south west and north east corner.
      *
-     *
-     *
+     * @param southWest
+     * @param northEast
      */
-    bool cacheTerrainData(const QGeoCoordinate& southWest, const QGeoCoordinate& northEast);
+    void cacheTerrainData(const QGeoCoordinate& southWest, const QGeoCoordinate& northEast);
 
 signals:
     void terrainData(bool success, QList<float> altitudes);
 
 private slots:
     void _requestFinished();
+    void _requestFinishedTile();
+
 private:
+
+    QString _uniqueTileId(const QGeoCoordinate& coordinate);
+    void    _downloadTiles(void);
 
     enum class State {
         Idle,
         Downloading,
     };
 
-    State                   _state = State::Idle;
-    QNetworkAccessManager   _networkManager;
+    State                       _state = State::Idle;
+    QNetworkAccessManager       _networkManager;
+
+    static QMutex                       _tilesMutex;
+    static QHash<QString, TerrainTile>  _tiles;
+    QStringList                         _downloadQueue;
 };
