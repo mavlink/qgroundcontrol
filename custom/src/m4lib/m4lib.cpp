@@ -54,7 +54,6 @@ M4Lib::M4Lib(QObject* parent)
     memset(_rawChannelsCalibration, 0, sizeof(_rawChannelsCalibration));
 }
 
-//-----------------------------------------------------------------------------
 M4Lib::~M4Lib()
 {
     _state = STATE_NONE;
@@ -175,7 +174,6 @@ M4Lib::tryStopCalibration()
 }
 
 
-//-----------------------------------------------------------------------------
 void
 M4Lib::softReboot()
 {
@@ -185,13 +183,7 @@ M4Lib::softReboot()
         qCDebug(YuneecLogVerbose) << "softReboot() -> Already bound. Skipping it...";
     } else {
         deinit();
-        //if(_m4Lib) {
-        //    disconnect(_m4Lib, &M4Lib::bytesReady, this, &M4Lib::_bytesReady);
-        //    delete _m4Lib;
-        //}
         QThread::msleep(SEND_INTERVAL);
-        //_m4Lib = new M4Lib(this);
-
         _state              = STATE_NONE;
         _responseTryCount   = 0;
         _currentChannelAdd  = 0;
@@ -200,7 +192,6 @@ M4Lib::softReboot()
         _sendRxInfoEnd      = false;
         _rxchannelInfoIndex = 2;
         _channelNumIndex    = 6;
-
         QThread::msleep(SEND_INTERVAL);
         init();
     }
@@ -609,7 +600,6 @@ M4Lib::_fillTableDeviceChannelNumMap(TableDeviceChannelNumInfo_t* channelNumInfo
     return res;
 }
 
-//-----------------------------------------------------------------------------
 void
 M4Lib::_initSequence()
 {
@@ -629,7 +619,6 @@ M4Lib::_initSequence()
     _timer.start(COMMAND_WAIT_INTERVAL);
 }
 
-//-----------------------------------------------------------------------------
 /*
  * This handles the sequence of events/commands sent to the MCU. A following
  * command is only sent once we receive an response from the previous one. If
@@ -774,7 +763,6 @@ M4Lib::_stateManager()
     }
 }
 
-//-----------------------------------------------------------------------------
 /**
  * This command is used for sending the information we got from bound aircraft to the bound aircraft
  * to make a confirmation.
@@ -803,7 +791,6 @@ M4Lib::_sendRxResInfo()
     return _sendRxInfoEnd;
 }
 
-//-----------------------------------------------------------------------------
 /**
  * This funtion is used for filling TableDeviceLocalInfo_t with the Local information
  * information from RxBindInfo
@@ -820,7 +807,6 @@ M4Lib::_generateTableDeviceLocalInfo(TableDeviceLocalInfo_t* localInfo)
     _rxLocalIndex++;
 }
 
-//-----------------------------------------------------------------------------
 /**
  * This funtion is used for filling TableDeviceChannelInfo_t with the channel information
  * information from RxBindInfo
@@ -873,7 +859,6 @@ M4Lib::_generateTableDeviceChannelInfo(TableDeviceChannelInfo_t* channelInfo)
     return true;
 }
 
-//-----------------------------------------------------------------------------
 void
 M4Lib::_initAndCheckBinding()
 {
@@ -902,7 +887,6 @@ M4Lib::_sendPassthroughMessage(QByteArray message)
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
-//-----------------------------------------------------------------------------
 /*
  *
  * A full, validated data packet has been received. The data argument contains
@@ -1084,7 +1068,6 @@ M4Lib::_bytesReady(QByteArray data)
     }
 }
 
-//-----------------------------------------------------------------------------
 void
 M4Lib::_handleQueryBindResponse(QByteArray data)
 {
@@ -1104,7 +1087,6 @@ M4Lib::_handleQueryBindResponse(QByteArray data)
     }
 }
 
-//-----------------------------------------------------------------------------
 bool
 M4Lib::_handleNonTypePacket(m4Packet& packet)
 {
@@ -1117,7 +1099,6 @@ M4Lib::_handleNonTypePacket(m4Packet& packet)
     return false;
 }
 
-//-----------------------------------------------------------------------------
 void
 M4Lib::_handleBindResponse()
 {
@@ -1130,7 +1111,6 @@ M4Lib::_handleBindResponse()
     }
 }
 
-//-----------------------------------------------------------------------------
 void
 M4Lib::_handleRxBindInfo(m4Packet& packet)
 {
@@ -1207,7 +1187,6 @@ M4Lib::_handleRxBindInfo(m4Packet& packet)
     }
 }
 
-//-----------------------------------------------------------------------------
 void
 M4Lib::_handleChannel(m4Packet& packet)
 {
@@ -1244,7 +1223,6 @@ M4Lib::_handleChannel(m4Packet& packet)
     }
 }
 
-//-----------------------------------------------------------------------------
 bool
 M4Lib::_handleCommand(m4Packet& packet)
 {
@@ -1278,7 +1256,6 @@ M4Lib::_handleCommand(m4Packet& packet)
     return false;
 }
 
-//-----------------------------------------------------------------------------
 void
 M4Lib::_switchChanged(m4Packet& packet)
 {
@@ -1292,7 +1269,6 @@ M4Lib::_switchChanged(m4Packet& packet)
     qCDebug(YuneecLog) << "Switches:" << switchChanged.hwId << switchChanged.newState << switchChanged.oldState;
 }
 
-//-----------------------------------------------------------------------------
 /*
  * Calibration Progress
 */
@@ -1331,7 +1307,6 @@ M4Lib::_calibrationStateChanged(m4Packet &packet)
     }
 }
 
-//-----------------------------------------------------------------------------
 void
 M4Lib::_handleRawChannelData(m4Packet& packet)
 {
@@ -1363,7 +1338,6 @@ M4Lib::_handleRawChannelData(m4Packet& packet)
     */
 }
 
-//-----------------------------------------------------------------------------
 void
 M4Lib::_handleMixedChannelData(m4Packet& packet)
 {
@@ -1407,7 +1381,6 @@ M4Lib::_handleMixedChannelData(m4Packet& packet)
     emit channelDataStatus(channels);
 }
 
-//-----------------------------------------------------------------------------
 void
 M4Lib::_handleControllerFeedback(m4Packet& packet)
 {
@@ -1426,7 +1399,6 @@ M4Lib::_handleControllerFeedback(m4Packet& packet)
 }
 
 
-//-----------------------------------------------------------------------------
 void
 M4Lib::_handlePassThroughPacket(m4Packet& packet)
 {
@@ -1460,7 +1432,6 @@ M4Lib::m4StateStr()
     return QString();
 }
 
-//-----------------------------------------------------------------------------
 int
 M4Lib::byteArrayToInt(QByteArray data, int offset, bool isBigEndian)
 {
@@ -1487,7 +1458,6 @@ M4Lib::byteArrayToInt(QByteArray data, int offset, bool isBigEndian)
     return iRetVal;
 }
 
-//-----------------------------------------------------------------------------
 short
 M4Lib::byteArrayToShort(QByteArray data, int offset, bool isBigEndian)
 {
