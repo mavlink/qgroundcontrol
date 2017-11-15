@@ -1,7 +1,6 @@
 #pragma once
 
 #include "TyphoonHCommon.h"
-#include "TyphoonHQuickInterface.h"
 #include "m4serial.h"
 #include "m4util.h"
 
@@ -9,6 +8,17 @@ class M4Lib : public QObject
 {
     Q_OBJECT
 public:
+
+    enum class M4State {
+        NONE           = 0,
+        AWAIT          = 1,
+        BIND           = 2,
+        CALIBRATION    = 3,
+        SETUP          = 4,
+        RUN            = 5,
+        SIM            = 6,
+        FACTORY_CAL    = 7
+    };
 
     void init();
     void deinit();
@@ -18,8 +28,7 @@ public:
     bool write(QByteArray data, bool debug);
     void tryRead();
 
-    // TODO remove again
-    TyphoonHQuickInterface::M4State getM4State() { return _m4State; }
+    M4State getM4State() { return _m4State; }
 
     bool getRcActive() { return _rcActive; }
     void setRcActive(bool rcActive) { _rcActive = rcActive; }
@@ -138,7 +147,7 @@ private:
 
     int                     _state;
     int                     _responseTryCount;
-    TyphoonHQuickInterface::M4State     _m4State;
+    M4State                 _m4State;
     uint8_t                 _channelNumIndex;
     RxBindInfo              _rxBindInfoFeedback;
     QTimer                  _timer;

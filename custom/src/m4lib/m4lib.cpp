@@ -35,7 +35,7 @@ M4Lib::M4Lib(QObject* parent)
     : QObject(parent)
     , _state(STATE_NONE)
     , _responseTryCount(0)
-    , _m4State(TyphoonHQuickInterface::M4_STATE_NONE)
+    , _m4State(M4State::NONE)
     , _currentChannelAdd(0)
     , _rxLocalIndex(0)
     , _sendRxInfoEnd(false)
@@ -125,9 +125,9 @@ M4Lib::tryEnterBindMode()
 {
     //-- Set M4 into bind mode
     _rxBindInfoFeedback.clear();
-    if(_m4State == TyphoonHQuickInterface::M4_STATE_BIND) {
+    if(_m4State == M4State::BIND) {
         _exitBind();
-    } else if(_m4State == TyphoonHQuickInterface::M4_STATE_RUN) {
+    } else if(_m4State == M4State::RUN) {
         _exitRun();
     }
     QTimer::singleShot(1000, this, &M4Lib::_initSequence);
@@ -136,11 +136,11 @@ M4Lib::tryEnterBindMode()
 void
 M4Lib::checkVehicleReady()
 {
-    if(_m4State == TyphoonHQuickInterface::M4_STATE_RUN && !_rcActive) {
+    if(_m4State == M4State::RUN && !_rcActive) {
         qCDebug(YuneecLog) << "In RUN mode but no RC yet";
         QTimer::singleShot(2000, this, &M4Lib::_initAndCheckBinding);
     } else {
-        if(_m4State != TyphoonHQuickInterface::M4_STATE_RUN) {
+        if(_m4State != M4State::RUN) {
             //-- The M4 is not initialized
             qCDebug(YuneecLog) << "M4 not yet initialized";
             _initAndCheckBinding();
@@ -152,12 +152,12 @@ void
 M4Lib::tryStartCalibration()
 {
     //-- Ignore it if already in factory cal mode
-    if(_m4State != TyphoonHQuickInterface::M4_STATE_FACTORY_CAL) {
+    if(_m4State != M4State::FACTORY_CAL) {
         memset(_rawChannelsCalibration, 0, sizeof(_rawChannelsCalibration));
         _rcCalibrationComplete = false;
         emit calibrationCompleteChanged();
         emit calibrationStateChanged();
-        if(_m4State == TyphoonHQuickInterface::M4_STATE_RUN) {
+        if(_m4State == M4State::RUN) {
             _exitRun();
             QThread::msleep(SEND_INTERVAL);
         }
@@ -168,7 +168,7 @@ M4Lib::tryStartCalibration()
 void
 M4Lib::tryStopCalibration()
 {
-    if(_m4State == TyphoonHQuickInterface::M4_STATE_FACTORY_CAL) {
+    if(_m4State == M4State::FACTORY_CAL) {
         _exitFactoryCalibration();
     }
 }
@@ -187,7 +187,7 @@ M4Lib::softReboot()
         _state              = STATE_NONE;
         _responseTryCount   = 0;
         _currentChannelAdd  = 0;
-        _m4State            = TyphoonHQuickInterface::M4_STATE_NONE;
+        _m4State            = M4State::NONE;
         _rxLocalIndex       = 0;
         _sendRxInfoEnd      = false;
         _rxchannelInfoIndex = 2;
@@ -864,7 +864,7 @@ M4Lib::_initAndCheckBinding()
 {
 #if defined(__androidx86__)
     //-- First boot, not bound
-    if(_m4State != TyphoonHQuickInterface::M4_STATE_RUN) {
+    if(_m4State != M4State::RUN) {
         emit enterBindMode();
     //-- RC is bound to something. Is it bound to whoever we are connected?
     } else if(!_rcActive) {
@@ -1230,14 +1230,14 @@ M4Lib::_handleCommand(m4Packet& packet)
     switch(packet.commandID()) {
         case Yuneec::CMD_TX_STATE_MACHINE: {
                 QByteArray commandValues = packet.commandValues();
-                TyphoonHQuickInterface::M4State state = (TyphoonHQuickInterface::M4State)(commandValues[0] & 0x1f);
+                M4State state = (M4State)(commandValues[0] & 0x1f);
                 if(state != _m4State) {
-                    TyphoonHQuickInterface::M4State old_state = _m4State;
+                    M4State old_state = _m4State;
                     _m4State = state;
                     emit m4StateChanged();
-                    qCDebug(YuneecLog) << "New State:" << m4StateStr() << "(" << _m4State << ")";
+                    qCDebug(YuneecLog) << "New State:" << m4StateStr() << "(" << (int)_m4State << ")";
                     //-- If we were connected and just finished calibration, bind again
-                    if(_vehicleConnected && old_state == TyphoonHQuickInterface::M4_STATE_FACTORY_CAL) {
+                    if(_vehicleConnected && old_state == M4State::FACTORY_CAL) {
                         _initAndCheckBinding();
                     }
                 }
@@ -1410,21 +1410,21 @@ QString
 M4Lib::m4StateStr()
 {
     switch(_m4State) {
-        case TyphoonHQuickInterface::M4_STATE_NONE:
+        case M4State::NONE:
             return QString("Waiting for vehicle to connect...");
-        case TyphoonHQuickInterface::M4_STATE_AWAIT:
+        case M4State::AWAIT:
             return QString("Waiting...");
-        case TyphoonHQuickInterface::M4_STATE_BIND:
+        case M4State::BIND:
             return QString("Binding...");
-        case TyphoonHQuickInterface::M4_STATE_CALIBRATION:
+        case M4State::CALIBRATION:
             return QString("Calibration...");
-        case TyphoonHQuickInterface::M4_STATE_SETUP:
+        case M4State::SETUP:
             return QString("Setup...");
-        case TyphoonHQuickInterface::M4_STATE_RUN:
+        case M4State::RUN:
             return QString("Running...");
-        case TyphoonHQuickInterface::M4_STATE_SIM:
+        case M4State::SIM:
             return QString("Simulation...");
-        case TyphoonHQuickInterface::M4_STATE_FACTORY_CAL:
+        case M4State::FACTORY_CAL:
             return QString("Factory Calibration...");
         default:
             return QString("Unknown state...");

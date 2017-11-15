@@ -178,7 +178,7 @@ TyphoonHM4Interface::rawChannels()
 TyphoonHQuickInterface::M4State
 TyphoonHM4Interface::m4State()
 {
-    return _m4Lib->getM4State();
+    return (TyphoonHQuickInterface::M4State)(int)(_m4Lib->getM4State());
 }
 
 //-----------------------------------------------------------------------------
@@ -228,7 +228,7 @@ TyphoonHM4Interface::_rcTimeout()
     emit rcActiveChanged();
 #if defined(__androidx86__)
     //-- If we are in run state after binding and we don't have RC, bind it again.
-    if(_vehicle && _m4Lib->getSoftReboot() && _m4Lib->getM4State() == TyphoonHQuickInterface::M4_STATE_RUN) {
+    if(_vehicle && _m4Lib->getSoftReboot() && m4State() == TyphoonHQuickInterface::M4_STATE_RUN) {
         _m4Lib->setSoftReboot(false);
         qCDebug(YuneecLogVerbose) << "RC bind again";
         enterBindMode();
@@ -294,7 +294,7 @@ void
 TyphoonHM4Interface::enterBindMode(bool skipPairCommand)
 {
 #if defined(__androidx86__)
-    qCDebug(YuneecLog) << "enterBindMode() Current Mode: " << _m4Lib->getM4State();
+    qCDebug(YuneecLog) << "enterBindMode() Current Mode: " << m4State();
     //-- Send MAVLink command telling vehicle to enter bind mode
     if(!skipPairCommand && _vehicle) {
         qCDebug(YuneecLog) << "pairRX()";

@@ -115,6 +115,8 @@ public:
     ~TyphoonHQuickInterface();
 
     //-- QtQuick Interface
+
+    //-- Mirror of M4Lib::M4State
     enum M4State {
         M4_STATE_NONE           = 0,
         M4_STATE_AWAIT          = 1,
