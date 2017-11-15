@@ -1330,8 +1330,8 @@ M4Lib::_handleRawChannelData(m4Packet& packet)
     /*
     QString resp = QString("Raw channels (%1): ").arg(analogChannelCount);
     QString temp;
-    for(int i = 0; i < channels.size(); i++) {
-        temp.sprintf(" %05u, ", channels[i]);
+    for(int i = 0; i < _rawChannels.size(); i++) {
+        temp.sprintf(" %05u, ", _rawChannels[i]);
         resp += temp;
     }
     qDebug() << resp;
