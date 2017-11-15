@@ -50,7 +50,7 @@ public:
      * @param southWest
      * @param northEast
      */
-    void cacheTerrainData(const QGeoCoordinate& southWest, const QGeoCoordinate& northEast);
+    bool cacheTerrainTiles(const QList<QGeoCoordinate>& coordinates);
 
 signals:
     void terrainData(bool success, QList<float> altitudes);
@@ -74,5 +74,5 @@ private:
 
     static QMutex                       _tilesMutex;
     static QHash<QString, TerrainTile>  _tiles;
-    QStringList                         _downloadQueue;
+    static QStringList                  _downloadQueue;
 };

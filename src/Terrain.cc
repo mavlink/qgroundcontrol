@@ -20,6 +20,10 @@
 
 QGC_LOGGING_CATEGORY(TerrainLog, "TerrainLog")
 
+QMutex                          ElevationProvider::_tilesMutex;
+QHash<QString, TerrainTile>     ElevationProvider::_tiles;
+QStringList                     ElevationProvider::_downloadQueue;
+
 ElevationProvider::ElevationProvider(QObject* parent)
     : QObject(parent)
 {
@@ -101,7 +105,7 @@ bool ElevationProvider::cacheTerrainTiles(const QList<QGeoCoordinate>& coordinat
         QString uniqueTileId = _uniqueTileId(coordinate);
         _tilesMutex.lock();
         if (_downloadQueue.contains(uniqueTileId) || _tiles.contains(uniqueTileId)) {
-            continue
+            continue;
         }
         _downloadQueue.append(uniqueTileId.replace("-", ","));
         _tilesMutex.unlock();
@@ -209,7 +213,7 @@ void ElevationProvider::_downloadTiles(void)
 
         QNetworkReply* networkReply = _networkManager.get(request);
         if (!networkReply) {
-            return false;
+            return;
         }
 
         connect(networkReply, &QNetworkReply::finished, this, &ElevationProvider::_requestFinishedTile);
@@ -229,7 +233,7 @@ QString ElevationProvider::_uniqueTileId(const QGeoCoordinate& coordinate)
 
     QString ret = QString::number(southEast.latitude(), 'f', 6) + "-" + QString::number(southEast.longitude(), 'f', 6) + "-" +
                   QString::number(northEast.latitude(), 'f', 6) + "-" + QString::number(northEast.longitude(), 'f', 6);
-    qCDebug << "Computing unique tile id for " << coordinate << ret;
+    qCDebug(TerrainLog) << "Computing unique tile id for " << coordinate << ret;
 
     return ret;
 }

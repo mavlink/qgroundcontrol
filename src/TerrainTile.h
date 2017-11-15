@@ -66,11 +66,18 @@ public:
     */
     float avgElevation(void) const { return _avgElevation; }
 
+    /**
+    * Accessor for the center coordinate
+    *
+    * @return center coordinate
+    */
+    QGeoCoordinate centerCoordinate(void) const;
+
     /// tile grid size in lat and lon
     static const int    _gridSize = TERRAIN_TILE_SIZE;
 
-    /// grid spacing in degree
-    static const float  _srtm1Increment = 1.0 / (60.0 * 60.0);
+    /// size of a tile in degree
+    static const double  _srtm1TileSize;
 
 private:
     QGeoCoordinate      _southWest;                                     /// South west corner of the tile
