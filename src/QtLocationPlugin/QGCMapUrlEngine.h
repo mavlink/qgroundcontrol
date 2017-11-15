@@ -45,6 +45,7 @@ public:
         OpenStreetMapSurferTerrain=35,
 
         StatkartTopo            = 100,
+        EniroTopo               = 110,
 
         BingMap                 = 444,
         BingSatellite           = 555,

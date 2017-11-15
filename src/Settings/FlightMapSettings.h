@@ -25,7 +25,8 @@ public:
         mapProviderGoogle,
         mapProviderStarkart,
         mapProviderMapbox,
-        mapProviderEsri
+        mapProviderEsri,
+        mapProviderEniro
     } MapProvider_t;
 
     // This enum must match the json meta data
