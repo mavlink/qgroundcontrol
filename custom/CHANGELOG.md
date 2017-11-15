@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.7 - Nov 14 2017
+
+*   Enable camera settings even if no microSD card is present
+
 ### v1.2.6 - Nov 10 2017
 
 *   Add hobbs meter

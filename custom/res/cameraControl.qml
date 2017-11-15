@@ -67,6 +67,7 @@ Rectangle {
     property bool _cameraModeUndefined:     !_cameraPhotoMode && !_cameraVideoMode
     property bool _recordingVideo:          _cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool _isThermal:               TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver
+    property bool _settingsEnabled:         !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED && _camera && _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE && !_recordingVideo
 
     property real _mediaWidth:              128
     property real _mediaHeight:             72
@@ -293,16 +294,15 @@ Rectangle {
             sourceSize.width:   width
             source:             "qrc:/typhoonh/img/sliders.svg"
             fillMode:           Image.PreserveAspectFit
-            color:              settingsEnabled ? qgcPal.text : qgcPal.colorGrey
+            color:              _settingsEnabled ? qgcPal.text : qgcPal.colorGrey
             anchors.horizontalCenter: parent.horizontalCenter
             MouseArea {
                 anchors.fill:   parent
-                enabled:        parent.settingsEnabled
+                enabled:        _settingsEnabled
                 onClicked: {
                     rootLoader.sourceComponent = cameraSettingsComponent
                 }
             }
-            property bool settingsEnabled: !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED && _cameraPhotoIdle && !_recordingVideo
         }
         Item {
             height:     ScreenTools.defaultFontPixelHeight
