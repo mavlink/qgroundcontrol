@@ -95,6 +95,11 @@ public:
     /// @return Sequence number for new item
     Q_INVOKABLE int insertSimpleMissionItem(QGeoCoordinate coordinate, int i);
 
+    /// Add a new ROI mission item to the list
+    ///     @param i: index to insert at
+    /// @return Sequence number for new item
+    Q_INVOKABLE int insertROIMissionItem(QGeoCoordinate coordinate, int i);
+
     /// Add a new complex mission item to the list
     ///     @param itemName: Name of complex item to create (from complexMissionItemNames)
     ///     @param mapCenterCoordinate: coordinate for current center of map

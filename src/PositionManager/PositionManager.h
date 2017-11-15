@@ -39,7 +39,6 @@ public:
 private slots:
     void _positionUpdated(const QGeoPositionInfo &update);
     void _error(QGeoPositionInfoSource::Error positioningError);
-    void _updateTimeout(void);
 
 signals:
     void lastPositionUpdated(bool valid, QVariant lastPosition);

@@ -349,19 +349,21 @@ QString SimpleMissionItem::commandName(void) const
 QString SimpleMissionItem::abbreviation() const
 {
     if (homePosition())
-        return QStringLiteral("H");
+        return tr("H");
 
     switch(command()) {
+    case MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF:
+        return tr("Takeoff");
+    case MavlinkQmlSingleton::MAV_CMD_NAV_LAND:
+        return tr("Land");
+    case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF:
+        return tr("VTOL Takeoff");
+    case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_LAND:
+        return tr("VTOL Land");
+    case MavlinkQmlSingleton::MAV_CMD_DO_SET_ROI:
+        return tr("ROI");
     default:
         return QString();
-    case MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF:
-        return QStringLiteral("Takeoff");
-    case MavlinkQmlSingleton::MAV_CMD_NAV_LAND:
-        return QStringLiteral("Land");
-    case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF:
-        return QStringLiteral("VTOL Takeoff");
-    case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_LAND:
-        return QStringLiteral("VTOL Land");
     }
 }
 
