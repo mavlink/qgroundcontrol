@@ -47,30 +47,7 @@ public:
 
     QString m4StateStr();
 
-    // TODO: should all by private
-    bool _exitToAwait();
-    bool _enterRun();
-    bool _exitRun();
-    bool _enterBind();
-    bool _enterFactoryCalibration();
-    bool _exitFactoryCalibration();
-    bool _sendRecvBothCh();
-    bool _exitBind();
-    bool _startBind();
-    bool _bind(int rxAddr);
-    bool _setChannelSetting();
-    bool _setPowerKey(int function);
-    bool _unbind();
-    bool _queryBindState();
-    bool _syncMixingDataDeleteAll();
-    bool _syncMixingDataAdd();
-    bool _sendTableDeviceLocalInfo(TableDeviceLocalInfo_t localInfo);
-    bool _sendTableDeviceChannelInfo(TableDeviceChannelInfo_t channelInfo);
-    bool _sendTableDeviceChannelNumInfo(ChannelNumType_t channelNumType);
-    bool _sendRxResInfo                      ();
-
-    bool _sendPassthroughMessage(QByteArray message);
-
+    bool setPowerKey(int function);
     int calChannel(int index);
 
     M4Lib(QObject* parent = NULL);
@@ -95,23 +72,45 @@ private slots:
     void _initAndCheckBinding                ();
 
 private:
-    bool _generateTableDeviceChannelNumInfo(TableDeviceChannelNumInfo_t* channelNumInfo, ChannelNumType_t channelNumType, int& num);
-    bool    _fillTableDeviceChannelNumMap       (TableDeviceChannelNumInfo_t *channelNumInfo, int num, QByteArray list);
-    void    _generateTableDeviceLocalInfo       (TableDeviceLocalInfo_t *localInfo);
-    bool    _generateTableDeviceChannelInfo     (TableDeviceChannelInfo_t *channelInfo);
+    bool _exitToAwait();
+    bool _enterRun();
+    bool _exitRun();
+    bool _enterBind();
+    bool _enterFactoryCalibration();
+    bool _exitFactoryCalibration();
+    bool _sendRecvBothCh();
+    bool _exitBind();
+    bool _startBind();
+    bool _bind(int rxAddr);
+    bool _setChannelSetting();
+    bool _unbind();
+    bool _queryBindState();
+    bool _syncMixingDataDeleteAll();
+    bool _syncMixingDataAdd();
+    bool _sendTableDeviceLocalInfo(TableDeviceLocalInfo_t localInfo);
+    bool _sendTableDeviceChannelInfo(TableDeviceChannelInfo_t channelInfo);
+    bool _sendTableDeviceChannelNumInfo(ChannelNumType_t channelNumType);
+    bool _sendRxResInfo                      ();
 
-    void    _handleBindResponse                 ();
-    void    _handleQueryBindResponse            (QByteArray data);
-    bool    _handleNonTypePacket                (m4Packet& packet);
-    void    _handleRxBindInfo                   (m4Packet& packet);
-    void    _handleChannel                      (m4Packet& packet);
-    bool    _handleCommand                      (m4Packet& packet);
-    void    _switchChanged                      (m4Packet& packet);
-    void    _calibrationStateChanged            (m4Packet& packet);
-    void    _handleMixedChannelData             (m4Packet& packet);
-    void    _handleRawChannelData               (m4Packet& packet);
-    void    _handleControllerFeedback           (m4Packet& packet);
-    void    _handlePassThroughPacket            (m4Packet& packet);
+    bool _sendPassthroughMessage(QByteArray message);
+
+    bool _generateTableDeviceChannelNumInfo(TableDeviceChannelNumInfo_t* channelNumInfo, ChannelNumType_t channelNumType, int& num);
+    bool _fillTableDeviceChannelNumMap       (TableDeviceChannelNumInfo_t *channelNumInfo, int num, QByteArray list);
+    void _generateTableDeviceLocalInfo       (TableDeviceLocalInfo_t *localInfo);
+    bool _generateTableDeviceChannelInfo     (TableDeviceChannelInfo_t *channelInfo);
+
+    void _handleBindResponse                 ();
+    void _handleQueryBindResponse            (QByteArray data);
+    bool _handleNonTypePacket                (m4Packet& packet);
+    void _handleRxBindInfo                   (m4Packet& packet);
+    void _handleChannel                      (m4Packet& packet);
+    bool _handleCommand                      (m4Packet& packet);
+    void _switchChanged                      (m4Packet& packet);
+    void _calibrationStateChanged            (m4Packet& packet);
+    void _handleMixedChannelData             (m4Packet& packet);
+    void _handleRawChannelData               (m4Packet& packet);
+    void _handleControllerFeedback           (m4Packet& packet);
+    void _handlePassThroughPacket            (m4Packet& packet);
 
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
     static  short   byteArrayToShort(QByteArray data, int offset, bool isBigEndian = false);

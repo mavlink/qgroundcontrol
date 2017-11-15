@@ -5,15 +5,6 @@
  *
  */
 
-/*-----------------------------------------------------------------------------
- *   Original source:
- *
- *   DroneFly/droneservice/src/main/java/com/yuneec/droneservice/parse/St16Controller.java
- *
- *   All comments within the command send functions came from the original file above.
- *   The functions themselves have been completely rewriten from scratch.
- */
-
 #include "QGCApplication.h"
 
 #include "TyphoonHPlugin.h"
@@ -21,10 +12,6 @@
 #include "TyphoonHQuickInterface.h"
 
 #include <QNetworkAccessManager>
-
-//-----------------------------------------------------------------------------
-// RC Channel data provided by Yuneec
-//#include "m4channeldata.h"
 
 #include <math.h>
 
@@ -283,7 +270,7 @@ TyphoonHM4Interface::_vehicleAdded(Vehicle* vehicle)
         _vehicle = vehicle;
         connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &TyphoonHM4Interface::_mavlinkMessageReceived);
         //-- Set the "Big Red Button" to bind mode
-        _setPowerKey(Yuneec::BIND_KEY_FUNCTION_BIND);
+        _m4Lib->setPowerKey(Yuneec::BIND_KEY_FUNCTION_BIND);
     }
 }
 
@@ -297,7 +284,7 @@ TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
         _vehicle = NULL;
         _m4Lib->setRcActive(false);
         emit rcActiveChanged();
-        _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
+        _m4Lib->setPowerKey(Yuneec::BIND_KEY_FUNCTION_BIND);
     }
 }
 
@@ -348,241 +335,6 @@ TyphoonHM4Interface::softReboot()
 {
     _m4Lib->softReboot();
 }
-
-
-
-//-----------------------------------------------------------------------------
-/**
- * Exit to Await (?)
- */
-bool
-TyphoonHM4Interface::_exitToAwait()
-{
-    return _m4Lib->_exitToAwait();
-}
-
-//-----------------------------------------------------------------------------
-/**
- * This command is used for entering the progress of binding aircraft.
- * This command is the first step of the progress of binging aircraft.
- * The next command you will send may be {@link _startBind}.
- */
-bool
-TyphoonHM4Interface::_enterRun()
-{
-    return _m4Lib->_enterRun();
-}
-
-//-----------------------------------------------------------------------------
-/**
- * This command is used for stopping control aircraft.
- */
-bool
-TyphoonHM4Interface::_exitRun()
-{
-    return _m4Lib->_exitRun();
-}
-
-//-----------------------------------------------------------------------------
-/**
- * This command is used for entering the progress of binding aircraft.
- * This command is the first step of the progress of binging aircraft.
- * The next command you will send may be {@link _startBind}.
- */
-bool
-TyphoonHM4Interface::_enterBind()
-{
-    return _m4Lib->_enterBind();
-}
-
-//-----------------------------------------------------------------------------
-/**
- * This command is used for calibrating joysticks and knobs of M4.
- * Generally, it is using by factory when the board of st16 was producted at first.
- */
-bool
-TyphoonHM4Interface::_enterFactoryCalibration()
-{
-    return _m4Lib->_enterFactoryCalibration();
-}
-
-//-----------------------------------------------------------------------------
-/**
- * This command is used for exit calibration.
- */
-bool
-TyphoonHM4Interface::_exitFactoryCalibration()
-{
-    return _m4Lib->_exitFactoryCalibration();
-}
-
-//-----------------------------------------------------------------------------
-/**
- * Use this command to set the type of channel receive original hardware signal values and encoding values.
- */
-//-- TODO: Do we really need raw data? Maybe CMD_RECV_MIXED_CH_ONLY would be enough.
-bool
-TyphoonHM4Interface::_sendRecvBothCh()
-{
-    return _m4Lib->_sendRecvBothCh();
-}
-
-//-----------------------------------------------------------------------------
-/**
- * This command is used for exiting the progress of binding.
- */
-bool
-TyphoonHM4Interface::_exitBind()
-{
-    return _m4Lib->_exitBind();
-}
-
-//-----------------------------------------------------------------------------
-/**
- * After {@link _enterBind} response rightly, send this command to get a list of aircraft which can be bind.
- * The next command you will send may be {@link _bind}.
- */
-bool
-TyphoonHM4Interface::_startBind()
-{
-    return _m4Lib->_startBind();
-}
-
-//-----------------------------------------------------------------------------
-/**
- * Use this command to bind specified aircraft.
- * After {@link _startBind} response rightly, you get a list of aircraft which can be bound.
- * Then you send this command and {@link _queryBindState} repeatedly several times until get a right
- * response from {@link _queryBindState}. If not bind successful after sending commands several times,
- * the progress of bind exits.
- */
-bool
-TyphoonHM4Interface::_bind(int rxAddr)
-{
-    return _m4Lib->_bind(rxAddr);
-}
-
-//-----------------------------------------------------------------------------
-/**
- * This command is used for setting the number of analog channel and switch channel.
- * After binding aircraft successful, you need to send this command.
- * Analog channel represent which controller has a smooth step changed value, like a rocker.
- * Switch channel represent which controller has two or three state of value, like flight mode switcher.
- * The next command you will send may be {@link _syncMixingDataDeleteAll}.
- */
-bool
-TyphoonHM4Interface::_setChannelSetting()
-{
-    return _m4Lib->_setChannelSetting();
-}
-
-//-----------------------------------------------------------------------------
-/**
- * This command is used for setting if power key is working.
- * Parameter of {@link #_setPowerKey(int)}, represent the function
- * of power key is working. For example, when you click power key, the screen will light up or
- * go out if set the value {@link BaseCommand#BIND_KEY_FUNCTION_PWR}.
- */
-bool
-TyphoonHM4Interface::_setPowerKey(int function)
-{
-    return _m4Lib->_setPowerKey(function);
-}
-
-//-----------------------------------------------------------------------------
-/**
- * This command is used for disconnecting the bound aircraft.
- * Suggest to use this command before using {@link _bind} first time.
- */
-bool
-TyphoonHM4Interface::_unbind()
-{
-    return _m4Lib->_unbind();
-}
-
-//-----------------------------------------------------------------------------
-/**
- * This command is used for querying the state of whether bind was succeed.
- * This command always be sent follow {@link _bind} with a transient time.
- * The next command you will send may be {@link _setChannelSetting}.
- */
-bool
-TyphoonHM4Interface::_queryBindState()
-{
-    return _m4Lib->_queryBindState();
-}
-
-//-----------------------------------------------------------------------------
-/**
- * This command is used for deleting all channel formula data synchronously.
- * See {@link _syncMixingDataAdd}.
- */
-bool
-TyphoonHM4Interface::_syncMixingDataDeleteAll()
-{
-    return _m4Lib->_syncMixingDataDeleteAll();
-}
-
-//-----------------------------------------------------------------------------
-/**
- * This command is used for adding channel formula data synchronously.
- * You need to send all the channel formula data successful,
- * if not, send {@link _syncMixingDataDeleteAll} again.
- * Channel formula make the same hardware signal values to the different values we get finally. (What?)
- */
-bool
-TyphoonHM4Interface::_syncMixingDataAdd()
-{
-    return _m4Lib->_syncMixingDataAdd();
-}
-
-
-//-----------------------------------------------------------------------------
-/**
- * This funtion is used for sending the Local information to aircraft
- * Local information such as structure TableDeviceLocalInfo_t
- */
-bool
-TyphoonHM4Interface::_sendTableDeviceLocalInfo(TableDeviceLocalInfo_t localInfo)
-{
-    return _m4Lib->_sendTableDeviceLocalInfo(localInfo);
-}
-
-//-----------------------------------------------------------------------------
-/**
- * This funtion is used for sending the Channel information to aircraft
- * Channel information such as structure TableDeviceChannelInfo_t
- */
-bool
-TyphoonHM4Interface::_sendTableDeviceChannelInfo(TableDeviceChannelInfo_t channelInfo)
-{
-    return _m4Lib->_sendTableDeviceChannelInfo(channelInfo);
-}
-
-
-//-----------------------------------------------------------------------------
-/**
- * This funtion is used for sending the Channel number information to aircraft
- * Channel information such as structure TableDeviceChannelNumInfo_t
- * This feature is distributed according to enum ChannelNumType_t
- */
-bool
-TyphoonHM4Interface::_sendTableDeviceChannelNumInfo(ChannelNumType_t channelNumTpye)
-{
-    return _m4Lib->_sendTableDeviceChannelNumInfo(channelNumTpye);
-}
-
-
-//-----------------------------------------------------------------------------
-/**
- * This command is used for sending messages to aircraft pass through ZigBee.
- */
-bool
-TyphoonHM4Interface::sendPassThroughMessage(QByteArray message)
-{
-    return _m4Lib->_sendPassthroughMessage(message);
-}
-
 
 //-----------------------------------------------------------------------------
 int

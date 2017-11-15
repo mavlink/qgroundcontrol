@@ -4,6 +4,7 @@
 #include "m4serial.h"
 #include "TyphoonHM4Interface.h"
 
+// RC Channel data provided by Yuneec
 #include "m4channeldata.h"
 
 #if defined(__androidx86__)
@@ -14,6 +15,21 @@ static const char* kUartName        = "/dev/ttyMFD0";
 #define COMMAND_WAIT_INTERVAL       250
 #define SEND_INTERVAL               60
 #define COMMAND_RESPONSE_TRIES      4
+
+/*
+ * Original source was ported from:
+ * DroneFly/droneservice/src/main/java/com/yuneec/droneservice/parse/St16Controller.java
+ * by Gus Grubba <mavlink@grubba.com>
+ *
+ * All comments within the command send functions came from the original file above.
+ * The functions themselves have been completely rewriten from scratch.
+ *
+ * Then the source was refactored into this M4Lib class.
+ * The state before can be accessed viewed at:
+ * https://github.com/YUNEEC/qgroundcontrol/blob/\
+ * 90cfa2408dc605b0cc36a083c91c3346949a8e31/custom/src/TyphoonHM4Interface.cc
+ * by Julian Oes <julian@oes.ch>
+ */
 
 M4Lib::M4Lib(QObject* parent)
     : QObject(parent)
@@ -44,7 +60,7 @@ M4Lib::~M4Lib()
     _state = STATE_NONE;
     _exitRun();
     QThread::msleep(SEND_INTERVAL);
-    _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
+    setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
     QThread::msleep(SEND_INTERVAL * 2);
 
     if(_commPort) {
@@ -64,7 +80,7 @@ M4Lib::init()
         connect(_commPort, &M4SerialComm::bytesReady, this, &M4Lib::_bytesReady);
     }
 
-    _setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
+    setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
     QThread::msleep(SEND_INTERVAL);
 #endif
 }
@@ -195,6 +211,9 @@ M4Lib::softReboot()
 }
 
 
+/**
+ * Exit to Await (?)
+ */
 bool
 M4Lib::_exitToAwait()
 {
@@ -204,6 +223,11 @@ M4Lib::_exitToAwait()
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * This command is used for entering the progress of binding aircraft.
+ * This command is the first step of the progress of binging aircraft.
+ * The next command you will send may be {@link _startBind}.
+ */
 bool
 M4Lib::_enterRun()
 {
@@ -213,6 +237,9 @@ M4Lib::_enterRun()
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * This command is used for stopping control aircraft.
+ */
 bool
 M4Lib::_exitRun()
 {
@@ -222,6 +249,11 @@ M4Lib::_exitRun()
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * This command is used for entering the progress of binding aircraft.
+ * This command is the first step of the progress of binging aircraft.
+ * The next command you will send may be {@link _startBind}.
+ */
 bool
 M4Lib::_enterBind()
 {
@@ -231,6 +263,10 @@ M4Lib::_enterBind()
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * This command is used for calibrating joysticks and knobs of M4.
+ * Generally, it is using by factory when the board of st16 was producted at first.
+ */
 bool
 M4Lib::_enterFactoryCalibration()
 {
@@ -240,6 +276,9 @@ M4Lib::_enterFactoryCalibration()
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * This command is used for exit calibration.
+ */
 bool
 M4Lib::_exitFactoryCalibration()
 {
@@ -249,6 +288,10 @@ M4Lib::_exitFactoryCalibration()
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * Use this command to set the type of channel receive original hardware signal values and encoding values.
+ */
+//-- TODO: Do we really need raw data? Maybe CMD_RECV_MIXED_CH_ONLY would be enough.
 bool
 M4Lib::_sendRecvBothCh()
 {
@@ -258,6 +301,9 @@ M4Lib::_sendRecvBothCh()
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * This command is used for exiting the progress of binding.
+ */
 bool
 M4Lib::_exitBind()
 {
@@ -267,6 +313,10 @@ M4Lib::_exitBind()
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * After {@link _enterBind} response rightly, send this command to get a list of aircraft which can be bind.
+ * The next command you will send may be {@link _bind}.
+ */
 bool
 M4Lib::_startBind()
 {
@@ -276,6 +326,13 @@ M4Lib::_startBind()
     return write(msg, DEBUG_DATA_DUMP);
 }
 
+/**
+ * Use this command to bind specified aircraft.
+ * After {@link _startBind} response rightly, you get a list of aircraft which can be bound.
+ * Then you send this command and {@link _queryBindState} repeatedly several times until get a right
+ * response from {@link _queryBindState}. If not bind successful after sending commands several times,
+ * the progress of bind exits.
+ */
 bool
 M4Lib::_bind(int rxAddr)
 {
@@ -289,6 +346,13 @@ M4Lib::_bind(int rxAddr)
     return write(msg, DEBUG_DATA_DUMP);
 }
 
+/**
+ * This command is used for setting the number of analog channel and switch channel.
+ * After binding aircraft successful, you need to send this command.
+ * Analog channel represent which controller has a smooth step changed value, like a rocker.
+ * Switch channel represent which controller has two or three state of value, like flight mode switcher.
+ * The next command you will send may be {@link _syncMixingDataDeleteAll}.
+ */
 bool
 M4Lib::_setChannelSetting()
 {
@@ -302,8 +366,14 @@ M4Lib::_setChannelSetting()
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * This command is used for setting if power key is working.
+ * Parameter of {@link #_setPowerKey(int)}, represent the function
+ * of power key is working. For example, when you click power key, the screen will light up or
+ * go out if set the value {@link BaseCommand#BIND_KEY_FUNCTION_PWR}.
+ */
 bool
-M4Lib::_setPowerKey(int function)
+M4Lib::setPowerKey(int function)
 {
     qCDebug(YuneecLogVerbose) << "Sending: CMD_SET_BINDKEY_FUNCTION";
     m4Command setPowerKeyCmd(Yuneec::CMD_SET_BINDKEY_FUNCTION);
@@ -314,6 +384,10 @@ M4Lib::_setPowerKey(int function)
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * This command is used for disconnecting the bound aircraft.
+ * Suggest to use this command before using {@link _bind} first time.
+ */
 bool
 M4Lib::_unbind()
 {
@@ -323,6 +397,11 @@ M4Lib::_unbind()
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * This command is used for querying the state of whether bind was succeed.
+ * This command always be sent follow {@link _bind} with a transient time.
+ * The next command you will send may be {@link _setChannelSetting}.
+ */
 bool
 M4Lib::_queryBindState()
 {
@@ -332,6 +411,10 @@ M4Lib::_queryBindState()
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * This command is used for deleting all channel formula data synchronously.
+ * See {@link _syncMixingDataAdd}.
+ */
 bool
 M4Lib::_syncMixingDataDeleteAll()
 {
@@ -341,6 +424,12 @@ M4Lib::_syncMixingDataDeleteAll()
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * This command is used for adding channel formula data synchronously.
+ * You need to send all the channel formula data successful,
+ * if not, send {@link _syncMixingDataDeleteAll} again.
+ * Channel formula make the same hardware signal values to the different values we get finally. (What?)
+ */
 bool
 M4Lib::_syncMixingDataAdd()
 {
@@ -359,6 +448,10 @@ M4Lib::_syncMixingDataAdd()
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * This funtion is used for sending the Local information to aircraft
+ * Local information such as structure TableDeviceLocalInfo_t
+ */
 bool
 M4Lib::_sendTableDeviceLocalInfo(TableDeviceLocalInfo_t localInfo)
 {
@@ -381,6 +474,10 @@ M4Lib::_sendTableDeviceLocalInfo(TableDeviceLocalInfo_t localInfo)
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * This funtion is used for sending the Channel information to aircraft
+ * Channel information such as structure TableDeviceChannelInfo_t
+ */
 bool
 M4Lib::_sendTableDeviceChannelInfo(TableDeviceChannelInfo_t channelInfo)
 {
@@ -412,6 +509,11 @@ M4Lib::_sendTableDeviceChannelInfo(TableDeviceChannelInfo_t channelInfo)
     return write(cmd, DEBUG_DATA_DUMP);
 }
 
+/**
+ * This funtion is used for sending the Channel number information to aircraft
+ * Channel information such as structure TableDeviceChannelNumInfo_t
+ * This feature is distributed according to enum ChannelNumType_t
+ */
 bool
 M4Lib::_sendTableDeviceChannelNumInfo(ChannelNumType_t channelNumType)
 {
@@ -788,6 +890,9 @@ M4Lib::_initAndCheckBinding()
 #endif
 }
 
+/**
+ * This command is used for sending messages to aircraft pass through ZigBee.
+ */
 bool
 M4Lib::_sendPassthroughMessage(QByteArray message)
 {

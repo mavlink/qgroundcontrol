@@ -36,7 +36,6 @@ public:
     bool    rcCalibrationComplete   ();
     void    startCalibration        ();
     void    stopCalibration         ();
-    bool    sendPassThroughMessage  (QByteArray message);
 
 
     QList<uint16_t>     rawChannels     ();
@@ -65,26 +64,6 @@ private slots:
     void    _saveSettings                       (const RxBindInfo& rxBindInfo);
 
 private:
-    bool    _exitToAwait                        ();
-    bool    _enterRun                           ();
-    bool    _exitRun                            ();
-    bool    _enterFactoryCalibration            ();
-    bool    _exitFactoryCalibration             ();
-    bool    _startBind                          ();
-    bool    _enterBind                          ();
-    bool    _exitBind                           ();
-    bool    _bind                               (int rxAddr);
-    bool    _unbind                             ();
-    void    _checkExitRun                       ();
-    bool    _queryBindState                     ();
-    bool    _sendRecvBothCh                     ();
-    bool    _setChannelSetting                  ();
-    bool    _syncMixingDataDeleteAll            ();
-    bool    _syncMixingDataAdd                  ();
-    bool    _sendTableDeviceLocalInfo           (TableDeviceLocalInfo_t localInfo);
-    bool    _sendTableDeviceChannelInfo         (TableDeviceChannelInfo_t channelInfo);
-    bool    _sendTableDeviceChannelNumInfo      (ChannelNumType_t channelNumTpye);
-    bool    _setPowerKey                        (int function);
 
 signals:
     void    m4StateChanged                      ();
