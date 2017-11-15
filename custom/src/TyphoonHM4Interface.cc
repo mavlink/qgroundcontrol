@@ -267,6 +267,7 @@ TyphoonHM4Interface::_vehicleAdded(Vehicle* vehicle)
 {
     if(!_vehicle) {
         _vehicle = vehicle;
+        _m4Lib->setVehicleConnected(true);
         connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &TyphoonHM4Interface::_mavlinkMessageReceived);
         //-- Set the "Big Red Button" to bind mode
         _m4Lib->setPowerKey(Yuneec::BIND_KEY_FUNCTION_BIND);
@@ -281,6 +282,7 @@ TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
         qCDebug(YuneecLog) << "_vehicleRemoved()";
         disconnect(_vehicle, &Vehicle::mavlinkMessageReceived,  this, &TyphoonHM4Interface::_mavlinkMessageReceived);
         _vehicle = NULL;
+        _m4Lib->setVehicleConnected(false);
         _m4Lib->setRcActive(false);
         emit rcActiveChanged();
         _m4Lib->setPowerKey(Yuneec::BIND_KEY_FUNCTION_BIND);
