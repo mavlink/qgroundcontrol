@@ -434,10 +434,10 @@ Item {
                 enabled:    _cameraIdle
             }
             //-- Video Res
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode && !_isCGOET; }
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode && !_isCGOET && !_noSdCard; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible:    _cameraVideoMode && !_isCGOET;
+                visible:    _cameraVideoMode && !_isCGOET && !_noSdCard;
                 indexModel: false
                 enabled:    !_recordingVideo
                 fact:       _videoResFact
