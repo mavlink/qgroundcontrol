@@ -12,9 +12,6 @@
 
 #include "m4lib/m4lib.h"
 
-#include "m4def.h"
-#include "m4util.h"
-
 #include "Vehicle.h"
 
 //-----------------------------------------------------------------------------
@@ -27,7 +24,6 @@ public:
     ~TyphoonHM4Interface();
 
     void    init                    (bool skipConnections = false);
-    bool    vehicleReady            ();
     void    enterBindMode           (bool skipPairCommand = false);
     void    initM4                  ();
     QString m4StateStr              ();
@@ -48,7 +44,7 @@ public:
     static TyphoonHM4Interface* pTyphoonHandler;
 
     //-- From QThread
-    void        run     ();
+    void        run                             ();
 
 public slots:
     void    softReboot                          ();
@@ -87,9 +83,8 @@ signals:
     void    batteryUpdate                       ();
 
 private:
-    M4Lib* _m4Lib;
+    M4Lib*                  _m4Lib;
     Vehicle*                _vehicle;
-    QString                 _currentConnection;
     uint32_t                _rcTime;
     bool                    _threadShouldStop;
     QTimer                  _rcTimer;

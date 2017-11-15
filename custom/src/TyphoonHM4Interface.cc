@@ -57,7 +57,6 @@ dump_data_packet(QByteArray data)
 #endif
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
 TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     : QThread(parent)
     , _vehicle(NULL)
