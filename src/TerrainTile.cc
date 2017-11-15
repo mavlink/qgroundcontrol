@@ -31,17 +31,17 @@ TerrainTile::~TerrainTile()
 {
 }
 
-TerrainTile::TerrainTile(QJsonDocument doc)
+TerrainTile::TerrainTile(QJsonDocument document)
     : _minElevation(-1.0)
     , _maxElevation(-1.0)
     , _avgElevation(-1.0)
     , _isValid(false)
 {
-    if (!doc.isObject()) {
+    if (!document.isObject()) {
         qCDebug(TerrainTileLog) << "Terrain tile json doc is no object";
         return;
     }
-    QJsonObject rootObject = doc.object();
+    QJsonObject rootObject = document.object();
 
     QString errorString;
     QList<JsonHelper::KeyValidateInfo> rootVersionKeyInfoList = {
@@ -123,7 +123,7 @@ TerrainTile::TerrainTile(QJsonDocument doc)
     _isValid = true;
 }
 
-bool TerrainTile::isIn(QGeoCoordinate coord)
+bool TerrainTile::isIn(const QGeoCoordinate& coordinate) const
 {
     if (!_isValid) {
         qCDebug(TerrainTileLog) << "isIn requested, but tile not valid";
@@ -135,7 +135,7 @@ bool TerrainTile::isIn(QGeoCoordinate coord)
     return ret;
 }
 
-float TerrainTile::elevation(const QGeoCoordinate& coord)
+float TerrainTile::elevation(const QGeoCoordinate& coordinate) const
 {
     if (_isValid) {
         qCDebug << "elevation: " << coord << " , in sw " << _southWest << " , ne " << _northEast;

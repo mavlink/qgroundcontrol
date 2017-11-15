@@ -569,7 +569,6 @@ HEADERS += \
     src/Settings/UnitsSettings.h \
     src/Settings/VideoSettings.h \
     src/Terrain.h \
-    src/TerrainCacheTileServer.h \
     src/TerrainTile.h \
     src/Vehicle/MAVLinkLogManager.h \
     src/VehicleSetup/JoystickConfigController.h \
@@ -758,7 +757,6 @@ SOURCES += \
     src/Settings/UnitsSettings.cc \
     src/Settings/VideoSettings.cc \
     src/Terrain.cc \
-    src/TerrainCacheTileServer.cc \
     src/TerrainTile.cc\
     src/Vehicle/MAVLinkLogManager.cc \
     src/VehicleSetup/JoystickConfigController.cc \
