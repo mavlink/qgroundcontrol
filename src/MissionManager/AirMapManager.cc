@@ -223,8 +223,8 @@ void AirMapRestrictionManager::_addPolygonToList(const airmap::Geometry::Polygon
         list.append(new PolygonAirspaceRestriction(polygonArray));
 
     } else {
-        // TODO: support that?
-        qWarning() << "Empty polygon, or Polygon with holes. Size: "<<polygon.size();
+        // no need to support those (they are rare, and in most cases, there's a more restrictive polygon filling the hole)
+        qCDebug(AirMapManagerLog) << "Empty polygon, or Polygon with holes. Size: "<<polygon.size();
     }
 }
 
@@ -888,9 +888,6 @@ void AirMapManager::setToolbox(QGCToolbox* toolbox)
     connect(ap->clientID(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     connect(ap->userName(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     connect(ap->password(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
-
-    connect(ap->sitaUserReg(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
-    connect(ap->sitaUavReg(),   &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
 
     _settingsChanged();
 
