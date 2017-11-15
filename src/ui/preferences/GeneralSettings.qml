@@ -531,16 +531,6 @@ QGCView {
                             QGCLabel        {text: qsTr("Password:");  width: _labelWidth; anchors.verticalCenter: parent.verticalCenter }
                             FactTextField   {fact: QGroundControl.settingsManager.airMapSettings.password; width: _editFieldWidth; anchors.verticalCenter: parent.verticalCenter; echoMode: TextInput.Password }
                         }
-                        Row {
-                            spacing:    ScreenTools.defaultFontPixelWidth
-                            QGCLabel        {text: qsTr("SITA UAV Reg:");  width: _labelWidth; anchors.verticalCenter: parent.verticalCenter }
-                            FactTextField   {fact: QGroundControl.settingsManager.airMapSettings.sitaUavReg; width: _editFieldWidth; anchors.verticalCenter: parent.verticalCenter }
-                        }
-                        Row {
-                            spacing:    ScreenTools.defaultFontPixelWidth
-                            QGCLabel        {text: qsTr("SITA User Reg:");  width: _labelWidth; anchors.verticalCenter: parent.verticalCenter }
-                            FactTextField   {fact: QGroundControl.settingsManager.airMapSettings.sitaUserReg; width: _editFieldWidth; anchors.verticalCenter: parent.verticalCenter }
-                        }
                     }
                 }
                 //-----------------------------------------------------------------

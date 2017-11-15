@@ -24,7 +24,5 @@ public:
     DEFINE_SETTINGFACT(clientID)
     DEFINE_SETTINGFACT(userName)
     DEFINE_SETTINGFACT(password)
-    DEFINE_SETTINGFACT(sitaUavReg)
-    DEFINE_SETTINGFACT(sitaUserReg)
 
 };

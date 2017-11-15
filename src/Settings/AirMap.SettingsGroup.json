@@ -22,17 +22,5 @@
     "shortDescription": "AirMap Password",
     "type":             "string",
     "defaultValue":     ""
-},
-{
-    "name":             "sitaUavReg",
-    "shortDescription": "AirMap SITA UAV Registration",
-    "type":             "string",
-    "defaultValue":     ""
-},
-{
-    "name":             "sitaUserReg",
-    "shortDescription": "AirMap SITA User Registration",
-    "type":             "string",
-    "defaultValue":     ""
 }
 ]
