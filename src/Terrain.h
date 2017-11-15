@@ -13,6 +13,8 @@
 #include <QGeoCoordinate>
 #include <QNetworkAccessManager>
 
+#include "TerrainCacheTileServer.h"
+
 /* usage example:
     ElevationProvider *p = new ElevationProvider();
     QList<QGeoCoordinate> coordinates;
@@ -37,6 +39,13 @@ public:
      * @return true on success
      */
     bool queryTerrainData(const QList<QGeoCoordinate>& coordinates);
+
+    /**
+     *
+     *
+     *
+     */
+    bool cacheTerrainData(const QGeoCoordinate& southWest, const QGeoCoordinate& northEast);
 
 signals:
     void terrainData(bool success, QList<float> altitudes);
