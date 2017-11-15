@@ -95,6 +95,9 @@ UrlFactory::getImageFormat(MapType type, const QByteArray& image)
                 case StatkartTopo:
                     format = "png";
                     break;
+                case EniroTopo:
+                    format = "png";
+                    break;
                 /*
                 case MapQuestMap:
                 case MapQuestSat:
@@ -156,6 +159,9 @@ UrlFactory::getTileURL(MapType type, int x, int y, int zoom, QNetworkAccessManag
             break;
         case StatkartTopo:
             request.setRawHeader("Referrer", "https://www.norgeskart.no/");
+            break;
+        case EniroTopo:
+            request.setRawHeader("Referrer", "https://www.eniro.se/");
             break;
         /*
         case OpenStreetMapSurfer:
@@ -257,6 +263,11 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
     case StatkartTopo:
     {
         return QString("http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo2&zoom=%1&x=%2&y=%3").arg(zoom).arg(x).arg(y);
+    }
+    break;
+    case EniroTopo:
+    {
+    	return QString("http://map.eniro.com/geowebcache/service/tms1.0.0/map/%1/%2/%3.png").arg(zoom).arg(x).arg((1<<zoom)-1-y);
     }
     break;
     /*

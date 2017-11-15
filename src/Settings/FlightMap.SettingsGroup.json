@@ -3,8 +3,8 @@
     "name":             "MapProvider",
     "shortDescription": "Currently selected map provider for flight maps",
     "type":             "uint32",
-    "enumStrings":      "Bing,Google,Statkart,Mapbox,Esri",
-    "enumValues":       "0,1,2,3,4",
+    "enumStrings":      "Bing,Google,Statkart,Mapbox,Esri,Eniro",
+    "enumValues":       "0,1,2,3,4,5",
     "defaultValue":     0
 },
 {

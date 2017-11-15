@@ -121,6 +121,8 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
 
     // Statkart
     mapTypes << QGCGEOMAPTYPE(QGeoMapType::TerrainMap,        "Statkart Terrain Map",     "Statkart Terrain Map",             false,  false,  UrlFactory::StatkartTopo);
+    // Eniro
+    mapTypes << QGCGEOMAPTYPE(QGeoMapType::TerrainMap,        "Eniro Terrain Map",        "Eniro Terrain Map",                false,  false,  UrlFactory::EniroTopo);
 
     // Esri
     mapTypes << QGCGEOMAPTYPE(QGeoMapType::StreetMap,         "Esri Street Map",          "ArcGIS Online World Street Map",   true,   false,  UrlFactory::EsriWorldStreet);
