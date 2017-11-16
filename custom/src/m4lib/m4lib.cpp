@@ -105,7 +105,7 @@ M4Lib::setSettings(const RxBindInfo& rxBindInfo)
 }
 
 bool
-M4Lib::write(QByteArray data, bool debug)
+M4Lib::_write(QByteArray data, bool debug)
 {
     return _commPort->write(data, debug);
 }
@@ -216,7 +216,7 @@ M4Lib::_exitToAwait()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_EXIT_TO_AWAIT";
     m4Command exitToAwaitCmd(Yuneec::CMD_EXIT_TO_AWAIT);
     QByteArray cmd = exitToAwaitCmd.pack();
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -230,7 +230,7 @@ M4Lib::_enterRun()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_ENTER_RUN";
     m4Command enterRunCmd(Yuneec::CMD_ENTER_RUN);
     QByteArray cmd = enterRunCmd.pack();
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -242,7 +242,7 @@ M4Lib::_exitRun()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_EXIT_RUN";
     m4Command exitRunCmd(Yuneec::CMD_EXIT_RUN);
     QByteArray cmd = exitRunCmd.pack();
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -256,7 +256,7 @@ M4Lib::_enterBind()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_ENTER_BIND";
     m4Command enterBindCmd(Yuneec::CMD_ENTER_BIND);
     QByteArray cmd = enterBindCmd.pack();
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -269,7 +269,7 @@ M4Lib::_enterFactoryCalibration()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_ENTER_FACTORY_CAL";
     m4Command enterFactoryCaliCmd(Yuneec::CMD_ENTER_FACTORY_CAL);
     QByteArray cmd = enterFactoryCaliCmd.pack();
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -281,7 +281,7 @@ M4Lib::_exitFactoryCalibration()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_EXIT_FACTORY_CALI";
     m4Command exitFacoryCaliCmd(Yuneec::CMD_EXIT_FACTORY_CAL);
     QByteArray cmd = exitFacoryCaliCmd.pack();
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -294,7 +294,7 @@ M4Lib::_sendRecvBothCh()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_RECV_BOTH_CH";
     m4Command enterRecvCmd(Yuneec::CMD_RECV_BOTH_CH);
     QByteArray cmd = enterRecvCmd.pack();
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -306,7 +306,7 @@ M4Lib::_exitBind()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_EXIT_BIND";
     m4Command exitBindCmd(Yuneec::CMD_EXIT_BIND);
     QByteArray cmd = exitBindCmd.pack();
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -319,7 +319,7 @@ M4Lib::_startBind()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_START_BIND";
     m4Message startBindMsg(Yuneec::CMD_START_BIND, Yuneec::TYPE_BIND);
     QByteArray msg = startBindMsg.pack();
-    return write(msg, DEBUG_DATA_DUMP);
+    return _write(msg, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -339,7 +339,7 @@ M4Lib::_bind(int rxAddr)
     bindMsg.data[6] = 5; //-- Gotta love magic numbers
     bindMsg.data[7] = 15;
     QByteArray msg = bindMsg.pack();
-    return write(msg, DEBUG_DATA_DUMP);
+    return _write(msg, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -359,7 +359,7 @@ M4Lib::_setChannelSetting()
     payload[0] = (uint8_t)(_rxBindInfoFeedback.aNum  & 0xff);
     payload[1] = (uint8_t)(_rxBindInfoFeedback.swNum & 0xff);
     QByteArray cmd = setChannelSettingCmd.pack(payload);
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -377,7 +377,7 @@ M4Lib::setPowerKey(int function)
     payload.resize(1);
     payload[0] = (uint8_t)(function & 0xff);
     QByteArray cmd = setPowerKeyCmd.pack(payload);
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -390,7 +390,7 @@ M4Lib::_unbind()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_UNBIND";
     m4Command unbindCmd(Yuneec::CMD_UNBIND);
     QByteArray cmd = unbindCmd.pack();
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -404,7 +404,7 @@ M4Lib::_queryBindState()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_QUERY_BIND_STATE";
     m4Command queryBindStateCmd(Yuneec::CMD_QUERY_BIND_STATE);
     QByteArray cmd = queryBindStateCmd.pack();
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -417,7 +417,7 @@ M4Lib::_syncMixingDataDeleteAll()
     qCDebug(YuneecLogVerbose) << "Sending: CMD_SYNC_MIXING_DATA_DELETE_ALL";
     m4Command syncMixingDataDeleteAllCmd(Yuneec::CMD_SYNC_MIXING_DATA_DELETE_ALL);
     QByteArray cmd = syncMixingDataDeleteAllCmd.pack();
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -441,7 +441,7 @@ M4Lib::_syncMixingDataAdd()
     m4Command syncMixingDataAddCmd(Yuneec::CMD_SYNC_MIXING_DATA_ADD);
     QByteArray payload((const char*)&channel_data[_currentChannelAdd], CHANNEL_LENGTH);
     QByteArray cmd = syncMixingDataAddCmd.pack(payload);
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -467,7 +467,7 @@ M4Lib::_sendTableDeviceLocalInfo(TableDeviceLocalInfo_t localInfo)
     payload[10] = (uint8_t)((localInfo.txAddr  & 0xff00) >> 8);
     QByteArray cmd = sendRxResInfoCmd.pack(payload);
     //qCDebug(YuneecLogVerbose) << "_sendTableDeviceLocalInfo" <<dump_data_packet(cmd);
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -502,7 +502,7 @@ M4Lib::_sendTableDeviceChannelInfo(TableDeviceChannelInfo_t channelInfo)
     payload[18] = channelInfo.extraType;
     QByteArray cmd = sendRxResInfoCmd.pack(payload);
     //qCDebug(YuneecLogVerbose) << "_sendTableDeviceChannelInfo" <<dump_data_packet(cmd);
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /**
@@ -527,7 +527,7 @@ M4Lib::_sendTableDeviceChannelNumInfo(ChannelNumType_t channelNumType)
         }
         QByteArray cmd = sendRxResInfoCmd.pack(payload);
         //qCDebug(YuneecLogVerbose) << channelNumTpye <<dump_data_packet(cmd);
-        return write(cmd, DEBUG_DATA_DUMP);
+        return _write(cmd, DEBUG_DATA_DUMP);
     }
     return true;
 }
@@ -889,7 +889,7 @@ M4Lib::_sendPassthroughMessage(QByteArray message)
     qCDebug(YuneecLogVerbose) << "Sending: pass through message";
     m4PassThroughCommand passThroughCommand;
     QByteArray cmd = passThroughCommand.pack(message);
-    return write(cmd, DEBUG_DATA_DUMP);
+    return _write(cmd, DEBUG_DATA_DUMP);
 }
 
 /*

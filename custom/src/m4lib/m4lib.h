@@ -90,7 +90,6 @@ public:
 
     void setSettings(const RxBindInfo& rxBindInfo);
 
-    bool write(QByteArray data, bool debug);
     void tryRead();
 
     M4State getM4State() { return _m4State; }
@@ -146,6 +145,7 @@ private slots:
     void _initAndCheckBinding                ();
 
 private:
+    bool _write(QByteArray data, bool debug);
     bool _exitToAwait();
     bool _enterRun();
     bool _exitRun();
