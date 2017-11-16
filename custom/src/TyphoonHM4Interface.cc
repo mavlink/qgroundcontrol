@@ -86,6 +86,7 @@ TyphoonHM4Interface::~TyphoonHM4Interface()
     _threadShouldStop = true;
     emit destroyed();
     if(_m4Lib) {
+        _m4Lib->deinit();
         delete _m4Lib;
     }
     pTyphoonHandler = NULL;
