@@ -218,15 +218,6 @@ TyphoonHM4Interface::_rcTimeout()
 {
     qCDebug(YuneecLog) << "RC Timeout";
     _m4Lib->setRcActive(false);
-    emit rcActiveChanged();
-#if defined(__androidx86__)
-    //-- If we are in run state after binding and we don't have RC, bind it again.
-    if(_vehicle && _m4Lib->getSoftReboot() && m4State() == TyphoonHQuickInterface::M4_STATE_RUN) {
-        _m4Lib->setSoftReboot(false);
-        qCDebug(YuneecLogVerbose) << "RC bind again";
-        enterBindMode();
-    }
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -238,13 +229,9 @@ TyphoonHM4Interface::_mavlinkMessageReceived(const mavlink_message_t& message)
         mavlink_msg_rc_channels_decode(&message, &channels);
         //-- Check if boot time changed
         if(channels.time_boot_ms != _rcTime) {
-            _m4Lib->setSoftReboot(false);
-            _rcTime     = channels.time_boot_ms;
+            _rcTime = channels.time_boot_ms;
             _rcTimer.stop();
-            if(!_m4Lib->getRcActive()) {
-                _m4Lib->setRcActive(true);;
-                emit rcActiveChanged();
-            }
+            _m4Lib->setRcActive(true);
         } else {
             if(!_rcTimer.isActive() && !_m4Lib->getSoftReboot()) {
                 //-- Wait a bit before assuming RC is lost
@@ -277,7 +264,6 @@ TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
         _vehicle = NULL;
         _m4Lib->setVehicleConnected(false);
         _m4Lib->setRcActive(false);
-        emit rcActiveChanged();
         _m4Lib->setPowerKey(Yuneec::BIND_KEY_FUNCTION_BIND);
     }
 }

@@ -90,6 +90,38 @@ M4Lib::~M4Lib()
     }
 }
 
+bool
+M4Lib::getRcActive()
+{
+    return _rcActive;
+}
+
+void
+M4Lib::setRcActive(bool rcActive)
+{
+    if (_rcActive != rcActive) {
+        _rcActive = rcActive;
+        emit rcActiveChanged();
+    }
+
+    if (rcActive) {
+        //-- If we were in softReboot, we can exit now because we have received RC.
+        if (_softReboot) {
+            _softReboot = false;
+        }
+    }
+
+    //-- This means there was a RC timeout while the vehicle was connected.
+    if (!rcActive && _vehicleConnected) {
+        //-- If we are in run state after binding and we don't have RC, bind it again.
+        if (_vehicleConnected && _softReboot && _m4State == M4State::RUN) {
+            _softReboot = false;
+            qCDebug(YuneecLogVerbose) << "RC bind again";
+            enterBindMode();
+        }
+    }
+}
+
 void
 M4Lib::init()
 {
@@ -240,9 +272,10 @@ M4Lib::softReboot()
         QThread::msleep(SEND_INTERVAL);
         init();
     }
-    _rcActive = false;
+    // We want to recheck if we are really bound, so we set RC inactive and wait to
+    // to get notified about RC being active again.
+    setRcActive(false);
     _softReboot = true;
-    emit rcActiveChanged();
 #endif
 }
 

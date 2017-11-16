@@ -96,8 +96,8 @@ public:
 
     M4State getM4State() { return _m4State; }
 
-    bool getRcActive() { return _rcActive; }
-    void setRcActive(bool rcActive) { _rcActive = rcActive; }
+    bool getRcActive();
+    void setRcActive(bool rcActive);
 
     bool getRcCalibrationComplete() { return _rcCalibrationComplete; }
 
@@ -108,7 +108,6 @@ public:
     const ControllerLocation& getControllerLocation() { return _controllerLocation; }
 
     bool getSoftReboot() { return _softReboot; }
-    void setSoftReboot(bool softReboot) { _softReboot = softReboot; }
 
     void resetBind();
     void enterBindMode(bool skipPairCommand = false);
