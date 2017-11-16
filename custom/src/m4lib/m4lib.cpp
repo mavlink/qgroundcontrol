@@ -38,6 +38,22 @@ static const char* kUartName        = "/dev/ttyMFD0";
  * by Julian Oes <julian@oes.ch>
  */
 
+
+#if 0
+static QString
+dump_data_packet(QByteArray data)
+{
+    QString resp;
+    QString temp;
+    for(int i = 0; i < data.size(); i++) {
+        temp.sprintf(" %02X, ", (uint8_t)data[i]);
+        resp += temp;
+    }
+    return resp;
+}
+#endif
+
+
 M4Lib::M4Lib(QObject* parent)
     : QObject(parent)
     , _state(STATE_NONE)

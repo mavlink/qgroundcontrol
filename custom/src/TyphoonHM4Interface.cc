@@ -44,20 +44,6 @@ static const char* kmonitName       = "monitName";
 static const char* kextraName       = "extraName";
 
 
-#if 0
-static QString
-dump_data_packet(QByteArray data)
-{
-    QString resp;
-    QString temp;
-    for(int i = 0; i < data.size(); i++) {
-        temp.sprintf(" %02X, ", (uint8_t)data[i]);
-        resp += temp;
-    }
-    return resp;
-}
-#endif
-
 //-----------------------------------------------------------------------------
 TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     : QThread(parent)
