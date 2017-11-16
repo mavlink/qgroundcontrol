@@ -88,6 +88,8 @@ public:
     void init();
     void deinit();
 
+    void setPairCommandCallback(std::function<void()> callback);
+
     void setSettings(const RxBindInfo& rxBindInfo);
 
     void tryRead();
@@ -108,10 +110,9 @@ public:
     bool getSoftReboot() { return _softReboot; }
     void setSoftReboot(bool softReboot) { _softReboot = softReboot; }
 
-    void setBinding(bool binding) { _binding = binding; }
-
     void resetBind();
-    void tryEnterBindMode();
+    void enterBindMode(bool skipPairCommand = false);
+
     void checkVehicleReady();
     void tryStartCalibration();
     void tryStopCalibration();
@@ -134,7 +135,6 @@ signals:
     void rawChannelsChanged                  ();
     void controllerLocationChanged           ();
     void m4StateChanged                      ();
-    void enterBindMode                       ();
     void saveSettings                        (const RxBindInfo& rxBindInfo);
 
 private slots:
@@ -145,6 +145,7 @@ private slots:
 
 private:
     bool _write(QByteArray data, bool debug);
+    void _tryEnterBindMode();
     bool _exitToAwait();
     bool _enterRun();
     bool _exitRun();
@@ -209,6 +210,8 @@ private:
         STATE_ENTER_RUN,
         STATE_RUNNING
     };
+
+    std::function<void()>   _pairCommandCallback = nullptr;
 
     int                     _state;
     int                     _responseTryCount;

@@ -56,10 +56,10 @@ private slots:
     void    _mavlinkMessageReceived             (const mavlink_message_t& message);
     void    _rcTimeout                          ();
     void    _rcActiveChanged                    ();
-    void    _enterBindMode                      ();
     void    _saveSettings                       (const M4Lib::RxBindInfo& rxBindInfo);
 
 private:
+    void    _sendMavlinkBindCommand             ();
 
 signals:
     void    m4StateChanged                      ();

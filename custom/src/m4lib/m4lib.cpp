@@ -100,6 +100,12 @@ M4Lib::deinit()
 }
 
 void
+M4Lib::setPairCommandCallback(std::function<void()> callback)
+{
+    _pairCommandCallback = callback;
+}
+
+void
 M4Lib::setSettings(const RxBindInfo& rxBindInfo)
 {
     _rxBindInfoFeedback = rxBindInfo;
@@ -128,7 +134,23 @@ M4Lib::resetBind()
 }
 
 void
-M4Lib::tryEnterBindMode()
+M4Lib::enterBindMode(bool skipPairCommand)
+{
+    qCDebug(YuneecLog) << "enterBindMode() Current Mode: " << (int)_m4State;
+    if(!skipPairCommand) {
+        if (!_pairCommandCallback) {
+            qCWarning(YuneecLog) << "pairCommandCallback not set.";
+            return;
+        }
+
+        _binding = true;
+        _pairCommandCallback();
+    }
+    _tryEnterBindMode();
+}
+
+void
+M4Lib::_tryEnterBindMode()
 {
     //-- Set M4 into bind mode
     _rxBindInfoFeedback = {};
@@ -872,10 +894,10 @@ M4Lib::_initAndCheckBinding()
 #if defined(__androidx86__)
     //-- First boot, not bound
     if(_m4State != M4State::RUN) {
-        emit enterBindMode();
+        enterBindMode();
     //-- RC is bound to something. Is it bound to whoever we are connected?
     } else if(!_rcActive) {
-        emit enterBindMode();
+        enterBindMode();
     } else {
         qCDebug(YuneecLog) << "In RUN mode and RC ready";
     }

@@ -13,6 +13,8 @@
 
 #include <QNetworkAccessManager>
 
+#include <functional>
+
 #include <math.h>
 
 QGC_LOGGING_CATEGORY(YuneecLog, "YuneecLog")
@@ -75,7 +77,6 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     connect(_m4Lib, &M4Lib::rawChannelsChanged, this, &TyphoonHM4Interface::rawChannelsChanged);
     connect(_m4Lib, &M4Lib::controllerLocationChanged, this, &TyphoonHM4Interface::controllerLocationChanged);
     connect(_m4Lib, &M4Lib::m4StateChanged, this, &TyphoonHM4Interface::m4StateChanged);
-    connect(_m4Lib, &M4Lib::enterBindMode, this, &TyphoonHM4Interface::_enterBindMode);
     connect(_m4Lib, &M4Lib::saveSettings, this, &TyphoonHM4Interface::_saveSettings);
 }
 
@@ -128,6 +129,7 @@ TyphoonHM4Interface::init(bool skipConnections)
     settings.endGroup();
     qCDebug(YuneecLog) << "Init M4 Handler";
     _m4Lib->init();
+    _m4Lib->setPairCommandCallback(std::bind(&TyphoonHM4Interface::_sendMavlinkBindCommand, this));
     _m4Lib->setSettings(rxBindInfoFeedback);
 
     if(!skipConnections) {
@@ -299,11 +301,18 @@ void
 TyphoonHM4Interface::enterBindMode(bool skipPairCommand)
 {
 #if defined(__androidx86__)
-    qCDebug(YuneecLog) << "enterBindMode() Current Mode: " << m4State();
-    //-- Send MAVLink command telling vehicle to enter bind mode
-    if(!skipPairCommand && _vehicle) {
-        qCDebug(YuneecLog) << "pairRX()";
-        _m4Lib->setBinding(true);
+    _m4Lib->enterBindMode(skipPairCommand);
+#else
+    Q_UNUSED(skipPairCommand);
+#endif
+}
+
+void
+TyphoonHM4Interface::_sendMavlinkBindCommand()
+{
+    if (_vehicle) {
+        //-- Send MAVLink command telling vehicle to enter bind mode
+        qCDebug(YuneecLog) << "send pairRX mavlink command()";
         _vehicle->sendMavCommand(
             _vehicle->defaultComponentId(),         // target component
             MAV_CMD_START_RX_PAIR,                  // command id
@@ -311,10 +320,6 @@ TyphoonHM4Interface::enterBindMode(bool skipPairCommand)
             1,
             0);
     }
-    _m4Lib->tryEnterBindMode();
-#else
-    Q_UNUSED(skipPairCommand);
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -356,14 +361,6 @@ TyphoonHM4Interface::_rcActiveChanged()
     //-- It just finished binding. Set the timer and see if we are indeed bound.
     _rcTimer.start(1000);
     emit rcActiveChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHM4Interface::_enterBindMode()
-{
-    // To be called from chil LibM4.
-    enterBindMode();
 }
 
 //-----------------------------------------------------------------------------
