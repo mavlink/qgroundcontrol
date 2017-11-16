@@ -119,7 +119,7 @@ public:
 
     void softReboot();
 
-    QString m4StateStr();
+    std::string m4StateStr();
 
     bool setPowerKey(int function);
     int calChannel(int index);

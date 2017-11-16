@@ -1240,7 +1240,7 @@ M4Lib::_handleCommand(m4Packet& packet)
                     M4State old_state = _m4State;
                     _m4State = state;
                     emit m4StateChanged();
-                    qCDebug(YuneecLog) << "New State:" << m4StateStr() << "(" << (int)_m4State << ")";
+                    qCDebug(YuneecLog) << "New State:" << QString::fromStdString(m4StateStr()) << "(" << (int)_m4State << ")";
                     //-- If we were connected and just finished calibration, bind again
                     if(_vehicleConnected && old_state == M4State::FACTORY_CAL) {
                         _initAndCheckBinding();
@@ -1411,30 +1411,30 @@ M4Lib::_handlePassThroughPacket(m4Packet& packet)
     QByteArray passThroughValues = packet.passthroughValues();
 }
 
-QString
+std::string
 M4Lib::m4StateStr()
 {
     switch(_m4State) {
         case M4State::NONE:
-            return QString("Waiting for vehicle to connect...");
+            return std::string("Waiting for vehicle to connect...");
         case M4State::AWAIT:
-            return QString("Waiting...");
+            return std::string("Waiting...");
         case M4State::BIND:
-            return QString("Binding...");
+            return std::string("Binding...");
         case M4State::CALIBRATION:
-            return QString("Calibration...");
+            return std::string("Calibration...");
         case M4State::SETUP:
-            return QString("Setup...");
+            return std::string("Setup...");
         case M4State::RUN:
-            return QString("Running...");
+            return std::string("Running...");
         case M4State::SIM:
-            return QString("Simulation...");
+            return std::string("Simulation...");
         case M4State::FACTORY_CAL:
-            return QString("Factory Calibration...");
+            return std::string("Factory Calibration...");
         default:
-            return QString("Unknown state...");
+            return std::string("Unknown state...");
     }
-    return QString();
+    return std::string();
 }
 
 int

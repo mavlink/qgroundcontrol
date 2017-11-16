@@ -197,7 +197,7 @@ TyphoonHM4Interface::controllerLocation()
 QString
 TyphoonHM4Interface::m4StateStr()
 {
-    return _m4Lib->m4StateStr();
+    return QString::fromStdString(_m4Lib->m4StateStr());
 }
 
 
