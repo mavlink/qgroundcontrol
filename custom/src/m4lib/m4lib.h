@@ -187,8 +187,8 @@ private:
     void _handlePassThroughPacket            (m4Packet& packet);
     std::string _getRxBindInfoFeedbackName   ();
 
-    static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
-    static  short   byteArrayToShort(QByteArray data, int offset, bool isBigEndian = false);
+    static  int     _byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
+    static  short   _byteArrayToShort(QByteArray data, int offset, bool isBigEndian = false);
 
     M4SerialComm* _commPort;
 

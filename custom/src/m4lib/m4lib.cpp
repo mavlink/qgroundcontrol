@@ -1390,15 +1390,15 @@ void
 M4Lib::_handleControllerFeedback(m4Packet& packet)
 {
     QByteArray commandValues = packet.commandValues();
-    int ilat = byteArrayToInt(commandValues, 0);
-    int ilon = byteArrayToInt(commandValues, 4);
-    int ialt = byteArrayToInt(commandValues, 8);
+    int ilat = _byteArrayToInt(commandValues, 0);
+    int ilon = _byteArrayToInt(commandValues, 4);
+    int ialt = _byteArrayToInt(commandValues, 8);
     _controllerLocation.latitude     = (double)ilat / 1e7;
     _controllerLocation.longitude    = (double)ilon / 1e7;
     _controllerLocation.altitude     = (double)ialt / 1e7;
-    _controllerLocation.accuracy     = byteArrayToShort(commandValues, 12);
-    _controllerLocation.speed        = byteArrayToShort(commandValues, 14);
-    _controllerLocation.angle        = byteArrayToShort(commandValues, 16);
+    _controllerLocation.accuracy     = _byteArrayToShort(commandValues, 12);
+    _controllerLocation.speed        = _byteArrayToShort(commandValues, 14);
+    _controllerLocation.angle        = _byteArrayToShort(commandValues, 16);
     _controllerLocation.satelliteCount = commandValues[18] & 0x1f;
     emit controllerLocationChanged();
 }
@@ -1438,7 +1438,7 @@ M4Lib::m4StateStr()
 }
 
 int
-M4Lib::byteArrayToInt(QByteArray data, int offset, bool isBigEndian)
+M4Lib::_byteArrayToInt(QByteArray data, int offset, bool isBigEndian)
 {
     int iRetVal = -1;
     if(data.size() < offset + 4) {
@@ -1464,7 +1464,7 @@ M4Lib::byteArrayToInt(QByteArray data, int offset, bool isBigEndian)
 }
 
 short
-M4Lib::byteArrayToShort(QByteArray data, int offset, bool isBigEndian)
+M4Lib::_byteArrayToShort(QByteArray data, int offset, bool isBigEndian)
 {
     short iRetVal = -1;
     if(data.size() < offset + 2) {
