@@ -79,6 +79,7 @@ void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString& comma
     }
 
     // Command line rules take precedence, so they go last in the list
+    _commandLineLoggingOptions += "TerrainLog,TerrainTileLog";
     if (!_commandLineLoggingOptions.isEmpty()) {
         QStringList logList = _commandLineLoggingOptions.split(",");
 
