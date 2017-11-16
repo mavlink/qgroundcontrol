@@ -64,7 +64,6 @@ private:
 signals:
     void    m4StateChanged                      ();
     void    switchStateChanged                  (int swId, int oldState, int newState);
-    void    channelDataStatus                   (QByteArray channelData);
     void    destroyed                           ();
     void    controllerLocationChanged           ();
     void    armedChanged                        (bool armed);

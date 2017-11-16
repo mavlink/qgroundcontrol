@@ -16,6 +16,8 @@
 static const char* kUartName        = "/dev/ttyMFD0";
 #endif
 
+#define UNUSED(x_) (void)(x_)
+
 #define DEBUG_DATA_DUMP             false
 #define COMMAND_WAIT_INTERVAL       250
 #define SEND_INTERVAL               60
@@ -1346,11 +1348,14 @@ M4Lib::_handleRawChannelData(m4Packet& packet)
 void
 M4Lib::_handleMixedChannelData(m4Packet& packet)
 {
+    UNUSED(packet);
+#if 0
+    // FIXME: this does not seem to be used.
     int analogChannelCount = _rxBindInfoFeedback.aNum  ? _rxBindInfoFeedback.aNum  : 10;
     int switchChannelCount = _rxBindInfoFeedback.swNum ? _rxBindInfoFeedback.swNum : 2;
     QByteArray values = packet.commandValues();
     int value, val1, val2, startIndex;
-    QByteArray channels;
+    std::vector<uint8_t> channels;
     for(int i = 0; i < analogChannelCount + switchChannelCount; i++) {
         if(i < analogChannelCount) {
             startIndex = (int)floor(i * 1.5);
@@ -1381,9 +1386,10 @@ M4Lib::_handleMixedChannelData(m4Packet& packet)
                     break;
             }
         }
-        channels.append(value);
+        channels.push_back(value);
     }
     emit channelDataStatus(channels);
+#endif
 }
 
 void

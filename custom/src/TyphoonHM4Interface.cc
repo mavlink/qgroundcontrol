@@ -73,7 +73,6 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     connect(_m4Lib, &M4Lib::calibrationCompleteChanged, this, &TyphoonHM4Interface::calibrationCompleteChanged);
     connect(_m4Lib, &M4Lib::calibrationStateChanged, this, &TyphoonHM4Interface::calibrationStateChanged);
     connect(_m4Lib, &M4Lib::rawChannelsChanged, this, &TyphoonHM4Interface::rawChannelsChanged);
-    connect(_m4Lib, &M4Lib::channelDataStatus, this, &TyphoonHM4Interface::channelDataStatus);
     connect(_m4Lib, &M4Lib::controllerLocationChanged, this, &TyphoonHM4Interface::controllerLocationChanged);
     connect(_m4Lib, &M4Lib::m4StateChanged, this, &TyphoonHM4Interface::m4StateChanged);
     connect(_m4Lib, &M4Lib::enterBindMode, this, &TyphoonHM4Interface::_enterBindMode);

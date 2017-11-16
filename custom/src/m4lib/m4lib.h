@@ -132,7 +132,6 @@ signals:
     void calibrationCompleteChanged          ();
     void calibrationStateChanged             ();
     void rawChannelsChanged                  ();
-    void channelDataStatus                   (QByteArray channelData);
     void controllerLocationChanged           ();
     void m4StateChanged                      ();
     void enterBindMode                       ();
