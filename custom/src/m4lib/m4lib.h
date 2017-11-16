@@ -102,7 +102,7 @@ public:
 
     void setVehicleConnected(bool vehicleConnected) { _vehicleConnected = vehicleConnected; }
 
-    QList<uint16_t> getRawChannels() { return _rawChannels; }
+    std::vector<uint16_t> getRawChannels() { return _rawChannels; }
 
     const ControllerLocation& getControllerLocation() { return _controllerLocation; }
 
@@ -227,6 +227,6 @@ private:
     bool                    _rcCalibrationComplete;
     bool                    _vehicleConnected;
     bool                    _binding;
-    QList<uint16_t>         _rawChannels;
+    std::vector<uint16_t>   _rawChannels;
     ControllerLocation      _controllerLocation;
 };

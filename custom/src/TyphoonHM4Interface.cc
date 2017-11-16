@@ -176,7 +176,7 @@ TyphoonHM4Interface::rcCalibrationComplete()
 QList<uint16_t>
 TyphoonHM4Interface::rawChannels()
 {
-    return _m4Lib->getRawChannels();
+    return QList<uint16_t>::fromVector(QVector<uint16_t>::fromStdVector(_m4Lib->getRawChannels()));
 }
 
 //-----------------------------------------------------------------------------

@@ -1329,7 +1329,7 @@ M4Lib::_handleRawChannelData(m4Packet& packet)
         } else {
             value = (val1 & 0x0f) << 8 | val2;
         }
-        _rawChannels.append(value);
+        _rawChannels.push_back(value);
     }
     emit rawChannelsChanged();
     /*
