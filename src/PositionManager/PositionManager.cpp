@@ -84,7 +84,6 @@ void QGCPositionManager::setPositionSource(QGCPositionManager::QGCPositionSource
         _currentSource->setPreferredPositioningMethods(QGeoPositionInfoSource::SatellitePositioningMethods);
         _currentSource->setUpdateInterval(_updateInterval);
         connect(_currentSource, &QGeoPositionInfoSource::positionUpdated,       this, &QGCPositionManager::_positionUpdated);
-        connect(_currentSource, &QGeoPositionInfoSource::updateTimeout,         this, &QGCPositionManager::_updateTimeout);
         connect(_currentSource, SIGNAL(error(QGeoPositionInfoSource::Error)),   this, SLOT(_error(QGeoPositionInfoSource::Error)));
         _currentSource->startUpdates();
     }
@@ -93,9 +92,4 @@ void QGCPositionManager::setPositionSource(QGCPositionManager::QGCPositionSource
 void QGCPositionManager::_error(QGeoPositionInfoSource::Error positioningError)
 {
     qWarning() << "QGCPositionManager error" << positioningError;
-}
-
-void QGCPositionManager::_updateTimeout(void)
-{
-    qWarning() << "QGCPositionManager updateTimeout";
 }
