@@ -103,40 +103,6 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-class RxBindInfo {
-public:
-    RxBindInfo();
-    void clear();
-    enum {
-        TYPE_NULL   = -1,
-        TYPE_SR12S  = 0,
-        TYPE_SR12E  = 1,
-        TYPE_SR24S  = 2,
-        TYPE_RX24   = 3,
-        TYPE_SR19P  = 4,
-    };
-    std::string getName();
-    int mode;
-    int panId;
-    int nodeId;
-    int aNum;
-    int aBit;
-    int trNum;
-    int trBit;
-    int swNum;
-    int swBit;
-    int monitNum;
-    int monitBit;
-    int extraNum;
-    int extraBit;
-    int txAddr;
-    std::vector<uint8_t> achName;
-    std::vector<uint8_t> trName;
-    std::vector<uint8_t> swName;
-    std::vector<uint8_t> monitName;
-    std::vector<uint8_t> extraName;
-};
-
 //-----------------------------------------------------------------------------
 class ControllerLocation {
 public:
@@ -194,7 +160,6 @@ public:
     float angle;
 };
 
-//-----------------------------------------------------------------------------
 class SwitchChanged {
 public:
     /**

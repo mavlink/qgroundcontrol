@@ -98,7 +98,7 @@ TyphoonHM4Interface::init(bool skipConnections)
     //-- Have we bound before?
     QSettings settings;
     settings.beginGroup(kRxInfoGroup);
-    RxBindInfo rxBindInfoFeedback {};
+    M4Lib::RxBindInfo rxBindInfoFeedback {};
     if(settings.contains(knodeId) && settings.contains(kaNum)) {
         rxBindInfoFeedback.mode        = settings.value(kmode,         0).toInt();
         rxBindInfoFeedback.panId       = settings.value(kpanId,        0).toInt();
@@ -368,7 +368,7 @@ TyphoonHM4Interface::_enterBindMode()
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHM4Interface::_saveSettings(const RxBindInfo& rxBindInfo)
+TyphoonHM4Interface::_saveSettings(const M4Lib::RxBindInfo& rxBindInfo)
 {
     //-- Store RX Info
     QSettings settings;

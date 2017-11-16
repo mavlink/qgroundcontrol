@@ -20,6 +20,37 @@ public:
         FACTORY_CAL    = 7
     };
 
+    /* Structure to save binding information. */
+    struct RxBindInfo {
+        enum class Type {
+            NUL    = -1,
+            SR12S  = 0,
+            SR12E  = 1,
+            SR24S  = 2,
+            RX24   = 3,
+            SR19P  = 4,
+        };
+        int mode = 0; // To store Type.
+        int panId = 0;
+        int nodeId = 0;
+        int aNum = 0;
+        int aBit = 0;
+        int trNum = 0;
+        int trBit = 0;
+        int swNum = 0;
+        int swBit = 0;
+        int monitNum = 0;
+        int monitBit = 0;
+        int extraNum = 0;
+        int extraBit = 0;
+        int txAddr = 0;
+        std::vector<uint8_t> achName {};
+        std::vector<uint8_t> trName {};
+        std::vector<uint8_t> swName {};
+        std::vector<uint8_t> monitName {};
+        std::vector<uint8_t> extraName {};
+    };
+
     void init();
     void deinit();
 
@@ -120,6 +151,7 @@ private:
     void _handleRawChannelData               (m4Packet& packet);
     void _handleControllerFeedback           (m4Packet& packet);
     void _handlePassThroughPacket            (m4Packet& packet);
+    std::string _getRxBindInfoFeedbackName   ();
 
     static  int     byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
     static  short   byteArrayToShort(QByteArray data, int offset, bool isBigEndian = false);

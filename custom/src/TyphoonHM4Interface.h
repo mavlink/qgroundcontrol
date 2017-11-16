@@ -57,7 +57,7 @@ private slots:
     void    _rcTimeout                          ();
     void    _rcActiveChanged                    ();
     void    _enterBindMode                      ();
-    void    _saveSettings                       (const RxBindInfo& rxBindInfo);
+    void    _saveSettings                       (const M4Lib::RxBindInfo& rxBindInfo);
 
 private:
 

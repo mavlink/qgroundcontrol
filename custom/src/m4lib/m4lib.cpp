@@ -1,8 +1,13 @@
 #include "m4lib.h"
 
+#include "m4util.h"
 #include "m4def.h"
 #include "m4serial.h"
 #include "TyphoonHM4Interface.h"
+
+#include <string>
+#include <vector>
+#include <sstream>
 
 // RC Channel data provided by Yuneec
 #include "m4channeldata.h"
@@ -114,7 +119,7 @@ M4Lib::tryRead()
 void
 M4Lib::resetBind()
 {
-    _rxBindInfoFeedback.clear();
+    _rxBindInfoFeedback = {};
     _exitRun();
     _unbind();
     _exitToAwait();
@@ -124,7 +129,7 @@ void
 M4Lib::tryEnterBindMode()
 {
     //-- Set M4 into bind mode
-    _rxBindInfoFeedback.clear();
+    _rxBindInfoFeedback = {};
     if(_m4State == M4State::BIND) {
         _exitBind();
     } else if(_m4State == M4State::RUN) {
@@ -1072,11 +1077,11 @@ void
 M4Lib::_handleQueryBindResponse(QByteArray data)
 {
     int nodeID = (data[10] & 0xff) | (data[11] << 8 & 0xff00);
-    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_QUERY_BIND_STATE" << nodeID << " -- " << QString::fromStdString(_rxBindInfoFeedback.getName());
+    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_QUERY_BIND_STATE" << nodeID << " -- " << QString::fromStdString(_getRxBindInfoFeedbackName());
     if(_state == STATE_QUERY_BIND) {
         if(nodeID == _rxBindInfoFeedback.nodeId) {
             _timer.stop();
-            qCDebug(YuneecLogVerbose) << "Switched to BOUND state with:" << QString::fromStdString(_rxBindInfoFeedback.getName());
+            qCDebug(YuneecLogVerbose) << "Switched to BOUND state with:" << QString::fromStdString(_getRxBindInfoFeedbackName());
             _state = STATE_EXIT_BIND;
             _exitBind();
             emit saveSettings(_rxBindInfoFeedback);
@@ -1178,7 +1183,7 @@ M4Lib::_handleRxBindInfo(m4Packet& packet)
         }
         int p = packet.data.length() - 2;
         _rxBindInfoFeedback.txAddr = ((uint8_t)packet.data[p] & 0xff) | ((uint8_t)packet.data[p + 1] << 8 & 0xff00);
-        qCDebug(YuneecLogVerbose) << "RxBindInfo:" << QString::fromStdString(_rxBindInfoFeedback.getName()) << _rxBindInfoFeedback.nodeId;
+        qCDebug(YuneecLogVerbose) << "RxBindInfo:" << QString::fromStdString(_getRxBindInfoFeedbackName()) << _rxBindInfoFeedback.nodeId;
         _state = STATE_UNBIND;
         _unbind();
         _timer.start(COMMAND_WAIT_INTERVAL);
@@ -1485,4 +1490,31 @@ M4Lib::calChannel(int index)
         return _rawChannelsCalibration[index];
     }
     return 0;
+}
+
+std::string M4Lib::_getRxBindInfoFeedbackName()
+{
+    std::stringstream nodeSs;
+    nodeSs << _rxBindInfoFeedback.nodeId;
+
+    switch (static_cast<RxBindInfo::Type>(_rxBindInfoFeedback.mode)) {
+        case RxBindInfo::Type::SR12S:
+            return std::string("SR12S_") + nodeSs.str();
+        case RxBindInfo::Type::SR12E:
+            return std::string("SR12E_") + nodeSs.str();
+        case RxBindInfo::Type::SR24S:
+            return std::string("SR24S_") + nodeSs.str() + std::string(" v1.03");
+        case RxBindInfo::Type::RX24:
+            return std::string("RX24_") + nodeSs.str();
+        case RxBindInfo::Type::SR19P:
+            return std::string("SR19P_") + nodeSs.str();
+        default:
+            if (_rxBindInfoFeedback.mode >= 105) {
+                std::stringstream modeSs;
+                modeSs << (float)_rxBindInfoFeedback.mode / 100.0f;
+                return std::string("SR24S_") + nodeSs.str() + std::string("v") + modeSs.str();
+            } else {
+                return nodeSs.str();
+            }
+    }
 }

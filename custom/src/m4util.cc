@@ -4,7 +4,6 @@
  */
 
 #include "m4util.h"
-#include <sstream>
 
 //-----------------------------------------------------------------------------
 static const unsigned char CRC8T[] = {
@@ -32,67 +31,6 @@ crc8(uint8_t* buffer, int len)
         ret = CRC8T[ret ^ buffer[i]];
     }
     return ret;
-}
-
-//-----------------------------------------------------------------------------
-RxBindInfo::RxBindInfo()
-{
-    clear();
-}
-
-//-----------------------------------------------------------------------------
-void
-RxBindInfo::clear()
-{
-    mode        = 0;
-    panId       = 0;
-    nodeId      = 0;
-    aNum        = 0;
-    aBit        = 0;
-    trNum       = 0;
-    trBit       = 0;
-    swNum       = 0;
-    swBit       = 0;
-    monitNum    = 0;
-    monitBit    = 0;
-    extraNum    = 0;
-    extraBit    = 0;
-    txAddr      = 0;
-    achName.clear();
-    trName.clear();
-    swName.clear();
-    monitName.clear();
-    extraName.clear();
-}
-
-
-//-----------------------------------------------------------------------------
-std::string
-RxBindInfo::getName() {
-
-    std::stringstream nodeSs;
-    nodeSs << nodeId;
-
-    switch (mode) {
-        case TYPE_SR12S:
-            return std::string("SR12S_") + nodeSs.str();
-        case TYPE_SR12E:
-            return std::string("SR12E_") + nodeSs.str();
-        case TYPE_SR24S:
-            return std::string("SR24S_") + nodeSs.str() + std::string(" v1.03");
-        case TYPE_RX24:
-            return std::string("RX24_") + nodeSs.str();
-        case TYPE_SR19P:
-            return std::string("SR19P_") + nodeSs.str();
-        default:
-            if (mode >= 105) {
-                std::stringstream modeSs;
-                modeSs << (float)mode / 100.0f;
-                return std::string("SR24S_") + nodeSs.str() + std::string("v") + modeSs.str();
-            } else {
-                return nodeSs.str();
-            }
-    }
 }
 
 
