@@ -22,8 +22,9 @@ import QGroundControl.FlightMap     1.0
 Item {
     id: _root
 
-    property var    mapControl                          ///< Map control to place item in
-    property var    mapPolygon                          ///< QGCMapPolygon object
+    property var    qgcView                                     ///< QGCView for popping dialogs
+    property var    mapControl                                  ///< Map control to place item in
+    property var    mapPolygon                                  ///< QGCMapPolygon object
     property bool   interactive:        mapPolygon.interactive
     property color  interiorColor:      "transparent"
     property real   interiorOpacity:    1
@@ -146,6 +147,10 @@ Item {
         setCircleRadius(center, radius)
     }
 
+    function loadKMLFile() {
+        mapPolygon.loadKMLFile("/Users/Don/Downloads/polygon.kml")
+    }
+
     onInteractiveChanged: {
         if (interactive) {
             addHandles()
@@ -167,6 +172,21 @@ Item {
     }
 
     QGCPalette { id: qgcPal }
+
+    QGCFileDialog {
+        id:             kmlLoadDialog
+        qgcView:        _root.qgcView
+        folder:         QGroundControl.settingsManager.appSettings.missionSavePath
+        title:          qsTr("Select KML File")
+        selectExisting: true
+        nameFilters:    [ qsTr("KML files (*.kml)") ]
+
+
+        onAcceptedForLoad: {
+            mapPolygon.loadKMLFile(file)
+            close()
+        }
+    }
 
     Component {
         id: polygonComponent
@@ -272,8 +292,6 @@ Item {
                     mapPolygon.adjustVertex(polygonVertex, itemCoordinate)
                 }
             }
-
-            onDragStop: adjustCircleRadius(itemCoordinate)
 
             onClicked: mapPolygon.removeVertex(polygonVertex)
         }
@@ -395,8 +413,8 @@ Item {
                 }
 
                 MenuItem {
-                    text:       qsTr("Load KML...")
-                    enabled:    false
+                    text:           qsTr("Load KML...")
+                    onTriggered:    kmlLoadDialog.openForLoad()
                 }
             }
 

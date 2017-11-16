@@ -23,8 +23,7 @@
 #include <QThread>
 #include <QTimer>
 #include <QTime>
-
-#include "qextserialport.h"
+#include <QSerialPort>
 
 #include <stdint.h>
 
@@ -72,7 +71,7 @@ private:
     PX4FirmwareUpgradeThreadController* _controller;
     
     Bootloader*      _bootloader;
-    QextSerialPort*     _bootloaderPort;
+    QSerialPort*     _bootloaderPort;
     QTimer*             _timerRetry;
     QTime               _elapsed;
     static const int    _retryTimeout = 100;

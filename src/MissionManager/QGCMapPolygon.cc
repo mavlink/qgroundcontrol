@@ -11,11 +11,14 @@
 #include "QGCGeo.h"
 #include "JsonHelper.h"
 #include "QGCQGeoCoordinate.h"
+#include "QGCApplication.h"
 
 #include <QGeoRectangle>
 #include <QDebug>
 #include <QJsonArray>
 #include <QLineF>
+#include <QFile>
+#include <QDomDocument>
 
 const char* QGCMapPolygon::jsonPolygonKey = "polygon";
 
@@ -433,4 +436,81 @@ void QGCMapPolygon::offset(double distance)
     for (int i=0; i<rgNewPolygon.count(); i++) {
         appendVertex(rgNewPolygon[i]);
     }
+}
+
+bool QGCMapPolygon::loadKMLFile(const QString& kmlFile)
+{
+    QFile file(kmlFile);
+
+    if (!file.exists()) {
+        qgcApp()->showMessage(tr("File not found: %1").arg(kmlFile));
+        return false;
+    }
+
+    if (!file.open(QIODevice::ReadOnly)) {
+        qgcApp()->showMessage(tr("Unable to open file: %1 error: $%2").arg(kmlFile).arg(file.errorString()));
+        return false;
+    }
+
+    QDomDocument doc;
+    QString errorMessage;
+    int errorLine;
+    if (!doc.setContent(&file, &errorMessage, &errorLine)) {
+        qgcApp()->showMessage(tr("Unable to parse KML file: %1 error: %2 line: %3").arg(kmlFile).arg(errorMessage).arg(errorLine));
+        return false;
+    }
+
+    QDomNodeList rgNodes = doc.elementsByTagName("Polygon");
+    if (rgNodes.count() == 0) {
+        qgcApp()->showMessage(tr("Unable to find Polygon node in KML"));
+        return false;
+    }
+
+    QDomNode coordinatesNode = rgNodes.item(0).namedItem("outerBoundaryIs").namedItem("LinearRing").namedItem("coordinates");
+    if (coordinatesNode.isNull()) {
+        qgcApp()->showMessage(tr("Internal error: Unable to find coordinates node in KML"));
+        return false;
+    }
+
+    QString coordinatesString = coordinatesNode.toElement().text().simplified();
+    QStringList rgCoordinateStrings = coordinatesString.split(" ");
+
+    QList<QGeoCoordinate> rgCoords;
+    for (int i=0; i<rgCoordinateStrings.count()-1; i++) {
+        QString coordinateString = rgCoordinateStrings[i];
+
+        QStringList rgValueStrings = coordinateString.split(",");
+
+        QGeoCoordinate coord;
+        coord.setLongitude(rgValueStrings[0].toDouble());
+        coord.setLatitude(rgValueStrings[1].toDouble());
+
+        rgCoords.append(coord);
+    }
+
+    // Determine winding, reverse if needed
+    double sum = 0;
+    for (int i=0; i<rgCoords.count(); i++) {
+        QGeoCoordinate coord1 = rgCoords[i];
+        QGeoCoordinate coord2 = (i == rgCoords.count() - 1) ? rgCoords[0] : rgCoords[i+1];
+
+        sum += (coord2.longitude() - coord1.longitude()) * (coord2.latitude() + coord1.latitude());
+    }
+    bool reverse = sum < 0.0;
+
+    if (reverse) {
+        QList<QGeoCoordinate> rgReversed;
+
+        for (int i=0; i<rgCoords.count(); i++) {
+            rgReversed.prepend(rgCoords[i]);
+        }
+        rgCoords = rgReversed;
+    }
+
+    clear();
+    for (int i=0; i<rgCoords.count(); i++) {
+        appendVertex(rgCoords[i]);
+    }
+
+    return true;
 }
