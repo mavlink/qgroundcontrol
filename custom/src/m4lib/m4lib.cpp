@@ -582,18 +582,18 @@ M4Lib::_generateTableDeviceChannelNumInfo(TableDeviceChannelNumInfo_t* channelNu
  * information from RxBindInfo
  */
 bool
-M4Lib::_fillTableDeviceChannelNumMap(TableDeviceChannelNumInfo_t* channelNumInfo, int num, QByteArray list)
+M4Lib::_fillTableDeviceChannelNumMap(TableDeviceChannelNumInfo_t* channelNumInfo, int num, std::vector<uint8_t> list)
 {
     bool res = false;
     if(num) {
-        if(num <= (int)list.count()) {
+        if(num <= (int)list.size()) {
             channelNumInfo->index = _channelNumIndex;
             for(int i = 0; i < num; i++) {
                 channelNumInfo->channelMap[i] = (uint8_t)list[i];
             }
             res = true;
         } else {
-            qCritical() << "_fillTableDeviceChannelNumMap() called with mismatching list size. Num =" << num << "List =" << list.count();
+            qCritical() << "_fillTableDeviceChannelNumMap() called with mismatching list size. Num =" << num << "List =" << list.size();
         }
     }
     _channelNumIndex++;
@@ -1072,11 +1072,11 @@ void
 M4Lib::_handleQueryBindResponse(QByteArray data)
 {
     int nodeID = (data[10] & 0xff) | (data[11] << 8 & 0xff00);
-    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_QUERY_BIND_STATE" << nodeID << " -- " << _rxBindInfoFeedback.getName();
+    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_QUERY_BIND_STATE" << nodeID << " -- " << QString::fromStdString(_rxBindInfoFeedback.getName());
     if(_state == STATE_QUERY_BIND) {
         if(nodeID == _rxBindInfoFeedback.nodeId) {
             _timer.stop();
-            qCDebug(YuneecLogVerbose) << "Switched to BOUND state with:" << _rxBindInfoFeedback.getName();
+            qCDebug(YuneecLogVerbose) << "Switched to BOUND state with:" << QString::fromStdString(_rxBindInfoFeedback.getName());
             _state = STATE_EXIT_BIND;
             _exitBind();
             emit saveSettings(_rxBindInfoFeedback);
@@ -1158,27 +1158,27 @@ M4Lib::_handleRxBindInfo(m4Packet& packet)
         int ilen = 30;
         _rxBindInfoFeedback.achName.clear();
         for(int i = 0; i < _rxBindInfoFeedback.aNum ; i++) {
-            _rxBindInfoFeedback.achName.append((uint8_t)packet.data[ilen++]);
+            _rxBindInfoFeedback.achName.push_back((uint8_t)packet.data[ilen++]);
         }
         _rxBindInfoFeedback.trName.clear();
         for(int i = 0; i < _rxBindInfoFeedback.trNum ; i++) {
-            _rxBindInfoFeedback.trName.append((uint8_t)packet.data[ilen++]);
+            _rxBindInfoFeedback.trName.push_back((uint8_t)packet.data[ilen++]);
         }
         _rxBindInfoFeedback.swName.clear();
         for(int i = 0; i < _rxBindInfoFeedback.swNum ; i++) {
-            _rxBindInfoFeedback.swName.append((uint8_t)packet.data[ilen++]);
+            _rxBindInfoFeedback.swName.push_back((uint8_t)packet.data[ilen++]);
         }
         _rxBindInfoFeedback.monitName.clear();
         for(int i = 0; i < _rxBindInfoFeedback.monitNum ; i++) {
-            _rxBindInfoFeedback.monitName.append((uint8_t)packet.data[ilen++]);
+            _rxBindInfoFeedback.monitName.push_back((uint8_t)packet.data[ilen++]);
         }
         _rxBindInfoFeedback.extraName.clear();
         for(int i = 0; i < _rxBindInfoFeedback.extraNum ; i++) {
-            _rxBindInfoFeedback.extraName.append((uint8_t)packet.data[ilen++]);
+            _rxBindInfoFeedback.extraName.push_back((uint8_t)packet.data[ilen++]);
         }
         int p = packet.data.length() - 2;
         _rxBindInfoFeedback.txAddr = ((uint8_t)packet.data[p] & 0xff) | ((uint8_t)packet.data[p + 1] << 8 & 0xff00);
-        qCDebug(YuneecLogVerbose) << "RxBindInfo:" << _rxBindInfoFeedback.getName() << _rxBindInfoFeedback.nodeId;
+        qCDebug(YuneecLogVerbose) << "RxBindInfo:" << QString::fromStdString(_rxBindInfoFeedback.getName()) << _rxBindInfoFeedback.nodeId;
         _state = STATE_UNBIND;
         _unbind();
         _timer.start(COMMAND_WAIT_INTERVAL);

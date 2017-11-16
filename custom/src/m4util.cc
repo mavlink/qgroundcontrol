@@ -4,6 +4,7 @@
  */
 
 #include "m4util.h"
+#include <sstream>
 
 //-----------------------------------------------------------------------------
 static const unsigned char CRC8T[] = {
@@ -64,27 +65,34 @@ RxBindInfo::clear()
     extraName.clear();
 }
 
+
 //-----------------------------------------------------------------------------
-QString
+std::string
 RxBindInfo::getName() {
+
+    std::stringstream nodeSs;
+    nodeSs << nodeId;
+
     switch (mode) {
         case TYPE_SR12S:
-            return QString("SR12S_%1").arg(nodeId);
+            return std::string("SR12S_") + nodeSs.str();
         case TYPE_SR12E:
-            return QString("SR12E_%1").arg(nodeId);
+            return std::string("SR12E_") + nodeSs.str();
         case TYPE_SR24S:
-            return QString("SR24S_%1 v1.03").arg(nodeId);
+            return std::string("SR24S_") + nodeSs.str() + std::string(" v1.03");
         case TYPE_RX24:
-            return QString("RX24_%1").arg(nodeId);
+            return std::string("RX24_") + nodeSs.str();
         case TYPE_SR19P:
-            return QString("SR19P_%1").arg(nodeId);
+            return std::string("SR19P_") + nodeSs.str();
         default:
             if (mode >= 105) {
-                QString fmt;
-                fmt.sprintf("SR24S_%dv%.2f", nodeId, (float)mode / 100.0f);
-                return fmt;
+                std::stringstream modeSs;
+                modeSs << (float)mode / 100.0f;
+                return std::string("SR24S_") + nodeSs.str() + std::string("v") + modeSs.str();
             } else {
-                return QString::number(nodeId);
+                return nodeSs.str();
             }
     }
 }
+
+

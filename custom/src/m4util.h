@@ -10,7 +10,10 @@
 #include "TyphoonHCommon.h"
 #include "m4def.h"
 
-extern uint8_t crc8(uint8_t* buffer, int len);
+#include <string>
+#include <vector>
+
+uint8_t crc8(uint8_t* buffer, int len);
 
 #define DEFAULT_TX_MAX_CHANNEL			24
 
@@ -70,7 +73,6 @@ typedef enum {
     CalibrationHwIndexMax
 } CalibrationHwIndex_t;
 
-class M4SerialComm;
 
 //-----------------------------------------------------------------------------
 //-- Accessor class to handle data structure in an "Yuneec" way
@@ -113,7 +115,7 @@ public:
         TYPE_RX24   = 3,
         TYPE_SR19P  = 4,
     };
-    QString getName();
+    std::string getName();
     int mode;
     int panId;
     int nodeId;
@@ -128,11 +130,11 @@ public:
     int extraNum;
     int extraBit;
     int txAddr;
-    QByteArray achName;
-    QByteArray trName;
-    QByteArray swName;
-    QByteArray monitName;
-    QByteArray extraName;
+    std::vector<uint8_t> achName;
+    std::vector<uint8_t> trName;
+    std::vector<uint8_t> swName;
+    std::vector<uint8_t> monitName;
+    std::vector<uint8_t> extraName;
 };
 
 //-----------------------------------------------------------------------------

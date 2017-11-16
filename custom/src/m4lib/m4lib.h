@@ -104,7 +104,7 @@ private:
     bool _sendPassthroughMessage(QByteArray message);
 
     bool _generateTableDeviceChannelNumInfo(TableDeviceChannelNumInfo_t* channelNumInfo, ChannelNumType_t channelNumType, int& num);
-    bool _fillTableDeviceChannelNumMap       (TableDeviceChannelNumInfo_t *channelNumInfo, int num, QByteArray list);
+    bool _fillTableDeviceChannelNumMap       (TableDeviceChannelNumInfo_t *channelNumInfo, int num, std::vector<uint8_t> list);
     void _generateTableDeviceLocalInfo       (TableDeviceLocalInfo_t *localInfo);
     bool _generateTableDeviceChannelInfo     (TableDeviceChannelInfo_t *channelInfo);
 

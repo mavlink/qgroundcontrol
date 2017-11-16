@@ -113,11 +113,16 @@ TyphoonHM4Interface::init(bool skipConnections)
         rxBindInfoFeedback.monitBit    = settings.value(kmonitBit,     0).toInt();
         rxBindInfoFeedback.extraNum    = settings.value(kextraNum,     0).toInt();
         rxBindInfoFeedback.extraBit    = settings.value(kextraBit,     0).toInt();
-        rxBindInfoFeedback.achName     = settings.value(kacName,       QByteArray()).toByteArray();
-        rxBindInfoFeedback.trName      = settings.value(ktrName,       QByteArray()).toByteArray();
-        rxBindInfoFeedback.swName      = settings.value(kswName,       QByteArray()).toByteArray();
-        rxBindInfoFeedback.monitName   = settings.value(kmonitName,    QByteArray()).toByteArray();
-        rxBindInfoFeedback.extraName   = settings.value(kextraName,    QByteArray()).toByteArray();
+        QByteArray tempAchName         = settings.value(kacName,       QByteArray()).toByteArray();
+        QByteArray tempTrName          = settings.value(ktrName,       QByteArray()).toByteArray();
+        QByteArray tempSwName          = settings.value(kswName,       QByteArray()).toByteArray();
+        QByteArray tempMonitName       = settings.value(kmonitName,    QByteArray()).toByteArray();
+        QByteArray tempExtraName       = settings.value(kextraName,    QByteArray()).toByteArray();
+        rxBindInfoFeedback.achName     = std::vector<uint8_t>(tempAchName.begin(),   tempAchName.end());
+        rxBindInfoFeedback.trName      = std::vector<uint8_t>(tempTrName.begin(),    tempTrName.end());
+        rxBindInfoFeedback.swName      = std::vector<uint8_t>(tempSwName.begin(),    tempSwName.end());
+        rxBindInfoFeedback.monitName   = std::vector<uint8_t>(tempMonitName.begin(), tempMonitName.end());
+        rxBindInfoFeedback.extraName   = std::vector<uint8_t>(tempExtraName.begin(), tempExtraName.end());
         rxBindInfoFeedback.txAddr      = settings.value(ktxAddr,       0).toInt();
     }
     settings.endGroup();
@@ -381,11 +386,11 @@ TyphoonHM4Interface::_saveSettings(const RxBindInfo& rxBindInfo)
     settings.setValue(kmonitBit,    rxBindInfo.monitBit);
     settings.setValue(kextraNum,    rxBindInfo.extraNum);
     settings.setValue(kextraBit,    rxBindInfo.extraBit);
-    settings.setValue(kacName,      rxBindInfo.achName);
-    settings.setValue(ktrName,      rxBindInfo.trName);
-    settings.setValue(kswName,      rxBindInfo.swName);
-    settings.setValue(kmonitName,   rxBindInfo.monitName);
-    settings.setValue(kextraName,   rxBindInfo.extraName);
+    settings.setValue(kacName,      QByteArray(reinterpret_cast<const char*>(rxBindInfo.achName.data())));
+    settings.setValue(ktrName,      QByteArray(reinterpret_cast<const char*>(rxBindInfo.trName.data())));
+    settings.setValue(kswName,      QByteArray(reinterpret_cast<const char*>(rxBindInfo.swName.data())));
+    settings.setValue(kmonitName,   QByteArray(reinterpret_cast<const char*>(rxBindInfo.monitName.data())));
+    settings.setValue(kextraName,   QByteArray(reinterpret_cast<const char*>(rxBindInfo.extraName.data())));
     settings.setValue(ktxAddr,      rxBindInfo.txAddr);
     settings.endGroup();
 }
