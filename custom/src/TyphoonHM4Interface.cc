@@ -187,7 +187,7 @@ TyphoonHM4Interface::m4State()
 }
 
 //-----------------------------------------------------------------------------
-const ControllerLocation&
+const M4Lib::ControllerLocation&
 TyphoonHM4Interface::controllerLocation()
 {
     return _m4Lib->getControllerLocation();

@@ -106,7 +106,7 @@ public slots:
 private slots:
     void _controllerLocationChanged ()
     {
-        ControllerLocation loc = _pHandler->controllerLocation();
+        M4Lib::ControllerLocation loc = _pHandler->controllerLocation();
         QGeoPositionInfo update(QGeoCoordinate(loc.latitude, loc.longitude, loc.altitude), QDateTime::currentDateTime());
         //-- Not certain if these are using the same units and/or methods of computation
         update.setAttribute(QGeoPositionInfo::Direction,    loc.angle);

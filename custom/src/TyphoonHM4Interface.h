@@ -39,7 +39,7 @@ public:
 
     TyphoonHQuickInterface::M4State     m4State             ();
 
-    const ControllerLocation&           controllerLocation  ();
+    const M4Lib::ControllerLocation&           controllerLocation  ();
 
     static TyphoonHM4Interface* pTyphoonHandler;
 

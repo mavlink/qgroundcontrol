@@ -103,63 +103,6 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-class ControllerLocation {
-public:
-    ControllerLocation()
-        : longitude(0.0)
-        , latitude(0.0)
-        , altitude(0.0)
-        , satelliteCount(0)
-        , accuracy(0.0f)
-        , speed(0.0f)
-        , angle(0.0f)
-    {
-    }
-    ControllerLocation& operator=(ControllerLocation& other)
-    {
-        longitude       = other.longitude;
-        latitude        = other.latitude;
-        altitude        = other.altitude;
-        satelliteCount  = other.satelliteCount;
-        accuracy        = other.accuracy;
-        speed           = other.speed;
-        angle           = other.angle;
-        return *this;
-    }
-    /**
-     * Longitude of remote-controller
-     */
-    double longitude;
-    /**
-     * Latitude of remote-controller
-     */
-    double latitude;
-    /**
-     * Altitude of remote-controller
-     */
-    double altitude;
-    /**
-     * The number of satellite has searched
-     */
-    int satelliteCount;
-
-    /**
-     * Accuracy of remote-controller
-     */
-    float accuracy;
-
-    /**
-     * Speed of remote-controller
-     */
-    float speed;
-
-    /**
-     * Angle of remote-controller
-     */
-    float angle;
-};
-
 class SwitchChanged {
 public:
     /**

@@ -51,6 +51,40 @@ public:
         std::vector<uint8_t> extraName {};
     };
 
+    struct ControllerLocation {
+        /**
+         * Longitude of remote-controller
+         */
+        double longitude = 0.0;
+        /**
+         * Latitude of remote-controller
+         */
+        double latitude = 0.0;
+        /**
+         * Altitude of remote-controller
+         */
+        double altitude = 0.0;
+        /**
+         * The number of satellite has searched
+         */
+        int satelliteCount = 0;
+
+        /**
+         * Accuracy of remote-controller
+         */
+        float accuracy = 0.0f;
+
+        /**
+         * Speed of remote-controller
+         */
+        float speed = 0.0f;
+
+        /**
+         * Angle of remote-controller
+         */
+        float angle = 0.0f;
+    };
+
     void init();
     void deinit();
 
