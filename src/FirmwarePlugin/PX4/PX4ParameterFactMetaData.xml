@@ -1356,6 +1356,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
     </parameter>
     <parameter default="2.6" name="EKF2_HDG_GATE" type="FLOAT">
       <short_desc>Gate size for magnetic heading fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
       <min>1.0</min>
       <unit>SD</unit>
       <decimal>1</decimal>
@@ -1363,6 +1364,7 @@ Assumes measurement is timestamped at trailing edge of integration period</short
     </parameter>
     <parameter default="3.0" name="EKF2_MAG_GATE" type="FLOAT">
       <short_desc>Gate size for magnetometer XYZ component fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
       <min>1.0</min>
       <unit>SD</unit>
       <decimal>1</decimal>
@@ -1412,7 +1414,8 @@ This parameter is used when the magnetometer fusion method is set automatically 
       <scope>modules/ekf2</scope>
     </parameter>
     <parameter default="5.0" name="EKF2_BARO_GATE" type="FLOAT">
-      <short_desc>Gate size for barometric height fusion</short_desc>
+      <short_desc>Gate size for barometric and GPS height fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
       <min>1.0</min>
       <unit>SD</unit>
       <decimal>1</decimal>
@@ -1420,6 +1423,7 @@ This parameter is used when the magnetometer fusion method is set automatically 
     </parameter>
     <parameter default="5.0" name="EKF2_GPS_P_GATE" type="FLOAT">
       <short_desc>Gate size for GPS horizontal position fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
       <min>1.0</min>
       <unit>SD</unit>
       <decimal>1</decimal>
@@ -1427,6 +1431,7 @@ This parameter is used when the magnetometer fusion method is set automatically 
     </parameter>
     <parameter default="5.0" name="EKF2_GPS_V_GATE" type="FLOAT">
       <short_desc>Gate size for GPS velocity fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
       <min>1.0</min>
       <unit>SD</unit>
       <decimal>1</decimal>
@@ -1434,6 +1439,7 @@ This parameter is used when the magnetometer fusion method is set automatically 
     </parameter>
     <parameter default="3.0" name="EKF2_TAS_GATE" type="FLOAT">
       <short_desc>Gate size for TAS fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
       <min>1.0</min>
       <unit>SD</unit>
       <decimal>1</decimal>
@@ -1484,6 +1490,7 @@ This parameter is used when the magnetometer fusion method is set automatically 
     </parameter>
     <parameter default="5.0" name="EKF2_RNG_GATE" type="FLOAT">
       <short_desc>Gate size for range finder fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
       <min>1.0</min>
       <unit>SD</unit>
       <decimal>1</decimal>
@@ -1512,6 +1519,7 @@ This parameter is used when the magnetometer fusion method is set automatically 
     </parameter>
     <parameter default="5.0" name="EKF2_EV_GATE" type="FLOAT">
       <short_desc>Gate size for vision estimate fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
       <min>1.0</min>
       <unit>SD</unit>
       <decimal>1</decimal>
@@ -1540,6 +1548,7 @@ This parameter is used when the magnetometer fusion method is set automatically 
     </parameter>
     <parameter default="3.0" name="EKF2_OF_GATE" type="FLOAT">
       <short_desc>Gate size for optical flow fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
       <min>1.0</min>
       <unit>SD</unit>
       <decimal>1</decimal>
@@ -3807,6 +3816,17 @@ by initializing the estimator to the LPE_LAT/LON parameters when global informat
         <value code="5">Terminate</value>
         <value code="4">RC Auto Recovery (CASA Outback Challenge rules)</value>
         <value code="6">Lockdown</value>
+      </values>
+    </parameter>
+    <parameter default="1" name="NAV_TRAFF_AVOID" type="INT32">
+      <short_desc>Set traffic avoidance mode</short_desc>
+      <long_desc>Enabling this will allow the system to respond to transponder data from e.g. ADSB transponders</long_desc>
+      <scope>modules/navigator</scope>
+      <values>
+        <value code="1">Warn only</value>
+        <value code="0">Disabled</value>
+        <value code="3">Land immediately</value>
+        <value code="2">Return to Land</value>
       </values>
     </parameter>
     <parameter default="1" name="NAV_FORCE_VT" type="INT32">
@@ -7696,24 +7716,79 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
     </parameter>
   </group>
   <group name="Sensor Calibration">
-    <parameter default="0" name="CAL_MAG_PRIME" type="INT32">
-      <short_desc>Primary mag ID</short_desc>
+    <parameter default="0" name="CAL_GYRO0_ID" type="INT32">
+      <short_desc>ID of the Gyro that the calibration is for</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="63" name="CAL_MAG_SIDES" type="INT32">
-      <short_desc>Bitfield selecting mag sides for calibration</short_desc>
-      <long_desc>DETECT_ORIENTATION_TAIL_DOWN = 1 DETECT_ORIENTATION_NOSE_DOWN = 2 DETECT_ORIENTATION_LEFT = 4 DETECT_ORIENTATION_RIGHT = 8 DETECT_ORIENTATION_UPSIDE_DOWN = 16 DETECT_ORIENTATION_RIGHTSIDE_UP = 32</long_desc>
-      <min>34</min>
-      <max>63</max>
+    <parameter default="1" name="CAL_GYRO0_EN" type="INT32">
+      <short_desc>Gyro 0 enabled</short_desc>
+      <boolean />
       <scope>modules/sensors</scope>
-      <values>
-        <value code="34">Two side calibration</value>
-        <value code="63">Six side calibration</value>
-        <value code="38">Three side calibration</value>
-      </values>
+    </parameter>
+    <parameter default="0.0" name="CAL_GYRO0_XOFF" type="FLOAT">
+      <short_desc>Gyro X-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_GYRO0_YOFF" type="FLOAT">
+      <short_desc>Gyro Y-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_GYRO0_ZOFF" type="FLOAT">
+      <short_desc>Gyro Z-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_GYRO0_XSCALE" type="FLOAT">
+      <short_desc>Gyro X-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_GYRO0_YSCALE" type="FLOAT">
+      <short_desc>Gyro Y-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_GYRO0_ZSCALE" type="FLOAT">
+      <short_desc>Gyro Z-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="CAL_ACC1_ID" type="INT32">
+      <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1" name="CAL_ACC1_EN" type="INT32">
+      <short_desc>Accelerometer 1 enabled</short_desc>
+      <boolean />
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_ACC1_XOFF" type="FLOAT">
+      <short_desc>Accelerometer X-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_ACC1_YOFF" type="FLOAT">
+      <short_desc>Accelerometer Y-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_ACC1_ZOFF" type="FLOAT">
+      <short_desc>Accelerometer Z-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_ACC1_XSCALE" type="FLOAT">
+      <short_desc>Accelerometer X-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_ACC1_YSCALE" type="FLOAT">
+      <short_desc>Accelerometer Y-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_ACC1_ZSCALE" type="FLOAT">
+      <short_desc>Accelerometer Z-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="CAL_MAG0_ID" type="INT32">
       <short_desc>ID of Magnetometer the calibration is for</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1" name="CAL_MAG0_EN" type="INT32">
+      <short_desc>Mag 0 enabled</short_desc>
+      <boolean />
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="-1" name="CAL_MAG0_ROT" type="INT32">
@@ -7777,8 +7852,222 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <short_desc>Magnetometer Z-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
+    <parameter default="0" name="CAL_ACC2_ID" type="INT32">
+      <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1" name="CAL_ACC2_EN" type="INT32">
+      <short_desc>Accelerometer 2 enabled</short_desc>
+      <boolean />
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_ACC2_XOFF" type="FLOAT">
+      <short_desc>Accelerometer X-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_ACC2_YOFF" type="FLOAT">
+      <short_desc>Accelerometer Y-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_ACC2_ZOFF" type="FLOAT">
+      <short_desc>Accelerometer Z-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_ACC2_XSCALE" type="FLOAT">
+      <short_desc>Accelerometer X-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_ACC2_YSCALE" type="FLOAT">
+      <short_desc>Accelerometer Y-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_ACC2_ZSCALE" type="FLOAT">
+      <short_desc>Accelerometer Z-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="CAL_MAG_PRIME" type="INT32">
+      <short_desc>Primary mag ID</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="CAL_GYRO_PRIME" type="INT32">
+      <short_desc>Primary gyro ID</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="CAL_GYRO1_ID" type="INT32">
+      <short_desc>ID of the Gyro that the calibration is for</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1" name="CAL_GYRO1_EN" type="INT32">
+      <short_desc>Gyro 1 enabled</short_desc>
+      <boolean />
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_GYRO1_XOFF" type="FLOAT">
+      <short_desc>Gyro X-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_GYRO1_YOFF" type="FLOAT">
+      <short_desc>Gyro Y-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_GYRO1_ZOFF" type="FLOAT">
+      <short_desc>Gyro Z-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_GYRO1_XSCALE" type="FLOAT">
+      <short_desc>Gyro X-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_GYRO1_YSCALE" type="FLOAT">
+      <short_desc>Gyro Y-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_GYRO1_ZSCALE" type="FLOAT">
+      <short_desc>Gyro Z-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="CAL_MAG2_ID" type="INT32">
+      <short_desc>ID of Magnetometer the calibration is for</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1" name="CAL_MAG2_EN" type="INT32">
+      <short_desc>Mag 2 enabled</short_desc>
+      <boolean />
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="CAL_MAG2_ROT" type="INT32">
+      <short_desc>Rotation of magnetometer 2 relative to airframe</short_desc>
+      <long_desc>An internal magnetometer will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
+      <min>-1</min>
+      <max>30</max>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+      <values>
+        <value code="24">Pitch 90°</value>
+        <value code="25">Pitch 270°</value>
+        <value code="20">Roll 270°</value>
+        <value code="21">Roll 270°, Yaw 45°</value>
+        <value code="22">Roll 270°, Yaw 90°</value>
+        <value code="23">Roll 270°, Yaw 135°</value>
+        <value code="1">Yaw 45°</value>
+        <value code="0">No rotation</value>
+        <value code="3">Yaw 135°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="7">Yaw 315°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="9">Roll 180°, Yaw 45°</value>
+        <value code="8">Roll 180°</value>
+        <value code="11">Roll 180°, Yaw 135°</value>
+        <value code="10">Roll 180°, Yaw 90°</value>
+        <value code="13">Roll 180°, Yaw 225°</value>
+        <value code="12">Pitch 180°</value>
+        <value code="15">Roll 180°, Yaw 315°</value>
+        <value code="14">Roll 180°, Yaw 270°</value>
+        <value code="17">Roll 90°, Yaw 45°</value>
+        <value code="16">Roll 90°</value>
+        <value code="19">Roll 90°, Yaw 135°</value>
+        <value code="18">Roll 90°, Yaw 90°</value>
+        <value code="-1">Internal mag</value>
+      </values>
+    </parameter>
+    <parameter default="0.0" name="CAL_MAG2_XOFF" type="FLOAT">
+      <short_desc>Magnetometer X-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_MAG2_YOFF" type="FLOAT">
+      <short_desc>Magnetometer Y-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_MAG2_ZOFF" type="FLOAT">
+      <short_desc>Magnetometer Z-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_MAG2_XSCALE" type="FLOAT">
+      <short_desc>Magnetometer X-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_MAG2_YSCALE" type="FLOAT">
+      <short_desc>Magnetometer Y-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_MAG2_ZSCALE" type="FLOAT">
+      <short_desc>Magnetometer Z-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="CAL_ACC0_ID" type="INT32">
+      <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1" name="CAL_ACC0_EN" type="INT32">
+      <short_desc>Accelerometer 0 enabled</short_desc>
+      <boolean />
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_ACC0_XOFF" type="FLOAT">
+      <short_desc>Accelerometer X-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_ACC0_YOFF" type="FLOAT">
+      <short_desc>Accelerometer Y-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="CAL_ACC0_ZOFF" type="FLOAT">
+      <short_desc>Accelerometer Z-axis offset</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_ACC0_XSCALE" type="FLOAT">
+      <short_desc>Accelerometer X-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_ACC0_YSCALE" type="FLOAT">
+      <short_desc>Accelerometer Y-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_ACC0_ZSCALE" type="FLOAT">
+      <short_desc>Accelerometer Z-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="CAL_BARO_PRIME" type="INT32">
+      <short_desc>Primary baro ID</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="CAL_AIR_PMODEL" type="INT32">
+      <short_desc>Airspeed sensor pitot model</short_desc>
+      <scope>modules/sensors</scope>
+      <values>
+        <value code="0">HB Pitot</value>
+      </values>
+    </parameter>
+    <parameter default="0.2" name="CAL_AIR_TUBELEN" type="FLOAT">
+      <short_desc>Airspeed sensor tube length</short_desc>
+      <min>0.01</min>
+      <max>0.5</max>
+      <unit>meter</unit>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="SENS_DPRES_OFF" type="FLOAT">
+      <short_desc>Differential pressure sensor offset</short_desc>
+      <long_desc>The offset (zero-reading) in Pascal</long_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="SENS_DPRES_ANSC" type="FLOAT">
+      <short_desc>Differential pressure sensor analog scaling</short_desc>
+      <long_desc>Pick the appropriate scaling from the datasheet. this number defines the (linear) conversion from voltage to Pascal (pa). For the MPXV7002DP this is 1000. NOTE: If the sensor always registers zero, try switching the static and dynamic tubes.</long_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="CAL_ACC_PRIME" type="INT32">
+      <short_desc>Primary accel ID</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
     <parameter default="0" name="CAL_MAG1_ID" type="INT32">
       <short_desc>ID of Magnetometer the calibration is for</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1" name="CAL_MAG1_EN" type="INT32">
+      <short_desc>Mag 1 enabled</short_desc>
+      <boolean />
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="-1" name="CAL_MAG1_ROT" type="INT32">
@@ -7842,75 +8131,46 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <short_desc>Magnetometer Z-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0" name="CAL_MAG2_ID" type="INT32">
-      <short_desc>ID of Magnetometer the calibration is for</short_desc>
+    <parameter default="0" name="CAL_GYRO2_ID" type="INT32">
+      <short_desc>ID of the Gyro that the calibration is for</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="-1" name="CAL_MAG2_ROT" type="INT32">
-      <short_desc>Rotation of magnetometer 2 relative to airframe</short_desc>
-      <long_desc>An internal magnetometer will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
-      <min>-1</min>
-      <max>30</max>
-      <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
-      <values>
-        <value code="24">Pitch 90°</value>
-        <value code="25">Pitch 270°</value>
-        <value code="20">Roll 270°</value>
-        <value code="21">Roll 270°, Yaw 45°</value>
-        <value code="22">Roll 270°, Yaw 90°</value>
-        <value code="23">Roll 270°, Yaw 135°</value>
-        <value code="1">Yaw 45°</value>
-        <value code="0">No rotation</value>
-        <value code="3">Yaw 135°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="7">Yaw 315°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="9">Roll 180°, Yaw 45°</value>
-        <value code="8">Roll 180°</value>
-        <value code="11">Roll 180°, Yaw 135°</value>
-        <value code="10">Roll 180°, Yaw 90°</value>
-        <value code="13">Roll 180°, Yaw 225°</value>
-        <value code="12">Pitch 180°</value>
-        <value code="15">Roll 180°, Yaw 315°</value>
-        <value code="14">Roll 180°, Yaw 270°</value>
-        <value code="17">Roll 90°, Yaw 45°</value>
-        <value code="16">Roll 90°</value>
-        <value code="19">Roll 90°, Yaw 135°</value>
-        <value code="18">Roll 90°, Yaw 90°</value>
-        <value code="-1">Internal mag</value>
-      </values>
-    </parameter>
-    <parameter default="0.0" name="CAL_MAG2_XOFF" type="FLOAT">
-      <short_desc>Magnetometer X-axis offset</short_desc>
+    <parameter default="1" name="CAL_GYRO2_EN" type="INT32">
+      <short_desc>Gyro 2 enabled</short_desc>
+      <boolean />
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_MAG2_YOFF" type="FLOAT">
-      <short_desc>Magnetometer Y-axis offset</short_desc>
+    <parameter default="0.0" name="CAL_GYRO2_XOFF" type="FLOAT">
+      <short_desc>Gyro X-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_MAG2_ZOFF" type="FLOAT">
-      <short_desc>Magnetometer Z-axis offset</short_desc>
-      <min>-500.0</min>
-      <max>500.0</max>
+    <parameter default="0.0" name="CAL_GYRO2_YOFF" type="FLOAT">
+      <short_desc>Gyro Y-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_MAG2_XSCALE" type="FLOAT">
-      <short_desc>Magnetometer X-axis scaling factor</short_desc>
+    <parameter default="0.0" name="CAL_GYRO2_ZOFF" type="FLOAT">
+      <short_desc>Gyro Z-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_MAG2_YSCALE" type="FLOAT">
-      <short_desc>Magnetometer Y-axis scaling factor</short_desc>
+    <parameter default="1.0" name="CAL_GYRO2_XSCALE" type="FLOAT">
+      <short_desc>Gyro X-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_MAG2_ZSCALE" type="FLOAT">
-      <short_desc>Magnetometer Z-axis scaling factor</short_desc>
+    <parameter default="1.0" name="CAL_GYRO2_YSCALE" type="FLOAT">
+      <short_desc>Gyro Y-axis scaling factor</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1.0" name="CAL_GYRO2_ZSCALE" type="FLOAT">
+      <short_desc>Gyro Z-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="CAL_MAG3_ID" type="INT32">
       <short_desc>ID of Magnetometer the calibration is for</short_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1" name="CAL_MAG3_EN" type="INT32">
+      <short_desc>Mag 3 enabled</short_desc>
+      <boolean />
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="-1" name="CAL_MAG3_ROT" type="INT32">
@@ -7952,20 +8212,14 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
     </parameter>
     <parameter default="0.0" name="CAL_MAG3_XOFF" type="FLOAT">
       <short_desc>Magnetometer X-axis offset</short_desc>
-      <min>-500.0</min>
-      <max>500.0</max>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0.0" name="CAL_MAG3_YOFF" type="FLOAT">
       <short_desc>Magnetometer Y-axis offset</short_desc>
-      <min>-500.0</min>
-      <max>500.0</max>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0.0" name="CAL_MAG3_ZOFF" type="FLOAT">
       <short_desc>Magnetometer Z-axis offset</short_desc>
-      <min>-500.0</min>
-      <max>500.0</max>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="1.0" name="CAL_MAG3_XSCALE" type="FLOAT">
@@ -7978,210 +8232,6 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
     </parameter>
     <parameter default="1.0" name="CAL_MAG3_ZSCALE" type="FLOAT">
       <short_desc>Magnetometer Z-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0" name="CAL_GYRO_PRIME" type="INT32">
-      <short_desc>Primary gyro ID</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0" name="CAL_GYRO0_ID" type="INT32">
-      <short_desc>ID of the Gyro that the calibration is for</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_GYRO0_XOFF" type="FLOAT">
-      <short_desc>Gyro X-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_GYRO0_YOFF" type="FLOAT">
-      <short_desc>Gyro Y-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_GYRO0_ZOFF" type="FLOAT">
-      <short_desc>Gyro Z-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_GYRO0_XSCALE" type="FLOAT">
-      <short_desc>Gyro X-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_GYRO0_YSCALE" type="FLOAT">
-      <short_desc>Gyro Y-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_GYRO0_ZSCALE" type="FLOAT">
-      <short_desc>Gyro Z-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0" name="CAL_GYRO1_ID" type="INT32">
-      <short_desc>ID of the Gyro that the calibration is for</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_GYRO1_XOFF" type="FLOAT">
-      <short_desc>Gyro X-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_GYRO1_YOFF" type="FLOAT">
-      <short_desc>Gyro Y-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_GYRO1_ZOFF" type="FLOAT">
-      <short_desc>Gyro Z-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_GYRO1_XSCALE" type="FLOAT">
-      <short_desc>Gyro X-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_GYRO1_YSCALE" type="FLOAT">
-      <short_desc>Gyro Y-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_GYRO1_ZSCALE" type="FLOAT">
-      <short_desc>Gyro Z-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0" name="CAL_GYRO2_ID" type="INT32">
-      <short_desc>ID of the Gyro that the calibration is for</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_GYRO2_XOFF" type="FLOAT">
-      <short_desc>Gyro X-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_GYRO2_YOFF" type="FLOAT">
-      <short_desc>Gyro Y-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_GYRO2_ZOFF" type="FLOAT">
-      <short_desc>Gyro Z-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_GYRO2_XSCALE" type="FLOAT">
-      <short_desc>Gyro X-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_GYRO2_YSCALE" type="FLOAT">
-      <short_desc>Gyro Y-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_GYRO2_ZSCALE" type="FLOAT">
-      <short_desc>Gyro Z-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0" name="CAL_BARO_PRIME" type="INT32">
-      <short_desc>Primary baro ID</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0" name="CAL_AIR_PMODEL" type="INT32">
-      <short_desc>Airspeed sensor pitot model</short_desc>
-      <scope>modules/sensors</scope>
-      <values>
-        <value code="0">HB Pitot</value>
-      </values>
-    </parameter>
-    <parameter default="0.2" name="CAL_AIR_TUBELEN" type="FLOAT">
-      <short_desc>Airspeed sensor tube length</short_desc>
-      <min>0.01</min>
-      <max>0.5</max>
-      <unit>meter</unit>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="SENS_DPRES_OFF" type="FLOAT">
-      <short_desc>Differential pressure sensor offset</short_desc>
-      <long_desc>The offset (zero-reading) in Pascal</long_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0" name="SENS_DPRES_ANSC" type="FLOAT">
-      <short_desc>Differential pressure sensor analog scaling</short_desc>
-      <long_desc>Pick the appropriate scaling from the datasheet. this number defines the (linear) conversion from voltage to Pascal (pa). For the MPXV7002DP this is 1000. NOTE: If the sensor always registers zero, try switching the static and dynamic tubes.</long_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0" name="CAL_ACC_PRIME" type="INT32">
-      <short_desc>Primary accel ID</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0" name="CAL_ACC0_ID" type="INT32">
-      <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_ACC0_XOFF" type="FLOAT">
-      <short_desc>Accelerometer X-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_ACC0_YOFF" type="FLOAT">
-      <short_desc>Accelerometer Y-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_ACC0_ZOFF" type="FLOAT">
-      <short_desc>Accelerometer Z-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_ACC0_XSCALE" type="FLOAT">
-      <short_desc>Accelerometer X-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_ACC0_YSCALE" type="FLOAT">
-      <short_desc>Accelerometer Y-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_ACC0_ZSCALE" type="FLOAT">
-      <short_desc>Accelerometer Z-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0" name="CAL_ACC1_ID" type="INT32">
-      <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_ACC1_XOFF" type="FLOAT">
-      <short_desc>Accelerometer X-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_ACC1_YOFF" type="FLOAT">
-      <short_desc>Accelerometer Y-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_ACC1_ZOFF" type="FLOAT">
-      <short_desc>Accelerometer Z-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_ACC1_XSCALE" type="FLOAT">
-      <short_desc>Accelerometer X-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_ACC1_YSCALE" type="FLOAT">
-      <short_desc>Accelerometer Y-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_ACC1_ZSCALE" type="FLOAT">
-      <short_desc>Accelerometer Z-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0" name="CAL_ACC2_ID" type="INT32">
-      <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_ACC2_XOFF" type="FLOAT">
-      <short_desc>Accelerometer X-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_ACC2_YOFF" type="FLOAT">
-      <short_desc>Accelerometer Y-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="CAL_ACC2_ZOFF" type="FLOAT">
-      <short_desc>Accelerometer Z-axis offset</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_ACC2_XSCALE" type="FLOAT">
-      <short_desc>Accelerometer X-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_ACC2_YSCALE" type="FLOAT">
-      <short_desc>Accelerometer Y-axis scaling factor</short_desc>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1.0" name="CAL_ACC2_ZSCALE" type="FLOAT">
-      <short_desc>Accelerometer Z-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
   </group>
@@ -8794,6 +8844,18 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
     </parameter>
   </group>
   <group name="Sensors">
+    <parameter default="63" name="CAL_MAG_SIDES" type="INT32">
+      <short_desc>Bitfield selecting mag sides for calibration</short_desc>
+      <long_desc>DETECT_ORIENTATION_TAIL_DOWN = 1 DETECT_ORIENTATION_NOSE_DOWN = 2 DETECT_ORIENTATION_LEFT = 4 DETECT_ORIENTATION_RIGHT = 8 DETECT_ORIENTATION_UPSIDE_DOWN = 16 DETECT_ORIENTATION_RIGHTSIDE_UP = 32</long_desc>
+      <min>34</min>
+      <max>63</max>
+      <scope>modules/sensors</scope>
+      <values>
+        <value code="34">Two side calibration</value>
+        <value code="63">Six side calibration</value>
+        <value code="38">Three side calibration</value>
+      </values>
+    </parameter>
     <parameter default="1013.25" name="SENS_BARO_QNH" type="FLOAT">
       <short_desc>QNH for barometer</short_desc>
       <min>500</min>

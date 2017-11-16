@@ -197,3 +197,20 @@ void QGCMapPolygonTest::_testVertexManipulation(void)
     QCOMPARE(polyList.count(), 0);
     QCOMPARE(_pathModel->count(), 0);
 }
+
+void QGCMapPolygonTest::_testKMLLoad(void)
+{
+    QVERIFY(_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/GoodPolygon.kml")));
+
+    setExpectedMessageBox(QMessageBox::Ok);
+    QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/BadXml.kml")));
+    checkExpectedMessageBox();
+
+    setExpectedMessageBox(QMessageBox::Ok);
+    QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/MissingPolygonNode.kml")));
+    checkExpectedMessageBox();
+
+    setExpectedMessageBox(QMessageBox::Ok);
+    QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/BadCoordinatesNode.kml")));
+    checkExpectedMessageBox();
+}
