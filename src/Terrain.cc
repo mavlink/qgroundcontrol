@@ -137,28 +137,6 @@ bool ElevationProvider::cacheTerrainTiles(const QGeoCoordinate& southWest, const
     return true;
 }
 
-bool ElevationProvider::cacheTerrainTiles(const QList<QGeoCoordinate>& coordinates)
-{
-    if (coordinates.length() == 0) {
-        return false;
-    }
-
-    for (const auto& coordinate : coordinates) {
-        QString uniqueTileId = _uniqueTileId(coordinate);
-        _tilesMutex.lock();
-        if (_downloadQueue.contains(uniqueTileId) || _tiles.contains(uniqueTileId)) {
-            _tilesMutex.unlock();
-            continue;
-        }
-        _downloadQueue.append(uniqueTileId);
-        _tilesMutex.unlock();
-        qCDebug(TerrainLog) << "Adding tile to download queue: " << uniqueTileId;
-    }
-
-    _downloadTiles();
-    return true;
-}
-
 void ElevationProvider::_requestFinished()
 {
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
@@ -265,7 +243,7 @@ void ElevationProvider::_downloadTiles(void)
         connect(networkReply, &QNetworkReply::finished, this, &ElevationProvider::_requestFinishedTile);
 
         _state = State::Downloading;
-    } else if (_state == State::Idle) {
+    } else if (_state == State::Idle && _coordinates.length() > 0) {
         queryTerrainData(_coordinates);
     }
 }
