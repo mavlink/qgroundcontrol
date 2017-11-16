@@ -7,7 +7,7 @@
 
 QGC_LOGGING_CATEGORY(TerrainTileLog, "TerrainTileLog")
 
-const double TerrainTile::_srtm1TileSize        = 0.025;
+const double TerrainTile::srtm1TileSize         = 0.025;
 const char*  TerrainTile::_jsonStatusKey        = "status";
 const char*  TerrainTile::_jsonDataKey          = "data";
 const char*  TerrainTile::_jsonBoundsKey        = "bounds";
@@ -47,7 +47,7 @@ TerrainTile::TerrainTile(QJsonDocument document)
     QString errorString;
     QList<JsonHelper::KeyValidateInfo> rootVersionKeyInfoList = {
         { _jsonStatusKey, QJsonValue::String, true },
-        { _jsonDataKey, QJsonValue::String, true },
+        { _jsonDataKey, QJsonValue::Object, true },
     };
     if (!JsonHelper::validateKeys(rootObject, rootVersionKeyInfoList, errorString)) {
         qCDebug(TerrainTileLog) << "Error in reading json: " << errorString;
@@ -91,7 +91,7 @@ TerrainTile::TerrainTile(QJsonDocument document)
     _northEast.setLongitude(neArray[1].toDouble());
 
     // Stats
-    const QJsonObject& statsObject = dataObject[_jsonBoundsKey].toObject();
+    const QJsonObject& statsObject = dataObject[_jsonStatsKey].toObject();
     QList<JsonHelper::KeyValidateInfo> statsVersionKeyInfoList = {
         { _jsonMaxElevationKey, QJsonValue::Double, true },
         { _jsonMinElevationKey, QJsonValue::Double, true },
@@ -107,17 +107,17 @@ TerrainTile::TerrainTile(QJsonDocument document)
 
     // Carpet
     const QJsonArray& carpetArray = dataObject[_jsonCarpetKey].toArray();
-    if (carpetArray.count() != _gridSize) {
-        qCDebug(TerrainTileLog) << "Expected array of " << _gridSize << ", instead got " << carpetArray.count();
+    if (carpetArray.count() < gridSize) { // TODO (birchera): We always get 91x91 points, figure out why and where the exact location of the elev values are.
+        qCDebug(TerrainTileLog) << "Expected array of " << gridSize << ", instead got " << carpetArray.count();
         return;
     }
-    for (int i = 0; i < _gridSize; i++) {
+    for (int i = 0; i < gridSize; i++) {
         const QJsonArray& row = carpetArray[i].toArray();
-        if (row.count() != _gridSize) {
-            qCDebug(TerrainTileLog) << "Expected row array of " << _gridSize << ", instead got " << row.count();
+        if (row.count() < gridSize) { // TODO (birchera): the same as above
+            qCDebug(TerrainTileLog) << "Expected row array of " << gridSize << ", instead got " << row.count();
             return;
         }
-        for (int j = 0; j < _gridSize; j++) {
+        for (int j = 0; j < gridSize; j++) {
             _data[i][j] = row[j].toDouble();
         }
     }
@@ -130,8 +130,8 @@ bool TerrainTile::isIn(const QGeoCoordinate& coordinate) const
         qCDebug(TerrainTileLog) << "isIn requested, but tile not valid";
         return false;
     }
-    bool ret = coordinate.latitude() >= _southWest.longitude() && coordinate.longitude() >= _southWest.longitude() &&
-               coordinate.latitude() <= _northEast.longitude() && coordinate.longitude() <= _northEast.longitude();
+    bool ret = coordinate.latitude() >= _southWest.latitude() && coordinate.longitude() >= _southWest.longitude() &&
+               coordinate.latitude() <= _northEast.latitude() && coordinate.longitude() <= _northEast.longitude();
     qCDebug(TerrainTileLog) << "Checking isIn: " << coordinate << " , in sw " << _southWest << " , ne " << _northEast << ": " << ret;
     return ret;
 }
@@ -141,13 +141,13 @@ float TerrainTile::elevation(const QGeoCoordinate& coordinate) const
     if (_isValid) {
         qCDebug(TerrainTileLog) << "elevation: " << coordinate << " , in sw " << _southWest << " , ne " << _northEast;
         // Get the index at resolution of 1 arc second
-        int indexLat = std::round((coordinate.latitude() - _southWest.latitude()) * _gridSize / _srtm1TileSize);
-        int indexLon = std::round((coordinate.longitude() - _southWest.longitude()) * _gridSize / _srtm1TileSize);
+        int indexLat = std::round((coordinate.latitude() - _southWest.latitude()) * gridSize / srtm1TileSize);
+        int indexLon = std::round((coordinate.longitude() - _southWest.longitude()) * gridSize / srtm1TileSize);
         qCDebug(TerrainTileLog) << "indexLat:indexLon" << indexLat << indexLon; // TODO (birchera): Move this down to the next debug output, once this is all properly working.
         Q_ASSERT(indexLat >= 0);
-        Q_ASSERT(indexLat < _gridSize);
+        Q_ASSERT(indexLat < gridSize);
         Q_ASSERT(indexLon >= 0);
-        Q_ASSERT(indexLon < _gridSize);
+        Q_ASSERT(indexLon < gridSize);
         qCDebug(TerrainTileLog) << "elevation" << _data[indexLat][indexLon];
         return _data[indexLat][indexLon];
     } else {

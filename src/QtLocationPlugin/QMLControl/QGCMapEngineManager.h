@@ -19,6 +19,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapTileSet.h"
+#include "Terrain.h"
 
 Q_DECLARE_LOGGING_CATEGORY(QGCMapEngineManagerLog)
 
@@ -152,6 +153,8 @@ private:
     int         _actionProgress;
     ImportAction _importAction;
     bool        _importReplace;
+
+    ElevationProvider _elevationProvider;
 };
 
 #endif
