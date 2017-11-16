@@ -233,7 +233,11 @@ TyphoonHM4Interface::_mavlinkMessageReceived(const mavlink_message_t& message)
             _rcTimer.stop();
             _m4Lib->setRcActive(true);
         } else {
-            if(!_rcTimer.isActive() && !_m4Lib->getSoftReboot()) {
+            //-- The assumption here is that the SoftReboot happens quickly enough
+            //   so we don't have to care.
+            //   This check is removed because we like to avoid the dependency on the
+            //   M4Lib internal softReboot state.
+            if(!_rcTimer.isActive() /*&& !_m4Lib->getSoftReboot()*/) {
                 //-- Wait a bit before assuming RC is lost
                 _rcTimer.start(1000);
             }

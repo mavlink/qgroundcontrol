@@ -107,7 +107,9 @@ public:
 
     const ControllerLocation& getControllerLocation() { return _controllerLocation; }
 
-    bool getSoftReboot() { return _softReboot; }
+    // TODO: Check if we really don't need this.
+    //       If possible we don't want to leak this information.
+    //bool getSoftReboot() { return _softReboot; }
 
     void resetBind();
     void enterBindMode(bool skipPairCommand = false);
