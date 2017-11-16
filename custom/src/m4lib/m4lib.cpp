@@ -5,6 +5,8 @@
 #include "m4serial.h"
 #include "TyphoonHM4Interface.h"
 
+#if defined(__androidx86__)
+
 #include <string>
 #include <vector>
 #include <sstream>
@@ -12,9 +14,7 @@
 // RC Channel data provided by Yuneec
 #include "m4channeldata.h"
 
-#if defined(__androidx86__)
 static const char* kUartName        = "/dev/ttyMFD0";
-#endif
 
 #define UNUSED(x_) (void)(x_)
 
@@ -1595,3 +1595,5 @@ std::string M4Lib::_getRxBindInfoFeedbackName()
             }
     }
 }
+
+#endif // defined(__androidx86__)

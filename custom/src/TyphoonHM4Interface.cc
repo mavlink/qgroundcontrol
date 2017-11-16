@@ -22,6 +22,7 @@ QGC_LOGGING_CATEGORY(YuneecLogVerbose, "YuneecLogVerbose")
 
 TyphoonHM4Interface* TyphoonHM4Interface::pTyphoonHandler = NULL;
 
+#if defined(__androidx86__)
 static const char* kRxInfoGroup     = "YuneecM4RxInfo";
 static const char* kmode            = "mode";
 static const char* kpanId           = "panId";
@@ -42,6 +43,7 @@ static const char* ktrName          = "trName";
 static const char* kswName          = "swName";
 static const char* kmonitName       = "monitName";
 static const char* kextraName       = "extraName";
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -52,10 +54,13 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     , _threadShouldStop(false)
 {
     pTyphoonHandler = this;
+#if defined(__androidx86__)
     _m4Lib = new M4Lib(this);
+#endif
     _rcTimer.setSingleShot(true);
     connect(&_rcTimer, &QTimer::timeout, this, &TyphoonHM4Interface::_rcTimeout);
 
+#if defined(__androidx86__)
     connect(_m4Lib, &M4Lib::rcActiveChanged, this, &TyphoonHM4Interface::_rcActiveChanged);
     connect(_m4Lib, &M4Lib::switchStateChanged, this, &TyphoonHM4Interface::switchStateChanged);
     connect(_m4Lib, &M4Lib::calibrationCompleteChanged, this, &TyphoonHM4Interface::calibrationCompleteChanged);
@@ -64,24 +69,28 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     connect(_m4Lib, &M4Lib::controllerLocationChanged, this, &TyphoonHM4Interface::controllerLocationChanged);
     connect(_m4Lib, &M4Lib::m4StateChanged, this, &TyphoonHM4Interface::m4StateChanged);
     connect(_m4Lib, &M4Lib::saveSettings, this, &TyphoonHM4Interface::_saveSettings);
+#endif
 }
 
 //-----------------------------------------------------------------------------
 TyphoonHM4Interface::~TyphoonHM4Interface()
 {
     _threadShouldStop = true;
-    emit destroyed();
+#if defined(__androidx86__)
     if(_m4Lib) {
         _m4Lib->deinit();
         delete _m4Lib;
     }
+#endif
     pTyphoonHandler = NULL;
+    emit destroyed();
 }
 
 //-----------------------------------------------------------------------------
 void
 TyphoonHM4Interface::init(bool skipConnections)
 {
+#if defined(__androidx86__)
     //-- Have we bound before?
     QSettings settings;
     settings.beginGroup(kRxInfoGroup);
@@ -117,6 +126,7 @@ TyphoonHM4Interface::init(bool skipConnections)
     _m4Lib->init();
     _m4Lib->setPairCommandCallback(std::bind(&TyphoonHM4Interface::_sendMavlinkBindCommand, this));
     _m4Lib->setSettings(rxBindInfoFeedback);
+#endif
 
     if(!skipConnections) {
         connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &TyphoonHM4Interface::_vehicleAdded);
@@ -131,11 +141,15 @@ void
 TyphoonHM4Interface::run()
 {
     while (!_threadShouldStop) {
+#if defined(__androidx86__)
         if (_m4Lib) {
             _m4Lib->tryRead();
         } else {
+#endif
             QThread::msleep(10);
+#if defined(__androidx86__)
         }
+#endif
     }
 }
 
@@ -143,49 +157,76 @@ TyphoonHM4Interface::run()
 void
 TyphoonHM4Interface::resetBind()
 {
+#if defined(__androidx86__)
     _m4Lib->resetBind();
+#endif
 }
 
 //-----------------------------------------------------------------------------
 bool
 TyphoonHM4Interface::rcActive()
 {
+#if defined(__androidx86__)
     return _m4Lib->getRcActive();
+#else
+    return false;
+#endif
 }
 
 //-----------------------------------------------------------------------------
 bool
 TyphoonHM4Interface::rcCalibrationComplete()
 {
+#if defined(__androidx86__)
     return _m4Lib->getRcCalibrationComplete();
+#else
+    return false;
+#endif
 }
 
 //-----------------------------------------------------------------------------
 QList<uint16_t>
 TyphoonHM4Interface::rawChannels()
 {
+#if defined(__androidx86__)
     return QList<uint16_t>::fromVector(QVector<uint16_t>::fromStdVector(_m4Lib->getRawChannels()));
+#else
+    return QList<uint16_t>();
+#endif
 }
 
 //-----------------------------------------------------------------------------
 TyphoonHQuickInterface::M4State
 TyphoonHM4Interface::m4State()
 {
+#if defined(__androidx86__)
     return (TyphoonHQuickInterface::M4State)(int)(_m4Lib->getM4State());
+#else
+    return TyphoonHQuickInterface::M4_STATE_NONE;
+#endif
 }
 
 //-----------------------------------------------------------------------------
 const M4Lib::ControllerLocation&
 TyphoonHM4Interface::controllerLocation()
 {
+#if defined(__androidx86__)
     return _m4Lib->getControllerLocation();
+#else
+    static M4Lib::ControllerLocation empty {};
+    return empty;
+#endif
 }
 
 //-----------------------------------------------------------------------------
 QString
 TyphoonHM4Interface::m4StateStr()
 {
+#if defined(__androidx86__)
     return QString::fromStdString(_m4Lib->m4StateStr());
+#else
+    return QString();
+#endif
 }
 
 
@@ -203,7 +244,9 @@ TyphoonHM4Interface::_vehicleReady(bool ready)
             } else {
                 qCDebug(YuneecLog) << "_vehicleReady( YES )";
                 //-- If we have not received RC messages yet and the M4 is running, wait a bit longer
+#if defined(__androidx86__)
                 _m4Lib->checkVehicleReady();
+#endif
             }
         } else {
             qCDebug(YuneecLog) << "_vehicleReady( NOT )";
@@ -217,7 +260,9 @@ void
 TyphoonHM4Interface::_rcTimeout()
 {
     qCDebug(YuneecLog) << "RC Timeout";
+#if defined(__androidx86__)
     _m4Lib->setRcActive(false);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -231,7 +276,9 @@ TyphoonHM4Interface::_mavlinkMessageReceived(const mavlink_message_t& message)
         if(channels.time_boot_ms != _rcTime) {
             _rcTime = channels.time_boot_ms;
             _rcTimer.stop();
+#if defined(__androidx86__)
             _m4Lib->setRcActive(true);
+#endif
         } else {
             //-- The assumption here is that the SoftReboot happens quickly enough
             //   so we don't have to care.
@@ -251,10 +298,13 @@ TyphoonHM4Interface::_vehicleAdded(Vehicle* vehicle)
 {
     if(!_vehicle) {
         _vehicle = vehicle;
+
+#if defined(__androidx86__)
         _m4Lib->setVehicleConnected(true);
         connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &TyphoonHM4Interface::_mavlinkMessageReceived);
         //-- Set the "Big Red Button" to bind mode
         _m4Lib->setPowerKey(Yuneec::BIND_KEY_FUNCTION_BIND);
+#endif
     }
 }
 
@@ -266,9 +316,12 @@ TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
         qCDebug(YuneecLog) << "_vehicleRemoved()";
         disconnect(_vehicle, &Vehicle::mavlinkMessageReceived,  this, &TyphoonHM4Interface::_mavlinkMessageReceived);
         _vehicle = NULL;
+
+#if defined(__androidx86__)
         _m4Lib->setVehicleConnected(false);
         _m4Lib->setRcActive(false);
         _m4Lib->setPowerKey(Yuneec::BIND_KEY_FUNCTION_BIND);
+#endif
     }
 }
 
@@ -306,28 +359,40 @@ TyphoonHM4Interface::startCalibration()
         qCWarning(YuneecLog) << "Cannot start calibration while armed.";
         return;
     }
+
+#if defined(__androidx86__)
     _m4Lib->tryStartCalibration();
+#endif
 }
 
 //-----------------------------------------------------------------------------
 void
 TyphoonHM4Interface::stopCalibration()
 {
+#if defined(__androidx86__)
     _m4Lib->tryStopCalibration();
+#endif
 }
 
 //-----------------------------------------------------------------------------
 void
 TyphoonHM4Interface::softReboot()
 {
+#if defined(__androidx86__)
     _m4Lib->softReboot();
+#endif
 }
 
 //-----------------------------------------------------------------------------
 int
 TyphoonHM4Interface::calChannel(int index)
 {
+#if defined(__androidx86__)
     return _m4Lib->calChannel(index);
+#else
+    Q_UNUSED(index)
+    return 0;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -343,6 +408,7 @@ TyphoonHM4Interface::_rcActiveChanged()
 void
 TyphoonHM4Interface::_saveSettings(const M4Lib::RxBindInfo& rxBindInfo)
 {
+#if defined(__androidx86__)
     //-- Store RX Info
     QSettings settings;
     settings.beginGroup(kRxInfoGroup);
@@ -366,4 +432,7 @@ TyphoonHM4Interface::_saveSettings(const M4Lib::RxBindInfo& rxBindInfo)
     settings.setValue(kextraName,   QByteArray(reinterpret_cast<const char*>(rxBindInfo.extraName.data())));
     settings.setValue(ktxAddr,      rxBindInfo.txAddr);
     settings.endGroup();
+#else
+    Q_UNUSED(rxBindInfo);
+#endif
 }

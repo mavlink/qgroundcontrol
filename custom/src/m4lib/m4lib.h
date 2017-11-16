@@ -125,6 +125,8 @@ public:
     bool setPowerKey(int function);
     int calChannel(int index);
 
+#if defined(__androidx86__)
+    // These need to be ifdefd, otherwise we get linking errors.
     M4Lib(QObject* parent = NULL);
     ~M4Lib();
 
@@ -143,6 +145,7 @@ private slots:
     void _initSequence();
     void _stateManager();
     void _initAndCheckBinding                ();
+#endif
 
 private:
     bool _write(QByteArray data, bool debug);

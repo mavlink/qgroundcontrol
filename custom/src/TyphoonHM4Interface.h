@@ -82,7 +82,10 @@ signals:
     void    batteryUpdate                       ();
 
 private:
+
+#if defined(__androidx86__)
     M4Lib*                  _m4Lib;
+#endif
     Vehicle*                _vehicle;
     uint32_t                _rcTime;
     bool                    _threadShouldStop;
