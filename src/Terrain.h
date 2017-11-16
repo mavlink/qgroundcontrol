@@ -45,12 +45,21 @@ public:
     bool queryTerrainData(const QList<QGeoCoordinate>& coordinates);
 
     /**
+     * Cache all data in rectangular region given by list of coordinates.
+     *
+     * @param coordinates
+     * @return true on successful scheduling for download
+     */
+    bool cacheTerrainTiles(const QList<QGeoCoordinate>& coordinates);
+
+    /**
      * Cache all data in rectangular region given by south west and north east corner.
      *
      * @param southWest
      * @param northEast
+     * @return true on successful scheduling for download
      */
-    bool cacheTerrainTiles(const QList<QGeoCoordinate>& coordinates);
+    bool cacheTerrainTiles(const QGeoCoordinate& southWest, const QGeoCoordinate& northEast);
 
 signals:
     void terrainData(bool success, QList<float> altitudes);

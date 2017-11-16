@@ -157,6 +157,8 @@ QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
     } else {
         qWarning() <<  "QGCMapEngineManager::startDownload() No Tiles to save";
     }
+    // TODO: this could also get some feedback
+    _elevationProvider.cacheTerrainTiles(QGeoCoordinate(_bottomRightLat, _topleftLon), QGeoCoordinate(_topleftLat, _bottomRightLon));
 }
 
 //-----------------------------------------------------------------------------

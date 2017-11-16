@@ -95,6 +95,37 @@ bool ElevationProvider::queryTerrainData(const QList<QGeoCoordinate>& coordinate
     return true;
 }
 
+bool ElevationProvider::cacheTerrainTiles(const QGeoCoordinate& southWest, const QGeoCoordinate& northEast)
+{
+    qCDebug(TerrainLog) << "Cache terrain tiles southWest:northEast" << southWest << northEast;
+
+    // Correct corners of the tile to fixed grid
+    QGeoCoordinate southWestCorrected;
+    southWestCorrected.setLatitude(floor(southWest.latitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
+    southWestCorrected.setLongitude(floor(southWest.longitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
+    QGeoCoordinate northEastCorrected;
+    northEastCorrected.setLatitude(ceil(northEast.latitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
+    northEastCorrected.setLongitude(ceil(northEast.longitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
+
+    // Add all tiles to download queue
+    for (double lat = southWestCorrected.latitude() + TerrainTile::srtm1TileSize / 2.0; lat < northEastCorrected.latitude(); lat += TerrainTile::srtm1TileSize) {
+        for (double lon = southWestCorrected.longitude() + TerrainTile::srtm1TileSize / 2.0; lon < northEastCorrected.longitude(); lon += TerrainTile::srtm1TileSize) {
+            QString uniqueTileId = _uniqueTileId(QGeoCoordinate(lat, lon));
+            _tilesMutex.lock();
+            if (_downloadQueue.contains(uniqueTileId) || _tiles.contains(uniqueTileId)) {
+                _tilesMutex.unlock();
+                continue;
+            }
+            _downloadQueue.append(uniqueTileId.replace("_", ","));
+            _tilesMutex.unlock();
+            qCDebug(TerrainLog) << "Adding tile to download queue: " << uniqueTileId;
+        }
+    }
+
+    _downloadTiles();
+    return true;
+}
+
 bool ElevationProvider::cacheTerrainTiles(const QList<QGeoCoordinate>& coordinates)
 {
     if (coordinates.length() == 0) {
@@ -105,9 +136,10 @@ bool ElevationProvider::cacheTerrainTiles(const QList<QGeoCoordinate>& coordinat
         QString uniqueTileId = _uniqueTileId(coordinate);
         _tilesMutex.lock();
         if (_downloadQueue.contains(uniqueTileId) || _tiles.contains(uniqueTileId)) {
+            _tilesMutex.unlock();
             continue;
         }
-        _downloadQueue.append(uniqueTileId.replace("-", ","));
+        _downloadQueue.append(uniqueTileId.replace("_", ","));
         _tilesMutex.unlock();
         qCDebug(TerrainLog) << "Adding tile to download queue: " << uniqueTileId;
     }
@@ -166,7 +198,8 @@ void ElevationProvider::_requestFinishedTile()
         QJsonParseError parseError;
         QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
         qCDebug(TerrainLog) << "ERROR: Received " << responseJson;
-        // TODO: Handle error in downloading data
+        // TODO (birchera): Handle error in downloading data
+        _downloadTiles();
         return;
     }
 
@@ -175,7 +208,8 @@ void ElevationProvider::_requestFinishedTile()
     QJsonParseError parseError;
     QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
-        // TODO: Handle error in downloading data
+        // TODO (birchera): Handle error in downloading data
+        _downloadTiles();
         return;
     }
 
@@ -187,7 +221,7 @@ void ElevationProvider::_requestFinishedTile()
         } else {
             delete tile;
         }
-        _tilesMutex.lock();
+        _tilesMutex.unlock();
     }
 
     _downloadTiles();
@@ -202,7 +236,7 @@ void ElevationProvider::_downloadTiles(void)
         query.addQueryItem(QStringLiteral("points"), _downloadQueue.first());
         _downloadQueue.pop_front();
         _tilesMutex.unlock();
-        QUrl url(QStringLiteral("https://api.airmap.com/elevation/stage/srtm1/carpet"));
+        QUrl url(QStringLiteral("https://api.airmap.com/elevation/stage/srtm1/ele/carpet"));
         url.setQuery(query);
 
         QNetworkRequest request(url);
@@ -224,15 +258,17 @@ void ElevationProvider::_downloadTiles(void)
 
 QString ElevationProvider::_uniqueTileId(const QGeoCoordinate& coordinate)
 {
-    QGeoCoordinate southEast;
-    southEast.setLatitude(floor(coordinate.latitude()*40.0)/40.0);
-    southEast.setLongitude(floor(coordinate.longitude()*40.0)/40.0);
+    // Compute corners of the tile
+    QGeoCoordinate southWest;
+    southWest.setLatitude(floor(coordinate.latitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
+    southWest.setLongitude(floor(coordinate.longitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
     QGeoCoordinate northEast;
-    northEast.setLatitude(ceil(coordinate.latitude()*40.0)/40.0);
-    northEast.setLongitude(ceil(coordinate.longitude()*40.0)/40.0);
+    northEast.setLatitude(ceil(coordinate.latitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
+    northEast.setLongitude(ceil(coordinate.longitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
 
-    QString ret = QString::number(southEast.latitude(), 'f', 6) + "-" + QString::number(southEast.longitude(), 'f', 6) + "-" +
-                  QString::number(northEast.latitude(), 'f', 6) + "-" + QString::number(northEast.longitude(), 'f', 6);
+    // Generate uniquely identifying string
+    QString ret = QString::number(southWest.latitude(), 'f', 6) + "_" + QString::number(southWest.longitude(), 'f', 6) + "_" +
+                  QString::number(northEast.latitude(), 'f', 6) + "_" + QString::number(northEast.longitude(), 'f', 6);
     qCDebug(TerrainLog) << "Computing unique tile id for " << coordinate << ret;
 
     return ret;

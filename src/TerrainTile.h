@@ -74,10 +74,10 @@ public:
     QGeoCoordinate centerCoordinate(void) const;
 
     /// tile grid size in lat and lon
-    static const int    _gridSize = TERRAIN_TILE_SIZE;
+    static const int    gridSize = TERRAIN_TILE_SIZE;
 
     /// size of a tile in degree
-    static const double  _srtm1TileSize;
+    static const double  srtm1TileSize;
 
 private:
     QGeoCoordinate      _southWest;                                     /// South west corner of the tile
