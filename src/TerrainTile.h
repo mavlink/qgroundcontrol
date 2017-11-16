@@ -5,7 +5,7 @@
 
 #include <QGeoCoordinate>
 
-#define TERRAIN_TILE_SIZE 90
+#define TERRAIN_TILE_SIZE 91
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainTileLog)
 

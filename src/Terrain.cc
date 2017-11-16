@@ -30,39 +30,9 @@ ElevationProvider::ElevationProvider(QObject* parent)
 
 }
 
-bool ElevationProvider::queryTerrainData(const QList<QGeoCoordinate>& coordinates)
+bool ElevationProvider::queryTerrainDataPoints(const QList<QGeoCoordinate>& coordinates)
 {
-    if (coordinates.length() == 0) {
-        return false;
-    }
-
-    bool fallBackToOnline = false;
-    QList<float> altitudes;
-    foreach (QGeoCoordinate coordinate, coordinates) {
-        QString uniqueTileId = _uniqueTileId(coordinate);
-        _tilesMutex.lock();
-        if (!_tiles.contains(uniqueTileId)) {
-            _tilesMutex.unlock();
-            fallBackToOnline = true;
-            break;
-        } else {
-            if (_tiles[uniqueTileId].isIn(coordinate)) {
-                altitudes.push_back(_tiles[uniqueTileId].elevation(coordinate));
-            } else {
-                qCDebug(TerrainLog) << "Error: coordinate not in tile region";
-                altitudes.push_back(-1.0);
-            }
-        }
-        _tilesMutex.unlock();
-    }
-
-    if (!fallBackToOnline) {
-        qCDebug(TerrainLog) << "All altitudes taken from cached data";
-        emit terrainData(true, altitudes);
-        return true;
-    }
-
-    if (_state != State::Idle) {
+    if (_state != State::Idle || coordinates.length() == 0) {
         return false;
     }
 
@@ -95,6 +65,47 @@ bool ElevationProvider::queryTerrainData(const QList<QGeoCoordinate>& coordinate
     return true;
 }
 
+bool ElevationProvider::queryTerrainData(const QList<QGeoCoordinate>& coordinates)
+{
+    if (_state != State::Idle || coordinates.length() == 0) {
+        return false;
+    }
+
+    QList<float> altitudes;
+    bool needToDownload = false;
+    foreach (QGeoCoordinate coordinate, coordinates) {
+        QString uniqueTileId = _uniqueTileId(coordinate);
+        _tilesMutex.lock();
+        if (!_tiles.contains(uniqueTileId)) {
+            qCDebug(TerrainLog) << "Need to download tile " << uniqueTileId;
+            _downloadQueue.append(uniqueTileId);
+            needToDownload = true;
+        } else {
+            if (!needToDownload) {
+                if (_tiles[uniqueTileId].isIn(coordinate)) {
+                    altitudes.push_back(_tiles[uniqueTileId].elevation(coordinate));
+                } else {
+                    qCDebug(TerrainLog) << "Error: coordinate not in tile region";
+                    altitudes.push_back(-1.0);
+                }
+            }
+        }
+        _tilesMutex.unlock();
+    }
+
+    if (!needToDownload) {
+        qCDebug(TerrainLog) << "All altitudes taken from cached data";
+        emit terrainData(true, altitudes);
+        _coordinates.clear();
+        return true;
+    }
+
+    _coordinates = coordinates;
+
+    _downloadTiles();
+    return true;
+}
+
 bool ElevationProvider::cacheTerrainTiles(const QGeoCoordinate& southWest, const QGeoCoordinate& northEast)
 {
     qCDebug(TerrainLog) << "Cache terrain tiles southWest:northEast" << southWest << northEast;
@@ -116,7 +127,7 @@ bool ElevationProvider::cacheTerrainTiles(const QGeoCoordinate& southWest, const
                 _tilesMutex.unlock();
                 continue;
             }
-            _downloadQueue.append(uniqueTileId.replace("_", ","));
+            _downloadQueue.append(uniqueTileId);
             _tilesMutex.unlock();
             qCDebug(TerrainLog) << "Adding tile to download queue: " << uniqueTileId;
         }
@@ -139,7 +150,7 @@ bool ElevationProvider::cacheTerrainTiles(const QList<QGeoCoordinate>& coordinat
             _tilesMutex.unlock();
             continue;
         }
-        _downloadQueue.append(uniqueTileId.replace("_", ","));
+        _downloadQueue.append(uniqueTileId);
         _tilesMutex.unlock();
         qCDebug(TerrainLog) << "Adding tile to download queue: " << uniqueTileId;
     }
@@ -233,12 +244,13 @@ void ElevationProvider::_downloadTiles(void)
         QUrlQuery query;
         _tilesMutex.lock();
         qCDebug(TerrainLog) << "Starting download for " << _downloadQueue.first();
-        query.addQueryItem(QStringLiteral("points"), _downloadQueue.first());
+        query.addQueryItem(QStringLiteral("points"), _downloadQueue.first().replace("_", ","));
         _downloadQueue.pop_front();
         _tilesMutex.unlock();
         QUrl url(QStringLiteral("https://api.airmap.com/elevation/stage/srtm1/ele/carpet"));
         url.setQuery(query);
 
+        qWarning() << "url" << url;
         QNetworkRequest request(url);
 
         QNetworkProxy tProxy;
@@ -253,6 +265,8 @@ void ElevationProvider::_downloadTiles(void)
         connect(networkReply, &QNetworkReply::finished, this, &ElevationProvider::_requestFinishedTile);
 
         _state = State::Downloading;
+    } else if (_state == State::Idle) {
+        queryTerrainData(_coordinates);
     }
 }
 

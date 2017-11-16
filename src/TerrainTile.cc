@@ -141,8 +141,8 @@ float TerrainTile::elevation(const QGeoCoordinate& coordinate) const
     if (_isValid) {
         qCDebug(TerrainTileLog) << "elevation: " << coordinate << " , in sw " << _southWest << " , ne " << _northEast;
         // Get the index at resolution of 1 arc second
-        int indexLat = std::round((coordinate.latitude() - _southWest.latitude()) * gridSize / srtm1TileSize);
-        int indexLon = std::round((coordinate.longitude() - _southWest.longitude()) * gridSize / srtm1TileSize);
+        int indexLat = round((coordinate.latitude() - _southWest.latitude()) * (gridSize - 1) / srtm1TileSize);
+        int indexLon = round((coordinate.longitude() - _southWest.longitude()) * (gridSize - 1) / srtm1TileSize);
         qCDebug(TerrainTileLog) << "indexLat:indexLon" << indexLat << indexLon; // TODO (birchera): Move this down to the next debug output, once this is all properly working.
         Q_ASSERT(indexLat >= 0);
         Q_ASSERT(indexLat < gridSize);

@@ -38,7 +38,15 @@ public:
 
     /**
      * Async elevation query for a list of lon,lat coordinates. When the query is done, the terrainData() signal
-     * is emitted.
+     * is emitted. This call directly looks elevations up online.
+     * @param coordinates
+     * @return true on success
+     */
+    bool queryTerrainDataPoints(const QList<QGeoCoordinate>& coordinates);
+
+    /**
+     * Async elevation query for a list of lon,lat coordinates. When the query is done, the terrainData() signal
+     * is emitted. This call caches local elevation tables for faster lookup in the future.
      * @param coordinates
      * @return true on success
      */
@@ -80,6 +88,7 @@ private:
 
     State                       _state = State::Idle;
     QNetworkAccessManager       _networkManager;
+    QList<QGeoCoordinate>       _coordinates;
 
     static QMutex                       _tilesMutex;
     static QHash<QString, TerrainTile>  _tiles;
