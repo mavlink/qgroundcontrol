@@ -112,6 +112,13 @@ public:
     void setPairCommandCallback(std::function<void()> callback);
     void setSwitchStateChangedCallback(std::function<void(SwitchId, SwitchState)> callback);
     void setButtonStateChangedCallback(std::function<void(ButtonId, ButtonState)> callback);
+    void setRcActiveChangedCallback(std::function<void()> callback);
+    void setCalibrationCompleteChangedCallback(std::function<void()> callback);
+    void setCalibrationStateChangedCallback(std::function<void()> callback);
+    void setRawChannelsChangedCallback(std::function<void()> callback);
+    void setControllerLocationChangedCallback(std::function<void()> callback);
+    void setM4StateChangedCallback(std::function<void()> callback);
+    void setSaveSettingsCallback(std::function<void(const RxBindInfo& rxBindInfo)> callback);
 
     void setSettings(const RxBindInfo& rxBindInfo);
 
@@ -152,15 +159,6 @@ public:
     // These need to be ifdefd, otherwise we get linking errors.
     M4Lib(QObject* parent = NULL);
     ~M4Lib();
-
-signals:
-    void rcActiveChanged();
-    void calibrationCompleteChanged          ();
-    void calibrationStateChanged             ();
-    void rawChannelsChanged                  ();
-    void controllerLocationChanged           ();
-    void m4StateChanged                      ();
-    void saveSettings                        (const RxBindInfo& rxBindInfo);
 
 private slots:
     void _bytesReady(QByteArray data);
@@ -240,6 +238,13 @@ private:
     std::function<void()>   _pairCommandCallback = nullptr;
     std::function<void(SwitchId, SwitchState)> _switchStateChangedCallback = nullptr;
     std::function<void(ButtonId, ButtonState)> _buttonStateChangedCallback = nullptr;
+    std::function<void()> _rcActiveChangedCallback = nullptr;
+    std::function<void()> _calibrationCompleteChangedCallback = nullptr;
+    std::function<void()> _calibrationStateChangedCallback = nullptr;
+    std::function<void()> _rawChannelsChangedCallback = nullptr;
+    std::function<void()> _controllerLocationChangedCallback = nullptr;
+    std::function<void()> _m4StateChangedCallback = nullptr;
+    std::function<void(const RxBindInfo&)> _saveSettingsCallback = nullptr;
 
     int                     _state;
     int                     _responseTryCount;

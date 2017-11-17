@@ -61,18 +61,29 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     connect(&_rcTimer, &QTimer::timeout, this, &TyphoonHM4Interface::_rcTimeout);
 
 #if defined(__androidx86__)
-    connect(_m4Lib, &M4Lib::rcActiveChanged, this, &TyphoonHM4Interface::_rcActiveChanged);
-    connect(_m4Lib, &M4Lib::calibrationCompleteChanged, this, &TyphoonHM4Interface::calibrationCompleteChanged);
-    connect(_m4Lib, &M4Lib::calibrationStateChanged, this, &TyphoonHM4Interface::calibrationStateChanged);
-    connect(_m4Lib, &M4Lib::rawChannelsChanged, this, &TyphoonHM4Interface::rawChannelsChanged);
-    connect(_m4Lib, &M4Lib::controllerLocationChanged, this, &TyphoonHM4Interface::controllerLocationChanged);
-    connect(_m4Lib, &M4Lib::m4StateChanged, this, &TyphoonHM4Interface::m4StateChanged);
-    connect(_m4Lib, &M4Lib::saveSettings, this, &TyphoonHM4Interface::_saveSettings);
-
-    _m4Lib->setButtonStateChangedCallback(std::bind(&TyphoonHM4Interface::_buttonStateChanged, this,
-                                                    std::placeholders::_1, std::placeholders::_2));
-    _m4Lib->setSwitchStateChangedCallback(std::bind(&TyphoonHM4Interface::_switchStateChanged, this,
-                                                    std::placeholders::_1, std::placeholders::_2));
+    _m4Lib->setPairCommandCallback(
+                std::bind(&TyphoonHM4Interface::_sendMavlinkBindCommand, this));
+    _m4Lib->setButtonStateChangedCallback(
+                std::bind(&TyphoonHM4Interface::_buttonStateChanged, this,
+                          std::placeholders::_1, std::placeholders::_2));
+    _m4Lib->setSwitchStateChangedCallback(
+                std::bind(&TyphoonHM4Interface::_switchStateChanged, this,
+                          std::placeholders::_1, std::placeholders::_2));
+    _m4Lib->setRcActiveChangedCallback(
+                std::bind(&TyphoonHM4Interface::_rcActiveChanged, this));
+    _m4Lib->setCalibrationCompleteChangedCallback(
+                std::bind(&TyphoonHM4Interface::_calibrationCompleteChanged, this));
+    _m4Lib->setCalibrationStateChangedCallback(
+                std::bind(&TyphoonHM4Interface::_calibrationStateChanged, this));
+    _m4Lib->setRawChannelsChangedCallback(
+                std::bind(&TyphoonHM4Interface::_rawChannelsChanged, this));
+    _m4Lib->setControllerLocationChangedCallback(
+                std::bind(&TyphoonHM4Interface::_controllerLocationChanged, this));
+    _m4Lib->setM4StateChangedCallback(
+                std::bind(&TyphoonHM4Interface::_m4StateChanged, this));
+    _m4Lib->setSaveSettingsCallback(
+                std::bind(&TyphoonHM4Interface::_saveSettings, this,
+                          std::placeholders::_1));
 #endif
 }
 
@@ -128,7 +139,6 @@ TyphoonHM4Interface::init(bool skipConnections)
     settings.endGroup();
     qCDebug(YuneecLog) << "Init M4 Handler";
     _m4Lib->init();
-    _m4Lib->setPairCommandCallback(std::bind(&TyphoonHM4Interface::_sendMavlinkBindCommand, this));
     _m4Lib->setSettings(rxBindInfoFeedback);
 #endif
 
@@ -406,6 +416,41 @@ TyphoonHM4Interface::_rcActiveChanged()
     //-- It just finished binding. Set the timer and see if we are indeed bound.
     _rcTimer.start(1000);
     emit rcActiveChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHM4Interface::_calibrationCompleteChanged()
+{
+    emit calibrationCompleteChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHM4Interface::_calibrationStateChanged()
+{
+    emit calibrationStateChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHM4Interface::_rawChannelsChanged()
+{
+    emit rawChannelsChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHM4Interface::_controllerLocationChanged()
+{
+    emit controllerLocationChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHM4Interface::_m4StateChanged()
+{
+    emit m4StateChanged();
 }
 
 //-----------------------------------------------------------------------------

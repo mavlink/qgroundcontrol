@@ -56,6 +56,11 @@ private slots:
     void    _mavlinkMessageReceived             (const mavlink_message_t& message);
     void    _rcTimeout                          ();
     void    _rcActiveChanged                    ();
+    void    _calibrationCompleteChanged         ();
+    void    _calibrationStateChanged            ();
+    void    _rawChannelsChanged                 ();
+    void    _controllerLocationChanged          ();
+    void    _m4StateChanged                     ();
     void    _saveSettings                       (const M4Lib::RxBindInfo& rxBindInfo);
 
 private:

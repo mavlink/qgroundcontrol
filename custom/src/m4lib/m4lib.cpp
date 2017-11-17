@@ -102,7 +102,9 @@ M4Lib::setRcActive(bool rcActive)
 {
     if (_rcActive != rcActive) {
         _rcActive = rcActive;
-        emit rcActiveChanged();
+        if (_rcActiveChangedCallback) {
+            _rcActiveChangedCallback();
+        }
     }
 
     if (rcActive) {
@@ -164,6 +166,48 @@ void
 M4Lib::setButtonStateChangedCallback(std::function<void(ButtonId, ButtonState)> callback)
 {
     _buttonStateChangedCallback = callback;
+}
+
+void
+M4Lib::setRcActiveChangedCallback(std::function<void()> callback)
+{
+    _rcActiveChangedCallback = callback;
+}
+
+void
+M4Lib::setCalibrationCompleteChangedCallback(std::function<void()> callback)
+{
+    _calibrationCompleteChangedCallback = callback;
+}
+
+void
+M4Lib::setCalibrationStateChangedCallback(std::function<void()> callback)
+{
+    _calibrationStateChangedCallback = callback;
+}
+
+void
+M4Lib::setRawChannelsChangedCallback(std::function<void()> callback)
+{
+    _rawChannelsChangedCallback = callback;
+}
+
+void
+M4Lib::setControllerLocationChangedCallback(std::function<void()> callback)
+{
+    _controllerLocationChangedCallback = callback;
+}
+
+void
+M4Lib::setM4StateChangedCallback(std::function<void()> callback)
+{
+    _m4StateChangedCallback = callback;
+}
+
+void
+M4Lib::setSaveSettingsCallback(std::function<void(const RxBindInfo& rxBindInfo)> callback)
+{
+    _saveSettingsCallback = callback;
 }
 
 void
@@ -245,8 +289,12 @@ M4Lib::tryStartCalibration()
     if(_m4State != M4State::FACTORY_CAL) {
         memset(_rawChannelsCalibration, 0, sizeof(_rawChannelsCalibration));
         _rcCalibrationComplete = false;
-        emit calibrationCompleteChanged();
-        emit calibrationStateChanged();
+        if (_calibrationCompleteChangedCallback) {
+            _calibrationCompleteChangedCallback();
+        }
+        if (_calibrationStateChangedCallback) {
+            _calibrationStateChangedCallback();
+        }
         if(_m4State == M4State::RUN) {
             _exitRun();
             QThread::msleep(SEND_INTERVAL);
@@ -1170,7 +1218,9 @@ M4Lib::_handleQueryBindResponse(QByteArray data)
             qCDebug(YuneecLogVerbose) << "Switched to BOUND state with:" << QString::fromStdString(_getRxBindInfoFeedbackName());
             _state = STATE_EXIT_BIND;
             _exitBind();
-            emit saveSettings(_rxBindInfoFeedback);
+            if (_saveSettingsCallback) {
+                _saveSettingsCallback(_rxBindInfoFeedback);
+            }
             _timer.start(COMMAND_WAIT_INTERVAL);
         } else {
             qCWarning(YuneecLog) << "Response CMD_QUERY_BIND_STATE from unkown origin:" << nodeID;
@@ -1325,7 +1375,9 @@ M4Lib::_handleCommand(m4Packet& packet)
                 if(state != _m4State) {
                     M4State old_state = _m4State;
                     _m4State = state;
-                    emit m4StateChanged();
+                    if (_m4StateChangedCallback) {
+                        _m4StateChangedCallback();
+                    }
                     qCDebug(YuneecLog) << "New State:" << QString::fromStdString(m4StateStr()) << "(" << (int)_m4State << ")";
                     //-- If we were connected and just finished calibration, bind again
                     if(_vehicleConnected && old_state == M4State::FACTORY_CAL) {
@@ -1444,10 +1496,14 @@ M4Lib::_calibrationStateChanged(m4Packet &packet)
 
     if(_rcCalibrationComplete != state) {
         _rcCalibrationComplete = state;
-        emit calibrationCompleteChanged();
+        if (_calibrationCompleteChangedCallback) {
+            _calibrationCompleteChangedCallback();
+        }
     }
     if(change) {
-        emit calibrationStateChanged();
+        if (_calibrationStateChangedCallback) {
+            _calibrationStateChangedCallback();
+        }
     }
 }
 
@@ -1470,7 +1526,9 @@ M4Lib::_handleRawChannelData(m4Packet& packet)
         }
         _rawChannels.push_back(value);
     }
-    emit rawChannelsChanged();
+    if (_rawChannelsChangedCallback) {
+        _rawChannelsChangedCallback();
+    }
     /*
     QString resp = QString("Raw channels (%1): ").arg(analogChannelCount);
     QString temp;
@@ -1543,7 +1601,9 @@ M4Lib::_handleControllerFeedback(m4Packet& packet)
     _controllerLocation.speed        = _byteArrayToShort(commandValues, 14);
     _controllerLocation.angle        = _byteArrayToShort(commandValues, 16);
     _controllerLocation.satelliteCount = commandValues[18] & 0x1f;
-    emit controllerLocationChanged();
+    if (_controllerLocationChangedCallback) {
+        _controllerLocationChangedCallback();
+    }
 }
 
 
