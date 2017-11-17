@@ -62,13 +62,17 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
 
 #if defined(__androidx86__)
     connect(_m4Lib, &M4Lib::rcActiveChanged, this, &TyphoonHM4Interface::_rcActiveChanged);
-    connect(_m4Lib, &M4Lib::switchStateChanged, this, &TyphoonHM4Interface::switchStateChanged);
     connect(_m4Lib, &M4Lib::calibrationCompleteChanged, this, &TyphoonHM4Interface::calibrationCompleteChanged);
     connect(_m4Lib, &M4Lib::calibrationStateChanged, this, &TyphoonHM4Interface::calibrationStateChanged);
     connect(_m4Lib, &M4Lib::rawChannelsChanged, this, &TyphoonHM4Interface::rawChannelsChanged);
     connect(_m4Lib, &M4Lib::controllerLocationChanged, this, &TyphoonHM4Interface::controllerLocationChanged);
     connect(_m4Lib, &M4Lib::m4StateChanged, this, &TyphoonHM4Interface::m4StateChanged);
     connect(_m4Lib, &M4Lib::saveSettings, this, &TyphoonHM4Interface::_saveSettings);
+
+    _m4Lib->setButtonStateChangedCallback(std::bind(&TyphoonHM4Interface::_buttonStateChanged, this,
+                                                    std::placeholders::_1, std::placeholders::_2));
+    _m4Lib->setSwitchStateChangedCallback(std::bind(&TyphoonHM4Interface::_switchStateChanged, this,
+                                                    std::placeholders::_1, std::placeholders::_2));
 #endif
 }
 
@@ -435,4 +439,18 @@ TyphoonHM4Interface::_saveSettings(const M4Lib::RxBindInfo& rxBindInfo)
 #else
     Q_UNUSED(rxBindInfo);
 #endif
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHM4Interface::_buttonStateChanged(M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState)
+{
+    emit buttonStateChanged(buttonId, buttonState);
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHM4Interface::_switchStateChanged(M4Lib::SwitchId switchId, M4Lib::SwitchState switchState)
+{
+    emit switchStateChanged(switchId, switchState);
 }

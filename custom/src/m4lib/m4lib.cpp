@@ -3,6 +3,7 @@
 #include "m4util.h"
 #include "m4def.h"
 #include "m4serial.h"
+
 #include "TyphoonHM4Interface.h"
 
 #if defined(__androidx86__)
@@ -151,6 +152,18 @@ void
 M4Lib::setPairCommandCallback(std::function<void()> callback)
 {
     _pairCommandCallback = callback;
+}
+
+void
+M4Lib::setSwitchStateChangedCallback(std::function<void(SwitchId, SwitchState)> callback)
+{
+    _switchStateChangedCallback = callback;
+}
+
+void
+M4Lib::setButtonStateChangedCallback(std::function<void(ButtonId, ButtonState)> callback)
+{
+    _buttonStateChangedCallback = callback;
 }
 
 void
@@ -1341,10 +1354,63 @@ M4Lib::_switchChanged(m4Packet& packet)
     QByteArray commandValues = packet.commandValues();
     SwitchChanged switchChanged;
     switchChanged.hwId      = (int)commandValues[0];
-    switchChanged.newState  = (int)commandValues[1];
-    switchChanged.oldState  = (int)commandValues[2];
-    emit switchStateChanged(switchChanged.hwId, switchChanged.oldState, switchChanged.newState);
-    qCDebug(YuneecLog) << "Switches:" << switchChanged.hwId << switchChanged.newState << switchChanged.oldState;
+    switchChanged.newState  = (int)commandValues[2]; // This was previously mixed up with oldState
+    //switchChanged.oldState  = (int)commandValues[1]; // Unused.
+
+    switch (switchChanged.hwId) {
+        case Yuneec::BUTTON_POWER:
+            if (_buttonStateChangedCallback) {
+                //-- Pressed is 0
+                if (switchChanged.newState == 0) {
+                    _buttonStateChangedCallback(ButtonId::POWER, ButtonState::PRESSED);
+                    qCDebug(YuneecLogVerbose) << "Power button pressed";
+                } else {
+                    _buttonStateChangedCallback(ButtonId::POWER, ButtonState::NORMAL);
+                    qCDebug(YuneecLogVerbose) << "Power button normal";
+                }
+            }
+            break;
+        case Yuneec::BUTTON_OBS:
+            if (_switchStateChangedCallback) {
+                //-- On is position 3 (index 2)
+                if (switchChanged.newState == 2) {
+                    _switchStateChangedCallback(SwitchId::OBSTACLE_AVOIDENCE, SwitchState::ON);
+                    qCDebug(YuneecLogVerbose) << "Obstacle avoidance switch on";
+                } else if (switchChanged.newState == 1) {
+                    _switchStateChangedCallback(SwitchId::OBSTACLE_AVOIDENCE, SwitchState::CENTER);
+                    qCDebug(YuneecLogVerbose) << "Obstacle avoidance switch center";
+                } else {
+                    _switchStateChangedCallback(SwitchId::OBSTACLE_AVOIDENCE, SwitchState::OFF);
+                    qCDebug(YuneecLogVerbose) << "Obstacle avoidance switch off";
+                }
+            }
+            break;
+       case Yuneec::BUTTON_CAMERA_SHUTTER:
+            if (_buttonStateChangedCallback) {
+                if (switchChanged.newState == 0) {
+                    _buttonStateChangedCallback(ButtonId::CAMERA_SHUTTER, ButtonState::PRESSED);
+                    qCDebug(YuneecLogVerbose) << "Camera button pressed";
+                } else {
+                    _buttonStateChangedCallback(ButtonId::CAMERA_SHUTTER, ButtonState::NORMAL);
+                    qCDebug(YuneecLogVerbose) << "Camera button normal";
+                }
+            }
+           break;
+       case Yuneec::BUTTON_VIDEO_SHUTTER:
+            if (_buttonStateChangedCallback) {
+                if (switchChanged.newState == 0) {
+                    _buttonStateChangedCallback(ButtonId::VIDEO_SHUTTER, ButtonState::PRESSED);
+                    qCDebug(YuneecLogVerbose) << "Video button pressed";
+                } else {
+                    _buttonStateChangedCallback(ButtonId::VIDEO_SHUTTER, ButtonState::NORMAL);
+                    qCDebug(YuneecLogVerbose) << "Video button normal";
+                }
+            }
+            break;
+        default:
+            qCDebug(YuneecLogVerbose) << "Unhandled switch/button: " << switchChanged.hwId << " - " << switchChanged.newState;
+            break;
+    }
 }
 
 /*

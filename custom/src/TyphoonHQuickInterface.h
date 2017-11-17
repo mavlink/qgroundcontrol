@@ -11,6 +11,8 @@
 #include "VideoReceiver.h"
 #include "Vehicle.h"
 
+#include "m4lib/m4lib.h" // For button, switches
+
 #include <QQmlListProperty>
 
 class YExportFiles;
@@ -395,7 +397,8 @@ private slots:
     void    _flightUpdate               ();
     void    _powerTrigger               ();
     void    _rawChannelsChanged         ();
-    void    _switchStateChanged         (int swId, int newState, int oldState);
+    void    _switchStateChanged         (M4Lib::SwitchId switchId, M4Lib::SwitchState switchState);
+    void    _buttonStateChanged         (M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState);
     void    _importMissions             ();
     void    _calibrationCompleteChanged ();
     void    _calibrationStateChanged    ();

@@ -113,7 +113,7 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
 
     TyphoonHPlugin* pPlug = dynamic_cast<TyphoonHPlugin*>(qgcApp()->toolbox()->corePlugin());
     if(pPlug && pPlug->handler()) {
-        connect(pPlug->handler(), &TyphoonHM4Interface::switchStateChanged, this, &YuneecCameraControl::_switchStateChanged);
+        connect(pPlug->handler(), &TyphoonHM4Interface::buttonStateChanged, this, &YuneecCameraControl::_buttonStateChanged);
     }
 
     //-- Get Gimbal Version
@@ -622,13 +622,12 @@ YuneecCameraControl::_irStatusTimeout()
 
 //-----------------------------------------------------------------------------
 void
-YuneecCameraControl::_switchStateChanged(int swId, int oldState, int newState)
+YuneecCameraControl::_buttonStateChanged(M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState)
 {
-    Q_UNUSED(oldState);
     //-- On Button Down
-    if(newState == 1) {
-        switch(swId) {
-            case Yuneec::BUTTON_CAMERA_SHUTTER:
+    if(buttonState == M4Lib::ButtonState::PRESSED) {
+        switch(buttonId) {
+            case M4Lib::ButtonId::CAMERA_SHUTTER:
                 //-- Do we have storage (in kb) and is camera idle?
                 if(storageTotal() == 0 || storageFree() < 250 || (photoMode() == PHOTO_CAPTURE_SINGLE && photoStatus() != PHOTO_CAPTURE_IDLE)) {
                     //-- Undefined camera state
@@ -669,7 +668,7 @@ YuneecCameraControl::_switchStateChanged(int swId, int oldState, int newState)
                     }
                 }
                 break;
-            case Yuneec::BUTTON_VIDEO_SHUTTER:
+            case M4Lib::ButtonId::VIDEO_SHUTTER:
                 //-- Do we have storage (in kb) and is camera idle?
                 if(storageTotal() == 0 || storageFree() < 250 || photoStatus() != PHOTO_CAPTURE_IDLE) {
                     //-- Undefined camera state

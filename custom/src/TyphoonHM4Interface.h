@@ -60,10 +60,13 @@ private slots:
 
 private:
     void    _sendMavlinkBindCommand             ();
+    void    _buttonStateChanged                 (M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState);
+    void    _switchStateChanged                 (M4Lib::SwitchId buttonId, M4Lib::SwitchState switchState);
 
 signals:
     void    m4StateChanged                      ();
-    void    switchStateChanged                  (int swId, int oldState, int newState);
+    void    buttonStateChanged                  (M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState);
+    void    switchStateChanged                  (M4Lib::SwitchId switchId, M4Lib::SwitchState switchState);
     void    destroyed                           ();
     void    controllerLocationChanged           ();
     void    armedChanged                        (bool armed);

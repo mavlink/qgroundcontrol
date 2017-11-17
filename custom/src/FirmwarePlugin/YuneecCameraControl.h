@@ -13,6 +13,8 @@
 #include <QSize>
 #include <QPoint>
 
+#include "m4lib/m4lib.h" // for button states
+
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLog)
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLogVerbose)
 
@@ -136,7 +138,7 @@ public:
 private slots:
     void    _recTimerHandler        ();
     void    _mavlinkMessageReceived (const mavlink_message_t& message);
-    void    _switchStateChanged     (int swId, int oldState, int newState);
+    void    _buttonStateChanged     (M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState);
     void    _parametersReady        ();
     void    _sendUpdates            ();
     void    _delayedStartVideo      ();

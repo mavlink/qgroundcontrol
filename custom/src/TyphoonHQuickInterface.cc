@@ -142,6 +142,7 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(_pHandler, &TyphoonHM4Interface::wifiDisconnected,             this, &TyphoonHQuickInterface::_wifiDisconnected);
         connect(_pHandler, &TyphoonHM4Interface::batteryUpdate,                this, &TyphoonHQuickInterface::_batteryUpdate);
         connect(_pHandler, &TyphoonHM4Interface::rawChannelsChanged,           this, &TyphoonHQuickInterface::_rawChannelsChanged);
+        connect(_pHandler, &TyphoonHM4Interface::buttonStateChanged,           this, &TyphoonHQuickInterface::_buttonStateChanged);
         connect(_pHandler, &TyphoonHM4Interface::switchStateChanged,           this, &TyphoonHQuickInterface::_switchStateChanged);
         connect(_pHandler, &TyphoonHM4Interface::calibrationStateChanged,      this, &TyphoonHQuickInterface::_calibrationStateChanged);
         connect(_pHandler, &TyphoonHM4Interface::calibrationCompleteChanged,   this, &TyphoonHQuickInterface::_calibrationCompleteChanged);
@@ -421,24 +422,29 @@ TyphoonHQuickInterface::_powerTrigger()
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::_switchStateChanged(int swId, int newState, int /*oldState*/)
+TyphoonHQuickInterface::_switchStateChanged(M4Lib::SwitchId switchId, M4Lib::SwitchState switchState)
 {
-    //qDebug() << "Switch:" << swId << newState;
-    if(swId == Yuneec::BUTTON_POWER) {
-        //-- Pressed is 0
-        if(newState == 0) {
-            _powerTimer.start(1000);
-        } else {
-            _powerTimer.stop();
-        }
-    } else if(swId == Yuneec::BUTTON_OBS) {
-        //-- On is position 3 (index 2)
-        if(newState == 2 && !_obsState) {
+    if(switchId == M4Lib::SwitchId::OBSTACLE_AVOIDENCE) {
+        if(switchState == M4Lib::SwitchState::ON && !_obsState) {
+
             _obsState = true;
             emit obsStateChanged();
         } else if(_obsState) {
             _obsState = false;
             emit obsStateChanged();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_buttonStateChanged(M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState)
+{
+    if(buttonId == M4Lib::ButtonId::POWER) {
+        if(buttonState == M4Lib::ButtonState::PRESSED) {
+            _powerTimer.start(1000);
+        } else {
+            _powerTimer.stop();
         }
     }
 }

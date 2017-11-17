@@ -85,10 +85,33 @@ public:
         float angle = 0.0f;
     };
 
+    enum class SwitchId {
+        OBSTACLE_AVOIDENCE,
+    };
+
+    enum class SwitchState {
+        OFF,
+        CENTER,
+        ON
+    };
+
+    enum class ButtonId {
+        POWER,
+        CAMERA_SHUTTER,
+        VIDEO_SHUTTER,
+    };
+
+    enum class ButtonState {
+        NORMAL,
+        PRESSED
+    };
+
     void init();
     void deinit();
 
     void setPairCommandCallback(std::function<void()> callback);
+    void setSwitchStateChangedCallback(std::function<void(SwitchId, SwitchState)> callback);
+    void setButtonStateChangedCallback(std::function<void(ButtonId, ButtonState)> callback);
 
     void setSettings(const RxBindInfo& rxBindInfo);
 
@@ -132,7 +155,6 @@ public:
 
 signals:
     void rcActiveChanged();
-    void switchStateChanged                  (int swId, int oldState, int newState);
     void calibrationCompleteChanged          ();
     void calibrationStateChanged             ();
     void rawChannelsChanged                  ();
@@ -216,6 +238,8 @@ private:
     };
 
     std::function<void()>   _pairCommandCallback = nullptr;
+    std::function<void(SwitchId, SwitchState)> _switchStateChangedCallback = nullptr;
+    std::function<void(ButtonId, ButtonState)> _buttonStateChangedCallback = nullptr;
 
     int                     _state;
     int                     _responseTryCount;
