@@ -15,7 +15,67 @@
 #include "Vehicle.h"
 
 //-----------------------------------------------------------------------------
-// M4 Handler
+// Timer class for M4Lib
+class TimerUsingQt : public QObject, public TimerInterface {
+    Q_OBJECT
+signals:
+    void started(int time_ms);
+    void stopped();
+
+public:
+    TimerUsingQt(QObject* parent = NULL) {
+        Q_UNUSED(parent);
+        _timer.setSingleShot(true);
+        connect(&_timer, &QTimer::timeout, this, &TimerUsingQt::_timeout);
+        connect(this, &TimerUsingQt::started, this, &TimerUsingQt::_started);
+        connect(this, &TimerUsingQt::stopped, this, &TimerUsingQt::_stopped);
+    }
+
+    void start(int time_ms) final {
+        // The QT Timer needs to be called from the main thread.
+        emit started(time_ms);
+    }
+
+    void stop() final {
+        emit stopped();
+    }
+
+    void setCallback(std::function<void()> callback) final {
+        _callback = callback;
+    }
+
+    virtual ~TimerUsingQt()
+    {
+        qCDebug(YuneecLogVerbose) << "timer destructed";
+        _callback = nullptr;
+    }
+
+private slots:
+    void _started(int time_ms) {
+        _timer.start(time_ms);
+    }
+
+    void _stopped() {
+        _timer.stop();
+    }
+
+private:
+    void _timeout()
+    {
+        if (_callback) {
+            _callback();
+        } else {
+            qCDebug(YuneecLogVerbose) << "callback not set";
+            abort();
+        }
+    }
+
+    QTimer _timer;
+    std::function<void()> _callback = nullptr;
+};
+
+//-----------------------------------------------------------------------------
+// Interface to everything St16 specific including the M4 microprocessor.
 class TyphoonHM4Interface : public QThread
 {
     Q_OBJECT
@@ -92,6 +152,7 @@ signals:
 private:
 
 #if defined(__androidx86__)
+    TimerUsingQt            _m4LibTimer;
     M4Lib*                  _m4Lib;
 #endif
     Vehicle*                _vehicle;
@@ -99,3 +160,4 @@ private:
     bool                    _threadShouldStop;
     QTimer                  _rcTimer;
 };
+

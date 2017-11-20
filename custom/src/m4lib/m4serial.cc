@@ -115,6 +115,13 @@ M4SerialComm::tryRead()
 }
 
 //-----------------------------------------------------------------------------
+void
+M4SerialComm::setBytesReadyCallback(std::function<void(QByteArray)> callback)
+{
+    _bytesReadyCallback = callback;
+}
+
+//-----------------------------------------------------------------------------
 bool
 M4SerialComm::_readData(void *buffer, int len)
 {
@@ -149,7 +156,9 @@ M4SerialComm::_readPacket(uint8_t length)
                 uint8_t oCRC = crc8(buffer, length);
                 if(iCRC == oCRC) {
                     QByteArray data((const char*)buffer, length);
-                    emit bytesReady(data);
+                    if (_bytesReadyCallback) {
+                        _bytesReadyCallback(data);
+                    }
                 } else {
                     qCDebug(YuneecLog) << "Bad CRC" << length << iCRC << oCRC;
                 }

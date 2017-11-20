@@ -55,8 +55,9 @@ dump_data_packet(QByteArray data)
 #endif
 
 
-M4Lib::M4Lib(QObject* parent)
-    : QObject(parent)
+M4Lib::M4Lib(TimerInterface& timer)
+    : QObject(NULL)
+    , _timer(timer)
     , _state(STATE_NONE)
     , _responseTryCount(0)
     , _m4State(M4State::NONE)
@@ -69,12 +70,12 @@ M4Lib::M4Lib(QObject* parent)
     , _binding(false)
 {
     _commPort = new M4SerialComm(this);
+    _commPort->setBytesReadyCallback(std::bind(&M4Lib::_bytesReady, this, std::placeholders::_1));
 
     _rxchannelInfoIndex = 2;
     _channelNumIndex    = 6;
 
-    _timer.setSingleShot(true);
-    connect(&_timer,   &QTimer::timeout, this, &M4Lib::_stateManager);
+    _timer.setCallback(std::bind(&M4Lib::_stateManager, this));
     memset(_rawChannelsCalibration, 0, sizeof(_rawChannelsCalibration));
 }
 
@@ -133,8 +134,6 @@ M4Lib::init()
     if(!_commPort || !_commPort->init(kUartName, 230400) || !_commPort->open()) {
         //-- TODO: If this ever happens, we need to do something about it
         qCWarning(YuneecLog) << "Could not start serial communication with M4";
-    } else {
-        connect(_commPort, &M4SerialComm::bytesReady, this, &M4Lib::_bytesReady);
     }
 
     setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
@@ -146,7 +145,6 @@ void
 M4Lib::deinit()
 {
     _timer.stop();
-    disconnect(_commPort, &M4SerialComm::bytesReady, this, &M4Lib::_bytesReady);
     _commPort->close();
 }
 

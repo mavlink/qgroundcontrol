@@ -4,6 +4,18 @@
 #include "m4serial.h"
 #include "m4util.h"
 
+#include <functional>
+
+
+class TimerInterface {
+public:
+    virtual void start(int time_ms) = 0;
+    virtual void stop() = 0;
+    virtual void setCallback(std::function<void()> callback) = 0;
+    virtual ~TimerInterface() = default;
+};
+
+
 class M4Lib : public QObject
 {
     Q_OBJECT
@@ -119,7 +131,6 @@ public:
     void setControllerLocationChangedCallback(std::function<void()> callback);
     void setM4StateChangedCallback(std::function<void()> callback);
     void setSaveSettingsCallback(std::function<void(const RxBindInfo& rxBindInfo)> callback);
-
     void setSettings(const RxBindInfo& rxBindInfo);
 
     void tryRead();
@@ -157,7 +168,7 @@ public:
 
 #if defined(__androidx86__)
     // These need to be ifdefd, otherwise we get linking errors.
-    M4Lib(QObject* parent = NULL);
+    M4Lib(TimerInterface& timer);
     ~M4Lib();
 
 private slots:
@@ -216,6 +227,8 @@ private:
 
     M4SerialComm* _commPort;
 
+    TimerInterface& _timer;
+
     enum {
         STATE_NONE,
         STATE_ENTER_BIND_ERROR,
@@ -251,7 +264,6 @@ private:
     M4State                 _m4State;
     uint8_t                 _channelNumIndex;
     RxBindInfo              _rxBindInfoFeedback;
-    QTimer                  _timer;
     int                     _currentChannelAdd;
     uint8_t                 _rxLocalIndex;
     uint8_t                 _rxchannelInfoIndex;

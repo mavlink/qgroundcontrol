@@ -13,6 +13,7 @@
 #if defined(__androidx86__)
 
 #include <termios.h>
+#include <functional>
 
 class M4SerialComm : public QObject
 {
@@ -26,6 +27,7 @@ public:
     bool        write   (QByteArray data, bool debug = false);
     bool        write   (void* data, int length);
     void        tryRead ();
+    void        setBytesReadyCallback(std::function<void(QByteArray)> callback);
 
 private:
     int         _openPort       (const char* port);
@@ -33,8 +35,6 @@ private:
     bool        _setupPort      (int baud);
     void        _readPacket     (uint8_t length);
     bool        _readData       (void *buffer, int len);
-signals:
-    void        bytesReady      (QByteArray data);
 
 private:
     enum class SerialPortState {
@@ -54,6 +54,7 @@ private:
     QString     _uart_name {};
     PacketState _currentPacketStatus = PacketState::NONE;
     struct termios  _savedtio;
+    std::function<void(QByteArray)> _bytesReadyCallback = nullptr;
 };
 
 #endif
