@@ -11,15 +11,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#endif
 
 //-----------------------------------------------------------------------------
 M4SerialComm::M4SerialComm(QObject* parent)
     : QObject(parent)
-    , _fd(-1)
-    , _baudrate(230400)
-    , _status(SERIAL_PORT_CLOSED)
-    , _currentPacketStatus(PACKET_NONE)
 {
 
 }
@@ -43,8 +38,7 @@ M4SerialComm::init(QString port, int baud)
 bool
 M4SerialComm::open()
 {
-#if defined(__androidx86__)
-    if(_status != SERIAL_PORT_CLOSED || _fd >= 0) {
+    if(_serialPortStatus != SerialPortState::CLOSED || _fd >= 0) {
         return false;
     }
     _fd = _openPort(_uart_name.toLatin1().data());
@@ -57,8 +51,7 @@ M4SerialComm::open()
     if(!_setupPort(_baudrate)) {
         return false;
     }
-    _status = SERIAL_PORT_OPEN;
-#endif
+    _serialPortStatus = SerialPortState::OPEN;
     return true;
 }
 
@@ -66,8 +59,7 @@ M4SerialComm::open()
 void
 M4SerialComm::close()
 {
-#if defined(__androidx86__)
-    _status = SERIAL_PORT_CLOSED;
+    _serialPortStatus = SerialPortState::CLOSED;
     if(_fd >= 0) {
       //tcsetattr(_fd, TCSANOW, &_savedtio);
         ::close(_fd);
@@ -76,7 +68,6 @@ M4SerialComm::close()
     //    qCDebug(YuneecLog) << "SERIAL: Timeout waiting for thread to end";
     //}
     _fd = -1;
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -98,44 +89,41 @@ bool M4SerialComm::write(void* data, int length)
 void
 M4SerialComm::tryRead()
 {
-#if defined(__androidx86__)
-    if(_status == SERIAL_PORT_OPEN) {
+    if(_serialPortStatus == SerialPortState::OPEN) {
         uint8_t b;
         if(::read(_fd, &b, 1) == 1) {
             switch (_currentPacketStatus) {
-                case PACKET_NONE:
+                case PacketState::NONE:
                     if(b == 0x55) {
-                        _currentPacketStatus = PACKET_FIRST_ID;
+                        _currentPacketStatus = PacketState::FIRST_ID;
                     }
                     break;
-                case PACKET_FIRST_ID:
+                case PacketState::FIRST_ID:
                     if(b == 0x55) {
-                        _currentPacketStatus = PACKET_SECOND_ID;
+                        _currentPacketStatus = PacketState::SECOND_ID;
                     } else {
-                        _currentPacketStatus = PACKET_NONE;
+                        _currentPacketStatus = PacketState::NONE;
                     }
                     break;
-                case PACKET_SECOND_ID:
+                case PacketState::SECOND_ID:
                     _readPacket(b);
-                    _currentPacketStatus = PACKET_NONE;
+                    _currentPacketStatus = PacketState::NONE;
                     break;
             }
         }
     }
-#endif
 }
 
 //-----------------------------------------------------------------------------
 bool
 M4SerialComm::_readData(void *buffer, int len)
 {
-#if defined(__androidx86__)
     int tries = 0;
     int left  = len;
     uint8_t* ptr = (uint8_t*)buffer;
     while(left > 0) {
         int count = ::read(_fd, ptr, left);
-        if(count < 0 || _status != SERIAL_PORT_OPEN || _fd < 0) {
+        if(count < 0 || _serialPortStatus != SerialPortState::OPEN || _fd < 0) {
             return false;
         }
         left -= count;
@@ -145,18 +133,12 @@ M4SerialComm::_readData(void *buffer, int len)
         }
     }
     return true;
-#else
-    Q_UNUSED(buffer);
-    Q_UNUSED(len);
-    return false;
-#endif
 }
 
 //-----------------------------------------------------------------------------
 void
 M4SerialComm::_readPacket(uint8_t length)
 {
-#if defined(__androidx86__)
     if(length > 1) {
         length--; //-- Skip CRC from count
         uint8_t buffer[260];
@@ -178,32 +160,23 @@ M4SerialComm::_readPacket(uint8_t length)
             qCDebug(YuneecLog) << "Missed message payload";
         }
     }
-#else
-    Q_UNUSED(length);
-#endif
 }
 
 //-----------------------------------------------------------------------------
 int
 M4SerialComm::_openPort(const char* port)
 {
-#if defined(__androidx86__)
     int fd = ::open(port, O_RDWR | O_NOCTTY | O_NDELAY);
     if(fd >= 0) {
         fcntl(fd, F_SETFL, 0);
     }
     return fd;
-#else
-    Q_UNUSED(port);
-    return 0;
-#endif
 }
 
 //-----------------------------------------------------------------------------
 bool
 M4SerialComm::_setupPort(int baud)
 {
-#if defined(__androidx86__)
     struct termios config;
     bzero(&config, sizeof(config));
     config.c_cflag |= (CS8 | CLOCAL | CREAD);
@@ -245,25 +218,17 @@ M4SerialComm::_setupPort(int baud)
         return false;
     }
     return true;
-#else
-    Q_UNUSED(baud)
-    return true;
-#endif
 }
 
 //-----------------------------------------------------------------------------
 int
 M4SerialComm::_writePort(void* buffer, int len)
 {
-#if defined(__androidx86__)
     int written = ::write(_fd, buffer, len);
     if(written != len && written >= 0) {
         qCWarning(YuneecLog) << QString("SERIAL: Wrote only %1 bytes out of %2 bytes").arg(written).arg(len);
     }
     return written;
-#else
-    Q_UNUSED(buffer);
-    Q_UNUSED(len);
-    return len;
-#endif
 }
+
+#endif // defined(__androidx86__)
