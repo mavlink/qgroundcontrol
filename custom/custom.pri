@@ -122,8 +122,8 @@ SOURCES += \
 
 !DesktopPlanner {
     SOURCES += \
-        $$PWD/src/m4lib/m4serial.cc \
-        $$PWD/src/m4lib/m4util.cc \
+        $$PWD/src/m4lib/m4serial.cpp \
+        $$PWD/src/m4lib/m4util.cpp \
         $$PWD/src/m4lib/m4lib.cpp \
         $$PWD/src/TyphoonHM4Interface.cc \
         $$PWD/src/TyphoonHQuickInterface.cc \
