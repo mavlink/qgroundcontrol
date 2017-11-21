@@ -171,13 +171,12 @@ public:
     M4Lib(TimerInterface& timer);
     ~M4Lib();
 
-private slots:
+private:
     void _bytesReady(QByteArray data);
     void _initSequence();
     void _stateManager();
-    void _initAndCheckBinding                ();
+    void _initAndCheckBinding();
 
-private:
     bool _write(QByteArray data, bool debug);
     void _tryEnterBindMode();
     bool _exitToAwait();
@@ -198,7 +197,7 @@ private:
     bool _sendTableDeviceLocalInfo(TableDeviceLocalInfo_t localInfo);
     bool _sendTableDeviceChannelInfo(TableDeviceChannelInfo_t channelInfo);
     bool _sendTableDeviceChannelNumInfo(ChannelNumType_t channelNumType);
-    bool _sendRxResInfo                      ();
+    bool _sendRxResInfo();
 
     bool _sendPassthroughMessage(QByteArray message);
 

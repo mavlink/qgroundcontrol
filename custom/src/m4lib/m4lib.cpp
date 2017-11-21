@@ -292,7 +292,9 @@ M4Lib::_tryEnterBindMode()
     } else if(_m4State == M4State::RUN) {
         _exitRun();
     }
-    QTimer::singleShot(1000, this, &M4Lib::_initSequence);
+    // TODO: check this, it seems the delay is not needed.
+    //QTimer::singleShot(1000, this, &M4Lib::_initSequence);
+    _initSequence();
 }
 
 void
@@ -300,7 +302,9 @@ M4Lib::checkVehicleReady()
 {
     if(_m4State == M4State::RUN && !_rcActive) {
         qCDebug(YuneecLog) << "In RUN mode but no RC yet";
-        QTimer::singleShot(2000, this, &M4Lib::_initAndCheckBinding);
+        // TODO: check this, it seems the delay is not needed.
+        //QTimer::singleShot(2000, this, &M4Lib::_initAndCheckBinding);
+        _initAndCheckBinding();
     } else {
         if(_m4State != M4State::RUN) {
             //-- The M4 is not initialized
@@ -1201,7 +1205,9 @@ M4Lib::_bytesReady(QByteArray data)
                         if(_binding) {
                             _binding = false;
                             qCDebug(YuneecLogVerbose) << "Soft reboot...";
-                            QTimer::singleShot(1000, this, &M4Lib::softReboot);
+                            // TODO: check this, it seems the delay is not needed.
+                            //QTimer::singleShot(1000, this, &M4Lib::softReboot);
+                            softReboot();
                         } else {
                             qCDebug(YuneecLogVerbose) << "M4 ready, in run state.";
                         }
