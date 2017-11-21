@@ -75,6 +75,18 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+// Sleeper class for M4Lib
+class SleeperUsingQt : public SleeperInterface {
+public:
+    SleeperUsingQt() {
+    }
+
+    void msleep(int duration_ms) final {
+        QThread::msleep(duration_ms);
+    }
+};
+
+//-----------------------------------------------------------------------------
 // Interface to everything St16 specific including the M4 microprocessor.
 class TyphoonHM4Interface : public QThread
 {
@@ -148,6 +160,7 @@ private:
 
 #if defined(__androidx86__)
     TimerUsingQt            _m4LibTimer;
+    SleeperUsingQt          _m4LibSleeper;
     M4Lib*                  _m4Lib;
 #endif
     Vehicle*                _vehicle;

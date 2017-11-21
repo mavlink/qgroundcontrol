@@ -55,9 +55,10 @@ dump_data_packet(QByteArray data)
 #endif
 
 
-M4Lib::M4Lib(TimerInterface& timer)
+M4Lib::M4Lib(TimerInterface& timer, SleeperInterface& sleeper)
     : QObject(NULL)
     , _timer(timer)
+    , _sleeper(sleeper)
     , _state(STATE_NONE)
     , _responseTryCount(0)
     , _m4State(M4State::NONE)
@@ -83,9 +84,9 @@ M4Lib::~M4Lib()
 {
     _state = STATE_NONE;
     _exitRun();
-    QThread::msleep(SEND_INTERVAL);
+    _sleeper.msleep(SEND_INTERVAL);
     setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
-    QThread::msleep(SEND_INTERVAL * 2);
+    _sleeper.msleep(SEND_INTERVAL * 2);
 
     if(_commPort) {
         delete _commPort;
@@ -167,7 +168,7 @@ M4Lib::init()
     }
 
     setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
-    QThread::msleep(SEND_INTERVAL);
+    _sleeper.msleep(SEND_INTERVAL);
 #endif
 }
 
@@ -329,7 +330,7 @@ M4Lib::tryStartCalibration()
         }
         if(_m4State == M4State::RUN) {
             _exitRun();
-            QThread::msleep(SEND_INTERVAL);
+            _sleeper.msleep(SEND_INTERVAL);
         }
         _enterFactoryCalibration();
     }
@@ -353,7 +354,7 @@ M4Lib::softReboot()
         qCDebug(YuneecLogVerbose) << "softReboot() -> Already bound. Skipping it...";
     } else {
         deinit();
-        QThread::msleep(SEND_INTERVAL);
+        _sleeper.msleep(SEND_INTERVAL);
         _state              = STATE_NONE;
         _responseTryCount   = 0;
         _currentChannelAdd  = 0;
@@ -362,7 +363,7 @@ M4Lib::softReboot()
         _sendRxInfoEnd      = false;
         _rxchannelInfoIndex = 2;
         _channelNumIndex    = 6;
-        QThread::msleep(SEND_INTERVAL);
+        _sleeper.msleep(SEND_INTERVAL);
         init();
     }
     // We want to recheck if we are really bound, so we set RC inactive and wait to
@@ -953,7 +954,7 @@ M4Lib::_sendRxResInfo()
     if(!_sendTableDeviceChannelInfo(channelInfo)) {
         return _sendRxInfoEnd;
     }
-    QThread::msleep(SEND_INTERVAL);
+    _sleeper.msleep(SEND_INTERVAL);
     _generateTableDeviceLocalInfo(&localInfo);
     if(!_sendTableDeviceLocalInfo(localInfo)) {
         return _sendRxInfoEnd;
@@ -1001,23 +1002,23 @@ M4Lib::_generateTableDeviceChannelInfo(TableDeviceChannelInfo_t* channelInfo)
     if(!_sendTableDeviceChannelNumInfo(ChannelNumAanlog)) {
         return false;
     }
-    QThread::msleep(SEND_INTERVAL);
+    _sleeper.msleep(SEND_INTERVAL);
     channelInfo->analogType = _channelNumIndex - 1;
     if(!_sendTableDeviceChannelNumInfo(ChannelNumTrim)) {
         return false;
     }
-    QThread::msleep(SEND_INTERVAL);
+    _sleeper.msleep(SEND_INTERVAL);
     channelInfo->trimType = _channelNumIndex - 1;
     if(!_sendTableDeviceChannelNumInfo(ChannelNumSwitch)) {
         return false;
     }
-    QThread::msleep(SEND_INTERVAL);
+    _sleeper.msleep(SEND_INTERVAL);
     channelInfo->switchType = _channelNumIndex - 1;
     // generate reply channel map
     if(!_sendTableDeviceChannelNumInfo(ChannelNumMonitor)) {
         return false;
     }
-    QThread::msleep(SEND_INTERVAL);
+    _sleeper.msleep(SEND_INTERVAL);
     channelInfo->replyChannelType   = _channelNumIndex - 1;
     channelInfo->requestChannelType = _channelNumIndex - 1;
     // generate extra channel map
@@ -1025,7 +1026,7 @@ M4Lib::_generateTableDeviceChannelInfo(TableDeviceChannelInfo_t* channelInfo)
         return false;
     }
     channelInfo->extraType = _channelNumIndex - 1;
-    QThread::msleep(SEND_INTERVAL);
+    _sleeper.msleep(SEND_INTERVAL);
     _rxchannelInfoIndex++;
     return true;
 }

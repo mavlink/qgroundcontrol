@@ -7,12 +7,22 @@
 #include <functional>
 
 
+// In order to use M4Lib, this interface needs to be implemented
+// and injected when constructing M4Lib.
 class TimerInterface {
 public:
     virtual void start(int time_ms) = 0;
     virtual void stop() = 0;
     virtual void setCallback(std::function<void()> callback) = 0;
     virtual ~TimerInterface() = default;
+};
+
+// In order to use M4Lib, this interface needs to be implemented
+// and injected when constructing M4Lib.
+class SleeperInterface {
+public:
+    virtual void msleep(int duration_ms) = 0;
+    virtual ~SleeperInterface() = default;
 };
 
 
@@ -168,7 +178,7 @@ public:
 
 #if defined(__androidx86__)
     // These need to be ifdefd, otherwise we get linking errors.
-    M4Lib(TimerInterface& timer);
+    M4Lib(TimerInterface& timer, SleeperInterface& sleeper);
     ~M4Lib();
 
 private:
@@ -226,6 +236,7 @@ private:
     M4SerialComm* _commPort;
 
     TimerInterface& _timer;
+    SleeperInterface& _sleeper;
 
     enum {
         STATE_NONE,
