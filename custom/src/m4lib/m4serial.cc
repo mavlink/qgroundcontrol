@@ -74,13 +74,13 @@ M4SerialComm::close()
 }
 
 //-----------------------------------------------------------------------------
-bool M4SerialComm::write(QByteArray data, bool debug)
+bool M4SerialComm::write(std::vector<uint8_t> data, bool debug)
 {
     if(debug) {
         // TODO: fix
         //_helper.logDebug(data.toHex());
     }
-    return _writePort(data.data(), data.size()) == data.length();
+    return _writePort(data.data(), data.size()) == (int)data.size();
 }
 
 //-----------------------------------------------------------------------------
@@ -120,7 +120,7 @@ M4SerialComm::tryRead()
 
 //-----------------------------------------------------------------------------
 void
-M4SerialComm::setBytesReadyCallback(std::function<void(QByteArray)> callback)
+M4SerialComm::setBytesReadyCallback(std::function<void(std::vector<uint8_t>)> callback)
 {
     _bytesReadyCallback = callback;
 }
@@ -159,7 +159,7 @@ M4SerialComm::_readPacket(uint8_t length)
             if(::read(_fd, &iCRC, 1) == 1) {
                 uint8_t oCRC = crc8(buffer, length);
                 if(iCRC == oCRC) {
-                    QByteArray data((const char*)buffer, length);
+                    std::vector<uint8_t> data((const char*)buffer, (const char*)buffer + length);
                     if (_bytesReadyCallback) {
                         _bytesReadyCallback(data);
                     }

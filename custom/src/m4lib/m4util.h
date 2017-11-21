@@ -79,7 +79,7 @@ typedef enum {
 class m4Packet
 {
 public:
-    m4Packet(QByteArray data_)
+    m4Packet(std::vector<uint8_t> data_)
         : data(data_)
     {
     }
@@ -91,15 +91,15 @@ public:
     {
         return data[9] & 0xFF;
     }
-    QByteArray commandValues()
+    std::vector<uint8_t> commandValues()
     {
-        return data.mid(10); //-- Data - header = payload
+        return std::vector<uint8_t>(data.begin() + 10, data.end()); //-- Data - header = payload
     }
-    QByteArray passthroughValues()
+    std::vector<uint8_t> passthroughValues()
     {
-        return data.mid(9); //-- Data - header = payload
+        return std::vector<uint8_t>(data.begin() + 9, data.end()); //-- Data - header = payload
     }
-    QByteArray data;
+    std::vector<uint8_t> data;
 };
 
 //-----------------------------------------------------------------------------
@@ -128,27 +128,28 @@ class m4Command
 public:
     m4Command(int id, int type = Yuneec::COMMAND_TYPE_NORMAL)
     {
-        data.fill(0, Yuneec::COMMAND_BODY_EXCLUDE_VALUES_LENGTH);
+        data.resize(Yuneec::COMMAND_BODY_EXCLUDE_VALUES_LENGTH);
+        std::fill(data.begin(), data.end(), 0);
         data[2] = (uint8_t)type;
         data[9] = (uint8_t)id;
     }
     virtual ~m4Command() {}
-    QByteArray pack(QByteArray payload = QByteArray())
+    std::vector<uint8_t> pack(std::vector<uint8_t> payload = std::vector<uint8_t>())
     {
         if(payload.size()) {
-            data.append(payload);
+           data.insert(data.end(), payload.begin(), payload.end());
         }
-        QByteArray command;
+        std::vector<uint8_t> command;
         command.resize(3);
         command[0] = 0x55;
         command[1] = 0x55;
         command[2] = (uint8_t)data.size() + 1;
-        command.append(data);
+        command.insert(command.end(), data.begin(), data.end());
         uint8_t crc = crc8((uint8_t*)data.data(), data.size());
-        command.append(crc);
+        command.push_back(crc);
         return command;
     }
-    QByteArray data;
+    std::vector<uint8_t> data;
 };
 
 //-----------------------------------------------------------------------------
@@ -158,26 +159,27 @@ class m4PassThroughCommand
 public:
     m4PassThroughCommand()
     {
-        data.fill(0, Yuneec::COMMAND_BODY_EXCLUDE_VALUES_LENGTH - 1);
+        data.resize(Yuneec::COMMAND_BODY_EXCLUDE_VALUES_LENGTH - 1);
+        std::fill(data.begin(), data.end(), 0);
         data[2] = (uint8_t)Yuneec::COMMAND_TYPE_PASS_THROUGH;
     }
     virtual ~m4PassThroughCommand() {}
-    QByteArray pack(QByteArray payload = QByteArray())
+    std::vector<uint8_t> pack(std::vector<uint8_t> payload = std::vector<uint8_t>())
     {
         if(payload.size()) {
-            data.append(payload);
+            data.insert(data.end(), payload.begin(), payload.end());
         }
-        QByteArray command;
+        std::vector<uint8_t> command;
         command.resize(3);
         command[0] = 0x55;
         command[1] = 0x55;
         command[2] = (uint8_t)data.size() + 1;
-        command.append(data);
+        command.insert(command.end(), data.begin(), data.end());
         uint8_t crc = crc8((uint8_t*)data.data(), data.size());
-        command.append(crc);
+        command.push_back(crc);
         return command;
     }
-    QByteArray data;
+    std::vector<uint8_t> data;
 };
 
 //-----------------------------------------------------------------------------
@@ -187,22 +189,23 @@ class m4Message
 public:
     m4Message(int id, int type = 0)
     {
-        data.fill(0, 8);
+        data.resize(8);
+        std::fill(data.begin(), data.end(), 8);
         data[2] = (uint8_t)type;
         data[3] = (uint8_t)id;
     }
     virtual ~m4Message() {}
-    QByteArray pack()
+    std::vector<uint8_t> pack()
     {
-        QByteArray command;
+        std::vector<uint8_t> command;
         command.resize(3);
         command[0] = 0x55;
         command[1] = 0x55;
         command[2] = (uint8_t)data.size() + 1;
-        command.append(data);
+        command.insert(command.end(), data.begin(), data.end());
         uint8_t crc = crc8((uint8_t*)data.data(), data.size());
-        command.append(crc);
+        command.push_back(crc);
         return command;
     }
-    QByteArray data;
+    std::vector<uint8_t> data;
 };

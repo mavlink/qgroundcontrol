@@ -5,6 +5,7 @@
 #include "m4util.h"
 
 #include <functional>
+#include <vector>
 
 
 // In order to use M4Lib, this interface needs to be implemented
@@ -186,12 +187,12 @@ public:
     ~M4Lib();
 
 private:
-    void _bytesReady(QByteArray data);
+    void _bytesReady(std::vector<uint8_t> data);
     void _initSequence();
     void _stateManager();
     void _initAndCheckBinding();
 
-    bool _write(QByteArray data, bool debug);
+    bool _write(std::vector<uint8_t> data, bool debug);
     void _tryEnterBindMode();
     bool _exitToAwait();
     bool _enterRun();
@@ -213,7 +214,7 @@ private:
     bool _sendTableDeviceChannelNumInfo(ChannelNumType_t channelNumType);
     bool _sendRxResInfo();
 
-    bool _sendPassthroughMessage(QByteArray message);
+    bool _sendPassthroughMessage(std::vector<uint8_t> message);
 
     bool _generateTableDeviceChannelNumInfo(TableDeviceChannelNumInfo_t* channelNumInfo, ChannelNumType_t channelNumType, int& num);
     bool _fillTableDeviceChannelNumMap       (TableDeviceChannelNumInfo_t *channelNumInfo, int num, std::vector<uint8_t> list);
@@ -221,7 +222,7 @@ private:
     bool _generateTableDeviceChannelInfo     (TableDeviceChannelInfo_t *channelInfo);
 
     void _handleBindResponse                 ();
-    void _handleQueryBindResponse            (QByteArray data);
+    void _handleQueryBindResponse            (std::vector<uint8_t> data);
     bool _handleNonTypePacket                (m4Packet& packet);
     void _handleRxBindInfo                   (m4Packet& packet);
     void _handleChannel                      (m4Packet& packet);
@@ -234,8 +235,8 @@ private:
     void _handlePassThroughPacket            (m4Packet& packet);
     std::string _getRxBindInfoFeedbackName   ();
 
-    static  int     _byteArrayToInt  (QByteArray data, int offset, bool isBigEndian = false);
-    static  short   _byteArrayToShort(QByteArray data, int offset, bool isBigEndian = false);
+    static  int     _byteArrayToInt  (std::vector<uint8_t> data, int offset, bool isBigEndian = false);
+    static  short   _byteArrayToShort(std::vector<uint8_t> data, int offset, bool isBigEndian = false);
 
     M4SerialComm* _commPort;
 

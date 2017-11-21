@@ -14,6 +14,7 @@
 
 #include <termios.h>
 #include <functional>
+#include <vector>
 
 class HelperInterface;
 
@@ -26,10 +27,10 @@ public:
     bool        init    (std::string port, int baud);
     bool        open    ();
     void        close   ();
-    bool        write   (QByteArray data, bool debug = false);
+    bool        write   (std::vector<uint8_t> data, bool debug = false);
     bool        write   (void* data, int length);
     void        tryRead ();
-    void        setBytesReadyCallback(std::function<void(QByteArray)> callback);
+    void        setBytesReadyCallback(std::function<void(std::vector<uint8_t>)> callback);
 
 private:
     int         _openPort       (const char* port);
@@ -57,7 +58,7 @@ private:
     std::string     _uart_name {};
     PacketState _currentPacketStatus = PacketState::NONE;
     struct termios  _savedtio;
-    std::function<void(QByteArray)> _bytesReadyCallback = nullptr;
+    std::function<void(std::vector<uint8_t>)> _bytesReadyCallback = nullptr;
 };
 
 #endif

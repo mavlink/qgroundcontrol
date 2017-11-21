@@ -9,7 +9,6 @@
 #if defined(__androidx86__)
 
 #include <string>
-#include <vector>
 #include <sstream>
 
 // RC Channel data provided by Yuneec
@@ -246,7 +245,7 @@ M4Lib::setSettings(const RxBindInfo& rxBindInfo)
 }
 
 bool
-M4Lib::_write(QByteArray data, bool debug)
+M4Lib::_write(std::vector<uint8_t> data, bool debug)
 {
     return _commPort->write(data, debug);
 }
@@ -384,7 +383,7 @@ M4Lib::_exitToAwait()
 {
     _helper.logDebug("Sending: CMD_EXIT_TO_AWAIT");
     m4Command exitToAwaitCmd(Yuneec::CMD_EXIT_TO_AWAIT);
-    QByteArray cmd = exitToAwaitCmd.pack();
+    std::vector<uint8_t> cmd = exitToAwaitCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -398,7 +397,7 @@ M4Lib::_enterRun()
 {
     _helper.logDebug("Sending: CMD_ENTER_RUN");
     m4Command enterRunCmd(Yuneec::CMD_ENTER_RUN);
-    QByteArray cmd = enterRunCmd.pack();
+    std::vector<uint8_t> cmd = enterRunCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -410,7 +409,7 @@ M4Lib::_exitRun()
 {
     _helper.logDebug("Sending: CMD_EXIT_RUN");
     m4Command exitRunCmd(Yuneec::CMD_EXIT_RUN);
-    QByteArray cmd = exitRunCmd.pack();
+    std::vector<uint8_t> cmd = exitRunCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -424,7 +423,7 @@ M4Lib::_enterBind()
 {
     _helper.logDebug("Sending: CMD_ENTER_BIND");
     m4Command enterBindCmd(Yuneec::CMD_ENTER_BIND);
-    QByteArray cmd = enterBindCmd.pack();
+    std::vector<uint8_t> cmd = enterBindCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -437,7 +436,7 @@ M4Lib::_enterFactoryCalibration()
 {
     _helper.logDebug("Sending: CMD_ENTER_FACTORY_CAL");
     m4Command enterFactoryCaliCmd(Yuneec::CMD_ENTER_FACTORY_CAL);
-    QByteArray cmd = enterFactoryCaliCmd.pack();
+    std::vector<uint8_t> cmd = enterFactoryCaliCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -449,7 +448,7 @@ M4Lib::_exitFactoryCalibration()
 {
     _helper.logDebug("Sending: CMD_EXIT_FACTORY_CALI");
     m4Command exitFacoryCaliCmd(Yuneec::CMD_EXIT_FACTORY_CAL);
-    QByteArray cmd = exitFacoryCaliCmd.pack();
+    std::vector<uint8_t> cmd = exitFacoryCaliCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -462,7 +461,7 @@ M4Lib::_sendRecvBothCh()
 {
     _helper.logDebug("Sending: CMD_RECV_BOTH_CH");
     m4Command enterRecvCmd(Yuneec::CMD_RECV_BOTH_CH);
-    QByteArray cmd = enterRecvCmd.pack();
+    std::vector<uint8_t> cmd = enterRecvCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -474,7 +473,7 @@ M4Lib::_exitBind()
 {
     _helper.logDebug("Sending: CMD_EXIT_BIND");
     m4Command exitBindCmd(Yuneec::CMD_EXIT_BIND);
-    QByteArray cmd = exitBindCmd.pack();
+    std::vector<uint8_t> cmd = exitBindCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -487,7 +486,7 @@ M4Lib::_startBind()
 {
     _helper.logDebug("Sending: CMD_START_BIND");
     m4Message startBindMsg(Yuneec::CMD_START_BIND, Yuneec::TYPE_BIND);
-    QByteArray msg = startBindMsg.pack();
+    std::vector<uint8_t> msg = startBindMsg.pack();
     return _write(msg, DEBUG_DATA_DUMP);
 }
 
@@ -507,7 +506,7 @@ M4Lib::_bind(int rxAddr)
     bindMsg.data[5] = (uint8_t)((rxAddr & 0xff00) >> 8);
     bindMsg.data[6] = 5; //-- Gotta love magic numbers
     bindMsg.data[7] = 15;
-    QByteArray msg = bindMsg.pack();
+    std::vector<uint8_t> msg = bindMsg.pack();
     return _write(msg, DEBUG_DATA_DUMP);
 }
 
@@ -523,11 +522,12 @@ M4Lib::_setChannelSetting()
 {
     _helper.logDebug("Sending: CMD_SET_CHANNEL_SETTING");
     m4Command setChannelSettingCmd(Yuneec::CMD_SET_CHANNEL_SETTING);
-    QByteArray payload;
-    payload.fill(0, 2);
+    std::vector<uint8_t> payload;
+    payload.resize(2);
+    std::fill(payload.begin(), payload.end(), 0);
     payload[0] = (uint8_t)(_rxBindInfoFeedback.aNum  & 0xff);
     payload[1] = (uint8_t)(_rxBindInfoFeedback.swNum & 0xff);
-    QByteArray cmd = setChannelSettingCmd.pack(payload);
+    std::vector<uint8_t> cmd = setChannelSettingCmd.pack(payload);
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -542,10 +542,10 @@ M4Lib::setPowerKey(int function)
 {
     _helper.logDebug("Sending: CMD_SET_BINDKEY_FUNCTION");
     m4Command setPowerKeyCmd(Yuneec::CMD_SET_BINDKEY_FUNCTION);
-    QByteArray payload;
+    std::vector<uint8_t> payload;
     payload.resize(1);
     payload[0] = (uint8_t)(function & 0xff);
-    QByteArray cmd = setPowerKeyCmd.pack(payload);
+    std::vector<uint8_t> cmd = setPowerKeyCmd.pack(payload);
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -558,7 +558,7 @@ M4Lib::_unbind()
 {
     _helper.logDebug("Sending: CMD_UNBIND");
     m4Command unbindCmd(Yuneec::CMD_UNBIND);
-    QByteArray cmd = unbindCmd.pack();
+    std::vector<uint8_t> cmd = unbindCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -572,7 +572,7 @@ M4Lib::_queryBindState()
 {
     _helper.logDebug("Sending: CMD_QUERY_BIND_STATE");
     m4Command queryBindStateCmd(Yuneec::CMD_QUERY_BIND_STATE);
-    QByteArray cmd = queryBindStateCmd.pack();
+    std::vector<uint8_t> cmd = queryBindStateCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -585,7 +585,7 @@ M4Lib::_syncMixingDataDeleteAll()
 {
     _helper.logDebug("Sending: CMD_SYNC_MIXING_DATA_DELETE_ALL");
     m4Command syncMixingDataDeleteAllCmd(Yuneec::CMD_SYNC_MIXING_DATA_DELETE_ALL);
-    QByteArray cmd = syncMixingDataDeleteAllCmd.pack();
+    std::vector<uint8_t> cmd = syncMixingDataDeleteAllCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -608,8 +608,9 @@ M4Lib::_syncMixingDataAdd()
      */
     _helper.logDebug("Sending: CMD_SYNC_MIXING_DATA_ADD");
     m4Command syncMixingDataAddCmd(Yuneec::CMD_SYNC_MIXING_DATA_ADD);
-    QByteArray payload((const char*)&channel_data[_currentChannelAdd], CHANNEL_LENGTH);
-    QByteArray cmd = syncMixingDataAddCmd.pack(payload);
+    std::vector<uint8_t> payload((const char*)&channel_data[_currentChannelAdd],
+                                 (const char*)&channel_data[_currentChannelAdd] + CHANNEL_LENGTH);
+    std::vector<uint8_t> cmd = syncMixingDataAddCmd.pack(payload);
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -621,9 +622,10 @@ bool
 M4Lib::_sendTableDeviceLocalInfo(TableDeviceLocalInfo_t localInfo)
 {
     m4Command sendRxResInfoCmd(Yuneec::CMD_SEND_RX_RESINFO);
-    QByteArray payload;
+    std::vector<uint8_t> payload;
     int len = 11;
-    payload.fill(0, len);
+    payload.resize(len);
+    std::fill(payload.begin(), payload.end(), 0);
     payload[0]  = localInfo.index;
     payload[1]  = (uint8_t)(localInfo.mode     & 0xff);
     payload[2]  = (uint8_t)((localInfo.mode    & 0xff00) >> 8);
@@ -634,7 +636,7 @@ M4Lib::_sendTableDeviceLocalInfo(TableDeviceLocalInfo_t localInfo)
     payload[8]  = (uint8_t)((localInfo.panId   & 0xff00) >> 8);
     payload[9]  = (uint8_t)(localInfo.txAddr   & 0xff);
     payload[10] = (uint8_t)((localInfo.txAddr  & 0xff00) >> 8);
-    QByteArray cmd = sendRxResInfoCmd.pack(payload);
+    std::vector<uint8_t> cmd = sendRxResInfoCmd.pack(payload);
     //std::stringstream ss;
     //ss << "_sendTableDeviceLocalInfo" << dump_data_packet(cmd);
     //_helper.logDebug(ss.str());
@@ -649,9 +651,10 @@ bool
 M4Lib::_sendTableDeviceChannelInfo(TableDeviceChannelInfo_t channelInfo)
 {
     m4Command sendRxResInfoCmd(Yuneec::CMD_SEND_RX_RESINFO);
-    QByteArray payload;
+    std::vector<uint8_t> payload;
     int len = sizeof(channelInfo);
-    payload.fill(0, len);
+    payload.resize(len);
+    std::fill(payload.begin(), payload.end(), 0);
     payload[0]  = channelInfo.index;
     payload[1]  = channelInfo.aNum;
     payload[2]  = channelInfo.aBits;
@@ -671,7 +674,7 @@ M4Lib::_sendTableDeviceChannelInfo(TableDeviceChannelInfo_t channelInfo)
     payload[16] = channelInfo.replyChannelType;
     payload[17] = channelInfo.requestChannelType;
     payload[18] = channelInfo.extraType;
-    QByteArray cmd = sendRxResInfoCmd.pack(payload);
+    std::vector<uint8_t> cmd = sendRxResInfoCmd.pack(payload);
 
     //std::stringstream ss;
     //ss << "_sendTableDeviceChannelInfo" << dump_data_packet(cmd);
@@ -692,14 +695,15 @@ M4Lib::_sendTableDeviceChannelNumInfo(ChannelNumType_t channelNumType)
     int num =  0;
     if(_generateTableDeviceChannelNumInfo(&channelNumInfo, channelNumType, num)) {
         m4Command sendRxResInfoCmd(Yuneec::CMD_SEND_RX_RESINFO);
-        QByteArray payload;
+        std::vector<uint8_t> payload;
         int len = num + 1;
-        payload.fill(0, len);
+        payload.resize(len);
+        std::fill(payload.begin(), payload.end(), 0);
         payload[0] = channelNumInfo.index;
         for(int i = 0; i < num; i++) {
             payload[i + 1] = channelNumInfo.channelMap[i];
         }
-        QByteArray cmd = sendRxResInfoCmd.pack(payload);
+        std::vector<uint8_t> cmd = sendRxResInfoCmd.pack(payload);
         //std::stringstream ss;
         //ss << "channelNumType" << dump_data_packet(cmd);
         //_helper.logDebug(ss.str());
@@ -1067,11 +1071,11 @@ M4Lib::_initAndCheckBinding()
  * This command is used for sending messages to aircraft pass through ZigBee.
  */
 bool
-M4Lib::_sendPassthroughMessage(QByteArray message)
+M4Lib::_sendPassthroughMessage(std::vector<uint8_t> message)
 {
     _helper.logDebug("Sending: pass through message");
     m4PassThroughCommand passThroughCommand;
-    QByteArray cmd = passThroughCommand.pack(message);
+    std::vector<uint8_t> cmd = passThroughCommand.pack(message);
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -1085,7 +1089,7 @@ M4Lib::_sendPassthroughMessage(QByteArray message)
  * The main difference is we also handle the machine state here.
  */
 void
-M4Lib::_bytesReady(QByteArray data)
+M4Lib::_bytesReady(std::vector<uint8_t> data)
 {
     m4Packet packet(data);
     int type = packet.type();
@@ -1276,7 +1280,7 @@ M4Lib::_bytesReady(QByteArray data)
 }
 
 void
-M4Lib::_handleQueryBindResponse(QByteArray data)
+M4Lib::_handleQueryBindResponse(std::vector<uint8_t> data)
 {
     int nodeID = (data[10] & 0xff) | (data[11] << 8 & 0xff00);
     {
@@ -1396,7 +1400,7 @@ M4Lib::_handleRxBindInfo(m4Packet& packet)
         for(int i = 0; i < _rxBindInfoFeedback.extraNum ; i++) {
             _rxBindInfoFeedback.extraName.push_back((uint8_t)packet.data[ilen++]);
         }
-        int p = packet.data.length() - 2;
+        int p = packet.data.size() - 2;
         _rxBindInfoFeedback.txAddr = ((uint8_t)packet.data[p] & 0xff) | ((uint8_t)packet.data[p + 1] << 8 & 0xff00);
         std::stringstream ss;
         ss << "RxBindInfo:" << _getRxBindInfoFeedbackName() << _rxBindInfoFeedback.nodeId;
@@ -1454,7 +1458,7 @@ M4Lib::_handleCommand(m4Packet& packet)
     Q_UNUSED(packet);
     switch(packet.commandID()) {
         case Yuneec::CMD_TX_STATE_MACHINE: {
-                QByteArray commandValues = packet.commandValues();
+                std::vector<uint8_t> commandValues = packet.commandValues();
                 M4State state = (M4State)(commandValues[0] & 0x1f);
                 if(state != _m4State) {
                     M4State old_state = _m4State;
@@ -1493,7 +1497,7 @@ void
 M4Lib::_switchChanged(m4Packet& packet)
 {
     Q_UNUSED(packet);
-    QByteArray commandValues = packet.commandValues();
+    std::vector<uint8_t> commandValues = packet.commandValues();
     SwitchChanged switchChanged;
     switchChanged.hwId      = (int)commandValues[0];
     switchChanged.newState  = (int)commandValues[2]; // This was previously mixed up with oldState
@@ -1567,7 +1571,7 @@ M4Lib::_calibrationStateChanged(m4Packet &packet)
     Q_UNUSED(packet);
     bool state  = true;
     bool change = false;
-    QByteArray commandValues = packet.commandValues();
+    std::vector<uint8_t> commandValues = packet.commandValues();
     for (int i = CalibrationHwIndexJ1; i < CalibrationHwIndexMax; ++i) {
         if(_rawChannelsCalibration[i] != commandValues[i]) {
             _rawChannelsCalibration[i] = commandValues[i];
@@ -1603,7 +1607,7 @@ M4Lib::_calibrationStateChanged(m4Packet &packet)
 void
 M4Lib::_handleRawChannelData(m4Packet& packet)
 {
-    QByteArray values = packet.commandValues();
+    std::vector<uint8_t> values = packet.commandValues();
     int analogChannelCount = _rxBindInfoFeedback.aNum  ? _rxBindInfoFeedback.aNum  : 10;
     int val1, val2, startIndex;
     _rawChannels.clear();
@@ -1683,7 +1687,7 @@ M4Lib::_handleMixedChannelData(m4Packet& packet)
 void
 M4Lib::_handleControllerFeedback(m4Packet& packet)
 {
-    QByteArray commandValues = packet.commandValues();
+    std::vector<uint8_t> commandValues = packet.commandValues();
     int ilat = _byteArrayToInt(commandValues, 0);
     int ilon = _byteArrayToInt(commandValues, 4);
     int ialt = _byteArrayToInt(commandValues, 8);
@@ -1704,7 +1708,7 @@ void
 M4Lib::_handlePassThroughPacket(m4Packet& packet)
 {
     //Handle pass thrugh messages
-    QByteArray passThroughValues = packet.passthroughValues();
+    std::vector<uint8_t> passThroughValues = packet.passthroughValues();
 }
 
 std::string
@@ -1734,10 +1738,10 @@ M4Lib::m4StateStr()
 }
 
 int
-M4Lib::_byteArrayToInt(QByteArray data, int offset, bool isBigEndian)
+M4Lib::_byteArrayToInt(std::vector<uint8_t> data, int offset, bool isBigEndian)
 {
     int iRetVal = -1;
-    if(data.size() < offset + 4) {
+    if((int)data.size() < offset + 4) {
         return iRetVal;
     }
     int iLowest;
@@ -1760,10 +1764,10 @@ M4Lib::_byteArrayToInt(QByteArray data, int offset, bool isBigEndian)
 }
 
 short
-M4Lib::_byteArrayToShort(QByteArray data, int offset, bool isBigEndian)
+M4Lib::_byteArrayToShort(std::vector<uint8_t> data, int offset, bool isBigEndian)
 {
     short iRetVal = -1;
-    if(data.size() < offset + 2) {
+    if((int)data.size() < offset + 2) {
         return iRetVal;
     }
     int iLow;
