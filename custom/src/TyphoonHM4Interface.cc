@@ -61,29 +61,50 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
     connect(&_rcTimer, &QTimer::timeout, this, &TyphoonHM4Interface::_rcTimeout);
 
 #if defined(__androidx86__)
-    _m4Lib->setPairCommandCallback(
-                std::bind(&TyphoonHM4Interface::_sendMavlinkBindCommand, this));
-    _m4Lib->setButtonStateChangedCallback(
-                std::bind(&TyphoonHM4Interface::_buttonStateChanged, this,
-                          std::placeholders::_1, std::placeholders::_2));
-    _m4Lib->setSwitchStateChangedCallback(
-                std::bind(&TyphoonHM4Interface::_switchStateChanged, this,
-                          std::placeholders::_1, std::placeholders::_2));
-    _m4Lib->setRcActiveChangedCallback(
-                std::bind(&TyphoonHM4Interface::_rcActiveChanged, this));
-    _m4Lib->setCalibrationCompleteChangedCallback(
-                std::bind(&TyphoonHM4Interface::_calibrationCompleteChanged, this));
-    _m4Lib->setCalibrationStateChangedCallback(
-                std::bind(&TyphoonHM4Interface::_calibrationStateChanged, this));
-    _m4Lib->setRawChannelsChangedCallback(
-                std::bind(&TyphoonHM4Interface::_rawChannelsChanged, this));
-    _m4Lib->setControllerLocationChangedCallback(
-                std::bind(&TyphoonHM4Interface::_controllerLocationChanged, this));
-    _m4Lib->setM4StateChangedCallback(
-                std::bind(&TyphoonHM4Interface::_m4StateChanged, this));
-    _m4Lib->setSaveSettingsCallback(
-                std::bind(&TyphoonHM4Interface::_saveSettings, this,
-                          std::placeholders::_1));
+    // These are needed in order for signals containing these types to be queueable in order to
+    // switch threads.
+    qRegisterMetaType<M4Lib::ButtonId>("M4Lib::ButtonId");
+    qRegisterMetaType<M4Lib::ButtonState>("M4Lib::ButtonState");
+    qRegisterMetaType<M4Lib::SwitchId>("M4Lib::SwitchId");
+    qRegisterMetaType<M4Lib::SwitchState>("M4Lib::SwitchState");
+    qRegisterMetaType<M4Lib::RxBindInfo>("M4Lib::RxBindInfo");
+
+    // We need to wrap all callbacks with a slot/signal to get them back onto the main thread.
+    connect(this, &TyphoonHM4Interface::sendMavlinkBindCommand, this, &TyphoonHM4Interface::_sendMavlinkBindCommand);
+    _m4Lib->setPairCommandCallback([this]() {
+        emit sendMavlinkBindCommand();
+    });
+    _m4Lib->setButtonStateChangedCallback([this](M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState) {
+        qCDebug(YuneecLogVerbose) << "in buttonStateChanged";
+        emit buttonStateChanged(buttonId, buttonState);
+    });
+    _m4Lib->setSwitchStateChangedCallback([this](M4Lib::SwitchId switchId, M4Lib::SwitchState switchState) {
+        qCDebug(YuneecLogVerbose) << "in switchStateChanged";
+        emit switchStateChanged(switchId, switchState);
+    });
+    connect(this, &TyphoonHM4Interface::rcActiveChanged, this, &TyphoonHM4Interface::_rcActiveChanged);
+    _m4Lib->setRcActiveChangedCallback([this]() {
+        emit rcActiveChanged();
+    });
+    _m4Lib->setCalibrationCompleteChangedCallback([this]() {
+        emit calibrationCompleteChanged();
+    });
+    _m4Lib->setCalibrationStateChangedCallback([this]() {
+        emit calibrationStateChanged();
+    });
+    _m4Lib->setRawChannelsChangedCallback([this]() {
+        emit rawChannelsChanged();
+    });
+    _m4Lib->setControllerLocationChangedCallback([this]() {
+        emit controllerLocationChanged();
+    });
+    _m4Lib->setM4StateChangedCallback([this]() {
+        emit m4StateChanged();
+    });
+    connect(this, &TyphoonHM4Interface::saveSettings, this, &TyphoonHM4Interface::_saveSettings);
+    _m4Lib->setSaveSettingsCallback([this](const M4Lib::RxBindInfo rxBindInfo) {
+        emit saveSettings(rxBindInfo);
+    });
 #endif
 }
 
@@ -415,42 +436,6 @@ TyphoonHM4Interface::_rcActiveChanged()
 {
     //-- It just finished binding. Set the timer and see if we are indeed bound.
     _rcTimer.start(1000);
-    emit rcActiveChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHM4Interface::_calibrationCompleteChanged()
-{
-    emit calibrationCompleteChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHM4Interface::_calibrationStateChanged()
-{
-    emit calibrationStateChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHM4Interface::_rawChannelsChanged()
-{
-    emit rawChannelsChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHM4Interface::_controllerLocationChanged()
-{
-    emit controllerLocationChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHM4Interface::_m4StateChanged()
-{
-    emit m4StateChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -484,18 +469,4 @@ TyphoonHM4Interface::_saveSettings(const M4Lib::RxBindInfo& rxBindInfo)
 #else
     Q_UNUSED(rxBindInfo);
 #endif
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHM4Interface::_buttonStateChanged(M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState)
-{
-    emit buttonStateChanged(buttonId, buttonState);
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHM4Interface::_switchStateChanged(M4Lib::SwitchId switchId, M4Lib::SwitchState switchState)
-{
-    emit switchStateChanged(switchId, switchState);
 }

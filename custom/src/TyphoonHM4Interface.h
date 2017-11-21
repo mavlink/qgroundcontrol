@@ -116,19 +116,11 @@ private slots:
     void    _mavlinkMessageReceived             (const mavlink_message_t& message);
     void    _rcTimeout                          ();
     void    _rcActiveChanged                    ();
-    void    _calibrationCompleteChanged         ();
-    void    _calibrationStateChanged            ();
-    void    _rawChannelsChanged                 ();
-    void    _controllerLocationChanged          ();
-    void    _m4StateChanged                     ();
     void    _saveSettings                       (const M4Lib::RxBindInfo& rxBindInfo);
-
-private:
     void    _sendMavlinkBindCommand             ();
-    void    _buttonStateChanged                 (M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState);
-    void    _switchStateChanged                 (M4Lib::SwitchId buttonId, M4Lib::SwitchState switchState);
 
 signals:
+    void    sendMavlinkBindCommand              ();
     void    m4StateChanged                      ();
     void    buttonStateChanged                  (M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState);
     void    switchStateChanged                  (M4Lib::SwitchId switchId, M4Lib::SwitchState switchState);
@@ -139,7 +131,10 @@ signals:
     void    calibrationCompleteChanged          ();
     void    calibrationStateChanged             ();
     void    rcActiveChanged                     ();
+    void    saveSettings                        (const M4Lib::RxBindInfo& rxBindInfo);
     void    distanceSensor                      (int minDist, int maxDist, int curDist);
+
+
     //-- WIFI
     void    newWifiSSID                         (QString ssid, int rssi);
     void    newWifiRSSI                         ();
