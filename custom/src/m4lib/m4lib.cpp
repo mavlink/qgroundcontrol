@@ -10,6 +10,7 @@
 
 #include <string>
 #include <sstream>
+#include <iomanip>
 
 // RC Channel data provided by Yuneec
 #include "m4channeldata.h"
@@ -38,20 +39,16 @@ static const char* kUartName        = "/dev/ttyMFD0";
  * by Julian Oes <julian@oes.ch>
  */
 
-
-#if 0
-static QString
-dump_data_packet(QByteArray data)
+static std::string
+toHex(std::vector<uint8_t> data)
 {
-    QString resp;
-    QString temp;
-    for(int i = 0; i < data.size(); i++) {
-        temp.sprintf(" %02X, ", (uint8_t)data[i]);
-        resp += temp;
+    std::stringstream ss;
+    for (auto it = data.begin(); it != data.end(); ++it) {
+        ss << " ";
+        ss << std::setfill('0') << std::setw(2) << std::hex << int(*it);
     }
-    return resp;
+    return ss.str();
 }
-#endif
 
 
 M4Lib::M4Lib(TimerInterface& timer, HelperInterface& helper)
@@ -637,9 +634,11 @@ M4Lib::_sendTableDeviceLocalInfo(TableDeviceLocalInfo_t localInfo)
     payload[9]  = (uint8_t)(localInfo.txAddr   & 0xff);
     payload[10] = (uint8_t)((localInfo.txAddr  & 0xff00) >> 8);
     std::vector<uint8_t> cmd = sendRxResInfoCmd.pack(payload);
-    //std::stringstream ss;
-    //ss << "_sendTableDeviceLocalInfo" << dump_data_packet(cmd);
-    //_helper.logDebug(ss.str());
+#if DEBUG_DATA_DUMP==true
+    std::stringstream ss;
+    ss << "_sendTableDeviceLocalInfo" << toHex(cmd);
+    _helper.logDebug(ss.str());
+#endif
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -676,9 +675,11 @@ M4Lib::_sendTableDeviceChannelInfo(TableDeviceChannelInfo_t channelInfo)
     payload[18] = channelInfo.extraType;
     std::vector<uint8_t> cmd = sendRxResInfoCmd.pack(payload);
 
-    //std::stringstream ss;
-    //ss << "_sendTableDeviceChannelInfo" << dump_data_packet(cmd);
-    //_helper.logDebug(ss.str());
+#if DEBUG_DATA_DUMP==true
+    std::stringstream ss;
+    ss << "_sendTableDeviceChannelInfo" << toHex(cmd);
+    _helper.logDebug(ss.str());
+#endif
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -704,9 +705,11 @@ M4Lib::_sendTableDeviceChannelNumInfo(ChannelNumType_t channelNumType)
             payload[i + 1] = channelNumInfo.channelMap[i];
         }
         std::vector<uint8_t> cmd = sendRxResInfoCmd.pack(payload);
-        //std::stringstream ss;
-        //ss << "channelNumType" << dump_data_packet(cmd);
-        //_helper.logDebug(ss.str());
+#if DEBUG_DATA_DUMP==true
+        std::stringstream ss;
+        ss << "channelNumType" << toHex(cmd);
+        _helper.logDebug(ss.str());
+#endif
         return _write(cmd, DEBUG_DATA_DUMP);
     }
     return true;
@@ -1109,10 +1112,9 @@ M4Lib::_bytesReady(std::vector<uint8_t> data)
                     break;
                 default:
                     _timer.stop();
-                    // TODO: add this again
-                    //std::stringstream ss;
-                    //ss << "Received: TYPE_BIND Unknown:" << data.toHex();
-                    //_helper.logDebug(ss);
+                    std::stringstream ss;
+                    ss << "Received: TYPE_BIND Unknown:" << toHex(data);
+                    _helper.logDebug(ss.str());
                     break;
             }
             break;
@@ -1256,10 +1258,9 @@ M4Lib::_bytesReady(std::vector<uint8_t> data)
                     _helper.logDebug("Received TYPE_RSP: CMD_EXIT_FACTORY_CAL");
                     break;
                 default: {
-                        // TODO: add again
-                        //std::stringstream ss;
-                        //ss << "Received TYPE_RSP: ???" << packet.commandID() << data.toHex();
-                        //_helper.logInfo(ss.str());
+                        std::stringstream ss;
+                        ss << "Received TYPE_RSP: ???" << packet.commandID() << toHex(data);
+                        _helper.logInfo(ss.str());
                     }
                     break;
             }
@@ -1270,10 +1271,9 @@ M4Lib::_bytesReady(std::vector<uint8_t> data)
             _handlePassThroughPacket(packet);
             break;
         default: {
-                // TODO: add again
-                //std::stringstream ss;
-                //ss << "Received: Unknown Packet" << type << data.toHex();
-                //_helper.logWarn(ss.str());
+                std::stringstream ss;
+                ss << "Received: Unknown Packet" << type << toHex(data);
+                _helper.logWarn(ss.str());
             }
             break;
     }
@@ -1363,7 +1363,7 @@ M4Lib::_handleRxBindInfo(m4Packet& packet)
     if(_state == STATE_START_BIND) {
 
         //std::stringstream ss;
-        //ss << dump_data_packet(packet.data);
+        //ss << dumpDataPacket(packet.data);
         //_helper.logDebug(ss.str());
         _timer.stop();
         _rxBindInfoFeedback.mode     = ((uint8_t)packet.data[6]  & 0xff) | ((uint8_t)packet.data[7]  << 8 & 0xff00);
@@ -1444,10 +1444,9 @@ M4Lib::_handleChannel(m4Packet& packet)
             //-- COMMAND_M4_SEND_COMPRESS_TRIM_TO_PAD
             break;
         default:
-            // TODO: add this again
-            //std::stringstream ss;
-            //ss << "Received Unknown TYPE_CHN:" << packet.data.toHex();
-            //_helper.logInfo(ss.str());
+            std::stringstream ss;
+            ss << "Received Unknown TYPE_CHN:" << toHex(packet.data);
+            _helper.logInfo(ss.str());
             break;
     }
 }
@@ -1483,10 +1482,9 @@ M4Lib::_handleCommand(m4Packet& packet)
             _calibrationStateChanged(packet);
             return true;
         default: {
-                // TODO: add again
-                //std::stringstream ss;
-                //ss << "Received Unknown TYPE_CMD:" << packet.commandID() << packet.data.toHex();
-                //_helper.logDebug(ss.str());
+                std::stringstream ss;
+                ss << "Received Unknown TYPE_CMD:" << packet.commandID() << toHex(packet.data);
+                _helper.logDebug(ss.str());
                 break;
             }
     }
