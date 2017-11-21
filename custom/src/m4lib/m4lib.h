@@ -135,18 +135,18 @@ public:
 
     void tryRead();
 
-    M4State getM4State() { return _m4State; }
+    M4State getM4State();
 
     bool getRcActive();
     void setRcActive(bool rcActive);
 
-    bool getRcCalibrationComplete() { return _rcCalibrationComplete; }
+    bool getRcCalibrationComplete();
 
-    void setVehicleConnected(bool vehicleConnected) { _vehicleConnected = vehicleConnected; }
+    void setVehicleConnected(bool vehicleConnected);
 
-    std::vector<uint16_t> getRawChannels() { return _rawChannels; }
+    std::vector<uint16_t> getRawChannels();
 
-    const ControllerLocation& getControllerLocation() { return _controllerLocation; }
+    const ControllerLocation& getControllerLocation();
 
     // TODO: Check if we really don't need this.
     //       If possible we don't want to leak this information.
@@ -176,7 +176,6 @@ private slots:
     void _initSequence();
     void _stateManager();
     void _initAndCheckBinding                ();
-#endif
 
 private:
     bool _write(QByteArray data, bool debug);
@@ -276,4 +275,6 @@ private:
     bool                    _binding;
     std::vector<uint16_t>   _rawChannels;
     ControllerLocation      _controllerLocation;
+#endif // defined(__androidx86__)
 };
+

@@ -92,10 +92,40 @@ M4Lib::~M4Lib()
     }
 }
 
+M4Lib::M4State
+M4Lib::getM4State()
+{
+    return _m4State;
+}
+
 bool
 M4Lib::getRcActive()
 {
     return _rcActive;
+}
+
+bool
+M4Lib::getRcCalibrationComplete()
+{
+    return _rcCalibrationComplete;
+}
+
+void
+M4Lib::setVehicleConnected(bool vehicleConnected)
+{
+    _vehicleConnected = vehicleConnected;
+}
+
+std::vector<uint16_t>
+M4Lib::getRawChannels()
+{
+    return _rawChannels;
+}
+
+const M4Lib::ControllerLocation&
+M4Lib::getControllerLocation()
+{
+    return _controllerLocation;
 }
 
 void
