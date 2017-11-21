@@ -55,7 +55,7 @@ TyphoonHM4Interface::TyphoonHM4Interface(QObject* parent)
 {
     pTyphoonHandler = this;
 #if defined(__androidx86__)
-    _m4Lib = new M4Lib(_m4LibTimer, _m4LibSleeper);
+    _m4Lib = new M4Lib(_m4LibTimer, _m4LibHelper);
 #endif
     _rcTimer.setSingleShot(true);
     connect(&_rcTimer, &QTimer::timeout, this, &TyphoonHM4Interface::_rcTimeout);

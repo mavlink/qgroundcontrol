@@ -76,13 +76,25 @@ private:
 
 //-----------------------------------------------------------------------------
 // Sleeper class for M4Lib
-class SleeperUsingQt : public SleeperInterface {
+class HelperUsingQt : public HelperInterface {
 public:
-    SleeperUsingQt() {
+    HelperUsingQt() {
     }
 
     void msleep(int duration_ms) final {
         QThread::msleep(duration_ms);
+    }
+    void logDebug(std::string text) final {
+        qCDebug(YuneecLogVerbose) << "M4Lib verbose: " << QString::fromStdString(text);
+    }
+    void logInfo(std::string text) final {
+        qCDebug(YuneecLog) << "M4Lib info: " << QString::fromStdString(text);
+    }
+    void logWarn(std::string text) final {
+        qWarning() << "M4Lib warning: " << QString::fromStdString(text);
+    }
+    void logError(std::string text) final {
+        qWarning() << "M4Lib error: " << QString::fromStdString(text);
     }
 };
 
@@ -160,7 +172,7 @@ private:
 
 #if defined(__androidx86__)
     TimerUsingQt            _m4LibTimer;
-    SleeperUsingQt          _m4LibSleeper;
+    HelperUsingQt          _m4LibHelper;
     M4Lib*                  _m4Lib;
 #endif
     Vehicle*                _vehicle;

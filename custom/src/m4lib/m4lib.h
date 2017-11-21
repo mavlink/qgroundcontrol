@@ -19,10 +19,14 @@ public:
 
 // In order to use M4Lib, this interface needs to be implemented
 // and injected when constructing M4Lib.
-class SleeperInterface {
+class HelperInterface {
 public:
     virtual void msleep(int duration_ms) = 0;
-    virtual ~SleeperInterface() = default;
+    virtual void logDebug(std::string text) = 0;
+    virtual void logInfo(std::string text) = 0;
+    virtual void logWarn(std::string text) = 0;
+    virtual void logError(std::string text) = 0;
+    virtual ~HelperInterface() = default;
 };
 
 
@@ -178,7 +182,7 @@ public:
 
 #if defined(__androidx86__)
     // These need to be ifdefd, otherwise we get linking errors.
-    M4Lib(TimerInterface& timer, SleeperInterface& sleeper);
+    M4Lib(TimerInterface& timer, HelperInterface& helper);
     ~M4Lib();
 
 private:
@@ -236,7 +240,7 @@ private:
     M4SerialComm* _commPort;
 
     TimerInterface& _timer;
-    SleeperInterface& _sleeper;
+    HelperInterface& _helper;
 
     enum {
         STATE_NONE,

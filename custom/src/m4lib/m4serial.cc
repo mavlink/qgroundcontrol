@@ -6,15 +6,19 @@
 
 #include "m4serial.h"
 #include "m4util.h"
+#include "m4lib.h"
 
 #if defined(__androidx86__)
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 
+#include <sstream>
+
+
 //-----------------------------------------------------------------------------
-M4SerialComm::M4SerialComm(QObject* parent)
-    : QObject(parent)
+M4SerialComm::M4SerialComm(HelperInterface& helper)
+    : _helper(helper)
 {
 
 }
@@ -43,8 +47,7 @@ M4SerialComm::open()
     }
     _fd = _openPort(_uart_name.c_str());
     if(_fd < 0) {
-        perror("SERIAL");
-        qCDebug(YuneecLog) << "SERIAL: Could not open port" << QString::fromStdString(_uart_name);
+        _helper.logWarn("SERIAL: Could not open port" + _uart_name);
         return false;
     }
   //tcgetattr(_fd , &_savedtio);
@@ -65,7 +68,7 @@ M4SerialComm::close()
         ::close(_fd);
     }
     //if(!wait(1000)) {
-    //    qCDebug(YuneecLog) << "SERIAL: Timeout waiting for thread to end";
+    //    _helper.logDebug("SERIAL: Timeout waiting for thread to end");
     //}
     _fd = -1;
 }
@@ -74,7 +77,8 @@ M4SerialComm::close()
 bool M4SerialComm::write(QByteArray data, bool debug)
 {
     if(debug) {
-        qCDebug(YuneecLog) << data.toHex();
+        // TODO: fix
+        //_helper.logDebug(data.toHex());
     }
     return _writePort(data.data(), data.size()) == data.length();
 }
@@ -160,13 +164,15 @@ M4SerialComm::_readPacket(uint8_t length)
                         _bytesReadyCallback(data);
                     }
                 } else {
-                    qCDebug(YuneecLog) << "Bad CRC" << length << iCRC << oCRC;
+                    std::stringstream ss;
+                    ss << "Bad CRC" << length << iCRC << oCRC;
+                    _helper.logDebug(ss.str());
                 }
             } else {
-                qCDebug(YuneecLog) << "Missed CRC";
+                _helper.logDebug("Missed CRC");
             }
         } else {
-            qCDebug(YuneecLog) << "Missed message payload";
+            _helper.logDebug("Missed message payload");
         }
     }
 }
@@ -218,12 +224,14 @@ M4SerialComm::_setupPort(int baud)
             break;
     }
     if(baudError) {
-        qCWarning(YuneecLog) << "SERIAL: Could not set baud rate of" << baud;
+        std::stringstream ss;
+        ss << "SERIAL: Could not set baud rate of" << baud;
+        _helper.logWarn(ss.str());
         return false;
     }
     tcflush(_fd, TCIFLUSH);
     if(tcsetattr(_fd, TCSANOW, &config) < 0) {
-        qCWarning(YuneecLog) << "SERIAL: Could not set serial configuration";
+        _helper.logWarn("SERIAL: Could not set serial configuration");
         return false;
     }
     return true;
@@ -235,7 +243,9 @@ M4SerialComm::_writePort(void* buffer, int len)
 {
     int written = ::write(_fd, buffer, len);
     if(written != len && written >= 0) {
-        qCWarning(YuneecLog) << QString::fromStdString("SERIAL: Wrote only %1 bytes out of %2 bytes").arg(written).arg(len);
+        std::stringstream ss;
+        ss << "SERIAL: Wrote only " << written << " bytes out of " << len << " bytes";
+        _helper.logWarn(ss.str());
     }
     return written;
 }

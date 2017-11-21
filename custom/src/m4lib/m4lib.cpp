@@ -55,10 +55,9 @@ dump_data_packet(QByteArray data)
 #endif
 
 
-M4Lib::M4Lib(TimerInterface& timer, SleeperInterface& sleeper)
-    : QObject(NULL)
-    , _timer(timer)
-    , _sleeper(sleeper)
+M4Lib::M4Lib(TimerInterface& timer, HelperInterface& helper)
+    : _timer(timer)
+    , _helper(helper)
     , _state(STATE_NONE)
     , _responseTryCount(0)
     , _m4State(M4State::NONE)
@@ -70,7 +69,7 @@ M4Lib::M4Lib(TimerInterface& timer, SleeperInterface& sleeper)
     , _vehicleConnected(false)
     , _binding(false)
 {
-    _commPort = new M4SerialComm(this);
+    _commPort = new M4SerialComm(_helper);
     _commPort->setBytesReadyCallback(std::bind(&M4Lib::_bytesReady, this, std::placeholders::_1));
 
     _rxchannelInfoIndex = 2;
@@ -84,9 +83,9 @@ M4Lib::~M4Lib()
 {
     _state = STATE_NONE;
     _exitRun();
-    _sleeper.msleep(SEND_INTERVAL);
+    _helper.msleep(SEND_INTERVAL);
     setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
-    _sleeper.msleep(SEND_INTERVAL * 2);
+    _helper.msleep(SEND_INTERVAL * 2);
 
     if(_commPort) {
         delete _commPort;
@@ -151,7 +150,7 @@ M4Lib::setRcActive(bool rcActive)
         //-- If we are in run state after binding and we don't have RC, bind it again.
         if (_vehicleConnected && _softReboot && _m4State == M4State::RUN) {
             _softReboot = false;
-            qCDebug(YuneecLogVerbose) << "RC bind again";
+            _helper.logInfo("RC bind again");
             enterBindMode();
         }
     }
@@ -164,11 +163,11 @@ M4Lib::init()
 
     if(!_commPort || !_commPort->init(kUartName, 230400) || !_commPort->open()) {
         //-- TODO: If this ever happens, we need to do something about it
-        qCWarning(YuneecLog) << "Could not start serial communication with M4";
+        _helper.logWarn("Could not start serial communication with M4");
     }
 
     setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
-    _sleeper.msleep(SEND_INTERVAL);
+    _helper.msleep(SEND_INTERVAL);
 #endif
 }
 
@@ -270,10 +269,13 @@ M4Lib::resetBind()
 void
 M4Lib::enterBindMode(bool skipPairCommand)
 {
-    qCDebug(YuneecLog) << "enterBindMode() Current Mode: " << (int)_m4State;
+    std::stringstream ss;
+    ss << "enterBindMode() Current Mode: " << (int)_m4State;
+
+    _helper.logInfo(ss.str());
     if(!skipPairCommand) {
         if (!_pairCommandCallback) {
-            qCWarning(YuneecLog) << "pairCommandCallback not set.";
+            _helper.logWarn("pairCommandCallback not set.");
             return;
         }
 
@@ -302,14 +304,14 @@ void
 M4Lib::checkVehicleReady()
 {
     if(_m4State == M4State::RUN && !_rcActive) {
-        qCDebug(YuneecLog) << "In RUN mode but no RC yet";
+        _helper.logInfo("In RUN mode but no RC yet");
         // TODO: check this, it seems the delay is not needed.
         //QTimer::singleShot(2000, this, &M4Lib::_initAndCheckBinding);
         _initAndCheckBinding();
     } else {
         if(_m4State != M4State::RUN) {
             //-- The M4 is not initialized
-            qCDebug(YuneecLog) << "M4 not yet initialized";
+            _helper.logInfo("M4 not yet initialized");
             _initAndCheckBinding();
         }
     }
@@ -330,7 +332,7 @@ M4Lib::tryStartCalibration()
         }
         if(_m4State == M4State::RUN) {
             _exitRun();
-            _sleeper.msleep(SEND_INTERVAL);
+            _helper.msleep(SEND_INTERVAL);
         }
         _enterFactoryCalibration();
     }
@@ -349,12 +351,12 @@ void
 M4Lib::softReboot()
 {
 #if defined(__androidx86__)
-    qCDebug(YuneecLogVerbose) << "softReboot()";
+    _helper.logInfo("softReboot()");
     if(_rcActive) {
-        qCDebug(YuneecLogVerbose) << "softReboot() -> Already bound. Skipping it...";
+        _helper.logDebug("softReboot() -> Already bound. Skipping it...");
     } else {
         deinit();
-        _sleeper.msleep(SEND_INTERVAL);
+        _helper.msleep(SEND_INTERVAL);
         _state              = STATE_NONE;
         _responseTryCount   = 0;
         _currentChannelAdd  = 0;
@@ -363,7 +365,7 @@ M4Lib::softReboot()
         _sendRxInfoEnd      = false;
         _rxchannelInfoIndex = 2;
         _channelNumIndex    = 6;
-        _sleeper.msleep(SEND_INTERVAL);
+        _helper.msleep(SEND_INTERVAL);
         init();
     }
     // We want to recheck if we are really bound, so we set RC inactive and wait to
@@ -380,7 +382,7 @@ M4Lib::softReboot()
 bool
 M4Lib::_exitToAwait()
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_EXIT_TO_AWAIT";
+    _helper.logDebug("Sending: CMD_EXIT_TO_AWAIT");
     m4Command exitToAwaitCmd(Yuneec::CMD_EXIT_TO_AWAIT);
     QByteArray cmd = exitToAwaitCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
@@ -394,7 +396,7 @@ M4Lib::_exitToAwait()
 bool
 M4Lib::_enterRun()
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_ENTER_RUN";
+    _helper.logDebug("Sending: CMD_ENTER_RUN");
     m4Command enterRunCmd(Yuneec::CMD_ENTER_RUN);
     QByteArray cmd = enterRunCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
@@ -406,7 +408,7 @@ M4Lib::_enterRun()
 bool
 M4Lib::_exitRun()
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_EXIT_RUN";
+    _helper.logDebug("Sending: CMD_EXIT_RUN");
     m4Command exitRunCmd(Yuneec::CMD_EXIT_RUN);
     QByteArray cmd = exitRunCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
@@ -420,7 +422,7 @@ M4Lib::_exitRun()
 bool
 M4Lib::_enterBind()
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_ENTER_BIND";
+    _helper.logDebug("Sending: CMD_ENTER_BIND");
     m4Command enterBindCmd(Yuneec::CMD_ENTER_BIND);
     QByteArray cmd = enterBindCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
@@ -433,7 +435,7 @@ M4Lib::_enterBind()
 bool
 M4Lib::_enterFactoryCalibration()
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_ENTER_FACTORY_CAL";
+    _helper.logDebug("Sending: CMD_ENTER_FACTORY_CAL");
     m4Command enterFactoryCaliCmd(Yuneec::CMD_ENTER_FACTORY_CAL);
     QByteArray cmd = enterFactoryCaliCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
@@ -445,7 +447,7 @@ M4Lib::_enterFactoryCalibration()
 bool
 M4Lib::_exitFactoryCalibration()
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_EXIT_FACTORY_CALI";
+    _helper.logDebug("Sending: CMD_EXIT_FACTORY_CALI");
     m4Command exitFacoryCaliCmd(Yuneec::CMD_EXIT_FACTORY_CAL);
     QByteArray cmd = exitFacoryCaliCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
@@ -458,7 +460,7 @@ M4Lib::_exitFactoryCalibration()
 bool
 M4Lib::_sendRecvBothCh()
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_RECV_BOTH_CH";
+    _helper.logDebug("Sending: CMD_RECV_BOTH_CH");
     m4Command enterRecvCmd(Yuneec::CMD_RECV_BOTH_CH);
     QByteArray cmd = enterRecvCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
@@ -470,7 +472,7 @@ M4Lib::_sendRecvBothCh()
 bool
 M4Lib::_exitBind()
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_EXIT_BIND";
+    _helper.logDebug("Sending: CMD_EXIT_BIND");
     m4Command exitBindCmd(Yuneec::CMD_EXIT_BIND);
     QByteArray cmd = exitBindCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
@@ -483,7 +485,7 @@ M4Lib::_exitBind()
 bool
 M4Lib::_startBind()
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_START_BIND";
+    _helper.logDebug("Sending: CMD_START_BIND");
     m4Message startBindMsg(Yuneec::CMD_START_BIND, Yuneec::TYPE_BIND);
     QByteArray msg = startBindMsg.pack();
     return _write(msg, DEBUG_DATA_DUMP);
@@ -499,7 +501,7 @@ M4Lib::_startBind()
 bool
 M4Lib::_bind(int rxAddr)
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_BIND";
+    _helper.logDebug("Sending: CMD_BIND");
     m4Message bindMsg(Yuneec::CMD_BIND, Yuneec::TYPE_BIND);
     bindMsg.data[4] = (uint8_t)(rxAddr & 0xff);
     bindMsg.data[5] = (uint8_t)((rxAddr & 0xff00) >> 8);
@@ -519,7 +521,7 @@ M4Lib::_bind(int rxAddr)
 bool
 M4Lib::_setChannelSetting()
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_SET_CHANNEL_SETTING";
+    _helper.logDebug("Sending: CMD_SET_CHANNEL_SETTING");
     m4Command setChannelSettingCmd(Yuneec::CMD_SET_CHANNEL_SETTING);
     QByteArray payload;
     payload.fill(0, 2);
@@ -538,7 +540,7 @@ M4Lib::_setChannelSetting()
 bool
 M4Lib::setPowerKey(int function)
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_SET_BINDKEY_FUNCTION";
+    _helper.logDebug("Sending: CMD_SET_BINDKEY_FUNCTION");
     m4Command setPowerKeyCmd(Yuneec::CMD_SET_BINDKEY_FUNCTION);
     QByteArray payload;
     payload.resize(1);
@@ -554,7 +556,7 @@ M4Lib::setPowerKey(int function)
 bool
 M4Lib::_unbind()
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_UNBIND";
+    _helper.logDebug("Sending: CMD_UNBIND");
     m4Command unbindCmd(Yuneec::CMD_UNBIND);
     QByteArray cmd = unbindCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
@@ -568,7 +570,7 @@ M4Lib::_unbind()
 bool
 M4Lib::_queryBindState()
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_QUERY_BIND_STATE";
+    _helper.logDebug("Sending: CMD_QUERY_BIND_STATE");
     m4Command queryBindStateCmd(Yuneec::CMD_QUERY_BIND_STATE);
     QByteArray cmd = queryBindStateCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
@@ -581,7 +583,7 @@ M4Lib::_queryBindState()
 bool
 M4Lib::_syncMixingDataDeleteAll()
 {
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_SYNC_MIXING_DATA_DELETE_ALL";
+    _helper.logDebug("Sending: CMD_SYNC_MIXING_DATA_DELETE_ALL");
     m4Command syncMixingDataDeleteAllCmd(Yuneec::CMD_SYNC_MIXING_DATA_DELETE_ALL);
     QByteArray cmd = syncMixingDataDeleteAllCmd.pack();
     return _write(cmd, DEBUG_DATA_DUMP);
@@ -604,7 +606,7 @@ M4Lib::_syncMixingDataAdd()
      *  I have not seen a way to identify an error other than getting no response once
      *  the command is sent. There doesn't appear to be a "NAK" type response.
      */
-    qCDebug(YuneecLogVerbose) << "Sending: CMD_SYNC_MIXING_DATA_ADD";
+    _helper.logDebug("Sending: CMD_SYNC_MIXING_DATA_ADD");
     m4Command syncMixingDataAddCmd(Yuneec::CMD_SYNC_MIXING_DATA_ADD);
     QByteArray payload((const char*)&channel_data[_currentChannelAdd], CHANNEL_LENGTH);
     QByteArray cmd = syncMixingDataAddCmd.pack(payload);
@@ -633,7 +635,9 @@ M4Lib::_sendTableDeviceLocalInfo(TableDeviceLocalInfo_t localInfo)
     payload[9]  = (uint8_t)(localInfo.txAddr   & 0xff);
     payload[10] = (uint8_t)((localInfo.txAddr  & 0xff00) >> 8);
     QByteArray cmd = sendRxResInfoCmd.pack(payload);
-    //qCDebug(YuneecLogVerbose) << "_sendTableDeviceLocalInfo" <<dump_data_packet(cmd);
+    //std::stringstream ss;
+    //ss << "_sendTableDeviceLocalInfo" << dump_data_packet(cmd);
+    //_helper.logDebug(ss.str());
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -668,7 +672,10 @@ M4Lib::_sendTableDeviceChannelInfo(TableDeviceChannelInfo_t channelInfo)
     payload[17] = channelInfo.requestChannelType;
     payload[18] = channelInfo.extraType;
     QByteArray cmd = sendRxResInfoCmd.pack(payload);
-    //qCDebug(YuneecLogVerbose) << "_sendTableDeviceChannelInfo" <<dump_data_packet(cmd);
+
+    //std::stringstream ss;
+    //ss << "_sendTableDeviceChannelInfo" << dump_data_packet(cmd);
+    //_helper.logDebug(ss.str());
     return _write(cmd, DEBUG_DATA_DUMP);
 }
 
@@ -693,7 +700,9 @@ M4Lib::_sendTableDeviceChannelNumInfo(ChannelNumType_t channelNumType)
             payload[i + 1] = channelNumInfo.channelMap[i];
         }
         QByteArray cmd = sendRxResInfoCmd.pack(payload);
-        //qCDebug(YuneecLogVerbose) << channelNumTpye <<dump_data_packet(cmd);
+        //std::stringstream ss;
+        //ss << "channelNumType" << dump_data_packet(cmd);
+        //_helper.logDebug(ss.str());
         return _write(cmd, DEBUG_DATA_DUMP);
     }
     return true;
@@ -765,7 +774,9 @@ M4Lib::_fillTableDeviceChannelNumMap(TableDeviceChannelNumInfo_t* channelNumInfo
             }
             res = true;
         } else {
-            qCritical() << "_fillTableDeviceChannelNumMap() called with mismatching list size. Num =" << num << "List =" << list.size();
+            std::stringstream ss;
+            ss << "_fillTableDeviceChannelNumMap() called with mismatching list size. Num =" << num << "List =" << list.size();
+            _helper.logError(ss.str());
         }
     }
     _channelNumIndex++;
@@ -778,7 +789,10 @@ M4Lib::_initSequence()
     _responseTryCount = 0;
     //-- Check and see if we have binding info
     if(_rxBindInfoFeedback.nodeId) {
-        qCDebug(YuneecLog) << "Previously bound with:" << _rxBindInfoFeedback.nodeId << "(" << _rxBindInfoFeedback.aNum << "Analog Channels ) (" << _rxBindInfoFeedback.swNum << "Switches )";
+
+        std::stringstream ss;
+        ss << "Previously bound with:" << (int)_rxBindInfoFeedback.nodeId << "(" << _rxBindInfoFeedback.aNum << "Analog Channels ) (" << _rxBindInfoFeedback.swNum << "Switches )";
+        _helper.logInfo(ss.str()) ;
         //-- Initialize M4
         _state = STATE_RECV_BOTH_CH;
         _sendRecvBothCh();
@@ -802,9 +816,9 @@ M4Lib::_stateManager()
 {
     switch(_state) {
         case STATE_EXIT_RUN:
-            qCDebug(YuneecLogVerbose) << "STATE_EXIT_RUN Timeout";
+            _helper.logInfo("STATE_EXIT_RUN Timeout");
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qCWarning(YuneecLog) << "Too many STATE_EXIT_RUN Timeouts. Switching to initial run.";
+                _helper.logWarn("Too many STATE_EXIT_RUN Timeouts. Switching to initial run.");
                 _initSequence();
             } else {
                 _exitRun();
@@ -813,9 +827,9 @@ M4Lib::_stateManager()
             }
             break;
         case STATE_ENTER_BIND:
-            qCDebug(YuneecLogVerbose) << "STATE_ENTER_BIND Timeout";
+            _helper.logInfo("STATE_ENTER_BIND Timeout");
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qCWarning(YuneecLog) << "Too many STATE_ENTER_BIND Timeouts.";
+                _helper.logWarn("Too many STATE_ENTER_BIND Timeouts.");
                 if(_rxBindInfoFeedback.nodeId) {
                     _responseTryCount = 0;
                     _state = STATE_SEND_RX_INFO;
@@ -823,7 +837,7 @@ M4Lib::_stateManager()
                     _timer.start(COMMAND_WAIT_INTERVAL);
                 } else {
                     //-- We're stuck. Wen can't enter bind and we have no binding info.
-                    qCritical() << "Cannot enter binding mode";
+                    _helper.logError("Cannot enter binding mode");
                     _state = STATE_ENTER_BIND_ERROR;
                 }
             } else {
@@ -833,9 +847,9 @@ M4Lib::_stateManager()
             }
             break;
         case STATE_START_BIND:
-            qCDebug(YuneecLogVerbose) << "STATE_START_BIND Timeout";
+            _helper.logInfo("STATE_START_BIND Timeout");
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qCWarning(YuneecLog) << "Too many STATE_START_BIND Timeouts. Giving up...";
+                _helper.logError("Too many STATE_START_BIND Timeouts. Giving up...");
                 _state = STATE_EXIT_BIND;
                 _exitBind();
                 _timer.start(COMMAND_WAIT_INTERVAL);
@@ -848,9 +862,9 @@ M4Lib::_stateManager()
             }
             break;
         case STATE_UNBIND:
-            qCDebug(YuneecLogVerbose) << "STATE_UNBIND Timeout";
+            _helper.logInfo("STATE_UNBIND Timeout");
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qCWarning(YuneecLog) << "Too many STATE_UNBIND Timeouts. Go straight to bind.";
+                _helper.logWarn("Too many STATE_UNBIND Timeouts. Go straight to bind.");
                 _responseTryCount = 0;
                 _state = STATE_BIND;
                 _bind(_rxBindInfoFeedback.nodeId);
@@ -862,47 +876,47 @@ M4Lib::_stateManager()
             }
             break;
         case STATE_BIND:
-            qCDebug(YuneecLogVerbose) << "STATE_BIND Timeout";
+            _helper.logInfo("STATE_BIND Timeout");
             _bind(_rxBindInfoFeedback.nodeId);
             _timer.start(COMMAND_WAIT_INTERVAL);
             //-- TODO: This can't wait for ever...
             break;
         case STATE_QUERY_BIND:
-            qCDebug(YuneecLogVerbose) << "STATE_QUERY_BIND Timeout";
+            _helper.logInfo("STATE_QUERY_BIND Timeout");
             _queryBindState();
             _timer.start(COMMAND_WAIT_INTERVAL);
             //-- TODO: This can't wait for ever...
             break;
         case STATE_EXIT_BIND:
-            qCDebug(YuneecLogVerbose) << "STATE_EXIT_BIND Timeout";
+            _helper.logInfo("STATE_EXIT_BIND Timeout");
             _exitBind();
             _timer.start(COMMAND_WAIT_INTERVAL);
             //-- TODO: This can't wait for ever...
             break;
         case STATE_RECV_BOTH_CH:
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qCWarning(YuneecLog) << "Too many STATE_RECV_BOTH_CH Timeouts. Giving up...";
+                _helper.logWarn("Too many STATE_RECV_BOTH_CH Timeouts. Giving up...");
             } else {
-                qCDebug(YuneecLogVerbose) << "STATE_RECV_BOTH_CH Timeout";
+                _helper.logInfo("STATE_RECV_BOTH_CH Timeout");
                 _sendRecvBothCh();
                 _timer.start(COMMAND_WAIT_INTERVAL);
                 _responseTryCount++;
             }
             break;
         case STATE_SET_CHANNEL_SETTINGS:
-            qCDebug(YuneecLogVerbose) << "STATE_SET_CHANNEL_SETTINGS Timeout";
+            _helper.logInfo("STATE_SET_CHANNEL_SETTINGS Timeout");
             _setChannelSetting();
             _timer.start(COMMAND_WAIT_INTERVAL);
             //-- TODO: This can't wait for ever...
             break;
         case STATE_MIX_CHANNEL_DELETE:
-            qCDebug(YuneecLogVerbose) << "STATE_MIX_CHANNEL_DELETE Timeout";
+            _helper.logInfo("STATE_MIX_CHANNEL_DELETE Timeout");
             _syncMixingDataDeleteAll();
             _timer.start(COMMAND_WAIT_INTERVAL);
             //-- TODO: This can't wait for ever...
             break;
         case STATE_MIX_CHANNEL_ADD:
-            qCDebug(YuneecLogVerbose) << "STATE_MIX_CHANNEL_ADD Timeout";
+            _helper.logInfo("STATE_MIX_CHANNEL_ADD Timeout");
             //-- We need to delete and send again
             _state = STATE_MIX_CHANNEL_DELETE;
             _syncMixingDataDeleteAll();
@@ -911,9 +925,9 @@ M4Lib::_stateManager()
             break;
         case STATE_SEND_RX_INFO:
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qCWarning(YuneecLog) << "Too many STATE_SEND_RX_INFO Timeouts. Giving up...";
+                _helper.logWarn("Too many STATE_SEND_RX_INFO Timeouts. Giving up...");
             } else {
-                qCDebug(YuneecLogVerbose) << "STATE_SEND_RX_INFO Timeout";
+                _helper.logInfo("STATE_SEND_RX_INFO Timeout");
                 _sendRxResInfo();
                 _timer.start(COMMAND_WAIT_INTERVAL);
                 _responseTryCount++;
@@ -921,16 +935,18 @@ M4Lib::_stateManager()
             break;
         case STATE_ENTER_RUN:
             if(_responseTryCount > COMMAND_RESPONSE_TRIES) {
-                qCWarning(YuneecLog) << "Too many STATE_ENTER_RUN Timeouts. Giving up...";
+                _helper.logWarn("Too many STATE_ENTER_RUN Timeouts. Giving up...");
             } else {
-                qCDebug(YuneecLogVerbose) << "STATE_ENTER_RUN Timeout";
+                _helper.logInfo("STATE_ENTER_RUN Timeout");
                 _enterRun();
                 _timer.start(COMMAND_WAIT_INTERVAL);
                 _responseTryCount++;
             }
             break;
         default:
-            qCDebug(YuneecLogVerbose) << "Timeout:" << _state;
+            std::stringstream ss;
+            ss << "Timeout:" << _state;
+            _helper.logDebug(ss.str()) ;
             break;
     }
 }
@@ -954,7 +970,7 @@ M4Lib::_sendRxResInfo()
     if(!_sendTableDeviceChannelInfo(channelInfo)) {
         return _sendRxInfoEnd;
     }
-    _sleeper.msleep(SEND_INTERVAL);
+    _helper.msleep(SEND_INTERVAL);
     _generateTableDeviceLocalInfo(&localInfo);
     if(!_sendTableDeviceLocalInfo(localInfo)) {
         return _sendRxInfoEnd;
@@ -1002,23 +1018,23 @@ M4Lib::_generateTableDeviceChannelInfo(TableDeviceChannelInfo_t* channelInfo)
     if(!_sendTableDeviceChannelNumInfo(ChannelNumAanlog)) {
         return false;
     }
-    _sleeper.msleep(SEND_INTERVAL);
+    _helper.msleep(SEND_INTERVAL);
     channelInfo->analogType = _channelNumIndex - 1;
     if(!_sendTableDeviceChannelNumInfo(ChannelNumTrim)) {
         return false;
     }
-    _sleeper.msleep(SEND_INTERVAL);
+    _helper.msleep(SEND_INTERVAL);
     channelInfo->trimType = _channelNumIndex - 1;
     if(!_sendTableDeviceChannelNumInfo(ChannelNumSwitch)) {
         return false;
     }
-    _sleeper.msleep(SEND_INTERVAL);
+    _helper.msleep(SEND_INTERVAL);
     channelInfo->switchType = _channelNumIndex - 1;
     // generate reply channel map
     if(!_sendTableDeviceChannelNumInfo(ChannelNumMonitor)) {
         return false;
     }
-    _sleeper.msleep(SEND_INTERVAL);
+    _helper.msleep(SEND_INTERVAL);
     channelInfo->replyChannelType   = _channelNumIndex - 1;
     channelInfo->requestChannelType = _channelNumIndex - 1;
     // generate extra channel map
@@ -1026,7 +1042,7 @@ M4Lib::_generateTableDeviceChannelInfo(TableDeviceChannelInfo_t* channelInfo)
         return false;
     }
     channelInfo->extraType = _channelNumIndex - 1;
-    _sleeper.msleep(SEND_INTERVAL);
+    _helper.msleep(SEND_INTERVAL);
     _rxchannelInfoIndex++;
     return true;
 }
@@ -1042,7 +1058,7 @@ M4Lib::_initAndCheckBinding()
     } else if(!_rcActive) {
         enterBindMode();
     } else {
-        qCDebug(YuneecLog) << "In RUN mode and RC ready";
+        _helper.logInfo("In RUN mode and RC ready");
     }
 #endif
 }
@@ -1053,7 +1069,7 @@ M4Lib::_initAndCheckBinding()
 bool
 M4Lib::_sendPassthroughMessage(QByteArray message)
 {
-    qCDebug(YuneecLogVerbose) << "Sending: pass through message";
+    _helper.logDebug("Sending: pass through message");
     m4PassThroughCommand passThroughCommand;
     QByteArray cmd = passThroughCommand.pack(message);
     return _write(cmd, DEBUG_DATA_DUMP);
@@ -1089,7 +1105,10 @@ M4Lib::_bytesReady(QByteArray data)
                     break;
                 default:
                     _timer.stop();
-                    qCDebug(YuneecLog) << "Received: TYPE_BIND Unknown:" << data.toHex();
+                    // TODO: add this again
+                    //std::stringstream ss;
+                    //ss << "Received: TYPE_BIND Unknown:" << data.toHex();
+                    //_helper.logDebug(ss);
                     break;
             }
             break;
@@ -1107,7 +1126,7 @@ M4Lib::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_EXIT_RUN:
                     //-- Response from _exitRun()
-                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_EXIT_RUN";
+                    _helper.logDebug("Received TYPE_RSP: CMD_EXIT_RUN");
                     if(_state == STATE_EXIT_RUN) {
                         //-- Now we start initsequence
                         _initSequence();
@@ -1115,7 +1134,7 @@ M4Lib::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_ENTER_BIND:
                     //-- Response from _enterBind()
-                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_ENTER_BIND";
+                    _helper.logDebug("Received TYPE_RSP: CMD_ENTER_BIND");
                     if(_state == STATE_ENTER_BIND) {
                         //-- Now we start scanning
                         _responseTryCount = 0;
@@ -1125,7 +1144,7 @@ M4Lib::_bytesReady(QByteArray data)
                     }
                     break;
                 case Yuneec::CMD_UNBIND:
-                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_UNBIND";
+                    _helper.logDebug("Received TYPE_RSP: CMD_UNBIND");
                     if(_state == STATE_UNBIND) {
                         _state = STATE_BIND;
                         _bind(_rxBindInfoFeedback.nodeId);
@@ -1134,7 +1153,7 @@ M4Lib::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_EXIT_BIND:
                     //-- Response from _exitBind()
-                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_EXIT_BIND";
+                    _helper.logDebug("Received TYPE_RSP: CMD_EXIT_BIND");
                     if(_state == STATE_EXIT_BIND) {
                         _responseTryCount = 0;
                         _state = STATE_RECV_BOTH_CH;
@@ -1144,7 +1163,7 @@ M4Lib::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_RECV_BOTH_CH:
                     //-- Response from _sendRecvBothCh()
-                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_RECV_BOTH_CH";
+                    _helper.logDebug("Received TYPE_RSP: CMD_RECV_BOTH_CH");
                     if(_state == STATE_RECV_BOTH_CH) {
                         _state = STATE_SET_CHANNEL_SETTINGS;
                         _setChannelSetting();
@@ -1153,7 +1172,7 @@ M4Lib::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_SET_CHANNEL_SETTING:
                     //-- Response from _setChannelSetting()
-                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_SET_CHANNEL_SETTING";
+                    _helper.logDebug("Received TYPE_RSP: CMD_SET_CHANNEL_SETTING");
                     if(_state == STATE_SET_CHANNEL_SETTINGS) {
                         _state = STATE_MIX_CHANNEL_DELETE;
                         _syncMixingDataDeleteAll();
@@ -1162,7 +1181,7 @@ M4Lib::_bytesReady(QByteArray data)
                     break;
                 case Yuneec::CMD_SYNC_MIXING_DATA_DELETE_ALL:
                     //-- Response from _syncMixingDataDeleteAll()
-                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_SYNC_MIXING_DATA_DELETE_ALL";
+                    _helper.logDebug("Received TYPE_RSP: CMD_SYNC_MIXING_DATA_DELETE_ALL");
                     if(_state == STATE_MIX_CHANNEL_DELETE) {
                         _state = STATE_MIX_CHANNEL_ADD;
                         _currentChannelAdd = 0;
@@ -1170,74 +1189,88 @@ M4Lib::_bytesReady(QByteArray data)
                         _timer.start(COMMAND_WAIT_INTERVAL);
                     }
                     break;
-                case Yuneec::CMD_SYNC_MIXING_DATA_ADD:
-                    //-- Response from _syncMixingDataAdd()
-                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_SYNC_MIXING_DATA_ADD" << _currentChannelAdd;
-                    if(_state == STATE_MIX_CHANNEL_ADD) {
-                        _currentChannelAdd++;
-                        if(_currentChannelAdd < NUM_CHANNELS) {
-                            _syncMixingDataAdd();
-                            _timer.start(COMMAND_WAIT_INTERVAL);
-                        } else {
-                            _responseTryCount = 0;
-                            _state = STATE_SEND_RX_INFO;
-                            _sendRxResInfo();
-                            _timer.start(COMMAND_WAIT_INTERVAL);
+                case Yuneec::CMD_SYNC_MIXING_DATA_ADD: {
+                        //-- Response from _syncMixingDataAdd()
+                        std::stringstream ss;
+                        ss  << "Received TYPE_RSP: CMD_SYNC_MIXING_DATA_ADD" << _currentChannelAdd;
+                        _helper.logDebug(ss.str());
+                        if(_state == STATE_MIX_CHANNEL_ADD) {
+                            _currentChannelAdd++;
+                            if(_currentChannelAdd < NUM_CHANNELS) {
+                                _syncMixingDataAdd();
+                                _timer.start(COMMAND_WAIT_INTERVAL);
+                            } else {
+                                _responseTryCount = 0;
+                                _state = STATE_SEND_RX_INFO;
+                                _sendRxResInfo();
+                                _timer.start(COMMAND_WAIT_INTERVAL);
+                            }
                         }
                     }
                     break;
                 case Yuneec::CMD_SEND_RX_RESINFO:
                     //-- Response from _sendRxResInfo()
                     if(_state == STATE_SEND_RX_INFO && _sendRxInfoEnd) {
-                        qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_SEND_RX_RESINFO";
+                        _helper.logDebug("Received TYPE_RSP: CMD_SEND_RX_RESINFO");
                         _state = STATE_ENTER_RUN;
                         _responseTryCount = 0;
                         _enterRun();
                         _timer.start(COMMAND_WAIT_INTERVAL);
                     }
                     break;
-                case Yuneec::CMD_ENTER_RUN:
-                    //-- Response from _enterRun()
-                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_ENTER_RUN";
-                    qCDebug(YuneecLogVerbose) << "State: " << int(_state);
-                    if(_state == STATE_ENTER_RUN) {
-                        _state = STATE_RUNNING;
-                        _timer.stop();
-                        if(_binding) {
-                            _binding = false;
-                            qCDebug(YuneecLogVerbose) << "Soft reboot...";
-                            // TODO: check this, it seems the delay is not needed.
-                            //QTimer::singleShot(1000, this, &M4Lib::softReboot);
-                            softReboot();
-                        } else {
-                            qCDebug(YuneecLogVerbose) << "M4 ready, in run state.";
+                case Yuneec::CMD_ENTER_RUN: {
+                        //-- Response from _enterRun()
+                        _helper.logDebug("Received TYPE_RSP: CMD_ENTER_RUN");
+                        std::stringstream ss;
+                        ss << "State: " << int(_state);
+                        _helper.logDebug(ss.str());
+                        if(_state == STATE_ENTER_RUN) {
+                            _state = STATE_RUNNING;
+                            _timer.stop();
+                            if(_binding) {
+                                _binding = false;
+                                _helper.logInfo("Soft reboot...");
+                                // TODO: check this, it seems the delay is not needed.
+                                //QTimer::singleShot(1000, this, &M4Lib::softReboot);
+                                softReboot();
+                            } else {
+                                _helper.logInfo("M4 ready, in run state.");
+                            }
                         }
                     }
                     break;
                 case Yuneec::CMD_SET_BINDKEY_FUNCTION:
-                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_SET_BINDKEY_FUNCTION";
+                    _helper.logDebug("Received TYPE_RSP: CMD_SET_BINDKEY_FUNCTION");
                     break;
                 case Yuneec::CMD_EXIT_TO_AWAIT:
-                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_EXIT_TO_AWAIT";
+                    _helper.logDebug("Received TYPE_RSP: CMD_EXIT_TO_AWAIT");
                     break;
                 case Yuneec::CMD_ENTER_FACTORY_CAL:
-                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_ENTER_FACTORY_CAL";
+                    _helper.logDebug("Received TYPE_RSP: CMD_ENTER_FACTORY_CAL");
                     break;
                 case Yuneec::CMD_EXIT_FACTORY_CAL:
-                    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_EXIT_FACTORY_CAL";
+                    _helper.logDebug("Received TYPE_RSP: CMD_EXIT_FACTORY_CAL");
                     break;
-                default:
-                    qCDebug(YuneecLog) << "Received TYPE_RSP: ???" << packet.commandID() << data.toHex();
+                default: {
+                        // TODO: add again
+                        //std::stringstream ss;
+                        //ss << "Received TYPE_RSP: ???" << packet.commandID() << data.toHex();
+                        //_helper.logInfo(ss.str());
+                    }
                     break;
             }
             break;
         case Yuneec::TYPE_PASS_THROUGH:
             //Received pass-through data.
-            qCDebug(YuneecLog) << "Received TYPE_PASS_THROUGH (?)";
+            _helper.logInfo("Received TYPE_PASS_THROUGH (?)");
             _handlePassThroughPacket(packet);
             break;
-        default:
-            qCDebug(YuneecLog) << "Received: Unknown Packet" << type << data.toHex();
+        default: {
+                // TODO: add again
+                //std::stringstream ss;
+                //ss << "Received: Unknown Packet" << type << data.toHex();
+                //_helper.logWarn(ss.str());
+            }
             break;
     }
 }
@@ -1246,11 +1279,17 @@ void
 M4Lib::_handleQueryBindResponse(QByteArray data)
 {
     int nodeID = (data[10] & 0xff) | (data[11] << 8 & 0xff00);
-    qCDebug(YuneecLogVerbose) << "Received TYPE_RSP: CMD_QUERY_BIND_STATE" << nodeID << " -- " << QString::fromStdString(_getRxBindInfoFeedbackName());
+    {
+        std::stringstream ss;
+        ss << "Received TYPE_RSP: CMD_QUERY_BIND_STATE" << nodeID << " -- " << _getRxBindInfoFeedbackName();
+        _helper.logDebug(ss.str());
+    }
     if(_state == STATE_QUERY_BIND) {
         if(nodeID == _rxBindInfoFeedback.nodeId) {
             _timer.stop();
-            qCDebug(YuneecLogVerbose) << "Switched to BOUND state with:" << QString::fromStdString(_getRxBindInfoFeedbackName());
+            std::stringstream ss;
+            ss << "Switched to BOUND state with:" << _getRxBindInfoFeedbackName();
+            _helper.logDebug(ss.str());
             _state = STATE_EXIT_BIND;
             _exitBind();
             if (_saveSettingsCallback) {
@@ -1258,7 +1297,9 @@ M4Lib::_handleQueryBindResponse(QByteArray data)
             }
             _timer.start(COMMAND_WAIT_INTERVAL);
         } else {
-            qCWarning(YuneecLog) << "Response CMD_QUERY_BIND_STATE from unkown origin:" << nodeID;
+            std::stringstream ss;
+            ss << "Response CMD_QUERY_BIND_STATE from unkown origin:" << nodeID;
+            _helper.logWarn(ss.str());
         }
     }
 }
@@ -1278,7 +1319,7 @@ M4Lib::_handleNonTypePacket(m4Packet& packet)
 void
 M4Lib::_handleBindResponse()
 {
-    qCDebug(YuneecLogVerbose) << "Received TYPE_BIND: BIND Response";
+    _helper.logDebug("Received TYPE_BIND: BIND Response");
     if(_state == STATE_BIND) {
         _timer.stop();
         _state = STATE_QUERY_BIND;
@@ -1314,9 +1355,12 @@ M4Lib::_handleRxBindInfo(m4Packet& packet)
         }
      *
      */
-    qCDebug(YuneecLogVerbose) << "Received: TYPE_BIND with rxBindInfoFeedback";
+    _helper.logDebug("Received: TYPE_BIND with rxBindInfoFeedback");
     if(_state == STATE_START_BIND) {
-        //qCDebug(YuneecLogVerbose) << dump_data_packet(packet.data);
+
+        //std::stringstream ss;
+        //ss << dump_data_packet(packet.data);
+        //_helper.logDebug(ss.str());
         _timer.stop();
         _rxBindInfoFeedback.mode     = ((uint8_t)packet.data[6]  & 0xff) | ((uint8_t)packet.data[7]  << 8 & 0xff00);
         _rxBindInfoFeedback.panId    = ((uint8_t)packet.data[8]  & 0xff) | ((uint8_t)packet.data[9]  << 8 & 0xff00);
@@ -1354,12 +1398,14 @@ M4Lib::_handleRxBindInfo(m4Packet& packet)
         }
         int p = packet.data.length() - 2;
         _rxBindInfoFeedback.txAddr = ((uint8_t)packet.data[p] & 0xff) | ((uint8_t)packet.data[p + 1] << 8 & 0xff00);
-        qCDebug(YuneecLogVerbose) << "RxBindInfo:" << QString::fromStdString(_getRxBindInfoFeedbackName()) << _rxBindInfoFeedback.nodeId;
+        std::stringstream ss;
+        ss << "RxBindInfo:" << _getRxBindInfoFeedbackName() << _rxBindInfoFeedback.nodeId;
+        _helper.logDebug(ss.str());
         _state = STATE_UNBIND;
         _unbind();
         _timer.start(COMMAND_WAIT_INTERVAL);
     } else {
-        qCDebug(YuneecLogVerbose) << "RxBindInfo discarded (out of sequence)";
+        _helper.logDebug("RxBindInfo discarded (out of sequence)");
     }
 }
 
@@ -1369,7 +1415,7 @@ M4Lib::_handleChannel(m4Packet& packet)
     Q_UNUSED(packet);
     switch(packet.commandID()) {
         case Yuneec::CMD_RX_FEEDBACK_DATA:
-            qCDebug(YuneecLog) << "Received TYPE_CHN: CMD_RX_FEEDBACK_DATA";
+            _helper.logDebug("Received TYPE_CHN: CMD_RX_FEEDBACK_DATA");
             /* From original Java code
              *
              * We're not going to ever receive this unless the Typhoon is running
@@ -1382,19 +1428,22 @@ M4Lib::_handleChannel(m4Packet& packet)
             */
             break;
         case Yuneec::CMD_TX_CHANNEL_DATA_MIXED:
-            //qCDebug(YuneecLogVerbose) << "CMD_TX_CHANNEL_DATA_MIXED";
+            //_helper.logDebug("CMD_TX_CHANNEL_DATA_MIXED");
             _handleMixedChannelData(packet);
             break;
         case Yuneec::CMD_TX_CHANNEL_DATA_RAW:
             //-- We don't yet use this
-            //qCDebug(YuneecLogVerbose) << "CMD_TX_CHANNEL_DATA_RAW";
+            //_helper.logDebug("CMD_TX_CHANNEL_DATA_RAW");
             _handleRawChannelData(packet);
             break;
         case 0x82:
             //-- COMMAND_M4_SEND_COMPRESS_TRIM_TO_PAD
             break;
         default:
-            qCDebug(YuneecLog) << "Received Unknown TYPE_CHN:" << packet.data.toHex();
+            // TODO: add this again
+            //std::stringstream ss;
+            //ss << "Received Unknown TYPE_CHN:" << packet.data.toHex();
+            //_helper.logInfo(ss.str());
             break;
     }
 }
@@ -1413,7 +1462,9 @@ M4Lib::_handleCommand(m4Packet& packet)
                     if (_m4StateChangedCallback) {
                         _m4StateChangedCallback();
                     }
-                    qCDebug(YuneecLog) << "New State:" << QString::fromStdString(m4StateStr()) << "(" << (int)_m4State << ")";
+                    std::stringstream ss;
+                    ss << "New State:" << m4StateStr() << "(" << (int)_m4State << ")";
+                    _helper.logDebug(ss.str());
                     //-- If we were connected and just finished calibration, bind again
                     if(_vehicleConnected && old_state == M4State::FACTORY_CAL) {
                         _initAndCheckBinding();
@@ -1427,9 +1478,13 @@ M4Lib::_handleCommand(m4Packet& packet)
         case Yuneec::CMD_CALIBRATION_STATE_CHANGE:
             _calibrationStateChanged(packet);
             return true;
-        default:
-            qCDebug(YuneecLog) << "Received Unknown TYPE_CMD:" << packet.commandID() << packet.data.toHex();
-            break;
+        default: {
+                // TODO: add again
+                //std::stringstream ss;
+                //ss << "Received Unknown TYPE_CMD:" << packet.commandID() << packet.data.toHex();
+                //_helper.logDebug(ss.str());
+                break;
+            }
     }
     return false;
 }
@@ -1450,10 +1505,10 @@ M4Lib::_switchChanged(m4Packet& packet)
                 //-- Pressed is 0
                 if (switchChanged.newState == 0) {
                     _buttonStateChangedCallback(ButtonId::POWER, ButtonState::PRESSED);
-                    qCDebug(YuneecLogVerbose) << "Power button pressed";
+                    _helper.logDebug("Power button pressed");
                 } else {
                     _buttonStateChangedCallback(ButtonId::POWER, ButtonState::NORMAL);
-                    qCDebug(YuneecLogVerbose) << "Power button normal";
+                    _helper.logDebug("Power button normal");
                 }
             }
             break;
@@ -1462,13 +1517,13 @@ M4Lib::_switchChanged(m4Packet& packet)
                 //-- On is position 3 (index 2)
                 if (switchChanged.newState == 2) {
                     _switchStateChangedCallback(SwitchId::OBSTACLE_AVOIDENCE, SwitchState::ON);
-                    qCDebug(YuneecLogVerbose) << "Obstacle avoidance switch on";
+                    _helper.logDebug("Obstacle avoidance switch on");
                 } else if (switchChanged.newState == 1) {
                     _switchStateChangedCallback(SwitchId::OBSTACLE_AVOIDENCE, SwitchState::CENTER);
-                    qCDebug(YuneecLogVerbose) << "Obstacle avoidance switch center";
+                    _helper.logDebug("Obstacle avoidance switch center");
                 } else {
                     _switchStateChangedCallback(SwitchId::OBSTACLE_AVOIDENCE, SwitchState::OFF);
-                    qCDebug(YuneecLogVerbose) << "Obstacle avoidance switch off";
+                    _helper.logDebug("Obstacle avoidance switch off");
                 }
             }
             break;
@@ -1476,10 +1531,10 @@ M4Lib::_switchChanged(m4Packet& packet)
             if (_buttonStateChangedCallback) {
                 if (switchChanged.newState == 0) {
                     _buttonStateChangedCallback(ButtonId::CAMERA_SHUTTER, ButtonState::PRESSED);
-                    qCDebug(YuneecLogVerbose) << "Camera button pressed";
+                    _helper.logDebug("Camera button pressed");
                 } else {
                     _buttonStateChangedCallback(ButtonId::CAMERA_SHUTTER, ButtonState::NORMAL);
-                    qCDebug(YuneecLogVerbose) << "Camera button normal";
+                    _helper.logDebug("Camera button normal");
                 }
             }
            break;
@@ -1487,15 +1542,18 @@ M4Lib::_switchChanged(m4Packet& packet)
             if (_buttonStateChangedCallback) {
                 if (switchChanged.newState == 0) {
                     _buttonStateChangedCallback(ButtonId::VIDEO_SHUTTER, ButtonState::PRESSED);
-                    qCDebug(YuneecLogVerbose) << "Video button pressed";
+                    _helper.logDebug("Video button pressed");
                 } else {
                     _buttonStateChangedCallback(ButtonId::VIDEO_SHUTTER, ButtonState::NORMAL);
-                    qCDebug(YuneecLogVerbose) << "Video button normal";
+                    _helper.logDebug("Video button normal");
                 }
             }
             break;
-        default:
-            qCDebug(YuneecLogVerbose) << "Unhandled switch/button: " << switchChanged.hwId << " - " << switchChanged.newState;
+        default: {
+                std::stringstream ss;
+                ss << "Unhandled switch/button: " << switchChanged.hwId << " - " << switchChanged.newState;
+                _helper.logWarn(ss.str());
+            }
             break;
     }
 }

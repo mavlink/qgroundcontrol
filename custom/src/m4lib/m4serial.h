@@ -15,11 +15,13 @@
 #include <termios.h>
 #include <functional>
 
+class HelperInterface;
+
 class M4SerialComm : public QObject
 {
     Q_OBJECT
 public:
-    M4SerialComm  (QObject* parent = NULL);
+    M4SerialComm  (HelperInterface& helper);
     ~M4SerialComm ();
     bool        init    (std::string port, int baud);
     bool        open    ();
@@ -48,6 +50,7 @@ private:
         SECOND_ID
     };
 
+    HelperInterface& _helper;
     int         _fd = -1;
     int         _baudrate = 230400;
     SerialPortState _serialPortStatus = SerialPortState::CLOSED;
