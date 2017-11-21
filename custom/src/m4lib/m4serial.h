@@ -6,9 +6,6 @@
 
 #pragma once
 
-// TODO: include to be removed
-#include "TyphoonHCommon.h"
-
 // Only to be compiled on ST16 hardware (Android x86)
 #if defined(__androidx86__)
 
@@ -18,9 +15,7 @@
 
 class HelperInterface;
 
-class M4SerialComm : public QObject
-{
-    Q_OBJECT
+class M4SerialComm{
 public:
     M4SerialComm  (HelperInterface& helper);
     ~M4SerialComm ();

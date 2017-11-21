@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "TyphoonHCommon.h"
 #include "m4def.h"
 
 #include <string>

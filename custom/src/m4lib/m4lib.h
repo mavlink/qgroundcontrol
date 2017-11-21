@@ -1,6 +1,5 @@
 #pragma once
 
-#include "TyphoonHCommon.h"
 #include "m4serial.h"
 #include "m4util.h"
 
@@ -31,9 +30,8 @@ public:
 };
 
 
-class M4Lib : public QObject
+class M4Lib
 {
-    Q_OBJECT
 public:
 
     enum class M4State {

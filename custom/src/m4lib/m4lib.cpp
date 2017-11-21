@@ -4,13 +4,12 @@
 #include "m4def.h"
 #include "m4serial.h"
 
-#include "TyphoonHM4Interface.h"
-
 #if defined(__androidx86__)
 
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <cmath>
 
 // RC Channel data provided by Yuneec
 #include "m4channeldata.h"
@@ -1416,7 +1415,6 @@ M4Lib::_handleRxBindInfo(m4Packet& packet)
 void
 M4Lib::_handleChannel(m4Packet& packet)
 {
-    Q_UNUSED(packet);
     switch(packet.commandID()) {
         case Yuneec::CMD_RX_FEEDBACK_DATA:
             _helper.logDebug("Received TYPE_CHN: CMD_RX_FEEDBACK_DATA");
@@ -1454,7 +1452,6 @@ M4Lib::_handleChannel(m4Packet& packet)
 bool
 M4Lib::_handleCommand(m4Packet& packet)
 {
-    Q_UNUSED(packet);
     switch(packet.commandID()) {
         case Yuneec::CMD_TX_STATE_MACHINE: {
                 std::vector<uint8_t> commandValues = packet.commandValues();
@@ -1494,7 +1491,6 @@ M4Lib::_handleCommand(m4Packet& packet)
 void
 M4Lib::_switchChanged(m4Packet& packet)
 {
-    Q_UNUSED(packet);
     std::vector<uint8_t> commandValues = packet.commandValues();
     SwitchChanged switchChanged;
     switchChanged.hwId      = (int)commandValues[0];
@@ -1566,7 +1562,6 @@ M4Lib::_switchChanged(m4Packet& packet)
 void
 M4Lib::_calibrationStateChanged(m4Packet &packet)
 {
-    Q_UNUSED(packet);
     bool state  = true;
     bool change = false;
     std::vector<uint8_t> commandValues = packet.commandValues();
@@ -1575,7 +1570,10 @@ M4Lib::_calibrationStateChanged(m4Packet &packet)
             _rawChannelsCalibration[i] = commandValues[i];
             change = true;
         }
-        if ((int)commandValues[i] != TyphoonHQuickInterface::CalibrationStateRag) {
+        //if ((int)commandValues[i] != TyphoonHQuickInterface::CalibrationStateRag) {
+        // TODO: we don't want to depend on TyphoonHQuickInterface::CalibrationStateRag, so we just
+        //       copy the value over and hardcode it here.
+        if ((int)commandValues[i] != 4) {
             state = false;
         }
     }
@@ -1611,7 +1609,7 @@ M4Lib::_handleRawChannelData(m4Packet& packet)
     _rawChannels.clear();
     for(int i = 0; i < analogChannelCount; i++) {
         uint16_t value = 0;
-        startIndex = (int)floor(i * 1.5);
+        startIndex = (int)std::floor(i * 1.5);
         val1 = values[startIndex] & 0xff;
         val2 = values[startIndex + 1] & 0xff;
         if(i % 2 == 0) {
