@@ -21,7 +21,7 @@ class M4SerialComm : public QObject
 public:
     M4SerialComm  (QObject* parent = NULL);
     ~M4SerialComm ();
-    bool        init    (QString port, int baud);
+    bool        init    (std::string port, int baud);
     bool        open    ();
     void        close   ();
     bool        write   (QByteArray data, bool debug = false);
@@ -51,7 +51,7 @@ private:
     int         _fd = -1;
     int         _baudrate = 230400;
     SerialPortState _serialPortStatus = SerialPortState::CLOSED;
-    QString     _uart_name {};
+    std::string     _uart_name {};
     PacketState _currentPacketStatus = PacketState::NONE;
     struct termios  _savedtio;
     std::function<void(QByteArray)> _bytesReadyCallback = nullptr;

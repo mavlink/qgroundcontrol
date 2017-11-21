@@ -27,7 +27,7 @@ M4SerialComm::~M4SerialComm()
 
 //-----------------------------------------------------------------------------
 bool
-M4SerialComm::init(QString port, int baud)
+M4SerialComm::init(std::string port, int baud)
 {
     _uart_name = port;
     _baudrate  = baud;
@@ -41,10 +41,10 @@ M4SerialComm::open()
     if(_serialPortStatus != SerialPortState::CLOSED || _fd >= 0) {
         return false;
     }
-    _fd = _openPort(_uart_name.toLatin1().data());
+    _fd = _openPort(_uart_name.c_str());
     if(_fd < 0) {
         perror("SERIAL");
-        qCDebug(YuneecLog) << "SERIAL: Could not open port" << _uart_name;
+        qCDebug(YuneecLog) << "SERIAL: Could not open port" << QString::fromStdString(_uart_name);
         return false;
     }
   //tcgetattr(_fd , &_savedtio);
@@ -235,7 +235,7 @@ M4SerialComm::_writePort(void* buffer, int len)
 {
     int written = ::write(_fd, buffer, len);
     if(written != len && written >= 0) {
-        qCWarning(YuneecLog) << QString("SERIAL: Wrote only %1 bytes out of %2 bytes").arg(written).arg(len);
+        qCWarning(YuneecLog) << QString::fromStdString("SERIAL: Wrote only %1 bytes out of %2 bytes").arg(written).arg(len);
     }
     return written;
 }
