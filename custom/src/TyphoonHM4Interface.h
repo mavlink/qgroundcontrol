@@ -64,9 +64,6 @@ private:
     {
         if (_callback) {
             _callback();
-        } else {
-            qCDebug(YuneecLogVerbose) << "callback not set";
-            abort();
         }
     }
 
