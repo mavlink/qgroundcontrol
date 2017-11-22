@@ -122,9 +122,9 @@ SOURCES += \
 
 !DesktopPlanner {
     SOURCES += \
-        $$PWD/src/m4lib/m4serial.cpp \
-        $$PWD/src/m4lib/m4util.cpp \
-        $$PWD/src/m4lib/m4lib.cpp \
+        $$PWD/src/m4lib/src/m4serial.cpp \
+        $$PWD/src/m4lib/src/m4util.cpp \
+        $$PWD/src/m4lib/src/m4lib.cpp \
         $$PWD/src/TyphoonHM4Interface.cc \
         $$PWD/src/TyphoonHQuickInterface.cc \
         $$PWD/src/UTMConverter.cc \
@@ -141,11 +141,11 @@ HEADERS += \
 
 !DesktopPlanner {
     HEADERS += \
-        $$PWD/src/m4lib/m4channeldata.h \
-        $$PWD/src/m4lib/m4lib.h \
-        $$PWD/src/m4lib/m4def.h \
-        $$PWD/src/m4lib/m4serial.h \
-        $$PWD/src/m4lib/m4util.h \
+        $$PWD/src/m4lib/src/m4channeldata.h \
+        $$PWD/src/m4lib/src/m4lib.h \
+        $$PWD/src/m4lib/src/m4def.h \
+        $$PWD/src/m4lib/src/m4serial.h \
+        $$PWD/src/m4lib/src/m4util.h \
         $$PWD/src/TyphoonHCommon.h \
         $$PWD/src/TyphoonHM4Interface.h \
         $$PWD/src/TyphoonHQuickInterface.h \
