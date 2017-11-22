@@ -155,6 +155,7 @@ HEADERS += \
 
 INCLUDEPATH += \
     $$PWD/src \
+    $$PWD/src/m4lib/src \
 
 equals(QT_MAJOR_VERSION, 5) {
     greaterThan(QT_MINOR_VERSION, 5) {

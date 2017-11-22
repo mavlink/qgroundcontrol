@@ -10,7 +10,7 @@
 #include "TyphoonHCommon.h"
 #include "TyphoonHQuickInterface.h"
 
-#include "m4lib/m4lib.h"
+#include "m4lib.h"
 
 #include "Vehicle.h"
 

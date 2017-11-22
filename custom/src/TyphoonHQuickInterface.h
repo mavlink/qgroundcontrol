@@ -11,7 +11,7 @@
 #include "VideoReceiver.h"
 #include "Vehicle.h"
 
-#include "m4lib/m4lib.h" // For button, switches
+#include "m4lib.h" // For button, switches
 
 #include <QQmlListProperty>
 

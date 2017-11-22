@@ -13,7 +13,7 @@
 #include <QSize>
 #include <QPoint>
 
-#include "m4lib/m4lib.h" // for button states
+#include "m4lib.h" // for button states
 
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLog)
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLogVerbose)
