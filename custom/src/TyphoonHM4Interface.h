@@ -72,7 +72,7 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-// Sleeper class for M4Lib
+// Helper class for M4Lib
 class HelperUsingQt : public HelperInterface {
 public:
     HelperUsingQt() {
