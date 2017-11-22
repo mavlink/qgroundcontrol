@@ -141,7 +141,7 @@ HEADERS += \
 
 !DesktopPlanner {
     HEADERS += \
-        $$PWD/src/m4channeldata.h \
+        $$PWD/src/m4lib/m4channeldata.h \
         $$PWD/src/m4lib/m4lib.h \
         $$PWD/src/m4lib/m4def.h \
         $$PWD/src/m4lib/m4serial.h \
