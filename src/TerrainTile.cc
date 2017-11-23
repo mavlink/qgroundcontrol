@@ -1,5 +1,6 @@
 #include "TerrainTile.h"
 #include "JsonHelper.h"
+#include "QGCMapEngine.h"
 
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -7,7 +8,6 @@
 
 QGC_LOGGING_CATEGORY(TerrainTileLog, "TerrainTileLog")
 
-const double TerrainTile::srtm1TileSize         = 0.025;
 const char*  TerrainTile::_jsonStatusKey        = "status";
 const char*  TerrainTile::_jsonDataKey          = "data";
 const char*  TerrainTile::_jsonBoundsKey        = "bounds";
@@ -141,8 +141,8 @@ float TerrainTile::elevation(const QGeoCoordinate& coordinate) const
     if (_isValid) {
         qCDebug(TerrainTileLog) << "elevation: " << coordinate << " , in sw " << _southWest << " , ne " << _northEast;
         // Get the index at resolution of 1 arc second
-        int indexLat = round((coordinate.latitude() - _southWest.latitude()) * (gridSize - 1) / srtm1TileSize);
-        int indexLon = round((coordinate.longitude() - _southWest.longitude()) * (gridSize - 1) / srtm1TileSize);
+        int indexLat = round((coordinate.latitude() - _southWest.latitude()) * (gridSize - 1) / QGCMapEngine::srtm1TileSize);
+        int indexLon = round((coordinate.longitude() - _southWest.longitude()) * (gridSize - 1) / QGCMapEngine::srtm1TileSize);
         qCDebug(TerrainTileLog) << "indexLat:indexLon" << indexLat << indexLon; // TODO (birchera): Move this down to the next debug output, once this is all properly working.
         Q_ASSERT(indexLat >= 0);
         Q_ASSERT(indexLat < gridSize);

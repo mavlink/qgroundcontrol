@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "Terrain.h"
+#include "QGCMapEngine.h"
 
 #include <QUrl>
 #include <QUrlQuery>
@@ -112,15 +113,15 @@ bool ElevationProvider::cacheTerrainTiles(const QGeoCoordinate& southWest, const
 
     // Correct corners of the tile to fixed grid
     QGeoCoordinate southWestCorrected;
-    southWestCorrected.setLatitude(floor(southWest.latitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
-    southWestCorrected.setLongitude(floor(southWest.longitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
+    southWestCorrected.setLatitude(floor(southWest.latitude()/QGCMapEngine::srtm1TileSize)*QGCMapEngine::srtm1TileSize);
+    southWestCorrected.setLongitude(floor(southWest.longitude()/QGCMapEngine::srtm1TileSize)*QGCMapEngine::srtm1TileSize);
     QGeoCoordinate northEastCorrected;
-    northEastCorrected.setLatitude(ceil(northEast.latitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
-    northEastCorrected.setLongitude(ceil(northEast.longitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
+    northEastCorrected.setLatitude(ceil(northEast.latitude()/QGCMapEngine::srtm1TileSize)*QGCMapEngine::srtm1TileSize);
+    northEastCorrected.setLongitude(ceil(northEast.longitude()/QGCMapEngine::srtm1TileSize)*QGCMapEngine::srtm1TileSize);
 
     // Add all tiles to download queue
-    for (double lat = southWestCorrected.latitude() + TerrainTile::srtm1TileSize / 2.0; lat < northEastCorrected.latitude(); lat += TerrainTile::srtm1TileSize) {
-        for (double lon = southWestCorrected.longitude() + TerrainTile::srtm1TileSize / 2.0; lon < northEastCorrected.longitude(); lon += TerrainTile::srtm1TileSize) {
+    for (double lat = southWestCorrected.latitude() + QGCMapEngine::srtm1TileSize / 2.0; lat < northEastCorrected.latitude(); lat += QGCMapEngine::srtm1TileSize) {
+        for (double lon = southWestCorrected.longitude() + QGCMapEngine::srtm1TileSize / 2.0; lon < northEastCorrected.longitude(); lon += QGCMapEngine::srtm1TileSize) {
             QString uniqueTileId = _uniqueTileId(QGeoCoordinate(lat, lon));
             _tilesMutex.lock();
             if (_downloadQueue.contains(uniqueTileId) || _tiles.contains(uniqueTileId)) {
@@ -252,11 +253,11 @@ QString ElevationProvider::_uniqueTileId(const QGeoCoordinate& coordinate)
 {
     // Compute corners of the tile
     QGeoCoordinate southWest;
-    southWest.setLatitude(floor(coordinate.latitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
-    southWest.setLongitude(floor(coordinate.longitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
+    southWest.setLatitude(floor(coordinate.latitude()/QGCMapEngine::srtm1TileSize)*QGCMapEngine::srtm1TileSize);
+    southWest.setLongitude(floor(coordinate.longitude()/QGCMapEngine::srtm1TileSize)*QGCMapEngine::srtm1TileSize);
     QGeoCoordinate northEast;
-    northEast.setLatitude(ceil(coordinate.latitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
-    northEast.setLongitude(ceil(coordinate.longitude()/TerrainTile::srtm1TileSize)*TerrainTile::srtm1TileSize);
+    northEast.setLatitude(floor(coordinate.latitude()/QGCMapEngine::srtm1TileSize + 1)*QGCMapEngine::srtm1TileSize);
+    northEast.setLongitude(floor(coordinate.longitude()/QGCMapEngine::srtm1TileSize + 1)*QGCMapEngine::srtm1TileSize);
 
     // Generate uniquely identifying string
     QString ret = QString::number(southWest.latitude(), 'f', 6) + "_" + QString::number(southWest.longitude(), 'f', 6) + "_" +

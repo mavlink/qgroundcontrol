@@ -732,6 +732,14 @@ QGCView {
                                 }
                             }
                         }
+                        QGCCheckBox {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            text:           qsTr("Fetch elevation data")
+                            checked:        QGroundControl.mapEngineManager.fetchElevation
+                            onClicked:      QGroundControl.mapEngineManager.fetchElevation = checked
+                            visible:        mapType != "Airmap Elevation Data"
+                        }
                     }
 
                     Rectangle {
