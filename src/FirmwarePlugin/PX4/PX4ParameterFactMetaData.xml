@@ -7819,17 +7819,28 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <short_desc>Primary accel ID</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0" name="CAL_AIR_PMODEL" type="INT32">
-      <short_desc>Airspeed sensor pitot model</short_desc>
+    <parameter default="0" name="CAL_AIR_CMODEL" type="INT32">
+      <short_desc>Airspeed sensor compensation model for the SDP3x</short_desc>
+      <long_desc>Model with Pitot CAL_AIR_TUBED_MM: Not used, 1.5 mm tubes assumed. CAL_AIR_TUBELEN: Length of the tubes connecting the pitot to the sensor. Model without Pitot (1.5 mm tubes) CAL_AIR_TUBED_MM: Not used, 1.5 mm tubes assumed. CAL_AIR_TUBELEN: Length of the tubes connecting the pitot to the sensor. Tube Pressure Drop CAL_AIR_TUBED_MM: Diameter in mm of the pitot and tubes, must have the same diameter. CAL_AIR_TUBELEN: Length of the tubes connecting the pitot to the sensor and the static + dynamic port length of the pitot.</long_desc>
       <scope>modules/sensors</scope>
       <values>
-        <value code="0">HB Pitot</value>
+        <value code="0">Model with Pitot</value>
+        <value code="1">Model without Pitot (1.5 mm tubes)</value>
+        <value code="2">Tube Pressure Drop</value>
       </values>
+    </parameter>
+    <parameter default="1.5" name="CAL_AIR_TUBED_MM" type="FLOAT">
+      <short_desc>Airspeed sensor tube diameter. Only used for the Tube Pressure Drop Compensation</short_desc>
+      <min>0.1</min>
+      <max>100</max>
+      <unit>millimeter</unit>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0.2" name="CAL_AIR_TUBELEN" type="FLOAT">
       <short_desc>Airspeed sensor tube length</short_desc>
+      <long_desc>See the CAL_AIR_CMODEL explanation on how this parameter should be set.</long_desc>
       <min>0.01</min>
-      <max>0.5</max>
+      <max>2.00</max>
       <unit>meter</unit>
       <scope>modules/sensors</scope>
     </parameter>
