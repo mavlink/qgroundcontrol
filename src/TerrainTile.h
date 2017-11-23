@@ -76,9 +76,6 @@ public:
     /// tile grid size in lat and lon
     static const int    gridSize = TERRAIN_TILE_SIZE;
 
-    /// size of a tile in degree
-    static const double  srtm1TileSize;
-
 private:
     QGeoCoordinate      _southWest;                                     /// South west corner of the tile
     QGeoCoordinate      _northEast;                                     /// North east corner of the tile

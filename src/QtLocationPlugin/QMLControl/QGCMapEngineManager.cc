@@ -41,6 +41,7 @@ QGCMapEngineManager::QGCMapEngineManager(QGCApplication* app, QGCToolbox* toolbo
     , _setID(UINT64_MAX)
     , _freeDiskSpace(0)
     , _diskSpace(0)
+    , _fetchElevation(true)
     , _actionProgress(0)
     , _importAction(ActionNone)
     , _importReplace(false)
@@ -157,8 +158,26 @@ QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
     } else {
         qWarning() <<  "QGCMapEngineManager::startDownload() No Tiles to save";
     }
-    // TODO: this could also get some feedback
-    _elevationProvider.cacheTerrainTiles(QGeoCoordinate(_bottomRightLat, _topleftLon), QGeoCoordinate(_topleftLat, _bottomRightLon));
+    if (mapType != "Airmap Elevation Data" && _fetchElevation) {
+        QGCCachedTileSet* set = new QGCCachedTileSet(name + " Elevation");
+        set->setMapTypeStr("Airmap Elevation Data");
+        set->setTopleftLat(_topleftLat);
+        set->setTopleftLon(_topleftLon);
+        set->setBottomRightLat(_bottomRightLat);
+        set->setBottomRightLon(_bottomRightLon);
+        set->setMinZoom(1);
+        set->setMaxZoom(1);
+        set->setTotalTileSize(_totalSet.tileSize);
+        set->setTotalTileCount(_totalSet.tileCount);
+        set->setType(QGCMapEngine::getTypeFromName("Airmap Elevation Data"));
+        QGCCreateTileSetTask* task = new QGCCreateTileSetTask(set);
+        //-- Create Tile Set (it will also create a list of tiles to download)
+        connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);
+        connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
+        getQGCMapEngine()->addTask(task);
+    } else {
+        qWarning() <<  "QGCMapEngineManager::startDownload() No Tiles to save";
+    }
 }
 
 //-----------------------------------------------------------------------------
