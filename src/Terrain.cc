@@ -10,7 +10,6 @@
 #include "Terrain.h"
 #include "QGCMapEngine.h"
 #include "QGeoMapReplyQGC.h"
-#include <QtLocation/private/qgeotilespec_p.h>
 
 #include <QUrl>
 #include <QUrlQuery>
@@ -20,6 +19,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QtLocation/private/qgeotilespec_p.h>
 
 QGC_LOGGING_CATEGORY(TerrainLog, "TerrainLog")
 
@@ -165,16 +165,37 @@ void ElevationProvider::_fetchedTile()
 {
     QGeoTiledMapReplyQGC* reply = qobject_cast<QGeoTiledMapReplyQGC*>(QObject::sender());
 
-    if (!reply || !reply->isFinished()) {
-        if (reply) {
-            qCDebug(TerrainLog) << "Error in fetching elevation tile: " << reply->errorString();
-            reply->deleteLater();
-        } else {
-            qCDebug(TerrainLog) << "Elevation tile fetched but invalid reply data type.";
-        }
+    if (!reply) {
+        qCDebug(TerrainLog) << "Elevation tile fetched but invalid reply data type.";
         return;
     }
 
+    // remove from download queue
+    QGeoTileSpec spec = reply->tileSpec();
+    QString hash = QGCMapEngine::getTileHash(UrlFactory::AirmapElevation, spec.x(), spec.y(), spec.zoom());
+    _tilesMutex.lock();
+    if (_downloadQueue.contains(hash)) {
+        _downloadQueue.removeOne(hash);
+    }
+    _tilesMutex.unlock();
+
+    // handle potential errors
+    if (reply->error() != QGeoTiledMapReply::NoError) {
+        if (reply->error() == QGeoTiledMapReply::CommunicationError) {
+            qCDebug(TerrainLog) << "Elevation tile fetching returned communication error. " << reply->errorString();
+        } else {
+            qCDebug(TerrainLog) << "Elevation tile fetching returned error. " << reply->errorString();
+        }
+        reply->deleteLater();
+        return;
+    }
+    if (!reply->isFinished()) {
+        qCDebug(TerrainLog) << "Error in fetching elevation tile. Not finished. " << reply->errorString();
+        reply->deleteLater();
+        return;
+    }
+
+    // parse received data and insert into hash table
     QByteArray responseBytes = reply->mapImageData();
 
     QJsonParseError parseError;
@@ -194,12 +215,12 @@ void ElevationProvider::_fetchedTile()
         } else {
             delete terrainTile;
         }
-        if (_downloadQueue.contains(_getTileHash(terrainTile->centerCoordinate()))) {
-            _downloadQueue.removeOne(_getTileHash(terrainTile->centerCoordinate()));
-        }
         _tilesMutex.unlock();
     }
     reply->deleteLater();
+
+    // now try to query the data again
+    queryTerrainData(_coordinates);
 }
 
 QString ElevationProvider::_getTileHash(const QGeoCoordinate& coordinate)
