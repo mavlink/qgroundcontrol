@@ -112,9 +112,11 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
 {
     _timer.stop();
     if (!_reply) {
+        abort();
         return;
     }
     if (_reply->error() != QNetworkReply::NoError) {
+        abort();
         return;
     }
     QByteArray a = _reply->readAll();
@@ -195,4 +197,5 @@ QGeoTiledMapReplyQGC::timeout()
     if(_reply) {
         _reply->abort();
     }
+    abort();
 }

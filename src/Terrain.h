@@ -10,6 +10,7 @@
 #pragma once
 
 #include "TerrainTile.h"
+#include "QGCMapEngineData.h"
 #include "QGCLoggingCategory.h"
 
 #include <QObject>
@@ -17,6 +18,7 @@
 #include <QNetworkAccessManager>
 #include <QHash>
 #include <QMutex>
+#include <QtLocation/private/qgeotiledmapreply_p.h>
 
 /* usage example:
     ElevationProvider *p = new ElevationProvider();
@@ -52,27 +54,17 @@ public:
      */
     bool queryTerrainData(const QList<QGeoCoordinate>& coordinates);
 
-    /**
-     * Cache all data in rectangular region given by south west and north east corner.
-     *
-     * @param southWest
-     * @param northEast
-     * @return true on successful scheduling for download
-     */
-    bool cacheTerrainTiles(const QGeoCoordinate& southWest, const QGeoCoordinate& northEast);
-
 signals:
     /// signal returning requested elevation data
     void terrainData(bool success, QList<float> altitudes);
 
 private slots:
     void _requestFinished();                                    /// slot to handle download of elevation of list of coordinates
-    void _requestFinishedTile();                                /// slot to handle download of elevation tiles
+    void _fetchedTile();                                        /// slot to handle fetched elevation tiles
 
 private:
 
-    QString _uniqueTileId(const QGeoCoordinate& coordinate);    /// Method to create a unique string for each tile. Format: south_west_north_east as floats.
-    void    _downloadTiles(void);                               /// Method to trigger download of queued tiles, eventually emitting the requested altitudes (if any).
+    QString _getTileHash(const QGeoCoordinate& coordinate);     /// Method to create a unique string for each tile. Format: south_west_north_east as floats.
 
     enum class State {
         Idle,

@@ -9,6 +9,8 @@
 
 #include "Terrain.h"
 #include "QGCMapEngine.h"
+#include "QGeoMapReplyQGC.h"
+#include <QtLocation/private/qgeotilespec_p.h>
 
 #include <QUrl>
 #include <QUrlQuery>
@@ -75,16 +77,31 @@ bool ElevationProvider::queryTerrainData(const QList<QGeoCoordinate>& coordinate
     QList<float> altitudes;
     bool needToDownload = false;
     foreach (QGeoCoordinate coordinate, coordinates) {
-        QString uniqueTileId = _uniqueTileId(coordinate);
+        QString tileHash = _getTileHash(coordinate);
         _tilesMutex.lock();
-        if (!_tiles.contains(uniqueTileId)) {
-            qCDebug(TerrainLog) << "Need to download tile " << uniqueTileId;
-            _downloadQueue.append(uniqueTileId);
+        if (!_tiles.contains(tileHash)) {
+            qCDebug(TerrainLog) << "Need to download tile " << tileHash;
+
+            if (!_downloadQueue.contains(tileHash)) {
+                // Schedule the fetch task
+
+                QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL(UrlFactory::AirmapElevation, QGCMapEngine::long2elevationTileX(coordinate.longitude(), 1), QGCMapEngine::lat2elevationTileY(coordinate.latitude(), 1), 1, &_networkManager);
+                QGeoTileSpec spec;
+                spec.setX(QGCMapEngine::long2elevationTileX(coordinate.longitude(), 1));
+                spec.setY(QGCMapEngine::lat2elevationTileY(coordinate.latitude(), 1));
+                spec.setZoom(1);
+                spec.setMapId(UrlFactory::AirmapElevation);
+                QGeoTiledMapReplyQGC* reply = new QGeoTiledMapReplyQGC(&_networkManager, request, spec);
+                connect(reply, &QGeoTiledMapReplyQGC::finished, this, &ElevationProvider::_fetchedTile);
+                connect(reply, &QGeoTiledMapReplyQGC::aborted, this, &ElevationProvider::_fetchedTile);
+
+                _downloadQueue.append(tileHash);
+            }
             needToDownload = true;
         } else {
             if (!needToDownload) {
-                if (_tiles[uniqueTileId].isIn(coordinate)) {
-                    altitudes.push_back(_tiles[uniqueTileId].elevation(coordinate));
+                if (_tiles[tileHash].isIn(coordinate)) {
+                    altitudes.push_back(_tiles[tileHash].elevation(coordinate));
                 } else {
                     qCDebug(TerrainLog) << "Error: coordinate not in tile region";
                     altitudes.push_back(-1.0);
@@ -103,39 +120,7 @@ bool ElevationProvider::queryTerrainData(const QList<QGeoCoordinate>& coordinate
 
     _coordinates = coordinates;
 
-    _downloadTiles();
-    return true;
-}
-
-bool ElevationProvider::cacheTerrainTiles(const QGeoCoordinate& southWest, const QGeoCoordinate& northEast)
-{
-    qCDebug(TerrainLog) << "Cache terrain tiles southWest:northEast" << southWest << northEast;
-
-    // Correct corners of the tile to fixed grid
-    QGeoCoordinate southWestCorrected;
-    southWestCorrected.setLatitude(floor(southWest.latitude()/QGCMapEngine::srtm1TileSize)*QGCMapEngine::srtm1TileSize);
-    southWestCorrected.setLongitude(floor(southWest.longitude()/QGCMapEngine::srtm1TileSize)*QGCMapEngine::srtm1TileSize);
-    QGeoCoordinate northEastCorrected;
-    northEastCorrected.setLatitude(ceil(northEast.latitude()/QGCMapEngine::srtm1TileSize)*QGCMapEngine::srtm1TileSize);
-    northEastCorrected.setLongitude(ceil(northEast.longitude()/QGCMapEngine::srtm1TileSize)*QGCMapEngine::srtm1TileSize);
-
-    // Add all tiles to download queue
-    for (double lat = southWestCorrected.latitude() + QGCMapEngine::srtm1TileSize / 2.0; lat < northEastCorrected.latitude(); lat += QGCMapEngine::srtm1TileSize) {
-        for (double lon = southWestCorrected.longitude() + QGCMapEngine::srtm1TileSize / 2.0; lon < northEastCorrected.longitude(); lon += QGCMapEngine::srtm1TileSize) {
-            QString uniqueTileId = _uniqueTileId(QGeoCoordinate(lat, lon));
-            _tilesMutex.lock();
-            if (_downloadQueue.contains(uniqueTileId) || _tiles.contains(uniqueTileId)) {
-                _tilesMutex.unlock();
-                continue;
-            }
-            _downloadQueue.append(uniqueTileId);
-            _tilesMutex.unlock();
-            qCDebug(TerrainLog) << "Adding tile to download queue: " << uniqueTileId;
-        }
-    }
-
-    _downloadTiles();
-    return true;
+    return false;
 }
 
 void ElevationProvider::_requestFinished()
@@ -176,93 +161,51 @@ void ElevationProvider::_requestFinished()
     emit terrainData(false, altitudes);
 }
 
-void ElevationProvider::_requestFinishedTile()
+void ElevationProvider::_fetchedTile()
 {
-    QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
-    _state = State::Idle;
+    QGeoTiledMapReplyQGC* reply = qobject_cast<QGeoTiledMapReplyQGC*>(QObject::sender());
 
-    // When an error occurs we still end up here
-    if (reply->error() != QNetworkReply::NoError) {
-        QByteArray responseBytes = reply->readAll();
-
-        QJsonParseError parseError;
-        QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
-        qCDebug(TerrainLog) << "ERROR: Received " << responseJson;
-        // TODO (birchera): Handle error in downloading data
-        _downloadTiles();
+    if (!reply || !reply->isFinished()) {
+        if (reply) {
+            qCDebug(TerrainLog) << "Error in fetching elevation tile: " << reply->errorString();
+            reply->deleteLater();
+        } else {
+            qCDebug(TerrainLog) << "Elevation tile fetched but invalid reply data type.";
+        }
         return;
     }
 
-    QByteArray responseBytes = reply->readAll();
+    QByteArray responseBytes = reply->mapImageData();
 
     QJsonParseError parseError;
     QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
-        // TODO (birchera): Handle error in downloading data
-        _downloadTiles();
+        qCDebug(TerrainLog) << "Could not parse terrain tile " << parseError.errorString();
+        qCDebug(TerrainLog) << responseBytes;
+        reply->deleteLater();
         return;
     }
 
-    TerrainTile* tile = new TerrainTile(responseJson);
-    if (tile->isValid()) {
+    TerrainTile* terrainTile = new TerrainTile(responseJson);
+    if (terrainTile->isValid()) {
         _tilesMutex.lock();
-        if (!_tiles.contains(_uniqueTileId(tile->centerCoordinate()))) {
-            _tiles.insert(_uniqueTileId(tile->centerCoordinate()), *tile);
+        if (!_tiles.contains(_getTileHash(terrainTile->centerCoordinate()))) {
+            _tiles.insert(_getTileHash(terrainTile->centerCoordinate()), *terrainTile);
         } else {
-            delete tile;
+            delete terrainTile;
+        }
+        if (_downloadQueue.contains(_getTileHash(terrainTile->centerCoordinate()))) {
+            _downloadQueue.removeOne(_getTileHash(terrainTile->centerCoordinate()));
         }
         _tilesMutex.unlock();
     }
-
-    _downloadTiles();
+    reply->deleteLater();
 }
 
-void ElevationProvider::_downloadTiles(void)
+QString ElevationProvider::_getTileHash(const QGeoCoordinate& coordinate)
 {
-    if (_state == State::Idle && _downloadQueue.count() > 0) {
-        QUrlQuery query;
-        _tilesMutex.lock();
-        qCDebug(TerrainLog) << "Starting download for " << _downloadQueue.first();
-        query.addQueryItem(QStringLiteral("points"), _downloadQueue.first().replace("_", ","));
-        _downloadQueue.pop_front();
-        _tilesMutex.unlock();
-        QUrl url(QStringLiteral("https://api.airmap.com/elevation/stage/srtm1/ele/carpet"));
-        url.setQuery(query);
-
-        qWarning() << "url" << url;
-        QNetworkRequest request(url);
-
-        QNetworkProxy tProxy;
-        tProxy.setType(QNetworkProxy::DefaultProxy);
-        _networkManager.setProxy(tProxy);
-
-        QNetworkReply* networkReply = _networkManager.get(request);
-        if (!networkReply) {
-            return;
-        }
-
-        connect(networkReply, &QNetworkReply::finished, this, &ElevationProvider::_requestFinishedTile);
-
-        _state = State::Downloading;
-    } else if (_state == State::Idle && _coordinates.length() > 0) {
-        queryTerrainData(_coordinates);
-    }
-}
-
-QString ElevationProvider::_uniqueTileId(const QGeoCoordinate& coordinate)
-{
-    // Compute corners of the tile
-    QGeoCoordinate southWest;
-    southWest.setLatitude(floor(coordinate.latitude()/QGCMapEngine::srtm1TileSize)*QGCMapEngine::srtm1TileSize);
-    southWest.setLongitude(floor(coordinate.longitude()/QGCMapEngine::srtm1TileSize)*QGCMapEngine::srtm1TileSize);
-    QGeoCoordinate northEast;
-    northEast.setLatitude(floor(coordinate.latitude()/QGCMapEngine::srtm1TileSize + 1)*QGCMapEngine::srtm1TileSize);
-    northEast.setLongitude(floor(coordinate.longitude()/QGCMapEngine::srtm1TileSize + 1)*QGCMapEngine::srtm1TileSize);
-
-    // Generate uniquely identifying string
-    QString ret = QString::number(southWest.latitude(), 'f', 6) + "_" + QString::number(southWest.longitude(), 'f', 6) + "_" +
-                  QString::number(northEast.latitude(), 'f', 6) + "_" + QString::number(northEast.longitude(), 'f', 6);
-    qCDebug(TerrainLog) << "Computing unique tile id for " << coordinate << ret;
+    QString ret = QGCMapEngine::getTileHash(UrlFactory::AirmapElevation, QGCMapEngine::long2elevationTileX(coordinate.longitude(), 1), QGCMapEngine::lat2elevationTileY(coordinate.latitude(), 1), 1);
+    qCDebug(TerrainLog) << "Computing unique tile hash for " << coordinate << ret;
 
     return ret;
 }
