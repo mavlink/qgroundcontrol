@@ -405,12 +405,6 @@ Set to 2 to use heading from motion capture</short_desc>
       <decimal>8</decimal>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="10000" name="BAT_V_SCALE_IO" type="INT32">
-      <short_desc>Scaling factor for battery voltage sensor on PX4IO</short_desc>
-      <min>1</min>
-      <max>100000</max>
-      <scope>modules/sensors</scope>
-    </parameter>
   </group>
   <group name="Camera Control">
     <parameter default="0" name="CAM_FBACK_MODE" type="INT32">
@@ -2463,6 +2457,15 @@ Set to 0 to disable heading hold</short_desc>
       <unit>deg</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
+      <scope>modules/fw_pos_control_l1</scope>
+    </parameter>
+    <parameter default="0.0" name="FW_THR_ALT_SCL" type="FLOAT">
+      <short_desc>Scale throttle by pressure change</short_desc>
+      <long_desc>Automatically adjust throttle to account for decreased air density at higher altitudes. Start with a scale factor of 1.0 and adjust for different propulsion systems. When flying without airspeed sensor this will help to keep a constant performance over large altitude ranges. The default value of 0 will disable scaling.</long_desc>
+      <min>0.0</min>
+      <max>2.0</max>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="0.6" name="FW_THR_CRUISE" type="FLOAT">
