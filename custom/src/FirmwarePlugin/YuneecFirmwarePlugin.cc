@@ -101,6 +101,17 @@ const QVariantList& YuneecFirmwarePlugin::cameraList(const Vehicle* vehicle)
             true,       // true: camera is fixed orientation
             1.3,        // minimum trigger interval
             this)));    // parent
+        _cameraList.append(QVariant::fromValue(new CameraMetaData(
+            tr("CGOET"),// Camera name
+            5.6405,     // sensorWidth
+            3.1813,     // sensorHeight
+            1920,       // imageWidth
+            1080,       // imageHeight
+            3.5,        // focalLength
+            true,       // true: landscape orientation
+            true,       // true: camera is fixed orientation
+            1.3,        // minimum trigger interval
+            this)));    // parent
     }
 
     return _cameraList;
