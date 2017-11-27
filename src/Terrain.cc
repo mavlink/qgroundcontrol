@@ -210,12 +210,14 @@ void ElevationProvider::_fetchedTile()
     TerrainTile* terrainTile = new TerrainTile(responseJson);
     if (terrainTile->isValid()) {
         _tilesMutex.lock();
-        if (!_tiles.contains(_getTileHash(terrainTile->centerCoordinate()))) {
-            _tiles.insert(_getTileHash(terrainTile->centerCoordinate()), *terrainTile);
+        if (!_tiles.contains(hash)) {
+            _tiles.insert(hash), *terrainTile);
         } else {
             delete terrainTile;
         }
         _tilesMutex.unlock();
+    } else {
+        qCDebug(TerrainLog) << "Received invalid tile";
     }
     reply->deleteLater();
 
