@@ -210,21 +210,20 @@ void AirMapRestrictionManager::setROI(const QGeoCoordinate& center, double radiu
 void AirMapRestrictionManager::_addPolygonToList(const airmap::Geometry::Polygon& polygon, QList<PolygonAirspaceRestriction*>& list)
 {
     QVariantList polygonArray;
-    if (polygon.size() == 1) {
-        for (const auto& vertex : polygon[0].coordinates) {
-            QGeoCoordinate coord;
-            if (vertex.altitude) {
-                coord = QGeoCoordinate(vertex.latitude, vertex.longitude, vertex.altitude.get());
-            } else {
-                coord = QGeoCoordinate(vertex.latitude, vertex.longitude);
-            }
-            polygonArray.append(QVariant::fromValue(coord));
+    for (const auto& vertex : polygon.outer_ring.coordinates) {
+        QGeoCoordinate coord;
+        if (vertex.altitude) {
+            coord = QGeoCoordinate(vertex.latitude, vertex.longitude, vertex.altitude.get());
+        } else {
+            coord = QGeoCoordinate(vertex.latitude, vertex.longitude);
         }
-        list.append(new PolygonAirspaceRestriction(polygonArray));
+        polygonArray.append(QVariant::fromValue(coord));
+    }
+    list.append(new PolygonAirspaceRestriction(polygonArray));
 
-    } else {
+    if (polygon.inner_rings.size() > 0) {
         // no need to support those (they are rare, and in most cases, there's a more restrictive polygon filling the hole)
-        qCDebug(AirMapManagerLog) << "Empty polygon, or Polygon with holes. Size: "<<polygon.size();
+        qCDebug(AirMapManagerLog) << "Polygon with holes. Size: "<<polygon.inner_rings.size();
     }
 }
 
