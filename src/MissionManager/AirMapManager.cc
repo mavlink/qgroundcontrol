@@ -337,13 +337,13 @@ void AirMapFlightManager::_endFirstFlight()
         if (!isAlive.lock()) return;
         if (_state != State::EndFirstFlight) return;
 
-        if (result && result.value().size() > 0) {
+        if (result && result.value().flights.size() > 0) {
 
             Q_ASSERT(_shared.loginToken() != ""); // at this point we know the user is logged in (we queried the pilot id)
 
             Flights::EndFlight::Parameters params;
             params.authorization = _shared.loginToken().toStdString();
-            params.id = result.value()[0].id; // pick the first flight (TODO: match the vehicle id)
+            params.id = result.value().flights[0].id; // pick the first flight (TODO: match the vehicle id)
             _shared.client()->flights().end_flight(params, [this, isAlive](const Flights::EndFlight::Result& result) {
                 if (!isAlive.lock()) return;
                 if (_state != State::EndFirstFlight) return;
