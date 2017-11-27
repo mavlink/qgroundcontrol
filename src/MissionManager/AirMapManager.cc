@@ -67,12 +67,9 @@ void AirMapSharedState::login()
                 _processPendingRequests();
             } else {
                 _pendingRequests.clear();
-                try {
-                    std::rethrow_exception(result.error());
-                } catch (const std::exception& e) {
-                    // TODO: emit signal
-                    emit error("Failed to authenticate with AirMap", e.what(), "");
-                }
+                QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+                emit error("Failed to authenticate with AirMap",
+                        QString::fromStdString(result.error().message()), description);
             }
         });
 
@@ -95,12 +92,9 @@ void AirMapSharedState::login()
                 _processPendingRequests();
             } else {
                 _pendingRequests.clear();
-                try {
-                    std::rethrow_exception(result.error());
-                } catch (const std::exception& e) {
-                    // TODO: proper error handling
-                    emit error("Failed to authenticate with AirMap", e.what(), "");
-                }
+                QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+                emit error("Failed to authenticate with AirMap",
+                        QString::fromStdString(result.error().message()), description);
             }
         });
     }
@@ -129,8 +123,6 @@ void AirMapSharedState::logout()
 AirMapRestrictionManager::AirMapRestrictionManager(AirMapSharedState& shared)
     : _shared(shared)
 {
-    //connect(&_networking, &AirMapNetworking::finished, this, &AirMapRestrictionManager::_parseAirspaceJson);
-    //connect(&_networking, &AirMapNetworking::error, this, &AirMapRestrictionManager::_error);
 }
 
 void AirMapRestrictionManager::setROI(const QGeoCoordinate& center, double radiusMeters)
@@ -195,12 +187,9 @@ void AirMapRestrictionManager::setROI(const QGeoCoordinate& center, double radiu
             }
 
         } else {
-            try {
-                std::rethrow_exception(result.error());
-            } catch (const std::exception& e) {
-                // TODO: proper error handling
-                emit error("Failed to authenticate with AirMap", e.what(), "");
-            }
+            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+            emit error("Failed to authenticate with AirMap",
+                    QString::fromStdString(result.error().message()), description);
         }
         emit requestDone(true);
         _state = State::Idle;
@@ -303,12 +292,9 @@ void AirMapFlightManager::createFlight(const QList<MissionItem*>& missionItems)
                     emit flightPermitStatusChanged();
                     _state = State::Idle;
 
-                    try {
-                        std::rethrow_exception(result.error());
-                    } catch (const std::exception& e) {
-                        // TODO: proper error handling
-                        emit error("Failed to create Flight Plan", e.what(), "");
-                    }
+                    QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+                    emit error("Failed to create Flight Plan",
+                            QString::fromStdString(result.error().message()), description);
                 }
             });
         });
@@ -348,12 +334,9 @@ void AirMapFlightManager::_endFirstFlight()
                 if (_state != State::EndFirstFlight) return;
 
                 if (!result) {
-                    try {
-                        std::rethrow_exception(result.error());
-                    } catch (const std::exception& e) {
-                        // TODO: emit signal
-                        emit error("Failed to end first Flight", e.what(), "");
-                    }
+                    QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+                    emit error("Failed to end first Flight",
+                            QString::fromStdString(result.error().message()), description);
                 }
                 _state = State::Idle;
                 _uploadFlight();
@@ -428,8 +411,9 @@ void AirMapFlightManager::_uploadFlight()
                 _checkForValidBriefing();
 
             } else {
-                // TODO
-                qCDebug(AirMapManagerLog) << "Flight Plan creation failed";
+                QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+                emit error("Flight Plan creation failed",
+                        QString::fromStdString(result.error().message()), description);
             }
 
         });
@@ -466,7 +450,10 @@ void AirMapFlightManager::_checkForValidBriefing()
             }
 
         } else {
-            // TODO
+            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+            emit error("Brief Request failed",
+                    QString::fromStdString(result.error().message()), description);
+            _state = State::Idle;
         }
     });
 }
@@ -488,7 +475,10 @@ void AirMapFlightManager::_submitPendingFlightPlan()
             _pollBriefing();
 
         } else {
-            // TODO
+            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+            emit error("Failed to submit Flight Plan",
+                    QString::fromStdString(result.error().message()), description);
+            _state = State::Idle;
         }
     });
 }
@@ -553,7 +543,10 @@ void AirMapFlightManager::_pollBriefing()
                 _pollTimer.start(2000);
             }
         } else {
-            // TODO: error handling
+            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+            emit error("Brief Request failed",
+                    QString::fromStdString(result.error().message()), description);
+            _state = State::Idle;
         }
     });
 }
@@ -598,12 +591,9 @@ void AirMapFlightManager::_endFlight(const QString& flightID)
                 _uploadFlight();
             }
         } else {
-            try {
-                std::rethrow_exception(result.error());
-            } catch (const std::exception& e) {
-                // TODO: emit signal
-                emit error("Failed to end Flight", e.what(), "");
-            }
+            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+            emit error("Failed to end Flight",
+                    QString::fromStdString(result.error().message()), description);
         }
     });
 }
@@ -704,12 +694,9 @@ void AirMapTelemetry::startTelemetryStream(const QString& flightID)
             _state = State::Streaming;
         } else {
             _state = State::Idle;
-            try {
-                std::rethrow_exception(result.error());
-            } catch (const std::exception& e) {
-                // TODO: emit signal
-                emit error("Failed to start telemetry streaming", e.what(), "");
-            }
+            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+            emit error("Failed to start telemetry streaming",
+                    QString::fromStdString(result.error().message()), description);
         }
     });
 }
@@ -753,11 +740,9 @@ void AirMapTrafficMonitor::startConnection(const QString& flightID)
                     std::bind(&AirMapTrafficMonitor::_update, this, std::placeholders::_1,  std::placeholders::_2));
             _monitor->subscribe(_subscriber);
         } else {
-            try {
-                std::rethrow_exception(result.error());
-            } catch (const std::exception& e) {
-                // TODO: error
-            }
+            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+            emit error("Failed to start Traffic Monitoring",
+                    QString::fromStdString(result.error().message()), description);
         }
     };
 
@@ -799,8 +784,9 @@ AirMapManagerPerVehicle::AirMapManagerPerVehicle(AirMapSharedState& shared, cons
             this, &AirMapManagerPerVehicle::flightPermitStatusChanged);
     connect(&_flightManager, &AirMapFlightManager::flightPermitStatusChanged,
             this, &AirMapManagerPerVehicle::_flightPermitStatusChanged);
-    //connect(&_flightManager, &AirMapFlightManager::networkError, this, &AirMapManagerPerVehicle::networkError);
-    //connect(&_telemetry, &AirMapTelemetry::networkError, this, &AirMapManagerPerVehicle::networkError);
+    connect(&_flightManager, &AirMapFlightManager::error, this, &AirMapManagerPerVehicle::error);
+    connect(&_telemetry, &AirMapTelemetry::error, this, &AirMapManagerPerVehicle::error);
+    connect(&_trafficMonitor, &AirMapTrafficMonitor::error, this, &AirMapManagerPerVehicle::error);
     connect(&_trafficMonitor, &AirMapTrafficMonitor::trafficUpdate, this, &AirspaceManagerPerVehicle::trafficUpdate);
 }
 
@@ -894,9 +880,8 @@ void AirMapManager::setToolbox(QGCToolbox* toolbox)
 
 void AirMapManager::_error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails)
 {
-    //TODO: console message & UI message
-    //qgcApp()->showMessage(QString("AirMap error: %1%2").arg(errorString).arg(errorDetails));
-    qCDebug(AirMapManagerLog) << "Caught error: "<<what<<", "<<airmapdMessage<<", "<<airmapdDetails;
+    qCDebug(AirMapManagerLog) << "Error: "<<what<<", msg: "<<airmapdMessage<<", details: "<<airmapdDetails;
+    qgcApp()->showMessage(QString("AirMap Error: %1. %2").arg(what).arg(airmapdMessage));
 }
 
 void AirMapManager::requestWeatherUpdate(const QGeoCoordinate& coordinate)
@@ -931,7 +916,6 @@ void AirMapManager::requestWeatherUpdate(const QGeoCoordinate& coordinate)
             emit weatherUpdate(true, coordinate, weatherUpdateInfo);
 
         } else {
-            // TODO: error handling
             emit weatherUpdate(false, coordinate, WeatherInformation{});
         }
     });
@@ -972,7 +956,9 @@ void AirMapManager::_settingsChanged()
 
             } else {
                 qWarning("Failed to create airmap::qt::Client instance");
-                // TODO: user error message
+                QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+                _error("Failed to create airmap::qt::Client instance",
+                        QString::fromStdString(result.error().message()), description);
             }
         });
     }
@@ -981,14 +967,13 @@ void AirMapManager::_settingsChanged()
 AirspaceManagerPerVehicle* AirMapManager::instantiateVehicle(const Vehicle& vehicle)
 {
     AirMapManagerPerVehicle* manager = new AirMapManagerPerVehicle(_shared, vehicle, *_toolbox);
-    //connect(manager, &AirMapManagerPerVehicle::networkError, this, &AirMapManager::_networkError);
+    connect(manager, &AirMapManagerPerVehicle::error, this, &AirMapManager::_error);
     return manager;
 }
 
 AirspaceRestrictionProvider* AirMapManager::instantiateRestrictionProvider()
 {
     AirMapRestrictionManager* restrictionManager = new AirMapRestrictionManager(_shared);
-    //connect(restrictionManager, &AirMapRestrictionManager::networkError, this, &AirMapManager::_networkError);
     connect(restrictionManager, &AirMapRestrictionManager::error, this, &AirMapManager::_error);
     return restrictionManager;
 }
