@@ -279,6 +279,7 @@ public:
     void stop();
 
 signals:
+    void error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
     void trafficUpdate(QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
 
 private:
@@ -313,7 +314,7 @@ public:
     bool isTelemetryStreaming() const override;
 
 signals:
-    void networkError(QNetworkReply::NetworkError code, const QString& errorString, const QString& serverErrorMessage);
+    void error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
 
 public slots:
     void endFlight() override;
