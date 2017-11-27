@@ -85,10 +85,10 @@ TerrainTile::TerrainTile(QJsonDocument document)
         qCDebug(TerrainTileLog) << "Incomplete bounding location";
         return;
     }
-    _southWest.setLatitude(swArray[1].toDouble());
-    _southWest.setLongitude(swArray[0].toDouble());
-    _northEast.setLatitude(neArray[1].toDouble());
-    _northEast.setLongitude(neArray[0].toDouble());
+    _southWest.setLatitude(swArray[0].toDouble());
+    _southWest.setLongitude(swArray[1].toDouble());
+    _northEast.setLatitude(neArray[0].toDouble());
+    _northEast.setLongitude(neArray[1].toDouble());
 
     // Stats
     const QJsonObject& statsObject = dataObject[_jsonStatsKey].toObject();
