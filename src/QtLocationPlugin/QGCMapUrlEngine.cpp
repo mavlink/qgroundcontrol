@@ -36,7 +36,7 @@
 static const unsigned char pngSignature[]   = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00};
 static const unsigned char jpegSignature[]  = {0xFF, 0xD8, 0xFF, 0x00};
 static const unsigned char gifSignature[]   = {0x47, 0x49, 0x46, 0x38, 0x00};
-static const unsigned char jsonSignature[]  = {0x7A, 0x22, 0x00}; // two characters '{"'
+static const unsigned char jsonSignature[]  = {0x7B, 0x22, 0x00}; // two characters '{"'
 
 //-----------------------------------------------------------------------------
 UrlFactory::UrlFactory()

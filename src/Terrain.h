@@ -64,7 +64,7 @@ private slots:
 
 private:
 
-    QString _getTileHash(const QGeoCoordinate& coordinate);     /// Method to create a unique string for each tile. Format: south_west_north_east as floats.
+    QString _getTileHash(const QGeoCoordinate& coordinate);     /// Method to create a unique string for each tile
 
     enum class State {
         Idle,
