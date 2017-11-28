@@ -355,7 +355,7 @@ TyphoonHM4Interface::_vehicleRemoved(Vehicle* vehicle)
 #if defined(__androidx86__)
         _m4Lib->setVehicleConnected(false);
         _m4Lib->setRcActive(false);
-        _m4Lib->setPowerKey(Yuneec::BIND_KEY_FUNCTION_BIND);
+        _m4Lib->setPowerKey(Yuneec::BIND_KEY_FUNCTION_PWR);
 #endif
     }
 }
