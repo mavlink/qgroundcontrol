@@ -377,10 +377,9 @@ TyphoonHQuickInterface::launchUpdater()
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::setWiFiPassword(QString pwd)
+TyphoonHQuickInterface::setWiFiPassword(QString pwd, bool restart)
 {
     if(_pHandler && _vehicle) {
-#if defined __android__
         MAVLinkProtocol* pMavlink = qgcApp()->toolbox()->mavlinkProtocol();
         mavlink_wifi_config_ap_t config;
         memset(&config, 0, sizeof(config));
@@ -395,17 +394,28 @@ TyphoonHQuickInterface::setWiFiPassword(QString pwd)
         //-- Send command
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
         _password = pwd;
-        _configurations[_ssid] = pwd;
-        _saveWifiConfigurations();
         //-- Save new password (Android Configuration)
-        reset_jni();
-        QAndroidJniObject javaSSID = QAndroidJniObject::fromString(_ssid);
-        QAndroidJniObject javaPWD  = QAndroidJniObject::fromString(_password);
-        QAndroidJniObject::callStaticMethod<void>(jniClassName, "setWifiPassword", "(Ljava/lang/String;Ljava/lang/String;)V", javaSSID.object<jstring>(), javaPWD.object<jstring>());
-#else
-        Q_UNUSED(pwd)
+        QTimer::singleShot(300, this, &TyphoonHQuickInterface::_setWiFiPassword);
+        if(restart) {
+#if defined __android__
+            QTimer::singleShot(500, this, &TyphoonHQuickInterface::_restart);
 #endif
+        }
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_setWiFiPassword()
+{
+    _configurations[_ssid] = _password;
+    _saveWifiConfigurations();
+#if defined __android__
+    reset_jni();
+    QAndroidJniObject javaSSID = QAndroidJniObject::fromString(_ssid);
+    QAndroidJniObject javaPWD  = QAndroidJniObject::fromString(_password);
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "setWifiPassword", "(Ljava/lang/String;Ljava/lang/String;)V", javaSSID.object<jstring>(), javaPWD.object<jstring>());
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -785,15 +795,6 @@ TyphoonHQuickInterface::updateSystemImage()
     } else {
         _imageUpdateError(QString(tr("Could not locate update file.")));
     }
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::restart()
-{
-#if defined __android__
-    QTimer::singleShot(250, this, &TyphoonHQuickInterface::_restart);
 #endif
 }
 
