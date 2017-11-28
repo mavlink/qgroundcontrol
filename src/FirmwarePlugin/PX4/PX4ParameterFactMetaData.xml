@@ -6432,16 +6432,6 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
         <value code="18">Channel 18</value>
       </values>
     </parameter>
-    <parameter default="0" name="RC_RL1_DSM_VCC" type="INT32">
-      <short_desc>Relay control of relay 1 mapped to the Spektrum receiver power supply</short_desc>
-      <min>0</min>
-      <max>1</max>
-      <scope>modules/sensors</scope>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="1">Relay controls DSM power</value>
-      </values>
-    </parameter>
     <parameter default="0" name="RC_RSSI_PWM_CHAN" type="INT32">
       <short_desc>PWM input channel that provides RSSI</short_desc>
       <long_desc>0: do not read RSSI from input channel 1-18: read RSSI from specified input channel Specify the range for RSSI input with RC_RSSI_PWM_MIN and RC_RSSI_PWM_MAX parameters.</long_desc>
@@ -6483,12 +6473,6 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>0</min>
       <max>2000</max>
       <scope>drivers/px4io</scope>
-    </parameter>
-    <parameter default="1" name="RC_TH_USER" type="INT32">
-      <short_desc>RC mode switch threshold automatic distribution</short_desc>
-      <long_desc>This parameter is used by Ground Station software to specify whether the threshold values for flight mode switches were automatically calculated. 0 indicates that the threshold values were set by the user. Any other value indicates that the threshold value where automatically set by the ground station software. It is only meant for ground station use.</long_desc>
-      <boolean />
-      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0.0" name="TRIM_PITCH" type="FLOAT">
       <short_desc>Pitch trim</short_desc>
