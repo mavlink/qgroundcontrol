@@ -211,7 +211,7 @@ void ElevationProvider::_fetchedTile()
     if (terrainTile->isValid()) {
         _tilesMutex.lock();
         if (!_tiles.contains(hash)) {
-            _tiles.insert(hash), *terrainTile);
+            _tiles.insert(hash, *terrainTile);
         } else {
             delete terrainTile;
         }
