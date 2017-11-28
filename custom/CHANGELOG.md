@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.10 - Nov 28 2017
+
+*   Dealing with set wifi password corner cases
+
 ### v1.2.9 - Nov 26 2017
 
 *   Display animation while camera is busy (instead of black screen)

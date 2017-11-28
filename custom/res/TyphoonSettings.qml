@@ -659,7 +659,7 @@ QGCView {
                     enabled:    passwordField.text.length > 7 && passwordField.text.length < 21 && passwordField.text === passwordFieldConf.text
                     onClicked:  {
                         Qt.inputMethod.hide();
-                        TyphoonHQuickInterface.setWiFiPassword(passwordField.text)
+                        TyphoonHQuickInterface.setWiFiPassword(passwordField.text, false)
                         passwordField.text = ""
                         passwordFieldConf.text = ""
                         passwordDialog.visible = false

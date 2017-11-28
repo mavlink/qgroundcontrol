@@ -228,12 +228,11 @@ public:
     Q_INVOKABLE void manualBind         ();
     Q_INVOKABLE void startCalibration   ();
     Q_INVOKABLE void stopCalibration    ();
-    Q_INVOKABLE void setWiFiPassword    (QString pwd);
+    Q_INVOKABLE void setWiFiPassword    (QString pwd, bool restart);
     Q_INVOKABLE void factoryTest        ();
     Q_INVOKABLE void launchBroswer      (QString url);
     Q_INVOKABLE void launchUpdater      ();
     Q_INVOKABLE bool shouldWeShowUpdate ();
-    Q_INVOKABLE void restart            ();
 
     //-- Android image update
     Q_INVOKABLE bool checkForUpdate     ();
@@ -413,6 +412,7 @@ private slots:
     void    _exportMessage              (QString message);
     void    _restart                    ();
     void    _imageFileChanged           ();
+    void    _setWiFiPassword            ();
 
 private:
     void    _saveWifiConfigurations     ();
