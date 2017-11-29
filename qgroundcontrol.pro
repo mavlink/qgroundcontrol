@@ -500,7 +500,6 @@ HEADERS += \
     src/LogCompressor.h \
     src/MG.h \
     src/MissionManager/CameraCalc.h \
-    src/MissionManager/AirMapController.h \
     src/MissionManager/AirspaceController.h \
     src/MissionManager/AirMapManager.h \
     src/MissionManager/AirspaceManagement.h \
@@ -720,7 +719,6 @@ SOURCES += \
     src/JsonHelper.cc \
     src/LogCompressor.cc \
     src/MissionManager/CameraCalc.cc \
-    src/MissionManager/AirMapController.cc \
     src/MissionManager/AirspaceController.cc \
     src/MissionManager/AirMapManager.cc \
     src/MissionManager/AirspaceManagement.cc \
