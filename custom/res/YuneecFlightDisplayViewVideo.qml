@@ -51,8 +51,29 @@ Item {
             text:               qsTr("WAITING FOR VIDEO")
             font.family:        ScreenTools.demiboldFontFamily
             color:              "white"
+            visible:            !_activeVehicle
             font.pointSize:     _mainIsMap ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
             anchors.centerIn:   parent
+        }
+        QGCColoredImage {
+            id:                 busyIndicator
+            height:             parent.height * 0.25
+            width:              height
+            source:             "/qmlimages/MapSync.svg"
+            sourceSize.height:  height
+            fillMode:           Image.PreserveAspectFit
+            mipmap:             true
+            smooth:             true
+            color:              qgcPal.colorBlue
+            visible:            _activeVehicle
+            anchors.centerIn:   parent
+            RotationAnimation on rotation {
+                loops:          Animation.Infinite
+                from:           360
+                to:             0
+                duration:       740
+                running:        noVideo.visible
+            }
         }
         MouseArea {
             anchors.fill: parent

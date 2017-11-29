@@ -213,10 +213,8 @@ Item {
                             mainWindow.enableToolbar()
                             TyphoonHQuickInterface.firstRun = false
                             if(TyphoonHQuickInterface.isDefaultPwd && passwordField.text !== "") {
-                                TyphoonHQuickInterface.setWiFiPassword(passwordField.text)
+                                TyphoonHQuickInterface.setWiFiPassword(passwordField.text, true)
                             }
-                            //-- We need to restart after the changes above
-                            TyphoonHQuickInterface.restart()
                             rootLoader.sourceComponent = null
                         }
                     }

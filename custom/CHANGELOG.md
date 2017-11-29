@@ -1,5 +1,27 @@
 ## DataPilot Release Changelog
 
+### v1.2.11 - Nov 28 2017
+
+*   German and Chinese localization (custom part only)
+
+### v1.2.10 - Nov 28 2017
+
+*   Dealing with set wifi password corner cases
+
+### v1.2.9 - Nov 26 2017
+
+*   Display animation while camera is busy (instead of black screen)
+*   Disable time lapse when capturing images while in video mode
+*   Add CGOET to list of cameras for survey
+
+### v1.2.8 - Nov 16 2017
+
+*   Restore Structure Scan
+
+### v1.2.7 - Nov 14 2017
+
+*   Enable camera settings even if no microSD card is present
+
 ### v1.2.6 - Nov 10 2017
 
 *   Add hobbs meter

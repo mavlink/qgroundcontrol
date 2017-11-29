@@ -55,6 +55,7 @@ stQGeoTileCacheQGCMapTypes kMapTypes[] = {
     {"Bing Satellite Map",      UrlFactory::BingSatellite},
     {"Bing Hybrid Map",         UrlFactory::BingHybrid},
     {"Statkart Terrain Map",    UrlFactory::StatkartTopo},
+    {"ENIRO Terrain Map",       UrlFactory::EniroTopo}
     /*
     {"MapQuest Street Map",     UrlFactory::MapQuestMap},
     {"MapQuest Satellite Map",  UrlFactory::MapQuestSat}
@@ -466,6 +467,7 @@ QGCMapEngine::concurrentDownloads(UrlFactory::MapType type)
     case UrlFactory::BingSatellite:
     case UrlFactory::BingHybrid:
     case UrlFactory::StatkartTopo:
+    case UrlFactory::EniroTopo:
     case UrlFactory::EsriWorldStreet:
     case UrlFactory::EsriWorldSatellite:
     case UrlFactory::EsriTerrain:

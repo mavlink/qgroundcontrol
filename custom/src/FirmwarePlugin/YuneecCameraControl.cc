@@ -308,6 +308,10 @@ YuneecCameraControl::recordTimeStr()
 bool
 YuneecCameraControl::takePhoto()
 {
+    if(cameraMode() == CAM_MODE_VIDEO && _photoMode == PHOTO_CAPTURE_TIMELAPSE) {
+        //-- In video mode, we disable time lapse
+        QGCCameraControl::setPhotoMode(PHOTO_CAPTURE_SINGLE);
+    }
     bool res = QGCCameraControl::takePhoto();
     if(res) {
         if(photoMode() == PHOTO_CAPTURE_TIMELAPSE) {

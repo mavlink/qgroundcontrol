@@ -655,7 +655,7 @@
         {
             "id":                   201,
             "rawName":              "MAV_CMD_DO_SET_ROI",
-            "friendlyName":         "Region of interest (cmd)" ,
+            "friendlyName":         "Region of interest" ,
             "description":          "Sets the region of interest for cameras.",
             "specifiesCoordinate":  true,
             "standaloneCoordinate": true,

@@ -110,6 +110,11 @@ void FlightMapSettings::_newMapProvider(QVariant value)
         _removeEnumValue(mapTypeSatellite, enumStrings, enumValues);
         _removeEnumValue(mapTypeHybrid, enumStrings, enumValues);
         break;
+    case mapProviderEniro:
+        _removeEnumValue(mapTypeStreet, enumStrings, enumValues);
+        _removeEnumValue(mapTypeSatellite, enumStrings, enumValues);
+        _removeEnumValue(mapTypeHybrid, enumStrings, enumValues);
+        break;
     case mapProviderEsri:
         _removeEnumValue(mapTypeHybrid, enumStrings, enumValues);
         break;

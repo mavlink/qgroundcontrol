@@ -359,6 +359,30 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
     return newItem->sequenceNumber();
 }
 
+int MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int i)
+{
+    int sequenceNumber = _nextSequenceNumber();
+    SimpleMissionItem * newItem = new SimpleMissionItem(_controllerVehicle, this);
+    newItem->setSequenceNumber(sequenceNumber);
+    newItem->setCoordinate(coordinate);
+    newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_DO_SET_ROI);
+    _initVisualItem(newItem);
+    newItem->setDefaultsForCommand();
+
+    double      prevAltitude;
+    MAV_FRAME   prevFrame;
+
+    if (_findPreviousAltitude(i, &prevAltitude, &prevFrame)) {
+        newItem->missionItem().setFrame(prevFrame);
+        newItem->missionItem().setParam7(prevAltitude);
+    }
+    _visualItems->insert(i, newItem);
+
+    _recalcAll();
+
+    return newItem->sequenceNumber();
+}
+
 int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int i)
 {
     ComplexMissionItem* newItem;
@@ -1789,11 +1813,9 @@ QStringList MissionController::complexMissionItemNames(void) const
     if (_controllerVehicle->fixedWing()) {
         complexItems.append(_fwLandingMissionItemName);
     }
-#if 0
     if (_controllerVehicle->multiRotor() || _controllerVehicle->vtol()) {
         complexItems.append(_structureScanMissionItemName);
     }
-#endif
 
     return complexItems;
 }
