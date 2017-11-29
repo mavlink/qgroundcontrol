@@ -67,7 +67,6 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _videoSurface(NULL)
     , _videoRunning(false)
     , _showFullScreen(false)
-    , _enabled(true)
 {
     _videoSurface  = new VideoSurface;
 #if defined(QGC_GST_STREAMING)
@@ -148,7 +147,7 @@ VideoReceiver::_connected()
     _timer.stop();
     _socket->deleteLater();
     _socket = NULL;
-    if(_enabled) {
+    if(qgcApp()->toolbox()->settingsManager()->videoSettings()->streamEnabled()->rawValue().toBool()) {
         _serverPresent = true;
         start();
     }
@@ -164,7 +163,7 @@ VideoReceiver::_socketError(QAbstractSocket::SocketError socketError)
     _socket->deleteLater();
     _socket = NULL;
     //-- Try again in 5 seconds
-    if(_enabled) {
+    if(qgcApp()->toolbox()->settingsManager()->videoSettings()->streamEnabled()->rawValue().toBool()) {
         _timer.start(5000);
     }
 }
@@ -180,7 +179,7 @@ VideoReceiver::_timeout()
         delete _socket;
         _socket = NULL;
     }
-    if(_enabled) {
+    if(qgcApp()->toolbox()->settingsManager()->videoSettings()->streamEnabled()->rawValue().toBool()) {
         //-- RTSP will try to connect to the server. If it cannot connect,
         //   it will simply give up and never try again. Instead, we keep
         //   attempting a connection on this timer. Once a connection is
@@ -209,8 +208,11 @@ VideoReceiver::_timeout()
 void
 VideoReceiver::start()
 {
-    _enabled = true;
-    emit enabledChanged();
+    if(!qgcApp()->toolbox()->settingsManager()->videoSettings()->streamEnabled()->rawValue().toBool() ||
+       !qgcApp()->toolbox()->settingsManager()->videoSettings()->streamConfigured()) {
+        qCDebug(VideoReceiverLog) << "start() but not enabled/configured";
+        return;
+    }
 #if defined(QGC_GST_STREAMING)
     qCDebug(VideoReceiverLog) << "start()";
 
@@ -424,8 +426,6 @@ VideoReceiver::start()
 void
 VideoReceiver::stop()
 {
-    _enabled = false;
-    emit enabledChanged();
 #if defined(QGC_GST_STREAMING)
     qCDebug(VideoReceiverLog) << "stop()";
     if(!_streaming) {
@@ -824,7 +824,7 @@ VideoReceiver::_updateTimer()
                 stop();
             }
         } else {
-            if(!running() && !_uri.isEmpty() && _enabled) {
+            if(!running() && !_uri.isEmpty() && qgcApp()->toolbox()->settingsManager()->videoSettings()->streamEnabled()->rawValue().toBool()) {
                 start();
             }
         }
