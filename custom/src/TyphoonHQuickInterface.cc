@@ -424,7 +424,7 @@ TyphoonHQuickInterface::_powerTrigger()
 void
 TyphoonHQuickInterface::_switchStateChanged(M4Lib::SwitchId switchId, M4Lib::SwitchState switchState)
 {
-    if(switchId == M4Lib::SwitchId::OBSTACLE_AVOIDENCE) {
+    if(switchId == M4Lib::SwitchId::OBSTACLE_AVOIDANCE) {
         if(switchState == M4Lib::SwitchState::ON && !_obsState) {
 
             _obsState = true;
