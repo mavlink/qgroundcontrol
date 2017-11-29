@@ -36,8 +36,9 @@ Item {
     property var    _videoReceiver:         QGroundControl.videoManager.videoReceiver
     property bool   _recordingVideo:        _videoReceiver && _videoReceiver.recording
     property bool   _videoRunning:          _videoReceiver && _videoReceiver.videoRunning
+    property bool   _streamingEnabled:      QGroundControl.settingsManager.videoSettings.streamConfigured
 
-    QGCPalette { id:qgcPal; colorGroupEnabled: parent.enabled }
+    QGCPalette { id:qgcPal; colorGroupEnabled: true }
 
     GridLayout {
         id:                 videoGrid
@@ -50,12 +51,14 @@ Item {
            font.pointSize:  ScreenTools.smallFontPointSize
         }
         Switch {
-            checked:        _videoRunning
-            enabled:        _activeVehicle
+            enabled:        _streamingEnabled && _activeVehicle
+            checked:        QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue
             onClicked: {
                 if(checked) {
+                    QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue = 1
                     _videoReceiver.start()
                 } else {
+                    QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue = 0
                     _videoReceiver.stop()
                 }
             }
@@ -82,14 +85,13 @@ Item {
             width:              height
             Layout.alignment:   Qt.AlignHCenter
             visible:            QGroundControl.settingsManager.videoSettings.showRecControl.rawValue
-
             Rectangle {
                 id:                 recordBtnBackground
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 width:              height
                 radius:             _recordingVideo ? 0 : height
-                color:              _videoRunning ? "red" : "gray"
+                color:              (_videoRunning && _streamingEnabled) ? "red" : "gray"
                 SequentialAnimation on opacity {
                     running:        _recordingVideo
                     loops:          Animation.Infinite
@@ -97,7 +99,6 @@ Item {
                     PropertyAnimation { to: 1.0; duration: 500 }
                 }
             }
-
             QGCColoredImage {
                 anchors.top:                parent.top
                 anchors.bottom:             parent.bottom
@@ -109,10 +110,9 @@ Item {
                 fillMode:                   Image.PreserveAspectFit
                 color:                      "white"
             }
-
             MouseArea {
                 anchors.fill:   parent
-                enabled:        _videoRunning
+                enabled:        _videoRunning && _streamingEnabled
                 onClicked: {
                     if (_recordingVideo) {
                         _videoReceiver.stopRecording()
@@ -123,6 +123,12 @@ Item {
                     }
                 }
             }
+        }
+        QGCLabel {
+            text:               qsTr("Video Streaming Not Configured")
+            font.pointSize:     ScreenTools.smallFontPointSize
+            visible:            !_streamingEnabled
+            Layout.columnSpan:  2
         }
     }
 }
