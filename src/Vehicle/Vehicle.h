@@ -36,7 +36,6 @@ class UASMessage;
 class SettingsManager;
 class ADSBVehicle;
 class QGCCameraManager;
-class AirMapController;
 class AirspaceController;
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
@@ -323,7 +322,6 @@ public:
     Q_PROPERTY(QVariantList         staticCameraList        READ staticCameraList                                       CONSTANT)
     Q_PROPERTY(QGCCameraManager*    dynamicCameras          READ dynamicCameras                                         NOTIFY dynamicCamerasChanged)
     Q_PROPERTY(QString              hobbsMeter              READ hobbsMeter                                             NOTIFY hobbsMeterChanged)
-    Q_PROPERTY(AirMapController*    airMapController        READ airMapController                                       CONSTANT)
     Q_PROPERTY(AirspaceAuthorization::PermitStatus  flightPermitStatus    READ flightPermitStatus                       NOTIFY flightPermitStatusChanged)   ///< state of flight permission
     Q_PROPERTY(AirspaceController*   airspaceController     READ airspaceController                                     CONSTANT)
 

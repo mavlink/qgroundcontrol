@@ -33,7 +33,6 @@
 #include "QGCCorePlugin.h"
 #include "ADSBVehicle.h"
 #include "QGCCameraManager.h"
-#include "AirMapController.h"
 #include "AirspaceController.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
