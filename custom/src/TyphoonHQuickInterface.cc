@@ -570,7 +570,7 @@ double
 TyphoonHQuickInterface::gpsAccuracy()
 {
     if(_pHandler) {
-        return _pHandler->controllerLocation().accuracy;
+        return _pHandler->controllerLocation().pdop;
     }
     return 0.0;
 }
