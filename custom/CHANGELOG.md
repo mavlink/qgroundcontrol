@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.11 - Nov 28 2017
+
+*   German and Chinese localization (custom part only)
+
 ### v1.2.10 - Nov 28 2017
 
 *   Dealing with set wifi password corner cases
