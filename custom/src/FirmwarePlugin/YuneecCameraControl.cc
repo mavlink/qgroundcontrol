@@ -224,7 +224,7 @@ YuneecCameraControl::_resumeIrStatus()
 Fact*
 YuneecCameraControl::exposureMode()
 {
-    return (_paramComplete && !_isCGOET) ? getFact(kCAM_EXPMODE) : NULL;
+    return (_paramComplete) ? getFact(kCAM_EXPMODE) : NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -238,14 +238,14 @@ YuneecCameraControl::ev()
 Fact*
 YuneecCameraControl::iso()
 {
-    return (_paramComplete && !_isCGOET) ? getFact(kCAM_ISO) : NULL;
+    return (_paramComplete) ? getFact(kCAM_ISO) : NULL;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 YuneecCameraControl::shutterSpeed()
 {
-    return (_paramComplete && !_isCGOET) ? getFact(kCAM_SHUTTERSPD) : NULL;
+    return (_paramComplete) ? getFact(kCAM_SHUTTERSPD) : NULL;
 }
 
 //-----------------------------------------------------------------------------
