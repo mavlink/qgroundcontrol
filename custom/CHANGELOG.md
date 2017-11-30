@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.12 - Nov 30 2017
+
+*   Fine tuning German localization
+
 ### v1.2.11 - Nov 28 2017
 
 *   German and Chinese localization (custom part only)
