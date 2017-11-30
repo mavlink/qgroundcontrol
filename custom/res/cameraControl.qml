@@ -51,7 +51,7 @@ Rectangle {
     property bool formatInProgress:         false
 
     property real _spacers:                 ScreenTools.defaultFontPixelHeight * 0.35
-    property real _labelFieldWidth:         ScreenTools.defaultFontPixelWidth * 30
+    property real _labelFieldWidth:         ScreenTools.defaultFontPixelWidth * 36
     property real _editFieldWidth:          ScreenTools.defaultFontPixelWidth * 30
 
     property var  _activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle
