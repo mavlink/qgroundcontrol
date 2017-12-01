@@ -20,11 +20,6 @@
 
 #include <QGeoCoordinate>
 
-/* Safeguard for systems lacking sincos (e.g. Mac OS X Leopard) */
-#ifndef sincos
-#define sincos(th,x,y) { (*(x))=sin(th); (*(y))=cos(th); }
-#endif
-
 /**
  * @brief Project a geodetic coordinate on to local tangential plane (LTP) as coordinate with East,
  * North, and Down components in meters.
