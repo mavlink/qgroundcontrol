@@ -45,12 +45,20 @@ Item {
         columnSpacing:      ScreenTools.defaultFontPixelWidth * 2
         rowSpacing:         ScreenTools.defaultFontPixelHeight
         anchors.centerIn:   parent
+        Connections {
+            // For some reason, the normal signal is not reflected in the control below
+            target: QGroundControl.settingsManager.videoSettings.streamEnabled
+            onRawValueChanged: {
+                enableSwitch.checked = QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue
+            }
+        }
         // Enable/Disable Video Streaming
         QGCLabel {
            text:            qsTr("Enable Stream")
            font.pointSize:  ScreenTools.smallFontPointSize
         }
         QGCSwitch {
+            id:             enableSwitch
             enabled:        _streamingEnabled
             checked:        QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue
             onClicked: {
