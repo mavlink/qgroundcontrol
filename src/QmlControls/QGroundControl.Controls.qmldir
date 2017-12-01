@@ -52,6 +52,7 @@ QGCMovableItem          1.0 QGCMovableItem.qml
 QGCPipable              1.0 QGCPipable.qml
 QGCRadioButton          1.0 QGCRadioButton.qml
 QGCSlider               1.0 QGCSlider.qml
+QGCSwitch               1.0 QGCSwitch.qml
 QGCTextField            1.0 QGCTextField.qml
 QGCToolBarButton        1.0 QGCToolBarButton.qml
 QGCView                 1.0 QGCView.qml
