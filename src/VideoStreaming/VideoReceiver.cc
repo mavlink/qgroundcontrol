@@ -67,8 +67,10 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _videoSurface(NULL)
     , _videoRunning(false)
     , _showFullScreen(false)
+    , _videoSettings(NULL)
 {
-    _videoSurface  = new VideoSurface;
+    _videoSurface = new VideoSurface;
+    _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
 #if defined(QGC_GST_STREAMING)
     _setVideoSink(_videoSurface->videoSink());
     _timer.setSingleShot(true);
@@ -147,7 +149,7 @@ VideoReceiver::_connected()
     _timer.stop();
     _socket->deleteLater();
     _socket = NULL;
-    if(qgcApp()->toolbox()->settingsManager()->videoSettings()->streamEnabled()->rawValue().toBool()) {
+    if(_videoSettings->streamEnabled()->rawValue().toBool()) {
         _serverPresent = true;
         start();
     }
@@ -163,7 +165,7 @@ VideoReceiver::_socketError(QAbstractSocket::SocketError socketError)
     _socket->deleteLater();
     _socket = NULL;
     //-- Try again in 5 seconds
-    if(qgcApp()->toolbox()->settingsManager()->videoSettings()->streamEnabled()->rawValue().toBool()) {
+    if(_videoSettings->streamEnabled()->rawValue().toBool()) {
         _timer.start(5000);
     }
 }
@@ -179,7 +181,7 @@ VideoReceiver::_timeout()
         delete _socket;
         _socket = NULL;
     }
-    if(qgcApp()->toolbox()->settingsManager()->videoSettings()->streamEnabled()->rawValue().toBool()) {
+    if(_videoSettings->streamEnabled()->rawValue().toBool()) {
         //-- RTSP will try to connect to the server. If it cannot connect,
         //   it will simply give up and never try again. Instead, we keep
         //   attempting a connection on this timer. Once a connection is
@@ -208,8 +210,8 @@ VideoReceiver::_timeout()
 void
 VideoReceiver::start()
 {
-    if(!qgcApp()->toolbox()->settingsManager()->videoSettings()->streamEnabled()->rawValue().toBool() ||
-       !qgcApp()->toolbox()->settingsManager()->videoSettings()->streamConfigured()) {
+    if(!_videoSettings->streamEnabled()->rawValue().toBool() ||
+       !_videoSettings->streamConfigured()) {
         qCDebug(VideoReceiverLog) << "start() but not enabled/configured";
         return;
     }
@@ -560,7 +562,7 @@ void
 VideoReceiver::_cleanupOldVideos()
 {
     //-- Only perform cleanup if storage limit is enabled
-    if(qgcApp()->toolbox()->settingsManager()->videoSettings()->enableStorageLimit()->rawValue().toBool()) {
+    if(_videoSettings->enableStorageLimit()->rawValue().toBool()) {
         QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
         QDir videoDir = QDir(savePath);
         videoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
@@ -576,7 +578,7 @@ VideoReceiver::_cleanupOldVideos()
         if(!vidList.isEmpty()) {
             uint64_t total   = 0;
             //-- Settings are stored using MB
-            uint64_t maxSize = (qgcApp()->toolbox()->settingsManager()->videoSettings()->maxVideoSize()->rawValue().toUInt() * 1024 * 1024);
+            uint64_t maxSize = (_videoSettings->maxVideoSize()->rawValue().toUInt() * 1024 * 1024);
             //-- Compute total used storage
             for(int i = 0; i < vidList.size(); i++) {
                 total += vidList[i].size();
@@ -624,7 +626,7 @@ VideoReceiver::startRecording(void)
         return;
     }
 
-    uint32_t muxIdx = qgcApp()->toolbox()->settingsManager()->videoSettings()->recordingFormat()->rawValue().toUInt();
+    uint32_t muxIdx = _videoSettings->recordingFormat()->rawValue().toUInt();
     if(muxIdx >= NUM_MUXES) {
         qgcApp()->showMessage(tr("Invalid video format defined."));
         return;
@@ -813,7 +815,7 @@ VideoReceiver::_updateTimer()
         if(_videoRunning) {
             uint32_t timeout = 1;
             if(qgcApp()->toolbox() && qgcApp()->toolbox()->settingsManager()) {
-                timeout = qgcApp()->toolbox()->settingsManager()->videoSettings()->rtspTimeout()->rawValue().toUInt();
+                timeout = _videoSettings->rtspTimeout()->rawValue().toUInt();
             }
             time_t elapsed = 0;
             time_t lastFrame = _videoSurface->lastFrame();
@@ -824,7 +826,7 @@ VideoReceiver::_updateTimer()
                 stop();
             }
         } else {
-            if(!running() && !_uri.isEmpty() && qgcApp()->toolbox()->settingsManager()->videoSettings()->streamEnabled()->rawValue().toBool()) {
+            if(!running() && !_uri.isEmpty() && _videoSettings->streamEnabled()->rawValue().toBool()) {
                 start();
             }
         }

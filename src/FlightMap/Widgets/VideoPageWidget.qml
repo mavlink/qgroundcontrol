@@ -12,7 +12,6 @@ import QtPositioning            5.2
 import QtQuick.Layouts          1.2
 import QtQuick.Controls         1.4
 import QtQuick.Dialogs          1.2
-import QtQuick.Controls.Styles  1.4
 import QtGraphicalEffects       1.0
 
 import QGroundControl                   1.0
@@ -46,12 +45,13 @@ Item {
         columnSpacing:      ScreenTools.defaultFontPixelWidth * 2
         rowSpacing:         ScreenTools.defaultFontPixelHeight
         anchors.centerIn:   parent
+        // Enable/Disable Video Streaming
         QGCLabel {
            text:            qsTr("Enable Stream")
            font.pointSize:  ScreenTools.smallFontPointSize
         }
-        Switch {
-            enabled:        _streamingEnabled && _activeVehicle
+        QGCSwitch {
+            enabled:        _streamingEnabled
             checked:        QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue
             onClicked: {
                 if(checked) {
@@ -62,19 +62,27 @@ Item {
                     _videoReceiver.stop()
                 }
             }
-            style:      SwitchStyle {
-                groove:     Rectangle {
-                    implicitWidth:  ScreenTools.defaultFontPixelWidth * 6
-                    implicitHeight: ScreenTools.defaultFontPixelHeight
-                    color:          control.checked ? qgcPal.colorGreen : qgcPal.colorGrey
-                    radius:         3
-                    border.color:   qgcPal.button
-                    border.width:   1
+        }
+        // Grid Lines
+        QGCLabel {
+           text:            qsTr("Grid Lines")
+           font.pointSize:  ScreenTools.smallFontPointSize
+           visible:         QGroundControl.videoManager.isGStreamer && QGroundControl.settingsManager.videoSettings.gridLines.visible
+        }
+        QGCSwitch {
+            enabled:        _streamingEnabled && _activeVehicle
+            checked:        QGroundControl.settingsManager.videoSettings.gridLines.rawValue
+            visible:        QGroundControl.videoManager.isGStreamer && QGroundControl.settingsManager.videoSettings.gridLines.visible
+            onClicked: {
+                if(checked) {
+                    QGroundControl.settingsManager.videoSettings.gridLines.rawValue = 1
+                } else {
+                    QGroundControl.settingsManager.videoSettings.gridLines.rawValue = 0
                 }
             }
         }
         QGCLabel {
-           text:            qsTr("Stream Recording")
+           text:            _recordingVideo ? qsTr("Stop Recording") : qsTr("Record Stream")
            font.pointSize:  ScreenTools.smallFontPointSize
            visible:         QGroundControl.settingsManager.videoSettings.showRecControl.rawValue
         }

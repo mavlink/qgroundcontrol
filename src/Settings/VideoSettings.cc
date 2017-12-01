@@ -31,6 +31,7 @@ const char* VideoSettings::maxVideoSizeName =       "MaxVideoSize";
 const char* VideoSettings::enableStorageLimitName = "EnableStorageLimit";
 const char* VideoSettings::rtspTimeoutName =        "RtspTimeout";
 const char* VideoSettings::streamEnabledName =      "StreamEnabled";
+const char* VideoSettings::disableWhenDisarmedName ="DisableWhenDisarmed";
 
 const char* VideoSettings::videoSourceNoVideo =     "No Video Available";
 const char* VideoSettings::videoDisabled =          "Video Stream Disabled";
@@ -52,6 +53,7 @@ VideoSettings::VideoSettings(QObject* parent)
     , _enableStorageLimitFact(NULL)
     , _rtspTimeoutFact(NULL)
     , _streamEnabledFact(NULL)
+    , _disableWhenDisarmedFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
@@ -190,6 +192,14 @@ Fact* VideoSettings::streamEnabled(void)
         _streamEnabledFact = _createSettingsFact(streamEnabledName);
     }
     return _streamEnabledFact;
+}
+
+Fact* VideoSettings::disableWhenDisarmed(void)
+{
+    if (!_disableWhenDisarmedFact) {
+        _disableWhenDisarmedFact = _createSettingsFact(disableWhenDisarmedName);
+    }
+    return _disableWhenDisarmedFact;
 }
 
 bool VideoSettings::streamConfigured(void)
