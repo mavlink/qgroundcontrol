@@ -30,6 +30,8 @@
 
 Q_DECLARE_LOGGING_CATEGORY(VideoReceiverLog)
 
+class VideoSettings;
+
 class VideoReceiver : public QObject
 {
     Q_OBJECT
@@ -137,6 +139,7 @@ private:
     VideoSurface*   _videoSurface;
     bool            _videoRunning;
     bool            _showFullScreen;
+    VideoSettings*  _videoSettings;
 };
 
 #endif // VIDEORECEIVER_H

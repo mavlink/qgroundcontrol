@@ -92,6 +92,7 @@
         <file alias="QGroundControl/Controls/QGCPipable.qml">src/QmlControls/QGCPipable.qml</file>
         <file alias="QGroundControl/Controls/QGCRadioButton.qml">src/QmlControls/QGCRadioButton.qml</file>
         <file alias="QGroundControl/Controls/QGCSlider.qml">src/QmlControls/QGCSlider.qml</file>
+        <file alias="QGroundControl/Controls/QGCSwitch.qml">src/QmlControls/QGCSwitch.qml</file>
         <file alias="QGroundControl/Controls/QGCTextField.qml">src/QmlControls/QGCTextField.qml</file>
         <file alias="QGroundControl/Controls/QGCToolBarButton.qml">src/QmlControls/QGCToolBarButton.qml</file>
         <file alias="QGroundControl/Controls/QGCView.qml">src/QmlControls/QGCView.qml</file>

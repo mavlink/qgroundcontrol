@@ -101,5 +101,12 @@
     "longDescription":  "Start/Stop Video Stream.",
     "type":             "bool",
     "defaultValue":     true
+},
+{
+    "name":             "DisableWhenDisarmed",
+    "shortDescription": "Video Stream Disnabled When Armed",
+    "longDescription":  "Disable Video Stream when disarmed.",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]
