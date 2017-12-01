@@ -116,11 +116,23 @@ install:
   # osx dependencies: qt, gstreamer, gstreamer-devel
   - if [ "${SPEC}" = "macx-clang" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.1-mac-clang-min.tar.bz2 &&
-        tar jxf Qt5.9.1-mac-clang-min.tar.bz2 -C /tmp &&
+        tar jxf Qt5.9.1-mac-clang-min.tar.bz2 -C /tmp
+        ;
+    fi
+
+  - if [ "${SPEC}" = "macx-clang" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-1.5.2-x86_64.pkg &&
-        sudo installer -verboseR -pkg gstreamer-1.0-1.5.2-x86_64.pkg -target / &&
+        sudo installer -verboseR -pkg gstreamer-1.0-1.5.2-x86_64.pkg -target /
+        ;
+    fi
+
+  - if [ "${SPEC}" = "macx-clang" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-1.5.2-x86_64.pkg &&
-        sudo installer -verboseR -pkg gstreamer-1.0-devel-1.5.2-x86_64.pkg -target / &&
+        sudo installer -verboseR -pkg gstreamer-1.0-devel-1.5.2-x86_64.pkg -target /
+        ;
+    fi
+
+  - if [ "${SPEC}" = "macx-clang" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2 &&
         sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks &&
         export QT_DIR=Qt5.9-mac-clang/5.9.1/clang_64 &&

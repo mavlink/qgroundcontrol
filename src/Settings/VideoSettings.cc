@@ -30,6 +30,8 @@ const char* VideoSettings::recordingFormatName =    "RecordingFormat";
 const char* VideoSettings::maxVideoSizeName =       "MaxVideoSize";
 const char* VideoSettings::enableStorageLimitName = "EnableStorageLimit";
 const char* VideoSettings::rtspTimeoutName =        "RtspTimeout";
+const char* VideoSettings::streamEnabledName =      "StreamEnabled";
+const char* VideoSettings::disableWhenDisarmedName ="DisableWhenDisarmed";
 
 const char* VideoSettings::videoSourceNoVideo =     "No Video Available";
 const char* VideoSettings::videoDisabled =          "Video Stream Disabled";
@@ -50,6 +52,8 @@ VideoSettings::VideoSettings(QObject* parent)
     , _maxVideoSizeFact(NULL)
     , _enableStorageLimitFact(NULL)
     , _rtspTimeoutFact(NULL)
+    , _streamEnabledFact(NULL)
+    , _disableWhenDisarmedFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
@@ -94,8 +98,8 @@ Fact* VideoSettings::videoSource(void)
 {
     if (!_videoSourceFact) {
         _videoSourceFact = _createSettingsFact(videoSourceName);
+        connect(_videoSourceFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
-
     return _videoSourceFact;
 }
 
@@ -103,8 +107,8 @@ Fact* VideoSettings::udpPort(void)
 {
     if (!_udpPortFact) {
         _udpPortFact = _createSettingsFact(udpPortName);
+        connect(_udpPortFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
-
     return _udpPortFact;
 }
 
@@ -112,8 +116,8 @@ Fact* VideoSettings::rtspUrl(void)
 {
     if (!_rtspUrlFact) {
         _rtspUrlFact = _createSettingsFact(rtspUrlName);
+        connect(_rtspUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
-
     return _rtspUrlFact;
 }
 
@@ -121,8 +125,8 @@ Fact* VideoSettings::tcpUrl(void)
 {
     if (!_tcpUrlFact) {
         _tcpUrlFact = _createSettingsFact(tcpUrlName);
+        connect(_tcpUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
-
     return _tcpUrlFact;
 }
 
@@ -131,7 +135,6 @@ Fact* VideoSettings::aspectRatio(void)
     if (!_videoAspectRatioFact) {
         _videoAspectRatioFact = _createSettingsFact(videoAspectRatioName);
     }
-
     return _videoAspectRatioFact;
 }
 
@@ -140,7 +143,6 @@ Fact* VideoSettings::gridLines(void)
     if (!_gridLinesFact) {
         _gridLinesFact = _createSettingsFact(videoGridLinesName);
     }
-
     return _gridLinesFact;
 }
 
@@ -149,7 +151,6 @@ Fact* VideoSettings::showRecControl(void)
     if (!_showRecControlFact) {
         _showRecControlFact = _createSettingsFact(showRecControlName);
     }
-
     return _showRecControlFact;
 }
 
@@ -158,7 +159,6 @@ Fact* VideoSettings::recordingFormat(void)
     if (!_recordingFormatFact) {
         _recordingFormatFact = _createSettingsFact(recordingFormatName);
     }
-
     return _recordingFormatFact;
 }
 
@@ -167,7 +167,6 @@ Fact* VideoSettings::maxVideoSize(void)
     if (!_maxVideoSizeFact) {
         _maxVideoSizeFact = _createSettingsFact(maxVideoSizeName);
     }
-
     return _maxVideoSizeFact;
 }
 
@@ -176,7 +175,6 @@ Fact* VideoSettings::enableStorageLimit(void)
     if (!_enableStorageLimitFact) {
         _enableStorageLimitFact = _createSettingsFact(enableStorageLimitName);
     }
-
     return _enableStorageLimitFact;
 }
 
@@ -185,6 +183,50 @@ Fact* VideoSettings::rtspTimeout(void)
     if (!_rtspTimeoutFact) {
         _rtspTimeoutFact = _createSettingsFact(rtspTimeoutName);
     }
-
     return _rtspTimeoutFact;
+}
+
+Fact* VideoSettings::streamEnabled(void)
+{
+    if (!_streamEnabledFact) {
+        _streamEnabledFact = _createSettingsFact(streamEnabledName);
+    }
+    return _streamEnabledFact;
+}
+
+Fact* VideoSettings::disableWhenDisarmed(void)
+{
+    if (!_disableWhenDisarmedFact) {
+        _disableWhenDisarmedFact = _createSettingsFact(disableWhenDisarmedName);
+    }
+    return _disableWhenDisarmedFact;
+}
+
+bool VideoSettings::streamConfigured(void)
+{
+#if !defined(QGC_GST_STREAMING)
+    return false;
+#endif
+    QString vSource = videoSource()->rawValue().toString();
+    if(vSource == videoSourceNoVideo || vSource == videoDisabled) {
+        return false;
+    }
+    //-- If UDP, check if port is set
+    if(vSource == videoSourceUDP) {
+        return udpPort()->rawValue().toInt() != 0;
+    }
+    //-- If RTSP, check for URL
+    if(vSource == videoSourceRTSP) {
+        return !rtspUrl()->rawValue().toString().isEmpty();
+    }
+    //-- If TCP, check for URL
+    if(vSource == videoSourceTCP) {
+        return !tcpUrl()->rawValue().toString().isEmpty();
+    }
+    return false;
+}
+
+void VideoSettings::_configChanged(QVariant)
+{
+    emit streamConfiguredChanged();
 }

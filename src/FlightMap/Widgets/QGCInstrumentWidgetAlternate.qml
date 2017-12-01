@@ -20,7 +20,7 @@ import QGroundControl.Palette       1.0
 /// Instrument panel shown when virtual thumbsticks are visible
 Rectangle {
     id:             root
-    width:          ScreenTools.isTinyScreen ? getPreferredInstrumentWidth() * 1.5 : getPreferredInstrumentWidth()
+    width:          getPreferredInstrumentWidth()
     height:         _outerRadius * 2
     radius:         _outerRadius
     color:          qgcPal.window
