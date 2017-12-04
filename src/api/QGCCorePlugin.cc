@@ -39,6 +39,7 @@ public:
         , defaultOptions            (NULL)
         , valuesPageWidgetInfo      (NULL)
         , cameraPageWidgetInfo      (NULL)
+        , videoPageWidgetInfo       (NULL)
         , healthPageWidgetInfo      (NULL)
         , vibrationPageWidgetInfo   (NULL)
     {
@@ -80,6 +81,7 @@ public:
 
     QmlComponentInfo*   valuesPageWidgetInfo;
     QmlComponentInfo*   cameraPageWidgetInfo;
+    QmlComponentInfo*   videoPageWidgetInfo;
     QmlComponentInfo*   healthPageWidgetInfo;
     QmlComponentInfo*   vibrationPageWidgetInfo;
     QVariantList        instrumentPageWidgetList;
@@ -148,13 +150,19 @@ QVariantList &QGCCorePlugin::settingsPages()
 QVariantList& QGCCorePlugin::instrumentPages(void)
 {
     if (!_p->valuesPageWidgetInfo) {
-        _p->valuesPageWidgetInfo = new QmlComponentInfo(tr("Values"), QUrl::fromUserInput("qrc:/qml/ValuePageWidget.qml"));
-        _p->cameraPageWidgetInfo = new QmlComponentInfo(tr("Camera"), QUrl::fromUserInput("qrc:/qml/CameraPageWidget.qml"));
-        _p->healthPageWidgetInfo = new QmlComponentInfo(tr("Health"), QUrl::fromUserInput("qrc:/qml/HealthPageWidget.qml"));
+        _p->valuesPageWidgetInfo    = new QmlComponentInfo(tr("Values"),    QUrl::fromUserInput("qrc:/qml/ValuePageWidget.qml"));
+        _p->cameraPageWidgetInfo    = new QmlComponentInfo(tr("Camera"),    QUrl::fromUserInput("qrc:/qml/CameraPageWidget.qml"));
+#if defined(QGC_GST_STREAMING)
+        _p->videoPageWidgetInfo     = new QmlComponentInfo(tr("Video Stream"), QUrl::fromUserInput("qrc:/qml/VideoPageWidget.qml"));
+#endif
+        _p->healthPageWidgetInfo    = new QmlComponentInfo(tr("Health"),    QUrl::fromUserInput("qrc:/qml/HealthPageWidget.qml"));
         _p->vibrationPageWidgetInfo = new QmlComponentInfo(tr("Vibration"), QUrl::fromUserInput("qrc:/qml/VibrationPageWidget.qml"));
 
         _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->valuesPageWidgetInfo));
         _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->cameraPageWidgetInfo));
+#if defined(QGC_GST_STREAMING)
+        _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->videoPageWidgetInfo));
+#endif
         _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->healthPageWidgetInfo));
         _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->vibrationPageWidgetInfo));
     }
