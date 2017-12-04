@@ -35,4 +35,14 @@
         <file alias="YuneecSafetyComponent.qml">src/AutoPilotPlugin/YuneecSafetyComponent.qml</file>
         <file alias="YuneecSafetyComponentSummary.qml">src/AutoPilotPlugin/YuneecSafetyComponentSummary.qml</file>
     </qresource>
+    <qresource prefix="/typhoonh/img">
+        <file alias="battery_back.svg">res/images/battery_back.svg</file>
+        <file alias="battery_charge_100.svg">res/images/battery_charge_100.svg</file>
+        <file alias="battery_charge_80.svg">res/images/battery_charge_80.svg</file>
+        <file alias="battery_charge_60.svg">res/images/battery_charge_60.svg</file>
+        <file alias="battery_charge_40.svg">res/images/battery_charge_40.svg</file>
+        <file alias="battery_charge_20.svg">res/images/battery_charge_20.svg</file>
+        <file alias="battery_plane.svg">res/images/battery_plane.svg</file>
+        <file alias="gps.svg">res/images/gps.svg</file>
+    </qresource>
 </RCC>

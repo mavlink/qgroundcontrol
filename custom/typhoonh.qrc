@@ -15,13 +15,6 @@
         <file alias="Megaphone.svg">res/images/bell.svg</file>
     </qresource>
     <qresource prefix="/typhoonh/img">
-        <file alias="battery_back.svg">res/images/battery_back.svg</file>
-        <file alias="battery_charge_100.svg">res/images/battery_charge_100.svg</file>
-        <file alias="battery_charge_80.svg">res/images/battery_charge_80.svg</file>
-        <file alias="battery_charge_60.svg">res/images/battery_charge_60.svg</file>
-        <file alias="battery_charge_40.svg">res/images/battery_charge_40.svg</file>
-        <file alias="battery_charge_20.svg">res/images/battery_charge_20.svg</file>
-        <file alias="battery_plane.svg">res/images/battery_plane.svg</file>
         <file alias="bell.svg">res/images/bell.svg</file>
         <file alias="camera.svg">res/images/camera.svg</file>
         <file alias="camera_switch_elapsed_mode.svg">res/images/camera_switch_elapsed_mode.svg</file>
@@ -44,7 +37,6 @@
         <file alias="flir-Rain.png">res/images/flir-Rain.png</file>
         <file alias="flir-Rainbow.png">res/images/flir-Rainbow.png</file>
         <file alias="flir-WhiteHot.png">res/images/flir-WhiteHot.png</file>
-        <file alias="gps.svg">res/images/gps.svg</file>
         <file alias="gimbalPitch.svg">res/images/gimbalPitch.svg</file>
         <file alias="gimbalYaw.svg">res/images/gimbalYaw.svg</file>
         <file alias="logoWhite.svg">res/images/logoWhite.svg</file>

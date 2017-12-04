@@ -34,12 +34,42 @@ Window {
     property var    currentPopUp:       null
     property real   currentCenterX:     0
     property var    activeVehicle:      QGroundControl.multiVehicleManager.activeVehicle
+    property bool   communicationLost:  activeVehicle ? activeVehicle.connectionLost : false
 
     function showSetupView() {
     }
 
     function showMessage(message) {
         console.log('Root: ' + message)
+    }
+
+    Timer {
+        id:        connectionTimer
+        interval:  5000
+        running:   false;
+        repeat:    false;
+        onTriggered: {
+            //-- Vehicle is gone
+            if(activeVehicle && communicationLost) {
+                if(!activeVehicle.autoDisconnect) {
+                    activeVehicle.disconnectInactiveVehicle()
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: QGroundControl.multiVehicleManager.activeVehicle
+        onConnectionLostChanged: {
+            if(communicationLost) {
+                if(activeVehicle && !activeVehicle.autoDisconnect) {
+                    //-- Communication lost
+                    connectionTimer.start();
+                }
+            } else {
+                connectionTimer.stop();
+            }
+        }
     }
 
     Item {
@@ -94,12 +124,26 @@ Window {
             console.log('Main: ' + message)
         }
 
+        function showPopUp(dropItem, centerX) {
+            rootLoader.sourceComponent = null
+            var oldIndicator = indicatorDropdown.sourceComponent
+            if(currentPopUp) {
+                currentPopUp.close()
+            }
+            if(oldIndicator !== dropItem) {
+                indicatorDropdown.centerX = centerX
+                indicatorDropdown.sourceComponent = dropItem
+                indicatorDropdown.visible = true
+                currentPopUp = indicatorDropdown
+            }
+        }
+
         Rectangle {
             id:                 toolBar
             visible:            false
             height:             ScreenTools.toolbarHeight
             anchors.left:       parent.left
-            anchors.right:      parent.right
+            anchors.right:      indicators.visible ? indicators.left : parent.right
             anchors.top:        parent.top
             color:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
             Row {
@@ -127,7 +171,7 @@ Window {
             id:                 planToolBar
             height:             ScreenTools.toolbarHeight
             anchors.left:       parent.left
-            anchors.right:      parent.right
+            anchors.right:      indicators.visible ? indicators.left : parent.right
             anchors.top:        parent.top
             onShowFlyView: {
                 mainWindow.showSettingsView()
@@ -135,6 +179,47 @@ Window {
             Component.onCompleted: {
                 ScreenTools.availableHeight = parent.height - planToolBar.height
                 planToolBar.visible = true
+            }
+        }
+
+        Rectangle {
+            id:                         indicators
+            color:                      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
+            anchors.right:              parent.right
+            anchors.top:                parent.top
+            height:                     ScreenTools.toolbarHeight
+            width:                      indicatorsRow.width
+            visible:                    activeVehicle
+            Row {
+                id:                     indicatorsRow
+                anchors.bottomMargin:   1
+                anchors.right:          parent.right
+                anchors.top:            parent.top
+                anchors.bottom:         parent.bottom
+                spacing:                ScreenTools.defaultFontPixelWidth * 3.25
+                Rectangle {
+                    height:             1
+                    width:              1
+                }
+                Rectangle {
+                    height:             parent.height * 0.75
+                    width:              1
+                    color:              qgcPal.text
+                    opacity:            0.5
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Loader {
+                    anchors.top:        parent.top
+                    anchors.bottom:     parent.bottom
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+                    source:             "/typhoonh/YGPSIndicator.qml"
+                }
+                Loader {
+                    anchors.top:        parent.top
+                    anchors.bottom:     parent.bottom
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+                    source:             "/typhoonh/BatteryIndicator.qml"
+                }
             }
         }
 
@@ -150,7 +235,10 @@ Window {
 
         Loader {
             id:                 planViewLoader
-            anchors.fill:       parent
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            anchors.top:        toolBar.bottom
+            anchors.bottom:     parent.bottom
             source:             "/qml/PlanView.qml"
             property var toolbar: planToolBar
         }
@@ -165,13 +253,34 @@ Window {
                 currentPopUp.close()
             }
         }
-
         //-------------------------------------------------------------------------
         //-- Loader helper for any child, no matter how deep can display an element
         //   in the middle of the main window.
         Loader {
             id: rootLoader
             anchors.centerIn: parent
+        }
+        //-------------------------------------------------------------------------
+        //-- Indicator Drop Down Info
+        Loader {
+            id: indicatorDropdown
+            visible: false
+            property real centerX: 0
+            function close() {
+                sourceComponent = null
+                currentPopUp = null
+            }
+        }
+        //-------------------------------------------------------------------------
+        // Progress bar
+        Rectangle {
+            id:             progressBar
+            anchors.top:    parent.top
+            anchors.topMargin: ScreenTools.toolbarHeight
+            anchors.left:   parent.left
+            height:         ScreenTools.toolbarHeight * 0.05
+            width:          activeVehicle ? activeVehicle.parameterManager.loadProgress * parent.width : 0
+            color:          qgcPal.colorGreen
         }
     }
 }

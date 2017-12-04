@@ -276,20 +276,19 @@ QGCView {
                 anchors.margins:    ScreenTools.defaultFontPixelHeight
                 columnSpacing:      ScreenTools.defaultFontPixelWidth
                 columns:            2
-                visible:            _activeVehicle
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel { text: qsTr("%1 Version:").arg(QGroundControl.appName) }
                 QGCLabel { text: QGroundControl.qgcVersion }
-                QGCLabel { text: qsTr("Camera Version:"); visible: !TyphoonHQuickInterface.desktopPlanner; }
-                QGCLabel { text: _camera ? _camera.firmwareVersion : ""; visible: !TyphoonHQuickInterface.desktopPlanner; }
-                QGCLabel { text: qsTr("Gimbal Version:"); visible: !TyphoonHQuickInterface.desktopPlanner; }
-                QGCLabel { text: _camera ? _camera.gimbalVersion : ""; visible: !TyphoonHQuickInterface.desktopPlanner; }
-                QGCLabel { text: qsTr("Flight Controller Version:") }
-                QGCLabel { text: firmwareVersion() }
-                QGCLabel { text: qsTr("Vehicle ID:") }
-                QGCLabel { text: _activeVehicle ? _activeVehicle.vehicleUIDStr : "" }
-                QGCLabel { text: qsTr("HOBBS Meter:") }
-                QGCLabel { text: _activeVehicle ? _activeVehicle.hobbsMeter : "" }
+                QGCLabel { text: qsTr("Camera Version:"); visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                QGCLabel { text: _camera ? _camera.firmwareVersion : ""; visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                QGCLabel { text: qsTr("Gimbal Version:"); visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                QGCLabel { text: _camera ? _camera.gimbalVersion : ""; visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                QGCLabel { text: qsTr("Flight Controller Version:"); visible: _activeVehicle; }
+                QGCLabel { text: firmwareVersion(); visible: _activeVehicle; }
+                QGCLabel { text: qsTr("Vehicle ID:"); visible: _activeVehicle; }
+                QGCLabel { text: _activeVehicle ? _activeVehicle.vehicleUIDStr : ""; visible: _activeVehicle; }
+                QGCLabel { text: qsTr("HOBBS Meter:"); visible: _activeVehicle; }
+                QGCLabel { text: _activeVehicle ? _activeVehicle.hobbsMeter : ""; visible: _activeVehicle; }
             }
         }
     }
