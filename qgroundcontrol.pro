@@ -233,10 +233,12 @@ QT += \
         multimedia
 }
 
-!MobileBuild {
-QT += \
-    printsupport \
-    serialport \
+AndroidBuild || iOSBuild {
+    # Android and iOS don't unclude these
+} else {
+    QT += \
+        printsupport \
+        serialport \
 }
 
 contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
