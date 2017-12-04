@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.13 - Dec 4 2017
+
+*   Desktop log download
+
 ### v1.2.12 - Nov 30 2017
 
 *   Fine tuning German localization

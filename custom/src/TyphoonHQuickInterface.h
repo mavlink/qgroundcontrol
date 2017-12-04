@@ -14,7 +14,9 @@
 #include <QQmlListProperty>
 
 class YExportFiles;
+#if defined(__androidx86__)
 class TyphoonHM4Interface;
+#endif
 class TyphoonHQuickInterface;
 
 //-----------------------------------------------------------------------------
@@ -171,6 +173,7 @@ public:
     Q_PROPERTY(bool             isUpdaterApp    READ    isUpdaterApp        CONSTANT)
     Q_PROPERTY(bool             isInternet      READ    isInternet          NOTIFY isInternetChanged)
     Q_PROPERTY(bool             isDefaultPwd    READ    isDefaultPwd        NOTIFY isDefaultPwdChanged)
+    Q_PROPERTY(bool             desktopPlanner  READ    desktopPlanner      CONSTANT)
 
     Q_PROPERTY(bool             firstRun            READ    firstRun            WRITE   setFirstRun         NOTIFY  firstRunChanged)
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
@@ -273,8 +276,16 @@ public:
     bool        isInternet          ();
     bool        isDefaultPwd        ();
     bool        firstRun            ();
-
+#if defined (__planner__)
+    bool        desktopPlanner      () { return true; }
+#else
+    bool        desktopPlanner      () { return false; }
+#endif
+#if defined(__androidx86__)
     void        init                (TyphoonHM4Interface* pHandler);
+#else
+    void        init                ();
+#endif
     void        setWifiAlertEnabled (bool enabled) { _wifiAlertEnabled = enabled; emit wifiAlertEnabledChanged(); }
     void        setFirstRun         (bool set);
 
@@ -426,7 +437,9 @@ private:
     void                    _clearSSids         ();
 
 private:
+#if defined(__androidx86__)
     TyphoonHM4Interface*    _pHandler;
+#endif
     Vehicle*                _vehicle;
     TyphoonHFileCopy*       _pFileCopy;
     VideoReceiver*          _videoReceiver;

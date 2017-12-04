@@ -4,8 +4,10 @@
  */
 
 #include "TyphoonHPlugin.h"
+#include "TyphoonHQuickInterface.h"
+#if defined(__androidx86__)
 #include "TyphoonHM4Interface.h"
-
+#endif
 #include <QtQml>
 #include <QQmlEngine>
 #include <QDateTime>
@@ -15,6 +17,9 @@
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
+
+QGC_LOGGING_CATEGORY(YuneecLog, "YuneecLog")
+QGC_LOGGING_CATEGORY(YuneecLogVerbose, "YuneecLogVerbose")
 
 #if defined( __android__) && defined (QT_DEBUG)
 #include <android/log.h>
@@ -48,7 +53,6 @@ myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString
 #endif
 
 //-----------------------------------------------------------------------------
-#if !defined (__planner__)
 static QObject*
 typhoonHQuickInterfaceSingletonFactory(QQmlEngine*, QJSEngine*)
 {
@@ -56,13 +60,16 @@ typhoonHQuickInterfaceSingletonFactory(QQmlEngine*, QJSEngine*)
     TyphoonHQuickInterface* pIFace = new TyphoonHQuickInterface();
     TyphoonHPlugin* pPlug = dynamic_cast<TyphoonHPlugin*>(qgcApp()->toolbox()->corePlugin());
     if(pPlug) {
+#if defined(__androidx86__)
         pIFace->init(pPlug->handler());
+#else
+        pIFace->init();
+#endif
     } else {
         qCritical() << "Error obtaining instance of TyphoonHPlugin";
     }
     return pIFace;
 }
-#endif
 
 //-----------------------------------------------------------------------------
 #if defined(__androidx86__)
@@ -135,7 +142,9 @@ public:
 #endif
     bool        enablePlanViewSelector      () { return false; }
     CustomInstrumentWidget* instrumentWidget();
+#if !defined(__planner__)
     QUrl        flyViewOverlay                 () const { return QUrl::fromUserInput("qrc:/typhoonh/YuneecFlyView.qml"); }
+#endif
     bool        showSensorCalibrationCompass   () const final;
     bool        showSensorCalibrationGyro      () const final;
     bool        showSensorCalibrationAccel     () const final;
@@ -220,11 +229,13 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app, QGCToolbox* toolbox)
     , _pMockLink(NULL)
 #endif
     , _pConsole(NULL)
+#if defined(__androidx86__)
     , _pHandler(NULL)
+#endif
 {
     _showAdvancedUI = false;
     _pOptions = new TyphoonHOptions(this, this);
-#if !defined (__planner__)
+#if defined(__androidx86__)
     _pHandler = new TyphoonHM4Interface();
 #endif
     connect(this, &QGCCorePlugin::showAdvancedUIChanged, this, &TyphoonHPlugin::_showAdvancedPages);
@@ -259,8 +270,10 @@ TyphoonHPlugin::~TyphoonHPlugin()
 #endif
     if(_pConsole)
         delete _pConsole;
+#if defined(__androidx86__)
     if(_pHandler)
         delete _pHandler;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -271,8 +284,8 @@ TyphoonHPlugin::setToolbox(QGCToolbox* toolbox)
     qInstallMessageHandler(myMessageOutput);
 #endif
     QGCCorePlugin::setToolbox(toolbox);
-#if !defined (__planner__)
     qmlRegisterSingletonType<TyphoonHQuickInterface>("TyphoonHQuickInterface", 1, 0, "TyphoonHQuickInterface", typhoonHQuickInterfaceSingletonFactory);
+#if defined(__androidx86__)
     _pHandler->init();
 #endif
     //-- Save current version
@@ -313,7 +326,7 @@ TyphoonHPlugin::settingsPages()
                 QUrl::fromUserInput("qrc:/res/gear-white.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pGeneral));
-#if !defined (__planner__)
+#if !defined(__planner__)
         if(!_pOfflineMaps) {
             _pOfflineMaps = new QGCSettings(tr("Offline Maps"),
                 QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"),
@@ -328,15 +341,21 @@ TyphoonHPlugin::settingsPages()
             }
             _settingsList.append(QVariant::fromValue((QGCSettings*)_pMAVLink));
         }
+#endif
+#if !defined (__planner__)
         if (_showAdvancedUI) {
+#endif
             if(!_pLogDownload) {
                 _pLogDownload = new QGCSettings(tr("Log Download"),
                     QUrl::fromUserInput("qrc:/typhoonh/LogDownload.qml"),
                     QUrl::fromUserInput("qrc:/qmlimages/LogDownloadIcon"));
             }
             _settingsList.append(QVariant::fromValue((QGCSettings*)_pLogDownload));
+#if !defined (__planner__)
         }
+#endif
 #ifdef QT_DEBUG
+#if !defined (__planner__)
 #if defined(__mobile__)
         if(!_pRCCal) {
             _pRCCal = new QGCSettings(tr("RC Calibration"),
@@ -345,6 +364,8 @@ TyphoonHPlugin::settingsPages()
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pRCCal));
 #endif
+#endif
+#if !defined(__planner__)
         if(!_pMockLink) {
             _pMockLink = new QGCSettings(tr("MockLink"),
                 QUrl::fromUserInput("qrc:/qml/MockLink.qml"),
@@ -357,15 +378,18 @@ TyphoonHPlugin::settingsPages()
                 QUrl::fromUserInput("qrc:/res/gear-white.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pConsole));
+#endif
 #else
         if (_showAdvancedUI) {
 #if defined(__mobile__)
+#if !defined (__planner__)
             if(!_pRCCal) {
                 _pRCCal = new QGCSettings(tr("RC Calibration"),
                     QUrl::fromUserInput("qrc:/typhoonh/RCCalibration.qml"),
                     QUrl::fromUserInput("qrc:/qmlimages/RC.svg"));
             }
             _settingsList.append(QVariant::fromValue((QGCSettings*)_pRCCal));
+#endif
 #endif
             if(!_pConsole) {
                 _pConsole = new QGCSettings(tr("Console"),
@@ -375,14 +399,13 @@ TyphoonHPlugin::settingsPages()
             _settingsList.append(QVariant::fromValue((QGCSettings*)_pConsole));
         }
 #endif
-#if defined(__mobile__)
+#if defined(__mobile__) && !defined (__planner__)
         if(!_pTyphoonSettings) {
             _pTyphoonSettings = new QGCSettings(tr("Vehicle"),
                 QUrl::fromUserInput("qrc:/typhoonh/TyphoonSettings.qml"),
                 QUrl::fromUserInput("qrc:/typhoonh/img/logoWhite.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pTyphoonSettings));
-#endif
 #endif
     }
     return _settingsList;

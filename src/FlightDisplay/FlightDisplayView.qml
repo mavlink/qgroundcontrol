@@ -43,8 +43,6 @@ QGCView {
     property var    _geoFenceController:    _planMasterController.geoFenceController
     property var    _rallyPointController:  _planMasterController.rallyPointController
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
-    property var    _videoReceiver:         QGroundControl.videoManager.videoReceiver
-    property bool   _recordingVideo:        _videoReceiver && _videoReceiver.recording
     property bool   _mainIsMap:             QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
     property bool   _isPipVisible:          QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
     property real   _savedZoomLevel:        0
@@ -344,63 +342,6 @@ QGCView {
             anchors.bottom:     parent.bottom
 
             property var qgcView: root
-        }
-
-        // Button to start/stop video recording
-        Item {
-            z:                  _flightVideoPipControl.z + 1
-            anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-            anchors.bottom:     _flightVideo.bottom
-            anchors.right:      _flightVideo.right
-            height:             ScreenTools.defaultFontPixelHeight * 2
-            width:              height
-            visible:            _videoReceiver && _videoReceiver.videoRunning && QGroundControl.settingsManager.videoSettings.showRecControl.rawValue && _flightVideo.visible && !_isCamera && !QGroundControl.videoManager.fullScreen
-            opacity:            0.75
-
-            readonly property string recordBtnBackground: "BackgroundName"
-
-            Rectangle {
-                id:                 recordBtnBackground
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                width:              height
-                radius:             _recordingVideo ? 0 : height
-                color:              "red"
-
-                SequentialAnimation on visible {
-                    running:        _recordingVideo
-                    loops:          Animation.Infinite
-                    PropertyAnimation { to: false; duration: 1000 }
-                    PropertyAnimation { to: true;  duration: 1000 }
-                }
-            }
-
-            QGCColoredImage {
-                anchors.top:                parent.top
-                anchors.bottom:             parent.bottom
-                anchors.horizontalCenter:   parent.horizontalCenter
-                width:                      height * 0.625
-                sourceSize.width:           width
-                source:                     "/qmlimages/CameraIcon.svg"
-                visible:                    recordBtnBackground.visible
-                fillMode:                   Image.PreserveAspectFit
-                color:                      "white"
-            }
-
-            MouseArea {
-                anchors.fill:   parent
-                onClicked: {
-                    if (_videoReceiver) {
-                        if (_recordingVideo) {
-                            _videoReceiver.stopRecording()
-                            // reset blinking animation
-                            recordBtnBackground.visible = true
-                        } else {
-                            _videoReceiver.startRecording()
-                        }
-                    }
-                }
-            }
         }
 
         MultiVehicleList {

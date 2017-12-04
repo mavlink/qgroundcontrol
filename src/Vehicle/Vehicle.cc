@@ -33,6 +33,8 @@
 #include "QGCCorePlugin.h"
 #include "ADSBVehicle.h"
 #include "QGCCameraManager.h"
+#include "VideoReceiver.h"
+#include "VideoManager.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -1121,6 +1123,11 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
             _clearCameraTriggerPoints();
         } else {
             _mapTrajectoryStop();
+            // Also handle Video Streaming
+            if(_settingsManager->videoSettings()->disableWhenDisarmed()->rawValue().toBool()) {
+                _settingsManager->videoSettings()->streamEnabled()->setRawValue(false);
+                qgcApp()->toolbox()->videoManager()->videoReceiver()->stop();
+            }
         }
     }
 
