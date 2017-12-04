@@ -23,6 +23,9 @@ TerrainTile::TerrainTile()
     : _minElevation(-1.0)
     , _maxElevation(-1.0)
     , _avgElevation(-1.0)
+    , _data(NULL)
+    , _gridSizeLat(-1)
+    , _gridSizeLon(-1)
     , _isValid(false)
 {
 
@@ -30,6 +33,13 @@ TerrainTile::TerrainTile()
 
 TerrainTile::~TerrainTile()
 {
+    if (_data) {
+        for (int i = 0; i < _gridSizeLat; i++) {
+            delete _data[i];
+            delete _data;
+            _data = NULL;
+        }
+    }
 }
 
 TerrainTile::TerrainTile(QJsonDocument document)
@@ -107,17 +117,25 @@ TerrainTile::TerrainTile(QJsonDocument document)
 
     // Carpet
     const QJsonArray& carpetArray = dataObject[_jsonCarpetKey].toArray();
-    if (carpetArray.count() < gridSize) { // TODO (birchera): We always get 91x91 points, figure out why and where the exact location of the elev values are.
-        qCDebug(TerrainTileLog) << "Expected array of " << gridSize << ", instead got " << carpetArray.count();
-        return;
-    }
-    for (int i = 0; i < gridSize; i++) {
+    _gridSizeLat = carpetArray.count();
+    qCDebug(TerrainTileLog) << "Received tile has size in latitude direction: " << carpetArray.count();
+    for (int i = 0; i < _gridSizeLat; i++) {
         const QJsonArray& row = carpetArray[i].toArray();
-        if (row.count() < gridSize) { // TODO (birchera): the same as above
-            qCDebug(TerrainTileLog) << "Expected row array of " << gridSize << ", instead got " << row.count();
+        if (i == 0) {
+            _gridSizeLon = row.count();
+            qCDebug(TerrainTileLog) << "Received tile has size in longitued direction: " << row.count();
+            if (_gridSizeLon > 0) {
+                _data = new float*[_gridSizeLat];
+            }
+            for (int k = 0; k < _gridSizeLat; k++) {
+                _data[k] = new float[_gridSizeLon];
+            }
+        }
+        if (row.count() < _gridSizeLon) {
+            qCDebug(TerrainTileLog) << "Expected row array of " << _gridSizeLon << ", instead got " << row.count();
             return;
         }
-        for (int j = 0; j < gridSize; j++) {
+        for (int j = 0; j < _gridSizeLon; j++) {
             _data[i][j] = row[j].toDouble();
         }
     }
@@ -141,14 +159,10 @@ float TerrainTile::elevation(const QGeoCoordinate& coordinate) const
     if (_isValid) {
         qCDebug(TerrainTileLog) << "elevation: " << coordinate << " , in sw " << _southWest << " , ne " << _northEast;
         // Get the index at resolution of 1 arc second
-        int indexLat = qRound(static_cast<qreal>((coordinate.latitude() - _southWest.latitude()) * (gridSize - 1) / QGCMapEngine::srtm1TileSize));
-        int indexLon = qRound(static_cast<qreal>((coordinate.longitude() - _southWest.longitude()) * (gridSize - 1) / QGCMapEngine::srtm1TileSize));
-        qCDebug(TerrainTileLog) << "indexLat:indexLon" << indexLat << indexLon; // TODO (birchera): Move this down to the next debug output, once this is all properly working.
-        Q_ASSERT(indexLat >= 0);
-        Q_ASSERT(indexLat < gridSize);
-        Q_ASSERT(indexLon >= 0);
-        Q_ASSERT(indexLon < gridSize);
-        qCDebug(TerrainTileLog) << "elevation" << _data[indexLat][indexLon];
+        int indexLat = _latToDataIndex(coordinate.latitude());
+        int indexLon = _lonToDataIndex(coordinate.longitude());
+        qCDebug(TerrainTileLog) << "indexLat:indexLon" << indexLat << indexLon;
+        qCDebug(TerrainTileLog) << "indexLat:indexLon" << indexLat << indexLon << "elevation" << _data[indexLat][indexLon];
         return _data[indexLat][indexLon];
     } else {
         qCDebug(TerrainTileLog) << "Asking for elevation, but no valid data.";
@@ -159,4 +173,22 @@ float TerrainTile::elevation(const QGeoCoordinate& coordinate) const
 QGeoCoordinate TerrainTile::centerCoordinate(void) const
 {
     return _southWest.atDistanceAndAzimuth(_southWest.distanceTo(_northEast) / 2.0, _southWest.azimuthTo(_northEast));
+}
+
+int TerrainTile::_latToDataIndex(double latitude) const
+{
+    if (isValid() && _southWest.isValid() && _northEast.isValid()) {
+        return qRound((latitude - _southWest.latitude()) / (_northEast.latitude() - _southWest.latitude()) * (_gridSizeLat - 1));
+    } else {
+        return -1;
+    }
+}
+
+int TerrainTile::_lonToDataIndex(double longitude) const
+{
+    if (isValid() && _southWest.isValid() && _northEast.isValid()) {
+        return qRound((longitude - _southWest.longitude()) / (_northEast.longitude() - _southWest.longitude()) * (_gridSizeLon - 1));
+    } else {
+        return -1;
+    }
 }

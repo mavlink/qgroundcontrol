@@ -9,6 +9,12 @@
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainTileLog)
 
+/**
+ * @brief The TerrainTile class
+ *
+ * Implements an interface for https://developers.airmap.com/v2.0/docs/elevation-api
+ */
+
 class TerrainTile
 {
 public:
@@ -73,10 +79,10 @@ public:
     */
     QGeoCoordinate centerCoordinate(void) const;
 
-    /// tile grid size in lat and lon
-    static const int    gridSize = TERRAIN_TILE_SIZE;
-
 private:
+    inline int _latToDataIndex(double latitude) const;
+    inline int _lonToDataIndex(double longitude) const;
+
     QGeoCoordinate      _southWest;                                     /// South west corner of the tile
     QGeoCoordinate      _northEast;                                     /// North east corner of the tile
 
@@ -84,7 +90,9 @@ private:
     float               _maxElevation;                                  /// Maximum elevation in tile
     float               _avgElevation;                                  /// Average elevation of the tile
 
-    float               _data[TERRAIN_TILE_SIZE][TERRAIN_TILE_SIZE];    /// elevation data
+    float**             _data;                                          /// 2D elevation data array
+    int                 _gridSizeLat;                                   /// data grid size in latitude direction
+    int                 _gridSizeLon;                                   /// data grid size in longitude direction
     bool                _isValid;                                       /// data loaded is valid
 
     // Json keys
