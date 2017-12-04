@@ -161,7 +161,6 @@ float TerrainTile::elevation(const QGeoCoordinate& coordinate) const
         // Get the index at resolution of 1 arc second
         int indexLat = _latToDataIndex(coordinate.latitude());
         int indexLon = _lonToDataIndex(coordinate.longitude());
-        qCDebug(TerrainTileLog) << "indexLat:indexLon" << indexLat << indexLon;
         qCDebug(TerrainTileLog) << "indexLat:indexLon" << indexLat << indexLon << "elevation" << _data[indexLat][indexLon];
         return _data[indexLat][indexLon];
     } else {
