@@ -82,6 +82,7 @@ Window {
         }
 
         function showFlyView() {
+            showSettingsView()
         }
 
         function showAnalyzeView() {
