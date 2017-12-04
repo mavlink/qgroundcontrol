@@ -50,8 +50,6 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox
     settings.beginGroup(_flightMapPositionSettingsGroup);
     _coord.setLatitude(settings.value(_flightMapPositionLatitudeSettingsKey, 0).toDouble());
     _coord.setLongitude(settings.value(_flightMapPositionLongitudeSettingsKey, 0).toDouble());
-
-    settings.beginGroup(_flightMapPositionSettingsGroup);
     _zoom = settings.value(_flightMapZoomSettingsKey, 2).toDouble();
     //if config file is clear
     if(_zoom == 0) _zoom = 17.0;
@@ -65,8 +63,6 @@ QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
     settings.beginGroup(_flightMapPositionSettingsGroup);
     settings.setValue(_flightMapPositionLatitudeSettingsKey, _coord.latitude());
     settings.setValue(_flightMapPositionLongitudeSettingsKey, _coord.longitude());
-     
-    settings.beginGroup(_flightMapPositionSettingsGroup);
     settings.setValue(_flightMapZoomSettingsKey, _zoom);
 }
 
