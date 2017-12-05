@@ -19,6 +19,7 @@
 
 #include <airmap/authenticator.h>
 #include <airmap/airspaces.h>
+#include <airmap/evaluation.h>
 #include <airmap/flight_plans.h>
 #include <airmap/flights.h>
 #include <airmap/pilots.h>
@@ -188,7 +189,7 @@ void AirMapRestrictionManager::setROI(const QGeoCoordinate& center, double radiu
 
         } else {
             QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
-            emit error("Failed to authenticate with AirMap",
+            emit error("Failed to retrieve Geofences",
                     QString::fromStdString(result.error().message()), description);
         }
         emit requestDone(true);
@@ -434,8 +435,8 @@ void AirMapFlightManager::_checkForValidBriefing()
 
         if (result) {
             bool allValid = true;
-            for (const auto& validation : result.value().validations) {
-                if (validation.status != FlightPlan::Briefing::Validation::Status::valid) {
+            for (const auto& validation : result.value().evaluation.validations) {
+                if (validation.status != Evaluation::Validation::Status::valid) {
                     emit error(QString("%1 registration identifier is invalid: %2").arg(
                         QString::fromStdString(validation.authority.name)).arg(QString::fromStdString(validation.message)), "", "");
                     allValid = false;
@@ -504,23 +505,23 @@ void AirMapFlightManager::_pollBriefing()
             bool rejected = false;
             bool accepted = false;
             bool pending = false;
-            for (const auto& authorization : briefing.authorizations) {
+            for (const auto& authorization : briefing.evaluation.authorizations) {
                 switch (authorization.status) {
-                case FlightPlan::Briefing::Authorization::Status::accepted:
-                case FlightPlan::Briefing::Authorization::Status::accepted_upon_submission:
+                case Evaluation::Authorization::Status::accepted:
+                case Evaluation::Authorization::Status::accepted_upon_submission:
                     accepted = true;
                     break;
-                case FlightPlan::Briefing::Authorization::Status::rejected:
-                case FlightPlan::Briefing::Authorization::Status::rejected_upon_submission:
+                case Evaluation::Authorization::Status::rejected:
+                case Evaluation::Authorization::Status::rejected_upon_submission:
                     rejected = true;
                     break;
-                case FlightPlan::Briefing::Authorization::Status::pending:
+                case Evaluation::Authorization::Status::pending:
                     pending = true;
                     break;
                 }
             }
 
-            if (briefing.authorizations.size() == 0) {
+            if (briefing.evaluation.authorizations.size() == 0) {
                 // if we don't get any authorizations, we assume it's accepted
                 accepted = true;
             }
