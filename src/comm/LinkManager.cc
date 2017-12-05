@@ -613,11 +613,13 @@ void LinkManager::_updateAutoConnectLinks(void)
     }
 
     // Check for RTK GPS connection gone
+#if !defined(__mobile__)
     if (!_autoConnectRTKPort.isEmpty() && !currentPorts.contains(_autoConnectRTKPort)) {
         qCDebug(LinkManagerLog) << "RTK GPS disconnected" << _autoConnectRTKPort;
         _toolbox->gpsManager()->disconnectGPS();
         _autoConnectRTKPort.clear();
     }
+#endif
 
 #endif
 #endif // NO_SERIAL_LINK
