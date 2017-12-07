@@ -25,7 +25,7 @@ const char* QGroundControlQmlGlobal::_flightMapPositionLongitudeSettingsKey =   
 const char* QGroundControlQmlGlobal::_flightMapZoomSettingsKey =                "FlightMapZoom";
 
 QGeoCoordinate   QGroundControlQmlGlobal::_coord = QGeoCoordinate(0.0,0.0);
-double           QGroundControlQmlGlobal::_zoom = 17;
+double           QGroundControlQmlGlobal::_zoom = 2;
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
@@ -46,20 +46,16 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox
     setParent(NULL);
     // Load last coordinates and zoom from config file
     QSettings settings;
-    
     settings.beginGroup(_flightMapPositionSettingsGroup);
-    _coord.setLatitude(settings.value(_flightMapPositionLatitudeSettingsKey, 0).toDouble());
-    _coord.setLongitude(settings.value(_flightMapPositionLongitudeSettingsKey, 0).toDouble());
-    _zoom = settings.value(_flightMapZoomSettingsKey, 2).toDouble();
-    //if config file is clear
-    if(_zoom == 0) _zoom = 17.0;
+    _coord.setLatitude(settings.value(_flightMapPositionLatitudeSettingsKey,    _coord.latitude()).toDouble());
+    _coord.setLongitude(settings.value(_flightMapPositionLongitudeSettingsKey,  _coord.longitude()).toDouble());
+    _zoom = settings.value(_flightMapZoomSettingsKey, _zoom).toDouble();
 }
 
 QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
 {
     // Save last coordinates and zoom to config file
     QSettings settings;
-    
     settings.beginGroup(_flightMapPositionSettingsGroup);
     settings.setValue(_flightMapPositionLatitudeSettingsKey, _coord.latitude());
     settings.setValue(_flightMapPositionLongitudeSettingsKey, _coord.longitude());
