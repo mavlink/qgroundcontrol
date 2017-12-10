@@ -7,21 +7,20 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-import QtQuick 2.3
+import QtQuick          2.3
 import QtQuick.Controls 1.2
 
-import QGroundControl.Controls 1.0
-import QGroundControl.Palette 1.0
-
-import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
+import QGroundControl.ScreenTools   1.0
 
 FactPanel {
     property var qgcTextFieldforwardKeysTo: this    ///< Causes all QGCTextFields to forward keys here if they have focus
+
+    property real defaultTextWidth:     ScreenTools.defaultFontPixelWidth
+    property real defaultTextHeight:    ScreenTools.defaultFontPixelHeight
 
     QGCPalette { id: __qgcPal; colorGroupEnabled: enabled }
 
