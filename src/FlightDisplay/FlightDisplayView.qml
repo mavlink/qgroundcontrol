@@ -16,6 +16,7 @@ import QtLocation               5.3
 import QtPositioning            5.3
 import QtMultimedia             5.5
 import QtQuick.Layouts          1.2
+import QtQuick.Window           2.2
 
 import QGroundControl               1.0
 import QGroundControl.FlightDisplay 1.0
@@ -182,6 +183,24 @@ QGCView {
         }
     }
 
+    Window {
+        id:             videoWindow
+        width:          !_mainIsMap ? _panel.width  : _pipSize
+        height:         !_mainIsMap ? _panel.height : _pipSize * (9/16)
+        visible:        false
+
+        Item {
+            id:             videoItem
+            anchors.fill:   parent
+        }
+
+        onClosing: {
+            _flightVideo.state = "unpopup"
+            videoWindow.visible = false
+        }
+
+    }
+
     QGCMapPalette { id: mapPal; lightColors: _mainIsMap ? _flightMap.isSatelliteMap : true }
 
     QGCViewPanel {
@@ -242,7 +261,11 @@ QGCView {
                     name:   "pipMode"
                     PropertyChanges {
                         target: _flightVideo
-                        anchors.margins:    ScreenTools.defaultFontPixelHeight
+                        anchors.margins: ScreenTools.defaultFontPixelHeight
+                    }
+                    PropertyChanges {
+                        target: _flightVideoPipControl
+                        inPopup: false
                     }
                 },
                 State {
@@ -251,10 +274,53 @@ QGCView {
                         target: _flightVideo
                         anchors.margins:    0
                     }
+                    PropertyChanges {
+                        target: _flightVideoPipControl
+                        inPopup: false
+                    }
+                },
+                State {
+                    name: "popup"
+                    StateChangeScript {
+                        script: QGroundControl.videoManager.stopVideo()
+                    }
+                    ParentChange {
+                        target: _flightVideo
+                        parent: videoItem
+                        x: 0
+                        y: 0
+                        width: videoWindow.width
+                        height: videoWindow.height
+                    }
+                    PropertyChanges {
+                        target: _flightVideoPipControl
+                        inPopup: true
+                    }
+                },
+                State {
+                    name: "unpopup"
+                    StateChangeScript {
+                        script: QGroundControl.videoManager.stopVideo()
+                    }
+                    ParentChange {
+                        target: _flightVideo
+                        parent: _panel
+                    }
+                    PropertyChanges {
+                        target: _flightVideo
+                        anchors.left:       _panel.left
+                        anchors.bottom:     _panel.bottom
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    }
+                    PropertyChanges {
+                        target: _flightVideoPipControl
+                        inPopup: false
+                    }
                 }
             ]
             //-- Video Streaming
             FlightDisplayViewVideo {
+                id:             videoStreaming
                 anchors.fill:   parent
                 visible:        QGroundControl.videoManager.isGStreamer
             }
@@ -284,6 +350,10 @@ QGCView {
             }
             onHideIt: {
                 setPipVisibility(!state)
+            }
+            onPopup: {
+                videoWindow.visible = true
+                _flightVideo.state = "popup"
             }
             onNewWidth: {
                 _pipSize = newWidth
