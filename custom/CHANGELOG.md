@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.14 - Dec 11 2017
+
+*   Add support for ISO/Shutter speed to CGOET 
+
 ### v1.2.13 - Dec 4 2017
 
 *   Desktop log download
