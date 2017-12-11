@@ -118,7 +118,7 @@ QGCView {
                 height:         bindRow.height * 2
                 width:          ScreenTools.defaultFontPixelWidth * 80
                 color:          qgcPal.windowShade
-                visible:        !_activeVehicle || (_activeVehicle.rcRSSI === 0 || _activeVehicle.rcRSSI === 255)
+                visible:        !TyphoonHQuickInterface.desktopPlanner && (!_activeVehicle || (_activeVehicle.rcRSSI === 0 || _activeVehicle.rcRSSI === 255))
                 anchors.horizontalCenter: parent.horizontalCenter
                 Row {
                     id:         bindRow
@@ -145,7 +145,7 @@ QGCView {
                 height:         passwordRow.height * 2
                 width:          ScreenTools.defaultFontPixelWidth * 80
                 color:          qgcPal.windowShade
-                visible:        _activeVehicle && (_camera && !_camera.isCGOET)
+                visible:        _activeVehicle && (_camera && !_camera.isCGOET) && !TyphoonHQuickInterface.desktopPlanner
                 anchors.horizontalCenter: parent.horizontalCenter
                 Row {
                     id:         passwordRow
@@ -171,7 +171,7 @@ QGCView {
                 height:         updateRow.height * 2
                 width:          ScreenTools.defaultFontPixelWidth * 80
                 color:          qgcPal.windowShade
-                visible:        ScreenTools.isMobile
+                visible:        ScreenTools.isMobile && !TyphoonHQuickInterface.desktopPlanner
                 anchors.horizontalCenter: parent.horizontalCenter
                 Row {
                     id:         updateRow
@@ -221,7 +221,7 @@ QGCView {
                 height:         factoryRow.height * 2
                 width:          ScreenTools.defaultFontPixelWidth * 80
                 color:          qgcPal.windowShade
-                visible:        QGroundControl.corePlugin.showAdvancedUI && TyphoonHQuickInterface.isFactoryApp
+                visible:        QGroundControl.corePlugin.showAdvancedUI && TyphoonHQuickInterface.isFactoryApp && !TyphoonHQuickInterface.desktopPlanner
                 anchors.horizontalCenter: parent.horizontalCenter
                 Row {
                     id:         factoryRow
@@ -247,7 +247,7 @@ QGCView {
                 height:         updaterRow.height * 2
                 width:          ScreenTools.defaultFontPixelWidth * 80
                 color:          qgcPal.windowShade
-                visible:        !factoryTest.visible && TyphoonHQuickInterface.isUpdaterApp
+                visible:        !factoryTest.visible && TyphoonHQuickInterface.isUpdaterApp && !TyphoonHQuickInterface.desktopPlanner
                 anchors.horizontalCenter: parent.horizontalCenter
                 Row {
                     id:         updaterRow
@@ -276,20 +276,19 @@ QGCView {
                 anchors.margins:    ScreenTools.defaultFontPixelHeight
                 columnSpacing:      ScreenTools.defaultFontPixelWidth
                 columns:            2
-                visible:            _activeVehicle
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel { text: qsTr("%1 Version:").arg(QGroundControl.appName) }
                 QGCLabel { text: QGroundControl.qgcVersion }
-                QGCLabel { text: qsTr("Camera Version:") }
-                QGCLabel { text: _camera ? _camera.firmwareVersion : "" }
-                QGCLabel { text: qsTr("Gimbal Version:") }
-                QGCLabel { text: _camera ? _camera.gimbalVersion : "" }
-                QGCLabel { text: qsTr("Flight Controller Version:") }
-                QGCLabel { text: firmwareVersion() }
-                QGCLabel { text: qsTr("Vehicle ID:") }
-                QGCLabel { text: _activeVehicle ? _activeVehicle.vehicleUIDStr : "" }
-                QGCLabel { text: qsTr("HOBBS Meter:") }
-                QGCLabel { text: _activeVehicle ? _activeVehicle.hobbsMeter : "" }
+                QGCLabel { text: qsTr("Camera Version:"); visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                QGCLabel { text: _camera ? _camera.firmwareVersion : ""; visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                QGCLabel { text: qsTr("Gimbal Version:"); visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                QGCLabel { text: _camera ? _camera.gimbalVersion : ""; visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                QGCLabel { text: qsTr("Flight Controller Version:"); visible: _activeVehicle; }
+                QGCLabel { text: firmwareVersion(); visible: _activeVehicle; }
+                QGCLabel { text: qsTr("Vehicle ID:"); visible: _activeVehicle; }
+                QGCLabel { text: _activeVehicle ? _activeVehicle.vehicleUIDStr : ""; visible: _activeVehicle; }
+                QGCLabel { text: qsTr("HOBBS Meter:"); visible: _activeVehicle; }
+                QGCLabel { text: _activeVehicle ? _activeVehicle.hobbsMeter : ""; visible: _activeVehicle; }
             }
         }
     }

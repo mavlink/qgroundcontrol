@@ -1,8 +1,12 @@
 <RCC>
     <qresource prefix="/qml">
         <file alias="QGroundControl/Controls/MainToolBar.qml">res/MainToolBar.qml</file>
-        <file alias="QGroundControl/Controls/VehicleRotationCal.qml">res/VehicleRotationCal.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml">res/YuneecFlightDisplayViewVideo.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/CameraMenu.qml">res/CameraMenu.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/OnOffSwitch.qml">res/OnOffSwitch.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/SSIDButton.qml">res/SSIDButton.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/ST16Analog.qml">res/ST16Analog.qml</file>
+        <file alias="TyphoonHQuickInterface/Widgets/SwitchCal.qml">res/SwitchCal.qml</file>
         <file alias="TyphoonHQuickInterface/Widgets/YSlider.qml">res/YSlider.qml</file>
         <file alias="TyphoonHQuickInterface/Widgets/YTextField.qml">res/YTextField.qml</file>
     </qresource>
@@ -11,13 +15,6 @@
         <file alias="Megaphone.svg">res/images/bell.svg</file>
     </qresource>
     <qresource prefix="/typhoonh/img">
-        <file alias="battery_back.svg">res/images/battery_back.svg</file>
-        <file alias="battery_charge_100.svg">res/images/battery_charge_100.svg</file>
-        <file alias="battery_charge_80.svg">res/images/battery_charge_80.svg</file>
-        <file alias="battery_charge_60.svg">res/images/battery_charge_60.svg</file>
-        <file alias="battery_charge_40.svg">res/images/battery_charge_40.svg</file>
-        <file alias="battery_charge_20.svg">res/images/battery_charge_20.svg</file>
-        <file alias="battery_plane.svg">res/images/battery_plane.svg</file>
         <file alias="bell.svg">res/images/bell.svg</file>
         <file alias="camera.svg">res/images/camera.svg</file>
         <file alias="camera_switch_elapsed_mode.svg">res/images/camera_switch_elapsed_mode.svg</file>
@@ -40,7 +37,6 @@
         <file alias="flir-Rain.png">res/images/flir-Rain.png</file>
         <file alias="flir-Rainbow.png">res/images/flir-Rainbow.png</file>
         <file alias="flir-WhiteHot.png">res/images/flir-WhiteHot.png</file>
-        <file alias="gps.svg">res/images/gps.svg</file>
         <file alias="gimbalPitch.svg">res/images/gimbalPitch.svg</file>
         <file alias="gimbalYaw.svg">res/images/gimbalYaw.svg</file>
         <file alias="logoWhite.svg">res/images/logoWhite.svg</file>
@@ -93,23 +89,14 @@
         <file alias="camera.wav">res/audio/camera.wav</file>
     </qresource>
     <qresource prefix="/typhoonh">
-        <file alias="BatteryIndicator.qml">res/BatteryIndicator.qml</file>
         <file alias="cameraControl.qml">res/cameraControl.qml</file>
-        <file alias="ChannelComponent.qml">src/AutoPilotPlugin/ChannelComponent.qml</file>
-        <file alias="GimbalComponent.qml">src/AutoPilotPlugin/GimbalComponent.qml</file>
-        <file alias="HealthComponentSummary.qml">src/AutoPilotPlugin/HealthComponentSummary.qml</file>
         <file alias="InitialSettings.qml">res/InitialSettings.qml</file>
-        <file alias="LogDownload.qml">res/LogDownload.qml</file>
         <file alias="ModeIndicator.qml">res/ModeIndicator.qml</file>
         <file alias="OBSIndicator.qml">res/OBSIndicator.qml</file>
         <file alias="RCCalibration.qml">res/RCCalibration.qml</file>
         <file alias="RCIndicator.qml">res/RCIndicator.qml</file>
-        <file alias="TyphoonSettings.qml">res/TyphoonSettings.qml</file>
         <file alias="UpdateDialog.qml">res/UpdateDialog.qml</file>
         <file alias="WIFIRSSIIndicator.qml">res/WIFIRSSIIndicator.qml</file>
-        <file alias="YGPSIndicator.qml">res/YGPSIndicator.qml</file>
         <file alias="YuneecFlyView.qml">res/YuneecFlyView.qml</file>
-        <file alias="YuneecSafetyComponent.qml">src/AutoPilotPlugin/YuneecSafetyComponent.qml</file>
-        <file alias="YuneecSafetyComponentSummary.qml">src/AutoPilotPlugin/YuneecSafetyComponentSummary.qml</file>
     </qresource>
 </RCC>

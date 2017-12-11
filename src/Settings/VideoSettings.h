@@ -19,29 +19,35 @@ class VideoSettings : public SettingsGroup
 public:
     VideoSettings(QObject* parent = NULL);
 
-    Q_PROPERTY(Fact* videoSource        READ videoSource        CONSTANT)
-    Q_PROPERTY(Fact* udpPort            READ udpPort            CONSTANT)
-    Q_PROPERTY(Fact* tcpUrl             READ tcpUrl             CONSTANT)
-    Q_PROPERTY(Fact* rtspUrl            READ rtspUrl            CONSTANT)
-    Q_PROPERTY(Fact* aspectRatio        READ aspectRatio        CONSTANT)
-    Q_PROPERTY(Fact* gridLines          READ gridLines          CONSTANT)
-    Q_PROPERTY(Fact* showRecControl     READ showRecControl     CONSTANT)
-    Q_PROPERTY(Fact* recordingFormat    READ recordingFormat    CONSTANT)
-    Q_PROPERTY(Fact* maxVideoSize       READ maxVideoSize       CONSTANT)
-    Q_PROPERTY(Fact* enableStorageLimit READ enableStorageLimit CONSTANT)
-    Q_PROPERTY(Fact* rtspTimeout        READ rtspTimeout        CONSTANT)
+    Q_PROPERTY(Fact* videoSource            READ videoSource            CONSTANT)
+    Q_PROPERTY(Fact* udpPort                READ udpPort                CONSTANT)
+    Q_PROPERTY(Fact* tcpUrl                 READ tcpUrl                 CONSTANT)
+    Q_PROPERTY(Fact* rtspUrl                READ rtspUrl                CONSTANT)
+    Q_PROPERTY(Fact* aspectRatio            READ aspectRatio            CONSTANT)
+    Q_PROPERTY(Fact* gridLines              READ gridLines              CONSTANT)
+    Q_PROPERTY(Fact* showRecControl         READ showRecControl         CONSTANT)
+    Q_PROPERTY(Fact* recordingFormat        READ recordingFormat        CONSTANT)
+    Q_PROPERTY(Fact* maxVideoSize           READ maxVideoSize           CONSTANT)
+    Q_PROPERTY(Fact* enableStorageLimit     READ enableStorageLimit     CONSTANT)
+    Q_PROPERTY(Fact* rtspTimeout            READ rtspTimeout            CONSTANT)
+    Q_PROPERTY(Fact* streamEnabled          READ streamEnabled          CONSTANT)
+    Q_PROPERTY(Fact* disableWhenDisarmed    READ disableWhenDisarmed    CONSTANT)
+    Q_PROPERTY(bool  streamConfigured       READ streamConfigured       NOTIFY streamConfiguredChanged)
 
-    Fact* videoSource       (void);
-    Fact* udpPort           (void);
-    Fact* rtspUrl           (void);
-    Fact* tcpUrl            (void);
-    Fact* aspectRatio       (void);
-    Fact* gridLines         (void);
-    Fact* showRecControl    (void);
-    Fact* recordingFormat   (void);
-    Fact* maxVideoSize      (void);
-    Fact* enableStorageLimit(void);
-    Fact* rtspTimeout      (void);
+    Fact* videoSource           (void);
+    Fact* udpPort               (void);
+    Fact* rtspUrl               (void);
+    Fact* tcpUrl                (void);
+    Fact* aspectRatio           (void);
+    Fact* gridLines             (void);
+    Fact* showRecControl        (void);
+    Fact* recordingFormat       (void);
+    Fact* maxVideoSize          (void);
+    Fact* enableStorageLimit    (void);
+    Fact* rtspTimeout           (void);
+    Fact* streamEnabled         (void);
+    Fact* disableWhenDisarmed   (void);
+    bool  streamConfigured      (void);
 
     static const char* videoSettingsGroupName;
 
@@ -56,12 +62,20 @@ public:
     static const char* maxVideoSizeName;
     static const char* enableStorageLimitName;
     static const char* rtspTimeoutName;
+    static const char* streamEnabledName;
+    static const char* disableWhenDisarmedName;
 
     static const char* videoSourceNoVideo;
     static const char* videoDisabled;
     static const char* videoSourceUDP;
     static const char* videoSourceRTSP;
     static const char* videoSourceTCP;
+
+signals:
+    void streamConfiguredChanged    ();
+
+private slots:
+    void _configChanged             (QVariant value);
 
 private:
     SettingsFact* _videoSourceFact;
@@ -75,6 +89,8 @@ private:
     SettingsFact* _maxVideoSizeFact;
     SettingsFact* _enableStorageLimitFact;
     SettingsFact* _rtspTimeoutFact;
+    SettingsFact* _streamEnabledFact;
+    SettingsFact* _disableWhenDisarmedFact;
 };
 
 #endif

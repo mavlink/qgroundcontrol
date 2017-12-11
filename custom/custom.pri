@@ -57,10 +57,8 @@ DesktopPlanner {
     message("Desktop Planner Build")
     DEFINES += __mobile__
     DEFINES += __planner__
-    DEFINES += NO_SERIAL_LINK
     CONFIG  += DISABLE_VIDEOSTREAMING
     CONFIG  += MobileBuild
-    CONFIG  += NoSerialBuild
 }
 
 DEFINES += CUSTOMHEADER=\"\\\"TyphoonHPlugin.h\\\"\"
@@ -100,14 +98,14 @@ DesktopPlanner {
 }
 
 MacBuild {
-    QMAKE_INFO_PLIST    = $$PWD/macOS/YuneecInfo.plist
-    ICON                = $$PWD/macOS/icon.icns
+    QMAKE_INFO_PLIST    = $$QGCROOT/custom/macOS/YuneecInfo.plist
+    ICON                = $$QGCROOT/custom/macOS/icon.icns
     OTHER_FILES        -= $$QGCROOT/Custom-Info.plist
-    OTHER_FILES        += $$PWD/macOS/Info.plist
+    OTHER_FILES        += $$QGCROOT/custom/macOS/Info.plist
 }
 
 WindowsBuild {
-    RC_ICONS            = $$PWD/Windows/icon.ico
+    RC_ICONS            = $$QGCROOT/custom/Windows/icon.ico
     VERSION             = $${DATA_PILOT_VERSION}.0
     ReleaseBuild {
         QMAKE_CFLAGS_RELEASE   += /Gy /Ox
@@ -117,42 +115,46 @@ WindowsBuild {
     }
 }
 
+QT += \
+    multimedia
+
+INCLUDEPATH += \
+    $$QGCROOT/custom/src \
+    $$QGCROOT/custom/src/FirmwarePlugin \
+    $$QGCROOT/custom/src/AutoPilotPlugin
+
 SOURCES += \
-    $$PWD/src/TyphoonHPlugin.cc \
+    $$QGCROOT/custom/src/TyphoonHPlugin.cc \
+    $$QGCROOT/custom/src/TyphoonHQuickInterface.cc \
+    $$QGCROOT/custom/src/UTMConverter.cc \
+    $$QGCROOT/custom/src/YExportFiles.cc \
 
 !DesktopPlanner {
     SOURCES += \
-        $$PWD/src/m4serial.cc \
-        $$PWD/src/m4util.cc \
-        $$PWD/src/TyphoonHM4Interface.cc \
-        $$PWD/src/TyphoonHQuickInterface.cc \
-        $$PWD/src/UTMConverter.cc \
-        $$PWD/src/YExportFiles.cc \
+        $$QGCROOT/custom/src/TyphoonHM4Interface.cc \
+        $$QGCROOT/custom/src/m4serial.cc \
+        $$QGCROOT/custom/src/m4util.cc \
 }
 
 AndroidBuild {
     SOURCES += \
-        $$PWD/src/TyphoonHJNI.cc \
+        $$QGCROOT/custom/src/TyphoonHJNI.cc \
 }
 
 HEADERS += \
-    $$PWD/src/TyphoonHPlugin.h \
+    $$QGCROOT/custom/src/TyphoonHPlugin.h \
+    $$QGCROOT/custom/src/TyphoonHCommon.h \
+    $$QGCROOT/custom/src/TyphoonHQuickInterface.h \
+    $$QGCROOT/custom/src/UTMConverter.h \
+    $$QGCROOT/custom/src/YExportFiles.h \
 
 !DesktopPlanner {
     HEADERS += \
-        $$PWD/src/m4channeldata.h \
-        $$PWD/src/m4def.h \
-        $$PWD/src/m4serial.h \
-        $$PWD/src/m4util.h \
-        $$PWD/src/TyphoonHCommon.h \
-        $$PWD/src/TyphoonHM4Interface.h \
-        $$PWD/src/TyphoonHQuickInterface.h \
-        $$PWD/src/UTMConverter.h \
-        $$PWD/src/YExportFiles.h \
-}
-
-INCLUDEPATH += \
-    $$PWD/src \
+        $$QGCROOT/custom/src/m4channeldata.h \
+        $$QGCROOT/custom/src/m4def.h \
+        $$QGCROOT/custom/src/m4serial.h \
+        $$QGCROOT/custom/src/m4util.h \
+        $$QGCROOT/custom/src/TyphoonHM4Interface.h \
 
 equals(QT_MAJOR_VERSION, 5) {
     greaterThan(QT_MINOR_VERSION, 5) {
@@ -168,44 +170,30 @@ equals(QT_MAJOR_VERSION, 5) {
     }
 }
 
-QT += \
-    multimedia
-
 #-------------------------------------------------------------------------------------
 # Firmware/AutoPilot Plugin
 
-INCLUDEPATH += \
-    $$PWD/src/FirmwarePlugin \
-    $$PWD/src/AutoPilotPlugin
-
 HEADERS+= \
-    $$PWD/src/AutoPilotPlugin/YuneecAutoPilotPlugin.h \
-    $$PWD/src/AutoPilotPlugin/GimbalComponent.h \
-    $$PWD/src/AutoPilotPlugin/ChannelComponent.h \
-    $$PWD/src/AutoPilotPlugin/HealthComponent.h \
-    $$PWD/src/AutoPilotPlugin/YuneecSafetyComponent.h \
-    $$PWD/src/FirmwarePlugin/YuneecFirmwarePlugin.h \
-    $$PWD/src/FirmwarePlugin/YuneecFirmwarePluginFactory.h \
-
-!DesktopPlanner {
-    HEADERS+= \
-        $$PWD/src/FirmwarePlugin/YuneecCameraControl.h \
-        $$PWD/src/FirmwarePlugin/YuneecCameraManager.h \
-}
+    $$QGCROOT/custom/src/AutoPilotPlugin/YuneecAutoPilotPlugin.h \
+    $$QGCROOT/custom/src/AutoPilotPlugin/GimbalComponent.h \
+    $$QGCROOT/custom/src/AutoPilotPlugin/ChannelComponent.h \
+    $$QGCROOT/custom/src/AutoPilotPlugin/HealthComponent.h \
+    $$QGCROOT/custom/src/AutoPilotPlugin/YuneecSafetyComponent.h \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePlugin.h \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePluginFactory.h \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraControl.h \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraManager.h \
 
 SOURCES += \
-    $$PWD/src/AutoPilotPlugin/YuneecAutoPilotPlugin.cc \
-    $$PWD/src/AutoPilotPlugin/GimbalComponent.cc \
-    $$PWD/src/AutoPilotPlugin/ChannelComponent.cc \
-    $$PWD/src/AutoPilotPlugin/HealthComponent.cc \
-    $$PWD/src/AutoPilotPlugin/YuneecSafetyComponent.cc \
-    $$PWD/src/FirmwarePlugin/YuneecFirmwarePlugin.cc \
-    $$PWD/src/FirmwarePlugin/YuneecFirmwarePluginFactory.cc \
-
-!DesktopPlanner {
-    SOURCES += \
-        $$PWD/src/FirmwarePlugin/YuneecCameraControl.cc \
-        $$PWD/src/FirmwarePlugin/YuneecCameraManager.cc \
+    $$QGCROOT/custom/src/AutoPilotPlugin/YuneecAutoPilotPlugin.cc \
+    $$QGCROOT/custom/src/AutoPilotPlugin/GimbalComponent.cc \
+    $$QGCROOT/custom/src/AutoPilotPlugin/ChannelComponent.cc \
+    $$QGCROOT/custom/src/AutoPilotPlugin/HealthComponent.cc \
+    $$QGCROOT/custom/src/AutoPilotPlugin/YuneecSafetyComponent.cc \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePlugin.cc \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePluginFactory.cc \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraControl.cc \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraManager.cc \
 }
 
 #-------------------------------------------------------------------------------------
@@ -213,7 +201,7 @@ SOURCES += \
 
 AndroidBuild {
     ANDROID_EXTRA_LIBS += $${PLUGIN_SOURCE}
-    include($$PWD/AndroidTyphoonH.pri)
+    include($$QGCROOT/custom/AndroidTyphoonH.pri)
     DeveloperBuild {
         message("Preparing Developer Build")
         QMAKE_POST_LINK = echo Start post link for Developer Build

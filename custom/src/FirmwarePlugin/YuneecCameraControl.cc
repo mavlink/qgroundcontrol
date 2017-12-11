@@ -111,10 +111,12 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     connect(_vehicle,   &Vehicle::mavlinkMessageReceived,   this, &YuneecCameraControl::_mavlinkMessageReceived);
     connect(this,       &QGCCameraControl::parametersReady, this, &YuneecCameraControl::_parametersReady);
 
+#if defined(__androidx86__)
     TyphoonHPlugin* pPlug = dynamic_cast<TyphoonHPlugin*>(qgcApp()->toolbox()->corePlugin());
     if(pPlug && pPlug->handler()) {
         connect(pPlug->handler(), &TyphoonHM4Interface::switchStateChanged, this, &YuneecCameraControl::_switchStateChanged);
     }
+#endif
 
     //-- Get Gimbal Version
     _vehicle->sendMavCommand(

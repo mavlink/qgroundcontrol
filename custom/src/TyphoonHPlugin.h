@@ -11,7 +11,10 @@
 
 #include <QTranslator>
 
+#if defined(__androidx86__)
 class TyphoonHM4Interface;
+#endif
+
 class TyphoonHOptions;
 class TyphoonHSettings;
 
@@ -22,7 +25,9 @@ public:
     TyphoonHPlugin(QGCApplication* app, QGCToolbox *toolbox);
     ~TyphoonHPlugin();
 
+#if defined(__androidx86__)
     TyphoonHM4Interface*   handler                  () { return _pHandler; }
+#endif
 
     // Overrides from QGCCorePlugin
     QGCOptions*     options                         () final;
@@ -59,6 +64,8 @@ private:
 #endif
     QGCSettings*        _pConsole;
     QVariantList        _settingsList;
+#if defined(__androidx86__)
     TyphoonHM4Interface*_pHandler;
+#endif
     QTranslator         _YuneecTranslator;
 };

@@ -53,10 +53,12 @@ const QVariantList& YuneecAutoPilotPlugin::vehicleComponents(void)
             }
             _components.append(QVariant::fromValue((VehicleComponent*)_yuneecSafetyComponent));
 
+#if !defined (__planner__)
             if(!_gimbalComponent) {
                 _gimbalComponent = new GimbalComponent(_vehicle, this);
                 _gimbalComponent->setupTriggerSignals();
             }
+#endif
             _components.append(QVariant::fromValue((VehicleComponent*)_gimbalComponent));
 
             if(!_healthComponent) {
@@ -65,13 +67,17 @@ const QVariantList& YuneecAutoPilotPlugin::vehicleComponents(void)
             }
             _components.append(QVariant::fromValue((VehicleComponent*)_healthComponent));
 
+#if !defined (__planner__)
             if(qgcApp()->toolbox()->corePlugin()->showAdvancedUI()) {
+#endif
                 if(!_channelComponent) {
                     _channelComponent = new ChannelComponent(_vehicle, this);
                     _channelComponent->setupTriggerSignals();
                 }
                 _components.append(QVariant::fromValue((VehicleComponent*)_channelComponent));
+#if !defined (__planner__)
             }
+#endif
 
         } else {
             qWarning() << "Call to vehicleComponents prior to parametersReady";
