@@ -67,8 +67,13 @@ Rectangle {
         anchors.verticalCenter: commandPicker.verticalCenter
         anchors.leftMargin:     _margin
         anchors.left:           parent.left
-        text:                   missionItem.homePosition ? "H" : missionItem.sequenceNumber
         color:                  _outerTextColor
+        text: {
+            if (missionItem.abbreviation.charAt(0) > 'A' && missionItem.abbreviation.charAt(0) < 'z') {
+                return missionItem.abbreviation;
+            }
+            return missionItem.sequenceNumber
+        }
     }
 
     QGCColoredImage {
