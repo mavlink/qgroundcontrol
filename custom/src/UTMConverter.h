@@ -13,7 +13,7 @@ class UTMConverter : public QObject
 {
     Q_OBJECT
 public:
-    UTMConverter();
+    UTMConverter(bool skyward);
     ~UTMConverter();
 
     bool        convertTelemetryFile        (const QString& srcFilename, const QString& dstFilename);
@@ -31,8 +31,10 @@ private:
     int         _mavlinkChannel;
     QFile       _logFile;
     bool        _cancel;
+    bool        _convertToSkyward;
 
     typedef struct {
+        qint64  timeStamp;
         double  time;
         double  lon;
         double  lat;
@@ -45,6 +47,7 @@ private:
 
     QString     _cameraModel;
     QString     _cameraVersion;
+    QString     _gimbalVersion;
 
     QString     _apUID;
     QString     _apVersion;

@@ -225,7 +225,7 @@ public:
     Q_INVOKABLE int  rawChannel         (int channel);
     Q_INVOKABLE int  calChannelState    (int channel);
     Q_INVOKABLE void initExport         ();
-    Q_INVOKABLE void exportData         (bool exportUTM);
+    Q_INVOKABLE void exportData         (bool exportUTM, bool exportSkyward);
     Q_INVOKABLE void cancelExportData   ();
     Q_INVOKABLE void importMission      ();
     Q_INVOKABLE void manualBind         ();

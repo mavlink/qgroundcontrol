@@ -347,14 +347,30 @@ QGCView {
                     }
                     Rectangle {
                         color:          qgcPal.window
-                        width:          exportUTMCheck.width  + (ScreenTools.defaultFontPixelWidth * 4)
-                        height:         exportUTMCheck.height + ScreenTools.defaultFontPixelHeight
+                        width:          skywardBox.width
+                        height:         skywardBox.height
                         radius:         4
                         visible:        !_importAction
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCCheckBox {
                             id:                 exportUTMCheck
                             text:               qsTr("Export UTM Telemetry")
+                            checked:            false
+                            enabled:            !TyphoonHQuickInterface.copyingFiles
+                            anchors.centerIn:   parent
+                        }
+                    }
+                    Rectangle {
+                        id:             skywardBox
+                        color:          qgcPal.window
+                        width:          exportSkywardCheck.width  + (ScreenTools.defaultFontPixelWidth * 4)
+                        height:         exportSkywardCheck.height + ScreenTools.defaultFontPixelHeight
+                        radius:         4
+                        visible:        !_importAction
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCCheckBox {
+                            id:                 exportSkywardCheck
+                            text:               qsTr("Export Skyward Telemetry")
                             checked:            false
                             enabled:            !TyphoonHQuickInterface.copyingFiles
                             anchors.centerIn:   parent
@@ -388,7 +404,7 @@ QGCView {
                                 if(TyphoonHQuickInterface.copyingFiles) {
                                     TyphoonHQuickInterface.cancelExportData()
                                 } else {
-                                    TyphoonHQuickInterface.exportData(exportUTMCheck.checked)
+                                    TyphoonHQuickInterface.exportData(exportUTMCheck.checked, exportSkywardCheck.checked)
                                 }
                             }
                         }

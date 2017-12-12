@@ -18,7 +18,7 @@ public:
     YExportFiles();
     ~YExportFiles();
 
-    bool        exportData                  (bool convertToUTM);
+    bool        exportData                  (bool convertToUTM, bool convertToSkyward);
     void        cancel                      ();
 
 protected:
@@ -34,6 +34,7 @@ private slots:
 
 private:
     bool            _convertToUTM;
+    bool            _convertToSkyward;
     bool            _cancel;
     quint32         _totalFiles;
     quint32         _curFile;
