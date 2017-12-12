@@ -429,7 +429,6 @@ private:
     void    _saveWifiConfigurations     ();
     void    _loadWifiConfigurations     ();
     void    _endCopyThread              ();
-    void    _enableThermalVideo         ();
 
 private:
     void                    _distanceSensor     (int minDist, int maxDist, int curDist);

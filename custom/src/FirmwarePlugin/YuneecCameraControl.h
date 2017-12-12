@@ -16,7 +16,7 @@
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLog)
 Q_DECLARE_LOGGING_CATEGORY(YuneecCameraLogVerbose)
 
-//-- Temperature Status (CGOET)
+//-- Temperature Status (CGOET/E10T)
 typedef struct
 {
     int32_t center_val;
@@ -71,6 +71,8 @@ public:
     Q_PROPERTY(QPoint       spotArea        READ    spotArea            WRITE  setSpotArea      NOTIFY spotAreaChanged)
     Q_PROPERTY(QSize        videoSize       READ    videoSize           WRITE  setVideoSize     NOTIFY videoSizeChanged)
     Q_PROPERTY(bool         isCGOET         READ    isCGOET             NOTIFY isCGOETChanged)
+    Q_PROPERTY(bool         isE10T          READ    isE10T              NOTIFY isE10TChanged)
+    Q_PROPERTY(bool         isThermal       READ    isThermal           NOTIFY isThermalChanged)
     Q_PROPERTY(bool         isE90           READ    isE90               NOTIFY isE90Changed)
     Q_PROPERTY(bool         paramComplete   READ    paramComplete       NOTIFY factsLoaded)
 
@@ -123,6 +125,8 @@ public:
     void        setVideoSize        (QSize s);
 
     bool        isCGOET             () { return _isCGOET; }
+    bool        isE10T              () { return _isE10T; }
+    bool        isThermal           () { return _isCGOET || _isE10T; }
     bool        isE90               () { return _isE90; }
     bool        paramComplete       () { return _paramComplete; }
 
@@ -159,6 +163,8 @@ signals:
     void    spotAreaChanged         ();
     void    videoSizeChanged        ();
     void    isCGOETChanged          ();
+    void    isE10TChanged           ();
+    void    isThermalChanged        ();
     void    isE90Changed            ();
     void    irTempChanged           ();
     void    palettetBarChanged      ();
@@ -199,6 +205,7 @@ private:
     QSize                   _videoSize;
     bool                    _isE90;
     bool                    _isCGOET;
+    bool                    _isE10T;
     QStringList             _updatesToSend;
     bool                    _inMissionMode;
     bool                    _irValid;
