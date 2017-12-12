@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.16 - Dec 12 2017
+
+*   Add gimbal angle support to manual Structure Scan
+
 ### v1.2.15 - Dec 12 2017
 
 *   Add support for the E10T (Untested)
