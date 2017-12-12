@@ -257,6 +257,7 @@ public:
     virtual QString vehicleImageCompass(const Vehicle* vehicle) const;
 
     /// Allows the core plugin to override the toolbar indicators
+    ///     signals toolbarIndicatorsChanged
     /// @return A list of QUrl with the indicators (see MainToolBarIndicators.qml)
     virtual const QVariantList& toolBarIndicators(const Vehicle* vehicle);
 
@@ -297,6 +298,9 @@ public:
 
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const QString px4FollowMeFlightMode;
+
+signals:
+    void toolbarIndicatorsChanged(void);
 
 protected:
     // Arms the vehicle with validation and retries
