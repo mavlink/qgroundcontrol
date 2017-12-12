@@ -1191,7 +1191,7 @@ TyphoonHQuickInterface::initExport()
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::exportData(bool exportUTM)
+TyphoonHQuickInterface::exportData(bool exportUTM, bool exportSkyward)
 {
     _copyingFiles = true;
     _updateProgress = 0;
@@ -1203,7 +1203,7 @@ TyphoonHQuickInterface::exportData(bool exportUTM)
     connect(_exporter, &YExportFiles::copyCompleted,    this, &TyphoonHQuickInterface::_copyCompleted);
     connect(_exporter, &YExportFiles::message,          this, &TyphoonHQuickInterface::_exportMessage);
     _exportMessage(QString(tr("Copying files...")));
-    _exporter->exportData(exportUTM);
+    _exporter->exportData(exportUTM, exportSkyward);
 }
 
 //-----------------------------------------------------------------------------

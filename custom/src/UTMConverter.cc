@@ -9,7 +9,7 @@
 
 #define TIMESTAMP_SIZE sizeof(quint64)
 
-const char* kLoggingHeader =
+const char* kUTMLoggingHeader =
 "{\n"\
 "\t\"exchange\": {\n"\
 "\t\t\"exchange_type\": \"flight_logging\",\n"\
@@ -36,14 +36,80 @@ const char* kLoggingHeader =
 "\t\t\t\"flight_logging\": {\n"\
 "\t\t\t\t\"flight_logging_items\": [\n";
 
-const char* kLoggingKeys =
+const char* kSKYLoggingHeader =
+"{\n"\
+"\t\"exchange\": {\n"\
+"\t\t\"exchange_type\": \"flight_logging\",\n"\
+"\t\t\"exchanger\": \"DataPilot ###DPVERSION###\",\n"\
+"\t\t\"flight_session_id\": \"0\",\n"\
+"\t\t\"message\": {\n"\
+"\t\t\t\"flight_data\": {\n"\
+"\t\t\t\t\"flight_session_start\": \"###FLIGHTSTART###Z\",\n"\
+"\t\t\t\t\"flight_session_end\": \"###FLIGHTEND###Z\",\n"\
+"\t\t\t\t\"aircraft\": {\n"\
+"\t\t\t\t\t\"firmware_version\": \"###APFIRMWARE###\",\n"\
+"\t\t\t\t\t\"serial_number\": \"###APSERIAL###\",\n"\
+"\t\t\t\t\t\"hardware_version\": \"1.0\",\n"\
+"\t\t\t\t\t\"manufacturer\": \"Yuneec\",\n"\
+"\t\t\t\t\t\"model\": \"H520\",\n"\
+"\t\t\t\t\t\"name\": \"\"\n"\
+"\t\t\t\t},\n"\
+"\t\t\t\t\"gcs\": {\n"\
+"\t\t\t\t\t\"manufacturer\": \"Yuneec\",\n"\
+"\t\t\t\t\t\"model\": \"DataPilot\",\n"\
+"\t\t\t\t\t\"version\": \"###DPVERSION###\"\n"\
+"\t\t\t\t},\n"\
+"\t\t\t\t\"logfile_device_origin\": {\n"\
+"\t\t\t\t\t\"model\": \"ST16S\",\n"\
+"\t\t\t\t\t\"operating_system\": \"Android 4.4.1\",\n"\
+"\t\t\t\t\t\"user_interface_idiom\": \"Android\",\n"\
+"\t\t\t\t\t\"device_ssid\": \"\"\n"\
+"\t\t\t\t},\n"\
+"\t\t\t\t\"remote_controller\": {\n"\
+"\t\t\t\t\t\"firmware_version\": \"\",\n"\
+"\t\t\t\t\t\"serial_number\": \"\"\n"\
+"\t\t\t\t},\n"\
+"\t\t\t\t\"flight_controller\": {\n"\
+"\t\t\t\t\t\"firmware_version\": \"###APFIRMWARE###\",\n"\
+"\t\t\t\t\t\"serial_number\": \"###APSERIAL###\"\n"\
+"\t\t\t\t},\n"\
+"\t\t\t\t\"payload\": {\n"\
+"\t\t\t\t\t\"gimbal\": {\n"\
+"\t\t\t\t\t\t\"firmware_version\": \"###GIMBALFIRMWARE###\",\n"\
+"\t\t\t\t\t\t\"serial_number\": \"\",\n"\
+"\t\t\t\t\t\t\"hardware_version\": \"\",\n"\
+"\t\t\t\t\t\t\"model\": \"\"\n"\
+"\t\t\t\t\t},\n"\
+"\t\t\t\t\t\"camera\": {\n"\
+"\t\t\t\t\t\t\"firmware_version\": \"###CAMERAFIRMWARE###\",\n"\
+"\t\t\t\t\t\t\"serial_number\": \"\",\n"\
+"\t\t\t\t\t\t\"hardware_version\": \"\",\n"\
+"\t\t\t\t\t\t\"model\": \"###CAMERANAME###\"\n"\
+"\t\t\t\t\t}\n"\
+"\t\t\t\t}\n"\
+"\t\t\t},\n"\
+"\t\t\t\"flight_logging\": {\n"\
+"\t\t\t\t\"flight_logging_items\": [\n";
+
+const char* kUTMLoggingKeys =
 "\t\t\t\t],\n"\
 "\t\t\t\t\"flight_logging_keys\": [\n"\
 "\t\t\t\t\t\"timestamp\", \"gps_lon\", \"gps_lat\", \"gps_altitude\", \"speed\", \"battery_voltage\"\n"\
 "\t\t\t\t],\n"\
 "\t\t\t\t\"altitude_system\": \"WGS84\",\n";
 
-const char* kLoggingFooter =
+const char* kSKYLoggingKeys =
+"\t\t\t\t],\n"\
+"\t\t\t\t\"flight_logging_keys\": [\n"\
+"\t\t\t\t\t\"timestamp\",\n"\
+"\t\t\t\t\t\"aircraft_lon\",\n"\
+"\t\t\t\t\t\"aircraft_lat\",\n"\
+"\t\t\t\t\t\"aircraft_altitude\",\n"\
+"\t\t\t\t\t\"aircraft_speed\",\n"\
+"\t\t\t\t\t\"battery_voltage\"\n"\
+"\t\t\t\t],\n";
+
+const char* kUTMLoggingFooter =
 "\t\t\t},\n"\
 "\t\t\t\"file\": {\n"\
 "\t\t\t\t\"logging_type\": \"GUTMA_DX_JSON\",\n"\
@@ -55,8 +121,22 @@ const char* kLoggingFooter =
 "\t}\n"\
 "}\n";
 
+const char* kSKYLoggingFooter =
+"\t\t\t\t\"altitude_system\": \"WGS84\",\n"\
+"\t\t\t\t\"logging_start_dtg\": \"###LOGSTART###Z\"\n"\
+"\t\t\t},\n"\
+"\t\t\t\"file\":\t{\n"\
+"\t\t\t\t\"logging_type\": \"SKYWARD_GCS\",\n"\
+"\t\t\t\t\"filename\": \"###FILENAME###\",\n"\
+"\t\t\t\t\"creation_dtg\": \"###FILEDATE###Z\"\n"\
+"\t\t\t},\n"\
+"\t\t\t\"message_type\": \"flight_logging_submission\"\n"\
+"\t\t}\n"\
+"\t}\n"\
+"}";
+
 //-----------------------------------------------------------------------------
-UTMConverter::UTMConverter()
+UTMConverter::UTMConverter(bool skyward)
     : _curTimeUSecs(0)
     , _startDTG(0)
     , _lastSpeed(0)
@@ -65,6 +145,7 @@ UTMConverter::UTMConverter()
     , _globalPositionIntMessageAvailable(false)
     , _mavlinkChannel(0)
     , _cancel(false)
+    , _convertToSkyward(skyward)
 {
 
 }
@@ -125,7 +206,15 @@ UTMConverter::convertTelemetryFile(const QString& srcFilename, const QString& ds
     //-- Write UTM File
     if(!_cancel && _logItems.size()) {
         //-- Header
-        QString header = kLoggingHeader;
+        QString header;
+        if(_convertToSkyward) {
+            header = kSKYLoggingHeader;
+            header.replace("###GIMBALFIRMWARE###", _gimbalVersion);
+            header.replace("###FLIGHTSTART###", QDateTime::fromMSecsSinceEpoch(_startDTG / 1000).toString(Qt::ISODateWithMs));
+            header.replace("###FLIGHTEND###", QDateTime::fromMSecsSinceEpoch(_curTimeUSecs / 1000).toString(Qt::ISODateWithMs));
+        } else {
+            header = kUTMLoggingHeader;
+        }
         header.replace("###APFIRMWARE###", _apVersion);
         header.replace("###APSERIAL###", _apUID);
         header.replace("###DPVERSION###", qgcApp()->applicationVersion());
@@ -137,13 +226,24 @@ UTMConverter::convertTelemetryFile(const QString& srcFilename, const QString& ds
                 break;
             }
             QString line;
-            line.sprintf("\t\t\t\t\t[%.3f, %f, %f, %.3f, %.3f, %.3f ]",
-                _logItems[i].time,
-                _logItems[i].lon,
-                _logItems[i].lat,
-                _logItems[i].alt,
-                _logItems[i].speed,
-                _logItems[i].battery);
+            if(_convertToSkyward) {
+                QDateTime timeS = QDateTime::fromMSecsSinceEpoch(_logItems[i].timeStamp / 1000);
+                line.sprintf("\t\t\t\t\t[\"%sZ\", \"%f\", \"%f\", \"%.3f\", \"%.3f\", \"%.3f\" ]",
+                    timeS.toString(Qt::ISODateWithMs).toLocal8Bit().data(),
+                    _logItems[i].lon,
+                    _logItems[i].lat,
+                    _logItems[i].alt,
+                    _logItems[i].speed,
+                    _logItems[i].battery);
+            } else {
+                line.sprintf("\t\t\t\t\t[%.3f, %f, %f, %.3f, %.3f, %.3f ]",
+                    _logItems[i].time,
+                    _logItems[i].lon,
+                    _logItems[i].lat,
+                    _logItems[i].alt,
+                    _logItems[i].speed,
+                    _logItems[i].battery);
+            }
             if(i < _logItems.size() - 1) {
                 line += ",\n";
             } else {
@@ -151,12 +251,27 @@ UTMConverter::convertTelemetryFile(const QString& srcFilename, const QString& ds
             }
             _utmLogFile.write(line.toLocal8Bit());
         }
-        _utmLogFile.write(kLoggingKeys);
+        //-- Keys
+        if(_convertToSkyward) {
+            _utmLogFile.write(kSKYLoggingKeys);
+        } else {
+            _utmLogFile.write(kUTMLoggingKeys);
+        }
+        //-- Footer
         QDateTime dtg = QDateTime::fromMSecsSinceEpoch(_startDTG / 1000);
-        QString line = QString("\t\t\t\t\"logging_start_dtg\": \"%1Z\"\n").arg(dtg.toString(Qt::ISODateWithMs));
-        _utmLogFile.write(line.toLocal8Bit());
-        QString footer(kLoggingFooter);
+        QString logStart = dtg.toString(Qt::ISODateWithMs);
+        if(!_convertToSkyward) {
+            QString line = QString("\t\t\t\t\"logging_start_dtg\": \"%1Z\"\n").arg(logStart);
+            _utmLogFile.write(line.toLocal8Bit());
+        }
+        QString footer;
         QFileInfo fi(dstFilename);
+        if(_convertToSkyward) {
+            footer = kSKYLoggingFooter;
+            footer.replace("###LOGSTART###", logStart);
+        } else {
+            footer = kUTMLoggingFooter;
+        }
         footer.replace("###FILENAME###", fi.baseName());
         footer.replace("###FILEDATE###", QDateTime::currentDateTime().toString(Qt::ISODateWithMs));
         _utmLogFile.write(footer.toLocal8Bit());
@@ -266,6 +381,7 @@ UTMConverter::_handleGpsRawInt(mavlink_message_t& message)
             logItem.lat   = gpsRawInt.lat / (double)1E7;
             logItem.alt   = gpsRawInt.alt / 1000.0;
             logItem.time  = curElapsed;
+            logItem.timeStamp = _curTimeUSecs;
             logItem.speed = _lastSpeed;
             logItem.battery = _lastBattery;
             if(_logItems.size()) {
@@ -307,6 +423,7 @@ UTMConverter::_handleGlobalPositionInt(mavlink_message_t& message)
     logItem.lat   = globalPositionInt.lat / (double)1E7;
     logItem.alt   = globalPositionInt.alt / 1000.0;
     logItem.time  = curElapsed;
+    logItem.timeStamp = _curTimeUSecs;
     logItem.speed = _lastSpeed;
     logItem.battery = _lastBattery;
     if(_logItems.size()) {
@@ -344,6 +461,7 @@ UTMConverter::_handleCameraInfo(mavlink_message_t& message)
     int  minor = (info.firmware_version >>  8) & 0xFF;
     int  major = info.firmware_version & 0xFF;
     _cameraVersion.sprintf("%d.%d.%d_%c", major, minor, build, cntry);
+    qDebug() << "Camera:" << _cameraVersion;
 }
 
 //-----------------------------------------------------------------------------
@@ -352,18 +470,27 @@ UTMConverter::_handleAutopilotVersion(mavlink_message_t& message)
 {
     mavlink_autopilot_version_t autopilotVersion;
     mavlink_msg_autopilot_version_decode(&message, &autopilotVersion);
-    uint8_t* pUid = (uint8_t*)(void*)&autopilotVersion.uid;
-    _apUID.sprintf("%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
-        pUid[0] & 0xff,
-        pUid[1] & 0xff,
-        pUid[2] & 0xff,
-        pUid[3] & 0xff,
-        pUid[4] & 0xff,
-        pUid[5] & 0xff,
-        pUid[6] & 0xff,
-        pUid[7] & 0xff);
-    _apVersion.sprintf("%d.%d.%d",
-        autopilotVersion.flight_custom_version[2],
-        autopilotVersion.flight_custom_version[1],
-        autopilotVersion.flight_custom_version[0]);
+    if (message.compid == MAV_COMP_ID_GIMBAL) {
+        int major = (autopilotVersion.flight_sw_version >> (8 * 3)) & 0xFF;
+        int minor = (autopilotVersion.flight_sw_version >> (8 * 2)) & 0xFF;
+        int patch = (autopilotVersion.flight_sw_version >> (8 * 1)) & 0xFF;
+        _gimbalVersion.sprintf("%d.%d.%d", major, minor, patch);
+        qDebug() << "Gimbal:" << _gimbalVersion;
+    } else {
+        uint8_t* pUid = (uint8_t*)(void*)&autopilotVersion.uid;
+        _apUID.sprintf("%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
+            pUid[0] & 0xff,
+            pUid[1] & 0xff,
+            pUid[2] & 0xff,
+            pUid[3] & 0xff,
+            pUid[4] & 0xff,
+            pUid[5] & 0xff,
+            pUid[6] & 0xff,
+            pUid[7] & 0xff);
+        _apVersion.sprintf("%d.%d.%d",
+            autopilotVersion.flight_custom_version[2],
+            autopilotVersion.flight_custom_version[1],
+            autopilotVersion.flight_custom_version[0]);
+        qDebug() << "AP:" << _apVersion << _apUID;
+    }
 }
