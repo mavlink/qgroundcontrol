@@ -56,6 +56,9 @@ public:
     // Override from QGCTool
     void        setToolbox          (QGCToolbox *toolbox);
 
+    Q_INVOKABLE void startVideo() {_videoReceiver->stop();};
+    Q_INVOKABLE void stopVideo() {_videoReceiver->stop();};
+
 signals:
     void hasVideoChanged            ();
     void isGStreamerChanged         ();
