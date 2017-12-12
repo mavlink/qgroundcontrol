@@ -188,7 +188,6 @@ TyphoonHQuickInterface::init()
         //-- Thermal video surface must be created before UI
         if(!_videoReceiver) {
             _videoReceiver = new VideoReceiver(this);
-            _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:8554/live"));
             connect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);
         }
 #if defined(__androidx86__)
@@ -342,11 +341,18 @@ TyphoonHQuickInterface::_camerasChanged()
 #if !defined (__planner__)
     if(_vehicle) {
         if(_vehicle->dynamicCameras() && _vehicle->dynamicCameras()->cameras()->count()) {
-            //-- A camera has just been added. Check for CGOET
+            //-- A camera has just been added. Check for CGOET or E10T
             YuneecCameraControl* pCamera = qobject_cast<YuneecCameraControl*>((*_vehicle->dynamicCameras()->cameras())[0]);
             if(pCamera) {
-                if(pCamera->isCGOET()) {
-                    _enableThermalVideo();
+                if(pCamera->isThermal()) {
+                    qCDebug(YuneecLog) << "Starting thermal image receiver";
+                    if(pCamera->isCGOET()) {
+                        _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:8554/live"));
+                    } else {
+                        _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1/stream2"));
+                    }
+                    _videoReceiver->start();
+                    emit thermalImagePresentChanged();
                 }
             }
         }
@@ -976,6 +982,9 @@ TyphoonHQuickInterface::connectedCamera()
     if(ssid.startsWith("CGOET")) {
         return QString("CGO-ET");
     }
+    if(ssid.startsWith("E10T")) {
+        return QString("E10T");
+    }
     if(ssid.startsWith("E90")) {
         return QString("E90");
     }
@@ -990,7 +999,7 @@ bool
 TyphoonHQuickInterface::isTyphoon()
 {
     QString ssid = connectedSSID();
-    if(ssid.startsWith("CGOET") || ssid.startsWith("E90_") || ssid.startsWith("E50_")) {
+    if(ssid.startsWith("CGOET") || ssid.startsWith("E10T") || ssid.startsWith("E90_") || ssid.startsWith("E50_")) {
         return true;
     }
     return false;
@@ -1391,7 +1400,7 @@ TyphoonHQuickInterface::_newSSID(QString ssid, int rssi)
 {
     qCDebug(YuneecLog) << "New SSID" << ssid << rssi;
 #if !defined(QT_DEBUG)
-    if(ssid.startsWith("CGOET") || ssid.startsWith("E90_") || ssid.startsWith("E50_")) {
+    if(ssid.startsWith("CGOET") || ssid.startsWith("E10T") || ssid.startsWith("E90_") || ssid.startsWith("E50_")) {
 #endif
         if(!_findSsid(ssid, rssi)) {
             TyphoonSSIDItem* ssidInfo = new TyphoonSSIDItem(ssid, rssi);
@@ -1438,17 +1447,6 @@ TyphoonHQuickInterface::_authenticationError()
     emit connectedSSIDChanged();
     emit authenticationError();
     startScan();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::_enableThermalVideo()
-{
-    if(_videoReceiver) {
-        qCDebug(YuneecLog) << "Starting thermal image receiver";
-        _videoReceiver->start();
-        emit thermalImagePresentChanged();
-    }
 }
 
 //-----------------------------------------------------------------------------

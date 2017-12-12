@@ -145,7 +145,7 @@ QGCView {
                 height:         passwordRow.height * 2
                 width:          ScreenTools.defaultFontPixelWidth * 80
                 color:          qgcPal.windowShade
-                visible:        _activeVehicle && (_camera && !_camera.isCGOET) && !TyphoonHQuickInterface.desktopPlanner
+                visible:        _activeVehicle && (_camera && !_camera.isThermal) && !TyphoonHQuickInterface.desktopPlanner
                 anchors.horizontalCenter: parent.horizontalCenter
                 Row {
                     id:         passwordRow

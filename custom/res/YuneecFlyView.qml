@@ -61,7 +61,7 @@ Item {
     property var    _meteringFact:      _camera && _camera.meteringMode
     property var    _videoResFact:      _camera && _camera.videoRes
     property var    _irPaletteFact:     _camera && _camera.irPalette
-    property var    _isCGOET:           _camera && _camera.isCGOET
+    property var    _isThermal:         _camera && _camera.isThermal
 
     property bool   _cameraAutoMode:    _expModeFact  ? _expModeFact.rawValue === 0 : true
     property string _altitude:          _activeVehicle   ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0"
@@ -384,10 +384,10 @@ Item {
             }
             //-- EV
             Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode; }
-            QGCLabel { text: qsTr("EV:"); visible: _cameraAutoMode && !_isCGOET; anchors.verticalCenter: parent.verticalCenter; }
+            QGCLabel { text: qsTr("EV:"); visible: _cameraAutoMode && !_isThermal; anchors.verticalCenter: parent.verticalCenter; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible: _cameraAutoMode && !_isCGOET;
+                visible: _cameraAutoMode && !_isThermal;
                 indexModel: false
                 fact:       _evFact
                 enabled:    _cameraIdle
@@ -413,58 +413,58 @@ Item {
                 enabled:    _cameraIdle
             }
             //-- WB
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: !_isCGOET; }
-            QGCLabel { text: qsTr("WB:"); anchors.verticalCenter: parent.verticalCenter; visible: !_isCGOET; }
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: !_isThermal; }
+            QGCLabel { text: qsTr("WB:"); anchors.verticalCenter: parent.verticalCenter; visible: !_isThermal; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
                 indexModel: false
                 fact:       _wbFact
                 enabled:    _cameraIdle
-                visible:    !_isCGOET
+                visible:    !_isThermal
             }
             //-- Metering
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && !_isCGOET; }
-            QGCLabel { text: qsTr("Metering:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && !_isCGOET; }
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && !_isThermal; }
+            QGCLabel { text: qsTr("Metering:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && !_isThermal; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible:    _cameraAutoMode && !_isCGOET;
+                visible:    _cameraAutoMode && !_isThermal;
                 indexModel: false
                 fact:       _meteringFact
                 enabled:    _cameraIdle
             }
             //-- Video Res
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode && !_isCGOET && !_noSdCard; }
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode && !_isThermal && !_noSdCard; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible:    _cameraVideoMode && !_isCGOET && !_noSdCard;
+                visible:    _cameraVideoMode && !_isThermal && !_noSdCard;
                 indexModel: false
                 enabled:    !_recordingVideo
                 fact:       _videoResFact
             }
-            //-- CGOET Palette
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: !_cameraAutoMode && _isCGOET; }
-            QGCLabel { text: qsTr("Palette:"); anchors.verticalCenter: parent.verticalCenter; visible: _isCGOET; }
+            //-- CGOET/E10T Palette
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: !_cameraAutoMode && _isThermal; }
+            QGCLabel { text: qsTr("Palette:"); anchors.verticalCenter: parent.verticalCenter; visible: _isThermal; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible:    _isCGOET;
+                visible:    _isThermal;
                 indexModel: false
                 fact:       _irPaletteFact
             }
-            //-- CGOET ROI
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _isCGOET; }
-            QGCLabel { text: qsTr("ROI:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && _isCGOET; }
+            //-- CGOET/E10T ROI
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _isThermal; }
+            QGCLabel { text: qsTr("ROI:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && _isThermal; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible:    _isCGOET;
+                visible:    _isThermal;
                 indexModel: false
                 fact:       _camera ? _camera.irROI : null
             }
-            //-- CGOET Presets
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _isCGOET; }
-            QGCLabel { text: qsTr("Presets:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && _isCGOET; }
+            //-- CGOET/E10T Presets
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _isThermal; }
+            QGCLabel { text: qsTr("Presets:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && _isThermal; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible:    _isCGOET;
+                visible:    _isThermal;
                 indexModel: false
                 fact:       _camera ? _camera.irPresets : null
             }

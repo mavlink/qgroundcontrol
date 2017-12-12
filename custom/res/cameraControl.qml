@@ -391,11 +391,11 @@ Rectangle {
                         anchors.margins:    ScreenTools.defaultFontPixelHeight
                         anchors.horizontalCenter: parent.horizontalCenter
                         //-------------------------------------------
-                        //-- CGOET Thermal Video Modes
+                        //-- CGOET/E10T Thermal Video Modes
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
-                            visible:        _camera && _camera.isCGOET
+                            visible:        _camera && _camera.isThermal
                             property var thermalModes: [qsTr("Off"), qsTr("Blend"), qsTr("Full"), qsTr("Picture In Picture")]
                             QGCLabel {
                                 text:       qsTr("Thermal View Mode")
@@ -413,14 +413,14 @@ Rectangle {
                             color:      qgcPal.button
                             height:     1
                             width:      cameraSettingsCol.width
-                            visible:    _camera && _camera.isCGOET
+                            visible:    _camera && _camera.isThermal
                         }
                         //-------------------------------------------
-                        //-- CGOET Thermal Video Opacity
+                        //-- CGOET/E10T Thermal Video Opacity
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
-                            visible:        _camera && _camera.isCGOET && TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend
+                            visible:        _camera && _camera.isThermal && TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend
                             QGCLabel {
                                 text:       qsTr("Blend Opacity")
                                 width:      _labelFieldWidth
@@ -441,14 +441,14 @@ Rectangle {
                             color:      qgcPal.button
                             height:     1
                             width:      cameraSettingsCol.width
-                            visible:    _camera && _camera.isCGOET && TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend
+                            visible:    _camera && _camera.isThermal && TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend
                         }
                         //-------------------------------------------
-                        //-- CGOET Thermal ROI
+                        //-- CGOET/E10T Thermal ROI
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
-                            visible:        _camera && _camera.isCGOET
+                            visible:        _camera && _camera.isThermal
                             QGCLabel {
                                 text:       qsTr("ROI")
                                 width:      _labelFieldWidth
@@ -465,14 +465,14 @@ Rectangle {
                             color:      qgcPal.button
                             height:     1
                             width:      cameraSettingsCol.width
-                            visible:    _camera && _camera.isCGOET
+                            visible:    _camera && _camera.isThermal
                         }
                         //-------------------------------------------
-                        //-- CGOET Presets
+                        //-- CGOET/E10T Presets
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
-                            visible:        _camera && _camera.isCGOET
+                            visible:        _camera && _camera.isThermal
                             QGCLabel {
                                 text:       qsTr("Presets")
                                 width:      _labelFieldWidth
@@ -489,7 +489,7 @@ Rectangle {
                             color:      qgcPal.button
                             height:     1
                             width:      cameraSettingsCol.width
-                            visible:    _camera && _camera.isCGOET
+                            visible:    _camera && _camera.isThermal
                         }
                         //-------------------------------------------
                         //-- Settings from Camera Definition File
@@ -619,7 +619,7 @@ Rectangle {
                         //-- Screen Grid
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
-                            visible:        _camera && !_camera.isCGOET
+                            visible:        _camera && !_camera.isThermal
                             anchors.horizontalCenter: parent.horizontalCenter
                             QGCLabel {
                                 text:       qsTr("Screen Grid")
@@ -637,7 +637,7 @@ Rectangle {
                             color:      qgcPal.button
                             height:     1
                             width:      cameraSettingsCol.width
-                            visible:    _camera && !_camera.isCGOET
+                            visible:    _camera && !_camera.isThermal
                         }
                         //-------------------------------------------
                         //-- Reset Camera

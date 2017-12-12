@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.15 - Dec 12 2017
+
+*   Add support for the E10T (Untested)
+
 ### v1.2.14 - Dec 11 2017
 
 *   Add support for ISO/Shutter speed to CGOET 
