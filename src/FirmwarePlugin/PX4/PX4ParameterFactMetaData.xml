@@ -537,13 +537,14 @@ Set to 2 to use heading from motion capture</short_desc>
       <long_desc>Default value: (10 &lt;&lt; 0 | 1000 &lt;&lt; 8 | 0 &lt;&lt; 24) = 256010 - authorizer system id = 10 - authentication method parameter = 10000msec of timeout - authentication method = during arm</long_desc>
       <scope>modules/commander</scope>
     </parameter>
-    <parameter default="5.0e-3" name="COM_ARM_EKF_AB" type="FLOAT">
-      <short_desc>Maximum value of EKF accelerometer delta velocity bias estimate that will allow arming</short_desc>
+    <parameter default="2.4e-3" name="COM_ARM_EKF_AB" type="FLOAT">
+      <short_desc>Maximum value of EKF accelerometer delta velocity bias estimate that will allow arming.
+Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than EKF2_ABL_LIM * FILTER_UPDATE_PERIOD_MS * 0.001 so this parameter must be less than that to be useful</short_desc>
       <min>0.001</min>
       <max>0.01</max>
       <unit>m/s</unit>
       <decimal>4</decimal>
-      <increment>0.0005</increment>
+      <increment>0.0001</increment>
       <scope>modules/commander</scope>
     </parameter>
     <parameter default="8.7e-4" name="COM_ARM_EKF_GB" type="FLOAT">
