@@ -29,7 +29,6 @@ Rectangle {
     property real   _fieldWidth:    ScreenTools.defaultFontPixelWidth * 10.5
     property var    _vehicle:       QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
 
-
     function polygonCaptureStarted() {
         missionItem.clearPolygon()
     }
@@ -65,14 +64,6 @@ Rectangle {
         QGCLabel {
             anchors.left:   parent.left
             anchors.right:  parent.right
-            text:           qsTr("WORK IN PROGRESS. CAREFUL!")
-            wrapMode:       Text.WordWrap
-            color:          qgcPal.warningText
-        }
-
-        QGCLabel {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
             text:           qsTr("Note: Polygon respresents structure surface not vehicle flight path.")
             wrapMode:       Text.WordWrap
             font.pointSize: ScreenTools.smallFontPointSize
@@ -93,6 +84,33 @@ Rectangle {
             distanceToSurfaceLabel: qsTr("Scan Distance")
             frontalDistanceLabel:   qsTr("Layer Height")
             sideDistanceLabel:      qsTr("Trigger Distance")
+        }
+
+        GridLayout {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            columnSpacing:  ScreenTools.defaultFontPixelWidth / 2
+            rowSpacing:     0
+            columns:        3
+            enabled:        missionItem.cameraCalc.cameraSpecType === CameraCalc.CameraSpecNone
+
+            Item { width: 1; height: 1 }
+            QGCLabel { text: qsTr("Pitch") }
+            QGCLabel { text: qsTr("Yaw") }
+
+            QGCLabel {
+                text:               qsTr("Gimbal")
+                Layout.fillWidth:   true
+            }
+            FactTextField {
+                fact:           missionItem.gimbalPitch
+                implicitWidth:  ScreenTools.defaultFontPixelWidth * 9
+            }
+
+            FactTextField {
+                fact:           missionItem.gimbalYaw
+                implicitWidth:  ScreenTools.defaultFontPixelWidth * 9
+            }
         }
 
         SectionHeader {
@@ -153,6 +171,11 @@ Rectangle {
                     checked:        !missionItem.yawVehicleToStructure
                     enabled:        false
                 }
+            }
+
+            Item {
+                height: ScreenTools.defaultFontPixelHeight / 2
+                width:  1
             }
 
             QGCButton {
