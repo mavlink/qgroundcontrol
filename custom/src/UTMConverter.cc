@@ -461,7 +461,6 @@ UTMConverter::_handleCameraInfo(mavlink_message_t& message)
     int  minor = (info.firmware_version >>  8) & 0xFF;
     int  major = info.firmware_version & 0xFF;
     _cameraVersion.sprintf("%d.%d.%d_%c", major, minor, build, cntry);
-    qDebug() << "Camera:" << _cameraVersion;
 }
 
 //-----------------------------------------------------------------------------
@@ -475,7 +474,6 @@ UTMConverter::_handleAutopilotVersion(mavlink_message_t& message)
         int minor = (autopilotVersion.flight_sw_version >> (8 * 2)) & 0xFF;
         int patch = (autopilotVersion.flight_sw_version >> (8 * 1)) & 0xFF;
         _gimbalVersion.sprintf("%d.%d.%d", major, minor, patch);
-        qDebug() << "Gimbal:" << _gimbalVersion;
     } else {
         uint8_t* pUid = (uint8_t*)(void*)&autopilotVersion.uid;
         _apUID.sprintf("%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
@@ -491,6 +489,5 @@ UTMConverter::_handleAutopilotVersion(mavlink_message_t& message)
             autopilotVersion.flight_custom_version[2],
             autopilotVersion.flight_custom_version[1],
             autopilotVersion.flight_custom_version[0]);
-        qDebug() << "AP:" << _apVersion << _apUID;
     }
 }
