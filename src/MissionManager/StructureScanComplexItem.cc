@@ -127,8 +127,10 @@ void StructureScanComplexItem::_polygonCountChanged(int count)
 int StructureScanComplexItem::lastSequenceNumber(void) const
 {
     return _sequenceNumber +
-            ((_flightPolygon.count() + 1) * _layersFact.rawValue().toInt()) + // 1 waypoint for each polygon vertex + 1 to go back to first polygon vertex
-            1;  // Gimbal control command
+            (_layersFact.rawValue().toInt() *
+                ((_flightPolygon.count() + 1) + // 1 waypoint for each polygon vertex + 1 to go back to first polygon vertex for each layer
+                 2)) +                          // Camera trigger start/stop for each layer
+            1;                                  // Gimbal control command
 }
 
 void StructureScanComplexItem::setDirty(bool dirty)

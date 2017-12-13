@@ -122,9 +122,6 @@ void StructureScanComplexItemTest::_validateItem(StructureScanComplexItem* item)
     QCOMPARE(item->gimbalPitch()->cookedValue().toDouble(), 45.0);
     QCOMPARE(item->gimbalYaw()->cookedValue().toDouble(), 45.0);
     QCOMPARE(item->layers()->cookedValue().toInt(), 2);
-
-    int seqNum = item->sequenceNumber();
-    QCOMPARE(item->lastSequenceNumber(), seqNum + (5 /* 5 waypoints per layer */ * item->layers()->cookedValue().toInt()) + 1 /* gimbal command */);
 }
 
 void StructureScanComplexItemTest::_testSaveLoad(void)
@@ -151,4 +148,14 @@ void StructureScanComplexItemTest::_testGimbalAngleUpdate(void)
     _structureScanItem->cameraCalc()->setCameraSpecType(CameraCalc::CameraSpecCustom);
     QCOMPARE(_structureScanItem->gimbalPitch()->cookedValue().toDouble(), 0.0);
     QCOMPARE(_structureScanItem->gimbalYaw()->cookedValue().toDouble(), 90.0);
+}
+
+void StructureScanComplexItemTest::_testItemCount(void)
+{
+    QList<MissionItem*> items;
+
+    _initItem();
+    _structureScanItem->appendMissionItems(items, this);
+    QCOMPARE(items.count(), _structureScanItem->lastSequenceNumber());
+
 }
