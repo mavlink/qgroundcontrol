@@ -7,11 +7,13 @@
  *
  ****************************************************************************/
 
+#include <QDebug>
 
 #include <cmath>
 #include <limits>
 
 #include "QGCGeo.h"
+#include "UTM.h"
 
 // These defines are private
 #define M_DEG_TO_RAD (M_PI / 180.0)
@@ -81,3 +83,16 @@ void convertNedToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCo
     coord->setAltitude(-z + origin.altitude());
 }
 
+int convertGeoToUTM(const QGeoCoordinate& coord, double& easting, double& northing)
+{
+    return LatLonToUTMXY(coord.latitude(), coord.longitude(), -1 /* zone */, easting, northing);
+}
+
+void convertUTMToGeo(double easting, double northing, int zone, bool southhemi, QGeoCoordinate& coord)
+{
+    double latRadians, lonRadians;
+
+    UTMXYToLatLon (easting, northing, zone, southhemi, latRadians, lonRadians);
+    coord.setLatitude(RadToDeg(latRadians));
+    coord.setLongitude(RadToDeg(lonRadians));
+}
