@@ -7,6 +7,7 @@ CameraSection           1.0 CameraSection.qml
 ClickableColor          1.0 ClickableColor.qml
 DropButton              1.0 DropButton.qml
 DropPanel               1.0 DropPanel.qml
+EditPositionDialog      1.0 EditPositionDialog.qml
 ExclusiveGroupItem      1.0 ExclusiveGroupItem.qml
 FactSliderPanel         1.0 FactSliderPanel.qml
 FileButton              1.0 FileButton.qml
