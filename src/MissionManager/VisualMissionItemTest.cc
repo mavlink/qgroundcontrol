@@ -43,6 +43,7 @@ void VisualMissionItemTest::init(void)
     rgVisualItemSignals[specifiesAltitudeOnlyChangedIndex] =                SIGNAL(specifiesAltitudeOnlyChanged());
     rgVisualItemSignals[specifiedFlightSpeedChangedIndex] =                 SIGNAL(specifiedFlightSpeedChanged());
     rgVisualItemSignals[specifiedGimbalYawChangedIndex] =                   SIGNAL(specifiedGimbalYawChanged());
+    rgVisualItemSignals[specifiedGimbalPitchChangedIndex] =                 SIGNAL(specifiedGimbalPitchChanged());
     rgVisualItemSignals[lastSequenceNumberChangedIndex] =                   SIGNAL(lastSequenceNumberChanged(int));
     rgVisualItemSignals[missionGimbalYawChangedIndex] =                     SIGNAL(missionGimbalYawChanged(double));
     rgVisualItemSignals[missionVehicleYawChangedIndex] =                    SIGNAL(missionVehicleYawChanged(double));

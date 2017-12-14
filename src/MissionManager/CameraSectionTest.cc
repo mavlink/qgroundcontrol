@@ -36,6 +36,7 @@ void CameraSectionTest::init(void)
 
     rgCameraSignals[specifyGimbalChangedIndex] =        SIGNAL(specifyGimbalChanged(bool));
     rgCameraSignals[specifiedGimbalYawChangedIndex] =   SIGNAL(specifiedGimbalYawChanged(double));
+    rgCameraSignals[specifiedGimbalPitchChangedIndex] = SIGNAL(specifiedGimbalPitchChanged(double));
     rgCameraSignals[specifyCameraModeChangedIndex] =    SIGNAL(specifyCameraModeChanged(bool));
 
     _cameraSection = _simpleItem->cameraSection();
@@ -206,21 +207,31 @@ void CameraSectionTest::_testDirty(void)
     _cameraSection->setDirty(false);
     _spySection->clearAllSignals();
 
-    // Check the remaining items that should set dirty bit
+    // dirty SHOULD NOT change if pitch or yaw is changed while specifyGimbal IS NOT set
+    _cameraSection->setSpecifyGimbal(false);
+    _cameraSection->setDirty(false);
+    _spySection->clearAllSignals();
+    _cameraSection->gimbalPitch()->setRawValue(_cameraSection->gimbalPitch()->rawValue().toDouble() + 1);
+    _cameraSection->gimbalYaw()->setRawValue(_cameraSection->gimbalYaw()->rawValue().toDouble() + 1);
+    QVERIFY(_spySection->checkNoSignalByMask(dirtyChangedMask));
+    QCOMPARE(_cameraSection->dirty(), false);
 
+    // dirty SHOULD change if pitch or yaw is changed while specifyGimbal IS set
+    _cameraSection->setSpecifyGimbal(true);
+    _cameraSection->setDirty(false);
+    _spySection->clearAllSignals();
     _cameraSection->gimbalPitch()->setRawValue(_cameraSection->gimbalPitch()->rawValue().toDouble() + 1);
     QVERIFY(_spySection->checkSignalByMask(dirtyChangedMask));
-    QCOMPARE(_spySection->pullBoolFromSignalIndex(dirtyChangedIndex), true);
+    QCOMPARE(_cameraSection->dirty(), true);
+    _cameraSection->setDirty(false);
+    _spySection->clearAllSignals();
+    _cameraSection->gimbalYaw()->setRawValue(_cameraSection->gimbalYaw()->rawValue().toDouble() + 1);
+    QVERIFY(_spySection->checkSignalByMask(dirtyChangedMask));
     QCOMPARE(_cameraSection->dirty(), true);
     _cameraSection->setDirty(false);
     _spySection->clearAllSignals();
 
-    _cameraSection->gimbalYaw()->setRawValue(_cameraSection->gimbalPitch()->rawValue().toDouble() + 1);
-    QVERIFY(_spySection->checkSignalByMask(dirtyChangedMask));
-    QCOMPARE(_spySection->pullBoolFromSignalIndex(dirtyChangedIndex), true);
-    QCOMPARE(_cameraSection->dirty(), true);
-    _cameraSection->setDirty(false);
-    _spySection->clearAllSignals();
+    // Check the remaining items that should set dirty bit
 
     _cameraSection->cameraAction()->setRawValue(_cameraSection->cameraAction()->rawValue().toInt() + 1);
     QVERIFY(_spySection->checkSignalByMask(dirtyChangedMask));
@@ -1080,4 +1091,24 @@ void CameraSectionTest::_testScanForMultipleItems(void)
             visualItems.clearAndDeleteContents();
         }
     }
+}
+
+void CameraSectionTest::_testSpecifiedGimbalValuesChanged(void)
+{
+    // specifiedGimbal[Yaw|Pitch]Changed SHOULD NOT signal if values are changed when specifyGimbal IS NOT set
+    _cameraSection->setSpecifyGimbal(false);
+    _spyCamera->clearAllSignals();
+    _cameraSection->gimbalYaw()->setRawValue(_cameraSection->gimbalYaw()->rawValue().toDouble() + 1);
+    QVERIFY(_spyCamera->checkNoSignalByMask(specifiedGimbalYawChangedMask));
+    _cameraSection->gimbalPitch()->setRawValue(_cameraSection->gimbalPitch()->rawValue().toDouble() + 1);
+    QVERIFY(_spyCamera->checkNoSignalByMask(specifiedGimbalPitchChangedMask));
+
+    // specifiedGimbal[Yaw|Pitch]Changed SHOULD signal if values are changed when specifyGimbal IS set
+    _cameraSection->setSpecifyGimbal(true);
+    _spyCamera->clearAllSignals();
+    _cameraSection->gimbalYaw()->setRawValue(_cameraSection->gimbalYaw()->rawValue().toDouble() + 1);
+    QVERIFY(_spyCamera->checkSignalByMask(specifiedGimbalYawChangedMask));
+    _spyCamera->clearAllSignals();
+    _cameraSection->gimbalPitch()->setRawValue(_cameraSection->gimbalPitch()->rawValue().toDouble() + 1);
+    QVERIFY(_spyCamera->checkSignalByMask(specifiedGimbalPitchChangedMask));
 }
