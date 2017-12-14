@@ -16,6 +16,9 @@
 #include "VideoReceiver.h"
 #include "YuneecCameraControl.h"
 #include "YExportFiles.h"
+#if defined(__planner__)
+#include "PlanMasterController.h"
+#endif
 
 #include <QDirIterator>
 #include <QtAlgorithms>
@@ -1754,3 +1757,16 @@ TyphoonHQuickInterface::_readUDPBytes()
     }
 #endif
 }
+
+//-----------------------------------------------------------------------------
+#if 0 //defined(__planner__)
+void
+TyphoonHQuickInterface::uploadMission(PlanMasterController* controller)
+{
+    QFile file("/tmp/foo.plan");
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QJsonDocument saveDoc(controller->saveToJson());
+        file.write(saveDoc.toJson());
+    }
+}
+#endif

@@ -34,17 +34,18 @@ Window {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    property var    currentPopUp:       null
-    property real   currentCenterX:     0
-    property var    activeVehicle:      QGroundControl.multiVehicleManager.activeVehicle
-    property bool   communicationLost:  activeVehicle ? activeVehicle.connectionLost : false
-    property var    planMap:            planViewLoader.item ? planViewLoader.item.planMap : null
-    property var    mapSettings:        QGroundControl.settingsManager.flightMapSettings
-    property string mapType:            mapSettings.mapProvider.enumStringValue + " " + mapSettings.mapType.enumStringValue
-    property real   minZoom:            2
-    property real   maxZoom:            19
-    property int    clientCount:        TyphoonHQuickInterface.clientList.length
-    property bool   toolbarEnabled:     true
+    property var    currentPopUp:           null
+    property real   currentCenterX:         0
+    property var    activeVehicle:          QGroundControl.multiVehicleManager.activeVehicle
+    property bool   communicationLost:      activeVehicle ? activeVehicle.connectionLost : false
+    property var    planMap:                planViewLoader.item ? planViewLoader.item.planMap : null
+    property var    planMasterController:   planViewLoader.item ? planViewLoader.item.planMasterController : null
+    property var    mapSettings:            QGroundControl.settingsManager.flightMapSettings
+    property string mapType:                mapSettings.mapProvider.enumStringValue + " " + mapSettings.mapType.enumStringValue
+    property real   minZoom:                2
+    property real   maxZoom:                19
+    property int    clientCount:            TyphoonHQuickInterface.clientList.length
+    property bool   toolbarEnabled:         true
 
     function showSetupView() {
     }
@@ -451,6 +452,9 @@ Window {
                             enabled:        !TyphoonHQuickInterface.copyingDone
                             onClicked: {
                                 console.log('Upload')
+                                if(planMasterController) {
+                                    //TyphoonHQuickInterface.uploadMission(planMasterController)
+                                }
                             }
                         }
                         QGCButton {

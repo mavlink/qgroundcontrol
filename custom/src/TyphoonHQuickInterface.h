@@ -12,11 +12,17 @@
 #include "Vehicle.h"
 
 #include <QQmlListProperty>
+#include <QDomDocument>
+#include <QJsonDocument>
 
 class YExportFiles;
 #if defined(__androidx86__)
 class TyphoonHM4Interface;
 #endif
+#if defined(__planner__)
+class PlanMasterController;
+#endif
+
 class TyphoonHQuickInterface;
 class QUdpSocket;
 
@@ -246,6 +252,10 @@ public:
     //-- Android image update
     Q_INVOKABLE bool checkForUpdate     ();
     Q_INVOKABLE void updateSystemImage  ();
+
+#if defined(__planner__)
+   // Q_INVOKABLE void uploadMission      (PlanMasterController* controller);
+#endif
 
     M4State     m4State             ();
     QString     m4StateStr          ();
