@@ -33,6 +33,7 @@ QGCView {
     z:          QGroundControl.zOrderTopMost
 
     property alias          planMap:                    editorMap
+    property alias          planMasterController:       masterController
 
     readonly property int   _decimalPlaces:             8
     readonly property real  _horizontalMargin:          ScreenTools.defaultFontPixelWidth  / 2
