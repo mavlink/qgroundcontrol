@@ -91,6 +91,7 @@ void MissionController::_resetMissionFlightStatus(void)
     _missionFlightStatus.vehicleSpeed =         _controllerVehicle->multiRotor() || _managerVehicle->vtol() ? _missionFlightStatus.hoverSpeed : _missionFlightStatus.cruiseSpeed;
     _missionFlightStatus.vehicleYaw =           0.0;
     _missionFlightStatus.gimbalYaw =            std::numeric_limits<double>::quiet_NaN();
+    _missionFlightStatus.gimbalPitch =          std::numeric_limits<double>::quiet_NaN();
 
     // Battery information
 
@@ -355,6 +356,7 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
             newItem->missionItem().setParam7(prevAltitude);
         }
     }
+    newItem->setMissionFlightStatus(_missionFlightStatus);
     _visualItems->insert(i, newItem);
 
     _recalcAll();
@@ -1227,12 +1229,13 @@ void MissionController::_recalcMissionFlightStatus()
         }
 
         // Look for gimbal change
-        if (_managerVehicle->vehicleYawsToNextWaypointInMission()) {
-            // We current only support gimbal display in this mode
-            double gimbalYaw = item->specifiedGimbalYaw();
-            if (!qIsNaN(gimbalYaw)) {
-                _missionFlightStatus.gimbalYaw = gimbalYaw;
-            }
+        double gimbalYaw = item->specifiedGimbalYaw();
+        if (!qIsNaN(gimbalYaw)) {
+            _missionFlightStatus.gimbalYaw = gimbalYaw;
+        }
+        double gimbalPitch = item->specifiedGimbalPitch();
+        if (!qIsNaN(gimbalPitch)) {
+            _missionFlightStatus.gimbalPitch = gimbalPitch;
         }
 
         if (i == 0) {
@@ -1511,6 +1514,7 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
     connect(visualItem, &VisualMissionItem::exitCoordinateHasRelativeAltitudeChanged,   this, &MissionController::_recalcWaypointLines);
     connect(visualItem, &VisualMissionItem::specifiedFlightSpeedChanged,                this, &MissionController::_recalcMissionFlightStatus);
     connect(visualItem, &VisualMissionItem::specifiedGimbalYawChanged,                  this, &MissionController::_recalcMissionFlightStatus);
+    connect(visualItem, &VisualMissionItem::specifiedGimbalPitchChanged,                this, &MissionController::_recalcMissionFlightStatus);
     connect(visualItem, &VisualMissionItem::terrainAltitudeChanged,                     this, &MissionController::_recalcMissionFlightStatus);
     connect(visualItem, &VisualMissionItem::lastSequenceNumberChanged,                  this, &MissionController::_recalcSequence);
 
