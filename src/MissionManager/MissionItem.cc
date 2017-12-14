@@ -52,6 +52,7 @@ MissionItem::MissionItem(QObject* parent)
 
     setAutoContinue(true);
 
+    connect(&_param1Fact, &Fact::rawValueChanged, this, &MissionItem::_param1Changed);
     connect(&_param2Fact, &Fact::rawValueChanged, this, &MissionItem::_param2Changed);
     connect(&_param3Fact, &Fact::rawValueChanged, this, &MissionItem::_param3Changed);
 }
@@ -440,6 +441,27 @@ double MissionItem::specifiedGimbalYaw(void) const
     }
 
     return gimbalYaw;
+}
+
+double MissionItem::specifiedGimbalPitch(void) const
+{
+    double gimbalPitch = std::numeric_limits<double>::quiet_NaN();
+
+    if (_commandFact.rawValue().toInt() == MAV_CMD_DO_MOUNT_CONTROL && _param7Fact.rawValue().toInt() == MAV_MOUNT_MODE_MAVLINK_TARGETING) {
+        gimbalPitch = _param1Fact.rawValue().toDouble();
+    }
+
+    return gimbalPitch;
+}
+
+void MissionItem::_param1Changed(QVariant value)
+{
+    Q_UNUSED(value);
+
+    double gimbalPitch = specifiedGimbalPitch();
+    if (!qIsNaN(gimbalPitch)) {
+        emit specifiedGimbalPitchChanged(gimbalPitch);
+    }
 }
 
 void MissionItem::_param2Changed(QVariant value)
