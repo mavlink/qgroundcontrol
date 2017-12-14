@@ -222,6 +222,7 @@ private:
     void _adjustTransectsToEntryPointLocation(QList<QList<QGeoCoordinate>>& transects);
     bool _gridAngleIsNorthSouthTransects();
     double _clampGridAngle90(double gridAngle);
+    int _calcMissionCommandCount(QList<QList<QGeoCoordinate>>& transectSegments);
 
     int                             _sequenceNumber;
     bool                            _dirty;

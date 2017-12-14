@@ -638,6 +638,28 @@ void SurveyMissionItem::_adjustTransectsToEntryPointLocation(QList<QList<QGeoCoo
     qCDebug(SurveyMissionItemLog) << "Modified entry point" << transects.first().first();
 }
 
+int SurveyMissionItem::_calcMissionCommandCount(QList<QList<QGeoCoordinate>>& transectSegments)
+{
+    int missionCommandCount= 0;
+    for (int i=0; i<transectSegments.count(); i++) {
+        const QList<QGeoCoordinate>& transectSegment = transectSegments[i];
+
+        missionCommandCount += transectSegment.count();    // This accounts for all waypoints
+        if (_hoverAndCaptureEnabled()) {
+            // Internal camera trigger points are entry point, plus all points before exit point
+            missionCommandCount += transectSegment.count() - (_hasTurnaround() ? 2 : 0) - 1;
+        } else if (_triggerCamera() && !_imagesEverywhere()) {
+            // Camera on/off at entry/exit of each transect
+            missionCommandCount += 2;
+        }
+    }
+    if (transectSegments.count() && _triggerCamera() && _imagesEverywhere()) {
+         // Camera on/off for entire survey
+        missionCommandCount += 2;
+    }
+
+    return missionCommandCount;
+}
 void SurveyMissionItem::_generateGrid(void)
 {
     if (_ignoreRecalc) {
@@ -725,19 +747,8 @@ void SurveyMissionItem::_generateGrid(void)
     emit gridPointsChanged();
 
     // Determine command count for lastSequenceNumber
-
-    _missionCommandCount= 0;
-    for (int i=0; i<_transectSegments.count(); i++) {
-        const QList<QGeoCoordinate>& transectSegment = _transectSegments[i];
-
-        _missionCommandCount += transectSegment.count();    // This accounts for all waypoints
-        if (_hoverAndCaptureEnabled()) {
-            // Internal camera trigger points are entry point, plus all points before exit point
-            _missionCommandCount += transectSegment.count() - (_hasTurnaround() ? 2 : 0) - 1;
-        } else if (_triggerCamera()) {
-            _missionCommandCount += 2;                          // Camera on/off at entry/exit
-        }
-    }
+    _missionCommandCount = _calcMissionCommandCount(_transectSegments);
+    _missionCommandCount += _calcMissionCommandCount(_reflyTransectSegments);
     emit lastSequenceNumberChanged(lastSequenceNumber());
 
     // Set exit coordinate
@@ -1117,7 +1128,7 @@ bool SurveyMissionItem::_appendMissionItemsWorker(QList<MissionItem*>& items, QO
 {
     bool firstWaypointTrigger = false;
 
-    qCDebug(SurveyMissionItemLog) << "hasTurnaround:triggerCamera:hoverAndCapture:imagesEverywhere:hasRefly:buildRefly" << _hasTurnaround() << _triggerCamera() << _hoverAndCaptureEnabled() << _imagesEverywhere() << hasRefly << buildRefly;
+    qCDebug(SurveyMissionItemLog) << QStringLiteral("hasTurnaround(%1) triggerCamera(%2) hoverAndCapture(%3) imagesEverywhere(%4) hasRefly(%5) buildRefly(%6) ").arg(_hasTurnaround()).arg(_triggerCamera()).arg(_hoverAndCaptureEnabled()).arg(_imagesEverywhere()).arg(hasRefly).arg(buildRefly);
 
     QList<QList<QGeoCoordinate>>& transectSegments = buildRefly ? _reflyTransectSegments : _transectSegments;
 
