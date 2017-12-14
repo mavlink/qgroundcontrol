@@ -73,7 +73,18 @@ void SpeedSectionTest::_testDirty(void)
     QCOMPARE(_speedSection->dirty(), false);
     _spySection->clearAllSignals();
 
-    // Check the remaining items that should set dirty bit
+    // Flight speed change should only signal if specifyFlightSpeed is set
+
+    _speedSection->setSpecifyFlightSpeed(false);
+    _speedSection->setDirty(false);
+    _spySection->clearAllSignals();
+    _speedSection->flightSpeed()->setRawValue(_speedSection->flightSpeed()->rawValue().toDouble() + 1);
+    QVERIFY(_spySection->checkNoSignalByMask(dirtyChangedMask));
+    QCOMPARE(_speedSection->dirty(), false);
+
+    _speedSection->setSpecifyFlightSpeed(true);
+    _speedSection->setDirty(false);
+    _spySection->clearAllSignals();
     _speedSection->flightSpeed()->setRawValue(_speedSection->flightSpeed()->rawValue().toDouble() + 1);
     QVERIFY(_spySection->checkSignalByMask(dirtyChangedMask));
     QCOMPARE(_spySection->pullBoolFromSignalIndex(dirtyChangedIndex), true);
@@ -263,4 +274,19 @@ void SpeedSectionTest::_testScanForSection(void)
     QCOMPARE(_speedSection->settingsSpecified(), false);
     visualItems.clear();
     scanIndex = 0;
+}
+
+void SpeedSectionTest::_testSpecifiedFlightSpeedChanged(void)
+{
+    // specifiedFlightSpeedChanged SHOULD NOT signal if flight speed is changed when specifyFlightSpeed IS NOT set
+    _speedSection->setSpecifyFlightSpeed(false);
+    _spySpeed->clearAllSignals();
+    _speedSection->flightSpeed()->setRawValue(_speedSection->flightSpeed()->rawValue().toDouble() + 1);
+    QVERIFY(_spySpeed->checkNoSignalByMask(specifiedFlightSpeedChangedMask));
+
+    // specifiedFlightSpeedChanged SHOULD signal if flight speed is changed when specifyFlightSpeed IS set
+    _speedSection->setSpecifyFlightSpeed(true);
+    _spySpeed->clearAllSignals();
+    _speedSection->flightSpeed()->setRawValue(_speedSection->flightSpeed()->rawValue().toDouble() + 1);
+    QVERIFY(_spySpeed->checkSignalByMask(specifiedFlightSpeedChangedMask));
 }

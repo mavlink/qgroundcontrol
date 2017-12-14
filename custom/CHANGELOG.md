@@ -1,5 +1,10 @@
 ## DataPilot Release Changelog
 
+### v1.2.18 - Dec 14 2017
+
+*   Add UTM/Geo position editing support
+*	 Plan: Add speed/gimbal value carry-over from previous items
+
 ### v1.2.17 - Dec 12 2017
 
 *   Add support for Skyward log files

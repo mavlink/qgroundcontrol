@@ -33,6 +33,7 @@
 		<file alias="QGroundControl/Controls/CameraSection.qml">../src/PlanView/CameraSection.qml</file>
 		<file alias="QGroundControl/Controls/ClickableColor.qml">../src/QmlControls/ClickableColor.qml</file>
 		<file alias="QGroundControl/Controls/DropButton.qml">../src/QmlControls/DropButton.qml</file>
+		<file alias="QGroundControl/Controls/EditPositionDialog.qml">../src/QmlControls/EditPositionDialog.qml</file>
 		<file alias="QGroundControl/Controls/ExclusiveGroupItem.qml">../src/QmlControls/ExclusiveGroupItem.qml</file>
 		<file alias="QGroundControl/Controls/FactSliderPanel.qml">../src/QmlControls/FactSliderPanel.qml</file>
 		<file alias="QGroundControl/Controls/FileButton.qml">../src/QmlControls/FileButton.qml</file>
@@ -184,6 +185,7 @@
 		<file alias="CameraSpec.FactMetaData.json">../src/MissionManager/CameraSpec.FactMetaData.json</file>
 		<file alias="SpeedSection.FactMetaData.json">../src/MissionManager/SpeedSection.FactMetaData.json</file>
 		<file alias="MissionSettings.FactMetaData.json">../src/MissionManager/MissionSettings.FactMetaData.json</file>
+		<file alias="EditPositionDialog.FactMetaData.json">../src/QmlControls/EditPositionDialog.FactMetaData.json</file>
 		<file alias="Vehicle/VehicleFact.json">../src/Vehicle/VehicleFact.json</file>
 		<file alias="Vehicle/BatteryFact.json">../src/Vehicle/BatteryFact.json</file>
 		<file alias="Vehicle/GPSFact.json">../src/Vehicle/GPSFact.json</file>
