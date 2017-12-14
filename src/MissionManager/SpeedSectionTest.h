@@ -24,12 +24,13 @@ public:
     void cleanup(void) override;
 
 private slots:
-    void _testDirty(void);
-    void _testSettingsAvailable(void);
-    void _checkAvailable(void);
-    void _testItemCount(void);
-    void _testAppendSectionItems(void);
-    void _testScanForSection(void);
+    void _testDirty                         (void);
+    void _testSettingsAvailable             (void);
+    void _checkAvailable                    (void);
+    void _testItemCount                     (void);
+    void _testAppendSectionItems            (void);
+    void _testScanForSection                (void);
+    void _testSpecifiedFlightSpeedChanged   (void);
 
 private:
     void _createSpy(SpeedSection* speedSection, MultiSignalSpy** speedSpy);

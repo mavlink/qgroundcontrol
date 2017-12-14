@@ -54,6 +54,7 @@ public:
         double  vehicleSpeed;           ///< Either cruise or hover speed based on vehicle type and vtol state
         double  vehicleYaw;
         double  gimbalYaw;              ///< NaN signals yaw was never changed
+        double  gimbalPitch;            ///< NaN signals pitch was never changed
         int     mAhBattery;             ///< 0 for not available
         double  hoverAmps;              ///< Amp consumption during hover
         double  cruiseAmps;             ///< Amp consumption during cruise
