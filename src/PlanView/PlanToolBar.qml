@@ -283,13 +283,15 @@ Rectangle {
             }
 
             Item { width: 1; height: 1 }
-
+/*
+            FIXME: Swap point display is currently hidden since the code which calcs it doesn't work correctly
             QGCLabel { text: qsTr("Swap waypoint:"); font.pointSize: _dataFontSize; }
             QGCLabel {
                 text:                   _batteryChangePointText
                 font.pointSize:         _dataFontSize
                 Layout.minimumWidth:    _mediumValueWidth
             }
+*/
         }
     }
 

@@ -62,6 +62,15 @@ Rectangle {
         }
     }
 
+    Component {
+        id: editPositionDialog
+
+        EditPositionDialog {
+            coordinate: missionItem.coordinate
+            onCoordinateChanged: missionItem.coordinate = coordinate
+        }
+    }
+
     QGCLabel {
         id:                     label
         anchors.verticalCenter: commandPicker.verticalCenter
@@ -134,6 +143,12 @@ Rectangle {
                 text:           qsTr("Change command...")
                 onTriggered:    commandPicker.clicked()
                 visible:        !_waypointsOnlyMode
+            }
+
+            MenuItem {
+                text:           qsTr("Edit position...")
+                visible:        missionItem.specifiesCoordinate
+                onTriggered:    qgcView.showDialog(editPositionDialog, qsTr("Edit Position"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
             }
 
             MenuSeparator {

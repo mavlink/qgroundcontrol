@@ -28,6 +28,7 @@ private slots:
     void _testDirty(void);
     void _testSaveLoad(void);
     void _testGimbalAngleUpdate(void);
+    void _testItemCount(void);
 
 private:
     void _initItem(void);
