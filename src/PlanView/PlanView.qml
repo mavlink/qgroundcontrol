@@ -32,6 +32,8 @@ QGCView {
     viewPanel:  panel
     z:          QGroundControl.zOrderTopMost
 
+    property alias          planMap:                    editorMap
+
     readonly property int   _decimalPlaces:             8
     readonly property real  _horizontalMargin:          ScreenTools.defaultFontPixelWidth  / 2
     readonly property real  _margin:                    ScreenTools.defaultFontPixelHeight * 0.5
