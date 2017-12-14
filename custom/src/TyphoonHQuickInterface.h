@@ -18,6 +18,7 @@ class YExportFiles;
 class TyphoonHM4Interface;
 #endif
 class TyphoonHQuickInterface;
+class QUdpSocket;
 
 //-----------------------------------------------------------------------------
 // Vehicle List
@@ -174,7 +175,11 @@ public:
     Q_PROPERTY(bool             isInternet      READ    isInternet          NOTIFY isInternetChanged)
     Q_PROPERTY(bool             isDefaultPwd    READ    isDefaultPwd        NOTIFY isDefaultPwdChanged)
     Q_PROPERTY(bool             desktopPlanner  READ    desktopPlanner      CONSTANT)
-
+#if defined(__planner__)
+    Q_PROPERTY(QStringList      clientList      READ    clientList          NOTIFY clientListChanged)
+#else
+    Q_PROPERTY(QString          macAddress      READ    macAddress          NOTIFY macAddressChanged)
+#endif
     Q_PROPERTY(bool             firstRun            READ    firstRun            WRITE   setFirstRun         NOTIFY  firstRunChanged)
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
 
@@ -280,6 +285,7 @@ public:
     bool        desktopPlanner      () { return true; }
 #else
     bool        desktopPlanner      () { return false; }
+    QString     macAddress          () { return _macAddress; }
 #endif
 #if defined(__androidx86__)
     void        init                (TyphoonHM4Interface* pHandler);
@@ -311,6 +317,9 @@ public:
     bool        calibrationComplete ();
     bool        thermalImagePresent ();
 
+#if defined(__planner__)
+    QStringList clientList          () { return _st16ClientsNames; }
+#endif
     QString     updateError         () { return _updateError; }
     int         updateProgress      () { return _updateProgress; }
     bool        updateDone          () { return _updateDone; }
@@ -383,7 +392,12 @@ signals:
     void    thermalOpacityChanged       ();
     void    isInternetChanged           ();
     void    isDefaultPwdChanged         ();
-    void    firstRunChanged          ();
+    void    firstRunChanged             ();
+#if defined(__planner__)
+    void    clientListChanged           ();
+#else
+    void    macAddressChanged           ();
+#endif
 
 private slots:
     void    _m4StateChanged             ();
@@ -424,6 +438,8 @@ private slots:
     void    _restart                    ();
     void    _imageFileChanged           ();
     void    _setWiFiPassword            ();
+    void    _broadcastPresence          ();
+    void    _readUDPBytes               ();
 
 private:
     void    _saveWifiConfigurations     ();
@@ -434,6 +450,7 @@ private:
     void                    _distanceSensor     (int minDist, int maxDist, int curDist);
     TyphoonSSIDItem*        _findSsid           (QString ssid, int rssi);
     void                    _clearSSids         ();
+    void                    _initUDPListener    ();
 
 private:
 #if defined(__androidx86__)
@@ -451,6 +468,7 @@ private:
     QTimer                  _scanTimer;
     QTimer                  _flightTimer;
     QTimer                  _powerTimer;
+    QTimer                  _broadcastTimer;
     QTime                   _flightTime;
     bool                    _scanEnabled;
     bool                    _scanningWiFi;
@@ -474,4 +492,11 @@ private:
     bool                    _updateShown;
     bool                    _firstRun;
     bool                    _passwordSet;   //-- Was the password set within this session?
+    QUdpSocket*             _udpSocket;
+#if defined(__planner__)
+    QStringList             _st16ClientsNames;
+    QVector<QHostAddress>   _st16Clients;
+#else
+    QString                 _macAddress;
+#endif
 };

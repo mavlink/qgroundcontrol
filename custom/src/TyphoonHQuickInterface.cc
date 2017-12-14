@@ -60,6 +60,8 @@ reset_jni()
 #define FIRMWARE_FORCE_UPDATE_MINOR 1
 #define FIRMWARE_FORCE_UPDATE_PATCH 0
 
+#define UDP_BROADCAST_PORT          14549
+
 //-----------------------------------------------------------------------------
 TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     : QObject(parent)
@@ -90,6 +92,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _updateShown(false)
     , _firstRun(true)
     , _passwordSet(false)
+    , _udpSocket(NULL)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
 #if defined __android__
@@ -116,6 +119,9 @@ TyphoonHQuickInterface::~TyphoonHQuickInterface()
     }
     if(_exporter) {
         _exporter->deleteLater();
+    }
+    if(_udpSocket) {
+        _udpSocket->deleteLater();
     }
 }
 
@@ -158,11 +164,13 @@ TyphoonHQuickInterface::init()
         connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded,         this, &TyphoonHQuickInterface::_vehicleAdded);
         connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved,       this, &TyphoonHQuickInterface::_vehicleRemoved);
         connect(qgcApp()->toolbox()->videoManager()->videoReceiver(), &VideoReceiver::imageFileChanged,   this, &TyphoonHQuickInterface::_imageFileChanged);
-        connect(&_scanTimer,    &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
-        connect(&_flightTimer,  &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
-        connect(&_powerTimer,   &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
+        connect(&_scanTimer,        &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
+        connect(&_flightTimer,      &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
+        connect(&_powerTimer,       &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
+        connect(&_broadcastTimer,   &QTimer::timeout, this, &TyphoonHQuickInterface::_broadcastPresence);
         _flightTimer.setSingleShot(false);
         _powerTimer.setSingleShot(true);
+        _broadcastTimer.setSingleShot(false);
         //-- Make sure uLog is disabled
         qgcApp()->toolbox()->mavlinkLogManager()->setEnableAutoUpload(false);
         qgcApp()->toolbox()->mavlinkLogManager()->setEnableAutoStart(false);
@@ -185,11 +193,18 @@ TyphoonHQuickInterface::init()
                 logs.removeAt(0);
             }
         }
+#if !defined(__planner__)
         //-- Thermal video surface must be created before UI
         if(!_videoReceiver) {
             _videoReceiver = new VideoReceiver(this);
             connect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);
         }
+        //-- Start UDP broadcast
+        _broadcastTimer.start(5000);
+#else
+        //-- Start UDP listener
+        _initUDPListener();
+#endif
 #if defined(__androidx86__)
     }
 #endif
@@ -1664,4 +1679,78 @@ TyphoonMediaItem::setSelected (bool sel)
         }
         emit _parent->selectedCountChanged();
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_broadcastPresence()
+{
+    //-- The ST16 will broadcast its presence every 5 seconds so DataPilot Planner
+    //   can find it.
+#if !defined(__planner__)
+    if(!_udpSocket) {
+        _udpSocket = new QUdpSocket(this);
+    }
+    if(_macAddress.isEmpty()) {
+        //-- Get first interface with a MAC address
+        foreach(QNetworkInterface interface, QNetworkInterface::allInterfaces()) {
+            _macAddress = interface.hardwareAddress();
+            if(!_macAddress.isEmpty() && !_macAddress.endsWith("00:00:00")) {
+                break;
+            }
+        }
+        if(_macAddress.length() > 9) {
+            //-- Got one
+            _macAddress = _macAddress.mid(9);
+            _macAddress.replace(":", "");
+        } else {
+            //-- Make something up
+            _macAddress.sprintf("%06d", (qrand() % 999999));
+        }
+        _macAddress = "ST16S_" + _macAddress;
+        emit macAddressChanged();
+        qCDebug(YuneecLog) << "MAC Address:" << _macAddress;
+    }
+    _udpSocket->writeDatagram(_macAddress.toLocal8Bit(), QHostAddress::Broadcast, UDP_BROADCAST_PORT);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_initUDPListener()
+{
+    //-- DataPilot Planner listens for ST16 broadcasting their presences.
+#if defined(__planner__)
+    if(!_udpSocket) {
+        _udpSocket = new QUdpSocket(this);
+    }
+    QHostAddress host = QHostAddress::AnyIPv4;
+    _udpSocket->setProxy(QNetworkProxy::NoProxy);
+    if(_udpSocket->bind(host, UDP_BROADCAST_PORT, QAbstractSocket::ReuseAddressHint | QUdpSocket::ShareAddress)) {
+        qDebug() << "UDP Broadcast receiver bound to:" << UDP_BROADCAST_PORT;
+        QObject::connect(_udpSocket, &QUdpSocket::readyRead, this, &TyphoonHQuickInterface::_readUDPBytes);
+    } else {
+        qWarning() << "Could not bind UDP port:" << UDP_BROADCAST_PORT;
+    }
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_readUDPBytes()
+{
+    //-- This is a broadcast from an ST16. Collect its "name" and address.
+#if defined(__planner__)
+    while (_udpSocket->hasPendingDatagrams()) {
+        QByteArray datagram;
+        datagram.resize(_udpSocket->pendingDatagramSize());
+        QHostAddress sender;
+        _udpSocket->readDatagram(datagram.data(), datagram.size(), &sender);
+        if(!_st16Clients.contains(sender)) {
+            _st16ClientsNames.append(datagram.data());
+            _st16Clients.append(sender);
+            emit clientListChanged();
+        }
+    }
+#endif
 }

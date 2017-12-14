@@ -20,6 +20,8 @@ import QGroundControl.FlightDisplay         1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 
+import TyphoonHQuickInterface               1.0
+
 /// Native QML top level window
 Window {
     id:             _rootWindow
@@ -35,12 +37,47 @@ Window {
     property real   currentCenterX:     0
     property var    activeVehicle:      QGroundControl.multiVehicleManager.activeVehicle
     property bool   communicationLost:  activeVehicle ? activeVehicle.connectionLost : false
+    property var    planMap:            planViewLoader.item ? planViewLoader.item.planMap : null
+    property var    mapSettings:        QGroundControl.settingsManager.flightMapSettings
+    property string mapType:            mapSettings.mapProvider.enumStringValue + " " + mapSettings.mapType.enumStringValue
+    property real   minZoom:            2
+    property real   maxZoom:            19
+    property int    clientCount:        TyphoonHQuickInterface.clientList.length
 
     function showSetupView() {
     }
 
     function showMessage(message) {
         console.log('Root: ' + message)
+    }
+
+    function handleMapChanges() {
+        if(planMap) {
+            var xl = 0
+            var yl = 0
+            var xr = planMap.width.toFixed(0) - 1  // Must be within boundaries of visible map
+            var yr = planMap.height.toFixed(0) - 1 // Must be within boundaries of visible map
+            var c0 = planMap.toCoordinate(Qt.point(xl, yl), false /* clipToViewPort */)
+            var c1 = planMap.toCoordinate(Qt.point(xr, yr), false /* clipToViewPort */)
+            QGroundControl.mapEngineManager.updateForCurrentView(c0.longitude, c0.latitude, c1.longitude, c1.latitude, minZoom, maxZoom, mapType)
+            console.log('Tile count: ' + QGroundControl.mapEngineManager.tileCountStr)
+            console.log('Tile size:  ' + QGroundControl.mapEngineManager.tileSizeStr)
+        }
+    }
+
+    function updateMap() {
+        for (var i = 0; i < planMap.supportedMapTypes.length; i++) {
+            if (mapType === planMap.supportedMapTypes[i].name) {
+                planMap.activeMapType = planMap.supportedMapTypes[i]
+                handleMapChanges()
+                return
+            }
+        }
+    }
+
+    Component.onCompleted: {
+        QGroundControl.mapEngineManager.loadTileSets()
+        updateMap()
     }
 
     Timer {
@@ -56,6 +93,14 @@ Window {
                 }
             }
         }
+    }
+
+    Connections {
+        target: planMap
+        onCenterChanged:    handleMapChanges()
+        onZoomLevelChanged: handleMapChanges()
+        onWidthChanged:     handleMapChanges()
+        onHeightChanged:    handleMapChanges()
     }
 
     Connections {
@@ -189,7 +234,7 @@ Window {
             anchors.top:                parent.top
             height:                     ScreenTools.toolbarHeight
             width:                      indicatorsRow.width
-            visible:                    activeVehicle
+            visible:                    activeVehicle || clientCount
             Row {
                 id:                     indicatorsRow
                 anchors.bottomMargin:   1
@@ -212,13 +257,25 @@ Window {
                     anchors.top:        parent.top
                     anchors.bottom:     parent.bottom
                     anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+                    visible:            activeVehicle
                     source:             "/typhoonh/YGPSIndicator.qml"
                 }
                 Loader {
                     anchors.top:        parent.top
                     anchors.bottom:     parent.bottom
                     anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+                    visible:            activeVehicle
                     source:             "/typhoonh/BatteryIndicator.qml"
+                }
+                QGCButton {
+                    text:               qsTr("Upload to ST16")
+                    visible:            !activeVehicle
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Rectangle {
+                    height:             1
+                    width:              1
+                    visible:            !activeVehicle
                 }
             }
         }
