@@ -46,8 +46,8 @@ signals:
     void specifiedFlightSpeedChanged    (double flightSpeed);
 
 private slots:
-    void _setDirty                  (void);
     void _updateSpecifiedFlightSpeed(void);
+    void _flightSpeedChanged        (void);
 
 private:
     bool    _available;
