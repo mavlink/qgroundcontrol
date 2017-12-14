@@ -7,11 +7,12 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Window   2.2
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtPositioning    5.3
+import QtQuick              2.3
+import QtQuick.Window       2.2
+import QtQuick.Controls     1.2
+import QtQuick.Dialogs      1.2
+import QtPositioning        5.3
+import QtGraphicalEffects   1.0
 
 import QGroundControl                       1.0
 import QGroundControl.Palette               1.0
@@ -43,6 +44,7 @@ Window {
     property real   minZoom:            2
     property real   maxZoom:            19
     property int    clientCount:        TyphoonHQuickInterface.clientList.length
+    property bool   toolbarEnabled:     true
 
     function showSetupView() {
     }
@@ -126,34 +128,40 @@ Window {
         }
 
         function disableToolbar() {
+            toolbarEnabled = false
         }
 
         function enableToolbar() {
+            toolbarEnabled = true
         }
 
         function showSettingsView() {
-            rootLoader.sourceComponent = null
-            if(currentPopUp) {
-                currentPopUp.close()
+            if(toolbarEnabled) {
+                rootLoader.sourceComponent = null
+                if(currentPopUp) {
+                    currentPopUp.close()
+                }
+                //-- In settings view, the full height is available. Set to 0 so it is ignored.
+                ScreenTools.availableHeight = 0
+                planToolBar.visible = false
+                planViewLoader.visible = false
+                toolBar.visible = true
+                settingsViewLoader.visible = true
             }
-            //-- In settings view, the full height is available. Set to 0 so it is ignored.
-            ScreenTools.availableHeight = 0
-            planToolBar.visible = false
-            planViewLoader.visible = false
-            toolBar.visible = true
-            settingsViewLoader.visible = true
         }
 
         function showPlanView() {
-            rootLoader.sourceComponent = null
-            if(currentPopUp) {
-                currentPopUp.close()
+            if(toolbarEnabled) {
+                rootLoader.sourceComponent = null
+                if(currentPopUp) {
+                    currentPopUp.close()
+                }
+                ScreenTools.availableHeight = parent.height - toolBar.height
+                settingsViewLoader.visible = false
+                toolBar.visible = false
+                planViewLoader.visible = true
+                planToolBar.visible = true
             }
-            ScreenTools.availableHeight = parent.height - toolBar.height
-            settingsViewLoader.visible = false
-            toolBar.visible = false
-            planViewLoader.visible = true
-            planToolBar.visible = true
         }
 
         function showFlyView() {
@@ -204,6 +212,7 @@ Window {
                     source:             "/qmlimages/PaperPlane.svg"
                     logo:               true
                     checked:            false
+                    enabled:            toolbarEnabled
                     onClicked: {
                         checked = false
                         mainWindow.showPlanView()
@@ -234,7 +243,7 @@ Window {
             anchors.top:                parent.top
             height:                     ScreenTools.toolbarHeight
             width:                      indicatorsRow.width
-            visible:                    activeVehicle || clientCount
+            visible:                    activeVehicle || (clientCount && planViewLoader.visible)
             Row {
                 id:                     indicatorsRow
                 anchors.bottomMargin:   1
@@ -267,10 +276,16 @@ Window {
                     visible:            activeVehicle
                     source:             "/typhoonh/BatteryIndicator.qml"
                 }
+                //-- This is enabled (visisble) if we have received a broadcast
+                //   from an ST16 and we are not connected to a vehicle.
                 QGCButton {
                     text:               qsTr("Upload to ST16")
                     visible:            !activeVehicle
                     anchors.verticalCenter: parent.verticalCenter
+                    onClicked: {
+                        exportToST16.visible = true
+                        mainWindow.disableToolbar()
+                    }
                 }
                 Rectangle {
                     height:             1
@@ -338,6 +353,119 @@ Window {
             height:         ScreenTools.toolbarHeight * 0.05
             width:          activeVehicle ? activeVehicle.parameterManager.loadProgress * parent.width : 0
             color:          qgcPal.colorGreen
+        }
+        //-------------------------------------------------------------------------
+        //-- Upload to ST16
+        Item {
+            id:             exportToST16
+            visible:        false
+            anchors.fill:   parent
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+            Rectangle {
+                id:             exportST16Shadow
+                anchors.fill:   exportST16Rect
+                radius:         exportST16Rect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       exportST16Shadow
+                visible:            exportST16Rect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             exportST16Shadow
+            }
+            Rectangle {
+                id:             exportST16Rect
+                width:          ScreenTools.defaultFontPixelWidth * 100
+                height:         copyCol.height * 1.25
+                radius:         ScreenTools.defaultFontPixelWidth
+                color:          qgcPal.alertBackground
+                border.color:   qgcPal.alertBorder
+                border.width:   2
+                anchors.centerIn: parent
+                Column {
+                    id:                 copyCol
+                    width:              exportST16Rect.width
+                    spacing:            ScreenTools.defaultFontPixelHeight * 2
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           qsTr("Upload Mission")
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        color:          qgcPal.alertText
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           TyphoonHQuickInterface.clientList[0]
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    Rectangle {
+                        color:          qgcPal.window
+                        width:          exportUTMCheck.width  + (ScreenTools.defaultFontPixelWidth * 4)
+                        height:         exportUTMCheck.height + ScreenTools.defaultFontPixelHeight
+                        radius:         4
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCCheckBox {
+                            id:                 exportUTMCheck
+                            text:               qsTr("Include Map Tiles")
+                            checked:            false
+                            enabled:            !TyphoonHQuickInterface.copyingFiles
+                            anchors.centerIn:   parent
+                        }
+                    }
+                    ProgressBar {
+                        width:          parent.width * 0.75
+                        orientation:    Qt.Horizontal
+                        minimumValue:   0
+                        maximumValue:   100
+                        value:          TyphoonHQuickInterface.updateProgress
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           TyphoonHQuickInterface.copyMessage
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    Row {
+                        spacing:        ScreenTools.defaultFontPixelWidth * 2
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCButton {
+                            text:           !TyphoonHQuickInterface.copyingFiles ? qsTr("Upload") : qsTr("Cancel")
+                            width:          ScreenTools.defaultFontPixelWidth  * 16
+                            height:         ScreenTools.defaultFontPixelHeight * 2
+                            enabled:        !TyphoonHQuickInterface.copyingDone
+                            onClicked: {
+                                console.log('Upload')
+                            }
+                        }
+                        QGCButton {
+                            text:           qsTr("Close")
+                            width:          ScreenTools.defaultFontPixelWidth  * 16
+                            enabled:        !TyphoonHQuickInterface.copyingFiles
+                            height:         ScreenTools.defaultFontPixelHeight * 2
+                            onClicked: {
+                                mainWindow.enableToolbar()
+                                exportToST16.visible = false
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

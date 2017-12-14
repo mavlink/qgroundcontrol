@@ -176,7 +176,8 @@ public:
     Q_PROPERTY(bool             isDefaultPwd    READ    isDefaultPwd        NOTIFY isDefaultPwdChanged)
     Q_PROPERTY(bool             desktopPlanner  READ    desktopPlanner      CONSTANT)
 #if defined(__planner__)
-    Q_PROPERTY(QStringList      clientList      READ    clientList          NOTIFY clientListChanged)
+    //-- Upload mission to ST16
+    Q_PROPERTY(QStringList      clientList          READ    clientList          NOTIFY clientListChanged)
 #else
     Q_PROPERTY(QString          macAddress      READ    macAddress          NOTIFY macAddressChanged)
 #endif
