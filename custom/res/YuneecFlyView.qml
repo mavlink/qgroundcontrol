@@ -269,7 +269,7 @@ Item {
                     mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
                 }
-                if(camControlLoader.item.formatInProgress) {
+                if(camControlLoader.item && camControlLoader.item.formatInProgress) {
                     _formatComplete = true
                     showSimpleAlert(
                         qsTr("Format MicroSD Card"),
@@ -277,7 +277,9 @@ Item {
                 }
             }
             //-- Anything will reset this
-            camControlLoader.item.formatInProgress = false
+            if(camControlLoader.item) {
+                camControlLoader.item.formatInProgress = false
+            }
         }
         onStorageFreeChanged: {
             if(_fullSD) {
@@ -351,10 +353,13 @@ Item {
 
     MessageDialog {
         id:                 connectionLostDisarmedDialog
-        title:              qsTr("Communication Lost")
-        text:               qsTr("Connection to vehicle has been lost and closed.")
+        title:              TyphoonHQuickInterface.newPasswordSet ? qsTr("Password Changed") : qsTr("Communication Lost")
+        text:               TyphoonHQuickInterface.newPasswordSet ? qsTr("Please power cycle the vehicle for the new password to take effect.") : qsTr("Connection to vehicle has been lost and closed.")
         standardButtons:    StandardButton.Ok
-        onAccepted:         connectionLostDisarmedDialog.close()
+        onAccepted: {
+            TyphoonHQuickInterface.newPasswordSet = false
+            connectionLostDisarmedDialog.close()
+        }
     }
 
     //-- Camera Status

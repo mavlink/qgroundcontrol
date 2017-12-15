@@ -90,6 +90,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _updateShown(false)
     , _firstRun(true)
     , _passwordSet(false)
+    , _newPasswordSet(false)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
 #if defined __android__
