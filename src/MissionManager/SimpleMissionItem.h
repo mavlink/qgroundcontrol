@@ -24,7 +24,7 @@ class SimpleMissionItem : public VisualMissionItem
     
 public:
     SimpleMissionItem(Vehicle* vehicle, QObject* parent = NULL);
-    SimpleMissionItem(Vehicle* vehicle, const MissionItem& missionItem, QObject* parent = NULL);
+    SimpleMissionItem(Vehicle* vehicle, bool editMode, const MissionItem& missionItem, QObject* parent = NULL);
     SimpleMissionItem(const SimpleMissionItem& other, QObject* parent = NULL);
 
     ~SimpleMissionItem();
