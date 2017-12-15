@@ -1651,6 +1651,7 @@ TyphoonHM4Interface::_handleControllerFeedback(m4Packet& packet)
     _controllerLocation.angle        = byteArrayToShort(commandValues, 16);
     _controllerLocation.satelliteCount = commandValues[18] & 0x1f;
     emit controllerLocationChanged();
+    //qDebug() << "ST16 GPS:" << _controllerLocation.latitude << _controllerLocation.longitude << _controllerLocation.altitude << _controllerLocation.satelliteCount;
 }
 
 

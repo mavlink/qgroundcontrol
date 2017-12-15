@@ -53,242 +53,250 @@ QGCView {
     QGCViewPanel {
         id:             panel
         anchors.fill:   parent
-        Column {
-            id:                 settingsColumn
-            width:              qgcView.width
-            spacing:            ScreenTools.defaultFontPixelHeight * 0.5
-            anchors.margins:    ScreenTools.defaultFontPixelWidth
+        QGCFlickable {
+            clip:               true
+            width:              settingsColumn.width
+            height:             parent.height
+            contentHeight:      settingsColumn.height
+            contentWidth:       settingsColumn.width
             anchors.centerIn:   parent
-            //-----------------------------------------------------------------
-            Rectangle {
-                height:         importRow.height * 2
-                width:          ScreenTools.defaultFontPixelWidth * 80
-                color:          qgcPal.windowShade
-                anchors.horizontalCenter: parent.horizontalCenter
-                Row {
-                    id:         importRow
-                    spacing:    ScreenTools.defaultFontPixelWidth * 4
-                    anchors.centerIn: parent
-                    QGCButton {
-                        text:   qsTr("Import Mission")
-                        width:   _buttonWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                        onClicked: {
-                            _importAction = true
-                            rootLoader.sourceComponent = fileCopyDialog
-                            mainWindow.disableToolbar()
-                        }
-                    }
-                    QGCLabel {
-                        text:   qsTr("Import missions from microSD Card")
-                        width:   _textWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-            }
-            //-----------------------------------------------------------------
-            Rectangle {
-                height:         exportRow.height * 2
-                width:          ScreenTools.defaultFontPixelWidth * 80
-                color:          qgcPal.windowShade
-                anchors.horizontalCenter: parent.horizontalCenter
-                Row {
-                    id:         exportRow
-                    spacing:    ScreenTools.defaultFontPixelWidth * 4
-                    anchors.centerIn: parent
-                    QGCButton {
-                        text:   qsTr("Export Data")
-                        width:   _buttonWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                        onClicked: {
-                            _importAction = false
-                            rootLoader.sourceComponent = fileCopyDialog
-                            mainWindow.disableToolbar()
-                        }
-                    }
-                    QGCLabel {
-                        text:   qsTr("Export missions and logs to microSD Card")
-                        width:   _textWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-            }
-            //-----------------------------------------------------------------
-            Rectangle {
-                height:         bindRow.height * 2
-                width:          ScreenTools.defaultFontPixelWidth * 80
-                color:          qgcPal.windowShade
-                visible:        !TyphoonHQuickInterface.desktopPlanner && (!_activeVehicle || (_activeVehicle.rcRSSI === 0 || _activeVehicle.rcRSSI === 255))
-                anchors.horizontalCenter: parent.horizontalCenter
-                Row {
-                    id:         bindRow
-                    spacing:    ScreenTools.defaultFontPixelWidth * 4
-                    anchors.centerIn: parent
-                    QGCButton {
-                        text:   qsTr("Manual Bind")
-                        width:   _buttonWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                        onClicked: {
-                            rootLoader.sourceComponent = bindDialog
-                            mainWindow.disableToolbar()
-                        }
-                    }
-                    QGCLabel {
-                        text:   qsTr("Manually bind RC to vehicle (fly without camera)")
-                        width:   _textWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-            }
-            //-----------------------------------------------------------------
-            Rectangle {
-                height:         passwordRow.height * 2
-                width:          ScreenTools.defaultFontPixelWidth * 80
-                color:          qgcPal.windowShade
-                visible:        _activeVehicle && (_camera && !_camera.isThermal) && !TyphoonHQuickInterface.desktopPlanner
-                anchors.horizontalCenter: parent.horizontalCenter
-                Row {
-                    id:         passwordRow
-                    spacing:    ScreenTools.defaultFontPixelWidth * 4
-                    anchors.centerIn: parent
-                    QGCButton {
-                        text:   qsTr("Set Password")
-                        width:   _buttonWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                        onClicked: {
-                            passwordDialog.visible = true
-                        }
-                    }
-                    QGCLabel {
-                        text:   qsTr("Set connection password")
-                        width:   _textWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-            }
-            //-----------------------------------------------------------------
-            Rectangle {
-                height:         updateRow.height * 2
-                width:          ScreenTools.defaultFontPixelWidth * 80
-                color:          qgcPal.windowShade
-                visible:        ScreenTools.isMobile && !TyphoonHQuickInterface.desktopPlanner
-                anchors.horizontalCenter: parent.horizontalCenter
-                Row {
-                    id:         updateRow
-                    spacing:    ScreenTools.defaultFontPixelWidth * 4
-                    anchors.centerIn: parent
-                    QGCButton {
-                        text:       qsTr("Update Firmware")
-                        width:      _buttonWidth
-                        enabled:    !TyphoonHQuickInterface.updating
-                        anchors.verticalCenter: parent.verticalCenter
-                        onClicked: {
-                            if(TyphoonHQuickInterface.checkForUpdate()) {
-                                updateDialog.open()
-                            } else {
-                                noUpdateDialog.open()
-                            }
-                        }
-                        MessageDialog {
-                            id:                 noUpdateDialog
-                            title:              qsTr("Update Firmware")
-                            text:               qsTr("Update file not found.")
-                            standardButtons:    StandardButton.Ok
-                            onAccepted:         noUpdateDialog.close()
-                        }
-                        MessageDialog {
-                            id:                 updateDialog
-                            title:              qsTr("Update Firmware")
-                            text:               qsTr("Confirm updating firmware?")
-                            standardButtons:    StandardButton.Ok | StandardButton.Cancel
-                            onAccepted: {
-                                rootLoader.sourceComponent = firmwareUpdate
+            Column {
+                id:                 settingsColumn
+                width:              qgcView.width
+                spacing:            ScreenTools.defaultFontPixelHeight * 0.25
+                anchors.margins:    ScreenTools.defaultFontPixelWidth
+                anchors.centerIn:   parent
+                //-----------------------------------------------------------------
+                Rectangle {
+                    height:         importRow.height * 2
+                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    color:          qgcPal.windowShade
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Row {
+                        id:         importRow
+                        spacing:    ScreenTools.defaultFontPixelWidth * 4
+                        anchors.centerIn: parent
+                        QGCButton {
+                            text:   qsTr("Import Mission")
+                            width:   _buttonWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked: {
+                                _importAction = true
+                                rootLoader.sourceComponent = fileCopyDialog
                                 mainWindow.disableToolbar()
-                                TyphoonHQuickInterface.updateSystemImage()
                             }
                         }
-                    }
-                    QGCLabel {
-                        text:   qsTr("Update ST16 Firmware (from microSD card)")
-                        width:  _textWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-            }
-            //-----------------------------------------------------------------
-            Rectangle {
-                id:             factoryTest
-                height:         factoryRow.height * 2
-                width:          ScreenTools.defaultFontPixelWidth * 80
-                color:          qgcPal.windowShade
-                visible:        QGroundControl.corePlugin.showAdvancedUI && TyphoonHQuickInterface.isFactoryApp && !TyphoonHQuickInterface.desktopPlanner
-                anchors.horizontalCenter: parent.horizontalCenter
-                Row {
-                    id:         factoryRow
-                    spacing:    ScreenTools.defaultFontPixelWidth * 4
-                    anchors.centerIn: parent
-                    QGCButton {
-                        text:   qsTr("Factory Test")
-                        width:   _buttonWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                        onClicked: {
-                            TyphoonHQuickInterface.factoryTest()
+                        QGCLabel {
+                            text:   qsTr("Import missions from microSD Card")
+                            width:   _textWidth
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
-                    QGCLabel {
-                        text:   qsTr("Enter Factory Test")
-                        width:   _textWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
                 }
-            }
-            //-----------------------------------------------------------------
-            Rectangle {
-                height:         updaterRow.height * 2
-                width:          ScreenTools.defaultFontPixelWidth * 80
-                color:          qgcPal.windowShade
-                visible:        !factoryTest.visible && TyphoonHQuickInterface.isUpdaterApp && !TyphoonHQuickInterface.desktopPlanner
-                anchors.horizontalCenter: parent.horizontalCenter
-                Row {
-                    id:         updaterRow
-                    spacing:    ScreenTools.defaultFontPixelWidth * 4
-                    anchors.centerIn: parent
-                    QGCButton {
-                        text:   qsTr("Software Updater")
-                        width:   _buttonWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                        onClicked: {
-                            TyphoonHQuickInterface.launchUpdater()
+                //-----------------------------------------------------------------
+                Rectangle {
+                    height:         exportRow.height * 2
+                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    color:          qgcPal.windowShade
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Row {
+                        id:         exportRow
+                        spacing:    ScreenTools.defaultFontPixelWidth * 4
+                        anchors.centerIn: parent
+                        QGCButton {
+                            text:   qsTr("Export Data")
+                            width:   _buttonWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked: {
+                                _importAction = false
+                                rootLoader.sourceComponent = fileCopyDialog
+                                mainWindow.disableToolbar()
+                            }
+                        }
+                        QGCLabel {
+                            text:   qsTr("Export missions and logs to microSD Card")
+                            width:   _textWidth
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
-                    QGCLabel {
-                        text:   qsTr("Launch Software Updater App")
-                        width:   _textWidth
-                        anchors.verticalCenter: parent.verticalCenter
+                }
+                //-----------------------------------------------------------------
+                Rectangle {
+                    height:         bindRow.height * 2
+                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    color:          qgcPal.windowShade
+                    visible:        !TyphoonHQuickInterface.desktopPlanner && (!_activeVehicle || (_activeVehicle.rcRSSI === 0 || _activeVehicle.rcRSSI === 255))
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Row {
+                        id:         bindRow
+                        spacing:    ScreenTools.defaultFontPixelWidth * 4
+                        anchors.centerIn: parent
+                        QGCButton {
+                            text:   qsTr("Manual Bind")
+                            width:   _buttonWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked: {
+                                rootLoader.sourceComponent = bindDialog
+                                mainWindow.disableToolbar()
+                            }
+                        }
+                        QGCLabel {
+                            text:   qsTr("Manually bind RC to vehicle (fly without camera)")
+                            width:   _textWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
                     }
                 }
-            }
-            Item {
-                width:  1
-                height: ScreenTools.defaultFontPixelHeight * 0.5
-            }
-            GridLayout {
-                anchors.margins:    ScreenTools.defaultFontPixelHeight
-                columnSpacing:      ScreenTools.defaultFontPixelWidth
-                columns:            2
-                anchors.horizontalCenter: parent.horizontalCenter
-                QGCLabel { text: qsTr("%1 Version:").arg(QGroundControl.appName) }
-                QGCLabel { text: QGroundControl.qgcVersion }
-                QGCLabel { text: qsTr("Camera Version:"); visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
-                QGCLabel { text: _camera ? _camera.firmwareVersion : ""; visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
-                QGCLabel { text: qsTr("Gimbal Version:"); visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
-                QGCLabel { text: _camera ? _camera.gimbalVersion : ""; visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
-                QGCLabel { text: qsTr("Flight Controller Version:"); visible: _activeVehicle; }
-                QGCLabel { text: firmwareVersion(); visible: _activeVehicle; }
-                QGCLabel { text: qsTr("Vehicle ID:"); visible: _activeVehicle; }
-                QGCLabel { text: _activeVehicle ? _activeVehicle.vehicleUIDStr : ""; visible: _activeVehicle; }
-                QGCLabel { text: qsTr("HOBBS Meter:"); visible: _activeVehicle; }
-                QGCLabel { text: _activeVehicle ? _activeVehicle.hobbsMeter : ""; visible: _activeVehicle; }
+                //-----------------------------------------------------------------
+                Rectangle {
+                    height:         passwordRow.height * 2
+                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    color:          qgcPal.windowShade
+                    visible:        _activeVehicle && (_camera && !_camera.isThermal) && !TyphoonHQuickInterface.desktopPlanner
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Row {
+                        id:         passwordRow
+                        spacing:    ScreenTools.defaultFontPixelWidth * 4
+                        anchors.centerIn: parent
+                        QGCButton {
+                            text:   qsTr("Set Password")
+                            width:   _buttonWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked: {
+                                passwordDialog.visible = true
+                            }
+                        }
+                        QGCLabel {
+                            text:   qsTr("Set connection password")
+                            width:   _textWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+                //-----------------------------------------------------------------
+                Rectangle {
+                    height:         updateRow.height * 2
+                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    color:          qgcPal.windowShade
+                    visible:        ScreenTools.isMobile && !TyphoonHQuickInterface.desktopPlanner
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Row {
+                        id:         updateRow
+                        spacing:    ScreenTools.defaultFontPixelWidth * 4
+                        anchors.centerIn: parent
+                        QGCButton {
+                            text:       qsTr("Update Firmware")
+                            width:      _buttonWidth
+                            enabled:    !TyphoonHQuickInterface.updating
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked: {
+                                if(TyphoonHQuickInterface.checkForUpdate()) {
+                                    updateDialog.open()
+                                } else {
+                                    noUpdateDialog.open()
+                                }
+                            }
+                            MessageDialog {
+                                id:                 noUpdateDialog
+                                title:              qsTr("Update Firmware")
+                                text:               qsTr("Update file not found.")
+                                standardButtons:    StandardButton.Ok
+                                onAccepted:         noUpdateDialog.close()
+                            }
+                            MessageDialog {
+                                id:                 updateDialog
+                                title:              qsTr("Update Firmware")
+                                text:               qsTr("Confirm updating firmware?")
+                                standardButtons:    StandardButton.Ok | StandardButton.Cancel
+                                onAccepted: {
+                                    rootLoader.sourceComponent = firmwareUpdate
+                                    mainWindow.disableToolbar()
+                                    TyphoonHQuickInterface.updateSystemImage()
+                                }
+                            }
+                        }
+                        QGCLabel {
+                            text:   qsTr("Update ST16 Firmware (from microSD card)")
+                            width:  _textWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+                //-----------------------------------------------------------------
+                Rectangle {
+                    id:             factoryTest
+                    height:         factoryRow.height * 2
+                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    color:          qgcPal.windowShade
+                    visible:        QGroundControl.corePlugin.showAdvancedUI && TyphoonHQuickInterface.isFactoryApp && !TyphoonHQuickInterface.desktopPlanner
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Row {
+                        id:         factoryRow
+                        spacing:    ScreenTools.defaultFontPixelWidth * 4
+                        anchors.centerIn: parent
+                        QGCButton {
+                            text:   qsTr("Factory Test")
+                            width:   _buttonWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked: {
+                                TyphoonHQuickInterface.factoryTest()
+                            }
+                        }
+                        QGCLabel {
+                            text:   qsTr("Enter Factory Test")
+                            width:   _textWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+                //-----------------------------------------------------------------
+                Rectangle {
+                    height:         updaterRow.height * 2
+                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    color:          qgcPal.windowShade
+                    visible:        !factoryTest.visible && TyphoonHQuickInterface.isUpdaterApp && !TyphoonHQuickInterface.desktopPlanner
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Row {
+                        id:         updaterRow
+                        spacing:    ScreenTools.defaultFontPixelWidth * 4
+                        anchors.centerIn: parent
+                        QGCButton {
+                            text:   qsTr("Software Updater")
+                            width:   _buttonWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked: {
+                                TyphoonHQuickInterface.launchUpdater()
+                            }
+                        }
+                        QGCLabel {
+                            text:   qsTr("Launch Software Updater App")
+                            width:   _textWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+                Item {
+                    width:  1
+                    height: ScreenTools.defaultFontPixelHeight * 0.5
+                }
+                GridLayout {
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    columnSpacing:      ScreenTools.defaultFontPixelWidth
+                    columns:            2
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    QGCLabel { text: qsTr("%1 Version:").arg(QGroundControl.appName) }
+                    QGCLabel { text: QGroundControl.qgcVersion }
+                    QGCLabel { text: qsTr("Camera Version:"); visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                    QGCLabel { text: _camera ? _camera.firmwareVersion : ""; visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                    QGCLabel { text: qsTr("Gimbal Version:"); visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                    QGCLabel { text: _camera ? _camera.gimbalVersion : ""; visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                    QGCLabel { text: qsTr("Flight Controller Version:"); visible: _activeVehicle; }
+                    QGCLabel { text: firmwareVersion(); visible: _activeVehicle; }
+                    QGCLabel { text: qsTr("Vehicle ID:"); visible: _activeVehicle; }
+                    QGCLabel { text: _activeVehicle ? _activeVehicle.vehicleUIDStr : ""; visible: _activeVehicle; }
+                    QGCLabel { text: qsTr("HOBBS Meter:"); visible: _activeVehicle; }
+                    QGCLabel { text: _activeVehicle ? _activeVehicle.hobbsMeter : ""; visible: _activeVehicle; }
+                }
             }
         }
     }
@@ -674,6 +682,7 @@ QGCView {
                     enabled:    passwordField.text.length > 7 && passwordField.text.length < 21 && passwordField.text === passwordFieldConf.text
                     onClicked:  {
                         Qt.inputMethod.hide();
+                        TyphoonHQuickInterface.newPasswordSet = true
                         TyphoonHQuickInterface.setWiFiPassword(passwordField.text, false)
                         passwordField.text = ""
                         passwordFieldConf.text = ""

@@ -168,6 +168,7 @@ public:
     Q_PROPERTY(bool             bindingWiFi     READ    bindingWiFi         NOTIFY bindingWiFiChanged)
     Q_PROPERTY(bool             isTyphoon       READ    isTyphoon           NOTIFY wifiConnectedChanged)
     Q_PROPERTY(bool             connected       READ    connected           NOTIFY wifiConnectedChanged)
+    Q_PROPERTY(bool             newPasswordSet  READ    newPasswordSet      WRITE setNewPasswordSet         NOTIFY newPasswordSetChanged)
     Q_PROPERTY(QString          connectedSSID   READ    connectedSSID       NOTIFY connectedSSIDChanged)
     Q_PROPERTY(QString          connectedCamera READ    connectedCamera     NOTIFY connectedSSIDChanged)
     Q_PROPERTY(int              rssi            READ    rssi                NOTIFY rssiChanged)
@@ -306,6 +307,9 @@ public:
     void        setWifiAlertEnabled (bool enabled) { _wifiAlertEnabled = enabled; emit wifiAlertEnabledChanged(); }
     void        setFirstRun         (bool set);
 
+    bool        newPasswordSet      () { return _newPasswordSet; }
+    void        setNewPasswordSet   (bool set) { _newPasswordSet = set; emit newPasswordSetChanged(); }
+
     int         J1                  () { return rawChannel(0); }
     int         J2                  () { return rawChannel(1); }
     int         J3                  () { return rawChannel(2); }
@@ -404,6 +408,7 @@ signals:
     void    isInternetChanged           ();
     void    isDefaultPwdChanged         ();
     void    firstRunChanged             ();
+    void    newPasswordSetChanged       ();
 #if defined(__planner__)
     void    clientListChanged           ();
 #else
@@ -502,7 +507,8 @@ private:
     bool                    _isUpdaterApp;
     bool                    _updateShown;
     bool                    _firstRun;
-    bool                    _passwordSet;   //-- Was the password set within this session?
+    bool                    _passwordSet;       //-- Was the password set within this session?
+    bool                    _newPasswordSet;    //-- Password changed
     QUdpSocket*             _udpSocket;
 #if defined(__planner__)
     QStringList             _st16ClientsNames;
@@ -510,4 +516,5 @@ private:
 #else
     QString                 _macAddress;
 #endif
+
 };
