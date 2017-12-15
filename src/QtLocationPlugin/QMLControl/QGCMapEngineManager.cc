@@ -83,6 +83,10 @@ QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double lon1,
         QGCTileSet set = QGCMapEngine::getTileCount(z, lon0, lat0, lon1, lat1, mapType);
         _totalSet += set;
     }
+    if (_fetchElevation) {
+        QGCTileSet set = QGCMapEngine::getTileCount(1, lon0, lat0, lon1, lat1, UrlFactory::AirmapElevation);
+        _totalSet += set;
+    }
     emit tileX0Changed();
     emit tileX1Changed();
     emit tileY0Changed();

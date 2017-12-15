@@ -433,7 +433,7 @@ QGCView {
                     Row {
                         spacing:    ScreenTools.defaultFontPixelWidth
                         anchors.horizontalCenter: parent.horizontalCenter
-                        visible:    !_defaultSet
+                        visible:    !_defaultSet && mapType !== "Airmap Elevation Data"
                         QGCLabel {  text: qsTr("Zoom Levels:"); width: infoView._labelWidth; }
                         QGCLabel {  text: offlineMapView._currentSelection ? (offlineMapView._currentSelection.minZoom + " - " + offlineMapView._currentSelection.maxZoom) : ""; horizontalAlignment: Text.AlignRight; width: infoView._valueWidth; }
                     }
@@ -737,8 +737,10 @@ QGCView {
                             anchors.right:  parent.right
                             text:           qsTr("Fetch elevation data")
                             checked:        QGroundControl.mapEngineManager.fetchElevation
-                            onClicked:      QGroundControl.mapEngineManager.fetchElevation = checked
-                            visible:        mapType != "Airmap Elevation Data"
+                            onClicked: {
+                                QGroundControl.mapEngineManager.fetchElevation = checked
+                                handleChanges()
+                            }
                         }
                     }
 
