@@ -1759,7 +1759,7 @@ TyphoonHQuickInterface::_readUDPBytes()
 }
 
 //-----------------------------------------------------------------------------
-#if 0 //defined(__planner__)
+#if defined(__planner__)
 void
 TyphoonHQuickInterface::uploadMission(PlanMasterController* controller)
 {
@@ -1767,6 +1767,7 @@ TyphoonHQuickInterface::uploadMission(PlanMasterController* controller)
     if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QJsonDocument saveDoc(controller->saveToJson());
         file.write(saveDoc.toJson());
+        controller->setDirty(false);
     }
 }
 #endif

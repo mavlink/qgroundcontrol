@@ -244,7 +244,7 @@ Window {
             anchors.top:                parent.top
             height:                     ScreenTools.toolbarHeight
             width:                      indicatorsRow.width
-            visible:                    activeVehicle || (clientCount && planViewLoader.visible)
+            visible:                    (planViewLoader.visible && planMasterController && planMasterController.dirty) // clientCount &&  || activeVehicle
             Row {
                 id:                     indicatorsRow
                 anchors.bottomMargin:   1
@@ -282,6 +282,7 @@ Window {
                 QGCButton {
                     text:               qsTr("Upload to ST16")
                     visible:            !activeVehicle
+                    primary:            true
                     anchors.verticalCenter: parent.verticalCenter
                     onClicked: {
                         exportToST16.visible = true
@@ -407,7 +408,7 @@ Window {
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     QGCLabel {
-                        text:           TyphoonHQuickInterface.clientList[0]
+                        text:           clientCount ? TyphoonHQuickInterface.clientList[0] : ""
                         color:          qgcPal.alertText
                         font.family:    ScreenTools.demiboldFontFamily
                         font.pointSize: ScreenTools.mediumFontPointSize
@@ -453,7 +454,7 @@ Window {
                             onClicked: {
                                 console.log('Upload')
                                 if(planMasterController) {
-                                    //TyphoonHQuickInterface.uploadMission(planMasterController)
+                                    TyphoonHQuickInterface.uploadMission(planMasterController)
                                 }
                             }
                         }

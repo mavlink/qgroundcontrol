@@ -129,7 +129,10 @@ SOURCES += \
     $$QGCROOT/custom/src/UTMConverter.cc \
     $$QGCROOT/custom/src/YExportFiles.cc \
 
-!DesktopPlanner {
+DesktopPlanner {
+    SOURCES += \
+        $$QGCROOT/custom/src/YUploadFiles.cc
+} else {
     SOURCES += \
         $$QGCROOT/custom/src/TyphoonHM4Interface.cc \
         $$QGCROOT/custom/src/m4serial.cc \
@@ -148,13 +151,17 @@ HEADERS += \
     $$QGCROOT/custom/src/UTMConverter.h \
     $$QGCROOT/custom/src/YExportFiles.h \
 
-!DesktopPlanner {
+DesktopPlanner {
+    HEADERS += \
+        $$QGCROOT/custom/src/YUploadFiles.h
+} else {
     HEADERS += \
         $$QGCROOT/custom/src/m4channeldata.h \
         $$QGCROOT/custom/src/m4def.h \
         $$QGCROOT/custom/src/m4serial.h \
         $$QGCROOT/custom/src/m4util.h \
         $$QGCROOT/custom/src/TyphoonHM4Interface.h \
+}
 
 equals(QT_MAJOR_VERSION, 5) {
     greaterThan(QT_MINOR_VERSION, 5) {
@@ -173,27 +180,28 @@ equals(QT_MAJOR_VERSION, 5) {
 #-------------------------------------------------------------------------------------
 # Firmware/AutoPilot Plugin
 
-HEADERS+= \
-    $$QGCROOT/custom/src/AutoPilotPlugin/YuneecAutoPilotPlugin.h \
-    $$QGCROOT/custom/src/AutoPilotPlugin/GimbalComponent.h \
-    $$QGCROOT/custom/src/AutoPilotPlugin/ChannelComponent.h \
-    $$QGCROOT/custom/src/AutoPilotPlugin/HealthComponent.h \
-    $$QGCROOT/custom/src/AutoPilotPlugin/YuneecSafetyComponent.h \
-    $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePlugin.h \
-    $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePluginFactory.h \
-    $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraControl.h \
-    $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraManager.h \
+!DesktopPlanner {
+    HEADERS+= \
+        $$QGCROOT/custom/src/AutoPilotPlugin/YuneecAutoPilotPlugin.h \
+        $$QGCROOT/custom/src/AutoPilotPlugin/GimbalComponent.h \
+        $$QGCROOT/custom/src/AutoPilotPlugin/ChannelComponent.h \
+        $$QGCROOT/custom/src/AutoPilotPlugin/HealthComponent.h \
+        $$QGCROOT/custom/src/AutoPilotPlugin/YuneecSafetyComponent.h \
+        $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePlugin.h \
+        $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePluginFactory.h \
+        $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraControl.h \
+        $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraManager.h \
 
-SOURCES += \
-    $$QGCROOT/custom/src/AutoPilotPlugin/YuneecAutoPilotPlugin.cc \
-    $$QGCROOT/custom/src/AutoPilotPlugin/GimbalComponent.cc \
-    $$QGCROOT/custom/src/AutoPilotPlugin/ChannelComponent.cc \
-    $$QGCROOT/custom/src/AutoPilotPlugin/HealthComponent.cc \
-    $$QGCROOT/custom/src/AutoPilotPlugin/YuneecSafetyComponent.cc \
-    $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePlugin.cc \
-    $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePluginFactory.cc \
-    $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraControl.cc \
-    $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraManager.cc \
+    SOURCES += \
+        $$QGCROOT/custom/src/AutoPilotPlugin/YuneecAutoPilotPlugin.cc \
+        $$QGCROOT/custom/src/AutoPilotPlugin/GimbalComponent.cc \
+        $$QGCROOT/custom/src/AutoPilotPlugin/ChannelComponent.cc \
+        $$QGCROOT/custom/src/AutoPilotPlugin/HealthComponent.cc \
+        $$QGCROOT/custom/src/AutoPilotPlugin/YuneecSafetyComponent.cc \
+        $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePlugin.cc \
+        $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePluginFactory.cc \
+        $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraControl.cc \
+        $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraManager.cc \
 }
 
 #-------------------------------------------------------------------------------------

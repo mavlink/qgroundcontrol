@@ -254,7 +254,7 @@ public:
     Q_INVOKABLE void updateSystemImage  ();
 
 #if defined(__planner__)
-   // Q_INVOKABLE void uploadMission      (PlanMasterController* controller);
+    Q_INVOKABLE void uploadMission      (PlanMasterController* controller);
 #endif
 
     M4State     m4State             ();
