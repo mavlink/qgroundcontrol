@@ -141,14 +141,17 @@ public class QGCActivity extends QtActivity
     public static void restoreScreenOn() {
     }
 
+    //-------------------------------------------------------------------------
     public static void launchFactoryTest() {
         m_instance.launchApp("com.yuneec.flightcontrolmodetest");
     }
 
+    //-------------------------------------------------------------------------
     public static void launchUpdater() {
         m_instance.launchApp("com.yuneec.updater");
     }
 
+    //-------------------------------------------------------------------------
     public static void launchApp(String app) {
         Intent launchIntent = m_instance.getPackageManager().getLaunchIntentForPackage(app);
         if (launchIntent != null) {
@@ -160,19 +163,23 @@ public class QGCActivity extends QtActivity
         }
     }
 
+    //-------------------------------------------------------------------------
     public static void restartApp() {
         letItExit = false;
         m_instance.finish();
     }
 
+    //-------------------------------------------------------------------------
     public static boolean isFactoryAppInstalled() {
         return m_instance.isAppInstalled("com.yuneec.flightcontrolmodetest");
     }
 
+    //-------------------------------------------------------------------------
     public static boolean isUpdaterAppInstalled() {
         return m_instance.isAppInstalled("com.yuneec.updater");
     }
 
+    //-------------------------------------------------------------------------
     public static boolean isAppInstalled(String app) {
         try {
             PackageManager pm = m_instance.getPackageManager();
@@ -183,6 +190,7 @@ public class QGCActivity extends QtActivity
         }
     }
 
+    //-------------------------------------------------------------------------
     public static void updateImage() {
         //-- By the time this function is called, the caller has
         //   to make sure "/storage/sdcard1/update.zip" has been
@@ -202,22 +210,27 @@ public class QGCActivity extends QtActivity
         }
     }
 
+    //-------------------------------------------------------------------------
     public static void disconnectWifi() {
         mainWifi.disconnect();
     }
 
+    //-------------------------------------------------------------------------
     public static void reconnectWifi() {
         mainWifi.reconnect();
     }
 
+    //-------------------------------------------------------------------------
     public static int wifiRssi() {
         return currentWifiRssi;
     }
 
+    //-------------------------------------------------------------------------
     public static float getBatteryLevel() {
         return batteryLevel;
     }
 
+    //-------------------------------------------------------------------------
     public static void launchBrowser(String url) {
         Log.i(TAG, "launchBrowser(): " + url);
         Intent launchIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
@@ -230,6 +243,7 @@ public class QGCActivity extends QtActivity
         }
     }
 
+    //-------------------------------------------------------------------------
     public static void findWifiConfig() {
         String currentCamera = "";
         List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
@@ -255,6 +269,7 @@ public class QGCActivity extends QtActivity
         }
     }
 
+    //-------------------------------------------------------------------------
     public static void resetWifi() {
         Log.i(TAG, "resetWifi()");
         List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
@@ -274,15 +289,16 @@ public class QGCActivity extends QtActivity
         nativeWifiDisconnected();
     }
 
+    //-------------------------------------------------------------------------
     public static void setWifiPassword(String ssid, String password) {
-        Log.i(TAG, "resetWifiConfiguration(): " + ssid);
+        Log.i(TAG, "setWifiPassword(): " + ssid + " => " + password);
         List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
         if(list != null) {
             mainWifi.disconnect();
             for( WifiConfiguration i : list ) {
                 if(i.SSID != null && i.SSID.equals("\"" + ssid + "\"")) {
-                    Log.i(TAG, "Set new password for " + ssid + " => " + password);
-                    i.preSharedKey = "\"" + password + "\"";
+                    Log.i(TAG, "Forget " + ssid);
+                    mainWifi.removeNetwork(i.networkId);
                 }
             }
         }
@@ -290,29 +306,10 @@ public class QGCActivity extends QtActivity
         //-- Disconnect
         resetWifi();
         //-- Reconnect using new configuration
-        reconnectSSID(ssid);
+        bindSSID(ssid, password);
     }
 
-    public static void reconnectSSID(String ssid) {
-        Log.i(TAG, "Reconnect: " + ssid);
-        try {
-            List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
-            for( WifiConfiguration i : list ) {
-                if(i.SSID != null && i.SSID.equals("\"" + ssid + "\"")) {
-                    currentConnection = ssid;
-                    currentWifiRssi = 0;
-                    nativeNewWifiRSSI();
-                    mainWifi.enableNetwork(i.networkId, true);
-                    mainWifi.reconnect();
-                    mainWifi.saveConfiguration();
-                    return;
-                }
-            }
-        } catch(Exception e) {
-           Log.e(TAG, "Exception reconnectSSID()");
-        }
-    }
-
+    //-------------------------------------------------------------------------
     public static void bindSSID(String ssid, String passphrase) {
         Log.i(TAG, "Bind: " + ssid + " " + passphrase);
         try {
@@ -357,16 +354,19 @@ public class QGCActivity extends QtActivity
         }
     }
 
+    //-------------------------------------------------------------------------
     public static void startWifiScan() {
         Log.i(TAG, "Start WiFi Scan");
         receiverMode = ReceiverMode.SCANNING;
         mainWifi.startScan();
     }
 
+    //-------------------------------------------------------------------------
     public static String connectedSSID() {
         return currentConnection;
     }
 
+    //-------------------------------------------------------------------------
     public static void enableWiFi() {
         mainWifi.setWifiEnabled(true);
     }
@@ -375,6 +375,7 @@ public class QGCActivity extends QtActivity
         mainWifi.setWifiEnabled(false);
     }
 
+    //-------------------------------------------------------------------------
     class WifiReceiver extends BroadcastReceiver {
         public void onReceive(Context c, Intent intent) {
             try {
