@@ -214,11 +214,6 @@ void MissionManager::generateResumeMission(int resumeIndex)
     }
     _resumeMission = true;
     _writeMissionItemsWorker();
-
-    // Clean up no longer needed resume items
-    for (int i=0; i<resumeMission.count(); i++) {
-        resumeMission[i]->deleteLater();
-    }
 }
 
 /// Called when a new mavlink message for out vehicle is received
