@@ -552,7 +552,7 @@ UrlFactory::_tryCorrectGoogleVersions(QNetworkAccessManager* networkManager)
 #define AVERAGE_MAPBOX_SAT_MAP      15739
 #define AVERAGE_MAPBOX_STREET_MAP   5648
 #define AVERAGE_TILE_SIZE           13652
-#define AVERAGE_AIRMAP_ELEV_SIZE    34000
+#define AVERAGE_AIRMAP_ELEV_SIZE    5360
 
 //-----------------------------------------------------------------------------
 quint32

@@ -112,7 +112,7 @@ getQGCMapEngine()
 }
 
 //-----------------------------------------------------------------------------
-const double QGCMapEngine::srtm1TileSize = 0.025;
+const double QGCMapEngine::srtm1TileSize = 0.01;
 
 //-----------------------------------------------------------------------------
 void
@@ -392,9 +392,6 @@ QGCMapEngine::getMapNameList()
         for(size_t i = 0; i < NUM_ESRIMAPS; i++) {
             mapList << kEsriTypes[i].name;
         }
-    }
-    for(size_t i = 0; i < NUM_ELEVMAPS; i++) {
-        mapList << kElevationTypes[i].name;
     }
     return mapList;
 }
