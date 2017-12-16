@@ -30,6 +30,13 @@ Rectangle {
 
     property real maxWidth:          parent.width
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
+    property var    _vehicleTypeName: {
+        // Check if vehicleType isn't null before checking
+        if (QGroundControl.multiVehicleManager.activeVehicle) {
+            return QGroundControl.multiVehicleManager.activeVehicle.vehicleTypeName()
+        }
+        return ""
+    }
 
     onMaxWidthChanged: {
         var calcLength = (statusListView.count + 1)*statusListView.contentItem.children[0].width
@@ -42,7 +49,8 @@ Rectangle {
         id:                     label
         anchors.top:            parent.bottom
         width:                  parent.height
-        text:                   qsTr("Terrain Altitude")
+        text: _vehicleTypeName === "Submarine" ? qsTr("Sea Level") : qsTr("Terrain Altitude")
+
         horizontalAlignment:    Text.AlignHCenter
         rotation:               -90
         transformOrigin:        Item.TopLeft
@@ -76,6 +84,7 @@ Rectangle {
             property real availableHeight:  height - indicator.height
             property bool showTerrain:      !isNaN(object.terrainPercent)
             property real _terrainPercent:  showTerrain ? object.terrainPercent : 0
+            property color _altitudeBelowColor: _vehicleTypeName === "Submarine" ? "#800000FF" : "#80FF0000"
 
             readonly property bool display: object.specifiesCoordinate && !object.isStandaloneCoordinate
             readonly property real spacing: ScreenTools.defaultFontPixelWidth * ScreenTools.smallFontPointRatio
@@ -85,7 +94,7 @@ Rectangle {
                 anchors.horizontalCenter:   parent.horizontalCenter
                 width:                      indicator.width
                 height:                     Math.max(availableHeight * _terrainPercent, 1)
-                color:                      _terrainPercent > object.altPercent ? "red": qgcPal.text
+                color:                      _terrainPercent > object.altPercent ? _altitudeBelowColor : qgcPal.text
                 visible:                    !isNaN(object.terrainPercent)
             }
 
