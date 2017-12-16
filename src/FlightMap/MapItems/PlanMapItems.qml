@@ -15,7 +15,8 @@ import QGroundControl           1.0
 import QGroundControl.Controls  1.0
 import QGroundControl.FlightMap 1.0
 
-// Adds visual items associated with the Flight Plan to the map
+// Adds visual items associated with the Flight Plan to the map.
+// Currently only used by Fly View even though it's called PlanMapItems!
 Item {
     id: _root
 
@@ -45,24 +46,15 @@ Item {
         }
     }
 
-    // Waypoint lines
-    Instantiator {
-        model: largeMapView ? _missionController.waypointLines : 0
+    Component.onCompleted: {
+        _missionLineViewComponent = missionLineViewComponent.createObject(map)
+        if (_missionLineViewComponent.status === Component.Error)
+            console.log(_missionLineViewComponent.errorString())
+        map.addMapItem(_missionLineViewComponent)
+    }
 
-        Item {
-            property var _missionLineViewComponent
-
-            Component.onCompleted: {
-                _missionLineViewComponent = missionLineViewComponent.createObject(map, {"object": object})
-                if (_missionLineViewComponent.status === Component.Error)
-                    console.log(_missionLineViewComponent.errorString())
-                map.addMapItem(_missionLineViewComponent)
-            }
-
-            Component.onDestruction: {
-                _missionLineViewComponent.destroy()
-            }
-        }
+    Component.onDestruction: {
+        _missionLineViewComponent.destroy()
     }
 
     Component {
@@ -72,9 +64,7 @@ Item {
             line.width: 3
             line.color: "#be781c"                           // Hack, can't get palette to work in here
             z:          QGroundControl.zOrderWaypointLines
-            path:       object ? [ object.coordinate1, object.coordinate2] : undefined
-
-            property var object
+            path:       _missionController.waypointPath
         }
     }
 }

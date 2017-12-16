@@ -47,6 +47,7 @@ public:
     void loadFromVehicle(void);
     
     /// Writes the specified set of mission items to the vehicle
+    /// IMPORTANT NOTE: PlanManager will take control of the MissionItem objects with the missionItems list. It will free them when done.
     ///     @param missionItems Items to send to vehicle
     ///     Signals sendComplete when done
     void writeMissionItems(const QList<MissionItem*>& missionItems);
