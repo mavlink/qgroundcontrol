@@ -85,8 +85,8 @@ void PlanManager::writeMissionItems(const QList<MissionItem*>& missionItems)
     int firstIndex = skipFirstItem ? 1 : 0;
 
     for (int i=firstIndex; i<missionItems.count(); i++) {
-        MissionItem* item = new MissionItem(*missionItems[i]);
-        _writeMissionItems.append(item);
+        MissionItem* item = missionItems[i];
+        _writeMissionItems.append(item); // PlanManager takes control of passed MissionItem
 
         item->setIsCurrentItem(i == firstIndex);
 
@@ -911,7 +911,8 @@ void PlanManager::removeAll(void)
 void PlanManager::_clearAndDeleteMissionItems(void)
 {
     for (int i=0; i<_missionItems.count(); i++) {
-        _missionItems[i]->deleteLater();
+        // Using deleteLater here causes too much transient memory to stack up
+        delete _missionItems[i];
     }
     _missionItems.clear();
 }
@@ -920,7 +921,8 @@ void PlanManager::_clearAndDeleteMissionItems(void)
 void PlanManager::_clearAndDeleteWriteMissionItems(void)
 {
     for (int i=0; i<_writeMissionItems.count(); i++) {
-        _writeMissionItems[i]->deleteLater();
+        // Using deleteLater here causes too much transient memory to stack up
+        delete _writeMissionItems[i];
     }
     _writeMissionItems.clear();
 }

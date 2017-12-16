@@ -66,7 +66,8 @@ public:
     } MissionFlightStatus_t;
 
     Q_PROPERTY(QmlObjectListModel*  visualItems             READ visualItems                NOTIFY visualItemsChanged)
-    Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines              NOTIFY waypointLinesChanged)
+    Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines              NOTIFY waypointLinesChanged)        ///< Used by Plan view only for interactive editing
+    Q_PROPERTY(QVariantList         waypointPath            READ waypointPath               NOTIFY waypointPathChanged)         ///< Used by Fly view only for static display
     Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
     Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition        NOTIFY plannedHomePositionChanged)
 
@@ -146,6 +147,7 @@ public:
 
     QmlObjectListModel* visualItems             (void) { return _visualItems; }
     QmlObjectListModel* waypointLines           (void) { return &_waypointLines; }
+    QVariantList        waypointPath            (void) { return _waypointPath; }
     QStringList         complexMissionItemNames (void) const;
     QGeoCoordinate      plannedHomePosition     (void) const;
     VisualMissionItem*  currentPlanViewItem     (void) const;
@@ -167,27 +169,28 @@ public:
     int  batteriesRequired          (void) const { return _missionFlightStatus.batteriesRequired; }     ///< -1 for not supported
 
 signals:
-    void visualItemsChanged(void);
-    void waypointLinesChanged(void);
-    void newItemsFromVehicle(void);
-    void missionDistanceChanged(double missionDistance);
-    void missionTimeChanged(void);
-    void missionHoverDistanceChanged(double missionHoverDistance);
-    void missionHoverTimeChanged(void);
-    void missionCruiseDistanceChanged(double missionCruiseDistance);
-    void missionCruiseTimeChanged(void);
-    void missionMaxTelemetryChanged(double missionMaxTelemetry);
-    void complexMissionItemNamesChanged(void);
-    void resumeMissionIndexChanged(void);
-    void resumeMissionReady(void);
-    void resumeMissionUploadFail(void);
-    void batteryChangePointChanged(int batteryChangePoint);
-    void batteriesRequiredChanged(int batteriesRequired);
-    void plannedHomePositionChanged(QGeoCoordinate plannedHomePosition);
-    void progressPctChanged(double progressPct);
-    void currentMissionIndexChanged(int currentMissionIndex);
-    void currentPlanViewIndexChanged();
-    void currentPlanViewItemChanged();
+    void visualItemsChanged             (void);
+    void waypointLinesChanged           (void);
+    void waypointPathChanged            (void);
+    void newItemsFromVehicle            (void);
+    void missionDistanceChanged         (double missionDistance);
+    void missionTimeChanged             (void);
+    void missionHoverDistanceChanged    (double missionHoverDistance);
+    void missionHoverTimeChanged        (void);
+    void missionCruiseDistanceChanged   (double missionCruiseDistance);
+    void missionCruiseTimeChanged       (void);
+    void missionMaxTelemetryChanged     (double missionMaxTelemetry);
+    void complexMissionItemNamesChanged (void);
+    void resumeMissionIndexChanged      (void);
+    void resumeMissionReady             (void);
+    void resumeMissionUploadFail        (void);
+    void batteryChangePointChanged      (int batteryChangePoint);
+    void batteriesRequiredChanged       (int batteriesRequired);
+    void plannedHomePositionChanged     (QGeoCoordinate plannedHomePosition);
+    void progressPctChanged             (double progressPct);
+    void currentMissionIndexChanged     (int currentMissionIndex);
+    void currentPlanViewIndexChanged    (void);
+    void currentPlanViewItemChanged     (void);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
@@ -242,6 +245,7 @@ private:
     QmlObjectListModel*     _visualItems;
     MissionSettingsItem*    _settingsItem;
     QmlObjectListModel      _waypointLines;
+    QVariantList            _waypointPath;
     CoordVectHashTable      _linesTable;
     bool                    _firstItemsFromVehicle;
     bool                    _itemsRequested;
