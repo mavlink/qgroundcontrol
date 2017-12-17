@@ -7,40 +7,35 @@
 
 #include <QObject>
 #include <QThread>
+#include <QMetaType>
+#include <QTcpSocket>
 
-class UTMConverter;
+typedef  struct YuneecPacket {
+    uint32_t 	type;
+    uint32_t    size;
+} YuneecPacket_t;
+
 
 //-----------------------------------------------------------------------------
-class YUploadFiles : public QThread
+class YUploadFiles : public QObject
 {
     Q_OBJECT
 public:
-    YUploadFiles();
-    ~YUploadFiles();
+    YUploadFiles    (QObject* parent);
+    ~YUploadFiles   ();
 
-    bool        exportData                  (bool convertToUTM, bool convertToSkyward);
-    void        cancel                      ();
-
-protected:
-    void        run                         ();
+    void        init                        (QHostAddress address, uint16_t port);
 
 signals:
-    void        copyCompleted               (quint32 totalCount, quint32 curCount);
-    void        completed                   ();
-    void        message                     (QString errorMessage);
-    void        cancelProcess               ();
 
 private slots:
+    void        _connected                  ();
+    void        _socketError                (QAbstractSocket::SocketError socketError);
+    void        _readBytes                  ();
 
 private:
-    bool            _convertToUTM;
-    bool            _convertToSkyward;
-    bool            _cancel;
-    quint32         _totalFiles;
-    quint32         _curFile;
+    QTcpSocket*       _socket;
 
 private:
-    quint32     _filesInPath                (const QString& path);
-    bool        _copyFilesInPath            (const QString src, const QString dst);
-    bool        _convertLogsToUTM           (const QString src, const QString dst);
+
 };
