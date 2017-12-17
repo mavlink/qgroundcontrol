@@ -128,11 +128,9 @@ SOURCES += \
     $$QGCROOT/custom/src/TyphoonHQuickInterface.cc \
     $$QGCROOT/custom/src/UTMConverter.cc \
     $$QGCROOT/custom/src/YExportFiles.cc \
+    $$QGCROOT/custom/src/QGCRPC.cc
 
-DesktopPlanner {
-    SOURCES += \
-        $$QGCROOT/custom/src/YUploadFiles.cc
-} else {
+!DesktopPlanner {
     SOURCES += \
         $$QGCROOT/custom/src/TyphoonHM4Interface.cc \
         $$QGCROOT/custom/src/m4serial.cc \
@@ -150,11 +148,9 @@ HEADERS += \
     $$QGCROOT/custom/src/TyphoonHQuickInterface.h \
     $$QGCROOT/custom/src/UTMConverter.h \
     $$QGCROOT/custom/src/YExportFiles.h \
+    $$QGCROOT/custom/src/QGCRPC.h
 
-DesktopPlanner {
-    HEADERS += \
-        $$QGCROOT/custom/src/YUploadFiles.h
-} else {
+!DesktopPlanner {
     HEADERS += \
         $$QGCROOT/custom/src/m4channeldata.h \
         $$QGCROOT/custom/src/m4def.h \

@@ -10,32 +10,37 @@
 #include <QMetaType>
 #include <QTcpSocket>
 
-typedef  struct YuneecPacket {
-    uint32_t 	type;
-    uint32_t    size;
-} YuneecPacket_t;
-
-
 //-----------------------------------------------------------------------------
-class YUploadFiles : public QObject
+class IRPC : public QObject
 {
     Q_OBJECT
 public:
-    YUploadFiles    (QObject* parent);
-    ~YUploadFiles   ();
-
-    void        init                        (QHostAddress address, uint16_t port);
-
+    virtual ~IRPC() { }
+    virtual bool    IsConnected         () = 0;
+    virtual void    Close               () = 0;
+    virtual bool    SendMessage         (uint32_t message, QByteArray data) = 0;
 signals:
-
-private slots:
-    void        _connected                  ();
-    void        _socketError                (QAbstractSocket::SocketError socketError);
-    void        _readBytes                  ();
-
-private:
-    QTcpSocket*       _socket;
-
-private:
-
+    void            connected           ();
+    void            ConnectionClosed    ();
+    void            HandleMessage       (uint32_t message, QByteArray data);
+    void            ErrorMessage        (QString message);
 };
+
+//-----------------------------------------------------------------------------
+class IClientRPC : public IRPC
+{
+public:
+    virtual ~IClientRPC() { }
+    virtual bool    Connect             (QHostAddress address, uint16_t port) = 0;
+};
+
+//-----------------------------------------------------------------------------
+class IServerRPC : public IRPC
+{
+public:
+    virtual ~IServerRPC() { }
+    virtual bool    StartServer         (uint16_t port) = 0;
+};
+
+IClientRPC* getClientRPC();
+IServerRPC* getServerRPC();
