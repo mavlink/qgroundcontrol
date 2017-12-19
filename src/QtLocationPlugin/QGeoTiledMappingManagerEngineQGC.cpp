@@ -50,11 +50,11 @@
 
 #include <QtLocation/private/qgeocameracapabilities_p.h>
 #include <QtLocation/private/qgeomaptype_p.h>
-#if QT_VERSION < 0x050500
+#if QT_VERSION < QT_VERSION_CHECK(5, 5, 0)
 #include <QtLocation/private/qgeotiledmapdata_p.h>
 #else
 #include <QtLocation/private/qgeotiledmap_p.h>
-#if QT_VERSION >= 0x050600
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
 #include <QtLocation/private/qgeofiletilecache_p.h>
 #else
 #include <QtLocation/private/qgeotilecache_p.h>
@@ -64,7 +64,7 @@
 #include <QDir>
 #include <QStandardPaths>
 
-#if QT_VERSION >= 0x050500
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
 //-----------------------------------------------------------------------------
 QGeoTiledMapQGC::QGeoTiledMapQGC(QGeoTiledMappingManagerEngine *engine, QObject *parent)
     : QGeoTiledMap(engine, parent)
@@ -165,7 +165,7 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
         getQGCMapEngine()->setUserAgent(parameters.value(QStringLiteral("useragent")).toString().toLatin1());
     }
 
-#if QT_VERSION >= 0x050500
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
     _setCache(parameters);
 #endif
 
@@ -180,7 +180,7 @@ QGeoTiledMappingManagerEngineQGC::~QGeoTiledMappingManagerEngineQGC()
 {
 }
 
-#if QT_VERSION < 0x050500
+#if QT_VERSION < QT_VERSION_CHECK(5, 5, 0)
 
 //-----------------------------------------------------------------------------
 QGeoMapData *QGeoTiledMappingManagerEngineQGC::createMapData()
@@ -199,7 +199,7 @@ QGeoTiledMappingManagerEngineQGC::createMap()
 
 #endif
 
-#if QT_VERSION >= 0x050500
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
 //-----------------------------------------------------------------------------
 void
 QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
@@ -242,7 +242,7 @@ QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
     if(memLimit > 1024 * 1024 * 1024)
         memLimit = 1024 * 1024 * 1024;
     //-- Disable Qt's disk cache (sort of)
-#if QT_VERSION >= 0x050600
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
     QAbstractGeoTileCache *pTileCache = new QGeoFileTileCache(cacheDir);
     setTileCache(pTileCache);
 #else
