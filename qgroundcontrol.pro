@@ -591,26 +591,9 @@ HEADERS += \
 
 AIRMAPD_PATH = path_to_airmapd
 
-# Protobuf (AirMap)
-# This should be optional. As is, QGC now requires protobuf to be installed.
-MacBuild {
-    INCLUDEPATH += \
-        /usr/local/opt/protobuf/include
-    LIBS += \
-        -L/usr/local/opt/protobuf/lib
-}
-LIBS += -lprotobuf
-
 # airmapd
 INCLUDEPATH += $${AIRMAPD_PATH}/include
-LIBS += -L$${AIRMAPD_PATH}/build/src/airmap -lairmap-qt \
-	-lairmap-mavlink \
-	-lairmap-client -lssl -lcrypto \
-	-L$${AIRMAPD_PATH}/build/vendor/fmt/fmt -lfmt \
-	-lboost_system -lboost_date_time -lboost_filesystem -lboost_program_options \
-	-lboost_unit_test_framework \
-	-L$${AIRMAPD_PATH}/build/vendor/xdg -lxdg \
-	-L$${AIRMAPD_PATH}/build/vendor/uri/src -lnetwork-uri \
+LIBS += -L$${AIRMAPD_PATH}/build/src/airmap -lairmap-qt
 
 
 AndroidBuild {
