@@ -224,6 +224,32 @@ private:
     Fact            _temperature3Fact;
 };
 
+class VehicleClockFactGroup : public FactGroup
+{
+    Q_OBJECT
+
+public:
+    VehicleClockFactGroup(QObject* parent = NULL);
+
+    Q_PROPERTY(Fact* currentTime        READ currentTime        CONSTANT)
+    Q_PROPERTY(Fact* currentDate        READ currentDate        CONSTANT)
+
+    Fact* currentTime (void) { return &_currentTimeFact; }
+    Fact* currentDate (void) { return &_currentDateFact; }
+
+    static const char* _currentTimeFactName;
+    static const char* _currentDateFactName;
+
+    static const char* _settingsGroup;
+
+private slots:
+    void _updateAllValues(void) override;
+
+private:
+    Fact            _currentTimeFact;
+    Fact            _currentDateFact;
+};
+
 class Vehicle : public FactGroup
 {
     Q_OBJECT
@@ -356,6 +382,7 @@ public:
     Q_PROPERTY(FactGroup* wind        READ windFactGroup        CONSTANT)
     Q_PROPERTY(FactGroup* vibration   READ vibrationFactGroup   CONSTANT)
     Q_PROPERTY(FactGroup* temperature READ temperatureFactGroup CONSTANT)
+    Q_PROPERTY(FactGroup* clock       READ clockFactGroup       CONSTANT)
 
     Q_PROPERTY(int      firmwareMajorVersion        READ firmwareMajorVersion       NOTIFY firmwareVersionChanged)
     Q_PROPERTY(int      firmwareMinorVersion        READ firmwareMinorVersion       NOTIFY firmwareVersionChanged)
@@ -627,6 +654,7 @@ public:
     FactGroup* windFactGroup        (void) { return &_windFactGroup; }
     FactGroup* vibrationFactGroup   (void) { return &_vibrationFactGroup; }
     FactGroup* temperatureFactGroup (void) { return &_temperatureFactGroup; }
+    FactGroup* clockFactGroup       (void) { return &_clockFactGroup; }
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
@@ -1076,6 +1104,7 @@ private:
     VehicleWindFactGroup        _windFactGroup;
     VehicleVibrationFactGroup   _vibrationFactGroup;
     VehicleTemperatureFactGroup _temperatureFactGroup;
+    VehicleClockFactGroup       _clockFactGroup;
 
     static const char* _rollFactName;
     static const char* _pitchFactName;
@@ -1095,6 +1124,7 @@ private:
     static const char* _windFactGroupName;
     static const char* _vibrationFactGroupName;
     static const char* _temperatureFactGroupName;
+    static const char* _clockFactGroupName;
 
     static const int _vehicleUIUpdateRateMSecs = 100;
 
