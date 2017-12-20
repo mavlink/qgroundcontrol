@@ -870,7 +870,6 @@ private slots:
     void _geoFenceLoadComplete(void);
     void _rallyPointLoadComplete(void);
     void _sendMavCommandAgain(void);
-    void _activeJoystickChanged(void);
     void _clearTrajectoryPoints(void);
     void _clearCameraTriggerPoints(void);
     void _updateDistanceToHome(void);
