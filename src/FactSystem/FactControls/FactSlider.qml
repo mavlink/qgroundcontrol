@@ -90,7 +90,7 @@ Row {
                 }
 
                 QGCButton {
-                    height: parent.height/2
+                    height: Math.max(parent.height/2, ScreenTools.minTouchPixels)
                     width: height
                     text: "+"
                     anchors.verticalCenter: parent.verticalCenter
@@ -100,7 +100,7 @@ Row {
                 }
 
                 QGCButton {
-                    height: parent.height/2
+                    height: Math.max(parent.height/2, ScreenTools.minTouchPixels)
                     width: height
                     text: "-"
                     anchors.verticalCenter: parent.verticalCenter
