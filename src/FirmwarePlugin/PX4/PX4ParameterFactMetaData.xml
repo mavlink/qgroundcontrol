@@ -1093,9 +1093,9 @@ This parameter controls the time constant of the decay</short_desc>
     </parameter>
     <parameter default="1" name="EKF2_AID_MASK" type="INT32">
       <short_desc>Integer bitmask controlling data fusion and aiding methods</short_desc>
-      <long_desc>Set bits in the following positions to enable: 0 : Set to true to use GPS data if available 1 : Set to true to use optical flow data if available 2 : Set to true to inhibit IMU bias estimation 3 : Set to true to enable vision position fusion 4 : Set to true to enable vision yaw fusion 5 : Set to true to enable multi-rotor drag specific force fusion</long_desc>
+      <long_desc>Set bits in the following positions to enable: 0 : Set to true to use GPS data if available 1 : Set to true to use optical flow data if available 2 : Set to true to inhibit IMU bias estimation 3 : Set to true to enable vision position fusion 4 : Set to true to enable vision yaw fusion 5 : Set to true to enable multi-rotor drag specific force fusion 6 : set to true if the EV observations are in a non NED reference frame and need to be rotated before being used</long_desc>
       <min>0</min>
-      <max>63</max>
+      <max>127</max>
       <reboot_required>true</reboot_required>
       <scope>modules/ekf2</scope>
       <bitmask>
@@ -1105,6 +1105,7 @@ This parameter controls the time constant of the decay</short_desc>
         <bit index="3">vision position fusion</bit>
         <bit index="4">vision yaw fusion</bit>
         <bit index="5">multi-rotor drag fusion</bit>
+        <bit index="6">rotate external vision</bit>
       </bitmask>
     </parameter>
     <parameter default="0.1" name="EKF2_ANGERR_INIT" type="FLOAT">
