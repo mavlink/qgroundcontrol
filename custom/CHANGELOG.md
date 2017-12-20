@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.21 - Dec 16 2017
+
+*   Fix E10T RTSP URL (Thermal)
+
 ### v1.2.20 - Dec 16 2017
 
 *   Reduce memory usage for planning/uploading missions
