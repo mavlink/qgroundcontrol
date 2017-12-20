@@ -350,7 +350,7 @@ TyphoonHQuickInterface::_camerasChanged()
                     if(pCamera->isCGOET()) {
                         _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:8554/live"));
                     } else {
-                        _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1/stream2"));
+                        _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:554/stream2"));
                     }
                     _videoReceiver->start();
                     emit thermalImagePresentChanged();
