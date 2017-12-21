@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.22 - Dec 21 2017
+
+*   Internal change. Switching to the Yuneec MAVLink dialect. No external changes.
+
 ### v1.2.21 - Dec 16 2017
 
 *   Fix E10T RTSP URL (Thermal)
