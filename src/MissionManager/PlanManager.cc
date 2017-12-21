@@ -588,7 +588,7 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
     switch (savedExpectedAck) {
     case AckNone:
         // State machine is idle. Vehicle is confused.
-        _sendError(VehicleError, tr("Vehicle sent unexpected MISSION_ACK message, error: %1").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
+	qCDebug(PlanManagerLog) << QStringLiteral("Vehicle sent unexpected MISSION_ACK message, error: %1").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type));
         break;
     case AckMissionCount:
         // MISSION_COUNT message expected
