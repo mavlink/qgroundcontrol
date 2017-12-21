@@ -45,6 +45,7 @@ SetupPage {
             readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
             readonly property string highlightSuffix:   "</font>"
             readonly property string welcomeText:       qsTr("%1 can upgrade the firmware on Pixhawk devices, SiK Radios and PX4 Flow Smart Cameras.").arg(QGroundControl.appName)
+            readonly property string welcomeTextSingle: qsTr("Update the autopilot firmware to the latest version")
             readonly property string plugInText:        "<big>" + highlightPrefix + "Plug in your device" + highlightSuffix + " via USB to " + highlightPrefix + "start" + highlightSuffix + " firmware upgrade.</big>"
             readonly property string flashFailText:     "If upgrade failed, make sure to connect " + highlightPrefix + "directly" + highlightSuffix + " to a powered USB port on your computer, not through a USB hub. " +
                                                         "Also make sure you are only powered via USB " + highlightPrefix + "not battery" + highlightSuffix + "."
@@ -410,7 +411,7 @@ SetupPage {
                 frameVisible:       false
                 font.pointSize:     ScreenTools.defaultFontPointSize
                 textFormat:         TextEdit.RichText
-                text:               welcomeText
+                text:               _singleFirmwareMode ? welcomeTextSingle : welcomeText
 
                 style: TextAreaStyle {
                     textColor:          qgcPal.text
