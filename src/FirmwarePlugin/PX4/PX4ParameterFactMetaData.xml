@@ -1185,6 +1185,14 @@ This should be adjusted to minimise variance of the Y-axis drag specific force i
       <decimal>1</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
+    <parameter default="5.0" name="EKF2_BETA_GATE" type="FLOAT">
+      <short_desc>Gate size for synthetic sideslip fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
+      <min>1.0</min>
+      <unit>SD</unit>
+      <decimal>1</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
     <parameter default="0.3" name="EKF2_BETA_NOISE" type="FLOAT">
       <short_desc>Noise for synthetic sideslip fusion</short_desc>
       <min>0.1</min>
