@@ -53,6 +53,13 @@ linux : android-g++ {
     }
 }
 
+#-- MAVLink Dialect
+
+CONFIG         += QGC_DISABLE_APM_MAVLINK
+MAVLINKPATH_REL = custom/mavlink
+MAVLINKPATH     = $$QGCROOT/$$MAVLINKPATH_REL
+MAVLINK_CONF    = yuneec
+
 DesktopPlanner {
     message("Desktop Planner Build")
     DEFINES += __mobile__

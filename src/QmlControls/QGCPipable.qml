@@ -27,6 +27,7 @@ Item {
     property real minSize: 0.10
 
     property bool inPopup: false
+    property bool enablePopup: true
 
     signal  activated()
     signal  hideIt(bool state)
@@ -127,7 +128,7 @@ Item {
         fillMode:       Image.PreserveAspectFit
         anchors.left:   parent.left
         anchors.top:    parent.top
-        visible:        !isHidden && (ScreenTools.isMobile || pipMouseArea.containsMouse) && !inPopup && !ScreenTools.isMobile
+        visible:        !isHidden && !inPopup && !ScreenTools.isMobile && enablePopup
         height:         ScreenTools.defaultFontPixelHeight * 2.5
         width:          ScreenTools.defaultFontPixelHeight * 2.5
         sourceSize.height:  height
