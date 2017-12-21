@@ -1,0 +1,3 @@
+[submodule "mavlink"]
+	path = mavlink
+	url = https://github.com/YUNEEC/c_library_v2.git
