@@ -87,7 +87,7 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
     connect(&_flightPolygon,    &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_flightPathChanged);
 
     connect(_cameraCalc.distanceToSurface(),    &Fact::valueChanged,                this, &StructureScanComplexItem::_rebuildFlightPolygon);
-    connect(&_cameraCalc,                       &CameraCalc::cameraSpecTypeChanged, this, &StructureScanComplexItem::_cameraSpecTypeChanged);
+    connect(&_cameraCalc,                       &CameraCalc::cameraNameChanged,     this, &StructureScanComplexItem::_resetGimbal);
 
     connect(&_flightPolygon,                        &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_recalcCameraShots);
     connect(_cameraCalc.adjustedFootprintSide(),    &Fact::valueChanged,            this, &StructureScanComplexItem::_recalcCameraShots);
@@ -146,7 +146,7 @@ void StructureScanComplexItem::save(QJsonArray&  missionItems)
     QJsonObject saveObject;
 
     // Header
-    saveObject[JsonHelper::jsonVersionKey] =                    1;
+    saveObject[JsonHelper::jsonVersionKey] =                    2;
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
 
@@ -204,12 +204,17 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
     }
 
     int version = complexObject[JsonHelper::jsonVersionKey].toInt();
-    if (version != 1) {
+    if (version != 2) {
         errorString = tr("Version %1 not supported").arg(version);
         return false;
     }
 
     setSequenceNumber(sequenceNumber);
+
+    // Load CameraCalc first since it will trigger camera name change which will trounce gimbal angles
+    if (!_cameraCalc.load(complexObject[_jsonCameraCalcKey].toObject(), errorString)) {
+        return false;
+    }
 
     _gimbalPitchFact.setRawValue(complexObject[_gimbalPitchFactName].toDouble());
     _gimbalYawFact.setRawValue  (complexObject[_gimbalYawFactName].toDouble());
@@ -218,9 +223,6 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
     _altitudeRelative =         complexObject[_jsonAltitudeRelativeKey].toBool(true);
     _yawVehicleToStructure =    complexObject[_jsonYawVehicleToStructureKey].toBool(true);
 
-    if (!_cameraCalc.load(complexObject[_jsonCameraCalcKey].toObject(), errorString)) {
-        return false;
-    }
     if (!_structurePolygon.loadFromJson(complexObject, true /* required */, errorString)) {
         _structurePolygon.clear();
         return false;
@@ -455,10 +457,8 @@ void StructureScanComplexItem::_recalcCameraShots(void)
     _setCameraShots(cameraShots * _layersFact.rawValue().toInt());
 }
 
-void StructureScanComplexItem::_cameraSpecTypeChanged(CameraCalc::CameraSpecType cameraSpecType)
+void StructureScanComplexItem::_resetGimbal(void)
 {
-    Q_UNUSED(cameraSpecType);
-
     _gimbalPitchFact.setCookedValue(0);
     _gimbalYawFact.setCookedValue(90);
 }
