@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.23 - Dec 22 2017
+
+*   Internal change. Fixing Jenkins build.
+
 ### v1.2.22 - Dec 21 2017
 
 *   Internal change. Switching to the Yuneec MAVLink dialect. No external changes.

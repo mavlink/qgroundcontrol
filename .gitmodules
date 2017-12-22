@@ -6,4 +6,4 @@
 	url = https://github.com/mavlink/c_library_v2.git
 [submodule "custom/mavlink"]
 	path = custom/mavlink
-	url = https://github.com/YUNEEC/c_library_v2.git
+	url = git@github.com:YUNEEC/c_library_v2.git
