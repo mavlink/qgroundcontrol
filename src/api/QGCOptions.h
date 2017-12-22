@@ -44,6 +44,7 @@ public:
     Q_PROPERTY(bool                     multiVehicleEnabled             READ multiVehicleEnabled            NOTIFY multiVehicleEnabledChanged)
     Q_PROPERTY(bool                     showOfflineMapExport            READ showOfflineMapExport           NOTIFY showOfflineMapExportChanged)
     Q_PROPERTY(bool                     showOfflineMapImport            READ showOfflineMapImport           NOTIFY showOfflineMapImportChanged)
+    Q_PROPERTY(bool                     useMobileFileDialog             READ useMobileFileDialog            CONSTANT)
 
     /// Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /// @return true if QGC should consolidate both menus into one.
@@ -80,9 +81,11 @@ public:
 #if defined(__mobile__)
     virtual bool    showOfflineMapExport            () const { return false; }
     virtual bool    showOfflineMapImport            () const { return false; }
+    virtual bool    useMobileFileDialog             () const { return true;}
 #else
     virtual bool    showOfflineMapExport            () const { return true; }
     virtual bool    showOfflineMapImport            () const { return true; }
+    virtual bool    useMobileFileDialog             () const { return false;}
 #endif
 
     /// If returned QString in non-empty it means that firmware upgrade will run in a mode which only
