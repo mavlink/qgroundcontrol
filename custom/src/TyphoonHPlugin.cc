@@ -161,6 +161,7 @@ public:
     //   file dialog for it.
     bool        showOfflineMapExport           () const final { return false; }
     bool        showOfflineMapImport           () const final { return false; }
+    bool        useMobileFileDialog            () const final { return false;}
 #endif
 
 private slots:

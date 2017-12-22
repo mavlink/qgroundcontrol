@@ -1,5 +1,10 @@
 ## DataPilot Release Changelog
 
+### v1.2.24 - Dec 22 2017
+
+*   Added file picker for the desktop version (Planner)
+*   Fixed an issue where the Planner was not creating a proper offline vehicle (wrong set of cameras).
+
 ### v1.2.23 - Dec 22 2017
 
 *   Internal change. Fixing Jenkins build.

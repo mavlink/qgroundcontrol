@@ -195,6 +195,7 @@
 		<file alias="Vehicle/TemperatureFact.json">../src/Vehicle/TemperatureFact.json</file>
 		<file alias="Vehicle/SubmarineFact.json">../src/Vehicle/SubmarineFact.json</file>
 		<file alias="BrandImage.SettingsGroup.json">../src/Settings/BrandImage.SettingsGroup.json</file>
+		<file alias="Vehicle/ClockFact.json">../src/Vehicle/ClockFact.json</file>
 	</qresource>
 	<qresource prefix="/MockLink">
 		<file alias="PX4MockLink.params">../src/comm/PX4MockLink.params</file>

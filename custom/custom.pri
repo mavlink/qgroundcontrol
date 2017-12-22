@@ -162,6 +162,7 @@ HEADERS += \
         $$QGCROOT/custom/src/m4serial.h \
         $$QGCROOT/custom/src/m4util.h \
         $$QGCROOT/custom/src/TyphoonHM4Interface.h \
+}
 
 equals(QT_MAJOR_VERSION, 5) {
     greaterThan(QT_MINOR_VERSION, 5) {
@@ -201,7 +202,6 @@ SOURCES += \
     $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePluginFactory.cc \
     $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraControl.cc \
     $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraManager.cc \
-}
 
 #-------------------------------------------------------------------------------------
 # Android
