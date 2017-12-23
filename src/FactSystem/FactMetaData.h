@@ -193,6 +193,8 @@ private:
     static QVariant _normToPercent(const QVariant& normalized);
     static QVariant _centimetersToInches(const QVariant& centimeters);
     static QVariant _inchesToCentimeters(const QVariant& inches);
+    static QVariant _celsiusToFarenheit(const QVariant& celsius);
+    static QVariant _farenheitToCelsius(const QVariant& farenheit);
 
     struct AppSettingsTranslation_s {
         const char* rawUnits;
