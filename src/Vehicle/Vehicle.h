@@ -891,7 +891,6 @@ private:
     void _handleBatteryStatus(mavlink_message_t& message);
     void _handleSysStatus(mavlink_message_t& message);
     void _handleWindCov(mavlink_message_t& message);
-    void _handleWind(mavlink_message_t& message);
     void _handleVibration(mavlink_message_t& message);
     void _handleExtendedSysState(mavlink_message_t& message);
     void _handleCommandAck(mavlink_message_t& message);
@@ -906,7 +905,11 @@ private:
     void _handleScaledPressure(mavlink_message_t& message);
     void _handleScaledPressure2(mavlink_message_t& message);
     void _handleScaledPressure3(mavlink_message_t& message);
+    // ArduPilot dialect messages
+#if !defined(NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback(const mavlink_message_t& message);
+    void _handleWind(mavlink_message_t& message);
+#endif
     void _handleCameraImageCaptured(const mavlink_message_t& message);
     void _handleADSBVehicle(const mavlink_message_t& message);
     void _missionManagerError(int errorCode, const QString& errorMsg);

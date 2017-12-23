@@ -883,18 +883,21 @@ void MockLink::_respondWithAutopilotVersion(void)
 
     uint8_t customVersion[8] = { };
     uint32_t flightVersion = 0;
+#if !defined(NO_ARDUPILOT_DIALECT)
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         flightVersion |= 3 << (8*3);
         flightVersion |= 5 << (8*2);
         flightVersion |= 0 << (8*1);
         flightVersion |= FIRMWARE_VERSION_TYPE_DEV << (8*0);
     } else if (_firmwareType == MAV_AUTOPILOT_PX4) {
+#endif
         flightVersion |= 1 << (8*3);
         flightVersion |= 4 << (8*2);
         flightVersion |= 1 << (8*1);
         flightVersion |= FIRMWARE_VERSION_TYPE_DEV << (8*0);
+#if !defined(NO_ARDUPILOT_DIALECT)
     }
-
+#endif
     mavlink_msg_autopilot_version_pack_chan(_vehicleSystemId,
                                             _vehicleComponentId,
                                             _mavlinkChannel,
@@ -909,7 +912,12 @@ void MockLink::_respondWithAutopilotVersion(void)
                                             (uint8_t *)&customVersion,       // os_custom_version,
                                             0,                               // vendor_id,
                                             0,                               // product_id,
-                                            0);                              // uid
+                                            0                                // uid
+#if defined(NO_ARDUPILOT_DIALECT)
+                                            //-- Once the MAVLink module is updated, this should show up. In the mean time, it's disabled.
+                                            ,0                               // uid2
+#endif
+                                            );
     respondWithMavlinkMessage(msg);
 }
 
