@@ -3133,7 +3133,7 @@ but also ignore less noise</short_desc>
       <decimal>1</decimal>
       <scope>modules/land_detector</scope>
     </parameter>
-    <parameter default="4.0" name="LNDFW_VELI_MAX" type="FLOAT">
+    <parameter default="8.0" name="LNDFW_VELI_MAX" type="FLOAT">
       <short_desc>Fixedwing max short-term velocity</short_desc>
       <long_desc>Maximum velocity integral in flight direction allowed in the landed state (m/s)</long_desc>
       <min>2</min>
