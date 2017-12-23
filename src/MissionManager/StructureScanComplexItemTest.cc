@@ -99,7 +99,7 @@ void StructureScanComplexItemTest::_initItem(void)
         mapPolygon->appendVertex(vertex);
     }
 
-    _structureScanItem->cameraCalc()->setCameraSpecType(CameraCalc::CameraSpecNone);
+    _structureScanItem->cameraCalc()->setCameraName(CameraCalc::manualCameraName());
     _structureScanItem->gimbalPitch()->setCookedValue(45);
     _structureScanItem->gimbalYaw()->setCookedValue(45);
     _structureScanItem->layers()->setCookedValue(2);
@@ -118,7 +118,7 @@ void StructureScanComplexItemTest::_validateItem(StructureScanComplexItem* item)
         QCOMPARE(expectedVertex, actualVertex);
     }
 
-    QCOMPARE((int)item->cameraCalc()->cameraSpecType(), (int)CameraCalc::CameraSpecNone);
+    QCOMPARE(_structureScanItem->cameraCalc()->cameraName() , CameraCalc::manualCameraName());
     QCOMPARE(item->gimbalPitch()->cookedValue().toDouble(), 45.0);
     QCOMPARE(item->gimbalYaw()->cookedValue().toDouble(), 45.0);
     QCOMPARE(item->layers()->cookedValue().toInt(), 2);
@@ -144,8 +144,8 @@ void StructureScanComplexItemTest::_testGimbalAngleUpdate(void)
     // This sets the item to CameraCalc::CameraSpecNone and non-standard gimbal angles
     _initItem();
 
-    // Switching to a camera specific setup should set gimbal angles to defaults surface scan
-    _structureScanItem->cameraCalc()->setCameraSpecType(CameraCalc::CameraSpecCustom);
+    // Switching to a camera specific setup should set gimbal angles to defaults
+    _structureScanItem->cameraCalc()->setCameraName(CameraCalc::customCameraName());
     QCOMPARE(_structureScanItem->gimbalPitch()->cookedValue().toDouble(), 0.0);
     QCOMPARE(_structureScanItem->gimbalYaw()->cookedValue().toDouble(), 90.0);
 }
