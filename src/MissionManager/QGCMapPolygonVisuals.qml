@@ -418,7 +418,7 @@ Item {
 
                 MenuItem {
                     text:           qsTr("Set radius..." )
-                    enabled:        _circle
+                    visible:        _circle
                     onTriggered:    radiusDialog.visible = true
                 }
 
