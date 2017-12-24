@@ -641,6 +641,9 @@ QStringList Joystick::actions(void)
     list << "Arm" << "Disarm";
 
     if (_activeVehicle) {
+        if (_activeVehicle->vtol()) {
+            list << "Transition" << "Parachute";
+        }
         list << _activeVehicle->flightModes();
     }
 
@@ -799,6 +802,10 @@ void Joystick::_buttonAction(const QString& action)
         _activeVehicle->setArmed(true);
     } else if (action == "Disarm") {
         _activeVehicle->setArmed(false);
+    } else if (action == "Transition") {
+        _activeVehicle->vtolTransition();
+    } else if (action == "Parachute") {
+        _activeVehicle->parachute();
     } else if (_activeVehicle->flightModes().contains(action)) {
         _activeVehicle->setFlightMode(action);
     } else {

@@ -538,6 +538,12 @@ public:
     bool armed(void) { return _armed; }
     void setArmed(bool armed);
 
+    void vtolTransition(void);
+    void setVtolState(MAV_VTOL_STATE state) { _vtolState = state;}
+    MAV_VTOL_STATE vtolState(void) { return _vtolState; }
+
+    void parachute(void);
+
     bool flightModeSetAvailable(void);
     QStringList flightModes(void);
     QString flightMode(void) const;
@@ -1030,6 +1036,8 @@ private:
     bool    _armed;         ///< true: vehicle is armed
     uint8_t _base_mode;     ///< base_mode from HEARTBEAT
     uint32_t _custom_mode;  ///< custom_mode from HEARTBEAT
+
+    MAV_VTOL_STATE _vtolState;
 
     /// Used to store a message being sent by sendMessageMultiple
     typedef struct {
