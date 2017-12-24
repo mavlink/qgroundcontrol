@@ -92,7 +92,7 @@ Rectangle {
             columnSpacing:  ScreenTools.defaultFontPixelWidth / 2
             rowSpacing:     0
             columns:        3
-            enabled:        missionItem.cameraCalc.cameraSpecType === CameraCalc.CameraSpecNone
+            enabled:        missionItem.cameraCalc.cameraName === missionItem.cameraCalc.manualCameraName
 
             Item { width: 1; height: 1 }
             QGCLabel { text: qsTr("Pitch") }
