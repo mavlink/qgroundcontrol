@@ -148,10 +148,6 @@ Item {
         setCircleRadius(center, radius)
     }
 
-    function loadKMLFile() {
-        mapPolygon.loadKMLFile("/Users/Don/Downloads/polygon.kml")
-    }
-
     onInteractiveChanged: {
         if (interactive) {
             addHandles()
@@ -418,7 +414,7 @@ Item {
 
                 MenuItem {
                     text:           qsTr("Set radius..." )
-                    enabled:        _circle
+                    visible:        _circle
                     onTriggered:    radiusDialog.visible = true
                 }
 
