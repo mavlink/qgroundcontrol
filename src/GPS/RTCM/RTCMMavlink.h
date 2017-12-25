@@ -36,4 +36,5 @@ private:
     QGCToolbox& _toolbox;
     QElapsedTimer _bandwidthTimer;
     int _bandwidthByteCounter = 0;
+    uint8_t _sequenceId = 0;
 };

@@ -113,7 +113,7 @@ private slots:
     void _updateCoordinateAltitudes (void);
     void _rebuildFlightPolygon      (void);
     void _recalcCameraShots         (void);
-    void _cameraSpecTypeChanged     (CameraCalc::CameraSpecType cameraSpecType);
+    void _resetGimbal               (void);
 
 private:
     void _setExitCoordinate(const QGeoCoordinate& coordinate);

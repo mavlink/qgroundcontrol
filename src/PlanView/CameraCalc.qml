@@ -23,7 +23,7 @@ Column {
     property real   _margin:            ScreenTools.defaultFontPixelWidth / 2
     property int    _cameraIndex:       1
     property real   _fieldWidth:        ScreenTools.defaultFontPixelWidth * 10.5
-    property var    _cameraList:        [ qsTr("Manual (no camera specs)"), qsTr("Custom Camera") ]
+    property var    _cameraList:        [ ]
     property var    _vehicle:           QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
     property var    _vehicleCameraList: _vehicle ? _vehicle.staticCameraList : []
 
@@ -32,31 +32,18 @@ Column {
     readonly property int _gridTypeCamera:          2
 
     Component.onCompleted: {
+        _cameraList.push(cameraCalc.manualCameraName)
+        _cameraList.push(cameraCalc.customCameraName)
         for (var i=0; i<_vehicle.staticCameraList.length; i++) {
             _cameraList.push(_vehicle.staticCameraList[i].name)
         }
         gridTypeCombo.model = _cameraList
-        if (cameraCalc.cameraSpecType === CameraCalc.CameraSpecNone) {
-            gridTypeCombo.currentIndex = _gridTypeManual
+        var knownCameraIndex = gridTypeCombo.find(cameraCalc.cameraName)
+        if (knownCameraIndex != -1) {
+            gridTypeCombo.currentIndex = knownCameraIndex
         } else {
-            var index = -1
-            for (index=0; index<_cameraList.length; index++) {
-                if (_cameraList[index] == cameraCalc.knownCameraName) {
-                    break;
-                }
-            }
-            cameraCalc.fixedOrientation.value = false
-            if (index == _cameraList.length) {
-                gridTypeCombo.currentIndex = _gridTypeCustomCamera
-            } else {
-                gridTypeCombo.currentIndex = index
-                if (index != 1) {
-                    // Specific camera is selected
-                    var camera = _vehicleCameraList[index - _gridTypeCamera]
-                    cameraCalc.fixedOrientation.value = camera.fixedOrientation
-                    cameraCalc.minTriggerInterval.value = camera.minTriggerInterval
-                }
-            }
+            console.log("Internal error: Known camera not found", cameraCalc.cameraName)
+            gridTypeCombo.currentIndex = _gridTypeCustomCamera
         }
     }
 
@@ -86,21 +73,7 @@ Column {
             anchors.right:  parent.right
             model:          _cameraList
             currentIndex:   -1
-
-            onActivated: {
-                if (index == _gridTypeManual) {
-                    cameraCalc.cameraSpecType = CameraCalc.CameraSpecNone
-                    cameraCalc.valueSetIsDistance.value = false
-                } else if (index == _gridTypeCustomCamera) {
-                    cameraCalc.cameraSpecType = CameraCalc.CameraSpecCustom
-                    cameraCalc.knownCameraName = gridTypeCombo.textAt(index)
-                    cameraCalc.fixedOrientation.value = false
-                    cameraCalc.minTriggerInterval.value = 0
-                } else {
-                    cameraCalc.cameraSpecType = CameraCalc.CameraSpecKnown
-                    cameraCalc.knownCameraName = gridTypeCombo.textAt(index)
-                }
-            }
+            onActivated:    cameraCalc.cameraName = gridTypeCombo.textAt(index)
         } // QGCComboxBox
 
         // Camera based grid ui
@@ -108,7 +81,7 @@ Column {
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        _margin
-            visible:        cameraCalc.cameraSpecType !== CameraCalc.CameraSpecNone
+            visible:        cameraCalc.cameraName !== cameraCalc.manualCameraName
 
             Row {
                 spacing:                    _margin
@@ -138,7 +111,7 @@ Column {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 spacing:        _margin
-                visible:        cameraCalc.cameraSpecType === CameraCalc.CameraSpecCustom
+                visible:        cameraCalc.cameraName === cameraCalc.customCameraName
 
                 RowLayout {
                     anchors.left:   parent.left
@@ -306,7 +279,7 @@ Column {
             columnSpacing:  _margin
             rowSpacing:     _margin
             columns:        2
-            visible:        cameraCalc.cameraSpecType === CameraCalc.CameraSpecNone
+            visible:        cameraCalc.cameraName === cameraCalc.manualCameraName
 
             QGCLabel { text: distanceToSurfaceLabel }
             FactTextField {
