@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.25 - Dec 25 2017
+
+*   Fix Structure Scan camera section loading
+
 ### v1.2.24 - Dec 22 2017
 
 *   Added file picker for the desktop version (Planner)
