@@ -990,7 +990,7 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QObjec
     QString defaultValueJsonKey;
 #ifdef __mobile__
     if (json.contains(_mobileDefaultValueJsonKey)) {
-        defaultValueJsonKey = _mobileDefaultValueJsonKey
+        defaultValueJsonKey = _mobileDefaultValueJsonKey;
     }
 #endif
     if (defaultValueJsonKey.isEmpty() && json.contains(_defaultValueJsonKey)) {
