@@ -7,12 +7,10 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "Fact.h"
 #include "QGCMAVLink.h"
+#include "QGCApplication.h"
+#include "QGCCorePlugin.h"
 
 #include <QtQml>
 #include <QQmlEngine>
@@ -48,6 +46,21 @@ Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObjec
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+}
+
+Fact::Fact(FactMetaData* metaData, QObject* parent)
+    : QObject(parent)
+    , _name                     (metaData->name())
+    , _componentId              (0)
+    , _rawValue                 (0)
+    , _type                     (metaData->type())
+    , _metaData                 (NULL)
+    , _sendValueChangedSignals  (true)
+    , _deferredValueChangeSignal(false)
+{
+    // Allow core plugin a chance to override the default value
+    qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(*metaData);
+    setMetaData(metaData, true /* setDefaultFromMetaData */);
 }
 
 Fact::Fact(const Fact& other, QObject* parent)

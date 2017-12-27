@@ -31,6 +31,10 @@ public:
     Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObject* parent = NULL);
     Fact(const Fact& other, QObject* parent = NULL);
 
+    /// Creates a Fact using the name and type from metaData. Also calls QGCCorePlugin::adjustSettingsMetaData allowing
+    /// custom builds to override the metadata.
+    Fact(FactMetaData* metaData, QObject* parent = NULL);
+
     const Fact& operator=(const Fact& other);
 
     Q_PROPERTY(int          componentId             READ componentId                                        CONSTANT)
