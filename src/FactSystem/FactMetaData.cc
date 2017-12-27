@@ -986,29 +986,58 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QObjec
     if (json.contains(_unitsJsonKey)) {
         metaData->setRawUnits(json[_unitsJsonKey].toString());
     }
+
+    QString defaultValueJsonKey;
 #ifdef __mobile__
     if (json.contains(_mobileDefaultValueJsonKey)) {
-        metaData->setRawDefaultValue(json[_mobileDefaultValueJsonKey].toVariant());
-    } else if (json.contains(_defaultValueJsonKey)) {
-        metaData->setRawDefaultValue(json[_defaultValueJsonKey].toVariant());
-    }
-#else
-    if (json.contains(_defaultValueJsonKey)) {
-        metaData->setRawDefaultValue(json[_defaultValueJsonKey].toVariant());
+        defaultValueJsonKey = _mobileDefaultValueJsonKey;
     }
 #endif
+    if (defaultValueJsonKey.isEmpty() && json.contains(_defaultValueJsonKey)) {
+        defaultValueJsonKey = _defaultValueJsonKey;
+    }
+    if (!defaultValueJsonKey.isEmpty()) {
+        QVariant typedValue;
+        QString errorString;
+        QVariant initialValue = json[defaultValueJsonKey].toVariant();
+        if (metaData->convertAndValidateRaw(initialValue, true /* convertOnly */, typedValue, errorString)) {
+            metaData->setRawDefaultValue(typedValue);
+        } else {
+            qWarning() << "Invalid default value, name:" << metaData->name()
+                       << " type:" << metaData->type()
+                       << " value:" << initialValue
+                       << " error:" << errorString;
+        }
+    }
+
     if (json.contains(_minJsonKey)) {
         QVariant typedValue;
         QString errorString;
-        metaData->convertAndValidateRaw(json[_minJsonKey].toVariant(), true /* convertOnly */, typedValue, errorString);
-        metaData->setRawMin(typedValue);
+        QVariant initialValue = json[_minJsonKey].toVariant();
+        if (metaData->convertAndValidateRaw(initialValue, true /* convertOnly */, typedValue, errorString)) {
+            metaData->setRawMin(typedValue);
+        } else {
+            qWarning() << "Invalid min value, name:" << metaData->name()
+                       << " type:" << metaData->type()
+                       << " value:" << initialValue
+                       << " error:" << errorString;
+        }
     }
+
     if (json.contains(_maxJsonKey)) {
         QVariant typedValue;
         QString errorString;
-        metaData->convertAndValidateRaw(json[_maxJsonKey].toVariant(), true /* convertOnly */, typedValue, errorString);
-        metaData->setRawMax(typedValue);
+        QVariant initialValue = json[_maxJsonKey].toVariant();
+        if (metaData->convertAndValidateRaw(initialValue, true /* convertOnly */, typedValue, errorString)) {
+            metaData->setRawMax(typedValue);
+        } else {
+            qWarning() << "Invalid max value, name:" << metaData->name()
+                       << " type:" << metaData->type()
+                       << " value:" << initialValue
+                       << " error:" << errorString;
+        }
     }
+
     if (json.contains(_hasControlJsonKey)) {
         metaData->setHasControl(json[_hasControlJsonKey].toBool());
     } else {
