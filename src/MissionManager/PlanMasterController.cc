@@ -273,7 +273,7 @@ void PlanMasterController::sendToVehicle(void)
 void PlanMasterController::loadFromFile(const QString& filename)
 {
     QString errorString;
-    QString errorMessage = tr("Error reading Plan file (%1). %2").arg(filename).arg("%1");
+    QString errorMessage = tr("Error loading Plan file (%1). %2").arg(filename).arg("%1");
 
     if (filename.isEmpty()) {
         return;

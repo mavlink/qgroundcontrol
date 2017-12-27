@@ -12,6 +12,7 @@ import QtQuick              2.3
 import QtQuick.Controls     1.2
 import QtQuick.Dialogs      1.2
 
+import QGroundControl               1.0
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
@@ -22,12 +23,9 @@ import QGroundControl.Controllers   1.0
 SetupPage {
     id:                 subFramePage
     pageComponent:      subFramePageComponent
-    property var  _flatParamList:       ListModel {
-        ListElement {
-            name: "Blue Robotics BlueROV2"
-            file: "Sub/bluerov2-3_5.params"
-        }
-    }
+
+    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
+    property bool _oldFW:   !(_activeVehicle.firmwareMajorVersion > 3 || _activeVehicle.firmwareMinorVersion > 5 || _activeVehicle.firmwarePatchVersion >= 2)
 
     APMAirframeComponentController { id: controller; factPanel: subFramePage.viewPanel }
 
@@ -194,18 +192,16 @@ SetupPage {
                 spacing :           _margins
                 layoutDirection:    Qt.Vertical;
 
-                Repeater {
-                    id:     airframePicker
-                    model:  _flatParamList
+                QGCButton {
+                    width:  parent.width
+                    text:   "Blue Robotics BlueROV2"
+                    property var file:   _oldFW ? "Sub/bluerov2-3_5.params" : "Sub/bluerov2-3_5_2.params"
 
-                    delegate: QGCButton {
-                        width:  parent.width
-                        text:   name
-
-                        onClicked : {
-                            controller.loadParameters(file)
-                            hideDialog()
-                        }
+                    onClicked : {
+                        console.log(_oldFW)
+                        console.log(_activeVehicle.firmwarePatchVersion)
+                        controller.loadParameters(file)
+                        hideDialog()
                     }
                 }
             }

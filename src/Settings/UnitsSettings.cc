@@ -16,12 +16,14 @@ const char* UnitsSettings::unitsSettingsGroupName =     "Units";
 const char* UnitsSettings::distanceUnitsSettingsName =  "DistanceUnits";
 const char* UnitsSettings::areaUnitsSettingsName =      "AreaUnits";
 const char* UnitsSettings::speedUnitsSettingsName =     "SpeedUnits";
+const char* UnitsSettings::temperatureUnitsSettingsName = "TemperatureUnits";
 
 UnitsSettings::UnitsSettings(QObject* parent)
     : SettingsGroup(unitsSettingsGroupName, QString() /* root settings group */, parent)
     , _distanceUnitsFact(NULL)
     , _areaUnitsFact(NULL)
     , _speedUnitsFact(NULL)
+    , _temperatureUnitsFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<UnitsSettings>("QGroundControl.SettingsManager", 1, 0, "UnitsSettings", "Reference only");
@@ -91,4 +93,25 @@ Fact* UnitsSettings::speedUnits(void)
     }
 
     return _speedUnitsFact;
+}
+
+Fact* UnitsSettings::temperatureUnits(void)
+{
+    if (!_temperatureUnitsFact) {
+        // Units settings can't be loaded from json since it creates an infinite loop of meta data loading.
+        QStringList     enumStrings;
+        QVariantList    enumValues;
+
+        enumStrings << "Celsius" << "Farenheit";
+        enumValues << QVariant::fromValue((uint32_t)TemperatureUnitsCelsius) << QVariant::fromValue((uint32_t)TemperatureUnitsFarenheit);
+
+        FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
+        metaData->setName(temperatureUnitsSettingsName);
+        metaData->setEnumInfo(enumStrings, enumValues);
+        metaData->setRawDefaultValue(TemperatureUnitsCelsius);
+
+        _temperatureUnitsFact = new SettingsFact(QString() /* no settings group */, metaData, this);
+    }
+
+    return _temperatureUnitsFact;
 }
