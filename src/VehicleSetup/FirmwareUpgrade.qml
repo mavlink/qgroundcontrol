@@ -311,7 +311,7 @@ SetupPage {
                             visible:    !px4Flow
 
                             Rectangle {
-                                height: 1
+                                height:     1
                                 width:      ScreenTools.defaultFontPixelWidth * 5
                                 color:      qgcPal.text
                                 anchors.verticalCenter: _advanced.verticalCenter
@@ -341,7 +341,7 @@ SetupPage {
                             width:      parent.width
                             wrapMode:   Text.WordWrap
                             visible:    showFirmwareTypeSelection
-                            text:       px4Flow ? qsTr("Select which version of the firmware you would like to install:") : qsTr("Select which version of the above flight stack you would like to install:")
+                            text:       _singleFirmwareMode ?  qsTr("Select the standard version or one from the file system (previously downloaded):") : (px4Flow ? qsTr("Select which version of the firmware you would like to install:") : qsTr("Select which version of the above flight stack you would like to install:"))
                         }
 
                         QGCComboBox {
