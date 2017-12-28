@@ -271,6 +271,27 @@ bool QGCSerialPortInfo::isBootloader(void) const
     }
 }
 
+bool QGCSerialPortInfo::isSystemPort(void) const
+{
+    // Known operating system peripherals that are NOT a drone
+
+    // These are known Mac OS ports that
+    // are never connected to a drone but instead
+    // to other system peripherals.
+    if (systemLocation().contains("tty.MALS")
+        || systemLocation().contains("tty.SOC")
+        || systemLocation().contains("tty.Bluetooth-Incoming-Port")
+        // We open these by their cu.usbserial and cu.usbmodem handles
+        // already. We don't want to open them twice and conflict
+        // with ourselves.
+        || systemLocation().contains("tty.usbserial")
+        || systemLocation().contains("tty.usbmodem")) {
+
+        return true;
+    }
+    return false;
+}
+
 bool QGCSerialPortInfo::canFlash(void)
 {
     BoardType_t boardType;
