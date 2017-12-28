@@ -251,6 +251,33 @@ QGCView {
                 }
                 //-----------------------------------------------------------------
                 Rectangle {
+                    id:             ledControl
+                    height:         ledControlRow.height * 2
+                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    color:          qgcPal.windowShade
+                    visible:        !TyphoonHQuickInterface.desktopPlanner && _activeVehicle
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Row {
+                        id:         ledControlRow
+                        spacing:    ScreenTools.defaultFontPixelWidth * 4
+                        anchors.centerIn: parent
+                        QGCComboBox {
+                            width:          _buttonWidth
+                            model:          ledOptions
+                            currentIndex:   TyphoonHQuickInterface.ledOptions
+                            onActivated:    TyphoonHQuickInterface.ledOptions = index
+                            anchors.verticalCenter: parent.verticalCenter
+                            property var ledOptions: [qsTr("All Off"), qsTr("Front Off"), qsTr("All On")]
+                        }
+                        QGCLabel {
+                            text:   qsTr("LED Control")
+                            width:   _textWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+                //-----------------------------------------------------------------
+                Rectangle {
                     height:         updaterRow.height * 2
                     width:          ScreenTools.defaultFontPixelWidth * 80
                     color:          qgcPal.windowShade

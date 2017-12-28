@@ -283,6 +283,42 @@ TyphoonHQuickInterface::firstRun()
 }
 
 //-----------------------------------------------------------------------------
+int
+TyphoonHQuickInterface::ledOptions()
+{
+    return 0;
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::setLedOptions(int option)
+{
+    int mode = MODE_OFF;
+    int mask = 0x3F;
+    switch (option) {
+    //-- All Off
+    case 0:
+        break;
+    //-- Front Off
+    case 1:
+        mask = 0x7;
+        break;
+    //-- All On
+    case 2:
+        mode = MODE_ON;
+        break;
+    }
+    _vehicle->sendMavCommand(
+        _vehicle->defaultComponentId(),             // target component
+        MAV_CMD_LED_CONTROL,                        // Command id
+        true,                                       // ShowError
+        mode,                                       // LED Mode
+        0,                                          // LED Color
+        mask,                                       // LED Mask
+        0);                                         // Blink count
+}
+
+//-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::_vehicleAdded(Vehicle* vehicle)
 {

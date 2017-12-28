@@ -178,6 +178,7 @@ public:
 
     Q_PROPERTY(bool             firstRun            READ    firstRun            WRITE   setFirstRun         NOTIFY  firstRunChanged)
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
+    Q_PROPERTY(int              ledOptions          READ    ledOptions          WRITE   setLedOptions       NOTIFY  ledOptionsChanged)
 
     Q_PROPERTY(int              J1              READ    J1                  NOTIFY rawChannelChanged)
     Q_PROPERTY(int              J2              READ    J2                  NOTIFY rawChannelChanged)
@@ -293,6 +294,9 @@ public:
     bool        newPasswordSet      () { return _newPasswordSet; }
     void        setNewPasswordSet   (bool set) { _newPasswordSet = set; emit newPasswordSetChanged(); }
 
+    int         ledOptions          ();
+    void        setLedOptions       (int option);
+
     int         J1                  () { return rawChannel(0); }
     int         J2                  () { return rawChannel(1); }
     int         J3                  () { return rawChannel(2); }
@@ -389,6 +393,7 @@ signals:
     void    isDefaultPwdChanged         ();
     void    firstRunChanged             ();
     void    newPasswordSetChanged       ();
+    void    ledOptionsChanged           ();
 
 private slots:
     void    _m4StateChanged             ();
