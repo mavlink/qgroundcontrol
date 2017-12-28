@@ -501,6 +501,13 @@ void LinkManager::_updateAutoConnectLinks(void)
         QString boardName;
 
         if (portInfo.getBoardInfo(boardType, boardName)) {
+
+            if (portInfo.isSystemPort()) {
+                // Don't connect to system ports
+                qCDebug(LinkManagerLog) << "Not opening known system ports" << portInfo.systemLocation();
+                continue;
+            }
+
             if (portInfo.isBootloader()) {
                 // Don't connect to bootloader
                 qCDebug(LinkManagerLog) << "Waiting for bootloader to finish" << portInfo.systemLocation();

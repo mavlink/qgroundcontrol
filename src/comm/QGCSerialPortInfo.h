@@ -49,6 +49,9 @@ public:
     /// @return true: Board is currently in bootloader
     bool isBootloader(void) const;
 
+    /// @return true: Port is a system port and not an autopilot
+    bool isSystemPort(void) const;
+
 private:
     typedef struct {
         const char* classString;
