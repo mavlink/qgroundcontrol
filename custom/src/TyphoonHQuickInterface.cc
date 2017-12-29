@@ -293,7 +293,8 @@ TyphoonHQuickInterface::setLedOptions(LedState option)
     case LedAllOff:
         break;
     case LedFrontOff:
-        mask = 0x7;
+        mode = MODE_ON;
+        mask = 0x1E;
         break;
     case LedAllOn:
         mode = MODE_ON;
@@ -304,7 +305,7 @@ TyphoonHQuickInterface::setLedOptions(LedState option)
         MAV_CMD_LED_CONTROL,                        // Command id
         true,                                       // ShowError
         mode,                                       // LED Mode
-        0,                                          // LED Color
+        COLOR_WHITE,                                // LED Color
         mask,                                       // LED Mask
         0);                                         // Blink count
     _ledState = option;
