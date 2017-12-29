@@ -455,6 +455,30 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       0,        // minTriggerInterval
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("Parrot Sequioa RGB"),
+                                      6.17,     // sensorWidth
+                                      4.63,     // sendsorHeight
+                                      4608,     // imageWidth
+                                      3456,     // imageHeight
+                                      4.9,      // focalLength
+                                      true,     // landscape
+                                      false,    // fixedOrientation
+                                      1,        // minTriggerInterval
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("Parrot Sequioa Monochrome"),
+                                      4.8,      // sensorWidth
+                                      3.6,      // sendsorHeight
+                                      1280,     // imageWidth
+                                      960,      // imageHeight
+                                      4.0,      // focalLength
+                                      true,     // landscape
+                                      false,    // fixedOrientation
+                                      0.8,      // minTriggerInterval
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
     }
 
     return _cameraList;
