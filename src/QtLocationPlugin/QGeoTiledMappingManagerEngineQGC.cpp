@@ -73,14 +73,6 @@ QGeoTiledMapQGC::QGeoTiledMapQGC(QGeoTiledMappingManagerEngine *engine, QObject 
 }
 #endif
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-#define QGCGEOMAPTYPE(a,b,c,d,e,f)  QGeoMapType(a,b,c,d,e,f,QByteArray("QGroundControl"), QGeoCameraCapabilities())
-#elif QT_VERSION >= QT_VERSION_CHECK(5, 9, 0)
-#define QGCGEOMAPTYPE(a,b,c,d,e,f)  QGeoMapType(a,b,c,d,e,f,QByteArray("QGroundControl"))
-#else
-#define QGCGEOMAPTYPE(a,b,c,d,e,f)  QGeoMapType(a,b,c,d,e,f)
-#endif
-
 //-----------------------------------------------------------------------------
 QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString)
 :   QGeoTiledMappingManagerEngine()
@@ -93,6 +85,16 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     setCameraCapabilities(cameraCaps);
 
     setTileSize(QSize(256, 256));
+
+    // In Qt 5.10 QGeoMapType need QGeoCameraCapabilities as argument
+    // E.g: https://github.com/qt/qtlocation/blob/2b230b0a10d898979e9d5193f4da2e408b397fe3/src/plugins/geoservices/osm/qgeotiledmappingmanagerengineosm.cpp#L167
+    #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+    #define QGCGEOMAPTYPE(a,b,c,d,e,f)  QGeoMapType(a,b,c,d,e,f,QByteArray("QGroundControl"), cameraCaps)
+    #elif QT_VERSION >= QT_VERSION_CHECK(5, 9, 0)
+    #define QGCGEOMAPTYPE(a,b,c,d,e,f)  QGeoMapType(a,b,c,d,e,f,QByteArray("QGroundControl"))
+    #else
+    #define QGCGEOMAPTYPE(a,b,c,d,e,f)  QGeoMapType(a,b,c,d,e,f)
+    #endif
 
     /*
      * Google and Bing don't seem kosher at all. This was based on original code from OpenPilot and heavily modified to be used in QGC.
