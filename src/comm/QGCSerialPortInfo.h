@@ -50,7 +50,7 @@ public:
     bool isBootloader(void) const;
 
     /// @return true: Port is a system port and not an autopilot
-    bool isSystemPort(void) const;
+    static bool isSystemPort(QSerialPortInfo* port);
 
 private:
     typedef struct {
