@@ -252,7 +252,9 @@ QList<QGCSerialPortInfo> QGCSerialPortInfo::availablePorts(void)
     QList<QGCSerialPortInfo>    list;
 
     foreach(QSerialPortInfo portInfo, QSerialPortInfo::availablePorts()) {
-        list << *((QGCSerialPortInfo*)&portInfo);
+        if (!isSystemPort(&portInfo)) {
+            list << *((QGCSerialPortInfo*)&portInfo);
+        }
     }
 
     return list;
@@ -271,21 +273,22 @@ bool QGCSerialPortInfo::isBootloader(void) const
     }
 }
 
-bool QGCSerialPortInfo::isSystemPort(void) const
+bool QGCSerialPortInfo::isSystemPort(QSerialPortInfo* port)
 {
-    // Known operating system peripherals that are NOT a drone
+    // Known operating system peripherals that are NEVER a peripheral
+    // that we should connect to.
 
-    // These are known Mac OS ports that
-    // are never connected to a drone but instead
-    // to other system peripherals.
-    if (systemLocation().contains("tty.MALS")
-        || systemLocation().contains("tty.SOC")
-        || systemLocation().contains("tty.Bluetooth-Incoming-Port")
+    // XXX Add Linux (LTE modems, etc) and Windows as needed
+
+    // MAC OS
+    if (port->systemLocation().contains("tty.MALS")
+        || port->systemLocation().contains("tty.SOC")
+        || port->systemLocation().contains("tty.Bluetooth-Incoming-Port")
         // We open these by their cu.usbserial and cu.usbmodem handles
         // already. We don't want to open them twice and conflict
         // with ourselves.
-        || systemLocation().contains("tty.usbserial")
-        || systemLocation().contains("tty.usbmodem")) {
+        || port->systemLocation().contains("tty.usbserial")
+        || port->systemLocation().contains("tty.usbmodem")) {
 
         return true;
     }
