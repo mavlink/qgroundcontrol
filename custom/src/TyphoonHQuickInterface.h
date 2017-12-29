@@ -143,9 +143,16 @@ public:
         ThermalPIP,
     };
 
+    enum LedState {
+        LedAllOn,
+        LedAllOff,
+        LedFrontOff
+    };
+
     Q_ENUMS(M4State)
     Q_ENUMS(CalibrationState)
     Q_ENUMS(ThermalViewMode)
+    Q_ENUMS(LedState)
 
     Q_PROPERTY(M4State          m4State         READ    m4State             NOTIFY m4StateChanged)
     Q_PROPERTY(QString          m4StateStr      READ    m4StateStr          NOTIFY m4StateChanged)
@@ -178,7 +185,7 @@ public:
 
     Q_PROPERTY(bool             firstRun            READ    firstRun            WRITE   setFirstRun         NOTIFY  firstRunChanged)
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
-    Q_PROPERTY(int              ledOptions          READ    ledOptions          WRITE   setLedOptions       NOTIFY  ledOptionsChanged)
+    Q_PROPERTY(LedState         ledOptions          READ    ledOptions          WRITE   setLedOptions       NOTIFY  ledOptionsChanged)
 
     Q_PROPERTY(int              J1              READ    J1                  NOTIFY rawChannelChanged)
     Q_PROPERTY(int              J2              READ    J2                  NOTIFY rawChannelChanged)
@@ -294,8 +301,8 @@ public:
     bool        newPasswordSet      () { return _newPasswordSet; }
     void        setNewPasswordSet   (bool set) { _newPasswordSet = set; emit newPasswordSetChanged(); }
 
-    int         ledOptions          ();
-    void        setLedOptions       (int option);
+    LedState    ledOptions          () { return _ledState; }
+    void        setLedOptions       (LedState option);
 
     int         J1                  () { return rawChannel(0); }
     int         J2                  () { return rawChannel(1); }
@@ -485,5 +492,6 @@ private:
     bool                    _firstRun;
     bool                    _passwordSet;       //-- Was the password set within this session?
     bool                    _newPasswordSet;    //-- Password changed
+    LedState                _ledState;          //-- Internally kept state as the vehicle does not tells us what state the LEDs are
 
 };

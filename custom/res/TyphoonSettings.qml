@@ -267,7 +267,7 @@ QGCView {
                             currentIndex:   TyphoonHQuickInterface.ledOptions
                             onActivated:    TyphoonHQuickInterface.ledOptions = index
                             anchors.verticalCenter: parent.verticalCenter
-                            property var ledOptions: [qsTr("All Off"), qsTr("Front Off"), qsTr("All On")]
+                            property var ledOptions: [qsTr("All On"), qsTr("All Off"), qsTr("Front Off")]
                         }
                         QGCLabel {
                             text:   qsTr("LED Control")

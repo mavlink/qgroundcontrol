@@ -91,6 +91,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _firstRun(true)
     , _passwordSet(false)
     , _newPasswordSet(false)
+    , _ledState(LedAllOn)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
 #if defined __android__
@@ -283,28 +284,18 @@ TyphoonHQuickInterface::firstRun()
 }
 
 //-----------------------------------------------------------------------------
-int
-TyphoonHQuickInterface::ledOptions()
-{
-    return 0;
-}
-
-//-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::setLedOptions(int option)
+TyphoonHQuickInterface::setLedOptions(LedState option)
 {
     int mode = MODE_OFF;
     int mask = 0x3F;
     switch (option) {
-    //-- All Off
-    case 0:
+    case LedAllOff:
         break;
-    //-- Front Off
-    case 1:
+    case LedFrontOff:
         mask = 0x7;
         break;
-    //-- All On
-    case 2:
+    case LedAllOn:
         mode = MODE_ON;
         break;
     }
@@ -316,6 +307,8 @@ TyphoonHQuickInterface::setLedOptions(int option)
         0,                                          // LED Color
         mask,                                       // LED Mask
         0);                                         // Blink count
+    _ledState = option;
+    emit ledOptionsChanged();
 }
 
 //-----------------------------------------------------------------------------
