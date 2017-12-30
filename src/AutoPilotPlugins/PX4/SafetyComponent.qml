@@ -167,10 +167,10 @@ SetupPage {
                     columns:    3
 
                     Image {
-                        mipmap:             true
-                        fillMode:           Image.PreserveAspectFit
-                        source:             qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/LowBatteryLight.svg" : "/qmlimages/LowBattery.svg"
-                        Layout.rowSpan:     3
+                        mipmap:                 true
+                        fillMode:               Image.PreserveAspectFit
+                        source:                 qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/LowBatteryLight.svg" : "/qmlimages/LowBattery.svg"
+                        Layout.rowSpan:         4
                         Layout.maximumWidth:    _imageWidth
                         Layout.maximumHeight:   _imageHeight
                         width:                  _imageWidth
@@ -202,6 +202,15 @@ SetupPage {
                     }
                     FactTextField {
                         fact:                   controller.getParameterFact(-1, "BAT_CRIT_THR")
+                        Layout.minimumWidth:    _editFieldWidth
+                    }
+
+                    QGCLabel {
+                        text:               qsTr("Battery Emergency Level:")
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:                   controller.getParameterFact(-1, "BAT_EMERGEN_THR")
                         Layout.minimumWidth:    _editFieldWidth
                     }
                 }
