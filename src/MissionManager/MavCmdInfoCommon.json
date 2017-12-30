@@ -238,33 +238,6 @@
         { "id": 32, "rawName": "MAV_CMD_DO_FOLLOW", "friendlyName": "Follow Me" },
         { "id": 33, "rawName": "MAV_CMD_DO_FOLLOW_REPOSITION", "friendlyName": "Vehicle reposition" },
         {
-            "id":                   80,
-            "rawName":              "MAV_CMD_NAV_ROI",
-            "friendlyName":         "Region of interest (nav)",
-            "description":          "Sets the region of interest for cameras.",
-            "specifiesCoordinate":  true,
-            "standaloneCoordinate": true,
-            "friendlyEdit":         true,
-            "category":             "Camera",
-            "param1": {
-                "label":            "Mode",
-                "enumStrings":      "None,Next waypoint,Mission item,Location,ROI item",
-                "enumValues":       "0,1,2,3,4",
-                "default":          3,
-                "decimalPlaces":    0
-            },
-            "param2": {
-                "label":            "Mission Index",
-                "default":          0,
-                "decimalPlaces":    0
-            },
-            "param3": {
-                "label":            "ROI Index",
-                "default":          0,
-                "decimalPlaces":    0
-            }
-        },
-        {
             "id":                   81,
             "rawName":              "MAV_CMD_NAV_PATHPLANNING",
             "friendlyName":         "Path planning",
