@@ -43,8 +43,6 @@ MacBuild {
 }
 
 iOSBuild {
-    BUNDLE.files        = $$files($$PWD/ios/AppIcon*.png) $$PWD/ios/QGCLaunchScreen.xib
-    QMAKE_BUNDLE_DATA  += BUNDLE
     LIBS               += -framework AVFoundation
     #-- Info.plist (need an "official" one for the App Store)
     ForAppStore {
@@ -63,6 +61,8 @@ iOSBuild {
         QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOS-Info.plist
         OTHER_FILES      += $${BASEDIR}/ios/iOS-Info.plist
     }
+    BUNDLE.files        = $$files($$PWD/ios/AppIcon*.png) $$PWD/ios/QGCLaunchScreen.xib $$QMAKE_INFO_PLIST
+    QMAKE_BUNDLE_DATA  += BUNDLE
     #-- TODO: Add iTunesArtwork
 }
 
