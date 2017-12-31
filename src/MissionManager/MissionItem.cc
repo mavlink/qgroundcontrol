@@ -171,10 +171,10 @@ bool MissionItem::load(QTextStream &loadStream)
 {
     const QStringList &wpParams = loadStream.readLine().split("\t");
     if (wpParams.size() == 12) {
+        setCommand((MAV_CMD)wpParams[3].toInt());   // Has to be first since it triggers defaults to be set, which are then override by below set calls
         setSequenceNumber(wpParams[0].toInt());
         setIsCurrentItem(wpParams[1].toInt() == 1 ? true : false);
         setFrame((MAV_FRAME)wpParams[2].toInt());
-        setCommand((MAV_CMD)wpParams[3].toInt());
         setParam1(wpParams[4].toDouble());
         setParam2(wpParams[5].toDouble());
         setParam3(wpParams[6].toDouble());
@@ -300,8 +300,8 @@ bool MissionItem::load(const QJsonObject& json, int sequenceNumber, QString& err
     }
 
     // Make sure to set these first since they can signal other changes
-    setFrame((MAV_FRAME)convertedJson[_jsonFrameKey].toInt());
     setCommand((MAV_CMD)convertedJson[_jsonCommandKey].toInt());
+    setFrame((MAV_FRAME)convertedJson[_jsonFrameKey].toInt());
 
     _doJumpId = -1;
     if (convertedJson.contains(_jsonDoJumpIdKey)) {
