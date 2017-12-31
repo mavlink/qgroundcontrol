@@ -138,8 +138,11 @@ public:
     /// @return true: success, false: failure, errorString set
     bool loadJsonInfo(const QJsonObject& jsonObject, bool requireFullObject, QString& errorString);
 
-    /// Return param info for index, NULL for param should not be shown
-    const MissionCmdParamInfo* getParamInfo(int index) const;
+    /// Retruns parameter information for specified parameter
+    ///     @param index paremeter index to retrieve, 1-7
+    ///     @param showUI true: show parameter in editor, false: hide parameter in editor
+    /// @return Param info for index, NULL for none available
+    const MissionCmdParamInfo* getParamInfo(int index, bool& showUI) const;
 
 private:
     QString _loadErrorString(const QString& errorString) const;
