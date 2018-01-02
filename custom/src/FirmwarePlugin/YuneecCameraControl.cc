@@ -438,9 +438,9 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
                 emit activeSettingsChanged();
             }
             //-- Start recording local stream as well
-            //if(isCGOET() && qgcApp()->toolbox()->videoManager()->videoReceiver()) {
-            //    qgcApp()->toolbox()->videoManager()->videoReceiver()->startRecording();
-            //}
+            if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+                qgcApp()->toolbox()->videoManager()->videoReceiver()->startRecording();
+            }
         } else {
             _recTimer.stop();
             _recordTime = 0;
@@ -477,9 +477,9 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
             }
             _videoSound.play();
             //-- Stop recording local stream
-            //if(isCGOET() && qgcApp()->toolbox()->videoManager()->videoReceiver()) {
-            //    qgcApp()->toolbox()->videoManager()->videoReceiver()->stopRecording();
-            //}
+            if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+                qgcApp()->toolbox()->videoManager()->videoReceiver()->stopRecording();
+            }
         }
     }
 }

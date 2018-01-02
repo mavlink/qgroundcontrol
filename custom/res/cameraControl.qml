@@ -14,10 +14,11 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick                  2.4
+import QtQuick                  2.9
+import QtQuick.Controls         2.2
+import QtMultimedia             5.9
 import QtPositioning            5.2
 import QtQuick.Layouts          1.2
-import QtQuick.Controls         1.4
 import QtQuick.Dialogs          1.2
 import QtGraphicalEffects       1.0
 
@@ -69,13 +70,14 @@ Rectangle {
     property bool _isThermal:               TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver
     property bool _settingsEnabled:         !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED && _camera && _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE && !_recordingVideo
 
-    property real _mediaWidth:              128
-    property real _mediaHeight:             72
-    property real _mediaIndex:              0
+    property real   _mediaWidth:            128
+    property real   _mediaHeight:           72
+    property real   _mediaIndex:            0
 
     //-- Media Player
     property color  _rectColor:             qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
     property string _photoPath:             "file://" + QGroundControl.settingsManager.appSettings.savePath.rawValue.toString() + "/Photo/"
+    property string _videoPath:             "file://" + QGroundControl.settingsManager.appSettings.savePath.rawValue.toString() + "/Video/"
     property bool   _selectMode:            false
     property bool   _hasSelection:          TyphoonHQuickInterface.selectedCount > 0
     property bool   _hasPhotos:             TyphoonHQuickInterface.mediaList.length > 0
@@ -907,14 +909,55 @@ Rectangle {
                     onPressed:      { mouse.accepted = true; }
                     onReleased:     { mouse.accepted = true; }
                 }
-                QGCLabel {
+                Row {
+                    spacing:                ScreenTools.defaultFontPixelWidth * 2
                     anchors.top:            parent.top
                     anchors.topMargin:      ScreenTools.defaultFontPixelHeight
                     anchors.left:           parent.left
-                    anchors.leftMargin:     ScreenTools.defaultFontPixelHeight * 2
+                    anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 2
                     height:                 buttonRow.height
-                    verticalAlignment:      Text.AlignVCenter
-                    text:                   qsTr("Local Storage")
+                    QGCColoredImage {
+                        height:             parent.height * 0.9
+                        width:              height
+                        source:             "/typhoonh/img/camera.svg"
+                        fillMode:           Image.PreserveAspectFit
+                        sourceSize.width:   width
+                        anchors.verticalCenter: parent.verticalCenter
+                        color:              TyphoonHQuickInterface.browseVideos ? qgcPal.text : qgcPal.colorGreen
+                        MouseArea {
+                            anchors.fill:   parent
+                            onClicked: {
+                                if(TyphoonHQuickInterface.browseVideos) {
+                                    TyphoonHQuickInterface.browseVideos = false
+                                }
+                            }
+                        }
+                    }
+                    QGCColoredImage {
+                        height:             parent.height * 0.9
+                        width:              height
+                        source:             "/typhoonh/img/video.svg"
+                        fillMode:           Image.PreserveAspectFit
+                        sourceSize.width:   width
+                        anchors.verticalCenter: parent.verticalCenter
+                        color:              TyphoonHQuickInterface.browseVideos ? qgcPal.colorGreen : qgcPal.text
+                        MouseArea {
+                            anchors.fill:   parent
+                            onClicked: {
+                                if(!TyphoonHQuickInterface.browseVideos) {
+                                    TyphoonHQuickInterface.browseVideos = true
+                                }
+                            }
+                        }
+                    }
+                    Item {
+                        width:  1
+                        height: 1
+                    }
+                    QGCLabel {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text:                   qsTr("Local Storage")
+                    }
                 }
                 Row {
                     id:                     buttonRow
@@ -1013,10 +1056,35 @@ Rectangle {
             Image {
                 anchors.fill:       parent
                 anchors.margins:    2
+                visible:            _mediaItem && !_mediaItem.isVideo
                 fillMode:           Image.PreserveAspectFit
-                source:             _mediaItem ? _photoPath + _mediaItem.fileName : ""
+                source:             _mediaItem && !_mediaItem.isVideo ? _photoPath + _mediaItem.fileName : ""
                 sourceSize.width:   width
                 opacity:            _selectMode && _mediaItem && !_mediaItem.selected ? 0.5 : 1
+                MouseArea {
+                    anchors.fill:   parent
+                    onClicked: {
+                        if(_selectMode) {
+                            if(_mediaItem) {
+                                _mediaItem.selected = !_mediaItem.selected
+                            }
+                        } else {
+                            _mediaIndex = index
+                            rootLoader.sourceComponent = mediaViewComponent
+                        }
+                    }
+                }
+            }
+            Rectangle {
+                visible:        _mediaItem && _mediaItem.isVideo
+                color:          qgcPal.windowShade
+                border.color:   qgcPal.text
+                border.width:   1
+                anchors.fill:   parent
+                QGCLabel {
+                    text:   qsTr("Video")
+                    anchors.centerIn: parent
+                }
                 MouseArea {
                     anchors.fill:   parent
                     onClicked: {
@@ -1085,13 +1153,35 @@ Rectangle {
                     id:             mediaContent
                     width:          _mediaWidth  * 7
                     height:         _mediaHeight * 7
-                    fillMode:       Image.PreserveAspectFit
-                    source:         _mediaItem ? _photoPath + _mediaItem.fileName : ""
+                    visible:        _mediaItem && !_mediaItem.isVideo
+                    source:         visible ? _photoPath + _mediaItem.fileName : ""
                     cache:          false
+                    fillMode:       Image.PreserveAspectFit
                     anchors.centerIn:   parent
                 }
+                Video {
+                    id:             videoContent
+                    width:          _mediaWidth  * 7
+                    height:         _mediaHeight * 7
+                    visible:        _mediaItem && _mediaItem.isVideo
+                    source:         visible ? _videoPath + _mediaItem.fileName : ""
+                    autoLoad:       visible
+                    autoPlay:       true
+                    orientation:    180
+                    anchors.centerIn:   parent
+                    onErrorStringChanged: {
+                        console.log(videoContent.error + ' ' + videoContent.errorString)
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            videoContent.play()
+                            console.log('Play ' + videoContent.source.toString())
+                        }
+                    }
+                }
                 QGCLabel {
-                    text:           baseName(mediaContent.source.toString())
+                    text:           _mediaItem.fileName
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 10
                     anchors.horizontalCenter: parent.horizontalCenter

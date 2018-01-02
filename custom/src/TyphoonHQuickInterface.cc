@@ -77,6 +77,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _copyingFiles(false)
     , _copyingDone(false)
     , _wifiAlertEnabled(true)
+    , _browseVideos(false)
     , _updateProgress(0)
     , _updateDone(false)
     , _selectedCount(0)
@@ -172,7 +173,7 @@ TyphoonHQuickInterface::init()
         filter += qgcApp()->toolbox()->settingsManager()->appSettings()->telemetryFileExtension;
         QDir logDir(qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath(), filter);
         QFileInfoList logs = logDir.entryInfoList();
-        qSort(logs.begin(), logs.end(), created_greater_than);
+        std::sort(logs.begin(), logs.end(), created_greater_than);
         if(logs.size() > 1) {
             qint64 totalLogSize = 0;
             for(int i = 0; i < logs.size(); i++) {
@@ -201,7 +202,7 @@ bool
 TyphoonHQuickInterface::shouldWeShowUpdate()
 {
     //-- Only show once per session
-    if(_firstRun || _updateShown) {
+    if(    1     /*_firstRun || _updateShown*/ ) {
         return false;
     }
     bool res = false;
@@ -1126,12 +1127,18 @@ TyphoonHQuickInterface::refreshMeadiaList()
     clearMediaItems();
     _selectedCount = 0;
     emit selectedCountChanged();
-    QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+    QString photoPath;
+    QStringList nameFilters;
+    if(_browseVideos) {
+        photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Video");
+        nameFilters << "*" YUNEEC_VIDEO_EXTENSION;
+    } else {
+        photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+        nameFilters << "*.jpg" << "*.JPG";
+    }
     QDir photoDir = QDir(photoPath);
     photoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks);
     photoDir.setSorting(QDir::Time);
-    QStringList nameFilters;
-    nameFilters << "*.jpg" << "*.JPG";
     photoDir.setNameFilters(nameFilters);
     QStringList list = photoDir.entryList();
     foreach (QString fileName, list) {
@@ -1139,6 +1146,15 @@ TyphoonHQuickInterface::refreshMeadiaList()
         appendMediaItem(pItem);
     }
     emit mediaListChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::setBrowseVideos(bool video)
+{
+    _browseVideos = video;
+    emit browseVideosChanged();
+    refreshMeadiaList();
 }
 
 //-----------------------------------------------------------------------------
@@ -1406,7 +1422,7 @@ TyphoonHQuickInterface::_newSSID(QString ssid, int rssi)
         if(!_findSsid(ssid, rssi)) {
             TyphoonSSIDItem* ssidInfo = new TyphoonSSIDItem(ssid, rssi);
             _ssidList.append(QVariant::fromValue((TyphoonSSIDItem*)ssidInfo));
-            qSort(_ssidList.begin(), _ssidList.end(), compareRSSI);
+            std::sort(_ssidList.begin(), _ssidList.end(), compareRSSI);
             emit ssidListChanged();
         }
 #if !defined(QT_DEBUG)
