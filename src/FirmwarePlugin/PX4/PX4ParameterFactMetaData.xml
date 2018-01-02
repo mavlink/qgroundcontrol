@@ -8551,6 +8551,12 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
         <value code="5">SF/LW20</value>
       </values>
     </parameter>
+    <parameter default="0" name="SENS_EN_TFMINI" type="INT32">
+      <short_desc>Benewake TFmini laser rangefinder</short_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
     <parameter default="-1" name="SENS_EN_THERMAL" type="INT32">
       <short_desc>Thermal control of sensor temperature</short_desc>
       <scope>modules/sensors</scope>
@@ -8926,15 +8932,6 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <increment>1</increment>
       <scope>modules/vtol_att_control</scope>
     </parameter>
-    <parameter default="0.3" name="VT_ARSP_LP_GAIN" type="FLOAT">
-      <short_desc>Total airspeed estimate low-pass filter gain</short_desc>
-      <long_desc>Gain for tuning the low-pass filter for the total airspeed estimate</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <decimal>3</decimal>
-      <increment>0.01</increment>
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
     <parameter default="10.0" name="VT_ARSP_TRANS" type="FLOAT">
       <short_desc>Transition airspeed</short_desc>
       <long_desc>Airspeed at which we can switch to fw mode</long_desc>
@@ -9119,36 +9116,6 @@ to accelerate forward if necessary</short_desc>
       <increment>1</increment>
       <scope>modules/vtol_att_control</scope>
     </parameter>
-    <parameter default="30.0" name="VT_MC_ARSPD_MAX" type="FLOAT">
-      <short_desc>Maximum airspeed in multicopter mode</short_desc>
-      <long_desc>This is the maximum speed of the air flowing over the control surfaces.</long_desc>
-      <min>0.0</min>
-      <max>30.0</max>
-      <unit>m/s</unit>
-      <decimal>2</decimal>
-      <increment>0.5</increment>
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
-    <parameter default="10.0" name="VT_MC_ARSPD_MIN" type="FLOAT">
-      <short_desc>Minimum airspeed in multicopter mode</short_desc>
-      <long_desc>This is the minimum speed of the air flowing over the control surfaces.</long_desc>
-      <min>0.0</min>
-      <max>30.0</max>
-      <unit>m/s</unit>
-      <decimal>2</decimal>
-      <increment>0.5</increment>
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
-    <parameter default="10.0" name="VT_MC_ARSPD_TRIM" type="FLOAT">
-      <short_desc>Trim airspeed when in multicopter mode</short_desc>
-      <long_desc>This is the airflow over the control surfaces for which no airspeed scaling is applied in multicopter mode.</long_desc>
-      <min>0.0</min>
-      <max>30.0</max>
-      <unit>m/s</unit>
-      <decimal>2</decimal>
-      <increment>0.5</increment>
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
     <parameter default="0" name="VT_MOT_COUNT" type="INT32">
       <short_desc>VTOL number of engines</short_desc>
       <min>0</min>
@@ -9160,25 +9127,6 @@ to accelerate forward if necessary</short_desc>
     <parameter default="0" name="VT_OPT_RECOV_EN" type="INT32">
       <short_desc>Optimal recovery strategy for pitch-weak tailsitters</short_desc>
       <boolean />
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
-    <parameter default="120.0" name="VT_POWER_MAX" type="FLOAT">
-      <short_desc>Motor max power</short_desc>
-      <long_desc>Indicates the maximum power the motor is able to produce. Used to calculate propeller efficiency map.</long_desc>
-      <min>1</min>
-      <max>10000</max>
-      <unit>W</unit>
-      <decimal>0</decimal>
-      <increment>1</increment>
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
-    <parameter default="0.0" name="VT_PROP_EFF" type="FLOAT">
-      <short_desc>Propeller efficiency parameter</short_desc>
-      <long_desc>Influences propeller efficiency at different power settings. Should be tuned beforehand.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <decimal>3</decimal>
-      <increment>0.01</increment>
       <scope>modules/vtol_att_control</scope>
     </parameter>
     <parameter default="1.0" name="VT_TILT_FW" type="FLOAT">
