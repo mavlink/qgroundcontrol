@@ -21,6 +21,8 @@ const char* AutoConnectSettings:: autoConnectSiKRadioSettingsName =     "Autocon
 const char* AutoConnectSettings:: autoConnectPX4FlowSettingsName =      "AutoconnectPX4Flow";
 const char* AutoConnectSettings:: autoConnectRTKGPSSettingsName =       "AutoconnectRTKGPS";
 const char* AutoConnectSettings:: autoConnectLibrePilotSettingsName =   "AutoconnectLibrePilot";
+const char* AutoConnectSettings:: autoConnectNmeaPortName =             "AutoconnectNmeaPort";
+const char* AutoConnectSettings:: autoConnectNmeaBaudName =             "AutoconnectNmeaBaud";
 const char* AutoConnectSettings:: udpListenPortName =                   "AutoconnectUDPListenPort";
 const char* AutoConnectSettings:: udpTargetHostIPName =                 "AutoconnectUDPTargetHostIP";
 const char* AutoConnectSettings:: udpTargetHostPortName =               "AutoconnectUDPTargetHostPort";
@@ -35,6 +37,8 @@ AutoConnectSettings::AutoConnectSettings(QObject* parent)
     , _autoConnectPX4FlowFact   (NULL)
     , _autoConnectRTKGPSFact    (NULL)
     , _autoConnectLibrePilotFact(NULL)
+    , _autoConnectNmeaPortFact  (NULL)
+    , _autoConnectNmeaBaudFact  (NULL)
     , _udpListenPortFact        (NULL)
     , _udpTargetHostIPFact      (NULL)
     , _udpTargetHostPortFact    (NULL)
@@ -95,6 +99,24 @@ Fact* AutoConnectSettings::autoConnectLibrePilot(void)
     }
 
     return _autoConnectLibrePilotFact;
+}
+
+Fact* AutoConnectSettings::autoConnectNmeaPort(void)
+{
+    if (!_autoConnectNmeaPortFact) {
+        _autoConnectNmeaPortFact = _createSettingsFact(autoConnectNmeaPortName);
+    }
+
+    return _autoConnectNmeaPortFact;
+}
+
+Fact* AutoConnectSettings::autoConnectNmeaBaud(void)
+{
+    if (!_autoConnectNmeaBaudFact) {
+        _autoConnectNmeaBaudFact = _createSettingsFact(autoConnectNmeaBaudName);
+    }
+
+    return _autoConnectNmeaBaudFact;
 }
 
 Fact* AutoConnectSettings::udpListenPort(void)

@@ -464,7 +464,7 @@ QGCView {
 
                     Column {
                         id:         autoConnectCol
-                        spacing:    ScreenTools.defaultFontPixelWidth
+                        spacing:    ScreenTools.defaultFontPixelWidth * 2
                         anchors.centerIn: parent
 
                         Row {
@@ -486,6 +486,61 @@ QGCView {
                                     text:       autoConnectRepeater.names[index]
                                     fact:       modelData
                                     visible:    !ScreenTools.isiOS && modelData.visible
+                                }
+                            }
+                        }
+
+                        Row {
+                            width:    parent.width
+                            spacing:  ScreenTools.defaultFontPixelWidth
+                            visible:  !ScreenTools.isiOS
+                                      && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible
+                                      && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
+
+                            QGCLabel {
+                                anchors.baseline: nmeaPortCombo.baseline
+                                text: qsTr("NMEA GPS Device:")
+                            }
+
+                            QGCComboBox {
+                                id:     nmeaPortCombo
+                                width:  parent.width/3
+                                model:  ListModel {
+                                            ListElement { text: "disabled" }
+                                        }
+
+                                onActivated: {
+                                    if (index != -1) {
+                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.value = textAt(index);
+                                    }
+                                }
+                                Component.onCompleted: {
+                                    for (var i in QGroundControl.linkManager.serialPorts) {
+                                        nmeaPortCombo.model.append({text:QGroundControl.linkManager.serialPorts[i]})
+                                    }
+                                    var index = nmeaPortCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.valueString);
+                                    nmeaPortCombo.currentIndex = index;
+                                }
+                            }
+
+                            QGCLabel {
+                                anchors.baseline: nmeaBaudCombo.baseline
+                                text: qsTr("NMEA GPS Baudrate:")
+                            }
+
+                            QGCComboBox {
+                                id:     nmeaBaudCombo
+                                width:  parent.width/3
+                                model:  [4800, 9600, 19200, 38400, 57600, 115200]
+
+                                onActivated: {
+                                    if (index != -1) {
+                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.value = textAt(index);
+                                    }
+                                }
+                                Component.onCompleted: {
+                                    var index = nmeaBaudCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.valueString);
+                                    nmeaBaudCombo.currentIndex = index;
                                 }
                             }
                         }
