@@ -1,5 +1,10 @@
 ## DataPilot Release Changelog
 
+### v1.2.26 - Jan 2 2018
+
+*   Implement local video capture and display
+*   Fix ordering of image browser when using the CGOET
+
 ### v1.2.25 - Dec 25 2017
 
 *   Fix Structure Scan camera section loading
