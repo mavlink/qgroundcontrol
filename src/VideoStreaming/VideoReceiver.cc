@@ -609,7 +609,7 @@ VideoReceiver::_cleanupOldVideos()
 //                                        |                                      |
 //                                        +--------------------------------------+
 void
-VideoReceiver::startRecording(void)
+VideoReceiver::startRecording(const QString &videoFile)
 {
 #if defined(QGC_GST_STREAMING)
 
@@ -617,12 +617,6 @@ VideoReceiver::startRecording(void)
     // exit immediately if we are already recording
     if(_pipeline == NULL || _recording) {
         qCDebug(VideoReceiverLog) << "Already recording!";
-        return;
-    }
-
-    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
-    if(savePath.isEmpty()) {
-        qgcApp()->showMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
         return;
     }
 
@@ -648,11 +642,20 @@ VideoReceiver::startRecording(void)
         return;
     }
 
-    QString videoFile;
-    videoFile = savePath + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + "." + kVideoExtensions[muxIdx];
+    if(videoFile.isEmpty()) {
+        QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+        if(savePath.isEmpty()) {
+            qgcApp()->showMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
+            return;
+        }
+        _videoFile = savePath + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + "." + kVideoExtensions[muxIdx];
+    } else {
+        _videoFile = videoFile;
+    }
+    emit videoFileChanged();
 
-    g_object_set(G_OBJECT(_sink->filesink), "location", qPrintable(videoFile), NULL);
-    qCDebug(VideoReceiverLog) << "New video file:" << videoFile;
+    g_object_set(G_OBJECT(_sink->filesink), "location", qPrintable(_videoFile), NULL);
+    qCDebug(VideoReceiverLog) << "New video file:" << _videoFile;
 
     gst_object_ref(_sink->queue);
     gst_object_ref(_sink->parse);
