@@ -182,7 +182,8 @@ Vehicle::Vehicle(LinkInterface*             link,
 {
     _addLink(link);
 
-    connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &Vehicle::_activeJoystickChanged);
+    connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadSettings);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleAvailableChanged, this, &Vehicle::_loadSettings);
 
     _mavlink = _toolbox->mavlinkProtocol();
 
@@ -230,7 +231,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,double,double,double,quint64)),              this, SLOT(_updateAttitude(UASInterface*, double, double, double, quint64)));
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,int,double,double,double,quint64)),          this, SLOT(_updateAttitude(UASInterface*,int,double, double, double, quint64)));
 
-    _loadSettings();
 
     // Ask the vehicle for protocol version info.
     sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
@@ -1617,6 +1617,10 @@ int Vehicle::manualControlReservedButtonCount(void)
 
 void Vehicle::_loadSettings(void)
 {
+    if (!_active) {
+        return;
+    }
+
     QSettings settings;
 
     settings.beginGroup(QString(_settingsGroup).arg(_id));
@@ -1675,12 +1679,6 @@ QStringList Vehicle::joystickModes(void)
     return list;
 }
 
-void Vehicle::_activeJoystickChanged(void)
-{
-    _loadSettings();
-    _startJoystick(true);
-}
-
 bool Vehicle::joystickEnabled(void)
 {
     return _joystickEnabled;
@@ -1719,8 +1717,6 @@ void Vehicle::setActive(bool active)
         _active = active;
         emit activeChanged(_active);
     }
-
-    _startJoystick(_active);
 }
 
 QGeoCoordinate Vehicle::homePosition(void)
@@ -1992,7 +1988,6 @@ void Vehicle::_parametersReady(bool parametersReady)
     if (parametersReady) {
         _setupAutoDisarmSignalling();
         _startPlanRequest();
-        setJoystickEnabled(_joystickEnabled);
     }
 }
 
