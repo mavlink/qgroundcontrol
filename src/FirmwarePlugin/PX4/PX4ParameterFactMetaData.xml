@@ -4794,44 +4794,38 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV1" type="INT32">
       <short_desc>Invert direction of aux output channel 1</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4fmu</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV2" type="INT32">
       <short_desc>Invert direction of aux output channel 2</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4fmu</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV3" type="INT32">
       <short_desc>Invert direction of aux output channel 3</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4fmu</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV4" type="INT32">
       <short_desc>Invert direction of aux output channel 4</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4fmu</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV5" type="INT32">
       <short_desc>Invert direction of aux output channel 5</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4fmu</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV6" type="INT32">
       <short_desc>Invert direction of aux output channel 6</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4fmu</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_TRIM1" type="FLOAT">
@@ -4965,58 +4959,50 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV1" type="INT32">
       <short_desc>Invert direction of main output channel 1</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV2" type="INT32">
       <short_desc>Invert direction of main output channel 2</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV3" type="INT32">
       <short_desc>Invert direction of main output channel 3</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV4" type="INT32">
       <short_desc>Invert direction of main output channel 4</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV5" type="INT32">
       <short_desc>Invert direction of main output channel 5</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV6" type="INT32">
       <short_desc>Invert direction of main output channel 6</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV7" type="INT32">
       <short_desc>Invert direction of main output channel 7</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV8" type="INT32">
       <short_desc>Invert direction of main output channel 8</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_TRIM1" type="FLOAT">
