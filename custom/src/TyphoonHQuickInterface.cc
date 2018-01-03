@@ -202,7 +202,7 @@ bool
 TyphoonHQuickInterface::shouldWeShowUpdate()
 {
     //-- Only show once per session
-    if(    1     /*_firstRun || _updateShown*/ ) {
+    if(_firstRun || _updateShown) {
         return false;
     }
     bool res = false;
@@ -237,7 +237,8 @@ TyphoonHQuickInterface::shouldWeShowUpdate()
         if(v) {
             uint32_t frver = FIRMWARE_FORCE_UPDATE_MAJOR << 16 | FIRMWARE_FORCE_UPDATE_MINOR << 8 | FIRMWARE_FORCE_UPDATE_PATCH;
             uint32_t fmver = v->firmwareCustomMajorVersion() << 16 | v->firmwareCustomMinorVersion() << 8 | v->firmwareCustomPatchVersion();
-            if(frver >= fmver) {
+            //-- If fmver == 0, it's a dev firmware. Don't bother testing it.
+            if(fmver && frver >= fmver) {
                 //-- Reset update timer
                 settings.setValue(kUpdateCheck, QDate::currentDate());
                 //-- Show it as this is the shipping version
