@@ -375,7 +375,9 @@ TyphoonHQuickInterface::_isVideoRecordingChanged()
             if(pCamera && pCamera->isThermal()) {
                 //-- Record thermal image as well
                 if(pCamera->isVideoRecording()) {
-                   _videoReceiver->startRecording(QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + QString("-Thermal"));
+                    QString videoFile = qgcApp()->toolbox()->videoManager()->videoReceiver()->videoFile();
+                    videoFile.replace(YUNEEC_VIDEO_EXTENSION, tr("-Thermal") + QString(YUNEEC_VIDEO_EXTENSION));
+                   _videoReceiver->startRecording(videoFile);
                 } else {
                     _videoReceiver->stopRecording();
                 }

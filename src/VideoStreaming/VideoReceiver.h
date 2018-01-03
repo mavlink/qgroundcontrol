@@ -58,6 +58,7 @@ public:
     VideoSurface*   videoSurface    () { return _videoSurface; }
     bool            videoRunning    () { return _videoRunning; }
     QString         imageFile       () { return _imageFile; }
+    QString         videoFile       () { return _videoFile; }
     bool            showFullScreen  () { return _showFullScreen; }
 
     void            grabImage       (QString imageFile);
@@ -80,7 +81,7 @@ public slots:
     void stop                       ();
     void setUri                     (const QString& uri);
     void stopRecording              ();
-    void startRecording             (const QString& baseName = QString());
+    void startRecording             (const QString& videoFile = QString());
 
 private slots:
     void _updateTimer               ();
@@ -136,6 +137,7 @@ private:
 
     QString         _uri;
     QString         _imageFile;
+    QString         _videoFile;
     VideoSurface*   _videoSurface;
     bool            _videoRunning;
     bool            _showFullScreen;
