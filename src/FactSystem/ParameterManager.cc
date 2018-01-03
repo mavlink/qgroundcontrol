@@ -837,6 +837,8 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
         });
 
         ani->start(QAbstractAnimation::DeleteWhenStopped);
+    } else {
+        qCInfo(ParameterManagerLog) << "Parameters cache match failed" << qPrintable(QFileInfo(cache_file).absoluteFilePath());
     }
 }
 
