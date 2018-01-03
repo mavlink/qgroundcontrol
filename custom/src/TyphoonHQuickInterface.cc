@@ -347,6 +347,7 @@ TyphoonHQuickInterface::_camerasChanged()
             YuneecCameraControl* pCamera = qobject_cast<YuneecCameraControl*>((*_vehicle->dynamicCameras()->cameras())[0]);
             if(pCamera) {
                 if(pCamera->isThermal()) {
+                    connect(pCamera, &YuneecCameraControl::isVideoRecordingChanged, this, &TyphoonHQuickInterface::_isVideoRecordingChanged);
                     qCDebug(YuneecLog) << "Starting thermal image receiver";
                     if(pCamera->isCGOET()) {
                         _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:8554/live"));
@@ -355,6 +356,27 @@ TyphoonHQuickInterface::_camerasChanged()
                     }
                     _videoReceiver->start();
                     emit thermalImagePresentChanged();
+                }
+            }
+        }
+    }
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_isVideoRecordingChanged()
+{
+#if !defined (__planner__)
+    if(_vehicle && _videoReceiver) {
+        if(_vehicle->dynamicCameras() && _vehicle->dynamicCameras()->cameras()->count()) {
+            YuneecCameraControl* pCamera = qobject_cast<YuneecCameraControl*>((*_vehicle->dynamicCameras()->cameras())[0]);
+            if(pCamera && pCamera->isThermal()) {
+                //-- Record thermal image as well
+                if(pCamera->isVideoRecording()) {
+                   _videoReceiver->startRecording(QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + QString("-Thermal"));
+                } else {
+                    _videoReceiver->stopRecording();
                 }
             }
         }

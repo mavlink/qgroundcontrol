@@ -80,7 +80,7 @@ public slots:
     void stop                       ();
     void setUri                     (const QString& uri);
     void stopRecording              ();
-    void startRecording             ();
+    void startRecording             (const QString& baseName = QString());
 
 private slots:
     void _updateTimer               ();

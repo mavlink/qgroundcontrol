@@ -1018,7 +1018,7 @@ Rectangle {
                     model:              TyphoonHQuickInterface.mediaList
                     cellWidth:          _mediaWidth  + 8
                     cellHeight:         _mediaHeight + 8
-                    width:              (_mediaWidth  + 8) * 5
+                    width:              (_mediaWidth  + 8) * 6
                     height:             (_mediaHeight + 8) * 4
                     delegate:           mediaDelegate
                     cacheBuffer:        height * 4

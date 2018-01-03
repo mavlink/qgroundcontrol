@@ -439,6 +439,7 @@ private slots:
     void    _restart                    ();
     void    _imageFileChanged           ();
     void    _setWiFiPassword            ();
+    void    _isVideoRecordingChanged    ();
 
 private:
     void    _saveWifiConfigurations     ();
