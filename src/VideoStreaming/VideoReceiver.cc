@@ -609,7 +609,7 @@ VideoReceiver::_cleanupOldVideos()
 //                                        |                                      |
 //                                        +--------------------------------------+
 void
-VideoReceiver::startRecording(void)
+VideoReceiver::startRecording(const QString &videoFile)
 {
 #if defined(QGC_GST_STREAMING)
 
@@ -648,11 +648,14 @@ VideoReceiver::startRecording(void)
         return;
     }
 
-    QString videoFile;
-    videoFile = savePath + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + "." + kVideoExtensions[muxIdx];
+    if(videoFile.isEmpty()) {
+        _videoFile = savePath + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + "." + kVideoExtensions[muxIdx];
+    } else {
+        _videoFile = videoFile;
+    }
 
-    g_object_set(G_OBJECT(_sink->filesink), "location", qPrintable(videoFile), NULL);
-    qCDebug(VideoReceiverLog) << "New video file:" << videoFile;
+    g_object_set(G_OBJECT(_sink->filesink), "location", qPrintable(_videoFile), NULL);
+    qCDebug(VideoReceiverLog) << "New video file:" << _videoFile;
 
     gst_object_ref(_sink->queue);
     gst_object_ref(_sink->parse);

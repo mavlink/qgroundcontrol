@@ -131,5 +131,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/)
         qCWarning(YuneecLog) << "Couldn't register native methods";
         return JNI_ERR;
     }
+    qputenv("QT_QPA_EGLFS_PHYSICAL_WIDTH",  QByteArray("1280"));
+    qputenv("QT_QPA_EGLFS_PHYSICAL_HEIGHT", QByteArray("720"));
     return JNI_VERSION_1_6;
 }
