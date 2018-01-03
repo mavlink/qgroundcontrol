@@ -1160,14 +1160,21 @@ TyphoonHQuickInterface::refreshMeadiaList()
     }
     QDir photoDir = QDir(photoPath);
     photoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks);
-    photoDir.setSorting(QDir::Time);
     photoDir.setNameFilters(nameFilters);
     QStringList list = photoDir.entryList();
     foreach (QString fileName, list) {
         TyphoonMediaItem* pItem = new TyphoonMediaItem(this, fileName);
         appendMediaItem(pItem);
     }
+    //-- Asking QDir above to sort by date doesn't always work because it has a low granularity (2 seconds). As the
+    //   files are named based on their date/time to milliseconds, we sort it ourselves here.
+    std::sort(_mediaList.begin(), _mediaList.end(), [](TyphoonMediaItem* a, TyphoonMediaItem* b) { return a->fileName() > b->fileName(); });
     emit mediaListChanged();
+    /*
+    for (int i = 0; i < _mediaList.size(); i++) {
+        qDebug() << _mediaList.at(i)->fileName();
+    }
+    */
 }
 
 //-----------------------------------------------------------------------------
@@ -1681,11 +1688,12 @@ void
 TyphoonHQuickInterface::_imageFileChanged()
 {
     //-- Capture thermal image as well (if any)
-    if(thermalImagePresent()) {
-        QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
-        QDir().mkpath(photoPath);
-        photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + "-" + tr("Thermal") + ".jpg";
-        _videoReceiver->grabImage(photoPath);
+    if(thermalImagePresent() && qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+        QString photoPath = qgcApp()->toolbox()->videoManager()->videoReceiver()->imageFile();
+        if(!photoPath.isEmpty()) {
+            photoPath.replace(".jpg", tr("-Thermal.jpg"));
+            _videoReceiver->grabImage(photoPath);
+        }
     }
 }
 

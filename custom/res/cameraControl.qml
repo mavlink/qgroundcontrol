@@ -929,6 +929,8 @@ Rectangle {
                             onClicked: {
                                 if(TyphoonHQuickInterface.browseVideos) {
                                     TyphoonHQuickInterface.browseVideos = false
+                                    _selectMode = false
+                                    TyphoonHQuickInterface.selectAllMedia(false)
                                 }
                             }
                         }
@@ -946,6 +948,8 @@ Rectangle {
                             onClicked: {
                                 if(!TyphoonHQuickInterface.browseVideos) {
                                     TyphoonHQuickInterface.browseVideos = true
+                                    _selectMode = false
+                                    TyphoonHQuickInterface.selectAllMedia(false)
                                 }
                             }
                         }
@@ -1078,8 +1082,8 @@ Rectangle {
             Rectangle {
                 visible:        _mediaItem && _mediaItem.isVideo
                 color:          qgcPal.windowShade
-                border.color:   qgcPal.text
-                border.width:   1
+                border.color:   _selectMode ? (_mediaItem && _mediaItem.selected ? qgcPal.colorGreen : qgcPal.colorGrey) : _rectColor
+                border.width:   _selectMode ? (_mediaItem && _mediaItem.selected ? 2 : 1) : 0
                 anchors.fill:   parent
                 QGCLabel {
                     text:   qsTr("Video")
@@ -1159,6 +1163,27 @@ Rectangle {
                     fillMode:       Image.PreserveAspectFit
                     anchors.centerIn:   parent
                 }
+                QGCLabel {
+                    id:             runningTime
+                    text:           runningTime.msToTime(videoContent.position)
+                    visible:        _mediaItem && _mediaItem.isVideo
+                    anchors.top:    parent.top
+                    anchors.topMargin: 10
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    function msToTime(s) {
+                        function pad(n, z) {
+                            z = z || 2;
+                            return ('00' + n).slice(-z);
+                        }
+                        var ms = s % 1000;
+                        s = (s - ms) / 1000;
+                        var secs = s % 60;
+                        s = (s - secs) / 60;
+                        var mins = s % 60;
+                        var hrs = (s - mins) / 60;
+                        return pad(hrs) + ':' + pad(mins) + ':' + pad(secs) + '.' + pad(ms, 3);
+                    }
+                }
                 Video {
                     id:             videoContent
                     width:          _mediaWidth  * 7
@@ -1167,7 +1192,8 @@ Rectangle {
                     source:         visible ? _videoPath + _mediaItem.fileName : ""
                     autoLoad:       visible
                     autoPlay:       true
-                    orientation:    180
+                    notifyInterval: 100
+                  //orientation:    180 // Qt 5.9.3 plays upside down
                     anchors.centerIn:   parent
                     onErrorStringChanged: {
                         console.log(videoContent.error + ' ' + videoContent.errorString)
@@ -1175,7 +1201,15 @@ Rectangle {
                     MouseArea {
                         anchors.fill: parent
                         onClicked: {
-                            videoContent.play()
+                            switch (videoContent.playbackState) {
+                            case MediaPlayer.PlayingState:
+                                videoContent.pause()
+                                break;
+                            case MediaPlayer.PausedState:
+                            case MediaPlayer.StoppedState:
+                                videoContent.play()
+                                break;
+                            }
                             console.log('Play ' + videoContent.source.toString())
                         }
                     }
