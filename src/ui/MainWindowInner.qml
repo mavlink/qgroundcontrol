@@ -292,6 +292,8 @@ Item {
                 flightView.guidedController.confirmAction(flightView.guidedController.actionDisarm)
             }
         }
+        onVtolTransitionToFwdFlight:    flightView.guidedController.confirmAction(flightView.guidedController.actionVtolTransitionToFwdFlight)
+        onVtolTransitionToMRFlight:     flightView.guidedController.confirmAction(flightView.guidedController.actionVtolTransitionToMRFlight)
 
         //-- Entire tool bar area disable on cammand
         MouseArea {

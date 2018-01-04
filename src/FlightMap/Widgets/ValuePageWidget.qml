@@ -144,6 +144,8 @@ Column {
                     anchors.right:  parent.right
                     spacing:        _margins
 
+                    /*
+                      Leaving this here for now just in case
                     FactCheckBox {
                         text:       qsTr("Show large compass")
                         fact:       _showLargeCompass
@@ -151,6 +153,7 @@ Column {
 
                         property Fact _showLargeCompass: QGroundControl.settingsManager.appSettings.showLargeCompass
                     }
+                    */
 
                     Item {
                         width:  1
