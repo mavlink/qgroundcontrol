@@ -1216,7 +1216,12 @@ TyphoonHQuickInterface::deleteSelectedMedia()
             }
         }
     }
-    QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo/");
+    QString photoPath;
+    if(_browseVideos) {
+        photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Video/");
+    } else {
+        photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo/");
+    }
     foreach (QString fileName, toDelete) {
         QString filePath = photoPath + fileName;
         QFile::remove(filePath);
