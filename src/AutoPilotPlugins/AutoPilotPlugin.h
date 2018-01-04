@@ -66,7 +66,7 @@ protected:
     FirmwarePlugin* _firmwarePlugin;
     bool            _setupComplete;
 
-private:
+private slots:
     void _recalcSetupComplete(void);
 };
 
