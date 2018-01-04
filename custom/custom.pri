@@ -111,6 +111,14 @@ DesktopPlanner {
         $$QGCROOT/custom/typhoonh.qrc
 }
 
+DesktopPlanner {
+    REPC_REPLICA += \
+        $$QGCROOT/custom/QGCRemote.rep
+} else {
+    REPC_SOURCE += \
+        $$QGCROOT/custom/QGCRemote.rep
+}
+
 MacBuild {
     QMAKE_INFO_PLIST    = $$QGCROOT/custom/macOS/YuneecInfo.plist
     ICON                = $$QGCROOT/custom/macOS/icon.icns
@@ -130,7 +138,8 @@ WindowsBuild {
 }
 
 QT += \
-    multimedia
+    multimedia \
+    remoteobjects
 
 INCLUDEPATH += \
     $$QGCROOT/custom/src \
