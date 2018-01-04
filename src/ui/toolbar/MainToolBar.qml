@@ -34,6 +34,8 @@ Rectangle {
     signal showAnalyzeView
     signal armVehicle
     signal disarmVehicle
+    signal vtolTransitionToFwdFlight
+    signal vtolTransitionToMRFlight
 
     function checkSettingsButton() {
         settingsButton.checked = true

@@ -9,6 +9,7 @@
         <file alias="GPSRTKIndicator.qml">src/ui/toolbar/GPSRTKIndicator.qml</file>
         <file alias="MessageIndicator.qml">src/ui/toolbar/MessageIndicator.qml</file>
         <file alias="ModeIndicator.qml">src/ui/toolbar/ModeIndicator.qml</file>
+		<file alias="VTOLModeIndicator.qml">src/ui/toolbar/VTOLModeIndicator.qml</file>
         <file alias="RCRSSIIndicator.qml">src/ui/toolbar/RCRSSIIndicator.qml</file>
         <file alias="TelemetryRSSIIndicator.qml">src/ui/toolbar/TelemetryRSSIIndicator.qml</file>
         <file alias="JoystickIndicator.qml">src/ui/toolbar/JoystickIndicator.qml</file>
