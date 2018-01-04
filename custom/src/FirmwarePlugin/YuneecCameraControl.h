@@ -123,6 +123,7 @@ public:
 
     QSize       videoSize           ();
     void        setVideoSize        (QSize s);
+    bool        isVideoRecording    () { return _videoRecording; }
 
     bool        isCGOET             () { return _isCGOET; }
     bool        isE10T              () { return _isE10T; }
@@ -169,6 +170,7 @@ signals:
     void    irTempChanged           ();
     void    palettetBarChanged      ();
     void    irSpotROIChanged        ();
+    void    isVideoRecordingChanged ();
 
 protected:
     void    _setVideoStatus         (VideoStatus status) override;
@@ -213,4 +215,5 @@ private:
     SettingsFact*           _irROI;
     SettingsFact*           _irPresets;
     udp_ctrl_cam_lepton_area_temp_t _cgoetTempStatus;
+    bool                    _videoRecording;
 };

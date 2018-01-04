@@ -161,6 +161,7 @@ public:
     //   file dialog for it.
     bool        showOfflineMapExport           () const final { return false; }
     bool        showOfflineMapImport           () const final { return false; }
+    bool        useMobileFileDialog            () const final { return false;}
 #endif
 
 private slots:
@@ -450,8 +451,8 @@ TyphoonHPlugin::adjustSettingMetaData(FactMetaData& metaData)
 #endif
         return false;
     } else if (metaData.name() == VideoSettings::recordingFormatName) {
-        //-- Make it MP4
-        metaData.setRawDefaultValue(2);
+        //-- Make it Matroska
+        metaData.setRawDefaultValue(0);
         return false;
     } else if (metaData.name() == VideoSettings::videoAspectRatioName) {
         metaData.setRawDefaultValue(1.777777);

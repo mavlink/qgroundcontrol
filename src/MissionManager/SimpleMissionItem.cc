@@ -85,7 +85,7 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
     connect(this, &SimpleMissionItem::cameraSectionChanged,         this, &SimpleMissionItem::_updateLastSequenceNumber);
 }
 
-SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missionItem, QObject* parent)
+SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool editMode, const MissionItem& missionItem, QObject* parent)
     : VisualMissionItem(vehicle, parent)
     , _missionItem(missionItem)
     , _rawEdit(false)
@@ -111,11 +111,16 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missio
     _altitudeRelativeToHomeFact.setRawValue(true);
     _isCurrentItem = missionItem.isCurrentItem();
 
-    _setupMetaData();
+    // In !editMode we skip some of the intialization to save memory
+    if (editMode) {
+        _setupMetaData();
+    }
     _connectSignals();
     _updateOptionalSections();
     _syncFrameToAltitudeRelativeToHome();
-    _rebuildFacts();
+    if (editMode) {
+        _rebuildFacts();
+    }
 }
 
 SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, QObject* parent)

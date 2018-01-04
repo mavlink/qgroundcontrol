@@ -7,6 +7,9 @@
  *
  ****************************************************************************/
 
+#include <QTime>
+#include <QDateTime>
+#include <QLocale>
 
 #include "Vehicle.h"
 #include "MAVLinkProtocol.h"
@@ -66,6 +69,7 @@ const char* Vehicle::_batteryFactGroupName =    "battery";
 const char* Vehicle::_windFactGroupName =       "wind";
 const char* Vehicle::_vibrationFactGroupName =  "vibration";
 const char* Vehicle::_temperatureFactGroupName = "temperature";
+const char* Vehicle::_clockFactGroupName =      "clock";
 
 Vehicle::Vehicle(LinkInterface*             link,
                  int                        vehicleId,
@@ -174,6 +178,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _windFactGroup(this)
     , _vibrationFactGroup(this)
     , _temperatureFactGroup(this)
+    , _clockFactGroup(this)
 {
     _addLink(link);
 
@@ -348,6 +353,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _batteryFactGroup(this)
     , _windFactGroup(this)
     , _vibrationFactGroup(this)
+    , _clockFactGroup(this)
 {
     _commonInit();
     _firmwarePlugin->initializeVehicle(this);
@@ -411,6 +417,7 @@ void Vehicle::_commonInit(void)
     _addFactGroup(&_windFactGroup,      _windFactGroupName);
     _addFactGroup(&_vibrationFactGroup, _vibrationFactGroupName);
     _addFactGroup(&_temperatureFactGroup, _temperatureFactGroupName);
+    _addFactGroup(&_clockFactGroup,     _clockFactGroupName);
 
     // Add firmware-specific fact groups, if provided
     QMap<QString, FactGroup*>* fwFactGroups = _firmwarePlugin->factGroups();
@@ -667,9 +674,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_SCALED_PRESSURE3:
         _handleScaledPressure3(message);
         break;        
-    case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
-        _handleCameraFeedback(message);
-        break;
     case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
         _handleCameraImageCaptured(message);
         break;
@@ -684,11 +688,16 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         emit mavlinkSerialControl(ser.device, ser.flags, ser.timeout, ser.baudrate, QByteArray(reinterpret_cast<const char*>(ser.data), ser.count));
     }
         break;
-    // Following are ArduPilot dialect messages
 
+    // Following are ArduPilot dialect messages
+#if !defined(NO_ARDUPILOT_DIALECT)
+    case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
+        _handleCameraFeedback(message);
+        break;
     case MAVLINK_MSG_ID_WIND:
         _handleWind(message);
         break;
+#endif
     }
 
     // This must be emitted after the vehicle processes the message. This way the vehicle state is up to date when anyone else
@@ -699,6 +708,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 }
 
 
+#if !defined(NO_ARDUPILOT_DIALECT)
 void Vehicle::_handleCameraFeedback(const mavlink_message_t& message)
 {
     mavlink_camera_feedback_t feedback;
@@ -709,6 +719,7 @@ void Vehicle::_handleCameraFeedback(const mavlink_message_t& message)
     qCDebug(VehicleLog) << "_handleCameraFeedback coord:index" << imageCoordinate << feedback.img_idx;
     _cameraTriggerPoints.append(new QGCQGeoCoordinate(imageCoordinate, this));
 }
+#endif
 
 void Vehicle::_handleCameraImageCaptured(const mavlink_message_t& message)
 {
@@ -1007,6 +1018,7 @@ void Vehicle::_handleWindCov(mavlink_message_t& message)
     _windFactGroup.verticalSpeed()->setRawValue(0);
 }
 
+#if !defined(NO_ARDUPILOT_DIALECT)
 void Vehicle::_handleWind(mavlink_message_t& message)
 {
     mavlink_wind_t wind;
@@ -1016,6 +1028,7 @@ void Vehicle::_handleWind(mavlink_message_t& message)
     _windFactGroup.speed()->setRawValue(wind.speed);
     _windFactGroup.verticalSpeed()->setRawValue(wind.speed_z);
 }
+#endif
 
 void Vehicle::_handleSysStatus(mavlink_message_t& message)
 {
@@ -1032,6 +1045,8 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
         _batteryFactGroup.voltage()->setRawValue(VehicleBatteryFactGroup::_voltageUnavailable);
     } else {
         _batteryFactGroup.voltage()->setRawValue((double)sysStatus.voltage_battery / 1000.0);
+        // current_battery is 10 mA and voltage_battery is 1mV. (10/1e3 times 1/1e3 = 1/1e5)
+        _batteryFactGroup.instantPower()->setRawValue((float)(sysStatus.current_battery*sysStatus.voltage_battery)/(100000.0));
     }
     _batteryFactGroup.percentRemaining()->setRawValue(sysStatus.battery_remaining);
 
@@ -2935,6 +2950,7 @@ const char* VehicleBatteryFactGroup::_mahConsumedFactName =                 "mah
 const char* VehicleBatteryFactGroup::_currentFactName =                     "current";
 const char* VehicleBatteryFactGroup::_temperatureFactName =                 "temperature";
 const char* VehicleBatteryFactGroup::_cellCountFactName =                   "cellCount";
+const char* VehicleBatteryFactGroup::_instantPowerFactName =                "instantPower";
 
 const char* VehicleBatteryFactGroup::_settingsGroup =                       "Vehicle.battery";
 
@@ -2944,6 +2960,7 @@ const int    VehicleBatteryFactGroup::_mahConsumedUnavailable =       -1;
 const int    VehicleBatteryFactGroup::_currentUnavailable =           -1;
 const double VehicleBatteryFactGroup::_temperatureUnavailable =       -1.0;
 const int    VehicleBatteryFactGroup::_cellCountUnavailable =         -1.0;
+const double VehicleBatteryFactGroup::_instantPowerUnavailable =      -1.0;
 
 VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/BatteryFact.json", parent)
@@ -2953,6 +2970,7 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     , _currentFact                  (0, _currentFactName,                   FactMetaData::valueTypeFloat)
     , _temperatureFact              (0, _temperatureFactName,               FactMetaData::valueTypeDouble)
     , _cellCountFact                (0, _cellCountFactName,                 FactMetaData::valueTypeInt32)
+    , _instantPowerFact             (0, _instantPowerFactName,              FactMetaData::valueTypeFloat)
 {
     _addFact(&_voltageFact,                 _voltageFactName);
     _addFact(&_percentRemainingFact,        _percentRemainingFactName);
@@ -2960,6 +2978,7 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     _addFact(&_currentFact,                 _currentFactName);
     _addFact(&_temperatureFact,             _temperatureFactName);
     _addFact(&_cellCountFact,               _cellCountFactName);
+    _addFact(&_instantPowerFact,            _instantPowerFactName);
 
     // Start out as not available
     _voltageFact.setRawValue            (_voltageUnavailable);
@@ -2968,6 +2987,7 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     _currentFact.setRawValue            (_currentUnavailable);
     _temperatureFact.setRawValue        (_temperatureUnavailable);
     _cellCountFact.setRawValue          (_cellCountUnavailable);
+    _instantPowerFact.setRawValue       (_instantPowerUnavailable);
 }
 
 const char* VehicleWindFactGroup::_directionFactName =      "direction";
@@ -3038,4 +3058,28 @@ VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject* parent)
     _temperature1Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
     _temperature2Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
     _temperature3Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
+}
+
+const char* VehicleClockFactGroup::_currentTimeFactName = "currentTime";
+const char* VehicleClockFactGroup::_currentDateFactName = "currentDate";
+
+VehicleClockFactGroup::VehicleClockFactGroup(QObject* parent)
+    : FactGroup(1000, ":/json/Vehicle/ClockFact.json", parent)
+    , _currentTimeFact  (0, _currentTimeFactName,    FactMetaData::valueTypeString)
+    , _currentDateFact  (0, _currentDateFactName,    FactMetaData::valueTypeString)
+{
+    _addFact(&_currentTimeFact, _currentTimeFactName);
+    _addFact(&_currentDateFact, _currentDateFactName);
+
+    // Start out as not available "--.--"
+    _currentTimeFact.setRawValue    (std::numeric_limits<float>::quiet_NaN());
+    _currentDateFact.setRawValue    (std::numeric_limits<float>::quiet_NaN());
+}
+
+void VehicleClockFactGroup::_updateAllValues(void)
+{
+    _currentTimeFact.setRawValue(QTime::currentTime().toString());
+    _currentDateFact.setRawValue(QDateTime::currentDateTime().toString(QLocale::system().dateFormat(QLocale::ShortFormat)));
+
+    FactGroup::_updateAllValues();
 }

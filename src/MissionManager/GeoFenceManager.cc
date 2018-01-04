@@ -99,11 +99,8 @@ void GeoFenceManager::sendToVehicle(const QGeoCoordinate&   breachReturn,
         fenceItems.append(item);
     }
 
+    // Plan manager takes control of MissionItems, so no need to delete
     _planManager.writeMissionItems(fenceItems);
-
-    for (int i=0; i<fenceItems.count(); i++) {
-        fenceItems[i]->deleteLater();
-    }
 }
 
 void GeoFenceManager::removeAll(void)

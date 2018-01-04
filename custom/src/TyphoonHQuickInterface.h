@@ -26,6 +26,8 @@ class PlanMasterController;
 class TyphoonHQuickInterface;
 class QUdpSocket;
 
+#define YUNEEC_VIDEO_EXTENSION ".mkv"
+
 //-----------------------------------------------------------------------------
 // Vehicle List
 class TyphoonSSIDItem : public QObject
@@ -94,13 +96,16 @@ public:
         , _fileName(fileName)
         , _selected(false)
     {
+        _isVideo = fileName.endsWith(YUNEEC_VIDEO_EXTENSION, Qt::CaseInsensitive);
     }
 
     Q_PROPERTY(QString  fileName    READ fileName                       CONSTANT)
     Q_PROPERTY(bool     selected    READ selected   WRITE setSelected   NOTIFY selectedChanged)
+    Q_PROPERTY(bool     isVideo     READ isVideo                        CONSTANT)
 
     QString     fileName    () { return _fileName; }
     bool        selected    () { return _selected; }
+    bool        isVideo     () { return _isVideo;  }
 
     void        setSelected (bool sel);
 
@@ -111,6 +116,7 @@ protected:
     TyphoonHQuickInterface*     _parent;
     QString                     _fileName;
     bool                        _selected;
+    bool                        _isVideo;
 };
 
 //-----------------------------------------------------------------------------
@@ -190,6 +196,7 @@ public:
 #endif
     Q_PROPERTY(bool             firstRun            READ    firstRun            WRITE   setFirstRun         NOTIFY  firstRunChanged)
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
+    Q_PROPERTY(bool             browseVideos        READ    browseVideos        WRITE   setBrowseVideos     NOTIFY  browseVideosChanged)
 
     Q_PROPERTY(int              J1              READ    J1                  NOTIFY rawChannelChanged)
     Q_PROPERTY(int              J2              READ    J2                  NOTIFY rawChannelChanged)
@@ -287,6 +294,7 @@ public:
     QString     flightTime          ();
     QString     copyMessage         () { return _copyMessage; }
     bool        wifiAlertEnabled    () { return _wifiAlertEnabled; }
+    bool        browseVideos        () { return _browseVideos; }
     bool        rcActive            ();
     bool        isFactoryApp        () { return _isFactoryApp; }
     bool        isUpdaterApp        () { return _isUpdaterApp; }
@@ -306,6 +314,7 @@ public:
 #endif
     void        setWifiAlertEnabled (bool enabled) { _wifiAlertEnabled = enabled; emit wifiAlertEnabledChanged(); }
     void        setFirstRun         (bool set);
+    void        setBrowseVideos     (bool video);
 
     bool        newPasswordSet      () { return _newPasswordSet; }
     void        setNewPasswordSet   (bool set) { _newPasswordSet = set; emit newPasswordSetChanged(); }
@@ -390,6 +399,7 @@ signals:
     void    calibrationCompleteChanged  ();
     void    calibrationStateChanged     ();
     void    wifiAlertEnabledChanged     ();
+    void    browseVideosChanged         ();
     void    rcActiveChanged             ();
     void    updateErrorChanged          ();
     void    updateProgressChanged       ();
@@ -454,6 +464,7 @@ private slots:
     void    _restart                    ();
     void    _imageFileChanged           ();
     void    _setWiFiPassword            ();
+    void    _isVideoRecordingChanged    ();
     void    _broadcastPresence          ();
     void    _readUDPBytes               ();
 
@@ -492,6 +503,7 @@ private:
     bool                    _copyingFiles;
     bool                    _copyingDone;
     bool                    _wifiAlertEnabled;
+    bool                    _browseVideos;
     QString                 _copyMessage;
     QString                 _updateError;
     int                     _updateProgress;

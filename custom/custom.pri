@@ -1,5 +1,12 @@
 message("Adding Yuneec Typhoon H520 plugin")
 
+# The following define makes your compiler emit warnings if you use
+# any feature of Qt which as been marked deprecated (the exact warnings
+# depend on your compiler). Please consult the documentation of the
+# deprecated API in order to know how to port your code away from it.
+
+#DEFINES += QT_DEPRECATED_WARNINGS
+
 #-- Version control
 #   Major and minor versions are defined here (manually)
 
@@ -52,6 +59,13 @@ linux : android-g++ {
         message("Desktop build")
     }
 }
+
+#-- MAVLink Dialect
+
+CONFIG         += QGC_DISABLE_APM_MAVLINK
+MAVLINKPATH_REL = custom/mavlink
+MAVLINKPATH     = $$QGCROOT/$$MAVLINKPATH_REL
+MAVLINK_CONF    = yuneec
 
 DesktopPlanner {
     message("Desktop Planner Build")
@@ -176,29 +190,27 @@ equals(QT_MAJOR_VERSION, 5) {
 #-------------------------------------------------------------------------------------
 # Firmware/AutoPilot Plugin
 
-!DesktopPlanner {
-    HEADERS+= \
-        $$QGCROOT/custom/src/AutoPilotPlugin/YuneecAutoPilotPlugin.h \
-        $$QGCROOT/custom/src/AutoPilotPlugin/GimbalComponent.h \
-        $$QGCROOT/custom/src/AutoPilotPlugin/ChannelComponent.h \
-        $$QGCROOT/custom/src/AutoPilotPlugin/HealthComponent.h \
-        $$QGCROOT/custom/src/AutoPilotPlugin/YuneecSafetyComponent.h \
-        $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePlugin.h \
-        $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePluginFactory.h \
-        $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraControl.h \
-        $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraManager.h \
+HEADERS+= \
+    $$QGCROOT/custom/src/AutoPilotPlugin/YuneecAutoPilotPlugin.h \
+    $$QGCROOT/custom/src/AutoPilotPlugin/GimbalComponent.h \
+    $$QGCROOT/custom/src/AutoPilotPlugin/ChannelComponent.h \
+    $$QGCROOT/custom/src/AutoPilotPlugin/HealthComponent.h \
+    $$QGCROOT/custom/src/AutoPilotPlugin/YuneecSafetyComponent.h \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePlugin.h \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePluginFactory.h \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraControl.h \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraManager.h \
 
-    SOURCES += \
-        $$QGCROOT/custom/src/AutoPilotPlugin/YuneecAutoPilotPlugin.cc \
-        $$QGCROOT/custom/src/AutoPilotPlugin/GimbalComponent.cc \
-        $$QGCROOT/custom/src/AutoPilotPlugin/ChannelComponent.cc \
-        $$QGCROOT/custom/src/AutoPilotPlugin/HealthComponent.cc \
-        $$QGCROOT/custom/src/AutoPilotPlugin/YuneecSafetyComponent.cc \
-        $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePlugin.cc \
-        $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePluginFactory.cc \
-        $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraControl.cc \
-        $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraManager.cc \
-}
+SOURCES += \
+    $$QGCROOT/custom/src/AutoPilotPlugin/YuneecAutoPilotPlugin.cc \
+    $$QGCROOT/custom/src/AutoPilotPlugin/GimbalComponent.cc \
+    $$QGCROOT/custom/src/AutoPilotPlugin/ChannelComponent.cc \
+    $$QGCROOT/custom/src/AutoPilotPlugin/HealthComponent.cc \
+    $$QGCROOT/custom/src/AutoPilotPlugin/YuneecSafetyComponent.cc \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePlugin.cc \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecFirmwarePluginFactory.cc \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraControl.cc \
+    $$QGCROOT/custom/src/FirmwarePlugin/YuneecCameraManager.cc \
 
 #-------------------------------------------------------------------------------------
 # Android
