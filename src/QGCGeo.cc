@@ -28,7 +28,13 @@
 
 static const float epsilon = std::numeric_limits<double>::epsilon();
 
-void convertGeoToNed(QGeoCoordinate coord, QGeoCoordinate origin, double* x, double* y, double* z) {
+void convertGeoToNed(QGeoCoordinate coord, QGeoCoordinate origin, double* x, double* y, double* z)
+{
+    if (coord == origin) {
+        // Short circuit to prevent NaNs in calculation
+        *x = *y = *z = 0;
+        return;
+    }
 
     double lat_rad = coord.latitude() * M_DEG_TO_RAD;
     double lon_rad = coord.longitude() * M_DEG_TO_RAD;
