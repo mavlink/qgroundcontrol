@@ -108,6 +108,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _autoDisconnect(false)
     , _flying(false)
     , _landing(false)
+    , _vtolInFwdFlight(false)
     , _onboardControlSensorsPresent(0)
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
@@ -292,6 +293,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _autoDisconnect(false)
     , _flying(false)
     , _landing(false)
+    , _vtolInFwdFlight(false)
     , _onboardControlSensorsPresent(0)
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
@@ -989,6 +991,10 @@ void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
         break;
     default:
         break;
+    }
+
+    if (vtol()) {
+        setVtolInFwdFlight(extendedState.vtol_state == MAV_VTOL_STATE_FW);
     }
 }
 
@@ -2677,6 +2683,14 @@ void Vehicle::triggerCamera(void)
                    1.0,                             // trigger camera
                    0.0,                             // param 6 unused
                    1.0);                            // test shot flag
+}
+
+void Vehicle::setVtolInFwdFlight(bool vtolInFwdFlight)
+{
+    if (_vtolInFwdFlight != vtolInFwdFlight) {
+        _vtolInFwdFlight = vtolInFwdFlight;
+        emit vtolInFwdFlightChanged(vtolInFwdFlight);
+    }
 }
 
 const char* VehicleGPSFactGroup::_latFactName =                 "lat";
