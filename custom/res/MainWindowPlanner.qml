@@ -280,8 +280,17 @@ Window {
                 //-- This is enabled (visisble) if we have received a broadcast
                 //   from an ST16 and we are not connected to a vehicle.
                 QGCButton {
+                    text:               qsTr("Connect to ST16")
+                    visible:            !activeVehicle && clientCount && !TyphoonHQuickInterface.clientReady
+                    primary:            true
+                    anchors.verticalCenter: parent.verticalCenter
+                    onClicked: {
+                        TyphoonHQuickInterface.connectToNode(TyphoonHQuickInterface.clientList[0])
+                    }
+                }
+                QGCButton {
                     text:               qsTr("Upload to ST16")
-                    visible:            !activeVehicle
+                    visible:            !activeVehicle && TyphoonHQuickInterface.clientReady
                     primary:            true
                     anchors.verticalCenter: parent.verticalCenter
                     onClicked: {
@@ -454,7 +463,7 @@ Window {
                             onClicked: {
                                 console.log('Upload')
                                 if(planMasterController) {
-                                    TyphoonHQuickInterface.uploadMission(planMasterController)
+                                    TyphoonHQuickInterface.uploadMission("foo", planMasterController)
                                 }
                             }
                         }

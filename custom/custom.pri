@@ -151,7 +151,7 @@ SOURCES += \
     $$QGCROOT/custom/src/TyphoonHQuickInterface.cc \
     $$QGCROOT/custom/src/UTMConverter.cc \
     $$QGCROOT/custom/src/YExportFiles.cc \
-    $$QGCROOT/custom/src/QGCRPC.cc
+    $$QGCROOT/custom/src/YuneecRemote.cc
 
 !DesktopPlanner {
     SOURCES += \
@@ -171,7 +171,7 @@ HEADERS += \
     $$QGCROOT/custom/src/TyphoonHQuickInterface.h \
     $$QGCROOT/custom/src/UTMConverter.h \
     $$QGCROOT/custom/src/YExportFiles.h \
-    $$QGCROOT/custom/src/QGCRPC.h
+    $$QGCROOT/custom/src/YuneecRemote.h
 
 !DesktopPlanner {
     HEADERS += \

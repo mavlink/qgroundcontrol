@@ -16,6 +16,7 @@
 #include "VideoReceiver.h"
 #include "YuneecCameraControl.h"
 #include "YExportFiles.h"
+#include "YuneecRemote.h"
 #if defined(__planner__)
 #include "PlanMasterController.h"
 #endif
@@ -64,6 +65,7 @@ reset_jni()
 #define FIRMWARE_FORCE_UPDATE_PATCH 0
 
 #define UDP_BROADCAST_PORT          14549
+#define YUNEEC_RPC_PORT             14548
 
 //-----------------------------------------------------------------------------
 TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
@@ -98,6 +100,12 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _passwordSet(false)
     , _newPasswordSet(false)
     , _udpSocket(NULL)
+#if !defined(__planner__)
+    , _remoteInstance(NULL)
+    , _remoteObject(NULL)
+#else
+    , _remoteNode(NULL)
+#endif
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
 #if defined __android__
@@ -128,6 +136,18 @@ TyphoonHQuickInterface::~TyphoonHQuickInterface()
     if(_udpSocket) {
         _udpSocket->deleteLater();
     }
+#if !defined(__planner__)
+    if(_remoteObject) {
+        delete _remoteObject;
+    }
+    if(_remoteInstance) {
+        delete _remoteInstance;
+    }
+#else
+    if(_remoteNode) {
+        delete _remoteNode;
+    }
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1745,10 +1765,23 @@ TyphoonHQuickInterface::_broadcastPresence()
         _udpSocket = new QUdpSocket(this);
     }
     if(_macAddress.isEmpty()) {
+        QUrl url;
         //-- Get first interface with a MAC address
         foreach(QNetworkInterface interface, QNetworkInterface::allInterfaces()) {
             _macAddress = interface.hardwareAddress();
             if(!_macAddress.isEmpty() && !_macAddress.endsWith("00:00:00")) {
+                //-- Get an URL to this host
+                foreach (const QHostAddress &address, interface.allAddresses()) {
+                    if (address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress(QHostAddress::LocalHost)) {
+                        if(!address.toString().startsWith("127")) {
+                            url.setHost(address.toString());
+                            url.setPort(YUNEEC_RPC_PORT);
+                            url.setScheme("tcp");
+                            qCDebug(YuneecLog) << "Remote Object URL:" << url.toString();
+                            break;
+                        }
+                    }
+                }
                 break;
             }
         }
@@ -1759,10 +1792,15 @@ TyphoonHQuickInterface::_broadcastPresence()
         } else {
             //-- Make something up
             _macAddress.sprintf("%06d", (qrand() % 999999));
+            qWarning() << "Could not get a proper MAC address. Using a random value.";
         }
         _macAddress = "ST16S_" + _macAddress;
         emit macAddressChanged();
         qCDebug(YuneecLog) << "MAC Address:" << _macAddress;
+        //-- Initialize Remote Object
+        _remoteInstance = new YuneecRPCST16Side;
+        _remoteObject = new QRemoteObjectHost(url);
+        _remoteObject->enableRemoting(_remoteInstance);
     }
     _udpSocket->writeDatagram(_macAddress.toLocal8Bit(), QHostAddress::Broadcast, UDP_BROADCAST_PORT);
 #endif
@@ -1799,9 +1837,14 @@ TyphoonHQuickInterface::_readUDPBytes()
         datagram.resize(_udpSocket->pendingDatagramSize());
         QHostAddress sender;
         _udpSocket->readDatagram(datagram.data(), datagram.size(), &sender);
-        if(!_st16Clients.contains(sender)) {
+        QUrl url;
+        url.setHost(sender.toString());
+        url.setPort(YUNEEC_RPC_PORT);
+        url.setScheme("tcp");
+        if(!_st16Clients.contains(url)) {
             _st16ClientsNames.append(datagram.data());
-            _st16Clients.append(sender);
+            _st16Clients.append(url);
+            qDebug() << "New node:" << url.toString();
             emit clientListChanged();
         }
     }
@@ -1811,13 +1854,52 @@ TyphoonHQuickInterface::_readUDPBytes()
 //-----------------------------------------------------------------------------
 #if defined(__planner__)
 void
-TyphoonHQuickInterface::uploadMission(PlanMasterController* controller)
+TyphoonHQuickInterface::uploadMission(QString name, PlanMasterController* controller)
 {
-    QFile file("/tmp/foo.plan");
-    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    if(_remoteNode) {
         QJsonDocument saveDoc(controller->saveToJson());
-        file.write(saveDoc.toJson());
+        _remoteNode->sendMission(name, saveDoc.toJson());
+        //-- Should we do this?
         controller->setDirty(false);
+    }
+}
+#endif
+
+//-----------------------------------------------------------------------------
+#if defined(__planner__)
+bool
+TyphoonHQuickInterface::connectToNode(QString name)
+{
+    if(_remoteNode) {
+        disconnectNode();
+    }
+    _remoteNode = new YuneecRPCPlannerSide(this);
+    //-- Find name
+    int idx = _st16ClientsNames.indexOf(name);
+    if(idx < 0 || idx >= _st16Clients.size()) {
+        return false;
+    }
+    return _remoteNode->connectToNode(_st16Clients[idx]);
+}
+#endif
+
+//-----------------------------------------------------------------------------
+#if defined(__planner__)
+bool
+TyphoonHQuickInterface::clientReady()
+{
+    return _remoteNode && _remoteNode->ready();
+}
+#endif
+
+//-----------------------------------------------------------------------------
+#if defined(__planner__)
+void
+TyphoonHQuickInterface::disconnectNode()
+{
+    if(_remoteNode) {
+        delete _remoteNode;
+        _remoteNode = NULL;
     }
 }
 #endif

@@ -21,6 +21,10 @@ class TyphoonHM4Interface;
 #endif
 #if defined(__planner__)
 class PlanMasterController;
+class YuneecRPCPlannerSide;
+#else
+class YuneecRPCST16Side;
+class QRemoteObjectHost;
 #endif
 
 class TyphoonHQuickInterface;
@@ -191,6 +195,7 @@ public:
 #if defined(__planner__)
     //-- Upload mission to ST16
     Q_PROPERTY(QStringList      clientList      READ    clientList          NOTIFY clientListChanged)
+    Q_PROPERTY(bool             clientReady     READ    clientReady         NOTIFY clientReadyChanged)
 #else
     Q_PROPERTY(QString          macAddress      READ    macAddress          NOTIFY macAddressChanged)
 #endif
@@ -262,7 +267,7 @@ public:
     Q_INVOKABLE void updateSystemImage  ();
 
 #if defined(__planner__)
-    Q_INVOKABLE void uploadMission      (PlanMasterController* controller);
+    Q_INVOKABLE void uploadMission      (QString name, PlanMasterController* controller);
 #endif
 
     M4State     m4State             ();
@@ -343,7 +348,11 @@ public:
 
 #if defined(__planner__)
     QStringList clientList          () { return _st16ClientsNames; }
+    bool        clientReady         ();
+    Q_INVOKABLE bool connectToNode  (QString name);
+    Q_INVOKABLE void disconnectNode ();
 #endif
+
     QString     updateError         () { return _updateError; }
     int         updateProgress      () { return _updateProgress; }
     bool        updateDone          () { return _updateDone; }
@@ -421,6 +430,7 @@ signals:
     void    newPasswordSetChanged       ();
 #if defined(__planner__)
     void    clientListChanged           ();
+    void    clientReadyChanged          ();
 #else
     void    macAddressChanged           ();
 #endif
@@ -524,9 +534,12 @@ private:
     QUdpSocket*             _udpSocket;
 #if defined(__planner__)
     QStringList             _st16ClientsNames;
-    QVector<QHostAddress>   _st16Clients;
+    QVector<QUrl>           _st16Clients;
+    YuneecRPCPlannerSide*   _remoteNode;
 #else
     QString                 _macAddress;
+    YuneecRPCST16Side*      _remoteInstance;
+    QRemoteObjectHost*      _remoteObject;
 #endif
 
 };
