@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.27 - Jan 4 2018
+
+*   Fixed delete videos from video browser
+
 ### v1.2.26 - Jan 2 2018
 
 *   Implement local video capture and display
