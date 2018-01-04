@@ -41,7 +41,7 @@ Window {
     property var    planMap:                planViewLoader.item ? planViewLoader.item.planMap : null
     property var    planMasterController:   planViewLoader.item ? planViewLoader.item.planMasterController : null
     property var    mapSettings:            QGroundControl.settingsManager.flightMapSettings
-    property string mapType:                mapSettings.mapProvider.enumStringValue + " " + mapSettings.mapType.enumStringValue
+    property string mapType:                mapSettings ? mapSettings.mapProvider.enumStringValue + " " + mapSettings.mapType.enumStringValue : ""
     property real   minZoom:                2
     property real   maxZoom:                19
     property int    clientCount:            TyphoonHQuickInterface.clientList.length
@@ -63,8 +63,8 @@ Window {
             var c0 = planMap.toCoordinate(Qt.point(xl, yl), false /* clipToViewPort */)
             var c1 = planMap.toCoordinate(Qt.point(xr, yr), false /* clipToViewPort */)
             QGroundControl.mapEngineManager.updateForCurrentView(c0.longitude, c0.latitude, c1.longitude, c1.latitude, minZoom, maxZoom, mapType)
-            console.log('Tile count: ' + QGroundControl.mapEngineManager.tileCountStr)
-            console.log('Tile size:  ' + QGroundControl.mapEngineManager.tileSizeStr)
+            //console.log('Tile count: ' + QGroundControl.mapEngineManager.tileCountStr)
+            //console.log('Tile size:  ' + QGroundControl.mapEngineManager.tileSizeStr)
         }
     }
 
