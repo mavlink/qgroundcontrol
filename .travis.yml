@@ -115,8 +115,8 @@ install:
 
   # osx dependencies: qt, gstreamer, gstreamer-devel
   - if [ "${SPEC}" = "macx-clang" ]; then
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.1-mac-clang-min.tar.bz2 &&
-        tar jxf Qt5.9.1-mac-clang-min.tar.bz2 -C /tmp
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.3-clang_64-min.tar.bz2 &&
+        tar jxf Qt5.9.3-clang_64-min.tar.bz2 -C /tmp
         ;
     fi
 
@@ -135,7 +135,7 @@ install:
   - if [ "${SPEC}" = "macx-clang" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2 &&
         sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks &&
-        export QT_DIR=Qt5.9-mac-clang/5.9.1/clang_64 &&
+        export QT_DIR=Qt5.9-clang_64/5.9.3/clang_64 &&
         export QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins &&
         export QML2_IMPORT_PATH=/tmp/$QT_DIR/qml &&
         export PATH=/tmp/$QT_DIR/bin:$PATH
