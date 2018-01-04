@@ -54,29 +54,30 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app, QGCToolbox* toolbo
 
 void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 {
-   QGCTool::setToolbox(toolbox);
+    QGCTool::setToolbox(toolbox);
 
-   _firmwarePluginManager =     _toolbox->firmwarePluginManager();
-   _joystickManager =           _toolbox->joystickManager();
-   _mavlinkProtocol =           _toolbox->mavlinkProtocol();
+    _firmwarePluginManager =     _toolbox->firmwarePluginManager();
+    _joystickManager =           _toolbox->joystickManager();
+    _mavlinkProtocol =           _toolbox->mavlinkProtocol();
 
-   QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-   qmlRegisterUncreatableType<MultiVehicleManager>("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+    qmlRegisterUncreatableType<MultiVehicleManager>("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
 
-   connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
+    connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
 
-   SettingsManager* settingsManager = toolbox->settingsManager();
-   _offlineEditingVehicle = new Vehicle(static_cast<MAV_AUTOPILOT>(settingsManager->appSettings()->offlineEditingFirmwareType()->rawValue().toInt()),
-                                        static_cast<MAV_TYPE>(settingsManager->appSettings()->offlineEditingVehicleType()->rawValue().toInt()),
-                                        _firmwarePluginManager,
-                                        this);
+    SettingsManager* settingsManager = toolbox->settingsManager();
+    _offlineEditingVehicle = new Vehicle(static_cast<MAV_AUTOPILOT>(settingsManager->appSettings()->offlineEditingFirmwareType()->rawValue().toInt()),
+                                         static_cast<MAV_TYPE>(settingsManager->appSettings()->offlineEditingVehicleType()->rawValue().toInt()),
+                                         _firmwarePluginManager,
+                                         this);
 }
 
 void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType)
 {
     if (componentId != MAV_COMP_ID_AUTOPILOT1) {
-        // Don't create vehicles for components other than the autopilot
-        if (!getVehicleById(vehicleId)) {
+        // Special case for PX4 Flow
+        if (vehicleId != 81 || componentId != 50) {
+            // Don't create vehicles for components other than the autopilot
             qCDebug(MultiVehicleManagerLog()) << "Ignoring heartbeat from unknown component "
                                               << link->getName()
                                               << vehicleId
@@ -84,8 +85,8 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
                                               << vehicleMavlinkVersion
                                               << vehicleFirmwareType
                                               << vehicleType;
+            return;
         }
-        return;
     }
 
     if (_vehicles.count() > 0 && !qgcApp()->toolbox()->corePlugin()->options()->multiVehicleEnabled()) {
@@ -119,15 +120,15 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         _app->showMessage(tr("Warning: A vehicle is using the same system id as %1: %2").arg(qgcApp()->applicationName()).arg(vehicleId));
     }
 
-//    QSettings settings;
-//    bool mavlinkVersionCheck = settings.value("VERSION_CHECK_ENABLED", true).toBool();
-//    if (mavlinkVersionCheck && vehicleMavlinkVersion != MAVLINK_VERSION) {
-//        _ignoreVehicleIds += vehicleId;
-//        _app->showMessage(QString("The MAVLink protocol version on vehicle #%1 and %2 differ! "
-//                                  "It is unsafe to use different MAVLink versions. "
-//                                  "%2 therefore refuses to connect to vehicle #%1, which sends MAVLink version %3 (%2 uses version %4).").arg(vehicleId).arg(qgcApp()->applicationName()).arg(vehicleMavlinkVersion).arg(MAVLINK_VERSION));
-//        return;
-//    }
+    //    QSettings settings;
+    //    bool mavlinkVersionCheck = settings.value("VERSION_CHECK_ENABLED", true).toBool();
+    //    if (mavlinkVersionCheck && vehicleMavlinkVersion != MAVLINK_VERSION) {
+    //        _ignoreVehicleIds += vehicleId;
+    //        _app->showMessage(QString("The MAVLink protocol version on vehicle #%1 and %2 differ! "
+    //                                  "It is unsafe to use different MAVLink versions. "
+    //                                  "%2 therefore refuses to connect to vehicle #%1, which sends MAVLink version %3 (%2 uses version %4).").arg(vehicleId).arg(qgcApp()->applicationName()).arg(vehicleMavlinkVersion).arg(MAVLINK_VERSION));
+    //        return;
+    //    }
 
     Vehicle* vehicle = new Vehicle(link, vehicleId, componentId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, _firmwarePluginManager, _joystickManager);
     connect(vehicle, &Vehicle::allLinksInactive, this, &MultiVehicleManager::_deleteVehiclePhase1);
@@ -177,7 +178,7 @@ void MultiVehicleManager::_requestProtocolVersion(unsigned version)
 
         Vehicle *v = qobject_cast<Vehicle*>(_vehicles[i]);
         if (v && v->maxProtoVersion() > maxversion) {
-           maxversion = v->maxProtoVersion();
+            maxversion = v->maxProtoVersion();
         }
     }
 
