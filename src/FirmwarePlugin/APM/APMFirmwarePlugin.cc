@@ -913,14 +913,19 @@ void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
 
 double APMFirmwarePlugin::minimumTakeoffAltitude(Vehicle* vehicle)
 {
+    double minTakeoffAlt = 0;
     QString takeoffAltParam(vehicle->vtol() ? QStringLiteral("Q_RTL_ALT") : QStringLiteral("PILOT_TKOFF_ALT"));
     float paramDivisor = vehicle->vtol() ? 1.0 : 100.0; // PILOT_TAKEOFF_ALT is in centimeters
 
     if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, takeoffAltParam)) {
-        return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, takeoffAltParam)->rawValue().toDouble() / paramDivisor;
-    } else {
-        return FirmwarePlugin::minimumTakeoffAltitude(vehicle);
+        minTakeoffAlt = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, takeoffAltParam)->rawValue().toDouble() / paramDivisor;
     }
+
+    if (minTakeoffAlt == 0) {
+        minTakeoffAlt = FirmwarePlugin::minimumTakeoffAltitude(vehicle);
+    }
+
+    return minTakeoffAlt;
 }
 
 bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
