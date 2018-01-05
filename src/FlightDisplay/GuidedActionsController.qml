@@ -213,7 +213,7 @@ Item {
             confirmDialog.title = takeoffTitle
             confirmDialog.message = takeoffMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showTakeoff })
-            altitudeSlider.reset()
+            altitudeSlider.setToMinimumTakeoff()
             altitudeSlider.visible = true
             break;
         case actionStartMission:

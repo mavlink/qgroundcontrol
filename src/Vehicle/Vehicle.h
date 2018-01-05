@@ -423,6 +423,9 @@ public:
     /// Command vehicle to takeoff from current location
     Q_INVOKABLE void guidedModeTakeoff(double altitudeRelative);
 
+    /// @return The minimum takeoff altitude (relative) for guided takeoff.
+    Q_INVOKABLE double minimumTakeoffAltitude(void);
+
     /// Command vehicle to move to specified location (altitude is included and relative)
     Q_INVOKABLE void guidedModeGotoLocation(const QGeoCoordinate& gotoCoord);
 
