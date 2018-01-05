@@ -235,9 +235,11 @@ private:
     static const int    _autoconnectConnectDelayMSecs;
 
     // NMEA GPS device for GCS position
+#ifndef __mobile__
     QString      _nmeaDeviceName;
     QSerialPort* _nmeaPort;
     uint32_t     _nmeaBaud;
+#endif
 };
 
 #endif
