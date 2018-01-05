@@ -994,7 +994,11 @@ void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
     }
 
     if (vtol()) {
-        setVtolInFwdFlight(extendedState.vtol_state == MAV_VTOL_STATE_FW);
+        bool vtolInFwdFlight = extendedState.vtol_state == MAV_VTOL_STATE_FW;
+        if (vtolInFwdFlight != _vtolInFwdFlight) {
+            _vtolInFwdFlight = vtolInFwdFlight;
+            emit vtolInFwdFlightChanged(vtolInFwdFlight);
+        }
     }
 }
 
@@ -2688,8 +2692,11 @@ void Vehicle::triggerCamera(void)
 void Vehicle::setVtolInFwdFlight(bool vtolInFwdFlight)
 {
     if (_vtolInFwdFlight != vtolInFwdFlight) {
-        _vtolInFwdFlight = vtolInFwdFlight;
-        emit vtolInFwdFlightChanged(vtolInFwdFlight);
+        sendMavCommand(_defaultComponentId,
+                       MAV_CMD_DO_VTOL_TRANSITION,
+                       true,                                                    // show errors
+                       vtolInFwdFlight ? MAV_VTOL_STATE_FW : MAV_VTOL_STATE_MC, // transition state
+                       0, 0, 0, 0, 0, 0);                                       // param 2-7 unused
     }
 }
 
