@@ -626,10 +626,10 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
         // MISSION_REQUEST is expected, or MISSION_ACK to end sequence
         if (missionAck.type == MAV_MISSION_ACCEPTED) {
             qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionAck %1 guided mode item accepted").arg(_planTypeString());
-            _finishTransaction(true);
+            _finishTransaction(true, true /* apmGuidedItemWrite */);
         } else {
             _sendError(VehicleError, tr("Vehicle returned error: %1. %2Vehicle did not accept guided item.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
-            _finishTransaction(false);
+            _finishTransaction(false, true /* apmGuidedItemWrite */);
         }
         break;
     }
