@@ -40,6 +40,7 @@ public:
     YuneecRPCST16Side                   (QObject* parent = NULL) : QGCRemoteSimpleSource(parent) {}
     virtual ~YuneecRPCST16Side          () {}
 public slots:
+    virtual void initSendMission        (int missionCount);
     virtual void sendMission            (QGCNewMission mission);
 };
 #endif

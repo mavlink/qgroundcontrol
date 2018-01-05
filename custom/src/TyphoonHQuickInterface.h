@@ -194,10 +194,11 @@ public:
     Q_PROPERTY(bool             desktopPlanner  READ    desktopPlanner      CONSTANT)
 #if defined(__planner__)
     //-- Upload mission to ST16
-    Q_PROPERTY(QStringList      clientList      READ    clientList          NOTIFY clientListChanged)
-    Q_PROPERTY(bool             clientReady     READ    clientReady         NOTIFY clientReadyChanged)
+    Q_PROPERTY(QStringList      clientList      READ    clientList              NOTIFY clientListChanged)
+    Q_PROPERTY(bool             clientReady     READ    clientReady             NOTIFY clientReadyChanged)
+    Q_PROPERTY(QString          currentClient   READ    currentClient           WRITE  setCurrentClient     NOTIFY currentClientChanged)
 #else
-    Q_PROPERTY(QString          macAddress      READ    macAddress          NOTIFY macAddressChanged)
+    Q_PROPERTY(QString          macAddress      READ    macAddress              NOTIFY macAddressChanged)
 #endif
     Q_PROPERTY(bool             firstRun            READ    firstRun            WRITE   setFirstRun         NOTIFY  firstRunChanged)
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
@@ -348,6 +349,8 @@ public:
 
 #if defined(__planner__)
     QStringList clientList          () { return _st16ClientsNames; }
+    QString     currentClient       () { return _currentClient; }
+    void        setCurrentClient    (QString client) { _currentClient = client; emit currentClientChanged(); }
     bool        clientReady         ();
     Q_INVOKABLE bool connectToNode  (QString name);
     Q_INVOKABLE void disconnectNode ();
@@ -431,6 +434,7 @@ signals:
 #if defined(__planner__)
     void    clientListChanged           ();
     void    clientReadyChanged          ();
+    void    currentClientChanged        ();
 #else
     void    macAddressChanged           ();
 #endif
@@ -534,6 +538,7 @@ private:
     QUdpSocket*             _udpSocket;
 #if defined(__planner__)
     QStringList             _st16ClientsNames;
+    QString                 _currentClient;
     QVector<QUrl>           _st16Clients;
     YuneecRPCPlannerSide*   _remoteNode;
 #else

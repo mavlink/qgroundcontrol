@@ -280,16 +280,7 @@ Window {
                 //-- This is enabled (visisble) if we have received a broadcast
                 //   from an ST16 and we are not connected to a vehicle.
                 QGCButton {
-                    text:               qsTr("Connect to ST16")
-                    visible:            !activeVehicle && clientCount && !TyphoonHQuickInterface.clientReady
-                    primary:            true
-                    anchors.verticalCenter: parent.verticalCenter
-                    onClicked: {
-                        TyphoonHQuickInterface.connectToNode(TyphoonHQuickInterface.clientList[0])
-                    }
-                }
-                QGCButton {
-                    text:               qsTr("Upload to ST16")
+                    text:               qsTr("Upload to ") + TyphoonHQuickInterface.currentClient
                     visible:            !activeVehicle && TyphoonHQuickInterface.clientReady
                     primary:            true
                     anchors.verticalCenter: parent.verticalCenter

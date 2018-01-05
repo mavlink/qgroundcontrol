@@ -4,5 +4,6 @@ POD QGCNewMission(QString name, QByteArray mission)
 
 class QGCRemote
 {
+    SLOT(void initSendMission(int missionCount));
     SLOT(void sendMission(QGCNewMission mission));
 };

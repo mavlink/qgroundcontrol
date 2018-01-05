@@ -31,6 +31,8 @@ QGCView {
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property int    _clientCount:       TyphoonHQuickInterface.clientList.length
     property real   _buttonWidth:       ScreenTools.defaultFontPixelWidth * 16
+    property real   _gridElemWidth:     ScreenTools.defaultFontPixelWidth * 20
+    property string _currentNode:       _clientCount && remoteCombo.currentIndex >= 0 && remoteCombo.currentIndex < _clientCount ? TyphoonHQuickInterface.clientList[remoteCombo.currentIndex] : ""
 
     QGCPalette      { id: qgcPal }
 
@@ -53,9 +55,8 @@ QGCView {
         }
         Column {
             spacing:        ScreenTools.defaultFontPixelHeight
-            visible:        !_activeVehicle && _clientCount
-            anchors.top:    parent.top
-            anchors.topMargin: ScreenTools.defaultFontPixelHeight
+            visible:        !_activeVehicle && _clientCount && !TyphoonHQuickInterface.clientReady
+            anchors.centerIn: parent
             QGCLabel {
                 text:       qsTr("Select Remote")
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -74,7 +75,82 @@ QGCView {
                 enabled:        remoteCombo.currentIndex >= 0 && remoteCombo.currentIndex < _clientCount
                 anchors.horizontalCenter: parent.horizontalCenter
                 onClicked: {
-                    TyphoonHQuickInterface.connectToNode(TyphoonHQuickInterface.clientList[remoteCombo.currentIndex])
+                    TyphoonHQuickInterface.connectToNode(_currentNode)
+                }
+            }
+        }
+        Column {
+            anchors.centerIn: parent
+            spacing:        ScreenTools.defaultFontPixelHeight
+            visible:        !_activeVehicle && TyphoonHQuickInterface.clientReady
+            Rectangle {
+                width:  syncGrid.width
+                height: 1
+                color:  qgcPal.colorGrey
+            }
+            GridLayout {
+                id:             syncGrid
+                columns:        2
+                columnSpacing:  ScreenTools.defaultFontPixelWidth  * 8
+                rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.5
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel { text: qsTr("Local"); font.family: ScreenTools.demiboldFontFamily; Layout.alignment: Qt.AlignHCenter; }
+                QGCLabel { text: TyphoonHQuickInterface.currentClient; font.family: ScreenTools.demiboldFontFamily; Layout.alignment: Qt.AlignHCenter; }
+                QGCButton {
+                    text:           qsTr("Send Missions")
+                    width:          _gridElemWidth
+                    onClicked: {
+
+                    }
+                }
+                QGCButton {
+                    text:               qsTr("Fetch Missions")
+                    width:              _gridElemWidth
+                    Layout.fillWidth:   true
+                    onClicked: {
+
+                    }
+                }
+                QGCButton {
+                    text:               qsTr("Send Maps")
+                    width:              _gridElemWidth
+                    Layout.fillWidth:   true
+                    onClicked: {
+
+                    }
+                }
+                QGCButton {
+                    text:               qsTr("Fetch Maps")
+                    width:              _gridElemWidth
+                    Layout.fillWidth:   true
+                    onClicked: {
+
+                    }
+                }
+                Item {
+                    height:             1
+                    width:              1
+                }
+                QGCButton {
+                    text:               qsTr("Fetch Logs")
+                    width:              _gridElemWidth
+                    Layout.fillWidth:   true
+                    onClicked: {
+
+                    }
+                }
+            }
+            Rectangle {
+                width:  syncGrid.width
+                height: 1
+                color:  qgcPal.colorGrey
+            }
+            QGCButton {
+                text:           qsTr("Disconnect")
+                width:          _buttonWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                onClicked: {
+                    TyphoonHQuickInterface.disconnectNode()
                 }
             }
         }

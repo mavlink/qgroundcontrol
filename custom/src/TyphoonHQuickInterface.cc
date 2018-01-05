@@ -1884,6 +1884,7 @@ TyphoonHQuickInterface::connectToNode(QString name)
     if(idx < 0 || idx >= _st16Clients.size()) {
         return false;
     }
+    setCurrentClient(name);
     return _remoteNode->connectToNode(_st16Clients[idx]);
 }
 #endif
@@ -1906,5 +1907,6 @@ TyphoonHQuickInterface::disconnectNode()
         delete _remoteNode;
         _remoteNode = NULL;
     }
+    emit clientReadyChanged();
 }
 #endif
