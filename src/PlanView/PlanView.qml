@@ -14,6 +14,7 @@ import QtQuick.Dialogs  1.2
 import QtLocation       5.3
 import QtPositioning    5.3
 import QtQuick.Layouts  1.2
+import QtQuick.Window   2.2
 
 import QGroundControl               1.0
 import QGroundControl.FlightMap     1.0
@@ -652,10 +653,11 @@ QGCView {
             id:                 waypointValuesDisplay
             anchors.margins:    ScreenTools.defaultFontPixelWidth
             anchors.left:       parent.left
+            height:             ScreenTools.defaultFontPixelHeight * 7
             maxWidth:           parent.width - rightPanel.width - x
             anchors.bottom:     parent.bottom
             missionItems:       _missionController.visualItems
-            visible:            _editingLayer === _layerMission && !ScreenTools.isShortScreen
+            visible:            _editingLayer === _layerMission && (ScreenTools.isMobile ? height < Screen.height * 0.25 : true)
         }
     } // QGCViewPanel
 
