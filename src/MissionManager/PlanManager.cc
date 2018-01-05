@@ -263,7 +263,7 @@ bool PlanManager::_checkForExpectedAck(AckType_t receivedAck)
         } else {
             // We just warn in this case, this could be crap left over from a previous transaction or the vehicle going bonkers.
             // Whatever it is we let the ack timeout handle any error output to the user.
-            qCDebug(PlanManagerLog) << QString("Out of sequence ack expected:received %1:%2 %1").arg(_ackTypeToString(_expectedAck)).arg(_ackTypeToString(receivedAck)).arg(_planTypeString());
+            qCDebug(PlanManagerLog) << QString("Out of sequence ack %1 expected:received %2:%3").arg(_planTypeString().arg(_ackTypeToString(_expectedAck)).arg(_ackTypeToString(receivedAck)));
         }
         return false;
     }
