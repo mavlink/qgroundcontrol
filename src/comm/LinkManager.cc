@@ -21,13 +21,13 @@
 #include "UDPLink.h"
 #include "TCPLink.h"
 #include "SettingsManager.h"
-#include "PositionManager.h"
 #ifdef QGC_ENABLE_BLUETOOTH
 #include "BluetoothLink.h"
 #endif
 
 #ifndef __mobile__
 #include "GPSManager.h"
+#include "PositionManager.h"
 #endif
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
@@ -51,7 +51,9 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
     , _mavlinkChannelsUsedBitMask(1)    // We never use channel 0 to avoid sequence numbering problems
     , _autoConnectSettings(NULL)
     , _mavlinkProtocol(NULL)
+#ifndef __mobile__
     , _nmeaPort(NULL)
+#endif
 {
     qmlRegisterUncreatableType<LinkManager>         ("QGroundControl", 1, 0, "LinkManager",         "Reference only");
     qmlRegisterUncreatableType<LinkConfiguration>   ("QGroundControl", 1, 0, "LinkConfiguration",   "Reference only");
@@ -66,7 +68,9 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
 
 LinkManager::~LinkManager()
 {
+#ifndef __mobile__
     delete _nmeaPort;
+#endif
 }
 
 void LinkManager::setToolbox(QGCToolbox *toolbox)
@@ -502,6 +506,7 @@ void LinkManager::_updateAutoConnectLinks(void)
         QGCSerialPortInfo::BoardType_t boardType;
         QString boardName;
 
+#ifndef __mobile__
         if (portInfo.systemLocation().trimmed() == _autoConnectSettings->autoConnectNmeaPort()->cookedValueString()) {
             if (portInfo.systemLocation().trimmed() != _nmeaDeviceName) {
                 _nmeaDeviceName = portInfo.systemLocation().trimmed();
@@ -525,7 +530,9 @@ void LinkManager::_updateAutoConnectLinks(void)
                 _nmeaPort->setBaudRate(_nmeaBaud);
                 qCDebug(LinkManagerLog) << "Configuring nmea baudrate" << _nmeaBaud;
             }
-        } else if (portInfo.getBoardInfo(boardType, boardName)) {
+        } else
+#endif
+        if (portInfo.getBoardInfo(boardType, boardName)) {
             if (portInfo.isBootloader()) {
                 // Don't connect to bootloader
                 qCDebug(LinkManagerLog) << "Waiting for bootloader to finish" << portInfo.systemLocation();
