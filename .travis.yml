@@ -4,8 +4,6 @@ language: cpp
 
 env:
   global:
-    - CCACHE_CPP2=1
-    - CCACHE_DISABLE=1
     - JOBS=4
     - QT_FATAL_WARNINGS=1
     - SHADOW_BUILD_DIR=/tmp/shadow_build_dir
@@ -28,7 +26,7 @@ matrix:
           env: SPEC=android-g++ CONFIG=installer
           sudo: false
         - os: osx
-          osx_image: xcode8.3
+          osx_image: xcode9.2
           env: SPEC=macx-clang CONFIG=installer
           sudo: required
 # OSX builds pared back to installer only since travis sucks so bad we can't afford more than one'
@@ -50,7 +48,6 @@ android:
 addons:
   apt:
     packages:
-    - ccache
     - espeak
     - libespeak-dev
     - libgstreamer-plugins-base1.0-dev
@@ -60,24 +57,11 @@ addons:
     - libudev-dev
     - wget
 
-cache:
-  directories:
-    - $HOME/.ccache
-
 before_install:
   # fetch entire git repo to properly determine the version
   - if [ "${CONFIG}" = "installer" ]; then
         cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow && git fetch --all --tags;
     fi
-
-  # install ccache for osx/ios
-  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-        wget --quiet https://s3.amazonaws.com/px4-travis/toolchain/macos/ccache &&
-        chmod +x ccache && sudo mv ccache /usr/local/bin;
-    fi
-
-  # setup ccache
-  #- ccache -M 500MB && ccache -z
 
   # compile threads
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
@@ -113,28 +97,32 @@ install:
         ;
     fi
 
-  # osx dependencies: qt, gstreamer, gstreamer-devel
+  # osx dependencies: qt (master builds only: gstreamer, gstreamer-devel)
   - if [ "${SPEC}" = "macx-clang" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.3-clang_64-min.tar.bz2 &&
         tar jxf Qt5.9.3-clang_64-min.tar.bz2 -C /tmp
         ;
     fi
 
-  - if [ "${SPEC}" = "macx-clang" ]; then
+  - if [ "${SPEC}" = "macx-clang" && "${TRAVIS_BRANCH}" = "master" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-1.5.2-x86_64.pkg &&
         sudo installer -verboseR -pkg gstreamer-1.0-1.5.2-x86_64.pkg -target /
         ;
     fi
 
-  - if [ "${SPEC}" = "macx-clang" ]; then
+  - if [ "${SPEC}" = "macx-clang" && "${TRAVIS_BRANCH}" = "master" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-1.5.2-x86_64.pkg &&
         sudo installer -verboseR -pkg gstreamer-1.0-devel-1.5.2-x86_64.pkg -target /
         ;
     fi
 
-  - if [ "${SPEC}" = "macx-clang" ]; then
+  - if [ "${SPEC}" = "macx-clang" && "${TRAVIS_BRANCH}" = "master" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2 &&
-        sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks &&
+        sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks
+        ;
+    fi
+
+  - if [ "${SPEC}" = "macx-clang" ]; then
         export QT_DIR=Qt5.9-clang_64/5.9.3/clang_64 &&
         export QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins &&
         export QML2_IMPORT_PATH=/tmp/$QT_DIR/qml &&
