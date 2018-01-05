@@ -65,6 +65,9 @@ QUrl APMTuningComponent::setupSource(void) const
                 qmlFile = QStringLiteral("qrc:/qml/APMTuningComponentCopter.qml");
             }
             break;
+        case MAV_TYPE_SUBMARINE:
+            qmlFile = QStringLiteral("qrc:/qml/APMTuningComponentSub.qml");
+            break;
         default:
             // No tuning panel
             break;
