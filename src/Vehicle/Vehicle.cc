@@ -2266,6 +2266,11 @@ void Vehicle::guidedModeTakeoff(double altitudeRelative)
     _firmwarePlugin->guidedModeTakeoff(this, altitudeRelative);
 }
 
+double Vehicle::minimumTakeoffAltitude(void)
+{
+    return _firmwarePlugin->minimumTakeoffAltitude(this);
+}
+
 void Vehicle::startMission(void)
 {
     _firmwarePlugin->startMission(this);
