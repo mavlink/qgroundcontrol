@@ -1071,6 +1071,9 @@ QGCCacheWorker::_lookupReady(QHostInfo info)
     _hostLookupID = 0;
     if(info.error() == QHostInfo::NoError && info.addresses().size()) {
         QTcpSocket socket;
+        QNetworkProxy tempProxy;
+        tempProxy.setType(QNetworkProxy::DefaultProxy);
+        socket.setProxy(tempProxy);
         socket.connectToHost(info.addresses().first(), 80);
         if (socket.waitForConnected(2000)) {
             qCDebug(QGCTileCacheLog) << "Yes Internet Access";
