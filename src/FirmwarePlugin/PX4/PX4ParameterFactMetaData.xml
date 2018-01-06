@@ -7028,6 +7028,15 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <increment>0.5</increment>
       <scope>modules/navigator</scope>
     </parameter>
+    <parameter default="0" name="RTL_LAND_TYPE" type="INT32">
+      <short_desc>RTL land location</short_desc>
+      <long_desc>Land at the home location or planned mission landing</long_desc>
+      <scope>modules/navigator</scope>
+      <values>
+        <value code="0">Home Position</value>
+        <value code="1">Planned Landing (Mission)</value>
+      </values>
+    </parameter>
     <parameter default="5.0" name="RTL_MIN_DIST" type="FLOAT">
       <short_desc>Minimum distance to trigger rising to a safe altitude</short_desc>
       <long_desc>If the system is horizontally closer than this distance to home it will land straight on home instead of raising to the return altitude first.</long_desc>
