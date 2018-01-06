@@ -679,6 +679,8 @@ VideoReceiver::startRecording(const QString &videoFile)
     _recording = true;
     emit recordingChanged();
     qCDebug(VideoReceiverLog) << "Recording started";
+#else
+    Q_UNUSED(videoFile)
 #endif
 }
 
