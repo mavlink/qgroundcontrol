@@ -69,7 +69,7 @@ before_install:
     elif [ "${TRAVIS_OS_NAME}" = "osx" ]; then
         export JOBS=$((`sysctl -n hw.ncpu`+1));
         echo ${JOBS};
-        echo ${TRAVIS_BRANCH};
+        	echo ${TRAVIS_BRANCH};
     fi
 
 install:
@@ -106,19 +106,19 @@ install:
         ;
     fi
 
-  - if [[ "${SPEC}" = "macx-clang" && "${TRAVIS_BRANCH}" = "master" ]]; then
+  - if [[ "${SPEC}" = "macx-clang" && "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-1.5.2-x86_64.pkg &&
         sudo installer -verboseR -pkg gstreamer-1.0-1.5.2-x86_64.pkg -target /
         ;
     fi
 
-  - if [[ "${SPEC}" = "macx-clang" && "${TRAVIS_BRANCH}" = "master" ]]; then
+  - if [[ "${SPEC}" = "macx-clang" && "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-1.5.2-x86_64.pkg &&
         sudo installer -verboseR -pkg gstreamer-1.0-devel-1.5.2-x86_64.pkg -target /
         ;
     fi
 
-  - if [[ "${SPEC}" = "macx-clang" && "${TRAVIS_BRANCH}" = "master" ]]; then
+  - if [[ "${SPEC}" = "macx-clang" && "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2 &&
         sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks
         ;
