@@ -349,6 +349,18 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
     if (_cameraList.size() == 0) {
         CameraMetaData* metaData;
 
+        metaData = new CameraMetaData(tr("Sony NEX-5R 20mm"),  //http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-qx1-body-kit/specifications
+                                      23.2,                 //http://www.sony.com/electronics/camera-lenses/sel16f28/specifications
+                                      15.4,
+                                      4912,
+                                      3264,
+                                      20,
+                                      true,
+                                      false,
+                                      1,
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
+
         metaData = new CameraMetaData(tr("Sony ILCE-QX1"),  //http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-qx1-body-kit/specifications
                                       23.2,                 //http://www.sony.com/electronics/camera-lenses/sel16f28/specifications
                                       15.4,
