@@ -32,6 +32,9 @@ const qreal FactMetaData::UnitConsts_s::milesToMeters =         1609.344;
 const qreal FactMetaData::UnitConsts_s::feetToMeters =          0.3048;
 const qreal FactMetaData::UnitConsts_s::inchesToCentimeters =   2.54;
 
+const QString FactMetaData::defaultCategory =   tr("Other");
+const QString FactMetaData::defaultGroup =      tr("Misc");
+
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
     { "centi-degrees",  "deg",  FactMetaData::_centiDegreesToDegrees,                   FactMetaData::_degreesToCentiDegrees },
@@ -76,43 +79,45 @@ const char* FactMetaData::_maxJsonKey =                 "max";
 const char* FactMetaData::_hasControlJsonKey =          "control";
 
 FactMetaData::FactMetaData(QObject* parent)
-    : QObject(parent)
-    , _type(valueTypeInt32)
-    , _decimalPlaces(unknownDecimalPlaces)
-    , _rawDefaultValue(0)
+    : QObject               (parent)
+    , _type                 (valueTypeInt32)
+    , _decimalPlaces        (unknownDecimalPlaces)
+    , _rawDefaultValue      (0)
     , _defaultValueAvailable(false)
-    , _group("*Default Group")
-    , _rawMax(_maxForType())
-    , _maxIsDefaultForType(true)
-    , _rawMin(_minForType())
-    , _minIsDefaultForType(true)
-    , _rawTranslator(_defaultTranslator)
-    , _cookedTranslator(_defaultTranslator)
-    , _rebootRequired(false)
-    , _increment(std::numeric_limits<double>::quiet_NaN())
-    , _hasControl(true)
-    , _readOnly(false)
+    , _category             (defaultCategory)
+    , _group                (defaultGroup)
+    , _rawMax               (_maxForType())
+    , _maxIsDefaultForType  (true)
+    , _rawMin               (_minForType())
+    , _minIsDefaultForType  (true)
+    , _rawTranslator        (_defaultTranslator)
+    , _cookedTranslator     (_defaultTranslator)
+    , _rebootRequired       (false)
+    , _increment            (std::numeric_limits<double>::quiet_NaN())
+    , _hasControl           (true)
+    , _readOnly             (false)
 {
 
 }
 
 FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
-    : QObject(parent)
-    , _type(type)
-    , _decimalPlaces(unknownDecimalPlaces)
-    , _rawDefaultValue(0)
+    : QObject               (parent)
+    , _type                 (type)
+    , _decimalPlaces        (unknownDecimalPlaces)
+    , _rawDefaultValue      (0)
     , _defaultValueAvailable(false)
-    , _group("*Default Group")
-    , _rawMax(_maxForType())
-    , _maxIsDefaultForType(true)
-    , _rawMin(_minForType())
-    , _minIsDefaultForType(true)
-    , _rawTranslator(_defaultTranslator)
-    , _cookedTranslator(_defaultTranslator)
-    , _rebootRequired(false)
-    , _increment(std::numeric_limits<double>::quiet_NaN())
-    , _hasControl(true)
-    , _readOnly(false)
+    , _category             (defaultCategory)
+    , _group                (defaultGroup)
+    , _rawMax               (_maxForType())
+    , _maxIsDefaultForType  (true)
+    , _rawMin               (_minForType())
+    , _minIsDefaultForType  (true)
+    , _rawTranslator        (_defaultTranslator)
+    , _cookedTranslator     (_defaultTranslator)
+    , _rebootRequired       (false)
+    , _increment            (std::numeric_limits<double>::quiet_NaN())
+    , _hasControl           (true)
+    , _readOnly             (false)
 {
 
 }
@@ -124,23 +129,24 @@ FactMetaData::FactMetaData(const FactMetaData& other, QObject* parent)
 }
 
 FactMetaData::FactMetaData(ValueType_t type, const QString name, QObject* parent)
-    : QObject(parent)
-    , _type(type)
-    , _decimalPlaces(unknownDecimalPlaces)
-    , _rawDefaultValue(0)
+    : QObject               (parent)
+    , _type                 (type)
+    , _decimalPlaces        (unknownDecimalPlaces)
+    , _rawDefaultValue      (0)
     , _defaultValueAvailable(false)
-    , _group("*Default Group")
-    , _rawMax(_maxForType())
-    , _maxIsDefaultForType(true)
-    , _rawMin(_minForType())
-    , _minIsDefaultForType(true)
-    , _name(name)
-    , _rawTranslator(_defaultTranslator)
-    , _cookedTranslator(_defaultTranslator)
-    , _rebootRequired(false)
-    , _increment(std::numeric_limits<double>::quiet_NaN())
-    , _hasControl(true)
-    , _readOnly(false)
+    , _category             (defaultCategory)
+    , _group                (defaultGroup)
+    , _rawMax               (_maxForType())
+    , _maxIsDefaultForType  (true)
+    , _rawMin               (_minForType())
+    , _minIsDefaultForType  (true)
+    , _name                 (name)
+    , _rawTranslator        (_defaultTranslator)
+    , _cookedTranslator     (_defaultTranslator)
+    , _rebootRequired       (false)
+    , _increment            (std::numeric_limits<double>::quiet_NaN())
+    , _hasControl           (true)
+    , _readOnly             (false)
 {
 
 }
@@ -154,6 +160,7 @@ const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
     _bitmaskValues          = other._bitmaskValues;
     _enumStrings            = other._enumStrings;
     _enumValues             = other._enumValues;
+    _category               = other._category;
     _group                  = other._group;
     _longDescription        = other._longDescription;
     _rawMax                 = other._rawMax;

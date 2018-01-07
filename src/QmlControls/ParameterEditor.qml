@@ -7,13 +7,10 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Dialogs          1.2
+import QtQuick          2.3
+import QtQuick.Controls 1.2
+import QtQuick.Dialogs  1.2
+import QtQuick.Layouts  1.2
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
@@ -43,6 +40,8 @@ QGCView {
             showMessage(qsTr("Parameter Load Errors"), errorMsg, StandardButton.Ok)
         }
     }
+
+    ExclusiveGroup { id: sectionGroup }
 
     QGCViewPanel {
         id:             panel
@@ -158,48 +157,58 @@ QGCView {
             anchors.bottom:     parent.bottom
             clip:               true
             pixelAligned:       true
-            contentHeight:      groupedViewComponentColumn.height
-            contentWidth:       groupedViewComponentColumn.width
+            contentHeight:      groupedViewCategoryColumn.height
             flickableDirection: Flickable.VerticalFlick
             visible:            !_searchFilter
 
-            Column {
-                id:         groupedViewComponentColumn
-                spacing:    Math.ceil(ScreenTools.defaultFontPixelHeight * 0.25)
+            ColumnLayout {
+                id:             groupedViewCategoryColumn
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        Math.ceil(ScreenTools.defaultFontPixelHeight * 0.25)
 
                 Repeater {
-                    model: controller.componentIds
+                    model: controller.categories
 
                     Column {
-                        id:     componentColumn
-                        spacing: Math.ceil(ScreenTools.defaultFontPixelHeight * 0.25)
+                        Layout.fillWidth:   true
+                        spacing:            Math.ceil(ScreenTools.defaultFontPixelHeight * 0.25)
 
-                        readonly property int componentId: modelData
+                        readonly property string category: modelData
 
-                        QGCLabel {
-                            text: qsTr("Component #: %1").arg(componentId.toString())
-                            font.family: ScreenTools.demiboldFontFamily
-                            anchors.horizontalCenter: parent.horizontalCenter
+                        SectionHeader {
+                            id:             categoryHeader
+                            text:           category
+                            checked:        controller.currentCategory == text
+                            exclusiveGroup: sectionGroup
+
+                            onCheckedChanged: {
+                                if (checked) {
+                                    controller.currentCategory  = category
+                                    controller.currentGroup     = controller.getGroupsForCategory(category)[0]
+                                }
+                            }
                         }
 
-                        ExclusiveGroup { id: groupGroup }
+                        ExclusiveGroup { id: buttonGroup }
 
                         Repeater {
-                            model: controller.getGroupsForComponent(componentId)
+                            model: categoryHeader.checked ? controller.getGroupsForCategory(category) : 0
 
                             QGCButton {
                                 width:          ScreenTools.defaultFontPixelWidth * 25
                                 text:           groupName
                                 height:         _rowHeight
-                                exclusiveGroup: setupButtonGroup
+                                checked:        controller.currentGroup == text
+                                exclusiveGroup: buttonGroup
 
                                 readonly property string groupName: modelData
 
                                 onClicked: {
                                     checked = true
-                                    _rowWidth                       = 10
-                                    controller.currentComponentId   = componentId
-                                    controller.currentGroup         = groupName
+                                    _rowWidth                   = 10
+                                    controller.currentCategory  = category
+                                    controller.currentGroup     = groupName
                                 }
                             }
                         }
