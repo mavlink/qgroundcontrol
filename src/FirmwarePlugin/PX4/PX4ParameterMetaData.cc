@@ -181,6 +181,11 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 QString type = xml.attributes().value("type").toString();
                 QString strDefault =    xml.attributes().value("default").toString();
                 
+                QString category = xml.attributes().value("category").toString();
+                if (category.isEmpty()) {
+                    category = QStringLiteral("Standard");
+                }
+
                 qCDebug(PX4ParameterMetaDataLog) << "Found parameter name:" << name << " type:" << type << " default:" << strDefault;
 
                 // Convert type from string to FactMetaData::ValueType_t
@@ -196,7 +201,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 metaData = new FactMetaData(foundType);
                 Q_CHECK_PTR(metaData);
                 if (_mapParameterName2FactMetaData.contains(name)) {
-                    // We can't trust the meta dafa since we have dups
+                    // We can't trust the meta data since we have dups
                     qCWarning(PX4ParameterMetaDataLog) << "Duplicate parameter found:" << name;
                     badMetaData = true;
                     // Reset to default meta data
@@ -204,6 +209,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 } else {
                     _mapParameterName2FactMetaData[name] = metaData;
                     metaData->setName(name);
+                    metaData->setCategory(category);
                     metaData->setGroup(factGroup);
                     
                     if (xml.attributes().hasAttribute("default") && !strDefault.isEmpty()) {
