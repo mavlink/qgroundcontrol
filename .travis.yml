@@ -29,15 +29,15 @@ matrix:
           osx_image: xcode9.2
           env: SPEC=macx-clang CONFIG=installer
           sudo: required
+        - os: osx
+          osx_image: xcode8
+          env: SPEC=macx-ios-clang CONFIG=release
+          sudo: false
 # OSX builds pared back to installer only since travis sucks so bad we can't afford more than one'
 #        - os: osx
 #          osx_image: xcode8
 #          env: SPEC=macx-clang CONFIG=debug
 #          sudo: required
-#        - os: osx
-#          osx_image: xcode8
-#          env: SPEC=macx-ios-clang CONFIG=release
-#          sudo: false
 
 android:
   components:
@@ -130,14 +130,13 @@ install:
         ;
     fi
 
-  # ios dependencies: qt, TODO: add gstreamer
+  # ios dependencies: qt
   - if [ "${SPEC}" = "macx-ios-clang" ]; then
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.8.0-ios-min.tar.bz2 &&
-        tar jxf Qt5.8.0-ios-min.tar.bz2 -C /tmp &&
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.3-ios-min.tar.bz2 &&
+        tar jxf Qt5.9.3-ios-min.tar.bz2 -C /tmp &&
         export IOS_CCACHE_CC=`/usr/bin/xcrun -sdk iphoneos -find clang` &&
         export IOS_CCACHE_CXX=`/usr/bin/xcrun -sdk iphoneos -find clang++` &&
-        export PATH=/tmp/Qt5.8-ios/5.8/ios/bin:$PATH &&
-        tools/patch_qt_for_xcode8.sh
+        export PATH=/tmp/Qt5.9-ios/5.9.3/ios/bin:$PATH
         ;
     fi
 
