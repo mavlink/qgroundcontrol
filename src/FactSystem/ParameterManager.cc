@@ -178,8 +178,8 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
     }
 
     if (!_waitingReadParamIndexMap[componentId].contains(parameterId) &&
-        !_waitingReadParamNameMap[componentId].contains(parameterName) &&
-        !_waitingWriteParamNameMap[componentId].contains(parameterName)) {
+            !_waitingReadParamNameMap[componentId].contains(parameterName) &&
+            !_waitingWriteParamNameMap[componentId].contains(parameterName)) {
         qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix() << "Unrequested param update" << parameterName;
     }
 
@@ -265,34 +265,34 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
 
         FactMetaData::ValueType_t factType;
         switch (mavType) {
-            case MAV_PARAM_TYPE_UINT8:
-                factType = FactMetaData::valueTypeUint8;
-                break;
-            case MAV_PARAM_TYPE_INT8:
-                factType = FactMetaData::valueTypeInt8;
-                break;
-            case MAV_PARAM_TYPE_UINT16:
-                factType = FactMetaData::valueTypeUint16;
-                break;
-            case MAV_PARAM_TYPE_INT16:
-                factType = FactMetaData::valueTypeInt16;
-                break;
-            case MAV_PARAM_TYPE_UINT32:
-                factType = FactMetaData::valueTypeUint32;
-                break;
-            case MAV_PARAM_TYPE_INT32:
-                factType = FactMetaData::valueTypeInt32;
-                break;
-            case MAV_PARAM_TYPE_REAL32:
-                factType = FactMetaData::valueTypeFloat;
-                break;
-            case MAV_PARAM_TYPE_REAL64:
-                factType = FactMetaData::valueTypeDouble;
-                break;
-            default:
-                factType = FactMetaData::valueTypeInt32;
-                qCritical() << "Unsupported fact type" << mavType;
-                break;
+        case MAV_PARAM_TYPE_UINT8:
+            factType = FactMetaData::valueTypeUint8;
+            break;
+        case MAV_PARAM_TYPE_INT8:
+            factType = FactMetaData::valueTypeInt8;
+            break;
+        case MAV_PARAM_TYPE_UINT16:
+            factType = FactMetaData::valueTypeUint16;
+            break;
+        case MAV_PARAM_TYPE_INT16:
+            factType = FactMetaData::valueTypeInt16;
+            break;
+        case MAV_PARAM_TYPE_UINT32:
+            factType = FactMetaData::valueTypeUint32;
+            break;
+        case MAV_PARAM_TYPE_INT32:
+            factType = FactMetaData::valueTypeInt32;
+            break;
+        case MAV_PARAM_TYPE_REAL32:
+            factType = FactMetaData::valueTypeFloat;
+            break;
+        case MAV_PARAM_TYPE_REAL64:
+            factType = FactMetaData::valueTypeDouble;
+            break;
+        default:
+            factType = FactMetaData::valueTypeInt32;
+            qCritical() << "Unsupported fact type" << mavType;
+            break;
         }
 
         Fact* fact = new Fact(componentId, parameterName, factType, this);
@@ -325,7 +325,7 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         // When we are getting the very last component param index, reset the group maps to update for the
         // new params. By handling this here, we can pick up components which finish up later than the default
         // component param set.
-        _setupGroupMap();
+        _setupCategoryMap();
     }
 
     if (_prevWaitingWriteParamNameCount != 0 &&  waitingWriteParamNameCount == 0) {
@@ -511,22 +511,20 @@ QStringList ParameterManager::parameterNames(int componentId)
     return names;
 }
 
-void ParameterManager::_setupGroupMap(void)
+void ParameterManager::_setupCategoryMap(void)
 {
     // Must be able to handle being called multiple times
-    _mapGroup2ParameterName.clear();
+    _categoryMap.clear();
 
-    foreach (int componentId, _mapParameterName2Variant.keys()) {
-        foreach (const QString &name, _mapParameterName2Variant[componentId].keys()) {
-            Fact* fact = _mapParameterName2Variant[componentId][name].value<Fact*>();
-            _mapGroup2ParameterName[componentId][fact->group()] += name;
-        }
+    foreach (const QString &name, _mapParameterName2Variant[_vehicle->defaultComponentId()].keys()) {
+        Fact* fact = _mapParameterName2Variant[_vehicle->defaultComponentId()][name].value<Fact*>();
+        _categoryMap[fact->category()][fact->group()] += name;
     }
 }
 
-const QMap<int, QMap<QString, QStringList> >& ParameterManager::getGroupMap(void)
+const QMap<QString, QMap<QString, QStringList> >& ParameterManager::getCategoryMap(void)
 {
-    return _mapGroup2ParameterName;
+    return _categoryMap;
 }
 
 /// Requests missing index based parameters from the vehicle.
@@ -687,37 +685,37 @@ void ParameterManager::_writeParameterRaw(int componentId, const QString& paramN
     p.param_type = _factTypeToMavType(factType);
 
     switch (factType) {
-        case FactMetaData::valueTypeUint8:
-            union_value.param_uint8 = (uint8_t)value.toUInt();
-            break;
+    case FactMetaData::valueTypeUint8:
+        union_value.param_uint8 = (uint8_t)value.toUInt();
+        break;
 
-        case FactMetaData::valueTypeInt8:
-            union_value.param_int8 = (int8_t)value.toInt();
-            break;
+    case FactMetaData::valueTypeInt8:
+        union_value.param_int8 = (int8_t)value.toInt();
+        break;
 
-        case FactMetaData::valueTypeUint16:
-            union_value.param_uint16 = (uint16_t)value.toUInt();
-            break;
+    case FactMetaData::valueTypeUint16:
+        union_value.param_uint16 = (uint16_t)value.toUInt();
+        break;
 
-        case FactMetaData::valueTypeInt16:
-            union_value.param_int16 = (int16_t)value.toInt();
-            break;
+    case FactMetaData::valueTypeInt16:
+        union_value.param_int16 = (int16_t)value.toInt();
+        break;
 
-        case FactMetaData::valueTypeUint32:
-            union_value.param_uint32 = (uint32_t)value.toUInt();
-            break;
+    case FactMetaData::valueTypeUint32:
+        union_value.param_uint32 = (uint32_t)value.toUInt();
+        break;
 
-        case FactMetaData::valueTypeFloat:
-            union_value.param_float = value.toFloat();
-            break;
+    case FactMetaData::valueTypeFloat:
+        union_value.param_float = value.toFloat();
+        break;
 
-        default:
-            qCritical() << "Unsupported fact type" << factType;
-            // fall through
+    default:
+        qCritical() << "Unsupported fact type" << factType;
+        // fall through
 
-        case FactMetaData::valueTypeInt32:
-            union_value.param_int32 = (int32_t)value.toInt();
-            break;
+    case FactMetaData::valueTypeInt32:
+        union_value.param_int32 = (int32_t)value.toInt();
+        break;
     }
 
     p.param_value = union_value.param_float;
@@ -938,77 +936,77 @@ void ParameterManager::writeParametersToStream(QTextStream &stream)
 MAV_PARAM_TYPE ParameterManager::_factTypeToMavType(FactMetaData::ValueType_t factType)
 {
     switch (factType) {
-        case FactMetaData::valueTypeUint8:
-            return MAV_PARAM_TYPE_UINT8;
+    case FactMetaData::valueTypeUint8:
+        return MAV_PARAM_TYPE_UINT8;
 
-        case FactMetaData::valueTypeInt8:
-            return MAV_PARAM_TYPE_INT8;
+    case FactMetaData::valueTypeInt8:
+        return MAV_PARAM_TYPE_INT8;
 
-        case FactMetaData::valueTypeUint16:
-            return MAV_PARAM_TYPE_UINT16;
+    case FactMetaData::valueTypeUint16:
+        return MAV_PARAM_TYPE_UINT16;
 
-        case FactMetaData::valueTypeInt16:
-            return MAV_PARAM_TYPE_INT16;
+    case FactMetaData::valueTypeInt16:
+        return MAV_PARAM_TYPE_INT16;
 
-        case FactMetaData::valueTypeUint32:
-            return MAV_PARAM_TYPE_UINT32;
+    case FactMetaData::valueTypeUint32:
+        return MAV_PARAM_TYPE_UINT32;
 
-        case FactMetaData::valueTypeFloat:
-            return MAV_PARAM_TYPE_REAL32;
+    case FactMetaData::valueTypeFloat:
+        return MAV_PARAM_TYPE_REAL32;
 
-        default:
-            qWarning() << "Unsupported fact type" << factType;
-            // fall through
+    default:
+        qWarning() << "Unsupported fact type" << factType;
+        // fall through
 
-        case FactMetaData::valueTypeInt32:
-            return MAV_PARAM_TYPE_INT32;
+    case FactMetaData::valueTypeInt32:
+        return MAV_PARAM_TYPE_INT32;
     }
 }
 
 FactMetaData::ValueType_t ParameterManager::_mavTypeToFactType(MAV_PARAM_TYPE mavType)
 {
     switch (mavType) {
-        case MAV_PARAM_TYPE_UINT8:
-            return FactMetaData::valueTypeUint8;
+    case MAV_PARAM_TYPE_UINT8:
+        return FactMetaData::valueTypeUint8;
 
-        case MAV_PARAM_TYPE_INT8:
-            return FactMetaData::valueTypeInt8;
+    case MAV_PARAM_TYPE_INT8:
+        return FactMetaData::valueTypeInt8;
 
-        case MAV_PARAM_TYPE_UINT16:
-            return FactMetaData::valueTypeUint16;
+    case MAV_PARAM_TYPE_UINT16:
+        return FactMetaData::valueTypeUint16;
 
-        case MAV_PARAM_TYPE_INT16:
-            return FactMetaData::valueTypeInt16;
+    case MAV_PARAM_TYPE_INT16:
+        return FactMetaData::valueTypeInt16;
 
-        case MAV_PARAM_TYPE_UINT32:
-            return FactMetaData::valueTypeUint32;
+    case MAV_PARAM_TYPE_UINT32:
+        return FactMetaData::valueTypeUint32;
 
-        case MAV_PARAM_TYPE_REAL32:
-            return FactMetaData::valueTypeFloat;
+    case MAV_PARAM_TYPE_REAL32:
+        return FactMetaData::valueTypeFloat;
 
-        default:
-            qWarning() << "Unsupported mav param type" << mavType;
-            // fall through
+    default:
+        qWarning() << "Unsupported mav param type" << mavType;
+        // fall through
 
-        case MAV_PARAM_TYPE_INT32:
-            return FactMetaData::valueTypeInt32;
+    case MAV_PARAM_TYPE_INT32:
+        return FactMetaData::valueTypeInt32;
     }
 }
 
 void ParameterManager::_addMetaDataToDefaultComponent(void)
 {
-     if (_parameterMetaData) {
-         return;
-     }
+    if (_parameterMetaData) {
+        return;
+    }
 
-     QString metaDataFile;
-     int majorVersion, minorVersion;
+    QString metaDataFile;
+    int majorVersion, minorVersion;
 
-     // Load best parameter meta data set
-     metaDataFile = parameterMetaDataFile(_vehicle, _vehicle->firmwareType(), _parameterSetMajorVersion, majorVersion, minorVersion);
-     qCDebug(ParameterManagerLog) << "Adding meta data to Vehicle file:major:minor" << metaDataFile << majorVersion << minorVersion;
+    // Load best parameter meta data set
+    metaDataFile = parameterMetaDataFile(_vehicle, _vehicle->firmwareType(), _parameterSetMajorVersion, majorVersion, minorVersion);
+    qCDebug(ParameterManagerLog) << "Adding meta data to Vehicle file:major:minor" << metaDataFile << majorVersion << minorVersion;
 
-     _parameterMetaData = _vehicle->firmwarePlugin()->loadParameterMetaData(metaDataFile);
+    _parameterMetaData = _vehicle->firmwarePlugin()->loadParameterMetaData(metaDataFile);
 
     // Loop over all parameters in default component adding meta data
     QVariantMap& factMap = _mapParameterName2Variant[_vehicle->defaultComponentId()];
@@ -1349,7 +1347,7 @@ void ParameterManager::_loadOfflineEditingParams(void)
     }
 
     _addMetaDataToDefaultComponent();
-    _setupGroupMap();
+    _setupCategoryMap();
     _parametersReady = true;
     _initialLoadComplete = true;
 }

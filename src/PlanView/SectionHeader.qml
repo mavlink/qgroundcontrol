@@ -46,8 +46,9 @@ FocusScope {
             }
 
             QGCLabel {
-                id:                 label
-                Layout.fillWidth:   true
+                id:             label
+                anchors.left:   parent.left
+                anchors.right:  parent.right
 
                 QGCColoredImage {
                     id:                     image
