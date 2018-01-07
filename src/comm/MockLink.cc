@@ -44,6 +44,7 @@ const char* MockLink::_failParam =                  "COM_FLTMODE6";
 const char* MockConfiguration::_firmwareTypeKey =   "FirmwareType";
 const char* MockConfiguration::_vehicleTypeKey =    "VehicleType";
 const char* MockConfiguration::_sendStatusTextKey = "SendStatusText";
+const char* MockConfiguration::_highLatencyKey =    "HighLatency";
 const char* MockConfiguration::_failureModeKey =    "FailureMode";
 
 MockLink::MockLink(SharedLinkConfigurationPointer& config)
@@ -79,6 +80,7 @@ MockLink::MockLink(SharedLinkConfigurationPointer& config)
     _firmwareType = mockConfig->firmwareType();
     _vehicleType = mockConfig->vehicleType();
     _sendStatusText = mockConfig->sendStatusText();
+    _highLatency = mockConfig->highLatency();
     _failureMode = mockConfig->failureMode();
 
     union px4_custom_mode   px4_cm;
@@ -1012,10 +1014,11 @@ void MockLink::_sendStatusTextMessages(void)
 
 MockConfiguration::MockConfiguration(const QString& name)
     : LinkConfiguration(name)
-    , _firmwareType(MAV_AUTOPILOT_PX4)
-    , _vehicleType(MAV_TYPE_QUADROTOR)
-    , _sendStatusText(false)
-    , _failureMode(FailNone)
+    , _firmwareType     (MAV_AUTOPILOT_PX4)
+    , _vehicleType      (MAV_TYPE_QUADROTOR)
+    , _sendStatusText   (false)
+    , _highLatency      (false)
+    , _failureMode      (FailNone)
 {
 
 }
@@ -1026,6 +1029,7 @@ MockConfiguration::MockConfiguration(MockConfiguration* source)
     _firmwareType =     source->_firmwareType;
     _vehicleType =      source->_vehicleType;
     _sendStatusText =   source->_sendStatusText;
+    _highLatency =      source->_highLatency;
     _failureMode =      source->_failureMode;
 }
 
@@ -1042,6 +1046,7 @@ void MockConfiguration::copyFrom(LinkConfiguration *source)
     _firmwareType =     usource->_firmwareType;
     _vehicleType =      usource->_vehicleType;
     _sendStatusText =   usource->_sendStatusText;
+    _highLatency =      usource->_highLatency;
     _failureMode =      usource->_failureMode;
 }
 
@@ -1051,6 +1056,7 @@ void MockConfiguration::saveSettings(QSettings& settings, const QString& root)
     settings.setValue(_firmwareTypeKey, (int)_firmwareType);
     settings.setValue(_vehicleTypeKey, (int)_vehicleType);
     settings.setValue(_sendStatusTextKey, _sendStatusText);
+    settings.setValue(_highLatencyKey, _highLatency);
     settings.setValue(_failureModeKey, (int)_failureMode);
     settings.sync();
     settings.endGroup();
@@ -1062,6 +1068,7 @@ void MockConfiguration::loadSettings(QSettings& settings, const QString& root)
     _firmwareType = (MAV_AUTOPILOT)settings.value(_firmwareTypeKey, (int)MAV_AUTOPILOT_PX4).toInt();
     _vehicleType = (MAV_TYPE)settings.value(_vehicleTypeKey, (int)MAV_TYPE_QUADROTOR).toInt();
     _sendStatusText = settings.value(_sendStatusTextKey, false).toBool();
+    _highLatency = settings.value(_highLatencyKey, false).toBool();
     _failureMode = (FailureMode_t)settings.value(_failureModeKey, (int)FailNone).toInt();
     settings.endGroup();
 }

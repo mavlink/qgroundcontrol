@@ -35,6 +35,7 @@ Item {
         else
             subEditConfig.firmware = 0
         subEditConfig.sendStatus = sendStatus.checked
+        subEditConfig.highLatency = highLatency.checked
     }
 
     Component.onCompleted: {
@@ -49,6 +50,7 @@ Item {
         else
             copterVehicle.checked = true
         sendStatus.checked = subEditConfig.sendStatus
+        highLatency.checked = subEditConfig.highLatency
     }
 
     Column {
@@ -65,6 +67,11 @@ Item {
         QGCCheckBox {
             id:         sendStatus
             text:       qsTr("Send Status Text and Voice")
+            checked:    false
+        }
+        QGCCheckBox {
+            id:         highLatency
+            text:       qsTr("High latency")
             checked:    false
         }
         Item {
