@@ -497,6 +497,16 @@ int Fact::decimalPlaces(void) const
     }
 }
 
+QString Fact::category(void) const
+{
+    if (_metaData) {
+        return _metaData->category();
+    } else {
+        qWarning() << kMissingMetadata << name();
+        return QString();
+    }
+}
+
 QString Fact::group(void) const
 {
     if (_metaData) {

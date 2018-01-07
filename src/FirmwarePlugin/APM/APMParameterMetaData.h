@@ -32,6 +32,7 @@ public:
     { }
 
     QString name;
+    QString category;
     QString group;
     QString shortDescription;
     QString longDescription;
