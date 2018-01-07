@@ -12,9 +12,12 @@
 #include "QGCCorePlugin.h"
 
 QGCPositionManager::QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox)
-    : QGCTool(app, toolbox)
-    , _updateInterval(0)
-    , _currentSource(nullptr)
+    : QGCTool           (app, toolbox)
+    , _updateInterval   (0)
+    , _currentSource    (NULL)
+    , _defaultSource    (NULL)
+    , _nmeaSource       (NULL)
+    , _simulatedSource  (NULL)
 {
 
 }
