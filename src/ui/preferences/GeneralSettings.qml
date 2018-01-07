@@ -493,7 +493,7 @@ QGCView {
                         Row {
                             width:    parent.width
                             spacing:  ScreenTools.defaultFontPixelWidth
-                            visible:  !ScreenTools.isiOS
+                            visible:  !ScreenTools.isMobile
                                       && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible
                                       && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
 
