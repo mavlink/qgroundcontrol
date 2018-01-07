@@ -354,9 +354,9 @@
       <maintainer>James Goppert &lt;james.goppert@gmail.com&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
-    <airframe id="4070" maintainer="Lucas de Marchi" name="Intel Aero Ready to Fly Drone">
+    <airframe id="4070" maintainer="Beat Kueng &lt;beat@px4.io&gt;" name="Intel Aero Ready to Fly Drone">
       <class>Copter</class>
-      <maintainer>Lucas de Marchi</maintainer>
+      <maintainer>Beat Kueng &lt;beat@px4.io&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
     <airframe id="4080" maintainer="Anton Matosov &lt;anton.matosov@gmail.com&gt;" name="ZMR250 Racer">
