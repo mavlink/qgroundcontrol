@@ -84,6 +84,7 @@ public:
     QVariantList    bitmaskValues           (void) const { return _bitmaskValues; }
     QStringList     enumStrings             (void) const { return _enumStrings; }
     QVariantList    enumValues              (void) const { return _enumValues; }
+    QString         category                (void) const { return _category; }
     QString         group                   (void) const { return _group; }
     QString         longDescription         (void) const { return _longDescription;}
     QVariant        rawMax                  (void) const { return _rawMax; }
@@ -118,6 +119,7 @@ public:
     void setRawDefaultValue (const QVariant& rawDefaultValue);
     void setBitmaskInfo     (const QStringList& strings, const QVariantList& values);
     void setEnumInfo        (const QStringList& strings, const QVariantList& values);
+    void setCategory        (const QString& category)           { _category = category; }
     void setGroup           (const QString& group)              { _group = group; }
     void setLongDescription (const QString& longDescription)    { _longDescription = longDescription;}
     void setRawMax          (const QVariant& rawMax);
@@ -157,6 +159,9 @@ public:
 
     static ValueType_t stringToType(const QString& typeString, bool& unknownType);
     static size_t typeToSize(ValueType_t type);
+
+    static const QString defaultCategory;
+    static const QString defaultGroup;
 
 private:
     QVariant _minForType(void) const;
@@ -217,6 +222,7 @@ private:
     QVariantList    _bitmaskValues;
     QStringList     _enumStrings;
     QVariantList    _enumValues;
+    QString         _category;
     QString         _group;
     QString         _longDescription;
     QVariant        _rawMax;

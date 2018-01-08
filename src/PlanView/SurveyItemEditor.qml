@@ -409,7 +409,7 @@ Rectangle {
             FactCheckBox {
                 text:       qsTr("Take images in turnarounds")
                 fact:       missionItem.cameraTriggerInTurnaround
-                enabled:    !missionItem.hoverAndCapture.rawValue
+                enabled:    missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true
             }
 
             SectionHeader {
@@ -605,7 +605,7 @@ Rectangle {
             FactCheckBox {
                 text:               qsTr("Take images in turnarounds")
                 fact:               missionItem.cameraTriggerInTurnaround
-                enabled:            !missionItem.hoverAndCapture.rawValue
+                enabled:            missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true
                 Layout.columnSpan:  2
             }
 

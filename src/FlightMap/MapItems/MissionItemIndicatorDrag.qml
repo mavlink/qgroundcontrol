@@ -71,11 +71,15 @@ Rectangle {
         drag.maximumY:      itemDragger.parent.height - parent.height
         preventStealing:    true
 
-        onClicked: itemDragger.clicked()
+        onClicked: {
+            focus = true
+            itemDragger.clicked()
+        }
 
         property bool dragActive: drag.active
         onDragActiveChanged: {
             if (dragActive) {
+                focus = true
                 if (!_dragStartSignalled) {
                     _dragStartSignalled = true
                     dragStart()

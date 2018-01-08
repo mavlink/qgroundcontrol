@@ -108,6 +108,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _autoDisconnect(false)
     , _flying(false)
     , _landing(false)
+    , _vtolInFwdFlight(false)
     , _onboardControlSensorsPresent(0)
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
@@ -126,6 +127,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _maxProtoVersion(0)
     , _vehicleCapabilitiesKnown(false)
     , _capabilityBits(0)
+    , _highLatencyLink(false)
     , _cameras(NULL)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
@@ -182,7 +184,8 @@ Vehicle::Vehicle(LinkInterface*             link,
 {
     _addLink(link);
 
-    connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &Vehicle::_activeJoystickChanged);
+    connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadSettings);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleAvailableChanged, this, &Vehicle::_loadSettings);
 
     _mavlink = _toolbox->mavlinkProtocol();
 
@@ -230,7 +233,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,double,double,double,quint64)),              this, SLOT(_updateAttitude(UASInterface*, double, double, double, quint64)));
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,int,double,double,double,quint64)),          this, SLOT(_updateAttitude(UASInterface*,int,double, double, double, quint64)));
 
-    _loadSettings();
 
     // Ask the vehicle for protocol version info.
     sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
@@ -292,6 +294,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _autoDisconnect(false)
     , _flying(false)
     , _landing(false)
+    , _vtolInFwdFlight(false)
     , _onboardControlSensorsPresent(0)
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
@@ -302,6 +305,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _defaultHoverSpeed(_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
     , _vehicleCapabilitiesKnown(true)
     , _capabilityBits(_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? 0 : MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY)
+    , _highLatencyLink(false)
     , _cameras(NULL)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
@@ -990,6 +994,14 @@ void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
     default:
         break;
     }
+
+    if (vtol()) {
+        bool vtolInFwdFlight = extendedState.vtol_state == MAV_VTOL_STATE_FW;
+        if (vtolInFwdFlight != _vtolInFwdFlight) {
+            _vtolInFwdFlight = vtolInFwdFlight;
+            emit vtolInFwdFlightChanged(vtolInFwdFlight);
+        }
+    }
 }
 
 void Vehicle::_handleVibration(mavlink_message_t& message)
@@ -1341,6 +1353,7 @@ void Vehicle::_addLink(LinkInterface* link)
         _updatePriorityLink();
         connect(_toolbox->linkManager(), &LinkManager::linkInactive, this, &Vehicle::_linkInactiveOrDeleted);
         connect(_toolbox->linkManager(), &LinkManager::linkDeleted, this, &Vehicle::_linkInactiveOrDeleted);
+        connect(link, &LinkInterface::highLatencyChanged, this, &Vehicle::_updateHighLatencyLink);
     }
 }
 
@@ -1617,6 +1630,10 @@ int Vehicle::manualControlReservedButtonCount(void)
 
 void Vehicle::_loadSettings(void)
 {
+    if (!_active) {
+        return;
+    }
+
     QSettings settings;
 
     settings.beginGroup(QString(_settingsGroup).arg(_id));
@@ -1675,12 +1692,6 @@ QStringList Vehicle::joystickModes(void)
     return list;
 }
 
-void Vehicle::_activeJoystickChanged(void)
-{
-    _loadSettings();
-    _startJoystick(true);
-}
-
 bool Vehicle::joystickEnabled(void)
 {
     return _joystickEnabled;
@@ -1719,8 +1730,6 @@ void Vehicle::setActive(bool active)
         _active = active;
         emit activeChanged(_active);
     }
-
-    _startJoystick(_active);
 }
 
 QGeoCoordinate Vehicle::homePosition(void)
@@ -1992,7 +2001,6 @@ void Vehicle::_parametersReady(bool parametersReady)
     if (parametersReady) {
         _setupAutoDisarmSignalling();
         _startPlanRequest();
-        setJoystickEnabled(_joystickEnabled);
     }
 }
 
@@ -2263,6 +2271,11 @@ void Vehicle::guidedModeTakeoff(double altitudeRelative)
     }
     setGuidedMode(true);
     _firmwarePlugin->guidedModeTakeoff(this, altitudeRelative);
+}
+
+double Vehicle::minimumTakeoffAltitude(void)
+{
+    return _firmwarePlugin->minimumTakeoffAltitude(this);
 }
 
 void Vehicle::startMission(void)
@@ -2684,6 +2697,17 @@ void Vehicle::triggerCamera(void)
                    1.0);                            // test shot flag
 }
 
+void Vehicle::setVtolInFwdFlight(bool vtolInFwdFlight)
+{
+    if (_vtolInFwdFlight != vtolInFwdFlight) {
+        sendMavCommand(_defaultComponentId,
+                       MAV_CMD_DO_VTOL_TRANSITION,
+                       true,                                                    // show errors
+                       vtolInFwdFlight ? MAV_VTOL_STATE_FW : MAV_VTOL_STATE_MC, // transition state
+                       0, 0, 0, 0, 0, 0);                                       // param 2-7 unused
+    }
+}
+
 const char* VehicleGPSFactGroup::_latFactName =                 "lat";
 const char* VehicleGPSFactGroup::_lonFactName =                 "lon";
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
@@ -2938,6 +2962,14 @@ void Vehicle::_vehicleParamLoaded(bool ready)
     //   way to update this?
     if(ready) {
         emit hobbsMeterChanged();
+    }
+}
+
+void Vehicle::_updateHighLatencyLink(void)
+{
+    if (_priorityLink->highLatency() != _highLatencyLink) {
+        _highLatencyLink = _priorityLink->highLatency();
+        emit highLatencyLinkChanged(_highLatencyLink);
     }
 }
 

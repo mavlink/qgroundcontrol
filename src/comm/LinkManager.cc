@@ -27,6 +27,7 @@
 
 #ifndef __mobile__
 #include "GPSManager.h"
+#include "PositionManager.h"
 #endif
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
@@ -50,6 +51,9 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
     , _mavlinkChannelsUsedBitMask(1)    // We never use channel 0 to avoid sequence numbering problems
     , _autoConnectSettings(NULL)
     , _mavlinkProtocol(NULL)
+#ifndef __mobile__
+    , _nmeaPort(NULL)
+#endif
 {
     qmlRegisterUncreatableType<LinkManager>         ("QGroundControl", 1, 0, "LinkManager",         "Reference only");
     qmlRegisterUncreatableType<LinkConfiguration>   ("QGroundControl", 1, 0, "LinkConfiguration",   "Reference only");
@@ -64,7 +68,9 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
 
 LinkManager::~LinkManager()
 {
-
+#ifndef __mobile__
+    delete _nmeaPort;
+#endif
 }
 
 void LinkManager::setToolbox(QGCToolbox *toolbox)
@@ -500,6 +506,32 @@ void LinkManager::_updateAutoConnectLinks(void)
         QGCSerialPortInfo::BoardType_t boardType;
         QString boardName;
 
+#ifndef __mobile__
+        if (portInfo.systemLocation().trimmed() == _autoConnectSettings->autoConnectNmeaPort()->cookedValueString()) {
+            if (portInfo.systemLocation().trimmed() != _nmeaDeviceName) {
+                _nmeaDeviceName = portInfo.systemLocation().trimmed();
+                qCDebug(LinkManagerLog) << "Configuring nmea port" << _nmeaDeviceName;
+                QSerialPort* newPort = new QSerialPort(portInfo);
+
+                _nmeaBaud = _autoConnectSettings->autoConnectNmeaBaud()->cookedValue().toUInt();
+                newPort->setBaudRate(_nmeaBaud);
+                qCDebug(LinkManagerLog) << "Configuring nmea baudrate" << _nmeaBaud;
+
+                // This will stop polling old device if previously set
+                _toolbox->qgcPositionManager()->setNmeaSourceDevice(newPort);
+
+                if (_nmeaPort) {
+                    delete _nmeaPort;
+                }
+                _nmeaPort = newPort;
+
+            } else if (_autoConnectSettings->autoConnectNmeaBaud()->cookedValue().toUInt() != _nmeaBaud) {
+                _nmeaBaud = _autoConnectSettings->autoConnectNmeaBaud()->cookedValue().toUInt();
+                _nmeaPort->setBaudRate(_nmeaBaud);
+                qCDebug(LinkManagerLog) << "Configuring nmea baudrate" << _nmeaBaud;
+            }
+        } else
+#endif
         if (portInfo.getBoardInfo(boardType, boardName)) {
             if (portInfo.isBootloader()) {
                 // Don't connect to bootloader

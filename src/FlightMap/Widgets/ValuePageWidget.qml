@@ -82,7 +82,7 @@ Column {
             QGCLabel {
                 width:                  parent.width
                 horizontalAlignment:    Text.AlignHCenter
-                fontSizeMode:           Text.HorizontalFit
+                wrapMode:               Text.WordWrap
                 text:                   fact.shortDescription + (fact.units ? " (" + fact.units + ")" : "")
             }
             QGCLabel {
@@ -105,9 +105,9 @@ Column {
 
             QGCLabel {
                 width:                  parent.width
+                wrapMode:               Text.WordWrap
                 horizontalAlignment:    Text.AlignHCenter
                 font.pointSize:         ScreenTools.isTinyScreen ? ScreenTools.smallFontPointSize * 0.75 : ScreenTools.smallFontPointSize
-                fontSizeMode:           Text.HorizontalFit
                 text:                   fact.shortDescription
             }
             QGCLabel {
@@ -144,6 +144,8 @@ Column {
                     anchors.right:  parent.right
                     spacing:        _margins
 
+                    /*
+                      Leaving this here for now just in case
                     FactCheckBox {
                         text:       qsTr("Show large compass")
                         fact:       _showLargeCompass
@@ -151,6 +153,7 @@ Column {
 
                         property Fact _showLargeCompass: QGroundControl.settingsManager.appSettings.showLargeCompass
                     }
+                    */
 
                     Item {
                         width:  1

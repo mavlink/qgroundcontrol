@@ -263,7 +263,7 @@ bool PlanManager::_checkForExpectedAck(AckType_t receivedAck)
         } else {
             // We just warn in this case, this could be crap left over from a previous transaction or the vehicle going bonkers.
             // Whatever it is we let the ack timeout handle any error output to the user.
-            qCDebug(PlanManagerLog) << QString("Out of sequence ack expected:received %1:%2 %1").arg(_ackTypeToString(_expectedAck)).arg(_ackTypeToString(receivedAck)).arg(_planTypeString());
+            qCDebug(PlanManagerLog) << QString("Out of sequence ack %1 expected:received %2:%3").arg(_planTypeString().arg(_ackTypeToString(_expectedAck)).arg(_ackTypeToString(receivedAck)));
         }
         return false;
     }
@@ -626,10 +626,10 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
         // MISSION_REQUEST is expected, or MISSION_ACK to end sequence
         if (missionAck.type == MAV_MISSION_ACCEPTED) {
             qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionAck %1 guided mode item accepted").arg(_planTypeString());
-            _finishTransaction(true);
+            _finishTransaction(true, true /* apmGuidedItemWrite */);
         } else {
             _sendError(VehicleError, tr("Vehicle returned error: %1. %2Vehicle did not accept guided item.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
-            _finishTransaction(false);
+            _finishTransaction(false, true /* apmGuidedItemWrite */);
         }
         break;
     }

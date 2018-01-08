@@ -41,8 +41,9 @@ private:
     QVariantList    _summaryItems;
     QStringList     _deviceIds;
 
-    static const char* _airspeedBreaker;
-    static const char* _airspeedCal;
+    static const char* _airspeedDisabledParam;
+    static const char* _airspeedBreakerParam;
+    static const char* _airspeedCalParam;
 };
 
 #endif
