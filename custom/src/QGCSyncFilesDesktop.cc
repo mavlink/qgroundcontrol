@@ -29,7 +29,6 @@ QGCSyncFilesDesktop::QGCSyncFilesDesktop(QObject* parent)
     , _syncDone(false)
 {
     qmlRegisterUncreatableType<QGCSyncFilesDesktop>("QGroundControl", 1, 0, "QGCSyncFilesDesktop", "Reference only");
-    qmlRegisterUncreatableType<QGCRemoteReplica>("QGroundControl", 1, 0, "QGCRemote", "Reference only");
     //-- Start UDP listener
     _initUDPListener();
     connect(this, &QGCSyncFilesDesktop::completed,  this, &QGCSyncFilesDesktop::_completed);
@@ -127,10 +126,10 @@ QGCSyncFilesDesktop::connectToRemote(QString name)
             return false;
         }
         connect(_remoteObject.data(), &QRemoteObjectReplica::stateChanged, this, &QGCSyncFilesDesktop::_stateChanged);
+        connect(_remoteObject.data(), &QGCRemoteReplica::syncTypeChanged,  this, &QGCSyncFilesDesktop::_syncTypeChanged);
         _currentRemote = name;
         emit currentRemoteChanged();
         emit remoteReadyChanged();
-        emit qgcRemoteChanged();
     }
     return false;
 }
@@ -197,16 +196,21 @@ QGCSyncFilesDesktop::uploadAllMissions()
         _completed();
         return;
     }
+    QStringList allMissions;
     QString missionPath = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
-    QDirIterator it(missionPath, QStringList() << "*", QDir::Files, QDirIterator::NoIteratorFlags);
+    QDirIterator it(missionPath, QStringList() << "*.plan", QDir::Files, QDirIterator::NoIteratorFlags);
     while(it.hasNext()) {
         QFileInfo fi(it.next());
         _missions << fi.filePath();
+        allMissions << fi.fileName();
     }
     if(!_missions.size()) {
         _message(QString(tr("No missions to send")));
         _completed();
         return;
+    }
+    if(syncType() == SyncClone) {
+        _remoteObject->pruneExtraMissions(allMissions);
     }
     _doSync();
 }
@@ -333,5 +337,31 @@ QGCSyncFilesDesktop::_remoteMaintenance()
                 emit currentRemoteChanged();
             }
         }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::_syncTypeChanged(QGCRemoteReplica::SyncType)
+{
+    emit syncTypeChanged();
+}
+
+//-----------------------------------------------------------------------------
+QGCSyncFilesDesktop::SyncType
+QGCSyncFilesDesktop::syncType()
+{
+    if(_remoteObject.isNull()) {
+        return SyncClone;
+    }
+    return (SyncType)_remoteObject->syncType();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::setSyncType(SyncType type)
+{
+    if(!_remoteObject.isNull()) {
+        _remoteObject->setSyncType((QGCRemoteReplica::SyncType)type);
     }
 }

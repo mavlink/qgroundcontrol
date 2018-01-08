@@ -9,4 +9,5 @@ class QGCRemote
     PROP(SyncType syncType=SyncAppend READWRITE)
     SIGNAL(sendLogFragment(QGCLogFragment fragment));
     SLOT(void sendMission(QGCNewMission mission));
+    SLOT(void pruneExtraMissions(QStringList allMissions));
 };

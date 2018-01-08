@@ -27,13 +27,17 @@ public:
     QString     macAddress              () { return _macAddress; }
 
 public slots:
-    void        sendMission            (QGCNewMission mission);
+    void        sendMission             (QGCNewMission mission);
+    void        pruneExtraMissions      (QStringList allMissions);
 
 private slots:
     void    _broadcastPresence          ();
 
 signals:
     void    macAddressChanged           ();
+
+private:
+    bool    _processIncomingMission     (QString name, int count, QString& missionFile);
 
 private:
     QTimer                  _broadcastTimer;

@@ -13,6 +13,8 @@
 
 QGC_LOGGING_CATEGORY(QGCSyncFiles, "QGCSyncFiles")
 
+static const char* kMissionExtension = ".plan";
+
 //-----------------------------------------------------------------------------
 QGCSyncFilesMobile::QGCSyncFilesMobile(QObject* parent)
     : QGCRemoteSimpleSource(parent)
@@ -37,18 +39,60 @@ QGCSyncFilesMobile::~QGCSyncFilesMobile()
 }
 
 //-----------------------------------------------------------------------------
+bool
+QGCSyncFilesMobile::_processIncomingMission(QString name, int count, QString& missionFile)
+{
+    missionFile = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
+    if(!missionFile.endsWith("/")) missionFile += "/";
+    missionFile += name;
+    if(!missionFile.endsWith(kMissionExtension)) missionFile += kMissionExtension;
+    //-- Add a (unique) count if told to do so
+    if(count) {
+        missionFile.replace(kMissionExtension, QString("-%1%2").arg(count).arg(kMissionExtension));
+    }
+    QFile f(missionFile);
+    return f.exists();
+}
+
+//-----------------------------------------------------------------------------
 //-- Slot for Desktop sendMission
 void
 QGCSyncFilesMobile::sendMission(QGCNewMission mission)
 {
-    QString missionFile = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
-    if(!missionFile.endsWith("/")) missionFile += "/";
-    missionFile += mission.name();
-    if(!missionFile.endsWith(".plan")) missionFile += ".plan";
+    QString missionFile;
+    int count = 0;
+    //-- If we are appending, we need to make sure not to overwrite
+    do {
+        if(!_processIncomingMission(mission.name(), count++, missionFile)) {
+            break;
+        }
+    } while(syncType() == SyncAppend);
     qCDebug(QGCSyncFiles) << "Receiving:" << missionFile;
+    qCDebug(QGCSyncFiles) << "Sync Type:" << syncType();
     QFile file(missionFile);
-    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    if (file.open(QIODevice::WriteOnly)) {
         file.write(mission.mission());
+    }
+}
+
+//-----------------------------------------------------------------------------
+//-- Slot for Desktop pruneMission (Clone)
+void
+QGCSyncFilesMobile::pruneExtraMissions(QStringList allMissions)
+{
+    QStringList missionsToPrune;
+    QString missionPath = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
+    QDirIterator it(missionPath, QStringList() << "*.plan", QDir::Files, QDirIterator::NoIteratorFlags);
+    while(it.hasNext()) {
+        QFileInfo fi(it.next());
+        if(!allMissions.contains(fi.fileName())) {
+            missionsToPrune << fi.filePath();
+        }
+    }
+    foreach(QString missionFile, missionsToPrune) {
+        qCDebug(QGCSyncFiles) << "Pruning extra mission:" << missionFile;
+        QFile f(missionFile);
+        f.remove();
     }
 }
 

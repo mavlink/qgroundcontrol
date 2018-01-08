@@ -32,7 +32,6 @@ public:
     Q_PROPERTY(bool                 syncDone        READ    syncDone        NOTIFY syncDoneChanged)
     Q_PROPERTY(QString              syncMessage     READ    syncMessage     NOTIFY syncMessageChanged)
     Q_PROPERTY(int                  syncProgress    READ    syncProgress    NOTIFY syncProgressChanged)
-    Q_PROPERTY(QGCRemoteReplica*    qgcRemote       READ    qgcRemote       NOTIFY qgcRemoteChanged)
 
     //-- Connect to remote node
     Q_INVOKABLE bool connectToRemote    (QString name);
@@ -55,7 +54,22 @@ public:
     bool        syncDone                () { return _syncDone; }
     QString     syncMessage             () { return _syncMessage; }
     int         syncProgress            () { return _syncProgress; }
-    QGCRemoteReplica* qgcRemote         () { return _remoteObject.data(); }
+
+    //-------------------------------------------------------------------------
+    //-- From QGCRemote
+
+    enum SyncType {
+        SyncClone = 0,
+        SyncReplace = 1,
+        SyncAppend = 2,
+    };
+
+    Q_ENUM(SyncType)
+
+    Q_PROPERTY(SyncType             syncType        READ    syncType        WRITE setSyncType NOTIFY syncTypeChanged)
+
+    SyncType    syncType                ();
+    void        setSyncType             (SyncType type);
 
 protected:
     void    run                         ();
@@ -69,7 +83,7 @@ signals:
     void    syncDoneChanged             ();
     void    syncMessageChanged          ();
     void    syncProgressChanged         ();
-    void    qgcRemoteChanged            ();
+    void    syncTypeChanged             ();
     //-- From Thread
     void    progress                    (quint32 totalCount, quint32 curCount);
     void    completed                   ();
@@ -86,6 +100,7 @@ private slots:
     void    _message                    (QString message);
     void    _completed                  ();
     bool    _sendMission                (QString name, QByteArray mission);
+    void    _syncTypeChanged            (QGCRemoteReplica::SyncType syncType);
 
 private:
     void    _initUDPListener            ();
