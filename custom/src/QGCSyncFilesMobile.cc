@@ -179,8 +179,6 @@ QGCSyncFilesMobile::_broadcastPresence()
         //-- Initialize Remote Object
         _remoteObject = new QRemoteObjectHost(url);
         _remoteObject->enableRemoting(this);
-        connect(_remoteObject, &QRemoteObjectNode::remoteObjectAdded,   this, &QGCSyncFilesMobile::_remoteObjectAdded);
-        connect(_remoteObject, &QRemoteObjectNode::remoteObjectRemoved, this, &QGCSyncFilesMobile::_remoteObjectRemoved);
     }
     _udpSocket->writeDatagram(_macAddress.toLocal8Bit(), QHostAddress::Broadcast, QGC_UDP_BROADCAST_PORT);
 }
@@ -212,18 +210,4 @@ QGCSyncFilesMobile::_updateLogEntries()
         logs.append(l);
     }
     setLogEntries(logs);
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCSyncFilesMobile::_remoteObjectAdded(const QRemoteObjectSourceLocation &loc)
-{
-    qCDebug(QGCSyncFiles) << "Remote Object Added:" << loc.first << loc.second.hostUrl.toString();
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCSyncFilesMobile::_remoteObjectRemoved(const QRemoteObjectSourceLocation &loc)
-{
-    qCDebug(QGCSyncFiles) << "Remote Object Removed:" << loc.first << loc.second.hostUrl.toString();
 }

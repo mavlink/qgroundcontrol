@@ -288,7 +288,7 @@ QGCView {
                             }
                         }
                         QGCButton {
-                            text:           qsTr("Close")
+                            text:           TyphoonHQuickInterface.desktopSync.syncDone ? qsTr("Close") : qsTr("Cancel")
                             width:          ScreenTools.defaultFontPixelWidth  * 16
                             enabled:        !TyphoonHQuickInterface.desktopSync.sendingFiles
                             height:         ScreenTools.defaultFontPixelHeight * 2

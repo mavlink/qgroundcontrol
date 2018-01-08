@@ -33,8 +33,6 @@ public slots:
 
 private slots:
     void    _broadcastPresence          ();
-    void    _remoteObjectAdded          (const QRemoteObjectSourceLocation &loc);
-    void    _remoteObjectRemoved        (const QRemoteObjectSourceLocation &loc);
 
 signals:
     void    macAddressChanged           ();

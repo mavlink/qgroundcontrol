@@ -134,6 +134,7 @@ QGCSyncFilesDesktop::connectToRemote(QString name)
         _currentRemote = name;
         emit currentRemoteChanged();
         emit remoteReadyChanged();
+        _remoteObject->setConnectedToRemote(true);
     }
     return false;
 }
@@ -173,10 +174,12 @@ void
 QGCSyncFilesDesktop::initSync()
 {
     _missions.clear();
+    _syncMessage.clear();
     _sendingFiles   = false;
     _syncDone       = false;
     emit sendingFilesChanged();
     emit syncDoneChanged();
+    emit syncMessageChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -444,7 +447,6 @@ QGCSyncFilesDesktop::_processIncomingMission(QString name, int count, QString& m
 void
 QGCSyncFilesDesktop::_receiveMission(QGCNewMission mission)
 {
-    qCDebug(QGCSyncFiles) << "Receiving:" << mission.name();
     _progress(_totalFiles, ++_curFile);
     if(mission.mission().size()) {
         QString missionFile;
@@ -455,6 +457,7 @@ QGCSyncFilesDesktop::_receiveMission(QGCNewMission mission)
                 break;
             }
         } while(syncType() == SyncAppend);
+        qCDebug(QGCSyncFiles) << "Receiving:" << mission.name();
         QFile file(missionFile);
         if (file.open(QIODevice::WriteOnly)) {
             file.write(mission.mission());

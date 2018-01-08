@@ -173,6 +173,19 @@ Item {
     }
 
     Connections {
+        target: TyphoonHQuickInterface.desktopSync
+        onConnectedToRemoteChanged: {
+            if(TyphoonHQuickInterface.desktopSync.connectedToRemote) {
+                rootLoader.sourceComponent = desktopConnected
+                mainWindow.disableToolbar()
+            } else {
+                rootLoader.sourceComponent = null
+                mainWindow.enableToolbar()
+            }
+        }
+    }
+
+    Connections {
         target: TyphoonHQuickInterface
         //-- Position from Controller GPS (M4)
         onControllerLocationChanged: {
@@ -1097,6 +1110,76 @@ Item {
             Component.onCompleted: {
                 rootLoader.width  = connectionLostArmedItem.width
                 rootLoader.height = connectionLostArmedItem.height
+                mainWindow.disableToolbar()
+            }
+        }
+    }
+    //-- Desktop is connected
+    Component {
+        id:         desktopConnected
+        Item {
+            id:         desktopConnectedItem
+            z:          1000000
+            width:      mainWindow.width
+            height:     mainWindow.height
+            Rectangle {
+                id:             desktopConnectedShadow
+                anchors.fill:   desktopConnectedRect
+                radius:         desktopConnectedRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       desktopConnectedShadow
+                visible:            desktopConnectedRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             desktopConnectedShadow
+            }
+            Rectangle {
+                id:     desktopConnectedRect
+                width:  mainWindow.width   * 0.65
+                height: desktopConnectedCol.height * 1.5
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  qgcPal.alertBackground
+                border.color: qgcPal.alertBorder
+                border.width: 2
+                anchors.centerIn: parent
+                Column {
+                    id:                 desktopConnectedCol
+                    width:              desktopConnectedRect.width
+                    spacing:            ScreenTools.defaultFontPixelHeight * 3
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           qsTr("Connected to Desktop")
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        color:          qgcPal.alertText
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           qsTr("Interface disabled while connected to desktop.")
+                        width:          desktopConnectedRect.width * 0.75
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
+            }
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+            Component.onCompleted: {
+                rootLoader.width  = desktopConnectedItem.width
+                rootLoader.height = desktopConnectedItem.height
                 mainWindow.disableToolbar()
             }
         }
