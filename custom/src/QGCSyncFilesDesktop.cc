@@ -29,6 +29,7 @@ QGCSyncFilesDesktop::QGCSyncFilesDesktop(QObject* parent)
     , _syncDone(false)
 {
     qmlRegisterUncreatableType<QGCSyncFilesDesktop>("QGroundControl", 1, 0, "QGCSyncFilesDesktop", "Reference only");
+    qmlRegisterUncreatableType<QGCRemoteReplica>("QGroundControl", 1, 0, "QGCRemote", "Reference only");
     //-- Start UDP listener
     _initUDPListener();
     connect(this, &QGCSyncFilesDesktop::completed,  this, &QGCSyncFilesDesktop::_completed);
@@ -129,6 +130,7 @@ QGCSyncFilesDesktop::connectToRemote(QString name)
         _currentRemote = name;
         emit currentRemoteChanged();
         emit remoteReadyChanged();
+        emit qgcRemoteChanged();
     }
     return false;
 }

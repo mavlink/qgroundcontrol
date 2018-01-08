@@ -34,6 +34,7 @@ QGCView {
     property real   _gridElemWidth:     ScreenTools.defaultFontPixelWidth * 20
     property string _currentNode:       _clientCount && remoteCombo.currentIndex >= 0 && remoteCombo.currentIndex < _clientCount ? TyphoonHQuickInterface.desktopSync.remoteList[remoteCombo.currentIndex] : ""
     property string _dialogTitle:       ""
+    property var    _syncType:          QGCRemote.SyncClone
 
     QGCPalette      { id: qgcPal }
 
@@ -102,8 +103,7 @@ QGCView {
                     width:          _gridElemWidth
                     onClicked: {
                         _dialogTitle = qsTr("Send Missions")
-                        rootLoader.sourceComponent = syncFilesDialog
-                        mainWindow.disableToolbar()
+                        dialogLoader.source = "/typhoonh/QGCSyncFilesDialog.qml"
                     }
                 }
                 QGCButton {
@@ -158,108 +158,9 @@ QGCView {
             }
         }
     }
-    //-- Sync Files (Outgoing)
-    Component {
-        id:             syncFilesDialog
-        Item {
-            id:         syncFilesDialogItem
-            width:      mainWindow.width
-            height:     mainWindow.height
-            MouseArea {
-                anchors.fill:   parent
-                onWheel:        { wheel.accepted = true; }
-                onPressed:      { mouse.accepted = true; }
-                onReleased:     { mouse.accepted = true; }
-            }
-            Rectangle {
-                id:             syncFilesDialogShadow
-                anchors.fill:   syncFilesDialogRect
-                radius:         syncFilesDialogRect.radius
-                color:          qgcPal.window
-                visible:        false
-            }
-            DropShadow {
-                anchors.fill:       syncFilesDialogShadow
-                visible:            syncFilesDialogRect.visible
-                horizontalOffset:   4
-                verticalOffset:     4
-                radius:             32.0
-                samples:            65
-                color:              Qt.rgba(0,0,0,0.75)
-                source:             syncFilesDialogShadow
-            }
-            Rectangle {
-                id:     syncFilesDialogRect
-                width:  mainWindow.width   * 0.65
-                height: syncCol.height * 1.25
-                radius: ScreenTools.defaultFontPixelWidth
-                color:  qgcPal.alertBackground
-                border.color: qgcPal.alertBorder
-                border.width: 2
-                anchors.centerIn: parent
-                Column {
-                    id:                 syncCol
-                    width:              syncFilesDialogRect.width
-                    spacing:            ScreenTools.defaultFontPixelHeight * 2
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight
-                    anchors.centerIn:   parent
-                    QGCLabel {
-                        text:           _dialogTitle
-                        font.family:    ScreenTools.demiboldFontFamily
-                        font.pointSize: ScreenTools.largeFontPointSize
-                        color:          qgcPal.alertText
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    ProgressBar {
-                        width:          parent.width * 0.75
-                        orientation:    Qt.Horizontal
-                        minimumValue:   0
-                        maximumValue:   100
-                        value:          TyphoonHQuickInterface.desktopSync.syncProgress
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCLabel {
-                        text:           TyphoonHQuickInterface.desktopSync.syncMessage
-                        color:          qgcPal.alertText
-                        font.family:    ScreenTools.demiboldFontFamily
-                        font.pointSize: ScreenTools.mediumFontPointSize
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    Row {
-                        spacing:        ScreenTools.defaultFontPixelWidth * 2
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        QGCButton {
-                            text:           !TyphoonHQuickInterface.desktopSync.sendingFiles ? qsTr("Start") : qsTr("Cancel")
-                            width:          ScreenTools.defaultFontPixelWidth  * 16
-                            height:         ScreenTools.defaultFontPixelHeight * 2
-                            enabled:        !TyphoonHQuickInterface.desktopSync.syncDone
-                            onClicked: {
-                                if(TyphoonHQuickInterface.desktopSync.sendingFiles) {
-                                    TyphoonHQuickInterface.desktopSync.cancelSync()
-                                } else {
-                                    TyphoonHQuickInterface.desktopSync.uploadAllMissions()
-                                }
-                            }
-                        }
-                        QGCButton {
-                            text:           qsTr("Close")
-                            width:          ScreenTools.defaultFontPixelWidth  * 16
-                            enabled:        !TyphoonHQuickInterface.desktopSync.sendingFiles
-                            height:         ScreenTools.defaultFontPixelHeight * 2
-                            onClicked: {
-                                rootLoader.sourceComponent = null
-                                mainWindow.enableToolbar()
-                            }
-                        }
-                    }
-                }
-            }
-            Component.onCompleted: {
-                TyphoonHQuickInterface.desktopSync.initSync()
-                rootLoader.width  = syncFilesDialogItem.width
-                rootLoader.height = syncFilesDialogItem.height
-                mainWindow.disableToolbar()
-            }
-        }
+
+    Loader {
+        id:                 dialogLoader
+        anchors.fill:       parent
     }
 }

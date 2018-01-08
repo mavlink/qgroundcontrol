@@ -6,7 +6,7 @@ POD QGCLogFragment(QString name, int current, int total, QByteArray data)
 class QGCRemote
 {
     ENUM SyncType {SyncClone, SyncReplace, SyncAppend}
-    PROP(SyncType syncType=SYNC_APPEND READWRITE)
+    PROP(SyncType syncType=SyncAppend READWRITE)
     SIGNAL(sendLogFragment(QGCLogFragment fragment));
     SLOT(void sendMission(QGCNewMission mission));
 };

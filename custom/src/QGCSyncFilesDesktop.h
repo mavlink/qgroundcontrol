@@ -25,13 +25,14 @@ public:
     QGCSyncFilesDesktop                 (QObject* parent);
     ~QGCSyncFilesDesktop                ();
 
-    Q_PROPERTY(QStringList      remoteList      READ    remoteList      NOTIFY remoteListChanged)
-    Q_PROPERTY(bool             remoteReady     READ    remoteReady     NOTIFY remoteReadyChanged)
-    Q_PROPERTY(QString          currentRemote   READ    currentRemote   WRITE  setCurrentRemote     NOTIFY currentRemoteChanged)
-    Q_PROPERTY(bool             sendingFiles    READ    sendingFiles    NOTIFY sendingFilesChanged)
-    Q_PROPERTY(bool             syncDone        READ    syncDone        NOTIFY syncDoneChanged)
-    Q_PROPERTY(QString          syncMessage     READ    syncMessage     NOTIFY syncMessageChanged)
-    Q_PROPERTY(int              syncProgress    READ    syncProgress    NOTIFY syncProgressChanged)
+    Q_PROPERTY(QStringList          remoteList      READ    remoteList      NOTIFY remoteListChanged)
+    Q_PROPERTY(bool                 remoteReady     READ    remoteReady     NOTIFY remoteReadyChanged)
+    Q_PROPERTY(QString              currentRemote   READ    currentRemote   WRITE  setCurrentRemote     NOTIFY currentRemoteChanged)
+    Q_PROPERTY(bool                 sendingFiles    READ    sendingFiles    NOTIFY sendingFilesChanged)
+    Q_PROPERTY(bool                 syncDone        READ    syncDone        NOTIFY syncDoneChanged)
+    Q_PROPERTY(QString              syncMessage     READ    syncMessage     NOTIFY syncMessageChanged)
+    Q_PROPERTY(int                  syncProgress    READ    syncProgress    NOTIFY syncProgressChanged)
+    Q_PROPERTY(QGCRemoteReplica*    qgcRemote       READ    qgcRemote       NOTIFY qgcRemoteChanged)
 
     //-- Connect to remote node
     Q_INVOKABLE bool connectToRemote    (QString name);
@@ -54,6 +55,7 @@ public:
     bool        syncDone                () { return _syncDone; }
     QString     syncMessage             () { return _syncMessage; }
     int         syncProgress            () { return _syncProgress; }
+    QGCRemoteReplica* qgcRemote         () { return _remoteObject.data(); }
 
 protected:
     void    run                         ();
@@ -67,6 +69,7 @@ signals:
     void    syncDoneChanged             ();
     void    syncMessageChanged          ();
     void    syncProgressChanged         ();
+    void    qgcRemoteChanged            ();
     //-- From Thread
     void    progress                    (quint32 totalCount, quint32 curCount);
     void    completed                   ();
