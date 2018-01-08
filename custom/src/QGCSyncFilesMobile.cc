@@ -14,6 +14,7 @@
 QGC_LOGGING_CATEGORY(QGCSyncFiles, "QGCSyncFiles")
 
 static const char* kMissionExtension = ".plan";
+static const char* kMissionWildCard  = "*.plan";
 
 //-----------------------------------------------------------------------------
 QGCSyncFilesMobile::QGCSyncFilesMobile(QObject* parent)
@@ -25,6 +26,8 @@ QGCSyncFilesMobile::QGCSyncFilesMobile(QObject* parent)
     _broadcastTimer.setSingleShot(false);
     //-- Start UDP broadcast
     _broadcastTimer.start(5000);
+    _updateMissionList();
+    _updateLogEntries();
 }
 
 //-----------------------------------------------------------------------------
@@ -72,6 +75,9 @@ QGCSyncFilesMobile::sendMission(QGCNewMission mission)
     QFile file(missionFile);
     if (file.open(QIODevice::WriteOnly)) {
         file.write(mission.mission());
+        _updateMissionList();
+    } else {
+        qWarning() << "Error writing" << missionFile;
     }
 }
 
@@ -82,7 +88,7 @@ QGCSyncFilesMobile::pruneExtraMissions(QStringList allMissions)
 {
     QStringList missionsToPrune;
     QString missionPath = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
-    QDirIterator it(missionPath, QStringList() << "*.plan", QDir::Files, QDirIterator::NoIteratorFlags);
+    QDirIterator it(missionPath, QStringList() << kMissionWildCard, QDir::Files, QDirIterator::NoIteratorFlags);
     while(it.hasNext()) {
         QFileInfo fi(it.next());
         if(!allMissions.contains(fi.fileName())) {
@@ -93,6 +99,38 @@ QGCSyncFilesMobile::pruneExtraMissions(QStringList allMissions)
         qCDebug(QGCSyncFiles) << "Pruning extra mission:" << missionFile;
         QFile f(missionFile);
         f.remove();
+    }
+    _updateMissionList();
+}
+
+//-----------------------------------------------------------------------------
+//-- Slot for Desktop mission request
+void
+QGCSyncFilesMobile::requestMissions(QStringList missions)
+{
+    QStringList missionsToSend;
+    QString missionPath = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
+    QDirIterator it(missionPath, QStringList() << kMissionWildCard, QDir::Files, QDirIterator::NoIteratorFlags);
+    while(it.hasNext()) {
+        QFileInfo fi(it.next());
+        if(missions.contains(fi.fileName())) {
+            missionsToSend << fi.filePath();
+        }
+    }
+    foreach(QString missionFile, missionsToSend) {
+        qCDebug(QGCSyncFiles) << "Sending mission:" << missionFile;
+        QFileInfo fi(missionFile);
+        QFile f(missionFile);
+        if (!f.open(QIODevice::ReadOnly)) {
+            qWarning() << "Unable to open file" << missionFile;
+            QGCNewMission mission(fi.fileName(), QByteArray());
+            emit receiveMission(mission);
+        } else {
+            QByteArray bytes = f.readAll();
+            f.close();
+            QGCNewMission mission(fi.fileName(), bytes);
+            emit receiveMission(mission);
+        }
     }
 }
 
@@ -141,6 +179,51 @@ QGCSyncFilesMobile::_broadcastPresence()
         //-- Initialize Remote Object
         _remoteObject = new QRemoteObjectHost(url);
         _remoteObject->enableRemoting(this);
+        connect(_remoteObject, &QRemoteObjectNode::remoteObjectAdded,   this, &QGCSyncFilesMobile::_remoteObjectAdded);
+        connect(_remoteObject, &QRemoteObjectNode::remoteObjectRemoved, this, &QGCSyncFilesMobile::_remoteObjectRemoved);
     }
     _udpSocket->writeDatagram(_macAddress.toLocal8Bit(), QHostAddress::Broadcast, QGC_UDP_BROADCAST_PORT);
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesMobile::_updateMissionList()
+{
+    QStringList missions;
+    QString missionPath = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
+    QDirIterator it(missionPath, QStringList() << kMissionWildCard, QDir::Files, QDirIterator::NoIteratorFlags);
+    while(it.hasNext()) {
+        QFileInfo fi(it.next());
+        missions << fi.fileName();
+    }
+    setCurrentMissions(missions);
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesMobile::_updateLogEntries()
+{
+    QList<QGCRemoteLogEntry> logs;
+    QString logPath = qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath();
+    QDirIterator it(logPath, QStringList() << "*.tlog", QDir::Files, QDirIterator::NoIteratorFlags);
+    while(it.hasNext()) {
+        QFileInfo fi(it.next());
+        QGCRemoteLogEntry l(fi.baseName(), fi.size());
+        logs.append(l);
+    }
+    setLogEntries(logs);
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesMobile::_remoteObjectAdded(const QRemoteObjectSourceLocation &loc)
+{
+    qCDebug(QGCSyncFiles) << "Remote Object Added:" << loc.first << loc.second.hostUrl.toString();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesMobile::_remoteObjectRemoved(const QRemoteObjectSourceLocation &loc)
+{
+    qCDebug(QGCSyncFiles) << "Remote Object Removed:" << loc.first << loc.second.hostUrl.toString();
 }

@@ -1,5 +1,6 @@
 #include <QtCore>
 
+POD QGCRemoteLogEntry(QString name, quint64 size)
 POD QGCNewMission(QString name, QByteArray mission)
 POD QGCLogFragment(QString name, int current, int total, QByteArray data)
 
@@ -7,7 +8,11 @@ class QGCRemote
 {
     ENUM SyncType {SyncClone, SyncReplace, SyncAppend}
     PROP(SyncType syncType=SyncAppend READWRITE)
+    PROP(QStringList currentMissions)
+    PROP(QList<QGCRemoteLogEntry> logEntries)
     SIGNAL(sendLogFragment(QGCLogFragment fragment));
+    SIGNAL(receiveMission(QGCNewMission mission));
     SLOT(void sendMission(QGCNewMission mission));
     SLOT(void pruneExtraMissions(QStringList allMissions));
+    SLOT(void requestMissions(QStringList missions));
 };

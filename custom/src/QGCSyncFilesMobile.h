@@ -24,20 +24,25 @@ public:
 
     Q_PROPERTY(QString      macAddress      READ    macAddress      NOTIFY macAddressChanged)
 
-    QString     macAddress              () { return _macAddress; }
+    QString macAddress                  () { return _macAddress; }
 
 public slots:
-    void        sendMission             (QGCNewMission mission);
-    void        pruneExtraMissions      (QStringList allMissions);
+    void    sendMission                 (QGCNewMission mission);
+    void    pruneExtraMissions          (QStringList allMissions);
+    void    requestMissions             (QStringList missions);
 
 private slots:
     void    _broadcastPresence          ();
+    void    _remoteObjectAdded          (const QRemoteObjectSourceLocation &loc);
+    void    _remoteObjectRemoved        (const QRemoteObjectSourceLocation &loc);
 
 signals:
     void    macAddressChanged           ();
 
 private:
     bool    _processIncomingMission     (QString name, int count, QString& missionFile);
+    void    _updateMissionList          ();
+    void    _updateLogEntries             ();
 
 private:
     QTimer                  _broadcastTimer;

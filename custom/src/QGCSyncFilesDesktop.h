@@ -10,7 +10,7 @@
 #include <QThread>
 #include "QGCLoggingCategory.h"
 
-//-- This is created at compile time from QGCRemote.rep
+//-- This is built at compile time from QGCRemote.rep (full of unused variable warnings)
 #include "rep_QGCRemote_replica.h"
 
 Q_DECLARE_LOGGING_CATEGORY(QGCSyncFiles)
@@ -45,6 +45,8 @@ public:
     Q_INVOKABLE void uploadAllMissions  ();
     //-- Cancel sync thread
     Q_INVOKABLE void cancelSync         ();
+    //-- Download all remote mission files
+    Q_INVOKABLE void downloadAllMissions();
 
     QStringList remoteList              () { return _remoteNames; }
     bool        remoteReady             ();
@@ -101,10 +103,12 @@ private slots:
     void    _completed                  ();
     bool    _sendMission                (QString name, QByteArray mission);
     void    _syncTypeChanged            (QGCRemoteReplica::SyncType syncType);
+    void    _receiveMission             (QGCNewMission mission);
 
 private:
     void    _initUDPListener            ();
     bool    _doSync                     ();
+    bool    _processIncomingMission     (QString name, int count, QString& missionFile);
 
 private:
     QUdpSocket*                         _udpSocket;

@@ -16,6 +16,9 @@
 
 QGC_LOGGING_CATEGORY(QGCSyncFiles, "QGCSyncFiles")
 
+static const char* kMissionExtension = ".plan";
+static const char* kMissionWildCard  = "*.plan";
+
 //-----------------------------------------------------------------------------
 QGCSyncFilesDesktop::QGCSyncFilesDesktop(QObject* parent)
     : QThread(parent)
@@ -127,6 +130,7 @@ QGCSyncFilesDesktop::connectToRemote(QString name)
         }
         connect(_remoteObject.data(), &QRemoteObjectReplica::stateChanged, this, &QGCSyncFilesDesktop::_stateChanged);
         connect(_remoteObject.data(), &QGCRemoteReplica::syncTypeChanged,  this, &QGCSyncFilesDesktop::_syncTypeChanged);
+        connect(_remoteObject.data(), &QGCRemoteReplica::receiveMission,   this, &QGCSyncFilesDesktop::_receiveMission);
         _currentRemote = name;
         emit currentRemoteChanged();
         emit remoteReadyChanged();
@@ -182,6 +186,7 @@ QGCSyncFilesDesktop::uploadAllMissions()
     if(_sendingFiles) {
         return;
     }
+    //-- Reset Status
     _missions.clear();
     _sendingFiles   = true;
     _syncProgress   = 0;
@@ -197,8 +202,10 @@ QGCSyncFilesDesktop::uploadAllMissions()
         return;
     }
     QStringList allMissions;
+    //-- Where missions are stored
     QString missionPath = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
-    QDirIterator it(missionPath, QStringList() << "*.plan", QDir::Files, QDirIterator::NoIteratorFlags);
+    //-- Find all of them
+    QDirIterator it(missionPath, QStringList() << kMissionWildCard, QDir::Files, QDirIterator::NoIteratorFlags);
     while(it.hasNext()) {
         QFileInfo fi(it.next());
         _missions << fi.filePath();
@@ -209,10 +216,60 @@ QGCSyncFilesDesktop::uploadAllMissions()
         _completed();
         return;
     }
+    //-- If cloning, prune extra files
     if(syncType() == SyncClone) {
         _remoteObject->pruneExtraMissions(allMissions);
     }
     _doSync();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::downloadAllMissions()
+{
+    if(_sendingFiles) {
+        return;
+    }
+    _missions.clear();
+    _sendingFiles   = true;
+    _syncProgress   = 0;
+    _syncDone       = false;
+    _syncMessage.clear();
+    emit syncProgressChanged();
+    emit sendingFilesChanged();
+    emit syncMessageChanged();
+    emit syncDoneChanged();
+    if(!remoteReady()) {
+        _message(QString(tr("Not Connected To Remote")));
+        _completed();
+        return;
+    }
+    QStringList allMissions = _remoteObject->currentMissions();
+    _curFile = 0;
+    _totalFiles = allMissions.size();
+    qCDebug(QGCSyncFiles) << "Requesting all mission files";
+    qCDebug(QGCSyncFiles) << "Sync Type:" << syncType();
+    //-- If cloning, remove extra files
+    if(syncType() == SyncClone) {
+        QStringList missionsToPrune;
+        //-- Where missions are stored
+        QString missionPath = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
+        //-- Find all of them
+        QDirIterator it(missionPath, QStringList() << kMissionWildCard, QDir::Files, QDirIterator::NoIteratorFlags);
+        while(it.hasNext()) {
+            QFileInfo fi(it.next());
+            //-- If the remote doesn't have it, prune it.
+            if(!allMissions.contains(fi.fileName())) {
+                missionsToPrune << fi.filePath();
+            }
+        }
+        foreach(QString missionToZap, missionsToPrune) {
+            qCDebug(QGCSyncFiles) << "Pruning extra mission:" << missionToZap;
+            QFile f(missionToZap);
+            f.remove();
+        }
+    }
+    _remoteObject->requestMissions(allMissions);
 }
 
 //-----------------------------------------------------------------------------
@@ -299,7 +356,7 @@ QGCSyncFilesDesktop::run()
             QByteArray bytes = missionFile.readAll();
             missionFile.close();
             qCDebug(QGCSyncFiles) << "Sending:" << fi.filePath();
-            emit sendMission(fi.baseName(), bytes);
+            emit sendMission(fi.fileName(), bytes);
         }
         emit progress(_totalFiles, ++_curFile);
     }
@@ -317,6 +374,7 @@ QGCSyncFilesDesktop::_sendMission(QString name, QByteArray mission)
     if(_remoteObject.isNull()) {
         return false;
     }
+    if(!name.endsWith(kMissionExtension)) name += kMissionExtension;
     _remoteObject->sendMission(QGCNewMission(name, mission));
     return true;
 }
@@ -363,5 +421,50 @@ QGCSyncFilesDesktop::setSyncType(SyncType type)
 {
     if(!_remoteObject.isNull()) {
         _remoteObject->setSyncType((QGCRemoteReplica::SyncType)type);
+    }
+}
+
+//-----------------------------------------------------------------------------
+bool
+QGCSyncFilesDesktop::_processIncomingMission(QString name, int count, QString& missionFile)
+{
+    missionFile = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
+    if(!missionFile.endsWith("/")) missionFile += "/";
+    missionFile += name;
+    if(!missionFile.endsWith(kMissionExtension)) missionFile += kMissionExtension;
+    //-- Add a (unique) count if told to do so
+    if(count) {
+        missionFile.replace(kMissionExtension, QString("-%1%2").arg(count).arg(kMissionExtension));
+    }
+    QFile f(missionFile);
+    return f.exists();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::_receiveMission(QGCNewMission mission)
+{
+    qCDebug(QGCSyncFiles) << "Receiving:" << mission.name();
+    _progress(_totalFiles, ++_curFile);
+    if(mission.mission().size()) {
+        QString missionFile;
+        int count = 0;
+        //-- If we are appending, we need to make sure not to overwrite
+        do {
+            if(!_processIncomingMission(mission.name(), count++, missionFile)) {
+                break;
+            }
+        } while(syncType() == SyncAppend);
+        QFile file(missionFile);
+        if (file.open(QIODevice::WriteOnly)) {
+            file.write(mission.mission());
+        }
+    } else {
+        qWarning() << "Error receiving" << mission.name();
+    }
+    if(_totalFiles <= _curFile) {
+        _message(QString(tr("%1 files received")).arg(_totalFiles));
+        _progress(1, 1);
+        _completed();
     }
 }

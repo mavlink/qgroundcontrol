@@ -34,6 +34,7 @@ QGCView {
     property real   _gridElemWidth:     ScreenTools.defaultFontPixelWidth * 20
     property string _currentNode:       _clientCount && remoteCombo.currentIndex >= 0 && remoteCombo.currentIndex < _clientCount ? TyphoonHQuickInterface.desktopSync.remoteList[remoteCombo.currentIndex] : ""
     property string _dialogTitle:       ""
+    property bool   _sendMission:       true
 
     QGCPalette      { id: qgcPal }
 
@@ -101,6 +102,7 @@ QGCView {
                     text:           qsTr("Send Missions")
                     width:          _gridElemWidth
                     onClicked: {
+                        _sendMission = true
                         _dialogTitle = qsTr("Send Missions")
                         rootLoader.sourceComponent = syncFilesDialog
                         mainWindow.disableToolbar()
@@ -111,7 +113,10 @@ QGCView {
                     width:              _gridElemWidth
                     Layout.fillWidth:   true
                     onClicked: {
-
+                        _sendMission = false
+                        _dialogTitle = qsTr("Fetch Missions")
+                        rootLoader.sourceComponent = syncFilesDialog
+                        mainWindow.disableToolbar()
                     }
                 }
                 QGCButton {
@@ -274,7 +279,11 @@ QGCView {
                                 if(TyphoonHQuickInterface.desktopSync.sendingFiles) {
                                     TyphoonHQuickInterface.desktopSync.cancelSync()
                                 } else {
-                                    TyphoonHQuickInterface.desktopSync.uploadAllMissions()
+                                    if(_sendMission) {
+                                        TyphoonHQuickInterface.desktopSync.uploadAllMissions()
+                                    } else {
+                                        TyphoonHQuickInterface.desktopSync.downloadAllMissions()
+                                    }
                                 }
                             }
                         }
