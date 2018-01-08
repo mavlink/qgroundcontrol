@@ -150,14 +150,17 @@ SOURCES += \
     $$QGCROOT/custom/src/TyphoonHPlugin.cc \
     $$QGCROOT/custom/src/TyphoonHQuickInterface.cc \
     $$QGCROOT/custom/src/UTMConverter.cc \
-    $$QGCROOT/custom/src/YExportFiles.cc \
-    $$QGCROOT/custom/src/YuneecRemote.cc
+    $$QGCROOT/custom/src/YExportFiles.cc
 
-!DesktopPlanner {
+DesktopPlanner {
+    SOURCES += \
+        $$QGCROOT/custom/src/QGCSyncFilesDesktop.cc
+} else {
     SOURCES += \
         $$QGCROOT/custom/src/TyphoonHM4Interface.cc \
         $$QGCROOT/custom/src/m4serial.cc \
         $$QGCROOT/custom/src/m4util.cc \
+        $$QGCROOT/custom/src/QGCSyncFilesMobile.cc
 }
 
 AndroidBuild {
@@ -171,15 +174,18 @@ HEADERS += \
     $$QGCROOT/custom/src/TyphoonHQuickInterface.h \
     $$QGCROOT/custom/src/UTMConverter.h \
     $$QGCROOT/custom/src/YExportFiles.h \
-    $$QGCROOT/custom/src/YuneecRemote.h
 
-!DesktopPlanner {
+DesktopPlanner {
+    HEADERS += \
+        $$QGCROOT/custom/src/QGCSyncFilesDesktop.h
+} else {
     HEADERS += \
         $$QGCROOT/custom/src/m4channeldata.h \
         $$QGCROOT/custom/src/m4def.h \
         $$QGCROOT/custom/src/m4serial.h \
         $$QGCROOT/custom/src/m4util.h \
         $$QGCROOT/custom/src/TyphoonHM4Interface.h \
+        $$QGCROOT/custom/src/QGCSyncFilesMobile.h
 }
 
 equals(QT_MAJOR_VERSION, 5) {

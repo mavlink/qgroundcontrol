@@ -44,7 +44,7 @@ Window {
     property string mapType:                mapSettings ? mapSettings.mapProvider.enumStringValue + " " + mapSettings.mapType.enumStringValue : ""
     property real   minZoom:                2
     property real   maxZoom:                19
-    property int    clientCount:            TyphoonHQuickInterface.clientList.length
+    property int    clientCount:            TyphoonHQuickInterface.desktopSync.remoteList.length
     property bool   toolbarEnabled:         true
 
     function showSetupView() {
@@ -280,8 +280,8 @@ Window {
                 //-- This is enabled (visisble) if we have received a broadcast
                 //   from an ST16 and we are not connected to a vehicle.
                 QGCButton {
-                    text:               qsTr("Upload to ") + TyphoonHQuickInterface.currentClient
-                    visible:            !activeVehicle && TyphoonHQuickInterface.clientReady
+                    text:               qsTr("Upload to ") + TyphoonHQuickInterface.desktopSync.currentRemote
+                    visible:            !activeVehicle && TyphoonHQuickInterface.desktopSync.remoteReady
                     primary:            true
                     anchors.verticalCenter: parent.verticalCenter
                     onClicked: {
@@ -408,7 +408,7 @@ Window {
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     QGCLabel {
-                        text:           clientCount ? TyphoonHQuickInterface.clientList[0] : ""
+                        text:           clientCount ? TyphoonHQuickInterface.desktopSync.currentRemote : ""
                         color:          qgcPal.alertText
                         font.family:    ScreenTools.demiboldFontFamily
                         font.pointSize: ScreenTools.mediumFontPointSize
@@ -416,16 +416,25 @@ Window {
                     }
                     Rectangle {
                         color:          qgcPal.window
-                        width:          exportUTMCheck.width  + (ScreenTools.defaultFontPixelWidth * 4)
-                        height:         exportUTMCheck.height + ScreenTools.defaultFontPixelHeight
+                        width:          sendMissionCol.width  + (ScreenTools.defaultFontPixelWidth * 4)
+                        height:         sendMissionCol.height + ScreenTools.defaultFontPixelHeight
                         radius:         4
                         anchors.horizontalCenter: parent.horizontalCenter
-                        QGCCheckBox {
-                            id:                 exportUTMCheck
-                            text:               qsTr("Include Map Tiles")
-                            checked:            false
-                            enabled:            !TyphoonHQuickInterface.copyingFiles
+                        Column {
+                            id:         sendMissionCol
+                            spacing:    ScreenTools.defaultFontPixelHeight
                             anchors.centerIn:   parent
+                            QGCCheckBox {
+                                id:                 exportUTMCheck
+                                text:               qsTr("Include Map Tiles")
+                                checked:            false
+                                enabled:            !TyphoonHQuickInterface.desktopSync.sendingFiles
+                            }
+                            QGCTextField {
+                                id:                 missionName
+                                width:              ScreenTools.defaultFontPixelWidth * 24
+                                placeholderText:    qsTr("Enter mission name...")
+                            }
                         }
                     }
                     ProgressBar {
@@ -433,11 +442,11 @@ Window {
                         orientation:    Qt.Horizontal
                         minimumValue:   0
                         maximumValue:   100
-                        value:          TyphoonHQuickInterface.updateProgress
+                        value:          TyphoonHQuickInterface.desktopSync.syncProgress
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     QGCLabel {
-                        text:           TyphoonHQuickInterface.copyMessage
+                        text:           TyphoonHQuickInterface.desktopSync.syncMessage
                         color:          qgcPal.alertText
                         font.family:    ScreenTools.demiboldFontFamily
                         font.pointSize: ScreenTools.mediumFontPointSize
@@ -447,21 +456,21 @@ Window {
                         spacing:        ScreenTools.defaultFontPixelWidth * 2
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCButton {
-                            text:           !TyphoonHQuickInterface.copyingFiles ? qsTr("Upload") : qsTr("Cancel")
+                            text:           !TyphoonHQuickInterface.desktopSync.sendingFiles ? qsTr("Upload") : qsTr("Cancel")
                             width:          ScreenTools.defaultFontPixelWidth  * 16
                             height:         ScreenTools.defaultFontPixelHeight * 2
-                            enabled:        !TyphoonHQuickInterface.copyingDone
+                            enabled:        !TyphoonHQuickInterface.desktopSync.syncDone && missionName.text !== ""
                             onClicked: {
                                 console.log('Upload')
                                 if(planMasterController) {
-                                    TyphoonHQuickInterface.uploadMission("foo", planMasterController)
+                                    TyphoonHQuickInterface.desktopSync.uploadMission(missionName.text, planMasterController)
                                 }
                             }
                         }
                         QGCButton {
                             text:           qsTr("Close")
                             width:          ScreenTools.defaultFontPixelWidth  * 16
-                            enabled:        !TyphoonHQuickInterface.copyingFiles
+                            enabled:        !TyphoonHQuickInterface.desktopSync.sendingFiles
                             height:         ScreenTools.defaultFontPixelHeight * 2
                             onClicked: {
                                 mainWindow.enableToolbar()

@@ -29,10 +29,11 @@ QGCView {
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property int    _clientCount:       TyphoonHQuickInterface.clientList.length
+    property int    _clientCount:       TyphoonHQuickInterface.desktopSync.remoteList.length
     property real   _buttonWidth:       ScreenTools.defaultFontPixelWidth * 16
     property real   _gridElemWidth:     ScreenTools.defaultFontPixelWidth * 20
-    property string _currentNode:       _clientCount && remoteCombo.currentIndex >= 0 && remoteCombo.currentIndex < _clientCount ? TyphoonHQuickInterface.clientList[remoteCombo.currentIndex] : ""
+    property string _currentNode:       _clientCount && remoteCombo.currentIndex >= 0 && remoteCombo.currentIndex < _clientCount ? TyphoonHQuickInterface.desktopSync.remoteList[remoteCombo.currentIndex] : ""
+    property string _dialogTitle:       ""
 
     QGCPalette      { id: qgcPal }
 
@@ -55,7 +56,7 @@ QGCView {
         }
         Column {
             spacing:        ScreenTools.defaultFontPixelHeight
-            visible:        !_activeVehicle && _clientCount && !TyphoonHQuickInterface.clientReady
+            visible:        !_activeVehicle && _clientCount && !TyphoonHQuickInterface.desktopSync.remoteReady
             anchors.centerIn: parent
             QGCLabel {
                 text:       qsTr("Select Remote")
@@ -63,7 +64,7 @@ QGCView {
             }
             QGCComboBox {
                 id:             remoteCombo
-                model:          TyphoonHQuickInterface.clientList
+                model:          TyphoonHQuickInterface.desktopSync.remoteList
                 width:          _buttonWidth
                 currentIndex:   -1
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -75,14 +76,14 @@ QGCView {
                 enabled:        remoteCombo.currentIndex >= 0 && remoteCombo.currentIndex < _clientCount
                 anchors.horizontalCenter: parent.horizontalCenter
                 onClicked: {
-                    TyphoonHQuickInterface.connectToNode(_currentNode)
+                    TyphoonHQuickInterface.desktopSync.connectToRemote(_currentNode)
                 }
             }
         }
         Column {
             anchors.centerIn: parent
             spacing:        ScreenTools.defaultFontPixelHeight
-            visible:        !_activeVehicle && TyphoonHQuickInterface.clientReady
+            visible:        !_activeVehicle && TyphoonHQuickInterface.desktopSync.remoteReady
             Rectangle {
                 width:  syncGrid.width
                 height: 1
@@ -95,12 +96,14 @@ QGCView {
                 rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.5
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel { text: qsTr("Local"); font.family: ScreenTools.demiboldFontFamily; Layout.alignment: Qt.AlignHCenter; }
-                QGCLabel { text: TyphoonHQuickInterface.currentClient; font.family: ScreenTools.demiboldFontFamily; Layout.alignment: Qt.AlignHCenter; }
+                QGCLabel { text: TyphoonHQuickInterface.desktopSync.currentRemote; font.family: ScreenTools.demiboldFontFamily; Layout.alignment: Qt.AlignHCenter; }
                 QGCButton {
                     text:           qsTr("Send Missions")
                     width:          _gridElemWidth
                     onClicked: {
-
+                        _dialogTitle = qsTr("Send Missions")
+                        rootLoader.sourceComponent = syncFilesDialog
+                        mainWindow.disableToolbar()
                     }
                 }
                 QGCButton {
@@ -150,8 +153,112 @@ QGCView {
                 width:          _buttonWidth
                 anchors.horizontalCenter: parent.horizontalCenter
                 onClicked: {
-                    TyphoonHQuickInterface.disconnectNode()
+                    TyphoonHQuickInterface.desktopSync.disconnectRemote()
                 }
+            }
+        }
+    }
+    //-- Sync Files (Outgoing)
+    Component {
+        id:             syncFilesDialog
+        Item {
+            id:         syncFilesDialogItem
+            width:      mainWindow.width
+            height:     mainWindow.height
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+            Rectangle {
+                id:             syncFilesDialogShadow
+                anchors.fill:   syncFilesDialogRect
+                radius:         syncFilesDialogRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       syncFilesDialogShadow
+                visible:            syncFilesDialogRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             syncFilesDialogShadow
+            }
+            Rectangle {
+                id:     syncFilesDialogRect
+                width:  mainWindow.width   * 0.65
+                height: syncCol.height * 1.25
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  qgcPal.alertBackground
+                border.color: qgcPal.alertBorder
+                border.width: 2
+                anchors.centerIn: parent
+                Column {
+                    id:                 syncCol
+                    width:              syncFilesDialogRect.width
+                    spacing:            ScreenTools.defaultFontPixelHeight * 2
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           _dialogTitle
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        color:          qgcPal.alertText
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    ProgressBar {
+                        width:          parent.width * 0.75
+                        orientation:    Qt.Horizontal
+                        minimumValue:   0
+                        maximumValue:   100
+                        value:          TyphoonHQuickInterface.desktopSync.syncProgress
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           TyphoonHQuickInterface.desktopSync.syncMessage
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    Row {
+                        spacing:        ScreenTools.defaultFontPixelWidth * 2
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCButton {
+                            text:           !TyphoonHQuickInterface.desktopSync.sendingFiles ? qsTr("Start") : qsTr("Cancel")
+                            width:          ScreenTools.defaultFontPixelWidth  * 16
+                            height:         ScreenTools.defaultFontPixelHeight * 2
+                            enabled:        !TyphoonHQuickInterface.desktopSync.syncDone
+                            onClicked: {
+                                if(TyphoonHQuickInterface.desktopSync.sendingFiles) {
+                                    TyphoonHQuickInterface.desktopSync.cancelSync()
+                                } else {
+                                    TyphoonHQuickInterface.desktopSync.uploadAllMissions()
+                                }
+                            }
+                        }
+                        QGCButton {
+                            text:           qsTr("Close")
+                            width:          ScreenTools.defaultFontPixelWidth  * 16
+                            enabled:        !TyphoonHQuickInterface.desktopSync.sendingFiles
+                            height:         ScreenTools.defaultFontPixelHeight * 2
+                            onClicked: {
+                                rootLoader.sourceComponent = null
+                                mainWindow.enableToolbar()
+                            }
+                        }
+                    }
+                }
+            }
+            Component.onCompleted: {
+                TyphoonHQuickInterface.desktopSync.initSync()
+                rootLoader.width  = syncFilesDialogItem.width
+                rootLoader.height = syncFilesDialogItem.height
+                mainWindow.disableToolbar()
             }
         }
     }

@@ -12,25 +12,25 @@
 #include "Vehicle.h"
 
 #include <QQmlListProperty>
-#include <QDomDocument>
-#include <QJsonDocument>
 
 class YExportFiles;
 #if defined(__androidx86__)
 class TyphoonHM4Interface;
 #endif
 #if defined(__planner__)
-class PlanMasterController;
-class YuneecRPCPlannerSide;
+class QGCSyncFilesDesktop;
 #else
-class YuneecRPCST16Side;
-class QRemoteObjectHost;
+class QGCSyncFilesMobile;
 #endif
 
 class TyphoonHQuickInterface;
 class QUdpSocket;
 
-#define YUNEEC_VIDEO_EXTENSION ".mkv"
+#define YUNEEC_VIDEO_EXTENSION  ".mkv"
+
+#define QGC_UDP_BROADCAST_PORT  14549
+#define QGC_RPC_PORT            14548
+#define QGC_MOBILE_NAME         "ST16S_"    //-- Needs to go to AppSettings
 
 //-----------------------------------------------------------------------------
 // Vehicle List
@@ -193,12 +193,9 @@ public:
     Q_PROPERTY(bool             isDefaultPwd    READ    isDefaultPwd        NOTIFY isDefaultPwdChanged)
     Q_PROPERTY(bool             desktopPlanner  READ    desktopPlanner      CONSTANT)
 #if defined(__planner__)
-    //-- Upload mission to ST16
-    Q_PROPERTY(QStringList      clientList      READ    clientList              NOTIFY clientListChanged)
-    Q_PROPERTY(bool             clientReady     READ    clientReady             NOTIFY clientReadyChanged)
-    Q_PROPERTY(QString          currentClient   READ    currentClient           WRITE  setCurrentClient     NOTIFY currentClientChanged)
+    Q_PROPERTY(QGCSyncFilesDesktop* desktopSync READ    desktopSync         NOTIFY desktopSyncChanged)
 #else
-    Q_PROPERTY(QString          macAddress      READ    macAddress              NOTIFY macAddressChanged)
+    Q_PROPERTY(QGCSyncFilesMobile* mobileSync   READ    mobileSync          NOTIFY mobileSyncChanged)
 #endif
     Q_PROPERTY(bool             firstRun            READ    firstRun            WRITE   setFirstRun         NOTIFY  firstRunChanged)
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
@@ -267,10 +264,6 @@ public:
     Q_INVOKABLE bool checkForUpdate     ();
     Q_INVOKABLE void updateSystemImage  ();
 
-#if defined(__planner__)
-    Q_INVOKABLE void uploadMission      (QString name, PlanMasterController* controller);
-#endif
-
     M4State     m4State             ();
     QString     m4StateStr          ();
     QString     connectedSSID       ();
@@ -309,9 +302,10 @@ public:
     bool        firstRun            ();
 #if defined (__planner__)
     bool        desktopPlanner      () { return true; }
+    QGCSyncFilesDesktop* desktopSync() { return _desktopSync; }
 #else
     bool        desktopPlanner      () { return false; }
-    QString     macAddress          () { return _macAddress; }
+    QGCSyncFilesMobile* mobileSync  () { return _mobileSync; }
 #endif
 #if defined(__androidx86__)
     void        init                (TyphoonHM4Interface* pHandler);
@@ -346,15 +340,6 @@ public:
 
     bool        calibrationComplete ();
     bool        thermalImagePresent ();
-
-#if defined(__planner__)
-    QStringList clientList          () { return _st16ClientsNames; }
-    QString     currentClient       () { return _currentClient; }
-    void        setCurrentClient    (QString client) { _currentClient = client; emit currentClientChanged(); }
-    bool        clientReady         ();
-    Q_INVOKABLE bool connectToNode  (QString name);
-    Q_INVOKABLE void disconnectNode ();
-#endif
 
     QString     updateError         () { return _updateError; }
     int         updateProgress      () { return _updateProgress; }
@@ -432,11 +417,9 @@ signals:
     void    firstRunChanged             ();
     void    newPasswordSetChanged       ();
 #if defined(__planner__)
-    void    clientListChanged           ();
-    void    clientReadyChanged          ();
-    void    currentClientChanged        ();
+    void    desktopSyncChanged          ();
 #else
-    void    macAddressChanged           ();
+    void    mobileSyncChanged           ();
 #endif
 
 private slots:
@@ -473,14 +456,12 @@ private slots:
     void    _camerasChanged             ();
     void    _internetUpdated            ();
     void    _exportCompleted            ();
-    void    _copyCompleted              (quint32 totalCount, quint32 curCount);
+    void    _copyProgress               (quint32 totalCount, quint32 curCount);
     void    _exportMessage              (QString message);
     void    _restart                    ();
     void    _imageFileChanged           ();
     void    _setWiFiPassword            ();
     void    _isVideoRecordingChanged    ();
-    void    _broadcastPresence          ();
-    void    _readUDPBytes               ();
 
 private:
     void    _saveWifiConfigurations     ();
@@ -491,7 +472,6 @@ private:
     void                    _distanceSensor     (int minDist, int maxDist, int curDist);
     TyphoonSSIDItem*        _findSsid           (QString ssid, int rssi);
     void                    _clearSSids         ();
-    void                    _initUDPListener    ();
 
 private:
 #if defined(__androidx86__)
@@ -509,7 +489,6 @@ private:
     QTimer                  _scanTimer;
     QTimer                  _flightTimer;
     QTimer                  _powerTimer;
-    QTimer                  _broadcastTimer;
     QTime                   _flightTime;
     bool                    _scanEnabled;
     bool                    _scanningWiFi;
@@ -535,16 +514,10 @@ private:
     bool                    _firstRun;
     bool                    _passwordSet;       //-- Was the password set within this session?
     bool                    _newPasswordSet;    //-- Password changed
-    QUdpSocket*             _udpSocket;
 #if defined(__planner__)
-    QStringList             _st16ClientsNames;
-    QString                 _currentClient;
-    QVector<QUrl>           _st16Clients;
-    YuneecRPCPlannerSide*   _remoteNode;
+    QGCSyncFilesDesktop*    _desktopSync;
 #else
-    QString                 _macAddress;
-    YuneecRPCST16Side*      _remoteInstance;
-    QRemoteObjectHost*      _remoteObject;
+    QGCSyncFilesMobile*     _mobileSync;
 #endif
 
 };
