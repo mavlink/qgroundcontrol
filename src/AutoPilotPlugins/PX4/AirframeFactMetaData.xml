@@ -589,15 +589,6 @@
       <output name="MAIN4">throttle</output>
     </airframe>
   </airframe_group>
-  <airframe_group image="AirframeUnknown" name="custom">
-    <airframe id="20000" maintainer="Julian Oes &lt;julian@oes.ch&gt;&#10;This startup can be used on Pixhawk/Pixfalcon/Pixracer for the&#10;passthrough of RC input and PWM output." name="Passthrough mode for Snapdragon">
-      <class>Tool</class>
-      <maintainer>Julian Oes &lt;julian@oes.ch&gt;
-This startup can be used on Pixhawk/Pixfalcon/Pixracer for the
-passthrough of RC input and PWM output.</maintainer>
-      <type>custom</type>
-    </airframe>
-  </airframe_group>
   <airframe_group image="VTOLPlane" name="Standard VTOL">
     <airframe id="13000" maintainer="" name="Generic Quadplane VTOL">
       <class>VTOL</class>
