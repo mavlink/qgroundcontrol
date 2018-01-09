@@ -111,13 +111,9 @@ QGCSyncFilesDesktop::cancelSync()
 {
     _message(QString(tr("Canceling...")));
     _cancel = true;
+    emit canceledChanged();
     if(!_remoteObject.isNull()) {
         _remoteObject->setCancel(true);
-    }
-    //-- If sync thread is not running, clean things up from here
-    if(!isRunning()) {
-        _completed();
-        _message(QString(tr("Operation Canceled")));
     }
 }
 
@@ -212,6 +208,8 @@ QGCSyncFilesDesktop::initSync()
     _sendingFiles   = false;
     _syncDone       = false;
     _syncProgress   = 0;
+    _cancel         = false;
+    emit canceledChanged();
     emit sendingFilesChanged();
     emit syncDoneChanged();
     emit syncMessageChanged();
@@ -234,6 +232,7 @@ QGCSyncFilesDesktop::initLogFetch()
         QGCFileListItem* item = new QGCFileListItem(&_logController, logEntry.name(), logEntry.size());
         _logController.appendFileItem(item);
     }
+    std::sort(_logController.fileListV().begin(), _logController.fileListV().end(), [](QGCFileListItem* a, QGCFileListItem* b) { return a->fileName() > b->fileName(); });
     emit _logController.fileListChanged();
 }
 
@@ -453,7 +452,6 @@ QGCSyncFilesDesktop::_doSync()
         emit completed();
         return false;
     }
-    _cancel = false;
     this->start(QThread::NormalPriority);
     return true;
 }
@@ -634,7 +632,9 @@ QGCSyncFilesDesktop::_sendLogFragment(QGCLogFragment fragment)
     if(!_currentLog.isOpen()) {
        _currentLog.setFileName(logFile);
        qCDebug(QGCSyncFiles) << "Receiving:" << logFile;
-       _message(QString(tr("Receiving %1")).arg(fragment.name()));
+       if(!_cancel) {
+           _message(QString(tr("Receiving %1")).arg(fragment.name()));
+       }
        if (_currentLog.open(QIODevice::WriteOnly)) {
            _curFile++;
            _currentLog.write(fragment.data());
@@ -645,14 +645,14 @@ QGCSyncFilesDesktop::_sendLogFragment(QGCLogFragment fragment)
        }
     }
     //-- Check for end of sync
-    qDebug() << _totalFiles;
-    qDebug() << _curFile;
-    qDebug() << fragment.total();
-    qDebug() << fragment.current();
     if(_totalFiles <= _curFile && fragment.total() <= fragment.current()) {
         _currentLog.close();
         _setSyncProgress(1, 1);
         _completed();
-        _message(QString(tr("%1 files received")).arg(_totalFiles));
+        if(!_cancel) {
+            _message(QString(tr("%1 files received")).arg(_totalFiles));
+        } else {
+            _message(QString(tr("Operation Canceled")));
+        }
     }
 }

@@ -31,7 +31,7 @@ QGCView {
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property int    _clientCount:       TyphoonHQuickInterface.desktopSync.remoteList.length
-    property real   _buttonWidth:       ScreenTools.defaultFontPixelWidth * 16
+    property real   _buttonWidth:       ScreenTools.defaultFontPixelWidth * 20
     property real   _gridElemWidth:     ScreenTools.defaultFontPixelWidth * 20
     property string _currentNode:       _clientCount && remoteCombo.currentIndex >= 0 && remoteCombo.currentIndex < _clientCount ? TyphoonHQuickInterface.desktopSync.remoteList[remoteCombo.currentIndex] : ""
     property string _dialogTitle:       ""
@@ -67,29 +67,43 @@ QGCView {
             visible:        !_activeVehicle && !_clientCount
             anchors.centerIn: parent
         }
-        Column {
-            spacing:        ScreenTools.defaultFontPixelHeight
+        Rectangle {
+            id:             logRect
+            width:          connectCol.width  + (ScreenTools.defaultFontPixelWidth  * 16)
+            height:         connectCol.height + (ScreenTools.defaultFontPixelHeight * 8)
             visible:        !_activeVehicle && _clientCount && !TyphoonHQuickInterface.desktopSync.remoteReady
+            color:          qgcPal.alertBackground
+            border.color:   qgcPal.alertBorder
+            border.width:   2
+            radius:         4
             anchors.centerIn: parent
-            QGCLabel {
-                text:       qsTr("Select Remote")
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-            QGCComboBox {
-                id:             remoteCombo
-                model:          TyphoonHQuickInterface.desktopSync.remoteList
-                width:          _buttonWidth
-                currentIndex:   -1
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-            QGCButton {
-                text:           qsTr("Connect")
-                width:          _buttonWidth
-                primary:        true
-                enabled:        remoteCombo.currentIndex >= 0 && remoteCombo.currentIndex < _clientCount
-                anchors.horizontalCenter: parent.horizontalCenter
-                onClicked: {
-                    TyphoonHQuickInterface.desktopSync.connectToRemote(_currentNode)
+            Column {
+                id:             connectCol
+                spacing:        ScreenTools.defaultFontPixelHeight
+                anchors.centerIn: parent
+                QGCLabel {
+                    text:           qsTr("Select Remote")
+                    color:          qgcPal.alertText
+                    font.family:    ScreenTools.demiboldFontFamily
+                    font.pointSize: ScreenTools.mediumFontPointSize
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                QGCComboBox {
+                    id:             remoteCombo
+                    model:          TyphoonHQuickInterface.desktopSync.remoteList
+                    width:          _buttonWidth
+                    currentIndex:   -1
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                QGCButton {
+                    text:           qsTr("Connect")
+                    width:          _buttonWidth
+                    primary:        true
+                    enabled:        remoteCombo.currentIndex >= 0 && remoteCombo.currentIndex < _clientCount
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    onClicked: {
+                        TyphoonHQuickInterface.desktopSync.connectToRemote(_currentNode)
+                    }
                 }
             }
         }
@@ -295,7 +309,7 @@ QGCView {
                             text:           !TyphoonHQuickInterface.desktopSync.sendingFiles ? qsTr("Start") : qsTr("Cancel")
                             width:          ScreenTools.defaultFontPixelWidth  * 16
                             height:         ScreenTools.defaultFontPixelHeight * 2
-                            enabled:        !TyphoonHQuickInterface.desktopSync.syncDone
+                            enabled:        !TyphoonHQuickInterface.desktopSync.syncDone && !TyphoonHQuickInterface.desktopSync.canceled
                             onClicked: {
                                 if(TyphoonHQuickInterface.desktopSync.sendingFiles) {
                                     TyphoonHQuickInterface.desktopSync.cancelSync()
@@ -309,7 +323,7 @@ QGCView {
                             }
                         }
                         QGCButton {
-                            text:           TyphoonHQuickInterface.desktopSync.syncDone ? qsTr("Close") : qsTr("Cancel")
+                            text:           qsTr("Close")
                             width:          ScreenTools.defaultFontPixelWidth  * 16
                             enabled:        !TyphoonHQuickInterface.desktopSync.sendingFiles
                             height:         ScreenTools.defaultFontPixelHeight * 2
@@ -463,7 +477,7 @@ QGCView {
                             text:       !TyphoonHQuickInterface.desktopSync.sendingFiles ? qsTr("Start") : qsTr("Cancel")
                             width:      ScreenTools.defaultFontPixelWidth  * 16
                             height:     ScreenTools.defaultFontPixelHeight * 2
-                            enabled:    TyphoonHQuickInterface.desktopSync.logController.selectedCount > 0
+                            enabled:    TyphoonHQuickInterface.desktopSync.logController.selectedCount > 0 && !TyphoonHQuickInterface.desktopSync.canceled
                             onClicked: {
                                 if(TyphoonHQuickInterface.desktopSync.sendingFiles) {
                                     TyphoonHQuickInterface.desktopSync.cancelSync()

@@ -1,153 +1,75 @@
 /*!
- *   @brief Typhoon H QGCCorePlugin Declaration
+ *   @brief Desktop/Mobile RPC
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
 #pragma once
 
-#include "QGCFileListController.h"
+#include <QObject>
+#include <QtRemoteObjects>
 #include "QGCLoggingCategory.h"
 
-#include <QtRemoteObjects>
-#include <QThread>
-
-//-- This is built at compile time from QGCRemote.rep (full of unused variable warnings)
-#include "rep_QGCRemote_replica.h"
+//-- This is built at compile time from QGCRemote.rep
+#include "rep_QGCRemote_source.h"
 
 Q_DECLARE_LOGGING_CATEGORY(QGCSyncFiles)
 
-class PlanMasterController;
+class QGCSyncFilesMobile;
 
 //-----------------------------------------------------------------------------
-class QGCSyncFilesDesktop : public QThread
+class QGCLogUploadWorker : public QObject
 {
     Q_OBJECT
 public:
-    QGCSyncFilesDesktop                 (QObject* parent);
-    ~QGCSyncFilesDesktop                ();
-
-    Q_PROPERTY(QStringList          remoteList      READ    remoteList      NOTIFY remoteListChanged)
-    Q_PROPERTY(bool                 remoteReady     READ    remoteReady     NOTIFY remoteReadyChanged)
-    Q_PROPERTY(QString              currentRemote   READ    currentRemote   WRITE  setCurrentRemote     NOTIFY currentRemoteChanged)
-    Q_PROPERTY(bool                 sendingFiles    READ    sendingFiles    NOTIFY sendingFilesChanged)
-    Q_PROPERTY(bool                 syncDone        READ    syncDone        NOTIFY syncDoneChanged)
-    Q_PROPERTY(QString              syncMessage     READ    syncMessage     NOTIFY syncMessageChanged)
-    Q_PROPERTY(int                  syncProgress    READ    syncProgress    NOTIFY syncProgressChanged)
-    Q_PROPERTY(int                  fileProgress    READ    fileProgress    NOTIFY fileProgressChanged)
-    Q_PROPERTY(QGCFileListController* logController READ    logController   CONSTANT)
-
-    //-- Connect to remote node
-    Q_INVOKABLE bool connectToRemote    (QString name);
-    //-- Disconnect remote node
-    Q_INVOKABLE void disconnectRemote   ();
-    //-- Init sync state
-    Q_INVOKABLE void initSync           ();
-    //-- Upload current mission (Plan View)
-    Q_INVOKABLE void uploadMission      (QString name, PlanMasterController* controller);
-    //-- Upload all local mission files
-    Q_INVOKABLE void uploadAllMissions  ();
-    //-- Cancel sync thread
-    Q_INVOKABLE void cancelSync         ();
-    //-- Download all remote mission files
-    Q_INVOKABLE void downloadAllMissions();
-    //-- Download selected logs
-    Q_INVOKABLE void downloadSelectedLogs(QString path);
-    //-- Init log fetch state
-    Q_INVOKABLE void initLogFetch       ();
-
-    QStringList remoteList              () { return _remoteNames; }
-    bool        remoteReady             ();
-    QString     currentRemote           () { return _currentRemote; }
-    void        setCurrentRemote        (QString remote) { _currentRemote = remote; emit currentRemoteChanged(); }
-    bool        sendingFiles            () { return _sendingFiles; }
-    bool        syncDone                () { return _syncDone; }
-    QString     syncMessage             () { return _syncMessage; }
-    int         syncProgress            () { return _syncProgress; }
-    int         fileProgress            () { return _fileProgress; }
-
-    QGCFileListController* logController() { return &_logController; }
-
-public:
-    //-------------------------------------------------------------------------
-    //-- From QGCRemote
-
-    enum SyncType {
-        SyncClone = 0,
-        SyncReplace = 1,
-        SyncAppend = 2,
-    };
-
-    Q_ENUM(SyncType)
-
-    Q_PROPERTY(SyncType             syncType        READ    syncType        WRITE setSyncType NOTIFY syncTypeChanged)
-
-    SyncType    syncType                ();
-    void        setSyncType             (SyncType type);
-
-protected:
-    void    run                         ();
-
+    QGCLogUploadWorker(QGCSyncFilesMobile* parent) : _pSync(parent) {}
+public slots:
+    void doLogSync      (QStringList logsToSend);
 signals:
-    //-- To QML
-    void    remoteListChanged           ();
-    void    remoteReadyChanged          ();
-    void    currentRemoteChanged        ();
-    void    sendingFilesChanged         ();
-    void    syncDoneChanged             ();
-    void    syncMessageChanged          ();
-    void    syncProgressChanged         ();
-    void    fileProgressChanged         ();
-    void    syncTypeChanged             ();
-    //-- From Thread
-    void    progress                    (quint32 totalCount, quint32 curCount);
-    void    completed                   ();
-    void    message                     (QString errorMessage);
-    void    sendMission                 (QString name, QByteArray mission);
-    void    selectedCountChanged        ();
+    void sendLogFragment(QGCLogFragment fragment);
+    void done           ();
+private:
+    QGCSyncFilesMobile* _pSync;
+};
+
+//-----------------------------------------------------------------------------
+class QGCSyncFilesMobile : public QGCRemoteSimpleSource
+{
+    Q_OBJECT
+public:
+    QGCSyncFilesMobile                  (QObject* parent = NULL);
+    virtual ~QGCSyncFilesMobile         ();
+
+    Q_PROPERTY(QString      macAddress      READ    macAddress      NOTIFY macAddressChanged)
+
+    QString macAddress                  () { return _macAddress; }
+
+public slots:
+    void    sendMission                 (QGCNewMission mission);
+    void    pruneExtraMissions          (QStringList allMissions);
+    void    requestMissions             (QStringList missions);
+    void    requestLogs                 (QStringList logs);
 
 private slots:
-    void    _stateChanged               (QRemoteObjectReplica::State state, QRemoteObjectReplica::State oldState);
-    void    _nodeError                  (QRemoteObjectNode::ErrorCode errorCode);
-    void    _readUDPBytes               ();
-    void    _remoteMaintenance          ();
-    //-- From Thread
-    void    _setSyncProgress            (quint32 total, quint32 current);
-    void    _setFileProgress            (quint32 total, quint32 current);
-    void    _message                    (QString message);
-    void    _completed                  ();
-    bool    _sendMission                (QString name, QByteArray mission);
-    void    _syncTypeChanged            (QGCRemoteReplica::SyncType syncType);
-    void    _receiveMission             (QGCNewMission mission);
+    void    _broadcastPresence          ();
     void    _sendLogFragment            (QGCLogFragment fragment);
-    void    _delayedDisconnect          ();
+    void    _canceled                   (bool cancel);
+    void    _workerDone                 ();
+
+signals:
+    void    macAddressChanged           ();
+    void    doLogSync                   (QStringList logsToSend);
+    void    cancelFromDesktop           ();
 
 private:
-    void    _initUDPListener            ();
-    bool    _doSync                     ();
     bool    _processIncomingMission     (QString name, int count, QString& missionFile);
+    void    _updateMissionList          ();
+    void    _updateLogEntries           ();
 
 private:
-    QGCFileListController               _logController;
-    QUdpSocket*                         _udpSocket;
-    QSharedPointer<QGCRemoteReplica>    _remoteObject;
-    QRemoteObjectNode*                  _remoteNode;
-    QStringList                         _remoteNames;
-    QString                             _currentRemote;
-    QMap<QString, QUrl>                 _remoteURLs;
-    QMap<QString, QTime>                _remoteTimer;
-    bool                                _cancel;
-    quint32                             _totalFiles;
-    quint32                             _curFile;
-    quint32                             _syncProgress;
-    quint32                             _fileProgress;
-    QString                             _syncMessage;
-    bool                                _sendingFiles;
-    bool                                _syncDone;
-    bool                                _disconnecting;
-    bool                                _connecting;
-    QStringList                         _missions;
-    QTimer                              _remoteMaintenanceTimer;
-    //-- Fetch Logs
-    QString                             _logPath;
-    QFile                               _currentLog;
+    QTimer                  _broadcastTimer;
+    QString                 _macAddress;
+    QUdpSocket*             _udpSocket;
+    QRemoteObjectHost*      _remoteObject;
+    QThread                 _logThread;
+    QGCLogUploadWorker*     _worker;
 };

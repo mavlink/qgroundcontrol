@@ -21,9 +21,11 @@ QGCSyncFilesMobile::QGCSyncFilesMobile(QObject* parent)
     : QGCRemoteSimpleSource(parent)
     , _udpSocket(NULL)
     , _remoteObject(NULL)
+    , _worker(NULL)
 {
     qmlRegisterUncreatableType<QGCSyncFilesMobile>("QGroundControl", 1, 0, "QGCSyncFilesMobile", "Reference only");
     connect(&_broadcastTimer, &QTimer::timeout, this, &QGCSyncFilesMobile::_broadcastPresence);
+    connect(this, &QGCRemoteSimpleSource::cancelChanged, this, &QGCSyncFilesMobile::_canceled);
     _broadcastTimer.setSingleShot(false);
     //-- Start UDP broadcast
     _broadcastTimer.start(5000);
@@ -168,21 +170,41 @@ QGCSyncFilesMobile::requestLogs(QStringList logs)
             qCDebug(QGCSyncFiles) << "Request" << fi.filePath();
         }
     }
-    if(!logsToSend.size()) {
+    //-- If nothing to send or worker thread is still up for some reason, bail
+    if(!logsToSend.size() || _worker) {
         qCDebug(QGCSyncFiles) << "Nothing to send";
         QGCLogFragment logFrag(QString(), 0, 0, QByteArray());
         _sendLogFragment(logFrag);
     }
     //-- Start Worker Thread
     setCancel(false);
-    QGCLogUploadWorker *worker = new QGCLogUploadWorker;
-    worker->moveToThread(&_logThread);
-    connect(this, &QGCSyncFilesMobile::doLogSync, worker, &QGCLogUploadWorker::doLogSync);
-    connect(this, &QGCSyncFilesMobile::cancelChanged, worker, &QGCLogUploadWorker::cancel);
-    connect(worker, &QGCLogUploadWorker::sendLogFragment, this, &QGCSyncFilesMobile::_sendLogFragment);
+    _worker = new QGCLogUploadWorker(this);
+    _worker->moveToThread(&_logThread);
+    connect(this, &QGCSyncFilesMobile::doLogSync, _worker, &QGCLogUploadWorker::doLogSync);
+    connect(_worker, &QGCLogUploadWorker::sendLogFragment, this, &QGCSyncFilesMobile::_sendLogFragment);
+    connect(_worker, &QGCLogUploadWorker::done, this, &QGCSyncFilesMobile::_workerDone);
     qCDebug(QGCSyncFiles) << "Starting log upload thread";
     _logThread.start();
     emit doLogSync(logsToSend);
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesMobile::_workerDone()
+{
+    _worker->deleteLater();
+    _worker = NULL;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesMobile::_canceled(bool cancel)
+{
+    //-- For some stupid reason, connecting the cancelChanged signal directly
+    //   to the worker thread ain't working.
+    if(cancel) {
+        qDebug() << "Canceled from Desktop";
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -202,7 +224,7 @@ QGCLogUploadWorker::doLogSync(QStringList logsToSend)
 {
     qCDebug(QGCSyncFiles) << "Log upload thread started with" << logsToSend.size() << "logs to upload";
     foreach(QString logFile, logsToSend) {
-        if(_cancel) break;
+        if(_pSync->cancel()) break;
         qCDebug(QGCSyncFiles) << "Sending log:" << logFile;
         QFileInfo fi(logFile);
         QFile f(logFile);
@@ -215,14 +237,13 @@ QGCLogUploadWorker::doLogSync(QStringList logsToSend)
             quint64 sofar = 0;
             quint64 total = fi.size();
             while(true) {
-                if(_cancel) break;
+                if(_pSync->cancel()) break;
                 //-- Send in 1M chuncks
                 QByteArray bytes = f.read(1024 * 1024);
                 if(bytes.size() != 0) {
                     sofar += bytes.size();
                     QGCLogFragment logFrag(fi.fileName(), sofar, total, bytes);
                     emit sendLogFragment(logFrag);
-                    qCDebug(QGCSyncFiles) << "Sent:" << sofar << "bytes";
                 }
                 if(sofar >= total || bytes.size() == 0) {
                     break;
@@ -230,8 +251,11 @@ QGCLogUploadWorker::doLogSync(QStringList logsToSend)
             }
         }
     }
+    if(_pSync->cancel()) {
+        qCDebug(QGCSyncFiles) << "Thread canceled";
+    }
     //-- We're done
-    this->deleteLater();
+    emit done();
 }
 
 //-----------------------------------------------------------------------------
