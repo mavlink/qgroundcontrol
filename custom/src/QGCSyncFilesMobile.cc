@@ -143,21 +143,28 @@ QGCSyncFilesMobile::requestMissions(QStringList missions)
 void
 QGCSyncFilesMobile::requestLogs(QStringList logs)
 {
+    qCDebug(QGCSyncFiles) << "Log Request";
     QStringList logsToSend;
-    QString logPath = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
+    QString logPath = qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath();
     QDirIterator it(logPath, QStringList() << "*.tlog", QDir::Files, QDirIterator::NoIteratorFlags);
     while(it.hasNext()) {
         QFileInfo fi(it.next());
         if(logs.contains(fi.fileName())) {
             logsToSend << fi.filePath();
+            qCDebug(QGCSyncFiles) << "Request" << fi.filePath();
         }
+    }
+    if(!logsToSend.size()) {
+        qCDebug(QGCSyncFiles) << "Nothing to send";
+        QGCLogFragment logFrag(QString(), 0, 0, QByteArray());
+        _sendLogFragment(logFrag);
     }
     //-- Start Worker Thread
     QGCLogUploadWorker *worker = new QGCLogUploadWorker;
     worker->moveToThread(&_logThread);
-    connect(&_logThread, &QThread::finished, worker, &QObject::deleteLater);
     connect(this, &QGCSyncFilesMobile::doLogSync, worker, &QGCLogUploadWorker::doLogSync);
     connect(worker, &QGCLogUploadWorker::sendLogFragment, this, &QGCSyncFilesMobile::_sendLogFragment);
+    qCDebug(QGCSyncFiles) << "Starting log upload thread";
     _logThread.start();
     emit doLogSync(logsToSend);
 }
@@ -175,6 +182,7 @@ QGCSyncFilesMobile::_sendLogFragment(QGCLogFragment fragment)
 void
 QGCLogUploadWorker::doLogSync(QStringList logsToSend)
 {
+    qCDebug(QGCSyncFiles) << "Log upload thread started with" << logsToSend.size() << "logs to upload";
     foreach(QString logFile, logsToSend) {
         qCDebug(QGCSyncFiles) << "Sending log:" << logFile;
         QFileInfo fi(logFile);
@@ -202,6 +210,8 @@ QGCLogUploadWorker::doLogSync(QStringList logsToSend)
             }
         }
     }
+    //-- We're done
+    this->deleteLater();
 }
 
 //-----------------------------------------------------------------------------
@@ -276,7 +286,7 @@ QGCSyncFilesMobile::_updateLogEntries()
     QDirIterator it(logPath, QStringList() << "*.tlog", QDir::Files, QDirIterator::NoIteratorFlags);
     while(it.hasNext()) {
         QFileInfo fi(it.next());
-        QGCRemoteLogEntry l(fi.baseName(), fi.size());
+        QGCRemoteLogEntry l(fi.fileName(), fi.size());
         logs.append(l);
     }
     setLogEntries(logs);

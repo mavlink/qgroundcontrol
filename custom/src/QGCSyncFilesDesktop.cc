@@ -109,6 +109,14 @@ QGCSyncFilesDesktop::cancelSync()
 {
     _message(QString(tr("Canceling...")));
     _cancel = true;
+    if(!_remoteObject.isNull()) {
+        _remoteObject->setCancel(true);
+    }
+    //-- If sync thread is not running, clean things up from here
+    if(!isRunning()) {
+        _completed();
+        _message(QString(tr("Operation Canceled")));
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -137,7 +145,6 @@ QGCSyncFilesDesktop::connectToRemote(QString name)
         _currentRemote = name;
         emit currentRemoteChanged();
         emit remoteReadyChanged();
-        _remoteObject->setConnectedToRemote(true);
     }
     return false;
 }
@@ -147,9 +154,12 @@ void
 QGCSyncFilesDesktop::disconnectRemote()
 {
     if(_remoteNode) {
-        delete _remoteNode;
+        _remoteNode->deleteLater();
         _remoteNode = NULL;
         emit remoteReadyChanged();
+        if(_currentLog.isOpen()) {
+            _currentLog.close();
+        }
     }
 }
 
@@ -180,9 +190,11 @@ QGCSyncFilesDesktop::initSync()
     _syncMessage.clear();
     _sendingFiles   = false;
     _syncDone       = false;
+    _syncProgress   = 0;
     emit sendingFilesChanged();
     emit syncDoneChanged();
     emit syncMessageChanged();
+    emit syncProgressChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -191,6 +203,8 @@ QGCSyncFilesDesktop::initLogFetch()
 {
     initSync();
     _logController.clearFileItems();
+    _fileProgress = 0;
+    emit fileProgressChanged();
     if(_currentLog.isOpen()) {
         _currentLog.close();
     }
@@ -340,7 +354,7 @@ QGCSyncFilesDesktop::downloadSelectedLogs(QString path)
     //-- Request logs
     _curFile = 0;
     _totalFiles = requestedLogs.size();
-    qCDebug(QGCSyncFiles) << "Requesting log files";
+    qCDebug(QGCSyncFiles) << "Requesting" <<  requestedLogs.size() << "log files";
     _remoteObject->requestLogs(requestedLogs);
 }
 
@@ -349,7 +363,6 @@ bool
 QGCSyncFilesDesktop::remoteReady()
 {
     bool nodeReady = !_remoteObject.isNull() && _remoteObject->state() == QRemoteObjectReplica::Valid;
-    qCDebug(QGCSyncFiles) << "State:" << nodeReady;
     return nodeReady;
 }
 
@@ -387,10 +400,21 @@ QGCSyncFilesDesktop::_message(QString message)
 
 //-----------------------------------------------------------------------------
 void
-QGCSyncFilesDesktop::_stateChanged(QRemoteObjectReplica::State state, QRemoteObjectReplica::State)
+QGCSyncFilesDesktop::_stateChanged(QRemoteObjectReplica::State state, QRemoteObjectReplica::State oldState)
 {
     qCDebug(QGCSyncFiles) << "State changed to" << state;
     emit remoteReadyChanged();
+    if(oldState == QRemoteObjectReplica::Valid && state != QRemoteObjectReplica::Valid) {
+        //-- Remote went kaput
+        if(_remoteTimer.contains(_currentRemote)) {
+            _remoteTimer.remove(_currentRemote);
+            _remoteURLs.remove(_currentRemote);
+            _remoteNames.removeOne(_currentRemote);
+            emit remoteListChanged();
+            _currentRemote.clear();
+            emit currentRemoteChanged();
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -561,6 +585,14 @@ QGCSyncFilesDesktop::_receiveMission(QGCNewMission mission)
 void
 QGCSyncFilesDesktop::_sendLogFragment(QGCLogFragment fragment)
 {
+    //-- Check for error
+    if(fragment.name().isEmpty()) {
+        _currentLog.close();
+        _setSyncProgress(1, 1);
+        _completed();
+        _message(QString(tr("Remote Error")));
+        return;
+    }
     QString logFile = _logPath;
     logFile += fragment.name();
     if(_currentLog.isOpen()) {
@@ -570,7 +602,6 @@ QGCSyncFilesDesktop::_sendLogFragment(QGCLogFragment fragment)
             if(fragment.data().size()) {
                 _currentLog.write(fragment.data());
                 _setFileProgress(fragment.total(), fragment.current());
-                return;
             }
         }
     }
@@ -583,12 +614,15 @@ QGCSyncFilesDesktop::_sendLogFragment(QGCLogFragment fragment)
            _currentLog.write(fragment.data());
            _setSyncProgress(_totalFiles, _curFile);
            _setFileProgress(fragment.total(), fragment.current());
-           return;
        } else {
            qWarning() << "Error creating" << logFile;
        }
     }
     //-- Check for end of sync
+    qDebug() << _totalFiles;
+    qDebug() << _curFile;
+    qDebug() << fragment.total();
+    qDebug() << fragment.current();
     if(_totalFiles <= _curFile && fragment.total() <= fragment.current()) {
         _currentLog.close();
         _setSyncProgress(1, 1);
