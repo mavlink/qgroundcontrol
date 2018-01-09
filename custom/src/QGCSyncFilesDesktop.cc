@@ -22,6 +22,7 @@ static const char* kMissionWildCard  = "*.plan";
 //-----------------------------------------------------------------------------
 QGCSyncFilesDesktop::QGCSyncFilesDesktop(QObject* parent)
     : QThread(parent)
+    , _logController(this)
     , _udpSocket(NULL)
     , _remoteNode(NULL)
     , _cancel(false)
@@ -131,6 +132,7 @@ QGCSyncFilesDesktop::connectToRemote(QString name)
         connect(_remoteObject.data(), &QRemoteObjectReplica::stateChanged, this, &QGCSyncFilesDesktop::_stateChanged);
         connect(_remoteObject.data(), &QGCRemoteReplica::syncTypeChanged,  this, &QGCSyncFilesDesktop::_syncTypeChanged);
         connect(_remoteObject.data(), &QGCRemoteReplica::receiveMission,   this, &QGCSyncFilesDesktop::_receiveMission);
+        connect(_remoteObject.data(), &QGCRemoteReplica::sendLogFragment,  this, &QGCSyncFilesDesktop::_sendLogFragment);
         _currentRemote = name;
         emit currentRemoteChanged();
         emit remoteReadyChanged();
@@ -295,11 +297,25 @@ QGCSyncFilesDesktop::downloadSelectedLogs()
         _completed();
         return;
     }
+    //-- Target Path
+    _logPath = "/tmp/telemetery/";
+    QDir destDir(_logPath);
+    if (!destDir.exists()) {
+        if(!destDir.mkpath(".")) {
+            _message(QString(tr("Error creating destination %1")).arg(_logPath));
+            return;
+        }
+    }
+    //-- Request logs
     QList<QGCRemoteLogEntry> allLogs = _remoteObject->logEntries();
+    QStringList requestedLogs;
+    foreach(QGCRemoteLogEntry logEntry, allLogs) {
+        requestedLogs << logEntry.name();
+    }
     _curFile = 0;
     _totalFiles = allLogs.size();
     qCDebug(QGCSyncFiles) << "Requesting log files";
-    _remoteObject->requestMissions(allLogs);
+    _remoteObject->requestLogs(requestedLogs);
 }
 
 //-----------------------------------------------------------------------------
@@ -497,4 +513,16 @@ QGCSyncFilesDesktop::_receiveMission(QGCNewMission mission)
         _progress(1, 1);
         _completed();
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::_sendLogFragment(QGCLogFragment fragment)
+{
+    QString logFile = _logPath;
+    logFile += fragment.name();
+
+
+
+
 }

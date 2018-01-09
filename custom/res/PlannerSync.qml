@@ -35,6 +35,8 @@ QGCView {
     property string _currentNode:       _clientCount && remoteCombo.currentIndex >= 0 && remoteCombo.currentIndex < _clientCount ? TyphoonHQuickInterface.desktopSync.remoteList[remoteCombo.currentIndex] : ""
     property string _dialogTitle:       ""
     property bool   _sendMission:       true
+    property bool   _connected:         !_activeVehicle && TyphoonHQuickInterface.desktopSync.remoteReady
+    property bool   _hasLogs:           _connected ? TyphoonHQuickInterface.desktopSync.logController.fileList.length > 0 : false
 
     QGCPalette      { id: qgcPal }
 
@@ -84,7 +86,7 @@ QGCView {
         Column {
             anchors.centerIn: parent
             spacing:        ScreenTools.defaultFontPixelHeight
-            visible:        !_activeVehicle && TyphoonHQuickInterface.desktopSync.remoteReady
+            visible:        _connected
             Rectangle {
                 width:  syncGrid.width
                 height: 1
@@ -142,9 +144,11 @@ QGCView {
                 QGCButton {
                     text:               qsTr("Fetch Logs")
                     width:              _gridElemWidth
+                    enabled:            _hasLogs
                     Layout.fillWidth:   true
                     onClicked: {
-
+                        rootLoader.sourceComponent = fecthLogsDialog
+                        mainWindow.disableToolbar()
                     }
                 }
             }
@@ -163,7 +167,7 @@ QGCView {
             }
         }
     }
-    //-- Sync Files (Outgoing)
+    //-- Sync Files
     Component {
         id:             syncFilesDialog
         Item {
@@ -304,6 +308,145 @@ QGCView {
                 TyphoonHQuickInterface.desktopSync.initSync()
                 rootLoader.width  = syncFilesDialogItem.width
                 rootLoader.height = syncFilesDialogItem.height
+                mainWindow.disableToolbar()
+            }
+        }
+    }
+    //-- Fetch Logs
+    Component {
+        id:             fetchLogsDialog
+        Item {
+            id:         fetchLogsDialogItem
+            width:      mainWindow.width
+            height:     mainWindow.height
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+            Rectangle {
+                id:             fetchLogsDialogShadow
+                anchors.fill:   fetchLogsDialogRect
+                radius:         fetchLogsDialogRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       fetchLogsDialogShadow
+                visible:            fetchLogsDialogRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             fetchLogsDialogShadow
+            }
+            Rectangle {
+                id:         fetchLogsDialogRect
+                width:      mainWindow.width    * 0.65
+                height:     fetchLogsCol.height * 1.25
+                radius:     ScreenTools.defaultFontPixelWidth
+                color:      qgcPal.alertBackground
+                border.color: qgcPal.alertBorder
+                border.width: 2
+                anchors.centerIn: parent
+                Column {
+                    id:                 fetchLogsCol
+                    width:              fetchLogsDialogRect.width
+                    spacing:            ScreenTools.defaultFontPixelHeight * 2
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           qsTr("Fetch Telemetry Logs")
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        color:          qgcPal.alertText
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    Row {
+                        spacing:        ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        ListView {
+                            id:             logView
+                            width:          ScreenTools.defaultFontPixelWidth * 20
+                            height:         qgcView.height * 0.5
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            orientation:    ListView.Vertical
+                            model:          TyphoonHQuickInterface.desktopSync.logController.fileList
+                            cacheBuffer:    Math.max(height * 2, 0)
+                            clip:           true
+                            highlightMoveDuration: 250
+                            delegate: Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
+                                property var _fileItem: _hasLogs ? TyphoonHQuickInterface.desktopSync.logController.fileList[index] : null
+                                QGCCheckBox {
+                                    text:       ""
+                                    checked:    _fileItem.selected
+                                    onClicked:  _fileItem.selected = !_fileItem.selected
+                                }
+                                QGCLabel {
+                                    text:       _fileItem.fileName
+                                }
+                                QGCLabel {
+                                    text:       _fileItem.size
+                                }
+                            }
+                        }
+                        Column {
+                            spacing:    ScreenTools.defaultFontPixelHeight
+                            anchors.verticalCenter: parent.verticalCenter
+                            QGCButton {
+                                text:   qsTr("Select All")
+                            }
+                            QGCButton {
+                                text:   qsTr("Select None")
+                            }
+                        }
+                    }
+                    ProgressBar {
+                        width:          parent.width * 0.75
+                        orientation:    Qt.Horizontal
+                        minimumValue:   0
+                        maximumValue:   100
+                        value:          TyphoonHQuickInterface.desktopSync.syncProgress
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           TyphoonHQuickInterface.desktopSync.syncMessage
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    Row {
+                        spacing:        ScreenTools.defaultFontPixelWidth * 2
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCButton {
+                            text:           !TyphoonHQuickInterface.desktopSync.sendingFiles ? qsTr("Start") : qsTr("Cancel")
+                            width:          ScreenTools.defaultFontPixelWidth  * 16
+                            height:         ScreenTools.defaultFontPixelHeight * 2
+                            enabled:        !TyphoonHQuickInterface.desktopSync.syncDone
+                            onClicked: {
+                            }
+                        }
+                        QGCButton {
+                            text:           TyphoonHQuickInterface.desktopSync.syncDone ? qsTr("Close") : qsTr("Cancel")
+                            width:          ScreenTools.defaultFontPixelWidth  * 16
+                            enabled:        !TyphoonHQuickInterface.desktopSync.sendingFiles
+                            height:         ScreenTools.defaultFontPixelHeight * 2
+                            onClicked: {
+                                rootLoader.sourceComponent = null
+                                mainWindow.enableToolbar()
+                            }
+                        }
+                    }
+                }
+            }
+            Component.onCompleted: {
+                TyphoonHQuickInterface.desktopSync.initSync()
+                rootLoader.width  = fetchLogsDialogItem.width
+                rootLoader.height = fetchLogsDialogItem.height
                 mainWindow.disableToolbar()
             }
         }

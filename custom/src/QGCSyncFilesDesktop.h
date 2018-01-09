@@ -5,10 +5,11 @@
 
 #pragma once
 
-#include <QObject>
+#include "QGCFileListController.h"
+#include "QGCLoggingCategory.h"
+
 #include <QtRemoteObjects>
 #include <QThread>
-#include "QGCLoggingCategory.h"
 
 //-- This is built at compile time from QGCRemote.rep (full of unused variable warnings)
 #include "rep_QGCRemote_replica.h"
@@ -32,6 +33,7 @@ public:
     Q_PROPERTY(bool                 syncDone        READ    syncDone        NOTIFY syncDoneChanged)
     Q_PROPERTY(QString              syncMessage     READ    syncMessage     NOTIFY syncMessageChanged)
     Q_PROPERTY(int                  syncProgress    READ    syncProgress    NOTIFY syncProgressChanged)
+    Q_PROPERTY(QGCFileListController* logController READ    logController   CONSTANT)
 
     //-- Connect to remote node
     Q_INVOKABLE bool connectToRemote    (QString name);
@@ -59,6 +61,9 @@ public:
     QString     syncMessage             () { return _syncMessage; }
     int         syncProgress            () { return _syncProgress; }
 
+    QGCFileListController* logController() { return &_logController; }
+
+public:
     //-------------------------------------------------------------------------
     //-- From QGCRemote
 
@@ -93,6 +98,7 @@ signals:
     void    completed                   ();
     void    message                     (QString errorMessage);
     void    sendMission                 (QString name, QByteArray mission);
+    void    selectedCountChanged        ();
 
 private slots:
     void    _stateChanged               (QRemoteObjectReplica::State state, QRemoteObjectReplica::State oldState);
@@ -106,6 +112,7 @@ private slots:
     bool    _sendMission                (QString name, QByteArray mission);
     void    _syncTypeChanged            (QGCRemoteReplica::SyncType syncType);
     void    _receiveMission             (QGCNewMission mission);
+    void    _sendLogFragment            (QGCLogFragment fragment);
 
 private:
     void    _initUDPListener            ();
@@ -113,6 +120,7 @@ private:
     bool    _processIncomingMission     (QString name, int count, QString& missionFile);
 
 private:
+    QGCFileListController               _logController;
     QUdpSocket*                         _udpSocket;
     QSharedPointer<QGCRemoteReplica>    _remoteObject;
     QRemoteObjectNode*                  _remoteNode;
@@ -129,4 +137,7 @@ private:
     bool                                _syncDone;
     QStringList                         _missions;
     QTimer                              _remoteMaintenanceTimer;
+    //-- Fetch Logs
+    QString                             _logPath;
+    QFile                               _currentLog;
 };

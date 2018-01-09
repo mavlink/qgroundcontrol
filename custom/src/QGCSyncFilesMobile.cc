@@ -22,12 +22,14 @@ QGCSyncFilesMobile::QGCSyncFilesMobile(QObject* parent)
     , _udpSocket(NULL)
     , _remoteObject(NULL)
 {
-    connect(&_broadcastTimer,   &QTimer::timeout, this, &QGCSyncFilesMobile::_broadcastPresence);
+    connect(&_broadcastTimer, &QTimer::timeout, this, &QGCSyncFilesMobile::_broadcastPresence);
     _broadcastTimer.setSingleShot(false);
     //-- Start UDP broadcast
     _broadcastTimer.start(5000);
     _updateMissionList();
     _updateLogEntries();
+    //-- TODO: Connect to vehicle and check when it's disarmed. Update log entries.
+    //-- TODO: Need to switch interface when switching WiFi APs
 }
 
 //-----------------------------------------------------------------------------
@@ -186,6 +188,7 @@ QGCLogUploadWorker::doLogSync(QStringList logsToSend)
             quint64 sofar = 0;
             quint64 total = fi.size();
             while(true) {
+                //-- Send in 1M chuncks
                 QByteArray bytes = f.read(1024 * 1024);
                 if(bytes.size() != 0) {
                     sofar += bytes.size();
