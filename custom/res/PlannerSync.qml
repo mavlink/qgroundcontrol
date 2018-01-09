@@ -10,6 +10,7 @@ import QtQuick.Controls.Styles  1.2
 import QtQuick.Dialogs          1.2
 import QtQuick.Layouts          1.2
 import QtGraphicalEffects       1.0
+import Qt.labs.platform         1.0
 
 import QGroundControl                       1.0
 import QGroundControl.Controllers           1.0
@@ -87,6 +88,11 @@ QGCView {
             anchors.centerIn: parent
             spacing:        ScreenTools.defaultFontPixelHeight
             visible:        _connected
+            onVisibleChanged: {
+                if(visible) {
+                    TyphoonHQuickInterface.desktopSync.initLogFetch()
+                }
+            }
             Rectangle {
                 width:  syncGrid.width
                 height: 1
@@ -147,7 +153,7 @@ QGCView {
                     enabled:            _hasLogs
                     Layout.fillWidth:   true
                     onClicked: {
-                        rootLoader.sourceComponent = fecthLogsDialog
+                        rootLoader.sourceComponent = fetchLogsDialog
                         mainWindow.disableToolbar()
                     }
                 }
@@ -306,8 +312,6 @@ QGCView {
             }
             Component.onCompleted: {
                 TyphoonHQuickInterface.desktopSync.initSync()
-                rootLoader.width  = syncFilesDialogItem.width
-                rootLoader.height = syncFilesDialogItem.height
                 mainWindow.disableToolbar()
             }
         }
@@ -343,14 +347,14 @@ QGCView {
                 source:             fetchLogsDialogShadow
             }
             Rectangle {
-                id:         fetchLogsDialogRect
-                width:      mainWindow.width    * 0.65
-                height:     fetchLogsCol.height * 1.25
-                radius:     ScreenTools.defaultFontPixelWidth
-                color:      qgcPal.alertBackground
-                border.color: qgcPal.alertBorder
-                border.width: 2
-                anchors.centerIn: parent
+                id:                 fetchLogsDialogRect
+                width:              ScreenTools.defaultFontPixelWidth * 100
+                height:             fetchLogsCol.height * 1.25
+                radius:             ScreenTools.defaultFontPixelWidth
+                color:              qgcPal.alertBackground
+                border.color:       qgcPal.alertBorder
+                border.width:       2
+                anchors.centerIn:   parent
                 Column {
                     id:                 fetchLogsCol
                     width:              fetchLogsDialogRect.width
@@ -364,12 +368,15 @@ QGCView {
                         color:          qgcPal.alertText
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
-                    Row {
-                        spacing:        ScreenTools.defaultFontPixelWidth
+                    Rectangle {
+                        id:             logRect
+                        color:          qgcPal.window
+                        width:          logView.width  + (ScreenTools.defaultFontPixelWidth * 4)
+                        height:         logView.height + ScreenTools.defaultFontPixelHeight
                         anchors.horizontalCenter: parent.horizontalCenter
                         ListView {
                             id:             logView
-                            width:          ScreenTools.defaultFontPixelWidth * 20
+                            width:          (ScreenTools.defaultFontPixelWidth * (16 * 4)) + (ScreenTools.defaultFontPixelWidth * 8)
                             height:         qgcView.height * 0.5
                             spacing:        ScreenTools.defaultFontPixelWidth
                             orientation:    ListView.Vertical
@@ -377,39 +384,45 @@ QGCView {
                             cacheBuffer:    Math.max(height * 2, 0)
                             clip:           true
                             highlightMoveDuration: 250
+                            anchors.centerIn: parent
                             delegate: Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
+                                anchors.horizontalCenter: parent.horizontalCenter
                                 property var _fileItem: _hasLogs ? TyphoonHQuickInterface.desktopSync.logController.fileList[index] : null
                                 QGCCheckBox {
                                     text:       ""
                                     checked:    _fileItem.selected
                                     onClicked:  _fileItem.selected = !_fileItem.selected
+                                    anchors.verticalCenter: parent.verticalCenter
                                 }
                                 QGCLabel {
                                     text:       _fileItem.fileName
+                                    width:      logView.width * 0.55
+                                    anchors.verticalCenter: parent.verticalCenter
                                 }
                                 QGCLabel {
-                                    text:       _fileItem.size
+                                    text:       _fileItem.sizeStr
+                                    width:      logView.width * 0.25
+                                    horizontalAlignment: Text.AlignRight
+                                    anchors.verticalCenter: parent.verticalCenter
                                 }
-                            }
-                        }
-                        Column {
-                            spacing:    ScreenTools.defaultFontPixelHeight
-                            anchors.verticalCenter: parent.verticalCenter
-                            QGCButton {
-                                text:   qsTr("Select All")
-                            }
-                            QGCButton {
-                                text:   qsTr("Select None")
                             }
                         }
                     }
                     ProgressBar {
-                        width:          parent.width * 0.75
+                        width:          logRect.width
                         orientation:    Qt.Horizontal
                         minimumValue:   0
                         maximumValue:   100
                         value:          TyphoonHQuickInterface.desktopSync.syncProgress
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    ProgressBar {
+                        width:          logRect.width
+                        orientation:    Qt.Horizontal
+                        minimumValue:   0
+                        maximumValue:   100
+                        value:          TyphoonHQuickInterface.desktopSync.fileProgress
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     QGCLabel {
@@ -423,11 +436,26 @@ QGCView {
                         spacing:        ScreenTools.defaultFontPixelWidth * 2
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCButton {
+                            text:   qsTr("Select All")
+                            width:  ScreenTools.defaultFontPixelWidth * 16
+                            onClicked: TyphoonHQuickInterface.desktopSync.logController.selectAllFiles(true)
+                        }
+                        QGCButton {
+                            text:   qsTr("Select None")
+                            width:  ScreenTools.defaultFontPixelWidth * 16
+                            onClicked: TyphoonHQuickInterface.desktopSync.logController.selectAllFiles(false)
+                        }
+                        QGCButton {
                             text:           !TyphoonHQuickInterface.desktopSync.sendingFiles ? qsTr("Start") : qsTr("Cancel")
                             width:          ScreenTools.defaultFontPixelWidth  * 16
                             height:         ScreenTools.defaultFontPixelHeight * 2
-                            enabled:        !TyphoonHQuickInterface.desktopSync.syncDone
+                            enabled:        TyphoonHQuickInterface.desktopSync.logController.selectedCount > 0
                             onClicked: {
+                                if(TyphoonHQuickInterface.desktopSync.sendingFiles) {
+                                    // Cancel
+                                } else {
+                                    logDownloadFileDialog.open()
+                                }
                             }
                         }
                         QGCButton {
@@ -443,10 +471,16 @@ QGCView {
                     }
                 }
             }
+            FolderDialog {
+                id:             logDownloadFileDialog
+                folder:         QGroundControl.settingsManager.appSettings.telemetrySavePath
+                onAccepted: {
+                    TyphoonHQuickInterface.desktopSync.downloadSelectedLogs(folder)
+                    close()
+                }
+            }
             Component.onCompleted: {
                 TyphoonHQuickInterface.desktopSync.initSync()
-                rootLoader.width  = fetchLogsDialogItem.width
-                rootLoader.height = fetchLogsDialogItem.height
                 mainWindow.disableToolbar()
             }
         }

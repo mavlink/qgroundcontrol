@@ -34,10 +34,12 @@ public:
     Q_PROPERTY(QString  fileName    READ fileName                       CONSTANT)
     Q_PROPERTY(bool     selected    READ selected   WRITE setSelected   NOTIFY selectedChanged)
     Q_PROPERTY(quint64  size        READ size                           CONSTANT)
+    Q_PROPERTY(QString  sizeStr     READ sizeStr                        CONSTANT)
 
     QString     fileName    () { return _fileName; }
     bool        selected    () { return _selected; }
     quint64     size        () { return _size; }
+    QString     sizeStr     ();
 
     void        setSelected (bool sel);
 
@@ -45,7 +47,7 @@ signals:
     void        selectedChanged ();
 
 protected:
-    QGCFileListController*     _parent;
+    QGCFileListController*      _parent;
     QString                     _fileName;
     bool                        _selected;
     quint64                     _size;
@@ -65,7 +67,8 @@ public:
 
     Q_INVOKABLE void selectAllFiles     (bool selected);
 
-    QQmlListProperty<QGCFileListItem>   fileList();
+    QQmlListProperty<QGCFileListItem>   fileList    ();
+    QVector<QGCFileListItem*>&          fileListV   () { return _fileList; }
 
     void        appendFileItem          (QGCFileListItem* fileItem);
     QGCFileListItem* fileItem           (int index);

@@ -33,6 +33,7 @@ public:
     Q_PROPERTY(bool                 syncDone        READ    syncDone        NOTIFY syncDoneChanged)
     Q_PROPERTY(QString              syncMessage     READ    syncMessage     NOTIFY syncMessageChanged)
     Q_PROPERTY(int                  syncProgress    READ    syncProgress    NOTIFY syncProgressChanged)
+    Q_PROPERTY(int                  fileProgress    READ    fileProgress    NOTIFY fileProgressChanged)
     Q_PROPERTY(QGCFileListController* logController READ    logController   CONSTANT)
 
     //-- Connect to remote node
@@ -50,7 +51,9 @@ public:
     //-- Download all remote mission files
     Q_INVOKABLE void downloadAllMissions();
     //-- Download selected logs
-    Q_INVOKABLE void downloadSelectedLogs();
+    Q_INVOKABLE void downloadSelectedLogs(QString path);
+    //-- Init log fetch state
+    Q_INVOKABLE void initLogFetch       ();
 
     QStringList remoteList              () { return _remoteNames; }
     bool        remoteReady             ();
@@ -60,6 +63,7 @@ public:
     bool        syncDone                () { return _syncDone; }
     QString     syncMessage             () { return _syncMessage; }
     int         syncProgress            () { return _syncProgress; }
+    int         fileProgress            () { return _fileProgress; }
 
     QGCFileListController* logController() { return &_logController; }
 
@@ -92,6 +96,7 @@ signals:
     void    syncDoneChanged             ();
     void    syncMessageChanged          ();
     void    syncProgressChanged         ();
+    void    fileProgressChanged         ();
     void    syncTypeChanged             ();
     //-- From Thread
     void    progress                    (quint32 totalCount, quint32 curCount);
@@ -106,7 +111,8 @@ private slots:
     void    _readUDPBytes               ();
     void    _remoteMaintenance          ();
     //-- From Thread
-    void    _progress                   (quint32 total, quint32 current);
+    void    _setSyncProgress            (quint32 total, quint32 current);
+    void    _setFileProgress            (quint32 total, quint32 current);
     void    _message                    (QString message);
     void    _completed                  ();
     bool    _sendMission                (QString name, QByteArray mission);
@@ -132,6 +138,7 @@ private:
     quint32                             _totalFiles;
     quint32                             _curFile;
     quint32                             _syncProgress;
+    quint32                             _fileProgress;
     QString                             _syncMessage;
     bool                                _sendingFiles;
     bool                                _syncDone;

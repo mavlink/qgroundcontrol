@@ -7,6 +7,7 @@
 
 #include "QGCApplication.h"
 #include "QGCFileListController.h"
+#include "QGCMapEngine.h"
 
 //-----------------------------------------------------------------------------
 QGCFileListController::QGCFileListController(QObject* parent)
@@ -120,4 +121,11 @@ QGCFileListItem::setSelected (bool sel)
         }
         emit _parent->selectedCountChanged();
     }
+}
+
+//-----------------------------------------------------------------------------
+QString
+QGCFileListItem::sizeStr()
+{
+    return QGCMapEngine::bigSizeToString(_size);
 }

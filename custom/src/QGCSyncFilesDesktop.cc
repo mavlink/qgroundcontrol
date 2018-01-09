@@ -29,6 +29,7 @@ QGCSyncFilesDesktop::QGCSyncFilesDesktop(QObject* parent)
     , _totalFiles(0)
     , _curFile(0)
     , _syncProgress(0)
+    , _fileProgress(0)
     , _sendingFiles(false)
     , _syncDone(false)
 {
@@ -36,7 +37,7 @@ QGCSyncFilesDesktop::QGCSyncFilesDesktop(QObject* parent)
     //-- Start UDP listener
     _initUDPListener();
     connect(this, &QGCSyncFilesDesktop::completed,  this, &QGCSyncFilesDesktop::_completed);
-    connect(this, &QGCSyncFilesDesktop::progress,   this, &QGCSyncFilesDesktop::_progress);
+    connect(this, &QGCSyncFilesDesktop::progress,   this, &QGCSyncFilesDesktop::_setSyncProgress);
     connect(this, &QGCSyncFilesDesktop::message,    this, &QGCSyncFilesDesktop::_message);
     connect(this, &QGCSyncFilesDesktop::sendMission,this, &QGCSyncFilesDesktop::_sendMission);
     connect(&_remoteMaintenanceTimer, &QTimer::timeout, this, &QGCSyncFilesDesktop::_remoteMaintenance);
@@ -160,13 +161,13 @@ QGCSyncFilesDesktop::uploadMission(QString name, PlanMasterController* controlle
         _sendingFiles   = true;
         emit sendingFilesChanged();
         _message(QString(tr("Uploading %1")).arg(name));
-        _progress(100, 50);
+        _setSyncProgress(100, 50);
         QJsonDocument saveDoc(controller->saveToJson());
         _sendMission(name, saveDoc.toJson());
         //-- Should we do this?
         controller->setDirty(false);
         _message(QString(tr("%1 sent.")).arg(name));
-        _progress(100, 100);
+        _setSyncProgress(100, 100);
         _completed();
     }
 }
@@ -182,6 +183,23 @@ QGCSyncFilesDesktop::initSync()
     emit sendingFilesChanged();
     emit syncDoneChanged();
     emit syncMessageChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::initLogFetch()
+{
+    initSync();
+    _logController.clearFileItems();
+    if(_currentLog.isOpen()) {
+        _currentLog.close();
+    }
+    QList<QGCRemoteLogEntry> allLogs = _remoteObject->logEntries();
+    foreach(QGCRemoteLogEntry logEntry, allLogs) {
+        QGCFileListItem* item = new QGCFileListItem(&_logController, logEntry.name(), logEntry.size());
+        _logController.appendFileItem(item);
+    }
+    emit _logController.fileListChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -279,7 +297,7 @@ QGCSyncFilesDesktop::downloadAllMissions()
 
 //-----------------------------------------------------------------------------
 void
-QGCSyncFilesDesktop::downloadSelectedLogs()
+QGCSyncFilesDesktop::downloadSelectedLogs(QString path)
 {
     if(_sendingFiles) {
         return;
@@ -298,7 +316,13 @@ QGCSyncFilesDesktop::downloadSelectedLogs()
         return;
     }
     //-- Target Path
-    _logPath = "/tmp/telemetery/";
+    _logPath = path;
+    if(_logPath.startsWith("file://")) _logPath.replace("file://", "");
+#ifdef Q_OS_WIN
+    if(!_logPath.endsWith("\\") && !_logPath.endsWith("/")) _logPath += "/";
+#else
+    if(!_logPath.endsWith("/")) _logPath += "/";
+#endif
     QDir destDir(_logPath);
     if (!destDir.exists()) {
         if(!destDir.mkpath(".")) {
@@ -306,14 +330,16 @@ QGCSyncFilesDesktop::downloadSelectedLogs()
             return;
         }
     }
-    //-- Request logs
-    QList<QGCRemoteLogEntry> allLogs = _remoteObject->logEntries();
+    //-- Build log list
     QStringList requestedLogs;
-    foreach(QGCRemoteLogEntry logEntry, allLogs) {
-        requestedLogs << logEntry.name();
+    for(int i = 0; i < _logController.fileListV().size(); i++) {
+        if(_logController.fileListV()[i] && _logController.fileListV()[i]->selected()) {
+            requestedLogs << _logController.fileListV()[i]->fileName();
+        }
     }
+    //-- Request logs
     _curFile = 0;
-    _totalFiles = allLogs.size();
+    _totalFiles = requestedLogs.size();
     qCDebug(QGCSyncFiles) << "Requesting log files";
     _remoteObject->requestLogs(requestedLogs);
 }
@@ -329,10 +355,26 @@ QGCSyncFilesDesktop::remoteReady()
 
 //-----------------------------------------------------------------------------
 void
-QGCSyncFilesDesktop::_progress(quint32 total, quint32 current)
+QGCSyncFilesDesktop::_setSyncProgress(quint32 total, quint32 current)
 {
-    _syncProgress = (int)((double)current / (double)total * 100.0);
+    if(!total) {
+        _syncProgress = 100;
+    } else {
+        _syncProgress = (int)((double)current / (double)total * 100.0);
+    }
     emit syncProgressChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::_setFileProgress(quint32 total, quint32 current)
+{
+    if(!total) {
+        _fileProgress = 100;
+    } else {
+        _fileProgress = (int)((double)current / (double)total * 100.0);
+    }
+    emit fileProgressChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -490,7 +532,7 @@ QGCSyncFilesDesktop::_processIncomingMission(QString name, int count, QString& m
 void
 QGCSyncFilesDesktop::_receiveMission(QGCNewMission mission)
 {
-    _progress(_totalFiles, ++_curFile);
+    _setSyncProgress(_totalFiles, ++_curFile);
     if(mission.mission().size()) {
         QString missionFile;
         int count = 0;
@@ -510,7 +552,7 @@ QGCSyncFilesDesktop::_receiveMission(QGCNewMission mission)
     }
     if(_totalFiles <= _curFile) {
         _message(QString(tr("%1 files received")).arg(_totalFiles));
-        _progress(1, 1);
+        _setSyncProgress(1, 1);
         _completed();
     }
 }
@@ -521,8 +563,36 @@ QGCSyncFilesDesktop::_sendLogFragment(QGCLogFragment fragment)
 {
     QString logFile = _logPath;
     logFile += fragment.name();
-
-
-
-
+    if(_currentLog.isOpen()) {
+        if(_currentLog.fileName() != logFile) {
+            _currentLog.close();
+        } else {
+            if(fragment.data().size()) {
+                _currentLog.write(fragment.data());
+                _setFileProgress(fragment.total(), fragment.current());
+                return;
+            }
+        }
+    }
+    if(!_currentLog.isOpen()) {
+       _currentLog.setFileName(logFile);
+       qCDebug(QGCSyncFiles) << "Receiving:" << logFile;
+       _message(QString(tr("Receiving %1")).arg(fragment.name()));
+       if (_currentLog.open(QIODevice::WriteOnly)) {
+           _curFile++;
+           _currentLog.write(fragment.data());
+           _setSyncProgress(_totalFiles, _curFile);
+           _setFileProgress(fragment.total(), fragment.current());
+           return;
+       } else {
+           qWarning() << "Error creating" << logFile;
+       }
+    }
+    //-- Check for end of sync
+    if(_totalFiles <= _curFile && fragment.total() <= fragment.current()) {
+        _currentLog.close();
+        _setSyncProgress(1, 1);
+        _completed();
+        _message(QString(tr("%1 files received")).arg(_totalFiles));
+    }
 }
