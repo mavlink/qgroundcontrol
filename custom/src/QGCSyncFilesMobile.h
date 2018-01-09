@@ -20,10 +20,15 @@ class QGCSyncFilesMobile;
 class QGCLogUploadWorker : public QObject
 {
     Q_OBJECT
+public:
+    QGCLogUploadWorker() : _cancel(false) {}
 public slots:
     void doLogSync      (QStringList logsToSend);
+    void cancel         (bool cancel) { _cancel = cancel; }
 signals:
     void sendLogFragment(QGCLogFragment fragment);
+private:
+    bool _cancel;
 };
 
 //-----------------------------------------------------------------------------

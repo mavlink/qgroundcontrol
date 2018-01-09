@@ -112,16 +112,21 @@ QGCSyncFilesMobile::pruneExtraMissions(QStringList allMissions)
 void
 QGCSyncFilesMobile::requestMissions(QStringList missions)
 {
+    setCancel(false);
     QStringList missionsToSend;
     QString missionPath = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
     QDirIterator it(missionPath, QStringList() << kMissionWildCard, QDir::Files, QDirIterator::NoIteratorFlags);
     while(it.hasNext()) {
+        QCoreApplication::processEvents();
+        if(cancel()) return;
         QFileInfo fi(it.next());
         if(missions.contains(fi.fileName())) {
             missionsToSend << fi.filePath();
         }
     }
     foreach(QString missionFile, missionsToSend) {
+        QCoreApplication::processEvents();
+        if(cancel()) return;
         qCDebug(QGCSyncFiles) << "Sending mission:" << missionFile;
         QFileInfo fi(missionFile);
         QFile f(missionFile);
@@ -160,9 +165,11 @@ QGCSyncFilesMobile::requestLogs(QStringList logs)
         _sendLogFragment(logFrag);
     }
     //-- Start Worker Thread
+    setCancel(false);
     QGCLogUploadWorker *worker = new QGCLogUploadWorker;
     worker->moveToThread(&_logThread);
     connect(this, &QGCSyncFilesMobile::doLogSync, worker, &QGCLogUploadWorker::doLogSync);
+    connect(this, &QGCSyncFilesMobile::cancelChanged, worker, &QGCLogUploadWorker::cancel);
     connect(worker, &QGCLogUploadWorker::sendLogFragment, this, &QGCSyncFilesMobile::_sendLogFragment);
     qCDebug(QGCSyncFiles) << "Starting log upload thread";
     _logThread.start();
@@ -174,7 +181,9 @@ QGCSyncFilesMobile::requestLogs(QStringList logs)
 void
 QGCSyncFilesMobile::_sendLogFragment(QGCLogFragment fragment)
 {
-    emit sendLogFragment(fragment);
+    if(!cancel()) {
+        emit sendLogFragment(fragment);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -184,6 +193,7 @@ QGCLogUploadWorker::doLogSync(QStringList logsToSend)
 {
     qCDebug(QGCSyncFiles) << "Log upload thread started with" << logsToSend.size() << "logs to upload";
     foreach(QString logFile, logsToSend) {
+        if(_cancel) break;
         qCDebug(QGCSyncFiles) << "Sending log:" << logFile;
         QFileInfo fi(logFile);
         QFile f(logFile);
@@ -196,6 +206,7 @@ QGCLogUploadWorker::doLogSync(QStringList logsToSend)
             quint64 sofar = 0;
             quint64 total = fi.size();
             while(true) {
+                if(_cancel) break;
                 //-- Send in 1M chuncks
                 QByteArray bytes = f.read(1024 * 1024);
                 if(bytes.size() != 0) {

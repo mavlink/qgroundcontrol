@@ -172,6 +172,7 @@ Item {
         }
     }
 
+    /*
     Connections {
         target: TyphoonHQuickInterface.desktopSync
         onConnectedToRemoteChanged: {
@@ -184,6 +185,7 @@ Item {
             }
         }
     }
+    */
 
     Connections {
         target: TyphoonHQuickInterface
