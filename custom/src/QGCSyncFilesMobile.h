@@ -21,18 +21,14 @@ class QGCLogUploadWorker : public QObject
 {
     Q_OBJECT
 public:
-    QGCLogUploadWorker() : _cancel(false) {}
+    QGCLogUploadWorker(QGCSyncFilesMobile* parent) : _pSync(parent) {}
 public slots:
     void doLogSync      (QStringList logsToSend);
-    void cancel         (bool cancel)
-    {
-        qCDebug(QGCSyncFiles) << "Canceled from remote";
-        _cancel = cancel;
-    }
 signals:
     void sendLogFragment(QGCLogFragment fragment);
+    void done           ();
 private:
-    bool _cancel;
+    QGCSyncFilesMobile* _pSync;
 };
 
 //-----------------------------------------------------------------------------
@@ -56,10 +52,13 @@ public slots:
 private slots:
     void    _broadcastPresence          ();
     void    _sendLogFragment            (QGCLogFragment fragment);
+    void    _canceled                   (bool cancel);
+    void    _workerDone                 ();
 
 signals:
     void    macAddressChanged           ();
     void    doLogSync                   (QStringList logsToSend);
+    void    cancelFromDesktop           ();
 
 private:
     bool    _processIncomingMission     (QString name, int count, QString& missionFile);
@@ -72,5 +71,6 @@ private:
     QUdpSocket*             _udpSocket;
     QRemoteObjectHost*      _remoteObject;
     QThread                 _logThread;
+    QGCLogUploadWorker*     _worker;
 };
 
