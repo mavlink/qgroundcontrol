@@ -444,7 +444,7 @@ Set to 2 to use heading from motion capture</short_desc>
     </parameter>
   </group>
   <group name="Circuit Breaker">
-    <parameter default="0" name="CBRK_AIRSPD_CHK" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_AIRSPD_CHK" type="INT32">
       <short_desc>Circuit breaker for airspeed sensor</short_desc>
       <long_desc>Setting this parameter to 162128 will disable the check for an airspeed sensor. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -452,7 +452,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="0" name="CBRK_BUZZER" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_BUZZER" type="INT32">
       <short_desc>Circuit breaker for disabling buzzer</short_desc>
       <long_desc>Setting this parameter to 782097 will disable the buzzer audio notification. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -460,7 +460,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="284953" name="CBRK_ENGINEFAIL" type="INT32">
+    <parameter category="Developer" default="284953" name="CBRK_ENGINEFAIL" type="INT32">
       <short_desc>Circuit breaker for engine failure detection</short_desc>
       <long_desc>Setting this parameter to 284953 will disable the engine failure detection. If the aircraft is in engine failure mode the engine failure flag will be set to healthy WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -468,7 +468,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="121212" name="CBRK_FLIGHTTERM" type="INT32">
+    <parameter category="Developer" default="121212" name="CBRK_FLIGHTTERM" type="INT32">
       <short_desc>Circuit breaker for flight termination</short_desc>
       <long_desc>Setting this parameter to 121212 will disable the flight termination action. --&gt; The IO driver will not do flight termination if requested by the FMU WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -476,7 +476,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="0" name="CBRK_GPSFAIL" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_GPSFAIL" type="INT32">
       <short_desc>Circuit breaker for GPS failure detection</short_desc>
       <long_desc>Setting this parameter to 240024 will disable the GPS failure detection. If this check is enabled, then the sensor check will fail if the GPS module is missing. It will also check for excessive signal noise on the GPS receiver and warn the user if detected. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -484,7 +484,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="0" name="CBRK_IO_SAFETY" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_IO_SAFETY" type="INT32">
       <short_desc>Circuit breaker for IO safety</short_desc>
       <long_desc>Setting this parameter to 22027 will disable IO safety. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -492,7 +492,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="0" name="CBRK_RATE_CTRL" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_RATE_CTRL" type="INT32">
       <short_desc>Circuit breaker for rate controller output</short_desc>
       <long_desc>Setting this parameter to 140253 will disable the rate controller uORB publication. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -500,7 +500,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="0" name="CBRK_SUPPLY_CHK" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_SUPPLY_CHK" type="INT32">
       <short_desc>Circuit breaker for power supply check</short_desc>
       <long_desc>Setting this parameter to 894281 will disable the power valid checks in the commander. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -508,7 +508,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="0" name="CBRK_USB_CHK" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_USB_CHK" type="INT32">
       <short_desc>Circuit breaker for USB link check</short_desc>
       <long_desc>Setting this parameter to 197848 will disable the USB connected checks in the commander. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -516,7 +516,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="0" name="CBRK_VELPOSERR" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_VELPOSERR" type="INT32">
       <short_desc>Circuit breaker for position error check</short_desc>
       <long_desc>Setting this parameter to 201607 will disable the position and velocity accuracy checks in the commander. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -702,7 +702,7 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <increment>1</increment>
       <scope>modules/commander</scope>
     </parameter>
-    <parameter default="0" name="COM_FLIGHT_UUID" type="INT32">
+    <parameter category="System" default="0" name="COM_FLIGHT_UUID" type="INT32" volatile="true">
       <short_desc>Next flight UUID</short_desc>
       <long_desc>This number is incremented automatically after every flight on disarming in order to remember the next flight UUID. The first flight is 0.</long_desc>
       <min>0</min>
@@ -1434,12 +1434,12 @@ Increasing it makes the multi-rotor wind estimates adjust more slowly</short_des
       <decimal>3</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="0" name="EKF2_MAGBIAS_ID" type="INT32">
+    <parameter category="System" default="0" name="EKF2_MAGBIAS_ID" type="INT32">
       <short_desc>ID of Magnetometer the learned bias is for</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="0.0" name="EKF2_MAGBIAS_X" type="FLOAT">
+    <parameter category="System" default="0.0" name="EKF2_MAGBIAS_X" type="FLOAT" volatile="true">
       <short_desc>Learned value of magnetometer X axis bias.
 This is the amount of X-axis magnetometer bias learned by the EKF and saved from the last flight. It must be set to zero if the ground based magnetometer calibration is repeated</short_desc>
       <min>-0.5</min>
@@ -1449,7 +1449,7 @@ This is the amount of X-axis magnetometer bias learned by the EKF and saved from
       <reboot_required>true</reboot_required>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="0.0" name="EKF2_MAGBIAS_Y" type="FLOAT">
+    <parameter category="System" default="0.0" name="EKF2_MAGBIAS_Y" type="FLOAT" volatile="true">
       <short_desc>Learned value of magnetometer Y axis bias.
 This is the amount of Y-axis magnetometer bias learned by the EKF and saved from the last flight. It must be set to zero if the ground based magnetometer calibration is repeated</short_desc>
       <min>-0.5</min>
@@ -1459,7 +1459,7 @@ This is the amount of Y-axis magnetometer bias learned by the EKF and saved from
       <reboot_required>true</reboot_required>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="0.0" name="EKF2_MAGBIAS_Z" type="FLOAT">
+    <parameter category="System" default="0.0" name="EKF2_MAGBIAS_Z" type="FLOAT" volatile="true">
       <short_desc>Learned value of magnetometer Z axis bias.
 This is the amount of Z-axis magnetometer bias learned by the EKF and saved from the last flight. It must be set to zero if the ground based magnetometer calibration is repeated</short_desc>
       <min>-0.5</min>
@@ -3198,13 +3198,13 @@ but also ignore less noise</short_desc>
       <decimal>1</decimal>
       <scope>modules/land_detector</scope>
     </parameter>
-    <parameter default="0" name="LND_FLIGHT_T_HI" type="INT32">
+    <parameter category="System" default="0" name="LND_FLIGHT_T_HI" type="INT32" volatile="true">
       <short_desc>Total flight time in microseconds</short_desc>
       <long_desc>Total flight time of this autopilot. Higher 32 bits of the value. Flight time in microseconds = (LND_FLIGHT_T_HI &lt;&lt; 32) | LND_FLIGHT_T_LO.</long_desc>
       <min>0</min>
       <scope>modules/land_detector</scope>
     </parameter>
-    <parameter default="0" name="LND_FLIGHT_T_LO" type="INT32">
+    <parameter category="System" default="0" name="LND_FLIGHT_T_LO" type="INT32" volatile="true">
       <short_desc>Total flight time in microseconds</short_desc>
       <long_desc>Total flight time of this autopilot. Lower 32 bits of the value. Flight time in microseconds = (LND_FLIGHT_T_HI &lt;&lt; 32) | LND_FLIGHT_T_LO.</long_desc>
       <min>0</min>
@@ -3601,6 +3601,46 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <short_desc>Test mode (Identify) of MKBLCTRL Driver</short_desc>
       <boolean />
       <scope>drivers/mkblctrl</scope>
+    </parameter>
+  </group>
+  <group name="MPU9x50 Configuration">
+    <parameter default="4" name="MPU_ACC_LPF_ENM" type="INT32">
+      <short_desc>Low pass filter frequency for Accelerometer</short_desc>
+      <scope>platforms/qurt/fc_addon/mpu_spi</scope>
+      <values>
+        <value code="0">MPU9X50_ACC_LPF_460HZ</value>
+        <value code="1">MPU9X50_ACC_LPF_184HZ</value>
+        <value code="2">MPU9X50_ACC_LPF_92HZ</value>
+        <value code="3">MPU9X50_ACC_LPF_41HZ</value>
+        <value code="4">MPU9X50_ACC_LPF_20HZ</value>
+        <value code="5">MPU9X50_ACC_LPF_10HZ</value>
+        <value code="6">MPU9X50_ACC_LPF_5HZ</value>
+        <value code="7">MPU9X50_ACC_LPF_460HZ_NOLPF</value>
+      </values>
+    </parameter>
+    <parameter default="4" name="MPU_GYRO_LPF_ENM" type="INT32">
+      <short_desc>Low pass filter frequency for Gyro</short_desc>
+      <scope>platforms/qurt/fc_addon/mpu_spi</scope>
+      <values>
+        <value code="0">MPU9X50_GYRO_LPF_250HZ</value>
+        <value code="1">MPU9X50_GYRO_LPF_184HZ</value>
+        <value code="2">MPU9X50_GYRO_LPF_92HZ</value>
+        <value code="3">MPU9X50_GYRO_LPF_41HZ</value>
+        <value code="4">MPU9X50_GYRO_LPF_20HZ</value>
+        <value code="5">MPU9X50_GYRO_LPF_10HZ</value>
+        <value code="6">MPU9X50_GYRO_LPF_5HZ</value>
+        <value code="7">MPU9X50_GYRO_LPF_3600HZ_NOLPF</value>
+      </values>
+    </parameter>
+    <parameter default="2" name="MPU_SAMPLE_R_ENM" type="INT32">
+      <short_desc>Sample rate in Hz</short_desc>
+      <scope>platforms/qurt/fc_addon/mpu_spi</scope>
+      <values>
+        <value code="0">MPU9x50_SAMPLE_RATE_100HZ</value>
+        <value code="1">MPU9x50_SAMPLE_RATE_200HZ</value>
+        <value code="2">MPU9x50_SAMPLE_RATE_500HZ</value>
+        <value code="3">MPU9x50_SAMPLE_RATE_1000HZ</value>
+      </values>
     </parameter>
   </group>
   <group name="Mission">
@@ -5141,7 +5181,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
   </group>
   <group name="Position Estimator INAV">
-    <parameter default="0" name="CBRK_NO_VISION" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_NO_VISION" type="INT32">
       <short_desc>Disable vision input</short_desc>
       <long_desc>Set to the appropriate key (328754) to disable vision input.</long_desc>
       <min>0</min>
@@ -5337,6 +5377,13 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>0.0</min>
       <max>10.0</max>
       <scope>modules/position_estimator_inav</scope>
+    </parameter>
+  </group>
+  <group name="RC Receiver Configuration">
+    <parameter default="1" name="RC_RECEIVER_TYPE" type="INT32">
+      <short_desc>RC receiver type</short_desc>
+      <long_desc>Acceptable values: - RC_RECEIVER_SPEKTRUM = 1, - RC_RECEIVER_LEMONRX = 2,</long_desc>
+      <scope>platforms/qurt/fc_addon/rc_receiver</scope>
     </parameter>
   </group>
   <group name="Radio Calibration">
@@ -7252,106 +7299,106 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
     </parameter>
   </group>
   <group name="Sensor Calibration">
-    <parameter default="1" name="CAL_ACC0_EN" type="INT32">
+    <parameter category="Developer" default="1" name="CAL_ACC0_EN" type="INT32">
       <short_desc>Accelerometer 0 enabled</short_desc>
       <boolean />
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0" name="CAL_ACC0_ID" type="INT32">
+    <parameter category="System" default="0" name="CAL_ACC0_ID" type="INT32">
       <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC0_XOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC0_XOFF" type="FLOAT">
       <short_desc>Accelerometer X-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC0_XSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC0_XSCALE" type="FLOAT">
       <short_desc>Accelerometer X-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC0_YOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC0_YOFF" type="FLOAT">
       <short_desc>Accelerometer Y-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC0_YSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC0_YSCALE" type="FLOAT">
       <short_desc>Accelerometer Y-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC0_ZOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC0_ZOFF" type="FLOAT">
       <short_desc>Accelerometer Z-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC0_ZSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC0_ZSCALE" type="FLOAT">
       <short_desc>Accelerometer Z-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1" name="CAL_ACC1_EN" type="INT32">
+    <parameter category="Developer" default="1" name="CAL_ACC1_EN" type="INT32">
       <short_desc>Accelerometer 1 enabled</short_desc>
       <boolean />
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0" name="CAL_ACC1_ID" type="INT32">
+    <parameter category="System" default="0" name="CAL_ACC1_ID" type="INT32">
       <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC1_XOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC1_XOFF" type="FLOAT">
       <short_desc>Accelerometer X-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC1_XSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC1_XSCALE" type="FLOAT">
       <short_desc>Accelerometer X-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC1_YOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC1_YOFF" type="FLOAT">
       <short_desc>Accelerometer Y-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC1_YSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC1_YSCALE" type="FLOAT">
       <short_desc>Accelerometer Y-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC1_ZOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC1_ZOFF" type="FLOAT">
       <short_desc>Accelerometer Z-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC1_ZSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC1_ZSCALE" type="FLOAT">
       <short_desc>Accelerometer Z-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1" name="CAL_ACC2_EN" type="INT32">
+    <parameter category="Developer" default="1" name="CAL_ACC2_EN" type="INT32">
       <short_desc>Accelerometer 2 enabled</short_desc>
       <boolean />
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0" name="CAL_ACC2_ID" type="INT32">
+    <parameter category="System" default="0" name="CAL_ACC2_ID" type="INT32">
       <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC2_XOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC2_XOFF" type="FLOAT">
       <short_desc>Accelerometer X-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC2_XSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC2_XSCALE" type="FLOAT">
       <short_desc>Accelerometer X-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC2_YOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC2_YOFF" type="FLOAT">
       <short_desc>Accelerometer Y-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC2_YSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC2_YSCALE" type="FLOAT">
       <short_desc>Accelerometer Y-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC2_ZOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC2_ZOFF" type="FLOAT">
       <short_desc>Accelerometer Z-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC2_ZSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC2_ZSCALE" type="FLOAT">
       <short_desc>Accelerometer Z-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0" name="CAL_ACC_PRIME" type="INT32">
+    <parameter category="System" default="0" name="CAL_ACC_PRIME" type="INT32">
       <short_desc>Primary accel ID</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
@@ -7964,6 +8011,39 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       </values>
     </parameter>
   </group>
+  <group name="Snapdragon UART ESC">
+    <parameter default="250000" name="UART_ESC_BAUD" type="INT32">
+      <short_desc>ESC UART baud rate</short_desc>
+      <long_desc>Default rate is 250Kbps, whic is used in off-the-shelf QRP ESC products.</long_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+    </parameter>
+    <parameter default="2" name="UART_ESC_MODEL" type="INT32">
+      <short_desc>ESC model</short_desc>
+      <long_desc>See esc_model_t enum definition in uart_esc_dev.h for all supported ESC model enum values.</long_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+      <values>
+        <value code="0">ESC_200QX</value>
+        <value code="1">ESC_350QX</value>
+        <value code="2">ESC_210QC</value>
+      </values>
+    </parameter>
+    <parameter default="4" name="UART_ESC_MOTOR1" type="INT32">
+      <short_desc>Motor 1 Mapping</short_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+    </parameter>
+    <parameter default="2" name="UART_ESC_MOTOR2" type="INT32">
+      <short_desc>Motor 2 Mapping</short_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+    </parameter>
+    <parameter default="1" name="UART_ESC_MOTOR3" type="INT32">
+      <short_desc>Motor 3 Mapping</short_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+    </parameter>
+    <parameter default="3" name="UART_ESC_MOTOR4" type="INT32">
+      <short_desc>Motor 4 Mapping</short_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+    </parameter>
+  </group>
   <group name="Subscriber Example">
     <parameter default="100" name="SUB_INTERV" type="INT32">
       <short_desc>Interval of one subscriber in the example in ms</short_desc>
@@ -8130,7 +8210,7 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <min>0</min>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="2" name="SYS_RESTART_TYPE" type="INT32">
+    <parameter category="System" default="2" name="SYS_RESTART_TYPE" type="INT32" volatile="true">
       <short_desc>Set restart type</short_desc>
       <long_desc>Set by px4io to indicate type of restart</long_desc>
       <min>0</min>
