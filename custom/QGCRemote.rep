@@ -16,4 +16,5 @@ class QGCRemote
     SLOT(void sendMission(QGCNewMission mission));
     SLOT(void pruneExtraMissions(QStringList allMissions));
     SLOT(void requestMissions(QStringList missions));
+    SLOT(void requestLogs(QStringList logs));
 };

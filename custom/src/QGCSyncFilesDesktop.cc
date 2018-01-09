@@ -276,6 +276,33 @@ QGCSyncFilesDesktop::downloadAllMissions()
 }
 
 //-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::downloadSelectedLogs()
+{
+    if(_sendingFiles) {
+        return;
+    }
+    _sendingFiles   = true;
+    _syncProgress   = 0;
+    _syncDone       = false;
+    _syncMessage.clear();
+    emit syncProgressChanged();
+    emit sendingFilesChanged();
+    emit syncMessageChanged();
+    emit syncDoneChanged();
+    if(!remoteReady()) {
+        _message(QString(tr("Not Connected To Remote")));
+        _completed();
+        return;
+    }
+    QList<QGCRemoteLogEntry> allLogs = _remoteObject->logEntries();
+    _curFile = 0;
+    _totalFiles = allLogs.size();
+    qCDebug(QGCSyncFiles) << "Requesting log files";
+    _remoteObject->requestMissions(allLogs);
+}
+
+//-----------------------------------------------------------------------------
 bool
 QGCSyncFilesDesktop::remoteReady()
 {

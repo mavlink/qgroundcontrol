@@ -14,6 +14,18 @@
 
 Q_DECLARE_LOGGING_CATEGORY(QGCSyncFiles)
 
+class QGCSyncFilesMobile;
+
+//-----------------------------------------------------------------------------
+class QGCLogUploadWorker : public QObject
+{
+    Q_OBJECT
+public slots:
+    void doLogSync      (QStringList logsToSend);
+signals:
+    void sendLogFragment(QGCLogFragment fragment);
+};
+
 //-----------------------------------------------------------------------------
 class QGCSyncFilesMobile : public QGCRemoteSimpleSource
 {
@@ -30,22 +42,26 @@ public slots:
     void    sendMission                 (QGCNewMission mission);
     void    pruneExtraMissions          (QStringList allMissions);
     void    requestMissions             (QStringList missions);
+    void    requestLogs                 (QStringList logs);
 
 private slots:
     void    _broadcastPresence          ();
+    void    _sendLogFragment            (QGCLogFragment fragment);
 
 signals:
     void    macAddressChanged           ();
+    void    doLogSync                   (QStringList logsToSend);
 
 private:
     bool    _processIncomingMission     (QString name, int count, QString& missionFile);
     void    _updateMissionList          ();
-    void    _updateLogEntries             ();
+    void    _updateLogEntries           ();
 
 private:
     QTimer                  _broadcastTimer;
     QString                 _macAddress;
     QUdpSocket*             _udpSocket;
     QRemoteObjectHost*      _remoteObject;
+    QThread                 _logThread;
 };
 

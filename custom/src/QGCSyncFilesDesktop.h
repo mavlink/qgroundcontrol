@@ -47,6 +47,8 @@ public:
     Q_INVOKABLE void cancelSync         ();
     //-- Download all remote mission files
     Q_INVOKABLE void downloadAllMissions();
+    //-- Download selected logs
+    Q_INVOKABLE void downloadSelectedLogs();
 
     QStringList remoteList              () { return _remoteNames; }
     bool        remoteReady             ();

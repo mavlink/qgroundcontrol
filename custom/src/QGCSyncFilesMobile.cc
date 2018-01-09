@@ -36,6 +36,8 @@ QGCSyncFilesMobile::~QGCSyncFilesMobile()
     if(_udpSocket) {
         _udpSocket->deleteLater();
     }
+    _logThread.quit();
+    _logThread.wait();
     if(_remoteObject) {
         delete _remoteObject;
     }
@@ -130,6 +132,71 @@ QGCSyncFilesMobile::requestMissions(QStringList missions)
             f.close();
             QGCNewMission mission(fi.fileName(), bytes);
             emit receiveMission(mission);
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+//-- Slot for Desktop log request
+void
+QGCSyncFilesMobile::requestLogs(QStringList logs)
+{
+    QStringList logsToSend;
+    QString logPath = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
+    QDirIterator it(logPath, QStringList() << "*.tlog", QDir::Files, QDirIterator::NoIteratorFlags);
+    while(it.hasNext()) {
+        QFileInfo fi(it.next());
+        if(logs.contains(fi.fileName())) {
+            logsToSend << fi.filePath();
+        }
+    }
+    //-- Start Worker Thread
+    QGCLogUploadWorker *worker = new QGCLogUploadWorker;
+    worker->moveToThread(&_logThread);
+    connect(&_logThread, &QThread::finished, worker, &QObject::deleteLater);
+    connect(this, &QGCSyncFilesMobile::doLogSync, worker, &QGCLogUploadWorker::doLogSync);
+    connect(worker, &QGCLogUploadWorker::sendLogFragment, this, &QGCSyncFilesMobile::_sendLogFragment);
+    _logThread.start();
+    emit doLogSync(logsToSend);
+}
+
+//-----------------------------------------------------------------------------
+//-- Send log fragment on main thread
+void
+QGCSyncFilesMobile::_sendLogFragment(QGCLogFragment fragment)
+{
+    emit sendLogFragment(fragment);
+}
+
+//-----------------------------------------------------------------------------
+//-- Log upload thread
+void
+QGCLogUploadWorker::doLogSync(QStringList logsToSend)
+{
+    foreach(QString logFile, logsToSend) {
+        qCDebug(QGCSyncFiles) << "Sending log:" << logFile;
+        QFileInfo fi(logFile);
+        QFile f(logFile);
+        if (!f.open(QIODevice::ReadOnly)) {
+            qWarning() << "Unable to open file" << logFile;
+            QGCLogFragment logFrag(fi.fileName(), 0, 0, QByteArray());
+            emit sendLogFragment(logFrag);
+            break;
+        } else {
+            quint64 sofar = 0;
+            quint64 total = fi.size();
+            while(true) {
+                QByteArray bytes = f.read(1024 * 1024);
+                if(bytes.size() != 0) {
+                    sofar += bytes.size();
+                    QGCLogFragment logFrag(fi.fileName(), sofar, total, bytes);
+                    emit sendLogFragment(logFrag);
+                    qCDebug(QGCSyncFiles) << "Sent:" << sofar << "bytes";
+                }
+                if(sofar >= total || bytes.size() == 0) {
+                    break;
+                }
+            }
         }
     }
 }
