@@ -119,6 +119,7 @@ private slots:
     void    _syncTypeChanged            (QGCRemoteReplica::SyncType syncType);
     void    _receiveMission             (QGCNewMission mission);
     void    _sendLogFragment            (QGCLogFragment fragment);
+    void    _delayedDisconnect          ();
 
 private:
     void    _initUDPListener            ();
@@ -142,6 +143,8 @@ private:
     QString                             _syncMessage;
     bool                                _sendingFiles;
     bool                                _syncDone;
+    bool                                _disconnecting;
+    bool                                _connecting;
     QStringList                         _missions;
     QTimer                              _remoteMaintenanceTimer;
     //-- Fetch Logs

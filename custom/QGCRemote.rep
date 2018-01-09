@@ -9,6 +9,7 @@ class QGCRemote
     ENUM SyncType {SyncClone, SyncReplace, SyncAppend}
     PROP(SyncType syncType=SyncAppend READWRITE)
     PROP(bool cancel=false READWRITE)
+    PROP(bool desktopConnected=false READWRITE)
     PROP(QStringList currentMissions)
     PROP(QList<QGCRemoteLogEntry> logEntries)
     SIGNAL(sendLogFragment(QGCLogFragment fragment));

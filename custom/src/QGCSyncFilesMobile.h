@@ -24,7 +24,11 @@ public:
     QGCLogUploadWorker() : _cancel(false) {}
 public slots:
     void doLogSync      (QStringList logsToSend);
-    void cancel         (bool cancel) { _cancel = cancel; }
+    void cancel         (bool cancel)
+    {
+        qCDebug(QGCSyncFiles) << "Canceled from remote";
+        _cancel = cancel;
+    }
 signals:
     void sendLogFragment(QGCLogFragment fragment);
 private:

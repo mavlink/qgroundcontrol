@@ -32,6 +32,8 @@ QGCSyncFilesDesktop::QGCSyncFilesDesktop(QObject* parent)
     , _fileProgress(0)
     , _sendingFiles(false)
     , _syncDone(false)
+    , _disconnecting(false)
+    , _connecting(false)
 {
     qmlRegisterUncreatableType<QGCSyncFilesDesktop>("QGroundControl", 1, 0, "QGCSyncFilesDesktop", "Reference only");
     //-- Start UDP listener
@@ -43,7 +45,7 @@ QGCSyncFilesDesktop::QGCSyncFilesDesktop(QObject* parent)
     connect(&_remoteMaintenanceTimer, &QTimer::timeout, this, &QGCSyncFilesDesktop::_remoteMaintenance);
     _remoteMaintenanceTimer.setSingleShot(false);
     //-- Every 15 seconds, clear stale remotes
-    _remoteMaintenanceTimer.start(15000);
+    _remoteMaintenanceTimer.start(5000);
 }
 
 //-----------------------------------------------------------------------------
@@ -128,8 +130,9 @@ QGCSyncFilesDesktop::connectToRemote(QString name)
         return false;
     }
     if(_remoteNode) {
-        disconnectRemote();
+        _delayedDisconnect();
     }
+    _disconnecting = false;
     _remoteNode = new QRemoteObjectNode(this);
     qCDebug(QGCSyncFiles) << "Connect to" << _remoteURLs[name].toString();
     connect(_remoteNode, &QRemoteObjectNode::error, this, &QGCSyncFilesDesktop::_nodeError);
@@ -145,6 +148,8 @@ QGCSyncFilesDesktop::connectToRemote(QString name)
         _currentRemote = name;
         emit currentRemoteChanged();
         emit remoteReadyChanged();
+        _remoteMaintenanceTimer.start(5000);
+        _connecting = true;
     }
     return false;
 }
@@ -154,12 +159,28 @@ void
 QGCSyncFilesDesktop::disconnectRemote()
 {
     if(_remoteNode) {
-        _remoteNode->deleteLater();
-        _remoteNode = NULL;
-        emit remoteReadyChanged();
-        if(_currentLog.isOpen()) {
-            _currentLog.close();
+        if(!_remoteObject.isNull()) {
+            //-- Tell remote we're bailing
+            _remoteObject->setDesktopConnected(false);
+            _disconnecting = true;
+            emit remoteReadyChanged();
+            QTimer::singleShot(500, this, &QGCSyncFilesDesktop::_delayedDisconnect);
+        } else {
+            //-- No one home. Bail now.
+            _delayedDisconnect();
         }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::_delayedDisconnect()
+{
+    _remoteNode->deleteLater();
+    _remoteNode = NULL;
+    emit remoteReadyChanged();
+    if(_currentLog.isOpen()) {
+        _currentLog.close();
     }
 }
 
@@ -362,7 +383,7 @@ QGCSyncFilesDesktop::downloadSelectedLogs(QString path)
 bool
 QGCSyncFilesDesktop::remoteReady()
 {
-    bool nodeReady = !_remoteObject.isNull() && _remoteObject->state() == QRemoteObjectReplica::Valid;
+    bool nodeReady = !_remoteObject.isNull() && _remoteObject->state() == QRemoteObjectReplica::Valid && !_disconnecting;
     return nodeReady;
 }
 
@@ -507,6 +528,11 @@ QGCSyncFilesDesktop::_remoteMaintenance()
                 emit currentRemoteChanged();
             }
         }
+    }
+    //-- Tell newly connected remote we're around
+    if(remoteReady() && _connecting) {
+        _remoteObject->setDesktopConnected(true);
+        _connecting = false;
     }
 }
 

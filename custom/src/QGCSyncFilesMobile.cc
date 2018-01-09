@@ -22,12 +22,21 @@ QGCSyncFilesMobile::QGCSyncFilesMobile(QObject* parent)
     , _udpSocket(NULL)
     , _remoteObject(NULL)
 {
+    qmlRegisterUncreatableType<QGCSyncFilesMobile>("QGroundControl", 1, 0, "QGCSyncFilesMobile", "Reference only");
     connect(&_broadcastTimer, &QTimer::timeout, this, &QGCSyncFilesMobile::_broadcastPresence);
     _broadcastTimer.setSingleShot(false);
     //-- Start UDP broadcast
     _broadcastTimer.start(5000);
     _updateMissionList();
     _updateLogEntries();
+    //-- Initialize Remote Object
+    QUrl url;
+    url.setHost(QString("0.0.0.0"));
+    url.setPort(QGC_RPC_PORT);
+    url.setScheme("tcp");
+    qCDebug(QGCSyncFiles) << "Remote Object URL:" << url.toString();
+    _remoteObject = new QRemoteObjectHost(url);
+    _remoteObject->enableRemoting(this);
     //-- TODO: Connect to vehicle and check when it's disarmed. Update log entries.
     //-- TODO: Need to switch interface when switching WiFi APs
 }
@@ -41,7 +50,7 @@ QGCSyncFilesMobile::~QGCSyncFilesMobile()
     _logThread.quit();
     _logThread.wait();
     if(_remoteObject) {
-        delete _remoteObject;
+        _remoteObject->deleteLater();
     }
 }
 
@@ -240,18 +249,6 @@ QGCSyncFilesMobile::_broadcastPresence()
         foreach(QNetworkInterface interface, QNetworkInterface::allInterfaces()) {
             _macAddress = interface.hardwareAddress();
             if(!_macAddress.isEmpty() && !_macAddress.endsWith("00:00:00")) {
-                //-- Get an URL to this host
-                foreach (const QHostAddress &address, interface.allAddresses()) {
-                    if (address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress(QHostAddress::LocalHost)) {
-                        if(!address.toString().startsWith("127")) {
-                            url.setHost(address.toString());
-                            url.setPort(QGC_RPC_PORT);
-                            url.setScheme("tcp");
-                            qCDebug(QGCSyncFiles) << "Remote Object URL:" << url.toString();
-                            break;
-                        }
-                    }
-                }
                 break;
             }
         }
@@ -267,9 +264,6 @@ QGCSyncFilesMobile::_broadcastPresence()
         _macAddress = QGC_MOBILE_NAME + _macAddress;
         emit macAddressChanged();
         qCDebug(QGCSyncFiles) << "MAC Address:" << _macAddress;
-        //-- Initialize Remote Object
-        _remoteObject = new QRemoteObjectHost(url);
-        _remoteObject->enableRemoting(this);
     }
     _udpSocket->writeDatagram(_macAddress.toLocal8Bit(), QHostAddress::Broadcast, QGC_UDP_BROADCAST_PORT);
 }

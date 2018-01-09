@@ -172,20 +172,20 @@ Item {
         }
     }
 
-    /*
     Connections {
-        target: TyphoonHQuickInterface.desktopSync
-        onConnectedToRemoteChanged: {
-            if(TyphoonHQuickInterface.desktopSync.connectedToRemote) {
-                rootLoader.sourceComponent = desktopConnected
-                mainWindow.disableToolbar()
+        target: TyphoonHQuickInterface.mobileSync
+        onDesktopConnectedChanged: {
+            if(TyphoonHQuickInterface.mobileSync.desktopConnected) {
+                if(rootLoader.sourceComponent !== desktopConnectedDlg) {
+                    rootLoader.sourceComponent = desktopConnectedDlg
+                    mainWindow.disableToolbar()
+                }
             } else {
                 rootLoader.sourceComponent = null
                 mainWindow.enableToolbar()
             }
         }
     }
-    */
 
     Connections {
         target: TyphoonHQuickInterface
@@ -1118,41 +1118,41 @@ Item {
     }
     //-- Desktop is connected
     Component {
-        id:         desktopConnected
+        id:         desktopConnectedDlg
         Item {
-            id:         desktopConnectedItem
+            id:         desktopConnectedDlgItem
             z:          1000000
             width:      mainWindow.width
             height:     mainWindow.height
             Rectangle {
-                id:             desktopConnectedShadow
-                anchors.fill:   desktopConnectedRect
-                radius:         desktopConnectedRect.radius
+                id:             desktopConnectedDlgShadow
+                anchors.fill:   desktopConnectedDlgRect
+                radius:         desktopConnectedDlgRect.radius
                 color:          qgcPal.window
                 visible:        false
             }
             DropShadow {
-                anchors.fill:       desktopConnectedShadow
-                visible:            desktopConnectedRect.visible
+                anchors.fill:       desktopConnectedDlgShadow
+                visible:            desktopConnectedDlgRect.visible
                 horizontalOffset:   4
                 verticalOffset:     4
                 radius:             32.0
                 samples:            65
                 color:              Qt.rgba(0,0,0,0.75)
-                source:             desktopConnectedShadow
+                source:             desktopConnectedDlgShadow
             }
             Rectangle {
-                id:     desktopConnectedRect
+                id:     desktopConnectedDlgRect
                 width:  mainWindow.width   * 0.65
-                height: desktopConnectedCol.height * 1.5
+                height: desktopConnectedDlgCol.height * 3
                 radius: ScreenTools.defaultFontPixelWidth
                 color:  qgcPal.alertBackground
                 border.color: qgcPal.alertBorder
                 border.width: 2
                 anchors.centerIn: parent
                 Column {
-                    id:                 desktopConnectedCol
-                    width:              desktopConnectedRect.width
+                    id:                 desktopConnectedDlgCol
+                    width:              desktopConnectedDlgRect.width
                     spacing:            ScreenTools.defaultFontPixelHeight * 3
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     anchors.centerIn:   parent
@@ -1164,8 +1164,7 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     QGCLabel {
-                        text:           qsTr("Interface disabled while connected to desktop.")
-                        width:          desktopConnectedRect.width * 0.75
+                        text:           qsTr("User interface disabled while connected to desktop.")
                         color:          qgcPal.alertText
                         font.family:    ScreenTools.demiboldFontFamily
                         font.pointSize: ScreenTools.mediumFontPointSize
@@ -1180,8 +1179,8 @@ Item {
                 onReleased:     { mouse.accepted = true; }
             }
             Component.onCompleted: {
-                rootLoader.width  = desktopConnectedItem.width
-                rootLoader.height = desktopConnectedItem.height
+                rootLoader.width  = desktopConnectedDlgItem.width
+                rootLoader.height = desktopConnectedDlgItem.height
                 mainWindow.disableToolbar()
             }
         }
