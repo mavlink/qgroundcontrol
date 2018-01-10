@@ -7,6 +7,7 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
+#include "QGCMapEngineManager.h"
 
 //-- TODO: This is here as it defines the UDP port and URL. It needs to go upstream
 #include "TyphoonHQuickInterface.h"
@@ -31,6 +32,7 @@ QGCSyncFilesMobile::QGCSyncFilesMobile(QObject* parent)
     _broadcastTimer.start(5000);
     _updateMissionList();
     _updateLogEntries();
+    qgcApp()->toolbox()->mapEngineManager()->loadTileSets();
     //-- Initialize Remote Object
     QUrl url;
     url.setHost(QString("0.0.0.0"));
@@ -319,4 +321,21 @@ QGCSyncFilesMobile::_updateLogEntries()
         logs.append(l);
     }
     setLogEntries(logs);
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesMobile::_tileSetsChanged()
+{
+    QList<QGCSyncTileSet> sets;
+    QGCMapEngineManager* mapMgr = qgcApp()->toolbox()->mapEngineManager();
+    QmlObjectListModel&  tileSets = (*mapMgr->tileSets());
+    for(int i = 0; i < tileSets.count(); i++ ) {
+        QGCCachedTileSet* set = qobject_cast<QGCCachedTileSet*>(tileSets.get(i));
+        if(set) {
+            QGCSyncTileSet s(set->name(), set->totalTileCount(), set->totalTilesSize());
+            sets.append(s);
+        }
+    }
+    setTileSets(sets);
 }

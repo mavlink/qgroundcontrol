@@ -54,6 +54,7 @@ private slots:
     void    _sendLogFragment            (QGCLogFragment fragment);
     void    _canceled                   (bool cancel);
     void    _workerDone                 ();
+    void    _tileSetsChanged            ();
 
 signals:
     void    macAddressChanged           ();

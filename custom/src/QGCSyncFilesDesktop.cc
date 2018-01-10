@@ -23,6 +23,7 @@ static const char* kMissionWildCard  = "*.plan";
 QGCSyncFilesDesktop::QGCSyncFilesDesktop(QObject* parent)
     : QThread(parent)
     , _logController(this)
+    , _mapController(this)
     , _udpSocket(NULL)
     , _remoteNode(NULL)
     , _cancel(false)
@@ -238,6 +239,22 @@ QGCSyncFilesDesktop::initLogFetch()
 
 //-----------------------------------------------------------------------------
 void
+QGCSyncFilesDesktop::initMapFetch()
+{
+    initSync();
+    _fileProgress = 0;
+    emit fileProgressChanged();
+    QList<QGCSyncTileSet> allSets = _remoteObject->tileSets();
+    foreach(QGCSyncTileSet set, allSets) {
+        QGCFileListItem* item = new QGCFileListItem(&_mapController, set.name(), set.count());
+        _mapController.appendFileItem(item);
+    }
+    std::sort(_mapController.fileListV().begin(), _mapController.fileListV().end(), [](QGCFileListItem* a, QGCFileListItem* b) { return a->fileName() < b->fileName(); });
+    emit _mapController.fileListChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
 QGCSyncFilesDesktop::uploadAllMissions()
 {
     if(_sendingFiles) {
@@ -376,6 +393,14 @@ QGCSyncFilesDesktop::downloadSelectedLogs(QString path)
     _totalFiles = requestedLogs.size();
     qCDebug(QGCSyncFiles) << "Requesting" <<  requestedLogs.size() << "log files";
     _remoteObject->requestLogs(requestedLogs);
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::uploadSelectedTiles()
+{
+
+
 }
 
 //-----------------------------------------------------------------------------

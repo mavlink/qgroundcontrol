@@ -17,6 +17,7 @@ import QGroundControl.Controllers           1.0
 import QGroundControl.Controls              1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Palette               1.0
+import QGroundControl.QGCMapEngineManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Vehicle               1.0
 
@@ -37,6 +38,15 @@ QGCView {
     property string _dialogTitle:       ""
     property bool   _sendMission:       true
     property bool   _hasLogs:           connected ? TyphoonHQuickInterface.desktopSync.logController.fileList.length > 0 : false
+    property bool   _hasMaps:           connected ? TyphoonHQuickInterface.desktopSync.mapController.fileList.length > 0 : false
+
+    readonly property string kCancel:        qsTr("Cancel")
+    readonly property string kClose:         qsTr("Close")
+    readonly property string kFetchMissions: qsTr("Fetch Missions")
+    readonly property string kSelectAll:     qsTr("Select All")
+    readonly property string kSelectNone:    qsTr("Select None")
+    readonly property string kSendMission:   qsTr("Send Missions")
+    readonly property string kStart:         qsTr("Start")
 
     property bool   connected:          !_activeVehicle && TyphoonHQuickInterface.desktopSync.remoteReady
 
@@ -140,22 +150,22 @@ QGCView {
                 QGCLabel { text: qsTr("Local"); font.family: ScreenTools.demiboldFontFamily; Layout.alignment: Qt.AlignHCenter; }
                 QGCLabel { text: TyphoonHQuickInterface.desktopSync.currentRemote; font.family: ScreenTools.demiboldFontFamily; Layout.alignment: Qt.AlignHCenter; }
                 QGCButton {
-                    text:           qsTr("Send Missions")
+                    text:           kSendMission
                     width:          _gridElemWidth
                     onClicked: {
                         _sendMission = true
-                        _dialogTitle = qsTr("Send Missions")
+                        _dialogTitle = kSendMission
                         rootLoader.sourceComponent = syncFilesDialog
                         mainWindow.disableToolbar()
                     }
                 }
                 QGCButton {
-                    text:               qsTr("Fetch Missions")
+                    text:               kFetchMissions
                     width:              _gridElemWidth
                     Layout.fillWidth:   true
                     onClicked: {
                         _sendMission = false
-                        _dialogTitle = qsTr("Fetch Missions")
+                        _dialogTitle = kFetchMissions
                         rootLoader.sourceComponent = syncFilesDialog
                         mainWindow.disableToolbar()
                     }
@@ -165,15 +175,18 @@ QGCView {
                     width:              _gridElemWidth
                     Layout.fillWidth:   true
                     onClicked: {
-
+                        rootLoader.sourceComponent = uploadMapsDlg
+                        mainWindow.disableToolbar()
                     }
                 }
                 QGCButton {
                     text:               qsTr("Fetch Maps")
                     width:              _gridElemWidth
+                    enabled:            _hasMaps
                     Layout.fillWidth:   true
                     onClicked: {
-
+                        rootLoader.sourceComponent = fetchMapsDialog
+                        mainWindow.disableToolbar()
                     }
                 }
                 Item {
@@ -316,7 +329,7 @@ QGCView {
                         spacing:        ScreenTools.defaultFontPixelWidth * 2
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCButton {
-                            text:           !TyphoonHQuickInterface.desktopSync.sendingFiles ? qsTr("Start") : qsTr("Cancel")
+                            text:           !TyphoonHQuickInterface.desktopSync.sendingFiles ? kStart : kCancel
                             width:          ScreenTools.defaultFontPixelWidth  * 16
                             height:         ScreenTools.defaultFontPixelHeight * 2
                             enabled:        !TyphoonHQuickInterface.desktopSync.syncDone && !TyphoonHQuickInterface.desktopSync.canceled
@@ -333,7 +346,7 @@ QGCView {
                             }
                         }
                         QGCButton {
-                            text:           qsTr("Close")
+                            text:           kClose
                             width:          ScreenTools.defaultFontPixelWidth  * 16
                             enabled:        !TyphoonHQuickInterface.desktopSync.sendingFiles
                             height:         ScreenTools.defaultFontPixelHeight * 2
@@ -347,6 +360,7 @@ QGCView {
             }
             Component.onCompleted: {
                 TyphoonHQuickInterface.desktopSync.initSync()
+                TyphoonHQuickInterface.desktopSync.syncMessage = _sendMission ? qsTr("Select missions to upload to remote") : qsTr("Select missions to download from remote")
                 mainWindow.disableToolbar()
             }
         }
@@ -472,19 +486,19 @@ QGCView {
                         spacing:        ScreenTools.defaultFontPixelWidth * 2
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCButton {
-                            text:       qsTr("Select All")
+                            text:       kSelectAll
                             width:      ScreenTools.defaultFontPixelWidth * 16
                             enabled:    !TyphoonHQuickInterface.desktopSync.sendingFiles
                             onClicked:  TyphoonHQuickInterface.desktopSync.logController.selectAllFiles(true)
                         }
                         QGCButton {
-                            text:       qsTr("Select None")
+                            text:       kSelectNone
                             width:      ScreenTools.defaultFontPixelWidth * 16
                             enabled:    !TyphoonHQuickInterface.desktopSync.sendingFiles
                             onClicked:  TyphoonHQuickInterface.desktopSync.logController.selectAllFiles(false)
                         }
                         QGCButton {
-                            text:       !TyphoonHQuickInterface.desktopSync.sendingFiles ? qsTr("Start") : qsTr("Cancel")
+                            text:       !TyphoonHQuickInterface.desktopSync.sendingFiles ? kStart : kCancel
                             width:      ScreenTools.defaultFontPixelWidth  * 16
                             height:     ScreenTools.defaultFontPixelHeight * 2
                             enabled:    TyphoonHQuickInterface.desktopSync.logController.selectedCount > 0 && !TyphoonHQuickInterface.desktopSync.canceled
@@ -505,7 +519,7 @@ QGCView {
                             }
                         }
                         QGCButton {
-                            text:       qsTr("Close")
+                            text:       kClose
                             width:      ScreenTools.defaultFontPixelWidth  * 16
                             enabled:    !TyphoonHQuickInterface.desktopSync.sendingFiles
                             height:     ScreenTools.defaultFontPixelHeight * 2
@@ -519,6 +533,342 @@ QGCView {
             }
             Component.onCompleted: {
                 TyphoonHQuickInterface.desktopSync.initSync()
+                TyphoonHQuickInterface.desktopSync.syncMessage = qsTr("Select telemetry logs to download from remote")
+                mainWindow.disableToolbar()
+            }
+        }
+    }
+    //-- Fetch Maps
+    Component {
+        id:             fetchMapsDialog
+        Rectangle {
+            id:         fetchMapsDialogItem
+            width:      mainWindow.width
+            height:     mainWindow.height
+            color:      Qt.rgba(0,0,0,0.1)
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+            Rectangle {
+                id:             fetchMapsDialogShadow
+                anchors.fill:   fetchMapsDialogRect
+                radius:         fetchMapsDialogRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       fetchMapsDialogShadow
+                visible:            fetchMapsDialogRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             fetchMapsDialogShadow
+            }
+            Rectangle {
+                id:                 fetchMapsDialogRect
+                width:              ScreenTools.defaultFontPixelWidth * 100
+                height:             fetchLogsCol.height * 1.25
+                radius:             ScreenTools.defaultFontPixelWidth
+                color:              qgcPal.alertBackground
+                border.color:       qgcPal.alertBorder
+                border.width:       2
+                anchors.centerIn:   parent
+                Column {
+                    id:                 fetchLogsCol
+                    width:              fetchMapsDialogRect.width
+                    spacing:            ScreenTools.defaultFontPixelHeight * 2
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           qsTr("Fetch Tile Sets")
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        color:          qgcPal.alertText
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    Rectangle {
+                        id:             mapFetchRect
+                        color:          qgcPal.window
+                        width:          mapFetchView.width  + (ScreenTools.defaultFontPixelWidth * 4)
+                        height:         mapFetchView.height + ScreenTools.defaultFontPixelHeight
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        ListView {
+                            id:             mapFetchView
+                            width:          (ScreenTools.defaultFontPixelWidth * (16 * 4)) + (ScreenTools.defaultFontPixelWidth * 8)
+                            height:         qgcView.height * 0.35
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            orientation:    ListView.Vertical
+                            model:          TyphoonHQuickInterface.desktopSync.mapController.fileList
+                            cacheBuffer:    Math.max(height * 2, 0)
+                            clip:           true
+                            highlightMoveDuration: 250
+                            anchors.centerIn: parent
+                            delegate: Row {
+                                spacing: ScreenTools.defaultFontPixelWidth
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                property var _fileItem: _hasMaps ? TyphoonHQuickInterface.desktopSync.mapController.fileList[index] : null
+                                QGCCheckBox {
+                                    text:       ""
+                                    checked:    _fileItem.selected
+                                    onClicked:  _fileItem.selected = !_fileItem.selected
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                QGCLabel {
+                                    text:       _fileItem.fileName
+                                    width:      mapFetchView.width * 0.55
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                QGCLabel {
+                                    text:       _fileItem.sizeStr
+                                    width:      mapFetchView.width * 0.25
+                                    horizontalAlignment: Text.AlignRight
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+                        }
+                    }
+                    ProgressBar {
+                        width:          mapFetchRect.width
+                        orientation:    Qt.Horizontal
+                        minimumValue:   0
+                        maximumValue:   100
+                        value:          TyphoonHQuickInterface.desktopSync.syncProgress
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    ProgressBar {
+                        width:          mapFetchRect.width
+                        orientation:    Qt.Horizontal
+                        minimumValue:   0
+                        maximumValue:   100
+                        value:          TyphoonHQuickInterface.desktopSync.fileProgress
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           TyphoonHQuickInterface.desktopSync.syncMessage
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    Row {
+                        spacing:        ScreenTools.defaultFontPixelWidth * 2
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCButton {
+                            text:       kSelectAll
+                            width:      ScreenTools.defaultFontPixelWidth * 16
+                            enabled:    !TyphoonHQuickInterface.desktopSync.sendingFiles
+                            onClicked:  TyphoonHQuickInterface.desktopSync.mapController.selectAllFiles(true)
+                        }
+                        QGCButton {
+                            text:       kSelectNone
+                            width:      ScreenTools.defaultFontPixelWidth * 16
+                            enabled:    !TyphoonHQuickInterface.desktopSync.sendingFiles
+                            onClicked:  TyphoonHQuickInterface.desktopSync.mapController.selectAllFiles(false)
+                        }
+                        QGCButton {
+                            text:       !TyphoonHQuickInterface.desktopSync.sendingFiles ? kStart : kCancel
+                            width:      ScreenTools.defaultFontPixelWidth  * 16
+                            height:     ScreenTools.defaultFontPixelHeight * 2
+                            enabled:    TyphoonHQuickInterface.desktopSync.mapController.selectedCount > 0 && !TyphoonHQuickInterface.desktopSync.canceled
+                            onClicked: {
+                                if(TyphoonHQuickInterface.desktopSync.sendingFiles) {
+                                    TyphoonHQuickInterface.desktopSync.cancelSync()
+                                } else {
+
+                                }
+                            }
+                        }
+                        QGCButton {
+                            text:       kClose
+                            width:      ScreenTools.defaultFontPixelWidth  * 16
+                            enabled:    !TyphoonHQuickInterface.desktopSync.sendingFiles
+                            height:     ScreenTools.defaultFontPixelHeight * 2
+                            onClicked: {
+                                rootLoader.sourceComponent = null
+                                mainWindow.enableToolbar()
+                            }
+                        }
+                    }
+                }
+            }
+            Component.onCompleted: {
+                TyphoonHQuickInterface.desktopSync.initSync()
+                TyphoonHQuickInterface.desktopSync.syncMessage = qsTr("Select map tile sets to download from remote")
+                mainWindow.disableToolbar()
+            }
+        }
+    }
+    //-- Upload Maps
+    Component {
+        id:             uploadMapsDlg
+        Rectangle {
+            id:         uploadMapsDlgItem
+            width:      mainWindow.width
+            height:     mainWindow.height
+            color:      Qt.rgba(0,0,0,0.1)
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+            Rectangle {
+                id:             uploadMapsDlgShadow
+                anchors.fill:   uploadMapsDlgRect
+                radius:         uploadMapsDlgRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       uploadMapsDlgShadow
+                visible:            uploadMapsDlgRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             uploadMapsDlgShadow
+            }
+            Rectangle {
+                id:                 uploadMapsDlgRect
+                width:              ScreenTools.defaultFontPixelWidth * 100
+                height:             uploadMapsCol.height * 1.25
+                radius:             ScreenTools.defaultFontPixelWidth
+                color:              qgcPal.alertBackground
+                border.color:       qgcPal.alertBorder
+                border.width:       2
+                anchors.centerIn:   parent
+                Column {
+                    id:                 uploadMapsCol
+                    width:              uploadMapsDlgRect.width
+                    spacing:            ScreenTools.defaultFontPixelHeight * 2
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           qsTr("Send Map Tiles")
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        color:          qgcPal.alertText
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    Rectangle {
+                        id:             logRect
+                        color:          qgcPal.window
+                        width:          tileSetList.width  + (ScreenTools.defaultFontPixelWidth * 4)
+                        height:         tileSetList.height + ScreenTools.defaultFontPixelHeight
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCFlickable {
+                            id:                 tileSetList
+                            clip:               true
+                            width:              (ScreenTools.defaultFontPixelWidth * (16 * 4)) + (ScreenTools.defaultFontPixelWidth * 8)
+                            height:             qgcView.height * 0.35
+                            contentHeight:      _cacheList.height
+                            anchors.centerIn:   parent
+                            Column {
+                                id:             _cacheList
+                                width:          tileSetList.width
+                                spacing:        ScreenTools.defaultFontPixelHeight * 0.5
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                Repeater {
+                                    model: QGroundControl.mapEngineManager.tileSets
+                                    delegate: Row {
+                                        spacing: ScreenTools.defaultFontPixelWidth
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        QGCCheckBox {
+                                            text:       ""
+                                            checked:    object.selected
+                                            onClicked:  object.selected = !object.selected
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                        QGCLabel {
+                                            text:       object.name
+                                            width:      tileSetList.width * 0.55
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                        QGCLabel {
+                                            text:       object.totalTileCount
+                                            width:      tileSetList.width * 0.25
+                                            horizontalAlignment: Text.AlignRight
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    ProgressBar {
+                        width:          logRect.width
+                        orientation:    Qt.Horizontal
+                        minimumValue:   0
+                        maximumValue:   100
+                        value:          TyphoonHQuickInterface.desktopSync.syncProgress
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    ProgressBar {
+                        width:          logRect.width
+                        orientation:    Qt.Horizontal
+                        minimumValue:   0
+                        maximumValue:   100
+                        value:          TyphoonHQuickInterface.desktopSync.fileProgress
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           TyphoonHQuickInterface.desktopSync.syncMessage
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    Row {
+                        spacing:        ScreenTools.defaultFontPixelWidth * 2
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCButton {
+                            text:       kSelectAll
+                            width:      ScreenTools.defaultFontPixelWidth * 16
+                            enabled:    !TyphoonHQuickInterface.desktopSync.sendingFiles
+                            onClicked:  QGroundControl.mapEngineManager.selectAll()
+                        }
+                        QGCButton {
+                            text:       kSelectNone
+                            width:      ScreenTools.defaultFontPixelWidth * 16
+                            enabled:    !TyphoonHQuickInterface.desktopSync.sendingFiles
+                            onClicked:  QGroundControl.mapEngineManager.selectNone()
+                        }
+                        QGCButton {
+                            text:       !TyphoonHQuickInterface.desktopSync.sendingFiles ? kStart : kCancel
+                            width:      ScreenTools.defaultFontPixelWidth  * 16
+                            height:     ScreenTools.defaultFontPixelHeight * 2
+                            enabled:    QGroundControl.mapEngineManager.selectedCount > 0 && !TyphoonHQuickInterface.desktopSync.canceled
+                            onClicked: {
+                                if(TyphoonHQuickInterface.desktopSync.sendingFiles) {
+                                    TyphoonHQuickInterface.desktopSync.cancelSync()
+                                } else {
+                                    TyphoonHQuickInterface.desktopSync.uploadSelectedTiles()
+                                }
+                            }
+                        }
+                        QGCButton {
+                            text:       kClose
+                            width:      ScreenTools.defaultFontPixelWidth  * 16
+                            enabled:    !TyphoonHQuickInterface.desktopSync.sendingFiles
+                            height:     ScreenTools.defaultFontPixelHeight * 2
+                            onClicked: {
+                                rootLoader.sourceComponent = null
+                                mainWindow.enableToolbar()
+                            }
+                        }
+                    }
+                }
+            }
+            Component.onCompleted: {
+                QGroundControl.mapEngineManager.loadTileSets()
+                TyphoonHQuickInterface.desktopSync.initMapFetch()
+                TyphoonHQuickInterface.desktopSync.syncMessage = qsTr("Select tile set(s) to send to remote")
                 mainWindow.disableToolbar()
             }
         }

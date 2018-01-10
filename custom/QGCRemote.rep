@@ -3,6 +3,7 @@
 POD QGCRemoteLogEntry(QString name, quint64 size)
 POD QGCNewMission(QString name, QByteArray mission)
 POD QGCLogFragment(QString name, int current, int total, QByteArray data)
+POD QGCSyncTileSet(QString name, quint32 count, quint64 size)
 
 class QGCRemote
 {
@@ -12,6 +13,7 @@ class QGCRemote
     PROP(bool desktopConnected=false READWRITE)
     PROP(QStringList currentMissions)
     PROP(QList<QGCRemoteLogEntry> logEntries)
+    PROP(QList<QGCSyncTileSet> tileSets)
     SIGNAL(sendLogFragment(QGCLogFragment fragment));
     SIGNAL(receiveMission(QGCNewMission mission));
     SLOT(void sendMission(QGCNewMission mission));

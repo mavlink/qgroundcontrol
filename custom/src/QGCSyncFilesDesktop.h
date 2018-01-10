@@ -32,10 +32,11 @@ public:
     Q_PROPERTY(bool                 sendingFiles    READ    sendingFiles    NOTIFY sendingFilesChanged)
     Q_PROPERTY(bool                 syncDone        READ    syncDone        NOTIFY syncDoneChanged)
     Q_PROPERTY(bool                 canceled        READ    canceled        NOTIFY canceledChanged)
-    Q_PROPERTY(QString              syncMessage     READ    syncMessage     NOTIFY syncMessageChanged)
+    Q_PROPERTY(QString              syncMessage     READ    syncMessage     WRITE  setSyncMessage       NOTIFY syncMessageChanged)
     Q_PROPERTY(int                  syncProgress    READ    syncProgress    NOTIFY syncProgressChanged)
     Q_PROPERTY(int                  fileProgress    READ    fileProgress    NOTIFY fileProgressChanged)
     Q_PROPERTY(QGCFileListController* logController READ    logController   CONSTANT)
+    Q_PROPERTY(QGCFileListController* mapController READ    mapController   CONSTANT)
 
     //-- Connect to remote node
     Q_INVOKABLE bool connectToRemote    (QString name);
@@ -55,6 +56,10 @@ public:
     Q_INVOKABLE void downloadSelectedLogs(QString path);
     //-- Init log fetch state
     Q_INVOKABLE void initLogFetch       ();
+    //-- Init map fetch state
+    Q_INVOKABLE void initMapFetch       ();
+    //-- Upload selected map tile sets
+    Q_INVOKABLE void uploadSelectedTiles();
 
     QStringList remoteList              () { return _remoteNames; }
     bool        remoteReady             ();
@@ -64,10 +69,12 @@ public:
     bool        syncDone                () { return _syncDone; }
     bool        canceled                () { return _cancel; }
     QString     syncMessage             () { return _syncMessage; }
+    void        setSyncMessage          (QString message) { _syncMessage = message; emit syncMessageChanged(); }
     int         syncProgress            () { return _syncProgress; }
     int         fileProgress            () { return _fileProgress; }
 
     QGCFileListController* logController() { return &_logController; }
+    QGCFileListController* mapController() { return &_mapController; }
 
 public:
     //-------------------------------------------------------------------------
@@ -131,6 +138,7 @@ private:
 
 private:
     QGCFileListController               _logController;
+    QGCFileListController               _mapController;
     QUdpSocket*                         _udpSocket;
     QSharedPointer<QGCRemoteReplica>    _remoteObject;
     QRemoteObjectNode*                  _remoteNode;
