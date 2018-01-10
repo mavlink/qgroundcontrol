@@ -47,9 +47,6 @@ private:
 #else
 
 #include "TyphoonHCommon.h"
-#if defined(__androidx86__)
-#include <termios.h>
-#endif
 
 class M4SerialComm : public QThread
 {
@@ -90,9 +87,6 @@ private:
     int         _status;
     QString     _uart_name;
     int         _currentPacketStatus;
-#if defined(__androidx86__)
-    struct termios  _savedtio;
-#endif
 };
 #endif
 
