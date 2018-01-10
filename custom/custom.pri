@@ -39,7 +39,14 @@ linux : android-g++ {
     CONFIG  += NoSerialBuild
     equals(ANDROID_TARGET_ARCH, x86)  {
         message("Using ST16 specific Android interface")
-        DEFINES += USE_QT_SERIALPORT
+        equals(QT_MAJOR_VERSION, 5): {
+            equals(QT_MAJOR_VERSION, 9): {
+                greaterThan(QT_MINOR_VERSION, 1): {
+                    message(Using QSerialPort)
+                    DEFINES += USE_QT_SERIALPORT
+                }
+            }
+        }
         PlayStoreBuild|DeveloperBuild {
             CONFIG -= debug
             CONFIG -= debug_and_release

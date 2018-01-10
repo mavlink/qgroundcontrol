@@ -6,6 +6,7 @@
 
 #include "m4serial.h"
 #include "m4util.h"
+#include <errno.h>
 
 #if defined(USE_QT_SERIALPORT)
 //-----------------------------------------------------------------------------
