@@ -7,6 +7,165 @@
 #include "m4serial.h"
 #include "m4util.h"
 
+#if defined(USE_QT_SERIALPORT)
+//-----------------------------------------------------------------------------
+M4SerialComm::M4SerialComm(QObject* parent)
+    : QObject(parent)
+    , _dataLength(0)
+    , _baudrate(230400)
+    , _currentPacketStatus(PACKET_NONE)
+{
+
+}
+
+//-----------------------------------------------------------------------------
+M4SerialComm::~M4SerialComm()
+{
+    close();
+}
+
+//-----------------------------------------------------------------------------
+bool
+M4SerialComm::init(QString port, int baud)
+{
+    _uart_name = port;
+    _baudrate  = baud;
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+bool
+M4SerialComm::open()
+{
+#if defined(__androidx86__)
+    if(_port.isOpen()) {
+        return false;
+    }
+    _port.setPortName(_uart_name);
+    _port.open(QIODevice::ReadWrite);
+    if(!_port.isOpen()) {
+        qCDebug(YuneecLog) << "SERIAL: Could not open port" << _uart_name << _port.errorString();
+        return false;
+    }
+    _port.setDataTerminalReady(true);
+    _port.setBaudRate     (_baudrate);
+    _port.setDataBits     (QSerialPort::Data8);
+    _port.setFlowControl  (QSerialPort::NoFlowControl);
+    _port.setStopBits     (QSerialPort::OneStop);
+    _port.setParity       (QSerialPort::NoParity);
+    QObject::connect(&_port, &QIODevice::readyRead, this, &M4SerialComm::_readBytes);
+#endif
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+void
+M4SerialComm::close()
+{
+#if defined(__androidx86__)
+    if(_port.isOpen()) {
+        _port.close();
+    }
+#endif
+}
+
+//-----------------------------------------------------------------------------
+bool
+M4SerialComm::write(QByteArray data, bool debug)
+{
+#if defined(__androidx86__)
+    if(_port.isOpen()) {
+        if(debug) {
+            qCDebug(YuneecLog) << data.toHex();
+        }
+        return _port.write(data) == data.length();
+    }
+    return false;
+#else
+    Q_UNUSED(data)
+    Q_UNUSED(debug)
+#endif
+}
+
+//-----------------------------------------------------------------------------
+bool
+M4SerialComm::write(void* data, int length)
+{
+#if defined(__androidx86__)
+    if(_port.isOpen()) {
+        return _port.write((const char*)data, length) == length;
+    }
+    return false;
+#else
+    Q_UNUSED(data)
+    Q_UNUSED(debug)
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+M4SerialComm::_readBytes()
+{
+    qint64 byteCount = _port.bytesAvailable();
+    if (byteCount) {
+        QByteArray buffer;
+        buffer.resize(byteCount);
+        _port.read(buffer.data(), buffer.size());
+        for(int i = 0; i < (int)byteCount; i++) {
+            uint8_t b = buffer[i];
+            switch (_currentPacketStatus) {
+            case PACKET_NONE:
+                if(b == 0x55) {
+                    _currentPacketStatus = PACKET_FIRST_ID;
+                }
+                break;
+            case PACKET_FIRST_ID:
+                if(b == 0x55) {
+                    _currentPacketStatus = PACKET_SECOND_ID;
+                } else {
+                    _currentPacketStatus = PACKET_NONE;
+                }
+                break;
+            case PACKET_SECOND_ID:
+                if(b < 2) {
+                    _currentPacketStatus = PACKET_NONE;
+                } else {
+                    _dataLength = b - 1; // Exclude trailing CRC
+                    _data.clear();
+                    _currentPacketStatus = PACKET_DATA;
+                }
+                break;
+            case PACKET_DATA:
+                if(_data.size() == _dataLength) {
+                    _readPacket(b);
+                    _currentPacketStatus = PACKET_NONE;
+                } else {
+                    _data.append(b);
+                }
+                break;
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+M4SerialComm::_readPacket(uint8_t crc)
+{
+#if defined(__androidx86__)
+    uint8_t oCRC = crc8((uint8_t*)(void*)_data.data(), _data.size());
+    if(crc == oCRC) {
+        emit bytesReady(_data);
+    } else {
+        qCDebug(YuneecLog) << "Bad CRC";
+    }
+#else
+    Q_UNUSED(length);
+#endif
+}
+
+#else
+
 #if defined(__androidx86__)
 #include <stdio.h>
 #include <unistd.h>
@@ -243,7 +402,9 @@ M4SerialComm::_setupPort(int baud)
         return false;
     }
     tcflush(_fd, TCIFLUSH);
-    if(tcsetattr(_fd, TCSANOW, &config) < 0) {
+    if(tcsetattr(_fd, TCSANOW, &config) != 0) {
+        const char* errStr = strerror(errno);
+        qCWarning(YuneecLog) << "tcsetattr(): " << errStr;
         qCWarning(YuneecLog) << "SERIAL: Could not set serial configuration";
         return false;
     }
@@ -270,3 +431,4 @@ M4SerialComm::_writePort(void* buffer, int len)
     return len;
 #endif
 }
+#endif

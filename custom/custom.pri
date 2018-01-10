@@ -39,6 +39,7 @@ linux : android-g++ {
     CONFIG  += NoSerialBuild
     equals(ANDROID_TARGET_ARCH, x86)  {
         message("Using ST16 specific Android interface")
+        DEFINES += USE_QT_SERIALPORT
         PlayStoreBuild|DeveloperBuild {
             CONFIG -= debug
             CONFIG -= debug_and_release
@@ -140,6 +141,11 @@ WindowsBuild {
 QT += \
     multimedia \
     remoteobjects
+
+contains (DEFINES, USE_QT_SERIALPORT) {
+QT += \
+    serialport
+}
 
 INCLUDEPATH += \
     $$QGCROOT/custom/src \

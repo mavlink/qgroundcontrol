@@ -6,10 +6,51 @@
 
 #pragma once
 
+#if defined(USE_QT_SERIALPORT)
+
+#include <QObject>
+#include <QSerialPort>
+
+class M4SerialComm : public QObject
+{
+    Q_OBJECT
+public:
+    M4SerialComm        (QObject* parent = NULL);
+    ~M4SerialComm       ();
+    bool  init          (QString port, int baud);
+    bool  open          ();
+    void  close         ();
+    bool  write         (QByteArray data, bool debug = false);
+    bool  write         (void* data, int length);
+private slots:
+    void  _readBytes    ();
+private:
+    void  _readPacket   (uint8_t crc);
+signals:
+    void  bytesReady    (QByteArray data);
+private:
+    enum {
+        // Packet Status
+        PACKET_NONE,
+        PACKET_FIRST_ID,
+        PACKET_SECOND_ID,
+        PACKET_DATA
+    };
+    QString     _uart_name;
+    QSerialPort _port;
+    QByteArray  _data;
+    uint8_t     _dataLength;
+    int         _baudrate;
+    int         _status;
+    int         _currentPacketStatus;
+};
+#else
+
 #include "TyphoonHCommon.h"
 #if defined(__androidx86__)
 #include <termios.h>
 #endif
+
 class M4SerialComm : public QThread
 {
     Q_OBJECT
@@ -53,4 +94,5 @@ private:
     struct termios  _savedtio;
 #endif
 };
+#endif
 
