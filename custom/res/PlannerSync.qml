@@ -60,12 +60,22 @@ QGCView {
             visible:        _activeVehicle
             anchors.centerIn: parent
         }
-        QGCLabel {
-            text:           qsTr("No remotes detected")
-            font.family:    ScreenTools.demiboldFontFamily
-            font.pointSize: ScreenTools.mediumFontPointSize
+        Column {
+            spacing:        ScreenTools.defaultFontPixelHeight * 2
             visible:        !_activeVehicle && !_clientCount
             anchors.centerIn: parent
+            QGCLabel {
+                id:             noRemoteLabel
+                text:           qsTr("No remotes detected")
+                font.family:    ScreenTools.demiboldFontFamily
+                font.pointSize: ScreenTools.mediumFontPointSize
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            QGCLabel {
+                text:           qsTr("Start your ST16 remote, make sure it is connected to the same WiFi network as this computer and start DataPilot")
+                font.family:    ScreenTools.demiboldFontFamily
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
         }
         Rectangle {
             id:             logRect
