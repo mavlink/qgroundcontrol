@@ -595,40 +595,64 @@ QGCView {
                     Rectangle {
                         id:             mapFetchRect
                         color:          qgcPal.window
-                        width:          mapFetchView.width  + (ScreenTools.defaultFontPixelWidth * 4)
-                        height:         mapFetchView.height + ScreenTools.defaultFontPixelHeight
+                        width:          mapFetchViewCol.width  + (ScreenTools.defaultFontPixelWidth * 4)
+                        height:         mapFetchViewCol.height + ScreenTools.defaultFontPixelHeight
                         anchors.horizontalCenter: parent.horizontalCenter
-                        ListView {
-                            id:             mapFetchView
-                            width:          (ScreenTools.defaultFontPixelWidth * (16 * 4)) + (ScreenTools.defaultFontPixelWidth * 8)
-                            height:         qgcView.height * 0.35
-                            spacing:        ScreenTools.defaultFontPixelWidth
-                            orientation:    ListView.Vertical
-                            model:          TyphoonHQuickInterface.desktopSync.mapController.fileList
-                            cacheBuffer:    Math.max(height * 2, 0)
-                            clip:           true
-                            highlightMoveDuration: 250
-                            anchors.centerIn: parent
-                            delegate: Row {
-                                spacing: ScreenTools.defaultFontPixelWidth
+                        Column {
+                            id:             mapFetchViewCol
+                            spacing:        ScreenTools.defaultFontPixelHeight
+                            ListView {
+                                id:             mapFetchView
+                                width:          (ScreenTools.defaultFontPixelWidth * (16 * 4)) + (ScreenTools.defaultFontPixelWidth * 8)
+                                height:         qgcView.height * 0.35
+                                spacing:        ScreenTools.defaultFontPixelWidth
+                                orientation:    ListView.Vertical
+                                model:          TyphoonHQuickInterface.desktopSync.mapController.fileList
+                                cacheBuffer:    Math.max(height * 2, 0)
+                                clip:           true
+                                highlightMoveDuration: 250
+                                anchors.centerIn: parent
+                                delegate: Row {
+                                    spacing: ScreenTools.defaultFontPixelWidth
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    property var _fileItem: _hasMaps ? TyphoonHQuickInterface.desktopSync.mapController.fileList[index] : null
+                                    QGCCheckBox {
+                                        text:       ""
+                                        checked:    _fileItem.selected
+                                        onClicked:  _fileItem.selected = !_fileItem.selected
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    QGCLabel {
+                                        text:       _fileItem.fileName
+                                        width:      mapFetchView.width * 0.55
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    QGCLabel {
+                                        text:       _fileItem.sizeStr
+                                        width:      mapFetchView.width * 0.25
+                                        horizontalAlignment: Text.AlignRight
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                }
+                            }
+                            ExclusiveGroup { id: radioGroup }
+                            Column {
+                                spacing:            ScreenTools.defaultFontPixelHeight
+                                width:              ScreenTools.defaultFontPixelWidth * 24
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                property var _fileItem: _hasMaps ? TyphoonHQuickInterface.desktopSync.mapController.fileList[index] : null
-                                QGCCheckBox {
-                                    text:       ""
-                                    checked:    _fileItem.selected
-                                    onClicked:  _fileItem.selected = !_fileItem.selected
-                                    anchors.verticalCenter: parent.verticalCenter
+                                QGCRadioButton {
+                                    exclusiveGroup: radioGroup
+                                    text:           qsTr("Append to existing set")
+                                    checked:        !QGroundControl.mapEngineManager.importReplace
+                                    onClicked:      QGroundControl.mapEngineManager.importReplace = !checked
+                                    enabled:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone
                                 }
-                                QGCLabel {
-                                    text:       _fileItem.fileName
-                                    width:      mapFetchView.width * 0.55
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                                QGCLabel {
-                                    text:       _fileItem.sizeStr
-                                    width:      mapFetchView.width * 0.25
-                                    horizontalAlignment: Text.AlignRight
-                                    anchors.verticalCenter: parent.verticalCenter
+                                QGCRadioButton {
+                                    exclusiveGroup: radioGroup
+                                    text:           qsTr("Replace existing set")
+                                    checked:        QGroundControl.mapEngineManager.importReplace
+                                    onClicked:      QGroundControl.mapEngineManager.importReplace = checked
+                                    enabled:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone
                                 }
                             }
                         }
@@ -639,14 +663,6 @@ QGCView {
                         minimumValue:   0
                         maximumValue:   100
                         value:          TyphoonHQuickInterface.desktopSync.syncProgress
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    ProgressBar {
-                        width:          mapFetchRect.width
-                        orientation:    Qt.Horizontal
-                        minimumValue:   0
-                        maximumValue:   100
-                        value:          TyphoonHQuickInterface.desktopSync.fileProgress
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     QGCLabel {

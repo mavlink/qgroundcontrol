@@ -7,7 +7,6 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
-#include "QGCMapEngineManager.h"
 
 //-- TODO: This is here as it defines the UDP port and URL. It needs to go upstream
 #include "TyphoonHQuickInterface.h"
@@ -31,8 +30,6 @@ QGCSyncFilesMobile::QGCSyncFilesMobile(QObject* parent)
     connect(this, &QGCRemoteSimpleSource::cancelChanged, this, &QGCSyncFilesMobile::_canceled);
     QGCMapEngineManager* mapMgr = qgcApp()->toolbox()->mapEngineManager();
     connect(mapMgr, &QGCMapEngineManager::tileSetsChanged, this, &QGCSyncFilesMobile::_tileSetsChanged);
-    connect(mapMgr, &QGCMapEngineManager::importActionChanged, this, &QGCSyncFilesMobile::_mapExportActionChanged);
-    connect(mapMgr, &QGCMapEngineManager::actionProgressChanged, this, &QGCSyncFilesMobile::_mapExportProgressChanged);
     _broadcastTimer.setSingleShot(false);
     _updateMissionList();
     _updateLogEntries();
@@ -211,20 +208,20 @@ void
 QGCSyncFilesMobile::requestMapTiles(QStringList sets)
 {
     qCDebug(QGCSyncFiles) << "Map Request";
-    QStringList mapsToSend;
     QGCMapEngineManager* mapMgr = qgcApp()->toolbox()->mapEngineManager();
-    QmlObjectListModel&  tileSets = (*mapMgr->tileSets());
-    mapMgr->selectNone();
+    QmlObjectListModel& tileSets = (*mapMgr->tileSets());
+    //-- Collect sets to export
+    QVector<QGCCachedTileSet*> setsToExport;
     for(int i = 0; i < tileSets.count(); i++ ) {
         QGCCachedTileSet* set = qobject_cast<QGCCachedTileSet*>(tileSets.get(i));
         if(set && sets.contains(set->name())) {
-            set->setSelected(true);
+            setsToExport.append(set);
         }
     }
     //-- Temp file to save the exported set
     _mapFile = new QTemporaryFile;
     //-- If cannot create file, there is nothing to send or worker thread is still up for some reason, bail
-    if (_mapFile->open() || !mapsToSend.size() || _mapWorker) {
+    if (_mapFile->open() || !setsToExport.size() || _mapWorker) {
         qCDebug(QGCSyncFiles) << "Nothing to send";
         QGCMapFragment logFrag(0, 0, QByteArray(), 0);
         _sendMapFragment(logFrag);
@@ -241,10 +238,20 @@ QGCSyncFilesMobile::requestMapTiles(QStringList sets)
     connect(_mapWorker, &QGCMapUploadWorker::sendMapFragment, this, &QGCSyncFilesMobile::_sendMapFragment);
     connect(_mapWorker, &QGCMapUploadWorker::done, this, &QGCSyncFilesMobile::_mapWorkerDone);
     //-- Request map export
-    if(mapMgr->exportSets(_mapFile->fileName())) {
-        qCDebug(QGCSyncFiles) << "Exporting map set to" << _mapFile->fileName();
-    } else {
-        qWarning() << "Error exporting map set to" << _mapFile->fileName();
+    QGCExportTileTask* task = new QGCExportTileTask(setsToExport, _mapFile->fileName());
+    connect(task, &QGCExportTileTask::actionCompleted, this, &QGCSyncFilesMobile::_mapExportDone);
+    connect(task, &QGCExportTileTask::actionProgress, this, &QGCSyncFilesMobile::_mapExportProgressChanged);
+    connect(task, &QGCMapTask::error, this, &QGCSyncFilesMobile::_mapExportError);
+    getQGCMapEngine()->addTask(task);
+    qCDebug(QGCSyncFiles) << "Exporting map set to" << _mapFile->fileName();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesMobile::_mapExportError(QGCMapTask::TaskType, QString errorString)
+{
+    qWarning() << "Map export error:" << errorString;
+    if(_mapFile) {
         QGCMapFragment logFrag(0, 0, QByteArray(), 0);
         _sendMapFragment(logFrag);
         delete _mapFile;
@@ -254,25 +261,21 @@ QGCSyncFilesMobile::requestMapTiles(QStringList sets)
 
 //-----------------------------------------------------------------------------
 void
-QGCSyncFilesMobile::_mapExportActionChanged()
+QGCSyncFilesMobile::_mapExportDone()
 {
     if(_mapFile) {
-        if(qgcApp()->toolbox()->mapEngineManager()->importAction() == QGCMapEngineManager::ActionDone) {
-            if(_mapFile) {
-                qCDebug(QGCSyncFiles) << "Starting map upload thread";
-                _workerThread.start();
-                emit doMapSync(_mapFile);
-            }
-        }
+        qCDebug(QGCSyncFiles) << "Starting map upload thread";
+        _workerThread.start();
+        emit doMapSync(_mapFile);
     }
 }
 
 //-----------------------------------------------------------------------------
 void
-QGCSyncFilesMobile::_mapExportProgressChanged()
+QGCSyncFilesMobile::_mapExportProgressChanged(int percentage)
 {
     if(_mapFile) {
-        QGCMapFragment mapFrag(0, 0, QByteArray(1,'1'), qgcApp()->toolbox()->mapEngineManager()->actionProgress());
+        QGCMapFragment mapFrag(0, 0, QByteArray(1,'1'), percentage);
         _sendMapFragment(mapFrag);
     }
 }
@@ -382,13 +385,14 @@ QGCMapUploadWorker::doMapSync(QTemporaryFile* mapFile)
     } else {
         quint64 sofar = 0;
         quint64 total = mapFile->size();
+        int segment = 0;
         while(true) {
             if(_pSync->cancel()) break;
             //-- Send in 1M chuncks
             QByteArray bytes = mapFile->read(1024 * 1024);
             if(bytes.size() != 0) {
                 sofar += bytes.size();
-                QGCMapFragment mapFrag(sofar, total, bytes, 0);
+                QGCMapFragment mapFrag(sofar, total, bytes, segment++);
                 emit sendMapFragment(mapFrag);
             }
             if(sofar >= total || bytes.size() == 0) {

@@ -8,6 +8,7 @@
 #include <QObject>
 #include <QtRemoteObjects>
 #include "QGCLoggingCategory.h"
+#include "QGCMapEngineManager.h"
 
 //-- This is built at compile time from QGCRemote.rep
 #include "rep_QGCRemote_source.h"
@@ -74,8 +75,9 @@ private slots:
     void    _logWorkerDone              ();
     void    _mapWorkerDone              ();
     void    _tileSetsChanged            ();
-    void    _mapExportActionChanged     ();
-    void    _mapExportProgressChanged   ();
+    void    _mapExportDone              ();
+    void    _mapExportProgressChanged   (int percentage);
+    void    _mapExportError             (QGCMapTask::TaskType type, QString errorString);
 
 signals:
     void    macAddressChanged           ();

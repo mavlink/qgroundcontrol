@@ -7,6 +7,7 @@
 
 #include "QGCFileListController.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMapEngineManager.h"
 
 #include <QtRemoteObjects>
 #include <QThread>
@@ -108,28 +109,32 @@ signals:
     void    syncProgressChanged         ();
     void    fileProgressChanged         ();
     void    syncTypeChanged             ();
+    void    selectedCountChanged        ();
     //-- From Thread
     void    progress                    (quint32 totalCount, quint32 curCount);
     void    completed                   ();
     void    message                     (QString errorMessage);
     void    sendMission                 (QString name, QByteArray mission);
-    void    selectedCountChanged        ();
 
 private slots:
     void    _stateChanged               (QRemoteObjectReplica::State state, QRemoteObjectReplica::State oldState);
     void    _nodeError                  (QRemoteObjectNode::ErrorCode errorCode);
     void    _readUDPBytes               ();
     void    _remoteMaintenance          ();
+    void    _syncTypeChanged            (QGCRemoteReplica::SyncType syncType);
+    void    _delayedDisconnect          ();
+    void    _sendMapFragment            (QGCMapFragment fragment);
+    void    _mapImportCompleted         ();
+    void    _mapImportProgress          (int percentage);
+    void    _mapImportError             (QGCMapTask::TaskType type, QString errorString);
+    void    _receiveMission             (QGCNewMission mission);
+    void    _sendLogFragment            (QGCLogFragment fragment);
     //-- From Thread
     void    _setSyncProgress            (quint32 total, quint32 current);
     void    _setFileProgress            (quint32 total, quint32 current);
     void    _message                    (QString message);
     void    _completed                  ();
     bool    _sendMission                (QString name, QByteArray mission);
-    void    _syncTypeChanged            (QGCRemoteReplica::SyncType syncType);
-    void    _receiveMission             (QGCNewMission mission);
-    void    _sendLogFragment            (QGCLogFragment fragment);
-    void    _delayedDisconnect          ();
 
 private:
     void    _initUDPListener            ();
@@ -161,4 +166,5 @@ private:
     //-- Fetch Logs
     QString                             _logPath;
     QFile                               _currentLog;
+    QTemporaryFile*                     _mapFile;
 };

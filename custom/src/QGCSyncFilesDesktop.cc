@@ -35,6 +35,7 @@ QGCSyncFilesDesktop::QGCSyncFilesDesktop(QObject* parent)
     , _syncDone(false)
     , _disconnecting(false)
     , _connecting(false)
+    , _mapFile(NULL)
 {
     qmlRegisterUncreatableType<QGCSyncFilesDesktop>("QGroundControl", 1, 0, "QGCSyncFilesDesktop", "Reference only");
     //-- Start UDP listener
@@ -142,6 +143,7 @@ QGCSyncFilesDesktop::connectToRemote(QString name)
         connect(_remoteObject.data(), &QGCRemoteReplica::syncTypeChanged,  this, &QGCSyncFilesDesktop::_syncTypeChanged);
         connect(_remoteObject.data(), &QGCRemoteReplica::receiveMission,   this, &QGCSyncFilesDesktop::_receiveMission);
         connect(_remoteObject.data(), &QGCRemoteReplica::sendLogFragment,  this, &QGCSyncFilesDesktop::_sendLogFragment);
+        connect(_remoteObject.data(), &QGCRemoteReplica::sendMapFragment,  this, &QGCSyncFilesDesktop::_sendMapFragment);
         _currentRemote = name;
         emit currentRemoteChanged();
         emit remoteReadyChanged();
@@ -235,7 +237,7 @@ QGCSyncFilesDesktop::initLogFetch()
     }
     std::sort(_logController.fileListV().begin(), _logController.fileListV().end(), [](QGCFileListItem* a, QGCFileListItem* b) { return a->fileName() > b->fileName(); });
     emit _logController.fileListChanged();
-    qCDebug(QGCSyncFiles) << "Downloaded" << allLogs.size() << "log entries";
+    qCDebug(QGCSyncFiles) << "Remote has" << allLogs.size() << "log entries";
 }
 
 //-----------------------------------------------------------------------------
@@ -245,6 +247,9 @@ QGCSyncFilesDesktop::initMapFetch()
     initSync();
     _fileProgress = 0;
     emit fileProgressChanged();
+    //-- Init map engine
+    qgcApp()->toolbox()->mapEngineManager()->loadTileSets();
+    //-- Get remote tile set list
     QList<QGCSyncTileSet> allSets = _remoteObject->tileSets();
     foreach(QGCSyncTileSet set, allSets) {
         QGCFileListItem* item = new QGCFileListItem(&_mapController, set.name(), set.count());
@@ -252,7 +257,7 @@ QGCSyncFilesDesktop::initMapFetch()
     }
     std::sort(_mapController.fileListV().begin(), _mapController.fileListV().end(), [](QGCFileListItem* a, QGCFileListItem* b) { return a->fileName() < b->fileName(); });
     emit _mapController.fileListChanged();
-    qCDebug(QGCSyncFiles) << "Downloaded" << allSets.size() << "map tile entries";
+    qCDebug(QGCSyncFiles) << "Remote has" << allSets.size() << "map tile entries";
 }
 
 //-----------------------------------------------------------------------------
@@ -681,5 +686,110 @@ QGCSyncFilesDesktop::_sendLogFragment(QGCLogFragment fragment)
         } else {
             _message(QString(tr("Operation Canceled")));
         }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::_sendMapFragment(QGCMapFragment fragment)
+{
+    //-- Check for cancel
+    if(_cancel) {
+        if(_mapFile) {
+            delete _mapFile;
+            _mapFile = NULL;
+        }
+        _message(QString(tr("Operation Canceled")));
+        return;
+    }
+    //-- Check for non data
+    if(fragment.current() == 0 && fragment.total() == 0) {
+        //-- Check for progress
+        if(fragment.data().size()) {
+            _setSyncProgress(100, fragment.progress());
+            return;
+        }
+        //-- Error
+        if(_mapFile) {
+            delete _mapFile;
+            _mapFile = NULL;
+        }
+        _setSyncProgress(1, 1);
+        _completed();
+        _message(QString(tr("Remote Error")));
+        return;
+    }
+    //-- Check for first fragment
+    if(fragment.progress() == 0) {
+        if(_mapFile) {
+            delete _mapFile;
+            _mapFile = NULL;
+        }
+        //-- Create temp file
+        _mapFile = new QTemporaryFile;
+        if(!_mapFile->open()) {
+            qWarning() << "Error creating" << _mapFile->fileName();
+            _message(QString(tr("Error creating incoming map file")));
+            delete _mapFile;
+            _mapFile = NULL;
+            _setSyncProgress(1, 1);
+            _completed();
+            return;
+        } else {
+            //-- Temp file created
+            _message(QString(tr("Receiving map data")));
+            qCDebug(QGCSyncFiles) << "Receiving:" << _mapFile->fileName();
+        }
+    }
+    if(_mapFile) {
+        if(fragment.data().size()) {
+           _mapFile->write(fragment.data());
+           _setSyncProgress(fragment.total(), fragment.current());
+        }
+       //-- Check for end of file
+       if(fragment.total() <= fragment.current()) {
+           _mapFile->close();
+           _setSyncProgress(1, 1);
+           _message(QString(tr("Importing map data")));
+           //-- Import map tiles
+           QGCImportTileTask* task = new QGCImportTileTask(_mapFile->fileName(), qgcApp()->toolbox()->mapEngineManager()->importReplace());
+           connect(task, &QGCImportTileTask::actionCompleted, this, &QGCSyncFilesDesktop::_mapImportCompleted);
+           connect(task, &QGCImportTileTask::actionProgress, this, &QGCSyncFilesDesktop::_mapImportProgress);
+           connect(task, &QGCMapTask::error, this, &QGCSyncFilesDesktop::_mapImportError);
+           getQGCMapEngine()->addTask(task);
+       }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::_mapImportProgress(int percentage)
+{
+    _setSyncProgress(100, percentage);
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::_mapImportError(QGCMapTask::TaskType, QString errorString)
+{
+    qWarning() << "Map import error:" << errorString;
+    _completed();
+    _message(QString(tr("Map import error")));
+    if(_mapFile) {
+        delete _mapFile;
+        _mapFile = NULL;
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::_mapImportCompleted()
+{
+    if(_mapFile) {
+        qCDebug(QGCSyncFiles) << "Map import complete";
+        _completed();
+        _message(QString(tr("Map tiles received")));
+        delete _mapFile;
+        _mapFile = NULL;
     }
 }
