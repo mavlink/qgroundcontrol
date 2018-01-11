@@ -32,6 +32,21 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+class QGCMapUploadWorker : public QObject
+{
+    Q_OBJECT
+public:
+    QGCMapUploadWorker(QGCSyncFilesMobile* parent) : _pSync(parent) {}
+public slots:
+    void doMapSync      (QTemporaryFile* mapFile);
+signals:
+    void sendMapFragment(QGCMapFragment fragment);
+    void done           ();
+private:
+    QGCSyncFilesMobile* _pSync;
+};
+
+//-----------------------------------------------------------------------------
 class QGCSyncFilesMobile : public QGCRemoteSimpleSource
 {
     Q_OBJECT
@@ -45,20 +60,27 @@ public:
 
 public slots:
     void    sendMission                 (QGCNewMission mission);
+    void    sendMap                     (QGCLogFragment fragment);
     void    pruneExtraMissions          (QStringList allMissions);
     void    requestMissions             (QStringList missions);
     void    requestLogs                 (QStringList logs);
+    void    requestMapTiles             (QStringList sets);
 
 private slots:
     void    _broadcastPresence          ();
     void    _sendLogFragment            (QGCLogFragment fragment);
+    void    _sendMapFragment            (QGCMapFragment fragment);
     void    _canceled                   (bool cancel);
-    void    _workerDone                 ();
+    void    _logWorkerDone              ();
+    void    _mapWorkerDone              ();
     void    _tileSetsChanged            ();
+    void    _mapExportActionChanged     ();
+    void    _mapExportProgressChanged   ();
 
 signals:
     void    macAddressChanged           ();
     void    doLogSync                   (QStringList logsToSend);
+    void    doMapSync                   (QTemporaryFile* mapFile);
     void    cancelFromDesktop           ();
 
 private:
@@ -71,7 +93,9 @@ private:
     QString                 _macAddress;
     QUdpSocket*             _udpSocket;
     QRemoteObjectHost*      _remoteObject;
-    QThread                 _logThread;
-    QGCLogUploadWorker*     _worker;
+    QThread                 _workerThread;
+    QGCLogUploadWorker*     _logWorker;
+    QGCMapUploadWorker*     _mapWorker;
+    QTemporaryFile*         _mapFile;
 };
 

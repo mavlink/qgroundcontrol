@@ -235,6 +235,7 @@ QGCSyncFilesDesktop::initLogFetch()
     }
     std::sort(_logController.fileListV().begin(), _logController.fileListV().end(), [](QGCFileListItem* a, QGCFileListItem* b) { return a->fileName() > b->fileName(); });
     emit _logController.fileListChanged();
+    qCDebug(QGCSyncFiles) << "Downloaded" << allLogs.size() << "log entries";
 }
 
 //-----------------------------------------------------------------------------
@@ -251,6 +252,7 @@ QGCSyncFilesDesktop::initMapFetch()
     }
     std::sort(_mapController.fileListV().begin(), _mapController.fileListV().end(), [](QGCFileListItem* a, QGCFileListItem* b) { return a->fileName() < b->fileName(); });
     emit _mapController.fileListChanged();
+    qCDebug(QGCSyncFiles) << "Downloaded" << allSets.size() << "map tile entries";
 }
 
 //-----------------------------------------------------------------------------

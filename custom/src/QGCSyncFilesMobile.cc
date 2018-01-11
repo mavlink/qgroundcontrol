@@ -22,17 +22,23 @@ QGCSyncFilesMobile::QGCSyncFilesMobile(QObject* parent)
     : QGCRemoteSimpleSource(parent)
     , _udpSocket(NULL)
     , _remoteObject(NULL)
-    , _worker(NULL)
+    , _logWorker(NULL)
+    , _mapWorker(NULL)
+    , _mapFile(NULL)
 {
     qmlRegisterUncreatableType<QGCSyncFilesMobile>("QGroundControl", 1, 0, "QGCSyncFilesMobile", "Reference only");
     connect(&_broadcastTimer, &QTimer::timeout, this, &QGCSyncFilesMobile::_broadcastPresence);
     connect(this, &QGCRemoteSimpleSource::cancelChanged, this, &QGCSyncFilesMobile::_canceled);
+    QGCMapEngineManager* mapMgr = qgcApp()->toolbox()->mapEngineManager();
+    connect(mapMgr, &QGCMapEngineManager::tileSetsChanged, this, &QGCSyncFilesMobile::_tileSetsChanged);
+    connect(mapMgr, &QGCMapEngineManager::importActionChanged, this, &QGCSyncFilesMobile::_mapExportActionChanged);
+    connect(mapMgr, &QGCMapEngineManager::actionProgressChanged, this, &QGCSyncFilesMobile::_mapExportProgressChanged);
     _broadcastTimer.setSingleShot(false);
-    //-- Start UDP broadcast
-    _broadcastTimer.start(5000);
     _updateMissionList();
     _updateLogEntries();
-    qgcApp()->toolbox()->mapEngineManager()->loadTileSets();
+    mapMgr->loadTileSets();
+    //-- Start UDP broadcast
+    _broadcastTimer.start(5000);
     //-- Initialize Remote Object
     QUrl url;
     url.setHost(QString("0.0.0.0"));
@@ -42,7 +48,7 @@ QGCSyncFilesMobile::QGCSyncFilesMobile(QObject* parent)
     _remoteObject = new QRemoteObjectHost(url);
     _remoteObject->enableRemoting(this);
     //-- TODO: Connect to vehicle and check when it's disarmed. Update log entries.
-    //-- TODO: Need to switch interface when switching WiFi APs
+    //-- TODO: Find better way to determine if we are connected to the desktop
 }
 
 //-----------------------------------------------------------------------------
@@ -51,8 +57,8 @@ QGCSyncFilesMobile::~QGCSyncFilesMobile()
     if(_udpSocket) {
         _udpSocket->deleteLater();
     }
-    _logThread.quit();
-    _logThread.wait();
+    _workerThread.quit();
+    _workerThread.wait();
     if(_remoteObject) {
         _remoteObject->deleteLater();
     }
@@ -96,6 +102,14 @@ QGCSyncFilesMobile::sendMission(QGCNewMission mission)
     } else {
         qWarning() << "Error writing" << missionFile;
     }
+}
+
+//-----------------------------------------------------------------------------
+//-- Slot for Desktop sendMission
+void
+QGCSyncFilesMobile::sendMap(QGCLogFragment fragment)
+{
+    Q_UNUSED(fragment);
 }
 
 //-----------------------------------------------------------------------------
@@ -173,29 +187,114 @@ QGCSyncFilesMobile::requestLogs(QStringList logs)
         }
     }
     //-- If nothing to send or worker thread is still up for some reason, bail
-    if(!logsToSend.size() || _worker) {
+    if(!logsToSend.size() || _logWorker) {
         qCDebug(QGCSyncFiles) << "Nothing to send";
         QGCLogFragment logFrag(QString(), 0, 0, QByteArray());
         _sendLogFragment(logFrag);
+        return;
     }
     //-- Start Worker Thread
     setCancel(false);
-    _worker = new QGCLogUploadWorker(this);
-    _worker->moveToThread(&_logThread);
-    connect(this, &QGCSyncFilesMobile::doLogSync, _worker, &QGCLogUploadWorker::doLogSync);
-    connect(_worker, &QGCLogUploadWorker::sendLogFragment, this, &QGCSyncFilesMobile::_sendLogFragment);
-    connect(_worker, &QGCLogUploadWorker::done, this, &QGCSyncFilesMobile::_workerDone);
+    _logWorker = new QGCLogUploadWorker(this);
+    _logWorker->moveToThread(&_workerThread);
+    connect(this, &QGCSyncFilesMobile::doLogSync, _logWorker, &QGCLogUploadWorker::doLogSync);
+    connect(_logWorker, &QGCLogUploadWorker::sendLogFragment, this, &QGCSyncFilesMobile::_sendLogFragment);
+    connect(_logWorker, &QGCLogUploadWorker::done, this, &QGCSyncFilesMobile::_logWorkerDone);
     qCDebug(QGCSyncFiles) << "Starting log upload thread";
-    _logThread.start();
+    _workerThread.start();
     emit doLogSync(logsToSend);
 }
 
 //-----------------------------------------------------------------------------
+//-- Slot for Desktop map request
 void
-QGCSyncFilesMobile::_workerDone()
+QGCSyncFilesMobile::requestMapTiles(QStringList sets)
 {
-    _worker->deleteLater();
-    _worker = NULL;
+    qCDebug(QGCSyncFiles) << "Map Request";
+    QStringList mapsToSend;
+    QGCMapEngineManager* mapMgr = qgcApp()->toolbox()->mapEngineManager();
+    QmlObjectListModel&  tileSets = (*mapMgr->tileSets());
+    mapMgr->selectNone();
+    for(int i = 0; i < tileSets.count(); i++ ) {
+        QGCCachedTileSet* set = qobject_cast<QGCCachedTileSet*>(tileSets.get(i));
+        if(set && sets.contains(set->name())) {
+            set->setSelected(true);
+        }
+    }
+    //-- Temp file to save the exported set
+    _mapFile = new QTemporaryFile;
+    //-- If cannot create file, there is nothing to send or worker thread is still up for some reason, bail
+    if (_mapFile->open() || !mapsToSend.size() || _mapWorker) {
+        qCDebug(QGCSyncFiles) << "Nothing to send";
+        QGCMapFragment logFrag(0, 0, QByteArray(), 0);
+        _sendMapFragment(logFrag);
+        delete _mapFile;
+        _mapFile = NULL;
+        return;
+    }
+    _mapFile->close();
+    //-- Start Worker Thread
+    setCancel(false);
+    _mapWorker = new QGCMapUploadWorker(this);
+    _mapWorker->moveToThread(&_workerThread);
+    connect(this, &QGCSyncFilesMobile::doMapSync, _mapWorker, &QGCMapUploadWorker::doMapSync);
+    connect(_mapWorker, &QGCMapUploadWorker::sendMapFragment, this, &QGCSyncFilesMobile::_sendMapFragment);
+    connect(_mapWorker, &QGCMapUploadWorker::done, this, &QGCSyncFilesMobile::_mapWorkerDone);
+    //-- Request map export
+    if(mapMgr->exportSets(_mapFile->fileName())) {
+        qCDebug(QGCSyncFiles) << "Exporting map set to" << _mapFile->fileName();
+    } else {
+        qWarning() << "Error exporting map set to" << _mapFile->fileName();
+        QGCMapFragment logFrag(0, 0, QByteArray(), 0);
+        _sendMapFragment(logFrag);
+        delete _mapFile;
+        _mapFile = NULL;
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesMobile::_mapExportActionChanged()
+{
+    if(_mapFile) {
+        if(qgcApp()->toolbox()->mapEngineManager()->importAction() == QGCMapEngineManager::ActionDone) {
+            if(_mapFile) {
+                qCDebug(QGCSyncFiles) << "Starting map upload thread";
+                _workerThread.start();
+                emit doMapSync(_mapFile);
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesMobile::_mapExportProgressChanged()
+{
+    if(_mapFile) {
+        QGCMapFragment mapFrag(0, 0, QByteArray(1,'1'), qgcApp()->toolbox()->mapEngineManager()->actionProgress());
+        _sendMapFragment(mapFrag);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesMobile::_logWorkerDone()
+{
+    _logWorker->deleteLater();
+    _logWorker = NULL;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesMobile::_mapWorkerDone()
+{
+    _mapWorker->deleteLater();
+    _mapWorker = NULL;
+    if(_mapFile) {
+        delete _mapFile;
+        _mapFile = NULL;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -216,6 +315,16 @@ QGCSyncFilesMobile::_sendLogFragment(QGCLogFragment fragment)
 {
     if(!cancel()) {
         emit sendLogFragment(fragment);
+    }
+}
+
+//-----------------------------------------------------------------------------
+//-- Send map fragment on main thread
+void
+QGCSyncFilesMobile::_sendMapFragment(QGCMapFragment fragment)
+{
+    if(!cancel()) {
+        emit sendMapFragment(fragment);
     }
 }
 
@@ -257,6 +366,41 @@ QGCLogUploadWorker::doLogSync(QStringList logsToSend)
         qCDebug(QGCSyncFiles) << "Thread canceled";
     }
     //-- We're done
+    emit done();
+}
+
+//-----------------------------------------------------------------------------
+//-- Map upload thread
+void
+QGCMapUploadWorker::doMapSync(QTemporaryFile* mapFile)
+{
+    qCDebug(QGCSyncFiles) << "Map upload thread started";
+    if (!mapFile || !mapFile->open()) {
+        qWarning() << "Unable to open map file" << (mapFile ? mapFile->fileName() : "NULL");
+        QGCMapFragment mapFrag(0, 0, QByteArray(), 0);
+        emit sendMapFragment(mapFrag);
+    } else {
+        quint64 sofar = 0;
+        quint64 total = mapFile->size();
+        while(true) {
+            if(_pSync->cancel()) break;
+            //-- Send in 1M chuncks
+            QByteArray bytes = mapFile->read(1024 * 1024);
+            if(bytes.size() != 0) {
+                sofar += bytes.size();
+                QGCMapFragment mapFrag(sofar, total, bytes, 0);
+                emit sendMapFragment(mapFrag);
+            }
+            if(sofar >= total || bytes.size() == 0) {
+                break;
+            }
+        }
+    }
+    if(_pSync->cancel()) {
+        qCDebug(QGCSyncFiles) << "Thread canceled";
+    }
+    //-- We're done
+    mapFile->close();
     emit done();
 }
 

@@ -134,6 +134,7 @@ QGCView {
             onVisibleChanged: {
                 if(visible) {
                     TyphoonHQuickInterface.desktopSync.initLogFetch()
+                    TyphoonHQuickInterface.desktopSync.initMapFetch()
                 }
             }
             Rectangle {
@@ -154,7 +155,7 @@ QGCView {
                     width:          _gridElemWidth
                     onClicked: {
                         _sendMission = true
-                        _dialogTitle = kSendMission
+                        _dialogTitle = kSendMission + qsTr(" To ") + TyphoonHQuickInterface.desktopSync.currentRemote
                         rootLoader.sourceComponent = syncFilesDialog
                         mainWindow.disableToolbar()
                     }
@@ -165,7 +166,7 @@ QGCView {
                     Layout.fillWidth:   true
                     onClicked: {
                         _sendMission = false
-                        _dialogTitle = kFetchMissions
+                        _dialogTitle = kFetchMissions + qsTr(" From ") + TyphoonHQuickInterface.desktopSync.currentRemote
                         rootLoader.sourceComponent = syncFilesDialog
                         mainWindow.disableToolbar()
                     }
@@ -412,7 +413,7 @@ QGCView {
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     anchors.centerIn:   parent
                     QGCLabel {
-                        text:           qsTr("Fetch Telemetry Logs")
+                        text:           qsTr("Fetch Telemetry Logs From ") + TyphoonHQuickInterface.desktopSync.currentRemote
                         font.family:    ScreenTools.demiboldFontFamily
                         font.pointSize: ScreenTools.largeFontPointSize
                         color:          qgcPal.alertText
@@ -585,7 +586,7 @@ QGCView {
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     anchors.centerIn:   parent
                     QGCLabel {
-                        text:           qsTr("Fetch Tile Sets")
+                        text:           qsTr("Fetch Map Tile Sets From ") + TyphoonHQuickInterface.desktopSync.currentRemote
                         font.family:    ScreenTools.demiboldFontFamily
                         font.pointSize: ScreenTools.largeFontPointSize
                         color:          qgcPal.alertText
@@ -750,7 +751,7 @@ QGCView {
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     anchors.centerIn:   parent
                     QGCLabel {
-                        text:           qsTr("Send Map Tiles")
+                        text:           qsTr("Send Map Tiles To ") + TyphoonHQuickInterface.desktopSync.currentRemote
                         font.family:    ScreenTools.demiboldFontFamily
                         font.pointSize: ScreenTools.largeFontPointSize
                         color:          qgcPal.alertText
@@ -867,7 +868,6 @@ QGCView {
             }
             Component.onCompleted: {
                 QGroundControl.mapEngineManager.loadTileSets()
-                TyphoonHQuickInterface.desktopSync.initMapFetch()
                 TyphoonHQuickInterface.desktopSync.syncMessage = qsTr("Select tile set(s) to send to remote")
                 mainWindow.disableToolbar()
             }
