@@ -61,7 +61,8 @@ public:
 
 public slots:
     void    missionToMobile             (QGCNewMission mission);
-    void    mapToMobile                 (QGCMapFragment fragment);
+    void    mapToMobile                 (bool importReplace);
+    void    mapFragmentToMobile         (QGCMapFragment fragment);
     void    pruneExtraMissionsOnMobile  (QStringList allMissions);
     void    requestMissionsFromMobile   (QStringList missions);
     void    requestLogsFromMobile       (QStringList logs);

@@ -79,7 +79,7 @@ QGCSyncFilesMobile::_processIncomingMission(QString name, int count, QString& mi
 }
 
 //-----------------------------------------------------------------------------
-//-- Slot for Desktop missionToMobile
+//-- Slot for desktop mission to mobile
 void
 QGCSyncFilesMobile::missionToMobile(QGCNewMission mission)
 {
@@ -103,9 +103,18 @@ QGCSyncFilesMobile::missionToMobile(QGCNewMission mission)
 }
 
 //-----------------------------------------------------------------------------
-//-- Slot for Desktop missionToMobile
+//-- Slot for map fragment from desktop
 void
-QGCSyncFilesMobile::mapToMobile(QGCMapFragment fragment)
+QGCSyncFilesMobile::mapToMobile(bool importReplace)
+{
+    qCDebug(QGCSyncFiles) << "Maps from desktop starting. Replace sets:" << importReplace;
+    qgcApp()->toolbox()->mapEngineManager()->setImportReplace(importReplace);
+}
+
+//-----------------------------------------------------------------------------
+//-- Slot for map fragment from desktop
+void
+QGCSyncFilesMobile::mapFragmentToMobile(QGCMapFragment fragment)
 {
     //-- Check for cancel
     if(cancel()) {

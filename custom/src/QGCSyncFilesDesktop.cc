@@ -36,6 +36,8 @@ QGCSyncFilesDesktop::QGCSyncFilesDesktop(QObject* parent)
     , _disconnecting(false)
     , _connecting(false)
     , _mapFile(NULL)
+    , _lastMapExportProgress(0)
+    , _importReplace(false)
 {
     qmlRegisterUncreatableType<QGCSyncFilesDesktop>("QGroundControl", 1, 0, "QGCSyncFilesDesktop", "Reference only");
     //-- Start UDP listener
@@ -468,6 +470,8 @@ QGCSyncFilesDesktop::_mapExportDone()
     connect(this, &QGCSyncFilesDesktop::doMapSync, mapWorker, &QGCMapUploadWorker::doMapSync);
     connect(mapWorker, &QGCMapUploadWorker::mapFragment, this, &QGCSyncFilesDesktop::_mapFragmentToMobile);
     _workerThread.start();
+    //-- Let mobile know map tiles are comming and what to do with them
+    _remoteObject->mapToMobile(_importReplace);
     emit doMapSync(_mapFile);
 }
 
@@ -502,7 +506,7 @@ void
 QGCSyncFilesDesktop::_mapFragmentToMobile(QGCMapFragment fragment)
 {
     if(!_cancel && !_remoteObject.isNull()) {
-        _remoteObject->mapToMobile(fragment);
+        _remoteObject->mapFragmentToMobile(fragment);
     }
 }
 

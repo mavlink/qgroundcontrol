@@ -18,7 +18,8 @@ class QGCRemote
     SIGNAL(logFragment(QGCLogFragment fragment));
     SIGNAL(mapFragment(QGCMapFragment fragment));
     SIGNAL(missionFromMobile(QGCNewMission mission));
-    SLOT(void mapToMobile(QGCMapFragment fragment));
+    SLOT(void mapToMobile(bool importReplace));
+    SLOT(void mapFragmentToMobile(QGCMapFragment fragment));
     SLOT(void missionToMobile(QGCNewMission mission));
     SLOT(void pruneExtraMissionsOnMobile(QStringList allMissions));
     SLOT(void requestMissionsFromMobile(QStringList missions));

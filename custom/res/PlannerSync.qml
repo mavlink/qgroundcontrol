@@ -47,6 +47,8 @@ QGCView {
     readonly property string kSelectNone:    qsTr("Select None")
     readonly property string kSendMission:   qsTr("Send Missions")
     readonly property string kStart:         qsTr("Start")
+    readonly property string kAppendSet:     qsTr("Append to existing sets")
+    readonly property string kReplaceSet:    qsTr("Replace existing sets")
 
     property bool   connected:          !_activeVehicle && TyphoonHQuickInterface.desktopSync.remoteReady
 
@@ -645,21 +647,20 @@ QGCView {
                             ExclusiveGroup { id: radioGroup }
                             Column {
                                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
-                                //width:              ScreenTools.defaultFontPixelWidth  * 24
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 QGCRadioButton {
                                     exclusiveGroup: radioGroup
-                                    text:           qsTr("Append to existing sets")
+                                    text:           kAppendSet
                                     checked:        !QGroundControl.mapEngineManager.importReplace
                                     onClicked:      QGroundControl.mapEngineManager.importReplace = !checked
-                                    enabled:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone
+                                    enabled:        !TyphoonHQuickInterface.desktopSync.sendingFiles
                                 }
                                 QGCRadioButton {
                                     exclusiveGroup: radioGroup
-                                    text:           qsTr("Replace existing sets")
+                                    text:           kReplaceSet
                                     checked:        QGroundControl.mapEngineManager.importReplace
                                     onClicked:      QGroundControl.mapEngineManager.importReplace = checked
-                                    enabled:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone
+                                    enabled:        !TyphoonHQuickInterface.desktopSync.sendingFiles
                                 }
                             }
                         }
@@ -783,44 +784,74 @@ QGCView {
                     Rectangle {
                         id:             logRect
                         color:          qgcPal.window
-                        width:          tileSetList.width  + (ScreenTools.defaultFontPixelWidth * 4)
-                        height:         tileSetList.height + ScreenTools.defaultFontPixelHeight
+                        width:          mapSendViewCol.width  + (ScreenTools.defaultFontPixelWidth * 4)
+                        height:         mapSendViewCol.height + ScreenTools.defaultFontPixelHeight
                         anchors.horizontalCenter: parent.horizontalCenter
-                        QGCFlickable {
-                            id:                 tileSetList
-                            clip:               true
-                            width:              (ScreenTools.defaultFontPixelWidth * (16 * 4)) + (ScreenTools.defaultFontPixelWidth * 8)
-                            height:             qgcView.height * 0.35
-                            contentHeight:      _cacheList.height
-                            anchors.centerIn:   parent
-                            Column {
-                                id:             _cacheList
-                                width:          tileSetList.width
-                                spacing:        ScreenTools.defaultFontPixelHeight * 0.5
+                        Column {
+                            id:             mapSendViewCol
+                            spacing:        ScreenTools.defaultFontPixelHeight * 0.5
+                            anchors.centerIn: parent
+                            QGCFlickable {
+                                id:                 tileSetList
+                                clip:               true
+                                width:              (ScreenTools.defaultFontPixelWidth * (16 * 4)) + (ScreenTools.defaultFontPixelWidth * 8)
+                                height:             qgcView.height * 0.35
+                                contentHeight:      _cacheList.height
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                Repeater {
-                                    model: QGroundControl.mapEngineManager.tileSets
-                                    delegate: Row {
-                                        spacing: ScreenTools.defaultFontPixelWidth
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        QGCCheckBox {
-                                            text:       ""
-                                            checked:    object.selected
-                                            onClicked:  object.selected = !object.selected
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-                                        QGCLabel {
-                                            text:       object.name
-                                            width:      tileSetList.width * 0.55
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-                                        QGCLabel {
-                                            text:       object.totalTileCount
-                                            width:      tileSetList.width * 0.25
-                                            horizontalAlignment: Text.AlignRight
-                                            anchors.verticalCenter: parent.verticalCenter
+                                Column {
+                                    id:             _cacheList
+                                    width:          tileSetList.width
+                                    spacing:        ScreenTools.defaultFontPixelHeight * 0.5
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    Repeater {
+                                        model: QGroundControl.mapEngineManager.tileSets
+                                        delegate: Row {
+                                            spacing: ScreenTools.defaultFontPixelWidth
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            QGCCheckBox {
+                                                text:       ""
+                                                checked:    object.selected
+                                                onClicked:  object.selected = !object.selected
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+                                            QGCLabel {
+                                                text:       object.name
+                                                width:      tileSetList.width * 0.55
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+                                            QGCLabel {
+                                                text:       object.totalTileCount
+                                                width:      tileSetList.width * 0.25
+                                                horizontalAlignment: Text.AlignRight
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
                                         }
                                     }
+                                }
+                            }
+                            Rectangle {
+                                width:              mapFetchView.width * 0.75
+                                height:             1
+                                color:              qgcPal.text
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                            ExclusiveGroup { id: radioGroup }
+                            Column {
+                                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                QGCRadioButton {
+                                    exclusiveGroup: radioGroup
+                                    text:           kAppendSet
+                                    checked:        !TyphoonHQuickInterface.desktopSync.importReplace
+                                    onClicked:      TyphoonHQuickInterface.desktopSync.importReplace = !checked
+                                    enabled:        !TyphoonHQuickInterface.desktopSync.sendingFiles
+                                }
+                                QGCRadioButton {
+                                    exclusiveGroup: radioGroup
+                                    text:           kReplaceSet
+                                    checked:        TyphoonHQuickInterface.desktopSync.importReplace
+                                    onClicked:      TyphoonHQuickInterface.desktopSync.importReplace = checked
+                                    enabled:        !TyphoonHQuickInterface.desktopSync.sendingFiles
                                 }
                             }
                         }

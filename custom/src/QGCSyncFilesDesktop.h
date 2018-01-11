@@ -66,6 +66,7 @@ public:
     Q_PROPERTY(int                  fileProgress    READ    fileProgress    NOTIFY fileProgressChanged)
     Q_PROPERTY(QGCFileListController* logController READ    logController   CONSTANT)
     Q_PROPERTY(QGCFileListController* mapController READ    mapController   CONSTANT)
+    Q_PROPERTY(bool                 importReplace   READ    importReplace   WRITE   setImportReplace   NOTIFY importReplaceChanged)
 
     //-- Connect to remote node
     Q_INVOKABLE bool connectToRemote    (QString name);
@@ -103,6 +104,8 @@ public:
     void        setSyncMessage          (QString message) { _syncMessage = message; emit syncMessageChanged(); }
     int         syncProgress            () { return _syncProgress; }
     int         fileProgress            () { return _fileProgress; }
+    bool        importReplace           () { return _importReplace; }
+    void        setImportReplace        (bool replace) { _importReplace = replace; emit importReplaceChanged(); }
 
     QGCFileListController* logController() { return &_logController; }
     QGCFileListController* mapController() { return &_mapController; }
@@ -137,6 +140,7 @@ signals:
     void    fileProgressChanged         ();
     void    syncTypeChanged             ();
     void    selectedCountChanged        ();
+    void    importReplaceChanged        ();
     //-- Thread
     void    doMissionSync               (QStringList missionsToSend);
     void    doMapSync                   (QTemporaryFile* mapFile);
@@ -200,4 +204,5 @@ private:
     QFile                               _currentLog;
     QTemporaryFile*                     _mapFile;
     int                                 _lastMapExportProgress;
+    bool                                _importReplace;
 };
