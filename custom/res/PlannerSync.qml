@@ -600,18 +600,19 @@ QGCView {
                         anchors.horizontalCenter: parent.horizontalCenter
                         Column {
                             id:             mapFetchViewCol
-                            spacing:        ScreenTools.defaultFontPixelHeight
+                            spacing:        ScreenTools.defaultFontPixelHeight * 0.5
+                            anchors.centerIn: parent
                             ListView {
                                 id:             mapFetchView
                                 width:          (ScreenTools.defaultFontPixelWidth * (16 * 4)) + (ScreenTools.defaultFontPixelWidth * 8)
-                                height:         qgcView.height * 0.35
+                                height:         qgcView.height * 0.3
                                 spacing:        ScreenTools.defaultFontPixelWidth
                                 orientation:    ListView.Vertical
                                 model:          TyphoonHQuickInterface.desktopSync.mapController.fileList
                                 cacheBuffer:    Math.max(height * 2, 0)
                                 clip:           true
                                 highlightMoveDuration: 250
-                                anchors.centerIn: parent
+                                anchors.horizontalCenter: parent.horizontalCenter
                                 delegate: Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
                                     anchors.horizontalCenter: parent.horizontalCenter
@@ -635,21 +636,27 @@ QGCView {
                                     }
                                 }
                             }
+                            Rectangle {
+                                width:              mapFetchView.width * 0.75
+                                height:             1
+                                color:              qgcPal.text
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
                             ExclusiveGroup { id: radioGroup }
                             Column {
-                                spacing:            ScreenTools.defaultFontPixelHeight
-                                width:              ScreenTools.defaultFontPixelWidth * 24
+                                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                                //width:              ScreenTools.defaultFontPixelWidth  * 24
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 QGCRadioButton {
                                     exclusiveGroup: radioGroup
-                                    text:           qsTr("Append to existing set")
+                                    text:           qsTr("Append to existing sets")
                                     checked:        !QGroundControl.mapEngineManager.importReplace
                                     onClicked:      QGroundControl.mapEngineManager.importReplace = !checked
                                     enabled:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone
                                 }
                                 QGCRadioButton {
                                     exclusiveGroup: radioGroup
-                                    text:           qsTr("Replace existing set")
+                                    text:           qsTr("Replace existing sets")
                                     checked:        QGroundControl.mapEngineManager.importReplace
                                     onClicked:      QGroundControl.mapEngineManager.importReplace = checked
                                     enabled:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone
@@ -696,7 +703,7 @@ QGCView {
                                 if(TyphoonHQuickInterface.desktopSync.sendingFiles) {
                                     TyphoonHQuickInterface.desktopSync.cancelSync()
                                 } else {
-
+                                    TyphoonHQuickInterface.desktopSync.downloadSelectedTiles()
                                 }
                             }
                         }

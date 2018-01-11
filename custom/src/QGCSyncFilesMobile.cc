@@ -208,12 +208,16 @@ void
 QGCSyncFilesMobile::requestMapTiles(QStringList sets)
 {
     qCDebug(QGCSyncFiles) << "Map Request";
+    foreach(QString setName, sets) {
+        qCDebug(QGCSyncFiles) << "Requesting" << setName;
+    }
     QGCMapEngineManager* mapMgr = qgcApp()->toolbox()->mapEngineManager();
     QmlObjectListModel& tileSets = (*mapMgr->tileSets());
     //-- Collect sets to export
     QVector<QGCCachedTileSet*> setsToExport;
     for(int i = 0; i < tileSets.count(); i++ ) {
         QGCCachedTileSet* set = qobject_cast<QGCCachedTileSet*>(tileSets.get(i));
+        qCDebug(QGCSyncFiles) << "Testing" << set->name();
         if(set && sets.contains(set->name())) {
             setsToExport.append(set);
         }
@@ -222,7 +226,13 @@ QGCSyncFilesMobile::requestMapTiles(QStringList sets)
     _mapFile = new QTemporaryFile;
     //-- If cannot create file, there is nothing to send or worker thread is still up for some reason, bail
     if (_mapFile->open() || !setsToExport.size() || _mapWorker) {
-        qCDebug(QGCSyncFiles) << "Nothing to send";
+        if(!setsToExport.size()) {
+            qCDebug(QGCSyncFiles) << "Nothing to send";
+        } else if (_mapWorker) {
+            qCDebug(QGCSyncFiles) << "Worker thread still busy";
+        } else {
+            qCDebug(QGCSyncFiles) << "Error creating temp map export file" << _mapFile->fileName();
+        }
         QGCMapFragment logFrag(0, 0, QByteArray(), 0);
         _sendMapFragment(logFrag);
         delete _mapFile;

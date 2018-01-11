@@ -261,6 +261,7 @@ Window {
                     width:              1
                     color:              qgcPal.text
                     opacity:            0.5
+                    visible:            activeVehicle || TyphoonHQuickInterface.desktopSync.remoteReady
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 Loader {
@@ -416,20 +417,13 @@ Window {
                     }
                     Rectangle {
                         color:          qgcPal.window
-                        width:          sendMissionCol.width  + (ScreenTools.defaultFontPixelWidth * 4)
-                        height:         sendMissionCol.height + ScreenTools.defaultFontPixelHeight
-                        radius:         4
+                        width:          sendMissionCol.width  + (ScreenTools.defaultFontPixelWidth  * 8)
+                        height:         sendMissionCol.height + (ScreenTools.defaultFontPixelHeight * 4)
                         anchors.horizontalCenter: parent.horizontalCenter
                         Column {
                             id:         sendMissionCol
                             spacing:    ScreenTools.defaultFontPixelHeight
                             anchors.centerIn:   parent
-                            QGCCheckBox {
-                                id:                 exportUTMCheck
-                                text:               qsTr("Include Map Tiles")
-                                checked:            false
-                                enabled:            !TyphoonHQuickInterface.desktopSync.sendingFiles
-                            }
                             QGCTextField {
                                 id:                 missionName
                                 width:              ScreenTools.defaultFontPixelWidth * 24
@@ -456,12 +450,11 @@ Window {
                         spacing:        ScreenTools.defaultFontPixelWidth * 2
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCButton {
-                            text:           !TyphoonHQuickInterface.desktopSync.sendingFiles ? qsTr("Upload") : qsTr("Cancel")
+                            text:           qsTr("Upload")
                             width:          ScreenTools.defaultFontPixelWidth  * 16
                             height:         ScreenTools.defaultFontPixelHeight * 2
-                            enabled:        !TyphoonHQuickInterface.desktopSync.syncDone && missionName.text !== ""
+                            enabled:        !TyphoonHQuickInterface.desktopSync.sendingFiles && !TyphoonHQuickInterface.desktopSync.syncDone && missionName.text !== ""
                             onClicked: {
-                                console.log('Upload')
                                 if(planMasterController) {
                                     TyphoonHQuickInterface.desktopSync.uploadMission(missionName.text, planMasterController)
                                 }

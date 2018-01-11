@@ -61,6 +61,8 @@ public:
     Q_INVOKABLE void initMapFetch       ();
     //-- Upload selected map tile sets
     Q_INVOKABLE void uploadSelectedTiles();
+    //-- Download selected map tile sets
+    Q_INVOKABLE void downloadSelectedTiles();
 
     QStringList remoteList              () { return _remoteNames; }
     bool        remoteReady             ();

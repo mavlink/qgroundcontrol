@@ -411,6 +411,38 @@ QGCSyncFilesDesktop::uploadSelectedTiles()
 }
 
 //-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::downloadSelectedTiles()
+{
+    if(_sendingFiles) {
+        return;
+    }
+    _sendingFiles   = true;
+    _syncProgress   = 0;
+    _syncDone       = false;
+    _syncMessage.clear();
+    emit syncProgressChanged();
+    emit sendingFilesChanged();
+    emit syncMessageChanged();
+    emit syncDoneChanged();
+    if(!remoteReady()) {
+        _message(QString(tr("Not Connected To Remote")));
+        _completed();
+        return;
+    }
+    //-- Build map tile set list
+    QStringList requestedSets;
+    for(int i = 0; i < _mapController.fileListV().size(); i++) {
+        if(_mapController.fileListV()[i] && _mapController.fileListV()[i]->selected()) {
+            requestedSets << _mapController.fileListV()[i]->fileName();
+        }
+    }
+    //-- Request logs
+    qCDebug(QGCSyncFiles) << "Requesting" <<  requestedSets.size() << "map tile sets";
+    _remoteObject->requestMapTiles(requestedSets);
+}
+
+//-----------------------------------------------------------------------------
 bool
 QGCSyncFilesDesktop::remoteReady()
 {
