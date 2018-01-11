@@ -420,10 +420,8 @@ QGCSyncFilesDesktop::downloadSelectedTiles()
     _sendingFiles   = true;
     _syncProgress   = 0;
     _syncDone       = false;
-    _syncMessage.clear();
     emit syncProgressChanged();
     emit sendingFilesChanged();
-    emit syncMessageChanged();
     emit syncDoneChanged();
     if(!remoteReady()) {
         _message(QString(tr("Not Connected To Remote")));
@@ -439,6 +437,7 @@ QGCSyncFilesDesktop::downloadSelectedTiles()
     }
     //-- Request logs
     qCDebug(QGCSyncFiles) << "Requesting" <<  requestedSets.size() << "map tile sets";
+    _message(QString(tr("Remote is exporting map tiles")));
     _remoteObject->requestMapTiles(requestedSets);
 }
 
@@ -725,6 +724,7 @@ QGCSyncFilesDesktop::_sendLogFragment(QGCLogFragment fragment)
 void
 QGCSyncFilesDesktop::_sendMapFragment(QGCMapFragment fragment)
 {
+    qDebug() << "Map fragment" << fragment.current() << fragment.total() << fragment.data().size() << fragment.progress();
     //-- Check for cancel
     if(_cancel) {
         if(_mapFile) {

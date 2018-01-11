@@ -334,13 +334,13 @@ TyphoonHPlugin::settingsPages()
                 QUrl::fromUserInput("qrc:/res/gear-white.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pGeneral));
-#if !defined(__planner__)
         if(!_pOfflineMaps) {
             _pOfflineMaps = new QGCSettings(tr("Offline Maps"),
                 QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"),
                 QUrl::fromUserInput("qrc:/typhoonh/img/mapIcon.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pOfflineMaps));
+#if !defined(__planner__)
         if (_showAdvancedUI) {
             if(!_pMAVLink) {
                 _pMAVLink = new QGCSettings(tr("MAVLink"),

@@ -99,5 +99,5 @@ private:
     QGCLogUploadWorker*     _logWorker;
     QGCMapUploadWorker*     _mapWorker;
     QTemporaryFile*         _mapFile;
+    int                     _lastMapExportProgress;
 };
-

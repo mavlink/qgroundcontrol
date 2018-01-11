@@ -24,6 +24,7 @@ QGCSyncFilesMobile::QGCSyncFilesMobile(QObject* parent)
     , _logWorker(NULL)
     , _mapWorker(NULL)
     , _mapFile(NULL)
+    , _lastMapExportProgress(0)
 {
     qmlRegisterUncreatableType<QGCSyncFilesMobile>("QGroundControl", 1, 0, "QGCSyncFilesMobile", "Reference only");
     connect(&_broadcastTimer, &QTimer::timeout, this, &QGCSyncFilesMobile::_broadcastPresence);
@@ -225,7 +226,7 @@ QGCSyncFilesMobile::requestMapTiles(QStringList sets)
     //-- Temp file to save the exported set
     _mapFile = new QTemporaryFile;
     //-- If cannot create file, there is nothing to send or worker thread is still up for some reason, bail
-    if (_mapFile->open() || !setsToExport.size() || _mapWorker) {
+    if (!_mapFile->open() || !setsToExport.size() || _mapWorker) {
         if(!setsToExport.size()) {
             qCDebug(QGCSyncFiles) << "Nothing to send";
         } else if (_mapWorker) {
@@ -248,6 +249,7 @@ QGCSyncFilesMobile::requestMapTiles(QStringList sets)
     connect(_mapWorker, &QGCMapUploadWorker::sendMapFragment, this, &QGCSyncFilesMobile::_sendMapFragment);
     connect(_mapWorker, &QGCMapUploadWorker::done, this, &QGCSyncFilesMobile::_mapWorkerDone);
     //-- Request map export
+    _lastMapExportProgress = 0;
     QGCExportTileTask* task = new QGCExportTileTask(setsToExport, _mapFile->fileName());
     connect(task, &QGCExportTileTask::actionCompleted, this, &QGCSyncFilesMobile::_mapExportDone);
     connect(task, &QGCExportTileTask::actionProgress, this, &QGCSyncFilesMobile::_mapExportProgressChanged);
@@ -284,7 +286,10 @@ QGCSyncFilesMobile::_mapExportDone()
 void
 QGCSyncFilesMobile::_mapExportProgressChanged(int percentage)
 {
-    if(_mapFile) {
+    //-- Progress from map engine can go over 100% some times
+    if(_mapFile && _lastMapExportProgress != percentage && percentage <= 100) {
+        _lastMapExportProgress = percentage;
+        qCDebug(QGCSyncFiles) << "Map export progress" << percentage;
         QGCMapFragment mapFrag(0, 0, QByteArray(1,'1'), percentage);
         _sendMapFragment(mapFrag);
     }
@@ -302,6 +307,7 @@ QGCSyncFilesMobile::_logWorkerDone()
 void
 QGCSyncFilesMobile::_mapWorkerDone()
 {
+    qCDebug(QGCSyncFiles) << "Destroying map upload thread";
     _mapWorker->deleteLater();
     _mapWorker = NULL;
     if(_mapFile) {
@@ -387,34 +393,48 @@ QGCLogUploadWorker::doLogSync(QStringList logsToSend)
 void
 QGCMapUploadWorker::doMapSync(QTemporaryFile* mapFile)
 {
+    bool error = true;
     qCDebug(QGCSyncFiles) << "Map upload thread started";
-    if (!mapFile || !mapFile->open()) {
-        qWarning() << "Unable to open map file" << (mapFile ? mapFile->fileName() : "NULL");
-        QGCMapFragment mapFrag(0, 0, QByteArray(), 0);
-        emit sendMapFragment(mapFrag);
+    if (!mapFile) {
+        qWarning() << "Map file not created";
     } else {
-        quint64 sofar = 0;
-        quint64 total = mapFile->size();
-        int segment = 0;
-        while(true) {
-            if(_pSync->cancel()) break;
-            //-- Send in 1M chuncks
-            QByteArray bytes = mapFile->read(1024 * 1024);
-            if(bytes.size() != 0) {
-                sofar += bytes.size();
-                QGCMapFragment mapFrag(sofar, total, bytes, segment++);
-                emit sendMapFragment(mapFrag);
-            }
-            if(sofar >= total || bytes.size() == 0) {
-                break;
+        QFileInfo fi(mapFile->fileName());
+        quint64 total = fi.size();
+        if (!total) {
+            qWarning() << "File is empty" << mapFile->fileName();
+        } else {
+            QFile f(mapFile->fileName());
+            if (!f.open(QIODevice::ReadOnly)) {
+                qWarning() << "Unable to open map file" << mapFile->fileName();
+            } else {
+                quint64 sofar = 0;
+                int segment = 0;
+                qCDebug(QGCSyncFiles) << "Uploading" << total << "bytes";
+                error = false;
+                while(true) {
+                    if(_pSync->cancel()) break;
+                    //-- Send in 1M chuncks
+                    QByteArray bytes = f.read(1024 * 1024);
+                    if(bytes.size() != 0) {
+                        sofar += bytes.size();
+                        QGCMapFragment mapFrag(sofar, total, bytes, segment++);
+                        emit sendMapFragment(mapFrag);
+                    }
+                    if(sofar >= total || bytes.size() == 0) {
+                        break;
+                    }
+                }
             }
         }
     }
     if(_pSync->cancel()) {
         qCDebug(QGCSyncFiles) << "Thread canceled";
+    } else if(error) {
+        QGCMapFragment mapFrag(0, 0, QByteArray(), 0);
+        emit sendMapFragment(mapFrag);
     }
     //-- We're done
-    mapFile->close();
+    qCDebug(QGCSyncFiles) << "Map upload thread ended";
     emit done();
 }
 
