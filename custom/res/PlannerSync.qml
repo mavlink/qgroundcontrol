@@ -795,7 +795,7 @@ QGCView {
                                 id:                 tileSetList
                                 clip:               true
                                 width:              (ScreenTools.defaultFontPixelWidth * (16 * 4)) + (ScreenTools.defaultFontPixelWidth * 8)
-                                height:             qgcView.height * 0.35
+                                height:             qgcView.height * 0.3
                                 contentHeight:      _cacheList.height
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 Column {
@@ -830,7 +830,7 @@ QGCView {
                                 }
                             }
                             Rectangle {
-                                width:              mapFetchView.width * 0.75
+                                width:              mapSendViewCol.width * 0.75
                                 height:             1
                                 color:              qgcPal.text
                                 anchors.horizontalCenter: parent.horizontalCenter
@@ -862,14 +862,6 @@ QGCView {
                         minimumValue:   0
                         maximumValue:   100
                         value:          TyphoonHQuickInterface.desktopSync.syncProgress
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    ProgressBar {
-                        width:          logRect.width
-                        orientation:    Qt.Horizontal
-                        minimumValue:   0
-                        maximumValue:   100
-                        value:          TyphoonHQuickInterface.desktopSync.fileProgress
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                     QGCLabel {
