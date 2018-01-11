@@ -21,7 +21,7 @@ static const char* kMissionWildCard  = "*.plan";
 
 //-----------------------------------------------------------------------------
 QGCSyncFilesDesktop::QGCSyncFilesDesktop(QObject* parent)
-    : QThread(parent)
+    : QObject(parent)
     , _logController(this)
     , _mapController(this)
     , _udpSocket(NULL)
@@ -43,7 +43,7 @@ QGCSyncFilesDesktop::QGCSyncFilesDesktop(QObject* parent)
     connect(this, &QGCSyncFilesDesktop::completed,  this, &QGCSyncFilesDesktop::_completed);
     connect(this, &QGCSyncFilesDesktop::progress,   this, &QGCSyncFilesDesktop::_setSyncProgress);
     connect(this, &QGCSyncFilesDesktop::message,    this, &QGCSyncFilesDesktop::_message);
-    connect(this, &QGCSyncFilesDesktop::sendMission,this, &QGCSyncFilesDesktop::_sendMission);
+    connect(this, &QGCSyncFilesDesktop::missionToMobile,this, &QGCSyncFilesDesktop::_missionToMobile);
     connect(&_remoteMaintenanceTimer, &QTimer::timeout, this, &QGCSyncFilesDesktop::_remoteMaintenance);
     _remoteMaintenanceTimer.setSingleShot(false);
     //-- Every 15 seconds, clear stale remotes
@@ -141,9 +141,9 @@ QGCSyncFilesDesktop::connectToRemote(QString name)
         }
         connect(_remoteObject.data(), &QRemoteObjectReplica::stateChanged, this, &QGCSyncFilesDesktop::_stateChanged);
         connect(_remoteObject.data(), &QGCRemoteReplica::syncTypeChanged,  this, &QGCSyncFilesDesktop::_syncTypeChanged);
-        connect(_remoteObject.data(), &QGCRemoteReplica::receiveMission,   this, &QGCSyncFilesDesktop::_receiveMission);
-        connect(_remoteObject.data(), &QGCRemoteReplica::sendLogFragment,  this, &QGCSyncFilesDesktop::_sendLogFragment);
-        connect(_remoteObject.data(), &QGCRemoteReplica::sendMapFragment,  this, &QGCSyncFilesDesktop::_sendMapFragment);
+        connect(_remoteObject.data(), &QGCRemoteReplica::missionFromMobile,   this, &QGCSyncFilesDesktop::_missionFromMobile);
+        connect(_remoteObject.data(), &QGCRemoteReplica::logFragment,  this, &QGCSyncFilesDesktop::_logFragment);
+        connect(_remoteObject.data(), &QGCRemoteReplica::mapFragment,  this, &QGCSyncFilesDesktop::_mapFragmentFromMobile);
         _currentRemote = name;
         emit currentRemoteChanged();
         emit remoteReadyChanged();
@@ -193,7 +193,7 @@ QGCSyncFilesDesktop::uploadMission(QString name, PlanMasterController* controlle
         _message(QString(tr("Uploading %1")).arg(name));
         _setSyncProgress(100, 50);
         QJsonDocument saveDoc(controller->saveToJson());
-        _sendMission(name, saveDoc.toJson());
+        _missionToMobile(name, saveDoc.toJson());
         //-- Should we do this?
         controller->setDirty(false);
         _message(QString(tr("%1 sent.")).arg(name));
@@ -206,7 +206,6 @@ QGCSyncFilesDesktop::uploadMission(QString name, PlanMasterController* controlle
 void
 QGCSyncFilesDesktop::initSync()
 {
-    _missions.clear();
     _syncMessage.clear();
     _sendingFiles   = false;
     _syncDone       = false;
@@ -230,7 +229,7 @@ QGCSyncFilesDesktop::initLogFetch()
     if(_currentLog.isOpen()) {
         _currentLog.close();
     }
-    QList<QGCRemoteLogEntry> allLogs = _remoteObject->logEntries();
+    QList<QGCRemoteLogEntry> allLogs = _remoteObject->logEntriesOnMobile();
     foreach(QGCRemoteLogEntry logEntry, allLogs) {
         QGCFileListItem* item = new QGCFileListItem(&_logController, logEntry.name(), logEntry.size());
         _logController.appendFileItem(item);
@@ -250,7 +249,7 @@ QGCSyncFilesDesktop::initMapFetch()
     //-- Init map engine
     qgcApp()->toolbox()->mapEngineManager()->loadTileSets();
     //-- Get remote tile set list
-    QList<QGCSyncTileSet> allSets = _remoteObject->tileSets();
+    QList<QGCSyncTileSet> allSets = _remoteObject->tileSetsOnMobile();
     foreach(QGCSyncTileSet set, allSets) {
         QGCFileListItem* item = new QGCFileListItem(&_mapController, set.name(), set.count());
         _mapController.appendFileItem(item);
@@ -268,40 +267,45 @@ QGCSyncFilesDesktop::uploadAllMissions()
         return;
     }
     //-- Reset Status
-    _missions.clear();
     _sendingFiles   = true;
     _syncProgress   = 0;
     _syncDone       = false;
-    _syncMessage.clear();
     emit syncProgressChanged();
     emit sendingFilesChanged();
-    emit syncMessageChanged();
     emit syncDoneChanged();
     if(!remoteReady()) {
         _message(QString(tr("Not Connected To Remote")));
         _completed();
         return;
     }
-    QStringList allMissions;
+    QStringList missionNames;
+    QStringList missionFiles;
     //-- Where missions are stored
     QString missionPath = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
     //-- Find all of them
     QDirIterator it(missionPath, QStringList() << kMissionWildCard, QDir::Files, QDirIterator::NoIteratorFlags);
     while(it.hasNext()) {
         QFileInfo fi(it.next());
-        _missions << fi.filePath();
-        allMissions << fi.fileName();
+        missionFiles << fi.filePath();
+        missionNames << fi.fileName();
     }
-    if(!_missions.size()) {
+    if(!missionFiles.size()) {
         _message(QString(tr("No missions to send")));
         _completed();
         return;
     }
+    _message(QString(tr("Sending mission files...")));
     //-- If cloning, prune extra files
     if(syncType() == SyncClone) {
-        _remoteObject->pruneExtraMissions(allMissions);
+        _remoteObject->pruneExtraMissionsOnMobile(missionNames);
     }
-    _doSync();
+    //-- Start Worker Thread
+    QGCMissionUploadWorker* missionWorker = new QGCMissionUploadWorker(this);
+    missionWorker->moveToThread(&_workerThread);
+    connect(this, &QGCSyncFilesDesktop::doMissionSync, missionWorker, &QGCMissionUploadWorker::doMissionSync);
+    qCDebug(QGCSyncFiles) << "Starting log upload thread";
+    _workerThread.start();
+    emit doMissionSync(missionFiles);
 }
 
 //-----------------------------------------------------------------------------
@@ -311,7 +315,6 @@ QGCSyncFilesDesktop::downloadAllMissions()
     if(_sendingFiles) {
         return;
     }
-    _missions.clear();
     _sendingFiles   = true;
     _syncProgress   = 0;
     _syncDone       = false;
@@ -325,7 +328,7 @@ QGCSyncFilesDesktop::downloadAllMissions()
         _completed();
         return;
     }
-    QStringList allMissions = _remoteObject->currentMissions();
+    QStringList allMissions = _remoteObject->missionsOnMobile();
     _curFile = 0;
     _totalFiles = allMissions.size();
     qCDebug(QGCSyncFiles) << "Requesting all mission files";
@@ -350,27 +353,35 @@ QGCSyncFilesDesktop::downloadAllMissions()
             f.remove();
         }
     }
-    _remoteObject->requestMissions(allMissions);
+    _remoteObject->requestMissionsFromMobile(allMissions);
+}
+
+//-----------------------------------------------------------------------------
+bool
+QGCSyncFilesDesktop::_prepareSync()
+{
+    if(_sendingFiles) {
+        return false;
+    }
+    _sendingFiles   = true;
+    _syncProgress   = 0;
+    _syncDone       = false;
+    emit syncProgressChanged();
+    emit sendingFilesChanged();
+    emit syncDoneChanged();
+    if(!remoteReady()) {
+        _message(QString(tr("Not Connected To Remote")));
+        _completed();
+        return false;
+    }
+    return true;
 }
 
 //-----------------------------------------------------------------------------
 void
 QGCSyncFilesDesktop::downloadSelectedLogs(QString path)
 {
-    if(_sendingFiles) {
-        return;
-    }
-    _sendingFiles   = true;
-    _syncProgress   = 0;
-    _syncDone       = false;
-    _syncMessage.clear();
-    emit syncProgressChanged();
-    emit sendingFilesChanged();
-    emit syncMessageChanged();
-    emit syncDoneChanged();
-    if(!remoteReady()) {
-        _message(QString(tr("Not Connected To Remote")));
-        _completed();
+    if(!_prepareSync()) {
         return;
     }
     //-- Target Path
@@ -398,34 +409,108 @@ QGCSyncFilesDesktop::downloadSelectedLogs(QString path)
     //-- Request logs
     _curFile = 0;
     _totalFiles = requestedLogs.size();
-    qCDebug(QGCSyncFiles) << "Requesting" <<  requestedLogs.size() << "log files";
-    _remoteObject->requestLogs(requestedLogs);
+    QString text = QString(tr("Requesing %1 log files").arg(requestedLogs.size()));
+    _message(text);
+    qCDebug(QGCSyncFiles) << text;
+    _remoteObject->requestLogsFromMobile(requestedLogs);
 }
 
 //-----------------------------------------------------------------------------
 void
 QGCSyncFilesDesktop::uploadSelectedTiles()
 {
+    if(!_prepareSync()) {
+        return;
+    }
+    //-- Collect sets to export
+    QGCMapEngineManager* mapMgr = qgcApp()->toolbox()->mapEngineManager();
+    QmlObjectListModel& tileSets = (*mapMgr->tileSets());
+    QVector<QGCCachedTileSet*> setsToExport;
+    for(int i = 0; i < tileSets.count(); i++ ) {
+        QGCCachedTileSet* set = qobject_cast<QGCCachedTileSet*>(tileSets.get(i));
+        qCDebug(QGCSyncFiles) << "Testing" << set->name();
+        if(set && set->selected()) {
+            setsToExport.append(set);
+        }
+    }
+    if(!setsToExport.size()) {
+        _message(QString(tr("No tiles to send")));
+        _completed();
+        return;
+    }
+    //-- Temp file to save the exported set
+    _mapFile = new QTemporaryFile;
+    //-- If cannot create file, bail
+    if (!_mapFile->open()) {
+        _message(QString(tr("Error creating temporary map tile set")));
+        _completed();
+        return;
+    }
+    _mapFile->close();
+    //-- Export selected sets
+    _message(QString(tr("Exporting selected map tile sets")));
+    _lastMapExportProgress = 0;
+    QGCExportTileTask* task = new QGCExportTileTask(setsToExport, _mapFile->fileName());
+    connect(task, &QGCExportTileTask::actionCompleted, this, &QGCSyncFilesDesktop::_mapExportDone);
+    connect(task, &QGCExportTileTask::actionProgress, this, &QGCSyncFilesDesktop::_mapExportProgressChanged);
+    connect(task, &QGCMapTask::error, this, &QGCSyncFilesDesktop::_mapExportError);
+    getQGCMapEngine()->addTask(task);
+}
 
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::_mapExportDone()
+{
+    //-- Start Worker Thread
+    qCDebug(QGCSyncFiles) << "Starting map upload thread";
+    QGCMapUploadWorker* mapWorker = new QGCMapUploadWorker(this);
+    mapWorker->moveToThread(&_workerThread);
+    connect(this, &QGCSyncFilesDesktop::doMapSync, mapWorker, &QGCMapUploadWorker::doMapSync);
+    connect(mapWorker, &QGCMapUploadWorker::mapFragment, this, &QGCSyncFilesDesktop::_mapFragmentToMobile);
+    _workerThread.start();
+    emit doMapSync(_mapFile);
+}
 
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::_mapExportError(QGCMapTask::TaskType, QString errorString)
+{
+    qWarning() << "Map export error:" << errorString;
+    if(_mapFile) {
+        delete _mapFile;
+        _mapFile = NULL;
+    }
+    _message(QString(tr("Error exporting map tile sets")));
+    _completed();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::_mapExportProgressChanged(int percentage)
+{
+    //-- Progress from map engine can go over 100% some times
+    if(_lastMapExportProgress != percentage && percentage <= 100) {
+        _lastMapExportProgress = percentage;
+        qCDebug(QGCSyncFiles) << "Map export progress" << percentage;
+        _setSyncProgress(100, percentage);
+    }
+}
+
+//-----------------------------------------------------------------------------
+//-- Send map fragment on main thread
+void
+QGCSyncFilesDesktop::_mapFragmentToMobile(QGCMapFragment fragment)
+{
+    if(!_cancel && !_remoteObject.isNull()) {
+        _remoteObject->mapToMobile(fragment);
+    }
 }
 
 //-----------------------------------------------------------------------------
 void
 QGCSyncFilesDesktop::downloadSelectedTiles()
 {
-    if(_sendingFiles) {
-        return;
-    }
-    _sendingFiles   = true;
-    _syncProgress   = 0;
-    _syncDone       = false;
-    emit syncProgressChanged();
-    emit sendingFilesChanged();
-    emit syncDoneChanged();
-    if(!remoteReady()) {
-        _message(QString(tr("Not Connected To Remote")));
-        _completed();
+    if(!_prepareSync()) {
         return;
     }
     //-- Build map tile set list
@@ -435,10 +520,10 @@ QGCSyncFilesDesktop::downloadSelectedTiles()
             requestedSets << _mapController.fileListV()[i]->fileName();
         }
     }
-    //-- Request logs
+    //-- Request map tiles
     qCDebug(QGCSyncFiles) << "Requesting" <<  requestedSets.size() << "map tile sets";
     _message(QString(tr("Remote is exporting map tiles")));
-    _remoteObject->requestMapTiles(requestedSets);
+    _remoteObject->requestMapTilesFromMobile(requestedSets);
 }
 
 //-----------------------------------------------------------------------------
@@ -508,18 +593,6 @@ QGCSyncFilesDesktop::_nodeError(QRemoteObjectNode::ErrorCode errorCode)
 }
 
 //-----------------------------------------------------------------------------
-bool
-QGCSyncFilesDesktop::_doSync()
-{
-    if(_remoteObject.isNull()) {
-        emit completed();
-        return false;
-    }
-    this->start(QThread::NormalPriority);
-    return true;
-}
-
-//-----------------------------------------------------------------------------
 void
 QGCSyncFilesDesktop::_completed()
 {
@@ -530,46 +603,14 @@ QGCSyncFilesDesktop::_completed()
 }
 
 //-----------------------------------------------------------------------------
-void
-QGCSyncFilesDesktop::run()
-{
-    _curFile    = 0;
-    _totalFiles = _missions.size();
-    emit progress(_totalFiles, 0);
-    emit message(QString(tr("Sending mission files...")));
-    foreach(QString mission, _missions) {
-        if(_cancel) {
-            emit message(QString(tr("Operation Canceled")));
-            break;
-        }
-        QFileInfo fi(mission);
-        QFile missionFile(mission);
-        if (!missionFile.open(QIODevice::ReadOnly)) {
-            qWarning() << "Unable to open file" << mission;
-        } else {
-            QByteArray bytes = missionFile.readAll();
-            missionFile.close();
-            qCDebug(QGCSyncFiles) << "Sending:" << fi.filePath();
-            emit sendMission(fi.fileName(), bytes);
-        }
-        emit progress(_totalFiles, ++_curFile);
-    }
-    if(!_cancel) {
-        emit message(QString(tr("%1 files sent")).arg(_totalFiles));
-        emit progress(1, 1);
-    }
-    emit completed();
-}
-
-//-----------------------------------------------------------------------------
 bool
-QGCSyncFilesDesktop::_sendMission(QString name, QByteArray mission)
+QGCSyncFilesDesktop::_missionToMobile(QString name, QByteArray mission)
 {
     if(_remoteObject.isNull()) {
         return false;
     }
     if(!name.endsWith(kMissionExtension)) name += kMissionExtension;
-    _remoteObject->sendMission(QGCNewMission(name, mission));
+    _remoteObject->missionToMobile(QGCNewMission(name, mission));
     return true;
 }
 
@@ -641,7 +682,7 @@ QGCSyncFilesDesktop::_processIncomingMission(QString name, int count, QString& m
 
 //-----------------------------------------------------------------------------
 void
-QGCSyncFilesDesktop::_receiveMission(QGCNewMission mission)
+QGCSyncFilesDesktop::_missionFromMobile(QGCNewMission mission)
 {
     _setSyncProgress(_totalFiles, ++_curFile);
     if(mission.mission().size()) {
@@ -670,7 +711,7 @@ QGCSyncFilesDesktop::_receiveMission(QGCNewMission mission)
 
 //-----------------------------------------------------------------------------
 void
-QGCSyncFilesDesktop::_sendLogFragment(QGCLogFragment fragment)
+QGCSyncFilesDesktop::_logFragment(QGCLogFragment fragment)
 {
     //-- Check for error
     if(fragment.name().isEmpty()) {
@@ -722,9 +763,8 @@ QGCSyncFilesDesktop::_sendLogFragment(QGCLogFragment fragment)
 
 //-----------------------------------------------------------------------------
 void
-QGCSyncFilesDesktop::_sendMapFragment(QGCMapFragment fragment)
+QGCSyncFilesDesktop::_mapFragmentFromMobile(QGCMapFragment fragment)
 {
-    qDebug() << "Map fragment" << fragment.current() << fragment.total() << fragment.data().size() << fragment.progress();
     //-- Check for cancel
     if(_cancel) {
         if(_mapFile) {
@@ -824,4 +864,91 @@ QGCSyncFilesDesktop::_mapImportCompleted()
         delete _mapFile;
         _mapFile = NULL;
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMissionUploadWorker::doMissionSync(QStringList missions)
+{
+    int curFile    = 0;
+    int totalFiles = missions.size();
+    emit _pSync->progress(totalFiles, 0);
+    foreach(QString mission, missions) {
+        if(_pSync->canceled()) {
+            emit _pSync->message(QString(tr("Operation Canceled")));
+            break;
+        }
+        QFileInfo fi(mission);
+        QFile missionFile(mission);
+        if (!missionFile.open(QIODevice::ReadOnly)) {
+            qWarning() << "Unable to open file" << mission;
+        } else {
+            QByteArray bytes = missionFile.readAll();
+            missionFile.close();
+            qCDebug(QGCSyncFiles) << "Sending:" << fi.filePath();
+            emit _pSync->missionToMobile(fi.fileName(), bytes);
+        }
+        emit _pSync->progress(totalFiles, ++curFile);
+    }
+    if(!_pSync->canceled()) {
+        emit _pSync->message(QString(tr("%1 files sent")).arg(totalFiles));
+        emit _pSync->progress(1, 1);
+    }
+    emit _pSync->completed();
+    this->deleteLater();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMapUploadWorker::doMapSync(QTemporaryFile* mapFile)
+{
+    QString error;
+    qCDebug(QGCSyncFiles) << "Map upload thread started";
+    if (!mapFile) {
+        error = QString(tr("Internal error. Map file not created."));
+    } else {
+        QFileInfo fi(mapFile->fileName());
+        quint64 total = fi.size();
+        if (!total) {
+            qWarning() << "File is empty" << mapFile->fileName();
+            error = QString(tr("Internal error. Exported map file is empty"));
+        } else {
+            QFile f(mapFile->fileName());
+            if (!f.open(QIODevice::ReadOnly)) {
+                qWarning() << "File open error" << mapFile->fileName();
+                error = QString(tr("Unable to open exported map file"));
+            } else {
+                quint64 sofar = 0;
+                int segment = 0;
+                qCDebug(QGCSyncFiles) << "Uploading" << total << "bytes";
+                emit _pSync->message(QString(tr("Uploading map tiles")));
+                while(true) {
+                    if(_pSync->canceled()) break;
+                    //-- Send in 1M chuncks
+                    QByteArray bytes = f.read(1024 * 1024);
+                    if(bytes.size() != 0) {
+                        sofar += bytes.size();
+                        QGCMapFragment mapFrag(sofar, total, bytes, segment++);
+                        emit mapFragment(mapFrag);
+                    }
+                    if(sofar >= total || bytes.size() == 0) {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    if(_pSync->canceled()) {
+        qCDebug(QGCSyncFiles) << "Thread canceled";
+    } else if(!error.isEmpty()) {
+        emit _pSync->message(error);
+        QGCMapFragment mapFrag(0, 0, QByteArray(), 0);
+        emit mapFragment(mapFrag);
+    } else {
+        emit _pSync->message(QString(tr("Upload completed")));
+    }
+    //-- We're done
+    qCDebug(QGCSyncFiles) << "Map upload thread ended";
+    emit _pSync->completed();
+    this->deleteLater();
 }

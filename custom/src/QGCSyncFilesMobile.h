@@ -26,7 +26,7 @@ public:
 public slots:
     void doLogSync      (QStringList logsToSend);
 signals:
-    void sendLogFragment(QGCLogFragment fragment);
+    void logFragment(QGCLogFragment fragment);
     void done           ();
 private:
     QGCSyncFilesMobile* _pSync;
@@ -41,7 +41,7 @@ public:
 public slots:
     void doMapSync      (QTemporaryFile* mapFile);
 signals:
-    void sendMapFragment(QGCMapFragment fragment);
+    void mapFragment(QGCMapFragment fragment);
     void done           ();
 private:
     QGCSyncFilesMobile* _pSync;
@@ -60,17 +60,17 @@ public:
     QString macAddress                  () { return _macAddress; }
 
 public slots:
-    void    sendMission                 (QGCNewMission mission);
-    void    sendMap                     (QGCLogFragment fragment);
-    void    pruneExtraMissions          (QStringList allMissions);
-    void    requestMissions             (QStringList missions);
-    void    requestLogs                 (QStringList logs);
-    void    requestMapTiles             (QStringList sets);
+    void    missionToMobile             (QGCNewMission mission);
+    void    mapToMobile                 (QGCMapFragment fragment);
+    void    pruneExtraMissionsOnMobile  (QStringList allMissions);
+    void    requestMissionsFromMobile   (QStringList missions);
+    void    requestLogsFromMobile       (QStringList logs);
+    void    requestMapTilesFromMobile   (QStringList sets);
 
 private slots:
     void    _broadcastPresence          ();
-    void    _sendLogFragment            (QGCLogFragment fragment);
-    void    _sendMapFragment            (QGCMapFragment fragment);
+    void    _logFragment                (QGCLogFragment fragment);
+    void    _mapFragment                (QGCMapFragment fragment);
     void    _canceled                   (bool cancel);
     void    _logWorkerDone              ();
     void    _mapWorkerDone              ();
@@ -78,6 +78,8 @@ private slots:
     void    _mapExportDone              ();
     void    _mapExportProgressChanged   (int percentage);
     void    _mapExportError             (QGCMapTask::TaskType type, QString errorString);
+    void    _mapImportCompleted         ();
+    void    _mapImportError             (QGCMapTask::TaskType type, QString errorString);
 
 signals:
     void    macAddressChanged           ();
@@ -87,8 +89,8 @@ signals:
 
 private:
     bool    _processIncomingMission     (QString name, int count, QString& missionFile);
-    void    _updateMissionList          ();
-    void    _updateLogEntries           ();
+    void    _updateMissionsOnMobile     ();
+    void    _updateLogEntriesOnMobile   ();
 
 private:
     QTimer                  _broadcastTimer;

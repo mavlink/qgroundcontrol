@@ -18,9 +18,37 @@
 Q_DECLARE_LOGGING_CATEGORY(QGCSyncFiles)
 
 class PlanMasterController;
+class QGCSyncFilesDesktop;
 
 //-----------------------------------------------------------------------------
-class QGCSyncFilesDesktop : public QThread
+class QGCMapUploadWorker : public QObject
+{
+    Q_OBJECT
+public:
+    QGCMapUploadWorker(QGCSyncFilesDesktop* parent) : _pSync(parent) {}
+public slots:
+    void doMapSync      (QTemporaryFile* mapFile);
+signals:
+    void mapFragment(QGCMapFragment fragment);
+    void done           ();
+private:
+    QGCSyncFilesDesktop* _pSync;
+};
+
+//-----------------------------------------------------------------------------
+class QGCMissionUploadWorker : public QObject
+{
+    Q_OBJECT
+public:
+    QGCMissionUploadWorker(QGCSyncFilesDesktop* parent) : _pSync(parent) {}
+public slots:
+    void doMissionSync  (QStringList missions);
+private:
+    QGCSyncFilesDesktop* _pSync;
+};
+
+//-----------------------------------------------------------------------------
+class QGCSyncFilesDesktop : public QObject
 {
     Q_OBJECT
 public:
@@ -96,9 +124,6 @@ public:
     SyncType    syncType                ();
     void        setSyncType             (SyncType type);
 
-protected:
-    void    run                         ();
-
 signals:
     //-- To QML
     void    remoteListChanged           ();
@@ -112,11 +137,13 @@ signals:
     void    fileProgressChanged         ();
     void    syncTypeChanged             ();
     void    selectedCountChanged        ();
-    //-- From Thread
+    //-- Thread
+    void    doMissionSync               (QStringList missionsToSend);
+    void    doMapSync                   (QTemporaryFile* mapFile);
     void    progress                    (quint32 totalCount, quint32 curCount);
     void    completed                   ();
     void    message                     (QString errorMessage);
-    void    sendMission                 (QString name, QByteArray mission);
+    void    missionToMobile             (QString name, QByteArray mission);
 
 private slots:
     void    _stateChanged               (QRemoteObjectReplica::State state, QRemoteObjectReplica::State oldState);
@@ -125,22 +152,26 @@ private slots:
     void    _remoteMaintenance          ();
     void    _syncTypeChanged            (QGCRemoteReplica::SyncType syncType);
     void    _delayedDisconnect          ();
-    void    _sendMapFragment            (QGCMapFragment fragment);
+    void    _mapFragmentFromMobile      (QGCMapFragment fragment);
     void    _mapImportCompleted         ();
     void    _mapImportProgress          (int percentage);
     void    _mapImportError             (QGCMapTask::TaskType type, QString errorString);
-    void    _receiveMission             (QGCNewMission mission);
-    void    _sendLogFragment            (QGCLogFragment fragment);
+    void    _missionFromMobile          (QGCNewMission mission);
+    void    _logFragment                (QGCLogFragment fragment);
+    void    _mapExportDone              ();
+    void    _mapExportProgressChanged   (int percentage);
+    void    _mapExportError             (QGCMapTask::TaskType type, QString errorString);
     //-- From Thread
     void    _setSyncProgress            (quint32 total, quint32 current);
     void    _setFileProgress            (quint32 total, quint32 current);
     void    _message                    (QString message);
     void    _completed                  ();
-    bool    _sendMission                (QString name, QByteArray mission);
+    bool    _missionToMobile            (QString name, QByteArray mission);
+    void    _mapFragmentToMobile        (QGCMapFragment fragment);
 
 private:
     void    _initUDPListener            ();
-    bool    _doSync                     ();
+    bool    _prepareSync                ();
     bool    _processIncomingMission     (QString name, int count, QString& missionFile);
 
 private:
@@ -163,10 +194,10 @@ private:
     bool                                _syncDone;
     bool                                _disconnecting;
     bool                                _connecting;
-    QStringList                         _missions;
     QTimer                              _remoteMaintenanceTimer;
-    //-- Fetch Logs
+    QThread                             _workerThread;
     QString                             _logPath;
     QFile                               _currentLog;
     QTemporaryFile*                     _mapFile;
+    int                                 _lastMapExportProgress;
 };

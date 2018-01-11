@@ -12,16 +12,17 @@ class QGCRemote
     PROP(SyncType syncType=SyncAppend READWRITE)
     PROP(bool cancel=false READWRITE)
     PROP(bool desktopConnected=false READWRITE)
-    PROP(QStringList currentMissions)
-    PROP(QList<QGCRemoteLogEntry> logEntries)
-    PROP(QList<QGCSyncTileSet> tileSets)
-    SIGNAL(sendLogFragment(QGCLogFragment fragment));
-    SIGNAL(sendMapFragment(QGCMapFragment fragment));
-    SIGNAL(receiveMission(QGCNewMission mission));
-    SLOT(void sendMission(QGCNewMission mission));
-    SLOT(void pruneExtraMissions(QStringList allMissions));
-    SLOT(void requestMissions(QStringList missions));
-    SLOT(void requestLogs(QStringList logs));
-    SLOT(void requestMapTiles(QStringList sets));
-    SLOT(void sendMap(QGCLogFragment fragment));
+    PROP(QStringList missionsOnMobile)
+    PROP(QList<QGCRemoteLogEntry> logEntriesOnMobile)
+    PROP(QList<QGCSyncTileSet> tileSetsOnMobile)
+    SIGNAL(logFragment(QGCLogFragment fragment));
+    SIGNAL(mapFragment(QGCMapFragment fragment));
+    SIGNAL(missionFromMobile(QGCNewMission mission));
+    SLOT(void mapToMobile(QGCMapFragment fragment));
+    SLOT(void missionToMobile(QGCNewMission mission));
+    SLOT(void pruneExtraMissionsOnMobile(QStringList allMissions));
+    SLOT(void requestMissionsFromMobile(QStringList missions));
+    SLOT(void requestLogsFromMobile(QStringList logs));
+    SLOT(void requestMapTilesFromMobile(QStringList sets));
 };
+
