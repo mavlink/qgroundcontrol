@@ -662,3 +662,13 @@ bool Fact::readOnly(void) const
         return false;
     }
 }
+
+bool Fact::volatileValue(void) const
+{
+    if (_metaData) {
+        return _metaData->volatileValue();
+    } else {
+        qWarning() << kMissingMetadata << name();
+        return false;
+    }
+}
