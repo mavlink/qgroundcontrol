@@ -247,6 +247,19 @@ bool PX4FirmwarePlugin::sendHomePositionToVehicle(void)
     return false;
 }
 
+FactMetaData* PX4FirmwarePlugin::getMetaDataForFact(QObject* parameterMetaData, const QString& name, MAV_TYPE vehicleType)
+{
+    PX4ParameterMetaData* px4MetaData = qobject_cast<PX4ParameterMetaData*>(parameterMetaData);
+
+    if (px4MetaData) {
+        return px4MetaData->getMetaDataForFact(name, vehicleType);
+    } else {
+        qWarning() << "Internal error: pointer passed to PX4FirmwarePlugin::getMetaDataForFact not PX4ParameterMetaData";
+    }
+
+    return NULL;
+}
+
 void PX4FirmwarePlugin::addMetaDataToFact(QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType)
 {
     PX4ParameterMetaData* px4MetaData = qobject_cast<PX4ParameterMetaData*>(parameterMetaData);
@@ -256,6 +269,11 @@ void PX4FirmwarePlugin::addMetaDataToFact(QObject* parameterMetaData, Fact* fact
     } else {
         qWarning() << "Internal error: pointer passed to PX4FirmwarePlugin::addMetaDataToFact not PX4ParameterMetaData";
     }
+}
+
+void PX4FirmwarePlugin::getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)
+{
+    return PX4ParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion);
 }
 
 QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
@@ -571,5 +589,3 @@ QGCCameraControl* PX4FirmwarePlugin::createCameraControl(const mavlink_camera_in
 {
     return new QGCCameraControl(info, vehicle, compID, parent);
 }
-
-
