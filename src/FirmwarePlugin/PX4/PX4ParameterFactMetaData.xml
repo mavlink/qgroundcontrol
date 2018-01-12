@@ -328,7 +328,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <decimal>8</decimal>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="3.4" name="BAT_V_EMPTY" type="FLOAT">
+    <parameter default="3.5" name="BAT_V_EMPTY" type="FLOAT">
       <short_desc>Empty cell voltage (5C load)</short_desc>
       <long_desc>Defines the voltage where a single cell of the battery is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
       <unit>V</unit>
@@ -9068,7 +9068,7 @@ to accelerate forward if necessary</short_desc>
       <max>45.0</max>
       <scope>modules/vtol_att_control</scope>
     </parameter>
-    <parameter default="0" name="VT_ELEV_MC_LOCK" type="INT32">
+    <parameter default="1" name="VT_ELEV_MC_LOCK" type="INT32">
       <short_desc>Lock elevons in multicopter mode</short_desc>
       <long_desc>If set to 1 the elevons are locked in multicopter mode</long_desc>
       <boolean />
