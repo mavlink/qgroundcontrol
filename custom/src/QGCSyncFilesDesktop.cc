@@ -120,7 +120,7 @@ QGCSyncFilesDesktop::_readUDPBytes()
         QString payload = datagram.data();
         QStringList remoteIdentifier = payload.split("|");
         if(remoteIdentifier.size() == 2) {
-            if(remoteIdentifier[1].toInt() == signature) {
+            if(remoteIdentifier[1] == signature) {
                 QString remoteName = remoteIdentifier[0];
                 if(!_remoteURLs.contains(remoteName)) {
                     _remoteNames.append(remoteName);
