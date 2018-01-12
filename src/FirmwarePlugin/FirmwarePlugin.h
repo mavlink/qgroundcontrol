@@ -218,6 +218,11 @@ public:
     ///         call deleteParameterMetaData when no longer needed.
     virtual QObject* loadParameterMetaData(const QString& metaDataFile) { Q_UNUSED(metaDataFile); return NULL; }
 
+    /// Returns the FactMetaData associated with the parameter name
+    ///     @param opaqueParameterMetaData Opaque pointer returned from loadParameterMetaData
+    ///     @param name Parameter name
+    virtual FactMetaData* getMetaDataForFact(QObject* parameterMetaData, const QString& name, MAV_TYPE vehicleType) { Q_UNUSED(parameterMetaData); Q_UNUSED(name); Q_UNUSED(vehicleType); return NULL; }
+
     /// Adds the parameter meta data to the Fact
     ///     @param opaqueParameterMetaData Opaque pointer returned from loadParameterMetaData
     virtual void addMetaDataToFact(QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) { Q_UNUSED(parameterMetaData); Q_UNUSED(fact); Q_UNUSED(vehicleType); return; }

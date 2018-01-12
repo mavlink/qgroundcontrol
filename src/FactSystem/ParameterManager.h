@@ -142,6 +142,8 @@ private:
     void _writeParameterRaw(int componentId, const QString& paramName, const QVariant& value);
     void _writeLocalParamCache(int vehicleId, int componentId);
     void _tryCacheHashLoad(int vehicleId, int componentId, QVariant hash_value);
+    void _loadMetaData(void);
+    void _clearMetaData(void);
     void _addMetaDataToDefaultComponent(void);
     QString _remapParamNameToVersion(const QString& paramName);
     void _loadOfflineEditingParams(void);
@@ -158,8 +160,6 @@ private:
     /// Second mapping is parameter name, to Fact* in QVariant
     QMap<int, QVariantMap>            _mapParameterName2Variant;
 
-    QMap<int, QMap<int, QString> >    _mapParameterId2Name;
-
     // Category map of default component parameters
     QMap<QString /* category */, QMap<QString /* group */, QStringList /* parameter names */> > _categoryMap;
     
@@ -169,6 +169,7 @@ private:
     bool        _initialLoadComplete;           ///< true: Initial load of all parameters complete, whether successful or not
     bool        _waitingForDefaultComponent;    ///< true: last chance wait for default component params
     bool        _saveRequired;                  ///< true: _saveToEEPROM should be called
+    bool        _metaDataAddedToFacts;          ///< true: FactMetaData has been adde to the default component facts
     bool        _logReplay;                     ///< true: running with log replay link
     QString     _versionParam;                  ///< Parameter which contains parameter set version
     int         _parameterSetMajorVersion;      ///< Version for parameter set, -1 if not known
