@@ -1,5 +1,5 @@
 /*!
- *   @brief Typhoon H QGCCorePlugin Declaration
+ *   @brief  Desktop/Mobile Sync: Desktop implementation
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 

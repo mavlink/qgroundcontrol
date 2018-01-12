@@ -1,5 +1,5 @@
 /*!
- *   @brief Desktop/Mobile RPC
+ *   @brief  Desktop/Mobile Sync: Mobile implementation
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
@@ -67,7 +67,11 @@ bool
 QGCSyncFilesMobile::_processIncomingMission(QString name, int count, QString& missionFile)
 {
     missionFile = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
+#ifdef Q_OS_WIN
+    if(!missionFile.endsWith("/") && !missionFile.endsWith("\\")) missionFile += "\\";
+#else
     if(!missionFile.endsWith("/")) missionFile += "/";
+#endif
     missionFile += name;
     if(!missionFile.endsWith(kMissionExtension)) missionFile += kMissionExtension;
     //-- Add a (unique) count if told to do so

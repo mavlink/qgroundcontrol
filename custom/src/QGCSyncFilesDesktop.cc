@@ -1,5 +1,5 @@
 /*!
- *   @brief Typhoon H QGCCorePlugin Implementation
+ *   @brief  Desktop/Mobile Sync: Desktop implementation
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
@@ -421,16 +421,19 @@ QGCSyncFilesDesktop::downloadSelectedLogs(QString path)
     }
     //-- Target Path
     _logPath = path;
-    if(_logPath.startsWith("file://")) _logPath.replace("file://", "");
 #ifdef Q_OS_WIN
+    if(_logPath.startsWith("file:///")) _logPath.replace("file:///", "");
+    if(_logPath.startsWith("file://")) _logPath.replace("file://", "");
     if(!_logPath.endsWith("\\") && !_logPath.endsWith("/")) _logPath += "/";
 #else
+    if(_logPath.startsWith("file://")) _logPath.replace("file://", "");
     if(!_logPath.endsWith("/")) _logPath += "/";
 #endif
     QDir destDir(_logPath);
     if (!destDir.exists()) {
         if(!destDir.mkpath(".")) {
             _message(QString(tr("Error creating destination %1")).arg(_logPath));
+            _completed();
             return;
         }
     }
@@ -706,7 +709,11 @@ bool
 QGCSyncFilesDesktop::_processIncomingMission(QString name, int count, QString& missionFile)
 {
     missionFile = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
+#ifdef Q_OS_WIN
+    if(!missionFile.endsWith("/") && !missionFile.endsWith("\\")) missionFile += "\\";
+#else
     if(!missionFile.endsWith("/")) missionFile += "/";
+#endif
     missionFile += name;
     if(!missionFile.endsWith(kMissionExtension)) missionFile += kMissionExtension;
     //-- Add a (unique) count if told to do so

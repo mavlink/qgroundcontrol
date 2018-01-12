@@ -1,5 +1,5 @@
 /*!
- *   @brief Desktop/Mobile RPC
+ *   @brief  Desktop/Mobile Sync: Mobile implementation
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
