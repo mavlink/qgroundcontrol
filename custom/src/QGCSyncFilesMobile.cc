@@ -525,6 +525,21 @@ QGCMapUploadWorker::doMapSync(QTemporaryFile* mapFile)
 }
 
 //-----------------------------------------------------------------------------
+QByteArray
+classinfo_signature(const QMetaObject *metaObject)
+{
+    static const QByteArray s_classinfoRemoteobjectSignature(QCLASSINFO_REMOTEOBJECT_SIGNATURE);
+    if (!metaObject)
+        return QByteArray{};
+    for (int i = metaObject->classInfoOffset(); i < metaObject->classInfoCount(); ++i) {
+        auto ci = metaObject->classInfo(i);
+        if (s_classinfoRemoteobjectSignature == ci.name())
+            return ci.value();
+    }
+    return QByteArray{};
+}
+
+//-----------------------------------------------------------------------------
 void
 QGCSyncFilesMobile::_broadcastPresence()
 {
@@ -552,7 +567,8 @@ QGCSyncFilesMobile::_broadcastPresence()
             macAddress.sprintf("%06d", (qrand() % 999999));
             qWarning() << "Could not get a proper MAC address. Using a random value.";
         }
-        _remoteIdentifier.sprintf("%s%s|%d", QGC_MOBILE_NAME, macAddress.toLocal8Bit().data(), QGC_RPC_VERSION);
+        QByteArray sig = classinfo_signature(&QGCRemoteSimpleSource::staticMetaObject);
+        _remoteIdentifier.sprintf("%s%s|%s", QGC_MOBILE_NAME, macAddress.toLocal8Bit().data(), sig.data());
         emit remoteIdentifierChanged();
         qCDebug(QGCSyncFiles) << "Remote identifier:" << _remoteIdentifier;
     }

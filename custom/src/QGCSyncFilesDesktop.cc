@@ -84,9 +84,29 @@ QGCSyncFilesDesktop::_initUDPListener()
 }
 
 //-----------------------------------------------------------------------------
+QByteArray
+classinfo_signature(const QMetaObject *metaObject)
+{
+    static const QByteArray s_classinfoRemoteobjectSignature(QCLASSINFO_REMOTEOBJECT_SIGNATURE);
+    if (!metaObject)
+        return QByteArray{};
+    for (int i = metaObject->classInfoOffset(); i < metaObject->classInfoCount(); ++i) {
+        auto ci = metaObject->classInfo(i);
+        if (s_classinfoRemoteobjectSignature == ci.name())
+            return ci.value();
+    }
+    return QByteArray{};
+}
+
+//-----------------------------------------------------------------------------
 void
 QGCSyncFilesDesktop::_readUDPBytes()
 {
+    static QString signature;
+    if(signature.isEmpty()) {
+        signature = classinfo_signature(&QGCRemoteReplica::staticMetaObject);
+        qCWarning(QGCSyncFiles) << "Signature:" << signature;
+    }
     //-- This is a broadcast from a Mobile build. Collect its "name" and URL.
     while (_udpSocket->hasPendingDatagrams()) {
         QByteArray datagram;
@@ -100,16 +120,17 @@ QGCSyncFilesDesktop::_readUDPBytes()
         QString payload = datagram.data();
         QStringList remoteIdentifier = payload.split("|");
         if(remoteIdentifier.size() == 2) {
-            if(remoteIdentifier[1].toInt() == QGC_RPC_VERSION) {
+            if(remoteIdentifier[1].toInt() == signature) {
                 QString remoteName = remoteIdentifier[0];
                 if(!_remoteURLs.contains(remoteName)) {
-                    _remoteNames.append(datagram.data());
+                    _remoteNames.append(remoteName);
                     _remoteURLs[remoteName] = url;
                     _remoteTimer[remoteName] = QTime();
                     _remoteTimer[remoteName].start();
                     qCDebug(QGCSyncFiles) << "New node:" << url.toString();
                     emit remoteListChanged();
                 } else {
+                    //-- Restart keepalive timer
                     _remoteTimer[remoteName].restart();
                 }
             } else {
