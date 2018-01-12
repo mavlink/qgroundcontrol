@@ -27,7 +27,7 @@
 class FactMetaData : public QObject
 {
     Q_OBJECT
-    
+
 public:
     typedef enum {
         valueTypeUint8,
@@ -45,7 +45,7 @@ public:
     } ValueType_t;
 
     typedef QVariant (*Translator)(const QVariant& from);
-    
+
     FactMetaData(QObject* parent = NULL);
     FactMetaData(ValueType_t type, QObject* parent = NULL);
     FactMetaData(ValueType_t type, const QString name, QObject* parent = NULL);
@@ -75,6 +75,9 @@ public:
 
     /// Returns the string for distance units which has configued by user
     static QString appSettingsAreaUnitsString(void);
+
+    static const QString defaultCategory    ();
+    static const QString defaultGroup       ();
 
     int             decimalPlaces           (void) const;
     QVariant        rawDefaultValue         (void) const;
@@ -159,9 +162,6 @@ public:
 
     static ValueType_t stringToType(const QString& typeString, bool& unknownType);
     static size_t typeToSize(ValueType_t type);
-
-    static const QString defaultCategory;
-    static const QString defaultGroup;
 
 private:
     QVariant _minForType(void) const;

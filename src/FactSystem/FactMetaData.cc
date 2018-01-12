@@ -32,8 +32,8 @@ const qreal FactMetaData::UnitConsts_s::milesToMeters =         1609.344;
 const qreal FactMetaData::UnitConsts_s::feetToMeters =          0.3048;
 const qreal FactMetaData::UnitConsts_s::inchesToCentimeters =   2.54;
 
-const QString FactMetaData::defaultCategory =   tr("Other");
-const QString FactMetaData::defaultGroup =      tr("Misc");
+static const char* kDefaultCategory = QT_TRANSLATE_NOOP("FactMetaData", "Other");
+static const char* kDefaultGroup    = QT_TRANSLATE_NOOP("FactMetaData", "Misc");
 
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
@@ -84,8 +84,6 @@ FactMetaData::FactMetaData(QObject* parent)
     , _decimalPlaces        (unknownDecimalPlaces)
     , _rawDefaultValue      (0)
     , _defaultValueAvailable(false)
-    , _category             (defaultCategory)
-    , _group                (defaultGroup)
     , _rawMax               (_maxForType())
     , _maxIsDefaultForType  (true)
     , _rawMin               (_minForType())
@@ -97,7 +95,8 @@ FactMetaData::FactMetaData(QObject* parent)
     , _hasControl           (true)
     , _readOnly             (false)
 {
-
+    _category   = kDefaultCategory;
+    _group      = kDefaultGroup;
 }
 
 FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
@@ -106,8 +105,6 @@ FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
     , _decimalPlaces        (unknownDecimalPlaces)
     , _rawDefaultValue      (0)
     , _defaultValueAvailable(false)
-    , _category             (defaultCategory)
-    , _group                (defaultGroup)
     , _rawMax               (_maxForType())
     , _maxIsDefaultForType  (true)
     , _rawMin               (_minForType())
@@ -119,7 +116,8 @@ FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
     , _hasControl           (true)
     , _readOnly             (false)
 {
-
+    _category   = kDefaultCategory;
+    _group      = kDefaultGroup;
 }
 
 FactMetaData::FactMetaData(const FactMetaData& other, QObject* parent)
@@ -134,8 +132,6 @@ FactMetaData::FactMetaData(ValueType_t type, const QString name, QObject* parent
     , _decimalPlaces        (unknownDecimalPlaces)
     , _rawDefaultValue      (0)
     , _defaultValueAvailable(false)
-    , _category             (defaultCategory)
-    , _group                (defaultGroup)
     , _rawMax               (_maxForType())
     , _maxIsDefaultForType  (true)
     , _rawMin               (_minForType())
@@ -148,7 +144,8 @@ FactMetaData::FactMetaData(ValueType_t type, const QString name, QObject* parent
     , _hasControl           (true)
     , _readOnly             (false)
 {
-
+    _category   = kDefaultCategory;
+    _group      = kDefaultGroup;
 }
 
 const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
@@ -179,6 +176,16 @@ const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
     _hasControl             = other._hasControl;
     _readOnly               = other._readOnly;
     return *this;
+}
+
+const QString FactMetaData::defaultCategory()
+{
+    return QString(kDefaultCategory);
+}
+
+const QString FactMetaData::defaultGroup()
+{
+    return QString(kDefaultGroup);
 }
 
 QVariant FactMetaData::rawDefaultValue(void) const
@@ -253,7 +260,7 @@ QVariant FactMetaData::_minForType(void) const
     case valueTypeCustom:
         return QVariant();
     }
-    
+
     // Make windows compiler happy, even switch is full cased
     return QVariant();
 }
@@ -285,7 +292,7 @@ QVariant FactMetaData::_maxForType(void) const
     case valueTypeCustom:
         return QVariant();
     }
-    
+
     // Make windows compiler happy, even switch is full cased
     return QVariant();
 }
@@ -293,9 +300,9 @@ QVariant FactMetaData::_maxForType(void) const
 bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertOnly, QVariant& typedValue, QString& errorString)
 {
     bool convertOk = false;
-    
+
     errorString.clear();
-    
+
     switch (type()) {
     case FactMetaData::valueTypeInt8:
     case FactMetaData::valueTypeInt16:
@@ -347,11 +354,11 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
         typedValue = QVariant(rawValue.toByteArray());
         break;
     }
-    
+
     if (!convertOk) {
         errorString += tr("Invalid number");
     }
-    
+
     return convertOk && errorString.isEmpty();
 }
 
