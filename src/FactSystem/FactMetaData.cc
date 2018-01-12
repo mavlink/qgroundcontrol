@@ -96,6 +96,7 @@ FactMetaData::FactMetaData(QObject* parent)
     , _increment            (std::numeric_limits<double>::quiet_NaN())
     , _hasControl           (true)
     , _readOnly             (false)
+    , _volatile             (false)
 {
 
 }
@@ -118,6 +119,7 @@ FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
     , _increment            (std::numeric_limits<double>::quiet_NaN())
     , _hasControl           (true)
     , _readOnly             (false)
+    , _volatile             (false)
 {
 
 }
@@ -147,6 +149,7 @@ FactMetaData::FactMetaData(ValueType_t type, const QString name, QObject* parent
     , _increment            (std::numeric_limits<double>::quiet_NaN())
     , _hasControl           (true)
     , _readOnly             (false)
+    , _volatile             (false)
 {
 
 }
@@ -178,6 +181,7 @@ const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
     _increment              = other._increment;
     _hasControl             = other._hasControl;
     _readOnly               = other._readOnly;
+    _volatile               = other._volatile;
     return *this;
 }
 
@@ -1126,5 +1130,13 @@ QVariant FactMetaData::cookedMin(void) const
         return cookedMax;
     } else {
         return cookedMin;
+    }
+}
+
+void FactMetaData::setVolatileValue(bool bValue)
+{
+    _volatile = bValue;
+    if (_volatile) {
+        _readOnly = true;
     }
 }
