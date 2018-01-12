@@ -15,7 +15,7 @@
 //-- This is built at compile time from QGCRemote.rep (full of unused variable warnings)
 #include "rep_QGCRemote_replica.h"
 
-Q_DECLARE_LOGGING_CATEGORY(QGCSyncFiles)
+Q_DECLARE_LOGGING_CATEGORY(QGCRemoteSync)
 
 class PlanMasterController;
 class QGCSyncFilesDesktop;
@@ -165,6 +165,7 @@ private slots:
     void    _mapExportDone              ();
     void    _mapExportProgressChanged   (int percentage);
     void    _mapExportError             (QGCMapTask::TaskType type, QString errorString);
+    void    _remoteObjError             (QRemoteObjectNode::ErrorCode errorCode);
     //-- From Thread
     void    _setSyncProgress            (quint32 total, quint32 current);
     void    _setFileProgress            (quint32 total, quint32 current);

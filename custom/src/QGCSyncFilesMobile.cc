@@ -11,7 +11,7 @@
 //-- TODO: This is here as it defines the UDP port and URL. It needs to go upstream
 #include "TyphoonHQuickInterface.h"
 
-QGC_LOGGING_CATEGORY(QGCSyncFiles, "QGCSyncFiles")
+QGC_LOGGING_CATEGORY(QGCRemoteSync, "QGCRemoteSync")
 
 static const char* kMissionExtension = ".plan";
 static const char* kMissionWildCard  = "*.plan";
@@ -42,7 +42,7 @@ QGCSyncFilesMobile::QGCSyncFilesMobile(QObject* parent)
     url.setHost(QString("0.0.0.0"));
     url.setPort(QGC_RPC_PORT);
     url.setScheme("tcp");
-    qCDebug(QGCSyncFiles) << "Remote Object URL:" << url.toString();
+    qCDebug(QGCRemoteSync) << "Remote Object URL:" << url.toString();
     _remoteObject = new QRemoteObjectHost(url);
     _remoteObject->enableRemoting(this);
     //-- TODO: Connect to vehicle and check when it's disarmed. Update log entries.
@@ -95,8 +95,8 @@ QGCSyncFilesMobile::missionToMobile(QGCNewMission mission)
             break;
         }
     } while(syncType() == SyncAppend);
-    qCDebug(QGCSyncFiles) << "Receiving:" << missionFile;
-    qCDebug(QGCSyncFiles) << "Sync Type:" << syncType();
+    qCDebug(QGCRemoteSync) << "Receiving:" << missionFile;
+    qCDebug(QGCRemoteSync) << "Sync Type:" << syncType();
     QFile file(missionFile);
     if (file.open(QIODevice::WriteOnly)) {
         file.write(mission.mission());
@@ -111,7 +111,7 @@ QGCSyncFilesMobile::missionToMobile(QGCNewMission mission)
 void
 QGCSyncFilesMobile::mapToMobile(bool importReplace)
 {
-    qCDebug(QGCSyncFiles) << "Maps from desktop starting. Replace sets:" << importReplace;
+    qCDebug(QGCRemoteSync) << "Maps from desktop starting. Replace sets:" << importReplace;
     qgcApp()->toolbox()->mapEngineManager()->setImportReplace(importReplace);
 }
 
@@ -126,7 +126,7 @@ QGCSyncFilesMobile::mapFragmentToMobile(QGCMapFragment fragment)
             delete _mapFile;
             _mapFile = NULL;
         }
-        qCDebug(QGCSyncFiles) << "Operation Canceled";
+        qCDebug(QGCRemoteSync) << "Operation Canceled";
         return;
     }
     //-- Check for non data
@@ -140,7 +140,7 @@ QGCSyncFilesMobile::mapFragmentToMobile(QGCMapFragment fragment)
             delete _mapFile;
             _mapFile = NULL;
         }
-        qCDebug(QGCSyncFiles) << "Remote Error";
+        qCDebug(QGCRemoteSync) << "Remote Error";
         return;
     }
     //-- Check for first fragment
@@ -152,13 +152,13 @@ QGCSyncFilesMobile::mapFragmentToMobile(QGCMapFragment fragment)
         //-- Create temp file
         _mapFile = new QTemporaryFile;
         if(!_mapFile->open()) {
-            qCWarning(QGCSyncFiles) << "Error creating" << _mapFile->fileName();
+            qCWarning(QGCRemoteSync) << "Error creating" << _mapFile->fileName();
             delete _mapFile;
             _mapFile = NULL;
             return;
         } else {
             //-- Temp file created
-            qCDebug(QGCSyncFiles) << "Receiving:" << _mapFile->fileName();
+            qCDebug(QGCRemoteSync) << "Receiving:" << _mapFile->fileName();
         }
     }
     if(_mapFile) {
@@ -168,7 +168,7 @@ QGCSyncFilesMobile::mapFragmentToMobile(QGCMapFragment fragment)
        //-- Check for end of file
        if(fragment.total() <= fragment.current()) {
            _mapFile->close();
-           qCDebug(QGCSyncFiles) << "Importing map data";
+           qCDebug(QGCRemoteSync) << "Importing map data";
            //-- Import map tiles
            QGCImportTileTask* task = new QGCImportTileTask(_mapFile->fileName(), qgcApp()->toolbox()->mapEngineManager()->importReplace());
            connect(task, &QGCImportTileTask::actionCompleted, this, &QGCSyncFilesMobile::_mapImportCompleted);
@@ -194,7 +194,7 @@ void
 QGCSyncFilesMobile::_mapImportCompleted()
 {
     if(_mapFile) {
-        qCDebug(QGCSyncFiles) << "Map import complete";
+        qCDebug(QGCRemoteSync) << "Map import complete";
         delete _mapFile;
         _mapFile = NULL;
     }
@@ -215,7 +215,7 @@ QGCSyncFilesMobile::pruneExtraMissionsOnMobile(QStringList allMissions)
         }
     }
     foreach(QString missionFile, missionsToPrune) {
-        qCDebug(QGCSyncFiles) << "Pruning extra mission:" << missionFile;
+        qCDebug(QGCRemoteSync) << "Pruning extra mission:" << missionFile;
         QFile f(missionFile);
         f.remove();
     }
@@ -242,7 +242,7 @@ QGCSyncFilesMobile::requestMissionsFromMobile(QStringList missions)
     foreach(QString missionFile, missionsToSend) {
         QCoreApplication::processEvents();
         if(cancel()) return;
-        qCDebug(QGCSyncFiles) << "Sending mission:" << missionFile;
+        qCDebug(QGCRemoteSync) << "Sending mission:" << missionFile;
         QFileInfo fi(missionFile);
         QFile f(missionFile);
         if (!f.open(QIODevice::ReadOnly)) {
@@ -263,7 +263,7 @@ QGCSyncFilesMobile::requestMissionsFromMobile(QStringList missions)
 void
 QGCSyncFilesMobile::requestLogsFromMobile(QStringList logs)
 {
-    qCDebug(QGCSyncFiles) << "Log Request";
+    qCDebug(QGCRemoteSync) << "Log Request";
     QStringList logsToSend;
     QString logPath = qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath();
     QDirIterator it(logPath, QStringList() << "*.tlog", QDir::Files, QDirIterator::NoIteratorFlags);
@@ -271,12 +271,12 @@ QGCSyncFilesMobile::requestLogsFromMobile(QStringList logs)
         QFileInfo fi(it.next());
         if(logs.contains(fi.fileName())) {
             logsToSend << fi.filePath();
-            qCDebug(QGCSyncFiles) << "Request" << fi.filePath();
+            qCDebug(QGCRemoteSync) << "Request" << fi.filePath();
         }
     }
     //-- If nothing to send or worker thread is still up for some reason, bail
     if(!logsToSend.size() || _logWorker) {
-        qCDebug(QGCSyncFiles) << "Nothing to send";
+        qCDebug(QGCRemoteSync) << "Nothing to send";
         QGCLogFragment logFrag(QString(), 0, 0, QByteArray());
         _logFragment(logFrag);
         return;
@@ -288,7 +288,7 @@ QGCSyncFilesMobile::requestLogsFromMobile(QStringList logs)
     connect(this, &QGCSyncFilesMobile::doLogSync, _logWorker, &QGCLogUploadWorker::doLogSync);
     connect(_logWorker, &QGCLogUploadWorker::logFragment, this, &QGCSyncFilesMobile::_logFragment);
     connect(_logWorker, &QGCLogUploadWorker::done, this, &QGCSyncFilesMobile::_logWorkerDone);
-    qCDebug(QGCSyncFiles) << "Starting log upload thread";
+    qCDebug(QGCRemoteSync) << "Starting log upload thread";
     _workerThread.start();
     emit doLogSync(logsToSend);
 }
@@ -298,9 +298,9 @@ QGCSyncFilesMobile::requestLogsFromMobile(QStringList logs)
 void
 QGCSyncFilesMobile::requestMapTilesFromMobile(QStringList sets)
 {
-    qCDebug(QGCSyncFiles) << "Map Request";
+    qCDebug(QGCRemoteSync) << "Map Request";
     foreach(QString setName, sets) {
-        qCDebug(QGCSyncFiles) << "Requesting" << setName;
+        qCDebug(QGCRemoteSync) << "Requesting" << setName;
     }
     QGCMapEngineManager* mapMgr = qgcApp()->toolbox()->mapEngineManager();
     QmlObjectListModel& tileSets = (*mapMgr->tileSets());
@@ -308,7 +308,7 @@ QGCSyncFilesMobile::requestMapTilesFromMobile(QStringList sets)
     QVector<QGCCachedTileSet*> setsToExport;
     for(int i = 0; i < tileSets.count(); i++ ) {
         QGCCachedTileSet* set = qobject_cast<QGCCachedTileSet*>(tileSets.get(i));
-        qCDebug(QGCSyncFiles) << "Testing" << set->name();
+        qCDebug(QGCRemoteSync) << "Testing" << set->name();
         if(set && sets.contains(set->name())) {
             setsToExport.append(set);
         }
@@ -318,11 +318,11 @@ QGCSyncFilesMobile::requestMapTilesFromMobile(QStringList sets)
     //-- If cannot create file, there is nothing to send or worker thread is still up for some reason, bail
     if (!_mapFile->open() || !setsToExport.size() || _mapWorker) {
         if(!setsToExport.size()) {
-            qCDebug(QGCSyncFiles) << "Nothing to send";
+            qCDebug(QGCRemoteSync) << "Nothing to send";
         } else if (_mapWorker) {
-            qCDebug(QGCSyncFiles) << "Worker thread still busy";
+            qCDebug(QGCRemoteSync) << "Worker thread still busy";
         } else {
-            qCDebug(QGCSyncFiles) << "Error creating temp map export file" << _mapFile->fileName();
+            qCDebug(QGCRemoteSync) << "Error creating temp map export file" << _mapFile->fileName();
         }
         QGCMapFragment logFrag(0, 0, QByteArray(), 0);
         _mapFragment(logFrag);
@@ -345,7 +345,7 @@ QGCSyncFilesMobile::requestMapTilesFromMobile(QStringList sets)
     connect(task, &QGCExportTileTask::actionProgress, this, &QGCSyncFilesMobile::_mapExportProgressChanged);
     connect(task, &QGCMapTask::error, this, &QGCSyncFilesMobile::_mapExportError);
     getQGCMapEngine()->addTask(task);
-    qCDebug(QGCSyncFiles) << "Exporting map set to" << _mapFile->fileName();
+    qCDebug(QGCRemoteSync) << "Exporting map set to" << _mapFile->fileName();
 }
 
 //-----------------------------------------------------------------------------
@@ -366,7 +366,7 @@ void
 QGCSyncFilesMobile::_mapExportDone()
 {
     if(_mapFile) {
-        qCDebug(QGCSyncFiles) << "Starting map upload thread";
+        qCDebug(QGCRemoteSync) << "Starting map upload thread";
         _workerThread.start();
         emit doMapSync(_mapFile);
     }
@@ -379,7 +379,7 @@ QGCSyncFilesMobile::_mapExportProgressChanged(int percentage)
     //-- Progress from map engine can go over 100% some times
     if(_mapFile && _lastMapExportProgress != percentage && percentage <= 100) {
         _lastMapExportProgress = percentage;
-        qCDebug(QGCSyncFiles) << "Map export progress" << percentage;
+        qCDebug(QGCRemoteSync) << "Map export progress" << percentage;
         QGCMapFragment mapFrag(0, 0, QByteArray(1,'1'), percentage);
         _mapFragment(mapFrag);
     }
@@ -397,7 +397,7 @@ QGCSyncFilesMobile::_logWorkerDone()
 void
 QGCSyncFilesMobile::_mapWorkerDone()
 {
-    qCDebug(QGCSyncFiles) << "Destroying map upload thread";
+    qCDebug(QGCRemoteSync) << "Destroying map upload thread";
     _mapWorker->deleteLater();
     _mapWorker = NULL;
     if(_mapFile) {
@@ -442,10 +442,10 @@ QGCSyncFilesMobile::_mapFragment(QGCMapFragment fragment)
 void
 QGCLogUploadWorker::doLogSync(QStringList logsToSend)
 {
-    qCDebug(QGCSyncFiles) << "Log upload thread started with" << logsToSend.size() << "logs to upload";
+    qCDebug(QGCRemoteSync) << "Log upload thread started with" << logsToSend.size() << "logs to upload";
     foreach(QString logFile, logsToSend) {
         if(_pSync->cancel()) break;
-        qCDebug(QGCSyncFiles) << "Sending log:" << logFile;
+        qCDebug(QGCRemoteSync) << "Sending log:" << logFile;
         QFileInfo fi(logFile);
         QFile f(logFile);
         if (!f.open(QIODevice::ReadOnly)) {
@@ -472,7 +472,7 @@ QGCLogUploadWorker::doLogSync(QStringList logsToSend)
         }
     }
     if(_pSync->cancel()) {
-        qCDebug(QGCSyncFiles) << "Thread canceled";
+        qCDebug(QGCRemoteSync) << "Thread canceled";
     }
     //-- We're done
     emit done();
@@ -484,7 +484,7 @@ void
 QGCMapUploadWorker::doMapSync(QTemporaryFile* mapFile)
 {
     bool error = true;
-    qCDebug(QGCSyncFiles) << "Map upload thread started";
+    qCDebug(QGCRemoteSync) << "Map upload thread started";
     if (!mapFile) {
         qWarning() << "Map file not created";
     } else {
@@ -499,7 +499,7 @@ QGCMapUploadWorker::doMapSync(QTemporaryFile* mapFile)
             } else {
                 quint64 sofar = 0;
                 int segment = 0;
-                qCDebug(QGCSyncFiles) << "Uploading" << total << "bytes";
+                qCDebug(QGCRemoteSync) << "Uploading" << total << "bytes";
                 error = false;
                 while(true) {
                     if(_pSync->cancel()) break;
@@ -518,13 +518,13 @@ QGCMapUploadWorker::doMapSync(QTemporaryFile* mapFile)
         }
     }
     if(_pSync->cancel()) {
-        qCDebug(QGCSyncFiles) << "Thread canceled";
+        qCDebug(QGCRemoteSync) << "Thread canceled";
     } else if(error) {
         QGCMapFragment mapFrag(0, 0, QByteArray(), 0);
         emit mapFragment(mapFrag);
     }
     //-- We're done
-    qCDebug(QGCSyncFiles) << "Map upload thread ended";
+    qCDebug(QGCRemoteSync) << "Map upload thread ended";
     emit done();
 }
 
@@ -574,7 +574,7 @@ QGCSyncFilesMobile::_broadcastPresence()
         QByteArray sig = classinfo_signature(&QGCRemoteSimpleSource::staticMetaObject);
         _remoteIdentifier.sprintf("%s%s|%s", QGC_MOBILE_NAME, macAddress.toLocal8Bit().data(), sig.data());
         emit remoteIdentifierChanged();
-        qCDebug(QGCSyncFiles) << "Remote identifier:" << _remoteIdentifier;
+        qCDebug(QGCRemoteSync) << "Remote identifier:" << _remoteIdentifier;
     }
     _udpSocket->writeDatagram(_remoteIdentifier.toLocal8Bit(), QHostAddress::Broadcast, QGC_UDP_BROADCAST_PORT);
 }

@@ -13,7 +13,7 @@
 //-- This is built at compile time from QGCRemote.rep
 #include "rep_QGCRemote_source.h"
 
-Q_DECLARE_LOGGING_CATEGORY(QGCSyncFiles)
+Q_DECLARE_LOGGING_CATEGORY(QGCRemoteSync)
 
 class QGCSyncFilesMobile;
 

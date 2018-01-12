@@ -6,11 +6,11 @@
 
 import QtQuick                  2.5
 import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.2
+import QtQuick.Controls.Styles  1.4
 import QtQuick.Dialogs          1.2
 import QtQuick.Layouts          1.2
+
 import QtGraphicalEffects       1.0
-import Qt.labs.platform         1.0
 
 import QGroundControl                       1.0
 import QGroundControl.Controllers           1.0
@@ -124,7 +124,15 @@ QGCView {
                     enabled:        remoteCombo.currentIndex >= 0 && remoteCombo.currentIndex < _clientCount
                     anchors.horizontalCenter: parent.horizontalCenter
                     onClicked: {
-                        TyphoonHQuickInterface.desktopSync.connectToRemote(_currentNode)
+                        if(!TyphoonHQuickInterface.desktopSync.connectToRemote(_currentNode)) {
+                            refreshDlg.open()
+                        }
+                    }
+                    MessageDialog {
+                        id:                 refreshDlg
+                        title:              qsTr("Connection Error")
+                        text:               qsTr("Could not connect to remote.")
+                        standardButtons:    StandardButton.Ok
                     }
                 }
             }
@@ -512,9 +520,11 @@ QGCView {
                                     logDownloadFileDialog.open()
                                 }
                             }
-                            FolderDialog {
+                            FileDialog {
                                 id:             logDownloadFileDialog
                                 folder:         QGroundControl.settingsManager.appSettings.telemetrySavePath
+                                selectFolder:   true
+                                title:          qsTr("Select Folder To Save Telemetry Logs")
                                 onAccepted: {
                                     TyphoonHQuickInterface.desktopSync.downloadSelectedLogs(folder)
                                     close()
