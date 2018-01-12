@@ -533,29 +533,30 @@ QGCSyncFilesMobile::_broadcastPresence()
     if(!_udpSocket) {
         _udpSocket = new QUdpSocket(this);
     }
-    if(_macAddress.isEmpty()) {
+    if(_remoteIdentifier.isEmpty()) {
         QUrl url;
+        QString macAddress;
         //-- Get first interface with a MAC address
         foreach(QNetworkInterface interface, QNetworkInterface::allInterfaces()) {
-            _macAddress = interface.hardwareAddress();
-            if(!_macAddress.isEmpty() && !_macAddress.endsWith("00:00:00")) {
+            macAddress = interface.hardwareAddress();
+            if(!macAddress.isEmpty() && !macAddress.endsWith("00:00:00")) {
                 break;
             }
         }
-        if(_macAddress.length() > 9) {
+        if(macAddress.length() > 9) {
             //-- Got one
-            _macAddress = _macAddress.mid(9);
-            _macAddress.replace(":", "");
+            macAddress = macAddress.mid(9);
+            macAddress.replace(":", "");
         } else {
             //-- Make something up
-            _macAddress.sprintf("%06d", (qrand() % 999999));
+            macAddress.sprintf("%06d", (qrand() % 999999));
             qWarning() << "Could not get a proper MAC address. Using a random value.";
         }
-        _macAddress = QGC_MOBILE_NAME + _macAddress;
-        emit macAddressChanged();
-        qCDebug(QGCSyncFiles) << "MAC Address:" << _macAddress;
+        _remoteIdentifier.sprintf("%s%s|%d", QGC_MOBILE_NAME, macAddress.toLocal8Bit().data(), QGC_RPC_VERSION);
+        emit remoteIdentifierChanged();
+        qCDebug(QGCSyncFiles) << "Remote identifier:" << _remoteIdentifier;
     }
-    _udpSocket->writeDatagram(_macAddress.toLocal8Bit(), QHostAddress::Broadcast, QGC_UDP_BROADCAST_PORT);
+    _udpSocket->writeDatagram(_remoteIdentifier.toLocal8Bit(), QHostAddress::Broadcast, QGC_UDP_BROADCAST_PORT);
 }
 
 //-----------------------------------------------------------------------------

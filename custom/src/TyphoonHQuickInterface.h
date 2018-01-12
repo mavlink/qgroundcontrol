@@ -30,6 +30,8 @@ class QUdpSocket;
 
 #define QGC_UDP_BROADCAST_PORT  14549
 #define QGC_RPC_PORT            14548
+#define QGC_RPC_VERSION         1
+
 #define QGC_MOBILE_NAME         "ST16S_"    //-- Needs to go to AppSettings
 
 //-----------------------------------------------------------------------------

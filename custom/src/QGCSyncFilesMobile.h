@@ -55,9 +55,9 @@ public:
     QGCSyncFilesMobile                  (QObject* parent = NULL);
     virtual ~QGCSyncFilesMobile         ();
 
-    Q_PROPERTY(QString      macAddress      READ    macAddress      NOTIFY macAddressChanged)
+    Q_PROPERTY(QString remoteIdentifier READ remoteIdentifier NOTIFY remoteIdentifierChanged)
 
-    QString macAddress                  () { return _macAddress; }
+    QString remoteIdentifier            () { return _remoteIdentifier; }
 
 public slots:
     void    missionToMobile             (QGCNewMission mission);
@@ -83,7 +83,7 @@ private slots:
     void    _mapImportError             (QGCMapTask::TaskType type, QString errorString);
 
 signals:
-    void    macAddressChanged           ();
+    void    remoteIdentifierChanged     ();
     void    doLogSync                   (QStringList logsToSend);
     void    doMapSync                   (QTemporaryFile* mapFile);
     void    cancelFromDesktop           ();
@@ -95,7 +95,7 @@ private:
 
 private:
     QTimer                  _broadcastTimer;
-    QString                 _macAddress;
+    QString                 _remoteIdentifier;
     QUdpSocket*             _udpSocket;
     QRemoteObjectHost*      _remoteObject;
     QThread                 _workerThread;

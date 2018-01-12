@@ -61,6 +61,8 @@ QGCSyncFilesDesktop::~QGCSyncFilesDesktop()
         _udpSocket->deleteLater();
     }
     disconnectRemote();
+    _workerThread.quit();
+    _workerThread.wait();
 }
 
 //-----------------------------------------------------------------------------
@@ -95,16 +97,26 @@ QGCSyncFilesDesktop::_readUDPBytes()
         url.setHost(sender.toString());
         url.setPort(QGC_RPC_PORT);
         url.setScheme("tcp");
-        QString remoteName = datagram.data();
-        if(!_remoteURLs.contains(remoteName)) {
-            _remoteNames.append(datagram.data());
-            _remoteURLs[remoteName] = url;
-            _remoteTimer[remoteName] = QTime();
-            _remoteTimer[remoteName].start();
-            qCDebug(QGCSyncFiles) << "New node:" << url.toString();
-            emit remoteListChanged();
+        QString payload = datagram.data();
+        QStringList remoteIdentifier = payload.split("|");
+        if(remoteIdentifier.size() == 2) {
+            if(remoteIdentifier[1].toInt() == QGC_RPC_VERSION) {
+                QString remoteName = remoteIdentifier[0];
+                if(!_remoteURLs.contains(remoteName)) {
+                    _remoteNames.append(datagram.data());
+                    _remoteURLs[remoteName] = url;
+                    _remoteTimer[remoteName] = QTime();
+                    _remoteTimer[remoteName].start();
+                    qCDebug(QGCSyncFiles) << "New node:" << url.toString();
+                    emit remoteListChanged();
+                } else {
+                    _remoteTimer[remoteName].restart();
+                }
+            } else {
+                qCWarning(QGCSyncFiles) << "Ignored invalid node version:" << payload;
+            }
         } else {
-            _remoteTimer[remoteName].restart();
+            qCWarning(QGCSyncFiles) << "Ignored invalid node:" << payload;
         }
     }
 }
