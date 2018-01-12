@@ -244,21 +244,6 @@ MainWindow::MainWindow()
         menuBar()->hide();
 #endif
         show();
-#ifdef __macos__
-        // TODO HACK
-        // This is a really ugly hack. For whatever reason, by having a QQuickWidget inside a
-        // QDockWidget (MainToolBar above), the main menu is not shown when the app first
-        // starts. I looked everywhere and I could not find a solution. What I did notice was
-        // that if any other window gets focus, the menu comes up when you come back to QGC.
-        // That is, if you were to click on another window and then back to QGC, the menus
-        // would appear. This hack below creates a 0x0 dialog and immediately closes it.
-        // That works around the issue and it will do until I find the root of the problem.
-        QDialog qd(this);
-        qd.show();
-        qd.raise();
-        qd.activateWindow();
-        qd.close();
-#endif
     }
 
 #ifndef __mobile__
