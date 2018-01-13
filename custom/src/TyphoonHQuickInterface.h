@@ -17,9 +17,21 @@ class YExportFiles;
 #if defined(__androidx86__)
 class TyphoonHM4Interface;
 #endif
-class TyphoonHQuickInterface;
+#if defined(__planner__)
+class QGCSyncFilesDesktop;
+#else
+class QGCSyncFilesMobile;
+#endif
 
-#define YUNEEC_VIDEO_EXTENSION ".mkv"
+class TyphoonHQuickInterface;
+class QUdpSocket;
+
+#define YUNEEC_VIDEO_EXTENSION  ".mkv"
+
+#define QGC_UDP_BROADCAST_PORT  14549
+#define QGC_RPC_PORT            14548
+
+#define QGC_MOBILE_NAME         "ST16S_"    //-- Needs to go to AppSettings
 
 //-----------------------------------------------------------------------------
 // Vehicle List
@@ -181,7 +193,11 @@ public:
     Q_PROPERTY(bool             isInternet      READ    isInternet          NOTIFY isInternetChanged)
     Q_PROPERTY(bool             isDefaultPwd    READ    isDefaultPwd        NOTIFY isDefaultPwdChanged)
     Q_PROPERTY(bool             desktopPlanner  READ    desktopPlanner      CONSTANT)
-
+#if defined(__planner__)
+    Q_PROPERTY(QGCSyncFilesDesktop* desktopSync READ    desktopSync         NOTIFY desktopSyncChanged)
+#else
+    Q_PROPERTY(QGCSyncFilesMobile* mobileSync   READ    mobileSync          NOTIFY mobileSyncChanged)
+#endif
     Q_PROPERTY(bool             firstRun            READ    firstRun            WRITE   setFirstRun         NOTIFY  firstRunChanged)
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
     Q_PROPERTY(bool             browseVideos        READ    browseVideos        WRITE   setBrowseVideos     NOTIFY  browseVideosChanged)
@@ -287,8 +303,10 @@ public:
     bool        firstRun            ();
 #if defined (__planner__)
     bool        desktopPlanner      () { return true; }
+    QGCSyncFilesDesktop* desktopSync() { return _desktopSync; }
 #else
     bool        desktopPlanner      () { return false; }
+    QGCSyncFilesMobile* mobileSync  () { return _mobileSync; }
 #endif
 #if defined(__androidx86__)
     void        init                (TyphoonHM4Interface* pHandler);
@@ -399,6 +417,11 @@ signals:
     void    isDefaultPwdChanged         ();
     void    firstRunChanged             ();
     void    newPasswordSetChanged       ();
+#if defined(__planner__)
+    void    desktopSyncChanged          ();
+#else
+    void    mobileSyncChanged           ();
+#endif
 
 private slots:
     void    _m4StateChanged             ();
@@ -434,7 +457,7 @@ private slots:
     void    _camerasChanged             ();
     void    _internetUpdated            ();
     void    _exportCompleted            ();
-    void    _copyCompleted              (quint32 totalCount, quint32 curCount);
+    void    _copyProgress               (quint32 totalCount, quint32 curCount);
     void    _exportMessage              (QString message);
     void    _restart                    ();
     void    _imageFileChanged           ();
@@ -492,5 +515,10 @@ private:
     bool                    _firstRun;
     bool                    _passwordSet;       //-- Was the password set within this session?
     bool                    _newPasswordSet;    //-- Password changed
+#if defined(__planner__)
+    QGCSyncFilesDesktop*    _desktopSync;
+#else
+    QGCSyncFilesMobile*     _mobileSync;
+#endif
 
 };

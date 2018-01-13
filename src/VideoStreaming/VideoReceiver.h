@@ -42,6 +42,7 @@ public:
     Q_PROPERTY(VideoSurface*    videoSurface        READ    videoSurface        CONSTANT)
     Q_PROPERTY(bool             videoRunning        READ    videoRunning        NOTIFY  videoRunningChanged)
     Q_PROPERTY(QString          imageFile           READ    imageFile           NOTIFY  imageFileChanged)
+    Q_PROPERTY(QString          videoFile           READ    videoFile           NOTIFY  videoFileChanged)
     Q_PROPERTY(bool             showFullScreen      READ    showFullScreen      WRITE   setShowFullScreen     NOTIFY showFullScreenChanged)
 
     explicit VideoReceiver(QObject* parent = 0);
@@ -68,6 +69,7 @@ public:
 signals:
     void videoRunningChanged        ();
     void imageFileChanged           ();
+    void videoFileChanged           ();
     void showFullScreenChanged      ();
 #if defined(QGC_GST_STREAMING)
     void recordingChanged           ();

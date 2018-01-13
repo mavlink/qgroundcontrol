@@ -302,9 +302,10 @@ void QGCMapPolygon::_updateCenter(void)
             }
             center = _coordFromPointF(QPointF(centroid.x() / polygonF.count(), centroid.y() / polygonF.count()));
         }
-
-        _center = center;
-        emit centerChanged(center);
+        if (_center != center) {
+            _center = center;
+            emit centerChanged(center);
+        }
     }
 }
 

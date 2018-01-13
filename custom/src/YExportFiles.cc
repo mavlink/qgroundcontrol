@@ -69,7 +69,7 @@ YExportFiles::run()
         _totalFiles *= 2;
     }
     _totalFiles += _filesInPath(missionPath);
-    emit copyCompleted(_totalFiles, 0);
+    emit progress(_totalFiles, 0);
     bool ok = false;
     //-- Copy Mission Files
     emit message(QString(tr("Copying mission files...")));
@@ -91,7 +91,7 @@ YExportFiles::run()
         emit message(QString(tr("Operation Canceled")));
     } else if(ok) {
         emit message(QString(tr("%1 files exported")).arg(_totalFiles));
-        emit copyCompleted(1, 1);
+        emit progress(1, 1);
     }
     emit completed();
 }
@@ -128,7 +128,7 @@ YExportFiles::_copyFilesInPath(const QString src, const QString dst)
             emit message(QString(tr("Error copying to %1")).arg(fo.filePath()));
             return false;
         }
-        emit copyCompleted(_totalFiles, ++_curFile);
+        emit progress(_totalFiles, ++_curFile);
     }
     return true;
 }
@@ -159,7 +159,7 @@ YExportFiles::_convertLogsToUTM(const QString src, const QString dst)
                 emit message(QString(tr("Error exporting %1")).arg(fo.filePath()));
                 return false;
             }
-            emit copyCompleted(_totalFiles, ++_curFile);
+            emit progress(_totalFiles, ++_curFile);
         }
         if(!_cancel && _convertToSkyward) {
             QString output = dst + "/" + fi.baseName() + QStringLiteral(".sky");
@@ -173,7 +173,7 @@ YExportFiles::_convertLogsToUTM(const QString src, const QString dst)
                 emit message(QString(tr("Error exporting %1")).arg(fo.filePath()));
                 return false;
             }
-            emit copyCompleted(_totalFiles, ++_curFile);
+            emit progress(_totalFiles, ++_curFile);
         }
     }
     return true;

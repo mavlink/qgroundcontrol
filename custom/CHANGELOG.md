@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.28 - Jan 12 2018
+
+*   Desktop/Mobile sync (Sync files between DataPilot Planner and DataPilot)
+
 ### v1.2.27 - Jan 4 2018
 
 *   Fixed delete videos from video browser

@@ -25,7 +25,7 @@ protected:
     void        run                         ();
 
 signals:
-    void        copyCompleted               (quint32 totalCount, quint32 curCount);
+    void        progress                    (quint32 totalCount, quint32 curCount);
     void        completed                   ();
     void        message                     (QString errorMessage);
     void        cancelProcess               ();

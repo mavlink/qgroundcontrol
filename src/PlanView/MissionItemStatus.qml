@@ -20,7 +20,6 @@ import QGroundControl.FactControls  1.0
 
 Rectangle {
     id:         root
-    height:     ScreenTools.defaultFontPixelHeight * 7
     radius:     ScreenTools.defaultFontPixelWidth * 0.5
     color:      qgcPal.window
     opacity:    0.80
@@ -32,8 +31,10 @@ Rectangle {
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
     onMaxWidthChanged: {
-        var calcLength = (statusListView.count + 1)*statusListView.contentItem.children[0].width
-        root.width = root.maxWidth > calcLength ? calcLength : root.maxWidth
+        if(statusListView.contentItem.children[0]) {
+            var calcLength = (statusListView.count + 1) * statusListView.contentItem.children[0].width
+            root.width = root.maxWidth > calcLength ? calcLength : root.maxWidth
+        }
     }
 
     QGCPalette { id: qgcPal }
@@ -64,8 +65,10 @@ Rectangle {
         currentIndex:           _missionController.currentPlanViewIndex
 
         onCountChanged: {
-            var calcLength = (statusListView.count + 1)*statusListView.contentItem.children[0].width
-            root.width = root.maxWidth > calcLength ? calcLength : root.maxWidth
+            if(statusListView.contentItem.children[0]) {
+                var calcLength = (statusListView.count + 1) * statusListView.contentItem.children[0].width
+                root.width = root.maxWidth > calcLength ? calcLength : root.maxWidth
+            }
         }
 
         delegate: Item {

@@ -86,6 +86,7 @@ Rectangle {
                 text:           setupComplete ?
                     qsTr("Below you will find a summary of the settings for your vehicle. To the left are the setup menus for each component.") :
                     qsTr("WARNING: Your vehicle requires setup prior to flight. Please resolve the items marked in red using the menu on the left.")
+
                 property bool setupComplete: QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.autopilot.setupComplete : false
             }
 

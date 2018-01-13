@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/typhoonh">
         <file alias="MainWindowPlanner.qml">res/MainWindowPlanner.qml</file>
+        <file alias="PlannerSync.qml">res/PlannerSync.qml</file>
     </qresource>
 </RCC>

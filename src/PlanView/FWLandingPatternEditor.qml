@@ -52,6 +52,7 @@ Rectangle {
             anchors.left:   parent.left
             anchors.right:  parent.right
             factList:       [ missionItem.loiterAltitude, missionItem.loiterRadius ]
+            factLabels:     [ qsTr("Altitude"), qsTr("Radius") ]
         }
 
         Item { width: 1; height: _spacer }
@@ -82,14 +83,14 @@ Rectangle {
             anchors.right:   parent.right
             columns:         2
 
-                QGCLabel { text: missionItem.landingHeading.name }
+                QGCLabel { text: qsTr("Heading") }
 
                 FactTextField {
                     Layout.fillWidth:   true
                     fact:               missionItem.landingHeading
                 }
 
-                QGCLabel { text: missionItem.landingAltitude.name }
+                QGCLabel { text: qsTr("Altitude") }
 
                 FactTextField {
                     Layout.fillWidth:   true
@@ -98,7 +99,7 @@ Rectangle {
 
             QGCRadioButton {
                 id:                     useLandingDistance
-                text:                   missionItem.landingDistance.name
+                text:                   qsTr("Landing dist")
                 checked:                !useFallRate.checked
                 onClicked: {
                     useFallRate.checked = false
@@ -115,7 +116,7 @@ Rectangle {
 
             QGCRadioButton {
                 id:                     useFallRate
-                text:                   missionItem.fallRate.name
+                text:                   qsTr("Descent rate")
                 checked:                !useLandingDistance.checked
                 onClicked: {
                     useLandingDistance.checked = false
@@ -160,18 +161,11 @@ Rectangle {
     Column {
         id:                 editorColumnNeedLandingPoint
         anchors.margins:    _margin
+        anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
         visible:            !missionItem.landingCoordSet
         spacing:            ScreenTools.defaultFontPixelHeight
-
-        QGCLabel {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            wrapMode:       Text.WordWrap
-            font.pointSize: ScreenTools.smallFontPointSize
-            text:           qsTr("WIP (NOT FOR REAL FLIGHT!)")
-        }
 
         QGCLabel {
             anchors.left:   parent.left

@@ -27,7 +27,7 @@
 class FactMetaData : public QObject
 {
     Q_OBJECT
-    
+
 public:
     typedef enum {
         valueTypeUint8,
@@ -45,7 +45,7 @@ public:
     } ValueType_t;
 
     typedef QVariant (*Translator)(const QVariant& from);
-    
+
     FactMetaData(QObject* parent = NULL);
     FactMetaData(ValueType_t type, QObject* parent = NULL);
     FactMetaData(ValueType_t type, const QString name, QObject* parent = NULL);
@@ -76,6 +76,9 @@ public:
     /// Returns the string for distance units which has configued by user
     static QString appSettingsAreaUnitsString(void);
 
+    static const QString defaultCategory    ();
+    static const QString defaultGroup       ();
+
     int             decimalPlaces           (void) const;
     QVariant        rawDefaultValue         (void) const;
     QVariant        cookedDefaultValue      (void) const { return _rawTranslator(rawDefaultValue()); }
@@ -84,6 +87,7 @@ public:
     QVariantList    bitmaskValues           (void) const { return _bitmaskValues; }
     QStringList     enumStrings             (void) const { return _enumStrings; }
     QVariantList    enumValues              (void) const { return _enumValues; }
+    QString         category                (void) const { return _category; }
     QString         group                   (void) const { return _group; }
     QString         longDescription         (void) const { return _longDescription;}
     QVariant        rawMax                  (void) const { return _rawMax; }
@@ -100,6 +104,7 @@ public:
     bool            rebootRequired          (void) const { return _rebootRequired; }
     bool            hasControl              (void) const { return _hasControl; }
     bool            readOnly                (void) const { return _readOnly; }
+    bool            volatileValue           (void) const { return _volatile; }
 
     /// Amount to increment value when used in controls such as spin button or slider with detents.
     /// NaN for no increment available.
@@ -118,6 +123,7 @@ public:
     void setRawDefaultValue (const QVariant& rawDefaultValue);
     void setBitmaskInfo     (const QStringList& strings, const QVariantList& values);
     void setEnumInfo        (const QStringList& strings, const QVariantList& values);
+    void setCategory        (const QString& category)           { _category = category; }
     void setGroup           (const QString& group)              { _group = group; }
     void setLongDescription (const QString& longDescription)    { _longDescription = longDescription;}
     void setRawMax          (const QVariant& rawMax);
@@ -129,6 +135,7 @@ public:
     void setIncrement       (double increment)                  { _increment = increment; }
     void setHasControl      (bool bValue)                       { _hasControl = bValue; }
     void setReadOnly        (bool bValue)                       { _readOnly = bValue; }
+    void setVolatileValue   (bool bValue);
 
     void setTranslators(Translator rawTranslator, Translator cookedTranslator);
 
@@ -217,6 +224,7 @@ private:
     QVariantList    _bitmaskValues;
     QStringList     _enumStrings;
     QVariantList    _enumValues;
+    QString         _category;
     QString         _group;
     QString         _longDescription;
     QVariant        _rawMax;
@@ -233,6 +241,7 @@ private:
     double          _increment;
     bool            _hasControl;
     bool            _readOnly;
+    bool            _volatile;
 
     // Exact conversion constants
     static const struct UnitConsts_s {

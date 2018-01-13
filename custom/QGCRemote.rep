@@ -1,0 +1,29 @@
+#include <QtCore>
+
+POD QGCRemoteLogEntry(QString name, quint64 size)
+POD QGCNewMission(QString name, QByteArray mission)
+POD QGCLogFragment(QString name, int current, int total, QByteArray data)
+POD QGCMapFragment(int current, int total, QByteArray data, int progress)
+POD QGCSyncTileSet(QString name, quint32 count, quint64 size)
+
+class QGCRemote
+{
+    ENUM SyncType {SyncClone, SyncReplace, SyncAppend}
+    PROP(SyncType syncType=SyncAppend READWRITE)
+    PROP(bool cancel=false READWRITE)
+    PROP(bool desktopConnected=false READWRITE)
+    PROP(QStringList missionsOnMobile)
+    PROP(QList<QGCRemoteLogEntry> logEntriesOnMobile)
+    PROP(QList<QGCSyncTileSet> tileSetsOnMobile)
+    SIGNAL(logFragment(QGCLogFragment fragment));
+    SIGNAL(mapFragment(QGCMapFragment fragment));
+    SIGNAL(missionFromMobile(QGCNewMission mission));
+    SLOT(void mapToMobile(bool importReplace));
+    SLOT(void mapFragmentToMobile(QGCMapFragment fragment));
+    SLOT(void missionToMobile(QGCNewMission mission));
+    SLOT(void pruneExtraMissionsOnMobile(QStringList allMissions));
+    SLOT(void requestMissionsFromMobile(QStringList missions));
+    SLOT(void requestLogsFromMobile(QStringList logs));
+    SLOT(void requestMapTilesFromMobile(QStringList sets));
+};
+
