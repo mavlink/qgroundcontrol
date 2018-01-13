@@ -485,7 +485,7 @@ QGCView {
                                 FactCheckBox {
                                     text:       autoConnectRepeater.names[index]
                                     fact:       modelData
-                                    visible:    !ScreenTools.isiOS && modelData.visible
+                                    visible:    modelData.visible
                                 }
                             }
                         }
