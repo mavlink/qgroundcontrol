@@ -380,7 +380,7 @@ void MainWindow::showStatusBarCallback(bool checked)
     checked ? statusBar()->show() : statusBar()->hide();
 }
 
-void MainWindow::reallyClose(void)
+void MainWindow::_reallyClose(void)
 {
     _forceClose = true;
     close();
@@ -443,6 +443,7 @@ void MainWindow::connectCommonActions()
 {
     // Connect internal actions
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &MainWindow::_vehicleAdded);
+    connect(this, &MainWindow::reallyClose, this, &MainWindow::_reallyClose, Qt::QueuedConnection); // Queued to allow closeEvent to fully unwind before _reallyClose is called
 }
 
 void MainWindow::_openUrl(const QString& url, const QString& errorMessage)
