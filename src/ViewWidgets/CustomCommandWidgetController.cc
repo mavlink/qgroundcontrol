@@ -28,7 +28,6 @@ CustomCommandWidgetController::CustomCommandWidgetController(void) :
     }
     QSettings settings;
     _customQmlFile = settings.value(_settingsKey).toString();
-    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &CustomCommandWidgetController::_activeVehicleChanged);
 }
 
 void CustomCommandWidgetController::sendCommand(int commandId, QVariant componentId, QVariant confirm, QVariant param1, QVariant param2, QVariant param3, QVariant param4, QVariant param5, QVariant param6, QVariant param7)
@@ -40,13 +39,6 @@ void CustomCommandWidgetController::sendCommand(int commandId, QVariant componen
                                  (MAV_CMD)commandId,
                                  true,  // show error if fails
                                  param1.toFloat(), param2.toFloat(), param3.toFloat(), param4.toFloat(), param5.toFloat(), param6.toFloat(), param7.toFloat());
-    }
-}
-
-void CustomCommandWidgetController::_activeVehicleChanged(Vehicle* activeVehicle)
-{
-    if (activeVehicle) {
-        _vehicle = activeVehicle;
     }
 }
 

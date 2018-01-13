@@ -32,9 +32,6 @@ public:
 signals:
     void customQmlFileChanged   (const QString& customQmlFile);
 
-private slots:
-    void _activeVehicleChanged  (Vehicle* activeVehicle);
-
 private:
     Vehicle*            _vehicle;
     QString             _customQmlFile;
