@@ -83,8 +83,8 @@ install:
 
   # android dependencies: qt, gstreamer, android-ndk
   - if [ "${SPEC}" = "android-g++" ]; then
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.1-android-min.tar.bz2 &&
-        tar jxf Qt5.9.1-android-min.tar.bz2 -C /tmp &&
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.3-android_armv7-min.tar.bz2 &&
+        tar jxf Qt5.9.3-android_armv7-min.tar.bz2 -C /tmp &&
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-armv7-1.5.2.tar.bz2 &&
         mkdir -p ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
         tar jxf gstreamer-1.0-android-armv7-1.5.2.tar.bz2 -C ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
@@ -93,7 +93,7 @@ install:
         ./android-ndk-r10e-linux-x86_64.bin > /dev/null &&
         export ANDROID_NDK_ROOT=`pwd`/android-ndk-r10e &&
         export ANDROID_SDK_ROOT=/usr/local/android-sdk &&
-        export PATH=/tmp/Qt5.9-android/5.9.1/android_armv7/bin:`pwd`/android-ndk-r10e:$PATH && echo $PATH
+        export PATH=/tmp/Qt5.9-android_armv7/5.9.3/android_armv7/bin:`pwd`/android-ndk-r10e:$PATH && echo $PATH
         ;
     fi
 
