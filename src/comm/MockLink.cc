@@ -914,12 +914,8 @@ void MockLink::_respondWithAutopilotVersion(void)
                                             (uint8_t *)&customVersion,       // os_custom_version,
                                             0,                               // vendor_id,
                                             0,                               // product_id,
-                                            0                                // uid
-#if defined(NO_ARDUPILOT_DIALECT)
-                                            //-- Once the MAVLink module is updated, this should show up. In the mean time, it's disabled.
-                                            ,0                               // uid2
-#endif
-                                            );
+                                            0,                               // uid
+                                            0);                              // uid2
     respondWithMavlinkMessage(msg);
 }
 
