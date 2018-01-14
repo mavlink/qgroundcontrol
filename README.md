@@ -1,26 +1,15 @@
 # QGroundControl Ground Control Station
 
-## Open Source Micro Air Vehicle Ground Control Station
-
 [![Releases](https://img.shields.io/github/release/mavlink/QGroundControl.svg)](https://github.com/mavlink/QGroundControl/releases)
 [![Travis Build Status](https://travis-ci.org/mavlink/qgroundcontrol.svg?branch=master)](https://travis-ci.org/mavlink/qgroundcontrol)
 [![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/crxcm4qayejuvh6c/branch/master?svg=true)](https://ci.appveyor.com/project/mavlink/qgroundcontrol)
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mavlink/qgroundcontrol?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-The license terms are set in the COPYING.md file.
-
-* Project:
-<http://qgroundcontrol.com>
-
-* Files:
-<http://github.com/mavlink/qgroundcontrol>
-
-* Credits:
-<http://qgroundcontrol.org/credits>
-
+Website: <http://qgroundcontrol.com>
 
 ## Obtaining source code
+
 Source code for QGroundControl is kept on GitHub: https://github.com/mavlink/qgroundcontrol.
 ```
 git clone --recursive https://github.com/mavlink/qgroundcontrol.git
