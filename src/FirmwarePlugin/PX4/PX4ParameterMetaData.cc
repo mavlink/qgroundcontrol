@@ -265,7 +265,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                             qCDebug(PX4ParameterMetaDataLog) << "Min:" << text;
 
                             QVariant varMin;
-                            if (metaData->convertAndValidateRaw(text, true /* convertOnly */, varMin, errorString)) {
+                            if (metaData->convertAndValidateRaw(text, false /* convertOnly */, varMin, errorString)) {
                                 metaData->setRawMin(varMin);
                             } else {
                                 qCWarning(PX4ParameterMetaDataLog) << "Invalid min value, name:" << metaData->name() << " type:" << metaData->type() << " min:" << text << " error:" << errorString;
@@ -276,7 +276,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                             qCDebug(PX4ParameterMetaDataLog) << "Max:" << text;
 
                             QVariant varMax;
-                            if (metaData->convertAndValidateRaw(text, true /* convertOnly */, varMax, errorString)) {
+                            if (metaData->convertAndValidateRaw(text, false /* convertOnly */, varMax, errorString)) {
                                 metaData->setRawMax(varMax);
                             } else {
                                 qCWarning(PX4ParameterMetaDataLog) << "Invalid max value, name:" << metaData->name() << " type:" << metaData->type() << " max:" << text << " error:" << errorString;
