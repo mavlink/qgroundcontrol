@@ -40,7 +40,7 @@ Item {
 
     function getPreferredInstrumentWidth() {
         if(ScreenTools.isMobile) {
-            return ScreenTools.isTinyScreen ? mainWindow.width * 0.2 : mainWindow.width * 0.15
+            return mainWindow.width * 0.25
         }
         return ScreenTools.defaultFontPixelWidth * 30
     }

@@ -21,9 +21,12 @@
 
 QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "StructureScanComplexItemLog")
 
-const char* StructureScanComplexItem::jsonComplexItemTypeValue =        "StructureScan";
 const char* StructureScanComplexItem::_altitudeFactName =               "Altitude";
 const char* StructureScanComplexItem::_layersFactName =                 "Layers";
+const char* StructureScanComplexItem::_gimbalPitchFactName =            "GimbalPitch";
+const char* StructureScanComplexItem::_gimbalYawFactName =              "GimbalYaw";
+
+const char* StructureScanComplexItem::jsonComplexItemTypeValue =        "StructureScan";
 const char* StructureScanComplexItem::_jsonCameraCalcKey =              "CameraCalc";
 const char* StructureScanComplexItem::_jsonAltitudeRelativeKey =        "altitudeRelative";
 const char* StructureScanComplexItem::_jsonYawVehicleToStructureKey =   "yawVehicleToStructure";
@@ -44,6 +47,8 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
     , _yawVehicleToStructure    (false)
     , _altitudeFact             (0, _altitudeFactName,              FactMetaData::valueTypeDouble)
     , _layersFact               (0, _layersFactName,                FactMetaData::valueTypeUint32)
+    , _gimbalPitchFact          (0, _gimbalPitchFactName,                   FactMetaData::valueTypeDouble)
+    , _gimbalYawFact            (0, _gimbalYawFactName,                     FactMetaData::valueTypeDouble)
 {
     _editorQml = "qrc:/qml/StructureScanEditor.qml";
 
@@ -53,18 +58,25 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
 
     _altitudeFact.setMetaData   (_metaDataMap[_altitudeFactName]);
     _layersFact.setMetaData     (_metaDataMap[_layersFactName]);
+    _gimbalPitchFact.setMetaData(_metaDataMap[_gimbalPitchFactName]);
+    _gimbalYawFact.setMetaData  (_metaDataMap[_gimbalYawFactName]);
 
     _altitudeFact.setRawValue   (_altitudeFact.rawDefaultValue());
     _layersFact.setRawValue     (_layersFact.rawDefaultValue());
+    _gimbalPitchFact.setRawValue(_gimbalPitchFact.rawDefaultValue());
+    _gimbalYawFact.setRawValue  (_gimbalYawFact.rawDefaultValue());
 
     _altitudeFact.setRawValue(qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue());
 
-    connect(&_altitudeFact, &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
-    connect(&_layersFact,   &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
+    connect(&_altitudeFact,     &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
+    connect(&_layersFact,       &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
+    connect(&_gimbalPitchFact,  &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
+    connect(&_gimbalYawFact,    &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
 
-    connect(this, &StructureScanComplexItem::altitudeRelativeChanged, this, &StructureScanComplexItem::_setDirty);
-    connect(this, &StructureScanComplexItem::altitudeRelativeChanged, this, &StructureScanComplexItem::coordinateHasRelativeAltitudeChanged);
-    connect(this, &StructureScanComplexItem::altitudeRelativeChanged, this, &StructureScanComplexItem::exitCoordinateHasRelativeAltitudeChanged);
+    connect(this, &StructureScanComplexItem::altitudeRelativeChanged,       this, &StructureScanComplexItem::_setDirty);
+    connect(this, &StructureScanComplexItem::altitudeRelativeChanged,       this, &StructureScanComplexItem::coordinateHasRelativeAltitudeChanged);
+    connect(this, &StructureScanComplexItem::altitudeRelativeChanged,       this, &StructureScanComplexItem::exitCoordinateHasRelativeAltitudeChanged);
+    connect(this, &StructureScanComplexItem::yawVehicleToStructureChanged,  this, &StructureScanComplexItem::_setDirty);
 
     connect(&_altitudeFact, &Fact::valueChanged, this, &StructureScanComplexItem::_updateCoordinateAltitudes);
 
@@ -74,7 +86,8 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
 
     connect(&_flightPolygon,    &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_flightPathChanged);
 
-    connect(_cameraCalc.distanceToSurface(), &Fact::valueChanged, this, &StructureScanComplexItem::_rebuildFlightPolygon);
+    connect(_cameraCalc.distanceToSurface(),    &Fact::valueChanged,                this, &StructureScanComplexItem::_rebuildFlightPolygon);
+    connect(&_cameraCalc,                       &CameraCalc::cameraNameChanged,     this, &StructureScanComplexItem::_resetGimbal);
 
     connect(&_flightPolygon,                        &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_recalcCameraShots);
     connect(_cameraCalc.adjustedFootprintSide(),    &Fact::valueChanged,            this, &StructureScanComplexItem::_recalcCameraShots);
@@ -114,8 +127,10 @@ void StructureScanComplexItem::_polygonCountChanged(int count)
 int StructureScanComplexItem::lastSequenceNumber(void) const
 {
     return _sequenceNumber +
-            ((_flightPolygon.count() + 1) * _layersFact.rawValue().toInt()) + // 1 waypoint for each polygon vertex + 1 to go back to first polygon vertex
-            1;  // Gimbal yaw command
+            (_layersFact.rawValue().toInt() *
+                ((_flightPolygon.count() + 1) + // 1 waypoint for each polygon vertex + 1 to go back to first polygon vertex for each layer
+                 2)) +                          // Camera trigger start/stop for each layer
+            1;                                  // Gimbal control command
 }
 
 void StructureScanComplexItem::setDirty(bool dirty)
@@ -135,6 +150,8 @@ void StructureScanComplexItem::save(QJsonArray&  missionItems)
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
 
+    saveObject[_gimbalPitchFactName] =          _gimbalPitchFact.rawValue().toDouble();
+    saveObject[_gimbalYawFactName] =            _gimbalYawFact.rawValue().toDouble();
     saveObject[_altitudeFactName] =             _altitudeFact.rawValue().toDouble();
     saveObject[_jsonAltitudeRelativeKey] =      _altitudeRelative;
     saveObject[_layersFactName] =               _layersFact.rawValue().toDouble();
@@ -165,6 +182,8 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
         { VisualMissionItem::jsonTypeKey,               QJsonValue::String, true },
         { ComplexMissionItem::jsonComplexItemTypeKey,   QJsonValue::String, true },
         { QGCMapPolygon::jsonPolygonKey,                QJsonValue::Array,  true },
+        { _gimbalPitchFactName,                         QJsonValue::Double, true },
+        { _gimbalYawFactName,                           QJsonValue::Double, true },
         { _altitudeFactName,                            QJsonValue::Double, true },
         { _jsonAltitudeRelativeKey,                     QJsonValue::Bool,   false },
         { _layersFactName,                              QJsonValue::Double, true },
@@ -186,20 +205,24 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
 
     int version = complexObject[JsonHelper::jsonVersionKey].toInt();
     if (version != 1) {
-        errorString = tr("Version %1 not supported").arg(version);
+        errorString = tr("%1 complex item version %2 not supported").arg(jsonComplexItemTypeValue).arg(version);
         return false;
     }
 
     setSequenceNumber(sequenceNumber);
 
+    // Load CameraCalc first since it will trigger camera name change which will trounce gimbal angles
+    if (!_cameraCalc.load(complexObject[_jsonCameraCalcKey].toObject(), errorString)) {
+        return false;
+    }
+
+    _gimbalPitchFact.setRawValue(complexObject[_gimbalPitchFactName].toDouble());
+    _gimbalYawFact.setRawValue  (complexObject[_gimbalYawFactName].toDouble());
     _altitudeFact.setRawValue   (complexObject[_altitudeFactName].toDouble());
     _layersFact.setRawValue     (complexObject[_layersFactName].toDouble());
     _altitudeRelative =         complexObject[_jsonAltitudeRelativeKey].toBool(true);
     _yawVehicleToStructure =    complexObject[_jsonYawVehicleToStructureKey].toBool(true);
 
-    if (!_cameraCalc.load(complexObject[_jsonCameraCalcKey].toObject(), errorString)) {
-        return false;
-    }
     if (!_structurePolygon.loadFromJson(complexObject, true /* required */, errorString)) {
         _structurePolygon.clear();
         return false;
@@ -258,9 +281,9 @@ void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QO
         MissionItem* item = new MissionItem(seqNum++,
                                             MAV_CMD_DO_MOUNT_CONTROL,
                                             MAV_FRAME_MISSION,
-                                            0,                                  // Gimbal pitch
+                                            _gimbalPitchFact.rawValue().toDouble(),
                                             0,                                  // Gimbal roll
-                                            90,                                 // Gimbal yaw
+                                            _gimbalYawFact.rawValue().toDouble(),
                                             0, 0, 0,                            // param 4-6 not used
                                             MAV_MOUNT_MODE_MAVLINK_TARGETING,
                                             true,                               // autoContinue
@@ -432,4 +455,26 @@ void StructureScanComplexItem::_recalcCameraShots(void)
 
     int cameraShots = distance / _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
     _setCameraShots(cameraShots * _layersFact.rawValue().toInt());
+}
+
+void StructureScanComplexItem::_resetGimbal(void)
+{
+    _gimbalPitchFact.setCookedValue(0);
+    _gimbalYawFact.setCookedValue(90);
+}
+
+void StructureScanComplexItem::setAltitudeRelative(bool altitudeRelative)
+{
+    if (altitudeRelative != _altitudeRelative) {
+        _altitudeRelative = altitudeRelative;
+        emit altitudeRelativeChanged(altitudeRelative);
+    }
+}
+
+void StructureScanComplexItem::setYawVehicleToStructure(bool yawVehicleToStructure)
+{
+    if (yawVehicleToStructure != _yawVehicleToStructure) {
+        _yawVehicleToStructure = yawVehicleToStructure;
+        emit yawVehicleToStructureChanged(yawVehicleToStructure);
+    }
 }

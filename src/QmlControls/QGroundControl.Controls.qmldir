@@ -7,6 +7,7 @@ CameraSection           1.0 CameraSection.qml
 ClickableColor          1.0 ClickableColor.qml
 DropButton              1.0 DropButton.qml
 DropPanel               1.0 DropPanel.qml
+EditPositionDialog      1.0 EditPositionDialog.qml
 ExclusiveGroupItem      1.0 ExclusiveGroupItem.qml
 FactSliderPanel         1.0 FactSliderPanel.qml
 FileButton              1.0 FileButton.qml
@@ -52,10 +53,12 @@ QGCMovableItem          1.0 QGCMovableItem.qml
 QGCPipable              1.0 QGCPipable.qml
 QGCRadioButton          1.0 QGCRadioButton.qml
 QGCSlider               1.0 QGCSlider.qml
+QGCSwitch               1.0 QGCSwitch.qml
 QGCTextField            1.0 QGCTextField.qml
 QGCToolBarButton        1.0 QGCToolBarButton.qml
 QGCView                 1.0 QGCView.qml
 QGCViewDialog           1.0 QGCViewDialog.qml
+QGCViewDialogContainer  1.0 QGCViewDialogContainer.qml
 QGCViewMessage          1.0 QGCViewMessage.qml
 QGCViewPanel            1.0 QGCViewPanel.qml
 RoundButton             1.0 RoundButton.qml

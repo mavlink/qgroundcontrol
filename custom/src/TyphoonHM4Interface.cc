@@ -17,9 +17,6 @@
 
 #include <math.h>
 
-QGC_LOGGING_CATEGORY(YuneecLog, "YuneecLog")
-QGC_LOGGING_CATEGORY(YuneecLogVerbose, "YuneecLogVerbose")
-
 TyphoonHM4Interface* TyphoonHM4Interface::pTyphoonHandler = NULL;
 
 #if defined(__androidx86__)

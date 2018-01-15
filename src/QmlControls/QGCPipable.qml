@@ -26,9 +26,13 @@ Item {
     property real maxSize: 0.75
     property real minSize: 0.10
 
+    property bool inPopup: false
+    property bool enablePopup: true
+
     signal  activated()
     signal  hideIt(bool state)
     signal  newWidth(real newWidth)
+    signal  popup()
 
     MouseArea {
         id: pipMouseArea
@@ -87,7 +91,7 @@ Item {
         mipmap: true
         anchors.right:  parent.right
         anchors.top:    parent.top
-        visible:        !isHidden && (ScreenTools.isMobile || pipMouseArea.containsMouse)
+        visible:        !isHidden && (ScreenTools.isMobile || pipMouseArea.containsMouse) && !inPopup
         height:         ScreenTools.defaultFontPixelHeight * 2.5
         width:          ScreenTools.defaultFontPixelHeight * 2.5
         sourceSize.height:  height
@@ -116,10 +120,31 @@ Item {
         }
     }
 
+     //-- PIP Popup Indicator
+    Image {
+        id:             popupPIP
+        source:         "/qmlimages/PiP.svg"
+        mipmap:         true
+        fillMode:       Image.PreserveAspectFit
+        anchors.left:   parent.left
+        anchors.top:    parent.top
+        visible:        !isHidden && !inPopup && !ScreenTools.isMobile && enablePopup
+        height:         ScreenTools.defaultFontPixelHeight * 2.5
+        width:          ScreenTools.defaultFontPixelHeight * 2.5
+        sourceSize.height:  height
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                inPopup = true
+                pip.popup()
+            }
+        }
+    }
+
     //-- PIP Corner Indicator
     Image {
         id:             closePIP
-        source:         "/qmlimages/PiP.svg"
+        source:         "/qmlimages/pipHide.svg"
         mipmap:         true
         fillMode:       Image.PreserveAspectFit
         anchors.left:   parent.left

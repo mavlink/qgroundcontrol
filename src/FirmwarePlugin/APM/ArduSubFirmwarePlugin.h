@@ -35,23 +35,29 @@ class APMSubmarineFactGroup : public FactGroup
 public:
     APMSubmarineFactGroup(QObject* parent = NULL);
 
-    Q_PROPERTY(Fact* camTilt       READ camTilt       CONSTANT)
-    Q_PROPERTY(Fact* tetherTurns   READ tetherTurns   CONSTANT)
-    Q_PROPERTY(Fact* lightsLevel1  READ lightsLevel1  CONSTANT)
-    Q_PROPERTY(Fact* lightsLevel2  READ lightsLevel2  CONSTANT)
-    Q_PROPERTY(Fact* pilotGain     READ pilotGain     CONSTANT)
+    Q_PROPERTY(Fact* camTilt             READ camTilt             CONSTANT)
+    Q_PROPERTY(Fact* tetherTurns         READ tetherTurns         CONSTANT)
+    Q_PROPERTY(Fact* lightsLevel1        READ lightsLevel1        CONSTANT)
+    Q_PROPERTY(Fact* lightsLevel2        READ lightsLevel2        CONSTANT)
+    Q_PROPERTY(Fact* pilotGain           READ pilotGain           CONSTANT)
+    Q_PROPERTY(Fact* inputHold           READ inputHold     CONSTANT)
+    Q_PROPERTY(Fact* rangefinderDistance READ rangefinderDistance CONSTANT)
 
-    Fact* camTilt       (void) { return &_camTiltFact; }
-    Fact* tetherTurns   (void) { return &_tetherTurnsFact; }
-    Fact* lightsLevel1  (void) { return &_lightsLevel1Fact; }
-    Fact* lightsLevel2  (void) { return &_lightsLevel2Fact; }
-    Fact* pilotGain     (void) { return &_pilotGainFact; }
+    Fact* camTilt             (void) { return &_camTiltFact; }
+    Fact* tetherTurns         (void) { return &_tetherTurnsFact; }
+    Fact* lightsLevel1        (void) { return &_lightsLevel1Fact; }
+    Fact* lightsLevel2        (void) { return &_lightsLevel2Fact; }
+    Fact* pilotGain           (void) { return &_pilotGainFact; }
+    Fact* inputHold           (void) { return &_inputHoldFact; }
+    Fact* rangefinderDistance (void) { return &_rangefinderDistanceFact; }
 
     static const char* _camTiltFactName;
     static const char* _tetherTurnsFactName;
     static const char* _lightsLevel1FactName;
     static const char* _lightsLevel2FactName;
     static const char* _pilotGainFactName;
+    static const char* _inputHoldFactName;
+    static const char* _rangefinderDistanceFactName;
 
     static const char* _settingsGroup;
 
@@ -61,6 +67,8 @@ private:
     Fact            _lightsLevel1Fact;
     Fact            _lightsLevel2Fact;
     Fact            _pilotGainFact;
+    Fact            _inputHoldFact;
+    Fact            _rangefinderDistanceFact;
 };
 
 class APMSubMode : public APMCustomMode
@@ -99,6 +107,8 @@ class ArduSubFirmwarePlugin : public APMFirmwarePlugin
 
 public:
     ArduSubFirmwarePlugin(void);
+
+    QList<MAV_CMD> supportedMissionCommands(void);
 
     // Overrides from FirmwarePlugin
     int manualControlReservedButtonCount(void) final;

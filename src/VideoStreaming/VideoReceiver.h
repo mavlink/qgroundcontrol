@@ -30,6 +30,8 @@
 
 Q_DECLARE_LOGGING_CATEGORY(VideoReceiverLog)
 
+class VideoSettings;
+
 class VideoReceiver : public QObject
 {
     Q_OBJECT
@@ -38,9 +40,9 @@ public:
     Q_PROPERTY(bool             recording           READ    recording           NOTIFY recordingChanged)
 #endif
     Q_PROPERTY(VideoSurface*    videoSurface        READ    videoSurface        CONSTANT)
-    Q_PROPERTY(bool             videoRunning        READ    videoRunning        NOTIFY videoRunningChanged)
-    Q_PROPERTY(QString          imageFile           READ    imageFile           NOTIFY imageFileChanged)
-    Q_PROPERTY(bool             showFullScreen      READ    showFullScreen      WRITE setShowFullScreen     NOTIFY showFullScreenChanged)
+    Q_PROPERTY(bool             videoRunning        READ    videoRunning        NOTIFY  videoRunningChanged)
+    Q_PROPERTY(QString          imageFile           READ    imageFile           NOTIFY  imageFileChanged)
+    Q_PROPERTY(bool             showFullScreen      READ    showFullScreen      WRITE   setShowFullScreen     NOTIFY showFullScreenChanged)
 
     explicit VideoReceiver(QObject* parent = 0);
     ~VideoReceiver();
@@ -56,7 +58,9 @@ public:
     VideoSurface*   videoSurface    () { return _videoSurface; }
     bool            videoRunning    () { return _videoRunning; }
     QString         imageFile       () { return _imageFile; }
+    QString         videoFile       () { return _videoFile; }
     bool            showFullScreen  () { return _showFullScreen; }
+
     void            grabImage       (QString imageFile);
 
     void        setShowFullScreen   (bool show) { _showFullScreen = show; emit showFullScreenChanged(); }
@@ -77,7 +81,7 @@ public slots:
     void stop                       ();
     void setUri                     (const QString& uri);
     void stopRecording              ();
-    void startRecording             ();
+    void startRecording             (const QString& videoFile = QString());
 
 private slots:
     void _updateTimer               ();
@@ -133,10 +137,11 @@ private:
 
     QString         _uri;
     QString         _imageFile;
+    QString         _videoFile;
     VideoSurface*   _videoSurface;
     bool            _videoRunning;
     bool            _showFullScreen;
-
+    VideoSettings*  _videoSettings;
 };
 
 #endif // VIDEORECEIVER_H

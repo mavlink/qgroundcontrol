@@ -14,10 +14,11 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick                  2.4
+import QtQuick                  2.9
+import QtQuick.Controls         2.2
+import QtMultimedia             5.9
 import QtPositioning            5.2
 import QtQuick.Layouts          1.2
-import QtQuick.Controls         1.4
 import QtQuick.Dialogs          1.2
 import QtGraphicalEffects       1.0
 
@@ -69,13 +70,14 @@ Rectangle {
     property bool _isThermal:               TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver
     property bool _settingsEnabled:         !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED && _camera && _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE && !_recordingVideo
 
-    property real _mediaWidth:              128
-    property real _mediaHeight:             72
-    property real _mediaIndex:              0
+    property real   _mediaWidth:            128
+    property real   _mediaHeight:           72
+    property real   _mediaIndex:            0
 
     //-- Media Player
     property color  _rectColor:             qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
     property string _photoPath:             "file://" + QGroundControl.settingsManager.appSettings.savePath.rawValue.toString() + "/Photo/"
+    property string _videoPath:             "file://" + QGroundControl.settingsManager.appSettings.savePath.rawValue.toString() + "/Video/"
     property bool   _selectMode:            false
     property bool   _hasSelection:          TyphoonHQuickInterface.selectedCount > 0
     property bool   _hasPhotos:             TyphoonHQuickInterface.mediaList.length > 0
@@ -391,11 +393,11 @@ Rectangle {
                         anchors.margins:    ScreenTools.defaultFontPixelHeight
                         anchors.horizontalCenter: parent.horizontalCenter
                         //-------------------------------------------
-                        //-- CGOET Thermal Video Modes
+                        //-- CGOET/E10T Thermal Video Modes
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
-                            visible:        _camera && _camera.isCGOET
+                            visible:        _camera && _camera.isThermal
                             property var thermalModes: [qsTr("Off"), qsTr("Blend"), qsTr("Full"), qsTr("Picture In Picture")]
                             QGCLabel {
                                 text:       qsTr("Thermal View Mode")
@@ -413,14 +415,14 @@ Rectangle {
                             color:      qgcPal.button
                             height:     1
                             width:      cameraSettingsCol.width
-                            visible:    _camera && _camera.isCGOET
+                            visible:    _camera && _camera.isThermal
                         }
                         //-------------------------------------------
-                        //-- CGOET Thermal Video Opacity
+                        //-- CGOET/E10T Thermal Video Opacity
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
-                            visible:        _camera && _camera.isCGOET && TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend
+                            visible:        _camera && _camera.isThermal && TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend
                             QGCLabel {
                                 text:       qsTr("Blend Opacity")
                                 width:      _labelFieldWidth
@@ -441,14 +443,14 @@ Rectangle {
                             color:      qgcPal.button
                             height:     1
                             width:      cameraSettingsCol.width
-                            visible:    _camera && _camera.isCGOET && TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend
+                            visible:    _camera && _camera.isThermal && TyphoonHQuickInterface.thermalMode === TyphoonHQuickInterface.ThermalBlend
                         }
                         //-------------------------------------------
-                        //-- CGOET Thermal ROI
+                        //-- CGOET/E10T Thermal ROI
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
-                            visible:        _camera && _camera.isCGOET
+                            visible:        _camera && _camera.isThermal
                             QGCLabel {
                                 text:       qsTr("ROI")
                                 width:      _labelFieldWidth
@@ -465,14 +467,14 @@ Rectangle {
                             color:      qgcPal.button
                             height:     1
                             width:      cameraSettingsCol.width
-                            visible:    _camera && _camera.isCGOET
+                            visible:    _camera && _camera.isThermal
                         }
                         //-------------------------------------------
-                        //-- CGOET Presets
+                        //-- CGOET/E10T Presets
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
-                            visible:        _camera && _camera.isCGOET
+                            visible:        _camera && _camera.isThermal
                             QGCLabel {
                                 text:       qsTr("Presets")
                                 width:      _labelFieldWidth
@@ -489,7 +491,7 @@ Rectangle {
                             color:      qgcPal.button
                             height:     1
                             width:      cameraSettingsCol.width
-                            visible:    _camera && _camera.isCGOET
+                            visible:    _camera && _camera.isThermal
                         }
                         //-------------------------------------------
                         //-- Settings from Camera Definition File
@@ -619,7 +621,7 @@ Rectangle {
                         //-- Screen Grid
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
-                            visible:        _camera && !_camera.isCGOET
+                            visible:        _camera && !_camera.isThermal
                             anchors.horizontalCenter: parent.horizontalCenter
                             QGCLabel {
                                 text:       qsTr("Screen Grid")
@@ -637,7 +639,7 @@ Rectangle {
                             color:      qgcPal.button
                             height:     1
                             width:      cameraSettingsCol.width
-                            visible:    _camera && !_camera.isCGOET
+                            visible:    _camera && !_camera.isThermal
                         }
                         //-------------------------------------------
                         //-- Reset Camera
@@ -907,14 +909,59 @@ Rectangle {
                     onPressed:      { mouse.accepted = true; }
                     onReleased:     { mouse.accepted = true; }
                 }
-                QGCLabel {
+                Row {
+                    spacing:                ScreenTools.defaultFontPixelWidth * 2
                     anchors.top:            parent.top
                     anchors.topMargin:      ScreenTools.defaultFontPixelHeight
                     anchors.left:           parent.left
-                    anchors.leftMargin:     ScreenTools.defaultFontPixelHeight * 2
+                    anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 2
                     height:                 buttonRow.height
-                    verticalAlignment:      Text.AlignVCenter
-                    text:                   qsTr("Local Storage")
+                    QGCColoredImage {
+                        height:             parent.height * 0.9
+                        width:              height
+                        source:             "/typhoonh/img/camera.svg"
+                        fillMode:           Image.PreserveAspectFit
+                        sourceSize.width:   width
+                        anchors.verticalCenter: parent.verticalCenter
+                        color:              TyphoonHQuickInterface.browseVideos ? qgcPal.text : qgcPal.colorGreen
+                        MouseArea {
+                            anchors.fill:   parent
+                            onClicked: {
+                                if(TyphoonHQuickInterface.browseVideos) {
+                                    TyphoonHQuickInterface.browseVideos = false
+                                    _selectMode = false
+                                    TyphoonHQuickInterface.selectAllMedia(false)
+                                }
+                            }
+                        }
+                    }
+                    QGCColoredImage {
+                        height:             parent.height * 0.9
+                        width:              height
+                        source:             "/typhoonh/img/video.svg"
+                        fillMode:           Image.PreserveAspectFit
+                        sourceSize.width:   width
+                        anchors.verticalCenter: parent.verticalCenter
+                        color:              TyphoonHQuickInterface.browseVideos ? qgcPal.colorGreen : qgcPal.text
+                        MouseArea {
+                            anchors.fill:   parent
+                            onClicked: {
+                                if(!TyphoonHQuickInterface.browseVideos) {
+                                    TyphoonHQuickInterface.browseVideos = true
+                                    _selectMode = false
+                                    TyphoonHQuickInterface.selectAllMedia(false)
+                                }
+                            }
+                        }
+                    }
+                    Item {
+                        width:  1
+                        height: 1
+                    }
+                    QGCLabel {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text:                   qsTr("Local Storage")
+                    }
                 }
                 Row {
                     id:                     buttonRow
@@ -975,7 +1022,7 @@ Rectangle {
                     model:              TyphoonHQuickInterface.mediaList
                     cellWidth:          _mediaWidth  + 8
                     cellHeight:         _mediaHeight + 8
-                    width:              (_mediaWidth  + 8) * 5
+                    width:              (_mediaWidth  + 8) * 6
                     height:             (_mediaHeight + 8) * 4
                     delegate:           mediaDelegate
                     cacheBuffer:        height * 4
@@ -1013,10 +1060,35 @@ Rectangle {
             Image {
                 anchors.fill:       parent
                 anchors.margins:    2
+                visible:            _mediaItem && !_mediaItem.isVideo
                 fillMode:           Image.PreserveAspectFit
-                source:             _mediaItem ? _photoPath + _mediaItem.fileName : ""
+                source:             _mediaItem && !_mediaItem.isVideo ? _photoPath + _mediaItem.fileName : ""
                 sourceSize.width:   width
                 opacity:            _selectMode && _mediaItem && !_mediaItem.selected ? 0.5 : 1
+                MouseArea {
+                    anchors.fill:   parent
+                    onClicked: {
+                        if(_selectMode) {
+                            if(_mediaItem) {
+                                _mediaItem.selected = !_mediaItem.selected
+                            }
+                        } else {
+                            _mediaIndex = index
+                            rootLoader.sourceComponent = mediaViewComponent
+                        }
+                    }
+                }
+            }
+            Rectangle {
+                visible:        _mediaItem && _mediaItem.isVideo
+                color:          qgcPal.windowShade
+                border.color:   _selectMode ? (_mediaItem && _mediaItem.selected ? qgcPal.colorGreen : qgcPal.colorGrey) : _rectColor
+                border.width:   _selectMode ? (_mediaItem && _mediaItem.selected ? 2 : 1) : 0
+                anchors.fill:   parent
+                QGCLabel {
+                    text:   qsTr("Video")
+                    anchors.centerIn: parent
+                }
                 MouseArea {
                     anchors.fill:   parent
                     onClicked: {
@@ -1085,13 +1157,65 @@ Rectangle {
                     id:             mediaContent
                     width:          _mediaWidth  * 7
                     height:         _mediaHeight * 7
-                    fillMode:       Image.PreserveAspectFit
-                    source:         _mediaItem ? _photoPath + _mediaItem.fileName : ""
+                    visible:        _mediaItem && !_mediaItem.isVideo
+                    source:         visible ? _photoPath + _mediaItem.fileName : ""
                     cache:          false
+                    fillMode:       Image.PreserveAspectFit
                     anchors.centerIn:   parent
                 }
                 QGCLabel {
-                    text:           baseName(mediaContent.source.toString())
+                    id:             runningTime
+                    text:           runningTime.msToTime(videoContent.position)
+                    visible:        _mediaItem && _mediaItem.isVideo
+                    anchors.top:    parent.top
+                    anchors.topMargin: 10
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    function msToTime(s) {
+                        function pad(n, z) {
+                            z = z || 2;
+                            return ('00' + n).slice(-z);
+                        }
+                        var ms = s % 1000;
+                        s = (s - ms) / 1000;
+                        var secs = s % 60;
+                        s = (s - secs) / 60;
+                        var mins = s % 60;
+                        var hrs = (s - mins) / 60;
+                        return pad(hrs) + ':' + pad(mins) + ':' + pad(secs) + '.' + pad(ms, 3);
+                    }
+                }
+                Video {
+                    id:             videoContent
+                    width:          _mediaWidth  * 7
+                    height:         _mediaHeight * 7
+                    visible:        _mediaItem && _mediaItem.isVideo
+                    source:         visible ? _videoPath + _mediaItem.fileName : ""
+                    autoLoad:       visible
+                    autoPlay:       true
+                    notifyInterval: 100
+                  //orientation:    180 // Qt 5.9.3 plays upside down
+                    anchors.centerIn:   parent
+                    onErrorStringChanged: {
+                        console.log(videoContent.error + ' ' + videoContent.errorString)
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            switch (videoContent.playbackState) {
+                            case MediaPlayer.PlayingState:
+                                videoContent.pause()
+                                break;
+                            case MediaPlayer.PausedState:
+                            case MediaPlayer.StoppedState:
+                                videoContent.play()
+                                break;
+                            }
+                            console.log('Play ' + videoContent.source.toString())
+                        }
+                    }
+                }
+                QGCLabel {
+                    text:           _mediaItem.fileName
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 10
                     anchors.horizontalCenter: parent.horizontalCenter

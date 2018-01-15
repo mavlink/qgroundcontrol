@@ -33,6 +33,7 @@
 		<file alias="QGroundControl/Controls/CameraSection.qml">../src/PlanView/CameraSection.qml</file>
 		<file alias="QGroundControl/Controls/ClickableColor.qml">../src/QmlControls/ClickableColor.qml</file>
 		<file alias="QGroundControl/Controls/DropButton.qml">../src/QmlControls/DropButton.qml</file>
+		<file alias="QGroundControl/Controls/EditPositionDialog.qml">../src/QmlControls/EditPositionDialog.qml</file>
 		<file alias="QGroundControl/Controls/ExclusiveGroupItem.qml">../src/QmlControls/ExclusiveGroupItem.qml</file>
 		<file alias="QGroundControl/Controls/FactSliderPanel.qml">../src/QmlControls/FactSliderPanel.qml</file>
 		<file alias="QGroundControl/Controls/FileButton.qml">../src/QmlControls/FileButton.qml</file>
@@ -74,9 +75,11 @@
 		<file alias="QGroundControl/Controls/QGCPipable.qml">../src/QmlControls/QGCPipable.qml</file>
 		<file alias="QGroundControl/Controls/QGCRadioButton.qml">../src/QmlControls/QGCRadioButton.qml</file>
 		<file alias="QGroundControl/Controls/QGCSlider.qml">../src/QmlControls/QGCSlider.qml</file>
+		<file alias="QGroundControl/Controls/QGCSwitch.qml">../src/QmlControls/QGCSwitch.qml</file>
 		<file alias="QGroundControl/Controls/QGCTextField.qml">../src/QmlControls/QGCTextField.qml</file>
 		<file alias="QGroundControl/Controls/QGCView.qml">../src/QmlControls/QGCView.qml</file>
 		<file alias="QGroundControl/Controls/QGCViewDialog.qml">../src/QmlControls/QGCViewDialog.qml</file>
+		<file alias="QGroundControl/Controls/QGCViewDialogContainer.qml">../src/QmlControls/QGCViewDialogContainer.qml</file>
 		<file alias="QGroundControl/Controls/QGCViewMessage.qml">../src/QmlControls/QGCViewMessage.qml</file>
 		<file alias="QGroundControl/Controls/QGCViewPanel.qml">../src/QmlControls/QGCViewPanel.qml</file>
 		<file alias="QGroundControl/Controls/qmldir">../src/QmlControls/QGroundControl.Controls.qmldir</file>
@@ -152,6 +155,7 @@
 		<file alias="VehicleSummary.qml">../src/VehicleSetup/VehicleSummary.qml</file>
 		<file alias="VirtualJoystick.qml">../src/FlightDisplay/VirtualJoystick.qml</file>
 		<file alias="CameraPageWidget.qml">../src/FlightMap/Widgets/CameraPageWidget.qml</file>
+		<file alias="VideoPageWidget.qml">../src/FlightMap/Widgets/VideoPageWidget.qml</file>
 		<file alias="ValuePageWidget.qml">../src/FlightMap/Widgets/ValuePageWidget.qml</file>
 		<file alias="HealthPageWidget.qml">../src/FlightMap/Widgets/HealthPageWidget.qml</file>
 		<file alias="VibrationPageWidget.qml">../src/FlightMap/Widgets/VibrationPageWidget.qml</file>
@@ -181,6 +185,7 @@
 		<file alias="CameraSpec.FactMetaData.json">../src/MissionManager/CameraSpec.FactMetaData.json</file>
 		<file alias="SpeedSection.FactMetaData.json">../src/MissionManager/SpeedSection.FactMetaData.json</file>
 		<file alias="MissionSettings.FactMetaData.json">../src/MissionManager/MissionSettings.FactMetaData.json</file>
+		<file alias="EditPositionDialog.FactMetaData.json">../src/QmlControls/EditPositionDialog.FactMetaData.json</file>
 		<file alias="Vehicle/VehicleFact.json">../src/Vehicle/VehicleFact.json</file>
 		<file alias="Vehicle/BatteryFact.json">../src/Vehicle/BatteryFact.json</file>
 		<file alias="Vehicle/GPSFact.json">../src/Vehicle/GPSFact.json</file>
@@ -190,6 +195,7 @@
 		<file alias="Vehicle/TemperatureFact.json">../src/Vehicle/TemperatureFact.json</file>
 		<file alias="Vehicle/SubmarineFact.json">../src/Vehicle/SubmarineFact.json</file>
 		<file alias="BrandImage.SettingsGroup.json">../src/Settings/BrandImage.SettingsGroup.json</file>
+		<file alias="Vehicle/ClockFact.json">../src/Vehicle/ClockFact.json</file>
 	</qresource>
 	<qresource prefix="/MockLink">
 		<file alias="PX4MockLink.params">../src/comm/PX4MockLink.params</file>

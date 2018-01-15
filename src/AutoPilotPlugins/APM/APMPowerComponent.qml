@@ -29,6 +29,7 @@ SetupPage {
         Column {
             spacing: _margins
 
+            property Fact armVoltMin:       controller.getParameterFact(-1, "r.ARMING_VOLT_MIN")
             property Fact battAmpPerVolt:   controller.getParameterFact(-1, "BATT_AMP_PERVOLT")
             property Fact battCapacity:     controller.getParameterFact(-1, "BATT_CAPACITY")
             property Fact battCurrPin:      controller.getParameterFact(-1, "BATT_CURR_PIN")
@@ -239,6 +240,18 @@ SetupPage {
                 QGCLabel {
                     Layout.row:     2
                     Layout.column:  0
+                    text:           qsTr("Minimum arming voltage:")
+                }
+
+                FactTextField {
+                    id:     armVoltField
+                    width:  _fieldWidth
+                    fact:   armVoltMin
+                }
+
+                QGCLabel {
+                    Layout.row:     3
+                    Layout.column:  0
                     text:           qsTr("Power sensor:")
                 }
 
@@ -260,7 +273,7 @@ SetupPage {
                 }
 
                 QGCLabel {
-                    Layout.row:     3
+                    Layout.row:     4
                     Layout.column:  0
                     text:           qsTr("Current pin:")
                     visible:        _showAdvanced
@@ -274,7 +287,7 @@ SetupPage {
                 }
 
                 QGCLabel {
-                    Layout.row:     4
+                    Layout.row:     5
                     Layout.column:  0
                     text:           qsTr("Voltage pin:")
                     visible:        _showAdvanced
@@ -288,7 +301,7 @@ SetupPage {
                 }
 
                 QGCLabel {
-                    Layout.row:     5
+                    Layout.row:     6
                     Layout.column:  0
                     text:           qsTr("Voltage multiplier:")
                     visible:        _showAdvanced

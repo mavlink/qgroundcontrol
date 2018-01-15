@@ -100,7 +100,7 @@ void SimpleMissionItemTest::init(void)
                             70.1234567,
                             true,           // autoContinue
                             false);         // isCurrentItem
-    _simpleItem = new SimpleMissionItem(_offlineVehicle, missionItem);
+    _simpleItem = new SimpleMissionItem(_offlineVehicle, true /* editMode */, missionItem);
 
     // It's important top check that the right signals are emitted at the right time since that drives ui change.
     // It's also important to check that things are not being over-signalled when they should not be, since that can lead
@@ -139,7 +139,7 @@ void SimpleMissionItemTest::_testEditorFacts(void)
                                 70.1234567,
                                 true,           // autoContinue
                                 false);         // isCurrentItem
-        SimpleMissionItem simpleMissionItem(vehicle, missionItem);
+        SimpleMissionItem simpleMissionItem(vehicle, true /* editMode */, missionItem);
 
         // Validate that the fact values are correctly returned
 

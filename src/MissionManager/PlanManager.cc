@@ -85,8 +85,8 @@ void PlanManager::writeMissionItems(const QList<MissionItem*>& missionItems)
     int firstIndex = skipFirstItem ? 1 : 0;
 
     for (int i=firstIndex; i<missionItems.count(); i++) {
-        MissionItem* item = new MissionItem(*missionItems[i]);
-        _writeMissionItems.append(item);
+        MissionItem* item = missionItems[i];
+        _writeMissionItems.append(item); // PlanManager takes control of passed MissionItem
 
         item->setIsCurrentItem(i == firstIndex);
 
@@ -588,7 +588,7 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
     switch (savedExpectedAck) {
     case AckNone:
         // State machine is idle. Vehicle is confused.
-        _sendError(VehicleError, tr("Vehicle sent unexpected MISSION_ACK message, error: %1").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
+	qCDebug(PlanManagerLog) << QStringLiteral("Vehicle sent unexpected MISSION_ACK message, error: %1").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type));
         break;
     case AckMissionCount:
         // MISSION_COUNT message expected
@@ -604,7 +604,7 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
         // MISSION_REQUEST is expected, or MISSION_ACK to end sequence
         if (missionAck.type == MAV_MISSION_ACCEPTED) {
             if (_itemIndicesToWrite.count() == 0) {
-                qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionAck write sequence complete").arg(_planTypeString());
+                qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionAck write sequence complete %1").arg(_planTypeString());
                 _finishTransaction(true);
             } else {
                 _sendError(MissingRequestsError, tr("Vehicle did not request all items during write sequence, missed count %1.").arg(_itemIndicesToWrite.count()));
@@ -911,7 +911,8 @@ void PlanManager::removeAll(void)
 void PlanManager::_clearAndDeleteMissionItems(void)
 {
     for (int i=0; i<_missionItems.count(); i++) {
-        _missionItems[i]->deleteLater();
+        // Using deleteLater here causes too much transient memory to stack up
+        delete _missionItems[i];
     }
     _missionItems.clear();
 }
@@ -920,7 +921,8 @@ void PlanManager::_clearAndDeleteMissionItems(void)
 void PlanManager::_clearAndDeleteWriteMissionItems(void)
 {
     for (int i=0; i<_writeMissionItems.count(); i++) {
-        _writeMissionItems[i]->deleteLater();
+        // Using deleteLater here causes too much transient memory to stack up
+        delete _writeMissionItems[i];
     }
     _writeMissionItems.clear();
 }

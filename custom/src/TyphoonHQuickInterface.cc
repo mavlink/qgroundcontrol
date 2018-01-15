@@ -39,12 +39,12 @@ static const char* kThermalMode     = "ThermalMode";
 static const char* kSecondRun       = "SecondRun";
 static const char* kFirstRun        = "FirstRun";
 
-#if defined __android__
+#if defined(__androidx86__)
 static const char* kUpdateFile = "/storage/sdcard1/update.zip";
 static const char* kUpdateDest = "/mnt/sdcard/update.zip";
 #endif
 
-#if defined __android__
+#if defined(__androidx86__)
 void
 reset_jni()
 {
@@ -63,7 +63,9 @@ reset_jni()
 //-----------------------------------------------------------------------------
 TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     : QObject(parent)
+#if defined(__androidx86__)
     , _pHandler(NULL)
+#endif
     , _vehicle(NULL)
     , _pFileCopy(NULL)
     , _videoReceiver(NULL)
@@ -75,6 +77,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _copyingFiles(false)
     , _copyingDone(false)
     , _wifiAlertEnabled(true)
+    , _browseVideos(false)
     , _updateProgress(0)
     , _updateDone(false)
     , _selectedCount(0)
@@ -88,6 +91,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _updateShown(false)
     , _firstRun(true)
     , _passwordSet(false)
+    , _newPasswordSet(false)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
 #if defined __android__
@@ -126,9 +130,14 @@ created_greater_than(const QFileInfo &f1, const QFileInfo &f2)
 
 //-----------------------------------------------------------------------------
 void
+#if defined(__androidx86__)
 TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
+#else
+TyphoonHQuickInterface::init()
+#endif
 {
     qmlRegisterType<TyphoonMediaItem>("TyphoonMediaItem", 1,0, "TyphoonMediaItem");
+#if defined(__androidx86__)
     _pHandler = pHandler;
     if(_pHandler) {
         connect(_pHandler, &TyphoonHM4Interface::m4StateChanged,               this, &TyphoonHQuickInterface::_m4StateChanged);
@@ -147,6 +156,7 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         connect(_pHandler, &TyphoonHM4Interface::calibrationStateChanged,      this, &TyphoonHQuickInterface::_calibrationStateChanged);
         connect(_pHandler, &TyphoonHM4Interface::calibrationCompleteChanged,   this, &TyphoonHQuickInterface::_calibrationCompleteChanged);
         connect(_pHandler, &TyphoonHM4Interface::rcActiveChanged,              this, &TyphoonHQuickInterface::_rcActiveChanged);
+#endif
         connect(getQGCMapEngine(), &QGCMapEngine::internetUpdated,             this, &TyphoonHQuickInterface::_internetUpdated);
         connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded,         this, &TyphoonHQuickInterface::_vehicleAdded);
         connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved,       this, &TyphoonHQuickInterface::_vehicleRemoved);
@@ -164,7 +174,7 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         filter += qgcApp()->toolbox()->settingsManager()->appSettings()->telemetryFileExtension;
         QDir logDir(qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath(), filter);
         QFileInfoList logs = logDir.entryInfoList();
-        qSort(logs.begin(), logs.end(), created_greater_than);
+        std::sort(logs.begin(), logs.end(), created_greater_than);
         if(logs.size() > 1) {
             qint64 totalLogSize = 0;
             for(int i = 0; i < logs.size(); i++) {
@@ -181,10 +191,11 @@ TyphoonHQuickInterface::init(TyphoonHM4Interface* pHandler)
         //-- Thermal video surface must be created before UI
         if(!_videoReceiver) {
             _videoReceiver = new VideoReceiver(this);
-            _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:8554/live"));
             connect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);
         }
+#if defined(__androidx86__)
     }
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -227,7 +238,8 @@ TyphoonHQuickInterface::shouldWeShowUpdate()
         if(v) {
             uint32_t frver = FIRMWARE_FORCE_UPDATE_MAJOR << 16 | FIRMWARE_FORCE_UPDATE_MINOR << 8 | FIRMWARE_FORCE_UPDATE_PATCH;
             uint32_t fmver = v->firmwareCustomMajorVersion() << 16 | v->firmwareCustomMinorVersion() << 8 | v->firmwareCustomPatchVersion();
-            if(frver >= fmver) {
+            //-- If fmver == 0, it's a dev firmware. Don't bother testing it.
+            if(fmver && frver >= fmver) {
                 //-- Reset update timer
                 settings.setValue(kUpdateCheck, QDate::currentDate());
                 //-- Show it as this is the shipping version
@@ -282,9 +294,12 @@ TyphoonHQuickInterface::_vehicleAdded(Vehicle* vehicle)
         _vehicle = vehicle;
         connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &TyphoonHQuickInterface::_mavlinkMessageReceived);
         connect(_vehicle, &Vehicle::armedChanged,           this, &TyphoonHQuickInterface::_armedChanged);
+#if !defined (__planner__)
         connect(_vehicle, &Vehicle::dynamicCamerasChanged,  this, &TyphoonHQuickInterface::_dynamicCamerasChanged);
         _dynamicCamerasChanged();
+#endif
     }
+#if !defined (__planner__)
     if(!_passwordSet) {
         //-- If we dind't bind to anyting, it means this isn't really a first run. We've been here before.
         qCDebug(YuneecLog) << "Force firstRun to false";
@@ -293,6 +308,7 @@ TyphoonHQuickInterface::_vehicleAdded(Vehicle* vehicle)
         settings.setValue(kFirstRun, _firstRun);
         emit firstRunChanged();
     }
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -303,7 +319,9 @@ TyphoonHQuickInterface::_vehicleRemoved(Vehicle* vehicle)
         qCDebug(YuneecLog) << "_vehicleRemoved()";
         disconnect(_vehicle, &Vehicle::mavlinkMessageReceived,  this, &TyphoonHQuickInterface::_mavlinkMessageReceived);
         disconnect(_vehicle, &Vehicle::armedChanged,            this, &TyphoonHQuickInterface::_armedChanged);
+#if !defined (__planner__)
         disconnect(_vehicle, &Vehicle::dynamicCamerasChanged,   this, &TyphoonHQuickInterface::_dynamicCamerasChanged);
+#endif
         _vehicle = NULL;
     }
 }
@@ -312,27 +330,62 @@ TyphoonHQuickInterface::_vehicleRemoved(Vehicle* vehicle)
 void
 TyphoonHQuickInterface::_dynamicCamerasChanged()
 {
+#if !defined (__planner__)
     //-- Keep track of camera changes
     if(_vehicle->dynamicCameras()) {
         connect(_vehicle->dynamicCameras(), &QGCCameraManager::camerasChanged, this, &TyphoonHQuickInterface::_camerasChanged);
     }
+#endif
 }
 
 //-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::_camerasChanged()
 {
+#if !defined (__planner__)
     if(_vehicle) {
         if(_vehicle->dynamicCameras() && _vehicle->dynamicCameras()->cameras()->count()) {
-            //-- A camera has just been added. Check for CGOET
+            //-- A camera has just been added. Check for CGOET or E10T
             YuneecCameraControl* pCamera = qobject_cast<YuneecCameraControl*>((*_vehicle->dynamicCameras()->cameras())[0]);
             if(pCamera) {
-                if(pCamera->isCGOET()) {
-                    _enableThermalVideo();
+                if(pCamera->isThermal()) {
+                    connect(pCamera, &YuneecCameraControl::isVideoRecordingChanged, this, &TyphoonHQuickInterface::_isVideoRecordingChanged);
+                    qCDebug(YuneecLog) << "Starting thermal image receiver";
+                    if(pCamera->isCGOET()) {
+                        _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:8554/live"));
+                    } else {
+                        _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:554/stream2"));
+                    }
+                    _videoReceiver->start();
+                    emit thermalImagePresentChanged();
                 }
             }
         }
     }
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_isVideoRecordingChanged()
+{
+#if !defined (__planner__)
+    if(_vehicle && _videoReceiver) {
+        if(_vehicle->dynamicCameras() && _vehicle->dynamicCameras()->cameras()->count()) {
+            YuneecCameraControl* pCamera = qobject_cast<YuneecCameraControl*>((*_vehicle->dynamicCameras()->cameras())[0]);
+            if(pCamera && pCamera->isThermal()) {
+                //-- Record thermal image as well
+                if(pCamera->isVideoRecording()) {
+                    QString videoFile = qgcApp()->toolbox()->videoManager()->videoReceiver()->videoFile();
+                    videoFile.replace(YUNEEC_VIDEO_EXTENSION, tr("-Thermal") + QString(YUNEEC_VIDEO_EXTENSION));
+                   _videoReceiver->startRecording(videoFile);
+                } else {
+                    _videoReceiver->stopRecording();
+                }
+            }
+        }
+    }
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -380,7 +433,7 @@ TyphoonHQuickInterface::launchUpdater()
 void
 TyphoonHQuickInterface::setWiFiPassword(QString pwd, bool restart)
 {
-    if(_pHandler && _vehicle) {
+    if(_vehicle) {
         MAVLinkProtocol* pMavlink = qgcApp()->toolbox()->mavlinkProtocol();
         mavlink_wifi_config_ap_t config;
         memset(&config, 0, sizeof(config));
@@ -398,7 +451,7 @@ TyphoonHQuickInterface::setWiFiPassword(QString pwd, bool restart)
         //-- Save new password (Android Configuration)
         QTimer::singleShot(300, this, &TyphoonHQuickInterface::_setWiFiPassword);
         if(restart) {
-#if defined __android__
+#if defined(__androidx86__)
             QTimer::singleShot(500, this, &TyphoonHQuickInterface::_restart);
 #endif
         }
@@ -423,20 +476,22 @@ TyphoonHQuickInterface::_setWiFiPassword()
 void
 TyphoonHQuickInterface::_powerTrigger()
 {
+#if defined(__androidx86__)
     //-- If RC is not working
     if(!_pHandler->rcActive()) {
         //-- Panic button held down
         emit powerHeld();
     }
+#endif
 }
 
 //-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::_switchStateChanged(M4Lib::SwitchId switchId, M4Lib::SwitchState switchState)
 {
+#if defined(__androidx86__)
     if(switchId == M4Lib::SwitchId::OBSTACLE_AVOIDANCE) {
         if(switchState == M4Lib::SwitchState::ON && !_obsState) {
-
             _obsState = true;
             emit obsStateChanged();
         } else if(_obsState) {
@@ -444,6 +499,10 @@ TyphoonHQuickInterface::_switchStateChanged(M4Lib::SwitchId switchId, M4Lib::Swi
             emit obsStateChanged();
         }
     }
+#else
+    Q_UNUSED(switchId)
+    Q_UNUSED(switchState)
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -475,9 +534,6 @@ TyphoonHQuickInterface::thermalImagePresent()
     bool res = _videoReceiver && _videoReceiver->running();
     return res;
 #else
-#if !defined(WIN32)
-#warning Video Streaming Not Enabled for Yuneec Build!
-#endif
     return false;
 #endif
 }
@@ -500,18 +556,22 @@ TyphoonHQuickInterface::_controllerLocationChanged()
 void
 TyphoonHQuickInterface::_destroyed()
 {
+#if defined(__androidx86__)
     disconnect(_pHandler, &TyphoonHM4Interface::m4StateChanged,       this, &TyphoonHQuickInterface::_m4StateChanged);
     disconnect(_pHandler, &TyphoonHM4Interface::destroyed,            this, &TyphoonHQuickInterface::_destroyed);
     _pHandler = NULL;
+#endif
 }
 
 //-----------------------------------------------------------------------------
 TyphoonHQuickInterface::M4State
 TyphoonHQuickInterface::m4State()
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         return _pHandler->m4State();
     }
+#endif
     return TyphoonHQuickInterface::M4_STATE_NONE;
 }
 
@@ -519,9 +579,11 @@ TyphoonHQuickInterface::m4State()
 double
 TyphoonHQuickInterface::latitude()
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         return _pHandler->controllerLocation().latitude;
     }
+#endif
     return 0.0;
 }
 
@@ -529,9 +591,11 @@ TyphoonHQuickInterface::latitude()
 double
 TyphoonHQuickInterface::longitude()
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         return _pHandler->controllerLocation().longitude;
     }
+#endif
     return 0.0;
 }
 
@@ -539,9 +603,11 @@ TyphoonHQuickInterface::longitude()
 double
 TyphoonHQuickInterface::altitude()
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         return _pHandler->controllerLocation().altitude;
     }
+#endif
     return 0.0;
 }
 
@@ -549,9 +615,11 @@ TyphoonHQuickInterface::altitude()
 double
 TyphoonHQuickInterface::speed()
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         return _pHandler->controllerLocation().speed;
     }
+#endif
     return 0.0;
 }
 
@@ -559,9 +627,11 @@ TyphoonHQuickInterface::speed()
 double
 TyphoonHQuickInterface::gpsCount()
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         return _pHandler->controllerLocation().satelliteCount;
     }
+#endif
     return 0.0;
 }
 
@@ -569,9 +639,11 @@ TyphoonHQuickInterface::gpsCount()
 double
 TyphoonHQuickInterface::gpsAccuracy()
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         return _pHandler->controllerLocation().pdop;
     }
+#endif
     return 0.0;
 }
 
@@ -579,9 +651,11 @@ TyphoonHQuickInterface::gpsAccuracy()
 QString
 TyphoonHQuickInterface::m4StateStr()
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         _pHandler->m4StateStr();
     }
+#endif
     return QString();
 }
 
@@ -589,18 +663,22 @@ TyphoonHQuickInterface::m4StateStr()
 void
 TyphoonHQuickInterface::initM4()
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         _pHandler->softReboot();
     }
+#endif
 }
 
 //-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::enterBindMode()
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         _pHandler->enterBindMode();
     }
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -610,7 +688,7 @@ TyphoonHQuickInterface::startScan(int delay)
     _clearSSids();
     _scanEnabled  = true;
     emit ssidListChanged();
-#if defined __android__
+#if defined(__androidx86__)
     if(delay) {
         QTimer::singleShot(delay, this, &TyphoonHQuickInterface::_scanWifi);
     } else {
@@ -643,7 +721,7 @@ TyphoonHQuickInterface::stopScan()
 void
 TyphoonHQuickInterface::_scanWifi()
 {
-#if defined __android__
+#if defined(__androidx86__)
     reset_jni();
     QAndroidJniObject::callStaticMethod<void>(jniClassName, "startWifiScan", "()V");
 #endif
@@ -662,7 +740,7 @@ TyphoonHQuickInterface::connected()
 void
 TyphoonHQuickInterface::resetWifi()
 {
-#if defined __android__
+#if defined(__androidx86__)
     //-- Stop scanning and clear list
     stopScan();
     _clearSSids();
@@ -705,7 +783,7 @@ TyphoonHQuickInterface::bindWIFI(QString ssid, QString password)
         //-- This is a new binding to a new camera
         _passwordSet = true;
     }
-#if defined __android__
+#if defined(__androidx86__)
     reset_jni();
     QAndroidJniObject::callStaticMethod<void>(jniClassName, "disconnectWifi", "()V");
     //-- There isn't currently a way to disconnect and remove a Vehicle from here.
@@ -722,7 +800,7 @@ TyphoonHQuickInterface::bindWIFI(QString ssid, QString password)
 bool
 TyphoonHQuickInterface::checkForUpdate()
 {
-#if defined __android__
+#if defined(__androidx86__)
     QFileInfo fi(kUpdateFile);
     return fi.exists();
 #else
@@ -765,7 +843,7 @@ void
 TyphoonHQuickInterface::_imageUpdateDone()
 {
     //-- File copy finished. Reboot and update.
-#if defined __android__
+#if defined(__androidx86__)
     _endCopyThread();
     qCDebug(YuneecLog) << "Copy complete. Reboot for update.";
     reset_jni();
@@ -777,7 +855,7 @@ TyphoonHQuickInterface::_imageUpdateDone()
 void
 TyphoonHQuickInterface::updateSystemImage()
 {
-#if defined __android__
+#if defined(__androidx86__)
     qCDebug(YuneecLog) << "Initializing update";
     _updateError.clear();
     _updateProgress = 0;
@@ -808,7 +886,7 @@ TyphoonHQuickInterface::updateSystemImage()
 void
 TyphoonHQuickInterface::_restart()
 {
-#if defined __android__
+#if defined(__androidx86__)
     qCDebug(YuneecLog) << "Restart DataPilot";
     reset_jni();
     QAndroidJniObject::callStaticMethod<void>(jniClassName, "restartApp", "()V");
@@ -819,7 +897,7 @@ TyphoonHQuickInterface::_restart()
 void
 TyphoonHQuickInterface::factoryTest()
 {
-#if defined __android__
+#if defined(__androidx86__)
     qCDebug(YuneecLog) << "Exit to Factory Test";
     reset_jni();
     QAndroidJniObject::callStaticMethod<void>(jniClassName, "launchFactoryTest", "()V");
@@ -878,7 +956,7 @@ TyphoonHFileCopy::startCopy()
 void
 TyphoonHQuickInterface::_delayedBind()
 {
-#if defined __android__
+#if defined(__androidx86__)
     reset_jni();
     QAndroidJniObject javaSSID = QAndroidJniObject::fromString(_ssid);
     QAndroidJniObject javaPassword = QAndroidJniObject::fromString(_password);
@@ -892,7 +970,7 @@ int
 TyphoonHQuickInterface::rssi()
 {
     int res = 0;
-#if defined __android__
+#if defined(__androidx86__)
     reset_jni();
     res = (int)QAndroidJniObject::callStaticMethod<jint>(jniClassName, "wifiRssi", "()I");
 #endif
@@ -904,7 +982,7 @@ qreal
 TyphoonHQuickInterface::rcBattery()
 {
     qreal res = 0.0;
-#if defined __android__
+#if defined(__androidx86__)
     reset_jni();
     res = (qreal)QAndroidJniObject::callStaticMethod<jfloat>(jniClassName, "getBatteryLevel", "()F");
 #endif
@@ -916,7 +994,7 @@ QString
 TyphoonHQuickInterface::connectedSSID()
 {
     QString ssid;
-#if defined __android__
+#if defined(__androidx86__)
     reset_jni();
     QAndroidJniObject str = QAndroidJniObject::callStaticObjectMethod(jniClassName, "connectedSSID", "()Ljava/lang/String;");
     ssid = str.toString();
@@ -937,6 +1015,9 @@ TyphoonHQuickInterface::connectedCamera()
     if(ssid.startsWith("CGOET")) {
         return QString("CGO-ET");
     }
+    if(ssid.startsWith("E10T")) {
+        return QString("E10T");
+    }
     if(ssid.startsWith("E90")) {
         return QString("E90");
     }
@@ -951,7 +1032,7 @@ bool
 TyphoonHQuickInterface::isTyphoon()
 {
     QString ssid = connectedSSID();
-    if(ssid.startsWith("CGOET") || ssid.startsWith("E90_") || ssid.startsWith("E50_")) {
+    if(ssid.startsWith("CGOET") || ssid.startsWith("E10T") || ssid.startsWith("E90_") || ssid.startsWith("E50_")) {
         return true;
     }
     return false;
@@ -961,12 +1042,16 @@ TyphoonHQuickInterface::isTyphoon()
 int
 TyphoonHQuickInterface::rawChannel(int channel)
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         if(channel < _pHandler->rawChannels().size()) {
             uint16_t t = _pHandler->rawChannels()[channel];
             return t;
         }
     }
+#else
+    Q_UNUSED(channel);
+#endif
     return 0;
 }
 
@@ -974,9 +1059,13 @@ TyphoonHQuickInterface::rawChannel(int channel)
 int
 TyphoonHQuickInterface::calChannelState(int channel)
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         return _pHandler->calChannel(channel);
     }
+#else
+    Q_UNUSED(channel);
+#endif
     return 0;
 }
 
@@ -984,9 +1073,11 @@ TyphoonHQuickInterface::calChannelState(int channel)
 bool
 TyphoonHQuickInterface::calibrationComplete()
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         return _pHandler->rcCalibrationComplete();
     }
+#endif
     return false;
 }
 
@@ -1067,19 +1158,41 @@ TyphoonHQuickInterface::refreshMeadiaList()
     clearMediaItems();
     _selectedCount = 0;
     emit selectedCountChanged();
-    QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+    QString photoPath;
+    QStringList nameFilters;
+    if(_browseVideos) {
+        photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Video");
+        nameFilters << "*" YUNEEC_VIDEO_EXTENSION;
+    } else {
+        photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+        nameFilters << "*.jpg" << "*.JPG";
+    }
     QDir photoDir = QDir(photoPath);
     photoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks);
-    photoDir.setSorting(QDir::Time);
-    QStringList nameFilters;
-    nameFilters << "*.jpg" << "*.JPG";
     photoDir.setNameFilters(nameFilters);
     QStringList list = photoDir.entryList();
     foreach (QString fileName, list) {
         TyphoonMediaItem* pItem = new TyphoonMediaItem(this, fileName);
         appendMediaItem(pItem);
     }
+    //-- Asking QDir above to sort by date doesn't always work because it has a low granularity (2 seconds). As the
+    //   files are named based on their date/time to milliseconds, we sort it ourselves here.
+    std::sort(_mediaList.begin(), _mediaList.end(), [](TyphoonMediaItem* a, TyphoonMediaItem* b) { return a->fileName() > b->fileName(); });
     emit mediaListChanged();
+    /*
+    for (int i = 0; i < _mediaList.size(); i++) {
+        qDebug() << _mediaList.at(i)->fileName();
+    }
+    */
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::setBrowseVideos(bool video)
+{
+    _browseVideos = video;
+    emit browseVideosChanged();
+    refreshMeadiaList();
 }
 
 //-----------------------------------------------------------------------------
@@ -1109,7 +1222,12 @@ TyphoonHQuickInterface::deleteSelectedMedia()
             }
         }
     }
-    QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo/");
+    QString photoPath;
+    if(_browseVideos) {
+        photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Video/");
+    } else {
+        photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo/");
+    }
     foreach (QString fileName, toDelete) {
         QString filePath = photoPath + fileName;
         QFile::remove(filePath);
@@ -1133,7 +1251,7 @@ TyphoonHQuickInterface::initExport()
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::exportData(bool exportUTM)
+TyphoonHQuickInterface::exportData(bool exportUTM, bool exportSkyward)
 {
     _copyingFiles = true;
     _updateProgress = 0;
@@ -1145,7 +1263,7 @@ TyphoonHQuickInterface::exportData(bool exportUTM)
     connect(_exporter, &YExportFiles::copyCompleted,    this, &TyphoonHQuickInterface::_copyCompleted);
     connect(_exporter, &YExportFiles::message,          this, &TyphoonHQuickInterface::_exportMessage);
     _exportMessage(QString(tr("Copying files...")));
-    _exporter->exportData(exportUTM);
+    _exporter->exportData(exportUTM, exportSkyward);
 }
 
 //-----------------------------------------------------------------------------
@@ -1258,36 +1376,44 @@ TyphoonHQuickInterface::_importMissions()
 void
 TyphoonHQuickInterface::manualBind()
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         _pHandler->enterBindMode(true);
     }
+#endif
 }
 
 //-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::startCalibration()
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         _pHandler->startCalibration();
     }
+#endif
 }
 
 //-----------------------------------------------------------------------------
 void
 TyphoonHQuickInterface::stopCalibration()
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         _pHandler->stopCalibration();
     }
+#endif
 }
 
 //-----------------------------------------------------------------------------
 bool
 TyphoonHQuickInterface::rcActive()
 {
+#if defined(__androidx86__)
     if(_pHandler) {
         return _pHandler->rcActive();
     }
+#endif
     return false;
 }
 
@@ -1334,12 +1460,12 @@ TyphoonHQuickInterface::_newSSID(QString ssid, int rssi)
 {
     qCDebug(YuneecLog) << "New SSID" << ssid << rssi;
 #if !defined(QT_DEBUG)
-    if(ssid.startsWith("CGOET") || ssid.startsWith("E90_") || ssid.startsWith("E50_")) {
+    if(ssid.startsWith("CGOET") || ssid.startsWith("E10T") || ssid.startsWith("E90_") || ssid.startsWith("E50_")) {
 #endif
         if(!_findSsid(ssid, rssi)) {
             TyphoonSSIDItem* ssidInfo = new TyphoonSSIDItem(ssid, rssi);
             _ssidList.append(QVariant::fromValue((TyphoonSSIDItem*)ssidInfo));
-            qSort(_ssidList.begin(), _ssidList.end(), compareRSSI);
+            std::sort(_ssidList.begin(), _ssidList.end(), compareRSSI);
             emit ssidListChanged();
         }
 #if !defined(QT_DEBUG)
@@ -1381,17 +1507,6 @@ TyphoonHQuickInterface::_authenticationError()
     emit connectedSSIDChanged();
     emit authenticationError();
     startScan();
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::_enableThermalVideo()
-{
-    if(_videoReceiver) {
-        qCDebug(YuneecLog) << "Starting thermal image receiver";
-        _videoReceiver->start();
-        emit thermalImagePresentChanged();
-    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1587,11 +1702,12 @@ void
 TyphoonHQuickInterface::_imageFileChanged()
 {
     //-- Capture thermal image as well (if any)
-    if(thermalImagePresent()) {
-        QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
-        QDir().mkpath(photoPath);
-        photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + "-" + tr("Thermal") + ".jpg";
-        _videoReceiver->grabImage(photoPath);
+    if(thermalImagePresent() && qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+        QString photoPath = qgcApp()->toolbox()->videoManager()->videoReceiver()->imageFile();
+        if(!photoPath.isEmpty()) {
+            photoPath.replace(".jpg", tr("-Thermal.jpg"));
+            _videoReceiver->grabImage(photoPath);
+        }
     }
 }
 

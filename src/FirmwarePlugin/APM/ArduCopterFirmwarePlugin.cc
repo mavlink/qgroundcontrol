@@ -145,6 +145,9 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         remapV3_5["SERVO13_REVERSED"] = QStringLiteral("RC13_REVERSED");
         remapV3_5["SERVO14_REVERSED"] = QStringLiteral("RC14_REVERSED");
 
+        remapV3_5["ARMING_VOLT_MIN"] = QStringLiteral("ARMING_MIN_VOLT");
+        remapV3_5["ARMING_VOLT2_MIN"] = QStringLiteral("ARMING_MIN_VOLT2");
+
         _remapParamNameIntialized = true;
     }
 }

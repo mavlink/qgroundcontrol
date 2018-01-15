@@ -16,8 +16,12 @@
 #include <QQmlListProperty>
 
 class YExportFiles;
+#if defined(__androidx86__)
 class TyphoonHM4Interface;
+#endif
 class TyphoonHQuickInterface;
+
+#define YUNEEC_VIDEO_EXTENSION ".mkv"
 
 //-----------------------------------------------------------------------------
 // Vehicle List
@@ -87,13 +91,16 @@ public:
         , _fileName(fileName)
         , _selected(false)
     {
+        _isVideo = fileName.endsWith(YUNEEC_VIDEO_EXTENSION, Qt::CaseInsensitive);
     }
 
     Q_PROPERTY(QString  fileName    READ fileName                       CONSTANT)
     Q_PROPERTY(bool     selected    READ selected   WRITE setSelected   NOTIFY selectedChanged)
+    Q_PROPERTY(bool     isVideo     READ isVideo                        CONSTANT)
 
     QString     fileName    () { return _fileName; }
     bool        selected    () { return _selected; }
+    bool        isVideo     () { return _isVideo;  }
 
     void        setSelected (bool sel);
 
@@ -104,6 +111,7 @@ protected:
     TyphoonHQuickInterface*     _parent;
     QString                     _fileName;
     bool                        _selected;
+    bool                        _isVideo;
 };
 
 //-----------------------------------------------------------------------------
@@ -163,6 +171,7 @@ public:
     Q_PROPERTY(bool             bindingWiFi     READ    bindingWiFi         NOTIFY bindingWiFiChanged)
     Q_PROPERTY(bool             isTyphoon       READ    isTyphoon           NOTIFY wifiConnectedChanged)
     Q_PROPERTY(bool             connected       READ    connected           NOTIFY wifiConnectedChanged)
+    Q_PROPERTY(bool             newPasswordSet  READ    newPasswordSet      WRITE setNewPasswordSet         NOTIFY newPasswordSetChanged)
     Q_PROPERTY(QString          connectedSSID   READ    connectedSSID       NOTIFY connectedSSIDChanged)
     Q_PROPERTY(QString          connectedCamera READ    connectedCamera     NOTIFY connectedSSIDChanged)
     Q_PROPERTY(int              rssi            READ    rssi                NOTIFY rssiChanged)
@@ -175,9 +184,11 @@ public:
     Q_PROPERTY(bool             isUpdaterApp    READ    isUpdaterApp        CONSTANT)
     Q_PROPERTY(bool             isInternet      READ    isInternet          NOTIFY isInternetChanged)
     Q_PROPERTY(bool             isDefaultPwd    READ    isDefaultPwd        NOTIFY isDefaultPwdChanged)
+    Q_PROPERTY(bool             desktopPlanner  READ    desktopPlanner      CONSTANT)
 
     Q_PROPERTY(bool             firstRun            READ    firstRun            WRITE   setFirstRun         NOTIFY  firstRunChanged)
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
+    Q_PROPERTY(bool             browseVideos        READ    browseVideos        WRITE   setBrowseVideos     NOTIFY  browseVideosChanged)
 
     Q_PROPERTY(int              J1              READ    J1                  NOTIFY rawChannelChanged)
     Q_PROPERTY(int              J2              READ    J2                  NOTIFY rawChannelChanged)
@@ -226,7 +237,7 @@ public:
     Q_INVOKABLE int  rawChannel         (int channel);
     Q_INVOKABLE int  calChannelState    (int channel);
     Q_INVOKABLE void initExport         ();
-    Q_INVOKABLE void exportData         (bool exportUTM);
+    Q_INVOKABLE void exportData         (bool exportUTM, bool exportSkyward);
     Q_INVOKABLE void cancelExportData   ();
     Q_INVOKABLE void importMission      ();
     Q_INVOKABLE void manualBind         ();
@@ -271,16 +282,29 @@ public:
     QString     flightTime          ();
     QString     copyMessage         () { return _copyMessage; }
     bool        wifiAlertEnabled    () { return _wifiAlertEnabled; }
+    bool        browseVideos        () { return _browseVideos; }
     bool        rcActive            ();
     bool        isFactoryApp        () { return _isFactoryApp; }
     bool        isUpdaterApp        () { return _isUpdaterApp; }
     bool        isInternet          ();
     bool        isDefaultPwd        ();
     bool        firstRun            ();
-
+#if defined (__planner__)
+    bool        desktopPlanner      () { return true; }
+#else
+    bool        desktopPlanner      () { return false; }
+#endif
+#if defined(__androidx86__)
     void        init                (TyphoonHM4Interface* pHandler);
+#else
+    void        init                ();
+#endif
     void        setWifiAlertEnabled (bool enabled) { _wifiAlertEnabled = enabled; emit wifiAlertEnabledChanged(); }
     void        setFirstRun         (bool set);
+    void        setBrowseVideos     (bool video);
+
+    bool        newPasswordSet      () { return _newPasswordSet; }
+    void        setNewPasswordSet   (bool set) { _newPasswordSet = set; emit newPasswordSetChanged(); }
 
     int         J1                  () { return rawChannel(0); }
     int         J2                  () { return rawChannel(1); }
@@ -359,6 +383,7 @@ signals:
     void    calibrationCompleteChanged  ();
     void    calibrationStateChanged     ();
     void    wifiAlertEnabledChanged     ();
+    void    browseVideosChanged         ();
     void    rcActiveChanged             ();
     void    updateErrorChanged          ();
     void    updateProgressChanged       ();
@@ -376,7 +401,8 @@ signals:
     void    thermalOpacityChanged       ();
     void    isInternetChanged           ();
     void    isDefaultPwdChanged         ();
-    void    firstRunChanged          ();
+    void    firstRunChanged             ();
+    void    newPasswordSetChanged       ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -418,12 +444,12 @@ private slots:
     void    _restart                    ();
     void    _imageFileChanged           ();
     void    _setWiFiPassword            ();
+    void    _isVideoRecordingChanged    ();
 
 private:
     void    _saveWifiConfigurations     ();
     void    _loadWifiConfigurations     ();
     void    _endCopyThread              ();
-    void    _enableThermalVideo         ();
 
 private:
     void                    _distanceSensor     (int minDist, int maxDist, int curDist);
@@ -431,7 +457,9 @@ private:
     void                    _clearSSids         ();
 
 private:
+#if defined(__androidx86__)
     TyphoonHM4Interface*    _pHandler;
+#endif
     Vehicle*                _vehicle;
     TyphoonHFileCopy*       _pFileCopy;
     VideoReceiver*          _videoReceiver;
@@ -451,6 +479,7 @@ private:
     bool                    _copyingFiles;
     bool                    _copyingDone;
     bool                    _wifiAlertEnabled;
+    bool                    _browseVideos;
     QString                 _copyMessage;
     QString                 _updateError;
     int                     _updateProgress;
@@ -466,5 +495,7 @@ private:
     bool                    _isUpdaterApp;
     bool                    _updateShown;
     bool                    _firstRun;
-    bool                    _passwordSet;   //-- Was the password set within this session?
+    bool                    _passwordSet;       //-- Was the password set within this session?
+    bool                    _newPasswordSet;    //-- Password changed
+
 };

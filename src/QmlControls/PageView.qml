@@ -38,7 +38,7 @@ Rectangle {
             width:                  parent.height -(_margins * 2)
             sourceSize.width:       width
             fillMode:               Image.PreserveAspectFit
-            visible:                pageWidgetLoader.item.showSettingsIcon
+            visible:                pageWidgetLoader.item ? (pageWidgetLoader.item.showSettingsIcon ? pageWidgetLoader.item.showSettingsIcon : false) : false
 
             QGCMouseArea {
                 fillItem:   parent

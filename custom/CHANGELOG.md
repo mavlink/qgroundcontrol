@@ -1,5 +1,68 @@
 ## DataPilot Release Changelog
 
+### v1.2.27 - Jan 4 2018
+
+*   Fixed delete videos from video browser
+
+### v1.2.26 - Jan 2 2018
+
+*   Implement local video capture and display
+*   Fix ordering of image browser when using the CGOET
+
+### v1.2.25 - Dec 25 2017
+
+*   Fix Structure Scan camera section loading
+
+### v1.2.24 - Dec 22 2017
+
+*   Added file picker for the desktop version (Planner)
+*   Fixed an issue where the Planner was not creating a proper offline vehicle (wrong set of cameras).
+
+### v1.2.23 - Dec 22 2017
+
+*   Internal change. Fixing Jenkins build.
+
+### v1.2.22 - Dec 21 2017
+
+*   Internal change. Switching to the Yuneec MAVLink dialect. No external changes.
+
+### v1.2.21 - Dec 16 2017
+
+*   Fix E10T RTSP URL (Thermal)
+
+### v1.2.20 - Dec 16 2017
+
+*   Reduce memory usage for planning/uploading missions
+
+### v1.2.19 - Dec 15 2017
+
+*   Ask user to power cycle the vehicle for new password to take effect.
+
+### v1.2.18 - Dec 14 2017
+
+*   Add UTM/Geo position editing support
+*    Plan: Add speed/gimbal value carry-over from previous items
+
+### v1.2.17 - Dec 12 2017
+
+*   Add support for Skyward log files
+
+### v1.2.16 - Dec 12 2017
+
+*   Add gimbal angle support to manual Structure Scan
+
+### v1.2.15 - Dec 12 2017
+
+*   Add support for the E10T (Untested)
+
+### v1.2.14 - Dec 11 2017
+
+*   Add support for ISO/Shutter speed to CGOET 
+
+### v1.2.13 - Dec 4 2017
+
+*   Desktop log download
+
 ### v1.2.12 - Nov 30 2017
 
 *   Fine tuning German localization
