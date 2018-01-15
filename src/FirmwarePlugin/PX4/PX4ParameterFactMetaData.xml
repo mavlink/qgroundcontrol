@@ -3310,19 +3310,19 @@ by initializing the estimator to the LPE_LAT/LON parameters when global informat
     </parameter>
     <parameter default="145" name="LPE_FUSION" type="INT32">
       <short_desc>Integer bitmask controlling data fusion</short_desc>
-      <long_desc>Set bits in the following positions to enable: 0 : Set to true to fuse GPS data if available, also requires GPS for altitude init 1 : Set to true to fuse optical flow data if available 2 : Set to true to fuse vision position 3 : Set to true to fuse vision yaw 4 : Set to true to fuse land detector 5 : Set to true to publish AGL as local position down component 6 : Set to true to enable flow gyro compensation 7 : Set to true to enable baro fusion default (145 - GPS only)</long_desc>
+      <long_desc>Set bits in the following positions to enable: 0 : Set to true to fuse GPS data if available, also requires GPS for altitude init 1 : Set to true to fuse optical flow data if available 2 : Set to true to fuse vision position 3 : Set to true to enable landing target 4 : Set to true to fuse land detector 5 : Set to true to publish AGL as local position down component 6 : Set to true to enable flow gyro compensation 7 : Set to true to enable baro fusion default (145 - GPS, baro, land detector)</long_desc>
       <min>0</min>
-      <max>255</max>
+      <max>4294967295</max>
       <scope>modules/local_position_estimator</scope>
       <bitmask>
-        <bit index="0">fuse GPS, requires GPS for alt. init</bit>
-        <bit index="1">fuse optical flow</bit>
-        <bit index="2">fuse vision position</bit>
-        <bit index="3">fuse vision yaw</bit>
-        <bit index="4">fuse land detector</bit>
-        <bit index="5">pub agl as lpos down</bit>
-        <bit index="6">flow gyro compensation</bit>
-        <bit index="7">fuse baro</bit>
+        <bit index="0"> fuse GPS, requires GPS for alt. init</bit>
+        <bit index="1"> fuse optical flow</bit>
+        <bit index="2"> fuse vision position</bit>
+        <bit index="3"> fuse landing target</bit>
+        <bit index="4"> fuse land detector</bit>
+        <bit index="5"> pub agl as lpos down</bit>
+        <bit index="6"> flow gyro compensation</bit>
+        <bit index="7"> fuse baro</bit>
       </bitmask>
     </parameter>
     <parameter default="0.29" name="LPE_GPS_DELAY" type="FLOAT">
@@ -3724,12 +3724,6 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
-      <scope>modules/navigator</scope>
-    </parameter>
-    <parameter default="1" name="MIS_ONBOARD_EN" type="INT32">
-      <short_desc>Persistent onboard mission storage</short_desc>
-      <long_desc>When enabled, missions that have been uploaded by the GCS are stored and reloaded after reboot persistently.</long_desc>
-      <boolean />
       <scope>modules/navigator</scope>
     </parameter>
     <parameter default="2.5" name="MIS_TAKEOFF_ALT" type="FLOAT">
