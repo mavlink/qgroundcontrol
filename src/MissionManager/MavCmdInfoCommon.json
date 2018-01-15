@@ -624,6 +624,52 @@
                 "default":          0
             }
         },
+        {
+            "id":                   195,
+            "rawName":              "MAV_CMD_DO_SET_ROI_LOCATION",
+            "friendlyName":         "Region of interest (ROI)" ,
+            "description":          "Sets the region of interest for cameras.",
+            "specifiesCoordinate":  true,
+            "standaloneCoordinate": true,
+            "friendlyEdit":         true,
+            "category":             "Camera"
+        },
+        {
+            "id":                   196,
+            "rawName":              "MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET",
+            "friendlyName":         "ROI to next waypoint" ,
+            "description":          "Sets the region of interest to point towards the next waypoint with optional offsets.",
+            "specifiesCoordinate":  false,
+            "friendlyEdit":         true,
+            "category":             "Camera",
+            "param5": {
+                "label":            "Pitch offset",
+                "default":          0,
+                "units":            "deg",
+                "decimalPlaces":    0
+            },
+            "param6": {
+                "label":            "Roll offset",
+                "default":          0,
+                "units":            "deg",
+                "decimalPlaces":    0
+            },
+            "param7": {
+                "label":            "Yaw offset",
+                "default":          0,
+                "units":            "deg",
+                "decimalPlaces":    0
+            }
+        },
+        {
+            "id":                   197,
+            "rawName":              "MAV_CMD_DO_SET_ROI_NONE",
+            "friendlyName":         "Cancel ROI" ,
+            "description":          "Cancels the region of interest.",
+            "specifiesCoordinate":  false,
+            "friendlyEdit":         true,
+            "category":             "Camera"
+        },
         { "id": 200, "rawName": "MAV_CMD_DO_CONTROL_VIDEO", "friendlyName": "Control video" },
         {
             "id":                   201,
