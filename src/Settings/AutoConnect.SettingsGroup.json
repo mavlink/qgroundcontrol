@@ -42,6 +42,20 @@
     "defaultValue":     true
 },
 {
+    "name":             "AutoconnectNmeaPort",
+    "shortDescription": "NMEA GPS device for GCS position",
+    "longDescription":  "NMEA GPS device for GCS position",
+    "type":             "string",
+    "defaultValue":     "disabled"
+},
+{
+    "name":             "AutoconnectNmeaBaud",
+    "shortDescription": "NMEA GPS Baudrate",
+    "longDescription":  "NMEA GPS Baudrate",
+    "type":             "uint32",
+    "defaultValue":     4800
+},
+{
     "name":             "AutoconnectUDPListenPort",
     "shortDescription": "UDP port for autoconnect",
     "type":             "uint32",

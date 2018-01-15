@@ -173,6 +173,21 @@ Item {
     }
 
     Connections {
+        target: TyphoonHQuickInterface.mobileSync
+        onDesktopConnectedChanged: {
+            if(TyphoonHQuickInterface.mobileSync.desktopConnected) {
+                if(rootLoader.sourceComponent !== desktopConnectedDlg) {
+                    rootLoader.sourceComponent = desktopConnectedDlg
+                    mainWindow.disableToolbar()
+                }
+            } else {
+                rootLoader.sourceComponent = null
+                mainWindow.enableToolbar()
+            }
+        }
+    }
+
+    Connections {
         target: TyphoonHQuickInterface
         //-- Position from Controller GPS (M4)
         onControllerLocationChanged: {
@@ -1097,6 +1112,75 @@ Item {
             Component.onCompleted: {
                 rootLoader.width  = connectionLostArmedItem.width
                 rootLoader.height = connectionLostArmedItem.height
+                mainWindow.disableToolbar()
+            }
+        }
+    }
+    //-- Desktop is connected
+    Component {
+        id:         desktopConnectedDlg
+        Item {
+            id:         desktopConnectedDlgItem
+            z:          1000000
+            width:      mainWindow.width
+            height:     mainWindow.height
+            Rectangle {
+                id:             desktopConnectedDlgShadow
+                anchors.fill:   desktopConnectedDlgRect
+                radius:         desktopConnectedDlgRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       desktopConnectedDlgShadow
+                visible:            desktopConnectedDlgRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             desktopConnectedDlgShadow
+            }
+            Rectangle {
+                id:     desktopConnectedDlgRect
+                width:  mainWindow.width   * 0.65
+                height: desktopConnectedDlgCol.height * 3
+                radius: ScreenTools.defaultFontPixelWidth
+                color:  qgcPal.alertBackground
+                border.color: qgcPal.alertBorder
+                border.width: 2
+                anchors.centerIn: parent
+                Column {
+                    id:                 desktopConnectedDlgCol
+                    width:              desktopConnectedDlgRect.width
+                    spacing:            ScreenTools.defaultFontPixelHeight * 3
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           qsTr("Connected to Desktop")
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        color:          qgcPal.alertText
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           qsTr("User interface disabled while connected to desktop.")
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
+            }
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+            Component.onCompleted: {
+                rootLoader.width  = desktopConnectedDlgItem.width
+                rootLoader.height = desktopConnectedDlgItem.height
                 mainWindow.disableToolbar()
             }
         }

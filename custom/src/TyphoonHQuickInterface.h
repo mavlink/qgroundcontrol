@@ -17,7 +17,21 @@ class YExportFiles;
 #if defined(__androidx86__)
 class TyphoonHM4Interface;
 #endif
+#if defined(__planner__)
+class QGCSyncFilesDesktop;
+#else
+class QGCSyncFilesMobile;
+#endif
+
 class TyphoonHQuickInterface;
+class QUdpSocket;
+
+#define YUNEEC_VIDEO_EXTENSION  ".mkv"
+
+#define QGC_UDP_BROADCAST_PORT  14549
+#define QGC_RPC_PORT            14548
+
+#define QGC_MOBILE_NAME         "ST16S_"    //-- Needs to go to AppSettings
 
 //-----------------------------------------------------------------------------
 // Vehicle List
@@ -87,13 +101,16 @@ public:
         , _fileName(fileName)
         , _selected(false)
     {
+        _isVideo = fileName.endsWith(YUNEEC_VIDEO_EXTENSION, Qt::CaseInsensitive);
     }
 
     Q_PROPERTY(QString  fileName    READ fileName                       CONSTANT)
     Q_PROPERTY(bool     selected    READ selected   WRITE setSelected   NOTIFY selectedChanged)
+    Q_PROPERTY(bool     isVideo     READ isVideo                        CONSTANT)
 
     QString     fileName    () { return _fileName; }
     bool        selected    () { return _selected; }
+    bool        isVideo     () { return _isVideo;  }
 
     void        setSelected (bool sel);
 
@@ -104,6 +121,7 @@ protected:
     TyphoonHQuickInterface*     _parent;
     QString                     _fileName;
     bool                        _selected;
+    bool                        _isVideo;
 };
 
 //-----------------------------------------------------------------------------
@@ -182,9 +200,14 @@ public:
     Q_PROPERTY(bool             isInternet      READ    isInternet          NOTIFY isInternetChanged)
     Q_PROPERTY(bool             isDefaultPwd    READ    isDefaultPwd        NOTIFY isDefaultPwdChanged)
     Q_PROPERTY(bool             desktopPlanner  READ    desktopPlanner      CONSTANT)
-
+#if defined(__planner__)
+    Q_PROPERTY(QGCSyncFilesDesktop* desktopSync READ    desktopSync         NOTIFY desktopSyncChanged)
+#else
+    Q_PROPERTY(QGCSyncFilesMobile* mobileSync   READ    mobileSync          NOTIFY mobileSyncChanged)
+#endif
     Q_PROPERTY(bool             firstRun            READ    firstRun            WRITE   setFirstRun         NOTIFY  firstRunChanged)
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
+    Q_PROPERTY(bool             browseVideos        READ    browseVideos        WRITE   setBrowseVideos     NOTIFY  browseVideosChanged)
     Q_PROPERTY(LedState         ledOptions          READ    ledOptions          WRITE   setLedOptions       NOTIFY  ledOptionsChanged)
 
     Q_PROPERTY(int              J1              READ    J1                  NOTIFY rawChannelChanged)
@@ -279,6 +302,7 @@ public:
     QString     flightTime          ();
     QString     copyMessage         () { return _copyMessage; }
     bool        wifiAlertEnabled    () { return _wifiAlertEnabled; }
+    bool        browseVideos        () { return _browseVideos; }
     bool        rcActive            ();
     bool        isFactoryApp        () { return _isFactoryApp; }
     bool        isUpdaterApp        () { return _isUpdaterApp; }
@@ -287,8 +311,10 @@ public:
     bool        firstRun            ();
 #if defined (__planner__)
     bool        desktopPlanner      () { return true; }
+    QGCSyncFilesDesktop* desktopSync() { return _desktopSync; }
 #else
     bool        desktopPlanner      () { return false; }
+    QGCSyncFilesMobile* mobileSync  () { return _mobileSync; }
 #endif
 #if defined(__androidx86__)
     void        init                (TyphoonHM4Interface* pHandler);
@@ -297,6 +323,7 @@ public:
 #endif
     void        setWifiAlertEnabled (bool enabled) { _wifiAlertEnabled = enabled; emit wifiAlertEnabledChanged(); }
     void        setFirstRun         (bool set);
+    void        setBrowseVideos     (bool video);
 
     bool        newPasswordSet      () { return _newPasswordSet; }
     void        setNewPasswordSet   (bool set) { _newPasswordSet = set; emit newPasswordSetChanged(); }
@@ -381,6 +408,7 @@ signals:
     void    calibrationCompleteChanged  ();
     void    calibrationStateChanged     ();
     void    wifiAlertEnabledChanged     ();
+    void    browseVideosChanged         ();
     void    rcActiveChanged             ();
     void    updateErrorChanged          ();
     void    updateProgressChanged       ();
@@ -400,6 +428,11 @@ signals:
     void    isDefaultPwdChanged         ();
     void    firstRunChanged             ();
     void    newPasswordSetChanged       ();
+#if defined(__planner__)
+    void    desktopSyncChanged          ();
+#else
+    void    mobileSyncChanged           ();
+#endif
     void    ledOptionsChanged           ();
 
 private slots:
@@ -436,11 +469,12 @@ private slots:
     void    _camerasChanged             ();
     void    _internetUpdated            ();
     void    _exportCompleted            ();
-    void    _copyCompleted              (quint32 totalCount, quint32 curCount);
+    void    _copyProgress               (quint32 totalCount, quint32 curCount);
     void    _exportMessage              (QString message);
     void    _restart                    ();
     void    _imageFileChanged           ();
     void    _setWiFiPassword            ();
+    void    _isVideoRecordingChanged    ();
 
 private:
     void    _saveWifiConfigurations     ();
@@ -475,6 +509,7 @@ private:
     bool                    _copyingFiles;
     bool                    _copyingDone;
     bool                    _wifiAlertEnabled;
+    bool                    _browseVideos;
     QString                 _copyMessage;
     QString                 _updateError;
     int                     _updateProgress;
@@ -492,6 +527,11 @@ private:
     bool                    _firstRun;
     bool                    _passwordSet;       //-- Was the password set within this session?
     bool                    _newPasswordSet;    //-- Password changed
+#if defined(__planner__)
+    QGCSyncFilesDesktop*    _desktopSync;
+#else
+    QGCSyncFilesMobile*     _mobileSync;
+#endif
     LedState                _ledState;          //-- Internally kept state as the vehicle does not tells us what state the LEDs are
 
 };

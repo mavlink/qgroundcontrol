@@ -116,6 +116,11 @@ public:
     /// set into the link when it is added to LinkManager
     uint8_t mavlinkChannel(void) const;
 
+    /// Returns whether this link is high latency or not. High latency links should only perform
+    /// minimal communication with vehicle.
+    ///     signals: highLatencyChanged
+    bool highLatency(void) const { return _highLatency; }
+
     bool decodedFirstMavlinkPacket(void) const { return _decodedFirstMavlinkPacket; }
     bool setDecodedFirstMavlinkPacket(bool decodedFirstMavlinkPacket) { return _decodedFirstMavlinkPacket = decodedFirstMavlinkPacket; }
 
@@ -149,6 +154,7 @@ signals:
     void autoconnectChanged(bool autoconnect);
     void activeChanged(bool active);
     void _invokeWriteBytes(QByteArray);
+    void highLatencyChanged(bool highLatency);
 
     /// Signalled when a link suddenly goes away due to it being removed by for example pulling the cable to the connection.
     void connectionRemoved(LinkInterface* link);
@@ -202,7 +208,8 @@ protected:
     void _logOutputDataRate(quint64 byteCount, qint64 time);
 
     SharedLinkConfigurationPointer _config;
-    
+    bool _highLatency;
+
 private:
     /**
      * @brief logDataRateToBuffer Stores transmission times/amounts for statistics

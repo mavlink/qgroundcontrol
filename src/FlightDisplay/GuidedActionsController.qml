@@ -48,6 +48,7 @@ Item {
     readonly property string landAbortTitle:                qsTr("Land Abort")
     readonly property string setWaypointTitle:              qsTr("Set Waypoint")
     readonly property string gotoTitle:                     qsTr("Goto Location")
+    readonly property string vtolTransitionTitle:           qsTr("VTOL Transition")
 
     readonly property string armMessage:                        qsTr("Arm the vehicle.")
     readonly property string disarmMessage:                     qsTr("Disarm the vehicle")
@@ -67,6 +68,8 @@ Item {
     readonly property string landAbortMessage:                  qsTr("Abort the landing sequence.")
     readonly property string pauseMessage:                      qsTr("Pause the vehicle at it's current position.")
     readonly property string mvPauseMessage:                    qsTr("Pause all vehicles at their current position.")
+    readonly property string vtolTransitionFwdMessage:          qsTr("Transition VTOL to fixed wing flight.")
+    readonly property string vtolTransitionMRMessage:           qsTr("Transition VTOL to multi-rotor flight.")
 
     readonly property int actionRTL:                        1
     readonly property int actionLand:                       2
@@ -87,6 +90,8 @@ Item {
     readonly property int actionPause:                      17
     readonly property int actionMVPause:                    18
     readonly property int actionMVStartMission:             19
+    readonly property int actionVtolTransitionToFwdFlight:  20
+    readonly property int actionVtolTransitionToMRFlight:   21
 
     property bool showEmergenyStop:     !_hideEmergenyStop && _activeVehicle && _vehicleArmed && _vehicleFlying
     property bool showArm:              _activeVehicle && !_vehicleArmed
@@ -208,7 +213,7 @@ Item {
             confirmDialog.title = takeoffTitle
             confirmDialog.message = takeoffMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showTakeoff })
-            altitudeSlider.reset()
+            altitudeSlider.setToMinimumTakeoff()
             altitudeSlider.visible = true
             break;
         case actionStartMission:
@@ -287,6 +292,16 @@ Item {
             confirmDialog.message = mvPauseMessage
             confirmDialog.hideTrigger = true
             break;
+        case actionVtolTransitionToFwdFlight:
+            confirmDialog.title = vtolTransitionTitle
+            confirmDialog.message = vtolTransitionFwdMessage
+            confirmDialog.hideTrigger = true
+            break
+        case actionVtolTransitionToMRFlight:
+            confirmDialog.title = vtolTransitionTitle
+            confirmDialog.message = vtolTransitionMRMessage
+            confirmDialog.hideTrigger = true
+            break
         default:
             console.warn("Unknown actionCode", actionCode)
             return
@@ -358,6 +373,12 @@ Item {
                 var vehicle = rgVehicle.get(i)
                 vehicle.pauseVehicle()
             }
+            break
+        case actionVtolTransitionToFwdFlight:
+            _activeVehicle.vtolInFwdFlight = true
+            break
+        case actionVtolTransitionToMRFlight:
+            _activeVehicle.vtolInFwdFlight = false
             break
         default:
             console.warn(qsTr("Internal error: unknown actionCode"), actionCode)

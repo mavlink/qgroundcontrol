@@ -6,11 +6,172 @@
 
 #include "m4serial.h"
 #include "m4util.h"
+#include <errno.h>
+
+#if defined(USE_QT_SERIALPORT)
+//-----------------------------------------------------------------------------
+M4SerialComm::M4SerialComm(QObject* parent)
+    : QObject(parent)
+    , _dataLength(0)
+    , _baudrate(230400)
+    , _currentPacketStatus(PACKET_NONE)
+{
+
+}
+
+//-----------------------------------------------------------------------------
+M4SerialComm::~M4SerialComm()
+{
+    close();
+}
+
+//-----------------------------------------------------------------------------
+bool
+M4SerialComm::init(QString port, int baud)
+{
+    _uart_name = port;
+    _baudrate  = baud;
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+bool
+M4SerialComm::open()
+{
+#if defined(__androidx86__)
+    if(_port.isOpen()) {
+        return false;
+    }
+    _port.setPortName(_uart_name);
+    _port.open(QIODevice::ReadWrite);
+    if(!_port.isOpen()) {
+        qCDebug(YuneecLog) << "SERIAL: Could not open port" << _uart_name << _port.errorString();
+        return false;
+    }
+    _port.setDataTerminalReady(true);
+    _port.setBaudRate     (_baudrate);
+    _port.setDataBits     (QSerialPort::Data8);
+    _port.setFlowControl  (QSerialPort::NoFlowControl);
+    _port.setStopBits     (QSerialPort::OneStop);
+    _port.setParity       (QSerialPort::NoParity);
+    QObject::connect(&_port, &QIODevice::readyRead, this, &M4SerialComm::_readBytes);
+#endif
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+void
+M4SerialComm::close()
+{
+#if defined(__androidx86__)
+    if(_port.isOpen()) {
+        _port.close();
+    }
+#endif
+}
+
+//-----------------------------------------------------------------------------
+bool
+M4SerialComm::write(QByteArray data, bool debug)
+{
+#if defined(__androidx86__)
+    if(_port.isOpen()) {
+        if(debug) {
+            qCDebug(YuneecLog) << data.toHex();
+        }
+        return _port.write(data) == data.length();
+    }
+    return false;
+#else
+    Q_UNUSED(data)
+    Q_UNUSED(debug)
+#endif
+}
+
+//-----------------------------------------------------------------------------
+bool
+M4SerialComm::write(void* data, int length)
+{
+#if defined(__androidx86__)
+    if(_port.isOpen()) {
+        return _port.write((const char*)data, length) == length;
+    }
+    return false;
+#else
+    Q_UNUSED(data)
+    Q_UNUSED(debug)
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+M4SerialComm::_readBytes()
+{
+    qint64 byteCount = _port.bytesAvailable();
+    if (byteCount) {
+        QByteArray buffer;
+        buffer.resize(byteCount);
+        _port.read(buffer.data(), buffer.size());
+        for(int i = 0; i < (int)byteCount; i++) {
+            uint8_t b = buffer[i];
+            switch (_currentPacketStatus) {
+            case PACKET_NONE:
+                if(b == 0x55) {
+                    _currentPacketStatus = PACKET_FIRST_ID;
+                }
+                break;
+            case PACKET_FIRST_ID:
+                if(b == 0x55) {
+                    _currentPacketStatus = PACKET_SECOND_ID;
+                } else {
+                    _currentPacketStatus = PACKET_NONE;
+                }
+                break;
+            case PACKET_SECOND_ID:
+                if(b < 2) {
+                    _currentPacketStatus = PACKET_NONE;
+                } else {
+                    _dataLength = b - 1; // Exclude trailing CRC
+                    _data.clear();
+                    _currentPacketStatus = PACKET_DATA;
+                }
+                break;
+            case PACKET_DATA:
+                if(_data.size() == _dataLength) {
+                    _readPacket(b);
+                    _currentPacketStatus = PACKET_NONE;
+                } else {
+                    _data.append(b);
+                }
+                break;
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+M4SerialComm::_readPacket(uint8_t crc)
+{
+#if defined(__androidx86__)
+    uint8_t oCRC = crc8((uint8_t*)(void*)_data.data(), _data.size());
+    if(crc == oCRC) {
+        emit bytesReady(_data);
+    } else {
+        qCDebug(YuneecLog) << "Bad CRC";
+    }
+#else
+    Q_UNUSED(length);
+#endif
+}
+
+#else
 
 #if defined(__androidx86__)
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #endif
 
 //-----------------------------------------------------------------------------
@@ -53,8 +214,11 @@ M4SerialComm::open()
         qCDebug(YuneecLog) << "SERIAL: Could not open port" << _uart_name;
         return false;
     }
-  //tcgetattr(_fd , &_savedtio);
     if(!_setupPort(_baudrate)) {
+        if(_fd >= 0) {
+            ::close(_fd);
+        }
+        _fd = -1;
         return false;
     }
     _status = SERIAL_PORT_OPEN;
@@ -71,7 +235,6 @@ M4SerialComm::close()
 #if defined(__androidx86__)
     _status = SERIAL_PORT_CLOSED;
     if(_fd >= 0) {
-      //tcsetattr(_fd, TCSANOW, &_savedtio);
         ::close(_fd);
     }
     if(!wait(1000)) {
@@ -207,44 +370,30 @@ bool
 M4SerialComm::_setupPort(int baud)
 {
 #if defined(__androidx86__)
-    struct termios config;
+    struct termios2 config;
     bzero(&config, sizeof(config));
-    config.c_cflag |= (CS8 | CLOCAL | CREAD);
-    config.c_cc[VMIN]  = 1;
-    config.c_cc[VTIME] = 5;
-    bool baudError = false;
-    switch(baud) {
-        case 9600:
-            cfsetispeed(&config, B9600);
-            cfsetospeed(&config, B9600);
-            break;
-        case 19200:
-            cfsetispeed(&config, B19200);
-            cfsetospeed(&config, B19200);
-            break;
-        case 38400:
-            baudError = (cfsetispeed(&config, B38400) < 0 || cfsetospeed(&config, B38400) < 0);
-            break;
-        case 57600:
-            baudError = (cfsetispeed(&config, B57600) < 0 || cfsetospeed(&config, B57600) < 0);
-            break;
-        case 115200:
-            baudError = (cfsetispeed(&config, B115200) < 0 || cfsetospeed(&config, B115200) < 0);
-            break;
-        case 230400:
-            baudError = (cfsetispeed(&config, B230400) < 0 || cfsetospeed(&config, B230400) < 0);
-            break;
-        default:
-            baudError = true;
-            break;
-    }
-    if(baudError) {
-        qCWarning(YuneecLog) << "SERIAL: Could not set baud rate of" << baud;
+    if (ioctl(_fd, TCGETS2, &config) < 0) {
+        const char* errStr = strerror(errno);
+        qCWarning(YuneecLog) << "Could not get termios2:" << errStr;
         return false;
     }
-    tcflush(_fd, TCIFLUSH);
-    if(tcsetattr(_fd, TCSANOW, &config) < 0) {
-        qCWarning(YuneecLog) << "SERIAL: Could not set serial configuration";
+    config.c_iflag &= ~(IGNBRK | BRKINT | ICRNL | INLCR | PARMRK | INPCK | ISTRIP | IXON);
+    config.c_oflag &= ~(OCRNL | ONLCR | ONLRET | ONOCR | OFILL | OPOST);
+    config.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN | ISIG | TOSTOP);
+    config.c_cflag &= ~(CSIZE | PARENB | CBAUD | CRTSCTS);
+    config.c_cflag |= CS8 | BOTHER;
+    config.c_cc[VMIN]   = 1; // We want at least 1 byte to be available.
+    config.c_cc[VTIME]  = 0; // We don't timeout but wait indefinitely.
+    config.c_ispeed = baud;
+    config.c_ospeed = baud;
+    if (ioctl(_fd, TCSETS2, &config) == -1) {
+        const char* errStr = strerror(errno);
+        qCWarning(YuneecLog) << "Could not set terminal attributes:" << errStr;
+        return false;
+    }
+    if (ioctl(_fd, TCFLSH, TCIOFLUSH) == -1) {
+        const char* errStr = strerror(errno);
+        qCWarning(YuneecLog) << "Could not flush terminal:" << errStr;
         return false;
     }
     return true;
@@ -270,3 +419,4 @@ M4SerialComm::_writePort(void* buffer, int len)
     return len;
 #endif
 }
+#endif

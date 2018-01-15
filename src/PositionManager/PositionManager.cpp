@@ -12,9 +12,12 @@
 #include "QGCCorePlugin.h"
 
 QGCPositionManager::QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox)
-    : QGCTool(app, toolbox)
-    , _updateInterval(0)
-    , _currentSource(nullptr)
+    : QGCTool           (app, toolbox)
+    , _updateInterval   (0)
+    , _currentSource    (NULL)
+    , _defaultSource    (NULL)
+    , _nmeaSource       (NULL)
+    , _simulatedSource  (NULL)
 {
 
 }
@@ -22,6 +25,7 @@ QGCPositionManager::QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox)
 QGCPositionManager::~QGCPositionManager()
 {
     delete(_simulatedSource);
+    delete(_nmeaSource);
 }
 
 void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
@@ -41,7 +45,17 @@ void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
    //     _defaultSource = _simulatedSource;
    // }
 
-   setPositionSource(QGCPositionSource::GPS);
+   setPositionSource(QGCPositionSource::InternalGPS);
+}
+
+void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
+{
+    if (_nmeaSource) {
+        delete _nmeaSource;
+    }
+    _nmeaSource = new QNmeaPositionInfoSource(QNmeaPositionInfoSource::RealTimeMode, this);
+    _nmeaSource->setDevice(device);
+    setPositionSource(QGCPositionManager::NmeaGPS);
 }
 
 void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
@@ -73,7 +87,10 @@ void QGCPositionManager::setPositionSource(QGCPositionManager::QGCPositionSource
     case QGCPositionManager::Simulated:
         _currentSource = _simulatedSource;
         break;
-    case QGCPositionManager::GPS:
+    case QGCPositionManager::NmeaGPS:
+        _currentSource = _nmeaSource;
+        break;
+    case QGCPositionManager::InternalGPS:
     default:        
         _currentSource = _defaultSource;
         break;

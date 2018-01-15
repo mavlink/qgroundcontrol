@@ -59,6 +59,7 @@ private:
     QGCSettings*        _pMAVLink;
     QGCSettings*        _pRCCal;
     QGCSettings*        _pLogDownload;
+    QGCSettings*        _pPlannerSync;
 #ifdef QT_DEBUG
     QGCSettings*        _pMockLink;
 #endif

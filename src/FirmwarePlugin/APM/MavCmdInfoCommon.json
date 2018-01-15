@@ -51,9 +51,9 @@
             }
         },
         {
-            "id":                   201,
-            "comment":              "MAV_CMD_DO_SET_ROI",
-            "paramRemove":          "2,3"
+            "id":           201,
+            "comment":      "MAV_CMD_DO_SET_ROI",
+            "paramRemove":  "1,2,3"
         },
         {
             "id":           205,

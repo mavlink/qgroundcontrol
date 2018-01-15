@@ -42,6 +42,7 @@ public:
     Q_PROPERTY(VideoSurface*    videoSurface        READ    videoSurface        CONSTANT)
     Q_PROPERTY(bool             videoRunning        READ    videoRunning        NOTIFY  videoRunningChanged)
     Q_PROPERTY(QString          imageFile           READ    imageFile           NOTIFY  imageFileChanged)
+    Q_PROPERTY(QString          videoFile           READ    videoFile           NOTIFY  videoFileChanged)
     Q_PROPERTY(bool             showFullScreen      READ    showFullScreen      WRITE   setShowFullScreen     NOTIFY showFullScreenChanged)
 
     explicit VideoReceiver(QObject* parent = 0);
@@ -58,6 +59,7 @@ public:
     VideoSurface*   videoSurface    () { return _videoSurface; }
     bool            videoRunning    () { return _videoRunning; }
     QString         imageFile       () { return _imageFile; }
+    QString         videoFile       () { return _videoFile; }
     bool            showFullScreen  () { return _showFullScreen; }
 
     void            grabImage       (QString imageFile);
@@ -67,6 +69,7 @@ public:
 signals:
     void videoRunningChanged        ();
     void imageFileChanged           ();
+    void videoFileChanged           ();
     void showFullScreenChanged      ();
 #if defined(QGC_GST_STREAMING)
     void recordingChanged           ();
@@ -80,7 +83,7 @@ public slots:
     void stop                       ();
     void setUri                     (const QString& uri);
     void stopRecording              ();
-    void startRecording             ();
+    void startRecording             (const QString& videoFile = QString());
 
 private slots:
     void _updateTimer               ();
@@ -136,6 +139,7 @@ private:
 
     QString         _uri;
     QString         _imageFile;
+    QString         _videoFile;
     VideoSurface*   _videoSurface;
     bool            _videoRunning;
     bool            _showFullScreen;

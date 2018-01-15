@@ -45,6 +45,7 @@ SetupPage {
             readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
             readonly property string highlightSuffix:   "</font>"
             readonly property string welcomeText:       qsTr("%1 can upgrade the firmware on Pixhawk devices, SiK Radios and PX4 Flow Smart Cameras.").arg(QGroundControl.appName)
+            readonly property string welcomeTextSingle: qsTr("Update the autopilot firmware to the latest version")
             readonly property string plugInText:        "<big>" + highlightPrefix + "Plug in your device" + highlightSuffix + " via USB to " + highlightPrefix + "start" + highlightSuffix + " firmware upgrade.</big>"
             readonly property string flashFailText:     "If upgrade failed, make sure to connect " + highlightPrefix + "directly" + highlightSuffix + " to a powered USB port on your computer, not through a USB hub. " +
                                                         "Also make sure you are only powered via USB " + highlightPrefix + "not battery" + highlightSuffix + "."
@@ -310,7 +311,7 @@ SetupPage {
                             visible:    !px4Flow
 
                             Rectangle {
-                                height: 1
+                                height:     1
                                 width:      ScreenTools.defaultFontPixelWidth * 5
                                 color:      qgcPal.text
                                 anchors.verticalCenter: _advanced.verticalCenter
@@ -340,7 +341,7 @@ SetupPage {
                             width:      parent.width
                             wrapMode:   Text.WordWrap
                             visible:    showFirmwareTypeSelection
-                            text:       px4Flow ? qsTr("Select which version of the firmware you would like to install:") : qsTr("Select which version of the above flight stack you would like to install:")
+                            text:       _singleFirmwareMode ?  qsTr("Select the standard version or one from the file system (previously downloaded):") : (px4Flow ? qsTr("Select which version of the firmware you would like to install:") : qsTr("Select which version of the above flight stack you would like to install:"))
                         }
 
                         QGCComboBox {
@@ -410,7 +411,7 @@ SetupPage {
                 frameVisible:       false
                 font.pointSize:     ScreenTools.defaultFontPointSize
                 textFormat:         TextEdit.RichText
-                text:               welcomeText
+                text:               _singleFirmwareMode ? welcomeTextSingle : welcomeText
 
                 style: TextAreaStyle {
                     textColor:          qgcPal.text

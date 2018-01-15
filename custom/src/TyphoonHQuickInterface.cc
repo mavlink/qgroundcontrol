@@ -16,6 +16,11 @@
 #include "VideoReceiver.h"
 #include "YuneecCameraControl.h"
 #include "YExportFiles.h"
+#if defined(__planner__)
+#include "QGCSyncFilesDesktop.h"
+#else
+#include "QGCSyncFilesMobile.h"
+#endif
 
 #include <QDirIterator>
 #include <QtAlgorithms>
@@ -77,6 +82,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _copyingFiles(false)
     , _copyingDone(false)
     , _wifiAlertEnabled(true)
+    , _browseVideos(false)
     , _updateProgress(0)
     , _updateDone(false)
     , _selectedCount(0)
@@ -91,6 +97,11 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _firstRun(true)
     , _passwordSet(false)
     , _newPasswordSet(false)
+#if defined(__planner__)
+    , _desktopSync(NULL)
+#else
+    , _mobileSync(NULL)
+#endif
     , _ledState(LedAllOn)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
@@ -119,6 +130,15 @@ TyphoonHQuickInterface::~TyphoonHQuickInterface()
     if(_exporter) {
         _exporter->deleteLater();
     }
+#if defined(__planner__)
+    if(_desktopSync) {
+        _desktopSync->deleteLater();
+    }
+#else
+    if(_mobileSync) {
+        _mobileSync->deleteLater();
+    }
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -156,13 +176,21 @@ TyphoonHQuickInterface::init()
         connect(_pHandler, &TyphoonHM4Interface::calibrationCompleteChanged,   this, &TyphoonHQuickInterface::_calibrationCompleteChanged);
         connect(_pHandler, &TyphoonHM4Interface::rcActiveChanged,              this, &TyphoonHQuickInterface::_rcActiveChanged);
 #endif
+        //-- RPC
+#if defined(__planner__)
+        _desktopSync = new QGCSyncFilesDesktop(this);
+        emit desktopSyncChanged();
+#else
+        _mobileSync = new QGCSyncFilesMobile(this);
+        emit mobileSyncChanged();
+#endif
         connect(getQGCMapEngine(), &QGCMapEngine::internetUpdated,             this, &TyphoonHQuickInterface::_internetUpdated);
         connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded,         this, &TyphoonHQuickInterface::_vehicleAdded);
         connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved,       this, &TyphoonHQuickInterface::_vehicleRemoved);
         connect(qgcApp()->toolbox()->videoManager()->videoReceiver(), &VideoReceiver::imageFileChanged,   this, &TyphoonHQuickInterface::_imageFileChanged);
-        connect(&_scanTimer,    &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
-        connect(&_flightTimer,  &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
-        connect(&_powerTimer,   &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
+        connect(&_scanTimer,        &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
+        connect(&_flightTimer,      &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
+        connect(&_powerTimer,       &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
         _flightTimer.setSingleShot(false);
         _powerTimer.setSingleShot(true);
         //-- Make sure uLog is disabled
@@ -173,7 +201,7 @@ TyphoonHQuickInterface::init()
         filter += qgcApp()->toolbox()->settingsManager()->appSettings()->telemetryFileExtension;
         QDir logDir(qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath(), filter);
         QFileInfoList logs = logDir.entryInfoList();
-        qSort(logs.begin(), logs.end(), created_greater_than);
+        std::sort(logs.begin(), logs.end(), created_greater_than);
         if(logs.size() > 1) {
             qint64 totalLogSize = 0;
             for(int i = 0; i < logs.size(); i++) {
@@ -187,11 +215,13 @@ TyphoonHQuickInterface::init()
                 logs.removeAt(0);
             }
         }
+#if !defined(__planner__)
         //-- Thermal video surface must be created before UI
         if(!_videoReceiver) {
             _videoReceiver = new VideoReceiver(this);
             connect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);
         }
+#endif
 #if defined(__androidx86__)
     }
 #endif
@@ -237,7 +267,8 @@ TyphoonHQuickInterface::shouldWeShowUpdate()
         if(v) {
             uint32_t frver = FIRMWARE_FORCE_UPDATE_MAJOR << 16 | FIRMWARE_FORCE_UPDATE_MINOR << 8 | FIRMWARE_FORCE_UPDATE_PATCH;
             uint32_t fmver = v->firmwareCustomMajorVersion() << 16 | v->firmwareCustomMinorVersion() << 8 | v->firmwareCustomPatchVersion();
-            if(frver >= fmver) {
+            //-- If fmver == 0, it's a dev firmware. Don't bother testing it.
+            if(fmver && frver >= fmver) {
                 //-- Reset update timer
                 settings.setValue(kUpdateCheck, QDate::currentDate());
                 //-- Show it as this is the shipping version
@@ -376,6 +407,7 @@ TyphoonHQuickInterface::_camerasChanged()
             YuneecCameraControl* pCamera = qobject_cast<YuneecCameraControl*>((*_vehicle->dynamicCameras()->cameras())[0]);
             if(pCamera) {
                 if(pCamera->isThermal()) {
+                    connect(pCamera, &YuneecCameraControl::isVideoRecordingChanged, this, &TyphoonHQuickInterface::_isVideoRecordingChanged);
                     qCDebug(YuneecLog) << "Starting thermal image receiver";
                     if(pCamera->isCGOET()) {
                         _videoReceiver->setUri(QStringLiteral("rtsp://192.168.42.1:8554/live"));
@@ -384,6 +416,29 @@ TyphoonHQuickInterface::_camerasChanged()
                     }
                     _videoReceiver->start();
                     emit thermalImagePresentChanged();
+                }
+            }
+        }
+    }
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_isVideoRecordingChanged()
+{
+#if !defined (__planner__)
+    if(_vehicle && _videoReceiver) {
+        if(_vehicle->dynamicCameras() && _vehicle->dynamicCameras()->cameras()->count()) {
+            YuneecCameraControl* pCamera = qobject_cast<YuneecCameraControl*>((*_vehicle->dynamicCameras()->cameras())[0]);
+            if(pCamera && pCamera->isThermal()) {
+                //-- Record thermal image as well
+                if(pCamera->isVideoRecording()) {
+                    QString videoFile = qgcApp()->toolbox()->videoManager()->videoReceiver()->videoFile();
+                    videoFile.replace(YUNEEC_VIDEO_EXTENSION, tr("-Thermal") + QString(YUNEEC_VIDEO_EXTENSION));
+                   _videoReceiver->startRecording(videoFile);
+                } else {
+                    _videoReceiver->stopRecording();
                 }
             }
         }
@@ -1156,19 +1211,41 @@ TyphoonHQuickInterface::refreshMeadiaList()
     clearMediaItems();
     _selectedCount = 0;
     emit selectedCountChanged();
-    QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+    QString photoPath;
+    QStringList nameFilters;
+    if(_browseVideos) {
+        photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Video");
+        nameFilters << "*" YUNEEC_VIDEO_EXTENSION;
+    } else {
+        photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+        nameFilters << "*.jpg" << "*.JPG";
+    }
     QDir photoDir = QDir(photoPath);
     photoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks);
-    photoDir.setSorting(QDir::Time);
-    QStringList nameFilters;
-    nameFilters << "*.jpg" << "*.JPG";
     photoDir.setNameFilters(nameFilters);
     QStringList list = photoDir.entryList();
     foreach (QString fileName, list) {
         TyphoonMediaItem* pItem = new TyphoonMediaItem(this, fileName);
         appendMediaItem(pItem);
     }
+    //-- Asking QDir above to sort by date doesn't always work because it has a low granularity (2 seconds). As the
+    //   files are named based on their date/time to milliseconds, we sort it ourselves here.
+    std::sort(_mediaList.begin(), _mediaList.end(), [](TyphoonMediaItem* a, TyphoonMediaItem* b) { return a->fileName() > b->fileName(); });
     emit mediaListChanged();
+    /*
+    for (int i = 0; i < _mediaList.size(); i++) {
+        qDebug() << _mediaList.at(i)->fileName();
+    }
+    */
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::setBrowseVideos(bool video)
+{
+    _browseVideos = video;
+    emit browseVideosChanged();
+    refreshMeadiaList();
 }
 
 //-----------------------------------------------------------------------------
@@ -1198,7 +1275,12 @@ TyphoonHQuickInterface::deleteSelectedMedia()
             }
         }
     }
-    QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo/");
+    QString photoPath;
+    if(_browseVideos) {
+        photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Video/");
+    } else {
+        photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo/");
+    }
     foreach (QString fileName, toDelete) {
         QString filePath = photoPath + fileName;
         QFile::remove(filePath);
@@ -1231,7 +1313,7 @@ TyphoonHQuickInterface::exportData(bool exportUTM, bool exportSkyward)
     _exportMessage(QString(tr("Searching files...")));
     _exporter = new YExportFiles();
     connect(_exporter, &YExportFiles::completed,        this, &TyphoonHQuickInterface::_exportCompleted);
-    connect(_exporter, &YExportFiles::copyCompleted,    this, &TyphoonHQuickInterface::_copyCompleted);
+    connect(_exporter, &YExportFiles::progress,    this, &TyphoonHQuickInterface::_copyProgress);
     connect(_exporter, &YExportFiles::message,          this, &TyphoonHQuickInterface::_exportMessage);
     _exportMessage(QString(tr("Copying files...")));
     _exporter->exportData(exportUTM, exportSkyward);
@@ -1263,7 +1345,7 @@ TyphoonHQuickInterface::_exportCompleted()
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::_copyCompleted(quint32 totalCount, quint32 curCount)
+TyphoonHQuickInterface::_copyProgress(quint32 totalCount, quint32 curCount)
 {
     if(!totalCount) {
         _updateProgress = 0;
@@ -1315,7 +1397,7 @@ TyphoonHQuickInterface::_importMissions()
         totalFiles++;
         fil << fi;
     }
-    _copyCompleted(totalFiles, 0);
+    _copyProgress(totalFiles, 0);
     QString missionDir = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
     while(fil.size()) {
         QFileInfo fi = fil.first();
@@ -1333,7 +1415,7 @@ TyphoonHQuickInterface::_importMissions()
             emit copyingDoneChanged();
             return;
         }
-        _copyCompleted(totalFiles, ++curCount);
+        _copyProgress(totalFiles, ++curCount);
         qApp->processEvents();
     }
     _exportMessage(QString(tr("%1 files imported").arg(totalFiles)));
@@ -1436,7 +1518,7 @@ TyphoonHQuickInterface::_newSSID(QString ssid, int rssi)
         if(!_findSsid(ssid, rssi)) {
             TyphoonSSIDItem* ssidInfo = new TyphoonSSIDItem(ssid, rssi);
             _ssidList.append(QVariant::fromValue((TyphoonSSIDItem*)ssidInfo));
-            qSort(_ssidList.begin(), _ssidList.end(), compareRSSI);
+            std::sort(_ssidList.begin(), _ssidList.end(), compareRSSI);
             emit ssidListChanged();
         }
 #if !defined(QT_DEBUG)
@@ -1673,11 +1755,12 @@ void
 TyphoonHQuickInterface::_imageFileChanged()
 {
     //-- Capture thermal image as well (if any)
-    if(thermalImagePresent()) {
-        QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
-        QDir().mkpath(photoPath);
-        photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + "-" + tr("Thermal") + ".jpg";
-        _videoReceiver->grabImage(photoPath);
+    if(thermalImagePresent() && qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+        QString photoPath = qgcApp()->toolbox()->videoManager()->videoReceiver()->imageFile();
+        if(!photoPath.isEmpty()) {
+            photoPath.replace(".jpg", tr("-Thermal.jpg"));
+            _videoReceiver->grabImage(photoPath);
+        }
     }
 }
 

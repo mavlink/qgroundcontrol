@@ -328,7 +328,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <decimal>8</decimal>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="3.4" name="BAT_V_EMPTY" type="FLOAT">
+    <parameter default="3.5" name="BAT_V_EMPTY" type="FLOAT">
       <short_desc>Empty cell voltage (5C load)</short_desc>
       <long_desc>Defines the voltage where a single cell of the battery is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
       <unit>V</unit>
@@ -444,7 +444,7 @@ Set to 2 to use heading from motion capture</short_desc>
     </parameter>
   </group>
   <group name="Circuit Breaker">
-    <parameter default="0" name="CBRK_AIRSPD_CHK" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_AIRSPD_CHK" type="INT32">
       <short_desc>Circuit breaker for airspeed sensor</short_desc>
       <long_desc>Setting this parameter to 162128 will disable the check for an airspeed sensor. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -452,7 +452,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="0" name="CBRK_BUZZER" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_BUZZER" type="INT32">
       <short_desc>Circuit breaker for disabling buzzer</short_desc>
       <long_desc>Setting this parameter to 782097 will disable the buzzer audio notification. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -460,7 +460,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="284953" name="CBRK_ENGINEFAIL" type="INT32">
+    <parameter category="Developer" default="284953" name="CBRK_ENGINEFAIL" type="INT32">
       <short_desc>Circuit breaker for engine failure detection</short_desc>
       <long_desc>Setting this parameter to 284953 will disable the engine failure detection. If the aircraft is in engine failure mode the engine failure flag will be set to healthy WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -468,7 +468,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="121212" name="CBRK_FLIGHTTERM" type="INT32">
+    <parameter category="Developer" default="121212" name="CBRK_FLIGHTTERM" type="INT32">
       <short_desc>Circuit breaker for flight termination</short_desc>
       <long_desc>Setting this parameter to 121212 will disable the flight termination action. --&gt; The IO driver will not do flight termination if requested by the FMU WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -476,7 +476,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="0" name="CBRK_GPSFAIL" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_GPSFAIL" type="INT32">
       <short_desc>Circuit breaker for GPS failure detection</short_desc>
       <long_desc>Setting this parameter to 240024 will disable the GPS failure detection. If this check is enabled, then the sensor check will fail if the GPS module is missing. It will also check for excessive signal noise on the GPS receiver and warn the user if detected. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -484,7 +484,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="0" name="CBRK_IO_SAFETY" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_IO_SAFETY" type="INT32">
       <short_desc>Circuit breaker for IO safety</short_desc>
       <long_desc>Setting this parameter to 22027 will disable IO safety. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -492,7 +492,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="0" name="CBRK_RATE_CTRL" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_RATE_CTRL" type="INT32">
       <short_desc>Circuit breaker for rate controller output</short_desc>
       <long_desc>Setting this parameter to 140253 will disable the rate controller uORB publication. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -500,7 +500,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="0" name="CBRK_SUPPLY_CHK" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_SUPPLY_CHK" type="INT32">
       <short_desc>Circuit breaker for power supply check</short_desc>
       <long_desc>Setting this parameter to 894281 will disable the power valid checks in the commander. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -508,7 +508,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="0" name="CBRK_USB_CHK" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_USB_CHK" type="INT32">
       <short_desc>Circuit breaker for USB link check</short_desc>
       <long_desc>Setting this parameter to 197848 will disable the USB connected checks in the commander. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -516,7 +516,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>
-    <parameter default="0" name="CBRK_VELPOSERR" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_VELPOSERR" type="INT32">
       <short_desc>Circuit breaker for position error check</short_desc>
       <long_desc>Setting this parameter to 201607 will disable the position and velocity accuracy checks in the commander. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
@@ -702,7 +702,7 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <increment>1</increment>
       <scope>modules/commander</scope>
     </parameter>
-    <parameter default="0" name="COM_FLIGHT_UUID" type="INT32">
+    <parameter category="System" default="0" name="COM_FLIGHT_UUID" type="INT32" volatile="true">
       <short_desc>Next flight UUID</short_desc>
       <long_desc>This number is incremented automatically after every flight on disarming in order to remember the next flight UUID. The first flight is 0.</long_desc>
       <min>0</min>
@@ -1434,12 +1434,12 @@ Increasing it makes the multi-rotor wind estimates adjust more slowly</short_des
       <decimal>3</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="0" name="EKF2_MAGBIAS_ID" type="INT32">
+    <parameter category="System" default="0" name="EKF2_MAGBIAS_ID" type="INT32">
       <short_desc>ID of Magnetometer the learned bias is for</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="0.0" name="EKF2_MAGBIAS_X" type="FLOAT">
+    <parameter category="System" default="0.0" name="EKF2_MAGBIAS_X" type="FLOAT" volatile="true">
       <short_desc>Learned value of magnetometer X axis bias.
 This is the amount of X-axis magnetometer bias learned by the EKF and saved from the last flight. It must be set to zero if the ground based magnetometer calibration is repeated</short_desc>
       <min>-0.5</min>
@@ -1449,7 +1449,7 @@ This is the amount of X-axis magnetometer bias learned by the EKF and saved from
       <reboot_required>true</reboot_required>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="0.0" name="EKF2_MAGBIAS_Y" type="FLOAT">
+    <parameter category="System" default="0.0" name="EKF2_MAGBIAS_Y" type="FLOAT" volatile="true">
       <short_desc>Learned value of magnetometer Y axis bias.
 This is the amount of Y-axis magnetometer bias learned by the EKF and saved from the last flight. It must be set to zero if the ground based magnetometer calibration is repeated</short_desc>
       <min>-0.5</min>
@@ -1459,7 +1459,7 @@ This is the amount of Y-axis magnetometer bias learned by the EKF and saved from
       <reboot_required>true</reboot_required>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="0.0" name="EKF2_MAGBIAS_Z" type="FLOAT">
+    <parameter category="System" default="0.0" name="EKF2_MAGBIAS_Z" type="FLOAT" volatile="true">
       <short_desc>Learned value of magnetometer Z axis bias.
 This is the amount of Z-axis magnetometer bias learned by the EKF and saved from the last flight. It must be set to zero if the ground based magnetometer calibration is repeated</short_desc>
       <min>-0.5</min>
@@ -1899,10 +1899,13 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
       <scope>modules/fw_att_control</scope>
     </parameter>
     <parameter default="0" name="FW_ARSP_MODE" type="INT32">
-      <short_desc>Disable airspeed sensor</short_desc>
+      <short_desc>Airspeed mode</short_desc>
       <long_desc>For small wings or VTOL without airspeed sensor this parameter can be used to enable flying without an airspeed reading</long_desc>
-      <boolean />
       <scope>modules/fw_att_control</scope>
+      <values>
+        <value code="0">Normal (use airspeed if available)</value>
+        <value code="1">Airspeed disabled</value>
+      </values>
     </parameter>
     <parameter default="0" name="FW_BAT_SCALE_EN" type="INT32">
       <short_desc>Whether to scale throttle by battery power level</short_desc>
@@ -2191,27 +2194,6 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg/s</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-      <scope>modules/fw_att_control</scope>
-    </parameter>
-    <parameter default="0" name="FW_YCO_METHOD" type="INT32">
-      <short_desc>Method used for yaw coordination</short_desc>
-      <long_desc>The param value sets the method used to calculate the yaw rate 0: open-loop zero lateral acceleration based on kinematic constraints 1: closed-loop: try to reduce lateral acceleration to 0 by measuring the acceleration</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <scope>modules/fw_att_control</scope>
-      <values>
-        <value code="0">open-loop</value>
-        <value code="1">closed-loop</value>
-      </values>
-    </parameter>
-    <parameter default="1000.0" name="FW_YCO_VMIN" type="FLOAT">
-      <short_desc>Minimal speed for yaw coordination</short_desc>
-      <long_desc>For airspeeds above this value, the yaw rate is calculated for a coordinated turn. Set to a very high value to disable.</long_desc>
-      <min>0.0</min>
-      <max>1000.0</max>
-      <unit>m/s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
       <scope>modules/fw_att_control</scope>
@@ -3216,13 +3198,13 @@ but also ignore less noise</short_desc>
       <decimal>1</decimal>
       <scope>modules/land_detector</scope>
     </parameter>
-    <parameter default="0" name="LND_FLIGHT_T_HI" type="INT32">
+    <parameter category="System" default="0" name="LND_FLIGHT_T_HI" type="INT32" volatile="true">
       <short_desc>Total flight time in microseconds</short_desc>
       <long_desc>Total flight time of this autopilot. Higher 32 bits of the value. Flight time in microseconds = (LND_FLIGHT_T_HI &lt;&lt; 32) | LND_FLIGHT_T_LO.</long_desc>
       <min>0</min>
       <scope>modules/land_detector</scope>
     </parameter>
-    <parameter default="0" name="LND_FLIGHT_T_LO" type="INT32">
+    <parameter category="System" default="0" name="LND_FLIGHT_T_LO" type="INT32" volatile="true">
       <short_desc>Total flight time in microseconds</short_desc>
       <long_desc>Total flight time of this autopilot. Lower 32 bits of the value. Flight time in microseconds = (LND_FLIGHT_T_HI &lt;&lt; 32) | LND_FLIGHT_T_LO.</long_desc>
       <min>0</min>
@@ -3621,6 +3603,46 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <scope>drivers/mkblctrl</scope>
     </parameter>
   </group>
+  <group name="MPU9x50 Configuration">
+    <parameter default="4" name="MPU_ACC_LPF_ENM" type="INT32">
+      <short_desc>Low pass filter frequency for Accelerometer</short_desc>
+      <scope>platforms/qurt/fc_addon/mpu_spi</scope>
+      <values>
+        <value code="0">MPU9X50_ACC_LPF_460HZ</value>
+        <value code="1">MPU9X50_ACC_LPF_184HZ</value>
+        <value code="2">MPU9X50_ACC_LPF_92HZ</value>
+        <value code="3">MPU9X50_ACC_LPF_41HZ</value>
+        <value code="4">MPU9X50_ACC_LPF_20HZ</value>
+        <value code="5">MPU9X50_ACC_LPF_10HZ</value>
+        <value code="6">MPU9X50_ACC_LPF_5HZ</value>
+        <value code="7">MPU9X50_ACC_LPF_460HZ_NOLPF</value>
+      </values>
+    </parameter>
+    <parameter default="4" name="MPU_GYRO_LPF_ENM" type="INT32">
+      <short_desc>Low pass filter frequency for Gyro</short_desc>
+      <scope>platforms/qurt/fc_addon/mpu_spi</scope>
+      <values>
+        <value code="0">MPU9X50_GYRO_LPF_250HZ</value>
+        <value code="1">MPU9X50_GYRO_LPF_184HZ</value>
+        <value code="2">MPU9X50_GYRO_LPF_92HZ</value>
+        <value code="3">MPU9X50_GYRO_LPF_41HZ</value>
+        <value code="4">MPU9X50_GYRO_LPF_20HZ</value>
+        <value code="5">MPU9X50_GYRO_LPF_10HZ</value>
+        <value code="6">MPU9X50_GYRO_LPF_5HZ</value>
+        <value code="7">MPU9X50_GYRO_LPF_3600HZ_NOLPF</value>
+      </values>
+    </parameter>
+    <parameter default="2" name="MPU_SAMPLE_R_ENM" type="INT32">
+      <short_desc>Sample rate in Hz</short_desc>
+      <scope>platforms/qurt/fc_addon/mpu_spi</scope>
+      <values>
+        <value code="0">MPU9x50_SAMPLE_RATE_100HZ</value>
+        <value code="1">MPU9x50_SAMPLE_RATE_200HZ</value>
+        <value code="2">MPU9x50_SAMPLE_RATE_500HZ</value>
+        <value code="3">MPU9x50_SAMPLE_RATE_1000HZ</value>
+      </values>
+    </parameter>
+  </group>
   <group name="Mission">
     <parameter default="0" name="COM_OBL_ACT" type="INT32">
       <short_desc>Set offboard loss failsafe mode</short_desc>
@@ -3652,6 +3674,15 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <values>
         <value code="0">Assume use of remote control after fallback. Switch to ALTCTL if a height estimate is available, else switch to MANUAL.</value>
         <value code="1">Assume no use of remote control after fallback. Switch to DESCEND if a height estimate is available, else switch to TERMINATION.</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="COM_TAKEOFF_ACT" type="INT32">
+      <short_desc>Action after TAKEOFF has been accepted</short_desc>
+      <long_desc>The mode transition after TAKEOFF has completed successfully.</long_desc>
+      <scope>modules/commander</scope>
+      <values>
+        <value code="0">Hold</value>
+        <value code="1">Mission (if valid)</value>
       </values>
     </parameter>
     <parameter default="1" name="MIS_ALTMODE" type="INT32">
@@ -4785,44 +4816,38 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV1" type="INT32">
       <short_desc>Invert direction of aux output channel 1</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4fmu</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV2" type="INT32">
       <short_desc>Invert direction of aux output channel 2</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4fmu</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV3" type="INT32">
       <short_desc>Invert direction of aux output channel 3</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4fmu</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV4" type="INT32">
       <short_desc>Invert direction of aux output channel 4</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4fmu</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV5" type="INT32">
       <short_desc>Invert direction of aux output channel 5</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4fmu</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV6" type="INT32">
       <short_desc>Invert direction of aux output channel 6</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4fmu</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_TRIM1" type="FLOAT">
@@ -4956,58 +4981,50 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV1" type="INT32">
       <short_desc>Invert direction of main output channel 1</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV2" type="INT32">
       <short_desc>Invert direction of main output channel 2</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV3" type="INT32">
       <short_desc>Invert direction of main output channel 3</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV4" type="INT32">
       <short_desc>Invert direction of main output channel 4</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV5" type="INT32">
       <short_desc>Invert direction of main output channel 5</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV6" type="INT32">
       <short_desc>Invert direction of main output channel 6</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV7" type="INT32">
       <short_desc>Invert direction of main output channel 7</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV8" type="INT32">
       <short_desc>Invert direction of main output channel 8</short_desc>
-      <long_desc>Set to 1 to invert the channel, 0 for default direction.</long_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <reboot_required>true</reboot_required>
       <scope>drivers/px4io</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_TRIM1" type="FLOAT">
@@ -5164,7 +5181,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
   </group>
   <group name="Position Estimator INAV">
-    <parameter default="0" name="CBRK_NO_VISION" type="INT32">
+    <parameter category="Developer" default="0" name="CBRK_NO_VISION" type="INT32">
       <short_desc>Disable vision input</short_desc>
       <long_desc>Set to the appropriate key (328754) to disable vision input.</long_desc>
       <min>0</min>
@@ -5360,6 +5377,13 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>0.0</min>
       <max>10.0</max>
       <scope>modules/position_estimator_inav</scope>
+    </parameter>
+  </group>
+  <group name="RC Receiver Configuration">
+    <parameter default="1" name="RC_RECEIVER_TYPE" type="INT32">
+      <short_desc>RC receiver type</short_desc>
+      <long_desc>Acceptable values: - RC_RECEIVER_SPEKTRUM = 1, - RC_RECEIVER_LEMONRX = 2,</long_desc>
+      <scope>platforms/qurt/fc_addon/rc_receiver</scope>
     </parameter>
   </group>
   <group name="Radio Calibration">
@@ -7051,6 +7075,15 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <increment>0.5</increment>
       <scope>modules/navigator</scope>
     </parameter>
+    <parameter default="0" name="RTL_LAND_TYPE" type="INT32">
+      <short_desc>RTL land location</short_desc>
+      <long_desc>Land at the home location or planned mission landing</long_desc>
+      <scope>modules/navigator</scope>
+      <values>
+        <value code="0">Home Position</value>
+        <value code="1">Planned Landing (Mission)</value>
+      </values>
+    </parameter>
     <parameter default="5.0" name="RTL_MIN_DIST" type="FLOAT">
       <short_desc>Minimum distance to trigger rising to a safe altitude</short_desc>
       <long_desc>If the system is horizontally closer than this distance to home it will land straight on home instead of raising to the return altitude first.</long_desc>
@@ -7266,106 +7299,106 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
     </parameter>
   </group>
   <group name="Sensor Calibration">
-    <parameter default="1" name="CAL_ACC0_EN" type="INT32">
+    <parameter category="Developer" default="1" name="CAL_ACC0_EN" type="INT32">
       <short_desc>Accelerometer 0 enabled</short_desc>
       <boolean />
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0" name="CAL_ACC0_ID" type="INT32">
+    <parameter category="System" default="0" name="CAL_ACC0_ID" type="INT32">
       <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC0_XOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC0_XOFF" type="FLOAT">
       <short_desc>Accelerometer X-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC0_XSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC0_XSCALE" type="FLOAT">
       <short_desc>Accelerometer X-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC0_YOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC0_YOFF" type="FLOAT">
       <short_desc>Accelerometer Y-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC0_YSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC0_YSCALE" type="FLOAT">
       <short_desc>Accelerometer Y-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC0_ZOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC0_ZOFF" type="FLOAT">
       <short_desc>Accelerometer Z-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC0_ZSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC0_ZSCALE" type="FLOAT">
       <short_desc>Accelerometer Z-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1" name="CAL_ACC1_EN" type="INT32">
+    <parameter category="Developer" default="1" name="CAL_ACC1_EN" type="INT32">
       <short_desc>Accelerometer 1 enabled</short_desc>
       <boolean />
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0" name="CAL_ACC1_ID" type="INT32">
+    <parameter category="System" default="0" name="CAL_ACC1_ID" type="INT32">
       <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC1_XOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC1_XOFF" type="FLOAT">
       <short_desc>Accelerometer X-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC1_XSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC1_XSCALE" type="FLOAT">
       <short_desc>Accelerometer X-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC1_YOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC1_YOFF" type="FLOAT">
       <short_desc>Accelerometer Y-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC1_YSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC1_YSCALE" type="FLOAT">
       <short_desc>Accelerometer Y-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC1_ZOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC1_ZOFF" type="FLOAT">
       <short_desc>Accelerometer Z-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC1_ZSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC1_ZSCALE" type="FLOAT">
       <short_desc>Accelerometer Z-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1" name="CAL_ACC2_EN" type="INT32">
+    <parameter category="Developer" default="1" name="CAL_ACC2_EN" type="INT32">
       <short_desc>Accelerometer 2 enabled</short_desc>
       <boolean />
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0" name="CAL_ACC2_ID" type="INT32">
+    <parameter category="System" default="0" name="CAL_ACC2_ID" type="INT32">
       <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC2_XOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC2_XOFF" type="FLOAT">
       <short_desc>Accelerometer X-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC2_XSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC2_XSCALE" type="FLOAT">
       <short_desc>Accelerometer X-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC2_YOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC2_YOFF" type="FLOAT">
       <short_desc>Accelerometer Y-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC2_YSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC2_YSCALE" type="FLOAT">
       <short_desc>Accelerometer Y-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.0" name="CAL_ACC2_ZOFF" type="FLOAT">
+    <parameter category="System" default="0.0" name="CAL_ACC2_ZOFF" type="FLOAT">
       <short_desc>Accelerometer Z-axis offset</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="1.0" name="CAL_ACC2_ZSCALE" type="FLOAT">
+    <parameter category="System" default="1.0" name="CAL_ACC2_ZSCALE" type="FLOAT">
       <short_desc>Accelerometer Z-axis scaling factor</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0" name="CAL_ACC_PRIME" type="INT32">
+    <parameter category="System" default="0" name="CAL_ACC_PRIME" type="INT32">
       <short_desc>Primary accel ID</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
@@ -7796,7 +7829,485 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
   </group>
-  <group name="Sensor Thermal Compensation">
+  <group name="Sensors">
+    <parameter default="63" name="CAL_MAG_SIDES" type="INT32">
+      <short_desc>Bitfield selecting mag sides for calibration</short_desc>
+      <long_desc>DETECT_ORIENTATION_TAIL_DOWN = 1 DETECT_ORIENTATION_NOSE_DOWN = 2 DETECT_ORIENTATION_LEFT = 4 DETECT_ORIENTATION_RIGHT = 8 DETECT_ORIENTATION_UPSIDE_DOWN = 16 DETECT_ORIENTATION_RIGHTSIDE_UP = 32</long_desc>
+      <min>34</min>
+      <max>63</max>
+      <scope>modules/sensors</scope>
+      <values>
+        <value code="34">Two side calibration</value>
+        <value code="38">Three side calibration</value>
+        <value code="63">Six side calibration</value>
+      </values>
+    </parameter>
+    <parameter default="30.0" name="IMU_ACCEL_CUTOFF" type="FLOAT">
+      <short_desc>Driver level cut frequency for accel</short_desc>
+      <long_desc>The cut frequency for the 2nd order butterworth filter on the accel driver. This features is currently supported by the mpu6000 and mpu9250. This only affects the signal sent to the controllers, not the estimators. 0 disables the filter.</long_desc>
+      <min>5</min>
+      <max>1000</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="30.0" name="IMU_GYRO_CUTOFF" type="FLOAT">
+      <short_desc>Driver level cut frequency for gyro</short_desc>
+      <long_desc>The cut frequency for the 2nd order butterworth filter on the gyro driver. This features is currently supported by the mpu6000 and mpu9250. This only affects the signal sent to the controllers, not the estimators. 0 disables the filter.</long_desc>
+      <min>5</min>
+      <max>1000</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="1013.25" name="SENS_BARO_QNH" type="FLOAT">
+      <short_desc>QNH for barometer</short_desc>
+      <min>500</min>
+      <max>1500</max>
+      <unit>hPa</unit>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="SENS_BOARD_ROT" type="INT32">
+      <short_desc>Board rotation</short_desc>
+      <long_desc>This parameter defines the rotation of the FMU board relative to the platform.</long_desc>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+        <value code="8">Roll 180°</value>
+        <value code="9">Roll 180°, Yaw 45°</value>
+        <value code="10">Roll 180°, Yaw 90°</value>
+        <value code="11">Roll 180°, Yaw 135°</value>
+        <value code="12">Pitch 180°</value>
+        <value code="13">Roll 180°, Yaw 225°</value>
+        <value code="14">Roll 180°, Yaw 270°</value>
+        <value code="15">Roll 180°, Yaw 315°</value>
+        <value code="16">Roll 90°</value>
+        <value code="17">Roll 90°, Yaw 45°</value>
+        <value code="18">Roll 90°, Yaw 90°</value>
+        <value code="19">Roll 90°, Yaw 135°</value>
+        <value code="20">Roll 270°</value>
+        <value code="21">Roll 270°, Yaw 45°</value>
+        <value code="22">Roll 270°, Yaw 90°</value>
+        <value code="23">Roll 270°, Yaw 135°</value>
+        <value code="24">Pitch 90°</value>
+        <value code="25">Pitch 270°</value>
+      </values>
+    </parameter>
+    <parameter default="0.0" name="SENS_BOARD_X_OFF" type="FLOAT">
+      <short_desc>Board rotation X (Roll) offset</short_desc>
+      <long_desc>This parameter defines a rotational offset in degrees around the X (Roll) axis It allows the user to fine tune the board offset in the event of misalignment.</long_desc>
+      <unit>deg</unit>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="SENS_BOARD_Y_OFF" type="FLOAT">
+      <short_desc>Board rotation Y (Pitch) offset</short_desc>
+      <long_desc>This parameter defines a rotational offset in degrees around the Y (Pitch) axis. It allows the user to fine tune the board offset in the event of misalignment.</long_desc>
+      <unit>deg</unit>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.0" name="SENS_BOARD_Z_OFF" type="FLOAT">
+      <short_desc>Board rotation Z (YAW) offset</short_desc>
+      <long_desc>This parameter defines a rotational offset in degrees around the Z (Yaw) axis. It allows the user to fine tune the board offset in the event of misalignment.</long_desc>
+      <unit>deg</unit>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="SENS_EN_LL40LS" type="INT32">
+      <short_desc>Lidar-Lite (LL40LS)</short_desc>
+      <min>0</min>
+      <max>2</max>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">PWM</value>
+        <value code="2">I2C</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_EN_MB12XX" type="INT32">
+      <short_desc>Maxbotix Soanr (mb12xx)</short_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="SENS_EN_SF0X" type="INT32">
+      <short_desc>Lightware laser rangefinder (serial)</short_desc>
+      <min>0</min>
+      <max>4</max>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">SF02</value>
+        <value code="2">SF10/a</value>
+        <value code="3">SF10/b</value>
+        <value code="4">SF10/c</value>
+        <value code="5">SF11/c</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_EN_SF1XX" type="INT32">
+      <short_desc>Lightware SF1xx/SF20/LW20 laser rangefinder (i2c)</short_desc>
+      <min>0</min>
+      <max>5</max>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">SF10/a</value>
+        <value code="2">SF10/b</value>
+        <value code="3">SF10/c</value>
+        <value code="4">SF11/c</value>
+        <value code="5">SF/LW20</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_EN_TFMINI" type="INT32">
+      <short_desc>Benewake TFmini laser rangefinder</short_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="SENS_EN_THERMAL" type="INT32">
+      <short_desc>Thermal control of sensor temperature</short_desc>
+      <scope>modules/sensors</scope>
+      <values>
+        <value code="-1">Thermal control unavailable</value>
+        <value code="0">Thermal control off</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_EN_TRANGER" type="INT32">
+      <short_desc>TeraRanger Rangefinder (i2c)</short_desc>
+      <min>0</min>
+      <max>3</max>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Autodetect</value>
+        <value code="2">TROne</value>
+        <value code="3">TREvo</value>
+      </values>
+    </parameter>
+    <parameter default="6" name="SENS_FLOW_ROT" type="INT32">
+      <short_desc>PX4Flow board rotation</short_desc>
+      <long_desc>This parameter defines the yaw rotation of the PX4FLOW board relative to the vehicle body frame. Zero rotation is defined as X on flow board pointing towards front of vehicle. The recommneded installation default for the PX4FLOW board is with the Y axis forward (270 deg yaw).</long_desc>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
+    </parameter>
+  </group>
+  <group name="Snapdragon UART ESC">
+    <parameter default="250000" name="UART_ESC_BAUD" type="INT32">
+      <short_desc>ESC UART baud rate</short_desc>
+      <long_desc>Default rate is 250Kbps, whic is used in off-the-shelf QRP ESC products.</long_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+    </parameter>
+    <parameter default="2" name="UART_ESC_MODEL" type="INT32">
+      <short_desc>ESC model</short_desc>
+      <long_desc>See esc_model_t enum definition in uart_esc_dev.h for all supported ESC model enum values.</long_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+      <values>
+        <value code="0">ESC_200QX</value>
+        <value code="1">ESC_350QX</value>
+        <value code="2">ESC_210QC</value>
+      </values>
+    </parameter>
+    <parameter default="4" name="UART_ESC_MOTOR1" type="INT32">
+      <short_desc>Motor 1 Mapping</short_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+    </parameter>
+    <parameter default="2" name="UART_ESC_MOTOR2" type="INT32">
+      <short_desc>Motor 2 Mapping</short_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+    </parameter>
+    <parameter default="1" name="UART_ESC_MOTOR3" type="INT32">
+      <short_desc>Motor 3 Mapping</short_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+    </parameter>
+    <parameter default="3" name="UART_ESC_MOTOR4" type="INT32">
+      <short_desc>Motor 4 Mapping</short_desc>
+      <scope>platforms/qurt/fc_addon/uart_esc</scope>
+    </parameter>
+  </group>
+  <group name="Subscriber Example">
+    <parameter default="100" name="SUB_INTERV" type="INT32">
+      <short_desc>Interval of one subscriber in the example in ms</short_desc>
+      <unit>ms</unit>
+      <scope>examples/subscriber</scope>
+    </parameter>
+    <parameter default="3.14" name="SUB_TESTF" type="FLOAT">
+      <short_desc>Float Demonstration Parameter in the Example</short_desc>
+      <scope>examples/subscriber</scope>
+    </parameter>
+  </group>
+  <group name="Syslink">
+    <parameter default="231" name="SLNK_RADIO_ADDR1" type="INT32">
+      <short_desc>Operating address of the NRF51 (most significant byte)</short_desc>
+      <scope>modules/syslink</scope>
+    </parameter>
+    <parameter default="3890735079" name="SLNK_RADIO_ADDR2" type="INT32">
+      <short_desc>Operating address of the NRF51 (least significant 4 bytes)</short_desc>
+      <scope>modules/syslink</scope>
+    </parameter>
+    <parameter default="80" name="SLNK_RADIO_CHAN" type="INT32">
+      <short_desc>Operating channel of the NRF51</short_desc>
+      <min>0</min>
+      <max>125</max>
+      <scope>modules/syslink</scope>
+    </parameter>
+    <parameter default="2" name="SLNK_RADIO_RATE" type="INT32">
+      <short_desc>Operating datarate of the NRF51</short_desc>
+      <min>0</min>
+      <max>2</max>
+      <scope>modules/syslink</scope>
+    </parameter>
+  </group>
+  <group name="System">
+    <parameter default="15" name="LED_RGB_MAXBRT" type="INT32">
+      <short_desc>RGB Led brightness limit</short_desc>
+      <long_desc>Set to 0 to disable, 1 for minimum brightness up to 15 (max)</long_desc>
+      <min>0</min>
+      <max>15</max>
+      <scope>drivers/rgbled</scope>
+    </parameter>
+    <parameter default="0" name="SYS_AUTOCONFIG" type="INT32">
+      <short_desc>Automatically configure default values</short_desc>
+      <long_desc>Set to 1 to reset parameters on next system startup (setting defaults). Platform-specific values are used if available. RC* parameters are preserved.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <scope>modules/systemlib</scope>
+      <values>
+        <value code="0">Keep parameters</value>
+        <value code="1">Reset parameters</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SYS_AUTOSTART" type="INT32">
+      <short_desc>Auto-start script index</short_desc>
+      <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Defines the auto-start script used to bootstrap the system.</long_desc>
+      <min>0</min>
+      <max>99999</max>
+      <reboot_required>true</reboot_required>
+      <scope>modules/systemlib</scope>
+    </parameter>
+    <parameter default="0" name="SYS_CAL_ACCEL" type="INT32">
+      <short_desc>Enable auto start of accelerometer thermal calibration at the next power up</short_desc>
+      <long_desc>0 : Set to 0 to do nothing 1 : Set to 1 to start a calibration at next boot This parameter is reset to zero when the the temperature calibration starts. default (0, no calibration)</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <scope>modules/systemlib</scope>
+    </parameter>
+    <parameter default="0" name="SYS_CAL_BARO" type="INT32">
+      <short_desc>Enable auto start of barometer thermal calibration at the next power up</short_desc>
+      <long_desc>0 : Set to 0 to do nothing 1 : Set to 1 to start a calibration at next boot This parameter is reset to zero when the the temperature calibration starts. default (0, no calibration)</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <scope>modules/systemlib</scope>
+    </parameter>
+    <parameter default="0" name="SYS_CAL_GYRO" type="INT32">
+      <short_desc>Enable auto start of rate gyro thermal calibration at the next power up</short_desc>
+      <long_desc>0 : Set to 0 to do nothing 1 : Set to 1 to start a calibration at next boot This parameter is reset to zero when the the temperature calibration starts. default (0, no calibration)</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <scope>modules/systemlib</scope>
+    </parameter>
+    <parameter default="24" name="SYS_CAL_TDEL" type="INT32">
+      <short_desc>Required temperature rise during thermal calibration</short_desc>
+      <long_desc>A temperature increase greater than this value is required during calibration. Calibration will complete for each sensor when the temperature increase above the starting temeprature exceeds the value set by SYS_CAL_TDEL. If the temperature rise is insufficient, the calibration will continue indefinitely and the board will need to be repowered to exit.</long_desc>
+      <min>10</min>
+      <unit>deg C</unit>
+      <scope>modules/systemlib</scope>
+    </parameter>
+    <parameter default="10" name="SYS_CAL_TMAX" type="INT32">
+      <short_desc>Maximum starting temperature for thermal calibration</short_desc>
+      <long_desc>Temperature calibration will not start if the temperature of any sensor is higher than the value set by SYS_CAL_TMAX.</long_desc>
+      <unit>deg C</unit>
+      <scope>modules/systemlib</scope>
+    </parameter>
+    <parameter default="5" name="SYS_CAL_TMIN" type="INT32">
+      <short_desc>Minimum starting temperature for thermal calibration</short_desc>
+      <long_desc>Temperature calibration for each sensor will ignore data if the temperature is lower than the value set by SYS_CAL_TMIN.</long_desc>
+      <unit>deg C</unit>
+      <scope>modules/systemlib</scope>
+    </parameter>
+    <parameter default="157600" name="SYS_COMPANION" type="INT32">
+      <short_desc>TELEM2 as companion computer link</short_desc>
+      <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Configures the baud rate of the TELEM2 connector as companion computer interface.</long_desc>
+      <min>0</min>
+      <max>1921600</max>
+      <reboot_required>true</reboot_required>
+      <scope>modules/systemlib</scope>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="10">FrSky Telemetry</value>
+        <value code="20">Crazyflie (Syslink)</value>
+        <value code="57600">Companion Link (57600 baud, 8N1)</value>
+        <value code="157600">OSD (57600 baud, 8N1)</value>
+        <value code="257600">Command Receiver (57600 baud, 8N1)</value>
+        <value code="319200">Normal Telemetry (19200 baud, 8N1)</value>
+        <value code="338400">Normal Telemetry (38400 baud, 8N1)</value>
+        <value code="357600">Normal Telemetry (57600 baud, 8N1)</value>
+        <value code="419200">Iridium Telemetry (19200 baud, 8N1)</value>
+        <value code="921600">Companion Link (921600 baud, 8N1)</value>
+        <value code="1921600">ESP8266 (921600 baud, 8N1)</value>
+        <value code="3115200">Normal Telemetry (115200 baud, 8N1)</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SYS_FMU_TASK" type="INT32">
+      <short_desc>Run the FMU as a task to reduce latency</short_desc>
+      <long_desc>If true, the FMU will run in a separate task instead of on the work queue. Set this if low latency is required, for example for racing. This is a trade-off between RAM usage and latency: running as a task, it requires a separate stack and directly polls on the control topics, whereas running on the work queue, it runs at a fixed update rate.</long_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+      <scope>drivers/px4fmu</scope>
+    </parameter>
+    <parameter default="0" name="SYS_HITL" type="INT32">
+      <short_desc>Enable HITL mode on next boot</short_desc>
+      <long_desc>While enabled the system will boot in HITL mode and not enable all sensors and checks. When disabled the same vehicle can be normally flown outdoors.</long_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+      <scope>modules/systemlib</scope>
+    </parameter>
+    <parameter default="1" name="SYS_LOGGER" type="INT32">
+      <short_desc>SD logger</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <scope>modules/systemlib</scope>
+      <values>
+        <value code="0">sdlog2 (legacy)</value>
+        <value code="1">logger (default)</value>
+      </values>
+    </parameter>
+    <parameter default="2" name="SYS_MC_EST_GROUP" type="INT32">
+      <short_desc>Set multicopter estimator group</short_desc>
+      <long_desc>Set the group of estimators used for multicopters and VTOLs</long_desc>
+      <min>1</min>
+      <max>2</max>
+      <reboot_required>true</reboot_required>
+      <scope>modules/systemlib</scope>
+      <values>
+        <value code="1">local_position_estimator, attitude_estimator_q</value>
+        <value code="2">ekf2</value>
+      </values>
+    </parameter>
+    <parameter default="1" name="SYS_PARAM_VER" type="INT32">
+      <short_desc>Parameter version</short_desc>
+      <long_desc>This monotonically increasing number encodes the parameter compatibility set. whenever it increases parameters might not be backwards compatible and ground control stations should suggest a fresh configuration.</long_desc>
+      <min>0</min>
+      <scope>modules/systemlib</scope>
+    </parameter>
+    <parameter category="System" default="2" name="SYS_RESTART_TYPE" type="INT32" volatile="true">
+      <short_desc>Set restart type</short_desc>
+      <long_desc>Set by px4io to indicate type of restart</long_desc>
+      <min>0</min>
+      <max>2</max>
+      <scope>modules/systemlib</scope>
+      <values>
+        <value code="0">Data survives resets</value>
+        <value code="1">Data survives in-flight resets only</value>
+        <value code="2">Data does not survive reset</value>
+      </values>
+    </parameter>
+    <parameter default="1" name="SYS_STCK_EN" type="INT32">
+      <short_desc>Enable stack checking</short_desc>
+      <boolean />
+      <scope>modules/systemlib</scope>
+    </parameter>
+    <parameter default="1" name="SYS_USE_IO" type="INT32">
+      <short_desc>Set usage of IO board</short_desc>
+      <long_desc>Can be used to use a standard startup script but with a FMU only set-up. Set to 0 to force the FMU only set-up.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <boolean />
+      <reboot_required>true</reboot_required>
+      <scope>drivers/px4io</scope>
+    </parameter>
+  </group>
+  <group name="Testing">
+    <parameter default="2" name="TEST_1" type="INT32">
+      <short_desc>TEST_1</short_desc>
+      <scope>systemcmds/tests</scope>
+    </parameter>
+    <parameter default="4" name="TEST_2" type="INT32">
+      <short_desc>TEST_2</short_desc>
+      <scope>systemcmds/tests</scope>
+    </parameter>
+    <parameter default="0.01" name="TEST_D" type="FLOAT">
+      <short_desc>TEST_D</short_desc>
+      <scope>lib/controllib/controllib_test</scope>
+    </parameter>
+    <parameter default="2.0" name="TEST_DEV" type="FLOAT">
+      <short_desc>TEST_DEV</short_desc>
+      <scope>lib/controllib/controllib_test</scope>
+    </parameter>
+    <parameter default="10.0" name="TEST_D_LP" type="FLOAT">
+      <short_desc>TEST_D_LP</short_desc>
+      <scope>lib/controllib/controllib_test</scope>
+    </parameter>
+    <parameter default="10.0" name="TEST_HP" type="FLOAT">
+      <short_desc>TEST_HP</short_desc>
+      <scope>lib/controllib/controllib_test</scope>
+    </parameter>
+    <parameter default="0.1" name="TEST_I" type="FLOAT">
+      <short_desc>TEST_I</short_desc>
+      <scope>lib/controllib/controllib_test</scope>
+    </parameter>
+    <parameter default="1.0" name="TEST_I_MAX" type="FLOAT">
+      <short_desc>TEST_I_MAX</short_desc>
+      <scope>lib/controllib/controllib_test</scope>
+    </parameter>
+    <parameter default="10.0" name="TEST_LP" type="FLOAT">
+      <short_desc>TEST_LP</short_desc>
+      <scope>lib/controllib/controllib_test</scope>
+    </parameter>
+    <parameter default="1.0" name="TEST_MAX" type="FLOAT">
+      <short_desc>TEST_MAX</short_desc>
+      <scope>lib/controllib/controllib_test</scope>
+    </parameter>
+    <parameter default="1.0" name="TEST_MEAN" type="FLOAT">
+      <short_desc>TEST_MEAN</short_desc>
+      <scope>lib/controllib/controllib_test</scope>
+    </parameter>
+    <parameter default="-1.0" name="TEST_MIN" type="FLOAT">
+      <short_desc>TEST_MIN</short_desc>
+      <scope>lib/controllib/controllib_test</scope>
+    </parameter>
+    <parameter default="0.2" name="TEST_P" type="FLOAT">
+      <short_desc>TEST_P</short_desc>
+      <scope>lib/controllib/controllib_test</scope>
+    </parameter>
+    <parameter default="12345678" name="TEST_PARAMS" type="INT32">
+      <short_desc>TEST_PARAMS</short_desc>
+      <scope>systemcmds/tests</scope>
+    </parameter>
+    <parameter default="16" name="TEST_RC2_X" type="INT32">
+      <short_desc>TEST_RC2_X</short_desc>
+      <scope>systemcmds/tests</scope>
+    </parameter>
+    <parameter default="8" name="TEST_RC_X" type="INT32">
+      <short_desc>TEST_RC_X</short_desc>
+      <scope>systemcmds/tests</scope>
+    </parameter>
+    <parameter default="0.5" name="TEST_TRIM" type="FLOAT">
+      <short_desc>TEST_TRIM</short_desc>
+      <scope>lib/controllib/controllib_test</scope>
+    </parameter>
+  </group>
+  <group name="Thermal Compensation">
     <parameter default="0" name="TC_A0_ID" type="INT32">
       <short_desc>ID of Accelerometer that the calibration is for</short_desc>
       <scope>modules/sensors</scope>
@@ -8026,9 +8537,10 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="TC_A_ENABLE" type="INT32">
-      <short_desc>Set to 1 to enable thermal compensation for accelerometer sensors. Set to 0 to disable</short_desc>
+      <short_desc>Thermal compensation for accelerometer sensors</short_desc>
       <min>0</min>
       <max>1</max>
+      <boolean />
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="TC_B0_ID" type="INT32">
@@ -8164,9 +8676,10 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="TC_B_ENABLE" type="INT32">
-      <short_desc>Set to 1 to enable thermal compensation for barometric pressure sensors. Set to 0 to disable</short_desc>
+      <short_desc>Thermal compensation for barometric pressure sensors</short_desc>
       <min>0</min>
       <max>1</max>
+      <boolean />
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="TC_G0_ID" type="INT32">
@@ -8398,449 +8911,11 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="TC_G_ENABLE" type="INT32">
-      <short_desc>Set to 1 to enable thermal compensation for rate gyro sensors. Set to 0 to disable</short_desc>
-      <min>0</min>
-      <max>1</max>
-      <scope>modules/sensors</scope>
-    </parameter>
-  </group>
-  <group name="Sensors">
-    <parameter default="63" name="CAL_MAG_SIDES" type="INT32">
-      <short_desc>Bitfield selecting mag sides for calibration</short_desc>
-      <long_desc>DETECT_ORIENTATION_TAIL_DOWN = 1 DETECT_ORIENTATION_NOSE_DOWN = 2 DETECT_ORIENTATION_LEFT = 4 DETECT_ORIENTATION_RIGHT = 8 DETECT_ORIENTATION_UPSIDE_DOWN = 16 DETECT_ORIENTATION_RIGHTSIDE_UP = 32</long_desc>
-      <min>34</min>
-      <max>63</max>
-      <scope>modules/sensors</scope>
-      <values>
-        <value code="34">Two side calibration</value>
-        <value code="38">Three side calibration</value>
-        <value code="63">Six side calibration</value>
-      </values>
-    </parameter>
-    <parameter default="30.0" name="IMU_ACCEL_CUTOFF" type="FLOAT">
-      <short_desc>Driver level cut frequency for accel</short_desc>
-      <long_desc>The cut frequency for the 2nd order butterworth filter on the accel driver. This features is currently supported by the mpu6000 and mpu9250. This only affects the signal sent to the controllers, not the estimators. 0 disables the filter.</long_desc>
-      <min>5</min>
-      <max>1000</max>
-      <unit>Hz</unit>
-      <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="30.0" name="IMU_GYRO_CUTOFF" type="FLOAT">
-      <short_desc>Driver level cut frequency for gyro</short_desc>
-      <long_desc>The cut frequency for the 2nd order butterworth filter on the gyro driver. This features is currently supported by the mpu6000 and mpu9250. This only affects the signal sent to the controllers, not the estimators. 0 disables the filter.</long_desc>
-      <min>5</min>
-      <max>1000</max>
-      <unit>Hz</unit>
-      <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="1013.25" name="SENS_BARO_QNH" type="FLOAT">
-      <short_desc>QNH for barometer</short_desc>
-      <min>500</min>
-      <max>1500</max>
-      <unit>hPa</unit>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0" name="SENS_BOARD_ROT" type="INT32">
-      <short_desc>Board rotation</short_desc>
-      <long_desc>This parameter defines the rotation of the FMU board relative to the platform.</long_desc>
-      <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
-      <values>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-        <value code="8">Roll 180°</value>
-        <value code="9">Roll 180°, Yaw 45°</value>
-        <value code="10">Roll 180°, Yaw 90°</value>
-        <value code="11">Roll 180°, Yaw 135°</value>
-        <value code="12">Pitch 180°</value>
-        <value code="13">Roll 180°, Yaw 225°</value>
-        <value code="14">Roll 180°, Yaw 270°</value>
-        <value code="15">Roll 180°, Yaw 315°</value>
-        <value code="16">Roll 90°</value>
-        <value code="17">Roll 90°, Yaw 45°</value>
-        <value code="18">Roll 90°, Yaw 90°</value>
-        <value code="19">Roll 90°, Yaw 135°</value>
-        <value code="20">Roll 270°</value>
-        <value code="21">Roll 270°, Yaw 45°</value>
-        <value code="22">Roll 270°, Yaw 90°</value>
-        <value code="23">Roll 270°, Yaw 135°</value>
-        <value code="24">Pitch 90°</value>
-        <value code="25">Pitch 270°</value>
-      </values>
-    </parameter>
-    <parameter default="0.0" name="SENS_BOARD_X_OFF" type="FLOAT">
-      <short_desc>Board rotation X (Roll) offset</short_desc>
-      <long_desc>This parameter defines a rotational offset in degrees around the X (Roll) axis It allows the user to fine tune the board offset in the event of misalignment.</long_desc>
-      <unit>deg</unit>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="SENS_BOARD_Y_OFF" type="FLOAT">
-      <short_desc>Board rotation Y (Pitch) offset</short_desc>
-      <long_desc>This parameter defines a rotational offset in degrees around the Y (Pitch) axis. It allows the user to fine tune the board offset in the event of misalignment.</long_desc>
-      <unit>deg</unit>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0.0" name="SENS_BOARD_Z_OFF" type="FLOAT">
-      <short_desc>Board rotation Z (YAW) offset</short_desc>
-      <long_desc>This parameter defines a rotational offset in degrees around the Z (Yaw) axis. It allows the user to fine tune the board offset in the event of misalignment.</long_desc>
-      <unit>deg</unit>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0" name="SENS_EN_LL40LS" type="INT32">
-      <short_desc>Lidar-Lite (LL40LS)</short_desc>
-      <min>0</min>
-      <max>2</max>
-      <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="1">PWM</value>
-        <value code="2">I2C</value>
-      </values>
-    </parameter>
-    <parameter default="0" name="SENS_EN_MB12XX" type="INT32">
-      <short_desc>Maxbotix Soanr (mb12xx)</short_desc>
-      <boolean />
-      <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
-    </parameter>
-    <parameter default="0" name="SENS_EN_SF0X" type="INT32">
-      <short_desc>Lightware laser rangefinder (serial)</short_desc>
-      <min>0</min>
-      <max>4</max>
-      <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="1">SF02</value>
-        <value code="2">SF10/a</value>
-        <value code="3">SF10/b</value>
-        <value code="4">SF10/c</value>
-        <value code="5">SF11/c</value>
-      </values>
-    </parameter>
-    <parameter default="0" name="SENS_EN_SF1XX" type="INT32">
-      <short_desc>Lightware SF1xx/SF20/LW20 laser rangefinder (i2c)</short_desc>
-      <min>0</min>
-      <max>5</max>
-      <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="1">SF10/a</value>
-        <value code="2">SF10/b</value>
-        <value code="3">SF10/c</value>
-        <value code="4">SF11/c</value>
-        <value code="5">SF/LW20</value>
-      </values>
-    </parameter>
-    <parameter default="-1" name="SENS_EN_THERMAL" type="INT32">
-      <short_desc>Thermal control of sensor temperature</short_desc>
-      <scope>modules/sensors</scope>
-      <values>
-        <value code="-1">Thermal control unavailable</value>
-        <value code="0">Thermal control off</value>
-      </values>
-    </parameter>
-    <parameter default="0" name="SENS_EN_TRANGER" type="INT32">
-      <short_desc>TeraRanger Rangefinder (i2c)</short_desc>
-      <min>0</min>
-      <max>3</max>
-      <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="1">Autodetect</value>
-        <value code="2">TROne</value>
-        <value code="3">TREvo</value>
-      </values>
-    </parameter>
-    <parameter default="6" name="SENS_FLOW_ROT" type="INT32">
-      <short_desc>PX4Flow board rotation</short_desc>
-      <long_desc>This parameter defines the yaw rotation of the PX4FLOW board relative to the vehicle body frame. Zero rotation is defined as X on flow board pointing towards front of vehicle. The recommneded installation default for the PX4FLOW board is with the Y axis forward (270 deg yaw).</long_desc>
-      <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
-      <values>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-      </values>
-    </parameter>
-  </group>
-  <group name="Subscriber Example">
-    <parameter default="100" name="SUB_INTERV" type="INT32">
-      <short_desc>Interval of one subscriber in the example in ms</short_desc>
-      <unit>ms</unit>
-      <scope>examples/subscriber</scope>
-    </parameter>
-    <parameter default="3.14" name="SUB_TESTF" type="FLOAT">
-      <short_desc>Float Demonstration Parameter in the Example</short_desc>
-      <scope>examples/subscriber</scope>
-    </parameter>
-  </group>
-  <group name="Syslink">
-    <parameter default="231" name="SLNK_RADIO_ADDR1" type="INT32">
-      <short_desc>Operating address of the NRF51 (most significant byte)</short_desc>
-      <scope>modules/syslink</scope>
-    </parameter>
-    <parameter default="3890735079" name="SLNK_RADIO_ADDR2" type="INT32">
-      <short_desc>Operating address of the NRF51 (least significant 4 bytes)</short_desc>
-      <scope>modules/syslink</scope>
-    </parameter>
-    <parameter default="80" name="SLNK_RADIO_CHAN" type="INT32">
-      <short_desc>Operating channel of the NRF51</short_desc>
-      <min>0</min>
-      <max>125</max>
-      <scope>modules/syslink</scope>
-    </parameter>
-    <parameter default="2" name="SLNK_RADIO_RATE" type="INT32">
-      <short_desc>Operating datarate of the NRF51</short_desc>
-      <min>0</min>
-      <max>2</max>
-      <scope>modules/syslink</scope>
-    </parameter>
-  </group>
-  <group name="System">
-    <parameter default="15" name="LED_RGB_MAXBRT" type="INT32">
-      <short_desc>RGB Led brightness limit</short_desc>
-      <long_desc>Set to 0 to disable, 1 for minimum brightness up to 15 (max)</long_desc>
-      <min>0</min>
-      <max>15</max>
-      <scope>drivers/rgbled</scope>
-    </parameter>
-    <parameter default="0" name="SYS_AUTOCONFIG" type="INT32">
-      <short_desc>Automatically configure default values</short_desc>
-      <long_desc>Set to 1 to reset parameters on next system startup (setting defaults). Platform-specific values are used if available. RC* parameters are preserved.</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <scope>modules/systemlib</scope>
-      <values>
-        <value code="0">Keep parameters</value>
-        <value code="1">Reset parameters</value>
-      </values>
-    </parameter>
-    <parameter default="0" name="SYS_AUTOSTART" type="INT32">
-      <short_desc>Auto-start script index</short_desc>
-      <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Defines the auto-start script used to bootstrap the system.</long_desc>
-      <min>0</min>
-      <max>99999</max>
-      <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
-    </parameter>
-    <parameter default="0" name="SYS_CAL_ACCEL" type="INT32">
-      <short_desc>Enable auto start of accelerometer thermal calibration at the next power up</short_desc>
-      <long_desc>0 : Set to 0 to do nothing 1 : Set to 1 to start a calibration at next boot This parameter is reset to zero when the the temperature calibration starts. default (0, no calibration)</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <scope>modules/systemlib</scope>
-    </parameter>
-    <parameter default="0" name="SYS_CAL_BARO" type="INT32">
-      <short_desc>Enable auto start of barometer thermal calibration at the next power up</short_desc>
-      <long_desc>0 : Set to 0 to do nothing 1 : Set to 1 to start a calibration at next boot This parameter is reset to zero when the the temperature calibration starts. default (0, no calibration)</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <scope>modules/systemlib</scope>
-    </parameter>
-    <parameter default="0" name="SYS_CAL_GYRO" type="INT32">
-      <short_desc>Enable auto start of rate gyro thermal calibration at the next power up</short_desc>
-      <long_desc>0 : Set to 0 to do nothing 1 : Set to 1 to start a calibration at next boot This parameter is reset to zero when the the temperature calibration starts. default (0, no calibration)</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <scope>modules/systemlib</scope>
-    </parameter>
-    <parameter default="24" name="SYS_CAL_TDEL" type="INT32">
-      <short_desc>Required temperature rise during thermal calibration</short_desc>
-      <long_desc>A temperature increase greater than this value is required during calibration. Calibration will complete for each sensor when the temperature increase above the starting temeprature exceeds the value set by SYS_CAL_TDEL. If the temperature rise is insufficient, the calibration will continue indefinitely and the board will need to be repowered to exit.</long_desc>
-      <min>10</min>
-      <unit>deg C</unit>
-      <scope>modules/systemlib</scope>
-    </parameter>
-    <parameter default="10" name="SYS_CAL_TMAX" type="INT32">
-      <short_desc>Maximum starting temperature for thermal calibration</short_desc>
-      <long_desc>Temperature calibration will not start if the temperature of any sensor is higher than the value set by SYS_CAL_TMAX.</long_desc>
-      <unit>deg C</unit>
-      <scope>modules/systemlib</scope>
-    </parameter>
-    <parameter default="5" name="SYS_CAL_TMIN" type="INT32">
-      <short_desc>Minimum starting temperature for thermal calibration</short_desc>
-      <long_desc>Temperature calibration for each sensor will ignore data if the temperature is lower than the value set by SYS_CAL_TMIN.</long_desc>
-      <unit>deg C</unit>
-      <scope>modules/systemlib</scope>
-    </parameter>
-    <parameter default="157600" name="SYS_COMPANION" type="INT32">
-      <short_desc>TELEM2 as companion computer link</short_desc>
-      <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Configures the baud rate of the TELEM2 connector as companion computer interface.</long_desc>
-      <min>0</min>
-      <max>1921600</max>
-      <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="10">FrSky Telemetry</value>
-        <value code="20">Crazyflie (Syslink)</value>
-        <value code="57600">Companion Link (57600 baud, 8N1)</value>
-        <value code="157600">OSD (57600 baud, 8N1)</value>
-        <value code="257600">Command Receiver (57600 baud, 8N1)</value>
-        <value code="319200">Normal Telemetry (19200 baud, 8N1)</value>
-        <value code="338400">Normal Telemetry (38400 baud, 8N1)</value>
-        <value code="357600">Normal Telemetry (57600 baud, 8N1)</value>
-        <value code="419200">Iridium Telemetry (19200 baud, 8N1)</value>
-        <value code="921600">Companion Link (921600 baud, 8N1)</value>
-        <value code="1921600">ESP8266 (921600 baud, 8N1)</value>
-        <value code="3115200">Normal Telemetry (115200 baud, 8N1)</value>
-      </values>
-    </parameter>
-    <parameter default="0" name="SYS_FMU_TASK" type="INT32">
-      <short_desc>Run the FMU as a task to reduce latency</short_desc>
-      <long_desc>If true, the FMU will run in a separate task instead of on the work queue. Set this if low latency is required, for example for racing. This is a trade-off between RAM usage and latency: running as a task, it requires a separate stack and directly polls on the control topics, whereas running on the work queue, it runs at a fixed update rate.</long_desc>
-      <boolean />
-      <reboot_required>true</reboot_required>
-      <scope>drivers/px4fmu</scope>
-    </parameter>
-    <parameter default="0" name="SYS_HITL" type="INT32">
-      <short_desc>Enable HITL mode on next boot</short_desc>
-      <long_desc>While enabled the system will boot in HITL mode and not enable all sensors and checks. When disabled the same vehicle can be normally flown outdoors.</long_desc>
-      <boolean />
-      <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
-    </parameter>
-    <parameter default="1" name="SYS_LOGGER" type="INT32">
-      <short_desc>SD logger</short_desc>
-      <min>0</min>
-      <max>1</max>
-      <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
-      <values>
-        <value code="0">sdlog2 (legacy)</value>
-        <value code="1">logger (default)</value>
-      </values>
-    </parameter>
-    <parameter default="2" name="SYS_MC_EST_GROUP" type="INT32">
-      <short_desc>Set multicopter estimator group</short_desc>
-      <long_desc>Set the group of estimators used for multicopters and VTOLs</long_desc>
-      <min>1</min>
-      <max>2</max>
-      <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
-      <values>
-        <value code="1">local_position_estimator, attitude_estimator_q</value>
-        <value code="2">ekf2</value>
-      </values>
-    </parameter>
-    <parameter default="1" name="SYS_PARAM_VER" type="INT32">
-      <short_desc>Parameter version</short_desc>
-      <long_desc>This monotonically increasing number encodes the parameter compatibility set. whenever it increases parameters might not be backwards compatible and ground control stations should suggest a fresh configuration.</long_desc>
-      <min>0</min>
-      <scope>modules/systemlib</scope>
-    </parameter>
-    <parameter default="2" name="SYS_RESTART_TYPE" type="INT32">
-      <short_desc>Set restart type</short_desc>
-      <long_desc>Set by px4io to indicate type of restart</long_desc>
-      <min>0</min>
-      <max>2</max>
-      <scope>modules/systemlib</scope>
-      <values>
-        <value code="0">Data survives resets</value>
-        <value code="1">Data survives in-flight resets only</value>
-        <value code="2">Data does not survive reset</value>
-      </values>
-    </parameter>
-    <parameter default="1" name="SYS_STCK_EN" type="INT32">
-      <short_desc>Enable stack checking</short_desc>
-      <boolean />
-      <scope>modules/systemlib</scope>
-    </parameter>
-    <parameter default="1" name="SYS_USE_IO" type="INT32">
-      <short_desc>Set usage of IO board</short_desc>
-      <long_desc>Can be used to use a standard startup script but with a FMU only set-up. Set to 0 to force the FMU only set-up.</long_desc>
+      <short_desc>Thermal compensation for rate gyro sensors</short_desc>
       <min>0</min>
       <max>1</max>
       <boolean />
-      <reboot_required>true</reboot_required>
-      <scope>drivers/px4io</scope>
-    </parameter>
-  </group>
-  <group name="Testing">
-    <parameter default="2" name="TEST_1" type="INT32">
-      <short_desc>TEST_1</short_desc>
-      <scope>systemcmds/tests</scope>
-    </parameter>
-    <parameter default="4" name="TEST_2" type="INT32">
-      <short_desc>TEST_2</short_desc>
-      <scope>systemcmds/tests</scope>
-    </parameter>
-    <parameter default="0.01" name="TEST_D" type="FLOAT">
-      <short_desc>TEST_D</short_desc>
-      <scope>lib/controllib/controllib_test</scope>
-    </parameter>
-    <parameter default="2.0" name="TEST_DEV" type="FLOAT">
-      <short_desc>TEST_DEV</short_desc>
-      <scope>lib/controllib/controllib_test</scope>
-    </parameter>
-    <parameter default="10.0" name="TEST_D_LP" type="FLOAT">
-      <short_desc>TEST_D_LP</short_desc>
-      <scope>lib/controllib/controllib_test</scope>
-    </parameter>
-    <parameter default="10.0" name="TEST_HP" type="FLOAT">
-      <short_desc>TEST_HP</short_desc>
-      <scope>lib/controllib/controllib_test</scope>
-    </parameter>
-    <parameter default="0.1" name="TEST_I" type="FLOAT">
-      <short_desc>TEST_I</short_desc>
-      <scope>lib/controllib/controllib_test</scope>
-    </parameter>
-    <parameter default="1.0" name="TEST_I_MAX" type="FLOAT">
-      <short_desc>TEST_I_MAX</short_desc>
-      <scope>lib/controllib/controllib_test</scope>
-    </parameter>
-    <parameter default="10.0" name="TEST_LP" type="FLOAT">
-      <short_desc>TEST_LP</short_desc>
-      <scope>lib/controllib/controllib_test</scope>
-    </parameter>
-    <parameter default="1.0" name="TEST_MAX" type="FLOAT">
-      <short_desc>TEST_MAX</short_desc>
-      <scope>lib/controllib/controllib_test</scope>
-    </parameter>
-    <parameter default="1.0" name="TEST_MEAN" type="FLOAT">
-      <short_desc>TEST_MEAN</short_desc>
-      <scope>lib/controllib/controllib_test</scope>
-    </parameter>
-    <parameter default="-1.0" name="TEST_MIN" type="FLOAT">
-      <short_desc>TEST_MIN</short_desc>
-      <scope>lib/controllib/controllib_test</scope>
-    </parameter>
-    <parameter default="0.2" name="TEST_P" type="FLOAT">
-      <short_desc>TEST_P</short_desc>
-      <scope>lib/controllib/controllib_test</scope>
-    </parameter>
-    <parameter default="12345678" name="TEST_PARAMS" type="INT32">
-      <short_desc>TEST_PARAMS</short_desc>
-      <scope>systemcmds/tests</scope>
-    </parameter>
-    <parameter default="16" name="TEST_RC2_X" type="INT32">
-      <short_desc>TEST_RC2_X</short_desc>
-      <scope>systemcmds/tests</scope>
-    </parameter>
-    <parameter default="8" name="TEST_RC_X" type="INT32">
-      <short_desc>TEST_RC_X</short_desc>
-      <scope>systemcmds/tests</scope>
-    </parameter>
-    <parameter default="0.5" name="TEST_TRIM" type="FLOAT">
-      <short_desc>TEST_TRIM</short_desc>
-      <scope>lib/controllib/controllib_test</scope>
+      <scope>modules/sensors</scope>
     </parameter>
   </group>
   <group name="UAVCAN">
@@ -8915,15 +8990,6 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <unit>m/s</unit>
       <decimal>2</decimal>
       <increment>1</increment>
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
-    <parameter default="0.3" name="VT_ARSP_LP_GAIN" type="FLOAT">
-      <short_desc>Total airspeed estimate low-pass filter gain</short_desc>
-      <long_desc>Gain for tuning the low-pass filter for the total airspeed estimate</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <decimal>3</decimal>
-      <increment>0.01</increment>
       <scope>modules/vtol_att_control</scope>
     </parameter>
     <parameter default="10.0" name="VT_ARSP_TRANS" type="FLOAT">
@@ -9002,7 +9068,7 @@ to accelerate forward if necessary</short_desc>
       <max>45.0</max>
       <scope>modules/vtol_att_control</scope>
     </parameter>
-    <parameter default="0" name="VT_ELEV_MC_LOCK" type="INT32">
+    <parameter default="1" name="VT_ELEV_MC_LOCK" type="INT32">
       <short_desc>Lock elevons in multicopter mode</short_desc>
       <long_desc>If set to 1 the elevons are locked in multicopter mode</long_desc>
       <boolean />
@@ -9110,36 +9176,6 @@ to accelerate forward if necessary</short_desc>
       <increment>1</increment>
       <scope>modules/vtol_att_control</scope>
     </parameter>
-    <parameter default="30.0" name="VT_MC_ARSPD_MAX" type="FLOAT">
-      <short_desc>Maximum airspeed in multicopter mode</short_desc>
-      <long_desc>This is the maximum speed of the air flowing over the control surfaces.</long_desc>
-      <min>0.0</min>
-      <max>30.0</max>
-      <unit>m/s</unit>
-      <decimal>2</decimal>
-      <increment>0.5</increment>
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
-    <parameter default="10.0" name="VT_MC_ARSPD_MIN" type="FLOAT">
-      <short_desc>Minimum airspeed in multicopter mode</short_desc>
-      <long_desc>This is the minimum speed of the air flowing over the control surfaces.</long_desc>
-      <min>0.0</min>
-      <max>30.0</max>
-      <unit>m/s</unit>
-      <decimal>2</decimal>
-      <increment>0.5</increment>
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
-    <parameter default="10.0" name="VT_MC_ARSPD_TRIM" type="FLOAT">
-      <short_desc>Trim airspeed when in multicopter mode</short_desc>
-      <long_desc>This is the airflow over the control surfaces for which no airspeed scaling is applied in multicopter mode.</long_desc>
-      <min>0.0</min>
-      <max>30.0</max>
-      <unit>m/s</unit>
-      <decimal>2</decimal>
-      <increment>0.5</increment>
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
     <parameter default="0" name="VT_MOT_COUNT" type="INT32">
       <short_desc>VTOL number of engines</short_desc>
       <min>0</min>
@@ -9151,25 +9187,6 @@ to accelerate forward if necessary</short_desc>
     <parameter default="0" name="VT_OPT_RECOV_EN" type="INT32">
       <short_desc>Optimal recovery strategy for pitch-weak tailsitters</short_desc>
       <boolean />
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
-    <parameter default="120.0" name="VT_POWER_MAX" type="FLOAT">
-      <short_desc>Motor max power</short_desc>
-      <long_desc>Indicates the maximum power the motor is able to produce. Used to calculate propeller efficiency map.</long_desc>
-      <min>1</min>
-      <max>10000</max>
-      <unit>W</unit>
-      <decimal>0</decimal>
-      <increment>1</increment>
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
-    <parameter default="0.0" name="VT_PROP_EFF" type="FLOAT">
-      <short_desc>Propeller efficiency parameter</short_desc>
-      <long_desc>Influences propeller efficiency at different power settings. Should be tuned beforehand.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <decimal>3</decimal>
-      <increment>0.01</increment>
       <scope>modules/vtol_att_control</scope>
     </parameter>
     <parameter default="1.0" name="VT_TILT_FW" type="FLOAT">

@@ -90,6 +90,7 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     , _firstPhotoLapse(false)
     , _irROI(NULL)
     , _irPresets(NULL)
+    , _videoRecording(false)
 {
 
     memset(&_cgoetTempStatus, 0, sizeof(udp_ctrl_cam_lepton_area_temp_t));
@@ -438,9 +439,11 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
                 emit activeSettingsChanged();
             }
             //-- Start recording local stream as well
-            //if(isCGOET() && qgcApp()->toolbox()->videoManager()->videoReceiver()) {
-            //    qgcApp()->toolbox()->videoManager()->videoReceiver()->startRecording();
-            //}
+            if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+                qgcApp()->toolbox()->videoManager()->videoReceiver()->startRecording();
+                _videoRecording = true;
+                emit isVideoRecordingChanged();
+            }
         } else {
             _recTimer.stop();
             _recordTime = 0;
@@ -477,9 +480,11 @@ YuneecCameraControl::_setVideoStatus(VideoStatus status)
             }
             _videoSound.play();
             //-- Stop recording local stream
-            //if(isCGOET() && qgcApp()->toolbox()->videoManager()->videoReceiver()) {
-            //    qgcApp()->toolbox()->videoManager()->videoReceiver()->stopRecording();
-            //}
+            if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+                qgcApp()->toolbox()->videoManager()->videoReceiver()->stopRecording();
+                _videoRecording = false;
+                emit isVideoRecordingChanged();
+            }
         }
     }
 }

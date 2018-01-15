@@ -21,11 +21,12 @@ uint8_t LinkInterface::mavlinkChannel(void) const
 }
 // Links are only created by LinkManager so constructor is not public
 LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config)
-    : QThread(0)
-    , _config(config)
-    , _mavlinkChannelSet(false)
-    , _active(false)
-    , _enableRateCollection(false)
+    : QThread                   (0)
+    , _config                   (config)
+    , _highLatency              (false)
+    , _mavlinkChannelSet        (false)
+    , _active                   (false)
+    , _enableRateCollection     (false)
     , _decodedFirstMavlinkPacket(false)
 {
     _config->setLink(this);
