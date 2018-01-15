@@ -316,21 +316,8 @@ TyphoonHQuickInterface::firstRun()
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::setLedOptions(LedState option)
+TyphoonHQuickInterface::_sendLEDCommand(int mode, int mask)
 {
-    int mode = MODE_OFF;
-    int mask = 0x3F;
-    switch (option) {
-    case LedAllOff:
-        break;
-    case LedFrontOff:
-        mode = MODE_ON;
-        mask = 0x1E;
-        break;
-    case LedAllOn:
-        mode = MODE_ON;
-        break;
-    }
     _vehicle->sendMavCommand(
         _vehicle->defaultComponentId(),             // target component
         MAV_CMD_LED_CONTROL,                        // Command id
@@ -339,6 +326,29 @@ TyphoonHQuickInterface::setLedOptions(LedState option)
         COLOR_WHITE,                                // LED Color
         mask,                                       // LED Mask
         0);                                         // Blink count
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::setLedOptions(LedState option)
+{
+    int mode = MODE_OFF;
+    int mask = 0x3F;
+    switch (option) {
+    case LedAllOff:
+        break;
+    case LedFrontOff:
+        //-- First restore state
+        _sendLEDCommand(MODE_DISABLE, mask);
+        //-- Now turn off LED 3 and 4
+        mask = 0x0C;
+        break;
+    case LedAllOn:
+        //-- Not very intuive "Disabled" mode, indicating to restore normal "priority".
+        mode = MODE_DISABLE;
+        break;
+    }
+    _sendLEDCommand(mode, mask);
     _ledState = option;
     emit ledOptionsChanged();
 }

@@ -387,6 +387,9 @@ private:
     static int mediaCount(QQmlListProperty<TyphoonMediaItem>*);
     static void clearMediaItems(QQmlListProperty<TyphoonMediaItem>*);
 
+private:
+    void    _sendLEDCommand             (int mode, int mask);
+
 signals:
     void    m4StateChanged              ();
     void    controllerLocationChanged   ();
