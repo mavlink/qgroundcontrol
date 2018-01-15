@@ -83,6 +83,8 @@ public:
     Vehicle* controllerVehicle(void) { return _controllerVehicle; }
     Vehicle* managerVehicle(void) { return _managerVehicle; }
 
+    QJsonDocument saveToJson    ();
+
 signals:
     void containsItemsChanged   (bool containsItems);
     void syncInProgressChanged  (bool syncInProgress);

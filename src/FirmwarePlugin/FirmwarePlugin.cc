@@ -335,6 +335,7 @@ const QVariantList &FirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")));
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")));
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")));
+        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/VTOLModeIndicator.qml")));
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ArmedIndicator.qml")));
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSRTKIndicator.qml")));
     }
@@ -347,6 +348,18 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
 
     if (_cameraList.size() == 0) {
         CameraMetaData* metaData;
+
+        metaData = new CameraMetaData(tr("Sony NEX-5R 20mm"),  //http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-qx1-body-kit/specifications
+                                      23.2,                 //http://www.sony.com/electronics/camera-lenses/sel16f28/specifications
+                                      15.4,
+                                      4912,
+                                      3264,
+                                      20,
+                                      true,
+                                      false,
+                                      1,
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
 
         metaData = new CameraMetaData(tr("Sony ILCE-QX1"),  //http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-qx1-body-kit/specifications
                                       23.2,                 //http://www.sony.com/electronics/camera-lenses/sel16f28/specifications
@@ -453,6 +466,30 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       true,     // landscape
                                       false,    // fixedOrientation
                                       0,        // minTriggerInterval
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("Parrot Sequioa RGB"),
+                                      6.17,     // sensorWidth
+                                      4.63,     // sendsorHeight
+                                      4608,     // imageWidth
+                                      3456,     // imageHeight
+                                      4.9,      // focalLength
+                                      true,     // landscape
+                                      false,    // fixedOrientation
+                                      1,        // minTriggerInterval
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("Parrot Sequioa Monochrome"),
+                                      4.8,      // sensorWidth
+                                      3.6,      // sendsorHeight
+                                      1280,     // imageWidth
+                                      960,      // imageHeight
+                                      4.0,      // focalLength
+                                      true,     // landscape
+                                      false,    // fixedOrientation
+                                      0.8,      // minTriggerInterval
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
     }

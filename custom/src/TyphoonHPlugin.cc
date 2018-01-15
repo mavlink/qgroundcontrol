@@ -226,6 +226,7 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app, QGCToolbox* toolbox)
     , _pMAVLink(NULL)
     , _pRCCal(NULL)
     , _pLogDownload(NULL)
+    , _pPlannerSync(NULL)
 #if defined (QT_DEBUG)
     , _pMockLink(NULL)
 #endif
@@ -265,6 +266,12 @@ TyphoonHPlugin::~TyphoonHPlugin()
         delete _pOfflineMaps;
     if(_pMAVLink)
         delete _pMAVLink;
+    if(_pRCCal)
+        delete _pRCCal;
+    if(_pLogDownload)
+        delete _pLogDownload;
+    if(_pPlannerSync)
+        delete _pPlannerSync;
 #if defined (QT_DEBUG)
     if(_pMockLink)
         delete _pMockLink;
@@ -327,13 +334,13 @@ TyphoonHPlugin::settingsPages()
                 QUrl::fromUserInput("qrc:/res/gear-white.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pGeneral));
-#if !defined(__planner__)
         if(!_pOfflineMaps) {
             _pOfflineMaps = new QGCSettings(tr("Offline Maps"),
                 QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"),
                 QUrl::fromUserInput("qrc:/typhoonh/img/mapIcon.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pOfflineMaps));
+#if !defined(__planner__)
         if (_showAdvancedUI) {
             if(!_pMAVLink) {
                 _pMAVLink = new QGCSettings(tr("MAVLink"),
@@ -407,6 +414,14 @@ TyphoonHPlugin::settingsPages()
                 QUrl::fromUserInput("qrc:/typhoonh/img/logoWhite.svg"));
         }
         _settingsList.append(QVariant::fromValue((QGCSettings*)_pTyphoonSettings));
+#endif
+#if defined(__planner__)
+        if(!_pPlannerSync) {
+            _pPlannerSync = new QGCSettings(tr("Remote Sync"),
+                QUrl::fromUserInput("qrc:/typhoonh/PlannerSync.qml"),
+                QUrl::fromUserInput("qrc:/typhoonh/img/logoWhite.svg"));
+        }
+        _settingsList.append(QVariant::fromValue((QGCSettings*)_pPlannerSync));
 #endif
     }
     return _settingsList;

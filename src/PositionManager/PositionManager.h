@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QGeoPositionInfoSource>
+#include <QNmeaPositionInfoSource>
 
 #include <QVariant>
 
@@ -26,8 +27,9 @@ public:
 
     enum QGCPositionSource {
         Simulated,
-        GPS,
-        Log
+        InternalGPS,
+        Log,
+        NmeaGPS
     };
 
     void setPositionSource(QGCPositionSource source);
@@ -35,6 +37,8 @@ public:
     int updateInterval() const;
 
     void setToolbox(QGCToolbox* toolbox);
+
+    void setNmeaSourceDevice(QIODevice* device);
 
 private slots:
     void _positionUpdated(const QGeoPositionInfo &update);
@@ -48,5 +52,6 @@ private:
     int _updateInterval;
     QGeoPositionInfoSource * _currentSource;
     QGeoPositionInfoSource * _defaultSource;
+    QNmeaPositionInfoSource * _nmeaSource;
     QGeoPositionInfoSource * _simulatedSource;
 };

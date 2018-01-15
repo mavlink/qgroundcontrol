@@ -39,6 +39,12 @@ linux : android-g++ {
     CONFIG  += NoSerialBuild
     equals(ANDROID_TARGET_ARCH, x86)  {
         message("Using ST16 specific Android interface")
+        #equals(QT_MAJOR_VERSION, 5): {
+        #    greaterThan(QT_MINOR_VERSION, 9): {
+        #        message(Using QSerialPort)
+        #        DEFINES += USE_QT_SERIALPORT
+        #    }
+        #}
         PlayStoreBuild|DeveloperBuild {
             CONFIG -= debug
             CONFIG -= debug_and_release
@@ -111,6 +117,14 @@ DesktopPlanner {
         $$QGCROOT/custom/typhoonh.qrc
 }
 
+DesktopPlanner {
+    REPC_REPLICA += \
+        $$QGCROOT/custom/QGCRemote.rep
+} else {
+    REPC_SOURCE += \
+        $$QGCROOT/custom/QGCRemote.rep
+}
+
 MacBuild {
     QMAKE_INFO_PLIST    = $$QGCROOT/custom/macOS/YuneecInfo.plist
     ICON                = $$QGCROOT/custom/macOS/icon.icns
@@ -130,7 +144,13 @@ WindowsBuild {
 }
 
 QT += \
-    multimedia
+    multimedia \
+    remoteobjects
+
+contains (DEFINES, USE_QT_SERIALPORT) {
+QT += \
+    serialport
+}
 
 INCLUDEPATH += \
     $$QGCROOT/custom/src \
@@ -142,13 +162,18 @@ SOURCES += \
     $$QGCROOT/custom/src/TyphoonHQuickInterface.cc \
     $$QGCROOT/custom/src/UTMConverter.cc \
     $$QGCROOT/custom/src/YExportFiles.cc \
+    $$QGCROOT/custom/src/QGCFileListController.cc
 
-!DesktopPlanner {
+DesktopPlanner {
+    SOURCES += \
+        $$QGCROOT/custom/src/QGCSyncFilesDesktop.cc
+} else {
     SOURCES += \
         $$QGCROOT/custom/src/TyphoonHM4Interface.cc \
         $$QGCROOT/custom/src/m4lib/src/m4serial.cpp \
         $$QGCROOT/custom/src/m4lib/src/m4util.cpp \
         $$QGCROOT/custom/src/m4lib/src/m4lib.cpp \
+        $$QGCROOT/custom/src/QGCSyncFilesMobile.cc
 }
 
 AndroidBuild {
@@ -167,14 +192,19 @@ HEADERS += \
     $$QGCROOT/custom/src/TyphoonHQuickInterface.h \
     $$QGCROOT/custom/src/UTMConverter.h \
     $$QGCROOT/custom/src/YExportFiles.h \
+    $$QGCROOT/custom/src/QGCFileListController.h
 
-!DesktopPlanner {
+DesktopPlanner {
+    HEADERS += \
+        $$QGCROOT/custom/src/QGCSyncFilesDesktop.h
+} else {
     HEADERS += \
         $$QGCROOT/custom/src/m4lib/src/m4channeldata.h \
         $$QGCROOT/custom/src/m4lib/src/m4def.h \
         $$QGCROOT/custom/src/m4lib/src/m4serial.h \
         $$QGCROOT/custom/src/m4lib/src/m4util.h \
         $$QGCROOT/custom/src/TyphoonHM4Interface.h \
+        $$QGCROOT/custom/src/QGCSyncFilesMobile.h
 
     INCLUDEPATH += \
         $$PWD/src/m4lib/src \
@@ -330,6 +360,12 @@ DesktopInstall {
         DEPLOY_TARGET = $$shell_quote($$shell_path($$DESTDIR_WIN\\$${TARGET}.exe))
         message(Deploy Target: $${DEPLOY_TARGET})
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QT_BIN_DIR\\windeployqt --no-compiler-runtime --qmldir=$${BASEDIR_WIN}\\src $${DEPLOY_TARGET}
+
+        # This is not being copied so we do it by hand
+        QT_INSTALL_PATH = $$dirname(QT_BIN_DIR)
+        QT_LABS_PLATFORM_PATH = \"$$QT_INSTALL_PATH\\qml\\Qt\\labs\\platform\"
+        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR $$QT_LABS_PLATFORM_PATH $${DESTDIR_WIN}\\Qt\\labs\\platform
+
         #QMAKE_POST_LINK += $$escape_expand(\\n) cd $$BASEDIR_WIN && $$quote("\"C:\\Program Files \(x86\)\\NSIS\\makensis.exe\"" /NOCD "\"/XOutFile $${DESTDIR_WIN}\\$${TARGET}-installer.exe\"" "$$BASEDIR_WIN\\deploy\\qgroundcontrol_installer.nsi")
         #OTHER_FILES += deploy/$${TARGET}_installer.nsi
     }

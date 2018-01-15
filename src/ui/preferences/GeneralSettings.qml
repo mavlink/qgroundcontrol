@@ -41,6 +41,9 @@ QGCView {
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
     property Fact _mapProvider:                 QGroundControl.settingsManager.flightMapSettings.mapProvider
     property Fact _mapType:                     QGroundControl.settingsManager.flightMapSettings.mapType
+    property real _panelWidth:                  _qgcView.width * _internalWidthRatio
+
+    readonly property real _internalWidthRatio:          0.8
 
     readonly property string _requiresRestart:  qsTr("(Requires Restart)")
 
@@ -63,7 +66,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Units
                 Item {
-                    width:                      _qgcView.width * 0.8
+                    width:                      _panelWidth
                     height:                     unitLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -76,7 +79,7 @@ QGCView {
                 }
                 Rectangle {
                     height:                     unitsCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:                      _qgcView.width * 0.8
+                    width:                      _panelWidth
                     color:                      qgcPal.windowShade
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -115,7 +118,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Miscellaneous
                 Item {
-                    width:                      _qgcView.width * 0.8
+                    width:                      _panelWidth
                     height:                     miscLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -128,7 +131,7 @@ QGCView {
                 }
                 Rectangle {
                     height:                     miscCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:                      _qgcView.width * 0.8
+                    width:                      _panelWidth
                     color:                      qgcPal.windowShade
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -359,7 +362,7 @@ QGCView {
 
                         //-----------------------------------------------------------------
                         //-- Save path
-                        Row {
+                        RowLayout {
                             spacing:    ScreenTools.defaultFontPixelWidth
                             visible:    _savePath.visible && !ScreenTools.isMobile
 
@@ -368,8 +371,10 @@ QGCView {
                                 text:               qsTr("File Save Path:")
                             }
                             QGCLabel {
-                                anchors.baseline:   savePathBrowse.baseline
-                                text:               _savePath.rawValue === "" ? qsTr("<not set>") : _savePath.value
+                                anchors.baseline:       savePathBrowse.baseline
+                                Layout.maximumWidth:    _panelWidth * 0.5
+                                elide:                  Text.ElideMiddle
+                                text:                   _savePath.rawValue === "" ? qsTr("<not set>") : _savePath.value
                             }
                             QGCButton {
                                 id:         savePathBrowse
@@ -394,7 +399,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- RTK GPS
                 Item {
-                    width:                      _qgcView.width * 0.8
+                    width:                      _panelWidth
                     height:                     unitLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -407,7 +412,7 @@ QGCView {
                 }
                 Rectangle {
                     height:                     rtkGrid.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:                      _qgcView.width * 0.8
+                    width:                      _panelWidth
                     color:                      qgcPal.windowShade
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -438,7 +443,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Autoconnect settings
                 Item {
-                    width:                      _qgcView.width * 0.8
+                    width:                      _panelWidth
                     height:                     autoConnectLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -451,7 +456,7 @@ QGCView {
                 }
                 Rectangle {
                     height:                     autoConnectCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:                      _qgcView.width * 0.8
+                    width:                      _panelWidth
                     color:                      qgcPal.windowShade
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -459,7 +464,7 @@ QGCView {
 
                     Column {
                         id:         autoConnectCol
-                        spacing:    ScreenTools.defaultFontPixelWidth
+                        spacing:    ScreenTools.defaultFontPixelWidth * 2
                         anchors.centerIn: parent
 
                         Row {
@@ -480,7 +485,62 @@ QGCView {
                                 FactCheckBox {
                                     text:       autoConnectRepeater.names[index]
                                     fact:       modelData
-                                    visible:    !ScreenTools.isiOS && modelData.visible
+                                    visible:    modelData.visible
+                                }
+                            }
+                        }
+
+                        Row {
+                            width:    parent.width
+                            spacing:  ScreenTools.defaultFontPixelWidth
+                            visible:  !ScreenTools.isMobile
+                                      && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible
+                                      && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
+
+                            QGCLabel {
+                                anchors.baseline: nmeaPortCombo.baseline
+                                text: qsTr("NMEA GPS Device:")
+                            }
+
+                            QGCComboBox {
+                                id:     nmeaPortCombo
+                                width:  parent.width/3
+                                model:  ListModel {
+                                            ListElement { text: "disabled" }
+                                        }
+
+                                onActivated: {
+                                    if (index != -1) {
+                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.value = textAt(index);
+                                    }
+                                }
+                                Component.onCompleted: {
+                                    for (var i in QGroundControl.linkManager.serialPorts) {
+                                        nmeaPortCombo.model.append({text:QGroundControl.linkManager.serialPorts[i]})
+                                    }
+                                    var index = nmeaPortCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.valueString);
+                                    nmeaPortCombo.currentIndex = index;
+                                }
+                            }
+
+                            QGCLabel {
+                                anchors.baseline: nmeaBaudCombo.baseline
+                                text: qsTr("NMEA GPS Baudrate:")
+                            }
+
+                            QGCComboBox {
+                                id:     nmeaBaudCombo
+                                width:  parent.width/3
+                                model:  [4800, 9600, 19200, 38400, 57600, 115200]
+
+                                onActivated: {
+                                    if (index != -1) {
+                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.value = textAt(index);
+                                    }
+                                }
+                                Component.onCompleted: {
+                                    var index = nmeaBaudCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.valueString);
+                                    nmeaBaudCombo.currentIndex = index;
                                 }
                             }
                         }
@@ -490,7 +550,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Video Source
                 Item {
-                    width:                      _qgcView.width * 0.8
+                    width:                      _panelWidth
                     height:                     videoLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -503,7 +563,7 @@ QGCView {
                 }
                 Rectangle {
                     height:                     videoCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:                      _qgcView.width * 0.8
+                    width:                      _panelWidth
                     color:                      qgcPal.windowShade
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -605,7 +665,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Video Source
                 Item {
-                    width:                      _qgcView.width * 0.8
+                    width:                      _panelWidth
                     height:                     videoRecLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -618,7 +678,7 @@ QGCView {
                 }
                 Rectangle {
                     height:                     videoRecCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:                      _qgcView.width * 0.8
+                    width:                      _panelWidth
                     color:                      qgcPal.windowShade
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -676,7 +736,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Custom Brand Image
                 Item {
-                    width:                      _qgcView.width * 0.8
+                    width:                      _panelWidth
                     height:                     userBrandImageLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
@@ -689,7 +749,7 @@ QGCView {
                 }
                 Rectangle {
                     height:                     userBrandImageCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:                      _qgcView.width * 0.8
+                    width:                      _panelWidth
                     color:                      qgcPal.windowShade
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter

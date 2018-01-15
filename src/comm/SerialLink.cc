@@ -157,7 +157,12 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
     if (_port) {
         qCDebug(SerialLinkLog) << "SerialLink:" << QString::number((long)this, 16) << "closing port";
         _port->close();
-        QGC::SLEEP::usleep(50000);
+
+        // Wait 50 ms while continuing to run the event queue
+        for (unsigned i = 0; i < 10; i++) {
+            QGC::SLEEP::usleep(5000);
+            qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+        }
         delete _port;
         _port = NULL;
     }
@@ -169,12 +174,22 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
         qCDebug(SerialLinkLog) << "Not connecting to a bootloader, waiting for 2nd chance";
         const unsigned retry_limit = 12;
         unsigned retries;
+
         for (retries = 0; retries < retry_limit; retries++) {
             if (!_isBootloader()) {
-                QGC::SLEEP::msleep(500);
+                // Wait 500 ms while continuing to run the event loop
+                for (unsigned i = 0; i < 100; i++) {
+                    QGC::SLEEP::msleep(5);
+                    qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+                }
                 break;
             }
-            QGC::SLEEP::msleep(500);
+
+            // Wait 500 ms while continuing to run the event loop
+            for (unsigned i = 0; i < 100; i++) {
+                QGC::SLEEP::msleep(5);
+                qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+            }
         }
         // Check limit
         if (retries == retry_limit) {
@@ -199,10 +214,17 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
 #ifdef __android__
     _port->open(QIODevice::ReadWrite);
 #else
-    for (int openRetries = 0; openRetries < 4; openRetries++) {
+
+    // Try to open the port three times
+    for (int openRetries = 0; openRetries < 3; openRetries++) {
         if (!_port->open(QIODevice::ReadWrite)) {
             qCDebug(SerialLinkLog) << "Port open failed, retrying";
-            QGC::SLEEP::msleep(500);
+            // Wait 250 ms while continuing to run the event loop
+            for (unsigned i = 0; i < 50; i++) {
+                QGC::SLEEP::msleep(5);
+                qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+            }
+            qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
         } else {
             break;
         }

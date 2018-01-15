@@ -83,7 +83,7 @@ linux {
     DEFINES += NO_SERIAL_LINK
     DEFINES += QGC_DISABLE_UVC
     QMAKE_IOS_DEPLOYMENT_TARGET = 8.0
-    QMAKE_IOS_TARGETED_DEVICE_FAMILY = 1,2 # Universal
+    QMAKE_APPLE_TARGETED_DEVICE_FAMILY = 1,2 # Universal
     QMAKE_LFLAGS += -Wl,-no_pie
 } else {
     error("Unsupported build platform, only Linux, Windows, Android and Mac (Mac OS and iOS) are supported")
@@ -235,7 +235,9 @@ ReleaseBuild {
     DEFINES += QT_NO_DEBUG QT_MESSAGELOGCONTEXT
     CONFIG += force_debug_info  # Enable debugging symbols on release builds
     !iOSBuild {
-        CONFIG += ltcg              # Turn on link time code generation
+        !AndroidBuild {
+            CONFIG += ltcg              # Turn on link time code generation
+        }
     }
 
     WindowsBuild {

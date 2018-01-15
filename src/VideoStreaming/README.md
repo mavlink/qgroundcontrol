@@ -35,7 +35,10 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 
 Use apt-get to install GStreamer 1.0
 ```
-sudo apt-get install gstreamer1.0*
+list=$(apt-cache --names-only search ^gstreamer1.0-* | awk '{ print $1 }' | grep -v gstreamer1.0-hybris)
+```
+```
+sudo apt-get install $list
 ```
 
 The build system is setup to use pkgconfig and it will find the necessary headers and libraries automatically.

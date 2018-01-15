@@ -4,8 +4,6 @@ language: cpp
 
 env:
   global:
-    - CCACHE_CPP2=1
-    - CCACHE_DISABLE=1
     - JOBS=4
     - QT_FATAL_WARNINGS=1
     - SHADOW_BUILD_DIR=/tmp/shadow_build_dir
@@ -28,18 +26,18 @@ matrix:
           env: SPEC=android-g++ CONFIG=installer
           sudo: false
         - os: osx
-          osx_image: xcode8.3
+          osx_image: xcode9.2
           env: SPEC=macx-clang CONFIG=installer
           sudo: required
+        - os: osx
+          osx_image: xcode9.2
+          env: SPEC=macx-ios-clang CONFIG=release
+          sudo: false
 # OSX builds pared back to installer only since travis sucks so bad we can't afford more than one'
 #        - os: osx
 #          osx_image: xcode8
 #          env: SPEC=macx-clang CONFIG=debug
 #          sudo: required
-#        - os: osx
-#          osx_image: xcode8
-#          env: SPEC=macx-ios-clang CONFIG=release
-#          sudo: false
 
 android:
   components:
@@ -50,7 +48,6 @@ android:
 addons:
   apt:
     packages:
-    - ccache
     - espeak
     - libespeak-dev
     - libgstreamer-plugins-base1.0-dev
@@ -60,24 +57,11 @@ addons:
     - libudev-dev
     - wget
 
-cache:
-  directories:
-    - $HOME/.ccache
-
 before_install:
   # fetch entire git repo to properly determine the version
   - if [ "${CONFIG}" = "installer" ]; then
         cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow && git fetch --all --tags;
     fi
-
-  # install ccache for osx/ios
-  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-        wget --quiet https://s3.amazonaws.com/px4-travis/toolchain/macos/ccache &&
-        chmod +x ccache && sudo mv ccache /usr/local/bin;
-    fi
-
-  # setup ccache
-  #- ccache -M 500MB && ccache -z
 
   # compile threads
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
@@ -89,9 +73,9 @@ before_install:
 install:
   # linux dependencies: qt
   - if [ "${SPEC}" = "linux-g++-64" ]; then
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.1-linux-min.tar.bz2 &&
-        tar jxf Qt5.9.1-linux-min.tar.bz2 -C /tmp &&
-        export PATH=/tmp/Qt5.9-linux/5.9.1/gcc_64/bin:$PATH &&
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.3-gcc_64-min.tar.bz2 &&
+        tar jxf Qt5.9.3-gcc_64-min.tar.bz2 -C /tmp &&
+        export PATH=/tmp/Qt5.9-gcc_64/5.9.3/gcc_64/bin:$PATH &&
         export DISPLAY=:99.0 &&
         sh -e /etc/init.d/xvfb start
         ;
@@ -99,8 +83,8 @@ install:
 
   # android dependencies: qt, gstreamer, android-ndk
   - if [ "${SPEC}" = "android-g++" ]; then
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.1-android-min.tar.bz2 &&
-        tar jxf Qt5.9.1-android-min.tar.bz2 -C /tmp &&
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.3-android_armv7-min.tar.bz2 &&
+        tar jxf Qt5.9.3-android_armv7-min.tar.bz2 -C /tmp &&
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-armv7-1.5.2.tar.bz2 &&
         mkdir -p ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
         tar jxf gstreamer-1.0-android-armv7-1.5.2.tar.bz2 -C ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
@@ -109,47 +93,53 @@ install:
         ./android-ndk-r10e-linux-x86_64.bin > /dev/null &&
         export ANDROID_NDK_ROOT=`pwd`/android-ndk-r10e &&
         export ANDROID_SDK_ROOT=/usr/local/android-sdk &&
-        export PATH=/tmp/Qt5.9-android/5.9.1/android_armv7/bin:`pwd`/android-ndk-r10e:$PATH && echo $PATH
+        export PATH=/tmp/Qt5.9-android_armv7/5.9.3/android_armv7/bin:`pwd`/android-ndk-r10e:$PATH && echo $PATH
         ;
     fi
 
-  # osx dependencies: qt, gstreamer, gstreamer-devel
+  # osx dependencies: qt (master builds only: gstreamer, gstreamer-devel)
   - if [ "${SPEC}" = "macx-clang" ]; then
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.1-mac-clang-min.tar.bz2 &&
-        tar jxf Qt5.9.1-mac-clang-min.tar.bz2 -C /tmp
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.3-clang_64-min.tar.bz2 &&
+        tar jxf Qt5.9.3-clang_64-min.tar.bz2 -C /tmp
         ;
     fi
 
-  - if [ "${SPEC}" = "macx-clang" ]; then
+  - if [[ "${SPEC}" = "macx-clang" && "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-1.5.2-x86_64.pkg &&
         sudo installer -verboseR -pkg gstreamer-1.0-1.5.2-x86_64.pkg -target /
         ;
     fi
 
-  - if [ "${SPEC}" = "macx-clang" ]; then
+  - if [[ "${SPEC}" = "macx-clang" && "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-1.5.2-x86_64.pkg &&
         sudo installer -verboseR -pkg gstreamer-1.0-devel-1.5.2-x86_64.pkg -target /
         ;
     fi
 
-  - if [ "${SPEC}" = "macx-clang" ]; then
+  - if [[ "${SPEC}" = "macx-clang" && "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2 &&
-        sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks &&
-        export QT_DIR=Qt5.9-mac-clang/5.9.1/clang_64 &&
+        sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks
+        ;
+    fi
+
+  - if [ "${SPEC}" = "macx-clang" ]; then
+        export QT_DIR=Qt5.9-clang_64/5.9.3/clang_64 &&
         export QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins &&
         export QML2_IMPORT_PATH=/tmp/$QT_DIR/qml &&
         export PATH=/tmp/$QT_DIR/bin:$PATH
         ;
     fi
 
-  # ios dependencies: qt, TODO: add gstreamer
+  # ios dependencies: qt
   - if [ "${SPEC}" = "macx-ios-clang" ]; then
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.8.0-ios-min.tar.bz2 &&
-        tar jxf Qt5.8.0-ios-min.tar.bz2 -C /tmp &&
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.3-ios-min.tar.bz2
+        ;
+    fi
+  - if [ "${SPEC}" = "macx-ios-clang" ]; then
+        tar jxf Qt5.9.3-ios-min.tar.bz2 -C /tmp &&
         export IOS_CCACHE_CC=`/usr/bin/xcrun -sdk iphoneos -find clang` &&
         export IOS_CCACHE_CXX=`/usr/bin/xcrun -sdk iphoneos -find clang++` &&
-        export PATH=/tmp/Qt5.8-ios/5.8/ios/bin:$PATH &&
-        tools/patch_qt_for_xcode8.sh
+        export PATH=/tmp/Qt5.9-ios/5.9.3/ios/bin:$PATH
         ;
     fi
 

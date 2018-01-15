@@ -32,12 +32,15 @@ public:
     Q_PROPERTY(int      firmware    READ firmware           WRITE setFirmware       NOTIFY firmwareChanged)
     Q_PROPERTY(int      vehicle     READ vehicle            WRITE setVehicle        NOTIFY vehicleChanged)
     Q_PROPERTY(bool     sendStatus  READ sendStatusText     WRITE setSendStatusText NOTIFY sendStatusChanged)
+    Q_PROPERTY(bool     highLatency READ highLatency        WRITE setHighLatency    NOTIFY highLatencyChanged)
 
     // QML Access
     int     firmware        () { return (int)_firmwareType; }
     void    setFirmware     (int type) { _firmwareType = (MAV_AUTOPILOT)type; emit firmwareChanged(); }
     int     vehicle         () { return (int)_vehicleType; }
+    bool    highLatency     () const { return _highLatency; }
     void    setVehicle      (int type) { _vehicleType = (MAV_TYPE)type; emit vehicleChanged(); }
+    void    setHighLatency  (bool latency) { _highLatency = latency; emit highLatencyChanged(); }
 
     MockConfiguration(const QString& name);
     MockConfiguration(MockConfiguration* source);
@@ -73,16 +76,19 @@ signals:
     void firmwareChanged    ();
     void vehicleChanged     ();
     void sendStatusChanged  ();
+    void highLatencyChanged ();
 
 private:
     MAV_AUTOPILOT   _firmwareType;
     MAV_TYPE        _vehicleType;
     bool            _sendStatusText;
+    bool            _highLatency;
     FailureMode_t   _failureMode;
 
     static const char* _firmwareTypeKey;
     static const char* _vehicleTypeKey;
     static const char* _sendStatusTextKey;
+    static const char* _highLatencyKey;
     static const char* _failureModeKey;
 };
 

@@ -59,6 +59,7 @@
 
     <!-- Support devices without USB host mode since there are other connection types -->
     <uses-feature android:name="android.hardware.usb.host" android:required="false"/>
+    <uses-feature android:name="android.hardware.location.GPS" android:required="false" />
     <!-- The following comment will be replaced upon deployment with default features based on the dependencies of the application.
          Remove the comment if you do not require these default features. -->
     <!-- %%INSERT_FEATURES -->

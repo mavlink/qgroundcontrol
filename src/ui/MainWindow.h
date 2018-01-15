@@ -80,7 +80,7 @@ public:
     void saveLastUsedConnection(const QString connection);
 
     // Called from MainWindow.qml when the user accepts the window close dialog
-    Q_INVOKABLE void reallyClose(void);
+    void _reallyClose(void);
 
     /// @return Root qml object of main window QML
     QObject* rootQmlObject(void);
@@ -104,6 +104,7 @@ signals:
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
     /** Emitted when any value changes from any source */
     void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
+    void reallyClose(void);
 
     // Used for unit tests to know when the main window closes
     void mainWindowClosed(void);

@@ -188,7 +188,9 @@ VideoReceiver::_timeout()
         //   found to be working, only then we actually start the stream.
         QUrl url(_uri);
         _socket = new QTcpSocket;
-        _socket->setProxy(QNetworkProxy::NoProxy);
+        QNetworkProxy tempProxy;
+        tempProxy.setType(QNetworkProxy::DefaultProxy);
+        _socket->setProxy(tempProxy);
         connect(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &VideoReceiver::_socketError);
         connect(_socket, &QTcpSocket::connected, this, &VideoReceiver::_connected);
         _socket->connectToHost(url.host(), url.port());
@@ -620,12 +622,6 @@ VideoReceiver::startRecording(const QString &videoFile)
         return;
     }
 
-    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
-    if(savePath.isEmpty()) {
-        qgcApp()->showMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
-        return;
-    }
-
     uint32_t muxIdx = _videoSettings->recordingFormat()->rawValue().toUInt();
     if(muxIdx >= NUM_MUXES) {
         qgcApp()->showMessage(tr("Invalid video format defined."));
@@ -649,10 +645,16 @@ VideoReceiver::startRecording(const QString &videoFile)
     }
 
     if(videoFile.isEmpty()) {
+        QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+        if(savePath.isEmpty()) {
+            qgcApp()->showMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
+            return;
+        }
         _videoFile = savePath + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + "." + kVideoExtensions[muxIdx];
     } else {
         _videoFile = videoFile;
     }
+    emit videoFileChanged();
 
     g_object_set(G_OBJECT(_sink->filesink), "location", qPrintable(_videoFile), NULL);
     qCDebug(VideoReceiverLog) << "New video file:" << _videoFile;
@@ -677,6 +679,8 @@ VideoReceiver::startRecording(const QString &videoFile)
     _recording = true;
     emit recordingChanged();
     qCDebug(VideoReceiverLog) << "Recording started";
+#else
+    Q_UNUSED(videoFile)
 #endif
 }
 

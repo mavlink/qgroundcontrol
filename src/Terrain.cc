@@ -71,7 +71,6 @@ void ElevationProvider::_requestFinished()
 
         QJsonParseError parseError;
         QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
-        qDebug() << responseJson;
         emit terrainData(false, altitudes);
         return;
     }

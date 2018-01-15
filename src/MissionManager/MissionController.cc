@@ -1011,9 +1011,9 @@ void MissionController::_recalcWaypointLines(void)
     bool                firstCoordinateItem =   true;
     VisualMissionItem*  lastCoordinateItem =    qobject_cast<VisualMissionItem*>(_visualItems->get(0));
 
-    bool showHomePosition = _settingsItem->coordinate().isValid();
+    bool homePositionValid = _settingsItem->coordinate().isValid();
 
-    qCDebug(MissionControllerLog) << "_recalcWaypointLines showHomePosition" << showHomePosition;
+    qCDebug(MissionControllerLog) << "_recalcWaypointLines homePositionValid" << homePositionValid;
 
     CoordVectHashTable old_table = _linesTable;
     _linesTable.clear();
@@ -1032,35 +1032,33 @@ void MissionController::_recalcWaypointLines(void)
     for (int i=1; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
 
-
-        // If we still haven't found the first coordinate item and we hit a takeoff command, link back to home
-        if (firstCoordinateItem &&
-                item->isSimpleItem() &&
-                (!_controllerVehicle->firmwarePlugin()->supportedMissionCommands().contains(MAV_CMD_NAV_TAKEOFF) ||
-                    qobject_cast<SimpleMissionItem*>(item)->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF ||
-                    qobject_cast<SimpleMissionItem*>(item)->command() == MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF)) {
-            linkStartToHome = true;
-            if (!_editMode) {
-                _waypointPath.append(QVariant::fromValue(lastCoordinateItem->coordinate()));
+        // If we still haven't found the first coordinate item and we hit a takeoff command this means the mission starts from the ground.
+        // Link the first item back to home to show that.
+        if (firstCoordinateItem && item->isSimpleItem()) {
+            MAV_CMD command = (MAV_CMD)qobject_cast<SimpleMissionItem*>(item)->command();
+            if (command == MAV_CMD_NAV_TAKEOFF || command == MAV_CMD_NAV_VTOL_TAKEOFF) {
+                linkStartToHome = true;
             }
         }
 
-        if (item->specifiesCoordinate()) {
-            if (!item->isStandaloneCoordinate()) {
-                firstCoordinateItem = false;
-                if (lastCoordinateItem != _settingsItem || (showHomePosition && linkStartToHome)) {
-                    if (_editMode) {
-                        VisualItemPair pair(lastCoordinateItem, item);
-                        _addWaypointLineSegment(old_table, pair);
-                    } else {
-                        _waypointPath.append(QVariant::fromValue(item->coordinate()));
-                    }
+        if (item->specifiesCoordinate() && !item->isStandaloneCoordinate()) {
+            firstCoordinateItem = false;
+            if (lastCoordinateItem != _settingsItem || (homePositionValid && linkStartToHome)) {
+                if (_editMode) {
+                    VisualItemPair pair(lastCoordinateItem, item);
+                    _addWaypointLineSegment(old_table, pair);
                 }
-                lastCoordinateItem = item;
             }
+            _waypointPath.append(QVariant::fromValue(item->coordinate()));
+            lastCoordinateItem = item;
         }
     }
-    if (linkEndToHome && lastCoordinateItem != _settingsItem && showHomePosition) {
+
+    if (linkStartToHome && homePositionValid) {
+        _waypointPath.prepend(QVariant::fromValue(_settingsItem->coordinate()));
+    }
+
+    if (linkEndToHome && lastCoordinateItem != _settingsItem && homePositionValid) {
         if (_editMode) {
             VisualItemPair pair(lastCoordinateItem, _settingsItem);
             _addWaypointLineSegment(old_table, pair);

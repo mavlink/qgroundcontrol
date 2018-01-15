@@ -16,6 +16,11 @@
 #include "VideoReceiver.h"
 #include "YuneecCameraControl.h"
 #include "YExportFiles.h"
+#if defined(__planner__)
+#include "QGCSyncFilesDesktop.h"
+#else
+#include "QGCSyncFilesMobile.h"
+#endif
 
 #include <QDirIterator>
 #include <QtAlgorithms>
@@ -92,6 +97,11 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _firstRun(true)
     , _passwordSet(false)
     , _newPasswordSet(false)
+#if defined(__planner__)
+    , _desktopSync(NULL)
+#else
+    , _mobileSync(NULL)
+#endif
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
 #if defined __android__
@@ -119,6 +129,15 @@ TyphoonHQuickInterface::~TyphoonHQuickInterface()
     if(_exporter) {
         _exporter->deleteLater();
     }
+#if defined(__planner__)
+    if(_desktopSync) {
+        _desktopSync->deleteLater();
+    }
+#else
+    if(_mobileSync) {
+        _mobileSync->deleteLater();
+    }
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -157,13 +176,21 @@ TyphoonHQuickInterface::init()
         connect(_pHandler, &TyphoonHM4Interface::calibrationCompleteChanged,   this, &TyphoonHQuickInterface::_calibrationCompleteChanged);
         connect(_pHandler, &TyphoonHM4Interface::rcActiveChanged,              this, &TyphoonHQuickInterface::_rcActiveChanged);
 #endif
+        //-- RPC
+#if defined(__planner__)
+        _desktopSync = new QGCSyncFilesDesktop(this);
+        emit desktopSyncChanged();
+#else
+        _mobileSync = new QGCSyncFilesMobile(this);
+        emit mobileSyncChanged();
+#endif
         connect(getQGCMapEngine(), &QGCMapEngine::internetUpdated,             this, &TyphoonHQuickInterface::_internetUpdated);
         connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded,         this, &TyphoonHQuickInterface::_vehicleAdded);
         connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved,       this, &TyphoonHQuickInterface::_vehicleRemoved);
         connect(qgcApp()->toolbox()->videoManager()->videoReceiver(), &VideoReceiver::imageFileChanged,   this, &TyphoonHQuickInterface::_imageFileChanged);
-        connect(&_scanTimer,    &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
-        connect(&_flightTimer,  &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
-        connect(&_powerTimer,   &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
+        connect(&_scanTimer,        &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
+        connect(&_flightTimer,      &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
+        connect(&_powerTimer,       &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
         _flightTimer.setSingleShot(false);
         _powerTimer.setSingleShot(true);
         //-- Make sure uLog is disabled
@@ -188,11 +215,13 @@ TyphoonHQuickInterface::init()
                 logs.removeAt(0);
             }
         }
+#if !defined(__planner__)
         //-- Thermal video surface must be created before UI
         if(!_videoReceiver) {
             _videoReceiver = new VideoReceiver(this);
             connect(_videoReceiver, &VideoReceiver::videoRunningChanged, this, &TyphoonHQuickInterface::_videoRunningChanged);
         }
+#endif
 #if defined(__androidx86__)
     }
 #endif
@@ -1260,7 +1289,7 @@ TyphoonHQuickInterface::exportData(bool exportUTM, bool exportSkyward)
     _exportMessage(QString(tr("Searching files...")));
     _exporter = new YExportFiles();
     connect(_exporter, &YExportFiles::completed,        this, &TyphoonHQuickInterface::_exportCompleted);
-    connect(_exporter, &YExportFiles::copyCompleted,    this, &TyphoonHQuickInterface::_copyCompleted);
+    connect(_exporter, &YExportFiles::progress,    this, &TyphoonHQuickInterface::_copyProgress);
     connect(_exporter, &YExportFiles::message,          this, &TyphoonHQuickInterface::_exportMessage);
     _exportMessage(QString(tr("Copying files...")));
     _exporter->exportData(exportUTM, exportSkyward);
@@ -1292,7 +1321,7 @@ TyphoonHQuickInterface::_exportCompleted()
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::_copyCompleted(quint32 totalCount, quint32 curCount)
+TyphoonHQuickInterface::_copyProgress(quint32 totalCount, quint32 curCount)
 {
     if(!totalCount) {
         _updateProgress = 0;
@@ -1344,7 +1373,7 @@ TyphoonHQuickInterface::_importMissions()
         totalFiles++;
         fil << fi;
     }
-    _copyCompleted(totalFiles, 0);
+    _copyProgress(totalFiles, 0);
     QString missionDir = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
     while(fil.size()) {
         QFileInfo fi = fil.first();
@@ -1362,7 +1391,7 @@ TyphoonHQuickInterface::_importMissions()
             emit copyingDoneChanged();
             return;
         }
-        _copyCompleted(totalFiles, ++curCount);
+        _copyProgress(totalFiles, ++curCount);
         qApp->processEvents();
     }
     _exportMessage(QString(tr("%1 files imported").arg(totalFiles)));

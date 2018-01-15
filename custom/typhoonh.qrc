@@ -90,13 +90,19 @@
     </qresource>
     <qresource prefix="/typhoonh">
         <file alias="cameraControl.qml">res/cameraControl.qml</file>
+        <file alias="ChannelComponent.qml">src/AutoPilotPlugin/ChannelComponent.qml</file>
+        <file alias="GimbalComponent.qml">src/AutoPilotPlugin/GimbalComponent.qml</file>
+        <file alias="HealthComponentSummary.qml">src/AutoPilotPlugin/HealthComponentSummary.qml</file>
         <file alias="InitialSettings.qml">res/InitialSettings.qml</file>
         <file alias="ModeIndicator.qml">res/ModeIndicator.qml</file>
         <file alias="OBSIndicator.qml">res/OBSIndicator.qml</file>
         <file alias="RCCalibration.qml">res/RCCalibration.qml</file>
         <file alias="RCIndicator.qml">res/RCIndicator.qml</file>
+        <file alias="TyphoonSettings.qml">res/TyphoonSettings.qml</file>
         <file alias="UpdateDialog.qml">res/UpdateDialog.qml</file>
         <file alias="WIFIRSSIIndicator.qml">res/WIFIRSSIIndicator.qml</file>
         <file alias="YuneecFlyView.qml">res/YuneecFlyView.qml</file>
+        <file alias="YuneecSafetyComponent.qml">src/AutoPilotPlugin/YuneecSafetyComponent.qml</file>
+        <file alias="YuneecSafetyComponentSummary.qml">src/AutoPilotPlugin/YuneecSafetyComponentSummary.qml</file>
     </qresource>
 </RCC>

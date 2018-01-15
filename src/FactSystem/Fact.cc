@@ -7,12 +7,10 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "Fact.h"
 #include "QGCMAVLink.h"
+#include "QGCApplication.h"
+#include "QGCCorePlugin.h"
 
 #include <QtQml>
 #include <QQmlEngine>
@@ -48,6 +46,21 @@ Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObjec
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+}
+
+Fact::Fact(FactMetaData* metaData, QObject* parent)
+    : QObject(parent)
+    , _name                     (metaData->name())
+    , _componentId              (0)
+    , _rawValue                 (0)
+    , _type                     (metaData->type())
+    , _metaData                 (NULL)
+    , _sendValueChangedSignals  (true)
+    , _deferredValueChangeSignal(false)
+{
+    // Allow core plugin a chance to override the default value
+    qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(*metaData);
+    setMetaData(metaData, true /* setDefaultFromMetaData */);
 }
 
 Fact::Fact(const Fact& other, QObject* parent)
@@ -148,9 +161,11 @@ void Fact::_containerSetRawValue(const QVariant& value)
     if(_rawValue != value) {
         _rawValue = value;
         _sendValueChangedSignal(cookedValue());
-        emit vehicleUpdated(_rawValue);
         emit rawValueChanged(_rawValue);
     }
+
+    // This always need to be signalled in order to support forceSetRawValue usage and waiting for vehicleUpdated signal
+    emit vehicleUpdated(_rawValue);
 }
 
 QString Fact::name(void) const
@@ -484,6 +499,16 @@ int Fact::decimalPlaces(void) const
     }
 }
 
+QString Fact::category(void) const
+{
+    if (_metaData) {
+        return _metaData->category();
+    } else {
+        qWarning() << kMissingMetadata << name();
+        return QString();
+    }
+}
+
 QString Fact::group(void) const
 {
     if (_metaData) {
@@ -632,6 +657,16 @@ bool Fact::readOnly(void) const
 {
     if (_metaData) {
         return _metaData->readOnly();
+    } else {
+        qWarning() << kMissingMetadata << name();
+        return false;
+    }
+}
+
+bool Fact::volatileValue(void) const
+{
+    if (_metaData) {
+        return _metaData->volatileValue();
     } else {
         qWarning() << kMissingMetadata << name();
         return false;

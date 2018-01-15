@@ -41,7 +41,7 @@ APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
     enumToString.insert(THROW,     "Throw");
     enumToString.insert(AVOID_ADSB,"Avoid ADSB");
     enumToString.insert(GUIDED_NOGPS,"Guided No GPS");
-    enumToString.insert(SAFE_RTL,"Safe RTL");
+    enumToString.insert(SAFE_RTL,"Smart RTL");
 
 
     setEnumToStringMapping(enumToString);
