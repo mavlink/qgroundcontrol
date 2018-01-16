@@ -132,7 +132,7 @@ Item {
                     QGCLabel { text: getBatteryPercentageText() }
                     QGCLabel { text: qsTr("ST16 GPS Sat Count:") }
                     QGCLabel { text: TyphoonHQuickInterface.gpsCount.toFixed(0) }
-                  //QGCLabel { text: qsTr("RC GPS Accuracy:") }
+                  //QGCLabel { text: qsTr("RC GPS PDOP:") }
                   //QGCLabel { text: TyphoonHQuickInterface.gpsAccuracy.toFixed(1) }
                   //QGCLabel { text: qsTr("RC Ground Speed:") }
                   //QGCLabel { text: TyphoonHQuickInterface.speed.toFixed(1) }

@@ -26,7 +26,9 @@
 #include <QtAlgorithms>
 
 #include "TyphoonHQuickInterface.h"
+#if defined(__androidx86__)
 #include "TyphoonHM4Interface.h"
+#endif
 
 #if defined __android__
 #include <jni.h>
@@ -171,6 +173,7 @@ TyphoonHQuickInterface::init()
         connect(_pHandler, &TyphoonHM4Interface::wifiDisconnected,             this, &TyphoonHQuickInterface::_wifiDisconnected);
         connect(_pHandler, &TyphoonHM4Interface::batteryUpdate,                this, &TyphoonHQuickInterface::_batteryUpdate);
         connect(_pHandler, &TyphoonHM4Interface::rawChannelsChanged,           this, &TyphoonHQuickInterface::_rawChannelsChanged);
+        connect(_pHandler, &TyphoonHM4Interface::buttonStateChanged,           this, &TyphoonHQuickInterface::_buttonStateChanged);
         connect(_pHandler, &TyphoonHM4Interface::switchStateChanged,           this, &TyphoonHQuickInterface::_switchStateChanged);
         connect(_pHandler, &TyphoonHM4Interface::calibrationStateChanged,      this, &TyphoonHQuickInterface::_calibrationStateChanged);
         connect(_pHandler, &TyphoonHM4Interface::calibrationCompleteChanged,   this, &TyphoonHQuickInterface::_calibrationCompleteChanged);
@@ -190,9 +193,11 @@ TyphoonHQuickInterface::init()
         connect(qgcApp()->toolbox()->videoManager()->videoReceiver(), &VideoReceiver::imageFileChanged,   this, &TyphoonHQuickInterface::_imageFileChanged);
         connect(&_scanTimer,        &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
         connect(&_flightTimer,      &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
-        connect(&_powerTimer,       &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
         _flightTimer.setSingleShot(false);
+#if defined(__androidx86__)
+        connect(&_powerTimer,       &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
         _powerTimer.setSingleShot(true);
+#endif
         //-- Make sure uLog is disabled
         qgcApp()->toolbox()->mavlinkLogManager()->setEnableAutoUpload(false);
         qgcApp()->toolbox()->mavlinkLogManager()->setEnableAutoStart(false);
@@ -541,33 +546,25 @@ TyphoonHQuickInterface::_setWiFiPassword()
 }
 
 //-----------------------------------------------------------------------------
+#if defined(__androidx86__)
 void
 TyphoonHQuickInterface::_powerTrigger()
 {
-#if defined(__androidx86__)
     //-- If RC is not working
     if(!_pHandler->rcActive()) {
         //-- Panic button held down
         emit powerHeld();
     }
-#endif
 }
+#endif
 
 //-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::_switchStateChanged(int swId, int newState, int /*oldState*/)
-{
 #if defined(__androidx86__)
-    if(swId == Yuneec::BUTTON_POWER) {
-        //-- Pressed is 0
-        if(newState == 0) {
-            _powerTimer.start(1000);
-        } else {
-            _powerTimer.stop();
-        }
-    } else if(swId == Yuneec::BUTTON_OBS) {
-        //-- On is position 3 (index 2)
-        if(newState == 2 && !_obsState) {
+void
+TyphoonHQuickInterface::_switchStateChanged(M4Lib::SwitchId switchId, M4Lib::SwitchState switchState)
+{
+    if(switchId == M4Lib::SwitchId::OBSTACLE_AVOIDANCE) {
+        if(switchState == M4Lib::SwitchState::ON && !_obsState) {
             _obsState = true;
             emit obsStateChanged();
         } else if(_obsState) {
@@ -575,11 +572,23 @@ TyphoonHQuickInterface::_switchStateChanged(int swId, int newState, int /*oldSta
             emit obsStateChanged();
         }
     }
-#else
-    Q_UNUSED(swId)
-    Q_UNUSED(newState)
-#endif
 }
+#endif
+
+//-----------------------------------------------------------------------------
+#if defined(__androidx86__)
+void
+TyphoonHQuickInterface::_buttonStateChanged(M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState)
+{
+    if(buttonId == M4Lib::ButtonId::POWER) {
+        if(buttonState == M4Lib::ButtonState::PRESSED) {
+            _powerTimer.start(1000);
+        } else {
+            _powerTimer.stop();
+        }
+    }
+}
+#endif
 
 //-----------------------------------------------------------------------------
 void
@@ -704,7 +713,7 @@ TyphoonHQuickInterface::gpsAccuracy()
 {
 #if defined(__androidx86__)
     if(_pHandler) {
-        return _pHandler->controllerLocation().accuracy;
+        return _pHandler->controllerLocation().pdop;
     }
 #endif
     return 0.0;

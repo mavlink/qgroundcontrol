@@ -170,8 +170,9 @@ DesktopPlanner {
 } else {
     SOURCES += \
         $$QGCROOT/custom/src/TyphoonHM4Interface.cc \
-        $$QGCROOT/custom/src/m4serial.cc \
-        $$QGCROOT/custom/src/m4util.cc \
+        $$QGCROOT/custom/src/m4lib/src/m4serial.cpp \
+        $$QGCROOT/custom/src/m4lib/src/m4util.cpp \
+        $$QGCROOT/custom/src/m4lib/src/m4lib.cpp \
         $$QGCROOT/custom/src/QGCSyncFilesMobile.cc
 }
 
@@ -181,6 +182,11 @@ AndroidBuild {
 }
 
 HEADERS += \
+    $$QGCROOT/custom/src/m4lib/src/m4channeldata.h \
+    $$QGCROOT/custom/src/m4lib/src/m4lib.h \
+    $$QGCROOT/custom/src/m4lib/src/m4def.h \
+    $$QGCROOT/custom/src/m4lib/src/m4serial.h \
+    $$QGCROOT/custom/src/m4lib/src/m4util.h \
     $$QGCROOT/custom/src/TyphoonHPlugin.h \
     $$QGCROOT/custom/src/TyphoonHCommon.h \
     $$QGCROOT/custom/src/TyphoonHQuickInterface.h \
@@ -193,12 +199,15 @@ DesktopPlanner {
         $$QGCROOT/custom/src/QGCSyncFilesDesktop.h
 } else {
     HEADERS += \
-        $$QGCROOT/custom/src/m4channeldata.h \
-        $$QGCROOT/custom/src/m4def.h \
-        $$QGCROOT/custom/src/m4serial.h \
-        $$QGCROOT/custom/src/m4util.h \
+        $$QGCROOT/custom/src/m4lib/src/m4channeldata.h \
+        $$QGCROOT/custom/src/m4lib/src/m4def.h \
+        $$QGCROOT/custom/src/m4lib/src/m4serial.h \
+        $$QGCROOT/custom/src/m4lib/src/m4util.h \
         $$QGCROOT/custom/src/TyphoonHM4Interface.h \
         $$QGCROOT/custom/src/QGCSyncFilesMobile.h
+
+    INCLUDEPATH += \
+        $$PWD/src/m4lib/src \
 }
 
 equals(QT_MAJOR_VERSION, 5) {

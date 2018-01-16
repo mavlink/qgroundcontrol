@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.33 - Jan 16 2018
+
+*   Refactor ST16 library into a common set of libraries for DataPilot and the SDK.
+
 ### v1.2.32 - Jan 16 2018
 
 *   No code change. Preparing strings for localization.

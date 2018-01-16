@@ -11,6 +11,10 @@
 #include "VideoReceiver.h"
 #include "Vehicle.h"
 
+#if defined(__androidx86__)
+#include "m4lib.h" // For button, switches
+#endif
+
 #include <QQmlListProperty>
 
 class YExportFiles;
@@ -135,6 +139,8 @@ public:
     ~TyphoonHQuickInterface();
 
     //-- QtQuick Interface
+
+    //-- Mirror of M4Lib::M4State
     enum M4State {
         M4_STATE_NONE           = 0,
         M4_STATE_AWAIT          = 1,
@@ -454,9 +460,12 @@ private slots:
     void    _batteryUpdate              ();
     void    _armedChanged               (bool armed);
     void    _flightUpdate               ();
-    void    _powerTrigger               ();
     void    _rawChannelsChanged         ();
-    void    _switchStateChanged         (int swId, int newState, int oldState);
+#if defined(__androidx86__)
+    void    _powerTrigger               ();
+    void    _switchStateChanged         (M4Lib::SwitchId switchId, M4Lib::SwitchState switchState);
+    void    _buttonStateChanged         (M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState);
+#endif
     void    _importMissions             ();
     void    _calibrationCompleteChanged ();
     void    _calibrationStateChanged    ();
@@ -492,6 +501,7 @@ private:
 private:
 #if defined(__androidx86__)
     TyphoonHM4Interface*    _pHandler;
+    QTimer                  _powerTimer;
 #endif
     Vehicle*                _vehicle;
     TyphoonHFileCopy*       _pFileCopy;
@@ -504,7 +514,6 @@ private:
     QString                 _password;
     QTimer                  _scanTimer;
     QTimer                  _flightTimer;
-    QTimer                  _powerTimer;
     QTime                   _flightTime;
     bool                    _scanEnabled;
     bool                    _scanningWiFi;

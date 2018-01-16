@@ -113,12 +113,12 @@ public slots:
 private slots:
     void _controllerLocationChanged ()
     {
-        ControllerLocation loc = _pHandler->controllerLocation();
+        M4Lib::ControllerLocation loc = _pHandler->controllerLocation();
         QGeoPositionInfo update(QGeoCoordinate(loc.latitude, loc.longitude, loc.altitude), QDateTime::currentDateTime());
         //-- Not certain if these are using the same units and/or methods of computation
-        update.setAttribute(QGeoPositionInfo::Direction,    loc.angle);
+        update.setAttribute(QGeoPositionInfo::Direction,    loc.heading);
         update.setAttribute(QGeoPositionInfo::GroundSpeed,  loc.speed);
-        update.setAttribute(QGeoPositionInfo::HorizontalAccuracy, loc.accuracy);
+        update.setAttribute(QGeoPositionInfo::HorizontalAccuracy, loc.pdop); // pdop is the position dilution of precision and not actually the horizontal accuracy.
         _lastUpdate = update;
         emit positionUpdated(update);
     }
