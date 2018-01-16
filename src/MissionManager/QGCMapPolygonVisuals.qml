@@ -453,6 +453,7 @@ Item {
                         id:                 radiusField
                         text:               _circleRadius.toFixed(2)
                         onEditingFinished:  setRadiusFromDialog()
+                        inputMethodHints:   Qt.ImhFormattedNumbersOnly
                     }
                 }
 
