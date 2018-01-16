@@ -21,8 +21,9 @@ import QGroundControl.Controllers   1.0
 
 /// Base view control for all Setup pages
 QGCView {
-    id:         setupView
-    viewPanel:  setupPanel
+    id:             setupView
+    viewPanel:      setupPanel
+    enabled:        !_shouldDisableWhenArmed
 
     property alias  pageComponent:      pageLoader.sourceComponent
     property string pageName:           vehicleComponent ? vehicleComponent.name : ""
@@ -30,52 +31,12 @@ QGCView {
     property real   availableWidth:     width - pageLoader.x
     property real   availableHeight:    height - pageLoader.y
 
-    property real _margins: ScreenTools.defaultFontPixelHeight / 2
+    property bool _vehicleArmed:         QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.armed : false
+    property bool _shouldDisableWhenArmed: _vehicleArmed ? (vehicleComponent ? !vehicleComponent.allowSetupWhileArmed : false) : false
 
-    property bool visibleWhileArmed: false
-
-    property bool vehicleArmed: QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.armed : false
-
-    onVehicleArmedChanged: {
-        if (visibleWhileArmed) {
-            return
-        }
-
-        if (vehicleArmed) {
-            disabledWhileArmed.visible = true
-            setupView.viewPanel.enabled = false
-        } else {
-            disabledWhileArmed.visible = false
-            setupView.viewPanel.enabled = true
-        }
-    }
+    property real _margins:             ScreenTools.defaultFontPixelHeight * 0.5
 
     QGCPalette { id: qgcPal; colorGroupEnabled: setupPanel.enabled }
-
-    // Overlay to display when vehicle is armed and the setup page needs
-    // to be disabled
-    Item {
-        id: disabledWhileArmed
-        visible: false
-        z: 9999
-        anchors.fill: parent
-        Rectangle {
-            anchors.fill: parent
-            color: "black"
-            opacity: 0.5
-        }
-
-        QGCLabel {
-            anchors.margins:        defaultTextWidth * 2
-            anchors.fill:           parent
-            verticalAlignment:      Text.AlignVCenter
-            horizontalAlignment:    Text.AlignHCenter
-            wrapMode:               Text.WordWrap
-            font.pointSize:         ScreenTools.largeFontPointSize
-            color:                  "red"
-            text:                   "Setup disabled while the vehicle is armed"
-        }
-    }
 
     QGCViewPanel {
         id:             setupPanel
@@ -88,13 +49,13 @@ QGCView {
             clip:           true
 
             Column {
-                id:             headingColumn
-                width:          setupPanel.width
-                spacing:        _margins
+                id:                 headingColumn
+                width:              setupPanel.width
+                spacing:            _margins
 
                 QGCLabel {
                     font.pointSize: ScreenTools.largeFontPointSize
-                    text:           pageName + " " + qsTr("Setup")
+                    text:           qsTr("%1 Setup").arg(pageName)
                     visible:        !ScreenTools.isShortScreen
                 }
 
@@ -114,4 +75,27 @@ QGCView {
             }
         }
     }
+
+    // Overlay to display when vehicle is armed and this setup page needs
+    // to be disabled
+    Item {
+        visible:                    _shouldDisableWhenArmed
+        anchors.fill:               parent
+        Rectangle {
+            anchors.fill:           parent
+            color:                  "black"
+            opacity:                0.5
+        }
+        QGCLabel {
+            anchors.margins:        defaultTextWidth * 2
+            anchors.fill:           parent
+            verticalAlignment:      Text.AlignVCenter
+            horizontalAlignment:    Text.AlignHCenter
+            wrapMode:               Text.WordWrap
+            font.pointSize:         ScreenTools.largeFontPointSize
+            color:                  "red"
+            text:                   qsTr("Setup disabled while the vehicle is armed")
+        }
+    }
+
 }
