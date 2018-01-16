@@ -1142,6 +1142,15 @@ value will determine the minimum airspeed which will still be fused</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/ekf2</scope>
     </parameter>
+    <parameter default="5" name="EKF2_AVEL_DELAY" type="FLOAT">
+      <short_desc>Auxillary Velocity Estimate (e.g from a landing target) delay relative to IMU measurements</short_desc>
+      <min>0</min>
+      <max>300</max>
+      <unit>ms</unit>
+      <decimal>1</decimal>
+      <reboot_required>true</reboot_required>
+      <scope>modules/ekf2</scope>
+    </parameter>
     <parameter default="0" name="EKF2_BARO_DELAY" type="FLOAT">
       <short_desc>Barometer measurement delay relative to IMU measurements</short_desc>
       <min>0</min>
@@ -3211,6 +3220,64 @@ but also ignore less noise</short_desc>
       <scope>modules/land_detector</scope>
     </parameter>
   </group>
+  <group name="Landing target Estimator">
+    <parameter default="10.0" name="LTEST_ACC_UNC" type="FLOAT">
+      <short_desc>Acceleration uncertainty</short_desc>
+      <long_desc>Variance of acceleration measurement used for landing target position prediction. Higher values results in tighter following of the measurements and more lenient outlier rejection</long_desc>
+      <min>0.01</min>
+      <unit>(m/s^2)^2</unit>
+      <decimal>2</decimal>
+      <scope>modules/landing_target_estimator</scope>
+    </parameter>
+    <parameter default="0.005" name="LTEST_MEAS_UNC" type="FLOAT">
+      <short_desc>Landing target measurement uncertainty</short_desc>
+      <long_desc>Variance of the landing target measurement from the driver. Higher values results in less agressive following of the measurement and a smoother output as well as fewer rejected measurements.</long_desc>
+      <unit>tan(rad)^2</unit>
+      <decimal>4</decimal>
+      <scope>modules/landing_target_estimator</scope>
+    </parameter>
+    <parameter default="0" name="LTEST_MODE" type="INT32">
+      <short_desc>Landing target mode</short_desc>
+      <long_desc>Configure the mode of the landing target. Depending on the mode, the landing target observations are used differently to aid position estimation. Mode Moving:     The landing target may be moving around while in the field of view of the vehicle. Landing target measurements are not used to aid positioning. Mode Stationary: The landing target is stationary. Measured velocity w.r.t. the landing target is used to aid velocity estimation.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <scope>modules/landing_target_estimator</scope>
+      <values>
+        <value code="0">Moving</value>
+        <value code="1">Stationary</value>
+      </values>
+    </parameter>
+    <parameter default="0.1" name="LTEST_POS_UNC_IN" type="FLOAT">
+      <short_desc>Initial landing target position uncertainty</short_desc>
+      <long_desc>Initial variance of the relative landing target position in x and y direction</long_desc>
+      <min>0.001</min>
+      <unit>m^2</unit>
+      <decimal>3</decimal>
+      <scope>modules/landing_target_estimator</scope>
+    </parameter>
+    <parameter default="1.0" name="LTEST_SCALE_X" type="FLOAT">
+      <short_desc>Scale factor for sensor measurements in sensor x axis</short_desc>
+      <long_desc>Landing target x measurements are scaled by this factor before being used</long_desc>
+      <min>0.01</min>
+      <decimal>3</decimal>
+      <scope>modules/landing_target_estimator</scope>
+    </parameter>
+    <parameter default="1.0" name="LTEST_SCALE_Y" type="FLOAT">
+      <short_desc>Scale factor for sensor measurements in sensor y axis</short_desc>
+      <long_desc>Landing target y measurements are scaled by this factor before being used</long_desc>
+      <min>0.01</min>
+      <decimal>3</decimal>
+      <scope>modules/landing_target_estimator</scope>
+    </parameter>
+    <parameter default="1.0" name="LTEST_VEL_UNC_IN" type="FLOAT">
+      <short_desc>Initial landing target velocity uncertainty</short_desc>
+      <long_desc>Initial variance of the relative landing target velocity in x and y direction</long_desc>
+      <min>0.001</min>
+      <unit>(m/s)^2</unit>
+      <decimal>3</decimal>
+      <scope>modules/landing_target_estimator</scope>
+    </parameter>
+  </group>
   <group name="Local Position Estimator">
     <parameter default="0.012" name="LPE_ACC_XY" type="FLOAT">
       <short_desc>Accelerometer xy noise density</short_desc>
@@ -3312,7 +3379,7 @@ by initializing the estimator to the LPE_LAT/LON parameters when global informat
       <short_desc>Integer bitmask controlling data fusion</short_desc>
       <long_desc>Set bits in the following positions to enable: 0 : Set to true to fuse GPS data if available, also requires GPS for altitude init 1 : Set to true to fuse optical flow data if available 2 : Set to true to fuse vision position 3 : Set to true to enable landing target 4 : Set to true to fuse land detector 5 : Set to true to publish AGL as local position down component 6 : Set to true to enable flow gyro compensation 7 : Set to true to enable baro fusion default (145 - GPS, baro, land detector)</long_desc>
       <min>0</min>
-      <max>255</max>
+      <max>4294967295</max>
       <scope>modules/local_position_estimator</scope>
       <bitmask>
         <bit index="0"> fuse GPS, requires GPS for alt. init</bit>
@@ -3412,6 +3479,14 @@ EPV used if greater than this value</short_desc>
       <max>180</max>
       <unit>deg</unit>
       <decimal>8</decimal>
+      <scope>modules/local_position_estimator</scope>
+    </parameter>
+    <parameter default="0.0001" name="LPE_LT_COV" type="FLOAT">
+      <short_desc>Minimum landing target standard covariance, uses reported covariance if greater</short_desc>
+      <min>0.0</min>
+      <max>10</max>
+      <unit>m^2</unit>
+      <decimal>2</decimal>
       <scope>modules/local_position_estimator</scope>
     </parameter>
     <parameter default="1e-3" name="LPE_PN_B" type="FLOAT">
@@ -5371,6 +5446,65 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>0.0</min>
       <max>10.0</max>
       <scope>modules/position_estimator_inav</scope>
+    </parameter>
+  </group>
+  <group name="Precision Land">
+    <parameter default="5.0" name="PLD_BTOUT" type="FLOAT">
+      <short_desc>Landing Target Timeout</short_desc>
+      <long_desc>Time after which the landing target is considered lost without any new measurements.</long_desc>
+      <min>0.0</min>
+      <max>50</max>
+      <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+      <scope>modules/navigator</scope>
+    </parameter>
+    <parameter default="0.1" name="PLD_FAPPR_ALT" type="FLOAT">
+      <short_desc>Final approach altitude</short_desc>
+      <long_desc>Allow final approach (without horizontal positioning) if losing landing target closer than this to the ground.</long_desc>
+      <min>0.0</min>
+      <max>10</max>
+      <unit>m</unit>
+      <decimal>2</decimal>
+      <increment>0.1</increment>
+      <scope>modules/navigator</scope>
+    </parameter>
+    <parameter default="0.2" name="PLD_HACC_RAD" type="FLOAT">
+      <short_desc>Horizontal acceptance radius</short_desc>
+      <long_desc>Start descending if closer above landing target than this.</long_desc>
+      <min>0.0</min>
+      <max>10</max>
+      <unit>m</unit>
+      <decimal>2</decimal>
+      <increment>0.1</increment>
+      <scope>modules/navigator</scope>
+    </parameter>
+    <parameter default="3" name="PLD_MAX_SRCH" type="INT32">
+      <short_desc>Maximum number of search attempts</short_desc>
+      <long_desc>Maximum number of times to seach for the landing target if it is lost during the precision landing.</long_desc>
+      <min>0.0</min>
+      <max>100</max>
+      <scope>modules/navigator</scope>
+    </parameter>
+    <parameter default="10.0" name="PLD_SRCH_ALT" type="FLOAT">
+      <short_desc>Search altitude</short_desc>
+      <long_desc>Altitude above home to which to climb when searching for the landing target.</long_desc>
+      <min>0.0</min>
+      <max>100</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+      <scope>modules/navigator</scope>
+    </parameter>
+    <parameter default="10.0" name="PLD_SRCH_TOUT" type="FLOAT">
+      <short_desc>Search timeout</short_desc>
+      <long_desc>Time allowed to search for the landing target before falling back to normal landing.</long_desc>
+      <min>0.0</min>
+      <max>100</max>
+      <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+      <scope>modules/navigator</scope>
     </parameter>
   </group>
   <group name="RC Receiver Configuration">
