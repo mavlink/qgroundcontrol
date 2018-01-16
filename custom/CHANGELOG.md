@@ -1,5 +1,21 @@
 ## DataPilot Release Changelog
 
+### v1.2.32 - Jan 16 2018
+
+*   No code change. Preparing strings for localization.
+
+### v1.2.31 - Jan 15 2018
+
+*   LED control (All On/All Off/Front Off)
+
+### v1.2.30 - Jan 15 2018
+
+*   Build system change
+
+### v1.2.29 - Jan 15 2018
+
+*   Build system change
+
 ### v1.2.28 - Jan 12 2018
 
 *   Desktop/Mobile sync (Sync files between DataPilot Planner and DataPilot)

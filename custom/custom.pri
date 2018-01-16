@@ -361,10 +361,10 @@ DesktopInstall {
         message(Deploy Target: $${DEPLOY_TARGET})
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QT_BIN_DIR\\windeployqt --no-compiler-runtime --qmldir=$${BASEDIR_WIN}\\src $${DEPLOY_TARGET}
 
-        # This is not being copied so we do it by hand
-        QT_INSTALL_PATH = $$dirname(QT_BIN_DIR)
-        QT_LABS_PLATFORM_PATH = \"$$QT_INSTALL_PATH\\qml\\Qt\\labs\\platform\"
-        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR $$QT_LABS_PLATFORM_PATH $${DESTDIR_WIN}\\Qt\\labs\\platform
+        # This is not being copied so we do it by hand. This copies Qt.labs.platform.
+        # QT_INSTALL_PATH = $$dirname(QT_BIN_DIR)
+        # QT_LABS_PLATFORM_PATH = \"$$QT_INSTALL_PATH\\qml\\Qt\\labs\\platform\"
+        # QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR $$QT_LABS_PLATFORM_PATH $${DESTDIR_WIN}\\Qt\\labs\\platform
 
         #QMAKE_POST_LINK += $$escape_expand(\\n) cd $$BASEDIR_WIN && $$quote("\"C:\\Program Files \(x86\)\\NSIS\\makensis.exe\"" /NOCD "\"/XOutFile $${DESTDIR_WIN}\\$${TARGET}-installer.exe\"" "$$BASEDIR_WIN\\deploy\\qgroundcontrol_installer.nsi")
         #OTHER_FILES += deploy/$${TARGET}_installer.nsi
