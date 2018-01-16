@@ -8,7 +8,9 @@
 #include "YuneecCameraControl.h"
 #include "QGCCameraIO.h"
 #include "TyphoonHPlugin.h"
+#if defined(__androidx86__)
 #include "TyphoonHM4Interface.h"
+#endif
 #include "VideoManager.h"
 #include "SettingsManager.h"
 #include "VideoManager.h"
@@ -637,6 +639,7 @@ YuneecCameraControl::_irStatusTimeout()
 }
 
 //-----------------------------------------------------------------------------
+#if defined(__androidx86__)
 void
 YuneecCameraControl::_buttonStateChanged(M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState)
 {
@@ -706,6 +709,7 @@ YuneecCameraControl::_buttonStateChanged(M4Lib::ButtonId buttonId, M4Lib::Button
         }
     }
 }
+#endif
 
 //-----------------------------------------------------------------------------
 void

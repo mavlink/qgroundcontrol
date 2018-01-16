@@ -26,7 +26,9 @@
 #include <QtAlgorithms>
 
 #include "TyphoonHQuickInterface.h"
+#if defined(__androidx86__)
 #include "TyphoonHM4Interface.h"
+#endif
 
 #if defined __android__
 #include <jni.h>
@@ -191,9 +193,11 @@ TyphoonHQuickInterface::init()
         connect(qgcApp()->toolbox()->videoManager()->videoReceiver(), &VideoReceiver::imageFileChanged,   this, &TyphoonHQuickInterface::_imageFileChanged);
         connect(&_scanTimer,        &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
         connect(&_flightTimer,      &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
-        connect(&_powerTimer,       &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
         _flightTimer.setSingleShot(false);
+#if defined(__androidx86__)
+        connect(&_powerTimer,       &QTimer::timeout, this, &TyphoonHQuickInterface::_powerTrigger);
         _powerTimer.setSingleShot(true);
+#endif
         //-- Make sure uLog is disabled
         qgcApp()->toolbox()->mavlinkLogManager()->setEnableAutoUpload(false);
         qgcApp()->toolbox()->mavlinkLogManager()->setEnableAutoStart(false);
@@ -542,23 +546,23 @@ TyphoonHQuickInterface::_setWiFiPassword()
 }
 
 //-----------------------------------------------------------------------------
+#if defined(__androidx86__)
 void
 TyphoonHQuickInterface::_powerTrigger()
 {
-#if defined(__androidx86__)
     //-- If RC is not working
     if(!_pHandler->rcActive()) {
         //-- Panic button held down
         emit powerHeld();
     }
-#endif
 }
+#endif
 
 //-----------------------------------------------------------------------------
+#if defined(__androidx86__)
 void
 TyphoonHQuickInterface::_switchStateChanged(M4Lib::SwitchId switchId, M4Lib::SwitchState switchState)
 {
-#if defined(__androidx86__)
     if(switchId == M4Lib::SwitchId::OBSTACLE_AVOIDANCE) {
         if(switchState == M4Lib::SwitchState::ON && !_obsState) {
             _obsState = true;
@@ -568,13 +572,11 @@ TyphoonHQuickInterface::_switchStateChanged(M4Lib::SwitchId switchId, M4Lib::Swi
             emit obsStateChanged();
         }
     }
-#else
-    Q_UNUSED(switchId)
-    Q_UNUSED(switchState)
-#endif
 }
+#endif
 
 //-----------------------------------------------------------------------------
+#if defined(__androidx86__)
 void
 TyphoonHQuickInterface::_buttonStateChanged(M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState)
 {
@@ -586,6 +588,7 @@ TyphoonHQuickInterface::_buttonStateChanged(M4Lib::ButtonId buttonId, M4Lib::But
         }
     }
 }
+#endif
 
 //-----------------------------------------------------------------------------
 void
