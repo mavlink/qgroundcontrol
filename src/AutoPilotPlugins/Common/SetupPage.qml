@@ -35,6 +35,8 @@ QGCView {
     property bool _shouldDisableWhenArmed: _vehicleArmed ? (vehicleComponent ? !vehicleComponent.allowSetupWhileArmed : false) : false
 
     property real _margins:             ScreenTools.defaultFontPixelHeight * 0.5
+    property string _pageTitle:         qsTr("%1 Setup").arg(pageName)
+
 
     QGCPalette { id: qgcPal; colorGroupEnabled: setupPanel.enabled }
 
@@ -55,7 +57,7 @@ QGCView {
 
                 QGCLabel {
                     font.pointSize: ScreenTools.largeFontPointSize
-                    text:           qsTr("%1 Setup").arg(pageName)
+                    text:           _shouldDisableWhenArmed ? _pageTitle + "<font color=\"red\">" + qsTr(" (Disabled while the vehicle is armed)") + "</font>" : _pageTitle
                     visible:        !ScreenTools.isShortScreen
                 }
 
@@ -73,30 +75,14 @@ QGCView {
                 anchors.topMargin:  _margins
                 anchors.top:        headingColumn.bottom
             }
+            // Overlay to display when vehicle is armed and this setup page needs
+            // to be disabled
+            Rectangle {
+                visible:            _shouldDisableWhenArmed
+                anchors.fill:       pageLoader
+                color:              "black"
+                opacity:            0.5
+            }
         }
     }
-
-    // Overlay to display when vehicle is armed and this setup page needs
-    // to be disabled
-    Item {
-        visible:                    _shouldDisableWhenArmed
-        anchors.fill:               parent
-        z:                          9999
-        Rectangle {
-            anchors.fill:           parent
-            color:                  "black"
-            opacity:                0.5
-        }
-        QGCLabel {
-            anchors.margins:        defaultTextWidth * 2
-            anchors.fill:           parent
-            verticalAlignment:      Text.AlignVCenter
-            horizontalAlignment:    Text.AlignHCenter
-            wrapMode:               Text.WordWrap
-            font.pointSize:         ScreenTools.largeFontPointSize
-            color:                  "red"
-            text:                   qsTr("Setup disabled while the vehicle is armed")
-        }
-    }
-
 }
