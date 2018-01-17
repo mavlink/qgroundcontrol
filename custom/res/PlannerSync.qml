@@ -371,7 +371,7 @@ QGCView {
             }
             Component.onCompleted: {
                 TyphoonHQuickInterface.desktopSync.initSync()
-                TyphoonHQuickInterface.desktopSync.syncMessage = _sendMission ? qsTr("Select missions to upload to remote") : qsTr("Select missions to download from remote")
+                //TyphoonHQuickInterface.desktopSync.syncMessage = _sendMission ? qsTr("Select missions to upload to remote") : qsTr("Select missions to download from remote")
                 mainWindow.disableToolbar()
             }
         }
