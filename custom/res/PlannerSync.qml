@@ -371,7 +371,7 @@ QGCView {
             }
             Component.onCompleted: {
                 TyphoonHQuickInterface.desktopSync.initSync()
-                TyphoonHQuickInterface.desktopSync.syncMessage = _sendMission ? qsTr("Select missions to upload to remote") : qsTr("Select missions to download from remote")
+                //TyphoonHQuickInterface.desktopSync.syncMessage = _sendMission ? qsTr("Select missions to upload to remote") : qsTr("Select missions to download from remote")
                 mainWindow.disableToolbar()
             }
         }
@@ -450,11 +450,20 @@ QGCView {
                                 spacing: ScreenTools.defaultFontPixelWidth
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 property var _fileItem: _hasLogs ? TyphoonHQuickInterface.desktopSync.logController.fileList[index] : null
+                                property bool itemSelected: _hasLogs ? TyphoonHQuickInterface.desktopSync.logController.fileList[index].selected : false
+                                onItemSelectedChanged: {
+                                    logCheckBox.checked = _fileItem.selected
+                                }
                                 QGCCheckBox {
+                                    id:         logCheckBox
                                     text:       ""
-                                    checked:    _fileItem.selected
-                                    onClicked:  _fileItem.selected = !_fileItem.selected
+                                    onClicked:  {
+                                        _fileItem.selected = checked
+                                    }
                                     anchors.verticalCenter: parent.verticalCenter
+                                    Component.onCompleted: {
+                                        checked = _fileItem.selected
+                                    }
                                 }
                                 QGCLabel {
                                     text:       _fileItem.fileName
@@ -629,11 +638,20 @@ QGCView {
                                     spacing: ScreenTools.defaultFontPixelWidth
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     property var _fileItem: _hasMaps ? TyphoonHQuickInterface.desktopSync.mapController.fileList[index] : null
+                                    property bool itemSelected: _hasLogs ? TyphoonHQuickInterface.desktopSync.mapController.fileList[index].selected : false
+                                    onItemSelectedChanged: {
+                                        mapCheckBox.checked = _fileItem.selected
+                                    }
                                     QGCCheckBox {
+                                        id:         mapCheckBox
                                         text:       ""
-                                        checked:    _fileItem.selected
-                                        onClicked:  _fileItem.selected = !_fileItem.selected
+                                        onClicked:  {
+                                            _fileItem.selected = checked
+                                        }
                                         anchors.verticalCenter: parent.verticalCenter
+                                        Component.onCompleted: {
+                                            checked = _fileItem.selected
+                                        }
                                     }
                                     QGCLabel {
                                         text:       _fileItem.fileName
@@ -818,11 +836,18 @@ QGCView {
                                         delegate: Row {
                                             spacing: ScreenTools.defaultFontPixelWidth
                                             anchors.horizontalCenter: parent.horizontalCenter
+                                            property bool itemSelected: object.selected
+                                            onItemSelectedChanged: {
+                                                tileCheck.checked = object.selected
+                                            }
                                             QGCCheckBox {
+                                                id:         tileCheck
                                                 text:       ""
-                                                checked:    object.selected
-                                                onClicked:  object.selected = !object.selected
+                                                onClicked:  object.selected = checked
                                                 anchors.verticalCenter: parent.verticalCenter
+                                                Component.onCompleted: {
+                                                    checked = object.selected
+                                                }
                                             }
                                             QGCLabel {
                                                 text:       object.name

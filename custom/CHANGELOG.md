@@ -1,5 +1,11 @@
 ## DataPilot Release Changelog
 
+### v1.2.34 - Jan 17 2018
+
+*   Remote Sync: Don't show "Select Mission" text as there is no list.
+*   Remote Sync: Reset map/log list between connections.
+*   Remote Sync: Fix error where Select All/None was not working if a change was made manually.
+
 ### v1.2.33 - Jan 16 2018
 
 *   Refactor ST16 library into a common set of libraries for DataPilot and the SDK.
