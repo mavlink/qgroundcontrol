@@ -53,6 +53,7 @@ QGCView {
     property bool   _singleComplexItem:         _missionController.complexMissionItemNames.length === 1
     property real   _toolbarHeight:             _qgcView.height - ScreenTools.availableHeight
     property int    _editingLayer:              _layerMission
+    property int    _toolStripBottom:           toolStrip.height + toolStrip.y
 
     readonly property int       _layerMission:              1
     readonly property int       _layerGeoFence:             2
@@ -646,7 +647,7 @@ QGCView {
             anchors.bottom:     waypointValuesDisplay.visible ? waypointValuesDisplay.top : parent.bottom
             anchors.left:       parent.left
             mapControl:         editorMap
-            visible:            !ScreenTools.isTinyScreen
+            visible:            _toolStripBottom < y
         }
 
         MissionItemStatus {
@@ -657,7 +658,7 @@ QGCView {
             maxWidth:           parent.width - rightPanel.width - x
             anchors.bottom:     parent.bottom
             missionItems:       _missionController.visualItems
-            visible:            _editingLayer === _layerMission && (ScreenTools.isMobile ? height < Screen.height * 0.25 : true)
+            visible:            _editingLayer === _layerMission && (_toolStripBottom + mapScale.height) < y && QGroundControl.corePlugin.options.showMissionStatus
         }
     } // QGCViewPanel
 
