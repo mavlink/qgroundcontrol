@@ -823,7 +823,7 @@ VideoReceiver::_keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_
         } else {
             VideoReceiver* pThis = (VideoReceiver*)user_data;
             // reset the clock
-            GstClock* clock = gst_pipeline_get_pipeline_clock(GST_PIPELINE(pThis->_pipeline));
+            GstClock* clock = gst_pipeline_get_clock(GST_PIPELINE(pThis->_pipeline));
             GstClockTime time = gst_clock_get_time(clock);
             gst_object_unref(clock);
             gst_element_set_base_time(pThis->_pipeline, time); // offset pipeline timestamps to start at zero again
