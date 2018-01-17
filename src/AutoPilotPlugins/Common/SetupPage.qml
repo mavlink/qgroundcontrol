@@ -81,6 +81,7 @@ QGCView {
     Item {
         visible:                    _shouldDisableWhenArmed
         anchors.fill:               parent
+        z:                          9999
         Rectangle {
             anchors.fill:           parent
             color:                  "black"
