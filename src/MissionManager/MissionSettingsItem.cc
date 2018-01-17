@@ -297,6 +297,11 @@ void MissionSettingsItem::setMissionEndRTL(bool missionEndRTL)
 void MissionSettingsItem::_setHomeAltFromTerrain(double terrainAltitude)
 {
     if (!_plannedHomePositionFromVehicle) {
+		// We need to stop this from signalling, Otherwise the dirty but get set on a delay
+		// which then marks the Plan view as incorrectly dirty
+        _plannedHomePositionAltitudeFact.setSendValueChangedSignals(false);
         _plannedHomePositionAltitudeFact.setRawValue(terrainAltitude);
+        _plannedHomePositionAltitudeFact.clearDeferredValueChangeSignal();
+        _plannedHomePositionAltitudeFact.setSendValueChangedSignals(false);
     }
 }
