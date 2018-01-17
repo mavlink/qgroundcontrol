@@ -250,7 +250,6 @@ Rectangle {
                 setupIndicator:     false
                 exclusiveGroup:     setupButtonGroup
                 visible:            !ScreenTools.isMobile && _corePlugin.options.showFirmwareUpgrade
-                enabled:            !_vehicleArmed
                 text:               qsTr("Firmware")
                 Layout.fillWidth:   true
 
@@ -291,7 +290,6 @@ Rectangle {
                     exclusiveGroup:     setupButtonGroup
                     text:               modelData.name
                     visible:            modelData.setupSource.toString() !== ""
-                    enabled:            _vehicleArmed ? modelData.allowSetupWhileArmed : true
                     Layout.fillWidth:   true
 
                     onClicked: showVehicleComponentPanel(modelData)
