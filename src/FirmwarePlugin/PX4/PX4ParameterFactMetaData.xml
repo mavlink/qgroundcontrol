@@ -3379,7 +3379,7 @@ by initializing the estimator to the LPE_LAT/LON parameters when global informat
       <short_desc>Integer bitmask controlling data fusion</short_desc>
       <long_desc>Set bits in the following positions to enable: 0 : Set to true to fuse GPS data if available, also requires GPS for altitude init 1 : Set to true to fuse optical flow data if available 2 : Set to true to fuse vision position 3 : Set to true to enable landing target 4 : Set to true to fuse land detector 5 : Set to true to publish AGL as local position down component 6 : Set to true to enable flow gyro compensation 7 : Set to true to enable baro fusion default (145 - GPS, baro, land detector)</long_desc>
       <min>0</min>
-      <max>4294967295</max>
+      <max>255</max>
       <scope>modules/local_position_estimator</scope>
       <bitmask>
         <bit index="0"> fuse GPS, requires GPS for alt. init</bit>
