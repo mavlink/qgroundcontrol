@@ -1065,7 +1065,7 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
     if (sysStatus.battery_remaining > 0) {
         if (sysStatus.battery_remaining < _settingsManager->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toInt() &&
                 sysStatus.battery_remaining < _lastAnnouncedLowBatteryPercent) {
-            _say(QString("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
+            _say(QString(tr("%1 low battery: %2 percent remaining")).arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
         }
         _lastAnnouncedLowBatteryPercent = sysStatus.battery_remaining;
     }
@@ -2076,7 +2076,7 @@ void Vehicle::_connectionLostTimeout(void)
         _heardFrom = false;
         _maxProtoVersion = 0;
         emit connectionLostChanged(true);
-        _say(QString("%1 communication lost").arg(_vehicleIdSpeech()));
+        _say(QString(tr("%1 communication lost")).arg(_vehicleIdSpeech()));
         if (_autoDisconnect) {
 
             // Reset link state
@@ -2094,7 +2094,7 @@ void Vehicle::_connectionActive(void)
     if (_connectionLost) {
         _connectionLost = false;
         emit connectionLostChanged(false);
-        _say(QString("%1 communication regained").arg(_vehicleIdSpeech()));
+        _say(QString(tr("%1 communication regained")).arg(_vehicleIdSpeech()));
 
         // Re-negotiate protocol version for the link
         sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
@@ -2197,7 +2197,7 @@ QString Vehicle::vehicleTypeName() const {
 QString Vehicle::_vehicleIdSpeech(void)
 {
     if (_toolbox->multiVehicleManager()->vehicles()->count() > 1) {
-        return QString("vehicle %1").arg(id());
+        return QString(tr("vehicle %1")).arg(id());
     } else {
         return QString();
     }
@@ -2205,13 +2205,13 @@ QString Vehicle::_vehicleIdSpeech(void)
 
 void Vehicle::_handleFlightModeChanged(const QString& flightMode)
 {
-    _say(QString("%1 %2 flight mode").arg(_vehicleIdSpeech()).arg(flightMode));
+    _say(QString(tr("%1 %2 flight mode")).arg(_vehicleIdSpeech()).arg(flightMode));
     emit guidedModeChanged(_firmwarePlugin->isGuidedMode(this));
 }
 
 void Vehicle::_announceArmedChanged(bool armed)
 {
-    _say(QString("%1 %2").arg(_vehicleIdSpeech()).arg(armed ? QStringLiteral("armed") : QStringLiteral("disarmed")));
+    _say(QString("%1 %2").arg(_vehicleIdSpeech()).arg(armed ? QString(tr("armed")) : QString(tr("disarmed"))));
 }
 
 void Vehicle::_setFlying(bool flying)
