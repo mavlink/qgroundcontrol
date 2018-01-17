@@ -6358,39 +6358,39 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="640"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="638"/>
         <source>Mission item %1 is not an object</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="710"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="708"/>
         <source>Unsupported complex item type: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="713"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="711"/>
         <source>Unknown item type: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="736"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="734"/>
         <source>Could not find doJumpId: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="805"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="803"/>
         <source>The mission file is corrupted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="810"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="808"/>
         <source>The mission file is not compatible with this version of %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="849"/>
-        <location filename="../src/MissionManager/MissionController.cc" line="864"/>
-        <location filename="../src/MissionManager/MissionController.cc" line="888"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="847"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="862"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="886"/>
         <source>Mission: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11969,6 +11969,11 @@ Click Ok to start calibration.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../src/Vehicle/Vehicle.cc" line="1068"/>
+        <source>%1 low battery: %2 percent remaining</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../src/Vehicle/Vehicle.cc" line="1872"/>
         <source>Mission transfer failed. Retry transfer. Error: %1</source>
         <translation type="unfinished"></translation>
@@ -11981,6 +11986,16 @@ Click Ok to start calibration.</source>
     <message>
         <location filename="../src/Vehicle/Vehicle.cc" line="1884"/>
         <source>Rally Point transfer failed. Retry transfer. Error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2079"/>
+        <source>%1 communication lost</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2097"/>
+        <source>%1 communication regained</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -12113,6 +12128,26 @@ Click Ok to start calibration.</source>
     <message>
         <location filename="../src/Vehicle/Vehicle.cc" line="2191"/>
         <source>Onboard ADSB peripheral</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2200"/>
+        <source>vehicle %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2208"/>
+        <source>%1 %2 flight mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2214"/>
+        <source>armed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2214"/>
+        <source>disarmed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
