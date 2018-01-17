@@ -276,6 +276,7 @@ QGCSyncFilesDesktop::initLogFetch()
     if(_currentLog.isOpen()) {
         _currentLog.close();
     }
+    _logController.clearFileItems();
     QList<QGCRemoteLogEntry> allLogs = _remoteObject->logEntriesOnMobile();
     foreach(QGCRemoteLogEntry logEntry, allLogs) {
         QGCFileListItem* item = new QGCFileListItem(&_logController, logEntry.name(), logEntry.size());
@@ -296,6 +297,7 @@ QGCSyncFilesDesktop::initMapFetch()
     //-- Init map engine
     qgcApp()->toolbox()->mapEngineManager()->loadTileSets();
     //-- Get remote tile set list
+    _mapController.clearFileItems();
     QList<QGCSyncTileSet> allSets = _remoteObject->tileSetsOnMobile();
     foreach(QGCSyncTileSet set, allSets) {
         QGCFileListItem* item = new QGCFileListItem(&_mapController, set.name(), set.count());
