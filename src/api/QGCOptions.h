@@ -45,6 +45,7 @@ public:
     Q_PROPERTY(bool                     showOfflineMapExport            READ showOfflineMapExport           NOTIFY showOfflineMapExportChanged)
     Q_PROPERTY(bool                     showOfflineMapImport            READ showOfflineMapImport           NOTIFY showOfflineMapImportChanged)
     Q_PROPERTY(bool                     useMobileFileDialog             READ useMobileFileDialog            CONSTANT)
+    Q_PROPERTY(bool                     showMissionStatus               READ showMissionStatus              CONSTANT)
 
     /// Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /// @return true if QGC should consolidate both menus into one.
@@ -61,6 +62,10 @@ public:
     /// Provides an alternate instrument widget for the Fly View
     /// @return An alternate widget (see QGCInstrumentWidget.qml, the default widget)
     virtual CustomInstrumentWidget* instrumentWidget();
+
+    /// Should the mission status indicator (Plan View) be shown?
+    /// @return Yes or no
+    virtual bool        showMissionStatus           () { return true; }
 
     /// Allows access to the full fly view window
     virtual QUrl    flyViewOverlay                  () const { return QUrl(); }
