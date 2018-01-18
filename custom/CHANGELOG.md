@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.35 - Jan 18 2018
+
+*   Initial fixes for E10T (thermal image size and position)
+
 ### v1.2.34 - Jan 17 2018
 
 *   Remote Sync: Don't show "Select Mission" text as there is no list.
