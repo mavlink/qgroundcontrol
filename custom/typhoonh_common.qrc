@@ -10,6 +10,7 @@
     </qresource>
     <qresource prefix="/localization">
         <file alias="yuneec_de_DE.qm">localization/yuneec_de_DE.qm</file>
+        <file alias="yuneec_fr_FR.qm">localization/yuneec_fr_FR.qm</file>
         <file alias="yuneec_zh_CN.qm">localization/yuneec_zh_CN.qm</file>
     </qresource>
     <qresource prefix="/qmlimages">

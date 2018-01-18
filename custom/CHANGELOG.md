@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.36 - Jan 18 2018
+
+*   French localization
+
 ### v1.2.35 - Jan 18 2018
 
 *   Initial fixes for E10T (thermal image size and position)
