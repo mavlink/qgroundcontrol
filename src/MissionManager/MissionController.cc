@@ -1216,8 +1216,6 @@ void MissionController::_recalcMissionFlightStatus()
         }
     }
 
-    qDebug() << "Gimbal calc";
-
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
         SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(item);
@@ -1247,7 +1245,6 @@ void MissionController::_recalcMissionFlightStatus()
         // Look for gimbal change
         double gimbalYaw = item->specifiedGimbalYaw();
         if (!qIsNaN(gimbalYaw)) {
-            qDebug() << _editMode << gimbalYaw;
             _missionFlightStatus.gimbalYaw = gimbalYaw;
         }
         double gimbalPitch = item->specifiedGimbalPitch();
@@ -1353,7 +1350,6 @@ void MissionController::_recalcMissionFlightStatus()
                     _addTimeDistance(vtolInHover, hoverTime, cruiseTime, extraTime, distance, item->sequenceNumber());
                 }
 
-                qDebug() << "setMissionFlightStatus" << item->sequenceNumber() << _missionFlightStatus.gimbalYaw << item->commandName();
                 item->setMissionFlightStatus(_missionFlightStatus);
             }
 
