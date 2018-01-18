@@ -244,6 +244,7 @@ TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app, QGCToolbox* toolbox)
     //-- Initialize Localization
     QLocale locale = QLocale::system();
     //QLocale locale = QLocale(QLocale::German);
+    //QLocale locale = QLocale(QLocale::French);
     //QLocale locale = QLocale(QLocale::Chinese);
 #if defined (__macos__)
     locale = QLocale(locale.name());

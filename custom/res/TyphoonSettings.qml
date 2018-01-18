@@ -36,8 +36,9 @@ QGCView {
     property bool   _isCamera:        _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property var    _camera:          _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
 
-    property real   _buttonWidth:     ScreenTools.defaultFontPixelWidth * 16
-    property real   _textWidth:       ScreenTools.defaultFontPixelWidth * 40
+    property real   _buttonWidth:     ScreenTools.defaultFontPixelWidth * 24
+    property real   _textWidth:       ScreenTools.defaultFontPixelWidth * 60
+    property real   _rectWidth:       ScreenTools.defaultFontPixelWidth * 100
     property bool   _importAction:    false
 
     QGCPalette      { id: qgcPal }
@@ -69,7 +70,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 Rectangle {
                     height:         importRow.height * 2
-                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    width:          _rectWidth
                     color:          qgcPal.windowShade
                     anchors.horizontalCenter: parent.horizontalCenter
                     Row {
@@ -96,7 +97,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 Rectangle {
                     height:         exportRow.height * 2
-                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    width:          _rectWidth
                     color:          qgcPal.windowShade
                     anchors.horizontalCenter: parent.horizontalCenter
                     Row {
@@ -123,7 +124,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 Rectangle {
                     height:         bindRow.height * 2
-                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    width:          _rectWidth
                     color:          qgcPal.windowShade
                     visible:        !TyphoonHQuickInterface.desktopPlanner && (!_activeVehicle || (_activeVehicle.rcRSSI === 0 || _activeVehicle.rcRSSI === 255))
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -150,7 +151,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 Rectangle {
                     height:         passwordRow.height * 2
-                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    width:          _rectWidth
                     color:          qgcPal.windowShade
                     visible:        _activeVehicle && (_camera && !_camera.isThermal) && !TyphoonHQuickInterface.desktopPlanner
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -176,7 +177,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 Rectangle {
                     height:         updateRow.height * 2
-                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    width:          _rectWidth
                     color:          qgcPal.windowShade
                     visible:        ScreenTools.isMobile && !TyphoonHQuickInterface.desktopPlanner
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -226,7 +227,7 @@ QGCView {
                 Rectangle {
                     id:             factoryTest
                     height:         factoryRow.height * 2
-                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    width:          _rectWidth
                     color:          qgcPal.windowShade
                     visible:        QGroundControl.corePlugin.showAdvancedUI && TyphoonHQuickInterface.isFactoryApp && !TyphoonHQuickInterface.desktopPlanner
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -253,7 +254,7 @@ QGCView {
                 Rectangle {
                     id:             ledControl
                     height:         ledControlRow.height * 2
-                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    width:          _rectWidth
                     color:          qgcPal.windowShade
                     visible:        !TyphoonHQuickInterface.desktopPlanner && _activeVehicle
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -279,7 +280,7 @@ QGCView {
                 //-----------------------------------------------------------------
                 Rectangle {
                     height:         updaterRow.height * 2
-                    width:          ScreenTools.defaultFontPixelWidth * 80
+                    width:          _rectWidth
                     color:          qgcPal.windowShade
                     visible:        !factoryTest.visible && TyphoonHQuickInterface.isUpdaterApp && !TyphoonHQuickInterface.desktopPlanner
                     anchors.horizontalCenter: parent.horizontalCenter
