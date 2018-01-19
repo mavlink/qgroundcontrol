@@ -302,6 +302,6 @@ void MissionSettingsItem::_setHomeAltFromTerrain(double terrainAltitude)
         _plannedHomePositionAltitudeFact.setSendValueChangedSignals(false);
         _plannedHomePositionAltitudeFact.setRawValue(terrainAltitude);
         _plannedHomePositionAltitudeFact.clearDeferredValueChangeSignal();
-        _plannedHomePositionAltitudeFact.setSendValueChangedSignals(false);
+        _plannedHomePositionAltitudeFact.setSendValueChangedSignals(true);
     }
 }
