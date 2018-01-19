@@ -87,7 +87,7 @@ Rectangle {
             columnSpacing:  ScreenTools.defaultFontPixelWidth / 2
             rowSpacing:     0
             columns:        3
-            enabled:        missionItem.cameraCalc.cameraName === missionItem.cameraCalc.manualCameraName
+            visible:        missionItem.cameraCalc.isManualCamera
 
             Item { width: 1; height: 1 }
             QGCLabel { text: qsTr("Pitch") }
@@ -126,13 +126,27 @@ Rectangle {
                 rowSpacing:     _margin
                 columns:        2
 
-                QGCLabel { text: qsTr("Layers") }
+                QGCLabel {
+                    text:       qsTr("Structure height")
+                    visible:    !missionItem.cameraCalc.isManualCamera
+                }
+                FactTextField {
+                    fact:               missionItem.structureHeight
+                    Layout.fillWidth:   true
+                    visible:            !missionItem.cameraCalc.isManualCamera
+                }
+
+                QGCLabel {
+                    text:       qsTr("# Layers")
+                    visible:    missionItem.cameraCalc.isManualCamera
+                }
                 FactTextField {
                     fact:               missionItem.layers
                     Layout.fillWidth:   true
+                    visible:            missionItem.cameraCalc.isManualCamera
                 }
 
-                QGCLabel { text: qsTr("Altitude") }
+                QGCLabel { text: qsTr("Bottom layer alt") }
                 FactTextField {
                     fact:               missionItem.altitude
                     Layout.fillWidth:   true
