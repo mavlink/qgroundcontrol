@@ -29,7 +29,6 @@ const char* StructureScanComplexItem::_gimbalYawFactName =              "GimbalY
 const char* StructureScanComplexItem::jsonComplexItemTypeValue =        "StructureScan";
 const char* StructureScanComplexItem::_jsonCameraCalcKey =              "CameraCalc";
 const char* StructureScanComplexItem::_jsonAltitudeRelativeKey =        "altitudeRelative";
-const char* StructureScanComplexItem::_jsonYawVehicleToStructureKey =   "yawVehicleToStructure";
 
 QMap<QString, FactMetaData*> StructureScanComplexItem::_metaDataMap;
 
@@ -44,7 +43,6 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
     , _cameraShots              (0)
     , _cameraMinTriggerInterval (0)
     , _cameraCalc               (vehicle)
-    , _yawVehicleToStructure    (false)
     , _altitudeFact             (0, _altitudeFactName,              FactMetaData::valueTypeDouble)
     , _layersFact               (0, _layersFactName,                FactMetaData::valueTypeUint32)
     , _gimbalPitchFact          (0, _gimbalPitchFactName,                   FactMetaData::valueTypeDouble)
@@ -76,7 +74,6 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
     connect(this, &StructureScanComplexItem::altitudeRelativeChanged,       this, &StructureScanComplexItem::_setDirty);
     connect(this, &StructureScanComplexItem::altitudeRelativeChanged,       this, &StructureScanComplexItem::coordinateHasRelativeAltitudeChanged);
     connect(this, &StructureScanComplexItem::altitudeRelativeChanged,       this, &StructureScanComplexItem::exitCoordinateHasRelativeAltitudeChanged);
-    connect(this, &StructureScanComplexItem::yawVehicleToStructureChanged,  this, &StructureScanComplexItem::_setDirty);
 
     connect(&_altitudeFact, &Fact::valueChanged, this, &StructureScanComplexItem::_updateCoordinateAltitudes);
 
@@ -155,7 +152,6 @@ void StructureScanComplexItem::save(QJsonArray&  missionItems)
     saveObject[_altitudeFactName] =             _altitudeFact.rawValue().toDouble();
     saveObject[_jsonAltitudeRelativeKey] =      _altitudeRelative;
     saveObject[_layersFactName] =               _layersFact.rawValue().toDouble();
-    saveObject[_jsonYawVehicleToStructureKey] = _yawVehicleToStructure;
 
     QJsonObject cameraCalcObject;
     _cameraCalc.save(cameraCalcObject);
@@ -188,7 +184,6 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
         { _jsonAltitudeRelativeKey,                     QJsonValue::Bool,   false },
         { _layersFactName,                              QJsonValue::Double, true },
         { _jsonCameraCalcKey,                           QJsonValue::Object, true },
-        { _jsonYawVehicleToStructureKey,                QJsonValue::Bool, true },
     };
     if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
         return false;
@@ -221,7 +216,6 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
     _altitudeFact.setRawValue   (complexObject[_altitudeFactName].toDouble());
     _layersFact.setRawValue     (complexObject[_layersFactName].toDouble());
     _altitudeRelative =         complexObject[_jsonAltitudeRelativeKey].toBool(true);
-    _yawVehicleToStructure =    complexObject[_jsonYawVehicleToStructureKey].toBool(true);
 
     if (!_structurePolygon.loadFromJson(complexObject, true /* required */, errorString)) {
         _structurePolygon.clear();
@@ -264,33 +258,18 @@ void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QO
     int seqNum = _sequenceNumber;
     double baseAltitude = _altitudeFact.rawValue().toDouble();
 
-    if (_yawVehicleToStructure) {
-        MissionItem* item = new MissionItem(seqNum++,
-                                            MAV_CMD_CONDITION_YAW,
-                                            MAV_FRAME_MISSION,
-                                            90.0,                               // Target angle
-                                            0,                                  // Use default turn rate
-                                            1,                                  // Clockwise turn
-                                            0,                                  // Absolute angle specified
-                                            0, 0, 0,                            // param 5-7 not used
-                                            true,                               // autoContinue
-                                            false,                              // isCurrentItem
-                                            missionItemParent);
-        items.append(item);
-    } else {
-        MissionItem* item = new MissionItem(seqNum++,
-                                            MAV_CMD_DO_MOUNT_CONTROL,
-                                            MAV_FRAME_MISSION,
-                                            _gimbalPitchFact.rawValue().toDouble(),
-                                            0,                                  // Gimbal roll
-                                            _gimbalYawFact.rawValue().toDouble(),
-                                            0, 0, 0,                            // param 4-6 not used
-                                            MAV_MOUNT_MODE_MAVLINK_TARGETING,
-                                            true,                               // autoContinue
-                                            false,                              // isCurrentItem
-                                            missionItemParent);
-        items.append(item);
-    }
+    MissionItem* item = new MissionItem(seqNum++,
+                                        MAV_CMD_DO_MOUNT_CONTROL,
+                                        MAV_FRAME_MISSION,
+                                        _gimbalPitchFact.rawValue().toDouble(),
+                                        0,                                  // Gimbal roll
+                                        _gimbalYawFact.rawValue().toDouble(),
+                                        0, 0, 0,                            // param 4-6 not used
+                                        MAV_MOUNT_MODE_MAVLINK_TARGETING,
+                                        true,                               // autoContinue
+                                        false,                              // isCurrentItem
+                                        missionItemParent);
+    items.append(item);
 
     for (int layer=0; layer<_layersFact.rawValue().toInt(); layer++) {
         bool addTriggerStart = true;
@@ -468,13 +447,5 @@ void StructureScanComplexItem::setAltitudeRelative(bool altitudeRelative)
     if (altitudeRelative != _altitudeRelative) {
         _altitudeRelative = altitudeRelative;
         emit altitudeRelativeChanged(altitudeRelative);
-    }
-}
-
-void StructureScanComplexItem::setYawVehicleToStructure(bool yawVehicleToStructure)
-{
-    if (yawVehicleToStructure != _yawVehicleToStructure) {
-        _yawVehicleToStructure = yawVehicleToStructure;
-        emit yawVehicleToStructureChanged(yawVehicleToStructure);
     }
 }

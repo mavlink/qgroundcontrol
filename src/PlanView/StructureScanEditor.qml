@@ -48,11 +48,6 @@ Rectangle {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    ExclusiveGroup {
-        id: yawRadiosGroup
-        onCurrentChanged: missionItem.yawVehicleToStructure = yawVehicleRadio.checked
-    }
-
     Column {
         id:                 editorColumn
         anchors.margins:    _margin
@@ -148,28 +143,6 @@ Rectangle {
                     checked:            missionItem.altitudeRelative
                     Layout.columnSpan:  2
                     onClicked:          missionItem.altitudeRelative = checked
-                }
-            }
-
-            QGCLabel { text: qsTr("Point camera to structure using:") }
-
-            RowLayout {
-                spacing: _margin
-
-                QGCRadioButton {
-                    id:             yawVehicleRadio
-                    text:           qsTr("Vehicle yaw")
-                    exclusiveGroup: yawRadiosGroup
-                    checked:        !!missionItem.yawVehicleToStructure
-                    enabled:        false
-                }
-
-                QGCRadioButton
-                {
-                    text:           qsTr("Gimbal yaw")
-                    exclusiveGroup: yawRadiosGroup
-                    checked:        !missionItem.yawVehicleToStructure
-                    enabled:        false
                 }
             }
 
