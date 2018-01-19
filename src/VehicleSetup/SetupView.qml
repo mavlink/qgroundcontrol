@@ -34,6 +34,7 @@ Rectangle {
     readonly property real      _buttonWidth:       _defaultTextWidth * 18
     readonly property string    _armedVehicleText:  qsTr("This operation cannot be performed while the vehicle is armed.")
 
+    property bool   _vehicleArmed:                  QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.armed : false
     property string _messagePanelText:              qsTr("missing message panel text")
     property bool   _fullParameterVehicleAvailable: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && !QGroundControl.multiVehicleManager.activeVehicle.parameterManager.missingParameters
     property var    _corePlugin:                    QGroundControl.corePlugin
@@ -41,7 +42,7 @@ Rectangle {
     function showSummaryPanel()
     {
         if (_fullParameterVehicleAvailable) {
-            if (QGroundControl.multiVehicleManager.activeVehicle.autopilot.vehicleComponents.length == 0) {
+            if (QGroundControl.multiVehicleManager.activeVehicle.autopilot.vehicleComponents.length === 0) {
                 panelLoader.setSourceComponent(noComponentsVehicleSummaryComponent)
             } else {
                 panelLoader.setSource("VehicleSummary.qml")
@@ -80,8 +81,7 @@ Rectangle {
         var autopilotPlugin = QGroundControl.multiVehicleManager.activeVehicle.autopilot
         var prereq = autopilotPlugin.prerequisiteSetup(vehicleComponent)
         if (prereq !== "") {
-            //-- TODO: This cannot be translated when built this way.
-            _messagePanelText = prereq + " setup must be completed prior to " + vehicleComponent.name + " setup."
+            _messagePanelText = qsTr("%1 setup must be completed prior to %2 setup.").arg(prereq).arg(vehicleComponent.name)
             panelLoader.setSourceComponent(messagePanelComponent)
         } else {
             panelLoader.setSource(vehicleComponent.setupSource, vehicleComponent)
@@ -272,7 +272,7 @@ Rectangle {
                 setupIndicator:     true
                 setupComplete:      joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated : false
                 exclusiveGroup:     setupButtonGroup
-                visible:            _fullParameterVehicleAvailable && joystickManager.joysticks.length != 0
+                visible:            _fullParameterVehicleAvailable && joystickManager.joysticks.length !== 0
                 text:               qsTr("Joystick")
                 Layout.fillWidth:   true
 
@@ -289,7 +289,7 @@ Rectangle {
                     setupComplete:      modelData.setupComplete
                     exclusiveGroup:     setupButtonGroup
                     text:               modelData.name
-                    visible:            modelData.setupSource.toString() != ""
+                    visible:            modelData.setupSource.toString() !== ""
                     Layout.fillWidth:   true
 
                     onClicked: showVehicleComponentPanel(modelData)
