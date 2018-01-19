@@ -38,7 +38,6 @@ public:
     Q_PROPERTY(double           cameraMinTriggerInterval    MEMBER _cameraMinTriggerInterval                                NOTIFY cameraMinTriggerIntervalChanged)
     Q_PROPERTY(QGCMapPolygon*   structurePolygon            READ structurePolygon                                           CONSTANT)
     Q_PROPERTY(QGCMapPolygon*   flightPolygon               READ flightPolygon                                              CONSTANT)
-    Q_PROPERTY(bool             yawVehicleToStructure       READ yawVehicleToStructure      WRITE setYawVehicleToStructure  NOTIFY yawVehicleToStructureChanged)    ///< true: vehicle yaws to point to structure, false: gimbal yaws to point to structure
 
     CameraCalc* cameraCalc  (void) { return &_cameraCalc; }
     Fact* altitude          (void) { return &_altitudeFact; }
@@ -51,10 +50,8 @@ public:
     double          timeBetweenShots        (void);
     QGCMapPolygon*  structurePolygon        (void) { return &_structurePolygon; }
     QGCMapPolygon*  flightPolygon           (void) { return &_flightPolygon; }
-    bool            yawVehicleToStructure   (void) const { return _yawVehicleToStructure; }
 
     void setAltitudeRelative        (bool altitudeRelative);
-    void setYawVehicleToStructure   (bool yawVehicleToStructure);
 
     Q_INVOKABLE void rotateEntryPoint(void);
 
@@ -102,7 +99,6 @@ signals:
     void timeBetweenShotsChanged        (void);
     void cameraMinTriggerIntervalChanged(double cameraMinTriggerInterval);
     void altitudeRelativeChanged        (bool altitudeRelative);
-    void yawVehicleToStructureChanged   (bool yawVehicleToStructure);
 
 private slots:
     void _setDirty(void);
@@ -135,7 +131,6 @@ private:
     double          _cameraMinTriggerInterval;
     double          _cruiseSpeed;
     CameraCalc      _cameraCalc;
-    bool            _yawVehicleToStructure;
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 
@@ -151,7 +146,6 @@ private:
 
     static const char* _jsonCameraCalcKey;
     static const char* _jsonAltitudeRelativeKey;
-    static const char* _jsonYawVehicleToStructureKey;
 
     friend class StructureScanComplexItemTest;
 };
