@@ -22,6 +22,7 @@
 QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "StructureScanComplexItemLog")
 
 const char* StructureScanComplexItem::_altitudeFactName =               "Altitude";
+const char* StructureScanComplexItem::_structureHeightFactName =        "StructureHeight";
 const char* StructureScanComplexItem::_layersFactName =                 "Layers";
 const char* StructureScanComplexItem::_gimbalPitchFactName =            "GimbalPitch";
 const char* StructureScanComplexItem::_gimbalYawFactName =              "GimbalYaw";
@@ -71,6 +72,10 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
     connect(&_gimbalPitchFact,  &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
     connect(&_gimbalYawFact,    &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
 
+    connect(&_layersFact,                           &Fact::valueChanged,    this, &StructureScanComplexItem::_recalcLayerInfo);
+    connect(&_structureHeightFact,                  &Fact::valueChanged,    this, &StructureScanComplexItem::_recalcLayerInfo);
+    connect(_cameraCalc.adjustedFootprintFrontal(), &Fact::valueChanged,    this, &StructureScanComplexItem::_recalcLayerInfo);
+
     connect(this, &StructureScanComplexItem::altitudeRelativeChanged,       this, &StructureScanComplexItem::_setDirty);
     connect(this, &StructureScanComplexItem::altitudeRelativeChanged,       this, &StructureScanComplexItem::coordinateHasRelativeAltitudeChanged);
     connect(this, &StructureScanComplexItem::altitudeRelativeChanged,       this, &StructureScanComplexItem::exitCoordinateHasRelativeAltitudeChanged);
@@ -89,6 +94,8 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
     connect(&_flightPolygon,                        &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_recalcCameraShots);
     connect(_cameraCalc.adjustedFootprintSide(),    &Fact::valueChanged,            this, &StructureScanComplexItem::_recalcCameraShots);
     connect(&_layersFact,                           &Fact::valueChanged,            this, &StructureScanComplexItem::_recalcCameraShots);
+
+    _recalcLayerInfo();
 }
 
 void StructureScanComplexItem::_setScanDistance(double scanDistance)
@@ -143,13 +150,14 @@ void StructureScanComplexItem::save(QJsonArray&  missionItems)
     QJsonObject saveObject;
 
     // Header
-    saveObject[JsonHelper::jsonVersionKey] =                    1;
+    saveObject[JsonHelper::jsonVersionKey] =                    2;
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
 
     saveObject[_gimbalPitchFactName] =          _gimbalPitchFact.rawValue().toDouble();
     saveObject[_gimbalYawFactName] =            _gimbalYawFact.rawValue().toDouble();
     saveObject[_altitudeFactName] =             _altitudeFact.rawValue().toDouble();
+    saveObject[_structureHeightFactName] =      _structureHeightFact.rawValue().toDouble();
     saveObject[_jsonAltitudeRelativeKey] =      _altitudeRelative;
     saveObject[_layersFactName] =               _layersFact.rawValue().toDouble();
 
@@ -181,7 +189,8 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
         { _gimbalPitchFactName,                         QJsonValue::Double, true },
         { _gimbalYawFactName,                           QJsonValue::Double, true },
         { _altitudeFactName,                            QJsonValue::Double, true },
-        { _jsonAltitudeRelativeKey,                     QJsonValue::Bool,   false },
+        { _structureHeightFactName,                     QJsonValue::Double, true },
+        { _jsonAltitudeRelativeKey,                     QJsonValue::Bool,   true },
         { _layersFactName,                              QJsonValue::Double, true },
         { _jsonCameraCalcKey,                           QJsonValue::Object, true },
     };
@@ -199,7 +208,7 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
     }
 
     int version = complexObject[JsonHelper::jsonVersionKey].toInt();
-    if (version != 1) {
+    if (version != 2) {
         errorString = tr("%1 complex item version %2 not supported").arg(jsonComplexItemTypeValue).arg(version);
         return false;
     }
@@ -273,7 +282,9 @@ void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QO
 
     for (int layer=0; layer<_layersFact.rawValue().toInt(); layer++) {
         bool addTriggerStart = true;
-        double layerAltitude = baseAltitude + (layer * _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
+        // baseAltitude is the bottom of the first layer. Hence we need to move up half the distance of the camera footprint to center the camera
+        // within the layer.
+        double layerAltitude = baseAltitude + (_cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble() / 2.0) + (layer * _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
 
         for (int i=0; i<_flightPolygon.count(); i++) {
             QGeoCoordinate vertexCoord = _flightPolygon.vertexCoordinate(i);
@@ -447,5 +458,22 @@ void StructureScanComplexItem::setAltitudeRelative(bool altitudeRelative)
     if (altitudeRelative != _altitudeRelative) {
         _altitudeRelative = altitudeRelative;
         emit altitudeRelativeChanged(altitudeRelative);
+    }
+}
+
+void StructureScanComplexItem::_recalcLayerInfo(void)
+{
+    if (_cameraCalc.isManualCamera()) {
+        // Structure height is calculated from layer count, layer height.
+        _structureHeightFact.setSendValueChangedSignals(false);
+        _structureHeightFact.setRawValue(_layersFact.rawValue().toInt() * _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
+        _structureHeightFact.clearDeferredValueChangeSignal();
+        _structureHeightFact.setSendValueChangedSignals(true);
+    } else {
+        // Layer count is calculated from structure and layer heights
+        _layersFact.setSendValueChangedSignals(false);
+        _layersFact.setRawValue(qCeil(_structureHeightFact.rawValue().toDouble() / _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble()));
+        _layersFact.clearDeferredValueChangeSignal();
+        _layersFact.setSendValueChangedSignals(true);
     }
 }
