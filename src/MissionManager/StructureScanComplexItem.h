@@ -31,6 +31,7 @@ public:
     Q_PROPERTY(Fact*            gimbalPitch                 READ gimbalPitch                                                CONSTANT)
     Q_PROPERTY(Fact*            gimbalYaw                   READ gimbalYaw                                                  CONSTANT)
     Q_PROPERTY(Fact*            altitude                    READ altitude                                                   CONSTANT)
+    Q_PROPERTY(Fact*            structureHeight             READ structureHeight                                            CONSTANT)
     Q_PROPERTY(Fact*            layers                      READ layers                                                     CONSTANT)
     Q_PROPERTY(bool             altitudeRelative            READ altitudeRelative           WRITE setAltitudeRelative       NOTIFY altitudeRelativeChanged)
     Q_PROPERTY(int              cameraShots                 READ cameraShots                                                NOTIFY cameraShotsChanged)
@@ -41,6 +42,7 @@ public:
 
     CameraCalc* cameraCalc  (void) { return &_cameraCalc; }
     Fact* altitude          (void) { return &_altitudeFact; }
+    Fact* structureHeight   (void) { return &_structureHeightFact; }
     Fact* layers            (void) { return &_layersFact; }
 
     bool            altitudeRelative        (void) const { return _altitudeRelative; }
@@ -110,6 +112,7 @@ private slots:
     void _rebuildFlightPolygon      (void);
     void _recalcCameraShots         (void);
     void _resetGimbal               (void);
+    void _recalcLayerInfo           (void);
 
 private:
     void _setExitCoordinate(const QGeoCoordinate& coordinate);
@@ -135,11 +138,13 @@ private:
     static QMap<QString, FactMetaData*> _metaDataMap;
 
     Fact    _altitudeFact;
+    Fact    _structureHeightFact;
     Fact    _layersFact;
     Fact    _gimbalPitchFact;
     Fact    _gimbalYawFact;
 
     static const char* _altitudeFactName;
+    static const char* _structureHeightFactName;
     static const char* _layersFactName;
     static const char* _gimbalPitchFactName;
     static const char* _gimbalYawFactName;
