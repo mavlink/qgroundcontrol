@@ -171,7 +171,7 @@ YuneecCameraControl::_parametersReady()
                 _irROI = new SettingsFact("camera", metaData, this);
                 QQmlEngine::setObjectOwnership(_irROI, QQmlEngine::CppOwnership);
             }
-            {
+            if(isCGOET()) {
                 //-- Add Presets
                 FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, kIR_PRESETS, this);
                 QQmlEngine::setObjectOwnership(metaData, QQmlEngine::CppOwnership);
@@ -192,7 +192,7 @@ YuneecCameraControl::_parametersReady()
         if(!_irValid) {
             _irStatusTimer.start(100);
         }
-        if(isThermal()) {
+        if(isCGOET()) {
             _presetChanged(_irPresets->rawValue());
         }
     }
@@ -752,10 +752,11 @@ YuneecCameraControl::factChanged(Fact* pFact)
             if(cgoetTempStatus.all_area.max_val || cgoetTempStatus.all_area.min_val || cgoetTempStatus.all_area.center_val) {
                 memcpy(&_cgoetTempStatus, &cgoetTempStatus, sizeof(udp_ctrl_cam_lepton_area_temp_t));
                 bool rangeEnabled = false;
-                Fact* pRangeEnabledFact = _paramComplete ? getFact(kCAM_IRTEMPRENA) : NULL;
+                Fact* pRangeEnabledFact = (_paramComplete && isCGOET()) ? getFact(kCAM_IRTEMPRENA) : NULL;
                 if(pRangeEnabledFact) {
                     rangeEnabled = pRangeEnabledFact->rawValue().toUInt() > 0;
                 }
+                /*
                 QString temp;
                 temp.sprintf("IR Temperature Range: %s Locked Max: %.3f°C Min: %.3f°C All: Center: %.3f°C Max: %.3f°C Min: %.3f°C",
                          rangeEnabled ? "Enabled" : "Disabled",
@@ -765,6 +766,7 @@ YuneecCameraControl::factChanged(Fact* pFact)
                          (float)_cgoetTempStatus.all_area.max_val / 100.0f,
                          (float)_cgoetTempStatus.all_area.min_val / 100.0f);
                 qCDebug(YuneecCameraLog) << temp;
+                */
                 emit irTempChanged();
             }
             //-- Keep requesting it
@@ -961,8 +963,9 @@ YuneecCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& 
 QUrl
 YuneecCameraControl::palettetBar()
 {
+    //-- TODO: Need bars for E10T
     QString barStr = kPaleteBars[0];
-    if(isThermal()) {
+    if(isCGOET()) {
         Fact* pFact = getFact(kCAM_IRPALETTE);
         if(pFact && pFact->rawValue().toUInt() < 11) {
             barStr = kPaleteBars[pFact->rawValue().toUInt()];
@@ -976,7 +979,10 @@ YuneecCameraControl::palettetBar()
 qreal
 YuneecCameraControl::irMinTemp()
 {
-    Fact* pRangeEnabledFact = (_paramComplete && isThermal()) ? getFact(kCAM_IRTEMPRENA) : NULL;
+    if(isE10T()) {
+        return (qreal)_cgoetTempStatus.all_area.min_val / 100.0;
+    }
+    Fact* pRangeEnabledFact = (_paramComplete && isCGOET()) ? getFact(kCAM_IRTEMPRENA) : NULL;
     if(pRangeEnabledFact) {
         //-- Is range enabled?
         if(pRangeEnabledFact->rawValue().toBool()) {
@@ -997,7 +1003,10 @@ YuneecCameraControl::irMinTemp()
 qreal
 YuneecCameraControl::irMaxTemp()
 {
-    Fact* pRangeEnabledFact = (_paramComplete && isThermal()) ? getFact(kCAM_IRTEMPRENA) : NULL;
+    if(isE10T()) {
+        return (qreal)_cgoetTempStatus.all_area.max_val / 100.0;
+    }
+    Fact* pRangeEnabledFact = (_paramComplete && isCGOET()) ? getFact(kCAM_IRTEMPRENA) : NULL;
     if(pRangeEnabledFact) {
         //-- Is range enabled?
         if(pRangeEnabledFact->rawValue().toBool()) {
@@ -1015,10 +1024,30 @@ YuneecCameraControl::irMaxTemp()
 }
 
 //-----------------------------------------------------------------------------
+qreal
+YuneecCameraControl::irCenterTemp()
+{
+    if(isCGOET()) {
+        return (qreal)_cgoetTempStatus.custom_area.center_val / 100.0;
+    }
+    return (qreal)_cgoetTempStatus.all_area.center_val / 100.0;
+}
+
+//-----------------------------------------------------------------------------
+qreal
+YuneecCameraControl::irAverageTemp()
+{
+    if(isCGOET()) {
+        return (qreal)_cgoetTempStatus.custom_area.avg_val / 100.0;
+    }
+    return (qreal)_cgoetTempStatus.all_area.avg_val / 100.0;
+}
+
+//-----------------------------------------------------------------------------
 void
 YuneecCameraControl::_presetChanged(QVariant value)
 {
-    if(_paramComplete && isThermal() && value.toUInt() < PRESET_COUNT) {
+    if(_paramComplete && isCGOET() && value.toUInt() < PRESET_COUNT) {
         qCDebug(YuneecCameraLog) << "Set Preset: " << tr(cgoet_presets[value.toUInt()].name) << kPaleteBars[cgoet_presets[value.toUInt()].palette] << cgoet_presets[value.toUInt()].temp_min << cgoet_presets[value.toUInt()].temp_max;
         //-- Set Palette
         Fact* pFact = getFact(kCAM_IRPALETTE);

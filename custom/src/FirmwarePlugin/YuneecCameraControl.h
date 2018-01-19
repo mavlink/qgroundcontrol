@@ -135,8 +135,8 @@ public:
     bool        isE90               () { return _isE90; }
     bool        paramComplete       () { return _paramComplete; }
 
-    qreal       irCenterTemp        () { return (qreal)_cgoetTempStatus.custom_area.center_val / 100.0; }
-    qreal       irAverageTemp       () { return (qreal)_cgoetTempStatus.custom_area.avg_val / 100.0; }
+    qreal       irCenterTemp        ();
+    qreal       irAverageTemp       ();
     qreal       irMinTemp           ();
     qreal       irMaxTemp           ();
     bool        irValid             () { return _irValid; }

@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.37 - Jan 19 2018
+
+*   More fixes for E10T (No presets, no custom temp range)
+
 ### v1.2.36 - Jan 18 2018
 
 *   French localization
