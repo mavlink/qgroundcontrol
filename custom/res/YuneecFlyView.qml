@@ -62,6 +62,7 @@ Item {
     property var    _videoResFact:      _camera && _camera.videoRes
     property var    _irPaletteFact:     _camera && _camera.irPalette
     property var    _isThermal:         _camera && _camera.isThermal
+    property var    _isCGOET:           _camera && _camera.isCGOET
 
     property bool   _cameraAutoMode:    _expModeFact  ? _expModeFact.rawValue === 0 : true
     property string _altitude:          _activeVehicle   ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0"
@@ -479,12 +480,12 @@ Item {
                 indexModel: false
                 fact:       _camera ? _camera.irROI : null
             }
-            //-- CGOET/E10T Presets
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _isThermal; }
-            QGCLabel { text: qsTr("Presets:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && _isThermal; }
+            //-- CGOET Presets
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _isCGOET; }
+            QGCLabel { text: qsTr("Presets:"); anchors.verticalCenter: parent.verticalCenter; visible: _cameraAutoMode && _isCGOET; }
             CameraMenu {
                 anchors.verticalCenter: parent.verticalCenter
-                visible:    _isThermal;
+                visible:    _isCGOET;
                 indexModel: false
                 fact:       _camera ? _camera.irPresets : null
             }
