@@ -21,8 +21,9 @@ public:
     CameraCalc(Vehicle* vehicle, QObject* parent = NULL);
 
     Q_PROPERTY(QString          cameraName                  READ cameraName         WRITE setCameraName NOTIFY cameraNameChanged)
-    Q_PROPERTY(QString          customCameraName            READ customCameraName                       CONSTANT)                   // Camera name for custom camera setting
-    Q_PROPERTY(QString          manualCameraName            READ manualCameraName                       CONSTANT)                   // Camera name for manual camera setting
+    Q_PROPERTY(QString          customCameraName            READ customCameraName                       CONSTANT)                   ///< Camera name for custom camera setting
+    Q_PROPERTY(QString          manualCameraName            READ manualCameraName                       CONSTANT)                   ///< Camera name for manual camera setting
+    Q_PROPERTY(bool             isManualCamera              READ isManualCamera                         NOTIFY cameraNameChanged)   ///< true: using manual camera
     Q_PROPERTY(Fact*            valueSetIsDistance          READ valueSetIsDistance                     CONSTANT)                   ///< true: distance specified, resolution calculated
     Q_PROPERTY(Fact*            distanceToSurface           READ distanceToSurface                      CONSTANT)                   ///< Distance to surface for image foot print calculation
     Q_PROPERTY(Fact*            imageDensity                READ imageDensity                           CONSTANT)                   ///< Image density on surface (cm/px)
@@ -48,8 +49,9 @@ public:
     Fact* adjustedFootprintSide     (void) { return &_adjustedFootprintSideFact; }
     Fact* adjustedFootprintFrontal  (void) { return &_adjustedFootprintFrontalFact; }
 
-    double imageFootprintSide             (void) const { return _imageFootprintSide; }
-    double imageFootprintFrontal          (void) const { return _imageFootprintFrontal; }
+    bool    isManualCamera          (void) { return cameraName() == manualCameraName(); }
+    double  imageFootprintSide      (void) const { return _imageFootprintSide; }
+    double  imageFootprintFrontal   (void) const { return _imageFootprintFrontal; }
 
     bool dirty      (void) const { return _dirty; }
     void setDirty   (bool dirty);
