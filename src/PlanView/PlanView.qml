@@ -96,7 +96,10 @@ QGCView {
     }
 
     on_EnableAirMapChanged: {
-        if(!_enableAirMap) {
+        if(_enableAirMap) {
+            planControlColapsed = true
+            airspaceControl.colapsed = false
+        } else {
             planControlColapsed = false
         }
     }
@@ -563,7 +566,7 @@ QGCView {
                         height:                 ScreenTools.defaultFontPixelWidth * 2.5
                         sourceSize.height:      height
                         source:                 "qrc:/airmap/expand.svg"
-                        color:                  _colorWhite
+                        color:                  "white"
                         anchors.right:          parent.right
                         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
                         anchors.verticalCenter: parent.verticalCenter
