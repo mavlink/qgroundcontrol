@@ -171,6 +171,11 @@
         <file alias="APM/BrandImageSub">src/FirmwarePlugin/APM/APMBrandImageSub.png</file>
         <file alias="PX4/BrandImage">src/FirmwarePlugin/PX4/PX4BrandImage.png</file>
         <file alias="subVehicleArrowOpaque.png">src/FlightMap/Images/sub.png</file>
+        <file alias="advisory-icon.svg">src/Airmap/images/advisory-icon.svg</file>
+    </qresource>
+    <qresource prefix="/airmap">
+        <file alias="advisory-icon.svg">src/Airmap/images/advisory-icon.svg</file>
+        <file alias="pencil.svg">src/Airmap/images/pencil.svg</file>
     </qresource>
     <qresource prefix="/res">
         <file alias="action.svg">resources/action.svg</file>
@@ -207,6 +212,7 @@
         <file alias="wind-rose-arrow.svg">resources/wind-rose-arrow.svg</file>
         <file alias="XDelete.svg">resources/XDelete.svg</file>
         <file alias="XDeleteBlack.svg">resources/XDeleteBlack.svg</file>
+        <file alias="waypoint.svg">resources/waypoint.svg</file>
         <file>resources/icons/qgroundcontrol.ico</file>
     </qresource>
     <qresource prefix="/res/firmware">
