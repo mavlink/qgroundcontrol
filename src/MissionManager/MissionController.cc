@@ -364,10 +364,12 @@ int MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int i)
     int sequenceNumber = _nextSequenceNumber();
     SimpleMissionItem * newItem = new SimpleMissionItem(_controllerVehicle, this);
     newItem->setSequenceNumber(sequenceNumber);
-    newItem->setCoordinate(coordinate);
-    newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_DO_SET_ROI);
+    newItem->setCommand((MavlinkQmlSingleton::Qml_MAV_CMD)(_controllerVehicle->firmwarePlugin()->supportedMissionCommands().contains((MAV_CMD)MAV_CMD_DO_SET_ROI_LOCATION) ?
+        MAV_CMD_DO_SET_ROI_LOCATION :
+        MAV_CMD_DO_SET_ROI));
     _initVisualItem(newItem);
     newItem->setDefaultsForCommand();
+    newItem->setCoordinate(coordinate);
 
     double      prevAltitude;
     MAV_FRAME   prevFrame;
