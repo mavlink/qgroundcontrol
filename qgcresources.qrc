@@ -176,6 +176,7 @@
     </qresource>
     <qresource prefix="/airmap">
         <file alias="advisory-icon.svg">src/Airmap/images/advisory-icon.svg</file>
+        <file alias="colapse.svg">src/Airmap/images/colapse.svg</file>
         <file alias="expand.svg">src/Airmap/images/expand.svg</file>
         <file alias="pencil.svg">src/Airmap/images/pencil.svg</file>
     </qresource>

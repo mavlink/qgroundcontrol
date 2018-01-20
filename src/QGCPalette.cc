@@ -73,7 +73,7 @@ void QGCPalette::_buildMap(void)
     DECLARE_QGC_COLOR(alertBackground,      "#eecc44", "#eecc44", "#eecc44", "#eecc44")
     DECLARE_QGC_COLOR(alertBorder,          "#808080", "#808080", "#808080", "#808080")
     DECLARE_QGC_COLOR(alertText,            "#000000", "#000000", "#000000", "#000000")
-    DECLARE_QGC_COLOR(missionItemEditor,    "#585858", "#a39fd3", "#585858", "#4e4480")
+    DECLARE_QGC_COLOR(missionItemEditor,    "#585858", "#dbfef8", "#585858", "#585d83")
 
     // Colors are not affecting by theming
     DECLARE_QGC_COLOR(mapWidgetBorderLight, "#ffffff", "#ffffff", "#ffffff", "#ffffff")
