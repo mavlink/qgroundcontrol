@@ -18,7 +18,8 @@ Item {
     width:  parent.width
     height: colapsed ? colapsedRect.height : expandedRect.height
 
-    property var    colapsed:           true
+    property bool   colapsed:       true
+    property bool   showColapse:    true
 
     readonly property real      _radius:            ScreenTools.defaultFontPixelWidth * 0.5
     readonly property color     _colorOrange:       "#d75e0d"
@@ -123,6 +124,22 @@ Item {
                             color:              _colorWhite
                             font.pointSize:     ScreenTools.smallFontPointSize
                         }
+                    }
+                }
+                QGCColoredImage {
+                    width:                  height
+                    height:                 ScreenTools.defaultFontPixelWidth * 2.5
+                    sourceSize.height:      height
+                    source:                 "qrc:/airmap/colapse.svg"
+                    color:                  _colorWhite
+                    visible:                showColapse
+                    anchors.right:          parent.right
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                    anchors.verticalCenter: parent.verticalCenter
+                    MouseArea {
+                        anchors.fill:   parent
+                        enabled:        showColapse
+                        onClicked:      colapsed = true
                     }
                 }
             }

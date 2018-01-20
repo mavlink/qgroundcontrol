@@ -512,8 +512,9 @@ QGCView {
                 //-------------------------------------------------------
                 // Airmap Airspace Control
                 AirspaceControl {
-                    id:         airspaceControl
-                    width:      parent.width
+                    id:             airspaceControl
+                    width:          parent.width
+                    showColapse:    false
                     onColapsedChanged: {
                         if(!airspaceControl.colasped) {
                             planControlColapsed = true

@@ -15,19 +15,21 @@ import QtLocation               5.3
 import QtPositioning            5.3
 import QtQuick.Layouts          1.2
 
-import QGroundControl                           1.0
-import QGroundControl.ScreenTools               1.0
-import QGroundControl.Controls                  1.0
-import QGroundControl.Palette                   1.0
-import QGroundControl.Vehicle                   1.0
-import QGroundControl.FlightMap                 1.0
+import QGroundControl               1.0
+import QGroundControl.ScreenTools   1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.Vehicle       1.0
+import QGroundControl.FlightMap     1.0
+import QGroundControl.Airmap        1.0
 
 Item {
-    id: _root
+    id: widgetRoot
 
     property var    qgcView
     property bool   useLightColors
     property var    missionController
+    property bool   showValues:             true
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property bool   _isSatellite:           _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
@@ -51,28 +53,14 @@ Item {
         if(QGroundControl.corePlugin.options.instrumentWidget) {
             if(QGroundControl.corePlugin.options.instrumentWidget.source.toString().length) {
                 instrumentsLoader.source = QGroundControl.corePlugin.options.instrumentWidget.source
-                switch(QGroundControl.corePlugin.options.instrumentWidget.widgetPosition) {
-                case CustomInstrumentWidget.POS_TOP_RIGHT:
-                    instrumentsLoader.state  = "topMode"
-                    break;
-                case CustomInstrumentWidget.POS_BOTTOM_RIGHT:
-                    instrumentsLoader.state  = "bottomMode"
-                    break;
-                case CustomInstrumentWidget.POS_CENTER_RIGHT:
-                default:
-                    instrumentsLoader.state  = "centerMode"
-                    break;
-                }
             } else {
                 // Note: We currently show alternate instruments all the time. This is a trial change for daily builds.
                 // Leaving non-alternate code in for now in case the trial fails.
                 var useAlternateInstruments = true//QGroundControl.settingsManager.appSettings.virtualJoystick.value || ScreenTools.isTinyScreen
                 if(useAlternateInstruments) {
                     instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
-                    instrumentsLoader.state  = "topMode"
                 } else {
                     instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidget.qml"
-                    instrumentsLoader.state  = QGroundControl.settingsManager.appSettings.showLargeCompass.value == 1 ? "centerMode" : "topMode"
                 }
             }
         } else {
@@ -130,43 +118,30 @@ Item {
             text:                       "The vehicle has failed a pre-arm check. In order to arm the vehicle, resolve the failure or disable the arming check via the Safety tab on the Vehicle Setup page."
         }
     }
-
-    //-- Instrument Panel
-    Loader {
-        id:                     instrumentsLoader
-        anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
+    Column {
+        id:                     instrumentsColumn
+        spacing:                ScreenTools.defaultFontPixelHeight * 0.25
+        anchors.top:            parent.top
+        anchors.topMargin:      QGroundControl.corePlugin.options.instrumentWidget.widgetTopMargin + (ScreenTools.defaultFontPixelHeight * 0.5)
+        anchors.margins:        ScreenTools.defaultFontPixelHeight * 0.5
         anchors.right:          parent.right
-        z:                      QGroundControl.zOrderWidgets
-        property var  qgcView:  _root.qgcView
-        property real maxHeight:parent.height - (anchors.margins * 2)
-        states: [
-            State {
-                name:   "topMode"
-                AnchorChanges {
-                    target:                 instrumentsLoader
-                    anchors.verticalCenter: undefined
-                    anchors.bottom:         undefined
-                    anchors.top:            _root ? _root.top : undefined
-                }
-            },
-            State {
-                name:   "centerMode"
-                AnchorChanges {
-                    target:                 instrumentsLoader
-                    anchors.top:            undefined
-                    anchors.bottom:         undefined
-                    anchors.verticalCenter: _root ? _root.verticalCenter : undefined
-                }
-            },
-            State {
-                name:   "bottomMode"
-                AnchorChanges {
-                    target:                 instrumentsLoader
-                    anchors.top:            undefined
-                    anchors.verticalCenter: undefined
-                    anchors.bottom:         _root ? _root.bottom : undefined
-                }
+        //-------------------------------------------------------
+        // Airmap Airspace Control
+        AirspaceControl {
+            id:                 airspaceControl
+            width:              getPreferredInstrumentWidth()
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
+            onColapsedChanged: {
+                widgetRoot.showValues = colapsed
             }
-        ]
+        }
+        //-------------------------------------------------------
+        //-- Instrument Panel
+        Loader {
+            id:                         instrumentsLoader
+            anchors.margins:            ScreenTools.defaultFontPixelHeight * 0.5
+            property var  qgcView:      widgetRoot.qgcView
+            property real maxHeight:    widgetRoot ? widgetRoot.height - instrumentsColumn.y - airspaceControl.height - (ScreenTools.defaultFontPixelHeight * 4) : 0
+        }
     }
 }
