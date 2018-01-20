@@ -34,6 +34,7 @@ Item {
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property bool   _isSatellite:           _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
     property bool   _lightWidgetBorders:    _isSatellite
+    property bool   _enableAirMap:          QGroundControl.settingsManager.appSettings.enableAirMap.rawValue
 
     readonly property real _margins:        ScreenTools.defaultFontPixelHeight * 0.5
 
@@ -130,6 +131,7 @@ Item {
         AirspaceControl {
             id:                 airspaceControl
             width:              getPreferredInstrumentWidth()
+            visible:            _enableAirMap
             anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
             onColapsedChanged: {
                 widgetRoot.showValues = colapsed

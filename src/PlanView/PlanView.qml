@@ -46,18 +46,19 @@ QGCView {
     readonly property var   _defaultVehicleCoordinate:  QtPositioning.coordinate(37.803784, -122.462276)
     readonly property bool  _waypointsOnlyMode:         QGroundControl.corePlugin.options.missionWaypointsOnly
 
-    property var    _planMasterController:      masterController
-    property var    _missionController:         _planMasterController.missionController
-    property var    _geoFenceController:        _planMasterController.geoFenceController
-    property var    _rallyPointController:      _planMasterController.rallyPointController
-    property var    _visualItems:               _missionController.visualItems
-    property bool   _lightWidgetBorders:        editorMap.isSatelliteMap
-    property bool   _addWaypointOnClick:        false
-    property bool   _addROIOnClick:             false
-    property bool   _singleComplexItem:         _missionController.complexMissionItemNames.length === 1
-    property real   _toolbarHeight:             _qgcView.height - ScreenTools.availableHeight
-    property int    _editingLayer:              _layerMission
-    property int    _toolStripBottom:           toolStrip.height + toolStrip.y
+    property bool   _enableAirMap:                      QGroundControl.settingsManager.appSettings.enableAirMap.rawValue
+    property var    _planMasterController:              masterController
+    property var    _missionController:                 _planMasterController.missionController
+    property var    _geoFenceController:                _planMasterController.geoFenceController
+    property var    _rallyPointController:              _planMasterController.rallyPointController
+    property var    _visualItems:                       _missionController.visualItems
+    property bool   _lightWidgetBorders:                editorMap.isSatelliteMap
+    property bool   _addWaypointOnClick:                false
+    property bool   _addROIOnClick:                     false
+    property bool   _singleComplexItem:                 _missionController.complexMissionItemNames.length === 1
+    property real   _toolbarHeight:                     _qgcView.height - ScreenTools.availableHeight
+    property int    _editingLayer:                      _layerMission
+    property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
 
     readonly property int       _layerMission:              1
     readonly property int       _layerGeoFence:             2
@@ -92,6 +93,12 @@ QGCView {
         map:                        editorMap
         usePlannedHomePosition:     true
         planMasterController:       _planMasterController
+    }
+
+    on_EnableAirMapChanged: {
+        if(!_enableAirMap) {
+            planControlColapsed = false
+        }
     }
 
     Connections {
@@ -267,7 +274,7 @@ QGCView {
             function accept() {
                 var toIndex = toCombo.currentIndex
 
-                if (toIndex == 0) {
+                if (toIndex === 0) {
                     toIndex = 1
                 }
                 _missionController.moveMissionItem(_moveDialogMissionItemIndex, toIndex)
@@ -514,6 +521,7 @@ QGCView {
                 AirspaceControl {
                     id:             airspaceControl
                     width:          parent.width
+                    visible:        _enableAirMap
                     showColapse:    false
                     onColapsedChanged: {
                         if(!airspaceControl.colasped) {
@@ -529,7 +537,7 @@ QGCView {
                     height:     planControlColapsed ? colapsedRow.height + ScreenTools.defaultFontPixelHeight : 0
                     color:      qgcPal.missionItemEditor
                     radius:     _radius
-                    visible:    planControlColapsed
+                    visible:    planControlColapsed && _enableAirMap
                     Row {
                         id:                     colapsedRow
                         spacing:                ScreenTools.defaultFontPixelWidth
@@ -576,7 +584,7 @@ QGCView {
                     height:     !planControlColapsed ? expandedCol.height + ScreenTools.defaultFontPixelHeight : 0
                     color:      qgcPal.missionItemEditor
                     radius:     _radius
-                    visible:    !planControlColapsed
+                    visible:    !planControlColapsed || !_enableAirMap
                     Item {
                         height:             expandedCol.height
                         anchors.left:       parent.left
