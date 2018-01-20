@@ -63,6 +63,16 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
+        QGCColoredImage {
+            width:                  height
+            height:                 ScreenTools.defaultFontPixelWidth * 2.5
+            sourceSize.height:      height
+            source:                 "qrc:/airmap/expand.svg"
+            color:                  _colorWhite
+            anchors.right:          parent.right
+            anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+            anchors.verticalCenter: parent.verticalCenter
+        }
         MouseArea {
             anchors.fill:   parent
             onClicked:      colapsed = false
@@ -114,11 +124,6 @@ Item {
                             font.pointSize:     ScreenTools.smallFontPointSize
                         }
                     }
-                }
-                MouseArea {
-                    anchors.fill:   parent
-                    enabled:        !colapsed
-                    onClicked:      colapsed = true
                 }
             }
             //-- Contents (Brown Box)
@@ -189,7 +194,7 @@ Item {
                                 }
                                 Rectangle {
                                     id:                     regButton
-                                    height:                 regLabel.height + ScreenTools.defaultFontPixelHeight
+                                    height:                 regLabel.height + ScreenTools.defaultFontPixelHeight * 0.5
                                     radius:                 2
                                     color:                  _colorMidBrown
                                     Layout.fillWidth:       true
