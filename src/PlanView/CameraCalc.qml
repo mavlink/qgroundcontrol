@@ -248,6 +248,8 @@ Column {
             }
 
             // Calculated values
+/*
+            Taking these out for now since they take up so much space. May come back at a later time.
             GridLayout {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
@@ -269,6 +271,7 @@ Column {
                     enabled:            false
                 }
             } // GridLayout
+*/
 
         } // Column - Camera spec based ui
 
