@@ -176,5 +176,12 @@
     "shortDescription": "Default firmware type for flashing",
     "type":             "uint32",
     "defaultValue":     12
+},
+{
+    "name":             "EnableAirMap",
+    "shortDescription": "Enable AirMap",
+    "longDescription":  "Enable AirMap Services",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]
