@@ -556,6 +556,52 @@ QGCView {
                 }
 
                 //-----------------------------------------------------------------
+                //-- AirMap
+                Item {
+                    width:                      _qgcView.width * 0.8
+                    height:                     unitLabel.height
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.rtkSettings.visible
+                    QGCLabel {
+                        text:                   qsTr("AirMap")
+                        font.family:            ScreenTools.demiboldFontFamily
+                    }
+                }
+                Rectangle {
+                    height:                     airMapCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:                      _qgcView.width * 0.8
+                    color:                      qgcPal.windowShade
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.airMapSettings.visible
+                    Column {
+                        id:         airMapCol
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        anchors.centerIn: parent
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            QGCLabel        {text: qsTr("API Key:");  width: _labelWidth; anchors.verticalCenter: parent.verticalCenter }
+                            FactTextField   {fact: QGroundControl.settingsManager.airMapSettings.apiKey; width: _editFieldWidth; anchors.verticalCenter: parent.verticalCenter }
+                        }
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            QGCLabel        {text: qsTr("Client ID:");  width: _labelWidth; anchors.verticalCenter: parent.verticalCenter }
+                            FactTextField   {fact: QGroundControl.settingsManager.airMapSettings.clientID; width: _editFieldWidth; anchors.verticalCenter: parent.verticalCenter }
+                        }
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            QGCLabel        {text: qsTr("User Name:");  width: _labelWidth; anchors.verticalCenter: parent.verticalCenter }
+                            FactTextField   {fact: QGroundControl.settingsManager.airMapSettings.userName; width: _editFieldWidth; anchors.verticalCenter: parent.verticalCenter }
+                        }
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            QGCLabel        {text: qsTr("Password:");  width: _labelWidth; anchors.verticalCenter: parent.verticalCenter }
+                            FactTextField   {fact: QGroundControl.settingsManager.airMapSettings.password; width: _editFieldWidth; anchors.verticalCenter: parent.verticalCenter; echoMode: TextInput.Password }
+                        }
+                    }
+                }
+                //-----------------------------------------------------------------
                 //-- Video Source
                 Item {
                     width:                      _panelWidth

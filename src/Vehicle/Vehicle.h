@@ -20,6 +20,7 @@
 #include "MAVLinkProtocol.h"
 #include "UASMessageHandler.h"
 #include "SettingsFact.h"
+#include <AirspaceManagement.h>
 
 class UAS;
 class UASInterface;
@@ -35,6 +36,7 @@ class UASMessage;
 class SettingsManager;
 class ADSBVehicle;
 class QGCCameraManager;
+class AirspaceController;
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -353,6 +355,8 @@ public:
     Q_PROPERTY(QString              hobbsMeter              READ hobbsMeter                                             NOTIFY hobbsMeterChanged)
     Q_PROPERTY(bool                 vtolInFwdFlight         READ vtolInFwdFlight        WRITE setVtolInFwdFlight        NOTIFY vtolInFwdFlightChanged)
     Q_PROPERTY(bool                 highLatencyLink         READ highLatencyLink                                        NOTIFY highLatencyLinkChanged)
+    Q_PROPERTY(AirspaceAuthorization::PermitStatus  flightPermitStatus    READ flightPermitStatus                       NOTIFY flightPermitStatusChanged)   ///< state of flight permission
+    Q_PROPERTY(AirspaceController*   airspaceController     READ airspaceController                                     CONSTANT)
 
     // Vehicle state used for guided control
     Q_PROPERTY(bool flying                  READ flying NOTIFY flyingChanged)                               ///< Vehicle is flying
@@ -572,6 +576,8 @@ public:
     QmlObjectListModel* cameraTriggerPoints(void) { return &_cameraTriggerPoints; }
     QmlObjectListModel* adsbVehicles(void) { return &_adsbVehicles; }
 
+    AirspaceController* airspaceController() { return _airspaceController; }
+
     int  flowImageIndex() { return _flowImageIndex; }
 
     //-- Mavlink Logging
@@ -755,6 +761,11 @@ public:
     /// Vehicle is about to be deleted
     void prepareDelete();
 
+    AirspaceAuthorization::PermitStatus flightPermitStatus() const
+        { return _airspaceManagerPerVehicle ? _airspaceManagerPerVehicle->flightPermitStatus() : AirspaceAuthorization::PermitUnknown; }
+
+    AirspaceManagerPerVehicle* airspaceManager() const { return _airspaceManagerPerVehicle; }
+
 signals:
     void allLinksInactive(Vehicle* vehicle);
     void coordinateChanged(QGeoCoordinate coordinate);
@@ -789,6 +800,8 @@ signals:
     void capabilityBitsChanged(uint64_t capabilityBits);
     void toolBarIndicatorsChanged(void);
     void highLatencyLinkChanged(bool highLatencyLink);
+    void flightPermitStatusChanged();
+
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -886,6 +899,9 @@ private slots:
     void _updateDistanceToHome(void);
     void _updateHobbsMeter(void);
     void _vehicleParamLoaded(bool ready);
+
+    void _trafficUpdate(QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
+    void _adsbTimerTimeout();
 
 private:
     bool _containsLink(LinkInterface* link);
@@ -1037,7 +1053,10 @@ private:
     RallyPointManager*  _rallyPointManager;
     bool                _rallyPointManagerInitialRequestSent;
 
-    ParameterManager*    _parameterManager;
+    ParameterManager*   _parameterManager;
+
+    AirspaceController*   _airspaceController;
+    AirspaceManagerPerVehicle* _airspaceManagerPerVehicle;
 
     bool    _armed;         ///< true: vehicle is armed
     uint8_t _base_mode;     ///< base_mode from HEARTBEAT
@@ -1068,6 +1087,8 @@ private:
 
     QmlObjectListModel              _adsbVehicles;
     QMap<uint32_t, ADSBVehicle*>    _adsbICAOMap;
+    QMap<QString, ADSBVehicle*>     _trafficVehicleMap;
+    QTimer                          _adsbTimer;
 
     // Toolbox references
     FirmwarePluginManager*      _firmwarePluginManager;

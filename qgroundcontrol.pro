@@ -505,6 +505,9 @@ HEADERS += \
     src/LogCompressor.h \
     src/MG.h \
     src/MissionManager/CameraCalc.h \
+    src/MissionManager/AirspaceController.h \
+    src/MissionManager/AirMapManager.h \
+    src/MissionManager/AirspaceManagement.h \
     src/MissionManager/CameraSection.h \
     src/MissionManager/CameraSpec.h \
     src/MissionManager/ComplexMissionItem.h \
@@ -564,6 +567,7 @@ HEADERS += \
     src/QmlControls/RCChannelMonitorController.h \
     src/QmlControls/ScreenToolsController.h \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
+    src/Settings/AirMapSettings.h \
     src/Settings/AppSettings.h \
     src/Settings/AutoConnectSettings.h \
     src/Settings/BrandImageSettings.h \
@@ -697,6 +701,9 @@ SOURCES += \
     src/JsonHelper.cc \
     src/LogCompressor.cc \
     src/MissionManager/CameraCalc.cc \
+    src/MissionManager/AirspaceController.cc \
+    src/MissionManager/AirMapManager.cc \
+    src/MissionManager/AirspaceManagement.cc \
     src/MissionManager/CameraSection.cc \
     src/MissionManager/CameraSpec.cc \
     src/MissionManager/ComplexMissionItem.cc \
@@ -753,6 +760,7 @@ SOURCES += \
     src/QmlControls/RCChannelMonitorController.cc \
     src/QmlControls/ScreenToolsController.cc \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
+    src/Settings/AirMapSettings.cc \
     src/Settings/AppSettings.cc \
     src/Settings/AutoConnectSettings.cc \
     src/Settings/BrandImageSettings.cc \

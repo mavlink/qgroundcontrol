@@ -199,6 +199,7 @@
         <file alias="MavCmdInfoRover.json">src/MissionManager/MavCmdInfoRover.json</file>
         <file alias="MavCmdInfoSub.json">src/MissionManager/MavCmdInfoSub.json</file>
         <file alias="MavCmdInfoVTOL.json">src/MissionManager/MavCmdInfoVTOL.json</file>
+        <file alias="AirMap.SettingsGroup.json">src/Settings/AirMap.SettingsGroup.json</file>
         <file alias="App.SettingsGroup.json">src/Settings/App.SettingsGroup.json</file>
         <file alias="AutoConnect.SettingsGroup.json">src/Settings/AutoConnect.SettingsGroup.json</file>
         <file alias="FlightMap.SettingsGroup.json">src/Settings/FlightMap.SettingsGroup.json</file>
