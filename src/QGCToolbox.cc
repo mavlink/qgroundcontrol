@@ -30,7 +30,9 @@
 #include "QGCOptions.h"
 #include "SettingsManager.h"
 #include "QGCApplication.h"
+#if defined(QGC_AIRMAP_ENABLED)
 #include "AirMapManager.h"
+#endif
 
 #if defined(QGC_CUSTOM_BUILD)
 #include CUSTOMHEADER
@@ -57,7 +59,9 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     , _mavlinkLogManager    (NULL)
     , _corePlugin           (NULL)
     , _settingsManager      (NULL)
+#if defined(QGC_AIRMAP_ENABLED)
     , _airspaceManager      (NULL)
+#endif
 {
     // SettingsManager must be first so settings are available to any subsequent tools
     _settingsManager =          new SettingsManager(app, this);
@@ -82,7 +86,9 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _followMe =                 new FollowMe                (app, this);
     _videoManager =             new VideoManager            (app, this);
     _mavlinkLogManager =        new MAVLinkLogManager       (app, this);
+#if defined(QGC_AIRMAP_ENABLED)
     _airspaceManager =          new AirMapManager           (app, this);
+#endif
 }
 
 void QGCToolbox::setChildToolboxes(void)
@@ -109,7 +115,9 @@ void QGCToolbox::setChildToolboxes(void)
     _qgcPositionManager->setToolbox(this);
     _videoManager->setToolbox(this);
     _mavlinkLogManager->setToolbox(this);
+#if defined(QGC_AIRMAP_ENABLED)
     _airspaceManager->setToolbox(this);
+#endif
 }
 
 void QGCToolbox::_scanAndLoadPlugins(QGCApplication* app)

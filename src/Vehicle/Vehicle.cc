@@ -38,8 +38,9 @@
 #include "QGCCameraManager.h"
 #include "VideoReceiver.h"
 #include "VideoManager.h"
+#if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceController.h"
-
+#endif
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
 #define UPDATE_TIMER 50
@@ -140,8 +141,10 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _rallyPointManager(NULL)
     , _rallyPointManagerInitialRequestSent(false)
     , _parameterManager(NULL)
+#if defined(QGC_AIRMAP_ENABLED)
     , _airspaceController(NULL)
     , _airspaceManagerPerVehicle(NULL)
+#endif
     , _armed(false)
     , _base_mode(0)
     , _custom_mode(0)
@@ -265,8 +268,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     _adsbTimer.setSingleShot(false);
     _adsbTimer.start(1000);
 
+#if defined(QGC_AIRMAP_ENABLED)
     _airspaceController = new AirspaceController(this);
-
     AirspaceManager* airspaceManager = _toolbox->airspaceManager();
     if (airspaceManager) {
         _airspaceManagerPerVehicle = airspaceManager->instantiateVehicle(*this);
@@ -275,7 +278,7 @@ Vehicle::Vehicle(LinkInterface*             link,
             connect(_airspaceManagerPerVehicle, &AirspaceManagerPerVehicle::flightPermitStatusChanged, this, &Vehicle::flightPermitStatusChanged);
         }
     }
-
+#endif
 }
 
 // Disconnected Vehicle for offline editing
@@ -336,8 +339,10 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _rallyPointManager(NULL)
     , _rallyPointManagerInitialRequestSent(false)
     , _parameterManager(NULL)
+#if defined(QGC_AIRMAP_ENABLED)
     , _airspaceController(NULL)
     , _airspaceManagerPerVehicle(NULL)
+#endif
     , _armed(false)
     , _base_mode(0)
     , _custom_mode(0)
@@ -471,9 +476,11 @@ Vehicle::~Vehicle()
     delete _mav;
     _mav = NULL;
 
+#if defined(QGC_AIRMAP_ENABLED)
     if (_airspaceManagerPerVehicle) {
         delete _airspaceManagerPerVehicle;
     }
+#endif
 }
 
 void Vehicle::prepareDelete()

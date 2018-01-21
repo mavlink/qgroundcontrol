@@ -20,7 +20,9 @@
 #include "MAVLinkProtocol.h"
 #include "UASMessageHandler.h"
 #include "SettingsFact.h"
+#if defined(QGC_AIRMAP_ENABLED)
 #include <AirspaceManagement.h>
+#endif
 
 class UAS;
 class UASInterface;
@@ -36,7 +38,9 @@ class UASMessage;
 class SettingsManager;
 class ADSBVehicle;
 class QGCCameraManager;
+#if defined(QGC_AIRMAP_ENABLED)
 class AirspaceController;
+#endif
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -355,9 +359,10 @@ public:
     Q_PROPERTY(QString              hobbsMeter              READ hobbsMeter                                             NOTIFY hobbsMeterChanged)
     Q_PROPERTY(bool                 vtolInFwdFlight         READ vtolInFwdFlight        WRITE setVtolInFwdFlight        NOTIFY vtolInFwdFlightChanged)
     Q_PROPERTY(bool                 highLatencyLink         READ highLatencyLink                                        NOTIFY highLatencyLinkChanged)
+#if defined(QGC_AIRMAP_ENABLED)
     Q_PROPERTY(AirspaceAuthorization::PermitStatus  flightPermitStatus    READ flightPermitStatus                       NOTIFY flightPermitStatusChanged)   ///< state of flight permission
     Q_PROPERTY(AirspaceController*   airspaceController     READ airspaceController                                     CONSTANT)
-
+#endif
     // Vehicle state used for guided control
     Q_PROPERTY(bool flying                  READ flying NOTIFY flyingChanged)                               ///< Vehicle is flying
     Q_PROPERTY(bool landing                 READ landing NOTIFY landingChanged)                             ///< Vehicle is in landing pattern (DO_LAND_START)
@@ -576,8 +581,9 @@ public:
     QmlObjectListModel* cameraTriggerPoints(void) { return &_cameraTriggerPoints; }
     QmlObjectListModel* adsbVehicles(void) { return &_adsbVehicles; }
 
+#if defined(QGC_AIRMAP_ENABLED)
     AirspaceController* airspaceController() { return _airspaceController; }
-
+#endif
     int  flowImageIndex() { return _flowImageIndex; }
 
     //-- Mavlink Logging
@@ -761,10 +767,12 @@ public:
     /// Vehicle is about to be deleted
     void prepareDelete();
 
+#if defined(QGC_AIRMAP_ENABLED)
     AirspaceAuthorization::PermitStatus flightPermitStatus() const
         { return _airspaceManagerPerVehicle ? _airspaceManagerPerVehicle->flightPermitStatus() : AirspaceAuthorization::PermitUnknown; }
 
     AirspaceManagerPerVehicle* airspaceManager() const { return _airspaceManagerPerVehicle; }
+#endif
 
 signals:
     void allLinksInactive(Vehicle* vehicle);
@@ -800,8 +808,9 @@ signals:
     void capabilityBitsChanged(uint64_t capabilityBits);
     void toolBarIndicatorsChanged(void);
     void highLatencyLinkChanged(bool highLatencyLink);
+#if defined(QGC_AIRMAP_ENABLED)
     void flightPermitStatusChanged();
-
+#endif
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -1055,8 +1064,10 @@ private:
 
     ParameterManager*   _parameterManager;
 
+#if defined(QGC_AIRMAP_ENABLED)
     AirspaceController*   _airspaceController;
     AirspaceManagerPerVehicle* _airspaceManagerPerVehicle;
+#endif
 
     bool    _armed;         ///< true: vehicle is armed
     uint8_t _base_mode;     ///< base_mode from HEARTBEAT

@@ -84,8 +84,9 @@
 #include "CameraCalc.h"
 #include "VisualMissionItem.h"
 #include "EditPositionDialogController.h"
+#if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceController.h"
-
+#endif
 #ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
@@ -374,7 +375,6 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<ParameterManager>    ("QGroundControl.Vehicle",              1, 0, "ParameterManager",       "Reference only");
     qmlRegisterUncreatableType<QGCCameraManager>    ("QGroundControl.Vehicle",              1, 0, "QGCCameraManager",       "Reference only");
     qmlRegisterUncreatableType<QGCCameraControl>    ("QGroundControl.Vehicle",              1, 0, "QGCCameraControl",       "Reference only");
-    qmlRegisterUncreatableType<AirspaceController>  ("QGroundControl.Vehicle",              1, 0, "AirspaceController",       "Reference only");
     qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",      1, 0, "JoystickManager",        "Reference only");
     qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",      1, 0, "Joystick",               "Reference only");
     qmlRegisterUncreatableType<QGCPositionManager>  ("QGroundControl.QGCPositionManager",   1, 0, "QGCPositionManager",     "Reference only");
@@ -383,6 +383,9 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<GeoFenceController>  ("QGroundControl.Controllers",          1, 0, "GeoFenceController",     "Reference only");
     qmlRegisterUncreatableType<RallyPointController>("QGroundControl.Controllers",          1, 0, "RallyPointController",   "Reference only");
     qmlRegisterUncreatableType<VisualMissionItem>   ("QGroundControl.Controllers",          1, 0, "VisualMissionItem",      "Reference only");
+#if defined(QGC_AIRMAP_ENABLED)
+    qmlRegisterUncreatableType<AirspaceController>  ("QGroundControl.Vehicle",              1, 0, "AirspaceController",       "Reference only");
+#endif
 
     qmlRegisterType<ParameterEditorController>      ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
     qmlRegisterType<ESP8266ComponentController>     ("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");

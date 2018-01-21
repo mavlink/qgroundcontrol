@@ -21,7 +21,9 @@ GeoFenceManager::GeoFenceManager(Vehicle* vehicle)
     : _vehicle                  (vehicle)
     , _planManager              (vehicle, MAV_MISSION_TYPE_FENCE)
     , _firstParamLoadComplete   (false)
+#if defined(QGC_AIRMAP_ENABLED)
     , _airspaceManager            (qgcApp()->toolbox()->airspaceManager())
+#endif
 {
     connect(&_planManager, &PlanManager::inProgressChanged,         this, &GeoFenceManager::inProgressChanged);
     connect(&_planManager, &PlanManager::error,                     this, &GeoFenceManager::error);
