@@ -96,9 +96,13 @@ QGCView {
     }
 
     on_EnableAirMapChanged: {
-        if(_enableAirMap) {
-            planControlColapsed = true
-            airspaceControl.colapsed = false
+        if(QGroundControl.airmapSupported) {
+            if(_enableAirMap) {
+                planControlColapsed = true
+                airspaceControl.colapsed = false
+            } else {
+                planControlColapsed = false
+            }
         } else {
             planControlColapsed = false
         }
@@ -565,14 +569,16 @@ QGCView {
                         width:                  height
                         height:                 ScreenTools.defaultFontPixelWidth * 2.5
                         sourceSize.height:      height
-                        source:                 "qrc:/airmap/expand.svg"
+                        source:                 QGroundControl.airmapSupported ? "qrc:/airmap/expand.svg" : ""
                         color:                  "white"
+                        visible:                QGroundControl.airmapSupported
                         anchors.right:          parent.right
                         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     MouseArea {
                         anchors.fill:   parent
+                        enabled:        QGroundControl.airmapSupported
                         onClicked: {
                             airspaceControl.colapsed = true
                             planControlColapsed = false

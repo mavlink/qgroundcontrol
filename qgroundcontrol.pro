@@ -1075,6 +1075,9 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap/AirspaceManagement.cc \
         src/Airmap/AirspaceController.cc \
         src/Airmap/AirMapSettings.cc
+} else {
+    RESOURCES += \
+        src/Airmap/dummy/airmap_dummy.qrc
 }
 
 #-------------------------------------------------------------------------------------
