@@ -22,5 +22,29 @@
     "shortDescription": "AirMap Password",
     "type":             "string",
     "defaultValue":     ""
+},
+{
+    "name":             "enableAirMap",
+    "shortDescription": "Enable AirMap",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "enableTelemetry",
+    "shortDescription": "Enable AirMap Telemetry",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "loginEmail",
+    "shortDescription": "AirMap Login Email",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "loginPassword",
+    "shortDescription": "AirMap Login Password",
+    "type":             "string",
+    "defaultValue":     ""
 }
 ]

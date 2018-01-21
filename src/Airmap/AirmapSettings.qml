@@ -35,7 +35,7 @@ QGCView {
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 20
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
     property real _panelWidth:                  _qgcView.width * _internalWidthRatio
-    property Fact _enableAirMapFact:            QGroundControl.settingsManager.appSettings.enableAirMap
+    property Fact _enableAirMapFact:            QGroundControl.settingsManager.airMapSettings.enableAirMap
     property bool _airMapEnabled:               _enableAirMapFact.rawValue
 
     readonly property real _internalWidthRatio:          0.8
@@ -84,14 +84,12 @@ QGCView {
                             fact:       _enableAirMapFact
                             visible:    _enableAirMapFact.visible
                         }
-                        QGCCheckBox {
-                            text:       qsTr("Disable Telemetry")
-                            checked:    false
+                        FactCheckBox {
+                            text:       qsTr("Enable Telemetry")
+                            fact:       _enableTelemetryFact
+                            visible:    _enableTelemetryFact.visible
                             enabled:    _airMapEnabled
-                            onClicked:
-                            {
-
-                            }
+                            property Fact _enableTelemetryFact: QGroundControl.settingsManager.airMapSettings.enableTelemetry
                         }
                     }
                 }
@@ -102,7 +100,6 @@ QGCView {
                     height:                     loginLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
-                    visible:                    QGroundControl.settingsManager.appSettings.visible
                     QGCLabel {
                         id:             loginLabel
                         text:           qsTr("Login / Registration")
@@ -121,14 +118,18 @@ QGCView {
                         rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
                         anchors.centerIn:   parent
                         QGCLabel { text: qsTr("Email:") }
-                        QGCTextField {
-                            width:      _editFieldWidth
-                            enabled:    _airMapEnabled
+                        FactTextField {
+                            fact:           _loginEmailFact
+                            enabled:        _airMapEnabled
+                            visible:        _loginEmailFact.visible
+                            property Fact _loginEmailFact: QGroundControl.settingsManager.airMapSettings.loginEmail
                         }
                         QGCLabel { text: qsTr("Password:") }
-                        QGCTextField {
-                            width:      _editFieldWidth
-                            enabled:    _airMapEnabled
+                        FactTextField {
+                            fact:           _loginPasswordFact
+                            enabled:        _airMapEnabled
+                            visible:        _loginPasswordFact.visible
+                            property Fact _loginPasswordFact: QGroundControl.settingsManager.airMapSettings.loginPassword
                         }
                         Item {
                             width:  1
@@ -150,6 +151,9 @@ QGCView {
                             Layout.alignment:  Qt.AlignHCenter
                             Layout.columnSpan: 2
                             enabled:           _airMapEnabled
+                            onClicked: {
+                                Qt.openUrlExternally("https://www.airmap.com");
+                            }
                         }
                     }
                 }
@@ -187,6 +191,42 @@ QGCView {
                         QGCLabel { text: qsTr("jonh@doe.com") }
                         QGCLabel { text: qsTr("Phone:") }
                         QGCLabel { text: qsTr("+1 212 555 1212") }
+                    }
+                }
+                //-----------------------------------------------------------------
+                //-- License (Will this stay here?)
+                Item {
+                    width:                      _panelWidth
+                    height:                     licenseLabel.height
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.appSettings.visible
+                    QGCLabel {
+                        id:             licenseLabel
+                        text:           qsTr("License")
+                        font.family:    ScreenTools.demiboldFontFamily
+                    }
+                }
+                Rectangle {
+                    height:                     licenseGrid.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:                      _panelWidth
+                    color:                      qgcPal.windowShade
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    GridLayout {
+                        id:                 licenseGrid
+                        columns:            2
+                        columnSpacing:      ScreenTools.defaultFontPixelHeight * 2
+                        rowSpacing:         ScreenTools.defaultFontPixelWidth  * 0.25
+                        anchors.centerIn:   parent
+                        QGCLabel        { text: qsTr("API Key:") }
+                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.apiKey; }
+                        QGCLabel        { text: qsTr("Client ID:") }
+                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.clientID; }
+                        QGCLabel        { text: qsTr("User Name:") }
+                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.userName; }
+                        QGCLabel        { text: qsTr("Password:") }
+                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.password; echoMode: TextInput.Password }
                     }
                 }
             }

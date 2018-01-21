@@ -24,5 +24,9 @@ public:
     DEFINE_SETTINGFACT(clientID)
     DEFINE_SETTINGFACT(userName)
     DEFINE_SETTINGFACT(password)
+    DEFINE_SETTINGFACT(enableAirMap)
+    DEFINE_SETTINGFACT(enableTelemetry)
+    DEFINE_SETTINGFACT(loginEmail)
+    DEFINE_SETTINGFACT(loginPassword)
 
 };
