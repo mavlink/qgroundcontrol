@@ -841,6 +841,38 @@ Rectangle {
                     text: palette.alertText
                 }
 
+                // missionItemEditor
+                Loader {
+                    sourceComponent: rowHeader
+                    property var text: "missionItemEditor"
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    color: palette.missionItemEditor
+                    onColorSelected: palette.missionItemEditor = color
+                }
+                ClickableColor {
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    color: palette.missionItemEditor
+                    onColorSelected: palette.missionItemEditor = color
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: false }
+                    text: palette.missionItemEditor
+                }
+                Text {
+                    width: 80
+                    height: 20
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    property var palette: QGCPalette { colorGroupEnabled: true }
+                    text: palette.missionItemEditor
+                }
+
             }
 
             Column {
