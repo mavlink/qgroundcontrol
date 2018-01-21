@@ -76,11 +76,6 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
     newMap = JoystickAndroid::discover(_multiVehicleManager);
 #endif
 
-    if (_activeJoystick && !newMap.contains(_activeJoystick->name())) {
-        qCDebug(JoystickManagerLog) << "Active joystick removed";
-        setActiveJoystick(NULL);
-    }
-
     // Check to see if our current mapping contains any joysticks that are not in the new mapping
     // If so, those joysticks have been unplugged, and need to be cleaned up
     QMap<QString, Joystick*>::iterator i;
@@ -93,12 +88,19 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
         }
     }
 
+
     _name2JoystickMap = newMap;
     emit availableJoysticksChanged();
+
 
     if (!_name2JoystickMap.count()) {
         setActiveJoystick(NULL);
         return;
+    }
+
+    if (_activeJoystick && !newMap.contains(_activeJoystick->name())) {
+        qCDebug(JoystickManagerLog) << "Active joystick removed";
+        setActiveJoystick(NULL);
     }
 
     QSettings settings;
