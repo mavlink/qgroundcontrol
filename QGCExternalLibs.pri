@@ -130,9 +130,11 @@ contains (DEFINES, DISABLE_ZEROCONF) {
 #
 contains (DEFINES, DISABLE_AIRMAP) {
     message("Skipping support for AirMap (manual override from command line)")
+    DEFINES -= QGC_AIRMAP_ENABLED
 # Otherwise the user can still disable this feature in the user_config.pri file.
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_AIRMAP) {
     message("Skipping support for AirMap (manual override from user_config.pri)")
+    DEFINES -= QGC_AIRMAP_ENABLED
 } else {
     AIRMAPD_PATH = $$PWD/libs/airmapd
     INCLUDEPATH += \

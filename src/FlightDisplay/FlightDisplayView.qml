@@ -633,7 +633,7 @@ QGCView {
         width:          airspaceRow.width + (ScreenTools.defaultFontPixelWidth * 3)
         height:         airspaceRow.height * 1.25
         color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
-        visible:        _mainIsMap && flightPermit && flightPermit !== AirspaceAuthorization.PermitUnknown && !messageArea.visible && !criticalMmessageArea.visible
+        visible:        QGroundControl.airmapSupported && _mainIsMap && flightPermit && flightPermit !== AirspaceAuthorization.PermitUnknown && !messageArea.visible && !criticalMmessageArea.visible
         radius:         3
         border.width:   1
         border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
@@ -669,8 +669,8 @@ QGCView {
                 anchors.verticalCenter: parent.verticalCenter;
             }
         }
-        property var  flightPermit: _activeVehicle ? _activeVehicle.flightPermitStatus : null
-        property var  providerName: _activeVehicle ?  _activeVehicle.airspaceController.providerName : ""
+        property var  flightPermit: (QGroundControl.airmapSupported && _activeVehicle) ? _activeVehicle.flightPermitStatus : null
+        property var  providerName: _activeVehicle ? _activeVehicle.airspaceController.providerName : ""
     }
 
 }
