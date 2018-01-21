@@ -124,3 +124,24 @@ contains (DEFINES, DISABLE_ZEROCONF) {
     message("Skipping support for Zeroconf (unsupported platform)")
 }
 
+
+#
+# [OPTIONAL] AirMap Support
+#
+contains (DEFINES, DISABLE_AIRMAP) {
+    message("Skipping support for AirMap (manual override from command line)")
+# Otherwise the user can still disable this feature in the user_config.pri file.
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_AIRMAP) {
+    message("Skipping support for AirMap (manual override from user_config.pri)")
+} else {
+    AIRMAPD_PATH = $$PWD/libs/airmapd
+    INCLUDEPATH += \
+        $${AIRMAPD_PATH}/include
+    MacBuild|iOSBuild {
+        message("Including support for AirMap")
+        LIBS += -L$${AIRMAPD_PATH}/macOS/Qt.5.9 -lairmap-qt
+        DEFINES += QGC_AIRMAP_ENABLED
+    } else {
+        message("Skipping support for Airmap (unsupported platform)")
+    }
+}

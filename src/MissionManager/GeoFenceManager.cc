@@ -11,6 +11,7 @@
 #include "Vehicle.h"
 #include "QmlObjectListModel.h"
 #include "ParameterManager.h"
+#include "QGCApplication.h"
 #include "QGCMapPolygon.h"
 #include "QGCMapCircle.h"
 
@@ -20,6 +21,7 @@ GeoFenceManager::GeoFenceManager(Vehicle* vehicle)
     : _vehicle                  (vehicle)
     , _planManager              (vehicle, MAV_MISSION_TYPE_FENCE)
     , _firstParamLoadComplete   (false)
+    , _airspaceManager            (qgcApp()->toolbox()->airspaceManager())
 {
     connect(&_planManager, &PlanManager::inProgressChanged,         this, &GeoFenceManager::inProgressChanged);
     connect(&_planManager, &PlanManager::error,                     this, &GeoFenceManager::error);

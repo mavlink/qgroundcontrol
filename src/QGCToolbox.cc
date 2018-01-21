@@ -30,32 +30,34 @@
 #include "QGCOptions.h"
 #include "SettingsManager.h"
 #include "QGCApplication.h"
+#include "AirMapManager.h"
 
 #if defined(QGC_CUSTOM_BUILD)
 #include CUSTOMHEADER
 #endif
 
 QGCToolbox::QGCToolbox(QGCApplication* app)
-    : _audioOutput(NULL)
-    , _factSystem(NULL)
+    : _audioOutput          (NULL)
+    , _factSystem           (NULL)
     , _firmwarePluginManager(NULL)
 #ifndef __mobile__
-    , _gpsManager(NULL)
+    , _gpsManager           (NULL)
 #endif
-    , _imageProvider(NULL)
-    , _joystickManager(NULL)
-    , _linkManager(NULL)
-    , _mavlinkProtocol(NULL)
-    , _missionCommandTree(NULL)
-    , _multiVehicleManager(NULL)
-    , _mapEngineManager(NULL)
-    , _uasMessageHandler(NULL)
-    , _followMe(NULL)
-    , _qgcPositionManager(NULL)
-    , _videoManager(NULL)
-    , _mavlinkLogManager(NULL)
-    , _corePlugin(NULL)
-    , _settingsManager(NULL)
+    , _imageProvider        (NULL)
+    , _joystickManager      (NULL)
+    , _linkManager          (NULL)
+    , _mavlinkProtocol      (NULL)
+    , _missionCommandTree   (NULL)
+    , _multiVehicleManager  (NULL)
+    , _mapEngineManager     (NULL)
+    , _uasMessageHandler    (NULL)
+    , _followMe             (NULL)
+    , _qgcPositionManager   (NULL)
+    , _videoManager         (NULL)
+    , _mavlinkLogManager    (NULL)
+    , _corePlugin           (NULL)
+    , _settingsManager      (NULL)
+    , _airspaceManager      (NULL)
 {
     // SettingsManager must be first so settings are available to any subsequent tools
     _settingsManager =          new SettingsManager(app, this);
@@ -80,6 +82,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _followMe =                 new FollowMe                (app, this);
     _videoManager =             new VideoManager            (app, this);
     _mavlinkLogManager =        new MAVLinkLogManager       (app, this);
+    _airspaceManager =          new AirMapManager           (app, this);
 }
 
 void QGCToolbox::setChildToolboxes(void)
@@ -106,6 +109,7 @@ void QGCToolbox::setChildToolboxes(void)
     _qgcPositionManager->setToolbox(this);
     _videoManager->setToolbox(this);
     _mavlinkLogManager->setToolbox(this);
+    _airspaceManager->setToolbox(this);
 }
 
 void QGCToolbox::_scanAndLoadPlugins(QGCApplication* app)
