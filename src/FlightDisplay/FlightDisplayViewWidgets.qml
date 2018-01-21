@@ -34,7 +34,7 @@ Item {
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property bool   _isSatellite:           _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
     property bool   _lightWidgetBorders:    _isSatellite
-    property bool   _enableAirMap:          QGroundControl.settingsManager.appSettings.enableAirMap.rawValue
+    property bool   _enableAirMap:          QGroundControl.airmapSupported ? QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue : false
 
     readonly property real _margins:        ScreenTools.defaultFontPixelHeight * 0.5
 

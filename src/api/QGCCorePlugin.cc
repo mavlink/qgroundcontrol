@@ -30,7 +30,9 @@ public:
         : pGeneral                  (NULL)
         , pCommLinks                (NULL)
         , pOfflineMaps              (NULL)
+    #if defined(QGC_AIRMAP_ENABLED)
         , pAirmap                   (NULL)
+    #endif
         , pMAVLink                  (NULL)
         , pConsole                  (NULL)
     #if defined(QT_DEBUG)
@@ -54,8 +56,10 @@ public:
             delete pCommLinks;
         if(pOfflineMaps)
             delete pOfflineMaps;
+#if defined(QGC_AIRMAP_ENABLED)
         if(pAirmap)
             delete pAirmap;
+#endif
         if(pMAVLink)
             delete pMAVLink;
         if(pConsole)
@@ -73,7 +77,9 @@ public:
     QmlComponentInfo* pGeneral;
     QmlComponentInfo* pCommLinks;
     QmlComponentInfo* pOfflineMaps;
+#if defined(QGC_AIRMAP_ENABLED)
     QmlComponentInfo* pAirmap;
+#endif
     QmlComponentInfo* pMAVLink;
     QmlComponentInfo* pConsole;
 #if defined(QT_DEBUG)
@@ -131,10 +137,12 @@ QVariantList &QGCCorePlugin::settingsPages()
                                            QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"),
                                            QUrl::fromUserInput("qrc:/res/waves.svg"));
         _p->settingsList.append(QVariant::fromValue((QmlComponentInfo*)_p->pOfflineMaps));
+#if defined(QGC_AIRMAP_ENABLED)
         _p->pAirmap = new QmlComponentInfo(tr("AirMap"),
                                            QUrl::fromUserInput("qrc:/qml/AirmapSettings.qml"),
                                            QUrl::fromUserInput(""));
         _p->settingsList.append(QVariant::fromValue((QmlComponentInfo*)_p->pAirmap));
+#endif
         _p->pMAVLink = new QmlComponentInfo(tr("MAVLink"),
                                        QUrl::fromUserInput("qrc:/qml/MavlinkSettings.qml"),
                                        QUrl::fromUserInput("qrc:/res/waves.svg"));
