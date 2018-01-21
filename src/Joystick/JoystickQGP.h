@@ -1,4 +1,0 @@
-#ifndef JOYSTICKQGP_H
-#define JOYSTICKQGP_H
-
-#endif // JOYSTICKQGP_H
