@@ -61,7 +61,7 @@ void JoystickManager::init() {
     }
 #elif defined(__android__)
     _setActiveJoystickFromSettings();
-    //TODO: Investigate Android events for Joystick hot plugging & run _joystickCheckTimer if possible
+    connect(QGamepadManager::instance(), &QGamepadManager::connectedGamepadsChanged, this, &JoystickManager::_updateAvailableJoysticks);
 #endif
 }
 
@@ -207,8 +207,22 @@ void JoystickManager::_updateAvailableJoysticks(void)
         }
     }
 #elif defined(__android__)
+    QList<int> gamepads = QGamepadManager::instance()->connectedGamepads();
+    static QList<int> previousGamepads;
+    if (gamepads != previousGamepads){
+        previousGamepads = gamepads;
+        qCDebug(JoystickManagerLog) << "GPChange!: "<<previousGamepads;
+        _setActiveJoystickFromSettings();
+    }
     /*
      * TODO: Investigate Android events for Joystick hot plugging
      */
 #endif
+}
+void JoystickManager::androidGPConnected(int id){
+    qDebug()<<"conn";
+
+}
+void JoystickManager::androidGPDisconnected(int id){
+    qDebug()<< "disconn";
 }

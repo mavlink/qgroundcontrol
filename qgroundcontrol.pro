@@ -225,7 +225,8 @@ QT += \
     svg \
     widgets \
     xml \
-    texttospeech
+    texttospeech\
+    gamepad
 
 # Multimedia only used if QVC is enabled
 !contains (DEFINES, QGC_DISABLE_UVC) {
