@@ -15,6 +15,10 @@
         <file alias="JoystickIndicator.qml">src/ui/toolbar/JoystickIndicator.qml</file>
     </qresource>
     <qresource prefix="/qml">
+        <file alias="QGroundControl/Airmap/qmldir">src/Airmap/QGroundControl.Airmap.qmldir</file>
+        <file alias="QGroundControl/Airmap/AirspaceControl.qml">src/Airmap/AirspaceControl.qml</file>
+        <file alias="QGroundControl/Airmap/AirspaceRegulation.qml">src/Airmap/AirspaceRegulation.qml</file>
+        <file alias="AirmapSettings.qml">src/Airmap/AirmapSettings.qml</file>
         <file alias="AnalyzeView.qml">src/AnalyzeView/AnalyzeView.qml</file>
         <file alias="AppSettings.qml">src/ui/AppSettings.qml</file>
         <file alias="BluetoothSettings.qml">src/ui/preferences/BluetoothSettings.qml</file>

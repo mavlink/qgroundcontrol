@@ -28,7 +28,6 @@ QGCFlickable {
             anchors.left:       parent.left
             anchors.top:        parent.top
             text:               qsTr("Rally Points")
-            color:              "black"
         }
 
         Rectangle {
