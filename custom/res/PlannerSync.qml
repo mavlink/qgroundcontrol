@@ -238,6 +238,21 @@ QGCView {
             width:      mainWindow.width
             height:     mainWindow.height
             color:      Qt.rgba(0,0,0,0.1)
+            function setSyncMessage() {
+                if(_sendMission) {
+                    if(cloneCheckbox.checked) {
+                        TyphoonHQuickInterface.desktopSync.syncMessage = qsTr("All local missions will be cloned into the remote")
+                    } else {
+                        TyphoonHQuickInterface.desktopSync.syncMessage = qsTr("Select missions to upload to remote")
+                    }
+                } else {
+                    if(cloneCheckbox.checked) {
+                        TyphoonHQuickInterface.desktopSync.syncMessage = qsTr("All remote missions will be cloned locally")
+                    } else {
+                        TyphoonHQuickInterface.desktopSync.syncMessage = qsTr("Select missions to download from remote")
+                    }
+                }
+            }
             MouseArea {
                 anchors.fill:   parent
                 onWheel:        { wheel.accepted = true; }
@@ -273,7 +288,7 @@ QGCView {
                 Column {
                     id:                 syncCol
                     width:              checksRect.width + (ScreenTools.defaultFontPixelWidth  * 8)
-                    spacing:            ScreenTools.defaultFontPixelHeight * 2
+                    spacing:            ScreenTools.defaultFontPixelHeight
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     anchors.centerIn:   parent
                     QGCLabel {
@@ -292,31 +307,91 @@ QGCView {
                         anchors.horizontalCenter: parent.horizontalCenter
                         Column {
                             id:         syncFilesCol
-                            spacing:    ScreenTools.defaultFontPixelHeight
+                            spacing:    ScreenTools.defaultFontPixelHeight * 0.5
                             anchors.centerIn:   parent
-                            ExclusiveGroup { id: syncTypeGroup }
-                            QGCRadioButton {
-                                checked:        TyphoonHQuickInterface.desktopSync.syncType === QGCSyncFilesDesktop.SyncClone
-                                exclusiveGroup: syncTypeGroup
-                                text:           qsTr("Clone (Existing files are replaced and extra files are removed)")
-                                onClicked: {
-                                    TyphoonHQuickInterface.desktopSync.syncType = QGCSyncFilesDesktop.SyncClone
+                            ListView {
+                                id:             missionView
+                                width:          ScreenTools.defaultFontPixelWidth  * 62
+                                height:         ScreenTools.defaultFontPixelHeight * 10
+                                spacing:        ScreenTools.defaultFontPixelWidth
+                                orientation:    ListView.Vertical
+                                model:          TyphoonHQuickInterface.desktopSync.missionController.fileList
+                                cacheBuffer:    Math.max(height * 2, 0)
+                                clip:           true
+                                visible:        !cloneCheckbox.checked
+                                highlightMoveDuration: 250
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                property bool _hasMission: connected ? TyphoonHQuickInterface.desktopSync.missionController.fileList.length > 0 : false
+                                delegate: Row {
+                                    spacing: ScreenTools.defaultFontPixelHeight * 0.25
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    property var _fileItem: missionView._hasMission ? TyphoonHQuickInterface.desktopSync.missionController.fileList[index] : null
+                                    property bool itemSelected: missionView._hasMission ? TyphoonHQuickInterface.desktopSync.missionController.fileList[index].selected : false
+                                    onItemSelectedChanged: {
+                                        missionCheckBox.checked = _fileItem.selected
+                                    }
+                                    QGCCheckBox {
+                                        id:         missionCheckBox
+                                        text:       ""
+                                        onClicked:  {
+                                            _fileItem.selected = checked
+                                        }
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        Component.onCompleted: {
+                                            checked = _fileItem.selected
+                                        }
+                                    }
+                                    QGCLabel {
+                                        text:       _fileItem.fileName
+                                        width:      ScreenTools.defaultFontPixelWidth * 30
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    QGCLabel {
+                                        text:       _fileItem.sizeStr
+                                        width:      ScreenTools.defaultFontPixelWidth * 20
+                                        horizontalAlignment: Text.AlignRight
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
                                 }
                             }
-                            QGCRadioButton {
-                                checked:        TyphoonHQuickInterface.desktopSync.syncType === QGCSyncFilesDesktop.SyncReplace
-                                exclusiveGroup: syncTypeGroup
-                                text:           qsTr("Replace (Existing files are replaced)")
-                                onClicked: {
-                                    TyphoonHQuickInterface.desktopSync.syncType = QGCSyncFilesDesktop.SyncReplace
-                                }
+                            Rectangle {
+                                width:      parent.width * 0.9
+                                height:     1
+                                color:      qgcPal.text
+                                visible:    !cloneCheckbox.checked
+                                anchors.horizontalCenter: parent.horizontalCenter
                             }
-                            QGCRadioButton {
-                                checked:        TyphoonHQuickInterface.desktopSync.syncType === QGCSyncFilesDesktop.SyncAppend
-                                exclusiveGroup: syncTypeGroup
-                                text:           qsTr("Append (Existing files are added with an unique name)")
-                                onClicked: {
-                                    TyphoonHQuickInterface.desktopSync.syncType = QGCSyncFilesDesktop.SyncAppend
+                            Column {
+                                spacing:    ScreenTools.defaultFontPixelHeight * 0.25
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                ExclusiveGroup { id: syncTypeGroup }
+                                QGCRadioButton {
+                                    id:             cloneCheckbox
+                                    checked:        TyphoonHQuickInterface.desktopSync.syncType === QGCSyncFilesDesktop.SyncClone
+                                    exclusiveGroup: syncTypeGroup
+                                    text:           qsTr("Clone (Existing files are replaced and extra files are removed)")
+                                    onClicked: {
+                                        TyphoonHQuickInterface.desktopSync.syncType = QGCSyncFilesDesktop.SyncClone
+                                    }
+                                    onCheckedChanged: {
+                                       setSyncMessage()
+                                    }
+                                }
+                                QGCRadioButton {
+                                    checked:        TyphoonHQuickInterface.desktopSync.syncType === QGCSyncFilesDesktop.SyncReplace
+                                    exclusiveGroup: syncTypeGroup
+                                    text:           qsTr("Replace (Existing files are replaced)")
+                                    onClicked: {
+                                        TyphoonHQuickInterface.desktopSync.syncType = QGCSyncFilesDesktop.SyncReplace
+                                    }
+                                }
+                                QGCRadioButton {
+                                    checked:        TyphoonHQuickInterface.desktopSync.syncType === QGCSyncFilesDesktop.SyncAppend
+                                    exclusiveGroup: syncTypeGroup
+                                    text:           qsTr("Append (Existing files are added with an unique name)")
+                                    onClicked: {
+                                        TyphoonHQuickInterface.desktopSync.syncType = QGCSyncFilesDesktop.SyncAppend
+                                    }
                                 }
                             }
                         }
@@ -340,6 +415,20 @@ QGCView {
                         spacing:        ScreenTools.defaultFontPixelWidth * 2
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCButton {
+                            text:       kSelectAll
+                            width:      ScreenTools.defaultFontPixelWidth * 16
+                            enabled:    !TyphoonHQuickInterface.desktopSync.sendingFiles
+                            visible:    !cloneCheckbox.checked
+                            onClicked:  TyphoonHQuickInterface.desktopSync.missionController.selectAllFiles(true)
+                        }
+                        QGCButton {
+                            text:       kSelectNone
+                            width:      ScreenTools.defaultFontPixelWidth * 16
+                            enabled:    !TyphoonHQuickInterface.desktopSync.sendingFiles
+                            visible:    !cloneCheckbox.checked
+                            onClicked:  TyphoonHQuickInterface.desktopSync.missionController.selectAllFiles(false)
+                        }
+                        QGCButton {
                             text:           !TyphoonHQuickInterface.desktopSync.sendingFiles ? kStart : kCancel
                             width:          ScreenTools.defaultFontPixelWidth  * 16
                             height:         ScreenTools.defaultFontPixelHeight * 2
@@ -349,7 +438,7 @@ QGCView {
                                     TyphoonHQuickInterface.desktopSync.cancelSync()
                                 } else {
                                     if(_sendMission) {
-                                        TyphoonHQuickInterface.desktopSync.uploadAllMissions()
+                                        TyphoonHQuickInterface.desktopSync.uploadMissionFiles()
                                     } else {
                                         TyphoonHQuickInterface.desktopSync.downloadAllMissions()
                                     }
@@ -370,8 +459,12 @@ QGCView {
                 }
             }
             Component.onCompleted: {
-                TyphoonHQuickInterface.desktopSync.initSync()
-                //TyphoonHQuickInterface.desktopSync.syncMessage = _sendMission ? qsTr("Select missions to upload to remote") : qsTr("Select missions to download from remote")
+                if(_sendMission) {
+                    TyphoonHQuickInterface.desktopSync.initMissionUpload()
+                } else {
+                    TyphoonHQuickInterface.desktopSync.initSync()
+                }
+                setSyncMessage()
                 mainWindow.disableToolbar()
             }
         }
@@ -638,7 +731,7 @@ QGCView {
                                     spacing: ScreenTools.defaultFontPixelWidth
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     property var _fileItem: _hasMaps ? TyphoonHQuickInterface.desktopSync.mapController.fileList[index] : null
-                                    property bool itemSelected: _hasLogs ? TyphoonHQuickInterface.desktopSync.mapController.fileList[index].selected : false
+                                    property bool itemSelected: _hasMaps ? TyphoonHQuickInterface.desktopSync.mapController.fileList[index].selected : false
                                     onItemSelectedChanged: {
                                         mapCheckBox.checked = _fileItem.selected
                                     }

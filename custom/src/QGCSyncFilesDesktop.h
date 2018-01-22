@@ -64,9 +64,11 @@ public:
     Q_PROPERTY(QString              syncMessage     READ    syncMessage     WRITE  setSyncMessage       NOTIFY syncMessageChanged)
     Q_PROPERTY(int                  syncProgress    READ    syncProgress    NOTIFY syncProgressChanged)
     Q_PROPERTY(int                  fileProgress    READ    fileProgress    NOTIFY fileProgressChanged)
-    Q_PROPERTY(QGCFileListController* logController READ    logController   CONSTANT)
-    Q_PROPERTY(QGCFileListController* mapController READ    mapController   CONSTANT)
     Q_PROPERTY(bool                 importReplace   READ    importReplace   WRITE   setImportReplace   NOTIFY importReplaceChanged)
+
+    Q_PROPERTY(QGCFileListController* missionController READ    missionController   CONSTANT)
+    Q_PROPERTY(QGCFileListController* logController     READ    logController       CONSTANT)
+    Q_PROPERTY(QGCFileListController* mapController     READ    mapController       CONSTANT)
 
     //-- Connect to remote node
     Q_INVOKABLE bool connectToRemote    (QString name);
@@ -77,13 +79,15 @@ public:
     //-- Upload current mission (Plan View)
     Q_INVOKABLE void uploadMission      (QString name, PlanMasterController* controller);
     //-- Upload all local mission files
-    Q_INVOKABLE void uploadAllMissions  ();
+    Q_INVOKABLE void uploadMissionFiles ();
     //-- Cancel sync thread
     Q_INVOKABLE void cancelSync         ();
     //-- Download all remote mission files
     Q_INVOKABLE void downloadAllMissions();
     //-- Download selected logs
     Q_INVOKABLE void downloadSelectedLogs(QString path);
+    //-- Init local mission files to upload
+    Q_INVOKABLE void initMissionUpload  ();
     //-- Init log fetch state
     Q_INVOKABLE void initLogFetch       ();
     //-- Init map fetch state
@@ -107,8 +111,9 @@ public:
     bool        importReplace           () { return _importReplace; }
     void        setImportReplace        (bool replace) { _importReplace = replace; emit importReplaceChanged(); }
 
-    QGCFileListController* logController() { return &_logController; }
-    QGCFileListController* mapController() { return &_mapController; }
+    QGCFileListController* missionController    () { return &_missionController; }
+    QGCFileListController* logController        () { return &_logController; }
+    QGCFileListController* mapController        () { return &_mapController; }
 
 public:
     //-------------------------------------------------------------------------
@@ -180,6 +185,7 @@ private:
     bool    _processIncomingMission     (QString name, int count, QString& missionFile);
 
 private:
+    QGCFileListController               _missionController;
     QGCFileListController               _logController;
     QGCFileListController               _mapController;
     QUdpSocket*                         _udpSocket;

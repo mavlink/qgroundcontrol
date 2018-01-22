@@ -22,6 +22,7 @@ static const char* kMissionWildCard  = "*.plan";
 //-----------------------------------------------------------------------------
 QGCSyncFilesDesktop::QGCSyncFilesDesktop(QObject* parent)
     : QObject(parent)
+    , _missionController(this)
     , _logController(this)
     , _mapController(this)
     , _udpSocket(NULL)
@@ -267,6 +268,27 @@ QGCSyncFilesDesktop::initSync()
 
 //-----------------------------------------------------------------------------
 void
+QGCSyncFilesDesktop::initMissionUpload()
+{
+    initSync();
+    _missionController.clearFileItems();
+    _fileProgress = 0;
+    emit fileProgressChanged();
+    //-- Where missions are stored
+    QString missionPath = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
+    //-- Find all of them
+    QDirIterator it(missionPath, QStringList() << kMissionWildCard, QDir::Files, QDirIterator::NoIteratorFlags);
+    while(it.hasNext()) {
+        QFileInfo fi(it.next());
+        QGCFileListItem* item = new QGCFileListItem(&_missionController, fi.filePath(), fi.fileName(), fi.size());
+        _missionController.appendFileItem(item);
+    }
+    std::sort(_missionController.fileListV().begin(), _missionController.fileListV().end(), [](QGCFileListItem* a, QGCFileListItem* b) { return a->fileName() > b->fileName(); });
+    emit _missionController.fileListChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
 QGCSyncFilesDesktop::initLogFetch()
 {
     initSync();
@@ -310,7 +332,7 @@ QGCSyncFilesDesktop::initMapFetch()
 
 //-----------------------------------------------------------------------------
 void
-QGCSyncFilesDesktop::uploadAllMissions()
+QGCSyncFilesDesktop::uploadMissionFiles()
 {
     if(_sendingFiles) {
         return;
@@ -327,16 +349,15 @@ QGCSyncFilesDesktop::uploadAllMissions()
         _completed();
         return;
     }
+    bool isCloning = syncType() == SyncClone;
     QStringList missionNames;
     QStringList missionFiles;
-    //-- Where missions are stored
-    QString missionPath = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
-    //-- Find all of them
-    QDirIterator it(missionPath, QStringList() << kMissionWildCard, QDir::Files, QDirIterator::NoIteratorFlags);
-    while(it.hasNext()) {
-        QFileInfo fi(it.next());
-        missionFiles << fi.filePath();
-        missionNames << fi.fileName();
+    //-- Build file list
+    for(int i = 0; i < _missionController.fileListV().size(); i++) {
+        if(_missionController.fileListV()[i] && (isCloning || _missionController.fileListV()[i]->selected())) {
+            missionNames << _missionController.fileListV()[i]->fileName();
+            missionFiles << _missionController.fileListV()[i]->filePath();
+        }
     }
     if(!missionFiles.size()) {
         _message(QString(tr("No missions to send")));
@@ -345,7 +366,7 @@ QGCSyncFilesDesktop::uploadAllMissions()
     }
     _message(QString(tr("Sending mission files...")));
     //-- If cloning, prune extra files
-    if(syncType() == SyncClone) {
+    if(isCloning) {
         _remoteObject->pruneExtraMissionsOnMobile(missionNames);
     }
     //-- Start Worker Thread
