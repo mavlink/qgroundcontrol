@@ -104,6 +104,7 @@ public:
     bool            rebootRequired          (void) const { return _rebootRequired; }
     bool            hasControl              (void) const { return _hasControl; }
     bool            readOnly                (void) const { return _readOnly; }
+    bool            writeOnly               (void) const { return _writeOnly; }
     bool            volatileValue           (void) const { return _volatile; }
 
     /// Amount to increment value when used in controls such as spin button or slider with detents.
@@ -135,6 +136,7 @@ public:
     void setIncrement       (double increment)                  { _increment = increment; }
     void setHasControl      (bool bValue)                       { _hasControl = bValue; }
     void setReadOnly        (bool bValue)                       { _readOnly = bValue; }
+    void setWriteOnly       (bool bValue)                       { _writeOnly = bValue; }
     void setVolatileValue   (bool bValue);
 
     void setTranslators(Translator rawTranslator, Translator cookedTranslator);
@@ -241,6 +243,7 @@ private:
     double          _increment;
     bool            _hasControl;
     bool            _readOnly;
+    bool            _writeOnly;
     bool            _volatile;
 
     // Exact conversion constants
