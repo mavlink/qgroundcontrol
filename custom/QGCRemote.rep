@@ -13,7 +13,6 @@ class QGCRemote
     PROP(SyncType syncType=SyncAppend READWRITE)
     PROP(bool cancel=false READWRITE)
     PROP(bool desktopConnected=false READWRITE)
-    PROP(QStringList missionsOnMobile)
     PROP(QList<QGCRemoteLogEntry> logEntriesOnMobile)
     PROP(QList<QGCMissionEntry> missionEntriesOnMobile)
     PROP(QList<QGCSyncTileSet> tileSetsOnMobile)
