@@ -31,12 +31,24 @@ public:
     {
     }
 
+    QGCFileListItem(QGCFileListController* parent, QString filePath, QString fileName, quint64 size)
+        : QObject((QObject*)parent)
+        , _parent(parent)
+        , _fileName(fileName)
+        , _filePath(filePath)
+        , _selected(false)
+        , _size(size)
+    {
+    }
+
     Q_PROPERTY(QString  fileName    READ fileName                       CONSTANT)
+    Q_PROPERTY(QString  filePath    READ filePath                       CONSTANT)
     Q_PROPERTY(bool     selected    READ selected   WRITE setSelected   NOTIFY selectedChanged)
     Q_PROPERTY(quint64  size        READ size                           CONSTANT)
     Q_PROPERTY(QString  sizeStr     READ sizeStr                        CONSTANT)
 
     QString     fileName    () { return _fileName; }
+    QString     filePath    () { return _filePath; }
     bool        selected    () { return _selected; }
     quint64     size        () { return _size; }
     QString     sizeStr     ();
@@ -49,6 +61,7 @@ signals:
 protected:
     QGCFileListController*      _parent;
     QString                     _fileName;
+    QString                     _filePath;
     bool                        _selected;
     quint64                     _size;
 };

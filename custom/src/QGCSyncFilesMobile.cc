@@ -583,14 +583,15 @@ QGCSyncFilesMobile::_broadcastPresence()
 void
 QGCSyncFilesMobile::_updateMissionsOnMobile()
 {
-    QStringList missions;
+    QList<QGCMissionEntry> missions;
     QString missionPath = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();
     QDirIterator it(missionPath, QStringList() << kMissionWildCard, QDir::Files, QDirIterator::NoIteratorFlags);
     while(it.hasNext()) {
         QFileInfo fi(it.next());
-        missions << fi.fileName();
+        QGCMissionEntry m(fi.fileName(), fi.size());
+        missions.append(m);
     }
-    setMissionsOnMobile(missions);
+    setMissionEntriesOnMobile(missions);
 }
 
 //-----------------------------------------------------------------------------

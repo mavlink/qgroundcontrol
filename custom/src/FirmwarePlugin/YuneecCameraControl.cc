@@ -751,12 +751,12 @@ YuneecCameraControl::factChanged(Fact* pFact)
             //-- Ignore if bogus data
             if(cgoetTempStatus.all_area.max_val || cgoetTempStatus.all_area.min_val || cgoetTempStatus.all_area.center_val) {
                 memcpy(&_cgoetTempStatus, &cgoetTempStatus, sizeof(udp_ctrl_cam_lepton_area_temp_t));
-                bool rangeEnabled = false;
+                /*
                 Fact* pRangeEnabledFact = (_paramComplete && isCGOET()) ? getFact(kCAM_IRTEMPRENA) : NULL;
+                bool rangeEnabled = false;
                 if(pRangeEnabledFact) {
                     rangeEnabled = pRangeEnabledFact->rawValue().toUInt() > 0;
                 }
-                /*
                 QString temp;
                 temp.sprintf("IR Temperature Range: %s Locked Max: %.3f°C Min: %.3f°C All: Center: %.3f°C Max: %.3f°C Min: %.3f°C",
                          rangeEnabled ? "Enabled" : "Disabled",
