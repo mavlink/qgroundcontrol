@@ -32,7 +32,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(AirMapManagerLog)
 
-
 /**
  * @class LifetimeChecker
  * Base class which helps to check if an object instance still exists.

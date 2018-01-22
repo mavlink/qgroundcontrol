@@ -18,8 +18,10 @@ Item {
     width:  parent.width
     height: colapsed ? colapsedRect.height : expandedRect.height
 
-    property bool   colapsed:       true
-    property bool   showColapse:    true
+    property bool   colapsed:           true
+    property bool   showColapse:        true
+
+    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
 
     readonly property real      _radius:            ScreenTools.defaultFontPixelWidth * 0.5
     readonly property color     _colorOrange:       "#d75e0d"
@@ -61,6 +63,15 @@ Item {
             QGCLabel {
                 text:                   qsTr("Airspace")
                 color:                  _colorWhite
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            Item {
+                width:  ScreenTools.defaultFontPixelWidth
+                height: 1
+            }
+            AirspaceWeather {
+                iconHeight:             ScreenTools.defaultFontPixelWidth * 2.5
+                visible:                _activeVehicle && _activeVehicle.airspaceController.hasWeather
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
@@ -125,6 +136,14 @@ Item {
                             font.pointSize:     ScreenTools.smallFontPointSize
                         }
                     }
+                    Item {
+                        width:  ScreenTools.defaultFontPixelWidth
+                        height: 1
+                    }
+                    AirspaceWeather {
+                        visible:                _activeVehicle && _activeVehicle.airspaceController.hasWeather && showColapse
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
                 }
                 QGCColoredImage {
                     width:                  height
@@ -141,6 +160,12 @@ Item {
                         enabled:        showColapse
                         onClicked:      colapsed = true
                     }
+                }
+                AirspaceWeather {
+                    visible:                _activeVehicle && _activeVehicle.airspaceController.hasWeather && !showColapse
+                    anchors.right:          parent.right
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                    anchors.verticalCenter: parent.verticalCenter
                 }
             }
             //-- Contents (Brown Box)

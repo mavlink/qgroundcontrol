@@ -125,15 +125,15 @@ class Vehicle;
 
 struct WeatherInformation
 {
-    QString condition;                ///< The overall weather condition.
-    QString icon;                     ///< The icon or class of icon that should be used for display purposes.
-    uint32_t windHeading = 0;         ///< The heading in [°].
-    uint32_t windSpeed   = 0;         ///< The speed in [°].
-    uint32_t windGusting = 0;
-    int32_t temperature    = 0;       ///< The temperature in [°C].
-    float humidity         = 0.0;
-    uint32_t visibility    = 0;       ///< Visibility in [m].
-    uint32_t precipitation = 0;       ///< The probability of precipitation in [%].
+    QString     condition;              ///< The overall weather condition.
+    QString     icon;                   ///< The icon or class of icon that should be used for display purposes.
+    uint32_t    windHeading = 0;        ///< The heading in [°].
+    uint32_t    windSpeed   = 0;        ///< The speed in [°].
+    uint32_t    windGusting = 0;
+    int32_t     temperature = 0;        ///< The temperature in [°C].
+    float       humidity    = 0.0;
+    uint32_t    visibility  = 0;        ///< Visibility in [m].
+    uint32_t    precipitation = 0;      ///< The probability of precipitation in [%].
 };
 Q_DECLARE_METATYPE(WeatherInformation);
 
