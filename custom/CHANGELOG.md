@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.38 - Jan 22 2018
+
+*   Add list of missions to select what to sync (Remote Sync)
+
 ### v1.2.37 - Jan 19 2018
 
 *   More fixes for E10T (No presets, no custom temp range)
