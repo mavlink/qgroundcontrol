@@ -432,7 +432,7 @@ QGCView {
                             text:           !TyphoonHQuickInterface.desktopSync.sendingFiles ? kStart : kCancel
                             width:          ScreenTools.defaultFontPixelWidth  * 16
                             height:         ScreenTools.defaultFontPixelHeight * 2
-                            enabled:        !TyphoonHQuickInterface.desktopSync.syncDone && !TyphoonHQuickInterface.desktopSync.canceled
+                            enabled:        !TyphoonHQuickInterface.desktopSync.syncDone && !TyphoonHQuickInterface.desktopSync.canceled && (TyphoonHQuickInterface.desktopSync.missionController.selectedCount > 0 || cloneCheckbox.checked)
                             onClicked: {
                                 if(TyphoonHQuickInterface.desktopSync.sendingFiles) {
                                     TyphoonHQuickInterface.desktopSync.cancelSync()
