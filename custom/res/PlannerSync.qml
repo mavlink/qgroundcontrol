@@ -338,7 +338,7 @@ QGCView {
                                         }
                                         anchors.verticalCenter: parent.verticalCenter
                                         Component.onCompleted: {
-                                            checked = _fileItem.selected
+                                            checked = _fileItem ? _fileItem.selected :false
                                         }
                                     }
                                     QGCLabel {

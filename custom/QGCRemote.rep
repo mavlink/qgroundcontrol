@@ -2,7 +2,7 @@
 
 POD QGCRemoteLogEntry(QString name, quint64 size)
 POD QGCNewMission(QString name, QByteArray mission)
-POD QGCMissionEntry(QString name, uint32_t size)
+POD QGCMissionEntry(QString name, quint32 size)
 POD QGCLogFragment(QString name, int current, int total, QByteArray data)
 POD QGCMapFragment(int current, int total, QByteArray data, int progress)
 POD QGCSyncTileSet(QString name, quint32 count, quint64 size)
