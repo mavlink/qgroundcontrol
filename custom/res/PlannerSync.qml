@@ -440,7 +440,7 @@ QGCView {
                                     if(_sendMission) {
                                         TyphoonHQuickInterface.desktopSync.uploadMissionFiles()
                                     } else {
-                                        TyphoonHQuickInterface.desktopSync.downloadAllMissions()
+                                        TyphoonHQuickInterface.desktopSync.downloadMissions()
                                     }
                                 }
                             }
@@ -462,7 +462,7 @@ QGCView {
                 if(_sendMission) {
                     TyphoonHQuickInterface.desktopSync.initMissionUpload()
                 } else {
-                    TyphoonHQuickInterface.desktopSync.initSync()
+                    TyphoonHQuickInterface.desktopSync.initMissionFetch()
                 }
                 setSyncMessage()
                 mainWindow.disableToolbar()

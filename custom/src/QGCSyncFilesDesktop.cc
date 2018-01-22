@@ -298,7 +298,6 @@ QGCSyncFilesDesktop::initLogFetch()
     if(_currentLog.isOpen()) {
         _currentLog.close();
     }
-    _logController.clearFileItems();
     QList<QGCRemoteLogEntry> allLogs = _remoteObject->logEntriesOnMobile();
     foreach(QGCRemoteLogEntry logEntry, allLogs) {
         QGCFileListItem* item = new QGCFileListItem(&_logController, logEntry.name(), logEntry.size());
@@ -307,6 +306,24 @@ QGCSyncFilesDesktop::initLogFetch()
     std::sort(_logController.fileListV().begin(), _logController.fileListV().end(), [](QGCFileListItem* a, QGCFileListItem* b) { return a->fileName() > b->fileName(); });
     emit _logController.fileListChanged();
     qCDebug(QGCRemoteSync) << "Remote has" << allLogs.size() << "log entries";
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCSyncFilesDesktop::initMissionFetch()
+{
+    initSync();
+    _missionController.clearFileItems();
+    _fileProgress = 0;
+    emit fileProgressChanged();
+    QList<QGCMissionEntry> allMissions = _remoteObject->missionEntriesOnMobile();
+    foreach(QGCMissionEntry missionEntry, allMissions) {
+        QGCFileListItem* item = new QGCFileListItem(&_missionController, missionEntry.name(), missionEntry.size());
+        _missionController.appendFileItem(item);
+    }
+    std::sort(_missionController.fileListV().begin(), _missionController.fileListV().end(), [](QGCFileListItem* a, QGCFileListItem* b) { return a->fileName() > b->fileName(); });
+    emit _missionController.fileListChanged();
+    qCDebug(QGCRemoteSync) << "Remote has" << allMissions.size() << "mission entries";
 }
 
 //-----------------------------------------------------------------------------
@@ -380,7 +397,7 @@ QGCSyncFilesDesktop::uploadMissionFiles()
 
 //-----------------------------------------------------------------------------
 void
-QGCSyncFilesDesktop::downloadAllMissions()
+QGCSyncFilesDesktop::downloadMissions()
 {
     if(_sendingFiles) {
         return;
@@ -398,13 +415,25 @@ QGCSyncFilesDesktop::downloadAllMissions()
         _completed();
         return;
     }
-    QStringList allMissions = _remoteObject->missionsOnMobile();
+    bool isCloning = syncType() == SyncClone;
+    QStringList allMissions;
+    //-- Build file list
+    for(int i = 0; i < _missionController.fileListV().size(); i++) {
+        if(_missionController.fileListV()[i] && (isCloning || _missionController.fileListV()[i]->selected())) {
+            allMissions << _missionController.fileListV()[i]->fileName();
+        }
+    }
+    if(!allMissions.size()) {
+        _message(QString(tr("No missions to download")));
+        _completed();
+        return;
+    }
     _curFile = 0;
     _totalFiles = allMissions.size();
-    qCDebug(QGCRemoteSync) << "Requesting all mission files";
+    qCDebug(QGCRemoteSync) << "Requesting" << _totalFiles << "mission files";
     qCDebug(QGCRemoteSync) << "Sync Type:" << syncType();
     //-- If cloning, remove extra files
-    if(syncType() == SyncClone) {
+    if(isCloning) {
         QStringList missionsToPrune;
         //-- Where missions are stored
         QString missionPath = qgcApp()->toolbox()->settingsManager()->appSettings()->missionSavePath();

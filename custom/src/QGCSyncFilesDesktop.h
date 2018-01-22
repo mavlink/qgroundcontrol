@@ -78,16 +78,18 @@ public:
     Q_INVOKABLE void initSync           ();
     //-- Upload current mission (Plan View)
     Q_INVOKABLE void uploadMission      (QString name, PlanMasterController* controller);
-    //-- Upload all local mission files
+    //-- Upload local mission files
     Q_INVOKABLE void uploadMissionFiles ();
     //-- Cancel sync thread
     Q_INVOKABLE void cancelSync         ();
-    //-- Download all remote mission files
-    Q_INVOKABLE void downloadAllMissions();
+    //-- Download remote mission files
+    Q_INVOKABLE void downloadMissions   ();
     //-- Download selected logs
     Q_INVOKABLE void downloadSelectedLogs(QString path);
     //-- Init local mission files to upload
     Q_INVOKABLE void initMissionUpload  ();
+    //-- Init mission fetch state
+    Q_INVOKABLE void initMissionFetch   ();
     //-- Init log fetch state
     Q_INVOKABLE void initLogFetch       ();
     //-- Init map fetch state
