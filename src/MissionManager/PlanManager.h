@@ -144,6 +144,7 @@ protected:
     QList<int>          _itemIndicesToWrite;    ///< List of mission items which still need to be written to vehicle
     QList<int>          _itemIndicesToRead;     ///< List of mission items which still need to be requested from vehicle
     int                 _lastMissionRequest;    ///< Index of item last requested by MISSION_REQUEST
+    int                 _missionItemCountToRead;///< Count of all mission items to read
     
     QList<MissionItem*> _missionItems;          ///< Set of mission items on vehicle
     QList<MissionItem*> _writeMissionItems;     ///< Set of mission items currently being written to vehicle
