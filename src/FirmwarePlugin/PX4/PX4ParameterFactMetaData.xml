@@ -3801,6 +3801,17 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <increment>0.5</increment>
       <scope>modules/navigator</scope>
     </parameter>
+    <parameter default="0" name="MIS_MNT_YAW_CTL" type="INT32">
+      <short_desc>Enable yaw control of the mount. (Only affects multicopters and ROI mission items)</short_desc>
+      <long_desc>If enabled, yaw commands will be sent to the mount and the vehicle will follow its heading mode as specified by MIS_YAWMODE. If disabled, the vehicle will yaw towards the ROI.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <scope>modules/navigator</scope>
+      <values>
+        <value code="0">Disable</value>
+        <value code="1">Enable</value>
+      </values>
+    </parameter>
     <parameter default="2.5" name="MIS_TAKEOFF_ALT" type="FLOAT">
       <short_desc>Take-off altitude</short_desc>
       <long_desc>This is the minimum altitude the system will take off to.</long_desc>
@@ -3822,7 +3833,6 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="1">Heading towards waypoint</value>
         <value code="2">Heading towards home</value>
         <value code="3">Heading away from home</value>
-        <value code="4">Heading towards ROI</value>
       </values>
     </parameter>
     <parameter default="12.0" name="MIS_YAW_ERR" type="FLOAT">
