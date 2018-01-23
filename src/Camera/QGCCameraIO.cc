@@ -55,6 +55,8 @@ QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicl
         case FactMetaData::valueTypeFloat:
             _mavParamType = MAV_PARAM_EXT_TYPE_REAL32;
             break;
+            //-- String and custom are the same for now
+        case FactMetaData::valueTypeString:
         case FactMetaData::valueTypeCustom:
             _mavParamType = MAV_PARAM_EXT_TYPE_CUSTOM;
             break;
@@ -139,6 +141,8 @@ QGCCameraParamIO::_sendParameter()
         case FactMetaData::valueTypeFloat:
             union_value.param_float = _fact->rawValue().toFloat();
             break;
+            //-- String and custom are the same for now
+        case FactMetaData::valueTypeString:
         case FactMetaData::valueTypeCustom:
             {
                 QByteArray custom = _fact->rawValue().toByteArray();
