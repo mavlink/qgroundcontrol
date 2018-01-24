@@ -136,6 +136,27 @@ private:
     AirMapSharedState&      _shared;
 };
 
+/// class to download rulesets from AirMap
+class AirMapRulesetsManager : public AirspaceRulesetsProvider, public LifetimeChecker
+{
+    Q_OBJECT
+public:
+    AirMapRulesetsManager   (AirMapSharedState& shared);
+
+    void setROI             (const QGeoCoordinate& center) override;
+
+signals:
+    void error              (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+
+private:
+    enum class State {
+        Idle,
+        RetrieveItems,
+    };
+    State                   _state = State::Idle;
+    AirMapSharedState&      _shared;
+};
+
 
 /// class to upload a flight
 class AirMapFlightManager : public QObject, public LifetimeChecker
@@ -343,9 +364,9 @@ public:
 
     void setToolbox(QGCToolbox* toolbox) override;
 
-    AirspaceManagerPerVehicle* instantiateVehicle(const Vehicle& vehicle) override;
-
-    AirspaceRestrictionProvider* instantiateRestrictionProvider() override;
+    AirspaceManagerPerVehicle*      instantiateVehicle              (const Vehicle& vehicle) override;
+    AirspaceRestrictionProvider*    instantiateRestrictionProvider  () override;
+    AirspaceRulesetsProvider*       instantiateRulesetsProvider     () override;
 
     QString name() const override { return "AirMap"; }
 
