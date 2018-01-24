@@ -120,6 +120,24 @@ protected:
     QList<CircularAirspaceRestriction*> _circleList;
 };
 
+/**
+ * @class AirspaceRulesetsProvider
+ * Base class that queries for airspace rulesets
+ */
+class AirspaceRulesetsProvider : public QObject {
+    Q_OBJECT
+public:
+    AirspaceRulesetsProvider    () = default;
+    ~AirspaceRulesetsProvider   () = default;
+    /**
+     * Set region of interest that should be queried. When finished, the requestDone() signal will be emmited.
+     * @param center Center coordinate for ROI
+     */
+    virtual void setROI         (const QGeoCoordinate& center) = 0;
+signals:
+    void requestDone(bool success);
+};
+
 class AirspaceManagerPerVehicle;
 class Vehicle;
 
@@ -153,10 +171,14 @@ public:
     virtual AirspaceManagerPerVehicle* instantiateVehicle(const Vehicle& vehicle) = 0;
 
     /**
-     *
      * Factory method to create an AirspaceRestrictionProvider object
      */
     virtual AirspaceRestrictionProvider* instantiateRestrictionProvider() = 0;
+
+    /**
+     * Factory method to create an AirspaceRulesetsProvider object
+     */
+    virtual AirspaceRulesetsProvider* instantiateRulesetsProvider() = 0;
 
     /**
      * Set the ROI for airspace information (restrictions shown in UI)
@@ -190,10 +212,11 @@ private slots:
 private:
     void _updateToROI();
 
-    AirspaceRestrictionProvider* _restrictionsProvider = nullptr; ///< restrictions that are shown in the UI
+    AirspaceRestrictionProvider*    _restrictionsProvider   = nullptr; ///< restrictions that are shown in the UI
+    AirspaceRulesetsProvider*       _rulesetsProvider       = nullptr; ///< restrictions that are shown in the UI
 
-    QmlObjectListModel _polygonRestrictions; ///< current polygon restrictions
-    QmlObjectListModel _circleRestrictions; ///< current circle restrictions
+    QmlObjectListModel _polygonRestrictions;    ///< current polygon restrictions
+    QmlObjectListModel _circleRestrictions;     ///< current circle restrictions
 
     QTimer                  _roiUpdateTimer;
     QGeoCoordinate          _roiCenter;

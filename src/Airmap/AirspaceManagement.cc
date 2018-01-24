@@ -50,6 +50,9 @@ AirspaceManager::~AirspaceManager()
     if (_restrictionsProvider) {
         delete _restrictionsProvider;
     }
+    if(_rulesetsProvider) {
+        delete _rulesetsProvider;
+    }
     _polygonRestrictions.clearAndDeleteContents();
     _circleRestrictions.clearAndDeleteContents();
 }
@@ -64,6 +67,13 @@ void AirspaceManager::setToolbox(QGCToolbox* toolbox)
         connect(_restrictionsProvider, &AirspaceRestrictionProvider::requestDone, this,
                 &AirspaceManager::_restrictionsUpdated);
     }
+    _rulesetsProvider = instantiateRulesetsProvider();
+    /*
+    if (_rulesetsProvider) {
+        connect(_rulesetsProvider, &AirspaceRulesetsProvider::requestDone, this,
+                &AirspaceManager::_rulesetsUpdated);
+    }
+    */
 }
 
 void AirspaceManager::setROI(const QGeoCoordinate& center, double radiusMeters)
@@ -77,6 +87,11 @@ void AirspaceManager::_updateToROI()
 {
     if (_restrictionsProvider) {
         _restrictionsProvider->setROI(_roiCenter, _roiRadius);
+    }
+    //-- TODO: We may want to check the distance between this ROI and the last
+    //   to see if we really need to update it.
+    if(_rulesetsProvider) {
+        _rulesetsProvider->setROI(_roiCenter);
     }
 }
 
