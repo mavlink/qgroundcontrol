@@ -11,11 +11,12 @@
 
 #include "LifetimeChecker.h"
 #include "AirspaceRestrictionProvider.h"
+#include "AirMapSharedState.h"
 
 #include <QList>
 #include <QGeoCoordinate>
 
-class AirMapSharedState;
+#include "airmap/geometry.h"
 
 /**
  * @file AirMapRestrictionManager.h

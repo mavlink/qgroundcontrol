@@ -10,10 +10,11 @@
 #pragma once
 
 #include "LifetimeChecker.h"
+#include "AirMapSharedState.h"
+
+#include <QGCMAVLink.h>
 
 #include <QObject>
-
-class AirMapSharedState;
 
 /// class to send telemetry data to AirMap
 class AirMapTelemetry : public QObject, public LifetimeChecker

@@ -8,10 +8,14 @@
  ****************************************************************************/
 
 #include "AirMapTelemetry.h"
-#include "AirMapSharedState.h"
 #include "AirMapManager.h"
 
 #include "QGCMAVLink.h"
+
+#include "airmap/telemetry.h"
+#include "airmap/flights.h"
+
+using namespace airmap;
 
 AirMapTelemetry::AirMapTelemetry(AirMapSharedState& shared)
 : _shared(shared)

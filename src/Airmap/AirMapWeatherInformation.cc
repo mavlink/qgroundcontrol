@@ -8,14 +8,15 @@
  ****************************************************************************/
 
 #include "AirMapWeatherInformation.h"
-#include "AirMapSharedState.h"
 #include "AirMapManager.h"
 
 #define WEATHER_UPDATE_DISTANCE 50000                   //-- 50km threshold for weather updates
 #define WEATHER_UPDATE_TIME     30 * 60 * 60 * 1000     //-- 30 minutes threshold for weather updates
 
+using namespace airmap;
+
 AirMapWeatherInformation::AirMapWeatherInformation(AirMapSharedState& shared, QObject *parent)
-    : QObject(parent)
+    : AirspaceWeatherInfoProvider(parent)
     , _valid(false)
     , _windHeading(0)
     , _windSpeed(0)
@@ -24,11 +25,12 @@ AirMapWeatherInformation::AirMapWeatherInformation(AirMapSharedState& shared, QO
     , _humidity(0.0f)
     , _visibility(0)
     , _precipitation(0)
+    , _shared(shared)
 {
 }
 
 void
-AirMapWeatherInformation::setROI(QGeoCoordinate center)
+AirMapWeatherInformation::setROI(const QGeoCoordinate& center)
 {
     //-- If first time or we've moved more than WEATHER_UPDATE_DISTANCE, ask for weather updates.
     if(!_lastRoiCenter.isValid() || _lastRoiCenter.distanceTo(center) > WEATHER_UPDATE_DISTANCE) {
@@ -60,7 +62,6 @@ AirMapWeatherInformation::_requestWeatherUpdate(const QGeoCoordinate& coordinate
     _shared.client()->status().get_status_by_point(params, [this, coordinate](const Status::GetStatus::Result& result) {
         if (result) {
             const Status::Weather& weather = result.value().weather;
-            AirMapWeatherInformation weatherUpdateInfo;
             _valid          = true;
             _condition      = QString::fromStdString(weather.condition);
             _icon           = QStringLiteral("qrc:/airmapweather/") + QString::fromStdString(weather.icon) + QStringLiteral(".svg");

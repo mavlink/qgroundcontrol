@@ -11,15 +11,14 @@
 
 #include "AirspaceManager.h"
 #include "AirspaceVehicleManager.h"
+#include "AirMapSharedState.h"
+#include "AirMapFlightManager.h"
+#include "AirMapTelemetry.h"
+#include "AirMapTrafficMonitor.h"
 
 #include "QGCToolbox.h"
 
 /// AirMap per vehicle management class.
-
-class AirMapSharedState;
-class AirMapFlightManager;
-class AirMapTelemetry;
-class AirMapTrafficMonitor;
 
 class AirMapVehicleManager : public AirspaceVehicleManager
 {

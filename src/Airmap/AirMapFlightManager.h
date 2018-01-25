@@ -10,10 +10,15 @@
 #pragma once
 
 #include "LifetimeChecker.h"
+#include "AirMapSharedState.h"
+#include "AirspaceAuthorization.h"
 
 #include <QObject>
 #include <QTimer>
 #include <QList>
+#include <QGeoCoordinate>
+
+class MissionItem;
 
 //-----------------------------------------------------------------------------
 /// class to upload a flight

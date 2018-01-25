@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QObject>
+#include <QGeoCoordinate>
 
 class AirspaceManager;
 class QmlObjectListModel;
@@ -29,10 +30,10 @@ public:
 
     Q_INVOKABLE void setROI                 (QGeoCoordinate center, double radius);
 
-    QmlObjectListModel*             polygons    () { return _manager->polygonRestrictions();  }
-    QmlObjectListModel*             circles     () { return _manager->circularRestrictions(); }
-    QString                         providerName() { return _manager->name(); }
-    AirspaceWeatherInfoProvider*    weatherInfo () { return _manager->weatherInfo(); }
+    QmlObjectListModel*             polygons    ();
+    QmlObjectListModel*             circles     ();
+    QString                         providerName();
+    AirspaceWeatherInfoProvider*    weatherInfo ();
 
 private:
     AirspaceManager*    _manager;

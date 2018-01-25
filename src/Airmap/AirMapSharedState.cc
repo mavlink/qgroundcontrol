@@ -10,6 +10,10 @@
 #include "AirMapSharedState.h"
 #include "AirMapManager.h"
 
+#include "airmap/authenticator.h"
+
+using namespace airmap;
+
 void
 AirMapSharedState::setSettings(const Settings& settings)
 {

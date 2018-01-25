@@ -10,6 +10,7 @@
 #pragma once
 
 #include "LifetimeChecker.h"
+#include "AirMapSharedState.h"
 
 #include <QObject>
 #include <QGeoCoordinate>
@@ -17,8 +18,6 @@
 #include "airmap/traffic.h"
 
 #include <memory>
-
-class AirMapSharedState;
 
 /**
  * @class AirMapTrafficMonitor

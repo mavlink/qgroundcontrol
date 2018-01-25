@@ -12,9 +12,9 @@
 #include "AirMapRestrictionManager.h"
 #include "AirMapRulesetsManager.h"
 #include "AirMapSettings.h"
-#include "AirMapSharedState.h"
 #include "AirMapTelemetry.h"
 #include "AirMapTrafficMonitor.h"
+#include "AirMapVehicleManager.h"
 
 #include "QmlObjectListModel.h"
 #include "JsonHelper.h"
@@ -24,13 +24,6 @@
 #include "QGCApplication.h"
 
 #include <airmap/authenticator.h>
-#include <airmap/airspaces.h>
-#include <airmap/evaluation.h>
-#include <airmap/flight_plans.h>
-#include <airmap/flights.h>
-#include <airmap/pilots.h>
-#include <airmap/telemetry.h>
-#include <airmap/rulesets.h>
 
 using namespace airmap;
 

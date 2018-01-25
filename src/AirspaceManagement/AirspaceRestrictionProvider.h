@@ -16,6 +16,7 @@
 
 #include <QObject>
 #include <QList>
+#include <QGeoCoordinate>
 
 class AirspacePolygonRestriction;
 class AirspaceCircularRestriction;

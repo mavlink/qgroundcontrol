@@ -11,6 +11,15 @@
 #include "AirMapManager.h"
 
 #include "MissionItem.h"
+#include "QGCMAVLink.h"
+
+#include "airmap/pilots.h"
+#include "airmap/flights.h"
+#include "airmap/date_time.h"
+#include "airmap/flight_plans.h"
+#include "airmap/geometry.h"
+
+using namespace airmap;
 
 AirMapFlightManager::AirMapFlightManager(AirMapSharedState& shared)
     : _shared(shared)
