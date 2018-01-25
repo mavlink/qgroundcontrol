@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-#include "AirmapWeatherInformation.h"
+#include "AirMapWeatherInformation.h"
 #include "AirMapSharedState.h"
 #include "AirMapManager.h"
 
