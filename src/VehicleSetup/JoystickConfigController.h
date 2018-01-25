@@ -208,8 +208,6 @@ private:
     static const char* _imagePitchUp;
     static const char* _imagePitchDown;
     
-    static const int _updateInterval;   ///< Interval for ui update timer
-    
     int _rgFunctionAxisMapping[Joystick::maxFunction]; ///< Maps from joystick function to axis index. _axisMax indicates axis not set for this function.
 
     static const int _attitudeControls = 5;

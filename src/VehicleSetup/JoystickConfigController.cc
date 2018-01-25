@@ -16,7 +16,6 @@
 
 QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "JoystickConfigControllerLog")
 
-const int JoystickConfigController::_updateInterval =       150;        ///< Interval for timer which updates radio channel widgets
 const int JoystickConfigController::_calCenterPoint =       0;
 const int JoystickConfigController::_calValidMinValue =     -32768;     ///< Largest valid minimum axis value
 const int JoystickConfigController::_calValidMaxValue =     32767;      ///< Smallest valid maximum axis value
