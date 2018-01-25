@@ -1,8 +1,19 @@
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
+#include "AirMapManager.h"
 #include "AirMapVehicleManager.h"
 #include "AirMapFlightManager.h"
 #include "AirMapTelemetry.h"
 #include "AirMapTrafficMonitor.h"
+
+#include "Vehicle.h"
 
 AirMapVehicleManager::AirMapVehicleManager(AirMapSharedState& shared, const Vehicle& vehicle, QGCToolbox& toolbox)
     : AirspaceVehicleManager(vehicle)

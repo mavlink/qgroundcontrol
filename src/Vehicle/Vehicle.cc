@@ -143,7 +143,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _parameterManager(NULL)
 #if defined(QGC_AIRMAP_ENABLED)
     , _airspaceController(NULL)
-    , _airspaceManagerPerVehicle(NULL)
+    , _airspaceVehicleManager(NULL)
 #endif
     , _armed(false)
     , _base_mode(0)
@@ -272,10 +272,10 @@ Vehicle::Vehicle(LinkInterface*             link,
     _airspaceController = new AirspaceController(this);
     AirspaceManager* airspaceManager = _toolbox->airspaceManager();
     if (airspaceManager) {
-        _airspaceManagerPerVehicle = airspaceManager->instantiateVehicle(*this);
-        if (_airspaceManagerPerVehicle) {
-            connect(_airspaceManagerPerVehicle, &AirspaceVehicleManager::trafficUpdate, this, &Vehicle::_trafficUpdate);
-            connect(_airspaceManagerPerVehicle, &AirspaceVehicleManager::flightPermitStatusChanged, this, &Vehicle::flightPermitStatusChanged);
+        _airspaceVehicleManager = airspaceManager->instantiateVehicle(*this);
+        if (_airspaceVehicleManager) {
+            connect(_airspaceVehicleManager, &AirspaceVehicleManager::trafficUpdate, this, &Vehicle::_trafficUpdate);
+            connect(_airspaceVehicleManager, &AirspaceVehicleManager::flightPermitStatusChanged, this, &Vehicle::flightPermitStatusChanged);
         }
     }
 #endif
@@ -341,7 +341,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _parameterManager(NULL)
 #if defined(QGC_AIRMAP_ENABLED)
     , _airspaceController(NULL)
-    , _airspaceManagerPerVehicle(NULL)
+    , _airspaceVehicleManager(NULL)
 #endif
     , _armed(false)
     , _base_mode(0)
@@ -477,8 +477,8 @@ Vehicle::~Vehicle()
     _mav = NULL;
 
 #if defined(QGC_AIRMAP_ENABLED)
-    if (_airspaceManagerPerVehicle) {
-        delete _airspaceManagerPerVehicle;
+    if (_airspaceVehicleManager) {
+        delete _airspaceVehicleManager;
     }
 #endif
 }

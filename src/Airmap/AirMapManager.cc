@@ -16,7 +16,6 @@
 #include "AirMapTelemetry.h"
 #include "AirMapTrafficMonitor.h"
 
-#include "Vehicle.h"
 #include "QmlObjectListModel.h"
 #include "JsonHelper.h"
 #include "SettingsManager.h"

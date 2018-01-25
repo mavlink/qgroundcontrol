@@ -23,18 +23,25 @@
  *   each vehicle could have its own restrictions.
  */
 
-#include "QGCToolbox.h"
-#include "MissionItem.h"
+#include "AirspaceController.h"
+#include "AirspaceRestrictionProvider.h"
+#include "AirspaceRulesetsProvider.h"
+#include "AirspaceVehicleManager.h"
+#include "AirspaceWeatherInfoProvider.h"
 
+#include "QGCToolbox.h"
+#include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
+#include "Vehicle.h"
+
+#include <QGeoCoordinate>
 #include <QObject>
 #include <QString>
 #include <QList>
+#include <QTimer>
 
-#include <QGCLoggingCategory.h>
 
 Q_DECLARE_LOGGING_CATEGORY(AirspaceManagementLog)
-
-class AirMapWeatherInformation;
 
 //-----------------------------------------------------------------------------
 /**
@@ -49,14 +56,8 @@ public:
         PermitAccepted,
         PermitRejected,
     };
-    Q_ENUMS(PermitStatus);
+    Q_ENUM(PermitStatus)
 };
-
-class AirspaceRestrictionProvider;
-class AirspaceRulesetsProvider;
-class AirspaceVehicleManager;
-class AirspaceWeatherInfoProvider;
-class Vehicle;
 
 //-----------------------------------------------------------------------------
 /**
@@ -104,16 +105,7 @@ public:
     /**
      * Name of the airspace management provider (used in the UI)
      */
-    virtual QString name    () const = 0;
-
-    /**
-     * Request weather information update. When done, it will emit the weatherUpdate() signal.
-     * @param coordinate request update for this coordinate
-     */
-    virtual void requestWeatherUpdate(const QGeoCoordinate& coordinate) = 0;
-
-signals:
-    void weatherUpdate              (bool success, QGeoCoordinate coordinate, WeatherInformation weather);
+    virtual QString name            () const = 0;
 
 protected slots:
     virtual void _rulessetsUpdated  (bool success);

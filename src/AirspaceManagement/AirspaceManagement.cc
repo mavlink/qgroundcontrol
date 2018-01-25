@@ -9,7 +9,6 @@
 
 
 #include "AirspaceManagement.h"
-#include <Vehicle.h>
 
 QGC_LOGGING_CATEGORY(AirspaceManagementLog, "AirspaceManagementLog")
 
@@ -19,7 +18,9 @@ AirspaceManager::AirspaceManager(QGCApplication* app, QGCToolbox* toolbox)
     _roiUpdateTimer.setInterval(2000);
     _roiUpdateTimer.setSingleShot(true);
     connect(&_roiUpdateTimer, &QTimer::timeout, this, &AirspaceManager::_updateToROI);
-    qmlRegisterUncreatableType<AirspaceAuthorization>("QGroundControl", 1, 0, "AirspaceAuthorization", "Reference only");
+    qmlRegisterUncreatableType<AirspaceAuthorization>       ("QGroundControl",              1, 0, "AirspaceAuthorization",      "Reference only");
+    qmlRegisterUncreatableType<AirspaceController>          ("QGroundControl.Vehicle",      1, 0, "AirspaceController",         "Reference only");
+    qmlRegisterUncreatableType<AirspaceWeatherInfoProvider> ("QGroundControl.Vehicle",      1, 0, "AirspaceWeatherInfoProvider","Reference only");
 }
 
 AirspaceManager::~AirspaceManager()
@@ -89,26 +90,3 @@ void AirspaceManager::_rulessetsUpdated(bool)
 {
 
 }
-
-AirspaceVehicleManager::AirspaceVehicleManager(const Vehicle& vehicle)
-    : _vehicle(vehicle)
-{
-    connect(&_vehicle, &Vehicle::armedChanged, this, &AirspaceVehicleManager::_vehicleArmedChanged);
-    connect(&_vehicle, &Vehicle::mavlinkMessageReceived, this, &AirspaceVehicleManager::vehicleMavlinkMessageReceived);
-}
-
-void AirspaceVehicleManager::_vehicleArmedChanged(bool armed)
-{
-    if (armed) {
-        startTelemetryStream();
-        _vehicleWasInMissionMode = _vehicle.flightMode() == _vehicle.missionFlightMode();
-    } else {
-        stopTelemetryStream();
-        // end the flight if we were in mission mode during arming or disarming
-        // TODO: needs to be improved. for instance if we do RTL and then want to continue the mission...
-        if (_vehicleWasInMissionMode || _vehicle.flightMode() == _vehicle.missionFlightMode()) {
-            endFlight();
-        }
-    }
-}
-

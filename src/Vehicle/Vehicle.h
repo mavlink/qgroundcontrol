@@ -21,7 +21,8 @@
 #include "UASMessageHandler.h"
 #include "SettingsFact.h"
 #if defined(QGC_AIRMAP_ENABLED)
-#include <AirspaceManagement.h>
+#include "AirspaceManagement.h"
+#include "AirspaceVehicleManager.h"
 #endif
 
 class UAS;
@@ -769,9 +770,9 @@ public:
 
 #if defined(QGC_AIRMAP_ENABLED)
     AirspaceAuthorization::PermitStatus flightPermitStatus() const
-        { return _airspaceManagerPerVehicle ? _airspaceManagerPerVehicle->flightPermitStatus() : AirspaceAuthorization::PermitUnknown; }
+        { return _airspaceVehicleManager ? _airspaceVehicleManager->flightPermitStatus() : AirspaceAuthorization::PermitUnknown; }
 
-    AirspaceVehicleManager* airspaceManager() const { return _airspaceManagerPerVehicle; }
+    AirspaceVehicleManager* airspaceManager() const { return _airspaceVehicleManager; }
 #endif
 
 signals:
@@ -1065,8 +1066,8 @@ private:
     ParameterManager*   _parameterManager;
 
 #if defined(QGC_AIRMAP_ENABLED)
-    AirspaceController*   _airspaceController;
-    AirspaceVehicleManager* _airspaceManagerPerVehicle;
+    AirspaceController*     _airspaceController;
+    AirspaceVehicleManager* _airspaceVehicleManager;
 #endif
 
     bool    _armed;         ///< true: vehicle is armed

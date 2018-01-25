@@ -1069,8 +1069,8 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/AirspaceManagement/AirspaceRestriction.h \
         src/AirspaceManagement/AirspaceRestrictionProvider.h \
         src/AirspaceManagement/AirspaceRulesetsProvider.h \
-        src/AirspaceManagement/AirspaceWeatherInfoProvider.h \
         src/AirspaceManagement/AirspaceVehicleManager.h \
+        src/AirspaceManagement/AirspaceWeatherInfoProvider.h \
 
     SOURCES += \
         src/AirspaceManagement/AirspaceController.cc \
@@ -1078,8 +1078,8 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/AirspaceManagement/AirspaceRestriction.cc \
         src/AirspaceManagement/AirspaceRestrictionProvider.cc \
         src/AirspaceManagement/AirspaceRulesetsProvider.cc \
-        src/AirspaceManagement/AirspaceWeatherInfoProvider.cc \
         src/AirspaceManagement/AirspaceVehicleManager.cc \
+        src/AirspaceManagement/AirspaceWeatherInfoProvider.cc \
 
     #-- This is the AirMap implementation of the above
     RESOURCES += \
@@ -1089,31 +1089,28 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap
 
     HEADERS += \
+        src/Airmap/AirMapFlightManager.h \
         src/Airmap/AirMapManager.h \
-        src/Airmap/AirspaceManagement.h \
-        src/Airmap/AirMapSettings.h \
-        src/Airmap/AirmapWeatherInformation.h \
         src/Airmap/AirMapRestrictionManager.h \
         src/Airmap/AirMapRulesetsManager.h \
+        src/Airmap/AirMapSettings.h \
         src/Airmap/AirMapSharedState.h \
-        src/Airmap/AirMapFlightManager.h \
         src/Airmap/AirMapTelemetry.h \
         src/Airmap/AirMapTrafficMonitor.h \
         src/Airmap/AirMapVehicleManager.h \
+        src/Airmap/AirmapWeatherInformation.h \
 
     SOURCES += \
+        src/Airmap/AirMapFlightManager.cc \
         src/Airmap/AirMapManager.cc \
-        src/Airmap/AirspaceManagement.cc \
-        src/Airmap/AirspaceController.cc \
-        src/Airmap/AirMapSettings.cc \
-        src/Airmap/AirmapWeatherInformation.cc \
         src/Airmap/AirMapRestrictionManager.cc \
         src/Airmap/AirMapRulesetsManager.cc \
+        src/Airmap/AirMapSettings.cc \
         src/Airmap/AirMapSharedState.cc \
-        src/Airmap/AirMapFlightManager.cc \
         src/Airmap/AirMapTelemetry.cc \
         src/Airmap/AirMapTrafficMonitor.cc \
         src/Airmap/AirMapVehicleManager.cc \
+        src/Airmap/AirmapWeatherInformation.cc \
 
 } else {
     RESOURCES += \

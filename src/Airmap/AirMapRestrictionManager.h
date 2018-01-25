@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QObject>
+#include "AirMapManager.h"
 #include "AirspaceRestrictionProvider.h"
 
 /**

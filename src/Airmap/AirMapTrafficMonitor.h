@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QObject>
+#include "AirMapManager.h"
 
 /**
  * @class AirMapTrafficMonitor
@@ -31,11 +32,11 @@ public:
     void stop();
 
 signals:
-    void error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
-    void trafficUpdate(QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
+    void error          (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+    void trafficUpdate  (QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
 
 private:
-    void _update(airmap::Traffic::Update::Type type, const std::vector<airmap::Traffic::Update>& update);
+    void _update        (airmap::Traffic::Update::Type type, const std::vector<airmap::Traffic::Update>& update);
 
 private:
     QString                                               _flightID;

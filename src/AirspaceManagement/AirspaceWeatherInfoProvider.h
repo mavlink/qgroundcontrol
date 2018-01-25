@@ -15,6 +15,7 @@
  */
 
 #include <QObject>
+#include <QGeoCoordinate>
 
 class AirspaceWeatherInfoProvider : public QObject
 {

@@ -13,14 +13,10 @@
 #include "QGCApplication.h"
 #include "QGCQGeoCoordinate.h"
 
-#define WEATHER_UPDATE_DISTANCE 50000                   //-- 50km threshold for weather updates
-#define WEATHER_UPDATE_TIME     30 * 60 * 60 * 1000     //-- 30 minutes threshold for weather updates
-
 AirspaceController::AirspaceController(QObject* parent)
     : QObject(parent)
     , _manager(qgcApp()->toolbox()->airspaceManager())
 {
-    connect(_manager, &AirspaceManager::weatherUpdate, this, &AirspaceController::_weatherUpdate);
 }
 
 void AirspaceController::setROI(QGeoCoordinate center, double radius)
