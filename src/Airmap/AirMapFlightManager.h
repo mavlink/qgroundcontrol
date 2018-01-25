@@ -13,6 +13,7 @@
 
 #include <QObject>
 #include <QTimer>
+#include <QList>
 
 //-----------------------------------------------------------------------------
 /// class to upload a flight

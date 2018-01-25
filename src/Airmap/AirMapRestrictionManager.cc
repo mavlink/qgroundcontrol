@@ -7,8 +7,9 @@
  *
  ****************************************************************************/
 
-#include "AirMapManager.h"
 #include "AirMapRestrictionManager.h"
+#include "AirMapSharedState.h"
+#include "AirMapManager.h"
 
 AirMapRestrictionManager::AirMapRestrictionManager(AirMapSharedState& shared)
     : _shared(shared)

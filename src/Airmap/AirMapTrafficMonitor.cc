@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-#include "AirMapManager.h"
 #include "AirMapTrafficMonitor.h"
+#include "AirMapManager.h"
 
 AirMapTrafficMonitor::~AirMapTrafficMonitor()
 {

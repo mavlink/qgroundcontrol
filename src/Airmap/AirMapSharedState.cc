@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-#include "AirMapManager.h"
 #include "AirMapSharedState.h"
+#include "AirMapManager.h"
 
 void
 AirMapSharedState::setSettings(const Settings& settings)

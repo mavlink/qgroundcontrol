@@ -7,8 +7,9 @@
  *
  ****************************************************************************/
 
-#include "AirMapManager.h"
 #include "AirMapRulesetsManager.h"
+#include "AirMapSharedState.h"
+#include "AirMapManager.h"
 
 //-----------------------------------------------------------------------------
 AirMapRulesetsManager::AirMapRulesetsManager(AirMapSharedState& shared)
