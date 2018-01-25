@@ -85,6 +85,7 @@ SetupPage {
                 Item {
                     property int axisValue: 0
                     property int deadbandValue: 0
+                    property bool narrowIndicator: false
 
                     property color          __barColor:             qgcPal.windowShade
 
@@ -123,8 +124,8 @@ SetupPage {
                     // Indicator
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
-                        width:                  parent.height * 0.75
-                        height:                 width
+                        width:                  parent.narrowIndicator ?  height/6 : height
+                        height:                 parent.height * 0.75
                         x:                      (reversed ? (parent.width - _indicatorPosition) : _indicatorPosition) - (width / 2)
                         radius:                 width / 2
                         color:                  qgcPal.text
@@ -790,6 +791,7 @@ SetupPage {
                                 height:                 ScreenTools.defaultFontPixelHeight
                                 width:                  200
                                 sourceComponent:        axisMonitorDisplayComponent
+                                Component.onCompleted:  item.narrowIndicator = true
 
                                 property real defaultTextWidth:     ScreenTools.defaultFontPixelWidth
                                 property bool mapped:               true
