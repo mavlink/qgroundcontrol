@@ -43,22 +43,6 @@ Q_DECLARE_LOGGING_CATEGORY(AirspaceManagementLog)
 
 //-----------------------------------------------------------------------------
 /**
- * Contains the status of the Airspace authorization
- */
-class AirspaceAuthorization : public QObject {
-    Q_OBJECT
-public:
-    enum PermitStatus {
-        PermitUnknown = 0,
-        PermitPending,
-        PermitAccepted,
-        PermitRejected,
-    };
-    Q_ENUM(PermitStatus)
-};
-
-//-----------------------------------------------------------------------------
-/**
  * @class AirspaceManager
  * Base class for airspace management. There is one (global) instantiation of this
  */
