@@ -1099,7 +1099,7 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap/AirMapTelemetry.h \
         src/Airmap/AirMapTrafficMonitor.h \
         src/Airmap/AirMapVehicleManager.h \
-        src/Airmap/AirmapWeatherInformation.h \
+        src/Airmap/AirMapWeatherInformation.h \
         src/Airmap/LifetimeChecker.h \
 
     SOURCES += \
@@ -1112,7 +1112,7 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap/AirMapTelemetry.cc \
         src/Airmap/AirMapTrafficMonitor.cc \
         src/Airmap/AirMapVehicleManager.cc \
-        src/Airmap/AirmapWeatherInformation.cc \
+        src/Airmap/AirMapWeatherInformation.cc \
 
 } else {
     RESOURCES += \

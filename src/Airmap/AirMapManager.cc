@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "AirMapManager.h"
-#include "AirmapWeatherInformation.h"
+#include "AirMapWeatherInformation.h"
 #include "AirMapRestrictionManager.h"
 #include "AirMapRulesetsManager.h"
 #include "AirMapSettings.h"
