@@ -18,13 +18,6 @@ using namespace airmap;
 AirMapWeatherInformation::AirMapWeatherInformation(AirMapSharedState& shared, QObject *parent)
     : AirspaceWeatherInfoProvider(parent)
     , _valid(false)
-    , _windHeading(0)
-    , _windSpeed(0)
-    , _windGusting(0)
-    , _temperature(0)
-    , _humidity(0.0f)
-    , _visibility(0)
-    , _precipitation(0)
     , _shared(shared)
 {
 }
@@ -57,25 +50,17 @@ AirMapWeatherInformation::_requestWeatherUpdate(const QGeoCoordinate& coordinate
         return;
     }
     Status::GetStatus::Parameters params;
-    params.longitude = coordinate.longitude();
-    params.latitude  = coordinate.latitude();
-    params.weather   = true;
+    params.longitude= coordinate.longitude();
+    params.latitude = coordinate.latitude();
+    params.weather  = true;
     _shared.client()->status().get_status_by_point(params, [this, coordinate](const Status::GetStatus::Result& result) {
         if (result) {
             const Status::Weather& weather = result.value().weather;
-            _valid          = true;
-            _condition      = QString::fromStdString(weather.condition);
-            _icon           = QStringLiteral("qrc:/airmapweather/") + QString::fromStdString(weather.icon) + QStringLiteral(".svg");
-            _windHeading    = weather.wind.heading;
-            _windSpeed      = weather.wind.speed;
-            _windGusting    = weather.wind.gusting;
-            _temperature    = weather.temperature;
-            _humidity       = weather.humidity;
-            _visibility     = weather.visibility;
-            _precipitation  = weather.precipitation;
+            _valid  = true;
+            _icon   = QStringLiteral("qrc:/airmapweather/") + QString::fromStdString(weather.icon) + QStringLiteral(".svg");
             qCDebug(AirMapManagerLog) << "Weather Info: " << _valid << _icon;
         } else {
-            _valid          = false;
+            _valid  = false;
             qCDebug(AirMapManagerLog) << "Request Weather Failed";
         }
         emit weatherChanged();

@@ -10,6 +10,7 @@
 #include "AirspaceController.h"
 #include "AirspaceManager.h"
 #include "AirspaceWeatherInfoProvider.h"
+#include "AirspaceAdvisoryProvider.h"
 
 #include "QGCApplication.h"
 #include "QGCQGeoCoordinate.h"
@@ -49,4 +50,16 @@ AirspaceWeatherInfoProvider*
 AirspaceController::weatherInfo()
 {
     return _manager->weatherInfo();
+}
+
+AirspaceAdvisoryProvider*
+AirspaceController::advisories()
+{
+    return _manager->advisories();
+}
+
+AirspaceRulesetsProvider*
+AirspaceController::rules()
+{
+    return _manager->rules();
 }
