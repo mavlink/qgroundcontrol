@@ -10,6 +10,8 @@
 #include "AirMapTrafficMonitor.h"
 #include "AirMapManager.h"
 
+using namespace airmap;
+
 AirMapTrafficMonitor::~AirMapTrafficMonitor()
 {
     stop();

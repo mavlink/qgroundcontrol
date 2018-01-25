@@ -9,8 +9,8 @@
 
 #pragma once
 
+#include "AirMapSharedState.h"
 #include "AirspaceManager.h"
-
 #include "QGCLoggingCategory.h"
 
 #include <airmap/qt/logger.h>
@@ -19,7 +19,6 @@
 #include <memory>
 
 class QGCToolbox;
-class AirMapSharedState;
 class AirspaceVehicleManager;
 class AirspaceRestrictionProvider;
 class AirspaceRulesetsProvider;

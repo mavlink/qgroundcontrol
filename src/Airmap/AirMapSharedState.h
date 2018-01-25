@@ -10,6 +10,8 @@
 #pragma once
 
 #include <QObject>
+#include <QQueue>
+
 #include <airmap/qt/client.h>
 
 /**

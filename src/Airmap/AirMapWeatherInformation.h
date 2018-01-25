@@ -12,6 +12,7 @@
 #include "LifetimeChecker.h"
 
 #include "AirspaceWeatherInfoProvider.h"
+#include "AirMapSharedState.h"
 
 #include <QGeoCoordinate>
 #include <QTime>
@@ -40,21 +41,25 @@ public:
 
     void        setROI          (const QGeoCoordinate& center) override;
 
+signals:
+    void        error           (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+
 private:
     void        _requestWeatherUpdate   (const QGeoCoordinate& coordinate);
 
 private:
-    bool            _valid;
-    QString         _condition;
-    QString         _icon;
-    quint32         _windHeading;
-    quint32         _windSpeed;
-    quint32         _windGusting;
-    qint32          _temperature;
-    float           _humidity;
-    quint32         _visibility;
-    quint32         _precipitation;
+    bool                _valid;
+    QString             _condition;
+    QString             _icon;
+    quint32             _windHeading;
+    quint32             _windSpeed;
+    quint32             _windGusting;
+    qint32              _temperature;
+    float               _humidity;
+    quint32             _visibility;
+    quint32             _precipitation;
     //-- Don't check the weather every time the user moves the map
-    QGeoCoordinate  _lastRoiCenter;
-    QTime           _weatherTime;
+    AirMapSharedState&  _shared;
+    QGeoCoordinate      _lastRoiCenter;
+    QTime               _weatherTime;
 };

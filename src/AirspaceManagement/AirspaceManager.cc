@@ -10,12 +10,14 @@
 
 #include "AirspaceManager.h"
 #include "AirspaceWeatherInfoProvider.h"
+#include "AirspaceRestriction.h"
 #include "AirspaceRestrictionProvider.h"
 #include "AirspaceRulesetsProvider.h"
+#include "AirspaceVehicleManager.h"
+#include "AirspaceController.h"
 
 #include "Vehicle.h"
 #include "QGCApplication.h"
-#include "QmlObjectListModel.h"
 
 QGC_LOGGING_CATEGORY(AirspaceManagementLog, "AirspaceManagementLog")
 

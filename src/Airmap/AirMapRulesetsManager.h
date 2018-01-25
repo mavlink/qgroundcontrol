@@ -11,10 +11,9 @@
 
 #include "LifetimeChecker.h"
 #include "AirspaceRulesetsProvider.h"
+#include "AirMapSharedState.h"
 
 #include <QGeoCoordinate>
-
-class AirMapSharedState;
 
 /**
  * @file AirMapRulesetsManager.h

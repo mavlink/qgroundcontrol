@@ -25,6 +25,7 @@
 
 #include "QGCToolbox.h"
 #include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
 
 #include <QGeoCoordinate>
 #include <QObject>
@@ -34,10 +35,10 @@
 
 class Vehicle;
 class QGCApplication;
-class QmlObjectListModel;
 class AirspaceWeatherInfoProvider;
 class AirspaceRestrictionProvider;
 class AirspaceRulesetsProvider;
+class AirspaceVehicleManager;
 
 Q_DECLARE_LOGGING_CATEGORY(AirspaceManagementLog)
 
@@ -55,7 +56,7 @@ public:
     /**
      * Factory method to create an AirspaceVehicleManager object
      */
-    virtual AirspaceVehicleManager*      instantiateVehicle                      (const Vehicle& vehicle) = 0;
+    virtual AirspaceVehicleManager*         instantiateVehicle                      (const Vehicle& vehicle) = 0;
 
     /**
      * Factory method to create an AirspaceRestrictionProvider object

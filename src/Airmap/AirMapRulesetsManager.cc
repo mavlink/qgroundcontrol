@@ -8,8 +8,11 @@
  ****************************************************************************/
 
 #include "AirMapRulesetsManager.h"
-#include "AirMapSharedState.h"
 #include "AirMapManager.h"
+
+#include "airmap/rulesets.h"
+
+using namespace airmap;
 
 //-----------------------------------------------------------------------------
 AirMapRulesetsManager::AirMapRulesetsManager(AirMapSharedState& shared)

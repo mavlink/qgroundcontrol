@@ -8,8 +8,12 @@
  ****************************************************************************/
 
 #include "AirMapRestrictionManager.h"
-#include "AirMapSharedState.h"
 #include "AirMapManager.h"
+#include "AirspaceRestriction.h"
+
+#include "airmap/airspaces.h"
+
+using namespace airmap;
 
 AirMapRestrictionManager::AirMapRestrictionManager(AirMapSharedState& shared)
     : _shared(shared)
@@ -100,4 +104,3 @@ AirMapRestrictionManager::_addPolygonToList(const airmap::Geometry::Polygon& pol
         qCDebug(AirMapManagerLog) << "Polygon with holes. Size: "<<polygon.inner_rings.size();
     }
 }
-
