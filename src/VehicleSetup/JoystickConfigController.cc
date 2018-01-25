@@ -416,8 +416,8 @@ void JoystickConfigController::_inputCenterWait(Joystick::AxisFunction_t functio
     
     if (_stickDetectAxis == _axisNoAxis) {
         // Sticks have not yet moved close enough to center
-        
-        if (abs(_calCenterPoint - value) < _calRoughCenterDelta) {
+        int roughCenter = getDeadbandToggle() ? _rgAxisInfo[axis].deadband : _calRoughCenterDelta;
+        if (abs(_calCenterPoint - value) < roughCenter) {
             // Stick has moved close enough to center that we can start waiting for it to settle
             _stickDetectAxis = axis;
             _stickDetectInitialValue = value;
