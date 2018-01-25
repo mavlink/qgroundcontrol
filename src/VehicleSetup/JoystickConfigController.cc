@@ -71,6 +71,15 @@ void JoystickConfigController::start(void)
     _stopCalibration();
 }
 
+void JoystickConfigController::setDeadbandValue(int axis, int value)
+{
+    _axisDeadbandChanged(axis,value);
+    Joystick* joystick = _joystickManager->activeJoystick();
+    Joystick::Calibration_t calibration = joystick->getCalibration(axis);
+    calibration.deadband = value;
+    joystick->setCalibration(axis,calibration);
+}
+
 JoystickConfigController::~JoystickConfigController()
 {
     if(_activeJoystick) {

@@ -67,6 +67,7 @@ public:
     Q_INVOKABLE void skipButtonClicked(void);
     Q_INVOKABLE void nextButtonClicked(void);
     Q_INVOKABLE void start(void);
+    Q_INVOKABLE void setDeadbandValue(int axis, int value);
 
     bool rollAxisMapped(void);
     bool pitchAxisMapped(void);

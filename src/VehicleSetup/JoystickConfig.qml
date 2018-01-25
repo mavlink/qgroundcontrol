@@ -796,7 +796,28 @@ SetupPage {
                                 property real defaultTextWidth:     ScreenTools.defaultFontPixelWidth
                                 property bool mapped:               true
                                 readonly property bool reversed:    false
+
+
+                                MouseArea {
+                                    id:             deadbandMouseArea
+                                    anchors.fill:   parent.item
+
+                                    property real startY
+
+                                    onPressed: {
+                                        startY = mouseY
+                                    }
+                                    onPositionChanged: {
+                                        var newValue = parent.item.deadbandValue + (startY - mouseY)*15
+                                        if ((newValue > 0) && (newValue <32768)){parent.item.deadbandValue=newValue;}
+                                        startY = mouseY
+                                    }
+                                    onReleased: {
+                                        controller.setDeadbandValue(modelData,parent.item.deadbandValue)
+                                    }
+                                }
                             }
+
                         }
                     }
                 } // Column - Axis Monitor
