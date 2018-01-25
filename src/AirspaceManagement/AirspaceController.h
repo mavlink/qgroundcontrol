@@ -10,8 +10,9 @@
 #pragma once
 
 #include "AirspaceManagement.h"
-#include "QGCMapPolygon.h"
 #include "AirmapWeatherInformation.h"
+#include "QmlObjectListModel.h"
+#include "QGCMapPolygon.h"
 
 class AirspaceController : public QObject
 {

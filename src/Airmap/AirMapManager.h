@@ -12,13 +12,12 @@
 #include "QGCToolbox.h"
 #include "QGCLoggingCategory.h"
 #include "AirspaceManagement.h"
+#include "AirMapSharedState.h"
 
 #include <airmap/qt/logger.h>
 #include <airmap/qt/types.h>
 
 Q_DECLARE_LOGGING_CATEGORY(AirMapManagerLog)
-
-class AirMapSharedState;
 
 //-----------------------------------------------------------------------------
 /**

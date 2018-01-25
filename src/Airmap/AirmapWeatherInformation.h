@@ -11,6 +11,9 @@
 
 #include <QObject>
 #include <QGeoCoordinate>
+#include <QTime>
+
+#include "AirMapManager.h"
 #include "AirspaceWeatherInfoProvider.h"
 
 /**

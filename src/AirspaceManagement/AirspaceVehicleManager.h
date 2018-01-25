@@ -10,6 +10,7 @@
 #pragma once
 
 #include  <QList>
+#include "MissionItem.h"
 
 class Vehicle;
 

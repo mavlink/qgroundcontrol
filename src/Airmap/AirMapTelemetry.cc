@@ -7,6 +7,7 @@
  *
  ****************************************************************************/
 
+#include "AirMapManager.h"
 #include "AirMapTelemetry.h"
 
 AirMapTelemetry::AirMapTelemetry(AirMapSharedState& shared)

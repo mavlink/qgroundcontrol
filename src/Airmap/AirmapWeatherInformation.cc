@@ -1,4 +1,17 @@
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
+#include "AirMapManager.h"
 #include "AirmapWeatherInformation.h"
+
+#define WEATHER_UPDATE_DISTANCE 50000                   //-- 50km threshold for weather updates
+#define WEATHER_UPDATE_TIME     30 * 60 * 60 * 1000     //-- 30 minutes threshold for weather updates
 
 AirMapWeatherInformation::AirMapWeatherInformation(AirMapSharedState& shared, QObject *parent)
     : QObject(parent)
