@@ -18,7 +18,7 @@ Item {
     property color  _colorWhite:        "#ffffff"
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _celcius:           QGroundControl.settingsManager.unitsSettings.temperatureUnits.rawValue === UnitsSettings.TemperatureUnitsCelsius
-    property int    _tempC:             _activeVehicle ? _activeVehicle.airspaceController.weatherTemp : 0
+    property int    _tempC:             _activeVehicle && _activeVehicle.airspaceController.weatherInfo.valid ? _activeVehicle.airspaceController.weatherInfo.temperature : 0
     property string _tempS:             (_celcius ? _tempC : _tempC * 1.8 + 32).toFixed(0) + (_celcius ? "°C" : "°F")
     Row {
         id:                     weatherRow
@@ -27,15 +27,15 @@ Item {
             width:                  height
             height:                 iconHeight
             sourceSize.height:      height
-            source:                 _activeVehicle ? _activeVehicle.airspaceController.weatherIcon : ""
+            source:                 _activeVehicle && _activeVehicle.airspaceController.weatherInfo.valid ? _activeVehicle.airspaceController.weatherInfo.icon : ""
             color:                  _colorWhite
-            visible:                _activeVehicle && _activeVehicle.airspaceController.hasWeather
+            visible:                _activeVehicle && _activeVehicle.airspaceController.weatherInfo.valid
             anchors.verticalCenter: parent.verticalCenter
         }
         QGCLabel {
             text:                   _tempS
             color:                  _colorWhite
-            visible:                _activeVehicle && _activeVehicle.airspaceController.hasWeather
+            visible:                _activeVehicle && _activeVehicle.airspaceController.weatherInfo.valid
             anchors.verticalCenter: parent.verticalCenter
         }
     }

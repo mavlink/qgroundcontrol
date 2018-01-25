@@ -71,7 +71,7 @@ Item {
             }
             AirspaceWeather {
                 iconHeight:             ScreenTools.defaultFontPixelWidth * 2.5
-                visible:                _activeVehicle && _activeVehicle.airspaceController.hasWeather
+                visible:                _activeVehicle && _activeVehicle.airspaceController.weatherInfo.valid
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
@@ -141,7 +141,7 @@ Item {
                         height: 1
                     }
                     AirspaceWeather {
-                        visible:                _activeVehicle && _activeVehicle.airspaceController.hasWeather && showColapse
+                        visible:                _activeVehicle && _activeVehicle.airspaceController.weatherInfo.valid && showColapse
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
@@ -162,7 +162,7 @@ Item {
                     }
                 }
                 AirspaceWeather {
-                    visible:                _activeVehicle && _activeVehicle.airspaceController.hasWeather && !showColapse
+                    visible:                _activeVehicle && _activeVehicle.airspaceController.weatherInfo.valid && !showColapse
                     anchors.right:          parent.right
                     anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
                     anchors.verticalCenter: parent.verticalCenter

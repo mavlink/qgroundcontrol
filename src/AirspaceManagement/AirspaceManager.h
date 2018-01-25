@@ -81,7 +81,7 @@ public:
 
     QmlObjectListModel* polygonRestrictions     () { return &_polygonRestrictions; }
     QmlObjectListModel* circularRestrictions    () { return &_circleRestrictions;  }
-    AirspaceWeatherInfoProvider* weatherInfo    () { return _weather;}
+    AirspaceWeatherInfoProvider* weatherInfo    () { return _weatherProvider; }
 
     void setToolbox(QGCToolbox* toolbox) override;
 
@@ -109,5 +109,4 @@ private:
     QTimer                          _roiUpdateTimer;
     QGeoCoordinate                  _roiCenter;
     double                          _roiRadius;
-    AirspaceWeatherInfoProvider*    _weather;
 };

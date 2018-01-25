@@ -49,6 +49,7 @@ AirMapWeatherInformation::setROI(const QGeoCoordinate& center)
 void
 AirMapWeatherInformation::_requestWeatherUpdate(const QGeoCoordinate& coordinate)
 {
+    qCDebug(AirMapManagerLog) << "Request Weather";
     if (!_shared.client()) {
         qCDebug(AirMapManagerLog) << "No AirMap client instance. Not updating Weather information";
         _valid = false;
@@ -72,8 +73,10 @@ AirMapWeatherInformation::_requestWeatherUpdate(const QGeoCoordinate& coordinate
             _humidity       = weather.humidity;
             _visibility     = weather.visibility;
             _precipitation  = weather.precipitation;
+            qCDebug(AirMapManagerLog) << "Weather Info: " << _valid << _icon;
         } else {
             _valid          = false;
+            qCDebug(AirMapManagerLog) << "Request Weather Failed";
         }
         emit weatherChanged();
     });
