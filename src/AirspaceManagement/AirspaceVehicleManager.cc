@@ -13,28 +13,6 @@
 
 QGC_LOGGING_CATEGORY(AirspaceManagementLog, "AirspaceManagementLog")
 
-
-AirspaceRestriction::AirspaceRestriction(QObject* parent)
-    : QObject(parent)
-{
-}
-
-PolygonAirspaceRestriction::PolygonAirspaceRestriction(const QVariantList& polygon, QObject* parent)
-    : AirspaceRestriction(parent)
-    , _polygon(polygon)
-{
-
-}
-
-CircularAirspaceRestriction::CircularAirspaceRestriction(const QGeoCoordinate& center, double radius, QObject* parent)
-    : AirspaceRestriction(parent)
-    , _center(center)
-    , _radius(radius)
-{
-
-}
-
-
 AirspaceManager::AirspaceManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
 {
@@ -42,7 +20,6 @@ AirspaceManager::AirspaceManager(QGCApplication* app, QGCToolbox* toolbox)
     _roiUpdateTimer.setSingleShot(true);
     connect(&_roiUpdateTimer, &QTimer::timeout, this, &AirspaceManager::_updateToROI);
     qmlRegisterUncreatableType<AirspaceAuthorization>("QGroundControl", 1, 0, "AirspaceAuthorization", "Reference only");
-    qRegisterMetaType<WeatherInformation>();
 }
 
 AirspaceManager::~AirspaceManager()
@@ -60,20 +37,17 @@ AirspaceManager::~AirspaceManager()
 void AirspaceManager::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
-
-    // we should not call virtual methods in the constructor, so we instantiate the restriction provider here
+    // We should not call virtual methods in the constructor, so we instantiate the restriction provider here
     _restrictionsProvider = instantiateRestrictionProvider();
     if (_restrictionsProvider) {
         connect(_restrictionsProvider, &AirspaceRestrictionProvider::requestDone, this,
                 &AirspaceManager::_restrictionsUpdated);
     }
     _rulesetsProvider = instantiateRulesetsProvider();
-    /*
     if (_rulesetsProvider) {
         connect(_rulesetsProvider, &AirspaceRulesetsProvider::requestDone, this,
-                &AirspaceManager::_rulesetsUpdated);
+                &AirspaceManager::_rulessetsUpdated);
     }
-    */
 }
 
 void AirspaceManager::setROI(const QGeoCoordinate& center, double radiusMeters)
@@ -111,15 +85,19 @@ void AirspaceManager::_restrictionsUpdated(bool success)
     }
 }
 
-
-AirspaceManagerPerVehicle::AirspaceManagerPerVehicle(const Vehicle& vehicle)
-    : _vehicle(vehicle)
+void AirspaceManager::_rulessetsUpdated(bool)
 {
-    connect(&_vehicle, &Vehicle::armedChanged, this, &AirspaceManagerPerVehicle::_vehicleArmedChanged);
-    connect(&_vehicle, &Vehicle::mavlinkMessageReceived, this, &AirspaceManagerPerVehicle::vehicleMavlinkMessageReceived);
+
 }
 
-void AirspaceManagerPerVehicle::_vehicleArmedChanged(bool armed)
+AirspaceVehicleManager::AirspaceVehicleManager(const Vehicle& vehicle)
+    : _vehicle(vehicle)
+{
+    connect(&_vehicle, &Vehicle::armedChanged, this, &AirspaceVehicleManager::_vehicleArmedChanged);
+    connect(&_vehicle, &Vehicle::mavlinkMessageReceived, this, &AirspaceVehicleManager::vehicleMavlinkMessageReceived);
+}
+
+void AirspaceVehicleManager::_vehicleArmedChanged(bool armed)
 {
     if (armed) {
         startTelemetryStream();

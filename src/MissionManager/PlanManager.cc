@@ -81,7 +81,7 @@ void PlanManager::writeMissionItems(const QList<MissionItem*>& missionItems)
     if (_planType == MAV_MISSION_TYPE_MISSION) {
 #if defined(QGC_AIRMAP_ENABLED)
         // upload the flight to the airspace management backend
-        AirspaceManagerPerVehicle* airspaceManager = _vehicle->airspaceManager();
+        AirspaceVehicleManager* airspaceManager = _vehicle->airspaceManager();
         if (airspaceManager) {
             airspaceManager->createFlight(missionItems);
         }
