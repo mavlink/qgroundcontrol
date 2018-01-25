@@ -23,6 +23,7 @@ class AirspaceVehicleManager;
 class AirspaceRestrictionProvider;
 class AirspaceRulesetsProvider;
 class AirspaceWeatherInfoProvider;
+class AirspaceAdvisoryProvider;
 
 Q_DECLARE_LOGGING_CATEGORY(AirMapManagerLog)
 
@@ -46,6 +47,7 @@ public:
     AirspaceRestrictionProvider*    instantiateRestrictionProvider          () override;
     AirspaceRulesetsProvider*       instantiateRulesetsProvider             () override;
     AirspaceWeatherInfoProvider*    instatiateAirspaceWeatherInfoProvider   () override;
+    AirspaceAdvisoryProvider*       instatiateAirspaceAdvisoryProvider      () override;
 
     QString name            () const override { return "AirMap"; }
 

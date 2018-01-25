@@ -39,6 +39,7 @@ class AirspaceWeatherInfoProvider;
 class AirspaceRestrictionProvider;
 class AirspaceRulesetsProvider;
 class AirspaceVehicleManager;
+class AirspaceAdvisoryProvider;
 
 Q_DECLARE_LOGGING_CATEGORY(AirspaceManagementLog)
 
@@ -72,6 +73,12 @@ public:
      * Factory method to create an AirspaceRulesetsProvider object
      */
     virtual AirspaceWeatherInfoProvider*    instatiateAirspaceWeatherInfoProvider   () = 0;
+
+    /**
+     * Factory method to create an AirspaceAdvisoryProvider object
+     */
+    virtual AirspaceAdvisoryProvider*       instatiateAirspaceAdvisoryProvider      () = 0;
+
     /**
      * Set the ROI for airspace information (restrictions shown in UI)
      * @param center Center coordinate for ROI
@@ -82,6 +89,8 @@ public:
     QmlObjectListModel* polygonRestrictions     () { return &_polygonRestrictions; }
     QmlObjectListModel* circularRestrictions    () { return &_circleRestrictions;  }
     AirspaceWeatherInfoProvider* weatherInfo    () { return _weatherProvider; }
+    AirspaceAdvisoryProvider*    advisories     () { return _advisories; }
+    AirspaceRulesetsProvider*    rules          () { return _rulesetsProvider; }
 
     void setToolbox(QGCToolbox* toolbox) override;
 
@@ -102,6 +111,7 @@ private:
     AirspaceRestrictionProvider*    _restrictionsProvider   = nullptr; ///< Restrictions that are shown in the UI
     AirspaceRulesetsProvider*       _rulesetsProvider       = nullptr; ///< Restrictions that are shown in the UI
     AirspaceWeatherInfoProvider*    _weatherProvider        = nullptr; ///< Weather info that is shown in the UI
+    AirspaceAdvisoryProvider*       _advisories             = nullptr; ///< Advisory info that is shown in the UI
 
     QmlObjectListModel _polygonRestrictions;    ///< current polygon restrictions
     QmlObjectListModel _circleRestrictions;     ///< current circle restrictions

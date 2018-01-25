@@ -15,6 +15,8 @@
 class AirspaceManager;
 class QmlObjectListModel;
 class AirspaceWeatherInfoProvider;
+class AirspaceAdvisoryProvider;
+class AirspaceRulesetsProvider;
 
 class AirspaceController : public QObject
 {
@@ -27,6 +29,8 @@ public:
     Q_PROPERTY(QmlObjectListModel*          circles         READ circles        CONSTANT)   ///< List of AirspaceCircularRestriction objects
     Q_PROPERTY(QString                      providerName    READ providerName   CONSTANT)
     Q_PROPERTY(AirspaceWeatherInfoProvider* weatherInfo     READ weatherInfo    CONSTANT)
+    Q_PROPERTY(AirspaceAdvisoryProvider*    advisories      READ advisories     CONSTANT)
+    Q_PROPERTY(AirspaceRulesetsProvider*    rules           READ rules          CONSTANT)
 
     Q_INVOKABLE void setROI                 (QGeoCoordinate center, double radius);
 
@@ -34,6 +38,8 @@ public:
     QmlObjectListModel*             circles     ();
     QString                         providerName();
     AirspaceWeatherInfoProvider*    weatherInfo ();
+    AirspaceAdvisoryProvider*       advisories  ();
+    AirspaceRulesetsProvider*       rules       ();
 
 private:
     AirspaceManager*    _manager;

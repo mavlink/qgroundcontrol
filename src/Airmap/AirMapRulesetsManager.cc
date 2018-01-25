@@ -10,9 +10,14 @@
 #include "AirMapRulesetsManager.h"
 #include "AirMapManager.h"
 
-#include "airmap/rulesets.h"
-
 using namespace airmap;
+
+//-----------------------------------------------------------------------------
+AirMapRule::AirMapRule(QObject* parent)
+    : AirspaceRule(parent)
+    , _isDefault(false)
+{
+}
 
 //-----------------------------------------------------------------------------
 AirMapRulesetsManager::AirMapRulesetsManager(AirMapSharedState& shared)
@@ -32,6 +37,7 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
         return;
     }
     qCDebug(AirMapManagerLog) << "Setting ROI for Rulesets";
+    _rules.clearAndDeleteContents();
     _state = State::RetrieveItems;
     RuleSets::Search::Parameters params;
     params.geometry = Geometry::point(center.latitude(), center.longitude());
@@ -41,9 +47,16 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
         if (!isAlive.lock()) return;
         if (_state != State::RetrieveItems) return;
         if (result) {
-            const std::vector<RuleSet>& rulesets = result.value();
-            qCDebug(AirMapManagerLog)<<"Successful rulesets search. Items:" << rulesets.size();
-            for (const auto& ruleset : rulesets) {
+            const std::vector<RuleSet> rules = result.value();
+            qCDebug(AirMapManagerLog)<<"Successful rulesets search. Items:" << rules.size();
+            for (const auto& ruleset : rules) {
+                AirMapRule* pRule = new AirMapRule(this);
+                pRule->_id          = QString::fromStdString(ruleset.id);
+                pRule->_name        = QString::fromStdString(ruleset.short_name);
+                pRule->_description = QString::fromStdString(ruleset.description);
+                pRule->_isDefault   = ruleset.is_default;
+                _rules.append(pRule);
+                /*
                 qDebug() << "------------------------------------------";
                 qDebug() << "Jurisdiction:" << ruleset.jurisdiction.name.data() << (int)ruleset.jurisdiction.region;
                 qDebug() << "Name:        " << ruleset.name.data();
@@ -68,13 +81,14 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
                         qDebug() << "        " << (int)feature.status;
                     }
                 }
+                */
             }
         } else {
             QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
             emit error("Failed to retrieve RuleSets",
                     QString::fromStdString(result.error().message()), description);
         }
-        emit requestDone(true);
         _state = State::Idle;
+        emit rulesChanged();
     });
 }

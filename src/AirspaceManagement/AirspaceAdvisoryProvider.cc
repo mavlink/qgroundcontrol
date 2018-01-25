@@ -7,14 +7,9 @@
  *
  ****************************************************************************/
 
-#include "AirspaceRulesetsProvider.h"
+#include "AirspaceAdvisoryProvider.h"
 
-AirspaceRule::AirspaceRule(QObject* parent)
-    : QObject(parent)
-{
-}
-
-AirspaceRulesetsProvider::AirspaceRulesetsProvider(QObject *parent)
+AirspaceAdvisoryProvider::AirspaceAdvisoryProvider(QObject *parent)
     : QObject(parent)
 {
 }

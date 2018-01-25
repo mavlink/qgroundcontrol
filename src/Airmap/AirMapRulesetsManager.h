@@ -15,29 +15,54 @@
 
 #include <QGeoCoordinate>
 
+#include <airmap/rulesets.h>
+
 /**
  * @file AirMapRulesetsManager.h
  * Class to download rulesets from AirMap
  */
 
+//-----------------------------------------------------------------------------
+class AirMapRule : public AirspaceRule
+{
+    Q_OBJECT
+    friend class AirMapRulesetsManager;
+public:
+    AirMapRule                  (QObject* parent = NULL);
+    QString     id              () override { return _id; }
+    QString     description     () override { return _description; }
+    bool        isDefault       () override { return _isDefault; }
+    QString     name            () override { return _name; }
+private:
+    QString     _id;
+    QString     _description;
+    bool        _isDefault;
+    QString     _name;
+};
+
+//-----------------------------------------------------------------------------
 class AirMapRulesetsManager : public AirspaceRulesetsProvider, public LifetimeChecker
 {
     Q_OBJECT
 public:
-    AirMapRulesetsManager   (AirMapSharedState& shared);
+    AirMapRulesetsManager       (AirMapSharedState& shared);
 
-    void setROI             (const QGeoCoordinate& center) override;
+    bool                valid  () override { return _valid; }
+    QmlObjectListModel* rules  () override { return &_rules; }
+    void                setROI (const QGeoCoordinate& center) override;
 
 signals:
-    void error              (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+    void        error           (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
 
 private:
     enum class State {
         Idle,
         RetrieveItems,
     };
-    State                   _state = State::Idle;
-    AirMapSharedState&      _shared;
+    bool                            _valid;
+    State                           _state = State::Idle;
+    AirMapSharedState&              _shared;
+    QmlObjectListModel              _rules;
 };
 
 
