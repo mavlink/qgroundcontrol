@@ -7,8 +7,11 @@
  *
  ****************************************************************************/
 
-#include "AirMapManager.h"
 #include "AirMapTelemetry.h"
+#include "AirMapSharedState.h"
+#include "AirMapManager.h"
+
+#include "QGCMAVLink.h"
 
 AirMapTelemetry::AirMapTelemetry(AirMapSharedState& shared)
 : _shared(shared)

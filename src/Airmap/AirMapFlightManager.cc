@@ -7,8 +7,10 @@
  *
  ****************************************************************************/
 
-#include "AirMapManager.h"
 #include "AirMapFlightManager.h"
+#include "AirMapManager.h"
+
+#include "MissionItem.h"
 
 AirMapFlightManager::AirMapFlightManager(AirMapSharedState& shared)
     : _shared(shared)

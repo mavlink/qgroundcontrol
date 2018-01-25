@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "AirMapSettings.h"
-#include "QGCPalette.h"
 #include "QGCApplication.h"
 
 #include <QQmlEngine>

@@ -9,9 +9,14 @@
 
 #pragma once
 
-#include  <QList>
-#include "MissionItem.h"
+#include "AirspaceAuthorization.h"
+#include "QGCMAVLink.h"
 
+#include <QObject>
+#include <QList>
+#include <QGeoCoordinate>
+
+class MissionItem;
 class Vehicle;
 
 //-----------------------------------------------------------------------------

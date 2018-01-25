@@ -10,7 +10,6 @@
 #pragma once
 
 #include "SettingsGroup.h"
-#include "QGCMAVLink.h"
 
 class AirMapSettings : public SettingsGroup
 {

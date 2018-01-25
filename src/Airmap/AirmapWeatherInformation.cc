@@ -7,8 +7,9 @@
  *
  ****************************************************************************/
 
-#include "AirMapManager.h"
 #include "AirmapWeatherInformation.h"
+#include "AirMapSharedState.h"
+#include "AirMapManager.h"
 
 #define WEATHER_UPDATE_DISTANCE 50000                   //-- 50km threshold for weather updates
 #define WEATHER_UPDATE_TIME     30 * 60 * 60 * 1000     //-- 30 minutes threshold for weather updates

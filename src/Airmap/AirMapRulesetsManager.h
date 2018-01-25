@@ -9,15 +9,17 @@
 
 #pragma once
 
+#include "LifetimeChecker.h"
+#include "AirspaceRulesetsProvider.h"
+
+#include <QGeoCoordinate>
+
+class AirMapSharedState;
+
 /**
  * @file AirMapRulesetsManager.h
  * Class to download rulesets from AirMap
  */
-
-#include <QObject>
-#include "AirMapManager.h"
-#include "AirspaceRulesetsProvider.h"
-#include "AirMapSharedState.h"
 
 class AirMapRulesetsManager : public AirspaceRulesetsProvider, public LifetimeChecker
 {

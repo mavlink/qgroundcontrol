@@ -9,32 +9,23 @@
 
 #pragma once
 
-#include "QGCToolbox.h"
+#include "AirspaceManager.h"
+
 #include "QGCLoggingCategory.h"
-#include "AirspaceManagement.h"
-#include "AirMapSharedState.h"
 
 #include <airmap/qt/logger.h>
 #include <airmap/qt/types.h>
 
+#include <memory>
+
+class QGCToolbox;
+class AirMapSharedState;
+class AirspaceVehicleManager;
+class AirspaceRestrictionProvider;
+class AirspaceRulesetsProvider;
+class AirspaceWeatherInfoProvider;
+
 Q_DECLARE_LOGGING_CATEGORY(AirMapManagerLog)
-
-//-----------------------------------------------------------------------------
-/**
- * @class LifetimeChecker
- * Base class which helps to check if an object instance still exists.
- * A subclass can take a weak pointer from _instance and then check if the object was deleted.
- * This is used in callbacks that access 'this', but the instance might already be deleted (e.g. vehicle disconnect).
- */
-class LifetimeChecker
-{
-public:
-    LifetimeChecker() : _instance(this, [](void*){}) { }
-    virtual ~LifetimeChecker() = default;
-
-protected:
-    std::shared_ptr<LifetimeChecker> _instance;
-};
 
 //-----------------------------------------------------------------------------
 /**

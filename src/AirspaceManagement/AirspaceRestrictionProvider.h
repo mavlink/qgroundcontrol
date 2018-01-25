@@ -15,7 +15,10 @@
  */
 
 #include <QObject>
-#include "AirspaceRestriction.h"
+#include <QList>
+
+class AirspacePolygonRestriction;
+class AirspaceCircularRestriction;
 
 class AirspaceRestrictionProvider : public QObject {
     Q_OBJECT
