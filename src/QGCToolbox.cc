@@ -86,6 +86,9 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _followMe =                 new FollowMe                (app, this);
     _videoManager =             new VideoManager            (app, this);
     _mavlinkLogManager =        new MAVLinkLogManager       (app, this);
+    //-- Airmap Manager
+    //-- This should be "pluggable" so an arbitrary AirSpace manager can be used
+    //-- For now, we instantiate the one and only AirMap provider
 #if defined(QGC_AIRMAP_ENABLED)
     _airspaceManager =          new AirMapManager           (app, this);
 #endif

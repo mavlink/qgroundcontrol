@@ -771,7 +771,7 @@ public:
     AirspaceAuthorization::PermitStatus flightPermitStatus() const
         { return _airspaceManagerPerVehicle ? _airspaceManagerPerVehicle->flightPermitStatus() : AirspaceAuthorization::PermitUnknown; }
 
-    AirspaceManagerPerVehicle* airspaceManager() const { return _airspaceManagerPerVehicle; }
+    AirspaceVehicleManager* airspaceManager() const { return _airspaceManagerPerVehicle; }
 #endif
 
 signals:
@@ -1066,7 +1066,7 @@ private:
 
 #if defined(QGC_AIRMAP_ENABLED)
     AirspaceController*   _airspaceController;
-    AirspaceManagerPerVehicle* _airspaceManagerPerVehicle;
+    AirspaceVehicleManager* _airspaceManagerPerVehicle;
 #endif
 
     bool    _armed;         ///< true: vehicle is armed

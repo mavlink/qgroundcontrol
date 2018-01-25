@@ -1058,6 +1058,30 @@ SOURCES += \
 # AirMap
 
 contains (DEFINES, QGC_AIRMAP_ENABLED) {
+
+    #-- These should be always enabled but not yet
+    INCLUDEPATH += \
+        src/AirspaceManagement
+
+    HEADERS += \
+        src/AirspaceManagement/AirspaceController.h \
+        src/AirspaceManagement/AirspaceManagement.h \
+        src/AirspaceManagement/AirspaceRestriction.h \
+        src/AirspaceManagement/AirspaceRestrictionProvider.h \
+        src/AirspaceManagement/AirspaceRulesetsProvider.h \
+        src/AirspaceManagement/AirspaceWeatherInfoProvider.h \
+        src/AirspaceManagement/AirspaceVehicleManager.h \
+
+    SOURCES += \
+        src/AirspaceManagement/AirspaceController.cc \
+        src/AirspaceManagement/AirspaceManagement.cc \
+        src/AirspaceManagement/AirspaceRestriction.cc \
+        src/AirspaceManagement/AirspaceRestrictionProvider.cc \
+        src/AirspaceManagement/AirspaceRulesetsProvider.cc \
+        src/AirspaceManagement/AirspaceWeatherInfoProvider.cc \
+        src/AirspaceManagement/AirspaceVehicleManager.cc \
+
+    #-- This is the AirMap implementation of the above
     RESOURCES += \
         src/Airmap/airmap.qrc
 
@@ -1065,16 +1089,32 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap
 
     HEADERS += \
-        src/Airmap/AirspaceController.h \
         src/Airmap/AirMapManager.h \
         src/Airmap/AirspaceManagement.h \
-        src/Airmap/AirMapSettings.h
+        src/Airmap/AirMapSettings.h \
+        src/Airmap/AirmapWeatherInformation.h \
+        src/Airmap/AirMapRestrictionManager.h \
+        src/Airmap/AirMapRulesetsManager.h \
+        src/Airmap/AirMapSharedState.h \
+        src/Airmap/AirMapFlightManager.h \
+        src/Airmap/AirMapTelemetry.h \
+        src/Airmap/AirMapTrafficMonitor.h \
+        src/Airmap/AirMapVehicleManager.h \
 
     SOURCES += \
         src/Airmap/AirMapManager.cc \
         src/Airmap/AirspaceManagement.cc \
         src/Airmap/AirspaceController.cc \
-        src/Airmap/AirMapSettings.cc
+        src/Airmap/AirMapSettings.cc \
+        src/Airmap/AirmapWeatherInformation.cc \
+        src/Airmap/AirMapRestrictionManager.cc \
+        src/Airmap/AirMapRulesetsManager.cc \
+        src/Airmap/AirMapSharedState.cc \
+        src/Airmap/AirMapFlightManager.cc \
+        src/Airmap/AirMapTelemetry.cc \
+        src/Airmap/AirMapTrafficMonitor.cc \
+        src/Airmap/AirMapVehicleManager.cc \
+
 } else {
     RESOURCES += \
         src/Airmap/dummy/airmap_dummy.qrc

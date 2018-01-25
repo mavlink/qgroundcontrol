@@ -274,8 +274,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     if (airspaceManager) {
         _airspaceManagerPerVehicle = airspaceManager->instantiateVehicle(*this);
         if (_airspaceManagerPerVehicle) {
-            connect(_airspaceManagerPerVehicle, &AirspaceManagerPerVehicle::trafficUpdate, this, &Vehicle::_trafficUpdate);
-            connect(_airspaceManagerPerVehicle, &AirspaceManagerPerVehicle::flightPermitStatusChanged, this, &Vehicle::flightPermitStatusChanged);
+            connect(_airspaceManagerPerVehicle, &AirspaceVehicleManager::trafficUpdate, this, &Vehicle::_trafficUpdate);
+            connect(_airspaceManagerPerVehicle, &AirspaceVehicleManager::flightPermitStatusChanged, this, &Vehicle::flightPermitStatusChanged);
         }
     }
 #endif

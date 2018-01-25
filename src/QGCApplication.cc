@@ -86,6 +86,7 @@
 #include "EditPositionDialogController.h"
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceController.h"
+#include "AirmapWeatherInformation.h"
 #endif
 #ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
@@ -384,7 +385,8 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<RallyPointController>("QGroundControl.Controllers",          1, 0, "RallyPointController",   "Reference only");
     qmlRegisterUncreatableType<VisualMissionItem>   ("QGroundControl.Controllers",          1, 0, "VisualMissionItem",      "Reference only");
 #if defined(QGC_AIRMAP_ENABLED)
-    qmlRegisterUncreatableType<AirspaceController>  ("QGroundControl.Vehicle",              1, 0, "AirspaceController",       "Reference only");
+    qmlRegisterUncreatableType<AirspaceController>          ("QGroundControl.Vehicle",      1, 0, "AirspaceController",       "Reference only");
+    qmlRegisterUncreatableType<AirMapWeatherInformation>    ("QGroundControl.Vehicle",      1, 0, "AirMapWeatherInformation", "Reference only");
 #endif
 
     qmlRegisterType<ParameterEditorController>      ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
