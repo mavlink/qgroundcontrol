@@ -34,7 +34,7 @@ AirMapManager::AirMapManager(QGCApplication* app, QGCToolbox* toolbox)
 {
     _logger = std::make_shared<qt::Logger>();
     qt::register_types(); // TODO: still needed?s
-    _logger->logging_category().setEnabled(QtDebugMsg, true);
+    _logger->logging_category().setEnabled(QtDebugMsg, false);
     _logger->logging_category().setEnabled(QtInfoMsg, true);
     _logger->logging_category().setEnabled(QtWarningMsg, true);
     _dispatchingLogger = std::make_shared<qt::DispatchingLogger>(_logger);
