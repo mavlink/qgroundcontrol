@@ -9,9 +9,13 @@
 
 #pragma once
 
-#include <QObject>
-#include "AirMapManager.h"
+#include "LifetimeChecker.h"
 #include "AirspaceRestrictionProvider.h"
+
+#include <QList>
+#include <QGeoCoordinate>
+
+class AirMapSharedState;
 
 /**
  * @file AirMapRestrictionManager.h

@@ -16,7 +16,7 @@
  */
 
 #include <QObject>
-#include <QGeoCoordinate.h>
+#include <QGeoCoordinate>
 
 class AirspaceRulesetsProvider : public QObject {
     Q_OBJECT

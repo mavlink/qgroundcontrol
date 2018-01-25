@@ -7,11 +7,13 @@
  *
  ****************************************************************************/
 
-#include "AirMapManager.h"
 #include "AirspaceController.h"
-#include "AirspaceManagement.h"
+#include "AirspaceManager.h"
+#include "AirspaceWeatherInfoProvider.h"
+
 #include "QGCApplication.h"
 #include "QGCQGeoCoordinate.h"
+#include "QmlObjectListModel.h"
 
 AirspaceController::AirspaceController(QObject* parent)
     : QObject(parent)
@@ -19,7 +21,32 @@ AirspaceController::AirspaceController(QObject* parent)
 {
 }
 
-void AirspaceController::setROI(QGeoCoordinate center, double radius)
+void
+AirspaceController::setROI(QGeoCoordinate center, double radius)
 {
     _manager->setROI(center, radius);
+}
+
+QmlObjectListModel*
+AirspaceController::polygons()
+{
+    return _manager->polygonRestrictions();
+}
+
+QmlObjectListModel*
+AirspaceController::circles()
+{
+    return _manager->circularRestrictions();
+}
+
+QString
+AirspaceController::providerName()
+{
+    return _manager->name();
+}
+
+AirspaceWeatherInfoProvider*
+AirspaceController::weatherInfo()
+{
+    return _manager->weatherInfo();
 }

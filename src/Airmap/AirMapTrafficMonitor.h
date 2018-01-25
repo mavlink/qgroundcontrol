@@ -9,8 +9,16 @@
 
 #pragma once
 
+#include "LifetimeChecker.h"
+
 #include <QObject>
-#include "AirMapManager.h"
+#include <QGeoCoordinate>
+
+#include "airmap/traffic.h"
+
+#include <memory>
+
+class AirMapSharedState;
 
 /**
  * @class AirMapTrafficMonitor

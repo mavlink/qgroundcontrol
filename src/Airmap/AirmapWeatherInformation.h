@@ -9,12 +9,12 @@
 
 #pragma once
 
-#include <QObject>
+#include "LifetimeChecker.h"
+
+#include "AirspaceWeatherInfoProvider.h"
+
 #include <QGeoCoordinate>
 #include <QTime>
-
-#include "AirMapManager.h"
-#include "AirspaceWeatherInfoProvider.h"
 
 /**
  * @file AirMapWeatherInformation.h
@@ -24,7 +24,6 @@
 class AirMapWeatherInformation : public AirspaceWeatherInfoProvider, public LifetimeChecker
 {
     Q_OBJECT
-    friend class AirMapManager;
 public:
     AirMapWeatherInformation(AirMapSharedState &shared, QObject *parent = nullptr);
 

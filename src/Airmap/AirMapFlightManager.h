@@ -9,10 +9,10 @@
 
 #pragma once
 
+#include "LifetimeChecker.h"
+
 #include <QObject>
 #include <QTimer>
-
-#include "AirMapManager.h"
 
 //-----------------------------------------------------------------------------
 /// class to upload a flight

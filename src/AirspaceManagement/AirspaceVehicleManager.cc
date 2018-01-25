@@ -8,13 +8,14 @@
  ****************************************************************************/
 
 
-#include "AirspaceManagement.h"
-#include <Vehicle.h>
+#include "AirspaceManager.h"
+#include "Vehicle.h"
+#include "MissionItem.h"
 
 AirspaceVehicleManager::AirspaceVehicleManager(const Vehicle& vehicle)
     : _vehicle(vehicle)
 {
-    connect(&_vehicle, &Vehicle::armedChanged, this, &AirspaceVehicleManager::_vehicleArmedChanged);
+    connect(&_vehicle, &Vehicle::armedChanged,           this, &AirspaceVehicleManager::_vehicleArmedChanged);
     connect(&_vehicle, &Vehicle::mavlinkMessageReceived, this, &AirspaceVehicleManager::vehicleMavlinkMessageReceived);
 }
 

@@ -21,7 +21,7 @@
 #include "UASMessageHandler.h"
 #include "SettingsFact.h"
 #if defined(QGC_AIRMAP_ENABLED)
-#include "AirspaceManagement.h"
+#include "AirspaceManager.h"
 #include "AirspaceVehicleManager.h"
 #endif
 

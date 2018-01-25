@@ -11,6 +11,7 @@
 
 #include <QObject>
 #include <QGeoCoordinate>
+#include <QVariantList>
 
 /**
  * @class AirspaceRestriction

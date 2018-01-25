@@ -14,7 +14,7 @@
 #include <QGeoCoordinate>
 
 #if defined(QGC_AIRMAP_ENABLED)
-#include "AirspaceManagement.h"
+#include "AirspaceManager.h"
 #endif
 
 #include "QGCLoggingCategory.h"

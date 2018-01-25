@@ -9,9 +9,10 @@
 
 #pragma once
 
-#include <QObject>
-#include "AirspaceManagement.h"
+#include "AirspaceManager.h"
 #include "AirspaceVehicleManager.h"
+
+#include "QGCToolbox.h"
 
 /// AirMap per vehicle management class.
 

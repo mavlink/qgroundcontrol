@@ -7,11 +7,12 @@
  *
  ****************************************************************************/
 
-#include "AirMapManager.h"
 #include "AirMapVehicleManager.h"
+#include "AirMapSharedState.h"
 #include "AirMapFlightManager.h"
 #include "AirMapTelemetry.h"
 #include "AirMapTrafficMonitor.h"
+#include "AirMapManager.h"
 
 #include "Vehicle.h"
 

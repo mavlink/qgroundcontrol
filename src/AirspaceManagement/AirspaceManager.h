@@ -10,7 +10,7 @@
 #pragma once
 
 /**
- * @file AirspaceManagement.h
+ * @file AirspaceManager.h
  * This file contains the interface definitions used by an airspace management implementation (AirMap).
  * There are 3 base classes that must be subclassed:
  * - AirspaceManager
@@ -23,16 +23,8 @@
  *   each vehicle could have its own restrictions.
  */
 
-#include "AirspaceController.h"
-#include "AirspaceRestrictionProvider.h"
-#include "AirspaceRulesetsProvider.h"
-#include "AirspaceVehicleManager.h"
-#include "AirspaceWeatherInfoProvider.h"
-
 #include "QGCToolbox.h"
 #include "QGCLoggingCategory.h"
-#include "QmlObjectListModel.h"
-#include "Vehicle.h"
 
 #include <QGeoCoordinate>
 #include <QObject>
@@ -40,6 +32,12 @@
 #include <QList>
 #include <QTimer>
 
+class Vehicle;
+class QGCApplication;
+class QmlObjectListModel;
+class AirspaceWeatherInfoProvider;
+class AirspaceRestrictionProvider;
+class AirspaceRulesetsProvider;
 
 Q_DECLARE_LOGGING_CATEGORY(AirspaceManagementLog)
 
