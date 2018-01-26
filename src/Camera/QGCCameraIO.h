@@ -67,7 +67,7 @@ private:
     QTimer              _paramRequestTimer;
     bool                _done;
     bool                _updateOnSet;
-    MAV_PARAM_TYPE      _mavParamType;
+    MAV_PARAM_EXT_TYPE  _mavParamType;
     MAVLinkProtocol*    _pMavlink;
     bool                _forceUIUpdate;
 };
