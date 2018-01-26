@@ -806,7 +806,7 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
                     metaData->setRawUnits(attr);
                 }
             }
-            qCDebug(CameraControlLog) << "New parameter:" << factName;
+            qCDebug(CameraControlLog) << "New parameter:" << factName << (readOnly ? "ReadOnly" : "Writable") << (writeOnly ? "WriteOnly" : "Readable");
             _nameToFactMetaDataMap[factName] = metaData;
             Fact* pFact = new Fact(_compID, factName, factType, this);
             QQmlEngine::setObjectOwnership(pFact, QQmlEngine::CppOwnership);
