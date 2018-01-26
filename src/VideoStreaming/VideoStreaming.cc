@@ -155,6 +155,8 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
 #else
     Q_UNUSED(argc);
     Q_UNUSED(argv);
+    Q_UNUSED(logpath);
+    Q_UNUSED(debuglevel);
 #endif
     qmlRegisterType<VideoItem>              ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoItem");
     qmlRegisterUncreatableType<VideoSurface>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface", QLatin1String("VideoSurface from QML is not supported"));
