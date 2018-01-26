@@ -491,20 +491,21 @@ QGCView {
                         }
 
                         Row {
-                            width:    parent.width
-                            spacing:  ScreenTools.defaultFontPixelWidth
-                            visible:  !ScreenTools.isMobile
-                                      && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible
-                                      && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            spacing:                  ScreenTools.defaultFontPixelWidth
+                            visible:                  !ScreenTools.isMobile
+                                                      && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible
+                                                      && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
 
                             QGCLabel {
                                 anchors.baseline: nmeaPortCombo.baseline
-                                text: qsTr("NMEA GPS Device:")
+                                text:             qsTr("NMEA GPS Device:")
+                                width:            _labelWidth
                             }
 
                             QGCComboBox {
                                 id:     nmeaPortCombo
-                                width:  parent.width/3
+                                width:  _editFieldWidth
                                 model:  ListModel {
                                             ListElement { text: "disabled" }
                                         }
@@ -522,15 +523,22 @@ QGCView {
                                     nmeaPortCombo.currentIndex = index;
                                 }
                             }
-
+                        }
+                        Row {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            spacing:                  ScreenTools.defaultFontPixelWidth
+                            visible:                  !ScreenTools.isMobile
+                                                      && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible
+                                                      && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
                             QGCLabel {
                                 anchors.baseline: nmeaBaudCombo.baseline
-                                text: qsTr("NMEA GPS Baudrate:")
+                                text:             qsTr("NMEA GPS Baudrate:")
+                                width:            _labelWidth
                             }
 
                             QGCComboBox {
                                 id:     nmeaBaudCombo
-                                width:  parent.width/3
+                                width:  _editFieldWidth
                                 model:  [4800, 9600, 19200, 38400, 57600, 115200]
 
                                 onActivated: {

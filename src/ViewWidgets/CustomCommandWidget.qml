@@ -7,25 +7,25 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 import QtQuick                  2.3
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.4
 import QtQuick.Dialogs          1.2
 
+import QGroundControl               1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
 QGCView {
+    id:         qgcView
     viewPanel:  panel
 
-    property real   _margins:    ScreenTools.defaultFontPixelHeight
-    property string _emptyText:  "<p>" +
+    property var    _activeVehicle: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable ? QGroundControl.multiVehicleManager.activeVehicle : null
+    property real   _margins:       ScreenTools.defaultFontPixelHeight
+    property string _noVehicleText: qsTr("No vehicle connected")
+    property string _assignQmlFile: "<p>" +
         "You can create your own commands and parameter editing user interface in this widget. " +
         "You do this by providing your own Qml file. " +
         "This support is a work in progress and the details may change somewhat in the future. " +
@@ -34,29 +34,42 @@ QGCView {
         "So make sure to test your changes thoroughly before using them in flight.</p>" +
         "<p>Click 'Load Custom Qml file' to provide your custom qml file.</p>" +
         "<p>Click 'Reset' to reset to none.</p>" +
-        "<p>Example usage: http://www.qgroundcontrol.org/custom_command_qml_widgets</p>"
+        "<p>Example usage: http://https://dev.qgroundcontrol.com/en/tools/custom_command_widget.html</p>"
 
-    QGCPalette                      { id: qgcPal; colorGroupEnabled: enabled }
-    CustomCommandWidgetController   { id: controller; factPanel: panel }
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+
+    CustomCommandWidgetController {
+        id:         controller
+        factPanel:  panel
+
+        onCustomQmlFileChanged: _updateLoader()
+    }
+
+    Component.onCompleted: _updateLoader()
+
+    on_ActiveVehicleChanged: _updateLoader()
+
+    function _updateLoader() {
+        loader.sourceComponent = undefined
+        loader.visible = false
+        textOutput.text = _noVehicleText
+        if (_activeVehicle) {
+            if (controller.customQmlFile == "") {
+                textOutput.text = _assignQmlFile
+            } else {
+                loader.source = controller.customQmlFile
+            }
+        }
+    }
 
     QGCViewPanel {
         id:             panel
         anchors.fill:   parent
+
         Rectangle {
             anchors.fill:   parent
             color:          qgcPal.window
-            QGCLabel {
-                id:                 textOutput
-                anchors.margins:    _margins
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                anchors.top:        parent.top
-                anchors.bottom:     buttonRow.top
-                wrapMode:           Text.WordWrap
-                textFormat:         Text.RichText
-                text:               _emptyText
-                visible:            !loader.visible
-            }
+
             Loader {
                 id:                 loader
                 anchors.margins:    _margins
@@ -64,37 +77,42 @@ QGCView {
                 anchors.right:      parent.right
                 anchors.top:        parent.top
                 anchors.bottom:     buttonRow.top
-                source:             controller.customQmlFile
                 visible:            false
+
                 onStatusChanged: {
-                    loader.visible = true
                     if (loader.status == Loader.Error) {
-                        if (sourceComponent.status == Component.Error) {
-                            textOutput.text = sourceComponent.errorString()
-                            loader.visible = false
-                        }
+                        textOutput.text = sourceComponent.errorString()
+                    } else if (loader.status == Loader.Ready) {
+                        loader.visible = true
                     }
                 }
             }
+
+            QGCLabel {
+                id:                 textOutput
+                anchors.fill:       loader
+                wrapMode:           Text.WordWrap
+                textFormat:         Text.RichText
+                visible:            !loader.visible
+            }
+
             Row {
                 id:                 buttonRow
                 spacing:            ScreenTools.defaultFontPixelWidth
                 anchors.margins:    _margins
                 anchors.bottom:     parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
+
                 QGCButton {
                     text:       qsTr("Load Custom Qml file...")
                     width:      ScreenTools.defaultFontPixelWidth * 22
                     onClicked:  controller.selectQmlFile()
                 }
+
                 QGCButton {
                     text:       qsTr("Reset")
                     width:      ScreenTools.defaultFontPixelWidth * 22
-                    onClicked: {
-                        controller.clearQmlFile()
-                        loader.visible  = false
-                        textOutput.text = _emptyText
-                    }
+                    onClicked:  controller.clearQmlFile()
                 }
             }
         }

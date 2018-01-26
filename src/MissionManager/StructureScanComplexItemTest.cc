@@ -81,13 +81,6 @@ void StructureScanComplexItemTest::_testDirty(void)
     QVERIFY(_multiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
     _structureScanItem->setDirty(false);
     _multiSpy->clearAllSignals();
-
-    QVERIFY(!_structureScanItem->dirty());
-    _structureScanItem->setYawVehicleToStructure(!_structureScanItem->yawVehicleToStructure());
-    QVERIFY(_multiSpy->checkSignalByMask(dirtyChangedMask));
-    QVERIFY(_multiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
-    _structureScanItem->setDirty(false);
-    _multiSpy->clearAllSignals();
 }
 
 void StructureScanComplexItemTest::_initItem(void)
