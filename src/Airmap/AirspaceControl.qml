@@ -228,6 +228,7 @@ Item {
                                     color:                  _colorGray
                                     anchors.verticalCenter: parent.verticalCenter
                                     QGCColoredImage {
+                                        id:                 pencilIcon
                                         width:              height
                                         height:             parent.height * 0.5
                                         sourceSize.height:  height
@@ -301,6 +302,7 @@ Item {
             color:      Qt.rgba(0,0,0,0.1)
             MouseArea {
                 anchors.fill:   parent
+                onWheel:   { wheel.accepted = true; }
                 onClicked: {
                     mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
@@ -325,11 +327,12 @@ Item {
             }
             Rectangle {
                 id:                 ruleSelectorRect
+                x:                  0
+                y:                  0
                 color:              qgcPal.window
                 width:              rulesCol.width  + ScreenTools.defaultFontPixelWidth
                 height:             rulesCol.height + ScreenTools.defaultFontPixelHeight
                 radius:             ScreenTools.defaultFontPixelWidth
-                anchors.centerIn:   parent
                 Column {
                     id:             rulesCol
                     spacing:        ScreenTools.defaultFontPixelHeight * 0.5
@@ -388,8 +391,41 @@ Item {
                     }
                 }
             }
+            //-- Arrow
+            QGCColoredImage {
+                id:                 arrowIconShadow
+                anchors.fill:       arrowIcon
+                sourceSize.height:  height
+                source:             "qrc:/airmap/right-arrow.svg"
+                color:              qgcPal.window
+                visible:            false
+            }
+            DropShadow {
+                anchors.fill:       arrowIconShadow
+                visible:            ruleSelectorRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             arrowIconShadow
+            }
+            QGCColoredImage {
+                id:                 arrowIcon
+                width:              height
+                height:             ScreenTools.defaultFontPixelHeight * 2
+                sourceSize.height:  height
+                source:             "qrc:/airmap/right-arrow.svg"
+                color:              ruleSelectorRect.color
+                anchors.left:       ruleSelectorRect.right
+                anchors.top:        ruleSelectorRect.top
+                anchors.topMargin:  (ScreenTools.defaultFontPixelHeight * 4) - (height * 0.5) + (pencilIcon.height * 0.5)
+            }
             Component.onCompleted: {
                 mainWindow.disableToolbar()
+                var target = mainWindow.mapFromItem(pencilIcon, 0, 0)
+                ruleSelectorRect.x = target.x - ruleSelectorRect.width - (ScreenTools.defaultFontPixelWidth * 7)
+                ruleSelectorRect.y = target.y - (ScreenTools.defaultFontPixelHeight * 4)
             }
         }
     }

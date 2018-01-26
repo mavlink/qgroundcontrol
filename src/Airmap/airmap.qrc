@@ -14,6 +14,7 @@
         <file alias="colapse.svg">images/colapse.svg</file>
         <file alias="expand.svg">images/expand.svg</file>
         <file alias="pencil.svg">images/pencil.svg</file>
+        <file alias="right-arrow.svg">images/right-arrow.svg</file>
     </qresource>
     <qresource prefix="/airmapweather">
         <file alias="clear.svg">images/weather-icons/clear.svg</file>
@@ -45,6 +46,7 @@
         <file alias="sunny.svg">images/weather-icons/sunny.svg</file>
         <file alias="thunderstorm.svg">images/weather-icons/thunderstorm.svg</file>
         <file alias="tornado.svg">images/weather-icons/tornado.svg</file>
+        <file alias="unknown.svg">images/weather-icons/unknown.svg</file>
         <file alias="windy.svg">images/weather-icons/windy.svg</file>
     </qresource>
 </RCC>
