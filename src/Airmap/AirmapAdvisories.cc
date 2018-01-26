@@ -14,6 +14,14 @@
 
 using namespace airmap;
 
+//-----------------------------------------------------------------------------
+AirMapAdvisory::AirMapAdvisory(QObject* parent)
+    : AirspaceAdvisory(parent)
+    , _radius(0.0)
+{
+}
+
+//-----------------------------------------------------------------------------
 AirMapAdvisories::AirMapAdvisories(AirMapSharedState& shared, QObject *parent)
     : AirspaceAdvisoryProvider(parent)
     , _valid(false)
@@ -21,6 +29,7 @@ AirMapAdvisories::AirMapAdvisories(AirMapSharedState& shared, QObject *parent)
 {
 }
 
+//-----------------------------------------------------------------------------
 void
 AirMapAdvisories::setROI(const QGeoCoordinate& center, double radiusMeters)
 {
@@ -31,6 +40,17 @@ AirMapAdvisories::setROI(const QGeoCoordinate& center, double radiusMeters)
     }
 }
 
+//-----------------------------------------------------------------------------
+static bool
+adv_sort(QObject* a, QObject* b)
+{
+    AirMapAdvisory* aa = qobject_cast<AirMapAdvisory*>(a);
+    AirMapAdvisory* bb = qobject_cast<AirMapAdvisory*>(b);
+    if(!aa || !bb) return false;
+    return aa->color() > bb->color();
+}
+
+//-----------------------------------------------------------------------------
 void
 AirMapAdvisories::_requestAdvisories(const QGeoCoordinate& coordinate, double radiusMeters)
 {
@@ -41,8 +61,8 @@ AirMapAdvisories::_requestAdvisories(const QGeoCoordinate& coordinate, double ra
         emit advisoryChanged();
         return;
     }
-    _advisories.clear();
     _valid = false;
+    _airspaces.clearAndDeleteContents();
     Status::GetStatus::Parameters params;
     params.longitude = coordinate.longitude();
     params.latitude  = coordinate.latitude();
@@ -50,16 +70,27 @@ AirMapAdvisories::_requestAdvisories(const QGeoCoordinate& coordinate, double ra
     params.buffer    = radiusMeters;
     _shared.client()->status().get_status_by_point(params, [this, coordinate](const Status::GetStatus::Result& result) {
         if (result) {
-            qCDebug(AirMapManagerLog) << _advisories.size() << "Advisories Received";
-            _advisories     = result.value().advisories;
-            _advisory_color = result.value().advisory_color;
-            if(_advisories.size()) {
-                _valid = true;
-                qCDebug(AirMapManagerLog) << "Advisory Info: " << _advisories.size() << _advisories[0].airspace.name().data();
+            qCDebug(AirMapManagerLog) << "Successful advisory search. Items:" << result.value().advisories.size();
+            _airspaceColor = (AirspaceAdvisoryProvider::AdvisoryColor)(int)result.value().advisory_color;
+            const std::vector<Status::Advisory> advisories = result.value().advisories;
+            for (const auto& advisory : advisories) {
+                AirMapAdvisory* pAdvisory = new AirMapAdvisory(this);
+                pAdvisory->_id          = QString::fromStdString(advisory.airspace.id());
+                pAdvisory->_name        = QString::fromStdString(advisory.airspace.name());
+                pAdvisory->_type        = (AirspaceAdvisory::AdvisoryType)(int)advisory.airspace.type();
+                pAdvisory->_color       = (AirspaceAdvisoryProvider::AdvisoryColor)(int)advisory.color;
+                //-- TODO: Add airspace center coordinates and radius (easy to get from Json but
+                //   I have no idea how to get it from airmap::Airspace.)
+                // pAdvisory->_coordinates = QGeoCoordinate( something );
+                // pAdvisory->_radius = something ;
+                _airspaces.append(pAdvisory);
+                qCDebug(AirMapManagerLog) << "Adding advisory" << pAdvisory->name();
             }
+            //-- Sort in order of color (priority)
+            std::sort(_airspaces.objectList()->begin(), _airspaces.objectList()->end(), adv_sort);
+            _valid = true;
         } else {
             qCDebug(AirMapManagerLog) << "Advisories Request Failed";
-            _valid = false;
         }
         emit advisoryChanged();
     });

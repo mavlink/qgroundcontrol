@@ -3,3 +3,4 @@ Module QGroundControl.Airmap
 AirspaceControl         1.0 AirspaceControl.qml
 AirspaceRegulation      1.0 AirspaceRegulation.qml
 AirspaceWeather         1.0 AirspaceWeather.qml
+RuleSelector            1.0 RuleSelector.qml

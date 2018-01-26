@@ -27,9 +27,9 @@ class AirspaceRule : public QObject
 public:
 
     enum SelectionType {
-      pickone,              ///< One rule from the overall set needs to be picked.
-      required,             ///< Satisfying the RuleSet is required.
-      optional              ///< Satisfying the RuleSet is not required.
+      Pickone,              ///< One rule from the overall set needs to be picked.
+      Required,             ///< Satisfying the RuleSet is required.
+      Optional              ///< Satisfying the RuleSet is not required.
     };
 
     Q_ENUM(SelectionType)
@@ -38,15 +38,24 @@ public:
 
     Q_PROPERTY(QString          id              READ id             CONSTANT)
     Q_PROPERTY(QString          name            READ name           CONSTANT)
+    Q_PROPERTY(QString          shortName       READ shortName      CONSTANT)
     Q_PROPERTY(QString          description     READ description    CONSTANT)
     Q_PROPERTY(bool             isDefault       READ isDefault      CONSTANT)
     Q_PROPERTY(SelectionType    selectionType   READ selectionType  CONSTANT)
+    Q_PROPERTY(bool             selected        READ selected       WRITE setSelected   NOTIFY selectedChanged)
 
     virtual QString         id              () = 0;
     virtual QString         description     () = 0;
     virtual bool            isDefault       () = 0;
     virtual QString         name            () = 0;
+    virtual QString         shortName       () = 0;
     virtual SelectionType   selectionType   () = 0;
+    virtual bool            selected        () = 0;
+    virtual void            setSelected     (bool sel) = 0;
+
+signals:
+    void    selectedChanged                 ();
+
 };
 
 //-----------------------------------------------------------------------------
