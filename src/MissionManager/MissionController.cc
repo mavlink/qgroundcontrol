@@ -189,9 +189,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
             _addMissionSettings(_visualItems, _editMode && _visualItems->count() > 0 /* addToCenter */);
         }
 
-        if (_editMode) {
-            MissionController::_scanForAdditionalSettings(_visualItems, _controllerVehicle);
-        }
+        MissionController::_scanForAdditionalSettings(_visualItems, _controllerVehicle);
 
         _initAllVisualItems();
         _updateContainsItems();
@@ -290,14 +288,14 @@ void MissionController::convertToKMLDocument(QDomDocument& document)
             continue;
         }
         const MissionCommandUIInfo* uiInfo = \
-            qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_controllerVehicle, item->command());
+                qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_controllerVehicle, item->command());
 
         if (uiInfo && uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
             coord = QString::number(item->param6(),'f',7) \
-                + "," \
-                + QString::number(item->param5(),'f',7) \
-                + "," \
-                + QString::number(item->param7() + altitude,'f',2);
+                    + "," \
+                    + QString::number(item->param5(),'f',7) \
+                    + "," \
+                    + QString::number(item->param7() + altitude,'f',2);
             coords.append(coord);
         }
     }
@@ -366,10 +364,12 @@ int MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int i)
     int sequenceNumber = _nextSequenceNumber();
     SimpleMissionItem * newItem = new SimpleMissionItem(_controllerVehicle, this);
     newItem->setSequenceNumber(sequenceNumber);
-    newItem->setCoordinate(coordinate);
-    newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_DO_SET_ROI);
+    newItem->setCommand((MavlinkQmlSingleton::Qml_MAV_CMD)(_controllerVehicle->firmwarePlugin()->supportedMissionCommands().contains((MAV_CMD)MAV_CMD_DO_SET_ROI_LOCATION) ?
+        MAV_CMD_DO_SET_ROI_LOCATION :
+        MAV_CMD_DO_SET_ROI));
     _initVisualItem(newItem);
     newItem->setDefaultsForCommand();
+    newItem->setCoordinate(coordinate);
 
     double      prevAltitude;
     MAV_FRAME   prevFrame;
@@ -1783,8 +1783,10 @@ void MissionController::setDirty(bool dirty)
 
 void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualItems, Vehicle* vehicle)
 {
-    // First we look for a Fixed Wing Landing Pattern which is at the end
-    FixedWingLandingComplexItem::scanForItem(visualItems, vehicle);
+    if (_editMode) {
+        // First we look for a Fixed Wing Landing Pattern which is at the end
+        FixedWingLandingComplexItem::scanForItem(visualItems, vehicle);
+    }
 
     int scanIndex = 0;
     while (scanIndex < visualItems->count()) {
@@ -1792,11 +1794,13 @@ void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualIte
 
         qCDebug(MissionControllerLog) << "MissionController::_scanForAdditionalSettings count:scanIndex" << visualItems->count() << scanIndex;
 
-        MissionSettingsItem* settingsItem = qobject_cast<MissionSettingsItem*>(visualItem);
-        if (settingsItem) {
-            scanIndex++;
-            settingsItem->scanForMissionSettings(visualItems, scanIndex);
-            continue;
+        if (_editMode) {
+            MissionSettingsItem* settingsItem = qobject_cast<MissionSettingsItem*>(visualItem);
+            if (settingsItem) {
+                scanIndex++;
+                settingsItem->scanForMissionSettings(visualItems, scanIndex);
+                continue;
+            }
         }
 
         SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);

@@ -314,7 +314,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
         typedValue = QVariant(rawValue.toInt(&convertOk));
         if (!convertOnly && convertOk) {
             if (typedValue < rawMin() || typedValue > rawMax()) {
-                errorString = tr("Value must be within %1 and %2").arg(cookedMin().toInt()).arg(cookedMax().toInt());
+                errorString = tr("Value must be within %1 and %2").arg(rawMin().toInt()).arg(rawMax().toInt());
             }
         }
         break;
@@ -324,7 +324,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
         typedValue = QVariant(rawValue.toUInt(&convertOk));
         if (!convertOnly && convertOk) {
             if (typedValue < rawMin() || typedValue > rawMax()) {
-                errorString = tr("Value must be within %1 and %2").arg(cookedMin().toUInt()).arg(cookedMax().toUInt());
+                errorString = tr("Value must be within %1 and %2").arg(rawMin().toUInt()).arg(rawMax().toUInt());
             }
         }
         break;
@@ -332,7 +332,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
         typedValue = QVariant(rawValue.toFloat(&convertOk));
         if (!convertOnly && convertOk) {
             if (typedValue < rawMin() || typedValue > rawMax()) {
-                errorString = tr("Value must be within %1 and %2").arg(cookedMin().toFloat()).arg(cookedMax().toFloat());
+                errorString = tr("Value must be within %1 and %2").arg(rawMin().toFloat()).arg(rawMax().toFloat());
             }
         }
         break;
@@ -341,7 +341,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
         typedValue = QVariant(rawValue.toDouble(&convertOk));
         if (!convertOnly && convertOk) {
             if (typedValue < rawMin() || typedValue > rawMax()) {
-                errorString = tr("Value must be within %1 and %2").arg(cookedMin().toDouble()).arg(cookedMax().toDouble());
+                errorString = tr("Value must be within %1 and %2").arg(rawMin().toDouble()).arg(rawMax().toDouble());
             }
         }
         break;
