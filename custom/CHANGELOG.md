@@ -1,5 +1,11 @@
 ## DataPilot Release Changelog
 
+### v1.2.39 - Jan 26 2018
+
+*   Hide eleveation data from Plan View (not enough room)
+*   Allow editing RTH altitude when armed
+*   Bringing changes from upstream
+
 ### v1.2.38 - Jan 22 2018
 
 *   Add list of missions to select what to sync (Remote Sync)
