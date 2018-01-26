@@ -90,7 +90,7 @@ public:
     QmlObjectListModel* circularRestrictions    () { return &_circleRestrictions;  }
     AirspaceWeatherInfoProvider* weatherInfo    () { return _weatherProvider; }
     AirspaceAdvisoryProvider*    advisories     () { return _advisories; }
-    AirspaceRulesetsProvider*    rules          () { return _rulesetsProvider; }
+    AirspaceRulesetsProvider*    rulesets       () { return _rulesetsProvider; }
 
     void setToolbox(QGCToolbox* toolbox) override;
 

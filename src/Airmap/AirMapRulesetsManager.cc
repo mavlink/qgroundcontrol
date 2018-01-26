@@ -37,6 +37,9 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
         return;
     }
     qCDebug(AirMapManagerLog) << "Setting ROI for Rulesets";
+    _defaultIndex = 0;
+    _currentIndex = 0;
+    _valid = false;
     _rules.clearAndDeleteContents();
     _state = State::RetrieveItems;
     RuleSets::Search::Parameters params;
@@ -48,14 +51,33 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
         if (_state != State::RetrieveItems) return;
         if (result) {
             const std::vector<RuleSet> rules = result.value();
-            qCDebug(AirMapManagerLog)<<"Successful rulesets search. Items:" << rules.size();
+            qCDebug(AirMapManagerLog) << "Successful rulesets search. Items:" << rules.size();
             for (const auto& ruleset : rules) {
                 AirMapRule* pRule = new AirMapRule(this);
                 pRule->_id          = QString::fromStdString(ruleset.id);
                 pRule->_name        = QString::fromStdString(ruleset.short_name);
                 pRule->_description = QString::fromStdString(ruleset.description);
                 pRule->_isDefault   = ruleset.is_default;
+                if(pRule->_isDefault) {
+                    _defaultIndex = _rules.count();
+                    //-- TODO: This should be persistent and if the new incoming set has this
+                    //   rule, it should point to it.
+                    _currentIndex = _defaultIndex;
+                }
+                switch(ruleset.selection_type) {
+                case RuleSet::SelectionType::pickone:
+                    pRule->_selectionType = AirspaceRule::pickone;
+                    break;
+                case RuleSet::SelectionType::required:
+                    pRule->_selectionType = AirspaceRule::required;
+                    break;
+                default:
+                case RuleSet::SelectionType::optional:
+                    pRule->_selectionType = AirspaceRule::optional;
+                    break;
+                }
                 _rules.append(pRule);
+                qCDebug(AirMapManagerLog) << "Adding rule" << pRule->name();
                 /*
                 qDebug() << "------------------------------------------";
                 qDebug() << "Jurisdiction:" << ruleset.jurisdiction.name.data() << (int)ruleset.jurisdiction.region;
@@ -83,12 +105,36 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
                 }
                 */
             }
+            _valid = true;
         } else {
             QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
-            emit error("Failed to retrieve RuleSets",
-                    QString::fromStdString(result.error().message()), description);
+            emit error("Failed to retrieve RuleSets", QString::fromStdString(result.error().message()), description);
         }
         _state = State::Idle;
         emit rulesChanged();
     });
+}
+
+//-----------------------------------------------------------------------------
+QString
+AirMapRulesetsManager::defaultRule()
+{
+    if(_defaultIndex < _rules.count()) {
+        AirMapRule* rule = qobject_cast<AirMapRule*>(_rules.get(_defaultIndex));
+        if(rule) {
+            return rule->name();
+        }
+    }
+    return QString();
+}
+
+//-----------------------------------------------------------------------------
+void
+AirMapRulesetsManager::setCurrentIndex(int index)
+{
+    _currentIndex = index;
+    //-- TODO: Do whatever it is you do to select a rule
+
+
+    emit currentIndexChanged();
 }
