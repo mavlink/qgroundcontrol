@@ -3269,7 +3269,7 @@ but also ignore less noise</short_desc>
       <decimal>3</decimal>
       <scope>modules/landing_target_estimator</scope>
     </parameter>
-    <parameter default="1.0" name="LTEST_VEL_UNC_IN" type="FLOAT">
+    <parameter default="0.1" name="LTEST_VEL_UNC_IN" type="FLOAT">
       <short_desc>Initial landing target velocity uncertainty</short_desc>
       <long_desc>Initial variance of the relative landing target velocity in x and y direction</long_desc>
       <min>0.001</min>
