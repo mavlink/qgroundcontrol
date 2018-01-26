@@ -30,7 +30,7 @@ public:
     Q_PROPERTY(QString                      providerName    READ providerName   CONSTANT)
     Q_PROPERTY(AirspaceWeatherInfoProvider* weatherInfo     READ weatherInfo    CONSTANT)
     Q_PROPERTY(AirspaceAdvisoryProvider*    advisories      READ advisories     CONSTANT)
-    Q_PROPERTY(AirspaceRulesetsProvider*    rules           READ rules          CONSTANT)
+    Q_PROPERTY(AirspaceRulesetsProvider*    rulesets        READ rulesets       CONSTANT)
 
     Q_INVOKABLE void setROI                 (QGeoCoordinate center, double radius);
 
@@ -39,7 +39,7 @@ public:
     QString                         providerName();
     AirspaceWeatherInfoProvider*    weatherInfo ();
     AirspaceAdvisoryProvider*       advisories  ();
-    AirspaceRulesetsProvider*       rules       ();
+    AirspaceRulesetsProvider*       rulesets    ();
 
 private:
     AirspaceManager*    _manager;

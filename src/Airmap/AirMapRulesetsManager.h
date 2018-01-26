@@ -29,15 +29,17 @@ class AirMapRule : public AirspaceRule
     friend class AirMapRulesetsManager;
 public:
     AirMapRule                  (QObject* parent = NULL);
-    QString     id              () override { return _id; }
-    QString     description     () override { return _description; }
-    bool        isDefault       () override { return _isDefault; }
-    QString     name            () override { return _name; }
+    QString         id              () override { return _id; }
+    QString         description     () override { return _description; }
+    bool            isDefault       () override { return _isDefault; }
+    QString         name            () override { return _name; }
+    SelectionType   selectionType   () override { return _selectionType; }
 private:
-    QString     _id;
-    QString     _description;
-    bool        _isDefault;
-    QString     _name;
+    QString         _id;
+    QString         _description;
+    bool            _isDefault;
+    QString         _name;
+    SelectionType   _selectionType;
 };
 
 //-----------------------------------------------------------------------------
@@ -47,9 +49,14 @@ class AirMapRulesetsManager : public AirspaceRulesetsProvider, public LifetimeCh
 public:
     AirMapRulesetsManager       (AirMapSharedState& shared);
 
-    bool                valid  () override { return _valid; }
-    QmlObjectListModel* rules  () override { return &_rules; }
-    void                setROI (const QGeoCoordinate& center) override;
+    bool                valid       () override { return _valid; }
+    QmlObjectListModel* rules       () override { return &_rules; }
+    QString             defaultRule () override;
+    int                 defaultIndex() override { return _defaultIndex; }
+    int                 currentIndex() override { return _currentIndex; }
+    void             setCurrentIndex(int index) override;
+
+    void                setROI      (const QGeoCoordinate& center) override;
 
 signals:
     void        error           (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
@@ -59,6 +66,8 @@ private:
         Idle,
         RetrieveItems,
     };
+    int                             _defaultIndex;
+    int                             _currentIndex;
     bool                            _valid;
     State                           _state = State::Idle;
     AirMapSharedState&              _shared;

@@ -76,14 +76,12 @@ void AirspaceManager::setROI(const QGeoCoordinate& center, double radiusMeters)
 
 void AirspaceManager::_updateToROI()
 {
-    /*
     if (_restrictionsProvider) {
         _restrictionsProvider->setROI(_roiCenter, _roiRadius);
     }
     if(_rulesetsProvider) {
         _rulesetsProvider->setROI(_roiCenter);
     }
-    */
     if(_weatherProvider) {
         _weatherProvider->setROI(_roiCenter);
     }
