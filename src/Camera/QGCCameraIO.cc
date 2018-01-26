@@ -28,8 +28,13 @@ QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicl
     _paramWriteTimer.setInterval(3000);
     _paramRequestTimer.setSingleShot(true);
     _paramRequestTimer.setInterval(3500);
+    if(_fact->writeOnly()) {
+        //-- Write mode is always "done" as it won't ever read
+        _done = true;
+    } else {
+        connect(&_paramRequestTimer, &QTimer::timeout, this, &QGCCameraParamIO::_paramRequestTimeout);
+    }
     connect(&_paramWriteTimer,   &QTimer::timeout, this, &QGCCameraParamIO::_paramWriteTimeout);
-    connect(&_paramRequestTimer, &QTimer::timeout, this, &QGCCameraParamIO::_paramRequestTimeout);
     connect(_fact, &Fact::rawValueChanged, this, &QGCCameraParamIO::_factChanged);
     connect(_fact, &Fact::_containerRawValueChanged, this, &QGCCameraParamIO::_containerRawValueChanged);
     _pMavlink = qgcApp()->toolbox()->mavlinkProtocol();
@@ -73,9 +78,11 @@ QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicl
 void
 QGCCameraParamIO::setParamRequest()
 {
-    _paramRequestReceived = false;
-    _requestRetries = 0;
-    _paramRequestTimer.start();
+    if(!_fact->writeOnly()) {
+        _paramRequestReceived = false;
+        _requestRetries = 0;
+        _paramRequestTimer.start();
+    }
 }
 
 //-----------------------------------------------------------------------------
