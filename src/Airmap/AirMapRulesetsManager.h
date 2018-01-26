@@ -33,12 +33,17 @@ public:
     QString         description     () override { return _description; }
     bool            isDefault       () override { return _isDefault; }
     QString         name            () override { return _name; }
+    QString         shortName       () override { return _shortName; }
     SelectionType   selectionType   () override { return _selectionType; }
+    bool            selected        () override { return _selected; }
+    void            setSelected     (bool sel) override { _selected = sel; emit selectedChanged(); }
 private:
     QString         _id;
     QString         _description;
     bool            _isDefault;
+    bool            _selected;
     QString         _name;
+    QString         _shortName;
     SelectionType   _selectionType;
 };
 

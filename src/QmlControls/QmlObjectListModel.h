@@ -31,21 +31,22 @@ public:
 
     // Property accessors
     
-    int count(void) const;
-    
-    bool dirty(void) const { return _dirty; }
-    void setDirty(bool dirty);
-    
-    void append(QObject* object);
-    QObjectList swapObjectList(const QObjectList& newlist);
-    void clear(void);
-    QObject* removeAt(int i);
-    QObject* removeOne(QObject* object) { return removeAt(indexOf(object)); }
-    void insert(int i, QObject* object);
-    QObject* operator[](int i);
-    const QObject* operator[](int i) const;
-    bool contains(QObject* object) { return _objectList.indexOf(object) != -1; }
-    int indexOf(QObject* object) { return _objectList.indexOf(object); }
+    int             count               (void) const;
+    bool            dirty               (void) const { return _dirty; }
+    void            setDirty            (bool dirty);
+    void            append              (QObject* object);
+    QObjectList     swapObjectList      (const QObjectList& newlist);
+    void            clear               (void);
+    QObject*        removeAt            (int i);
+    QObject*        removeOne           (QObject* object) { return removeAt(indexOf(object)); }
+    void            insert              (int i, QObject* object);
+    QObject*        operator[]          (int i);
+    const QObject*  operator[]          (int i) const;
+    bool            contains            (QObject* object) { return _objectList.indexOf(object) != -1; }
+    int             indexOf             (QObject* object) { return _objectList.indexOf(object); }
+
+    QList<QObject*>* objectList         () { return &_objectList; }
+
     template<class T> T value(int index) { return qobject_cast<T>(_objectList[index]); }
 
     /// Calls deleteLater on all items and this itself.
@@ -55,11 +56,11 @@ public:
     void clearAndDeleteContents(void);
 
 signals:
-    void countChanged(int count);
-    void dirtyChanged(bool dirtyChanged);
+    void countChanged           (int count);
+    void dirtyChanged           (bool dirtyChanged);
     
 private slots:
-    void _childDirtyChanged(bool dirty);
+    void _childDirtyChanged     (bool dirty);
     
 private:
     // Overrides from QAbstractListModel

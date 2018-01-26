@@ -24,6 +24,7 @@ Item {
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   validRules:         _activeVehicle ? _activeVehicle.airspaceController.rulesets.valid : false
+    property bool   validAdvisories:    _activeVehicle ? _activeVehicle.airspaceController.advisories.valid : false
 
     readonly property real      _radius:            ScreenTools.defaultFontPixelWidth * 0.5
     readonly property color     _colorOrange:       "#d75e0d"
@@ -33,10 +34,20 @@ Item {
     readonly property color     _colorMidBrown:     "#3a322f"
     readonly property color     _colorYellow:       "#d7c61d"
     readonly property color     _colorWhite:        "#ffffff"
+    readonly property color     _colorRed:          "#aa1200"
+    readonly property color     _colorGreen:        "#125f00"
 
     QGCPalette {
         id: qgcPal
         colorGroupEnabled: enabled
+    }
+
+    function getAispaceColor(color) {
+        if(color === AirspaceAdvisoryProvider.Green)  return _colorGreen;
+        if(color === AirspaceAdvisoryProvider.Yellow) return _colorYellow;
+        if(color === AirspaceAdvisoryProvider.Orange) return _colorOrange;
+        if(color === AirspaceAdvisoryProvider.Red)    return _colorRed;
+        return _colorGray;
     }
 
     //---------------------------------------------------------------
@@ -45,7 +56,7 @@ Item {
         id:         colapsedRect
         width:      parent.width
         height:     colapsed ? colapsedRow.height + ScreenTools.defaultFontPixelHeight : 0
-        color:      _colorOrange
+        color:      validAdvisories ? getAispaceColor(_activeVehicle.airspaceController.advisories.airspaceColor) : _colorGray
         radius:     _radius
         visible:    colapsed
         Row {
@@ -98,9 +109,15 @@ Item {
         id:         expandedRect
         width:      parent.width
         height:     !colapsed ? expandedCol.height + ScreenTools.defaultFontPixelHeight : 0
-        color:      _colorOrange
+        color:      validAdvisories ? getAispaceColor(_activeVehicle.airspaceController.advisories.airspaceColor) : _colorGray
         radius:     _radius
         visible:    !colapsed
+        MouseArea {
+            anchors.fill:   parent
+            onWheel:        { wheel.accepted = true; }
+            onPressed:      { mouse.accepted = true; }
+            onReleased:     { mouse.accepted = true; }
+        }
         Column {
             id:                     expandedCol
             spacing:                ScreenTools.defaultFontPixelHeight * 0.5
@@ -133,8 +150,9 @@ Item {
                             color:              _colorWhite
                         }
                         QGCLabel {
-                            text:               qsTr("3 Advisories")
+                            text:               validAdvisories ? _activeVehicle.airspaceController.advisories.airspaces.count + qsTr(" Advisories") : ""
                             color:              _colorWhite
+                            visible:            validAdvisories
                             font.pointSize:     ScreenTools.smallFontPointSize
                         }
                     }
@@ -261,25 +279,33 @@ Item {
                             }
                         }
                     }
-                    AirspaceRegulation {
-                        regTitle:                   qsTr("Controlled Aispace (1)")
-                        regText:                    qsTr("Santa Monica Class D requires FAA Authorization, permissible below 100ft.")
-                        regColor:                   _colorOrange
-                        textColor:                  _colorWhite
-                        anchors.left:               parent.left
-                        anchors.leftMargin:         ScreenTools.defaultFontPixelWidth * 0.5
-                        anchors.right:              parent.right
-                        anchors.rightMargin:        ScreenTools.defaultFontPixelWidth * 0.5
-                    }
-                    AirspaceRegulation {
-                        regTitle:                   qsTr("Schools (2)")
-                        regText:                    qsTr("Santa Monica School of Something.")
-                        regColor:                   _colorYellow
-                        textColor:                  _colorWhite
-                        anchors.left:               parent.left
-                        anchors.leftMargin:         ScreenTools.defaultFontPixelWidth * 0.5
-                        anchors.right:              parent.right
-                        anchors.rightMargin:        ScreenTools.defaultFontPixelWidth * 0.5
+                    Flickable {
+                        clip:               true
+                        height:             ScreenTools.defaultFontPixelHeight * 8
+                        contentHeight:      advisoryCol.height
+                        flickableDirection: Flickable.VerticalFlick
+                        anchors.left:       parent.left
+                        anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.5
+                        anchors.right:      parent.right
+                        anchors.rightMargin:ScreenTools.defaultFontPixelWidth * 0.5
+                        Column {
+                            id:             advisoryCol
+                            spacing:        ScreenTools.defaultFontPixelHeight * 0.5
+                            anchors.right:  parent.right
+                            anchors.left:   parent.left
+                            Repeater {
+                                model:      validAdvisories ? _activeVehicle.airspaceController.advisories.airspaces : []
+                                delegate: AirspaceRegulation {
+                                    regTitle:            object.typeStr
+                                    regText:             object.name
+                                    regColor:            getAispaceColor(object.color)
+                                    anchors.right:       parent.right
+                                    anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+                                    anchors.left:        parent.left
+                                    anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -358,33 +384,69 @@ Item {
                         flickableDirection: Flickable.VerticalFlick
                         Column {
                             id:         rulesetCol
-                            spacing:    ScreenTools.defaultFontPixelHeight * 0.5
+                            spacing:    ScreenTools.defaultFontPixelHeight * 0.25
                             anchors.right: parent.right
                             anchors.left:  parent.left
+                            anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * 2
+                            anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 2
+                            Item {
+                                width:  1
+                                height: 1
+                            }
                             QGCLabel {
-                                text:      qsTr("PICK ONE REGULATION")
+                                text:           qsTr("PICK ONE REGULATION")
                                 font.pointSize: ScreenTools.smallFontPointSize
-                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
                             }
                             Repeater {
-                                model:      validRules ? _activeVehicle.airspaceController.rulesets.rules : []
-                                delegate: Row {
-                                    spacing: ScreenTools.defaultFontPixelWidth
-                                    anchors.right: parent.right
+                                model:    validRules ? _activeVehicle.airspaceController.rulesets.rules : []
+                                delegate: RuleSelector {
+                                    visible:             object.selectionType === AirspaceRule.Pickone
+                                    rule:                object
+                                    anchors.right:       parent.right
                                     anchors.rightMargin: ScreenTools.defaultFontPixelWidth
-                                    anchors.left:  parent.left
+                                    anchors.left:        parent.left
                                     anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
-                                    Rectangle {
-                                        width:      ScreenTools.defaultFontPixelWidth * 0.75
-                                        height:     ScreenTools.defaultFontPixelHeight
-                                        color:      qgcPal.colorGreen
-                                        anchors.verticalCenter: parent.verticalCenter
-                                    }
-                                    QGCLabel {
-                                        text:  object.name
-                                        font.pointSize: ScreenTools.smallFontPointSize
-                                        anchors.verticalCenter: parent.verticalCenter
-                                    }
+                                }
+                            }
+                            Item {
+                                width:  1
+                                height: 1
+                            }
+                            QGCLabel {
+                                text:           qsTr("OPTIONAL")
+                                font.pointSize: ScreenTools.smallFontPointSize
+                                anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                            }
+                            Repeater {
+                                model:    validRules ? _activeVehicle.airspaceController.rulesets.rules : []
+                                delegate: RuleSelector {
+                                    visible:             object.selectionType === AirspaceRule.Optional
+                                    rule:                object
+                                    anchors.right:       parent.right
+                                    anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+                                    anchors.left:        parent.left
+                                    anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
+                                }
+                            }
+                            Item {
+                                width:  1
+                                height: 1
+                            }
+                            QGCLabel {
+                                text:           qsTr("REQUIRED")
+                                font.pointSize: ScreenTools.smallFontPointSize
+                                anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                            }
+                            Repeater {
+                                model:    validRules ? _activeVehicle.airspaceController.rulesets.rules : []
+                                delegate: RuleSelector {
+                                    visible:             object.selectionType === AirspaceRule.Required
+                                    rule:                object
+                                    anchors.right:       parent.right
+                                    anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+                                    anchors.left:        parent.left
+                                    anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
                                 }
                             }
                         }
