@@ -94,6 +94,7 @@ FactMetaData::FactMetaData(QObject* parent)
     , _increment            (std::numeric_limits<double>::quiet_NaN())
     , _hasControl           (true)
     , _readOnly             (false)
+    , _writeOnly            (false)
     , _volatile             (false)
 {
     _category   = kDefaultCategory;
@@ -116,6 +117,7 @@ FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
     , _increment            (std::numeric_limits<double>::quiet_NaN())
     , _hasControl           (true)
     , _readOnly             (false)
+    , _writeOnly            (false)
     , _volatile             (false)
 {
     _category   = kDefaultCategory;
@@ -145,6 +147,7 @@ FactMetaData::FactMetaData(ValueType_t type, const QString name, QObject* parent
     , _increment            (std::numeric_limits<double>::quiet_NaN())
     , _hasControl           (true)
     , _readOnly             (false)
+    , _writeOnly            (false)
     , _volatile             (false)
 {
     _category   = kDefaultCategory;
@@ -178,6 +181,7 @@ const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
     _increment              = other._increment;
     _hasControl             = other._hasControl;
     _readOnly               = other._readOnly;
+    _writeOnly              = other._writeOnly;
     _volatile               = other._volatile;
     return *this;
 }
