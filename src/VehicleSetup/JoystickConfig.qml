@@ -537,6 +537,21 @@ SetupPage {
                                     onClicked:  controller.deadbandToggle = checked
                                 }
                             }
+                            Row{
+                                width: parent.width
+                                spacing: ScreenTools.defaultFontPixelWidth
+                                visible: advancedSettings.checked
+                                QGCLabel{
+                                    width:       parent.width * 0.85
+                                    font.pointSize:     ScreenTools.smallFontPointSize
+                                    wrapMode:           Text.WordWrap
+                                    text:   qsTr("Deadband can be set during the first ") +
+                                            qsTr("step of calibration by gently wiggling each axis. ") +
+                                            qsTr("Deadband can also be adjusted by clicking and ") +
+                                            qsTr("dragging vertically on the corresponding axis monitor.")
+                                    visible: controller.deadbandToggle
+                                }
+                            }
                         }
                     } // Column - left column
 
