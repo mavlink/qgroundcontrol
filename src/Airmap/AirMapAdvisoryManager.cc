@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-#include "AirMapAdvisories.h"
+#include "AirMapAdvisoryManager.h"
 #include "AirMapManager.h"
 
 #define ADVISORY_UPDATE_DISTANCE    500     //-- 500m threshold for updates
@@ -22,7 +22,7 @@ AirMapAdvisory::AirMapAdvisory(QObject* parent)
 }
 
 //-----------------------------------------------------------------------------
-AirMapAdvisories::AirMapAdvisories(AirMapSharedState& shared, QObject *parent)
+AirMapAdvisoryManager::AirMapAdvisoryManager(AirMapSharedState& shared, QObject *parent)
     : AirspaceAdvisoryProvider(parent)
     , _valid(false)
     , _shared(shared)
@@ -31,7 +31,7 @@ AirMapAdvisories::AirMapAdvisories(AirMapSharedState& shared, QObject *parent)
 
 //-----------------------------------------------------------------------------
 void
-AirMapAdvisories::setROI(const QGeoCoordinate& center, double radiusMeters)
+AirMapAdvisoryManager::setROI(const QGeoCoordinate& center, double radiusMeters)
 {
     //-- If first time or we've moved more than ADVISORY_UPDATE_DISTANCE, ask for updates.
     if(!_lastRoiCenter.isValid() || _lastRoiCenter.distanceTo(center) > ADVISORY_UPDATE_DISTANCE) {
@@ -52,7 +52,7 @@ adv_sort(QObject* a, QObject* b)
 
 //-----------------------------------------------------------------------------
 void
-AirMapAdvisories::_requestAdvisories(const QGeoCoordinate& coordinate, double radiusMeters)
+AirMapAdvisoryManager::_requestAdvisories(const QGeoCoordinate& coordinate, double radiusMeters)
 {
     qCDebug(AirMapManagerLog) << "Advisories Request";
     if (!_shared.client()) {

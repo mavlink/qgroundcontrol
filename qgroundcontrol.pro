@@ -1092,7 +1092,7 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap
 
     HEADERS += \
-        src/Airmap/AirMapAdvisories.h \
+        src/Airmap/AirMapAdvisoryManager.h \
         src/Airmap/AirMapFlightManager.h \
         src/Airmap/AirMapManager.h \
         src/Airmap/AirMapRestrictionManager.h \
@@ -1102,11 +1102,11 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap/AirMapTelemetry.h \
         src/Airmap/AirMapTrafficMonitor.h \
         src/Airmap/AirMapVehicleManager.h \
-        src/Airmap/AirMapWeatherInformation.h \
+        src/Airmap/AirMapWeatherInfoManager.h \
         src/Airmap/LifetimeChecker.h \
 
     SOURCES += \
-        src/Airmap/AirMapAdvisories.cc \
+        src/Airmap/AirMapAdvisoryManager.cc \
         src/Airmap/AirMapFlightManager.cc \
         src/Airmap/AirMapManager.cc \
         src/Airmap/AirMapRestrictionManager.cc \
@@ -1116,7 +1116,7 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap/AirMapTelemetry.cc \
         src/Airmap/AirMapTrafficMonitor.cc \
         src/Airmap/AirMapVehicleManager.cc \
-        src/Airmap/AirMapWeatherInformation.cc \
+        src/Airmap/AirMapWeatherInfoManager.cc \
 
 } else {
     RESOURCES += \

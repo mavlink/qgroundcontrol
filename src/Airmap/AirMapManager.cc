@@ -8,8 +8,8 @@
  ****************************************************************************/
 
 #include "AirMapManager.h"
-#include "AirMapAdvisories.h"
-#include "AirMapWeatherInformation.h"
+#include "AirMapAdvisoryManager.h"
+#include "AirMapWeatherInfoManager.h"
 #include "AirMapRestrictionManager.h"
 #include "AirMapRulesetsManager.h"
 #include "AirMapSettings.h"
@@ -131,15 +131,15 @@ AirMapManager::instantiateRulesetsProvider()
 AirspaceWeatherInfoProvider*
 AirMapManager::instatiateAirspaceWeatherInfoProvider()
 {
-    AirMapWeatherInformation* weatherInfo = new AirMapWeatherInformation(_shared);
-    connect(weatherInfo, &AirMapWeatherInformation::error, this, &AirMapManager::_error);
+    AirMapWeatherInfoManager* weatherInfo = new AirMapWeatherInfoManager(_shared);
+    connect(weatherInfo, &AirMapWeatherInfoManager::error, this, &AirMapManager::_error);
     return weatherInfo;
 }
 
 AirspaceAdvisoryProvider*
 AirMapManager::instatiateAirspaceAdvisoryProvider()
 {
-    AirMapAdvisories* advisories = new AirMapAdvisories(_shared);
-    connect(advisories, &AirMapAdvisories::error, this, &AirMapManager::_error);
+    AirMapAdvisoryManager* advisories = new AirMapAdvisoryManager(_shared);
+    connect(advisories, &AirMapAdvisoryManager::error, this, &AirMapManager::_error);
     return advisories;
 }

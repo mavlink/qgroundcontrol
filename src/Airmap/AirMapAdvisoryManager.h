@@ -21,7 +21,7 @@
 #include "airmap/status.h"
 
 /**
- * @file AirMapAdvisories.h
+ * @file AirMapAdvisoryManager.h
  * Advisory information provided by AirMap.
  */
 
@@ -29,7 +29,7 @@
 class AirMapAdvisory : public AirspaceAdvisory
 {
     Q_OBJECT
-    friend class AirMapAdvisories;
+    friend class AirMapAdvisoryManager;
 public:
     AirMapAdvisory (QObject* parent = NULL);
     QString         id              () override { return _id; }
@@ -48,11 +48,11 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-class AirMapAdvisories : public AirspaceAdvisoryProvider, public LifetimeChecker
+class AirMapAdvisoryManager : public AirspaceAdvisoryProvider, public LifetimeChecker
 {
     Q_OBJECT
 public:
-    AirMapAdvisories                    (AirMapSharedState &shared, QObject *parent = nullptr);
+    AirMapAdvisoryManager                    (AirMapSharedState &shared, QObject *parent = nullptr);
     bool                valid           () override { return _valid; }
     AdvisoryColor       airspaceColor   () override { return _airspaceColor; }
     QmlObjectListModel* airspaces       () override { return &_airspaces; }
