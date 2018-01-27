@@ -86,6 +86,7 @@ SetupPage {
                     property int axisValue: 0
                     property int deadbandValue: 0
                     property bool narrowIndicator: false
+                    property color deadbandColor: "#8c161a"
 
                     property color          __barColor:             qgcPal.windowShade
 
@@ -105,7 +106,7 @@ SetupPage {
                         x:                      _deadbandPosition
                         width:                  _deadbandWidth
                         height:                 parent.height / 2
-                        color:                  "#8c161a"
+                        color:                  deadbandColor
                         visible:                controller.deadbandToggle
 
                         property real _percentDeadband:    ((2 * deadbandValue) / (32768.0 * 2))
@@ -801,11 +802,13 @@ SetupPage {
                                 MouseArea {
                                     id:             deadbandMouseArea
                                     anchors.fill:   parent.item
+                                    enabled:        controller.deadbandToggle
 
                                     property real startY
 
                                     onPressed: {
                                         startY = mouseY
+                                        parent.item.deadbandColor = "#3C6315"
                                     }
                                     onPositionChanged: {
                                         var newValue = parent.item.deadbandValue + (startY - mouseY)*15
@@ -814,6 +817,7 @@ SetupPage {
                                     }
                                     onReleased: {
                                         controller.setDeadbandValue(modelData,parent.item.deadbandValue)
+                                        parent.item.deadbandColor = "#8c161a"
                                     }
                                 }
                             }
