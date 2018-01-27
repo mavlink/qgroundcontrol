@@ -55,14 +55,14 @@ AirMapWeatherInformation::_requestWeatherUpdate(const QGeoCoordinate& coordinate
     params.weather  = true;
     _shared.client()->status().get_status_by_point(params, [this, coordinate](const Status::GetStatus::Result& result) {
         if (result) {
-            const Status::Weather& weather = result.value().weather;
+            _weather = result.value().weather;
             _valid  = true;
-            if(weather.icon.empty()) {
+            if(_weather.icon.empty()) {
                 _icon = QStringLiteral("qrc:/airmapweather/unknown.svg");
             } else {
-                _icon = QStringLiteral("qrc:/airmapweather/") + QString::fromStdString(weather.icon) + QStringLiteral(".svg");
+                _icon = QStringLiteral("qrc:/airmapweather/") + QString::fromStdString(_weather.icon) + QStringLiteral(".svg");
             }
-            qCDebug(AirMapManagerLog) << "Weather Info: " << _valid << "Icon:" << QString::fromStdString(weather.icon) << "Condition:" << QString::fromStdString(weather.condition) << "Temp:" << weather.temperature;
+            qCDebug(AirMapManagerLog) << "Weather Info: " << _valid << "Icon:" << QString::fromStdString(_weather.icon) << "Condition:" << QString::fromStdString(_weather.condition) << "Temp:" << _weather.temperature;
         } else {
             _valid  = false;
             qCDebug(AirMapManagerLog) << "Request Weather Failed";
