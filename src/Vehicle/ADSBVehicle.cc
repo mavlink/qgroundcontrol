@@ -27,6 +27,23 @@ ADSBVehicle::ADSBVehicle(mavlink_adsb_vehicle_t& adsbVehicle, QObject* parent)
     update(adsbVehicle);
 }
 
+ADSBVehicle::ADSBVehicle(const QGeoCoordinate& location, float heading, QObject* parent)
+    : QObject(parent), _icaoAddress(0)
+{
+    update(location, heading);
+}
+
+void ADSBVehicle::update(const QGeoCoordinate& location, float heading)
+{
+    _coordinate = location;
+    _altitude = location.altitude();
+    _heading = heading;
+    emit coordinateChanged(_coordinate);
+    emit altitudeChanged(_altitude);
+    emit headingChanged(_heading);
+    _lastUpdateTimer.restart();
+}
+
 void ADSBVehicle::update(mavlink_adsb_vehicle_t& adsbVehicle)
 {
     if (_icaoAddress != adsbVehicle.ICAO_address) {
@@ -68,4 +85,10 @@ void ADSBVehicle::update(mavlink_adsb_vehicle_t& adsbVehicle)
         _heading = newHeading;
         emit headingChanged(_heading);
     }
+    _lastUpdateTimer.restart();
+}
+
+bool ADSBVehicle::expired()
+{
+    return _lastUpdateTimer.hasExpired(expirationTimeoutMs);
 }

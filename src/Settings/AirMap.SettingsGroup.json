@@ -1,0 +1,26 @@
+[
+{
+    "name":             "apiKey",
+    "shortDescription": "AirMap API Key",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "clientID",
+    "shortDescription": "AirMap Client ID",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "userName",
+    "shortDescription": "AirMap User Name",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "password",
+    "shortDescription": "AirMap Password",
+    "type":             "string",
+    "defaultValue":     ""
+}
+]

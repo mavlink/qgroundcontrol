@@ -37,6 +37,7 @@ const char* AppSettings::mapboxTokenName =                              "MapboxT
 const char* AppSettings::esriTokenName =                                "EsriToken";
 const char* AppSettings::defaultFirmwareTypeName =                      "DefaultFirmwareType";
 const char* AppSettings::gstDebugName =                                 "GstreamerDebugLevel";
+const char* AppSettings::enableAirMapName =                             "EnableAirMap";
 
 const char* AppSettings::parameterFileExtension =   "params";
 const char* AppSettings::planFileExtension =        "plan";
@@ -77,6 +78,7 @@ AppSettings::AppSettings(QObject* parent)
     , _esriTokenFact(NULL)
     , _defaultFirmwareTypeFact(NULL)
     , _gstDebugFact(NULL)
+    , _enableAirMapFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
@@ -399,4 +401,13 @@ Fact* AppSettings::defaultFirmwareType(void)
     }
 
     return _defaultFirmwareTypeFact;
+}
+
+Fact* AppSettings::enableAirMap(void)
+{
+    if (!_enableAirMapFact) {
+        _enableAirMapFact = _createSettingsFact(enableAirMapName);
+    }
+
+    return _enableAirMapFact;
 }
