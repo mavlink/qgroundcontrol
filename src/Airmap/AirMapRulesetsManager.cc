@@ -39,8 +39,6 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
         return;
     }
     qCDebug(AirMapManagerLog) << "Setting ROI for Rulesets";
-    _defaultIndex = 0;
-    _currentIndex = 0;
     _valid = false;
     _rules.clearAndDeleteContents();
     _state = State::RetrieveItems;
@@ -56,16 +54,16 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
             qCDebug(AirMapManagerLog) << "Successful rulesets search. Items:" << rules.size();
             for (const auto& ruleset : rules) {
                 AirMapRule* pRule = new AirMapRule(this);
+                connect(pRule, &AirspaceRule::selectedChanged, this, &AirMapRulesetsManager::_selectedChanged);
                 pRule->_id          = QString::fromStdString(ruleset.id);
                 pRule->_name        = QString::fromStdString(ruleset.name);
                 pRule->_shortName   = QString::fromStdString(ruleset.short_name);
                 pRule->_description = QString::fromStdString(ruleset.description);
                 pRule->_isDefault   = ruleset.is_default;
+                //-- TODO: This should be persistent and if the new incoming set has the
+                //   same, previosuly selected rules, it should "remember".
                 if(pRule->_isDefault) {
-                    _defaultIndex = _rules.count();
-                    //-- TODO: This should be persistent and if the new incoming set has this
-                    //   rule, it should point to it.
-                    _currentIndex = _defaultIndex;
+                    pRule->_selected = true;
                 }
                 switch(ruleset.selection_type) {
                 case RuleSet::SelectionType::pickone:
@@ -115,29 +113,32 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
         }
         _state = State::Idle;
         emit rulesChanged();
+        emit selectedRulesChanged();
     });
 }
 
 //-----------------------------------------------------------------------------
 QString
-AirMapRulesetsManager::defaultRule()
+AirMapRulesetsManager::selectedRules()
 {
-    if(_defaultIndex < _rules.count()) {
-        AirMapRule* rule = qobject_cast<AirMapRule*>(_rules.get(_defaultIndex));
-        if(rule) {
-            return rule->name();
+    QString selection;
+    for(int i = 0; i < _rules.count(); i++) {
+        AirMapRule* rule = qobject_cast<AirMapRule*>(_rules.get(i));
+        if(rule && rule->selected()) {
+            selection += rule->shortName() + ", ";
         }
     }
-    return QString();
+    int idx = selection.lastIndexOf(", ");
+    if(idx >= 0) {
+        selection = selection.left(idx);
+    }
+    return selection;
 }
 
 //-----------------------------------------------------------------------------
 void
-AirMapRulesetsManager::setCurrentIndex(int index)
+AirMapRulesetsManager::_selectedChanged()
 {
-    _currentIndex = index;
+    emit selectedRulesChanged();
     //-- TODO: Do whatever it is you do to select a rule
-
-
-    emit currentIndexChanged();
 }
