@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-#include "AirMapWeatherInformation.h"
+#include "AirMapWeatherInfoManager.h"
 #include "AirMapManager.h"
 
 #define WEATHER_UPDATE_DISTANCE 50000                   //-- 50km threshold for weather updates
@@ -15,7 +15,7 @@
 
 using namespace airmap;
 
-AirMapWeatherInformation::AirMapWeatherInformation(AirMapSharedState& shared, QObject *parent)
+AirMapWeatherInfoManager::AirMapWeatherInfoManager(AirMapSharedState& shared, QObject *parent)
     : AirspaceWeatherInfoProvider(parent)
     , _valid(false)
     , _shared(shared)
@@ -23,7 +23,7 @@ AirMapWeatherInformation::AirMapWeatherInformation(AirMapSharedState& shared, QO
 }
 
 void
-AirMapWeatherInformation::setROI(const QGeoCoordinate& center)
+AirMapWeatherInfoManager::setROI(const QGeoCoordinate& center)
 {
     //-- If first time or we've moved more than WEATHER_UPDATE_DISTANCE, ask for weather updates.
     if(!_lastRoiCenter.isValid() || _lastRoiCenter.distanceTo(center) > WEATHER_UPDATE_DISTANCE) {
@@ -40,7 +40,7 @@ AirMapWeatherInformation::setROI(const QGeoCoordinate& center)
 }
 
 void
-AirMapWeatherInformation::_requestWeatherUpdate(const QGeoCoordinate& coordinate)
+AirMapWeatherInfoManager::_requestWeatherUpdate(const QGeoCoordinate& coordinate)
 {
     qCDebug(AirMapManagerLog) << "Request Weather";
     if (!_shared.client()) {

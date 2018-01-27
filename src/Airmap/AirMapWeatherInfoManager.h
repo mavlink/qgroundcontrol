@@ -20,15 +20,15 @@
 #include "airmap/status.h"
 
 /**
- * @file AirMapWeatherInformation.h
+ * @file AirMapWeatherInfoManager.h
  * Weather information provided by AirMap.
  */
 
-class AirMapWeatherInformation : public AirspaceWeatherInfoProvider, public LifetimeChecker
+class AirMapWeatherInfoManager : public AirspaceWeatherInfoProvider, public LifetimeChecker
 {
     Q_OBJECT
 public:
-    AirMapWeatherInformation(AirMapSharedState &shared, QObject *parent = nullptr);
+    AirMapWeatherInfoManager(AirMapSharedState &shared, QObject *parent = nullptr);
 
     bool        valid           () override { return _valid; }
     QString     condition       () override { return QString::fromStdString(_weather.condition); }
