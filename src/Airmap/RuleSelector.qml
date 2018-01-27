@@ -12,9 +12,28 @@ import QGroundControl.Airmap            1.0
 import QGroundControl.SettingsManager   1.0
 
 Rectangle {
-    height:                 ScreenTools.defaultFontPixelHeight * 1.25
-    color:                  rule && rule.selected ? qgcPal.windowShadeDark : qgcPal.window
-    property var rule:      null
+    id:                         _root
+    height:                     ScreenTools.defaultFontPixelHeight
+    color:                      _selected ? qgcPal.windowShade : qgcPal.window
+    property var    rule:       null
+    property bool   checked:    false
+    property bool   _selected: {
+        if (exclusiveGroup) {
+            return checked
+        } else {
+            return rule ? rule.selected : false
+        }
+    }
+    property ExclusiveGroup exclusiveGroup:  null
+    onExclusiveGroupChanged: {
+        if (exclusiveGroup) {
+            checked = rule.selected
+            exclusiveGroup.bindCheckable(_root)
+        }
+    }
+    onCheckedChanged: {
+        rule.selected = checked
+    }
     QGCPalette {
         id: qgcPal
         colorGroupEnabled: enabled
@@ -28,7 +47,7 @@ Rectangle {
         Rectangle {
             width:      ScreenTools.defaultFontPixelWidth * 0.75
             height:     ScreenTools.defaultFontPixelHeight
-            color:      rule.selected ? qgcPal.colorGreen : qgcPal.window
+            color:      _selected ? qgcPal.colorGreen : qgcPal.window
             anchors.verticalCenter: parent.verticalCenter
         }
         QGCLabel {
@@ -40,7 +59,11 @@ Rectangle {
     MouseArea {
         anchors.fill: parent
         onClicked: {
-            rule.selected = !rule.selected
+            if (exclusiveGroup) {
+                checked = true
+            } else {
+                rule.selected = !rule.selected
+            }
         }
     }
 }

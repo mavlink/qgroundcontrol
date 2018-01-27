@@ -279,16 +279,21 @@ Item {
                                 }
                                 Rectangle {
                                     id:                     regButton
-                                    height:                 regLabel.height + ScreenTools.defaultFontPixelHeight * 0.5
+                                    height:                 ScreenTools.defaultFontPixelHeight * 1.5
                                     radius:                 2
                                     color:                  _colorMidBrown
                                     Layout.fillWidth:       true
                                     QGCLabel {
-                                        id:                 regLabel
-                                        text:               _validRules ? _activeVehicle.airspaceController.rulesets.rules.get(currentIndex).name : qsTr("None")
-                                        color:              _colorWhite
-                                        anchors.centerIn:   parent
-                                        property int    currentIndex:   _validRules ? _activeVehicle.airspaceController.rulesets.currentIndex : 0
+                                        id:                     regLabel
+                                        text:                   _validRules ? _activeVehicle.airspaceController.rulesets.selectedRules : qsTr("None")
+                                        elide:                  Text.ElideRight
+                                        horizontalAlignment:    Text.AlignHCenter
+                                        color:                  _colorWhite
+                                        anchors.left:           parent.left
+                                        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth  * 0.5
+                                        anchors.right:          parent.right
+                                        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth  * 0.5
+                                        anchors.verticalCenter: parent.verticalCenter
                                     }
                                 }
                             }
@@ -408,6 +413,7 @@ Item {
                                 width:  1
                                 height: 1
                             }
+                            ExclusiveGroup { id: rulesGroup }
                             QGCLabel {
                                 text:           qsTr("PICK ONE REGULATION")
                                 font.pointSize: ScreenTools.smallFontPointSize
@@ -418,6 +424,7 @@ Item {
                                 delegate: RuleSelector {
                                     visible:             object.selectionType === AirspaceRule.Pickone
                                     rule:                object
+                                    exclusiveGroup:      rulesGroup
                                     anchors.right:       parent.right
                                     anchors.rightMargin: ScreenTools.defaultFontPixelWidth
                                     anchors.left:        parent.left
@@ -479,7 +486,7 @@ Item {
             }
             DropShadow {
                 anchors.fill:       arrowIconShadow
-                visible:            ruleSelectorRect.visible
+                visible:            ruleSelectorRect.visible && qgcPal.globalTheme === QGCPalette.Dark
                 horizontalOffset:   4
                 verticalOffset:     4
                 radius:             32.0

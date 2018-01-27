@@ -66,17 +66,12 @@ public:
     ~AirspaceRulesetsProvider       () = default;
 
     Q_PROPERTY(bool                 valid           READ valid          NOTIFY rulesChanged)
-    Q_PROPERTY(QString              defaultRule     READ defaultRule    NOTIFY rulesChanged)
-    Q_PROPERTY(int                  defaultIndex    READ defaultIndex   NOTIFY rulesChanged)
-    Q_PROPERTY(int                  currentIndex    READ currentIndex   WRITE  setCurrentIndex NOTIFY currentIndexChanged)
+    Q_PROPERTY(QString              selectedRules   READ selectedRules  NOTIFY selectedRulesChanged)
     Q_PROPERTY(QmlObjectListModel*  rules           READ rules          NOTIFY rulesChanged)
 
     virtual bool                valid       () = 0;             ///< Current ruleset is valid
     virtual QmlObjectListModel* rules       () = 0;             ///< List of AirspaceRule
-    virtual QString             defaultRule () = 0;             ///< AirspaceRule::name
-    virtual int                 defaultIndex() = 0;             ///< Index into rules (QmlObjectListModel)
-    virtual int                 currentIndex() = 0;             ///< User selected index into rules (QmlObjectListModel)
-    virtual void             setCurrentIndex(int index) = 0;    ///< Select a rule
+    virtual QString            selectedRules() = 0;             ///< All selected rules concatenated into a string
     /**
      * Set region of interest that should be queried. When finished, the rulesChanged() signal will be emmited.
      * @param center Center coordinate for ROI
@@ -85,6 +80,6 @@ public:
 
 signals:
     void rulesChanged               ();
-    void currentIndexChanged        ();
+    void selectedRulesChanged       ();
 };
 

@@ -56,23 +56,21 @@ public:
 
     bool                valid       () override { return _valid; }
     QmlObjectListModel* rules       () override { return &_rules; }
-    QString             defaultRule () override;
-    int                 defaultIndex() override { return _defaultIndex; }
-    int                 currentIndex() override { return _currentIndex; }
-    void             setCurrentIndex(int index) override;
+    QString            selectedRules() override;
 
     void                setROI      (const QGeoCoordinate& center) override;
 
 signals:
-    void        error           (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+    void        error               (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+
+private slots:
+    void        _selectedChanged    ();
 
 private:
     enum class State {
         Idle,
         RetrieveItems,
     };
-    int                             _defaultIndex;
-    int                             _currentIndex;
     bool                            _valid;
     State                           _state = State::Idle;
     AirMapSharedState&              _shared;
