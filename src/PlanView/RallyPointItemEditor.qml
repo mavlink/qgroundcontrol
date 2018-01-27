@@ -17,8 +17,7 @@ Rectangle {
     property var rallyPoint ///< RallyPoint object associated with editor
     property var controller ///< RallyPointController
 
-    property bool   _currentItem:       rallyPoint ? rallyPoint == controller.currentRallyPoint : false
-    property color  _outerTextColor:    _currentItem ? "black" : qgcPal.text
+    property bool   _currentItem:       rallyPoint ? rallyPoint === controller.currentRallyPoint : false
 
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
@@ -47,10 +46,9 @@ Rectangle {
             anchors.left:           indicator.right
             anchors.verticalCenter: parent.verticalCenter
             text:                   qsTr("Rally Point")
-            color:                  _outerTextColor
         }
 
-        Image {
+        QGCColoredImage {
             id:                     hamburger
             anchors.rightMargin:    _margin
             anchors.right:          parent.right
@@ -59,14 +57,12 @@ Rectangle {
             height:                 width
             sourceSize.height:      height
             source:                 "qrc:/qmlimages/Hamburger.svg"
-
+            color:                  qgcPal.text
             MouseArea {
                 anchors.fill:   parent
                 onClicked:      hamburgerMenu.popup()
-
                 Menu {
                     id: hamburgerMenu
-
                     MenuItem {
                         text:           qsTr("Delete")
                         onTriggered:    controller.removePoint(rallyPoint)
@@ -74,7 +70,7 @@ Rectangle {
                 }
             }
         }
-    } // Item - titleBar
+    }
 
     Rectangle {
         id:                 valuesRect

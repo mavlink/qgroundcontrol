@@ -15,6 +15,10 @@
         <file alias="JoystickIndicator.qml">src/ui/toolbar/JoystickIndicator.qml</file>
     </qresource>
     <qresource prefix="/qml">
+        <file alias="QGroundControl/Airmap/qmldir">src/Airmap/QGroundControl.Airmap.qmldir</file>
+        <file alias="QGroundControl/Airmap/AirspaceControl.qml">src/Airmap/AirspaceControl.qml</file>
+        <file alias="QGroundControl/Airmap/AirspaceRegulation.qml">src/Airmap/AirspaceRegulation.qml</file>
+        <file alias="AirmapSettings.qml">src/Airmap/AirmapSettings.qml</file>
         <file alias="AnalyzeView.qml">src/AnalyzeView/AnalyzeView.qml</file>
         <file alias="AppSettings.qml">src/ui/AppSettings.qml</file>
         <file alias="BluetoothSettings.qml">src/ui/preferences/BluetoothSettings.qml</file>
@@ -195,6 +199,7 @@
         <file alias="MavCmdInfoRover.json">src/MissionManager/MavCmdInfoRover.json</file>
         <file alias="MavCmdInfoSub.json">src/MissionManager/MavCmdInfoSub.json</file>
         <file alias="MavCmdInfoVTOL.json">src/MissionManager/MavCmdInfoVTOL.json</file>
+        <file alias="AirMap.SettingsGroup.json">src/Settings/AirMap.SettingsGroup.json</file>
         <file alias="App.SettingsGroup.json">src/Settings/App.SettingsGroup.json</file>
         <file alias="AutoConnect.SettingsGroup.json">src/Settings/AutoConnect.SettingsGroup.json</file>
         <file alias="FlightMap.SettingsGroup.json">src/Settings/FlightMap.SettingsGroup.json</file>

@@ -121,18 +121,11 @@ class CustomInstrumentWidget : public QObject
 {
     Q_OBJECT
 public:
-    //-- Widget Position
-    enum Pos {
-        POS_TOP_RIGHT           = 0,
-        POS_CENTER_RIGHT        = 1,
-        POS_BOTTOM_RIGHT        = 2,
-    };
-    Q_ENUMS(Pos)
     CustomInstrumentWidget(QObject* parent = NULL);
     Q_PROPERTY(QUrl     source  READ source CONSTANT)
-    Q_PROPERTY(Pos      widgetPosition              READ widgetPosition             NOTIFY widgetPositionChanged)
+    Q_PROPERTY(double   widgetTopMargin     READ widgetTopMargin    NOTIFY widgetTopMarginChanged)
     virtual QUrl        source                      () { return QUrl(); }
-    virtual Pos         widgetPosition              () { return POS_CENTER_RIGHT; }
+    virtual double      widgetTopMargin             () { return 0.0; }
 signals:
-    void widgetPositionChanged  ();
+    void widgetTopMarginChanged();
 };
