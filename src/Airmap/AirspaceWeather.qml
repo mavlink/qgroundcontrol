@@ -14,9 +14,9 @@ import QGroundControl.SettingsManager   1.0
 Item {
     height: _valid ? weatherRow.height : 0
     width:  _valid ? weatherRow.width  : 0
+    property color  contentColor:       "#ffffff"
     property var    iconHeight:         ScreenTools.defaultFontPixelWidth * 4
     property bool   _valid:             _activeVehicle && _activeVehicle.airspaceController.weatherInfo.valid
-    property color  _colorWhite:        "#ffffff"
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _celcius:           QGroundControl.settingsManager.unitsSettings.temperatureUnits.rawValue === UnitsSettings.TemperatureUnitsCelsius
     property int    _tempC:             _valid ? _activeVehicle.airspaceController.weatherInfo.temperature : 0
@@ -29,13 +29,13 @@ Item {
             height:                 iconHeight
             sourceSize.height:      height
             source:                 _valid ? _activeVehicle.airspaceController.weatherInfo.icon : ""
-            color:                  _colorWhite
+            color:                  contentColor
             visible:                _valid
             anchors.verticalCenter: parent.verticalCenter
         }
         QGCLabel {
             text:                   _tempS
-            color:                  _colorWhite
+            color:                  contentColor
             visible:                _valid
             anchors.verticalCenter: parent.verticalCenter
         }
