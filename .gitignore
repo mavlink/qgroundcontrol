@@ -84,3 +84,4 @@ src/latex/
 .vagrant/
 Qt*-linux*.tar.*
 
+libs/airmapd/include/boost
