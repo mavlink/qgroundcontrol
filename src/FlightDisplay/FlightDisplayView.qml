@@ -431,15 +431,23 @@ QGCView {
             z:                          _panel.z + 5
             width:                      parent.width  - (_flightVideoPipControl.width / 2)
             height:                     Math.min(ScreenTools.availableHeight * 0.25, ScreenTools.defaultFontPixelWidth * 16)
-            visible:                    (_virtualJoystick ? _virtualJoystick.value : false) && !QGroundControl.videoManager.fullScreen
+            visible: {
+                if(!_activeVehicle)
+                    return false
+                if(QGroundControl.videoManager.fullScreen)
+                    return false
+                if(!_virtualJoystick || _virtualJoystick.value === 0)
+                    return false
+                if(_virtualJoystick.value === 2 && !_activeVehicle.gimbalAcknowledged)
+                    return false
+                return true
+            }
             anchors.bottom:             _flightVideoPipControl.top
             anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
             anchors.horizontalCenter:   flightDisplayViewWidgets.horizontalCenter
             source:                     "qrc:/qml/VirtualJoystick.qml"
-            active:                     _virtualJoystick ? _virtualJoystick.value : false
-
+            active:                     _virtualJoystick ? _virtualJoystick.value > 0 : false
             property bool useLightColors: isBackgroundDark
-
             property Fact _virtualJoystick: QGroundControl.settingsManager.appSettings.virtualJoystick
         }
 

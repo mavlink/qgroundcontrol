@@ -353,6 +353,7 @@ public:
     Q_PROPERTY(QString              hobbsMeter              READ hobbsMeter                                             NOTIFY hobbsMeterChanged)
     Q_PROPERTY(bool                 vtolInFwdFlight         READ vtolInFwdFlight        WRITE setVtolInFwdFlight        NOTIFY vtolInFwdFlightChanged)
     Q_PROPERTY(bool                 highLatencyLink         READ highLatencyLink                                        NOTIFY highLatencyLinkChanged)
+    Q_PROPERTY(bool                 gimbalAcknowledged      READ gimbalAcknowledged                                     NOTIFY gimbalAcknowledgedChanged)
 
     // Vehicle state used for guided control
     Q_PROPERTY(bool flying                  READ flying NOTIFY flyingChanged)                               ///< Vehicle is flying
@@ -415,6 +416,12 @@ public:
     Q_INVOKABLE void virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust);
     Q_INVOKABLE void disconnectInactiveVehicle(void);
 
+    /// Dumb (PWM) Camera Controls
+    Q_INVOKABLE void triggerCamera  (void);
+    Q_INVOKABLE void initGimbal     (void);
+    Q_INVOKABLE void gimbalControlValue(double pitch, double yaw);
+    Q_INVOKABLE void cameraZoomValue(double zoom);
+
     /// Command vehicle to return to launch
     Q_INVOKABLE void guidedModeRTL(void);
 
@@ -462,8 +469,7 @@ public:
     /// Clear Messages
     Q_INVOKABLE void clearMessages();
 
-    Q_INVOKABLE void triggerCamera(void);
-    Q_INVOKABLE void sendPlan(QString planFile);
+    Q_INVOKABLE void sendPlan       (QString planFile);
 
 #if 0
     // Temporarily removed, waiting for new command implementation
@@ -640,6 +646,7 @@ public:
     int             telemetryRNoise         () { return _telemetryRNoise; }
     bool            autoDisarm              ();
     bool            highLatencyLink         () const { return _highLatencyLink; }
+    bool            gimbalAcknowledged      () const { return _gimbalAcknowledged; }
     /// Get the maximum MAVLink protocol version supported
     /// @return the maximum version
     unsigned        maxProtoVersion         () const { return _maxProtoVersion; }
@@ -790,6 +797,7 @@ signals:
     void toolBarIndicatorsChanged(void);
     void highLatencyLinkChanged(bool highLatencyLink);
 
+    void gimbalAcknowledgedChanged  ();
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
     void messagesLostChanged        ();
@@ -1085,6 +1093,7 @@ private:
     uint8_t             _messageSeq;
     uint8_t             _compID;
     bool                _heardFrom;
+    bool                _gimbalAcknowledged;
 
     int _firmwareMajorVersion;
     int _firmwareMinorVersion;

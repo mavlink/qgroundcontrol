@@ -47,19 +47,37 @@ Column {
     property bool   _videoRecording:        _camera && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool   _noStorage:             _camera && _camera.storageTotal === 0
 
+    property Fact _virtualJoystick:         QGroundControl.settingsManager.appSettings.virtualJoystick
+    property bool _gimbalMode:              _virtualJoystick && _virtualJoystick.value === 2
+
     function showSettings() {
         qgcView.showDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
     }
-
-    //-- Dumb camera trigger if no actual camera interface exists
-    QGCButton {
+    //-- Dumb camera (PWM). Present if no actual camera interface exists
+    Column {
+        width:      pageWidth * 0.9
+        spacing:    ScreenTools.defaultFontPixelHeight
+        visible:    !_isCamera
         anchors.horizontalCenter:   parent.horizontalCenter
-        text:                       qsTr("Trigger Camera")
-        visible:                    !_isCamera
-        onClicked:                  _activeVehicle.triggerCamera()
-        enabled:                    _activeVehicle
+        Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.125;}
+        QGCButton {
+            anchors.horizontalCenter:   parent.horizontalCenter
+            text:                       qsTr("Trigger Camera")
+            width:                      parent.width
+            onClicked:                  _activeVehicle.triggerCamera()
+            enabled:                    _activeVehicle
+        }
+        QGCButton {
+            anchors.horizontalCenter:   parent.horizontalCenter
+            text:                       qsTr("Deploy Gimbal")
+            width:                      parent.width
+            visible:                    _gimbalMode
+            onClicked:                  _activeVehicle.initGimbal()
+            enabled:                    _activeVehicle && !_activeVehicle.gimbalAcknowledged
+        }
+        Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.125;}
     }
-    Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera; }
+    Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera;}
     //-- Actual controller
     QGCLabel {
         id:             cameraLabel

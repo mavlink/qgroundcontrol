@@ -153,6 +153,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _messageSeq(0)
     , _compID(0)
     , _heardFrom(false)
+    , _gimbalAcknowledged(false)
     , _firmwareMajorVersion(versionNotSetValue)
     , _firmwareMinorVersion(versionNotSetValue)
     , _firmwarePatchVersion(versionNotSetValue)
@@ -340,6 +341,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _messageSeq(0)
     , _compID(0)
     , _heardFrom(false)
+    , _gimbalAcknowledged(false)
     , _firmwareMajorVersion(versionNotSetValue)
     , _firmwareMinorVersion(versionNotSetValue)
     , _firmwarePatchVersion(versionNotSetValue)
@@ -536,6 +538,7 @@ void Vehicle::resetCounters()
     _messagesLost       = 0;
     _messageSeq         = 0;
     _heardFrom          = false;
+    _gimbalAcknowledged = false;
 }
 
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
@@ -2190,6 +2193,61 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
     }
 }
 
+void Vehicle::gimbalControlValue(double pitch, double yaw)
+{
+    //-- Incoming pitch and yaw values are -1.00 to 1.00
+    pitch = (pitch + 1.00) * -45.0;
+    yaw = yaw * 180.0;
+    qDebug() << pitch << yaw;
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_DO_MOUNT_CONTROL,
+                   false,                               // show errors
+                   pitch,                               // Pitch 0 - 90
+                   0,                                   // Roll (not used)
+                   yaw,                                 // Yaw -180 - 180
+                   0,                                   // Altitude (not used)
+                   0,                                   // Latitude (not used)
+                   0,                                   // Longitude (not used)
+    //             MAV_MOUNT_MODE_RC_TARGETING);        // RC Roll,Pitch,Yaw
+                   MAV_MOUNT_MODE_MAVLINK_TARGETING);   // MAVLink Roll,Pitch,Yaw
+}
+
+void Vehicle::cameraZoomValue(double zoom)
+{
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_DO_DIGICAM_CONTROL,
+                   false,                           // show errors
+                   NAN,                             // Show/Hide lens (not used)
+                   zoom,                            // Zoom absolute value (0 - 1)
+                   NAN, NAN, NAN, NAN, NAN);        // param 3-6 unused
+}
+
+void Vehicle::triggerCamera(void)
+{
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_DO_DIGICAM_CONTROL,
+                   false,                           // show errors
+                   0.0, 0.0, 0.0, 0.0,              // param 1-4 unused
+                   1.0,                             // trigger camera
+                   0.0,                             // param 6 unused
+                   1.0);                            // test shot flag
+}
+
+void Vehicle::initGimbal(void)
+{
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_DO_MOUNT_CONFIGURE,
+                   true,                            // Show errors
+                   MAV_MOUNT_MODE_NEUTRAL,          // Mode
+                   1,                               // Yes, stabilize roll
+                   1,                               // Yes, stabilize pitch
+                   1,                               // Yes, stabilize yaw
+                   //-- TODO: Angle (0) or Angular Rate (1)?
+                   0,                               // Use angle
+                   0,                               // Use angle
+                   0);                              // Use angle
+}
+
 void Vehicle::setConnectionLostEnabled(bool connectionLostEnabled)
 {
     if (_connectionLostEnabled != connectionLostEnabled) {
@@ -2643,6 +2701,15 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
         _setCapabilities(0);
     }
 
+    //-- Dumb (PWM) Gimbal State
+    if (ack.command == MAV_CMD_DO_MOUNT_CONFIGURE ) {
+        bool res = (ack.result == MAV_RESULT_ACCEPTED);
+        if (res != _gimbalAcknowledged) {
+            _gimbalAcknowledged = res;
+            emit gimbalAcknowledgedChanged();
+        }
+    }
+
     if (ack.command == MAV_CMD_REQUEST_PROTOCOL_VERSION && ack.result != MAV_RESULT_ACCEPTED) {
         // The autopilot does not understand the request and consequently is likely handling only
         // MAVLink 1
@@ -2824,17 +2891,6 @@ void Vehicle::setOfflineEditingDefaultComponentId(int defaultComponentId)
     } else {
         qWarning() << "Call to Vehicle::setOfflineEditingDefaultComponentId on vehicle which is not offline";
     }
-}
-
-void Vehicle::triggerCamera(void)
-{
-    sendMavCommand(_defaultComponentId,
-                   MAV_CMD_DO_DIGICAM_CONTROL,
-                   true,                            // show errors
-                   0.0, 0.0, 0.0, 0.0,              // param 1-4 unused
-                   1.0,                             // trigger camera
-                   0.0,                             // param 6 unused
-                   1.0);                            // test shot flag
 }
 
 void Vehicle::setVtolInFwdFlight(bool vtolInFwdFlight)

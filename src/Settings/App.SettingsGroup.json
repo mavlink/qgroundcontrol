@@ -98,10 +98,12 @@
 },
 {
     "name":             "VirtualTabletJoystick",
-    "shortDescription": "Show virtual joystick",
-    "longDescription":  "If this option is enabled the virtual joystick will be shown on the Fly view.",
-    "type":             "bool",
-    "defaultValue":     false
+    "shortDescription": "Virtual Joystick Mode",
+    "longDescription":  "Set the virtual joystick mode shown on the Fly view.",
+    "type":             "uint32",
+    "enumStrings":      "Disabled,Joystick,Gimbal Control",
+    "enumValues":       "0,1,2",
+    "defaultValue":     0
 },
 {
     "name":             "GstreamerDebugLevel",

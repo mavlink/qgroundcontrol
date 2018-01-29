@@ -11,23 +11,31 @@
 import QtQuick 2.3
 
 import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
+import QGroundControl.FactSystem    1.0
 import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
 
 Item {
     //property bool useLightColors - Must be passed in from loaded
+    property Fact _virtualJoystick: QGroundControl.settingsManager.appSettings.virtualJoystick
+    property bool _gimbalMode:      _activeVehicle && _virtualJoystick && _virtualJoystick.value === 2
 
     Timer {
         interval:   40  // 25Hz, same as real joystick rate
-        running:    QGroundControl.settingsManager.appSettings.virtualJoystick.value && _activeVehicle
+        running:    _virtualJoystick && _virtualJoystick.value === 1 && _activeVehicle
         repeat:     true
         onTriggered: {
             if (_activeVehicle) {
                 _activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
             }
         }
+    }
+
+    function setGimbal() {
+        //-- Set Pitch and Yaw ( -1.00 -> 1.00)
+        _activeVehicle.gimbalControlValue(rightStick.yAxis, rightStick.xAxis)
     }
 
     JoystickThumbPad {
@@ -37,9 +45,16 @@ Item {
         anchors.left:           parent.left
         anchors.bottom:         parent.bottom
         width:                  parent.height
-        height:                 parent.height
+        height:                 _gimbalMode ? parent.height * 1.5 : parent.height
         yAxisThrottle:          true
+        gimbalMode:             _gimbalMode
         lightColors:            useLightColors
+        onYAxisChanged: {
+            if(_gimbalMode) {
+                //-- Set Camera Zoom ( 0.00 -> 1.00)
+                _activeVehicle.cameraZoomValue(leftStick.yAxis)
+            }
+        }
     }
 
     JoystickThumbPad {
@@ -50,6 +65,17 @@ Item {
         anchors.bottom:         parent.bottom
         width:                  parent.height
         height:                 parent.height
+        gimbalMode:             _gimbalMode
         lightColors:            useLightColors
+        onYAxisChanged: {
+            if(_gimbalMode) {
+                setGimbal()
+            }
+        }
+        onXAxisChanged: {
+            if(_gimbalMode) {
+                setGimbal()
+            }
+        }
     }
 }

@@ -245,6 +245,24 @@ QGCView {
                             }
                         }
                         //-----------------------------------------------------------------
+                        //-- Virtual joystick settings
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    _virtualJoystick.visible
+                            QGCLabel {
+                                text:       qsTr("Virtual Joystick:")
+                                width:      _labelWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            FactComboBox {
+                                fact:       parent._virtualJoystick
+                                width:      _editFieldWidth
+                                indexModel: false
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            property Fact _virtualJoystick: QGroundControl.settingsManager.appSettings.virtualJoystick
+                        }
+                        //-----------------------------------------------------------------
                         //-- Audio preferences
                         FactCheckBox {
                             text:       qsTr("Mute all audio output")
@@ -324,15 +342,6 @@ QGCView {
                             }
                         }
                         //-----------------------------------------------------------------
-                        //-- Virtual joystick settings
-                        FactCheckBox {
-                            text:       qsTr("Virtual Joystick")
-                            visible:    _virtualJoystick.visible
-                            fact:       _virtualJoystick
-
-                            property Fact _virtualJoystick: QGroundControl.settingsManager.appSettings.virtualJoystick
-                        }
-                        //-----------------------------------------------------------------
                         //-- Default mission item altitude
                         Row {
                             spacing:    ScreenTools.defaultFontPixelWidth
@@ -349,7 +358,6 @@ QGCView {
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
-
                         //-----------------------------------------------------------------
                         //-- Mission AutoLoad
                         FactCheckBox {
