@@ -910,8 +910,8 @@ private slots:
     void _updateHobbsMeter(void);
     void _vehicleParamLoaded(bool ready);
 
-    void _trafficUpdate(QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
-    void _adsbTimerTimeout();
+    void _trafficUpdate         (bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
+    void _adsbTimerTimeout      ();
 
 private:
     bool _containsLink(LinkInterface* link);

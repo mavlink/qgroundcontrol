@@ -47,7 +47,7 @@ adv_sort(QObject* a, QObject* b)
     AirMapAdvisory* aa = qobject_cast<AirMapAdvisory*>(a);
     AirMapAdvisory* bb = qobject_cast<AirMapAdvisory*>(b);
     if(!aa || !bb) return false;
-    return aa->color() > bb->color();
+    return (int)aa->color() > (int)bb->color();
 }
 
 //-----------------------------------------------------------------------------

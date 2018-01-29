@@ -3009,15 +3009,15 @@ void Vehicle::_updateHighLatencyLink(void)
     }
 }
 
-void Vehicle::_trafficUpdate(QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading)
+void Vehicle::_trafficUpdate(bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading)
 {
     Q_UNUSED(vehicle_id);
     // qDebug() << "traffic update:" << traffic_id << vehicle_id << heading << location;
     // TODO: filter based on minimum altitude?
     if (_trafficVehicleMap.contains(traffic_id)) {
-        _trafficVehicleMap[traffic_id]->update(location, heading);
+        _trafficVehicleMap[traffic_id]->update(alert, location, heading);
     } else {
-        ADSBVehicle* vehicle = new ADSBVehicle(location, heading, this);
+        ADSBVehicle* vehicle = new ADSBVehicle(location, heading, alert, this);
         _trafficVehicleMap[traffic_id] = vehicle;
         _adsbVehicles.append(vehicle);
     }

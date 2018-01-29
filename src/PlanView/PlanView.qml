@@ -99,7 +99,7 @@ QGCView {
         if(QGroundControl.airmapSupported) {
             if(_enableAirMap) {
                 planControlColapsed = true
-                airspaceControl.colapsed = false
+                _activeVehicle.airspaceController.airspaceVisible = true
             } else {
                 planControlColapsed = false
             }
@@ -164,9 +164,15 @@ QGCView {
         }
     }
 
+    Connections {
+        target:         _activeVehicle ? _activeVehicle.airspaceController : undefined
+        onColapsedChanged: {
+            planControlColapsed = _activeVehicle.airspaceController.airspaceVisible
+        }
+    }
+
     Component {
         id: noItemForKML
-
         QGCViewMessage {
             message:    qsTr("You need at least one item to create a KML.")
         }
@@ -530,11 +536,6 @@ QGCView {
                     width:          parent.width
                     visible:        _enableAirMap
                     showColapse:    false
-                    onColapsedChanged: {
-                        if(!airspaceControl.colasped) {
-                            planControlColapsed = true
-                        }
-                    }
                 }
                 //-------------------------------------------------------
                 // Mission Controls (Colapsed)

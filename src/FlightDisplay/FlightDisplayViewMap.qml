@@ -51,6 +51,7 @@ FlightMap {
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property var    _gotoHereCoordinate:        QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
+    property bool   _airspaceManagement:        QGroundControl.airmapSupported && _activeVehicle
 
     property bool   _disableVehicleTracking:    false
     property bool   _keepVehicleCentered:       _mainIsMap ? false : true
@@ -198,15 +199,14 @@ FlightMap {
 
     // Add ADSB vehicles to the map
     MapItemView {
-        model: _activeVehicle ? _activeVehicle.adsbVehicles : 0
-
+        model: _activeVehicle ? _activeVehicle.adsbVehicles : []
         property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
         delegate: VehicleMapItem {
             coordinate:     object.coordinate
             altitude:       object.altitude
             callsign:       object.callsign
             heading:        object.heading
+            alert:          object.alert
             map:            flightMap
             z:              QGroundControl.zOrderVehicles
         }
@@ -331,22 +331,20 @@ FlightMap {
 
     // Airspace overlap support
     MapItemView {
-        model:      QGroundControl.airmapSupported && _activeVehicle ? _activeVehicle.airspaceController.circles : []
+        model:              _airspaceManagement && _activeVehicle.airspaceController.airspaceVisible ? _activeVehicle.airspaceController.circles : []
         delegate: MapCircle {
             center:         object.center
             radius:         object.radius
-            border.color:   "white"
-            color:          "yellow"
-            opacity:        0.25
+            border.color:   Qt.rgba(1,1,1,0.85)
+            color:          Qt.rgba(0.94,0.87,0,0.25)
         }
     }
 
     MapItemView {
-        model:      QGroundControl.airmapSupported && _activeVehicle ? _activeVehicle.airspaceController.polygons : []
+        model:              _airspaceManagement && _activeVehicle.airspaceController.airspaceVisible ? _activeVehicle.airspaceController.polygons : []
         delegate: MapPolygon {
-            border.color:   "white"
-            color:          "yellow"
-            opacity:        0.25
+            border.color:   Qt.rgba(1,1,1,0.85)
+            color:          Qt.rgba(0.94,0.87,0,0.25)
             path:           object.polygon
         }
     }

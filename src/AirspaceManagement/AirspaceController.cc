@@ -19,6 +19,7 @@
 AirspaceController::AirspaceController(QObject* parent)
     : QObject(parent)
     , _manager(qgcApp()->toolbox()->airspaceManager())
+    , _airspaceVisible(false)
 {
 }
 
