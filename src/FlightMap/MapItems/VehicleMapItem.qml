@@ -7,9 +7,10 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtLocation       5.3
-import QtPositioning    5.3
+import QtQuick              2.3
+import QtLocation           5.3
+import QtPositioning        5.3
+import QtGraphicalEffects   1.0
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -41,14 +42,30 @@ MapQuickItem {
         height:     vehicleIcon.height
         opacity:    vehicle ? (vehicle.active ? 1.0 : 0.5) : 1.0
 
+        Rectangle {
+            id:                 vehicleShadow
+            anchors.fill:       vehicleIcon
+            color:              Qt.rgba(1,1,1,1)
+            radius:             width * 0.5
+            visible:            false
+        }
+        DropShadow {
+            anchors.fill:       arrowIconShadow
+            visible:            vehicleIcon.visible
+            horizontalOffset:   4
+            verticalOffset:     4
+            radius:             32.0
+            samples:            65
+            color:              Qt.rgba(0.94,0.91,0,0.5)
+            source:             vehicleShadow
+        }
         Image {
             id:                 vehicleIcon
-            source:             _adsbVehicle ? "/qmlimages/adsbVehicle.svg" : vehicle.vehicleImageOpaque
+            source:             _adsbVehicle ? "/qmlimages/AwarenessAircraft.svg" : vehicle.vehicleImageOpaque
             mipmap:             true
             width:              size
             sourceSize.width:   size
             fillMode:           Image.PreserveAspectFit
-
             transform: Rotation {
                 origin.x:       vehicleIcon.width  / 2
                 origin.y:       vehicleIcon.height / 2
