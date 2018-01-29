@@ -48,8 +48,8 @@ AirMapTrafficMonitor::_update(Traffic::Update::Type type, const std::vector<Traf
     for (const auto& traffic : update) {
         QString traffic_id = QString::fromStdString(traffic.id);
         QString vehicle_id = QString::fromStdString(traffic.aircraft_id);
-        emit trafficUpdate(traffic_id, vehicle_id, QGeoCoordinate(traffic.latitude, traffic.longitude, traffic.altitude),
-                traffic.heading);
+        emit trafficUpdate(type == Traffic::Update::Type::alert, traffic_id, vehicle_id,
+            QGeoCoordinate(traffic.latitude, traffic.longitude, traffic.altitude), traffic.heading);
     }
 }
 

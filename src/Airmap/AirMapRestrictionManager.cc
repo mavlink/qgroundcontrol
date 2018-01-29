@@ -72,9 +72,7 @@ AirMapRestrictionManager::setROI(const QGeoCoordinate& center, double radiusMete
                         qWarning() << "unsupported geometry type: "<<(int)geometry.type();
                         break;
                 }
-
             }
-
         } else {
             QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
             emit error("Failed to retrieve Geofences",

@@ -17,9 +17,8 @@ import QGroundControl.Airmap        1.0
 Item {
     id:     _root
     width:  parent.width
-    height: colapsed ? colapsedRect.height : expandedRect.height
+    height: _colapsed ? colapsedRect.height : expandedRect.height
 
-    property bool   colapsed:           true
     property bool   showColapse:        true
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
@@ -27,6 +26,7 @@ Item {
     property bool   _validRules:        _activeVehicle ? _activeVehicle.airspaceController.rulesets.valid : false
     property bool   _validAdvisories:   _activeVehicle ? _activeVehicle.airspaceController.advisories.valid : false
     property color  _textColor:         qgcPal.text
+    property bool   _colapsed:          _activeVehicle ? !_activeVehicle.airspaceController.airspaceVisible : true
 
     readonly property real      _radius:            ScreenTools.defaultFontPixelWidth * 0.5
     readonly property color     _colorOrange:       "#d75e0d"
@@ -67,10 +67,10 @@ Item {
     Rectangle {
         id:         colapsedRect
         width:      parent.width
-        height:     colapsed ? colapsedRow.height + ScreenTools.defaultFontPixelHeight : 0
+        height:     _colapsed ? colapsedRow.height + ScreenTools.defaultFontPixelHeight : 0
         color:      _validAdvisories ? getAispaceColor(_activeVehicle.airspaceController.advisories.airspaceColor) : _colorGray
         radius:     _radius
-        visible:    colapsed
+        visible:    _colapsed
         Row {
             id:                     colapsedRow
             spacing:                ScreenTools.defaultFontPixelWidth
@@ -113,7 +113,10 @@ Item {
         }
         MouseArea {
             anchors.fill:   parent
-            onClicked:      colapsed = false
+            enabled:        _activeVehicle
+            onClicked:  {
+                _activeVehicle.airspaceController.airspaceVisible = true
+            }
         }
     }
     //---------------------------------------------------------------
@@ -121,10 +124,10 @@ Item {
     Rectangle {
         id:         expandedRect
         width:      parent.width
-        height:     !colapsed ? expandedCol.height + ScreenTools.defaultFontPixelHeight : 0
+        height:     !_colapsed ? expandedCol.height + ScreenTools.defaultFontPixelHeight : 0
         color:      _validAdvisories ? getAispaceColor(_activeVehicle.airspaceController.advisories.airspaceColor) : _colorGray
         radius:     _radius
-        visible:    !colapsed
+        visible:    !_colapsed
         MouseArea {
             anchors.fill:   parent
             onWheel:        { wheel.accepted = true; }
@@ -191,8 +194,8 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     MouseArea {
                         anchors.fill:   parent
-                        enabled:        showColapse
-                        onClicked:      colapsed = true
+                        enabled:        showColapse && _activeVehicle
+                        onClicked:      _activeVehicle.airspaceController.airspaceVisible = false
                     }
                 }
                 AirspaceWeather {

@@ -79,6 +79,15 @@ Item {
         onValueChanged: _setInstrumentWidget()
     }
 
+    Connections {
+        target:         _activeVehicle ? _activeVehicle.airspaceController : null
+        onAirspaceVisibleChanged: {
+            if(_activeVehicle) {
+                widgetRoot.showValues = !_activeVehicle.airspaceController.airspaceVisible
+            }
+        }
+    }
+
     Component.onCompleted: {
         _setInstrumentWidget()
     }
@@ -133,9 +142,6 @@ Item {
             width:              getPreferredInstrumentWidth()
             visible:            _enableAirMap
             anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
-            onColapsedChanged: {
-                widgetRoot.showValues = colapsed
-            }
         }
         //-------------------------------------------------------
         //-- Instrument Panel

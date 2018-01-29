@@ -53,7 +53,7 @@ public slots:
     virtual void endFlight              () = 0;
 
 signals:
-    void trafficUpdate                  (QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
+    void trafficUpdate                  (bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
     void flightPermitStatusChanged      ();
 
 protected slots:
