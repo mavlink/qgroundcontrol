@@ -71,6 +71,7 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
                     break;
                 case RuleSet::SelectionType::required:
                     pRule->_selectionType = AirspaceRule::Required;
+                    pRule->_selected = true;
                     break;
                 default:
                 case RuleSet::SelectionType::optional:

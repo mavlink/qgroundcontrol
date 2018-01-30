@@ -17,6 +17,7 @@ Rectangle {
     color:                      _selected ? qgcPal.windowShade : qgcPal.window
     property var    rule:       null
     property bool   checked:    false
+    property bool   required:   false
     property bool   _selected: {
         if (exclusiveGroup) {
             return checked
@@ -57,7 +58,8 @@ Rectangle {
         }
     }
     MouseArea {
-        anchors.fill: parent
+        anchors.fill:   parent
+        enabled:        !required
         onClicked: {
             if (exclusiveGroup) {
                 checked = true
