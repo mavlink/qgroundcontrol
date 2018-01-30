@@ -29,18 +29,6 @@ AirspaceController::setROI(QGeoCoordinate center, double radius)
     _manager->setROI(center, radius);
 }
 
-QmlObjectListModel*
-AirspaceController::polygons()
-{
-    return _manager->polygonRestrictions();
-}
-
-QmlObjectListModel*
-AirspaceController::circles()
-{
-    return _manager->circularRestrictions();
-}
-
 QString
 AirspaceController::providerName()
 {
@@ -63,4 +51,10 @@ AirspaceRulesetsProvider*
 AirspaceController::rulesets()
 {
     return _manager->rulesets();
+}
+
+AirspaceRestrictionProvider*
+AirspaceController::airspaces()
+{
+    return _manager->airspaces();
 }

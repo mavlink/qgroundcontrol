@@ -10,10 +10,10 @@
 #include "AirMapManager.h"
 #include "AirMapAdvisoryManager.h"
 #include "AirMapWeatherInfoManager.h"
-#include "AirMapRestrictionManager.h"
 #include "AirMapRulesetsManager.h"
 #include "AirMapSettings.h"
 #include "AirMapTelemetry.h"
+#include "AirMapRestrictionManager.h"
 #include "AirMapTrafficMonitor.h"
 #include "AirMapVehicleManager.h"
 
@@ -112,14 +112,6 @@ AirMapManager::instantiateVehicle(const Vehicle& vehicle)
     return manager;
 }
 
-AirspaceRestrictionProvider*
-AirMapManager::instantiateRestrictionProvider()
-{
-    AirMapRestrictionManager* restrictionManager = new AirMapRestrictionManager(_shared);
-    connect(restrictionManager, &AirMapRestrictionManager::error, this, &AirMapManager::_error);
-    return restrictionManager;
-}
-
 AirspaceRulesetsProvider*
 AirMapManager::instantiateRulesetsProvider()
 {
@@ -142,4 +134,12 @@ AirMapManager::instatiateAirspaceAdvisoryProvider()
     AirMapAdvisoryManager* advisories = new AirMapAdvisoryManager(_shared);
     connect(advisories, &AirMapAdvisoryManager::error, this, &AirMapManager::_error);
     return advisories;
+}
+
+AirspaceRestrictionProvider*
+AirMapManager::instantiateAirspaceRestrictionProvider()
+{
+    AirMapRestrictionManager* airspaces = new AirMapRestrictionManager(_shared);
+    connect(airspaces, &AirMapRestrictionManager::error, this, &AirMapManager::_error);
+    return airspaces;
 }
