@@ -16,6 +16,7 @@
         <file alias="expand.svg">images/expand.svg</file>
         <file alias="pencil.svg">images/pencil.svg</file>
         <file alias="right-arrow.svg">images/right-arrow.svg</file>
+        <file alias="unavailable.svg">images/unavailable.svg</file>
     </qresource>
     <qresource prefix="/airmapweather">
         <file alias="clear.svg">images/weather-icons/clear.svg</file>

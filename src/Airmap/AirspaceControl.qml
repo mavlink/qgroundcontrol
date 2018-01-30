@@ -33,6 +33,7 @@ Item {
     readonly property color     _colorBrown:        "#3c2b24"
     readonly property color     _colorLightBrown:   "#5a4e49"
     readonly property color     _colorGray:         "#615c61"
+    readonly property color     _colorLightGray:    "#a0a0a0"
     readonly property color     _colorMidBrown:     "#3a322f"
     readonly property color     _colorYellow:       "#d7c61d"
     readonly property color     _colorWhite:        "#ffffff"
@@ -81,13 +82,13 @@ Item {
                 width:                  height
                 height:                 ScreenTools.defaultFontPixelWidth * 2.5
                 sourceSize.height:      height
-                source:                 "qrc:/airmap/advisory-icon.svg"
-                color:                  _textColor
+                source:                 _activeVehicle ? "qrc:/airmap/advisory-icon.svg" : "qrc:/airmap/unavailable.svg"
+                color:                  _activeVehicle ? _textColor : _colorLightGray
                 anchors.verticalCenter: parent.verticalCenter
             }
             QGCLabel {
                 text:                   qsTr("Airspace")
-                color:                  _textColor
+                color:                  _activeVehicle ? _textColor : _colorLightGray
                 anchors.verticalCenter: parent.verticalCenter
             }
             Item {
@@ -97,7 +98,7 @@ Item {
             AirspaceWeather {
                 iconHeight:             ScreenTools.defaultFontPixelWidth * 2.5
                 visible:                _activeVehicle && _activeVehicle.airspaceController.weatherInfo.valid
-                contentColor:           _textColor
+                contentColor:           _activeVehicle ? _textColor : _colorLightGray
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
@@ -107,6 +108,7 @@ Item {
             sourceSize.height:      height
             source:                 "qrc:/airmap/expand.svg"
             color:                  _textColor
+            visible:                _activeVehicle
             anchors.right:          parent.right
             anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
             anchors.verticalCenter: parent.verticalCenter
