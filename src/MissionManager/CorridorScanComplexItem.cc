@@ -291,6 +291,7 @@ void CorridorScanComplexItem::_setDirty(void)
 
 void CorridorScanComplexItem::applyNewAltitude(double newAltitude)
 {
+    Q_UNUSED(newAltitude);
     // FIXME: NYI
     //_altitudeFact.setRawValue(newAltitude);
 }
