@@ -27,19 +27,28 @@ class AirMapRestrictionManager : public AirspaceRestrictionProvider, public Life
 {
     Q_OBJECT
 public:
-    AirMapRestrictionManager        (AirMapSharedState& shared);
-    void setROI                     (const QGeoCoordinate& center, double radiusMeters) override;
+    AirMapRestrictionManager            (AirMapSharedState& shared);
+    QmlObjectListModel* polygons        () override { return &_polygons; }
+    QmlObjectListModel* circles         () override { return &_circles; }
+    void                setROI          (const QGeoCoordinate& center, double radiusMeters) override;
 
 signals:
-    void error                      (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+    void error                          (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
 
 private:
-    static void _addPolygonToList   (const airmap::Geometry::Polygon& polygon, QList<AirspacePolygonRestriction*>& list);
+    void            _requestRestrictions(const QGeoCoordinate& center, double radiusMeters);
+    void            _addPolygonToList   (const airmap::Geometry::Polygon& polygon);
+
     enum class State {
         Idle,
         RetrieveItems,
     };
-    State                   _state = State::Idle;
-    AirMapSharedState&      _shared;
+
+    AirMapSharedState&  _shared;
+    double              _lastRadius;
+    QGeoCoordinate      _lastRoiCenter;
+    State               _state = State::Idle;
+    QmlObjectListModel  _polygons;
+    QmlObjectListModel  _circles;
 };
 

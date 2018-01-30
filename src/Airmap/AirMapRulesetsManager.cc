@@ -35,7 +35,7 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
         return;
     }
     if (_state != State::Idle) {
-        qCWarning(AirMapManagerLog) << "AirMapRestrictionManager::updateROI: state not idle";
+        qCWarning(AirMapManagerLog) << "AirMapRulesetsManager::updateROI: state not idle";
         return;
     }
     qCDebug(AirMapManagerLog) << "Setting ROI for Rulesets";

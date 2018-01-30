@@ -60,9 +60,10 @@ public:
 signals:
     void                error           (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
 private:
-    void            _requestAdvisories  (const QGeoCoordinate& coordinate, double radiusMeters);
+    void              _requestAdvisories();
 private:
     bool                _valid;
+    double              _lastRadius;
     AirMapSharedState&  _shared;
     QGeoCoordinate      _lastRoiCenter;
     QmlObjectListModel  _airspaces;

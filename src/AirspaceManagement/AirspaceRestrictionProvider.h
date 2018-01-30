@@ -14,6 +14,8 @@
  * Base class that queries for airspace restrictions
  */
 
+#include "QmlObjectListModel.h"
+
 #include <QObject>
 #include <QList>
 #include <QGeoCoordinate>
@@ -27,6 +29,9 @@ public:
     AirspaceRestrictionProvider     (QObject* parent = NULL);
     ~AirspaceRestrictionProvider    () = default;
 
+    Q_PROPERTY(QmlObjectListModel*  polygons        READ polygons       CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  circles         READ circles        CONSTANT)
+
     /**
      * Set region of interest that should be queried. When finished, the requestDone() signal will be emmited.
      * @param center Center coordinate for ROI
@@ -34,13 +39,6 @@ public:
      */
     virtual void setROI (const QGeoCoordinate& center, double radiusMeters) = 0;
 
-    const QList<AirspacePolygonRestriction*>&   polygons() const { return _polygonList; }
-    const QList<AirspaceCircularRestriction*>&  circles () const { return _circleList;  }
-
-signals:
-    void requestDone    (bool success);
-
-protected:
-    QList<AirspacePolygonRestriction*>  _polygonList;
-    QList<AirspaceCircularRestriction*> _circleList;
+    virtual QmlObjectListModel* polygons        () = 0;     ///< List of AirspacePolygonRestriction objects
+    virtual QmlObjectListModel* circles         () = 0;     ///< List of AirspaceCircularRestriction objects
 };

@@ -12,8 +12,8 @@
 #include "AirspaceWeatherInfoProvider.h"
 #include "AirspaceAdvisoryProvider.h"
 #include "AirspaceRestriction.h"
-#include "AirspaceRestrictionProvider.h"
 #include "AirspaceRulesetsProvider.h"
+#include "AirspaceRestrictionProvider.h"
 #include "AirspaceVehicleManager.h"
 #include "AirspaceController.h"
 
@@ -28,12 +28,13 @@ AirspaceManager::AirspaceManager(QGCApplication* app, QGCToolbox* toolbox)
     _roiUpdateTimer.setInterval(2000);
     _roiUpdateTimer.setSingleShot(true);
     connect(&_roiUpdateTimer, &QTimer::timeout, this, &AirspaceManager::_updateToROI);
-    qmlRegisterUncreatableType<AirspaceAuthorization>       ("QGroundControl",              1, 0, "AirspaceAuthorization",      "Reference only");
-    qmlRegisterUncreatableType<AirspaceController>          ("QGroundControl.Vehicle",      1, 0, "AirspaceController",         "Reference only");
-    qmlRegisterUncreatableType<AirspaceWeatherInfoProvider> ("QGroundControl.Vehicle",      1, 0, "AirspaceWeatherInfoProvider","Reference only");
-    qmlRegisterUncreatableType<AirspaceAdvisoryProvider>    ("QGroundControl.Vehicle",      1, 0, "AirspaceAdvisoryProvider",   "Reference only");
-    qmlRegisterUncreatableType<AirspaceRule>                ("QGroundControl.Vehicle",      1, 0, "AirspaceRule",               "Reference only");
-    qmlRegisterUncreatableType<AirspaceRulesetsProvider>    ("QGroundControl.Vehicle",      1, 0, "AirspaceRulesetsProvider",   "Reference only");
+    qmlRegisterUncreatableType<AirspaceAuthorization>       ("QGroundControl",              1, 0, "AirspaceAuthorization",          "Reference only");
+    qmlRegisterUncreatableType<AirspaceController>          ("QGroundControl.Vehicle",      1, 0, "AirspaceController",             "Reference only");
+    qmlRegisterUncreatableType<AirspaceWeatherInfoProvider> ("QGroundControl.Vehicle",      1, 0, "AirspaceWeatherInfoProvider",    "Reference only");
+    qmlRegisterUncreatableType<AirspaceAdvisoryProvider>    ("QGroundControl.Vehicle",      1, 0, "AirspaceAdvisoryProvider",       "Reference only");
+    qmlRegisterUncreatableType<AirspaceRule>                ("QGroundControl.Vehicle",      1, 0, "AirspaceRule",                   "Reference only");
+    qmlRegisterUncreatableType<AirspaceRulesetsProvider>    ("QGroundControl.Vehicle",      1, 0, "AirspaceRulesetsProvider",       "Reference only");
+    qmlRegisterUncreatableType<AirspaceRestrictionProvider> ("QGroundControl.Vehicle",      1, 0, "AirspaceRestrictionProvider",    "Reference only");
 }
 
 AirspaceManager::~AirspaceManager()
@@ -47,24 +48,19 @@ AirspaceManager::~AirspaceManager()
     if(_rulesetsProvider) {
         delete _rulesetsProvider;
     }
-    if (_restrictionsProvider) {
-        delete _restrictionsProvider;
+    if(_airspaces) {
+        delete _airspaces;
     }
-    _polygonRestrictions.clearAndDeleteContents();
-    _circleRestrictions.clearAndDeleteContents();
 }
 
 void AirspaceManager::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
     // We should not call virtual methods in the constructor, so we instantiate the restriction provider here
-    _restrictionsProvider = instantiateRestrictionProvider();
-    if (_restrictionsProvider) {
-        connect(_restrictionsProvider, &AirspaceRestrictionProvider::requestDone, this,   &AirspaceManager::_restrictionsUpdated);
-    }
     _rulesetsProvider   = instantiateRulesetsProvider();
     _weatherProvider    = instatiateAirspaceWeatherInfoProvider();
     _advisories         = instatiateAirspaceAdvisoryProvider();
+    _airspaces          = instantiateAirspaceRestrictionProvider();
 }
 
 void AirspaceManager::setROI(const QGeoCoordinate& center, double radiusMeters)
@@ -76,8 +72,8 @@ void AirspaceManager::setROI(const QGeoCoordinate& center, double radiusMeters)
 
 void AirspaceManager::_updateToROI()
 {
-    if (_restrictionsProvider) {
-        _restrictionsProvider->setROI(_roiCenter, _roiRadius);
+    if(_airspaces) {
+        _airspaces->setROI(_roiCenter, _roiRadius);
     }
     if(_rulesetsProvider) {
         _rulesetsProvider->setROI(_roiCenter);
@@ -88,25 +84,4 @@ void AirspaceManager::_updateToROI()
     if (_advisories) {
         _advisories->setROI(_roiCenter, _roiRadius);
     }
-}
-
-void AirspaceManager::_restrictionsUpdated(bool success)
-{
-    _polygonRestrictions.clearAndDeleteContents();
-    _circleRestrictions.clearAndDeleteContents();
-    if (success) {
-        for (const auto& circle : _restrictionsProvider->circles()) {
-            _circleRestrictions.append(circle);
-        }
-        for (const auto& polygon : _restrictionsProvider->polygons()) {
-            _polygonRestrictions.append(polygon);
-        }
-    } else {
-        // TODO: show error?
-    }
-}
-
-void AirspaceManager::_rulessetsUpdated(bool)
-{
-
 }

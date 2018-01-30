@@ -331,21 +331,21 @@ FlightMap {
 
     // Airspace overlap support
     MapItemView {
-        model:              _airspaceManagement && _activeVehicle.airspaceController.airspaceVisible ? _activeVehicle.airspaceController.circles : []
+        model:              _airspaceManagement && _activeVehicle.airspaceController.airspaceVisible ? _activeVehicle.airspaceController.airspaces.circles : []
         delegate: MapCircle {
             center:         object.center
             radius:         object.radius
+            color:          Qt.rgba(0.94, 0.87, 0, 0.15)
             border.color:   Qt.rgba(1,1,1,0.85)
-            color:          Qt.rgba(0.94,0.87,0,0.25)
         }
     }
 
     MapItemView {
-        model:              _airspaceManagement && _activeVehicle.airspaceController.airspaceVisible ? _activeVehicle.airspaceController.polygons : []
+        model:              _airspaceManagement && _activeVehicle.airspaceController.airspaceVisible ? _activeVehicle.airspaceController.airspaces.polygons : []
         delegate: MapPolygon {
-            border.color:   Qt.rgba(1,1,1,0.85)
-            color:          Qt.rgba(0.94,0.87,0,0.25)
             path:           object.polygon
+            color:          Qt.rgba(0.94, 0.87, 0, 0.15)
+            border.color:   Qt.rgba(1,1,1,0.85)
         }
     }
 }
