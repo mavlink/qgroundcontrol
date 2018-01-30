@@ -9,9 +9,10 @@
         <file alias="MavCmdInfoVTOL.json">src/MissionManager/UnitTest/MavCmdInfoVTOL.json</file>
         <file alias="MissionPlanner.waypoints">src/MissionManager/UnitTest/MissionPlanner.waypoints</file>
         <file alias="OldFileFormat.mission">src/MissionManager/UnitTest/OldFileFormat.mission</file>
-		<file alias="GoodPolygon.kml">src/MissionManager/UnitTest/GoodPolygon.kml</file>
-		<file alias="MissingPolygonNode.kml">src/MissionManager/UnitTest/MissingPolygonNode.kml</file>
-		<file alias="BadXml.kml">src/MissionManager/UnitTest/BadXml.kml</file>
-		<file alias="BadCoordinatesNode.kml">src/MissionManager/UnitTest/BadCoordinatesNode.kml</file>
+		<file alias="PolygonAreaTest.kml">src/MissionManager/UnitTest/PolygonAreaTest.kml</file>
+		<file alias="PolygonGood.kml">src/MissionManager/UnitTest/PolygonGood.kml</file>
+		<file alias="PolygonMissingNode.kml">src/MissionManager/UnitTest/PolygonMissingNode.kml</file>
+		<file alias="PolygonBadXml.kml">src/MissionManager/UnitTest/PolygonBadXml.kml</file>
+		<file alias="PolygonBadCoordinatesNode.kml">src/MissionManager/UnitTest/PolygonBadCoordinatesNode.kml</file>
     </qresource>
 </RCC>
