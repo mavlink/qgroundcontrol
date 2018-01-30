@@ -93,7 +93,9 @@ AirMapAdvisoryManager::_requestAdvisories()
                 qCDebug(AirMapManagerLog) << "Adding advisory" << pAdvisory->name();
             }
             //-- Sort in order of color (priority)
+            _airspaces.beginReset();
             std::sort(_airspaces.objectList()->begin(), _airspaces.objectList()->end(), adv_sort);
+            _airspaces.endReset();
             _valid = true;
         } else {
             qCDebug(AirMapManagerLog) << "Advisories Request Failed";

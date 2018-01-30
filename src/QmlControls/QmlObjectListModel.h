@@ -50,10 +50,13 @@ public:
     template<class T> T value(int index) { return qobject_cast<T>(_objectList[index]); }
 
     /// Calls deleteLater on all items and this itself.
-    void deleteListAndContents(void);
+    void deleteListAndContents  (void);
 
     /// Clears the list and calls deleteLater on each entry
-    void clearAndDeleteContents(void);
+    void clearAndDeleteContents (void);
+
+    void beginReset             () { beginResetModel(); }
+    void endReset               () { endResetModel();   }
 
 signals:
     void countChanged           (int count);

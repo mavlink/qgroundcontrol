@@ -59,6 +59,7 @@ QGCView {
     property real   _toolbarHeight:                     _qgcView.height - ScreenTools.availableHeight
     property int    _editingLayer:                      _layerMission
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
+    property bool   _airspaceManagement:                QGroundControl.airmapSupported && _activeVehicle
 
     readonly property int       _layerMission:              1
     readonly property int       _layerGeoFence:             2
@@ -348,6 +349,12 @@ QGCView {
 
             QGCMapPalette { id: mapPal; lightColors: editorMap.isSatelliteMap }
 
+            onCenterChanged: {
+                if(_activeVehicle && QGroundControl.airmapSupported) {
+                    _activeVehicle.airspaceController.setROI(center, 5000)
+                }
+            }
+
             MouseArea {
                 //-- It's a whole lot faster to just fill parent and deal with top offset below
                 //   than computing the coordinate offset.
@@ -425,6 +432,26 @@ QGCView {
                 myRallyPointController: _rallyPointController
                 interactive:            _editingLayer == _layerRallyPoints
                 planView:               true
+            }
+
+            // Airspace overlap support
+            MapItemView {
+                model:              _airspaceManagement && _activeVehicle.airspaceController.airspaceVisible ? _activeVehicle.airspaceController.airspaces.circles : []
+                delegate: MapCircle {
+                    center:         object.center
+                    radius:         object.radius
+                    color:          Qt.rgba(0.94, 0.87, 0, 0.1)
+                    border.color:   Qt.rgba(1,1,1,0.65)
+                }
+            }
+
+            MapItemView {
+                model:              _airspaceManagement && _activeVehicle.airspaceController.airspaceVisible ? _activeVehicle.airspaceController.airspaces.polygons : []
+                delegate: MapPolygon {
+                    path:           object.polygon
+                    color:          Qt.rgba(0.94, 0.87, 0, 0.1)
+                    border.color:   Qt.rgba(1,1,1,0.65)
+                }
             }
 
             ToolStrip {

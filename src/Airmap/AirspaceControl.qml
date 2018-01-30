@@ -470,6 +470,7 @@ Item {
                                 delegate: RuleSelector {
                                     visible:             object.selectionType === AirspaceRule.Required
                                     rule:                object
+                                    required:            true
                                     anchors.right:       parent.right
                                     anchors.rightMargin: ScreenTools.defaultFontPixelWidth
                                     anchors.left:        parent.left
