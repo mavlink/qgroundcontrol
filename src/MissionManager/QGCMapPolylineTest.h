@@ -11,16 +11,15 @@
 
 #include "UnitTest.h"
 #include "MultiSignalSpy.h"
-#include "QGCMapPolygon.h"
+#include "QGCMapPolyline.h"
 #include "QmlObjectListModel.h"
 
-/// Unit test for SurveyMissionItem
-class QGCMapPolygonTest : public UnitTest
+class QGCMapPolylineTest : public UnitTest
 {
     Q_OBJECT
     
 public:
-    QGCMapPolygonTest(void);
+    QGCMapPolylineTest(void);
 
 protected:
     void init(void) final;
@@ -29,32 +28,26 @@ protected:
 private slots:
     void _testDirty(void);
     void _testVertexManipulation(void);
-    void _testKMLLoad(void);
-    void _testArea(void);
+//    void _testKMLLoad(void);
 
 private:
     enum {
-        polygonCountChangedIndex = 0,
+        countChangedIndex = 0,
         pathChangedIndex,
-        polygonDirtyChangedIndex,
+        dirtyChangedIndex,
         clearedIndex,
-        centerChangedIndex,
-        maxPolygonSignalIndex
+        maxSignalIndex
     };
 
     enum {
-        polygonCountChangedMask =   1 << polygonCountChangedIndex,
-        pathChangedMask =           1 << pathChangedIndex,
-        polygonDirtyChangedMask =   1 << polygonDirtyChangedIndex,
-        clearedMask =               1 << clearedIndex,
-        centerChangedMask =         1 << centerChangedIndex,
+        countChangedMask =  1 << countChangedIndex,
+        pathChangedMask =   1 << pathChangedIndex,
+        dirtyChangedMask =  1 << dirtyChangedIndex,
+        clearedMask =       1 << clearedIndex,
     };
 
-    static const size_t _cPolygonSignals = maxPolygonSignalIndex;
-    const char*         _rgPolygonSignals[_cPolygonSignals];
-
-    void countChanged(int count);
-    void dirtyChanged(bool dirtyChanged);
+    static const size_t _cSignals = maxSignalIndex;
+    const char*         _rgSignals[_cSignals];
 
     enum {
         modelCountChangedIndex = 0,
@@ -70,9 +63,9 @@ private:
     static const size_t _cModelSignals = maxModelSignalIndex;
     const char*         _rgModelSignals[_cModelSignals];
 
-    MultiSignalSpy*         _multiSpyPolygon;
+    MultiSignalSpy*         _multiSpyPolyline;
     MultiSignalSpy*         _multiSpyModel;
-    QGCMapPolygon*          _mapPolygon;
+    QGCMapPolyline*         _mapPolyline;
     QmlObjectListModel*     _pathModel;
-    QList<QGeoCoordinate>   _polyPoints;
+    QList<QGeoCoordinate>   _linePoints;
 };

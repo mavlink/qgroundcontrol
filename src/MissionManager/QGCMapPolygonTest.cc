@@ -205,17 +205,23 @@ void QGCMapPolygonTest::_testVertexManipulation(void)
 
 void QGCMapPolygonTest::_testKMLLoad(void)
 {
-    QVERIFY(_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/GoodPolygon.kml")));
+    QVERIFY(_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/PolygonGood.kml")));
 
     setExpectedMessageBox(QMessageBox::Ok);
-    QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/BadXml.kml")));
+    QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/PolygonBadXml.kml")));
     checkExpectedMessageBox();
 
     setExpectedMessageBox(QMessageBox::Ok);
-    QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/MissingPolygonNode.kml")));
+    QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/PolygonMissingNode.kml")));
     checkExpectedMessageBox();
 
     setExpectedMessageBox(QMessageBox::Ok);
-    QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/BadCoordinatesNode.kml")));
+    QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/PolygonBadCoordinatesNode.kml")));
     checkExpectedMessageBox();
+}
+
+void QGCMapPolygonTest::_testArea(void)
+{
+    QVERIFY(_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/PolygonAreaTest.kml")));
+    QCOMPARE(_mapPolygon->area(), 4620.05313465);
 }
