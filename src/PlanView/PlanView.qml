@@ -97,9 +97,10 @@ QGCView {
 
     on_EnableAirMapChanged: {
         if(QGroundControl.airmapSupported) {
-            if(_enableAirMap) {
-                planControlColapsed = true
-                _activeVehicle.airspaceController.airspaceVisible = true
+            if(!_activeVehicle) {
+                planControlColapsed = false
+            } else if(_enableAirMap) {
+                planControlColapsed = _activeVehicle.airspaceController.airspaceVisible
             } else {
                 planControlColapsed = false
             }
@@ -165,8 +166,8 @@ QGCView {
     }
 
     Connections {
-        target:         _activeVehicle ? _activeVehicle.airspaceController : undefined
-        onColapsedChanged: {
+        target:         _activeVehicle ? _activeVehicle.airspaceController : null
+        onAirspaceVisibleChanged: {
             planControlColapsed = _activeVehicle.airspaceController.airspaceVisible
         }
     }
@@ -535,12 +536,11 @@ QGCView {
                     id:             airspaceControl
                     width:          parent.width
                     visible:        _enableAirMap
-                    showColapse:    false
+                    showColapse:    true
                 }
                 //-------------------------------------------------------
                 // Mission Controls (Colapsed)
                 Rectangle {
-                    id:         planColapsed
                     width:      parent.width
                     height:     planControlColapsed ? colapsedRow.height + ScreenTools.defaultFontPixelHeight : 0
                     color:      qgcPal.missionItemEditor
@@ -553,16 +553,16 @@ QGCView {
                         anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
                         anchors.verticalCenter: parent.verticalCenter
                         QGCColoredImage {
-                            width:                  height
-                            height:                 ScreenTools.defaultFontPixelWidth * 2.5
-                            sourceSize.height:      height
-                            source:                 "qrc:/res/waypoint.svg"
-                            color:                  qgcPal.text
+                            width:              height
+                            height:             ScreenTools.defaultFontPixelWidth * 2.5
+                            sourceSize.height:  height
+                            source:             "qrc:/res/waypoint.svg"
+                            color:              qgcPal.text
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         QGCLabel {
-                            text:   qsTr("Plan")
-                            color:  qgcPal.text
+                            text:               qsTr("Plan")
+                            color:              qgcPal.text
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -581,8 +581,9 @@ QGCView {
                         anchors.fill:   parent
                         enabled:        QGroundControl.airmapSupported
                         onClicked: {
-                            airspaceControl.colapsed = true
-                            planControlColapsed = false
+                            if(_activeVehicle) {
+                                _activeVehicle.airspaceController.airspaceVisible = false
+                            }
                         }
                     }
                 }
@@ -591,7 +592,7 @@ QGCView {
                 Rectangle {
                     id:         planExpanded
                     width:      parent.width
-                    height:     !planControlColapsed ? expandedCol.height + ScreenTools.defaultFontPixelHeight : 0
+                    height:     (!planControlColapsed || !_enableAirMap) ? expandedCol.height + ScreenTools.defaultFontPixelHeight : 0
                     color:      qgcPal.missionItemEditor
                     radius:     _radius
                     visible:    !planControlColapsed || !_enableAirMap

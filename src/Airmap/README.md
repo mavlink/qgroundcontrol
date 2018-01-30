@@ -4,5 +4,9 @@
 
 *    Traffic monitor timeout is now set to 2 minutes following instructions from Thomas Voß.
 
-* Add a "Wrong Way" icon to the airspace widget when not connected
+* Check rules sorting order
+
+* Group rules jurisdictions
+
+* ~Add a "Wrong Way" icon to the airspace widget when not connected~
 
