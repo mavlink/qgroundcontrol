@@ -138,9 +138,11 @@ contains (DEFINES, DISABLE_AIRMAP) {
 } else {
     AIRMAPD_PATH = $$PWD/libs/airmapd
     MacBuild|iOSBuild {
-        message("Including support for AirMap for macOS")
-        LIBS += -L$${AIRMAPD_PATH}/macOS/Qt.5.9 -lairmap-qt
-        DEFINES += QGC_AIRMAP_ENABLED
+        exists($${AIRMAPD_PATH}/macOS/Qt.5.9) {
+            message("Including support for AirMap for macOS")
+            LIBS += -L$${AIRMAPD_PATH}/macOS/Qt.5.9 -lairmap-qt
+            DEFINES += QGC_AIRMAP_ENABLED
+        }
     } else {
         message("Skipping support for Airmap (unsupported platform)")
         DEFINES -= QGC_AIRMAP_ENABLED
