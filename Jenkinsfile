@@ -8,6 +8,7 @@ pipeline {
             node {
               label 'mac'
             }
+            
           }
           environment {
             QT_FATAL_WARNINGS = '1'
@@ -20,6 +21,7 @@ pipeline {
             sh 'rm -rf ${SHADOW_BUILD_DIR}; mkdir -p ${SHADOW_BUILD_DIR}'
             sh 'cd ${SHADOW_BUILD_DIR}; ~/Qt/5.9.3/clang_64/bin/qmake -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=release CONFIG+=WarningsAsErrorsOn'
             sh 'cd ${SHADOW_BUILD_DIR}; make -j24'
+            sh 'ccache -s'
           }
         }
       }
@@ -27,5 +29,7 @@ pipeline {
   }
   environment {
     SHADOW_BUILD_DIR = '/tmp/jenkins/shadow_build_dir'
+    CCACHE_CPP2 = '1'
+    CCACHE_BASEDIR = '${WORKSPACE}'
   }
 }
