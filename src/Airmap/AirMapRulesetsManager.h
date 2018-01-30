@@ -14,6 +14,7 @@
 #include "AirMapSharedState.h"
 
 #include <QGeoCoordinate>
+#include <QStringList>
 
 #include <airmap/rulesets.h>
 
@@ -59,6 +60,9 @@ public:
     QString            selectedRules() override;
 
     void                setROI      (const QGeoCoordinate& center) override;
+
+    //-- Selected rules
+    QStringList         rulesetsIDs ();
 
 signals:
     void        error               (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);

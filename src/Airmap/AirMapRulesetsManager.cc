@@ -143,3 +143,17 @@ AirMapRulesetsManager::_selectedChanged()
     emit selectedRulesChanged();
     //-- TODO: Do whatever it is you do to select a rule
 }
+
+//-----------------------------------------------------------------------------
+QStringList
+AirMapRulesetsManager::rulesetsIDs()
+{
+    QStringList list;
+    for(int i = 0; i < _rules.count(); i++) {
+        AirMapRule* rule = qobject_cast<AirMapRule*>(_rules.get(i));
+        if(rule && rule->selected()) {
+            list << rule->id();
+        }
+    }
+    return list;
+}
