@@ -9,6 +9,8 @@
 
 #include "AirMapFlightManager.h"
 #include "AirMapManager.h"
+#include "AirMapRulesetsManager.h"
+#include "QGCApplication.h"
 
 #include "MissionItem.h"
 #include "QGCMAVLink.h"
@@ -178,18 +180,20 @@ void AirMapFlightManager::_uploadFlight()
 
         FlightPlans::Create::Parameters params;
         params.max_altitude = _flight.maxAltitude;
-        params.buffer = 2.f;
-        params.latitude = _flight.takeoffCoord.latitude();
-        params.longitude = _flight.takeoffCoord.longitude();
-        params.pilot.id = _pilotID.toStdString();
-        params.start_time = Clock::universal_time() + Minutes{5};
-        params.end_time = Clock::universal_time() + Hours{2}; // TODO: user-configurable?
-        params.rulesets = { // TODO: which ones to use?
-                "che_drone_rules",
-                "che_notam",
-                "che_airmap_rules",
-                "che_nature_preserve"
-                };
+        params.buffer       = 2.f;
+        params.latitude     = _flight.takeoffCoord.latitude();
+        params.longitude    = _flight.takeoffCoord.longitude();
+        params.pilot.id     = _pilotID.toStdString();
+        params.start_time   = Clock::universal_time() + Minutes{5};
+        params.end_time     = Clock::universal_time() + Hours{2}; // TODO: user-configurable?
+
+        //-- Rules
+        AirMapRulesetsManager* pRulesMgr = dynamic_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->rulesets());
+        if(pRulesMgr) {
+            foreach(QString ruleset, pRulesMgr->rulesetsIDs()) {
+                params.rulesets.push_back(ruleset.toStdString());
+            }
+        }
 
         // geometry: LineString
         Geometry::LineString lineString;
