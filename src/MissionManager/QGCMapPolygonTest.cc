@@ -219,9 +219,3 @@ void QGCMapPolygonTest::_testKMLLoad(void)
     QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/PolygonBadCoordinatesNode.kml")));
     checkExpectedMessageBox();
 }
-
-void QGCMapPolygonTest::_testArea(void)
-{
-    QVERIFY(_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/PolygonAreaTest.kml")));
-    QCOMPARE(_mapPolygon->area(), 4620.05313465);
-}

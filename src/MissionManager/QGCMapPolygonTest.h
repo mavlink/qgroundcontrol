@@ -30,7 +30,6 @@ private slots:
     void _testDirty(void);
     void _testVertexManipulation(void);
     void _testKMLLoad(void);
-    void _testArea(void);
 
 private:
     enum {
