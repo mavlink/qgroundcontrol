@@ -203,14 +203,20 @@ private:
     static QVariant _celsiusToFarenheit(const QVariant& celsius);
     static QVariant _farenheitToCelsius(const QVariant& farenheit);
 
-    struct AppSettingsTranslation_s {
-        const char* rawUnits;
-        const char* cookedUnits;
-        bool        speed;
-        uint32_t    speedOrDistanceUnits;
-        Translator  rawTranslator;
-        Translator  cookedTranslator;
+    enum UnitTypes {
+        UnitDistance = 0,
+        UnitArea,
+        UnitSpeed,
+        UnitTemperature
+    };
 
+    struct AppSettingsTranslation_s {
+        const char*     rawUnits;
+        const char*     cookedUnits;
+        UnitTypes       unitType;
+        uint32_t        unitOption;
+        Translator      rawTranslator;
+        Translator      cookedTranslator;
     };
 
     static const AppSettingsTranslation_s* _findAppSettingsDistanceUnitsTranslation(const QString& rawUnits);
