@@ -807,7 +807,8 @@ void FactMetaData::_setAppSettingsTranslators(void)
             if (pAppSettingsTranslation->rawUnits == _rawUnits.toLower() && (
                 (pAppSettingsTranslation->unitType == UnitTemperature && pAppSettingsTranslation->unitOption == qgcApp()->toolbox()->settingsManager()->unitsSettings()->temperatureUnits()->rawValue().toUInt()) ||
                 (pAppSettingsTranslation->unitType == UnitSpeed       && pAppSettingsTranslation->unitOption == qgcApp()->toolbox()->settingsManager()->unitsSettings()->speedUnits()->rawValue().toUInt()) ||
-                (pAppSettingsTranslation->unitType == UnitDistance    && pAppSettingsTranslation->unitOption == qgcApp()->toolbox()->settingsManager()->unitsSettings()->distanceUnits()->rawValue().toUInt())))
+                (pAppSettingsTranslation->unitType == UnitDistance    && pAppSettingsTranslation->unitOption == qgcApp()->toolbox()->settingsManager()->unitsSettings()->distanceUnits()->rawValue().toUInt()) ||
+                (pAppSettingsTranslation->unitType == UnitArea        && pAppSettingsTranslation->unitOption == qgcApp()->toolbox()->settingsManager()->unitsSettings()->areaUnits()->rawValue().toUInt())))
             {
                 _cookedUnits = pAppSettingsTranslation->cookedUnits;
                 setTranslators(pAppSettingsTranslation->rawTranslator, pAppSettingsTranslation->cookedTranslator);
