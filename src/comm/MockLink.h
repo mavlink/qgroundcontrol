@@ -175,6 +175,7 @@ private:
 
     // MockLink methods
     void _sendHeartBeat(void);
+    void _sendHighLatency2(void);
     void _handleIncomingNSHBytes(const char* bytes, int cBytes);
     void _handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes);
     void _loadParams(void);
@@ -201,6 +202,7 @@ private:
     void _logDownloadWorker(void);
     void _sendADSBVehicles(void);
     void _moveADSBVehicle(void);
+    uint8_t _flightModeEnumValue(void);
 
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
 
