@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.40 - Jan 31 2018
+
+*   Fix Metric/Imperial display
+
 ### v1.2.39 - Jan 26 2018
 
 *   Hide eleveation data from Plan View (not enough room)
