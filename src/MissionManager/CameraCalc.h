@@ -49,6 +49,14 @@ public:
     Fact* adjustedFootprintSide     (void) { return &_adjustedFootprintSideFact; }
     Fact* adjustedFootprintFrontal  (void) { return &_adjustedFootprintFrontalFact; }
 
+    const Fact* valueSetIsDistance          (void) const { return &_valueSetIsDistanceFact; }
+    const Fact* distanceToSurface           (void) const { return &_distanceToSurfaceFact; }
+    const Fact* imageDensity                (void) const { return &_imageDensityFact; }
+    const Fact* frontalOverlap              (void) const { return &_frontalOverlapFact; }
+    const Fact* sideOverlap                 (void) const { return &_sideOverlapFact; }
+    const Fact* adjustedFootprintSide       (void) const { return &_adjustedFootprintSideFact; }
+    const Fact* adjustedFootprintFrontal    (void) const { return &_adjustedFootprintFrontalFact; }
+
     bool    isManualCamera          (void) { return cameraName() == manualCameraName(); }
     double  imageFootprintSide      (void) const { return _imageFootprintSide; }
     double  imageFootprintFrontal   (void) const { return _imageFootprintFrontal; }

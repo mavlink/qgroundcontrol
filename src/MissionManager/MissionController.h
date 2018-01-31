@@ -253,6 +253,7 @@ private:
     QString                 _surveyMissionItemName;
     QString                 _fwLandingMissionItemName;
     QString                 _structureScanMissionItemName;
+    QString                 _corridorScanMissionItemName;
     AppSettings*            _appSettings;
     double                  _progressPct;
     int                     _currentPlanViewIndex;
