@@ -415,6 +415,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
         src/FactSystem/FactSystemTestPX4.h \
         src/FactSystem/ParameterManagerTest.h \
         src/MissionManager/CameraSectionTest.h \
+        src/MissionManager/CorridorScanComplexItemTest.h \
         src/MissionManager/MissionCommandTreeTest.h \
         src/MissionManager/MissionControllerManagerTest.h \
         src/MissionManager/MissionControllerTest.h \
@@ -423,6 +424,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
         src/MissionManager/MissionSettingsTest.h \
         src/MissionManager/PlanMasterControllerTest.h \
         src/MissionManager/QGCMapPolygonTest.h \
+        src/MissionManager/QGCMapPolylineTest.h \
         src/MissionManager/SectionTest.h \
         src/MissionManager/SimpleMissionItemTest.h \
         src/MissionManager/SpeedSectionTest.h \
@@ -452,6 +454,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
         src/FactSystem/FactSystemTestPX4.cc \
         src/FactSystem/ParameterManagerTest.cc \
         src/MissionManager/CameraSectionTest.cc \
+        src/MissionManager/CorridorScanComplexItemTest.cc \
         src/MissionManager/MissionCommandTreeTest.cc \
         src/MissionManager/MissionControllerManagerTest.cc \
         src/MissionManager/MissionControllerTest.cc \
@@ -460,6 +463,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
         src/MissionManager/MissionSettingsTest.cc \
         src/MissionManager/PlanMasterControllerTest.cc \
         src/MissionManager/QGCMapPolygonTest.cc \
+        src/MissionManager/QGCMapPolylineTest.cc \
         src/MissionManager/SectionTest.cc \
         src/MissionManager/SimpleMissionItemTest.cc \
         src/MissionManager/SpeedSectionTest.cc \
@@ -508,6 +512,7 @@ HEADERS += \
     src/MissionManager/CameraSection.h \
     src/MissionManager/CameraSpec.h \
     src/MissionManager/ComplexMissionItem.h \
+    src/MissionManager/CorridorScanComplexItem.h \
     src/MissionManager/FixedWingLandingComplexItem.h \
     src/MissionManager/GeoFenceController.h \
     src/MissionManager/GeoFenceManager.h \
@@ -526,6 +531,7 @@ HEADERS += \
     src/MissionManager/QGCFencePolygon.h \
     src/MissionManager/QGCMapCircle.h \
     src/MissionManager/QGCMapPolygon.h \
+    src/MissionManager/QGCMapPolyline.h \
     src/MissionManager/RallyPoint.h \
     src/MissionManager/RallyPointController.h \
     src/MissionManager/RallyPointManager.h \
@@ -700,6 +706,7 @@ SOURCES += \
     src/MissionManager/CameraSection.cc \
     src/MissionManager/CameraSpec.cc \
     src/MissionManager/ComplexMissionItem.cc \
+    src/MissionManager/CorridorScanComplexItem.cc \
     src/MissionManager/FixedWingLandingComplexItem.cc \
     src/MissionManager/GeoFenceController.cc \
     src/MissionManager/GeoFenceManager.cc \
@@ -718,6 +725,7 @@ SOURCES += \
     src/MissionManager/QGCFencePolygon.cc \
     src/MissionManager/QGCMapCircle.cc \
     src/MissionManager/QGCMapPolygon.cc \
+    src/MissionManager/QGCMapPolyline.cc \
     src/MissionManager/RallyPoint.cc \
     src/MissionManager/RallyPointController.cc \
     src/MissionManager/RallyPointManager.cc \
