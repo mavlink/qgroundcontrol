@@ -34,9 +34,8 @@ mkdir -p ${APPDIR}
 
 cd ${TMPDIR}
 wget -c --quiet http://ftp.us.debian.org/debian/pool/main/u/udev/udev_175-7.2_amd64.deb
-wget -c --quiet http://ftp.us.debian.org/debian/pool/main/e/espeak/espeak_1.46.02-2_amd64.deb
+wget -c --quiet http://ftp.us.debian.org/debian/pool/main/s/speech-dispatcher/speech-dispatcher_0.8.8-1_amd64.deb
 wget -c --quiet http://ftp.us.debian.org/debian/pool/main/libs/libsdl2/libsdl2-2.0-0_2.0.2%2bdfsg1-6_amd64.deb
-
 
 cd ${APPDIR}
 find ../ -name *.deb -exec dpkg -x {} . \;
