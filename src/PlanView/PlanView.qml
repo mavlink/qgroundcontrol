@@ -328,6 +328,9 @@ QGCView {
                 //   than computing the coordinate offset.
                 anchors.fill: parent
                 onClicked: {
+                    // Take focus to close any previous editing
+                    editorMap.focus = true
+
                     //-- Don't pay attention to items beneath the toolbar.
                     var topLimit = parent.height - ScreenTools.availableHeight
                     if(mouse.y < topLimit) {
