@@ -57,7 +57,6 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
 
     connect(this,               &MissionSettingsItem::terrainAltitudeChanged,           this, &MissionSettingsItem::_setHomeAltFromTerrain);
 
-    connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged,                    this, &MissionSettingsItem::_setDirty);
     connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged,                    this, &MissionSettingsItem::_updateAltitudeInCoordinate);
 
     connect(&_cameraSection,    &CameraSection::dirtyChanged,   this, &MissionSettingsItem::_sectionDirtyChanged);
@@ -297,11 +296,6 @@ void MissionSettingsItem::setMissionEndRTL(bool missionEndRTL)
 void MissionSettingsItem::_setHomeAltFromTerrain(double terrainAltitude)
 {
     if (!_plannedHomePositionFromVehicle) {
-		// We need to stop this from signalling, Otherwise the dirty but get set on a delay
-		// which then marks the Plan view as incorrectly dirty
-        _plannedHomePositionAltitudeFact.setSendValueChangedSignals(false);
         _plannedHomePositionAltitudeFact.setRawValue(terrainAltitude);
-        _plannedHomePositionAltitudeFact.clearDeferredValueChangeSignal();
-        _plannedHomePositionAltitudeFact.setSendValueChangedSignals(true);
     }
 }
