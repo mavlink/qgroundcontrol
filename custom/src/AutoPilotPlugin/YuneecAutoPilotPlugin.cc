@@ -58,8 +58,8 @@ const QVariantList& YuneecAutoPilotPlugin::vehicleComponents(void)
                 _gimbalComponent = new GimbalComponent(_vehicle, this);
                 _gimbalComponent->setupTriggerSignals();
             }
-#endif
             _components.append(QVariant::fromValue((VehicleComponent*)_gimbalComponent));
+#endif
 
             if(!_healthComponent) {
                 _healthComponent = new HealthComponent(_vehicle, this);
