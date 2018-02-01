@@ -20,6 +20,7 @@
         <file alias="hamburger.svg">res/images/hamburger.svg</file>
         <file alias="mapIcon.svg">res/images/mapIcon.svg</file>
         <file alias="waypoint.svg">res/images/waypoint.svg</file>
+        <file alias="VehicleIndicator.svg">res/images/VehicleIndicator.svg</file>
         <file alias="Y-Logo.svg">res/images/Y-Logo.svg</file>
         <file alias="YuneecBrandImage.svg">src/FirmwarePlugin/YuneecBrandImage.svg</file>
         <file alias="YuneecBrandImageBlack.svg">src/FirmwarePlugin/YuneecBrandImageBlack.svg</file>
