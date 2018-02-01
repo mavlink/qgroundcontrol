@@ -95,7 +95,8 @@ void QGCFileDownload::_downloadFinished(void)
     
     // When an error occurs or the user cancels the download, we still end up here. So bail out in
     // those cases.
-    if (reply->error() != QNetworkReply::NoError) {
+    if (reply->error() != QNetworkReply::NoError) {        
+        reply->deleteLater();
         return;
     }
 
@@ -128,6 +129,8 @@ void QGCFileDownload::_downloadFinished(void)
         qWarning() << errorMsg;
         emit error(errorMsg);
     }
+
+    reply->deleteLater();
 }
 
 /// @brief Called when an error occurs during download

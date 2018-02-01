@@ -1119,7 +1119,9 @@ This parameter controls the time constant of the decay</short_desc>
     </parameter>
     <parameter default="0.0" name="EKF2_ARSP_THR" type="FLOAT">
       <short_desc>Airspeed fusion threshold. A value of zero will deactivate airspeed fusion. Any other positive
-value will determine the minimum airspeed which will still be fused</short_desc>
+value will determine the minimum airspeed which will still be fused. Set to about 90% of the vehicles stall speed.
+Both airspeed fusion and sideslip fusion must be active for the EKF to continue navigating after loss of GPS.
+Use EKF2_FUSE_BETA to activate sideslip fusion</short_desc>
       <min>0.0</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
@@ -1291,7 +1293,7 @@ Increasing it makes the multi-rotor wind estimates adjust more slowly</short_des
     </parameter>
     <parameter default="0" name="EKF2_FUSE_BETA" type="INT32">
       <short_desc>Boolean determining if synthetic sideslip measurements should fused</short_desc>
-      <long_desc>A value of 1 indicates that fusion is active</long_desc>
+      <long_desc>A value of 1 indicates that fusion is active Both  sideslip fusion and airspeed fusion must be active for the EKF to continue navigating after loss of GPS. Use EKF2_ARSP_THR to activate airspeed fusion.</long_desc>
       <boolean />
       <scope>modules/ekf2</scope>
     </parameter>
@@ -1653,7 +1655,8 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <scope>modules/ekf2</scope>
     </parameter>
     <parameter default="2.5" name="EKF2_OF_RMAX" type="FLOAT">
-      <short_desc>Optical Flow data will not fused if the magnitude of the flow rate &gt; EKF2_OF_RMAX</short_desc>
+      <short_desc>Optical Flow data will not fused if the magnitude of the flow rate &gt; EKF2_OF_RMAX.
+Control loops will be instructed to limit ground speed such that the flow rate produced by movement over ground is less than 50% of EKF2_OF_RMAX</short_desc>
       <min>1.0</min>
       <unit>rad/s</unit>
       <decimal>2</decimal>
@@ -3269,7 +3272,7 @@ but also ignore less noise</short_desc>
       <decimal>3</decimal>
       <scope>modules/landing_target_estimator</scope>
     </parameter>
-    <parameter default="1.0" name="LTEST_VEL_UNC_IN" type="FLOAT">
+    <parameter default="0.1" name="LTEST_VEL_UNC_IN" type="FLOAT">
       <short_desc>Initial landing target velocity uncertainty</short_desc>
       <long_desc>Initial variance of the relative landing target velocity in x and y direction</long_desc>
       <min>0.001</min>
@@ -3801,6 +3804,17 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <increment>0.5</increment>
       <scope>modules/navigator</scope>
     </parameter>
+    <parameter default="0" name="MIS_MNT_YAW_CTL" type="INT32">
+      <short_desc>Enable yaw control of the mount. (Only affects multicopters and ROI mission items)</short_desc>
+      <long_desc>If enabled, yaw commands will be sent to the mount and the vehicle will follow its heading mode as specified by MIS_YAWMODE. If disabled, the vehicle will yaw towards the ROI.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <scope>modules/navigator</scope>
+      <values>
+        <value code="0">Disable</value>
+        <value code="1">Enable</value>
+      </values>
+    </parameter>
     <parameter default="2.5" name="MIS_TAKEOFF_ALT" type="FLOAT">
       <short_desc>Take-off altitude</short_desc>
       <long_desc>This is the minimum altitude the system will take off to.</long_desc>
@@ -3822,7 +3836,6 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="1">Heading towards waypoint</value>
         <value code="2">Heading towards home</value>
         <value code="3">Heading away from home</value>
-        <value code="4">Heading towards ROI</value>
       </values>
     </parameter>
     <parameter default="12.0" name="MIS_YAW_ERR" type="FLOAT">
@@ -4444,6 +4457,17 @@ default 1.5 turns per second</short_desc>
       <unit>m/s/s</unit>
       <decimal>2</decimal>
       <increment>1</increment>
+      <scope>modules/mc_pos_control</scope>
+    </parameter>
+    <parameter default="0.5" name="MPC_ACC_HOR_FLOW" type="FLOAT">
+      <short_desc>Horizontal acceleration in manual modes when optical flow ground speed limit is removed.
+If full stick is being applied and the EKF starts using GPS whilst using optical flow,
+the vehicle will accelerate at this rate until the normal position control speed is achieved</short_desc>
+      <min>0.2</min>
+      <max>2.0</max>
+      <unit>m/s/s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="10.0" name="MPC_ACC_HOR_MAX" type="FLOAT">
@@ -7954,6 +7978,11 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
     <parameter default="0.0" name="SENS_DPRES_OFF" type="FLOAT">
       <short_desc>Differential pressure sensor offset</short_desc>
       <long_desc>The offset (zero-reading) in Pascal</long_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.7" name="SENS_FLOW_MINRNG" type="FLOAT">
+      <short_desc>Optical Flow minimum focus distance</short_desc>
+      <long_desc>This parameter defines the minimum distance from ground required for the optical flow sensor to operate reliably. The sensor may be usable below this height, but accuracy will progressively reduce to loss of focus. *</long_desc>
       <scope>modules/sensors</scope>
     </parameter>
   </group>
