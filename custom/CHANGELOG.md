@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.44 - Feb 1 2018
+
+*   Fix incorrect Resume Mission display
+
 ### v1.2.43 - Jan 31 2018
 
 *   Turn off ROI and Structure Scan
