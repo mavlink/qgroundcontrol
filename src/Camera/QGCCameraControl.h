@@ -202,16 +202,16 @@ protected:
     virtual void    _setCameraMode          (CameraMode mode);
 
 protected slots:
-    void    _initWhenReady                  ();
-    void    _requestCameraSettings          ();
-    void    _requestAllParameters           ();
-    void    _requestParamUpdates            ();
-    void    _requestCaptureStatus           ();
-    void    _requestStorageInfo             ();
-    void    _downloadFinished               ();
-    void    _mavCommandResult               (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
-    void    _dataReady                      (QByteArray data);
-    void    _paramDone                      ();
+    virtual void    _initWhenReady          ();
+    virtual void    _requestCameraSettings  ();
+    virtual void    _requestAllParameters   ();
+    virtual void    _requestParamUpdates    ();
+    virtual void    _requestCaptureStatus   ();
+    virtual void    _requestStorageInfo     ();
+    virtual void    _downloadFinished       ();
+    virtual void    _mavCommandResult       (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
+    virtual void    _dataReady              (QByteArray data);
+    virtual void    _paramDone              ();
 
 private:
     bool    _handleLocalization             (QByteArray& bytes);
