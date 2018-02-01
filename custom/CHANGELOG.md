@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.42 - Jan 31 2018
+
+*   Show temperatures in Fahrenheit or Celsius (option)
+
 ### v1.2.41 - Jan 31 2018
 
 *   Fix DataPilotPlanner issues (show connected vehicle)
