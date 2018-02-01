@@ -202,7 +202,7 @@ Window {
             anchors.top:                parent.top
             height:                     ScreenTools.toolbarHeight
             width:                      indicatorsRow.width
-            visible:                    (planViewLoader.visible && planMasterController && planMasterController.dirty) // clientCount &&  || activeVehicle
+            visible:                    activeVehicle || (clientCount && planViewLoader.visible && planMasterController && planMasterController.dirty)
             Row {
                 id:                     indicatorsRow
                 anchors.bottomMargin:   1
@@ -236,7 +236,7 @@ Window {
                     visible:            activeVehicle
                     source:             "/typhoonh/BatteryIndicator.qml"
                 }
-                //-- This is enabled (visisble) if we have received a broadcast
+                //-- This is enabled (visible) if we have received a broadcast
                 //   from an ST16 and we are not connected to a vehicle.
                 QGCButton {
                     text:               qsTr("Upload to ") + TyphoonHQuickInterface.desktopSync.currentRemote
