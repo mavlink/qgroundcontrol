@@ -17,27 +17,63 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QTimer>
 
-ElevationProvider::ElevationProvider(QObject* parent)
-    : QObject(parent)
+QGC_LOGGING_CATEGORY(ElevationProviderLog, "ElevationProviderLog")
+
+Q_GLOBAL_STATIC(TerrainBatchManager, _terrainBatchManager)
+
+TerrainBatchManager::TerrainBatchManager(void)
 {
-
+    _batchTimer.setSingleShot(true);
+    _batchTimer.setInterval(_batchTimeout);
+    connect(&_batchTimer, &QTimer::timeout, this, &TerrainBatchManager::_sendNextBatch);
 }
 
-bool ElevationProvider::queryTerrainData(const QList<QGeoCoordinate>& coordinates)
+void TerrainBatchManager::addQuery(ElevationProvider* elevationProvider, const QList<QGeoCoordinate>& coordinates)
 {
-    if (_state != State::Idle || coordinates.length() == 0) {
-        return false;
+    if (coordinates.length() > 0) {
+        QueuedRequestInfo_t queuedRequestInfo = { elevationProvider, coordinates };
+        _requestQueue.append(queuedRequestInfo);
+        if (!_batchTimer.isActive()) {
+            _batchTimer.start();
+        }
     }
+}
+
+void TerrainBatchManager::_sendNextBatch(void)
+{
+    qCDebug(ElevationProviderLog) << "_sendNextBatch _state:_requestQueue.count" << (int)_state << _requestQueue.count();
+
+    if (_state != State::Idle) {
+        // Waiting for last download the complete, wait some more
+        _batchTimer.start();
+        return;
+    }
+
+    if (_requestQueue.count() == 0) {
+        return;
+    }
+
+    _sentRequests.clear();
+
+    // Convert coordinates to point strings for json query
+    QString points;
+    foreach (const QueuedRequestInfo_t& requestInfo, _requestQueue) {
+        SentRequestInfo_t sentRequestInfo = { requestInfo.elevationProvider, requestInfo.coordinates.count() };
+        qCDebug(ElevationProviderLog) << "Building request: coordinate count" << requestInfo.coordinates.count();
+        _sentRequests.append(sentRequestInfo);
+
+        foreach (const QGeoCoordinate& coord, requestInfo.coordinates) {
+            points += QString::number(coord.latitude(), 'f', 10) + ","
+                    + QString::number(coord.longitude(), 'f', 10) + ",";
+        }
+
+    }
+    points = points.mid(0, points.length() - 1); // remove the last ',' from string
+    _requestQueue.clear();
 
     QUrlQuery query;
-    QString points = "";
-    for (const auto& coordinate : coordinates) {
-        points += QString::number(coordinate.latitude(), 'f', 10) + ","
-                + QString::number(coordinate.longitude(), 'f', 10) + ",";
-    }
-    points = points.mid(0, points.length() - 1); // remove the last ','
-
     query.addQueryItem(QStringLiteral("points"), points);
     QUrl url(QStringLiteral("https://api.airmap.com/elevation/stage/srtm1/ele"));
     url.setQuery(query);
@@ -50,28 +86,36 @@ bool ElevationProvider::queryTerrainData(const QList<QGeoCoordinate>& coordinate
 
     QNetworkReply* networkReply = _networkManager.get(request);
     if (!networkReply) {
-        return false;
+        _batchFailed();
+        return;
     }
 
-    connect(networkReply, &QNetworkReply::finished, this, &ElevationProvider::_requestFinished);
+    connect(networkReply, &QNetworkReply::finished, this, &TerrainBatchManager::_requestFinished);
 
     _state = State::Downloading;
-    return true;
 }
 
-void ElevationProvider::_requestFinished()
+void TerrainBatchManager::_batchFailed(void)
 {
+    QList<float>    noAltitudes;
+
+    foreach (const SentRequestInfo_t& sentRequestInfo, _sentRequests) {
+        sentRequestInfo.elevationProvider->_signalTerrainData(false, noAltitudes);
+    }
+    _sentRequests.clear();
+}
+
+void TerrainBatchManager::_requestFinished()
+{
+    qCDebug(ElevationProviderLog) << "_requestFinished";
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
-    QList<float> altitudes;
+
     _state = State::Idle;
 
     // When an error occurs we still end up here
     if (reply->error() != QNetworkReply::NoError) {
-        QByteArray responseBytes = reply->readAll();
-
-        QJsonParseError parseError;
-        QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
-        emit terrainData(false, altitudes);
+        _batchFailed();
+        reply->deleteLater();
         return;
     }
 
@@ -80,18 +124,52 @@ void ElevationProvider::_requestFinished()
     QJsonParseError parseError;
     QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
-        emit terrainData(false, altitudes);
+        _batchFailed();
+        reply->deleteLater();
         return;
     }
+
     QJsonObject rootObject = responseJson.object();
     QString status = rootObject["status"].toString();
-    if (status == "success") {
-        const QJsonArray& dataArray = rootObject["data"].toArray();
-        for (int i = 0; i < dataArray.count(); i++) {
-            altitudes.push_back(dataArray[i].toDouble());
-        }
-
-        emit terrainData(true, altitudes);
+    if (status != "success") {
+        _batchFailed();
+        reply->deleteLater();
+        return;
     }
-    emit terrainData(false, altitudes);
+
+    QList<float> altitudes;
+    const QJsonArray& dataArray = rootObject["data"].toArray();
+    for (int i = 0; i < dataArray.count(); i++) {
+        altitudes.push_back(dataArray[i].toDouble());
+    }
+
+    int currentIndex = 0;
+    foreach (const SentRequestInfo_t& sentRequestInfo, _sentRequests) {
+        QList<float> requestAltitudes = altitudes.mid(currentIndex, sentRequestInfo.cCoord);
+        sentRequestInfo.elevationProvider->_signalTerrainData(true, requestAltitudes);
+        currentIndex += sentRequestInfo.cCoord;
+    }
+    _sentRequests.clear();
+
+    reply->deleteLater();
+}
+
+ElevationProvider::ElevationProvider(QObject* parent)
+    : QObject(parent)
+{
+
+}
+void ElevationProvider::queryTerrainData(const QList<QGeoCoordinate>& coordinates)
+{
+    qCDebug(ElevationProviderLog) << "queryTerrainData: coordinate count" << coordinates.count();
+    if (coordinates.length() == 0) {
+        return;
+    }
+
+    _terrainBatchManager->addQuery(this, coordinates);
+}
+
+void ElevationProvider::_signalTerrainData(bool success, QList<float>& altitudes)
+{
+    emit terrainData(success, altitudes);
 }
