@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.41 - Jan 31 2018
+
+*   Fix DataPilotPlanner issues (show connected vehicle)
+
 ### v1.2.40 - Jan 31 2018
 
 *   Fix Metric/Imperial display
