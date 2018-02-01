@@ -4,7 +4,7 @@
 
 *   Group rules jurisdictions
 
-*   Check rules sorting order. Repopulating QmlObjectListModel causes the repeater to show the contents in random order.
+*   ~Check rules sorting order. Repopulating QmlObjectListModel causes the repeater to show the contents in random order.~
 
 *   ~AirMapRestrictionManager seems to be incomplete (if not redundant). Shouldn't we use the array of AirSpace items returned by AirMapAdvisoryManager instead? In addition to the AirSpace object, it gives you a color to use in order of importance.~ See question below.
 
