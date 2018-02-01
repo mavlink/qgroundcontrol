@@ -233,18 +233,27 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,double,double,double,quint64)),              this, SLOT(_updateAttitude(UASInterface*, double, double, double, quint64)));
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,int,double,double,double,quint64)),          this, SLOT(_updateAttitude(UASInterface*,int,double, double, double, quint64)));
 
+    if (_highLatencyLink) {
+        // High latency links don't request information
+        _setMaxProtoVersion(100);
+        _setCapabilities(0);
+        _initialPlanRequestComplete = true;
+        _missionManagerInitialRequestSent = true;
+        _geoFenceManagerInitialRequestSent = true;
+        _rallyPointManagerInitialRequestSent = true;
+    } else {
+        // Ask the vehicle for protocol version info.
+        sendMavCommand(MAV_COMP_ID_ALL,                     // Don't know default component id yet.
+                       MAV_CMD_REQUEST_PROTOCOL_VERSION,
+                       false,                               // No error shown if fails
+                       1);                                  // Request protocol version
 
-    // Ask the vehicle for protocol version info.
-    sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
-                    MAV_CMD_REQUEST_PROTOCOL_VERSION,
-                   false,                                   // No error shown if fails
-                    1);                                     // Request protocol version
-
-    // Ask the vehicle for firmware version info.
-    sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
-                    MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES,
-                   false,                                   // No error shown if fails
-                    1);                                     // Request firmware version
+        // Ask the vehicle for firmware version info.
+        sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
+                       MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES,
+                       false,                                   // No error shown if fails
+                       1);                                      // Request firmware version
+    }
 
     _firmwarePlugin->initializeVehicle(this);
 
@@ -677,12 +686,15 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_SCALED_PRESSURE3:
         _handleScaledPressure3(message);
-        break;        
+        break;
     case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
         _handleCameraImageCaptured(message);
         break;
     case MAVLINK_MSG_ID_ADSB_VEHICLE:
         _handleADSBVehicle(message);
+        break;
+    case MAVLINK_MSG_ID_HIGH_LATENCY2:
+        _handleHighLatency2(message);
         break;
 
     case MAVLINK_MSG_ID_SERIAL_CONTROL:
@@ -693,7 +705,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     }
         break;
 
-    // Following are ArduPilot dialect messages
+        // Following are ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
     case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
         _handleCameraFeedback(message);
@@ -795,6 +807,47 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     _coordinate.setLongitude(globalPositionInt.lon / (double)1E7);
     _coordinate.setAltitude(globalPositionInt.alt  / 1000.0);
     emit coordinateChanged(_coordinate);
+}
+
+void Vehicle::_handleHighLatency2(mavlink_message_t& message)
+{
+    mavlink_high_latency2_t highLatency2;
+    mavlink_msg_high_latency2_decode(&message, &highLatency2);
+
+#if 0
+    typedef struct __mavlink_high_latency2_t {
+     uint16_t wp_num; /*< Current waypoint number*/
+     uint16_t failure_flags; /*< Indicates failures as defined in MAV_FAILURE_FLAG ENUM. */
+     uint8_t flight_mode; /*< Flight Mode of the vehicle as defined in the FLIGHT_MODE ENUM*/
+     uint8_t failsafe; /*< Indicates if a failsafe mode is triggered, defined in MAV_FAILSAFE_FLAG ENUM*/
+    }) mavlink_high_latency2_t;
+#endif
+
+    // FIXME: flight mode not yet supported
+
+    _coordinate.setLatitude(highLatency2.latitude  / (double)1E7);
+    _coordinate.setLongitude(highLatency2.longitude / (double)1E7);
+    _coordinate.setAltitude(highLatency2.altitude);
+    emit coordinateChanged(_coordinate);
+
+    _airSpeedFact.setRawValue((double)highLatency2.airspeed / 5.0);
+    _groundSpeedFact.setRawValue((double)highLatency2.groundspeed / 5.0);
+    _climbRateFact.setRawValue((double)highLatency2.climb_rate / 10.0);
+
+    _headingFact.setRawValue((double)highLatency2.heading * 2.0);
+
+    _windFactGroup.direction()->setRawValue((double)highLatency2.wind_heading * 2.0);
+    _windFactGroup.speed()->setRawValue((double)highLatency2.windspeed / 5.0);
+
+    _batteryFactGroup.percentRemaining()->setRawValue(highLatency2.battery);
+
+    _temperatureFactGroup.temperature1()->setRawValue(highLatency2.temperature_air);
+
+    _gpsFactGroup.lat()->setRawValue(highLatency2.latitude * 1e-7);
+    _gpsFactGroup.lon()->setRawValue(highLatency2.longitude * 1e-7);
+    _gpsFactGroup.count()->setRawValue(0);
+    _gpsFactGroup.hdop()->setRawValue(highLatency2.eph == UINT8_MAX ? std::numeric_limits<double>::quiet_NaN() : highLatency2.eph / 10.0);
+    _gpsFactGroup.vdop()->setRawValue(highLatency2.epv == UINT8_MAX ? std::numeric_limits<double>::quiet_NaN() : highLatency2.epv / 10.0);
 }
 
 void Vehicle::_handleAltitude(mavlink_message_t& message)
@@ -909,14 +962,14 @@ QString Vehicle::vehicleUIDStr()
     QString uid;
     uint8_t* pUid = (uint8_t*)(void*)&_uid;
     uid.sprintf("%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
-        pUid[0] & 0xff,
-        pUid[1] & 0xff,
-        pUid[2] & 0xff,
-        pUid[3] & 0xff,
-        pUid[4] & 0xff,
-        pUid[5] & 0xff,
-        pUid[6] & 0xff,
-        pUid[7] & 0xff);
+                pUid[0] & 0xff,
+            pUid[1] & 0xff,
+            pUid[2] & 0xff,
+            pUid[3] & 0xff,
+            pUid[4] & 0xff,
+            pUid[5] & 0xff,
+            pUid[6] & 0xff,
+            pUid[7] & 0xff);
     return uid;
 }
 
@@ -926,22 +979,22 @@ void Vehicle::_handleHilActuatorControls(mavlink_message_t &message)
     mavlink_msg_hil_actuator_controls_decode(&message, &hil);
     emit hilActuatorControlsChanged(hil.time_usec, hil.flags,
                                     hil.controls[0],
-                                    hil.controls[1],
-                                    hil.controls[2],
-                                    hil.controls[3],
-                                    hil.controls[4],
-                                    hil.controls[5],
-                                    hil.controls[6],
-                                    hil.controls[7],
-                                    hil.controls[8],
-                                    hil.controls[9],
-                                    hil.controls[10],
-                                    hil.controls[11],
-                                    hil.controls[12],
-                                    hil.controls[13],
-                                    hil.controls[14],
-                                    hil.controls[15],
-                                    hil.mode);
+            hil.controls[1],
+            hil.controls[2],
+            hil.controls[3],
+            hil.controls[4],
+            hil.controls[5],
+            hil.controls[6],
+            hil.controls[7],
+            hil.controls[8],
+            hil.controls[9],
+            hil.controls[10],
+            hil.controls[11],
+            hil.controls[12],
+            hil.controls[13],
+            hil.controls[14],
+            hil.controls[15],
+            hil.mode);
 }
 
 void Vehicle::_handleCommandLong(mavlink_message_t& message)
@@ -954,19 +1007,19 @@ void Vehicle::_handleCommandLong(mavlink_message_t& message)
     mavlink_msg_command_long_decode(&message, &cmd);
 
     switch (cmd.command) {
-        // Other component on the same system
-        // requests that QGC frees up the serial port of the autopilot
-        case MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN:
-            if (cmd.param6 > 0) {
-                // disconnect the USB link if its a direct connection to a Pixhawk
-                for (int i = 0; i < _links.length(); i++) {
-                    SerialLink *sl = qobject_cast<SerialLink*>(_links.at(i));
-                    if (sl && sl->getSerialConfig()->usbDirect()) {
-                        qDebug() << "Disconnecting:" << _links.at(i)->getName();
-                        qgcApp()->toolbox()->linkManager()->disconnectLink(_links.at(i));
-                    }
+    // Other component on the same system
+    // requests that QGC frees up the serial port of the autopilot
+    case MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN:
+        if (cmd.param6 > 0) {
+            // disconnect the USB link if its a direct connection to a Pixhawk
+            for (int i = 0; i < _links.length(); i++) {
+                SerialLink *sl = qobject_cast<SerialLink*>(_links.at(i));
+                if (sl && sl->getSerialConfig()->usbDirect()) {
+                    qDebug() << "Disconnecting:" << _links.at(i)->getName();
+                    qgcApp()->toolbox()->linkManager()->disconnectLink(_links.at(i));
                 }
             }
+        }
         break;
     }
 #endif
@@ -1351,6 +1404,7 @@ void Vehicle::_addLink(LinkInterface* link)
         qCDebug(VehicleLog) << "_addLink:" << QString("%1").arg((ulong)link, 0, 16);
         _links += link;
         _updatePriorityLink();
+        _updateHighLatencyLink();
         connect(_toolbox->linkManager(), &LinkManager::linkInactive, this, &Vehicle::_linkInactiveOrDeleted);
         connect(_toolbox->linkManager(), &LinkManager::linkDeleted, this, &Vehicle::_linkInactiveOrDeleted);
         connect(link, &LinkInterface::highLatencyChanged, this, &Vehicle::_updateHighLatencyLink);
@@ -2098,9 +2152,9 @@ void Vehicle::_connectionActive(void)
 
         // Re-negotiate protocol version for the link
         sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
-                        MAV_CMD_REQUEST_PROTOCOL_VERSION,
+                       MAV_CMD_REQUEST_PROTOCOL_VERSION,
                        false,                                   // No error shown if fails
-                        1);                                     // Request protocol version
+                       1);                                     // Request protocol version
     }
 }
 
@@ -2618,7 +2672,7 @@ void Vehicle::setSoloFirmware(bool soloFirmware)
 }
 
 #if 0
-    // Temporarily removed, waiting for new command implementation
+// Temporarily removed, waiting for new command implementation
 void Vehicle::motorTest(int motor, int percent, int timeoutSecs)
 {
     doCommandLongUnverified(_defaultComponentId, MAV_CMD_DO_MOTOR_TEST, motor, MOTOR_TEST_THROTTLE_PERCENT, percent, timeoutSecs);
@@ -2765,11 +2819,11 @@ void Vehicle::_ackMavlinkLogData(uint16_t sequence)
     ack.target_component = _defaultComponentId;
     ack.target_system = id();
     mavlink_msg_logging_ack_encode_chan(
-        _mavlink->getSystemId(),
-        _mavlink->getComponentId(),
-        priorityLink()->mavlinkChannel(),
-        &msg,
-        &ack);
+                _mavlink->getSystemId(),
+                _mavlink->getComponentId(),
+                priorityLink()->mavlinkChannel(),
+                &msg,
+                &ack);
     sendMessageOnLink(priorityLink(), msg);
 }
 
@@ -2778,7 +2832,7 @@ void Vehicle::_handleMavlinkLoggingData(mavlink_message_t& message)
     mavlink_logging_data_t log;
     mavlink_msg_logging_data_decode(&message, &log);
     emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence,
-        log.first_message_offset, QByteArray((const char*)log.data, log.length), false);
+                        log.first_message_offset, QByteArray((const char*)log.data, log.length), false);
 }
 
 void Vehicle::_handleMavlinkLoggingDataAcked(mavlink_message_t& message)
@@ -2787,7 +2841,7 @@ void Vehicle::_handleMavlinkLoggingDataAcked(mavlink_message_t& message)
     mavlink_msg_logging_data_acked_decode(&message, &log);
     _ackMavlinkLogData(log.sequence);
     emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence,
-        log.first_message_offset, QByteArray((const char*)log.data, log.length), true);
+                        log.first_message_offset, QByteArray((const char*)log.data, log.length), true);
 }
 
 void Vehicle::setFirmwarePluginInstanceData(QObject* firmwarePluginInstanceData)
@@ -2946,7 +3000,7 @@ QString Vehicle::hobbsMeter()
     static const char* HOOBS_LO = "LND_FLIGHT_T_LO";
     //-- TODO: Does this exist on non PX4?
     if (_parameterManager->parameterExists(FactSystem::defaultComponentId, HOOBS_HI) &&
-        _parameterManager->parameterExists(FactSystem::defaultComponentId, HOOBS_LO)) {
+            _parameterManager->parameterExists(FactSystem::defaultComponentId, HOOBS_LO)) {
         Fact* factHi = _parameterManager->getParameter(FactSystem::defaultComponentId, HOOBS_HI);
         Fact* factLo = _parameterManager->getParameter(FactSystem::defaultComponentId, HOOBS_LO);
         uint64_t hobbsTimeSeconds = ((uint64_t)factHi->rawValue().toUInt() << 32 | (uint64_t)factLo->rawValue().toUInt()) / 1000000;

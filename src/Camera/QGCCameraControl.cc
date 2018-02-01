@@ -40,6 +40,7 @@ static const char* kParameterrange  = "parameterrange";
 static const char* kParameterranges = "parameterranges";
 static const char* kParameters      = "parameters";
 static const char* kReadOnly        = "readonly";
+static const char* kWriteOnly       = "writeonly";
 static const char* kRoption         = "roption";
 static const char* kStep            = "step";
 static const char* kStrings         = "strings";
@@ -659,6 +660,13 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
         //-- Is it read only?
         bool readOnly = false;
         read_attribute(parameterNode, kReadOnly, readOnly);
+        //-- Is it write only?
+        bool writeOnly = false;
+        read_attribute(parameterNode, kWriteOnly, writeOnly);
+        //-- It can't be both
+        if(readOnly && writeOnly) {
+            qCritical() << QString("Parameter %1 cannot be both read only and write only").arg(factName);
+        }
         //-- Param type
         bool unknownType;
         FactMetaData::ValueType_t factType = FactMetaData::stringToType(type, unknownType);
@@ -689,6 +697,7 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
         metaData->setLongDescription(description);
         metaData->setHasControl(control);
         metaData->setReadOnly(readOnly);
+        metaData->setWriteOnly(writeOnly);
         //-- Options (enums)
         QDomElement optionElem = parameterNode.toElement();
         QDomNodeList optionsRoot = optionElem.elementsByTagName(kOptions);
@@ -797,7 +806,7 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
                     metaData->setRawUnits(attr);
                 }
             }
-            qCDebug(CameraControlLog) << "New parameter:" << factName;
+            qCDebug(CameraControlLog) << "New parameter:" << factName << (readOnly ? "ReadOnly" : "Writable") << (writeOnly ? "WriteOnly" : "Readable");
             _nameToFactMetaDataMap[factName] = metaData;
             Fact* pFact = new Fact(_compID, factName, factType, this);
             QQmlEngine::setObjectOwnership(pFact, QQmlEngine::CppOwnership);

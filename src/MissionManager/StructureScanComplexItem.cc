@@ -102,7 +102,7 @@ void StructureScanComplexItem::_setScanDistance(double scanDistance)
 {
     if (!qFuzzyCompare(_scanDistance, scanDistance)) {
         _scanDistance = scanDistance;
-        emit complexDistanceChanged(_scanDistance);
+        emit complexDistanceChanged();
     }
 }
 

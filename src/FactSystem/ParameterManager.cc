@@ -81,7 +81,17 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
     // Ensure the cache directory exists
     QFileInfo(QSettings().fileName()).dir().mkdir("ParamCache");
 
-    refreshAllParameters();
+    if (_vehicle->highLatencyLink()) {
+        // High latency links don't load parameters
+        _parametersReady = true;
+        _missingParameters = true;
+        _initialLoadComplete = true;
+        _waitingForDefaultComponent = false;
+        emit parametersReadyChanged(_parametersReady);
+        emit missingParametersChanged(_missingParameters);
+    } else {
+        refreshAllParameters();
+    }
 }
 
 ParameterManager::~ParameterManager()
@@ -133,12 +143,12 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
     }
 #endif
 
-	if (_vehicle->px4Firmware() && parameterName == "_HASH_CHECK") {
-    	if (!_initialLoadComplete && !_logReplay) {
-        	/* we received a cache hash, potentially load from cache */
-        	_tryCacheHashLoad(vehicleId, componentId, value);
-		}
-		return;
+    if (_vehicle->px4Firmware() && parameterName == "_HASH_CHECK") {
+        if (!_initialLoadComplete && !_logReplay) {
+            /* we received a cache hash, potentially load from cache */
+            _tryCacheHashLoad(vehicleId, componentId, value);
+        }
+        return;
     }
 
     _initialRequestTimeoutTimer.stop();
