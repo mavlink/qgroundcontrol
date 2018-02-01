@@ -19,6 +19,7 @@ import QGroundControl.Controls          1.0
 import QGroundControl.Palette           1.0
 import QGroundControl.Vehicle           1.0
 import QGroundControl.Controllers       1.0
+import QGroundControl.SettingsManager   1.0
 
 import TyphoonHQuickInterface           1.0
 
@@ -38,11 +39,16 @@ Item {
     property real   _minLabel:              ScreenTools.defaultFontPixelWidth * 8
     property double _thermalAspect:         _camera ? (_camera.isE10T ? 1.25 : 1.33) : 1
     property double _thermalHeightFactor:   _camera ? (_camera.isE10T ? 0.3955 : 0.9444) : 1
+    property bool   _celcius:               QGroundControl.settingsManager.unitsSettings.temperatureUnits.rawValue === UnitsSettings.TemperatureUnitsCelsius
 
     property real   spotSize:               48
     property bool   isSpot:                 _camera && _cameraAutoMode && _meteringModeFact && _meteringModeFact.rawValue === 2
     property bool   isCenter:               _camera && _cameraAutoMode && _meteringModeFact && _meteringModeFact.rawValue === 0
     property bool   isThermal:              !_mainIsMap && _camera && _camera.irValid && _camera.paramComplete && TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver
+
+    function getTemperature(tempC) {
+        return (_celcius ? tempC : tempC * 1.8 + 32).toFixed(1) + (_celcius ? "°C" : "°F")
+    }
 
     Rectangle {
         id:             noVideo
@@ -272,7 +278,7 @@ Item {
         }
         QGCLabel {
             id:                 aTempLabel
-            text:               _camera ? _camera.irAverageTemp.toFixed(1) + '°C' : ""
+            text:               _camera ? getTemperature(_camera.irAverageTemp) : ""
             color:              "white"
             font.family:        ScreenTools.demiboldFontFamily
             anchors.centerIn:   aTempRect
@@ -302,7 +308,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             QGCLabel {
                 id:                 sTempLabel
-                text:               _camera ? _camera.irCenterTemp.toFixed(1) + '°C' : ""
+                text:               _camera ? getTemperature(_camera.irCenterTemp) : ""
                 color:              "white"
                 font.family:        ScreenTools.demiboldFontFamily
                 anchors.centerIn:   parent
@@ -326,7 +332,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             QGCLabel {
                 id:                 maxTempLabel
-                text:               _camera ? _camera.irMaxTemp.toFixed(1) + '°C' : ""
+                text:               _camera ? getTemperature(_camera.irMaxTemp) : ""
                 color:              "white"
                 font.family:        ScreenTools.demiboldFontFamily
                 anchors.centerIn:   parent
@@ -358,7 +364,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             QGCLabel {
                 id:                 minTempLabel
-                text:               _camera ? _camera.irMinTemp.toFixed(1) + '°C' : ""
+                text:               _camera ? getTemperature(_camera.irMinTemp) : ""
                 color:              "white"
                 font.family:        ScreenTools.demiboldFontFamily
                 anchors.centerIn:   parent
