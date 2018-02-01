@@ -32,8 +32,8 @@ public:
     void                batteryConsumptionData              (Vehicle* vehicle, int& mAhBattery, double& hoverAmps, double& cruiseAmps) const final;
     bool                vehicleYawsToNextWaypointInMission  (const Vehicle* vehicle) const final;
     QString             internalParameterMetaDataFile       (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QString(":/typhoonh/YuneecParameterFactMetaData.xml"); }
-#if !defined (__planner__)
     QGCCameraManager*   createCameraManager                 (Vehicle *vehicle) override final;
+#if !defined (__planner__)
     QGCCameraControl*   createCameraControl                 (const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = NULL) override final;
 #endif
 

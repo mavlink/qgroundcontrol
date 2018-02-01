@@ -156,13 +156,11 @@ bool YuneecFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* veh
     }
 }
 
-#if !defined (__planner__)
 QGCCameraManager*
 YuneecFirmwarePlugin::createCameraManager(Vehicle *vehicle)
 {
     return new YuneecCameraManager(vehicle);
 }
-#endif
 
 #if !defined (__planner__)
 QGCCameraControl*

@@ -367,7 +367,7 @@ void PlanMasterController::saveToFile(const QString& filename)
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qgcApp()->showMessage(tr("Plan save error %1 : %2").arg(filename).arg(file.errorString()));
     } else {
-        QJsonDocument saveDoc(saveToJson());
+        QJsonDocument saveDoc = saveToJson();
         file.write(saveDoc.toJson());
     }
 
