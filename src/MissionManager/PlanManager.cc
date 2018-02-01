@@ -36,8 +36,7 @@ PlanManager::PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType)
 {
     _ackTimeoutTimer = new QTimer(this);
     _ackTimeoutTimer->setSingleShot(true);
-    _ackTimeoutTimer->setInterval(_ackTimeoutMilliseconds);
-    
+
     connect(_ackTimeoutTimer, &QTimer::timeout, this, &PlanManager::_ackTimeout);
 }
 
@@ -245,6 +244,24 @@ void PlanManager::_ackTimeout(void)
 
 void PlanManager::_startAckTimeout(AckType_t ack)
 {
+    switch (ack) {
+    case AckMissionItem:
+        // We are actively trying to get the mission item, so we don't want to wait as long.
+        _ackTimeoutTimer->setInterval(_retryTimeoutMilliseconds);
+        break;
+    case AckNone:
+        // FALLTHROUGH
+    case AckMissionCount:
+        // FALLTHROUGH
+    case AckMissionRequest:
+        // FALLTHROUGH
+    case AckMissionClearAll:
+        // FALLTHROUGH
+    case AckGuidedItem:
+        _ackTimeoutTimer->setInterval(_ackTimeoutMilliseconds);
+        break;
+    }
+
     _expectedAck = ack;
     _ackTimeoutTimer->start();
 }
