@@ -146,7 +146,8 @@ LinuxBuild {
         platforminputcontexts \
         platforms \
         position \
-        sqldrivers
+        sqldrivers \
+        texttospeech
 
     !contains(DEFINES, __rasp_pi2__) {
         QT_PLUGIN_LIST += xcbglintegrations
