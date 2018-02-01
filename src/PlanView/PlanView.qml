@@ -421,7 +421,7 @@ QGCView {
                 rotateImage:        [ false, false, false, masterController.syncInProgress, false, false, false ]
                 animateImage:       [ false, false, false, masterController.dirty, false, false, false ]
                 buttonEnabled:      [ true, true, true, !masterController.syncInProgress, true, true, true ]
-                buttonVisible:      [ true, _waypointsOnlyMode, true, true, true, _showZoom, _showZoom ]
+                buttonVisible:      [ true, false /* Hacked out out DataPilot for next release _waypointsOnlyMode */, true, true, true, _showZoom, _showZoom ]
                 maxHeight:          mapScale.y - toolStrip.y
 
                 property bool _showZoom: !ScreenTools.isMobile

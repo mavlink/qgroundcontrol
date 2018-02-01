@@ -1844,9 +1844,12 @@ QStringList MissionController::complexMissionItemNames(void) const
     if (_controllerVehicle->fixedWing()) {
         complexItems.append(_fwLandingMissionItemName);
     }
+#if 0
+    // Hacked out of DataPilot for next release
     if (_controllerVehicle->multiRotor() || _controllerVehicle->vtol()) {
         complexItems.append(_structureScanMissionItemName);
     }
+#endif
 
     return complexItems;
 }
