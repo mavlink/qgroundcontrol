@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.43 - Jan 31 2018
+
+*   Turn off ROI and Structure Scan
+
 ### v1.2.42 - Jan 31 2018
 
 *   Show temperatures in Fahrenheit or Celsius (option)
