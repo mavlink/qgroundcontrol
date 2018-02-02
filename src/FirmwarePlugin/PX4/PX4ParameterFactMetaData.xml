@@ -8403,6 +8403,10 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <short_desc>TEST_2</short_desc>
       <scope>systemcmds/tests</scope>
     </parameter>
+    <parameter default="5.0" name="TEST_3" type="FLOAT">
+      <short_desc>TEST_3</short_desc>
+      <scope>systemcmds/tests</scope>
+    </parameter>
     <parameter default="0.01" name="TEST_D" type="FLOAT">
       <short_desc>TEST_D</short_desc>
       <scope>lib/controllib/controllib_test</scope>
