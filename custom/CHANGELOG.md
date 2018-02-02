@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.47 - Feb 2 2018
+
+*   Added max horizontal velocity to Safety Panel
+
 ### v1.2.46 - Feb 2 2018
 
 *   Added max vertical velocity to Safety Panel
