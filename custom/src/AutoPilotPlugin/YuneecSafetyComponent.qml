@@ -47,6 +47,7 @@ SetupPage {
 
             property Fact _maxVelUp:        controller.getParameterFact(-1, "MPC_Z_VEL_MAX_DN")
             property Fact _maxVelDn:        controller.getParameterFact(-1, "MPC_Z_VEL_MAX_UP")
+            property Fact _maxVelHz:        controller.getParameterFact(-1, "MPC_VEL_MANUAL")
 
             ExclusiveGroup { id: homeLoiterGroup }
 
@@ -67,11 +68,19 @@ SetupPage {
             }
 
             Rectangle {
+                x:      maxVertGrid.x + outerGrid.x - _margins
+                y:      maxVertGrid.y + outerGrid.y - _margins
+                width:  maxVertGrid.width + (_margins * 2)
+                height: maxVertGrid.height + (_margins * 2)
+                color:  qgcPal.windowShade
+            }
+
+            Rectangle {
                 id:     lastRect
-                x:      maxVelGrid.x + outerGrid.x - _margins
-                y:      maxVelGrid.y + outerGrid.y - _margins
-                width:  maxVelGrid.width + (_margins * 2)
-                height: maxVelGrid.height + (_margins * 2)
+                x:      maxHorzGrid.x + outerGrid.x - _margins
+                y:      maxHorzGrid.y + outerGrid.y - _margins
+                width:  maxHorzGrid.width + (_margins * 2)
+                height: maxHorzGrid.height + (_margins * 2)
                 color:  qgcPal.windowShade
             }
 
@@ -189,17 +198,17 @@ SetupPage {
                 Item { width: _margins; height: 1 }
 
                 GridLayout {
-                    id:         maxVelGrid
+                    id:         maxVertGrid
                     columns:    3
                     Image {
                         mipmap:                 true
                         fillMode:               Image.PreserveAspectFit
                         source:                 "/typhoonh/img/TyphoonUpDown.svg"
                         Layout.rowSpan:         3
-                        Layout.maximumWidth:    _imageWidth  * 2
-                        Layout.maximumHeight:   _imageHeight * 2
-                        width:                  _imageWidth  * 2
-                        height:                 _imageHeight * 2
+                        Layout.maximumWidth:    _imageWidth
+                        Layout.maximumHeight:   _imageHeight
+                        width:                  _imageWidth
+                        height:                 _imageHeight
                     }
                     QGCLabel {
                         text:                   qsTr("Max Climb Velocity:")
@@ -218,6 +227,41 @@ SetupPage {
                     }
                     FactTextField {
                         fact:                   _maxVelDn
+                        Layout.minimumWidth:    _editFieldWidth
+                        Layout.alignment:       Qt.AlignVCenter
+                    }
+                }
+
+                Item { width: 1; height: _margins; Layout.columnSpan: 3 }
+
+                QGCLabel {
+                    text:               qsTr("Max Horizontal Velocity")
+                    Layout.columnSpan:  3
+                }
+
+                Item { width: 1; height: _margins; Layout.columnSpan: 3 }
+
+                Item { width: _margins; height: 1 }
+
+                GridLayout {
+                    id:         maxHorzGrid
+                    columns:    3
+                    Image {
+                        mipmap:                 true
+                        fillMode:               Image.PreserveAspectFit
+                        source:                 "/typhoonh/img/TyphoonHorizontal.svg"
+                        Layout.maximumWidth:    _imageWidth
+                        Layout.maximumHeight:   _imageHeight
+                        width:                  _imageWidth
+                        height:                 _imageHeight
+                    }
+                    QGCLabel {
+                        text:                   qsTr("Max Horizontal Velocity:")
+                        Layout.fillWidth:       true
+                        Layout.alignment:       Qt.AlignVCenter
+                    }
+                    FactTextField {
+                        fact:                   _maxVelHz
                         Layout.minimumWidth:    _editFieldWidth
                         Layout.alignment:       Qt.AlignVCenter
                     }
