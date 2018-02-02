@@ -76,6 +76,7 @@
         <file alias="TyphoonRight.svg">res/images/TyphoonRight.svg</file>
         <file alias="TyphoonTailDown.svg">res/images/TyphoonTailDown.svg</file>
         <file alias="TyphoonUpsideDown.svg">res/images/TyphoonUpsideDown.svg</file>
+        <file alias="TyphoonUpDown.svg">res/images/TyphoonUpDown.svg</file>
         <file alias="UpArrow.svg">res/images/UpArrow.svg</file>
         <file alias="VehicleWithCamera.svg">res/images/VehicleWithCamera.svg</file>
         <file alias="video.svg">res/images/video.svg</file>

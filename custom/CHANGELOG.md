@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.46 - Feb 2 2018
+
+*   Added max vertical velocity to Safety Panel
+
 ### v1.2.45 - Feb 2 2018
 
 *   Added image capture count to camera control
