@@ -3,6 +3,22 @@ pipeline {
   stages {
     stage('build') {
       parallel {
+        stage('Linux Release') {
+          agent {
+            docker {
+              image 'mavlink/qgc-build-linux'
+              args '-e CI=true -e CCACHE_BASEDIR=$WORKSPACE -e CCACHE_DIR=/tmp/ccache -v /tmp/ccache:/tmp/ccache:rw'
+            }
+          }
+          steps {
+            sh 'git submodule deinit -f .'
+            sh 'git clean -ff -x -d .'
+            sh 'git submodule update --init --recursive --force'
+            sh 'mkdir build; cd build; qmake -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=release CONFIG+=WarningsAsErrorsOn'
+            sh 'cd build; make -j4'
+            sh 'ccache -s'
+          }
+        }
         stage('OSX Debug') {
           agent {
             node {
