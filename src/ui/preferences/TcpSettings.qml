@@ -46,6 +46,24 @@ Item {
             height: ScreenTools.defaultFontPixelHeight / 2
             width:  parent.width
         }
+        QGCCheckBox {
+            text:       "High Latency"
+            checked:    false
+            visible:    editConfig ? editConfig.highLatencyAllowed : false
+            onCheckedChanged: {
+                if(editConfig) {
+                    editConfig.highLatency = checked
+                }
+            }
+            Component.onCompleted: {
+                if(editConfig)
+                    checked = editConfig.highLatency
+            }
+        }
+        Item {
+            height: ScreenTools.defaultFontPixelHeight / 2
+            width:  parent.width
+        }
         Row {
             spacing:    ScreenTools.defaultFontPixelWidth
             QGCLabel {

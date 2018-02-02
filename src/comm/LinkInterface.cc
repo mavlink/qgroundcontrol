@@ -23,7 +23,7 @@ uint8_t LinkInterface::mavlinkChannel(void) const
 LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config)
     : QThread                   (0)
     , _config                   (config)
-    , _highLatency              (false)
+    , _highLatency              (config->isHighLatency())
     , _mavlinkChannelSet        (false)
     , _active                   (false)
     , _enableRateCollection     (false)
