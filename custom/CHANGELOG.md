@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.48 - Feb 2 2018
+
+*   Bump up hover delay to two seconds
+
 ### v1.2.47 - Feb 2 2018
 
 *   Added max horizontal velocity to Safety Panel
