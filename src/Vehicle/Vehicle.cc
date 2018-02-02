@@ -221,7 +221,7 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     // Send MAV_CMD ack timer
     _mavCommandAckTimer.setSingleShot(true);
-    _mavCommandAckTimer.setInterval(_mavCommandAckTimeoutMSecs);
+    _mavCommandAckTimer.setInterval(_highLatencyLink ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs);
     connect(&_mavCommandAckTimer, &QTimer::timeout, this, &Vehicle::_sendMavCommandAgain);
 
     _mav = uas();
@@ -833,8 +833,9 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     _airSpeedFact.setRawValue((double)highLatency2.airspeed / 5.0);
     _groundSpeedFact.setRawValue((double)highLatency2.groundspeed / 5.0);
     _climbRateFact.setRawValue((double)highLatency2.climb_rate / 10.0);
-
     _headingFact.setRawValue((double)highLatency2.heading * 2.0);
+    _altitudeRelativeFact.setRawValue(std::numeric_limits<double>::quiet_NaN());
+    _altitudeAMSLFact.setRawValue(highLatency2.altitude);
 
     _windFactGroup.direction()->setRawValue((double)highLatency2.wind_heading * 2.0);
     _windFactGroup.speed()->setRawValue((double)highLatency2.windspeed / 5.0);
@@ -1497,6 +1498,7 @@ void Vehicle::_updatePriorityLink(void)
 
     if (newPriorityLink) {
         _priorityLink = _toolbox->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
+        _updateHighLatencyLink();
     }
 }
 
@@ -3028,6 +3030,7 @@ void Vehicle::_updateHighLatencyLink(void)
 {
     if (_priorityLink->highLatency() != _highLatencyLink) {
         _highLatencyLink = _priorityLink->highLatency();
+        _mavCommandAckTimer.setInterval(_highLatencyLink ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs);
         emit highLatencyLinkChanged(_highLatencyLink);
     }
 }
