@@ -244,20 +244,24 @@ Rectangle {
                 }
             }
         }
-        //-- Recording Time
+        //-- Recording Time / Images Captured
         Item {
             width:  1
             height: ScreenTools.defaultFontPixelHeight * 0.15
-            visible: _cameraVideoMode
         }
         QGCLabel {
             text: (_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _camera.recordTimeStr : "00:00:00"
             visible: _cameraVideoMode
             anchors.horizontalCenter: parent.horizontalCenter
         }
+        QGCLabel {
+            text: _activeVehicle && _cameraPhotoMode ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
+            visible: _cameraPhotoMode
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
         Item {
             width:  1
-            height: ScreenTools.defaultFontPixelHeight * _cameraVideoMode ? 0.075 : 0.15
+            height: ScreenTools.defaultFontPixelHeight * 0.15
         }
         Rectangle {
             height: 1

@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.45 - Feb 2 2018
+
+*   Added image capture count to camera control
+
 ### v1.2.44 - Feb 1 2018
 
 *   Fix incorrect Resume Mission display
