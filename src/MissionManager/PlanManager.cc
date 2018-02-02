@@ -30,13 +30,13 @@ PlanManager::PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType)
     , _transactionInProgress(TransactionNone)
     , _resumeMission(false)
     , _lastMissionRequest(-1)
+    , _missionItemCountToRead(-1)
     , _currentMissionIndex(-1)
     , _lastCurrentIndex(-1)
 {
     _ackTimeoutTimer = new QTimer(this);
     _ackTimeoutTimer->setSingleShot(true);
-    _ackTimeoutTimer->setInterval(_ackTimeoutMilliseconds);
-    
+
     connect(_ackTimeoutTimer, &QTimer::timeout, this, &PlanManager::_ackTimeout);
 }
 
@@ -244,6 +244,24 @@ void PlanManager::_ackTimeout(void)
 
 void PlanManager::_startAckTimeout(AckType_t ack)
 {
+    switch (ack) {
+    case AckMissionItem:
+        // We are actively trying to get the mission item, so we don't want to wait as long.
+        _ackTimeoutTimer->setInterval(_retryTimeoutMilliseconds);
+        break;
+    case AckNone:
+        // FALLTHROUGH
+    case AckMissionCount:
+        // FALLTHROUGH
+    case AckMissionRequest:
+        // FALLTHROUGH
+    case AckMissionClearAll:
+        // FALLTHROUGH
+    case AckGuidedItem:
+        _ackTimeoutTimer->setInterval(_ackTimeoutMilliseconds);
+        break;
+    }
+
     _expectedAck = ack;
     _ackTimeoutTimer->start();
 }
@@ -317,6 +335,7 @@ void PlanManager::_handleMissionCount(const mavlink_message_t& message)
         for (int i=0; i<missionCount.count; i++) {
             _itemIndicesToRead << i;
         }
+        _missionItemCountToRead = missionCount.count;
         _requestNextMissionItem();
     }
 }
@@ -460,7 +479,7 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message, bool miss
         return;
     }
 
-    emit progressPct((double)seq / (double)_missionItems.count());
+    emit progressPct((double)seq / (double)_missionItemCountToRead);
     
     _retryCount = 0;
     if (_itemIndicesToRead.count() == 0) {
