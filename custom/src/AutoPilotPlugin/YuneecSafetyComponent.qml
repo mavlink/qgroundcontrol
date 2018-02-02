@@ -45,6 +45,9 @@ SetupPage {
             property Fact _fenceRadius:     controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
             property Fact _fenceAlt:        controller.getParameterFact(-1, "GF_MAX_VER_DIST")
 
+            property Fact _maxVelUp:        controller.getParameterFact(-1, "MPC_Z_VEL_MAX_DN")
+            property Fact _maxVelDn:        controller.getParameterFact(-1, "MPC_Z_VEL_MAX_UP")
+
             ExclusiveGroup { id: homeLoiterGroup }
 
             Rectangle {
@@ -56,11 +59,19 @@ SetupPage {
             }
 
             Rectangle {
-                id:     lastRect
                 x:      returnHomeGrid.x + outerGrid.x - _margins
                 y:      returnHomeGrid.y + outerGrid.y - _margins
                 width:  returnHomeGrid.width + (_margins * 2)
                 height: returnHomeGrid.height + (_margins * 2)
+                color:  qgcPal.windowShade
+            }
+
+            Rectangle {
+                id:     lastRect
+                x:      maxVelGrid.x + outerGrid.x - _margins
+                y:      maxVelGrid.y + outerGrid.y - _margins
+                width:  maxVelGrid.width + (_margins * 2)
+                height: maxVelGrid.height + (_margins * 2)
                 color:  qgcPal.windowShade
             }
 
@@ -161,6 +172,52 @@ SetupPage {
                     }
                     FactTextField {
                         fact:                   controller.getParameterFact(-1, "RTL_RETURN_ALT")
+                        Layout.minimumWidth:    _editFieldWidth
+                        Layout.alignment:       Qt.AlignVCenter
+                    }
+                }
+
+                Item { width: 1; height: _margins; Layout.columnSpan: 3 }
+
+                QGCLabel {
+                    text:               qsTr("Max Vertical Velocity")
+                    Layout.columnSpan:  3
+                }
+
+                Item { width: 1; height: _margins; Layout.columnSpan: 3 }
+
+                Item { width: _margins; height: 1 }
+
+                GridLayout {
+                    id:         maxVelGrid
+                    columns:    3
+                    Image {
+                        mipmap:                 true
+                        fillMode:               Image.PreserveAspectFit
+                        source:                 "/typhoonh/img/TyphoonUpDown.svg"
+                        Layout.rowSpan:         3
+                        Layout.maximumWidth:    _imageWidth  * 2
+                        Layout.maximumHeight:   _imageHeight * 2
+                        width:                  _imageWidth  * 2
+                        height:                 _imageHeight * 2
+                    }
+                    QGCLabel {
+                        text:                   qsTr("Max Climb Velocity:")
+                        Layout.fillWidth:       true
+                        Layout.alignment:       Qt.AlignVCenter
+                    }
+                    FactTextField {
+                        fact:                   _maxVelUp
+                        Layout.minimumWidth:    _editFieldWidth
+                        Layout.alignment:       Qt.AlignVCenter
+                    }
+                    QGCLabel {
+                        text:                   qsTr("Max Descent Velocity:")
+                        Layout.fillWidth:       true
+                        Layout.alignment:       Qt.AlignVCenter
+                    }
+                    FactTextField {
+                        fact:                   _maxVelDn
                         Layout.minimumWidth:    _editFieldWidth
                         Layout.alignment:       Qt.AlignVCenter
                     }
