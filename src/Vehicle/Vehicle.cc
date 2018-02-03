@@ -814,17 +814,6 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     mavlink_high_latency2_t highLatency2;
     mavlink_msg_high_latency2_decode(&message, &highLatency2);
 
-#if 0
-    typedef struct __mavlink_high_latency2_t {
-     uint16_t wp_num; /*< Current waypoint number*/
-     uint16_t failure_flags; /*< Indicates failures as defined in MAV_FAILURE_FLAG ENUM. */
-     uint8_t flight_mode; /*< Flight Mode of the vehicle as defined in the FLIGHT_MODE ENUM*/
-     uint8_t failsafe; /*< Indicates if a failsafe mode is triggered, defined in MAV_FAILSAFE_FLAG ENUM*/
-    }) mavlink_high_latency2_t;
-#endif
-
-    // FIXME: flight mode not yet supported
-
     _coordinate.setLatitude(highLatency2.latitude  / (double)1E7);
     _coordinate.setLongitude(highLatency2.longitude / (double)1E7);
     _coordinate.setAltitude(highLatency2.altitude);
@@ -849,6 +838,40 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     _gpsFactGroup.count()->setRawValue(0);
     _gpsFactGroup.hdop()->setRawValue(highLatency2.eph == UINT8_MAX ? std::numeric_limits<double>::quiet_NaN() : highLatency2.eph / 10.0);
     _gpsFactGroup.vdop()->setRawValue(highLatency2.epv == UINT8_MAX ? std::numeric_limits<double>::quiet_NaN() : highLatency2.epv / 10.0);
+
+    struct failure2Sensor_s {
+        MAV_FAILURE_FLAG        failureBit;
+        MAV_SYS_STATUS_SENSOR   sensorBit;
+    };
+
+    static const failure2Sensor_s rgFailure2Sensor[] = {
+        { MAV_FAILURE_FLAG_GPS,             MAV_SYS_STATUS_SENSOR_GPS },
+        { MAV_FAILURE_FLAG_AIRSPEED,        MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE },
+        { MAV_FAILURE_FLAG_BAROMETER,       MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE },
+        { MAV_FAILURE_FLAG_ACCELEROMETER,   MAV_SYS_STATUS_SENSOR_3D_ACCEL },
+        { MAV_FAILURE_FLAG_GYROSCOPE,       MAV_SYS_STATUS_SENSOR_3D_GYRO },
+        { MAV_FAILURE_FLAG_MAGNETOMETER,    MAV_SYS_STATUS_SENSOR_3D_MAG },
+        // { MAV_FAILURE_FLAG_MISSION,          ???? },
+        // { MAV_FAILURE_FLAG_ESTIMATOR,        ???? },
+        // { MAV_FAILURE_FLAG_LIDAR,            ???? },
+        // { MAV_FAILURE_FLAG_OFFBOARD_LINK,    ???? },
+    };
+
+    // Map from MAV_FAILURE bits to standard SYS_STATUS message handling
+    uint32_t newOnboardControlSensorsEnabled = 0;
+    for (size_t i=0; i<sizeof(rgFailure2Sensor)/sizeof(failure2Sensor_s); i++) {
+        const failure2Sensor_s* pFailure2Sensor = &rgFailure2Sensor[i];
+        if (highLatency2.failure_flags & pFailure2Sensor->failureBit) {
+            // Assume if reporting as unhealthy that is it present and enabled
+            newOnboardControlSensorsEnabled |= pFailure2Sensor->sensorBit;
+        }
+    }
+    if (newOnboardControlSensorsEnabled != _onboardControlSensorsEnabled) {
+        _onboardControlSensorsEnabled = newOnboardControlSensorsEnabled;
+        _onboardControlSensorsPresent = newOnboardControlSensorsEnabled;
+        _onboardControlSensorsUnhealthy = 0;
+        emit unhealthySensorsChanged();
+    }
 }
 
 void Vehicle::_handleAltitude(mavlink_message_t& message)
@@ -2726,6 +2749,7 @@ QStringList Vehicle::unhealthySensors(void) const
         { MAV_SYS_STATUS_TERRAIN,                       "Terrain" },
         { MAV_SYS_STATUS_REVERSE_MOTOR,                 "Motors reversed" },
         { MAV_SYS_STATUS_LOGGING,                       "Logging" },
+        { MAV_SYS_STATUS_SENSOR_BATTERY,                "Battery" },
     };
 
     for (size_t i=0; i<sizeof(rgSensorInfo)/sizeof(sensorInfo_s); i++) {
