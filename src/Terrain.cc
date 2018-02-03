@@ -196,6 +196,8 @@ QString TerrainBatchManager::_stateToString(State state)
     case State::Downloading:
         return QStringLiteral("Downloading");
     }
+
+    return QStringLiteral("State unknown");
 }
 
 ElevationProvider::ElevationProvider(QObject* parent)
