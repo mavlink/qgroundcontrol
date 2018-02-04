@@ -43,7 +43,7 @@ void CorridorScanComplexItemTest::init(void)
     _rgCorridorPolygonSignals[corridorPolygonPathChangedIndex] = SIGNAL(pathChanged());
 
     _multiSpyCorridorPolygon = new MultiSignalSpy();
-    QCOMPARE(_multiSpyCorridorPolygon->init(_corridorItem->corridorPolygon(), _rgCorridorPolygonSignals, _cCorridorPolygonSignals), true);
+    QCOMPARE(_multiSpyCorridorPolygon->init(_corridorItem->surveyAreaPolygon(), _rgCorridorPolygonSignals, _cCorridorPolygonSignals), true);
 }
 
 void CorridorScanComplexItemTest::cleanup(void)

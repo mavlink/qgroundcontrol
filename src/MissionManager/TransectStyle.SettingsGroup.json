@@ -1,0 +1,38 @@
+[
+{
+    "name":             "TurnAroundDistance",
+    "shortDescription": "Amount of additional distance to add outside the survey area for vehicle turn around.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "defaultValue":     30
+},
+{
+    "name":             "TurnAroundDistanceMultiRotor",
+    "shortDescription": "Amount of additional distance to add outside the survey area for vehicle turn around.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "defaultValue":     10
+},
+{
+    "name":             "CameraTriggerInTurnAround",
+    "shortDescription": "Camera continues taking images in turn arounds.",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
+    "name":             "HoverAndCapture",
+    "shortDescription": "Stop and Hover at each image point before taking image",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "Refly90Degrees",
+    "shortDescription": "Refly the pattern at a 90 degree angle",
+    "type":             "bool",
+    "defaultValue":     false
+}
+]

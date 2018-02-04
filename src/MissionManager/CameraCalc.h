@@ -20,17 +20,18 @@ class CameraCalc : public CameraSpec
 public:
     CameraCalc(Vehicle* vehicle, QObject* parent = NULL);
 
-    Q_PROPERTY(QString          cameraName                  READ cameraName         WRITE setCameraName NOTIFY cameraNameChanged)
-    Q_PROPERTY(QString          customCameraName            READ customCameraName                       CONSTANT)                   ///< Camera name for custom camera setting
-    Q_PROPERTY(QString          manualCameraName            READ manualCameraName                       CONSTANT)                   ///< Camera name for manual camera setting
-    Q_PROPERTY(bool             isManualCamera              READ isManualCamera                         NOTIFY cameraNameChanged)   ///< true: using manual camera
-    Q_PROPERTY(Fact*            valueSetIsDistance          READ valueSetIsDistance                     CONSTANT)                   ///< true: distance specified, resolution calculated
-    Q_PROPERTY(Fact*            distanceToSurface           READ distanceToSurface                      CONSTANT)                   ///< Distance to surface for image foot print calculation
-    Q_PROPERTY(Fact*            imageDensity                READ imageDensity                           CONSTANT)                   ///< Image density on surface (cm/px)
-    Q_PROPERTY(Fact*            frontalOverlap              READ frontalOverlap                         CONSTANT)
-    Q_PROPERTY(Fact*            sideOverlap                 READ sideOverlap                            CONSTANT)
-    Q_PROPERTY(Fact*            adjustedFootprintSide       READ adjustedFootprintSide                  CONSTANT)                   ///< Side footprint adjusted down for overlap
-    Q_PROPERTY(Fact*            adjustedFootprintFrontal    READ adjustedFootprintFrontal               CONSTANT)                   ///< Frontal footprint adjusted down for overlap
+    Q_PROPERTY(QString          cameraName                  READ cameraName WRITE setCameraName                                 NOTIFY cameraNameChanged)
+    Q_PROPERTY(QString          customCameraName            READ customCameraName                                               CONSTANT)                                   ///< Camera name for custom camera setting
+    Q_PROPERTY(QString          manualCameraName            READ manualCameraName                                               CONSTANT)                                   ///< Camera name for manual camera setting
+    Q_PROPERTY(bool             isManualCamera              READ isManualCamera                                                 NOTIFY cameraNameChanged)                   ///< true: using manual camera
+    Q_PROPERTY(Fact*            valueSetIsDistance          READ valueSetIsDistance                                             CONSTANT)                                   ///< true: distance specified, resolution calculated
+    Q_PROPERTY(Fact*            distanceToSurface           READ distanceToSurface                                              CONSTANT)                                   ///< Distance to surface for image foot print calculation
+    Q_PROPERTY(Fact*            imageDensity                READ imageDensity                                                   CONSTANT)                                   ///< Image density on surface (cm/px)
+    Q_PROPERTY(Fact*            frontalOverlap              READ frontalOverlap                                                 CONSTANT)
+    Q_PROPERTY(Fact*            sideOverlap                 READ sideOverlap                                                    CONSTANT)
+    Q_PROPERTY(Fact*            adjustedFootprintSide       READ adjustedFootprintSide                                          CONSTANT)                                   ///< Side footprint adjusted down for overlap
+    Q_PROPERTY(Fact*            adjustedFootprintFrontal    READ adjustedFootprintFrontal                                       CONSTANT)                                   ///< Frontal footprint adjusted down for overlap
+    Q_PROPERTY(bool             distanceToSurfaceRelative   READ distanceToSurfaceRelative WRITE setDistanceToSurfaceRelative   NOTIFY distanceToSurfaceRelativeChanged)
 
     // The following values are calculated from the camera properties
     Q_PROPERTY(double imageFootprintSide    READ imageFootprintSide     NOTIFY imageFootprintSideChanged)       ///< Size of image size side in meters
@@ -57,30 +58,35 @@ public:
     const Fact* adjustedFootprintSide       (void) const { return &_adjustedFootprintSideFact; }
     const Fact* adjustedFootprintFrontal    (void) const { return &_adjustedFootprintFrontalFact; }
 
-    bool    isManualCamera          (void) { return cameraName() == manualCameraName(); }
-    double  imageFootprintSide      (void) const { return _imageFootprintSide; }
-    double  imageFootprintFrontal   (void) const { return _imageFootprintFrontal; }
+    bool    dirty                       (void) const { return _dirty; }
+    bool    isManualCamera              (void) { return cameraName() == manualCameraName(); }
+    double  imageFootprintSide          (void) const { return _imageFootprintSide; }
+    double  imageFootprintFrontal       (void) const { return _imageFootprintFrontal; }
+    bool    distanceToSurfaceRelative   (void) const { return _distanceToSurfaceRelative; }
 
-    bool dirty      (void) const { return _dirty; }
-    void setDirty   (bool dirty);
+    void setDirty                       (bool dirty);
+    void setDistanceToSurfaceRelative   (bool distanceToSurfaceRelative);
 
     void save(QJsonObject& json) const;
     bool load(const QJsonObject& json, QString& errorString);
 
 signals:
-    void cameraNameChanged              (QString cameraName);
-    void dirtyChanged                   (bool dirty);
-    void imageFootprintSideChanged      (double imageFootprintSide);
-    void imageFootprintFrontalChanged   (double imageFootprintFrontal);
+    void cameraNameChanged                  (QString cameraName);
+    void dirtyChanged                       (bool dirty);
+    void imageFootprintSideChanged          (double imageFootprintSide);
+    void imageFootprintFrontalChanged       (double imageFootprintFrontal);
+    void distanceToSurfaceRelativeChanged   (bool distanceToSurfaceRelative);
 
 private slots:
-    void _recalcTriggerDistance(void);
+    void _recalcTriggerDistance             (void);
+    void _adjustDistanceToSurfaceRelative   (void);
 
 private:
     Vehicle*        _vehicle;
     bool            _dirty;
     QString         _cameraName;
     bool            _disableRecalc;
+    bool            _distanceToSurfaceRelative;
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
@@ -99,6 +105,7 @@ private:
 
     static const char* _valueSetIsDistanceName;
     static const char* _distanceToSurfaceName;
+    static const char* _distanceToSurfaceRelativeName;
     static const char* _imageDensityName;
     static const char* _frontalOverlapName;
     static const char* _sideOverlapName;
