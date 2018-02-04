@@ -112,13 +112,13 @@ void TerrainBatchManager::_batchFailed(void)
 
 void TerrainBatchManager::_requestFinished()
 {
-    qCDebug(ElevationProviderLog) << "_requestFinished";
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
 
     _state = State::Idle;
 
     // When an error occurs we still end up here
     if (reply->error() != QNetworkReply::NoError) {
+        qCDebug(ElevationProviderLog) << "_requestFinished error:" << reply->error();
         _batchFailed();
         reply->deleteLater();
         return;
@@ -129,6 +129,7 @@ void TerrainBatchManager::_requestFinished()
     QJsonParseError parseError;
     QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
+        qCDebug(ElevationProviderLog) << "_requestFinished unable to parse json:" << parseError.errorString();
         _batchFailed();
         reply->deleteLater();
         return;
@@ -137,6 +138,7 @@ void TerrainBatchManager::_requestFinished()
     QJsonObject rootObject = responseJson.object();
     QString status = rootObject["status"].toString();
     if (status != "success") {
+        qCDebug(ElevationProviderLog) << "_requestFinished status != success:" << status;
         _batchFailed();
         reply->deleteLater();
         return;
