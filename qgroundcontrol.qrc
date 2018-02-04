@@ -204,6 +204,7 @@
         <file alias="Guided.SettingsGroup.json">src/Settings/Guided.SettingsGroup.json</file>
 		<file alias="QGCMapCircle.Facts.json">src/MissionManager/QGCMapCircle.Facts.json</file>
         <file alias="RTK.SettingsGroup.json">src/Settings/RTK.SettingsGroup.json</file>
+		<file alias="TransectStyle.SettingsGroup.json">src/MissionManager/TransectStyle.SettingsGroup.json</file>
         <file alias="Survey.SettingsGroup.json">src/MissionManager/Survey.SettingsGroup.json</file>
 		<file alias="CorridorScan.SettingsGroup.json">src/MissionManager/CorridorScan.SettingsGroup.json</file>
 		<file alias="StructureScan.SettingsGroup.json">src/MissionManager/StructureScan.SettingsGroup.json</file>

@@ -14,15 +14,16 @@
 
 #include <QQmlEngine>
 
-const char* CameraCalc::_valueSetIsDistanceName =       "ValueSetIsDistance";
-const char* CameraCalc::_distanceToSurfaceName =        "DistanceToSurface";
-const char* CameraCalc::_imageDensityName =             "ImageDensity";
-const char* CameraCalc::_frontalOverlapName =           "FrontalOverlap";
-const char* CameraCalc::_sideOverlapName =              "SideOverlap";
-const char* CameraCalc::_adjustedFootprintFrontalName = "AdjustedFootprintFrontal";
-const char* CameraCalc::_adjustedFootprintSideName =    "AdjustedFootprintSide";
-const char* CameraCalc::_jsonCameraNameKey =            "CameraName";
-const char* CameraCalc::_jsonCameraSpecTypeKey =        "CameraSpecType";
+const char* CameraCalc::_valueSetIsDistanceName =           "ValueSetIsDistance";
+const char* CameraCalc::_distanceToSurfaceName =            "DistanceToSurface";
+const char* CameraCalc::_distanceToSurfaceRelativeName =    "DistanceToSurfaceRelative";
+const char* CameraCalc::_imageDensityName =                 "ImageDensity";
+const char* CameraCalc::_frontalOverlapName =               "FrontalOverlap";
+const char* CameraCalc::_sideOverlapName =                  "SideOverlap";
+const char* CameraCalc::_adjustedFootprintFrontalName =     "AdjustedFootprintFrontal";
+const char* CameraCalc::_adjustedFootprintSideName =        "AdjustedFootprintSide";
+const char* CameraCalc::_jsonCameraNameKey =                "CameraName";
+const char* CameraCalc::_jsonCameraSpecTypeKey =            "CameraSpecType";
 
 CameraCalc::CameraCalc(Vehicle* vehicle, QObject* parent)
     : CameraSpec                    (parent)
@@ -30,6 +31,7 @@ CameraCalc::CameraCalc(Vehicle* vehicle, QObject* parent)
     , _dirty                        (false)
     , _cameraName                   (manualCameraName())
     , _disableRecalc                (false)
+    , _distanceToSurfaceRelative    (true)
     , _metaDataMap                  (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CameraCalc.FactMetaData.json"), this))
     , _valueSetIsDistanceFact       (0, _valueSetIsDistanceName,        FactMetaData::valueTypeBool)
     , _distanceToSurfaceFact        (0, _distanceToSurfaceName,         FactMetaData::valueTypeDouble)
@@ -53,6 +55,7 @@ CameraCalc::CameraCalc(Vehicle* vehicle, QObject* parent)
     _adjustedFootprintFrontalFact.setMetaData   (_metaDataMap[_adjustedFootprintFrontalName],   true);
 
     connect(this, &CameraCalc::cameraNameChanged, this, &CameraCalc::_recalcTriggerDistance);
+    connect(this, &CameraCalc::cameraNameChanged, this, &CameraCalc::_adjustDistanceToSurfaceRelative);
 
     connect(&_distanceToSurfaceFact,    &Fact::rawValueChanged, this, &CameraCalc::_recalcTriggerDistance);
     connect(&_imageDensityFact,         &Fact::rawValueChanged, this, &CameraCalc::_recalcTriggerDistance);
@@ -167,8 +170,9 @@ void CameraCalc::save(QJsonObject& json) const
     json[JsonHelper::jsonVersionKey] =      1;
     json[_adjustedFootprintSideName] =      _adjustedFootprintSideFact.rawValue().toDouble();
     json[_adjustedFootprintFrontalName] =   _adjustedFootprintFrontalFact.rawValue().toDouble();
-    json[_distanceToSurfaceName] =  _distanceToSurfaceFact.rawValue().toDouble();
-    json[_jsonCameraNameKey] = _cameraName;
+    json[_distanceToSurfaceName] =          _distanceToSurfaceFact.rawValue().toDouble();
+    json[_distanceToSurfaceRelativeName] =  _distanceToSurfaceRelative;
+    json[_jsonCameraNameKey] =              _cameraName;
 
     if (_cameraName != manualCameraName()) {
         CameraSpec::save(json);
@@ -209,6 +213,7 @@ bool CameraCalc::load(const QJsonObject& json, QString& errorString)
         { _adjustedFootprintSideName,       QJsonValue::Double, true },
         { _adjustedFootprintFrontalName,    QJsonValue::Double, true },
         { _distanceToSurfaceName,           QJsonValue::Double, true },
+        { _distanceToSurfaceRelativeName,   QJsonValue::Bool, true },
     };
     if (!JsonHelper::validateKeys(v1Json, keyInfoList1, errorString)) {
         return false;
@@ -220,6 +225,8 @@ bool CameraCalc::load(const QJsonObject& json, QString& errorString)
     _adjustedFootprintSideFact.setRawValue      (v1Json[_adjustedFootprintSideName].toDouble());
     _adjustedFootprintFrontalFact.setRawValue   (v1Json[_adjustedFootprintFrontalName].toDouble());
     _distanceToSurfaceFact.setRawValue          (v1Json[_distanceToSurfaceName].toDouble());
+
+    _distanceToSurfaceRelative = v1Json[_distanceToSurfaceRelativeName].toBool();
 
     if (_cameraName != manualCameraName()) {
         QList<JsonHelper::KeyValidateInfo> keyInfoList2 = {
@@ -256,4 +263,19 @@ QString CameraCalc::customCameraName(void)
 QString CameraCalc::manualCameraName(void)
 {
     return tr("Manual (no camera specs)");
+}
+
+void CameraCalc::_adjustDistanceToSurfaceRelative(void)
+{
+    if (!isManualCamera()) {
+        setDistanceToSurfaceRelative(true);
+    }
+}
+
+void CameraCalc::setDistanceToSurfaceRelative(bool distanceToSurfaceRelative)
+{
+    if (distanceToSurfaceRelative != _distanceToSurfaceRelative) {
+        _distanceToSurfaceRelative = distanceToSurfaceRelative;
+        emit distanceToSurfaceRelativeChanged(distanceToSurfaceRelative);
+    }
 }
