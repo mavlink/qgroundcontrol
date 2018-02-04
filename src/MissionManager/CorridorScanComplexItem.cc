@@ -380,15 +380,6 @@ void CorridorScanComplexItem::_rebuildTransects(void)
         for (int i=0; i<transects.count(); i++) {
             _cameraShots += singleTransectImageCount;
 
-            double offsetDistance;
-            if (transects.count() == 1) {
-                // Single transect is flown over scan line
-                offsetDistance = 0;
-            } else {
-                // Convert from normalized to absolute transect offset distance
-                offsetDistance = halfWidth - normalizedTransectPosition;
-            }
-
             // We must reverse the vertices for every other transect in order to make a lawnmower pattern
             QList<QGeoCoordinate> transectVertices = transects[i];
             if (reverseVertices) {
