@@ -100,6 +100,39 @@ Rectangle {
                 fact:                   missionItem.corridorWidth
                 Layout.fillWidth:       true
             }
+
+            QGCLabel { text: qsTr("Turnaround dist") }
+            FactTextField {
+                fact:                   missionItem.turnAroundDistance
+                Layout.fillWidth:       true
+            }
+
+            FactCheckBox {
+                text:               qsTr("Take images in turnarounds")
+                fact:               missionItem.cameraTriggerInTurnAround
+                enabled:            missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true
+                Layout.columnSpan:  2
+            }
+
+            QGCCheckBox {
+                id:                 relAlt
+                anchors.left:       parent.left
+                text:               qsTr("Relative altitude")
+                checked:            missionItem.cameraCalc.distanceToSurfaceRelative
+                enabled:            missionItem.cameraCalc.isManualCamera
+                Layout.columnSpan:  2
+                onClicked:          missionItem.cameraCalc.distanceToSurfaceRelative = checked
+
+                Connections {
+                    target: missionItem.cameraCalc
+                    onDistanceToSurfaceRelativeChanged: relAlt.checked = missionItem.cameraCalc.distanceToSurfaceRelative
+                }
+            }
+        }
+
+        QGCButton {
+            text:       qsTr("Rotate Entry Point")
+            onClicked:  missionItem.rotateEntryPoint()
         }
 
         SectionHeader {
