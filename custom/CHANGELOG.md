@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.49 - Feb 4 2018
+
+*   Fix terrain query crash
+
 ### v1.2.48 - Feb 2 2018
 
 *   Bump up hover delay to two seconds
