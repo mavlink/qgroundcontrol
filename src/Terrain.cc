@@ -33,6 +33,8 @@ TerrainBatchManager::TerrainBatchManager(void)
 void TerrainBatchManager::addQuery(ElevationProvider* elevationProvider, const QList<QGeoCoordinate>& coordinates)
 {
     if (coordinates.length() > 0) {
+        qCDebug(ElevationProviderLog) << "addQuery: elevationProvider:coordinates.count" << elevationProvider << coordinates.count();
+        connect(elevationProvider, &ElevationProvider::destroyed, this, &TerrainBatchManager::_elevationProviderDestroyed);
         QueuedRequestInfo_t queuedRequestInfo = { elevationProvider, coordinates };
         _requestQueue.append(queuedRequestInfo);
         if (!_batchTimer.isActive()) {
@@ -43,7 +45,7 @@ void TerrainBatchManager::addQuery(ElevationProvider* elevationProvider, const Q
 
 void TerrainBatchManager::_sendNextBatch(void)
 {
-    qCDebug(ElevationProviderLog) << "_sendNextBatch _state:_requestQueue.count" << (int)_state << _requestQueue.count();
+    qCDebug(ElevationProviderLog) << "_sendNextBatch _state:_requestQueue.count:_sentRequests.count" << _stateToString(_state) << _requestQueue.count() << _sentRequests.count();
 
     if (_state != State::Idle) {
         // Waiting for last download the complete, wait some more
@@ -60,7 +62,7 @@ void TerrainBatchManager::_sendNextBatch(void)
     // Convert coordinates to point strings for json query
     QString points;
     foreach (const QueuedRequestInfo_t& requestInfo, _requestQueue) {
-        SentRequestInfo_t sentRequestInfo = { requestInfo.elevationProvider, requestInfo.coordinates.count() };
+        SentRequestInfo_t sentRequestInfo = { requestInfo.elevationProvider, false, requestInfo.coordinates.count() };
         qCDebug(ElevationProviderLog) << "Building request: coordinate count" << requestInfo.coordinates.count();
         _sentRequests.append(sentRequestInfo);
 
@@ -100,7 +102,10 @@ void TerrainBatchManager::_batchFailed(void)
     QList<float>    noAltitudes;
 
     foreach (const SentRequestInfo_t& sentRequestInfo, _sentRequests) {
-        sentRequestInfo.elevationProvider->_signalTerrainData(false, noAltitudes);
+        if (!sentRequestInfo.providerDestroyed) {
+            disconnect(sentRequestInfo.elevationProvider, &ElevationProvider::destroyed, this, &TerrainBatchManager::_elevationProviderDestroyed);
+            sentRequestInfo.elevationProvider->_signalTerrainData(false, noAltitudes);
+        }
     }
     _sentRequests.clear();
 }
@@ -145,13 +150,54 @@ void TerrainBatchManager::_requestFinished()
 
     int currentIndex = 0;
     foreach (const SentRequestInfo_t& sentRequestInfo, _sentRequests) {
-        QList<float> requestAltitudes = altitudes.mid(currentIndex, sentRequestInfo.cCoord);
-        sentRequestInfo.elevationProvider->_signalTerrainData(true, requestAltitudes);
-        currentIndex += sentRequestInfo.cCoord;
+        if (!sentRequestInfo.providerDestroyed) {
+            disconnect(sentRequestInfo.elevationProvider, &ElevationProvider::destroyed, this, &TerrainBatchManager::_elevationProviderDestroyed);
+            QList<float> requestAltitudes = altitudes.mid(currentIndex, sentRequestInfo.cCoord);
+            sentRequestInfo.elevationProvider->_signalTerrainData(true, requestAltitudes);
+            currentIndex += sentRequestInfo.cCoord;
+        }
     }
     _sentRequests.clear();
 
     reply->deleteLater();
+}
+
+void TerrainBatchManager::_elevationProviderDestroyed(QObject* elevationProvider)
+{
+    // Remove/Mark deleted objects queries from queues
+
+    qCDebug(ElevationProviderLog) << "_elevationProviderDestroyed elevationProvider" << elevationProvider;
+
+    int i = 0;
+    while (i < _requestQueue.count()) {
+        const QueuedRequestInfo_t& requestInfo = _requestQueue[i];
+        if (requestInfo.elevationProvider == elevationProvider) {
+            qCDebug(ElevationProviderLog) << "Removing deleted provider from _requestQueue index:elevationProvider" << i << requestInfo.elevationProvider;
+            _requestQueue.removeAt(i);
+        } else {
+            i++;
+        }
+    }
+
+    for (int i=0; i<_sentRequests.count(); i++) {
+        SentRequestInfo_t& sentRequestInfo = _sentRequests[i];
+        if (sentRequestInfo.elevationProvider == elevationProvider) {
+            qCDebug(ElevationProviderLog) << "Zombieing deleted provider from _sentRequests index:elevatationProvider" << sentRequestInfo.elevationProvider;
+            sentRequestInfo.providerDestroyed = true;
+        }
+    }
+}
+
+QString TerrainBatchManager::_stateToString(State state)
+{
+    switch (state) {
+    case State::Idle:
+        return QStringLiteral("Idle");
+    case State::Downloading:
+        return QStringLiteral("Downloading");
+    }
+
+    return QStringLiteral("State unknown");
 }
 
 ElevationProvider::ElevationProvider(QObject* parent)
@@ -161,7 +207,6 @@ ElevationProvider::ElevationProvider(QObject* parent)
 }
 void ElevationProvider::queryTerrainData(const QList<QGeoCoordinate>& coordinates)
 {
-    qCDebug(ElevationProviderLog) << "queryTerrainData: coordinate count" << coordinates.count();
     if (coordinates.length() == 0) {
         return;
     }
