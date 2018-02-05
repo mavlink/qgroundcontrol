@@ -493,6 +493,7 @@ void MissionController::removeAll(void)
 {
     if (_visualItems) {
         _deinitAllVisualItems();
+        _visualItems->clearAndDeleteContents();
         _visualItems->deleteLater();
         _settingsItem = NULL;
         _visualItems = new QmlObjectListModel(this);
