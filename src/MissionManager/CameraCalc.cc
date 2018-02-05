@@ -54,6 +54,16 @@ CameraCalc::CameraCalc(Vehicle* vehicle, QObject* parent)
     _adjustedFootprintSideFact.setMetaData      (_metaDataMap[_adjustedFootprintSideName],      true);
     _adjustedFootprintFrontalFact.setMetaData   (_metaDataMap[_adjustedFootprintFrontalName],   true);
 
+    connect(&_valueSetIsDistanceFact,       &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
+    connect(&_distanceToSurfaceFact,        &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
+    connect(&_imageDensityFact,             &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
+    connect(&_frontalOverlapFact,           &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
+    connect(&_sideOverlapFact,              &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
+    connect(&_adjustedFootprintSideFact,    &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
+    connect(&_adjustedFootprintFrontalFact, &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
+    connect(this,                           &CameraCalc::cameraNameChanged,                 this, &CameraCalc::_setDirty);
+    connect(this,                           &CameraCalc::distanceToSurfaceRelativeChanged,  this, &CameraCalc::_setDirty);
+
     connect(this, &CameraCalc::cameraNameChanged, this, &CameraCalc::_recalcTriggerDistance);
     connect(this, &CameraCalc::cameraNameChanged, this, &CameraCalc::_adjustDistanceToSurfaceRelative);
 
@@ -278,4 +288,9 @@ void CameraCalc::setDistanceToSurfaceRelative(bool distanceToSurfaceRelative)
         _distanceToSurfaceRelative = distanceToSurfaceRelative;
         emit distanceToSurfaceRelativeChanged(distanceToSurfaceRelative);
     }
+}
+
+void CameraCalc::_setDirty(void)
+{
+    setDirty(true);
 }
