@@ -11,6 +11,7 @@ pipeline {
             }
           }
           steps {
+            sh 'ccache -z'
             sh 'git submodule deinit -f .'
             sh 'git clean -ff -x -d .'
             sh 'git submodule update --init --recursive --force'
@@ -27,6 +28,7 @@ pipeline {
             }
           }
           steps {
+            sh 'ccache -z'
             sh 'git submodule deinit -f .'
             sh 'git clean -ff -x -d .'
             sh 'git submodule update --init --recursive --force'
@@ -46,6 +48,7 @@ pipeline {
             QMAKESPEC = 'macx-clang'
           }
           steps {
+            sh 'ccache -z'
             sh 'git submodule deinit -f .'
             sh 'git clean -ff -x -d .'
             sh 'git submodule update --init --recursive --force'
@@ -66,6 +69,7 @@ pipeline {
             QMAKESPEC = 'macx-clang'
           }
           steps {
+            sh 'ccache -z'
             sh 'git submodule deinit -f .'
             sh 'git clean -ff -x -d .'
             sh 'git submodule update --init --recursive --force'
