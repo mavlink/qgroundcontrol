@@ -382,7 +382,7 @@ FORMS += \
 
 !MobileBuild {
 FORMS += \
-    src/ui/Linechart.ui \
+    src/ui/linechart/Linechart.ui \
     src/ui/MultiVehicleDockWidget.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \

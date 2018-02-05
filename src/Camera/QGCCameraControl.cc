@@ -842,7 +842,7 @@ QGCCameraControl::_handleLocalization(QByteArray& bytes)
     }
     //-- Find out where we are
     QLocale locale = QLocale::system();
-#if defined (__macos__)
+#if defined (Q_OS_MAC)
     locale = QLocale(locale.name());
 #endif
     QString localeName = locale.name().toLower().replace("-", "_");

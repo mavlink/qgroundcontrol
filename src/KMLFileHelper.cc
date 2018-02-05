@@ -10,6 +10,7 @@
 #include "KMLFileHelper.h"
 
 #include <QFile>
+#include <QVariant>
 
 QDomDocument KMLFileHelper::loadFile(const QString& kmlFile, QString& errorString)
 {

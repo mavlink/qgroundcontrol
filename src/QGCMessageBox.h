@@ -102,7 +102,7 @@ private:
         } else
 #endif
         {
-#ifdef __macos__
+#ifdef Q_OS_MAC
             QString emptyTitle;
             QMessageBox box(icon, emptyTitle, title, buttons, parent);
             box.setDefaultButton(defaultButton);
