@@ -89,7 +89,7 @@ static bool is_ip_local(const QHostAddress& add)
     return false;
 }
 
-static bool containst_target(const QList<UDPCLient*> list, const QHostAddress& address, quint16 port)
+static bool contains_target(const QList<UDPCLient*> list, const QHostAddress& address, quint16 port)
 {
     foreach(UDPCLient* target, list) {
         if(target->address == address && target->port == port) {
@@ -121,10 +121,8 @@ UDPLink::~UDPLink()
     // Tell the thread to exit
     _running = false;
     // Clear client list
-    while(_sessionTargets.size()) {
-        delete _sessionTargets.last();
-        _sessionTargets.removeLast();
-    }
+    qDeleteAll(_sessionTargets);
+    _sessionTargets.clear();
     quit();
     // Wait for it to exit
     wait();
@@ -167,7 +165,7 @@ void UDPLink::_writeBytes(const QByteArray data)
     // Send to all manually targeted systems
     foreach(UDPCLient* target, _udpConfig->targetHosts()) {
         // Skip it if it's part of the session clients below
-        if(!containst_target(_sessionTargets, target->address, target->port)) {
+        if(!contains_target(_sessionTargets, target->address, target->port)) {
             _writeDataGram(data, target);
         }
     }
@@ -218,7 +216,7 @@ void UDPLink::readBytes()
         if(is_ip_local(sender)) {
             asender = QHostAddress(QString("127.0.0.1"));
         }
-        if(!containst_target(_sessionTargets, asender, senderPort)) {
+        if(!contains_target(_sessionTargets, asender, senderPort)) {
             qDebug() << "Adding target" << asender << senderPort;
             UDPCLient* target = new UDPCLient(asender, senderPort);
             _sessionTargets.append(target);
@@ -391,7 +389,7 @@ void UDPConfiguration::_copyFrom(LinkConfiguration *source)
         _localPort = usource->localPort();
         _clearTargetHosts();
         foreach(UDPCLient* target, usource->targetHosts()) {
-            if(!containst_target(_targetHosts, target->address, target->port)) {
+            if(!contains_target(_targetHosts, target->address, target->port)) {
                 UDPCLient* newTarget = new UDPCLient(target);
                 _targetHosts.append(newTarget);
             }
@@ -403,10 +401,8 @@ void UDPConfiguration::_copyFrom(LinkConfiguration *source)
 
 void UDPConfiguration::_clearTargetHosts()
 {
-    while(_targetHosts.size()) {
-        delete _targetHosts.last();
-        _targetHosts.removeLast();
-    }
+    qDeleteAll(_targetHosts);
+    _targetHosts.clear();
 }
 
 /**
@@ -433,7 +429,7 @@ void UDPConfiguration::addHost(const QString& host, quint16 port)
         qWarning() << "UDP:" << "Could not resolve host:" << host << "port:" << port;
     } else {
         QHostAddress address(ipAdd);
-        if(!containst_target(_targetHosts, address, port)) {
+        if(!contains_target(_targetHosts, address, port)) {
             UDPCLient* newTarget = new UDPCLient(address, port);
             _targetHosts.append(newTarget);
             _updateHostList();
