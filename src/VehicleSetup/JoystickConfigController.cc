@@ -16,7 +16,6 @@
 
 QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "JoystickConfigControllerLog")
 
-const int JoystickConfigController::_updateInterval =       150;        ///< Interval for timer which updates radio channel widgets
 const int JoystickConfigController::_calCenterPoint =       0;
 const int JoystickConfigController::_calValidMinValue =     -32768;     ///< Largest valid minimum axis value
 const int JoystickConfigController::_calValidMaxValue =     32767;      ///< Smallest valid maximum axis value
@@ -69,6 +68,15 @@ JoystickConfigController::JoystickConfigController(void)
 void JoystickConfigController::start(void)
 {
     _stopCalibration();
+}
+
+void JoystickConfigController::setDeadbandValue(int axis, int value)
+{
+    _axisDeadbandChanged(axis,value);
+    Joystick* joystick = _joystickManager->activeJoystick();
+    Joystick::Calibration_t calibration = joystick->getCalibration(axis);
+    calibration.deadband = value;
+    joystick->setCalibration(axis,calibration);
 }
 
 JoystickConfigController::~JoystickConfigController()
@@ -407,8 +415,8 @@ void JoystickConfigController::_inputCenterWait(Joystick::AxisFunction_t functio
     
     if (_stickDetectAxis == _axisNoAxis) {
         // Sticks have not yet moved close enough to center
-        
-        if (abs(_calCenterPoint - value) < _calRoughCenterDelta) {
+        int roughCenter = getDeadbandToggle() ? std::max(_rgAxisInfo[axis].deadband,_calRoughCenterDelta) : _calRoughCenterDelta;
+        if (abs(_calCenterPoint - value) < roughCenter) {
             // Stick has moved close enough to center that we can start waiting for it to settle
             _stickDetectAxis = axis;
             _stickDetectInitialValue = value;

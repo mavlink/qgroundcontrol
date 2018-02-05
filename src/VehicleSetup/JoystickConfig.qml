@@ -85,6 +85,8 @@ SetupPage {
                 Item {
                     property int axisValue: 0
                     property int deadbandValue: 0
+                    property bool narrowIndicator: false
+                    property color deadbandColor: "#8c161a"
 
                     property color          __barColor:             qgcPal.windowShade
 
@@ -104,7 +106,7 @@ SetupPage {
                         x:                      _deadbandPosition
                         width:                  _deadbandWidth
                         height:                 parent.height / 2
-                        color:                  "#8c161a"
+                        color:                  deadbandColor
                         visible:                controller.deadbandToggle
 
                         property real _percentDeadband:    ((2 * deadbandValue) / (32768.0 * 2))
@@ -123,8 +125,8 @@ SetupPage {
                     // Indicator
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
-                        width:                  parent.height * 0.75
-                        height:                 width
+                        width:                  parent.narrowIndicator ?  height/6 : height
+                        height:                 parent.height * 0.75
                         x:                      (reversed ? (parent.width - _indicatorPosition) : _indicatorPosition) - (width / 2)
                         radius:                 width / 2
                         color:                  qgcPal.text
@@ -535,6 +537,21 @@ SetupPage {
                                     onClicked:  controller.deadbandToggle = checked
                                 }
                             }
+                            Row{
+                                width: parent.width
+                                spacing: ScreenTools.defaultFontPixelWidth
+                                visible: advancedSettings.checked
+                                QGCLabel{
+                                    width:       parent.width * 0.85
+                                    font.pointSize:     ScreenTools.smallFontPointSize
+                                    wrapMode:           Text.WordWrap
+                                    text:   qsTr("Deadband can be set during the first ") +
+                                            qsTr("step of calibration by gently wiggling each axis. ") +
+                                            qsTr("Deadband can also be adjusted by clicking and ") +
+                                            qsTr("dragging vertically on the corresponding axis monitor.")
+                                    visible: controller.deadbandToggle
+                                }
+                            }
                         }
                     } // Column - left column
 
@@ -790,11 +807,36 @@ SetupPage {
                                 height:                 ScreenTools.defaultFontPixelHeight
                                 width:                  200
                                 sourceComponent:        axisMonitorDisplayComponent
+                                Component.onCompleted:  item.narrowIndicator = true
 
                                 property real defaultTextWidth:     ScreenTools.defaultFontPixelWidth
                                 property bool mapped:               true
                                 readonly property bool reversed:    false
+
+
+                                MouseArea {
+                                    id:             deadbandMouseArea
+                                    anchors.fill:   parent.item
+                                    enabled:        controller.deadbandToggle
+
+                                    property real startY
+
+                                    onPressed: {
+                                        startY = mouseY
+                                        parent.item.deadbandColor = "#3C6315"
+                                    }
+                                    onPositionChanged: {
+                                        var newValue = parent.item.deadbandValue + (startY - mouseY)*15
+                                        if ((newValue > 0) && (newValue <32768)){parent.item.deadbandValue=newValue;}
+                                        startY = mouseY
+                                    }
+                                    onReleased: {
+                                        controller.setDeadbandValue(modelData,parent.item.deadbandValue)
+                                        parent.item.deadbandColor = "#8c161a"
+                                    }
+                                }
                             }
+
                         }
                     }
                 } // Column - Axis Monitor
