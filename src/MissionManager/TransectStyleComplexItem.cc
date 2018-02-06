@@ -45,27 +45,53 @@ TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, QString set
     , _hoverAndCaptureFact          (_settingsGroup, _metaDataMap[hoverAndCaptureName])
     , _refly90DegreesFact           (_settingsGroup, _metaDataMap[refly90DegreesName])
 {
-    connect(_cameraCalc.adjustedFootprintSide(), &Fact::valueChanged, this, &TransectStyleComplexItem::_rebuildTransects);
-    connect(_cameraCalc.adjustedFootprintSide(), &Fact::valueChanged, this, &TransectStyleComplexItem::_signalLastSequenceNumberChanged);
+    connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_hoverAndCaptureFact,                      &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_refly90DegreesFact,                       &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_surveyAreaPolygon,                        &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_cameraTriggerInTurnAroundFact,            &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(_cameraCalc.adjustedFootprintSide(),        &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(_cameraCalc.adjustedFootprintFrontal(),     &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
 
-    connect(&_turnAroundDistanceFact,           &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
-    connect(&_hoverAndCaptureFact,              &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
-    connect(&_refly90DegreesFact,               &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
-    connect(&_surveyAreaPolygon,                &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,            this, &TransectStyleComplexItem::_signalLastSequenceNumberChanged);
+    connect(&_hoverAndCaptureFact,                      &Fact::valueChanged,            this, &TransectStyleComplexItem::_signalLastSequenceNumberChanged);
+    connect(&_refly90DegreesFact,                       &Fact::valueChanged,            this, &TransectStyleComplexItem::_signalLastSequenceNumberChanged);
+    connect(&_surveyAreaPolygon,                        &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::_signalLastSequenceNumberChanged);
+    connect(&_cameraTriggerInTurnAroundFact,            &Fact::valueChanged,            this, &TransectStyleComplexItem::_signalLastSequenceNumberChanged);
+    connect(_cameraCalc.adjustedFootprintSide(),        &Fact::valueChanged,            this, &TransectStyleComplexItem::_signalLastSequenceNumberChanged);
+    connect(_cameraCalc.adjustedFootprintFrontal(),     &Fact::valueChanged,            this, &TransectStyleComplexItem::_signalLastSequenceNumberChanged);
 
-    connect(&_turnAroundDistanceFact,           &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
-    connect(&_cameraTriggerInTurnAroundFact,    &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
-    connect(&_hoverAndCaptureFact,              &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
-    connect(&_refly90DegreesFact,               &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
-    connect(&_surveyAreaPolygon,                &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::_setDirty);
+    connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,            this, &TransectStyleComplexItem::cameraShotsChanged);
+    connect(&_hoverAndCaptureFact,                      &Fact::valueChanged,            this, &TransectStyleComplexItem::cameraShotsChanged);
+    connect(&_refly90DegreesFact,                       &Fact::valueChanged,            this, &TransectStyleComplexItem::cameraShotsChanged);
+    connect(&_surveyAreaPolygon,                        &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::cameraShotsChanged);
+    connect(&_cameraTriggerInTurnAroundFact,            &Fact::valueChanged,            this, &TransectStyleComplexItem::cameraShotsChanged);
+    connect(_cameraCalc.adjustedFootprintSide(),        &Fact::valueChanged,            this, &TransectStyleComplexItem::cameraShotsChanged);
+    connect(_cameraCalc.adjustedFootprintFrontal(),     &Fact::valueChanged,            this, &TransectStyleComplexItem::cameraShotsChanged);
 
-    connect(&_surveyAreaPolygon,                &QGCMapPolygon::dirtyChanged,   this, &TransectStyleComplexItem::_setIfDirty);
-    connect(&_cameraCalc,                       &CameraCalc::dirtyChanged,      this, &TransectStyleComplexItem::_setIfDirty);
+    connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,            this, &TransectStyleComplexItem::complexDistanceChanged);
+    connect(&_hoverAndCaptureFact,                      &Fact::valueChanged,            this, &TransectStyleComplexItem::complexDistanceChanged);
+    connect(&_refly90DegreesFact,                       &Fact::valueChanged,            this, &TransectStyleComplexItem::complexDistanceChanged);
+    connect(&_surveyAreaPolygon,                        &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::complexDistanceChanged);
 
-    connect(&_surveyAreaPolygon, &QGCMapPolygon::pathChanged, this, &TransectStyleComplexItem::coveredAreaChanged);
+    connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,            this, &TransectStyleComplexItem::greatestDistanceToChanged);
+    connect(&_hoverAndCaptureFact,                      &Fact::valueChanged,            this, &TransectStyleComplexItem::greatestDistanceToChanged);
+    connect(&_refly90DegreesFact,                       &Fact::valueChanged,            this, &TransectStyleComplexItem::greatestDistanceToChanged);
+    connect(&_surveyAreaPolygon,                        &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::greatestDistanceToChanged);
 
-    connect(this, &TransectStyleComplexItem::transectPointsChanged, this, &TransectStyleComplexItem::complexDistanceChanged);
-    connect(this, &TransectStyleComplexItem::transectPointsChanged, this, &TransectStyleComplexItem::greatestDistanceToChanged);
+    connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
+    connect(&_cameraTriggerInTurnAroundFact,            &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
+    connect(&_hoverAndCaptureFact,                      &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
+    connect(&_refly90DegreesFact,                       &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
+    connect(&_surveyAreaPolygon,                        &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::_setDirty);
+
+    connect(&_surveyAreaPolygon,                        &QGCMapPolygon::dirtyChanged,   this, &TransectStyleComplexItem::_setIfDirty);
+    connect(&_cameraCalc,                               &CameraCalc::dirtyChanged,      this, &TransectStyleComplexItem::_setIfDirty);
+
+    connect(&_surveyAreaPolygon,                        &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::coveredAreaChanged);
+
+    connect(this,                                       &TransectStyleComplexItem::transectPointsChanged, this, &TransectStyleComplexItem::complexDistanceChanged);
+    connect(this,                                       &TransectStyleComplexItem::transectPointsChanged, this, &TransectStyleComplexItem::greatestDistanceToChanged);
 }
 
 void TransectStyleComplexItem::_setScanDistance(double scanDistance)
