@@ -38,10 +38,9 @@ CorridorScanComplexItem::CorridorScanComplexItem(Vehicle* vehicle, QObject* pare
 
     connect(&_corridorWidthFact,    &Fact::valueChanged,                                this, &CorridorScanComplexItem::_setDirty);
     connect(&_corridorPolyline,     &QGCMapPolyline::pathChanged,                       this, &CorridorScanComplexItem::_setDirty);
-    connect(this,                   &CorridorScanComplexItem::altitudeRelativeChanged,  this, &CorridorScanComplexItem::_setDirty);
 
-    connect(this, &CorridorScanComplexItem::altitudeRelativeChanged,       this, &CorridorScanComplexItem::coordinateHasRelativeAltitudeChanged);
-    connect(this, &CorridorScanComplexItem::altitudeRelativeChanged,       this, &CorridorScanComplexItem::exitCoordinateHasRelativeAltitudeChanged);
+    connect(&_cameraCalc, &CameraCalc::distanceToSurfaceRelativeChanged, this, &CorridorScanComplexItem::coordinateHasRelativeAltitudeChanged);
+    connect(&_cameraCalc, &CameraCalc::distanceToSurfaceRelativeChanged, this, &CorridorScanComplexItem::exitCoordinateHasRelativeAltitudeChanged);
 
     connect(&_corridorPolyline, &QGCMapPolyline::dirtyChanged,  this, &CorridorScanComplexItem::_polylineDirtyChanged);
     connect(&_corridorPolyline, &QGCMapPolyline::countChanged,  this, &CorridorScanComplexItem::_polylineCountChanged);

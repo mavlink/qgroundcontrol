@@ -45,15 +45,22 @@ TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, QString set
     , _hoverAndCaptureFact          (_settingsGroup, _metaDataMap[hoverAndCaptureName])
     , _refly90DegreesFact           (_settingsGroup, _metaDataMap[refly90DegreesName])
 {
-    connect(this,                   &TransectStyleComplexItem::altitudeRelativeChanged,  this, &TransectStyleComplexItem::_setDirty);
-
-    connect(this, &TransectStyleComplexItem::altitudeRelativeChanged,       this, &TransectStyleComplexItem::coordinateHasRelativeAltitudeChanged);
-    connect(this, &TransectStyleComplexItem::altitudeRelativeChanged,       this, &TransectStyleComplexItem::exitCoordinateHasRelativeAltitudeChanged);
-
     connect(_cameraCalc.adjustedFootprintSide(), &Fact::valueChanged, this, &TransectStyleComplexItem::_rebuildTransects);
     connect(_cameraCalc.adjustedFootprintSide(), &Fact::valueChanged, this, &TransectStyleComplexItem::_signalLastSequenceNumberChanged);
 
-    connect(&_turnAroundDistanceFact, &Fact::valueChanged, this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_turnAroundDistanceFact,           &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_hoverAndCaptureFact,              &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_refly90DegreesFact,               &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(&_surveyAreaPolygon,                &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::_rebuildTransects);
+
+    connect(&_turnAroundDistanceFact,           &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
+    connect(&_cameraTriggerInTurnAroundFact,    &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
+    connect(&_hoverAndCaptureFact,              &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
+    connect(&_refly90DegreesFact,               &Fact::valueChanged,            this, &TransectStyleComplexItem::_setDirty);
+    connect(&_surveyAreaPolygon,                &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::_setDirty);
+
+    connect(&_surveyAreaPolygon,                &QGCMapPolygon::dirtyChanged,   this, &TransectStyleComplexItem::_setIfDirty);
+    connect(&_cameraCalc,                       &CameraCalc::dirtyChanged,      this, &TransectStyleComplexItem::_setIfDirty);
 
     connect(&_surveyAreaPolygon, &QGCMapPolygon::pathChanged, this, &TransectStyleComplexItem::coveredAreaChanged);
 
@@ -79,6 +86,10 @@ void TransectStyleComplexItem::_setCameraShots(int cameraShots)
 
 void TransectStyleComplexItem::setDirty(bool dirty)
 {
+    if (!dirty) {
+        _surveyAreaPolygon.setDirty(false);
+        _cameraCalc.setDirty(false);
+    }
     if (_dirty != dirty) {
         _dirty = dirty;
         emit dirtyChanged(_dirty);
@@ -157,6 +168,13 @@ void TransectStyleComplexItem::setMissionFlightStatus(MissionController::Mission
 void TransectStyleComplexItem::_setDirty(void)
 {
     setDirty(true);
+}
+
+void TransectStyleComplexItem::_setIfDirty(bool dirty)
+{
+    if (dirty) {
+        setDirty(true);
+    }
 }
 
 void TransectStyleComplexItem::applyNewAltitude(double newAltitude)
