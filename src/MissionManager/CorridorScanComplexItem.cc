@@ -59,7 +59,17 @@ void CorridorScanComplexItem::_polylineCountChanged(int count)
 
 int CorridorScanComplexItem::lastSequenceNumber(void) const
 {
-    return _sequenceNumber + ((_corridorPolyline.count() + 2 /* trigger start/stop */ + (_hasTurnaround() ? 2 : 0)) * _transectCount());
+    int itemCount = _transectPoints.count();    // Each transpect point represents a waypoint item
+
+    if (_cameraTriggerInTurnAroundFact.rawValue().toDouble()) {
+        // Only one camera start and on camera stop
+        itemCount += 2;
+    } else {
+        // Each transect will have a camera start and stop in it
+        itemCount += _transectCount() * 2;
+    }
+
+    return _sequenceNumber + itemCount - 1;
 }
 
 void CorridorScanComplexItem::save(QJsonArray&  missionItems)
@@ -144,11 +154,12 @@ int CorridorScanComplexItem::_transectCount(void) const
 
 void CorridorScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
 {
-    int seqNum =        _sequenceNumber;
-    int pointIndex =    0;
+    int seqNum =            _sequenceNumber;
+    int pointIndex =        0;
+    bool imagesEverywhere = _cameraTriggerInTurnAroundFact.rawValue().toDouble();
 
     while (pointIndex < _transectPoints.count()) {
-        if (_hasTurnaround()) {
+        if (pointIndex != 0 && _hasTurnaround()) {
             QGeoCoordinate vertexCoord = _transectPoints[pointIndex++].value<QGeoCoordinate>();
             MissionItem* item = new MissionItem(seqNum++,
                                                 MAV_CMD_NAV_WAYPOINT,
@@ -166,7 +177,7 @@ void CorridorScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QOb
             items.append(item);
         }
 
-        bool addTrigger = true;
+        bool addTrigger = imagesEverywhere ? pointIndex == 0 : true;
         for (int i=0; i<_corridorPolyline.count(); i++) {
             QGeoCoordinate vertexCoord = _transectPoints[pointIndex++].value<QGeoCoordinate>();
             MissionItem* item = new MissionItem(seqNum++,
@@ -200,19 +211,21 @@ void CorridorScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QOb
             }
         }
 
-        MissionItem* item = new MissionItem(seqNum++,
-                                            MAV_CMD_DO_SET_CAM_TRIGG_DIST,
-                                            MAV_FRAME_MISSION,
-                                            0,           // stop triggering
-                                            0,           // shutter integration (ignore)
-                                            0,           // trigger immediately when starting
-                                            0, 0, 0, 0,  // param 4-7 unused
-                                            true,        // autoContinue
-                                            false,       // isCurrentItem
-                                            missionItemParent);
-        items.append(item);
+        if (!imagesEverywhere) {
+            MissionItem* item = new MissionItem(seqNum++,
+                                                MAV_CMD_DO_SET_CAM_TRIGG_DIST,
+                                                MAV_FRAME_MISSION,
+                                                0,           // stop triggering
+                                                0,           // shutter integration (ignore)
+                                                0,           // trigger immediately when starting
+                                                0, 0, 0, 0,  // param 4-7 unused
+                                                true,        // autoContinue
+                                                false,       // isCurrentItem
+                                                missionItemParent);
+            items.append(item);
+        }
 
-        if (_hasTurnaround()) {
+        if (_hasTurnaround() && pointIndex < _transectPoints.count()) {
             QGeoCoordinate vertexCoord = _transectPoints[pointIndex++].value<QGeoCoordinate>();
             MissionItem* item = new MissionItem(seqNum++,
                                                 MAV_CMD_NAV_WAYPOINT,
@@ -229,6 +242,20 @@ void CorridorScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QOb
                                                 missionItemParent);
             items.append(item);
         }
+    }
+
+    if (imagesEverywhere) {
+        MissionItem* item = new MissionItem(seqNum++,
+                                            MAV_CMD_DO_SET_CAM_TRIGG_DIST,
+                                            MAV_FRAME_MISSION,
+                                            0,           // stop triggering
+                                            0,           // shutter integration (ignore)
+                                            0,           // trigger immediately when starting
+                                            0, 0, 0, 0,  // param 4-7 unused
+                                            true,        // autoContinue
+                                            false,       // isCurrentItem
+                                            missionItemParent);
+        items.append(item);
     }
 }
 
@@ -388,6 +415,21 @@ void CorridorScanComplexItem::_rebuildTransects(void)
 
             normalizedTransectPosition += transectSpacing;
         }
+
+        // At this point _transectPoints has an extra turnaround segment at the beginning and end.
+        // These must be remove for the correcvt flight pattern.
+        _transectPoints.takeFirst();
+        _transectPoints.takeLast();
+    }
+
+    // Calculate distance flown for complex item
+    _complexDistance = 0;
+    for (int i=0; i<_transectPoints.count() - 2; i++) {
+        _complexDistance += _transectPoints[i].value<QGeoCoordinate>().distanceTo(_transectPoints[i+1].value<QGeoCoordinate>());
+    }
+
+    if (_cameraTriggerInTurnAroundFact.rawValue().toDouble()) {
+        _cameraShots = qCeil(_complexDistance / _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
     }
 
     _coordinate = _transectPoints.count() ? _transectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
@@ -395,6 +437,7 @@ void CorridorScanComplexItem::_rebuildTransects(void)
 
     emit transectPointsChanged();
     emit cameraShotsChanged();
+    emit complexDistanceChanged();
     emit coordinateChanged(_coordinate);
     emit exitCoordinateChanged(_exitCoordinate);
 }
