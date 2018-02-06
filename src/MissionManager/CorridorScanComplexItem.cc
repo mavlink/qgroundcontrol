@@ -69,7 +69,7 @@ int CorridorScanComplexItem::lastSequenceNumber(void) const
         itemCount += _transectCount() * 2;
     }
 
-    return _sequenceNumber + itemCount - 1;
+    return _sequenceNumber + itemCount;
 }
 
 void CorridorScanComplexItem::save(QJsonArray&  missionItems)
