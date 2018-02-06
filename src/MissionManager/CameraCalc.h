@@ -80,6 +80,7 @@ signals:
 private slots:
     void _recalcTriggerDistance             (void);
     void _adjustDistanceToSurfaceRelative   (void);
+    void _setDirty                          (void);
 
 private:
     Vehicle*        _vehicle;

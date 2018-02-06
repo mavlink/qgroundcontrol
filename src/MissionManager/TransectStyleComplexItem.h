@@ -104,7 +104,6 @@ signals:
     void cameraShotsChanged             (void);
     void timeBetweenShotsChanged        (void);
     void cameraMinTriggerIntervalChanged(double cameraMinTriggerInterval);
-    void altitudeRelativeChanged        (bool altitudeRelative);
     void transectPointsChanged          (void);
     void coveredAreaChanged             (void);
 
@@ -112,6 +111,7 @@ protected slots:
     virtual void _rebuildTransects          (void) = 0;
 
     void _setDirty                          (void);
+    void _setIfDirty                        (bool dirty);
     void _updateCoordinateAltitudes         (void);
     void _signalLastSequenceNumberChanged   (void);
 
