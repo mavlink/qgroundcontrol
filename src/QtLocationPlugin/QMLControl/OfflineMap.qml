@@ -918,11 +918,14 @@ QGCView {
                 width:      Math.min(_tileSetList.width, (ScreenTools.defaultFontPixelWidth  * 50).toFixed(0))
                 spacing:    ScreenTools.defaultFontPixelHeight * 0.5
                 anchors.horizontalCenter: parent.horizontalCenter
+                ExclusiveGroup { id: selectionGroup }
                 OfflineMapButton {
                     id:             firstButton
                     text:           qsTr("Add New Set")
                     width:          _cacheList.width
-                    height:         ScreenTools.defaultFontPixelHeight * 2
+                    height:         ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 3 : 2)
+                    currentSet:     _currentSelection
+                    exclusiveGroup: selectionGroup
                     onClicked: {
                         offlineMapView._currentSelection = null
                         addNewSet()
@@ -936,7 +939,10 @@ QGCView {
                         tiles:          object.totalTileCount
                         complete:       object.complete
                         width:          firstButton.width
-                        height:         ScreenTools.defaultFontPixelHeight * 2
+                        height:         ScreenTools.defaultFontPixelHeight * (ScreenTools.isMobile ? 3 : 2)
+                        exclusiveGroup: selectionGroup
+                        currentSet:     _currentSelection
+                        tileSet:        object
                         onClicked: {
                             offlineMapView._currentSelection = object
                             showInfo()
