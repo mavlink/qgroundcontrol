@@ -13,9 +13,10 @@
 TransectStyleComplexItemTest::TransectStyleComplexItemTest(void)
     : _offlineVehicle(NULL)
 {
-    _linePoints << QGeoCoordinate(47.633550640000003, -122.08982199)
-                << QGeoCoordinate(47.634129020000003, -122.08887249)
-                << QGeoCoordinate(47.633619320000001, -122.08811074);
+    _polygonVertices << QGeoCoordinate(47.633550640000003, -122.08982199)
+                     << QGeoCoordinate(47.634129020000003, -122.08887249)
+                     << QGeoCoordinate(47.633619320000001, -122.08811074)
+                     << QGeoCoordinate(47.633189139999999, -122.08900124);
 }
 
 void TransectStyleComplexItemTest::init(void)
@@ -24,6 +25,8 @@ void TransectStyleComplexItemTest::init(void)
 
     _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
     _transectStyleItem = new TransectStyleItem(_offlineVehicle, this);
+    _setSurveyAreaPolygon();
+    _transectStyleItem->setDirty(false);
 
     _rgSignals[cameraShotsChangedIndex] =               SIGNAL(cameraShotsChanged());
     _rgSignals[timeBetweenShotsChangedIndex] =          SIGNAL(timeBetweenShotsChanged());
@@ -34,6 +37,7 @@ void TransectStyleComplexItemTest::init(void)
     _rgSignals[complexDistanceChangedIndex] =           SIGNAL(complexDistanceChanged());
     _rgSignals[greatestDistanceToChangedIndex] =        SIGNAL(greatestDistanceToChanged());
     _rgSignals[additionalTimeDelayChangedIndex] =       SIGNAL(additionalTimeDelayChanged());
+    _rgSignals[lastSequenceNumberChangedIndex] =        SIGNAL(lastSequenceNumberChanged(int));
 
     _multiSpy = new MultiSignalSpy();
     QCOMPARE(_multiSpy->init(_transectStyleItem, _rgSignals, _cSignals), true);
@@ -73,46 +77,106 @@ void TransectStyleComplexItemTest::_testDirty(void)
     foreach(Fact* fact, rgFacts) {
         qDebug() << fact->name();
         QVERIFY(!_transectStyleItem->dirty());
-        if (fact->typeIsBool()) {
-            fact->setRawValue(!fact->rawValue().toBool());
-        } else {
-            fact->setRawValue(fact->rawValue().toDouble() + 1);
-        }
+        changeFactValue(fact);
         QVERIFY(_multiSpy->checkSignalByMask(dirtyChangedMask));
         _transectStyleItem->setDirty(false);
         _multiSpy->clearAllSignals();
     }
     rgFacts.clear();
 
-    _setPolyline();
+    _adjustSurveAreaPolygon();
     QVERIFY(_transectStyleItem->dirty());
     _transectStyleItem->setDirty(false);
     QVERIFY(!_transectStyleItem->surveyAreaPolygon()->dirty());
     _multiSpy->clearAllSignals();
 
-    _transectStyleItem->cameraCalc()->distanceToSurface()->setRawValue(_transectStyleItem->cameraCalc()->distanceToSurface()->rawValue().toDouble() + 1);
+    changeFactValue(_transectStyleItem->cameraCalc()->distanceToSurface());
     QVERIFY(_transectStyleItem->dirty());
     _transectStyleItem->setDirty(false);
     QVERIFY(!_transectStyleItem->cameraCalc()->dirty());
     _multiSpy->clearAllSignals();
 }
 
-void TransectStyleComplexItemTest::_setPolyline(void)
+void TransectStyleComplexItemTest::_setSurveyAreaPolygon(void)
 {
-    for (int i=0; i<_linePoints.count(); i++) {
-        QGeoCoordinate& vertex = _linePoints[i];
+    foreach (const QGeoCoordinate vertex, _polygonVertices) {
         _transectStyleItem->surveyAreaPolygon()->appendVertex(vertex);
     }
 }
 
+void TransectStyleComplexItemTest::_testRebuildTransects(void)
+{
+    // Changing the survey polygon should trigger:
+    //  _rebuildTransects call
+    //  coveredAreaChanged signal
+    //  lastSequenceNumberChanged signal
+    //  cameraShotsChanged signal
+    _adjustSurveAreaPolygon();
+    QVERIFY(_transectStyleItem->rebuildTransectsCalled);
+    QVERIFY(_multiSpy->checkSignalsByMask(coveredAreaChangedMask | lastSequenceNumberChangedMask | cameraShotsChangedMask));
+    _transectStyleItem->rebuildTransectsCalled = false;
+    _transectStyleItem->setDirty(false);
+    _multiSpy->clearAllSignals();
+
+    // Changes to these facts should trigger:
+    //  _rebuildTransects call
+    //  lastSequenceNumberChanged signal
+    //  cameraShotsChanged signal
+    QList<Fact*> rgFacts;
+    rgFacts << _transectStyleItem->turnAroundDistance()
+            << _transectStyleItem->cameraTriggerInTurnAround()
+            << _transectStyleItem->hoverAndCapture()
+            << _transectStyleItem->refly90Degrees()
+            << _transectStyleItem->cameraCalc()->adjustedFootprintSide()
+            << _transectStyleItem->cameraCalc()->adjustedFootprintFrontal();
+    foreach(Fact* fact, rgFacts) {
+        qDebug() << fact->name();
+        changeFactValue(fact);
+        QVERIFY(_transectStyleItem->rebuildTransectsCalled);
+        QVERIFY(_multiSpy->checkSignalsByMask(lastSequenceNumberChangedMask | cameraShotsChangedMask));
+        _transectStyleItem->setDirty(false);
+        _multiSpy->clearAllSignals();
+        _transectStyleItem->rebuildTransectsCalled = false;
+    }
+    rgFacts.clear();
+}
+
+void TransectStyleComplexItemTest::_testDistanceSignalling(void)
+{
+    _adjustSurveAreaPolygon();
+    QVERIFY(_multiSpy->checkSignalsByMask(complexDistanceChangedMask | greatestDistanceToChangedMask));
+    _transectStyleItem->setDirty(false);
+    _multiSpy->clearAllSignals();
+
+    QList<Fact*> rgFacts;
+    rgFacts << _transectStyleItem->turnAroundDistance()
+            << _transectStyleItem->hoverAndCapture()
+            << _transectStyleItem->refly90Degrees();
+    foreach(Fact* fact, rgFacts) {
+        qDebug() << fact->name();
+        changeFactValue(fact);
+        QVERIFY(_multiSpy->checkSignalsByMask(complexDistanceChangedMask | greatestDistanceToChangedMask));
+        _transectStyleItem->setDirty(false);
+        _multiSpy->clearAllSignals();
+    }
+    rgFacts.clear();
+}
+
+void TransectStyleComplexItemTest::_adjustSurveAreaPolygon(void)
+{
+    QGeoCoordinate vertex = _transectStyleItem->surveyAreaPolygon()->vertexCoordinate(0);
+    vertex.setLatitude(vertex.latitude() + 1);
+    _transectStyleItem->surveyAreaPolygon()->adjustVertex(0, vertex);
+}
+
 TransectStyleItem::TransectStyleItem(Vehicle* vehicle, QObject* parent)
     : TransectStyleComplexItem  (vehicle, QStringLiteral("UnitTestTransect"), parent)
-    , _rebuildTransectsCalled   (false)
+    , rebuildTransectsCalled    (false)
 {
 
 }
 
 void TransectStyleItem::_rebuildTransects(void)
 {
-    _rebuildTransectsCalled = true;
+    rebuildTransectsCalled = true;
 }
