@@ -110,10 +110,9 @@ void TransectStyleComplexItemTest::_testRebuildTransects(void)
     //  _rebuildTransects call
     //  coveredAreaChanged signal
     //  lastSequenceNumberChanged signal
-    //  cameraShotsChanged signal
     _adjustSurveAreaPolygon();
     QVERIFY(_transectStyleItem->rebuildTransectsCalled);
-    QVERIFY(_multiSpy->checkSignalsByMask(coveredAreaChangedMask | lastSequenceNumberChangedMask | cameraShotsChangedMask));
+    QVERIFY(_multiSpy->checkSignalsByMask(coveredAreaChangedMask | lastSequenceNumberChangedMask));
     _transectStyleItem->rebuildTransectsCalled = false;
     _transectStyleItem->setDirty(false);
     _multiSpy->clearAllSignals();
@@ -121,7 +120,6 @@ void TransectStyleComplexItemTest::_testRebuildTransects(void)
     // Changes to these facts should trigger:
     //  _rebuildTransects call
     //  lastSequenceNumberChanged signal
-    //  cameraShotsChanged signal
     QList<Fact*> rgFacts;
     rgFacts << _transectStyleItem->turnAroundDistance()
             << _transectStyleItem->cameraTriggerInTurnAround()
@@ -133,7 +131,7 @@ void TransectStyleComplexItemTest::_testRebuildTransects(void)
         qDebug() << fact->name();
         changeFactValue(fact);
         QVERIFY(_transectStyleItem->rebuildTransectsCalled);
-        QVERIFY(_multiSpy->checkSignalsByMask(lastSequenceNumberChangedMask | cameraShotsChangedMask));
+        QVERIFY(_multiSpy->checkSignalsByMask(lastSequenceNumberChangedMask));
         _transectStyleItem->setDirty(false);
         _multiSpy->clearAllSignals();
         _transectStyleItem->rebuildTransectsCalled = false;
