@@ -35,7 +35,7 @@ TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, QString set
     , _sequenceNumber           (0)
     , _dirty                    (false)
     , _ignoreRecalc             (false)
-    , _scanDistance             (0.0)
+    , _complexDistance          (0)
     , _cameraShots              (0)
     , _cameraMinTriggerInterval (0)
     , _cameraCalc               (vehicle)
@@ -61,14 +61,6 @@ TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, QString set
     connect(_cameraCalc.adjustedFootprintSide(),        &Fact::valueChanged,            this, &TransectStyleComplexItem::_signalLastSequenceNumberChanged);
     connect(_cameraCalc.adjustedFootprintFrontal(),     &Fact::valueChanged,            this, &TransectStyleComplexItem::_signalLastSequenceNumberChanged);
 
-    connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,            this, &TransectStyleComplexItem::cameraShotsChanged);
-    connect(&_hoverAndCaptureFact,                      &Fact::valueChanged,            this, &TransectStyleComplexItem::cameraShotsChanged);
-    connect(&_refly90DegreesFact,                       &Fact::valueChanged,            this, &TransectStyleComplexItem::cameraShotsChanged);
-    connect(&_surveyAreaPolygon,                        &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::cameraShotsChanged);
-    connect(&_cameraTriggerInTurnAroundFact,            &Fact::valueChanged,            this, &TransectStyleComplexItem::cameraShotsChanged);
-    connect(_cameraCalc.adjustedFootprintSide(),        &Fact::valueChanged,            this, &TransectStyleComplexItem::cameraShotsChanged);
-    connect(_cameraCalc.adjustedFootprintFrontal(),     &Fact::valueChanged,            this, &TransectStyleComplexItem::cameraShotsChanged);
-
     connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,            this, &TransectStyleComplexItem::complexDistanceChanged);
     connect(&_hoverAndCaptureFact,                      &Fact::valueChanged,            this, &TransectStyleComplexItem::complexDistanceChanged);
     connect(&_refly90DegreesFact,                       &Fact::valueChanged,            this, &TransectStyleComplexItem::complexDistanceChanged);
@@ -92,14 +84,6 @@ TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, QString set
 
     connect(this,                                       &TransectStyleComplexItem::transectPointsChanged, this, &TransectStyleComplexItem::complexDistanceChanged);
     connect(this,                                       &TransectStyleComplexItem::transectPointsChanged, this, &TransectStyleComplexItem::greatestDistanceToChanged);
-}
-
-void TransectStyleComplexItem::_setScanDistance(double scanDistance)
-{
-    if (!qFuzzyCompare(_scanDistance, scanDistance)) {
-        _scanDistance = scanDistance;
-        emit complexDistanceChanged();
-    }
 }
 
 void TransectStyleComplexItem::_setCameraShots(int cameraShots)
