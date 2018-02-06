@@ -29,10 +29,13 @@ protected:
     void cleanup(void) final;
     
 private slots:
-    void _testDirty(void);
+    void _testDirty                     (void);
+    void _testRebuildTransects          (void);
+    void _testDistanceSignalling        (void);
 
 private:
-    void _setPolyline(void);
+    void _setSurveyAreaPolygon  (void);
+    void _adjustSurveAreaPolygon(void);
 
     enum {
         // These signals are from TransectStyleComplexItem
@@ -46,6 +49,8 @@ private:
         complexDistanceChangedIndex,
         greatestDistanceToChangedIndex,
         additionalTimeDelayChangedIndex,
+        // These signals are from VisualMissionItem
+        lastSequenceNumberChangedIndex,
         maxSignalIndex
     };
 
@@ -61,6 +66,8 @@ private:
         complexDistanceChangedMask =        1 << complexDistanceChangedIndex,
         greatestDistanceToChangedMask =     1 << greatestDistanceToChangedIndex,
         additionalTimeDelayChangedMask =    1 << additionalTimeDelayChangedIndex,
+        // These signals are from VisualMissionItem
+        lastSequenceNumberChangedMask =     1 << lastSequenceNumberChangedIndex,
     };
 
     static const size_t _cSignals = maxSignalIndex;
@@ -68,7 +75,7 @@ private:
 
     Vehicle*                _offlineVehicle;
     MultiSignalSpy*         _multiSpy;
-    QList<QGeoCoordinate>   _linePoints;
+    QList<QGeoCoordinate>   _polygonVertices;
     TransectStyleItem*      _transectStyleItem;
 };
 
@@ -90,10 +97,9 @@ public:
     void    appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final { Q_UNUSED(items); Q_UNUSED(missionItemParent); }
     void    applyNewAltitude    (double newAltitude) final { Q_UNUSED(newAltitude); }
 
+    bool rebuildTransectsCalled;
+
 private slots:
     // Overrides from TransectStyleComplexItem
     void    _rebuildTransects   (void) final;
-
-private:
-    bool _rebuildTransectsCalled;
 };
