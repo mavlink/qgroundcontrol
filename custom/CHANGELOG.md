@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.50 - Feb 6 2018
+
+*   Fix offline maps multiple selected button states
+
 ### v1.2.49 - Feb 4 2018
 
 *   Fix terrain query crash
