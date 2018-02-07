@@ -32,6 +32,7 @@ Item {
         font.pointSize:         ScreenTools.mediumFontPointSize
         color:                  qgcPal.buttonText
         anchors.verticalCenter: parent.verticalCenter
+        visible:                QGroundControl.settingsManager.appSettings.advancedLinkSettings.rawValue
         Menu {
             id: linkSelectionMenu
         }
