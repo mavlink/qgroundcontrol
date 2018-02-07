@@ -34,6 +34,7 @@ const char* AppSettings::showLargeCompassName =                         "ShowLar
 const char* AppSettings::savePathName =                                 "SavePath";
 const char* AppSettings::autoLoadMissionsName =                         "AutoLoadMissions";
 const char* AppSettings::useChecklistName =                             "UseChecklist";
+const char* AppSettings::advancedLinkSettingsName =                     "AdvancedLinkSettings";
 const char* AppSettings::mapboxTokenName =                              "MapboxToken";
 const char* AppSettings::esriTokenName =                                "EsriToken";
 const char* AppSettings::defaultFirmwareTypeName =                      "DefaultFirmwareType";
@@ -365,6 +366,15 @@ Fact* AppSettings::autoLoadMissions(void)
     }
 
     return _autoLoadMissionsFact;
+}
+
+Fact* AppSettings::advancedLinkSettings(void)
+{
+    if (!_advancedLinkSettingsFact) {
+        _advancedLinkSettingsFact = _createSettingsFact(advancedLinkSettingsName);
+    }
+
+    return _advancedLinkSettingsFact;
 }
 
 Fact* AppSettings::mapboxToken(void)
