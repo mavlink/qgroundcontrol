@@ -1683,6 +1683,7 @@ void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
 
 void Vehicle::_updatePriorityLink(void)
 {
+    emit linkNamesChanged();
     LinkInterface* newPriorityLink = NULL;
 
     // This routine specifically does not clear _priorityLink when there are no links remaining.
@@ -1747,6 +1748,7 @@ void Vehicle::_updatePriorityLink(void)
 
     _priorityLink = _toolbox->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
     _updateHighLatencyLink();
+    emit priorityLinkNameChanged(_priorityLink->getName());
 }
 
 void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double yaw, quint64)
@@ -2085,6 +2087,44 @@ void Vehicle::setFlightMode(const QString& flightMode)
         sendMessageOnLink(priorityLink(), msg);
     } else {
         qWarning() << "FirmwarePlugin::setFlightMode failed, flightMode:" << flightMode;
+    }
+}
+
+QStringList Vehicle::linkNames(void) const
+{
+    QStringList names;
+
+    for (int i=0; i<_links.count(); i++) {
+        names += _links[i]->getName();
+    }
+    return names;
+}
+
+QString Vehicle::priorityLinkName(void) const
+{
+    return _priorityLink->getName();
+}
+
+void Vehicle::setPriorityLinkByName(const QString& priorityLinkName)
+{
+    if (priorityLinkName == _priorityLink->getName()) {
+        // The link did not change
+        return;
+    }
+
+    LinkInterface* newPriorityLink = NULL;
+
+
+    for (int i=0; i<_links.count(); i++) {
+        if (_links[i]->getName() == priorityLinkName) {
+            newPriorityLink = _links[i];
+        }
+    }
+
+    if (newPriorityLink) {
+        _priorityLink = _toolbox->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
+        _updateHighLatencyLink();
+        emit priorityLinkNameChanged(_priorityLink->getName());
     }
 }
 
