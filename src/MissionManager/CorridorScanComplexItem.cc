@@ -66,7 +66,7 @@ int CorridorScanComplexItem::lastSequenceNumber(void) const
 {
     int itemCount = _transectPoints.count();    // Each transpect point represents a waypoint item
 
-    if (_cameraTriggerInTurnAroundFact.rawValue().toDouble()) {
+    if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
         // Only one camera start and on camera stop
         itemCount += 2;
     } else {
@@ -74,7 +74,7 @@ int CorridorScanComplexItem::lastSequenceNumber(void) const
         itemCount += _transectCount() * 2;
     }
 
-    return _sequenceNumber + itemCount;
+    return _sequenceNumber + itemCount - 1;
 }
 
 void CorridorScanComplexItem::save(QJsonArray&  missionItems)
@@ -163,7 +163,7 @@ void CorridorScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QOb
 {
     int seqNum =            _sequenceNumber;
     int pointIndex =        0;
-    bool imagesEverywhere = _cameraTriggerInTurnAroundFact.rawValue().toDouble();
+    bool imagesEverywhere = _cameraTriggerInTurnAroundFact.rawValue().toBool();
 
     while (pointIndex < _transectPoints.count()) {
         if (_hasTurnaround()) {
@@ -182,7 +182,7 @@ void CorridorScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QOb
                                                 false,                                                  // isCurrentItem
                                                 missionItemParent);
             items.append(item);
-            if (imagesEverywhere) {
+            if (imagesEverywhere && pointIndex == 1) {
                 item = new MissionItem(seqNum++,
                                        MAV_CMD_DO_SET_CAM_TRIGG_DIST,
                                        MAV_FRAME_MISSION,
