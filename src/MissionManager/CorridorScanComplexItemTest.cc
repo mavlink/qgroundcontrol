@@ -138,12 +138,12 @@ void CorridorScanComplexItemTest::_testItemCount(void)
 
     _corridorItem->cameraTriggerInTurnAround()->setRawValue(false);
     _corridorItem->appendMissionItems(items, this);
-    QCOMPARE(items.count(), _corridorItem->lastSequenceNumber());
+    QCOMPARE(items.count() - 1, _corridorItem->lastSequenceNumber());
     items.clear();
 
     _corridorItem->cameraTriggerInTurnAround()->setRawValue(true);
     _corridorItem->appendMissionItems(items, this);
-    QCOMPARE(items.count(), _corridorItem->lastSequenceNumber());
+    QCOMPARE(items.count() - 1, _corridorItem->lastSequenceNumber());
     items.clear();
 }
 
