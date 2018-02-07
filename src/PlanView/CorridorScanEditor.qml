@@ -59,15 +59,6 @@ Rectangle {
         QGCLabel {
             anchors.left:   parent.left
             anchors.right:  parent.right
-            text:           qsTr("WARNING WORK IN PROGRESS: BE VERY CAREFUL WHEN FLYING")
-            wrapMode:       Text.WordWrap
-            color:          qgcPal.warningText
-            font.pointSize: ScreenTools.smallFontPointSize
-        }
-
-        QGCLabel {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
             text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(missionItem.cameraMinTriggerInterval.toFixed(1))
             wrapMode:       Text.WordWrap
             color:          qgcPal.warningText
