@@ -1,5 +1,11 @@
 ## DataPilot Release Changelog
 
+### v1.2.51 - Feb 7 2018
+
+*   Mission upload and download fixes to correctly retransmit
+    mission items and mission item request when they get lost
+    on the link.
+
 ### v1.2.50 - Feb 6 2018
 
 *   Fix offline maps multiple selected button states
