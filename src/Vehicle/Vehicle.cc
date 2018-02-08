@@ -1490,39 +1490,65 @@ void Vehicle::_updatePriorityLink(void)
 {
     LinkInterface* newPriorityLink = NULL;
 
-#ifndef NO_SERIAL_LINK
-    // Note that this routine specificallty does not clear _priorityLink when there are no links remaining.
+    // This routine specifically does not clear _priorityLink when there are no links remaining.
     // By doing this we hold a reference on the last link as the Vehicle shuts down. Thus preventing shutdown
     // ordering NULL pointer crashes where priorityLink() is still called during shutdown sequence.
+    if (_links.count() == 0) {
+        return;
+    }
+
+    // Check for the existing priority link to still be valid
+    for (int i=0; i<_links.count(); i++) {
+        if (_priorityLink.data() == _links[i]) {
+            // Still valid
+            return;
+        }
+    }
+
+    // The previous priority link is no longer valid. We must no find the best link available in this priority order:
+    //      Direct USB connection
+    //      Not a high latency link
+    //      Any link
+
+#ifndef NO_SERIAL_LINK
+    // Search for direct usb connection
     for (int i=0; i<_links.count(); i++) {
         LinkInterface* link = _links[i];
-        if (link->isConnected()) {
-            SerialLink* pSerialLink = qobject_cast<SerialLink*>(link);
-            if (pSerialLink) {
-                LinkConfiguration* config = pSerialLink->getLinkConfiguration();
-                if (config) {
-                    SerialConfiguration* pSerialConfig = qobject_cast<SerialConfiguration*>(config);
-                    if (pSerialConfig && pSerialConfig->usbDirect()) {
-                        if (_priorityLink.data() != link) {
-                            newPriorityLink = link;
-                            break;
-                        }
-                        return;
+        SerialLink* pSerialLink = qobject_cast<SerialLink*>(link);
+        if (pSerialLink) {
+            LinkConfiguration* config = pSerialLink->getLinkConfiguration();
+            if (config) {
+                SerialConfiguration* pSerialConfig = qobject_cast<SerialConfiguration*>(config);
+                if (pSerialConfig && pSerialConfig->usbDirect()) {
+                    if (_priorityLink.data() != link) {
+                        newPriorityLink = link;
+                        break;
                     }
+                    return;
                 }
             }
         }
     }
 #endif
 
-    if (!newPriorityLink && !_priorityLink.data() && _links.count()) {
+    if (!newPriorityLink) {
+        // Search for non-high latency link
+        for (int i=0; i<_links.count(); i++) {
+            LinkInterface* link = _links[i];
+            if (!link->highLatency()) {
+                newPriorityLink = link;
+                break;
+            }
+        }
+    }
+
+    if (!newPriorityLink) {
+        // Use any link
         newPriorityLink = _links[0];
     }
 
-    if (newPriorityLink) {
-        _priorityLink = _toolbox->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
-        _updateHighLatencyLink();
-    }
+    _priorityLink = _toolbox->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
+    _updateHighLatencyLink();
 }
 
 void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double yaw, quint64)
