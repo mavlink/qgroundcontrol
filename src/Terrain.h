@@ -30,8 +30,9 @@ public:
     void addQuery(ElevationProvider* elevationProvider, const QList<QGeoCoordinate>& coordinates);
 
 private slots:
-    void _sendNextBatch     (void);
-    void _requestFinished   (void);
+    void _sendNextBatch                 (void);
+    void _requestFinished               (void);
+    void _elevationProviderDestroyed    (QObject* elevationProvider);
 
 private:
     typedef struct {
@@ -41,6 +42,7 @@ private:
 
     typedef struct {
         ElevationProvider*      elevationProvider;
+        bool                    providerDestroyed;
         int                     cCoord;
     } SentRequestInfo_t;
 
@@ -51,6 +53,7 @@ private:
     };
 
     void _batchFailed(void);
+    QString _stateToString(State state);
 
     QList<QueuedRequestInfo_t>  _requestQueue;
     QList<SentRequestInfo_t>    _sentRequests;
