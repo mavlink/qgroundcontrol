@@ -81,33 +81,6 @@ Rectangle {
             sideDistanceLabel:      qsTr("Trigger Distance")
         }
 
-        GridLayout {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            columnSpacing:  ScreenTools.defaultFontPixelWidth / 2
-            rowSpacing:     0
-            columns:        3
-            visible:        missionItem.cameraCalc.isManualCamera
-
-            Item { width: 1; height: 1 }
-            QGCLabel { text: qsTr("Pitch") }
-            QGCLabel { text: qsTr("Yaw") }
-
-            QGCLabel {
-                text:               qsTr("Gimbal")
-                Layout.fillWidth:   true
-            }
-            FactTextField {
-                fact:           missionItem.gimbalPitch
-                implicitWidth:  ScreenTools.defaultFontPixelWidth * 9
-            }
-
-            FactTextField {
-                fact:           missionItem.gimbalYaw
-                implicitWidth:  ScreenTools.defaultFontPixelWidth * 9
-            }
-        }
-
         SectionHeader {
             id:         scanHeader
             text:       qsTr("Scan")

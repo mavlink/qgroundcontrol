@@ -296,7 +296,7 @@ private:
     static const char* _jsonFixedValueIsAltitudeKey;
     static const char* _jsonRefly90DegreesKey;
 
-    static const int _hoverAndCaptureDelaySeconds = 1;
+    static const int _hoverAndCaptureDelaySeconds = 2;
 };
 
 #endif
