@@ -312,6 +312,10 @@ void MockLink::_sendHighLatency2(void)
 {
     mavlink_message_t   msg;
 
+    union px4_custom_mode   px4_cm;
+    px4_cm.data = _mavCustomMode;
+
+    qDebug() << "Sending" << _mavCustomMode;
     mavlink_msg_high_latency2_pack_chan(_vehicleSystemId,
                                         _vehicleComponentId,
                                         _mavlinkChannel,
@@ -319,7 +323,7 @@ void MockLink::_sendHighLatency2(void)
                                         0,                          // timestamp
                                         _vehicleType,               // MAV_TYPE
                                         _firmwareType,              // MAV_AUTOPILOT
-                                        _flightModeEnumValue(),     // flight_mode
+                                        px4_cm.custom_mode_hl,      // custom_mode
                                         (int32_t)(_vehicleLatitude  * 1E7),
                                         (int32_t)(_vehicleLongitude * 1E7),
                                         (int16_t)_vehicleAltitude,
@@ -340,9 +344,7 @@ void MockLink::_sendHighLatency2(void)
                                         -1,                         // battery, do not use?
                                         0,                          // wp_num
                                         0,                          // failure_flags
-                                        0,                          // failsafe
                                         0, 0, 0);                   // custom0, custom1, custom2
-
     respondWithMavlinkMessage(msg);
 }
 
@@ -1369,9 +1371,4 @@ void MockLink::_sendADSBVehicles(void)
                                        0);                                          // Squawk code
 
     respondWithMavlinkMessage(responseMsg);
-}
-
-uint8_t MockLink::_flightModeEnumValue(void)
-{
-    return FLIGHT_MODE_STABILIZED;
 }

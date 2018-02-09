@@ -202,7 +202,6 @@ private:
     void _logDownloadWorker(void);
     void _sendADSBVehicles(void);
     void _moveADSBVehicle(void);
-    uint8_t _flightModeEnumValue(void);
 
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
 
