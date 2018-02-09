@@ -1515,7 +1515,16 @@ void Vehicle::_updatePriorityLink(void)
     }
 #endif
 
-    if (!newPriorityLink && !_priorityLink.data() && _links.count()) {
+    bool found_priority_link = false;
+    if (!newPriorityLink && _priorityLink.data()) {
+        for (int i=0; i<_links.count(); i++) {
+            if (_priorityLink->getLinkConfiguration() == _links[i]->getLinkConfiguration()) {
+                found_priority_link = true;
+            }
+        }
+    }
+
+    if (!newPriorityLink && _links.count() && (!_priorityLink.data() || !found_priority_link)) {
         newPriorityLink = _links[0];
     }
 
