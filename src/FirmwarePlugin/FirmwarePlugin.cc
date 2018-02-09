@@ -620,4 +620,9 @@ QGCCameraControl* FirmwarePlugin::createCameraControl(const mavlink_camera_infor
     return NULL;
 }
 
+uint32_t FirmwarePlugin::highLatencyCustomModeTo32Bits(uint16_t hlCustomMode)
+{
+    // Standard implementation assumes no special handling. Upper part of 32 bit value is not used.
+    return hlCustomMode;
+}
 
