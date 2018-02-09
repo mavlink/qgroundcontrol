@@ -814,6 +814,24 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     mavlink_high_latency2_t highLatency2;
     mavlink_msg_high_latency2_decode(&message, &highLatency2);
 
+    QString previousFlightMode;
+    if (_base_mode != 0 || _custom_mode != 0){
+        // Vehicle is initialized with _base_mode=0 and _custom_mode=0. Don't pass this to flightMode() since it will complain about
+        // bad modes while unit testing.
+        previousFlightMode = flightMode();
+    }
+    _base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+    _custom_mode = _firmwarePlugin->highLatencyCustomModeTo32Bits(highLatency2.custom_mode);
+    if (previousFlightMode != flightMode()) {
+        emit flightModeChanged(flightMode());
+    }
+
+    // Assume armed since we don't know
+    if (_armed != true) {
+        _armed = true;
+        emit armedChanged(_armed);
+    }
+
     _coordinate.setLatitude(highLatency2.latitude  / (double)1E7);
     _coordinate.setLongitude(highLatency2.longitude / (double)1E7);
     _coordinate.setAltitude(highLatency2.altitude);
@@ -840,21 +858,29 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     _gpsFactGroup.vdop()->setRawValue(highLatency2.epv == UINT8_MAX ? std::numeric_limits<double>::quiet_NaN() : highLatency2.epv / 10.0);
 
     struct failure2Sensor_s {
-        MAV_FAILURE_FLAG        failureBit;
+        HL_FAILURE_FLAG         failureBit;
         MAV_SYS_STATUS_SENSOR   sensorBit;
     };
 
     static const failure2Sensor_s rgFailure2Sensor[] = {
-        { MAV_FAILURE_FLAG_GPS,             MAV_SYS_STATUS_SENSOR_GPS },
-        { MAV_FAILURE_FLAG_AIRSPEED,        MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE },
-        { MAV_FAILURE_FLAG_BAROMETER,       MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE },
-        { MAV_FAILURE_FLAG_ACCELEROMETER,   MAV_SYS_STATUS_SENSOR_3D_ACCEL },
-        { MAV_FAILURE_FLAG_GYROSCOPE,       MAV_SYS_STATUS_SENSOR_3D_GYRO },
-        { MAV_FAILURE_FLAG_MAGNETOMETER,    MAV_SYS_STATUS_SENSOR_3D_MAG },
-        // { MAV_FAILURE_FLAG_MISSION,          ???? },
-        // { MAV_FAILURE_FLAG_ESTIMATOR,        ???? },
-        // { MAV_FAILURE_FLAG_LIDAR,            ???? },
-        // { MAV_FAILURE_FLAG_OFFBOARD_LINK,    ???? },
+        { HL_FAILURE_FLAG_GPS,                      MAV_SYS_STATUS_SENSOR_GPS },
+        { HL_FAILURE_FLAG_DIFFERENTIAL_PRESSURE,    MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE },
+        { HL_FAILURE_FLAG_ABSOLUTE_PRESSURE,        MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE },
+        { HL_FAILURE_FLAG_3D_ACCEL,                 MAV_SYS_STATUS_SENSOR_3D_ACCEL },
+        { HL_FAILURE_FLAG_3D_GYRO,                  MAV_SYS_STATUS_SENSOR_3D_GYRO },
+        { HL_FAILURE_FLAG_3D_MAG,                   MAV_SYS_STATUS_SENSOR_3D_MAG },
+#if 0
+        // FIXME: These don't currently map to existing sensor health bits. Support needs to be added to show them
+        // on health page of instrument panel as well.
+        { HL_FAILURE_FLAG_TERRAIN=64, /* Terrain subsystem failure. | */
+        { HL_FAILURE_FLAG_BATTERY=128, /* Battery failure/critical low battery. | */
+        { HL_FAILURE_FLAG_RC_RECEIVER=256, /* RC receiver failure/no rc connection. | */
+        { HL_FAILURE_FLAG_OFFBOARD_LINK=512, /* Offboard link failure. | */
+        { HL_FAILURE_FLAG_ENGINE=1024, /* Engine failure. | */
+        { HL_FAILURE_FLAG_GEOFENCE=2048, /* Geofence violation. | */
+        { HL_FAILURE_FLAG_ESTIMATOR=4096, /* Estimator failure, for example measurement rejection or large variances. | */
+        { HL_FAILURE_FLAG_MISSION=8192, /* Mission failure. | */
+#endif
     };
 
     // Map from MAV_FAILURE bits to standard SYS_STATUS message handling

@@ -589,3 +589,12 @@ QGCCameraControl* PX4FirmwarePlugin::createCameraControl(const mavlink_camera_in
 {
     return new QGCCameraControl(info, vehicle, compID, parent);
 }
+
+uint32_t PX4FirmwarePlugin::highLatencyCustomModeTo32Bits(uint16_t hlCustomMode)
+{
+    union px4_custom_mode px4_cm;
+    px4_cm.data = 0;
+    px4_cm.custom_mode_hl = hlCustomMode;
+
+    return px4_cm.data;
+}
