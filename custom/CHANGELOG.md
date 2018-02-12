@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### v1.2.52 - Feb 12 2018
+
+*   Change the way LED control is handled.
+
 ### v1.2.51 - Feb 7 2018
 
 *   Mission upload and download fixes to correctly retransmit

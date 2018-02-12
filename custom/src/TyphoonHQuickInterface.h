@@ -167,16 +167,9 @@ public:
         ThermalPIP,
     };
 
-    enum LedState {
-        LedAllOn,
-        LedAllOff,
-        LedFrontOff
-    };
-
     Q_ENUMS(M4State)
     Q_ENUMS(CalibrationState)
     Q_ENUMS(ThermalViewMode)
-    Q_ENUMS(LedState)
 
     Q_PROPERTY(M4State          m4State         READ    m4State             NOTIFY m4StateChanged)
     Q_PROPERTY(QString          m4StateStr      READ    m4StateStr          NOTIFY m4StateChanged)
@@ -195,6 +188,7 @@ public:
     Q_PROPERTY(bool             newPasswordSet  READ    newPasswordSet      WRITE setNewPasswordSet         NOTIFY newPasswordSetChanged)
     Q_PROPERTY(QString          connectedSSID   READ    connectedSSID       NOTIFY connectedSSIDChanged)
     Q_PROPERTY(QString          connectedCamera READ    connectedCamera     NOTIFY connectedSSIDChanged)
+    Q_PROPERTY(Fact*            ledFact         READ    ledFact             NOTIFY ledFactChanged)
     Q_PROPERTY(int              rssi            READ    rssi                NOTIFY rssiChanged)
     Q_PROPERTY(qreal            rcBattery       READ    rcBattery           NOTIFY rcBatteryChanged)
     Q_PROPERTY(QString          flightTime      READ    flightTime          NOTIFY flightTimeChanged)
@@ -214,7 +208,6 @@ public:
     Q_PROPERTY(bool             firstRun            READ    firstRun            WRITE   setFirstRun         NOTIFY  firstRunChanged)
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
     Q_PROPERTY(bool             browseVideos        READ    browseVideos        WRITE   setBrowseVideos     NOTIFY  browseVideosChanged)
-    Q_PROPERTY(LedState         ledOptions          READ    ledOptions          WRITE   setLedOptions       NOTIFY  ledOptionsChanged)
 
     Q_PROPERTY(int              J1              READ    J1                  NOTIFY rawChannelChanged)
     Q_PROPERTY(int              J2              READ    J2                  NOTIFY rawChannelChanged)
@@ -304,6 +297,7 @@ public:
     bool        copyingFiles        () { return _copyingFiles; }
     bool        copyingDone         () { return _copyingDone; }
     int         rssi                ();
+    Fact*       ledFact             ();
     qreal       rcBattery           ();
     QString     flightTime          ();
     QString     copyMessage         () { return _copyMessage; }
@@ -333,9 +327,6 @@ public:
 
     bool        newPasswordSet      () { return _newPasswordSet; }
     void        setNewPasswordSet   (bool set) { _newPasswordSet = set; emit newPasswordSetChanged(); }
-
-    LedState    ledOptions          () { return _ledState; }
-    void        setLedOptions       (LedState option);
 
     int         J1                  () { return rawChannel(0); }
     int         J2                  () { return rawChannel(1); }
@@ -393,9 +384,6 @@ private:
     static int mediaCount(QQmlListProperty<TyphoonMediaItem>*);
     static void clearMediaItems(QQmlListProperty<TyphoonMediaItem>*);
 
-private:
-    void    _sendLEDCommand             (int mode, int mask);
-
 signals:
     void    m4StateChanged              ();
     void    controllerLocationChanged   ();
@@ -406,6 +394,7 @@ signals:
     void    connectedSSIDChanged        ();
     void    bindingWiFiChanged          ();
     void    rssiChanged                 ();
+    void    ledFactChanged              ();
     void    bindTimeout                 ();
     void    rcBatteryChanged            ();
     void    flightTimeChanged           ();
@@ -442,7 +431,6 @@ signals:
 #else
     void    mobileSyncChanged           ();
 #endif
-    void    ledOptionsChanged           ();
 
 private slots:
     void    _m4StateChanged             ();
@@ -461,6 +449,7 @@ private slots:
     void    _armedChanged               (bool armed);
     void    _flightUpdate               ();
     void    _rawChannelsChanged         ();
+    void    _vehicleReady               (bool ready);
 #if defined(__androidx86__)
     void    _powerTrigger               ();
     void    _switchStateChanged         (M4Lib::SwitchId switchId, M4Lib::SwitchState switchState);
@@ -544,6 +533,4 @@ private:
 #else
     QGCSyncFilesMobile*     _mobileSync;
 #endif
-    LedState                _ledState;          //-- Internally kept state as the vehicle does not tells us what state the LEDs are
-
 };

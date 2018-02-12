@@ -7,6 +7,7 @@
 
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
+#include "ParameterManager.h"
 #include "AppSettings.h"
 #include "SettingsManager.h"
 #include "MAVLinkLogManager.h"
@@ -45,6 +46,7 @@ static const char* kThermalOpacity  = "ThermalOpacity";
 static const char* kThermalMode     = "ThermalMode";
 static const char* kSecondRun       = "SecondRun";
 static const char* kFirstRun        = "FirstRun";
+static const char* kLedParam        = "COM_LED_MODE";
 
 #if defined(__androidx86__)
 static const char* kUpdateFile = "/storage/sdcard1/update.zip";
@@ -104,7 +106,6 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
 #else
     , _mobileSync(NULL)
 #endif
-    , _ledState(LedAllOn)
 {
     qCDebug(YuneecLog) << "TyphoonHQuickInterface Created";
 #if defined __android__
@@ -190,6 +191,7 @@ TyphoonHQuickInterface::init()
         connect(getQGCMapEngine(), &QGCMapEngine::internetUpdated,             this, &TyphoonHQuickInterface::_internetUpdated);
         connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded,         this, &TyphoonHQuickInterface::_vehicleAdded);
         connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved,       this, &TyphoonHQuickInterface::_vehicleRemoved);
+        connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &TyphoonHQuickInterface::_vehicleReady);
         connect(qgcApp()->toolbox()->videoManager()->videoReceiver(), &VideoReceiver::imageFileChanged,   this, &TyphoonHQuickInterface::_imageFileChanged);
         connect(&_scanTimer,        &QTimer::timeout, this, &TyphoonHQuickInterface::_scanWifi);
         connect(&_flightTimer,      &QTimer::timeout, this, &TyphoonHQuickInterface::_flightUpdate);
@@ -321,45 +323,6 @@ TyphoonHQuickInterface::firstRun()
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::_sendLEDCommand(int mode, int mask)
-{
-    _vehicle->sendMavCommand(
-        _vehicle->defaultComponentId(),             // target component
-        MAV_CMD_LED_CONTROL,                        // Command id
-        true,                                       // ShowError
-        mode,                                       // LED Mode
-        COLOR_WHITE,                                // LED Color
-        mask,                                       // LED Mask
-        0);                                         // Blink count
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::setLedOptions(LedState option)
-{
-    int mode = MODE_OFF;
-    int mask = 0x3F;
-    switch (option) {
-    case LedAllOff:
-        break;
-    case LedFrontOff:
-        //-- First restore state
-        _sendLEDCommand(MODE_DISABLE, mask);
-        //-- Now turn off LED 3 and 4
-        mask = 0x0C;
-        break;
-    case LedAllOn:
-        //-- Not very intuive "Disabled" mode, indicating to restore normal "priority".
-        mode = MODE_DISABLE;
-        break;
-    }
-    _sendLEDCommand(mode, mask);
-    _ledState = option;
-    emit ledOptionsChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
 TyphoonHQuickInterface::_vehicleAdded(Vehicle* vehicle)
 {
     if(!_vehicle) {
@@ -396,6 +359,16 @@ TyphoonHQuickInterface::_vehicleRemoved(Vehicle* vehicle)
         disconnect(_vehicle, &Vehicle::dynamicCamerasChanged,   this, &TyphoonHQuickInterface::_dynamicCamerasChanged);
 #endif
         _vehicle = NULL;
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TyphoonHQuickInterface::_vehicleReady(bool)
+{
+    if(_vehicle) {
+        //-- Update LED Fact
+        emit ledFactChanged();
     }
 }
 
@@ -1047,6 +1020,18 @@ TyphoonHQuickInterface::rssi()
     res = (int)QAndroidJniObject::callStaticMethod<jint>(jniClassName, "wifiRssi", "()I");
 #endif
    return res;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+TyphoonHQuickInterface::ledFact()
+{
+    if (_vehicle && _vehicle->parameterManager()->parameterExists(_vehicle->defaultComponentId(), kLedParam)) {
+        Fact* fact = _vehicle->parameterManager()->getParameter(_vehicle->defaultComponentId(), kLedParam);
+        QQmlEngine::setObjectOwnership(fact, QQmlEngine::CppOwnership);
+        return fact;
+    }
+    return NULL;
 }
 
 //-----------------------------------------------------------------------------

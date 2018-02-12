@@ -256,23 +256,20 @@ QGCView {
                     height:         ledControlRow.height * 2
                     width:          _rectWidth
                     color:          qgcPal.windowShade
-                    visible:        !TyphoonHQuickInterface.desktopPlanner && _activeVehicle
+                    visible:        !TyphoonHQuickInterface.desktopPlanner && _activeVehicle && TyphoonHQuickInterface.ledFact && TyphoonHQuickInterface.ledFact.enumStrings.count
                     anchors.horizontalCenter: parent.horizontalCenter
                     Row {
                         id:         ledControlRow
                         spacing:    ScreenTools.defaultFontPixelWidth * 4
                         anchors.centerIn: parent
-                        QGCComboBox {
+                        FactComboBox {
                             width:          _buttonWidth
-                            model:          ledOptions
-                            currentIndex:   TyphoonHQuickInterface.ledOptions
-                            onActivated:    TyphoonHQuickInterface.ledOptions = index
+                            fact:           TyphoonHQuickInterface.ledFact
                             anchors.verticalCenter: parent.verticalCenter
-                            property var ledOptions: [qsTr("All On"), qsTr("All Off"), qsTr("Front Off")]
                         }
                         QGCLabel {
-                            text:   qsTr("LED Control")
-                            width:   _textWidth
+                            text:           qsTr("LED Control")
+                            width:          _textWidth
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
