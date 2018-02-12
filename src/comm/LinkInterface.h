@@ -17,6 +17,7 @@
 #include <QMetaType>
 #include <QSharedPointer>
 #include <QDebug>
+#include <QTimer>
 
 #include "QGCMAVLink.h"
 #include "LinkConfiguration.h"
@@ -42,7 +43,7 @@ public:
 
     // Property accessors
     bool active(void)           { return _active; }
-    void setActive(bool active) { _active = active; emit activeChanged(active); }
+    void setActive(bool active) { _active = active; emit activeChanged(this, active); }
 
     LinkConfiguration* getLinkConfiguration(void) { return _config.data(); }
 
@@ -152,7 +153,7 @@ private slots:
     
 signals:
     void autoconnectChanged(bool autoconnect);
-    void activeChanged(bool active);
+    void activeChanged(LinkInterface* link, bool active);
     void _invokeWriteBytes(QByteArray);
     void highLatencyChanged(bool highLatency);
 
@@ -248,7 +249,11 @@ private:
     virtual bool _connect(void) = 0;
 
     virtual void _disconnect(void) = 0;
+
+    void _bytesReceived(LinkInterface* link, QByteArray bytes);
     
+    void _bytesReceivedTimeout(void);
+
     /// Sets the mavlink channel to use for this link
     void _setMavlinkChannel(uint8_t channel);
     
@@ -276,6 +281,9 @@ private:
     bool _active;                       ///< true: link is actively receiving mavlink messages
     bool _enableRateCollection;
     bool _decodedFirstMavlinkPacket;    ///< true: link has correctly decoded it's first mavlink packet
+
+    static const int    _bytesReceivedTimeoutMSecs = 3500;  // Signal connection lost after 3.5 seconds of no messages
+    QTimer              _bytesReceivedTimer;
 };
 
 typedef QSharedPointer<LinkInterface> SharedLinkInterfacePointer;

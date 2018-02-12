@@ -1042,7 +1042,6 @@ private slots:
     void _updateAttitude                    (UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp);
     /** @brief A new camera image has arrived */
     void _imageReady                        (UASInterface* uas);
-    void _connectionLostTimeout(void);
     void _prearmErrorTimeout(void);
     void _missionLoadComplete(void);
     void _geoFenceLoadComplete(void);
@@ -1100,14 +1099,14 @@ private:
     void _rallyPointManagerError(int errorCode, const QString& errorMsg);
     void _mapTrajectoryStart(void);
     void _mapTrajectoryStop(void);
-    void _connectionActive(void);
+    void _linkActiveChanged(LinkInterface* link, bool active);
     void _say(const QString& text);
     QString _vehicleIdSpeech(void);
     void _handleMavlinkLoggingData(mavlink_message_t& message);
     void _handleMavlinkLoggingDataAcked(mavlink_message_t& message);
     void _ackMavlinkLogData(uint16_t sequence);
     void _sendNextQueuedMavCommand(void);
-    void _updatePriorityLink(void);
+    void _updatePriorityLink(bool updateActive);
     void _commonInit(void);
     void _startPlanRequest(void);
     void _setupAutoDisarmSignalling(void);
@@ -1199,8 +1198,6 @@ private:
     // Lost connection handling
     bool                _connectionLost;
     bool                _connectionLostEnabled;
-    static const int    _connectionLostTimeoutMSecs = 3500;  // Signal connection lost after 3.5 seconds of missed heartbeat
-    QTimer              _connectionLostTimer;
 
     bool                _initialPlanRequestComplete;
 
