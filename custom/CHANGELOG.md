@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.2.52 - Feb 12 2018
+
+* Update parameter meta data for new volatile information.
+
 ### v1.2.51 - Feb 7 2018
 
 *   Mission upload and download fixes to correctly retransmit
