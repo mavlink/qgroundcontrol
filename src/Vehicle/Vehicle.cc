@@ -1500,8 +1500,11 @@ void Vehicle::_updatePriorityLink(void)
     // Check for the existing priority link to still be valid
     for (int i=0; i<_links.count(); i++) {
         if (_priorityLink.data() == _links[i]) {
-            // Still valid
-            return;
+            if (!_priorityLink.data()->highLatency()) {
+                // Link is still valid. Continue to use it unless it is high latency. In that case we still look for a better
+                // link to use as priority link.
+                return;
+            }
         }
     }
 
