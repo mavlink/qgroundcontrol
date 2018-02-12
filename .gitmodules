@@ -7,6 +7,3 @@
 [submodule "custom/src/m4lib"]
 	path = custom/src/m4lib
 	url = git@github.com:YUNEEC/m4lib.git
-[submodule "custom/mavlink"]
-	path = custom/mavlink
-	url = git@github.com:YUNEEC/c_library_v2.git
