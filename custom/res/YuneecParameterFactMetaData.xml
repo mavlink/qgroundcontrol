@@ -916,13 +916,13 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <scope>modules/commander</scope>
     </parameter>
     <parameter default="1" name="COM_LED_MODE" type="INT32">
-      <short_desc>LED MODE</short_desc>
-      <long_desc>Each number stands for a LED mode, such as on or disabled.</long_desc>
+      <short_desc>LED Mode</short_desc>
+      <long_desc>Define the state of the LEDs to either All Off (as in night photography for instance), All On (as per default), or just the front two LEDs off.</long_desc>
       <scope>modules/commander</scope>
       <values>
-        <value code="0">LEDs off (e.g. for night photography)</value>
-        <value code="1">LEDs on (as per default)</value>
-        <value code="2">Front LEDs off</value>
+        <value code="0">LEDs Off</value>
+        <value code="1">LEDs On</value>
+        <value code="2">Front LEDs Off</value>
       </values>
     </parameter>
   </group>
