@@ -2239,13 +2239,13 @@ void Vehicle::initGimbal(void)
                    MAV_CMD_DO_MOUNT_CONFIGURE,
                    true,                            // Show errors
                    MAV_MOUNT_MODE_NEUTRAL,          // Mode
-                   1,                               // Yes, stabilize roll
-                   1,                               // Yes, stabilize pitch
-                   1,                               // Yes, stabilize yaw
+                   0,                               // Yes, stabilize roll
+                   0,                               // Yes, stabilize pitch
+                   0,                               // Yes, stabilize yaw
                    //-- TODO: Angle (0) or Angular Rate (1)?
-                   0,                               // Use angle
-                   0,                               // Use angle
-                   0);                              // Use angle
+                   1,                               // roll input (0 = angle, 1 = angular rate)
+                   1,                               // pitch input (0 = angle, 1 = angular rate)
+                   1);                              // yaw input (0 = angle, 1 = angular rate)
 }
 
 void Vehicle::setConnectionLostEnabled(bool connectionLostEnabled)
