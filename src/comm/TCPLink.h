@@ -97,6 +97,7 @@ public:
     /// From LinkConfiguration
     LinkType    type            () { return LinkConfiguration::TypeTcp; }
     void        copyFrom        (LinkConfiguration* source);
+    bool        isHighLatencyAllowed () { return true; }
     void        loadSettings    (QSettings& settings, const QString& root);
     void        saveSettings    (QSettings& settings, const QString& root);
     void        updateSettings  ();

@@ -126,6 +126,7 @@ public:
     void        saveSettings         (QSettings& settings, const QString& root);
     void        updateSettings       ();
     bool        isAutoConnectAllowed () { return true; }
+    bool        isHighLatencyAllowed () { return true; }
     QString     settingsURL          () { return "UdpSettings.qml"; }
 
 signals:
