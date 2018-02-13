@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.2.54 - Feb 13 2018
+
+* Fix Resume/Continue Mission popping up at wrong time
+
 ### V1.2.53 - Feb 12 2018
 
 * Update parameter meta data for new volatile information.
