@@ -175,6 +175,7 @@ private:
 
     // MockLink methods
     void _sendHeartBeat(void);
+    void _sendHighLatency2(void);
     void _handleIncomingNSHBytes(const char* bytes, int cBytes);
     void _handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes);
     void _loadParams(void);

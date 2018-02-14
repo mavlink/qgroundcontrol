@@ -63,7 +63,7 @@ VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, QObject* pa
 {
     *this = other;
 
-    // Don't get terrain altitude information for submarines or boards
+    // Don't get terrain altitude information for submarines or boats
     if (_vehicle->vehicleType() != MAV_TYPE_SUBMARINE && _vehicle->vehicleType() != MAV_TYPE_SURFACE_BOAT) {
         connect(this, &VisualMissionItem::coordinateChanged, this, &VisualMissionItem::_updateTerrainAltitude);
     }

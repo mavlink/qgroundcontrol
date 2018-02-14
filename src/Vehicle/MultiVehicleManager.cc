@@ -72,7 +72,7 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
                                          this);
 }
 
-void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleMavlinkVersion, int vehicleFirmwareType, int vehicleType)
+void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType)
 {
     if (componentId != MAV_COMP_ID_AUTOPILOT1) {
         // Special case for PX4 Flow
@@ -82,7 +82,6 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
                                               << link->getName()
                                               << vehicleId
                                               << componentId
-                                              << vehicleMavlinkVersion
                                               << vehicleFirmwareType
                                               << vehicleType;
             return;
@@ -108,27 +107,16 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         break;
     }
 
-    qCDebug(MultiVehicleManagerLog()) << "Adding new vehicle link:vehicleId:componentId:vehicleMavlinkVersion:vehicleFirmwareType:vehicleType "
+    qCDebug(MultiVehicleManagerLog()) << "Adding new vehicle link:vehicleId:componentId:vehicleFirmwareType:vehicleType "
                                       << link->getName()
                                       << vehicleId
                                       << componentId
-                                      << vehicleMavlinkVersion
                                       << vehicleFirmwareType
                                       << vehicleType;
 
     if (vehicleId == _mavlinkProtocol->getSystemId()) {
         _app->showMessage(tr("Warning: A vehicle is using the same system id as %1: %2").arg(qgcApp()->applicationName()).arg(vehicleId));
     }
-
-    //    QSettings settings;
-    //    bool mavlinkVersionCheck = settings.value("VERSION_CHECK_ENABLED", true).toBool();
-    //    if (mavlinkVersionCheck && vehicleMavlinkVersion != MAVLINK_VERSION) {
-    //        _ignoreVehicleIds += vehicleId;
-    //        _app->showMessage(QString("The MAVLink protocol version on vehicle #%1 and %2 differ! "
-    //                                  "It is unsafe to use different MAVLink versions. "
-    //                                  "%2 therefore refuses to connect to vehicle #%1, which sends MAVLink version %3 (%2 uses version %4).").arg(vehicleId).arg(qgcApp()->applicationName()).arg(vehicleMavlinkVersion).arg(MAVLINK_VERSION));
-    //        return;
-    //    }
 
     Vehicle* vehicle = new Vehicle(link, vehicleId, componentId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, _firmwarePluginManager, _joystickManager);
     connect(vehicle, &Vehicle::allLinksInactive, this, &MultiVehicleManager::_deleteVehiclePhase1);
@@ -371,7 +359,7 @@ void MultiVehicleManager::_sendGCSHeartbeat(void)
     LinkManager* linkMgr = _toolbox->linkManager();
     for (int i=0; i<linkMgr->links().count(); i++) {
         LinkInterface* link = linkMgr->links()[i];
-        if (link->isConnected()) {
+        if (link->isConnected() && !link->highLatency()) {
             mavlink_message_t message;
             mavlink_msg_heartbeat_pack_chan(_mavlinkProtocol->getSystemId(),
                                             _mavlinkProtocol->getComponentId(),
