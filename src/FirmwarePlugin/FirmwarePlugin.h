@@ -304,6 +304,9 @@ public:
     /// Returns true if the vehicle is a VTOL
     virtual bool isVtol(const Vehicle* vehicle) const;
 
+    /// Convert from HIGH_LATENCY2.custom_mode value to correct 32 bit value.
+    virtual uint32_t highLatencyCustomModeTo32Bits(uint16_t hlCustomMode);
+
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const QString px4FollowMeFlightMode;
 

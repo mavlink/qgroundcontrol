@@ -19,7 +19,7 @@
 #include "SurveyMissionItem.h"
 #include "FixedWingLandingComplexItem.h"
 #include "StructureScanComplexItem.h"
-#include "StructureScanComplexItem.h"
+#include "CorridorScanComplexItem.h"
 #include "JsonHelper.h"
 #include "ParameterManager.h"
 #include "QGroundControlQmlGlobal.h"
@@ -63,6 +63,7 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
     , _surveyMissionItemName(tr("Survey"))
     , _fwLandingMissionItemName(tr("Fixed Wing Landing"))
     , _structureScanMissionItemName(tr("Structure Scan"))
+    , _corridorScanMissionItemName(tr("Corridor Scan"))
     , _appSettings(qgcApp()->toolbox()->settingsManager()->appSettings())
     , _progressPct(0)
     , _currentPlanViewIndex(-1)
@@ -388,22 +389,41 @@ int MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int i)
 int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int i)
 {
     ComplexMissionItem* newItem;
+    bool surveyStyleItem = false;
 
     int sequenceNumber = _nextSequenceNumber();
     if (itemName == _surveyMissionItemName) {
         newItem = new SurveyMissionItem(_controllerVehicle, _visualItems);
         newItem->setCoordinate(mapCenterCoordinate);
-        // If the vehicle is known to have a gimbal then we automatically point the gimbal straight down if not already set
+        surveyStyleItem = true;
+    } else if (itemName == _fwLandingMissionItemName) {
+        newItem = new FixedWingLandingComplexItem(_controllerVehicle, _visualItems);
+    } else if (itemName == _structureScanMissionItemName) {
+        newItem = new StructureScanComplexItem(_controllerVehicle, _visualItems);
+    } else if (itemName == _corridorScanMissionItemName) {
+        newItem = new CorridorScanComplexItem(_controllerVehicle, _visualItems);
+        surveyStyleItem = true;
+    } else {
+        qWarning() << "Internal error: Unknown complex item:" << itemName;
+        return sequenceNumber;
+    }
+
+    if (surveyStyleItem) {
         bool rollSupported = false;
         bool pitchSupported = false;
         bool yawSupported = false;
+
+        // If the vehicle is known to have a gimbal then we automatically point the gimbal straight down if not already set
+
         MissionSettingsItem* settingsItem = _visualItems->value<MissionSettingsItem*>(0);
         CameraSection* cameraSection = settingsItem->cameraSection();
+
         // Set camera to photo mode (leave alone if user already specified)
         if (cameraSection->cameraModeSupported() && !cameraSection->specifyCameraMode()) {
             cameraSection->setSpecifyCameraMode(true);
             cameraSection->cameraMode()->setRawValue(CAMERA_MODE_IMAGE_SURVEY);
         }
+
         // Point gimbal straight down
         if (_controllerVehicle->firmwarePlugin()->hasGimbal(_controllerVehicle, rollSupported, pitchSupported, yawSupported) && pitchSupported) {
             // If the user already specified a gimbal angle leave it alone
@@ -412,14 +432,8 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
                 cameraSection->gimbalPitch()->setRawValue(-90.0);
             }
         }
-    } else if (itemName == _fwLandingMissionItemName) {
-        newItem = new FixedWingLandingComplexItem(_controllerVehicle, _visualItems);
-    } else if (itemName == _structureScanMissionItemName) {
-        newItem = new StructureScanComplexItem(_controllerVehicle, _visualItems);
-    } else {
-        qWarning() << "Internal error: Unknown complex item:" << itemName;
-        return sequenceNumber;
     }
+
     newItem->setSequenceNumber(sequenceNumber);
     _initVisualItem(newItem);
 
@@ -437,17 +451,17 @@ void MissionController::removeMissionItem(int index)
         return;
     }
 
-    bool surveyRemoved = _visualItems->value<SurveyMissionItem*>(index);
+    bool removeSurveyStyle = _visualItems->value<SurveyMissionItem*>(index) || _visualItems->value<CorridorScanComplexItem*>(index);
     VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->removeAt(index));
 
     _deinitVisualItem(item);
     item->deleteLater();
 
-    if (surveyRemoved) {
-        // Determine if the mission still has another survey in it
+    if (removeSurveyStyle) {
+        // Determine if the mission still has another survey style item in it
         bool foundSurvey = false;
         for (int i=1; i<_visualItems->count(); i++) {
-            if (_visualItems->value<SurveyMissionItem*>(i)) {
+            if (_visualItems->value<SurveyMissionItem*>(i) || _visualItems->value<CorridorScanComplexItem*>(index)) {
                 foundSurvey = true;
                 break;
             }
@@ -698,6 +712,15 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
                 nextSequenceNumber = structureItem->lastSequenceNumber() + 1;
                 qCDebug(MissionControllerLog) << "Structure Scan load complete: nextSequenceNumber" << nextSequenceNumber;
                 visualItems->append(structureItem);
+            } else if (complexItemType == CorridorScanComplexItem::jsonComplexItemTypeValue) {
+                qCDebug(MissionControllerLog) << "Loading Corridor Scan: nextSequenceNumber" << nextSequenceNumber;
+                CorridorScanComplexItem* corridorItem = new CorridorScanComplexItem(_controllerVehicle, visualItems);
+                if (!corridorItem->load(itemObject, nextSequenceNumber++, errorString)) {
+                    return false;
+                }
+                nextSequenceNumber = corridorItem->lastSequenceNumber() + 1;
+                qCDebug(MissionControllerLog) << "Corridor Scan load complete: nextSequenceNumber" << nextSequenceNumber;
+                visualItems->append(corridorItem);
             } else if (complexItemType == MissionSettingsItem::jsonComplexItemTypeValue) {
                 qCDebug(MissionControllerLog) << "Loading Mission Settings: nextSequenceNumber" << nextSequenceNumber;
                 MissionSettingsItem* settingsItem = new MissionSettingsItem(_controllerVehicle, visualItems);
@@ -1842,6 +1865,7 @@ QStringList MissionController::complexMissionItemNames(void) const
     QStringList complexItems;
 
     complexItems.append(_surveyMissionItemName);
+    complexItems.append(_corridorScanMissionItemName);
     if (_controllerVehicle->fixedWing()) {
         complexItems.append(_fwLandingMissionItemName);
     }

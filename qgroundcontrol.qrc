@@ -18,6 +18,7 @@
         <file alias="AnalyzeView.qml">src/AnalyzeView/AnalyzeView.qml</file>
         <file alias="AppSettings.qml">src/ui/AppSettings.qml</file>
         <file alias="BluetoothSettings.qml">src/ui/preferences/BluetoothSettings.qml</file>
+		<file alias="CorridorScanEditor.qml">src/PlanView/CorridorScanEditor.qml</file>
         <file alias="CustomCommandWidget.qml">src/ViewWidgets/CustomCommandWidget.qml</file>
         <file alias="DebugWindow.qml">src/ui/preferences/DebugWindow.qml</file>
         <file alias="ESP8266Component.qml">src/AutoPilotPlugins/Common/ESP8266Component.qml</file>
@@ -48,6 +49,7 @@
 		<file alias="QGroundControl/Controls/CameraCalc.qml">src/PlanView/CameraCalc.qml</file>
         <file alias="QGroundControl/Controls/CameraSection.qml">src/PlanView/CameraSection.qml</file>
         <file alias="QGroundControl/Controls/ClickableColor.qml">src/QmlControls/ClickableColor.qml</file>
+		<file alias="QGroundControl/Controls/CorridorScanMapVisual.qml">src/PlanView/CorridorScanMapVisual.qml</file>
         <file alias="QGroundControl/Controls/DropButton.qml">src/QmlControls/DropButton.qml</file>
 		<file alias="QGroundControl/Controls/EditPositionDialog.qml">src/QmlControls/EditPositionDialog.qml</file>
         <file alias="QGroundControl/Controls/ExclusiveGroupItem.qml">src/QmlControls/ExclusiveGroupItem.qml</file>
@@ -89,6 +91,7 @@
         <file alias="QGroundControl/Controls/QGCMapLabel.qml">src/QmlControls/QGCMapLabel.qml</file>
 		<file alias="QGroundControl/Controls/QGCMapCircleVisuals.qml">src/MissionManager/QGCMapCircleVisuals.qml</file>
         <file alias="QGroundControl/Controls/QGCMapPolygonVisuals.qml">src/MissionManager/QGCMapPolygonVisuals.qml</file>
+		<file alias="QGroundControl/Controls/QGCMapPolylineVisuals.qml">src/MissionManager/QGCMapPolylineVisuals.qml</file>
         <file alias="QGroundControl/Controls/QGCMouseArea.qml">src/QmlControls/QGCMouseArea.qml</file>
         <file alias="QGroundControl/Controls/QGCMovableItem.qml">src/QmlControls/QGCMovableItem.qml</file>
         <file alias="QGroundControl/Controls/QGCPipable.qml">src/QmlControls/QGCPipable.qml</file>
@@ -201,7 +204,9 @@
         <file alias="Guided.SettingsGroup.json">src/Settings/Guided.SettingsGroup.json</file>
 		<file alias="QGCMapCircle.Facts.json">src/MissionManager/QGCMapCircle.Facts.json</file>
         <file alias="RTK.SettingsGroup.json">src/Settings/RTK.SettingsGroup.json</file>
+		<file alias="TransectStyle.SettingsGroup.json">src/MissionManager/TransectStyle.SettingsGroup.json</file>
         <file alias="Survey.SettingsGroup.json">src/MissionManager/Survey.SettingsGroup.json</file>
+		<file alias="CorridorScan.SettingsGroup.json">src/MissionManager/CorridorScan.SettingsGroup.json</file>
 		<file alias="StructureScan.SettingsGroup.json">src/MissionManager/StructureScan.SettingsGroup.json</file>
         <file alias="Units.SettingsGroup.json">src/Settings/Units.SettingsGroup.json</file>
         <file alias="Video.SettingsGroup.json">src/Settings/Video.SettingsGroup.json</file>

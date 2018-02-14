@@ -13,7 +13,7 @@
 #include "QGCApplication.h"
 
 #ifdef UNITTEST_BUILD
-    #include "UnitTest.h"
+#include "UnitTest.h"
 #endif
 
 #include <QTimer>
@@ -166,27 +166,35 @@ void MockLink::run(void)
 void MockLink::_run1HzTasks(void)
 {
     if (_mavlinkStarted && _connected) {
-        _sendVibration();
-        _sendADSBVehicles();
-        if (!qgcApp()->runningUnitTests()) {
-            // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
-            _sendRCChannels();
-        }
-        if (_sendHomePositionDelayCount > 0) {
-            // We delay home position for better testing
-            _sendHomePositionDelayCount--;
+        if (_highLatency) {
+            _sendHighLatency2();
         } else {
-            _sendHomePosition();
-        }
-        if (_sendStatusText) {
-            _sendStatusText = false;
-            _sendStatusTextMessages();
+            _sendVibration();
+            _sendADSBVehicles();
+            if (!qgcApp()->runningUnitTests()) {
+                // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
+                _sendRCChannels();
+            }
+            if (_sendHomePositionDelayCount > 0) {
+                // We delay home position for better testing
+                _sendHomePositionDelayCount--;
+            } else {
+                _sendHomePosition();
+            }
+            if (_sendStatusText) {
+                _sendStatusText = false;
+                _sendStatusTextMessages();
+            }
         }
     }
 }
 
 void MockLink::_run10HzTasks(void)
 {
+    if (_highLatency) {
+        return;
+    }
+
     if (_mavlinkStarted && _connected) {
         _sendHeartBeat();
         if (_sendGPSPositionDelayCount > 0) {
@@ -200,6 +208,10 @@ void MockLink::_run10HzTasks(void)
 
 void MockLink::_run500HzTasks(void)
 {
+    if (_highLatency) {
+        return;
+    }
+
     if (_mavlinkStarted && _connected) {
         _paramRequestListWorker();
         _logDownloadWorker();
@@ -293,6 +305,46 @@ void MockLink::_sendHeartBeat(void)
                                     _mavCustomMode,      // custom mode
                                     _mavState);          // MAV_STATE
 
+    respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_sendHighLatency2(void)
+{
+    mavlink_message_t   msg;
+
+    union px4_custom_mode   px4_cm;
+    px4_cm.data = _mavCustomMode;
+
+    qDebug() << "Sending" << _mavCustomMode;
+    mavlink_msg_high_latency2_pack_chan(_vehicleSystemId,
+                                        _vehicleComponentId,
+                                        _mavlinkChannel,
+                                        &msg,
+                                        0,                          // timestamp
+                                        _vehicleType,               // MAV_TYPE
+                                        _firmwareType,              // MAV_AUTOPILOT
+                                        px4_cm.custom_mode_hl,      // custom_mode
+                                        (int32_t)(_vehicleLatitude  * 1E7),
+                                        (int32_t)(_vehicleLongitude * 1E7),
+                                        (int16_t)_vehicleAltitude,
+                                        (int16_t)_vehicleAltitude,  // target_altitude,
+                                        0,                          // heading
+                                        0,                          // target_heading
+                                        0,                          // target_distance
+                                        0,                          // throttle
+                                        0,                          // airspeed
+                                        0,                          // airspeed_sp
+                                        0,                          // groundspeed
+                                        0,                          // windspeed,
+                                        0,                          // wind_heading
+                                        UINT8_MAX,                  // eph not known
+                                        UINT8_MAX,                  // epv not known
+                                        0,                          // temperature_air
+                                        0,                          // climb_rate
+                                        -1,                         // battery, do not use?
+                                        0,                          // wp_num
+                                        0,                          // failure_flags
+                                        0, 0, 0);                   // custom0, custom1, custom2
     respondWithMavlinkMessage(msg);
 }
 
@@ -842,8 +894,8 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
     case MAV_CMD_USER_3:
         // Test command which returns MAV_RESULT_ACCEPTED on second attempt
         if (firstCmdUser3) {
-           firstCmdUser3 = false;
-           return;
+            firstCmdUser3 = false;
+            return;
         } else {
             firstCmdUser3 = true;
             commandResult = MAV_RESULT_ACCEPTED;
@@ -852,8 +904,8 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
     case MAV_CMD_USER_4:
         // Test command which returns MAV_RESULT_FAILED on second attempt
         if (firstCmdUser4) {
-           firstCmdUser4 = false;
-           return;
+            firstCmdUser4 = false;
+            return;
         } else {
             firstCmdUser4 = true;
             commandResult = MAV_RESULT_FAILED;
@@ -943,8 +995,8 @@ void MockLink::_sendHomePosition(void)
                                         (int32_t)(_vehicleAltitude * 1000),
                                         0.0f, 0.0f, 0.0f,
                                         &bogus[0],
-                                        0.0f, 0.0f, 0.0f,
-                                        0);
+            0.0f, 0.0f, 0.0f,
+            0);
     respondWithMavlinkMessage(msg);
 }
 
@@ -972,7 +1024,7 @@ void MockLink::_sendGpsRawInt(void)
                                       0,                                    // Altitude uncertainty in meters * 1000 (positive for up).
                                       0,                                    // Speed uncertainty in meters * 1000 (positive for up).
                                       0);                                   // Heading / track uncertainty in degrees * 1e5.
-        respondWithMavlinkMessage(msg);
+    respondWithMavlinkMessage(msg);
 }
 
 void MockLink::_sendStatusTextMessages(void)
@@ -1237,9 +1289,9 @@ void MockLink::_handleLogRequestData(const mavlink_message_t& msg)
     mavlink_msg_log_request_data_decode(&msg, &request);
 
     if (_logDownloadFilename.isEmpty()) {
-        #ifdef UNITTEST_BUILD
+#ifdef UNITTEST_BUILD
         _logDownloadFilename = UnitTest::createRandomFile(_logDownloadFileSize);
-        #endif
+#endif
     }
 
     if (request.id != 0) {

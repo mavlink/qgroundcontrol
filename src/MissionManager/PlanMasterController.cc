@@ -157,6 +157,11 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
 
 void PlanMasterController::loadFromVehicle(void)
 {
+    if (_managerVehicle->highLatencyLink()) {
+        qgcApp()->showMessage(tr("Download not supported on high latency links."));
+        return;
+    }
+
     if (offline()) {
         qCWarning(PlanMasterControllerLog) << "PlanMasterController::loadFromVehicle called while offline";
     } else if (!_editMode) {
@@ -256,6 +261,11 @@ void PlanMasterController::_sendRallyPointsComplete(void)
 
 void PlanMasterController::sendToVehicle(void)
 {
+    if (_managerVehicle->highLatencyLink()) {
+        qgcApp()->showMessage(tr("Upload not supported on high latency links."));
+        return;
+    }
+
     if (offline()) {
         qCWarning(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called while offline";
     } else if (syncInProgress()) {

@@ -33,6 +33,8 @@ public:
     Q_PROPERTY(bool             autoConnect         READ isAutoConnect  WRITE setAutoConnect    NOTIFY autoConnectChanged)
     Q_PROPERTY(bool             autoConnectAllowed  READ isAutoConnectAllowed                   CONSTANT)
     Q_PROPERTY(QString          settingsURL         READ settingsURL                            CONSTANT)
+    Q_PROPERTY(bool             highLatency         READ isHighLatency  WRITE setHighLatency    NOTIFY highLatencyChanged)
+    Q_PROPERTY(bool             highLatencyAllowed  READ isHighLatencyAllowed                   CONSTANT)
 
     // Property accessors
 
@@ -77,6 +79,13 @@ public:
     bool isAutoConnect() { return _autoConnect; }
 
     /*!
+     *
+     * Is this a High Latency configuration?
+     * @return True if this is an High Latency configuration (link with large delays).
+     */
+    bool isHighLatency() { return _highLatency; }
+
+    /*!
      * Set if this is this a dynamic configuration. (decided at runtime)
     */
     void setDynamic(bool dynamic = true) { _dynamic = dynamic; emit dynamicChanged(); }
@@ -86,6 +95,11 @@ public:
     */
     void setAutoConnect(bool autoc = true) { _autoConnect = autoc; emit autoConnectChanged(); }
 
+    /*!
+     * Set if this is this an High Latency configuration.
+    */
+    void setHighLatency(bool hl = false) { _highLatency = hl; emit highLatencyChanged(); }
+
     /// Virtual Methods
 
     /*!
@@ -94,6 +108,13 @@ public:
      * @return True if this type can be set as an Auto Connect configuration
      */
     virtual bool isAutoConnectAllowed() { return false; }
+
+    /*!
+     *
+     * Is High Latency allowed for this type?
+     * @return True if this type can be set as an High Latency configuration
+     */
+    virtual bool isHighLatencyAllowed() { return false; }
 
     /*!
      * @brief Connection type
@@ -174,6 +195,7 @@ signals:
     void dynamicChanged     ();
     void autoConnectChanged ();
     void linkChanged        (LinkInterface* link);
+    void highLatencyChanged ();
 
 protected:
     LinkInterface* _link; ///< Link currently using this configuration (if any)
@@ -181,6 +203,7 @@ private:
     QString _name;
     bool    _dynamic;       ///< A connection added automatically and not persistent (unless it's edited).
     bool    _autoConnect;   ///< This connection is started automatically at boot
+    bool    _highLatency;
 };
 
 typedef QSharedPointer<LinkConfiguration> SharedLinkConfigurationPointer;

@@ -267,11 +267,17 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             }
 
             if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
-                // Start loggin on first heartbeat
                 _startLogging();
                 mavlink_heartbeat_t heartbeat;
                 mavlink_msg_heartbeat_decode(&message, &heartbeat);
-                emit vehicleHeartbeatInfo(link, message.sysid, message.compid, heartbeat.mavlink_version, heartbeat.autopilot, heartbeat.type);
+                emit vehicleHeartbeatInfo(link, message.sysid, message.compid, heartbeat.autopilot, heartbeat.type);
+            }
+
+            if (message.msgid == MAVLINK_MSG_ID_HIGH_LATENCY2) {
+                _startLogging();
+                mavlink_high_latency2_t highLatency2;
+                mavlink_msg_high_latency2_decode(&message, &highLatency2);
+                emit vehicleHeartbeatInfo(link, message.sysid, message.compid, highLatency2.autopilot, highLatency2.type);
             }
 
             // Detect if we are talking to an old radio not supporting v2
