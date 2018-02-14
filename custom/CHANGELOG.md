@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.2.55 - Feb 14 2018
+
+* Bump hover and capture delay to 4 seconds
+
 ### V1.2.54 - Feb 13 2018
 
 * Fix Resume/Continue Mission popping up at wrong time
