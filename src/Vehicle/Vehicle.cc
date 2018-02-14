@@ -1747,6 +1747,9 @@ void Vehicle::_updatePriorityLink(bool updateActive)
     }
 
     if (_priorityLink.data() != newPriorityLink) {
+        if (_priorityLink) {
+            qgcApp()->showMessage((tr("switch to %2 as priority link")).arg(newPriorityLink->getName()));
+        }
         _priorityLink = _toolbox->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
         _updateHighLatencyLink();
         emit priorityLinkNameChanged(_priorityLink->getName());
@@ -2436,12 +2439,11 @@ void Vehicle::setConnectionLostEnabled(bool connectionLostEnabled)
 
 void Vehicle::_linkActiveChanged(LinkInterface *link, bool active)
 {
-    qWarning() << "Vehicle active changed called";
     if (link == _priorityLink) {
         if (active && _connectionLost) {
             // communication to priority link regained
             _connectionLost = false;
-            _say(QString(tr("%1 communication to priority link %2 regained")).arg(_vehicleIdSpeech()).arg(link->getName()));
+            qgcApp()->showMessage((tr("communication to priority link %2 regained")).arg(link->getName()));
 
             // Re-negotiate protocol version for the link
             sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
@@ -2451,11 +2453,13 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active)
 
         } else if (!active && !_connectionLost) {
             // communication to priority link lost
-            _say(QString(tr("%1 communication to priority link %2 lost")).arg(_vehicleIdSpeech()).arg(link->getName()));
+            qgcApp()->showMessage((tr("communication to priority link %2 lost")).arg(link->getName()));
+
             _updatePriorityLink(false);
 
             if (link == _priorityLink) {
-                 _say(QString(tr("%1 communication lost")).arg(_vehicleIdSpeech()));
+                _say(QString(tr("%1 communication lost")).arg(_vehicleIdSpeech()));
+                qgcApp()->showMessage((tr("%1 communication lost")).arg(_vehicleIdSpeech()));
 
                 if (_connectionLostEnabled) {
                     _connectionLost = true;
@@ -2471,14 +2475,10 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active)
                         disconnectInactiveVehicle();
                     }
                 }
-
-            } else {
-                 _say(QString(tr("%1 use %2 as the priority link")).arg(_vehicleIdSpeech()).arg(link->getName()));
-                // nothing more to do
             }
         }
     } else {
-        _say(QString(tr("%1 communication to auxiliary link %2 %3")).arg(_vehicleIdSpeech()).arg(link->getName()).arg(active ? "regained" : "lost"));
+        qgcApp()->showMessage((tr("communication to auxiliary link %2 %3")).arg(link->getName()).arg(active ? "regained" : "lost"));
     }
 }
 
