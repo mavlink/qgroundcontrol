@@ -338,6 +338,7 @@ void LinkManager::saveLinkConfigurationList()
                 settings.setValue(root + "/name", linkConfig->name());
                 settings.setValue(root + "/type", linkConfig->type());
                 settings.setValue(root + "/auto", linkConfig->isAutoConnect());
+                settings.setValue(root + "/high_latency", linkConfig->isHighLatency());
                 // Have the instance save its own values
                 linkConfig->saveSettings(settings, root);
             }
@@ -369,6 +370,7 @@ void LinkManager::loadLinkConfigurationList()
                         if(!name.isEmpty()) {
                             LinkConfiguration* pLink = NULL;
                             bool autoConnect = settings.value(root + "/auto").toBool();
+                            bool highLatency = settings.value(root + "/high_latency").toBool();
                             switch((LinkConfiguration::LinkType)type) {
 #ifndef NO_SERIAL_LINK
                             case LinkConfiguration::TypeSerial:
@@ -403,6 +405,7 @@ void LinkManager::loadLinkConfigurationList()
                             if(pLink) {
                                 //-- Have the instance load its own values
                                 pLink->setAutoConnect(autoConnect);
+                                pLink->setHighLatency(highLatency);
                                 pLink->loadSettings(settings, root);
                                 addConfiguration(pLink);
                                 linksChanged = true;
