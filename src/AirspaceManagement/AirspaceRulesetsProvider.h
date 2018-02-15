@@ -53,17 +53,25 @@ public:
 
     AirspaceRuleFeature(QObject* parent = NULL);
 
+    Q_PROPERTY(quint32          id              READ id             CONSTANT)
     Q_PROPERTY(Type             type            READ type           CONSTANT)
+    Q_PROPERTY(Unit             unit            READ unit           CONSTANT)
     Q_PROPERTY(Measurement      measurement     READ measurement    CONSTANT)
     Q_PROPERTY(QString          name            READ name           CONSTANT)
     Q_PROPERTY(QString          description     READ description    CONSTANT)
-    Q_PROPERTY(QVariant         value           READ description    CONSTANT)
+    Q_PROPERTY(QVariant         value           READ value          WRITE setValue  NOTIFY valueChanged)
 
-    virtual Measurement     measurement     () = 0;
+    virtual quint32         id              () = 0;
     virtual Type            type            () = 0;
+    virtual Unit            unit            () = 0;
+    virtual Measurement     measurement     () = 0;
     virtual QString         name            () = 0;
     virtual QString         description     () = 0;
     virtual QVariant        value           () = 0;
+    virtual void            setValue        (const QVariant val) = 0;
+
+signals:
+    void valueChanged   ();
 };
 
 //-----------------------------------------------------------------------------
@@ -143,9 +151,11 @@ public:
     Q_PROPERTY(bool                 valid               READ valid              NOTIFY ruleSetsChanged)
     Q_PROPERTY(QString              selectedRuleSets    READ selectedRuleSets   NOTIFY selectedRuleSetsChanged)
     Q_PROPERTY(QmlObjectListModel*  ruleSets            READ ruleSets           NOTIFY ruleSetsChanged)
+    Q_PROPERTY(QmlObjectListModel*  features            READ features           NOTIFY ruleSetsChanged)
 
     virtual bool                valid       () = 0;             ///< Current ruleset is valid
     virtual QmlObjectListModel* ruleSets    () = 0;             ///< List of AirspaceRuleSet
+    virtual QmlObjectListModel* features    () = 0;             ///< List of AirspaceRuleFeature (Aggregate of all features of selected rulesets)
     virtual QString         selectedRuleSets() = 0;             ///< All selected rules concatenated into a string
     /**
      * Set region of interest that should be queried. When finished, the rulesChanged() signal will be emmited.

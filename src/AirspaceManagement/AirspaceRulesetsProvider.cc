@@ -9,6 +9,11 @@
 
 #include "AirspaceRulesetsProvider.h"
 
+AirspaceRuleFeature::AirspaceRuleFeature(QObject* parent)
+    : QObject(parent)
+{
+}
+
 AirspaceRule::AirspaceRule(QObject *parent)
     : QObject(parent)
 {

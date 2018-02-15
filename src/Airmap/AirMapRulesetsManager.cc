@@ -13,8 +13,50 @@
 using namespace airmap;
 
 //-----------------------------------------------------------------------------
+AirMapRuleFeature::AirMapRuleFeature(QObject* parent)
+    : AirspaceRuleFeature(parent)
+{
+}
+
+//-----------------------------------------------------------------------------
+AirMapRuleFeature::AirMapRuleFeature(airmap::RuleSet::Feature feature, QObject* parent)
+    : AirspaceRuleFeature(parent)
+    , _feature(feature)
+{
+    //-- TODO: Read possible saved value from previous runs
+}
+
+//-----------------------------------------------------------------------------
+AirspaceRuleFeature::Type
+AirMapRuleFeature::type()
+{
+    return AirspaceRuleFeature::Unknown;
+}
+
+//-----------------------------------------------------------------------------
+AirspaceRuleFeature::Unit
+AirMapRuleFeature::unit()
+{
+    return AirspaceRuleFeature::UnknownUnit;
+}
+
+//-----------------------------------------------------------------------------
+AirspaceRuleFeature::Measurement
+AirMapRuleFeature::measurement()
+{
+    return AirspaceRuleFeature::UnknownMeasurement;
+}
+
+//-----------------------------------------------------------------------------
 AirMapRule::AirMapRule(QObject* parent)
     : AirspaceRule(parent)
+{
+}
+
+//-----------------------------------------------------------------------------
+AirMapRule::AirMapRule(const airmap::RuleSet::Rule& rule, QObject* parent)
+    : AirspaceRule(parent)
+    , _rule(rule)
 {
 }
 
@@ -45,9 +87,25 @@ AirMapRuleSet::AirMapRuleSet(QObject* parent)
 }
 
 //-----------------------------------------------------------------------------
+AirMapRuleSet::~AirMapRuleSet()
+{
+    _rules.deleteListAndContents();
+}
+
+//-----------------------------------------------------------------------------
 AirMapRulesetsManager::AirMapRulesetsManager(AirMapSharedState& shared)
     : _shared(shared)
 {
+}
+
+//-----------------------------------------------------------------------------
+static bool
+rules_sort(QObject* a, QObject* b)
+{
+    AirMapRule* aa = qobject_cast<AirMapRule*>(a);
+    AirMapRule* bb = qobject_cast<AirMapRule*>(b);
+    if(!aa || !bb) return false;
+    return (int)aa->order() > (int)bb->order();
 }
 
 //-----------------------------------------------------------------------------
@@ -101,6 +159,13 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
                     pRuleSet->_selectionType = AirspaceRuleSet::Optional;
                     break;
                 }
+                //-- Iterate Rules
+                for (const auto& rule : ruleset.rules) {
+                    AirMapRule* pRule = new AirMapRule(rule, this);
+                    pRuleSet->_rules.append(pRule);
+                }
+                //-- Sort rules by display order
+                std::sort(pRuleSet->_rules.objectList()->begin(), pRuleSet->_rules.objectList()->end(), rules_sort);
                 _ruleSets.append(pRuleSet);
                 qCDebug(AirMapManagerLog) << "Adding ruleset" << pRuleSet->name();
                 /*
@@ -115,7 +180,7 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
                     qDebug() << airspaceType.data();
                 }
                 qDebug() << "Rules:";
-                for (const auto& rule : ruleset.rulesets) {
+                for (const auto& rule : ruleset.rules) {
                     qDebug() << "    --------------------------------------";
                     qDebug() << "    " << rule.short_text.data();
                     qDebug() << "    " << rule.description.data();
