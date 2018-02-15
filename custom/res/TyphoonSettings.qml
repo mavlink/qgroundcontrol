@@ -264,6 +264,7 @@ QGCView {
                         anchors.centerIn: parent
                         FactComboBox {
                             width:          _buttonWidth
+                            centeredLabel:  true
                             fact:           TyphoonHQuickInterface.ledFact
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -380,8 +381,10 @@ QGCView {
                     }
                     Rectangle {
                         color:          qgcPal.window
-                        width:          skywardBox.width
-                        height:         skywardBox.height
+                      //width:          skywardBox.width
+                      //height:         skywardBox.height
+                        width:          exportUTMCheck.width  + (ScreenTools.defaultFontPixelWidth * 4)
+                        height:         exportUTMCheck.height + ScreenTools.defaultFontPixelHeight
                         radius:         4
                         visible:        !_importAction
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -393,6 +396,7 @@ QGCView {
                             anchors.centerIn:   parent
                         }
                     }
+                    /*
                     Rectangle {
                         id:             skywardBox
                         color:          qgcPal.window
@@ -409,6 +413,7 @@ QGCView {
                             anchors.centerIn:   parent
                         }
                     }
+                    */
                     ProgressBar {
                         width:          parent.width * 0.75
                         orientation:    Qt.Horizontal
@@ -437,7 +442,7 @@ QGCView {
                                 if(TyphoonHQuickInterface.copyingFiles) {
                                     TyphoonHQuickInterface.cancelExportData()
                                 } else {
-                                    TyphoonHQuickInterface.exportData(exportUTMCheck.checked, exportSkywardCheck.checked)
+                                    TyphoonHQuickInterface.exportData(exportUTMCheck.checked, false /*exportSkywardCheck.checked*/)
                                 }
                             }
                         }

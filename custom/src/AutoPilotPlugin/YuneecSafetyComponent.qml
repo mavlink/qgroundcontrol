@@ -189,7 +189,7 @@ SetupPage {
                 Item { width: 1; height: _margins; Layout.columnSpan: 3 }
 
                 QGCLabel {
-                    text:               qsTr("Max Vertical Velocity")
+                    text:               qsTr("Max Vertical Velocity (Manual Flight)")
                     Layout.columnSpan:  3
                 }
 
@@ -235,7 +235,7 @@ SetupPage {
                 Item { width: 1; height: _margins; Layout.columnSpan: 3 }
 
                 QGCLabel {
-                    text:               qsTr("Max Horizontal Velocity")
+                    text:               qsTr("Max Horizontal Velocity (Manual Flight)")
                     Layout.columnSpan:  3
                 }
 
