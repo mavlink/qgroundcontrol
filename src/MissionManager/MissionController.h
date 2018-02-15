@@ -205,6 +205,8 @@ private slots:
     void _visualItemsDirtyChanged(bool dirty);
     void _managerSendComplete(bool error);
     void _managerRemoveAllComplete(bool error);
+    void _updateTimeout();
+    void _complexBoundingBoxChanged();
 
 private:
     void _init(void);
@@ -258,6 +260,8 @@ private:
     double                  _progressPct;
     int                     _currentPlanViewIndex;
     VisualMissionItem*      _currentPlanViewItem;
+    QTimer                  _updateTimer;
+    QRectF                  _boundingBox;
 
     static const char*  _settingsGroup;
 

@@ -743,8 +743,8 @@ void SurveyMissionItem::_generateGrid(void)
     // Calc bounding box
     double north = 0.0;
     double south = 180.0;
-    double east  = 360.0;
-    double west  = 0.0;
+    double east  = 0.0;
+    double west  = 360.0;
     for (int i = 0; i < _simpleGridPoints.count(); i++) {
         QGeoCoordinate coord = _simpleGridPoints[i].value<QGeoCoordinate>();
         double lat = coord.latitude()  + 90.0;
