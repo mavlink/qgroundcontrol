@@ -35,6 +35,8 @@
 #include "QGCQFileDialog.h"
 #endif
 
+#define UPDATE_TIMEOUT 5000 ///< How often we check for bounding box changes
+
 QGC_LOGGING_CATEGORY(MissionControllerLog, "MissionControllerLog")
 
 const char* MissionController::_settingsGroup =                 "MissionController";
@@ -71,6 +73,8 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
 {
     _resetMissionFlightStatus();
     managerVehicleChanged(_managerVehicle);
+    _updateTimer.setSingleShot(true);
+    connect(&_updateTimer, &QTimer::timeout, this, &MissionController::_updateTimeout);
 }
 
 MissionController::~MissionController()
@@ -409,9 +413,9 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
     }
 
     if (surveyStyleItem) {
-        bool rollSupported = false;
+        bool rollSupported  = false;
         bool pitchSupported = false;
-        bool yawSupported = false;
+        bool yawSupported   = false;
 
         // If the vehicle is known to have a gimbal then we automatically point the gimbal straight down if not already set
 
@@ -434,11 +438,13 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
         }
     }
 
+    //-- Keep track of bounding box changes in complex items
+    if(!newItem->isSimpleItem()) {
+        connect(newItem, &ComplexMissionItem::boundingBoxChanged, this, &MissionController::_complexBoundingBoxChanged);
+    }
     newItem->setSequenceNumber(sequenceNumber);
     _initVisualItem(newItem);
-
     _visualItems->insert(i, newItem);
-
     _recalcAll();
 
     return newItem->sequenceNumber();
@@ -1491,6 +1497,7 @@ void MissionController::_recalcAll(void)
     _recalcSequence();
     _recalcChildItems();
     _recalcWaypointLines();
+    _updateTimer.start(UPDATE_TIMEOUT);
 }
 
 /// Initializes a new set of mission items
@@ -1986,4 +1993,58 @@ void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
         emit currentPlanViewIndexChanged();
         emit currentPlanViewItemChanged();
     }
+}
+
+void MissionController::_updateTimeout()
+{
+    QRectF boundingBox;
+    double north = 0.0;
+    double south = 180.0;
+    double east  = 0.0;
+    double west  = 360.0;
+    for (int i = 1; i < _visualItems->count(); i++) {
+        VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+        if(item->isSimpleItem()) {
+            SimpleMissionItem* pSimpleItem = qobject_cast<SimpleMissionItem*>(item);
+            if(pSimpleItem) {
+                switch(pSimpleItem->command()) {
+                case MAV_CMD_NAV_WAYPOINT:
+                case MAV_CMD_NAV_LAND:
+                case MAV_CMD_NAV_TAKEOFF:
+                if(pSimpleItem->coordinate().isValid()) {
+                    double lat = pSimpleItem->coordinate().latitude()  + 90.0;
+                    double lon = pSimpleItem->coordinate().longitude() + 180.0;
+                    north = fmax(north, lat);
+                    south = fmin(south, lat);
+                    east  = fmax(east,  lon);
+                    west  = fmin(west,  lon);
+                }
+                break;
+                default:
+                    break;
+                }
+            }
+        } else {
+            ComplexMissionItem* pComplexItem = qobject_cast<ComplexMissionItem*>(item);
+            if(pComplexItem) {
+                QRectF bb = pComplexItem->boundingBox();
+                if(!bb.isNull()) {
+                    north = fmax(north, bb.y()      + 90.0);
+                    south = fmin(south, bb.height() + 90.0);
+                    east  = fmax(east,  bb.x()     + 180.0);
+                    west  = fmin(west,  bb.width() + 180.0);
+                }
+            }
+        }
+    }
+    boundingBox = QRectF(east - 180.0, north - 90.0, west - 180.0, south - 90.0);
+    if(_boundingBox != boundingBox) {
+        _boundingBox = boundingBox;
+        qCDebug(MissionControllerLog) << "Bounding box:" << _boundingBox.y() << _boundingBox.x() << _boundingBox.height() << _boundingBox.width();
+    }
+}
+
+void MissionController::_complexBoundingBoxChanged()
+{
+    _updateTimer.start(UPDATE_TIMEOUT);
 }
