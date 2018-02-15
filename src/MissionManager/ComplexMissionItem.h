@@ -22,10 +22,15 @@ public:
     const ComplexMissionItem& operator=(const ComplexMissionItem& other);
 
     Q_PROPERTY(double   complexDistance     READ complexDistance    NOTIFY complexDistanceChanged)
+    Q_PROPERTY(QRectF   boundingBox         READ boundingBox        NOTIFY boundingBoxChanged)
 
     /// @return The distance covered the complex mission item in meters.
     /// Signals complexDistanceChanged
     virtual double complexDistance(void) const = 0;
+
+    /// @return The item bounding box (QRectf(West, Nort, East, South))
+    /// Signals boundingBoxChanged
+    virtual QRectF boundingBox(void) const { return QRectF(); }
 
     /// @return Amount of additional time delay in seconds needed to fly the complex item
     virtual double additionalTimeDelay(void) const { return 0; }
@@ -48,6 +53,7 @@ public:
 
 signals:
     void complexDistanceChanged     (void);
+    void boundingBoxChanged         (void);
     void greatestDistanceToChanged  (void);
     void additionalTimeDelayChanged (void);
 };

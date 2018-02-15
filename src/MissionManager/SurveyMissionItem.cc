@@ -163,6 +163,14 @@ void SurveyMissionItem::_setSurveyDistance(double surveyDistance)
     }
 }
 
+void SurveyMissionItem::_setBoundingBox(QRectF bb)
+{
+    if (bb != _boundingBox) {
+        _boundingBox = bb;
+        emit boundingBoxChanged();
+    }
+}
+
 void SurveyMissionItem::_setCameraShots(int cameraShots)
 {
     if (_cameraShots != cameraShots) {
@@ -731,6 +739,22 @@ void SurveyMissionItem::_generateGrid(void)
         surveyDistance += coord1.distanceTo(coord2);
     }
     _setSurveyDistance(surveyDistance);
+
+    // Calc bounding box
+    double north = 0.0;
+    double south = 180.0;
+    double east  = 360.0;
+    double west  = 0.0;
+    for (int i = 0; i < _simpleGridPoints.count(); i++) {
+        QGeoCoordinate coord = _simpleGridPoints[i].value<QGeoCoordinate>();
+        double lat = coord.latitude()  + 90.0;
+        double lon = coord.longitude() + 180.0;
+        north = fmax(north, lat);
+        south = fmin(south, lat);
+        east  = fmax(east,  lon);
+        west  = fmin(west,  lon);
+    }
+    _setBoundingBox(QRectF(east - 180.0, north - 90.0, west - 180.0, south - 90.0));
 
     if (cameraShots == 0 && _triggerCamera()) {
         cameraShots = (int)floor(surveyDistance / _triggerDistance());

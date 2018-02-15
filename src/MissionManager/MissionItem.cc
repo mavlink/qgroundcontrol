@@ -418,6 +418,10 @@ void MissionItem::setCoordinate(const QGeoCoordinate& coordinate)
 
 QGeoCoordinate MissionItem::coordinate(void) const
 {
+    if(!isfinite(param5()) || !isfinite(param6())) {
+        //-- If either of these are NAN, return an invalid (QGeoCoordinate::isValid() == false) coordinate
+        return QGeoCoordinate();
+    }
     return QGeoCoordinate(param5(), param6(), param7());
 }
 
