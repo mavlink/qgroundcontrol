@@ -96,6 +96,7 @@ public:
     // Overrides from ComplexMissionItem
 
     double              complexDistance     (void) const final { return _surveyDistance; }
+    QRectF              boundingBox         (void) const final { return _boundingBox; }
     double              additionalTimeDelay (void) const final { return _additionalFlightDelaySeconds; }
     int                 lastSequenceNumber  (void) const final;
     bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
@@ -199,6 +200,7 @@ private:
     void _intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines);
     void _adjustLineDirection(const QList<QLineF>& lineList, QList<QLineF>& resultLines);
     void _setSurveyDistance(double surveyDistance);
+    void _setBoundingBox(QRectF bb);
     void _setCameraShots(int cameraShots);
     void _setCoveredArea(double coveredArea);
     void _cameraValueChanged(void);
@@ -241,6 +243,7 @@ private:
 
     bool            _ignoreRecalc;
     double          _surveyDistance;
+    QRectF          _boundingBox;
     int             _cameraShots;
     double          _coveredArea;
     double          _timeBetweenShots;

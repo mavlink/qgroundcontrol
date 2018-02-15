@@ -404,8 +404,8 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message, bool miss
         mavlink_msg_mission_item_int_decode(&message, &missionItem);
 
         command =       (MAV_CMD)missionItem.command,
-                frame =         (MAV_FRAME)missionItem.frame,
-                param1 =        missionItem.param1;
+        frame =         (MAV_FRAME)missionItem.frame,
+        param1 =        missionItem.param1;
         param2 =        missionItem.param2;
         param3 =        missionItem.param3;
         param4 =        missionItem.param4;
@@ -420,8 +420,8 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message, bool miss
         mavlink_msg_mission_item_decode(&message, &missionItem);
 
         command =       (MAV_CMD)missionItem.command,
-                frame =         (MAV_FRAME)missionItem.frame,
-                param1 =        missionItem.param1;
+        frame =         (MAV_FRAME)missionItem.frame,
+        param1 =        missionItem.param1;
         param2 =        missionItem.param2;
         param3 =        missionItem.param3;
         param4 =        missionItem.param4;
@@ -439,7 +439,6 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message, bool miss
     } else if (frame == MAV_FRAME_GLOBAL_RELATIVE_ALT_INT) {
         frame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
     }
-    
 
     bool ardupilotHomePositionUpdate = false;
     if (!_checkForExpectedAck(AckMissionItem)) {

@@ -174,7 +174,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
             i = 1;
         }
 
-        for (; i<newMissionItems.count(); i++) {
+        for (; i < newMissionItems.count(); i++) {
             const MissionItem* missionItem = newMissionItems[i];
             newControllerMissionItems->append(new SimpleMissionItem(_controllerVehicle, _editMode, *missionItem, this));
         }
