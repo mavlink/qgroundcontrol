@@ -24,13 +24,37 @@
  */
 
 //-----------------------------------------------------------------------------
+class AirMapRuleFeature : public AirspaceRuleFeature
+{
+    Q_OBJECT
+public:
+
+    AirMapRuleFeature(QObject* parent = NULL);
+    AirMapRuleFeature(airmap::RuleSet::Feature feature, QObject* parent = NULL);
+
+    quint32         id              () override { return (quint32)_feature.id; }
+    Type            type            () override;
+    Unit            unit            () override;
+    Measurement     measurement     () override;
+    QString         name            () override { return QString::fromStdString(_feature.name);  }
+    QString         description     () override { return QString::fromStdString(_feature.description);  }
+    QVariant        value           () override { return _value; }
+    void            setValue        (const QVariant val) override { _value = val; emit valueChanged(); }
+private:
+    airmap::RuleSet::Feature _feature;
+    QVariant _value;
+};
+
+//-----------------------------------------------------------------------------
 class AirMapRule : public AirspaceRule
 {
     Q_OBJECT
 public:
 
     AirMapRule(QObject* parent = NULL);
+    AirMapRule(const airmap::RuleSet::Rule& rule, QObject* parent = NULL);
 
+    int             order           () { return (int)_rule.display_order; }
     Status          status          () override;
     QString         shortText       () override { return QString::fromStdString(_rule.short_text);  }
     QString         description     () override { return QString::fromStdString(_rule.description); }
@@ -45,7 +69,8 @@ class AirMapRuleSet : public AirspaceRuleSet
     Q_OBJECT
     friend class AirMapRulesetsManager;
 public:
-    AirMapRuleSet                  (QObject* parent = NULL);
+    AirMapRuleSet                   (QObject* parent = NULL);
+    ~AirMapRuleSet                  ();
     QString         id              () override { return _id; }
     QString         description     () override { return _description; }
     bool            isDefault       () override { return _isDefault; }
@@ -75,7 +100,8 @@ public:
 
     bool                valid       () override { return _valid; }
     QmlObjectListModel* ruleSets    () override { return &_ruleSets; }
-    QString            selectedRuleSets() override;
+    QmlObjectListModel* features    () override { return &_features; }
+    QString         selectedRuleSets() override;
 
     void                setROI      (const QGeoCoordinate& center) override;
 
@@ -97,6 +123,8 @@ private:
     State                           _state = State::Idle;
     AirMapSharedState&              _shared;
     QmlObjectListModel              _ruleSets;
+    //-- TODO: Connect to AirMapRuleSet::selectedChanged and rebuild features based on it.
+    QmlObjectListModel              _features;
 };
 
 
