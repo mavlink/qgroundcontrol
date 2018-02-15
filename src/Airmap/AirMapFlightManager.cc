@@ -188,7 +188,7 @@ void AirMapFlightManager::_uploadFlight()
         params.end_time     = Clock::universal_time() + Hours{2}; // TODO: user-configurable?
 
         //-- Rules
-        AirMapRulesetsManager* pRulesMgr = dynamic_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->rulesets());
+        AirMapRulesetsManager* pRulesMgr = dynamic_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->ruleSets());
         if(pRulesMgr) {
             foreach(QString ruleset, pRulesMgr->rulesetsIDs()) {
                 params.rulesets.push_back(ruleset.toStdString());

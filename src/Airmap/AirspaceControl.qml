@@ -290,7 +290,7 @@ Item {
                                     Layout.fillWidth:       true
                                     QGCLabel {
                                         id:                     regLabel
-                                        text:                   _validRules ? _activeVehicle.airspaceController.rulesets.selectedRules : qsTr("None")
+                                        text:                   _validRules ? _activeVehicle.airspaceController.ruleSets.selectedRuleSets : qsTr("None")
                                         elide:                  Text.ElideRight
                                         horizontalAlignment:    Text.AlignHCenter
                                         color:                  _colorWhite
@@ -425,9 +425,9 @@ Item {
                                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
                             }
                             Repeater {
-                                model:    _validRules ? _activeVehicle.airspaceController.rulesets.rules : []
+                                model:    _validRules ? _activeVehicle.airspaceController.rulesets.ruleSets : []
                                 delegate: RuleSelector {
-                                    visible:             object.selectionType === AirspaceRule.Pickone
+                                    visible:             object.selectionType === AirspaceRuleSet.Pickone
                                     rule:                object
                                     exclusiveGroup:      rulesGroup
                                     anchors.right:       parent.right
@@ -446,9 +446,9 @@ Item {
                                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
                             }
                             Repeater {
-                                model:    _validRules ? _activeVehicle.airspaceController.rulesets.rules : []
+                                model:    _validRules ? _activeVehicle.airspaceController.rulesets.ruleSets : []
                                 delegate: RuleSelector {
-                                    visible:             object.selectionType === AirspaceRule.Optional
+                                    visible:             object.selectionType === AirspaceRuleSet.Optional
                                     rule:                object
                                     anchors.right:       parent.right
                                     anchors.rightMargin: ScreenTools.defaultFontPixelWidth
@@ -466,9 +466,9 @@ Item {
                                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
                             }
                             Repeater {
-                                model:    _validRules ? _activeVehicle.airspaceController.rulesets.rules : []
+                                model:    _validRules ? _activeVehicle.airspaceController.rulesets.ruleSets : []
                                 delegate: RuleSelector {
-                                    visible:             object.selectionType === AirspaceRule.Required
+                                    visible:             object.selectionType === AirspaceRuleSet.Required
                                     rule:                object
                                     required:            true
                                     anchors.right:       parent.right

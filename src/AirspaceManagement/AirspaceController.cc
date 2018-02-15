@@ -48,9 +48,9 @@ AirspaceController::advisories()
 }
 
 AirspaceRulesetsProvider*
-AirspaceController::rulesets()
+AirspaceController::ruleSets()
 {
-    return _manager->rulesets();
+    return _manager->ruleSets();
 }
 
 AirspaceRestrictionProvider*

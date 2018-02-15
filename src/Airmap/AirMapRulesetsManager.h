@@ -27,9 +27,25 @@
 class AirMapRule : public AirspaceRule
 {
     Q_OBJECT
+public:
+
+    AirMapRule(QObject* parent = NULL);
+
+    Status          status          () override;
+    QString         shortText       () override { return QString::fromStdString(_rule.short_text);  }
+    QString         description     () override { return QString::fromStdString(_rule.description); }
+
+private:
+    airmap::RuleSet::Rule _rule;
+};
+
+//-----------------------------------------------------------------------------
+class AirMapRuleSet : public AirspaceRuleSet
+{
+    Q_OBJECT
     friend class AirMapRulesetsManager;
 public:
-    AirMapRule                  (QObject* parent = NULL);
+    AirMapRuleSet                  (QObject* parent = NULL);
     QString         id              () override { return _id; }
     QString         description     () override { return _description; }
     bool            isDefault       () override { return _isDefault; }
@@ -38,14 +54,16 @@ public:
     SelectionType   selectionType   () override { return _selectionType; }
     bool            selected        () override { return _selected; }
     void            setSelected     (bool sel) override { _selected = sel; emit selectedChanged(); }
+    QmlObjectListModel* rules       () override { return &_rules; }
 private:
-    QString         _id;
-    QString         _description;
-    bool            _isDefault;
-    bool            _selected;
-    QString         _name;
-    QString         _shortName;
-    SelectionType   _selectionType;
+    QString             _id;
+    QString             _description;
+    bool                _isDefault;
+    bool                _selected;
+    QString             _name;
+    QString             _shortName;
+    SelectionType       _selectionType;
+    QmlObjectListModel  _rules;
 };
 
 //-----------------------------------------------------------------------------
@@ -56,8 +74,8 @@ public:
     AirMapRulesetsManager       (AirMapSharedState& shared);
 
     bool                valid       () override { return _valid; }
-    QmlObjectListModel* rules       () override { return &_rules; }
-    QString            selectedRules() override;
+    QmlObjectListModel* ruleSets    () override { return &_ruleSets; }
+    QString            selectedRuleSets() override;
 
     void                setROI      (const QGeoCoordinate& center) override;
 
@@ -78,7 +96,7 @@ private:
     bool                            _valid;
     State                           _state = State::Idle;
     AirMapSharedState&              _shared;
-    QmlObjectListModel              _rules;
+    QmlObjectListModel              _ruleSets;
 };
 
 
