@@ -28,11 +28,14 @@ AirspaceManager::AirspaceManager(QGCApplication* app, QGCToolbox* toolbox)
     _roiUpdateTimer.setInterval(2000);
     _roiUpdateTimer.setSingleShot(true);
     connect(&_roiUpdateTimer, &QTimer::timeout, this, &AirspaceManager::_updateToROI);
+    //-- TODO: Move these away from QGroundControl and into their own group (Airspace)
     qmlRegisterUncreatableType<AirspaceAuthorization>       ("QGroundControl",              1, 0, "AirspaceAuthorization",          "Reference only");
     qmlRegisterUncreatableType<AirspaceController>          ("QGroundControl.Vehicle",      1, 0, "AirspaceController",             "Reference only");
     qmlRegisterUncreatableType<AirspaceWeatherInfoProvider> ("QGroundControl.Vehicle",      1, 0, "AirspaceWeatherInfoProvider",    "Reference only");
     qmlRegisterUncreatableType<AirspaceAdvisoryProvider>    ("QGroundControl.Vehicle",      1, 0, "AirspaceAdvisoryProvider",       "Reference only");
+    qmlRegisterUncreatableType<AirspaceRuleFeature>         ("QGroundControl.Vehicle",      1, 0, "AirspaceRuleFeature",            "Reference only");
     qmlRegisterUncreatableType<AirspaceRule>                ("QGroundControl.Vehicle",      1, 0, "AirspaceRule",                   "Reference only");
+    qmlRegisterUncreatableType<AirspaceRuleSet>             ("QGroundControl.Vehicle",      1, 0, "AirspaceRuleSet",                "Reference only");
     qmlRegisterUncreatableType<AirspaceRulesetsProvider>    ("QGroundControl.Vehicle",      1, 0, "AirspaceRulesetsProvider",       "Reference only");
     qmlRegisterUncreatableType<AirspaceRestrictionProvider> ("QGroundControl.Vehicle",      1, 0, "AirspaceRestrictionProvider",    "Reference only");
 }
@@ -45,8 +48,8 @@ AirspaceManager::~AirspaceManager()
     if(_weatherProvider) {
         delete _weatherProvider;
     }
-    if(_rulesetsProvider) {
-        delete _rulesetsProvider;
+    if(_ruleSetsProvider) {
+        delete _ruleSetsProvider;
     }
     if(_airspaces) {
         delete _airspaces;
@@ -57,7 +60,7 @@ void AirspaceManager::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
     // We should not call virtual methods in the constructor, so we instantiate the restriction provider here
-    _rulesetsProvider   = instantiateRulesetsProvider();
+    _ruleSetsProvider   = instantiateRulesetsProvider();
     _weatherProvider    = instatiateAirspaceWeatherInfoProvider();
     _advisories         = instatiateAirspaceAdvisoryProvider();
     _airspaces          = instantiateAirspaceRestrictionProvider();
@@ -75,8 +78,8 @@ void AirspaceManager::_updateToROI()
     if(_airspaces) {
         _airspaces->setROI(_roiCenter, _roiRadius);
     }
-    if(_rulesetsProvider) {
-        _rulesetsProvider->setROI(_roiCenter);
+    if(_ruleSetsProvider) {
+        _ruleSetsProvider->setROI(_roiCenter);
     }
     if(_weatherProvider) {
         _weatherProvider->setROI(_roiCenter);

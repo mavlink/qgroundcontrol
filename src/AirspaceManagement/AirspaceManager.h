@@ -88,7 +88,7 @@ public:
 
     AirspaceWeatherInfoProvider* weatherInfo    () { return _weatherProvider; }
     AirspaceAdvisoryProvider*    advisories     () { return _advisories; }
-    AirspaceRulesetsProvider*    rulesets       () { return _rulesetsProvider; }
+    AirspaceRulesetsProvider*    ruleSets       () { return _ruleSetsProvider; }
     AirspaceRestrictionProvider* airspaces      () { return _airspaces; }
 
     void setToolbox(QGCToolbox* toolbox) override;
@@ -101,7 +101,7 @@ public:
 private:
     void _updateToROI   ();
 
-    AirspaceRulesetsProvider*       _rulesetsProvider       = nullptr; ///< Rulesets that are shown in the UI
+    AirspaceRulesetsProvider*       _ruleSetsProvider       = nullptr; ///< Rulesets that are shown in the UI
     AirspaceWeatherInfoProvider*    _weatherProvider        = nullptr; ///< Weather info that is shown in the UI
     AirspaceAdvisoryProvider*       _advisories             = nullptr; ///< Advisory info that is shown in the UI
     AirspaceRestrictionProvider*    _airspaces              = nullptr; ///< Airspace info that is shown in the UI

@@ -29,7 +29,7 @@ public:
     Q_PROPERTY(QString                      providerName        READ providerName       CONSTANT)
     Q_PROPERTY(AirspaceWeatherInfoProvider* weatherInfo         READ weatherInfo        CONSTANT)
     Q_PROPERTY(AirspaceAdvisoryProvider*    advisories          READ advisories         CONSTANT)
-    Q_PROPERTY(AirspaceRulesetsProvider*    rulesets            READ rulesets           CONSTANT)
+    Q_PROPERTY(AirspaceRulesetsProvider*    ruleSets            READ ruleSets           CONSTANT)
     Q_PROPERTY(AirspaceRestrictionProvider* airspaces           READ airspaces          CONSTANT)
     Q_PROPERTY(bool                         airspaceVisible     READ airspaceVisible    WRITE setairspaceVisible    NOTIFY airspaceVisibleChanged)
 
@@ -38,7 +38,7 @@ public:
     QString                         providerName        ();
     AirspaceWeatherInfoProvider*    weatherInfo         ();
     AirspaceAdvisoryProvider*       advisories          ();
-    AirspaceRulesetsProvider*       rulesets            ();
+    AirspaceRulesetsProvider*       ruleSets            ();
     AirspaceRestrictionProvider*    airspaces           ();
     bool                            airspaceVisible     () { return _airspaceVisible; }
 
