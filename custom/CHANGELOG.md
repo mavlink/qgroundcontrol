@@ -1,5 +1,12 @@
 ## DataPilot Release Changelog
 
+### V1.2.56 - Feb 14 2018
+
+* Cosmetic changes:
+    * Hide Skyward log export (we don't have the current format)
+    * Center LED Mode label within combo box
+    * Added "Manual Flight" to text for Max Vertical/Horizontal velocity
+
 ### V1.2.55 - Feb 14 2018
 
 * Bump hover and capture delay to 4 seconds
