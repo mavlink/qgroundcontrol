@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.2.57 - Feb 15 2018
+
+* Turn off PREFLIGHT_STORAGE
+
 ### V1.2.56 - Feb 14 2018
 
 * Cosmetic changes:
