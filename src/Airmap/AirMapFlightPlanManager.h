@@ -40,6 +40,7 @@ private slots:
 private:
     void _uploadFlightPlan              ();
     void _createFlightPlan              ();
+    void _deleteFlightPlan              ();
 
 private:
     enum class State {
@@ -47,6 +48,7 @@ private:
         GetPilotID,
         FlightUpload,
         FlightPolling,
+        FlightDelete
     };
 
     struct Flight {
