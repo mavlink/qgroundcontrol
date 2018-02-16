@@ -153,7 +153,6 @@ private:
 
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
-    void _saveToEEPROM(void);
     void _checkInitialLoadComplete(void);
 
     /// First mapping is by component id
