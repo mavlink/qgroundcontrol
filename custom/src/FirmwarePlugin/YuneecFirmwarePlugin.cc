@@ -162,17 +162,6 @@ YuneecFirmwarePlugin::createCameraManager(Vehicle *vehicle)
     return new YuneecCameraManager(vehicle);
 }
 
-bool YuneecFirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities)
-{
-    bool baseCapability = PX4FirmwarePlugin::isCapable(vehicle, capabilities);
-    if (capabilities & MavCmdPreflightStorageCapability) {
-        // Currently hacked out due to problem with camera firmware and ParameterManager send PREFLIGHT_STORAGE to all component ids
-        return false;
-    } else {
-        return baseCapability;
-    }
-}
-
 #if !defined (__planner__)
 QGCCameraControl*
 YuneecFirmwarePlugin::createCameraControl(const mavlink_camera_information_t* info, Vehicle *vehicle, int compID, QObject* parent)
