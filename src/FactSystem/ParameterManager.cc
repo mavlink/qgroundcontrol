@@ -324,11 +324,6 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         _setupCategoryMap();
     }
 
-    if (_prevWaitingWriteParamNameCount != 0 &&  waitingWriteParamNameCount == 0) {
-        // If all the writes just finished the vehicle is up to date, so persist.
-        _saveToEEPROM();
-    }
-
     // Update param cache. The param cache is only used on PX4 Firmware since ArduPilot and Solo have volatile params
     // which invalidate the cache. The Solo also streams param updates in flight for things like gimbal values
     // which in turn causes a perf problem with all the param cache updates.
@@ -859,23 +854,6 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
         _parameterSetMajorVersion = -1;
         _clearMetaData();
         qCInfo(ParameterManagerLog) << "Parameters cache match failed" << qPrintable(QFileInfo(cacheFile).absoluteFilePath());
-    }
-}
-
-void ParameterManager::_saveToEEPROM(void)
-{
-    if (_saveRequired) {
-        _saveRequired = false;
-        if (_vehicle->firmwarePlugin()->isCapable(_vehicle, FirmwarePlugin::MavCmdPreflightStorageCapability)) {
-            _vehicle->sendMavCommand(MAV_COMP_ID_ALL,
-                                     MAV_CMD_PREFLIGHT_STORAGE,
-                                     true,  // showError
-                                     1,     // Write parameters to EEPROM
-                                     -1);   // Don't do anything with mission storage
-            qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "_saveToEEPROM";
-        } else {
-            qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "_saveToEEPROM skipped due to FirmwarePlugin::isCapable";
-        }
     }
 }
 

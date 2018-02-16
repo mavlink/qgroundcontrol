@@ -227,7 +227,7 @@ int PX4FirmwarePlugin::manualControlReservedButtonCount(void)
 
 bool PX4FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities)
 {
-    int available = MavCmdPreflightStorageCapability | SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability;
+    int available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability;
     if (vehicle->multiRotor() || vehicle->vtol()) {
         available |= TakeoffVehicleCapability;
     }
