@@ -634,7 +634,7 @@ QGCView {
         width:          airspaceRow.width + (ScreenTools.defaultFontPixelWidth * 3)
         height:         airspaceRow.height * 1.25
         color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
-        visible:        QGroundControl.airmapSupported && _mainIsMap && flightPermit && flightPermit !== AirspaceAuthorization.PermitUnknown && !messageArea.visible && !criticalMmessageArea.visible
+        visible:        QGroundControl.airmapSupported && _mainIsMap && flightPermit && flightPermit !== AirspaceFlightPlanProvider.PermitUnknown && !messageArea.visible && !criticalMmessageArea.visible
         radius:         3
         border.width:   1
         border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
@@ -649,20 +649,20 @@ QGCView {
             QGCLabel {
                 text: {
                     if(airspaceIndicator.flightPermit) {
-                        if(airspaceIndicator.flightPermit === AirspaceAuthorization.PermitPending)
+                        if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitPending)
                             return qsTr("Approval Pending")
-                        if(airspaceIndicator.flightPermit === AirspaceAuthorization.PermitAccepted)
+                        if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitAccepted)
                             return qsTr("Flight Approved")
-                        if(airspaceIndicator.flightPermit === AirspaceAuthorization.PermitRejected)
+                        if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitRejected)
                             return qsTr("Flight Rejected")
                     }
                     return ""
                 }
                 color: {
                     if(airspaceIndicator.flightPermit) {
-                        if(airspaceIndicator.flightPermit === AirspaceAuthorization.PermitPending)
+                        if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitPending)
                             return qgcPal.colorOrange
-                        if(airspaceIndicator.flightPermit === AirspaceAuthorization.PermitAccepted)
+                        if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitAccepted)
                             return qgcPal.colorGreen
                     }
                     return qgcPal.colorRed
@@ -670,7 +670,7 @@ QGCView {
                 anchors.verticalCenter: parent.verticalCenter;
             }
         }
-        property var  flightPermit: (QGroundControl.airmapSupported && _activeVehicle) ? _activeVehicle.flightPermitStatus : null
+        property var  flightPermit: QGroundControl.airmapSupported ? QGroundControl.airspaceManager.flightPlan.flightPermitStatus : null
         property var  providerName: QGroundControl.airspaceManager.providerName
     }
 

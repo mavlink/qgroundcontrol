@@ -461,7 +461,6 @@ void Vehicle::_commonInit(void)
         _airspaceVehicleManager = airspaceManager->instantiateVehicle(*this);
         if (_airspaceVehicleManager) {
             connect(_airspaceVehicleManager, &AirspaceVehicleManager::trafficUpdate, this, &Vehicle::_trafficUpdate);
-            connect(_airspaceVehicleManager, &AirspaceVehicleManager::flightPermitStatusChanged, this, &Vehicle::flightPermitStatusChanged);
         }
     }
 #endif

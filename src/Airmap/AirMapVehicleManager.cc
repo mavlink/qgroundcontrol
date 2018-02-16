@@ -38,7 +38,7 @@ AirMapVehicleManager::createFlight(const QList<MissionItem*>& missionItems)
     _flightManager.createFlight(missionItems);
 }
 
-AirspaceAuthorization::PermitStatus
+AirspaceFlightPlanProvider::PermitStatus
 AirMapVehicleManager::flightPermitStatus() const
 {
     return _flightManager.flightPermitStatus();
@@ -83,7 +83,7 @@ void
 AirMapVehicleManager::_flightPermitStatusChanged()
 {
     // activate traffic alerts
-    if (_flightManager.flightPermitStatus() == AirspaceAuthorization::PermitAccepted) {
+    if (_flightManager.flightPermitStatus() == AirspaceFlightPlanProvider::PermitAccepted) {
         qCDebug(AirMapManagerLog) << "Subscribing to Traffic Alerts";
         // since we already created the flight, we know that we have a valid login token
         _trafficMonitor.startConnection(_flightManager.flightID());

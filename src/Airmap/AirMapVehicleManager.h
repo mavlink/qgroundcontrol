@@ -33,7 +33,7 @@ public:
     void stopTelemetryStream    () override;
     bool isTelemetryStreaming   () const override;
 
-    AirspaceAuthorization::PermitStatus flightPermitStatus() const override;
+    AirspaceFlightPlanProvider::PermitStatus flightPermitStatus() const override;
 
 signals:
     void error                  (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);

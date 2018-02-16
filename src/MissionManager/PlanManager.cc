@@ -78,16 +78,6 @@ void PlanManager::writeMissionItems(const QList<MissionItem*>& missionItems)
         return;
     }
 
-    if (_planType == MAV_MISSION_TYPE_MISSION) {
-#if defined(QGC_AIRMAP_ENABLED)
-        // upload the flight to the airspace management backend
-        AirspaceVehicleManager* airspaceManager = _vehicle->airspaceManager();
-        if (airspaceManager) {
-            airspaceManager->createFlight(missionItems);
-        }
-#endif
-    }
-
     _clearAndDeleteWriteMissionItems();
 
     bool skipFirstItem = _planType == MAV_MISSION_TYPE_MISSION && !_vehicle->firmwarePlugin()->sendHomePositionToVehicle();

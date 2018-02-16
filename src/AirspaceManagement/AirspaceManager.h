@@ -33,14 +33,14 @@
 #include <QList>
 #include <QTimer>
 
-class Vehicle;
-class QGCApplication;
-class AirspaceWeatherInfoProvider;
+class AirspaceAdvisoryProvider;
+class AirspaceFlightPlanProvider;
+class AirspaceRestrictionProvider;
 class AirspaceRulesetsProvider;
 class AirspaceVehicleManager;
-class AirspaceAdvisoryProvider;
-class AirspaceRestrictionProvider;
-class MissionController;
+class AirspaceWeatherInfoProvider;
+class QGCApplication;
+class Vehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(AirspaceManagementLog)
 
@@ -60,6 +60,7 @@ public:
     Q_PROPERTY(AirspaceAdvisoryProvider*    advisories          READ advisories         CONSTANT)
     Q_PROPERTY(AirspaceRulesetsProvider*    ruleSets            READ ruleSets           CONSTANT)
     Q_PROPERTY(AirspaceRestrictionProvider* airspaces           READ airspaces          CONSTANT)
+    Q_PROPERTY(AirspaceFlightPlanProvider*  flightPlan          READ flightPlan         CONSTANT)
     Q_PROPERTY(bool                         airspaceVisible     READ airspaceVisible    WRITE setAirspaceVisible    NOTIFY airspaceVisibleChanged)
 
     Q_INVOKABLE void setROI                     (QGeoCoordinate center, double radius);
@@ -68,6 +69,7 @@ public:
     AirspaceAdvisoryProvider*    advisories     () { return _advisories; }
     AirspaceRulesetsProvider*    ruleSets       () { return _ruleSetsProvider; }
     AirspaceRestrictionProvider* airspaces      () { return _airspaces; }
+    AirspaceFlightPlanProvider*  flightPlan     () { return _flightPlan; }
 
     void setToolbox(QGCToolbox* toolbox) override;
 
@@ -81,11 +83,6 @@ public:
      */
     virtual AirspaceVehicleManager*         instantiateVehicle                      (const Vehicle& vehicle) = 0;
 
-    /**
-     * Create/upload a flight from a mission.
-     */
-    virtual void                            createFlight                            (MissionController* missionController) = 0;
-
 signals:
     void    airspaceVisibleChanged  ();
 
@@ -98,31 +95,21 @@ protected:
     virtual void                            _setROI                                 (const QGeoCoordinate& center, double radiusMeters);
 
     /**
-     * Factory method to create an AirspaceRulesetsProvider object
+     * Factory methods
      */
     virtual AirspaceRulesetsProvider*       _instantiateRulesetsProvider            () = 0;
-
-    /**
-     * Factory method to create an AirspaceRulesetsProvider object
-     */
     virtual AirspaceWeatherInfoProvider*    _instatiateAirspaceWeatherInfoProvider  () = 0;
-
-    /**
-     * Factory method to create an AirspaceAdvisoryProvider object
-     */
     virtual AirspaceAdvisoryProvider*       _instatiateAirspaceAdvisoryProvider     () = 0;
-
-    /**
-     * Factory method to create an AirspaceRestrictionProvider object
-     */
     virtual AirspaceRestrictionProvider*    _instantiateAirspaceRestrictionProvider () = 0;
+    virtual AirspaceFlightPlanProvider*     _instantiateAirspaceFlightPlanProvider  () = 0;
 
 protected:
     bool                            _airspaceVisible;
-    AirspaceRulesetsProvider*       _ruleSetsProvider       = nullptr; ///< Rulesets that are shown in the UI
-    AirspaceWeatherInfoProvider*    _weatherProvider        = nullptr; ///< Weather info that is shown in the UI
-    AirspaceAdvisoryProvider*       _advisories             = nullptr; ///< Advisory info that is shown in the UI
-    AirspaceRestrictionProvider*    _airspaces              = nullptr; ///< Airspace info that is shown in the UI
+    AirspaceRulesetsProvider*       _ruleSetsProvider       = nullptr; ///< Rulesets
+    AirspaceWeatherInfoProvider*    _weatherProvider        = nullptr; ///< Weather info
+    AirspaceAdvisoryProvider*       _advisories             = nullptr; ///< Advisory info
+    AirspaceRestrictionProvider*    _airspaces              = nullptr; ///< Airspace info
+    AirspaceFlightPlanProvider*     _flightPlan             = nullptr; ///< Flight plan management
     QTimer                          _roiUpdateTimer;
     QGeoCoordinate                  _roiCenter;
     double                          _roiRadius;

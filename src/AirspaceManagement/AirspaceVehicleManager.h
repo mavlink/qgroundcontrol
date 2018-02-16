@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "AirspaceAuthorization.h"
+#include "AirspaceFlightPlanProvider.h"
 #include "QGCMAVLink.h"
 
 #include <QObject>
@@ -40,7 +40,7 @@ public:
     /**
      * get the current flight permit status
      */
-    virtual AirspaceAuthorization::PermitStatus flightPermitStatus() const = 0;
+    virtual AirspaceFlightPlanProvider::PermitStatus flightPermitStatus() const = 0;
 
     /**
      * Setup the connection and start sending telemetry

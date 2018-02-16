@@ -357,9 +357,6 @@ public:
     Q_PROPERTY(QString              hobbsMeter              READ hobbsMeter                                             NOTIFY hobbsMeterChanged)
     Q_PROPERTY(bool                 vtolInFwdFlight         READ vtolInFwdFlight        WRITE setVtolInFwdFlight        NOTIFY vtolInFwdFlightChanged)
     Q_PROPERTY(bool                 highLatencyLink         READ highLatencyLink                                        NOTIFY highLatencyLinkChanged)
-#if defined(QGC_AIRMAP_ENABLED)
-    Q_PROPERTY(AirspaceAuthorization::PermitStatus  flightPermitStatus    READ flightPermitStatus                       NOTIFY flightPermitStatusChanged)   ///< state of flight permission
-#endif
     // Vehicle state used for guided control
     Q_PROPERTY(bool flying                  READ flying NOTIFY flyingChanged)                               ///< Vehicle is flying
     Q_PROPERTY(bool landing                 READ landing NOTIFY landingChanged)                             ///< Vehicle is in landing pattern (DO_LAND_START)
@@ -762,9 +759,6 @@ public:
     void prepareDelete();
 
 #if defined(QGC_AIRMAP_ENABLED)
-    AirspaceAuthorization::PermitStatus flightPermitStatus() const
-        { return _airspaceVehicleManager ? _airspaceVehicleManager->flightPermitStatus() : AirspaceAuthorization::PermitUnknown; }
-
     AirspaceVehicleManager* airspaceManager() const { return _airspaceVehicleManager; }
 #endif
 
@@ -802,9 +796,6 @@ signals:
     void capabilityBitsChanged(uint64_t capabilityBits);
     void toolBarIndicatorsChanged(void);
     void highLatencyLinkChanged(bool highLatencyLink);
-#if defined(QGC_AIRMAP_ENABLED)
-    void flightPermitStatusChanged();
-#endif
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
