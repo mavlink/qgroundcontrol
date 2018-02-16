@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.2.57 - Feb 16 2018
+
+* Upstream merge to remove PREFLIGHT_STORAGE calls
+
 ### V1.2.56 - Feb 14 2018
 
 * Cosmetic changes:
