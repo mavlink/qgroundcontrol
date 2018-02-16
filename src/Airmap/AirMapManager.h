@@ -43,13 +43,14 @@ public:
 
     void setToolbox (QGCToolbox* toolbox) override;
 
+    QString                         providerName                            () const override { return QString("AirMap"); }
     AirspaceVehicleManager*         instantiateVehicle                      (const Vehicle& vehicle) override;
-    AirspaceRulesetsProvider*       instantiateRulesetsProvider             () override;
-    AirspaceWeatherInfoProvider*    instatiateAirspaceWeatherInfoProvider   () override;
-    AirspaceAdvisoryProvider*       instatiateAirspaceAdvisoryProvider      () override;
-    AirspaceRestrictionProvider*    instantiateAirspaceRestrictionProvider  () override;
 
-    QString name            () const override { return "AirMap"; }
+protected:
+    AirspaceRulesetsProvider*       _instantiateRulesetsProvider            () override;
+    AirspaceWeatherInfoProvider*    _instatiateAirspaceWeatherInfoProvider  () override;
+    AirspaceAdvisoryProvider*       _instatiateAirspaceAdvisoryProvider     () override;
+    AirspaceRestrictionProvider*    _instantiateAirspaceRestrictionProvider () override;
 
 private slots:
     void _error             (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);

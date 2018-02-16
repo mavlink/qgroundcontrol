@@ -30,11 +30,12 @@ using namespace airmap;
 
 QGC_LOGGING_CATEGORY(AirMapManagerLog, "AirMapManagerLog")
 
+//-----------------------------------------------------------------------------
 AirMapManager::AirMapManager(QGCApplication* app, QGCToolbox* toolbox)
     : AirspaceManager(app, toolbox)
 {
     _logger = std::make_shared<qt::Logger>();
-    qt::register_types(); // TODO: still needed?s
+    qt::register_types(); // TODO: still needed?
     _logger->logging_category().setEnabled(QtDebugMsg, false);
     _logger->logging_category().setEnabled(QtInfoMsg,  false);
     _logger->logging_category().setEnabled(QtWarningMsg, true);
@@ -42,6 +43,7 @@ AirMapManager::AirMapManager(QGCApplication* app, QGCToolbox* toolbox)
     connect(&_shared, &AirMapSharedState::error, this, &AirMapManager::_error);
 }
 
+//-----------------------------------------------------------------------------
 AirMapManager::~AirMapManager()
 {
     if (_shared.client()) {
@@ -49,6 +51,7 @@ AirMapManager::~AirMapManager()
     }
 }
 
+//-----------------------------------------------------------------------------
 void
 AirMapManager::setToolbox(QGCToolbox* toolbox)
 {
@@ -61,6 +64,7 @@ AirMapManager::setToolbox(QGCToolbox* toolbox)
     _settingsChanged();
 }
 
+//-----------------------------------------------------------------------------
 void
 AirMapManager::_error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails)
 {
@@ -68,6 +72,7 @@ AirMapManager::_error(const QString& what, const QString& airmapdMessage, const 
     qgcApp()->showMessage(QString("AirMap Error: %1. %2").arg(what).arg(airmapdMessage));
 }
 
+//-----------------------------------------------------------------------------
 void
 AirMapManager::_settingsChanged()
 {
@@ -80,7 +85,7 @@ AirMapManager::_settingsChanged()
     settings.userName = ap->userName()->rawValueString();
     settings.password = ap->password()->rawValueString();
     _shared.setSettings(settings);
-    // need to re-create the client if the API key changed
+    //-- Need to re-create the client if the API key changed
     if (_shared.client() && apiKeyChanged) {
         delete _shared.client();
         _shared.setClient(nullptr);
@@ -104,6 +109,7 @@ AirMapManager::_settingsChanged()
     }
 }
 
+//-----------------------------------------------------------------------------
 AirspaceVehicleManager*
 AirMapManager::instantiateVehicle(const Vehicle& vehicle)
 {
@@ -112,32 +118,36 @@ AirMapManager::instantiateVehicle(const Vehicle& vehicle)
     return manager;
 }
 
+//-----------------------------------------------------------------------------
 AirspaceRulesetsProvider*
-AirMapManager::instantiateRulesetsProvider()
+AirMapManager::_instantiateRulesetsProvider()
 {
     AirMapRulesetsManager* rulesetsManager = new AirMapRulesetsManager(_shared);
     connect(rulesetsManager, &AirMapRulesetsManager::error, this, &AirMapManager::_error);
     return rulesetsManager;
 }
 
+//-----------------------------------------------------------------------------
 AirspaceWeatherInfoProvider*
-AirMapManager::instatiateAirspaceWeatherInfoProvider()
+AirMapManager::_instatiateAirspaceWeatherInfoProvider()
 {
     AirMapWeatherInfoManager* weatherInfo = new AirMapWeatherInfoManager(_shared);
     connect(weatherInfo, &AirMapWeatherInfoManager::error, this, &AirMapManager::_error);
     return weatherInfo;
 }
 
+//-----------------------------------------------------------------------------
 AirspaceAdvisoryProvider*
-AirMapManager::instatiateAirspaceAdvisoryProvider()
+AirMapManager::_instatiateAirspaceAdvisoryProvider()
 {
     AirMapAdvisoryManager* advisories = new AirMapAdvisoryManager(_shared);
     connect(advisories, &AirMapAdvisoryManager::error, this, &AirMapManager::_error);
     return advisories;
 }
 
+//-----------------------------------------------------------------------------
 AirspaceRestrictionProvider*
-AirMapManager::instantiateAirspaceRestrictionProvider()
+AirMapManager::_instantiateAirspaceRestrictionProvider()
 {
     AirMapRestrictionManager* airspaces = new AirMapRestrictionManager(_shared);
     connect(airspaces, &AirMapRestrictionManager::error, this, &AirMapManager::_error);

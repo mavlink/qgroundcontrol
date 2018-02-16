@@ -39,9 +39,6 @@ class UASMessage;
 class SettingsManager;
 class ADSBVehicle;
 class QGCCameraManager;
-#if defined(QGC_AIRMAP_ENABLED)
-class AirspaceController;
-#endif
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -362,7 +359,6 @@ public:
     Q_PROPERTY(bool                 highLatencyLink         READ highLatencyLink                                        NOTIFY highLatencyLinkChanged)
 #if defined(QGC_AIRMAP_ENABLED)
     Q_PROPERTY(AirspaceAuthorization::PermitStatus  flightPermitStatus    READ flightPermitStatus                       NOTIFY flightPermitStatusChanged)   ///< state of flight permission
-    Q_PROPERTY(AirspaceController*   airspaceController     READ airspaceController                                     CONSTANT)
 #endif
     // Vehicle state used for guided control
     Q_PROPERTY(bool flying                  READ flying NOTIFY flyingChanged)                               ///< Vehicle is flying
@@ -582,9 +578,6 @@ public:
     QmlObjectListModel* cameraTriggerPoints(void) { return &_cameraTriggerPoints; }
     QmlObjectListModel* adsbVehicles(void) { return &_adsbVehicles; }
 
-#if defined(QGC_AIRMAP_ENABLED)
-    AirspaceController* airspaceController() { return _airspaceController; }
-#endif
     int  flowImageIndex() { return _flowImageIndex; }
 
     //-- Mavlink Logging
@@ -1068,7 +1061,6 @@ private:
     ParameterManager*   _parameterManager;
 
 #if defined(QGC_AIRMAP_ENABLED)
-    AirspaceController*     _airspaceController;
     AirspaceVehicleManager* _airspaceVehicleManager;
 #endif
 

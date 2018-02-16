@@ -25,6 +25,7 @@ import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Mavlink       1.0
 import QGroundControl.Controllers   1.0
+import QGroundControl.Airspace      1.0
 import QGroundControl.Airmap        1.0
 
 /// Mission Editor
@@ -46,7 +47,7 @@ QGCView {
     readonly property var   _defaultVehicleCoordinate:  QtPositioning.coordinate(37.803784, -122.462276)
     readonly property bool  _waypointsOnlyMode:         QGroundControl.corePlugin.options.missionWaypointsOnly
 
-    property bool   _enableAirMap:                      QGroundControl.airmapSupported ? QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue : false
+    property bool   _airspaceEnabled:                    QGroundControl.airmapSupported ? QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue : false
     property var    _planMasterController:              masterController
     property var    _missionController:                 _planMasterController.missionController
     property var    _geoFenceController:                _planMasterController.geoFenceController
@@ -59,7 +60,6 @@ QGCView {
     property real   _toolbarHeight:                     _qgcView.height - ScreenTools.availableHeight
     property int    _editingLayer:                      _layerMission
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
-    property bool   _airspaceManagement:                QGroundControl.airmapSupported && _activeVehicle
 
     readonly property int       _layerMission:              1
     readonly property int       _layerGeoFence:             2
@@ -96,12 +96,10 @@ QGCView {
         planMasterController:       _planMasterController
     }
 
-    on_EnableAirMapChanged: {
+    on_AirspaceEnabledChanged: {
         if(QGroundControl.airmapSupported) {
-            if(!_activeVehicle) {
-                planControlColapsed = false
-            } else if(_enableAirMap) {
-                planControlColapsed = _activeVehicle.airspaceController.airspaceVisible
+            if(_airspaceEnabled) {
+                planControlColapsed = QGroundControl.airspaceManager.airspaceVisible
             } else {
                 planControlColapsed = false
             }
@@ -167,9 +165,9 @@ QGCView {
     }
 
     Connections {
-        target:         _activeVehicle ? _activeVehicle.airspaceController : null
+        target: QGroundControl.airspaceManager
         onAirspaceVisibleChanged: {
-            planControlColapsed = _activeVehicle.airspaceController.airspaceVisible
+            planControlColapsed = QGroundControl.airspaceManager.airspaceVisible
         }
     }
 
@@ -350,8 +348,8 @@ QGCView {
             QGCMapPalette { id: mapPal; lightColors: editorMap.isSatelliteMap }
 
             onCenterChanged: {
-                if(_activeVehicle && QGroundControl.airmapSupported) {
-                    _activeVehicle.airspaceController.setROI(center, 5000)
+                if(_airspaceEnabled) {
+                    QGroundControl.airspaceManager.setROI(center, 5000)
                 }
             }
 
@@ -439,7 +437,7 @@ QGCView {
 
             // Airspace overlap support
             MapItemView {
-                model:              _airspaceManagement && _activeVehicle.airspaceController.airspaceVisible ? _activeVehicle.airspaceController.airspaces.circles : []
+                model:              _airspaceEnabled && QGroundControl.airspaceManager.airspaceVisible ? QGroundControl.airspaceManager.airspaces.circles : []
                 delegate: MapCircle {
                     center:         object.center
                     radius:         object.radius
@@ -449,7 +447,7 @@ QGCView {
             }
 
             MapItemView {
-                model:              _airspaceManagement && _activeVehicle.airspaceController.airspaceVisible ? _activeVehicle.airspaceController.airspaces.polygons : []
+                model:              _airspaceEnabled && QGroundControl.airspaceManager.airspaceVisible ? QGroundControl.airspaceManager.airspaces.polygons : []
                 delegate: MapPolygon {
                     path:           object.polygon
                     color:          Qt.rgba(0.94, 0.87, 0, 0.1)
@@ -565,7 +563,7 @@ QGCView {
                 AirspaceControl {
                     id:             airspaceControl
                     width:          parent.width
-                    visible:        _enableAirMap
+                    visible:        _airspaceEnabled
                     showColapse:    true
                 }
                 //-------------------------------------------------------
@@ -575,7 +573,7 @@ QGCView {
                     height:     planControlColapsed ? colapsedRow.height + ScreenTools.defaultFontPixelHeight : 0
                     color:      qgcPal.missionItemEditor
                     radius:     _radius
-                    visible:    planControlColapsed && _enableAirMap
+                    visible:    planControlColapsed && _airspaceEnabled
                     Row {
                         id:                     colapsedRow
                         spacing:                ScreenTools.defaultFontPixelWidth
@@ -611,9 +609,7 @@ QGCView {
                         anchors.fill:   parent
                         enabled:        QGroundControl.airmapSupported
                         onClicked: {
-                            if(_activeVehicle) {
-                                _activeVehicle.airspaceController.airspaceVisible = false
-                            }
+                            QGroundControl.airspaceManager.airspaceVisible = false
                         }
                     }
                 }
@@ -622,10 +618,10 @@ QGCView {
                 Rectangle {
                     id:         planExpanded
                     width:      parent.width
-                    height:     (!planControlColapsed || !_enableAirMap) ? expandedCol.height + ScreenTools.defaultFontPixelHeight : 0
+                    height:     (!planControlColapsed || !_airspaceEnabled) ? expandedCol.height + ScreenTools.defaultFontPixelHeight : 0
                     color:      qgcPal.missionItemEditor
                     radius:     _radius
-                    visible:    !planControlColapsed || !_enableAirMap
+                    visible:    !planControlColapsed || !_airspaceEnabled
                     Item {
                         height:             expandedCol.height
                         anchors.left:       parent.left

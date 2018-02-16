@@ -38,9 +38,6 @@
 #include "QGCCameraManager.h"
 #include "VideoReceiver.h"
 #include "VideoManager.h"
-#if defined(QGC_AIRMAP_ENABLED)
-#include "AirspaceController.h"
-#endif
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
 #define UPDATE_TIMER 50
@@ -142,7 +139,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _rallyPointManagerInitialRequestSent(false)
     , _parameterManager(NULL)
 #if defined(QGC_AIRMAP_ENABLED)
-    , _airspaceController(NULL)
     , _airspaceVehicleManager(NULL)
 #endif
     , _armed(false)
@@ -276,18 +272,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(&_adsbTimer, &QTimer::timeout, this, &Vehicle::_adsbTimerTimeout);
     _adsbTimer.setSingleShot(false);
     _adsbTimer.start(1000);
-
-#if defined(QGC_AIRMAP_ENABLED)
-    _airspaceController = new AirspaceController(this);
-    AirspaceManager* airspaceManager = _toolbox->airspaceManager();
-    if (airspaceManager) {
-        _airspaceVehicleManager = airspaceManager->instantiateVehicle(*this);
-        if (_airspaceVehicleManager) {
-            connect(_airspaceVehicleManager, &AirspaceVehicleManager::trafficUpdate, this, &Vehicle::_trafficUpdate);
-            connect(_airspaceVehicleManager, &AirspaceVehicleManager::flightPermitStatusChanged, this, &Vehicle::flightPermitStatusChanged);
-        }
-    }
-#endif
 }
 
 // Disconnected Vehicle for offline editing
@@ -349,7 +333,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _rallyPointManagerInitialRequestSent(false)
     , _parameterManager(NULL)
 #if defined(QGC_AIRMAP_ENABLED)
-    , _airspaceController(NULL)
     , _airspaceVehicleManager(NULL)
 #endif
     , _armed(false)
@@ -470,6 +453,18 @@ void Vehicle::_commonInit(void)
 
     _flightDistanceFact.setRawValue(0);
     _flightTimeFact.setRawValue(0);
+
+    //-- Airspace Management
+#if defined(QGC_AIRMAP_ENABLED)
+    AirspaceManager* airspaceManager = _toolbox->airspaceManager();
+    if (airspaceManager) {
+        _airspaceVehicleManager = airspaceManager->instantiateVehicle(*this);
+        if (_airspaceVehicleManager) {
+            connect(_airspaceVehicleManager, &AirspaceVehicleManager::trafficUpdate, this, &Vehicle::_trafficUpdate);
+            connect(_airspaceVehicleManager, &AirspaceVehicleManager::flightPermitStatusChanged, this, &Vehicle::flightPermitStatusChanged);
+        }
+    }
+#endif
 }
 
 Vehicle::~Vehicle()

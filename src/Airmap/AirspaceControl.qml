@@ -7,12 +7,13 @@ import QtQml                    2.2
 import QtGraphicalEffects       1.0
 
 import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
+import QGroundControl.Airmap        1.0
+import QGroundControl.Airspace      1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
-import QGroundControl.Airmap        1.0
+import QGroundControl.ScreenTools   1.0
+import QGroundControl.Vehicle       1.0
 
 Item {
     id:     _root
@@ -21,12 +22,11 @@ Item {
 
     property bool   showColapse:        true
 
-    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property color  _airspaceColor:     _validAdvisories ? getAispaceColor(_activeVehicle.airspaceController.advisories.airspaceColor) : _colorGray
-    property bool   _validRules:        _activeVehicle ? _activeVehicle.airspaceController.rulesets.valid : false
-    property bool   _validAdvisories:   _activeVehicle ? _activeVehicle.airspaceController.advisories.valid : false
+    property color  _airspaceColor:     _validAdvisories ? getAispaceColor(QGroundControl.airspaceManager.advisories.airspaceColor) : _colorGray
+    property bool   _validRules:        QGroundControl.airspaceManager.ruleSets.valid
+    property bool   _validAdvisories:   QGroundControl.airspaceManager.advisories.valid
     property color  _textColor:         qgcPal.text
-    property bool   _colapsed:          _activeVehicle ? !_activeVehicle.airspaceController.airspaceVisible : true
+    property bool   _colapsed:          !QGroundControl.airspaceManager.airspaceVisible
 
     readonly property real      _radius:            ScreenTools.defaultFontPixelWidth * 0.5
     readonly property color     _colorOrange:       "#d75e0d"
@@ -55,7 +55,7 @@ Item {
 
     on_AirspaceColorChanged: {
        if(_validAdvisories) {
-           if(_activeVehicle.airspaceController.advisories.airspaceColor === AirspaceAdvisoryProvider.Yellow) {
+           if(QGroundControl.airspaceManager.advisories.airspaceColor === AirspaceAdvisoryProvider.Yellow) {
                _textColor = "#000000"
                return
            }
@@ -69,7 +69,7 @@ Item {
         id:         colapsedRect
         width:      parent.width
         height:     _colapsed ? colapsedRow.height + ScreenTools.defaultFontPixelHeight : 0
-        color:      _validAdvisories ? getAispaceColor(_activeVehicle.airspaceController.advisories.airspaceColor) : _colorGray
+        color:      _validAdvisories ? getAispaceColor(QGroundControl.airspaceManager.advisories.airspaceColor) : _colorGray
         radius:     _radius
         visible:    _colapsed
         Row {
@@ -82,13 +82,13 @@ Item {
                 width:                  height
                 height:                 ScreenTools.defaultFontPixelWidth * 2.5
                 sourceSize.height:      height
-                source:                 _activeVehicle ? "qrc:/airmap/advisory-icon.svg" : "qrc:/airmap/unavailable.svg"
-                color:                  _activeVehicle ? _textColor : _colorLightGray
+                source:                 "qrc:/airmap/advisory-icon.svg"
+                color:                  _textColor
                 anchors.verticalCenter: parent.verticalCenter
             }
             QGCLabel {
                 text:                   qsTr("Airspace")
-                color:                  _activeVehicle ? _textColor : _colorLightGray
+                color:                  _textColor
                 anchors.verticalCenter: parent.verticalCenter
             }
             Item {
@@ -96,9 +96,9 @@ Item {
                 height: 1
             }
             AirspaceWeather {
-                iconHeight:             ScreenTools.defaultFontPixelWidth * 2.5
-                visible:                _activeVehicle && _activeVehicle.airspaceController.weatherInfo.valid
-                contentColor:           _activeVehicle ? _textColor : _colorLightGray
+                iconHeight:             ScreenTools.defaultFontPixelHeight * 2
+                visible:                QGroundControl.airspaceManager.weatherInfo.valid
+                contentColor:           _textColor
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
@@ -108,16 +108,14 @@ Item {
             sourceSize.height:      height
             source:                 "qrc:/airmap/expand.svg"
             color:                  _textColor
-            visible:                _activeVehicle
             anchors.right:          parent.right
             anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
             anchors.verticalCenter: parent.verticalCenter
         }
         MouseArea {
             anchors.fill:   parent
-            enabled:        _activeVehicle
             onClicked:  {
-                _activeVehicle.airspaceController.airspaceVisible = true
+                QGroundControl.airspaceManager.airspaceVisible = true
             }
         }
     }
@@ -127,7 +125,7 @@ Item {
         id:         expandedRect
         width:      parent.width
         height:     !_colapsed ? expandedCol.height + ScreenTools.defaultFontPixelHeight : 0
-        color:      _validAdvisories ? getAispaceColor(_activeVehicle.airspaceController.advisories.airspaceColor) : _colorGray
+        color:      _validAdvisories ? getAispaceColor(QGroundControl.airspaceManager.advisories.airspaceColor) : _colorGray
         radius:     _radius
         visible:    !_colapsed
         MouseArea {
@@ -168,7 +166,7 @@ Item {
                             color:              _textColor
                         }
                         QGCLabel {
-                            text:               _validAdvisories ? _activeVehicle.airspaceController.advisories.airspaces.count + qsTr(" Advisories") : ""
+                            text:               _validAdvisories ? QGroundControl.airspaceManager.advisories.airspaces.count + qsTr(" Advisories") : ""
                             color:              _textColor
                             visible:            _validAdvisories
                             font.pointSize:     ScreenTools.smallFontPointSize
@@ -179,7 +177,7 @@ Item {
                         height: 1
                     }
                     AirspaceWeather {
-                        visible:                _activeVehicle && _activeVehicle.airspaceController.weatherInfo.valid && showColapse
+                        visible:                QGroundControl.airspaceManager.weatherInfo.valid && showColapse
                         contentColor:           _textColor
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -196,12 +194,12 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     MouseArea {
                         anchors.fill:   parent
-                        enabled:        showColapse && _activeVehicle
-                        onClicked:      _activeVehicle.airspaceController.airspaceVisible = false
+                        enabled:        showColapse
+                        onClicked:      QGroundControl.airspaceManager.airspaceVisible = false
                     }
                 }
                 AirspaceWeather {
-                    visible:                _activeVehicle && _activeVehicle.airspaceController.weatherInfo.valid && !showColapse
+                    visible:                QGroundControl.airspaceManager.weatherInfo.valid && !showColapse
                     contentColor:           _textColor
                     anchors.right:          parent.right
                     anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
@@ -290,7 +288,7 @@ Item {
                                     Layout.fillWidth:       true
                                     QGCLabel {
                                         id:                     regLabel
-                                        text:                   _validRules ? _activeVehicle.airspaceController.ruleSets.selectedRuleSets : qsTr("None")
+                                        text:                   _validRules ? QGroundControl.airspaceManager.ruleSets.selectedRuleSets : qsTr("None")
                                         elide:                  Text.ElideRight
                                         horizontalAlignment:    Text.AlignHCenter
                                         color:                  _colorWhite
@@ -319,7 +317,7 @@ Item {
                             anchors.right:  parent.right
                             anchors.left:   parent.left
                             Repeater {
-                                model:      _validAdvisories ? _activeVehicle.airspaceController.advisories.airspaces : []
+                                model:      _validAdvisories ? QGroundControl.airspaceManager.advisories.airspaces : []
                                 delegate: AirspaceRegulation {
                                     regTitle:            object.typeStr
                                     regText:             object.name
@@ -425,7 +423,7 @@ Item {
                                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
                             }
                             Repeater {
-                                model:    _validRules ? _activeVehicle.airspaceController.rulesets.ruleSets : []
+                                model:    _validRules ? QGroundControl.airspaceManager.ruleSets.ruleSets : []
                                 delegate: RuleSelector {
                                     visible:             object.selectionType === AirspaceRuleSet.Pickone
                                     rule:                object
@@ -446,7 +444,7 @@ Item {
                                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
                             }
                             Repeater {
-                                model:    _validRules ? _activeVehicle.airspaceController.rulesets.ruleSets : []
+                                model:    _validRules ? QGroundControl.airspaceManager.ruleSets.ruleSets : []
                                 delegate: RuleSelector {
                                     visible:             object.selectionType === AirspaceRuleSet.Optional
                                     rule:                object
@@ -466,7 +464,7 @@ Item {
                                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
                             }
                             Repeater {
-                                model:    _validRules ? _activeVehicle.airspaceController.rulesets.ruleSets : []
+                                model:    _validRules ? QGroundControl.airspaceManager.ruleSets.ruleSets : []
                                 delegate: RuleSelector {
                                     visible:             object.selectionType === AirspaceRuleSet.Required
                                     rule:                object
