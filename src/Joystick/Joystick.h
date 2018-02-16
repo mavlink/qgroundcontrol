@@ -61,6 +61,7 @@ public:
     Q_PROPERTY(QString name READ name CONSTANT)
 
     Q_PROPERTY(bool calibrated MEMBER _calibrated NOTIFY calibratedChanged)
+    Q_PROPERTY(bool outputEnabled MEMBER _outputEnabled WRITE setOutputEnabled NOTIFY outputEnabledChanged)
 
     Q_PROPERTY(int totalButtonCount  READ totalButtonCount    CONSTANT)
     Q_PROPERTY(int axisCount    READ axisCount      CONSTANT)
@@ -122,20 +123,13 @@ public:
     void setTXMode(int mode);
     int getTXMode(void) { return _transmitterMode; }
 
-    typedef enum {
-        CalibrationModeOff,         // Not calibrating
-        CalibrationModeMonitor,     // Monitors are active, continue to send to vehicle if already polling
-        CalibrationModeCalibrating, // Calibrating, stop sending joystick to vehicle
-    } CalibrationMode_t;
-
     /// Set the current calibration mode
-    void startCalibrationMode(CalibrationMode_t mode);
-
-    /// Clear the current calibration mode
-    void stopCalibrationMode(CalibrationMode_t mode);
+    void setCalibrationMode(bool calibrating);
+    void setOutputEnabled(bool enabled);
 
 signals:
     void calibratedChanged(bool calibrated);
+    void outputEnabledChanged(bool enabled);
 
     // The raw signals are only meant for use by calibration
     void rawAxisValueChanged(int index, int value);
@@ -201,7 +195,8 @@ protected:
     int     _totalButtonCount;
 
     static int          _transmitterMode;
-    CalibrationMode_t   _calibrationMode;
+    bool                _calibrationMode;
+    bool                _outputEnabled;
 
     int*                _rgAxisValues;
     Calibration_t*      _rgCalibration;
