@@ -15,13 +15,14 @@ import QtPositioning    5.3
 import QtQuick.Dialogs  1.2
 
 import QGroundControl               1.0
+import QGroundControl.Airspace      1.0
+import QGroundControl.Controllers   1.0
+import QGroundControl.Controls      1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.FlightMap     1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
-import QGroundControl.Controllers   1.0
 
 FlightMap {
     id:                         flightMap
@@ -51,7 +52,7 @@ FlightMap {
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property var    _gotoHereCoordinate:        QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
-    property bool   _airspaceManagement:        QGroundControl.airmapSupported && _activeVehicle
+    property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue : false
 
     property bool   _disableVehicleTracking:    false
     property bool   _keepVehicleCentered:       _mainIsMap ? false : true
@@ -59,8 +60,8 @@ FlightMap {
     // Track last known map position and zoom from Fly view in settings
     onZoomLevelChanged: QGroundControl.flightMapZoom = zoomLevel
     onCenterChanged: {
-        if(_activeVehicle && QGroundControl.airmapSupported) {
-            _activeVehicle.airspaceController.setROI(center, 5000)
+        if(_airspaceEnabled) {
+            QGroundControl.airspaceManager.setROI(center, 1000)
         }
         QGroundControl.flightMapPosition = center
     }
@@ -331,7 +332,7 @@ FlightMap {
 
     // Airspace overlap support
     MapItemView {
-        model:              _airspaceManagement && _activeVehicle.airspaceController.airspaceVisible ? _activeVehicle.airspaceController.airspaces.circles : []
+        model:              _airspaceEnabled && QGroundControl.airspaceManager.airspaceVisible ? QGroundControl.airspaceManager.airspaces.circles : []
         delegate: MapCircle {
             center:         object.center
             radius:         object.radius
@@ -341,7 +342,7 @@ FlightMap {
     }
 
     MapItemView {
-        model:              _airspaceManagement && _activeVehicle.airspaceController.airspaceVisible ? _activeVehicle.airspaceController.airspaces.polygons : []
+        model:              _airspaceEnabled && QGroundControl.airspaceManager.airspaceVisible ? QGroundControl.airspaceManager.airspaces.polygons : []
         delegate: MapPolygon {
             path:           object.polygon
             color:          Qt.rgba(0.94, 0.87, 0, 0.15)

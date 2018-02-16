@@ -36,7 +36,7 @@
         <file alias="mostly_cloudy_night.svg">images/weather-icons/mostly_cloudy_night.svg</file>
         <file alias="mostly_sunny.svg">images/weather-icons/mostly_sunny.svg</file>
         <file alias="partly_cloudy_day.svg">images/weather-icons/partly_cloudy_day.svg</file>
-        <file alias="partyly_cloudy_night.svg">images/weather-icons/partyly_cloudy_night.svg</file>
+        <file alias="partly_cloudy_night.svg">images/weather-icons/partly_cloudy_night.svg</file>
         <file alias="rain.svg">images/weather-icons/rain.svg</file>
         <file alias="rain_snow.svg">images/weather-icons/rain_snow.svg</file>
         <file alias="scattered_snow_showers_day.svg">images/weather-icons/scattered_snow_showers_day.svg</file>

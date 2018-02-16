@@ -15,7 +15,6 @@
 #include "AirspaceRulesetsProvider.h"
 #include "AirspaceRestrictionProvider.h"
 #include "AirspaceVehicleManager.h"
-#include "AirspaceController.h"
 
 #include "Vehicle.h"
 #include "QGCApplication.h"
@@ -24,20 +23,20 @@ QGC_LOGGING_CATEGORY(AirspaceManagementLog, "AirspaceManagementLog")
 
 AirspaceManager::AirspaceManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
+    , _airspaceVisible(false)
 {
     _roiUpdateTimer.setInterval(2000);
     _roiUpdateTimer.setSingleShot(true);
     connect(&_roiUpdateTimer, &QTimer::timeout, this, &AirspaceManager::_updateToROI);
-    //-- TODO: Move these away from QGroundControl and into their own group (Airspace)
-    qmlRegisterUncreatableType<AirspaceAuthorization>       ("QGroundControl",              1, 0, "AirspaceAuthorization",          "Reference only");
-    qmlRegisterUncreatableType<AirspaceController>          ("QGroundControl.Vehicle",      1, 0, "AirspaceController",             "Reference only");
-    qmlRegisterUncreatableType<AirspaceWeatherInfoProvider> ("QGroundControl.Vehicle",      1, 0, "AirspaceWeatherInfoProvider",    "Reference only");
-    qmlRegisterUncreatableType<AirspaceAdvisoryProvider>    ("QGroundControl.Vehicle",      1, 0, "AirspaceAdvisoryProvider",       "Reference only");
-    qmlRegisterUncreatableType<AirspaceRuleFeature>         ("QGroundControl.Vehicle",      1, 0, "AirspaceRuleFeature",            "Reference only");
-    qmlRegisterUncreatableType<AirspaceRule>                ("QGroundControl.Vehicle",      1, 0, "AirspaceRule",                   "Reference only");
-    qmlRegisterUncreatableType<AirspaceRuleSet>             ("QGroundControl.Vehicle",      1, 0, "AirspaceRuleSet",                "Reference only");
-    qmlRegisterUncreatableType<AirspaceRulesetsProvider>    ("QGroundControl.Vehicle",      1, 0, "AirspaceRulesetsProvider",       "Reference only");
-    qmlRegisterUncreatableType<AirspaceRestrictionProvider> ("QGroundControl.Vehicle",      1, 0, "AirspaceRestrictionProvider",    "Reference only");
+    qmlRegisterUncreatableType<AirspaceAdvisoryProvider>    ("QGroundControl.Airspace",      1, 0, "AirspaceAdvisoryProvider",       "Reference only");
+    qmlRegisterUncreatableType<AirspaceAuthorization>       ("QGroundControl.Airspace",      1, 0, "AirspaceAuthorization",          "Reference only");
+    qmlRegisterUncreatableType<AirspaceManager>             ("QGroundControl.Airspace",      1, 0, "AirspaceManager",                "Reference only");
+    qmlRegisterUncreatableType<AirspaceRestrictionProvider> ("QGroundControl.Airspace",      1, 0, "AirspaceRestrictionProvider",    "Reference only");
+    qmlRegisterUncreatableType<AirspaceRule>                ("QGroundControl.Airspace",      1, 0, "AirspaceRule",                   "Reference only");
+    qmlRegisterUncreatableType<AirspaceRuleFeature>         ("QGroundControl.Airspace",      1, 0, "AirspaceRuleFeature",            "Reference only");
+    qmlRegisterUncreatableType<AirspaceRuleSet>             ("QGroundControl.Airspace",      1, 0, "AirspaceRuleSet",                "Reference only");
+    qmlRegisterUncreatableType<AirspaceRulesetsProvider>    ("QGroundControl.Airspace",      1, 0, "AirspaceRulesetsProvider",       "Reference only");
+    qmlRegisterUncreatableType<AirspaceWeatherInfoProvider> ("QGroundControl.Airspace",      1, 0, "AirspaceWeatherInfoProvider",    "Reference only");
 }
 
 AirspaceManager::~AirspaceManager()
@@ -60,13 +59,18 @@ void AirspaceManager::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
     // We should not call virtual methods in the constructor, so we instantiate the restriction provider here
-    _ruleSetsProvider   = instantiateRulesetsProvider();
-    _weatherProvider    = instatiateAirspaceWeatherInfoProvider();
-    _advisories         = instatiateAirspaceAdvisoryProvider();
-    _airspaces          = instantiateAirspaceRestrictionProvider();
+    _ruleSetsProvider   = _instantiateRulesetsProvider();
+    _weatherProvider    = _instatiateAirspaceWeatherInfoProvider();
+    _advisories         = _instatiateAirspaceAdvisoryProvider();
+    _airspaces          = _instantiateAirspaceRestrictionProvider();
 }
 
-void AirspaceManager::setROI(const QGeoCoordinate& center, double radiusMeters)
+void AirspaceManager::setROI(QGeoCoordinate center, double radiusMeters)
+{
+    _setROI(center, radiusMeters);
+}
+
+void AirspaceManager::_setROI(const QGeoCoordinate& center, double radiusMeters)
 {
     _roiCenter = center;
     _roiRadius = radiusMeters;

@@ -19,14 +19,15 @@ import QtQuick.Layouts          1.2
 import QtQuick.Window           2.2
 
 import QGroundControl               1.0
+import QGroundControl.Airspace      1.0
+import QGroundControl.Controllers   1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.FactSystem    1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.FlightMap     1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.FactSystem    1.0
 
 /// Flight Display View
 QGCView {
@@ -670,7 +671,7 @@ QGCView {
             }
         }
         property var  flightPermit: (QGroundControl.airmapSupported && _activeVehicle) ? _activeVehicle.flightPermitStatus : null
-        property var  providerName: _activeVehicle ? _activeVehicle.airspaceController.providerName : ""
+        property var  providerName: QGroundControl.airspaceManager.providerName
     }
 
 }

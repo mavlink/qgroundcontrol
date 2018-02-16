@@ -21,6 +21,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Vehicle       1.0
 import QGroundControl.FlightMap     1.0
+import QGroundControl.Airspace      1.0
 import QGroundControl.Airmap        1.0
 
 Item {
@@ -29,12 +30,12 @@ Item {
     property var    qgcView
     property bool   useLightColors
     property var    missionController
-    property bool   showValues:             _activeVehicle ? !_activeVehicle.airspaceController.airspaceVisible : true
+    property bool   showValues:             QGroundControl.airspaceManager.airspaceVisible
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property bool   _isSatellite:           _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
     property bool   _lightWidgetBorders:    _isSatellite
-    property bool   _enableAirMap:          QGroundControl.airmapSupported ? QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue : false
+    property bool   _airspaceEnabled:       QGroundControl.airmapSupported ? QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue : false
 
     readonly property real _margins:        ScreenTools.defaultFontPixelHeight * 0.5
 
@@ -80,11 +81,9 @@ Item {
     }
 
     Connections {
-        target:         _activeVehicle ? _activeVehicle.airspaceController : null
+        target: QGroundControl.airspaceManager
         onAirspaceVisibleChanged: {
-            if(_activeVehicle) {
-                widgetRoot.showValues = !_activeVehicle.airspaceController.airspaceVisible
-            }
+             widgetRoot.showValues = !QGroundControl.airspaceManager.airspaceVisible
         }
     }
 
@@ -140,7 +139,7 @@ Item {
         AirspaceControl {
             id:                 airspaceControl
             width:              getPreferredInstrumentWidth()
-            visible:            _enableAirMap
+            visible:            _airspaceEnabled
             anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
         }
         //-------------------------------------------------------

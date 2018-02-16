@@ -1081,7 +1081,6 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
     HEADERS += \
         src/AirspaceManagement/AirspaceAdvisoryProvider.h \
         src/AirspaceManagement/AirspaceAuthorization.h \
-        src/AirspaceManagement/AirspaceController.h \
         src/AirspaceManagement/AirspaceManager.h \
         src/AirspaceManagement/AirspaceRestriction.h \
         src/AirspaceManagement/AirspaceRestrictionProvider.h \
@@ -1091,7 +1090,6 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
 
     SOURCES += \
         src/AirspaceManagement/AirspaceAdvisoryProvider.cc \
-        src/AirspaceManagement/AirspaceController.cc \
         src/AirspaceManagement/AirspaceManager.cc \
         src/AirspaceManagement/AirspaceRestriction.cc \
         src/AirspaceManagement/AirspaceRestrictionProvider.cc \
