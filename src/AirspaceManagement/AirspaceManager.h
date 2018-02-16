@@ -40,6 +40,7 @@ class AirspaceRulesetsProvider;
 class AirspaceVehicleManager;
 class AirspaceAdvisoryProvider;
 class AirspaceRestrictionProvider;
+class MissionController;
 
 Q_DECLARE_LOGGING_CATEGORY(AirspaceManagementLog)
 
@@ -61,7 +62,7 @@ public:
     Q_PROPERTY(AirspaceRestrictionProvider* airspaces           READ airspaces          CONSTANT)
     Q_PROPERTY(bool                         airspaceVisible     READ airspaceVisible    WRITE setAirspaceVisible    NOTIFY airspaceVisibleChanged)
 
-    Q_INVOKABLE void setROI                             (QGeoCoordinate center, double radius);
+    Q_INVOKABLE void setROI                     (QGeoCoordinate center, double radius);
 
     AirspaceWeatherInfoProvider* weatherInfo    () { return _weatherProvider; }
     AirspaceAdvisoryProvider*    advisories     () { return _advisories; }
@@ -79,6 +80,11 @@ public:
      * Factory method to create an AirspaceVehicleManager object
      */
     virtual AirspaceVehicleManager*         instantiateVehicle                      (const Vehicle& vehicle) = 0;
+
+    /**
+     * Create/upload a flight from a mission.
+     */
+    virtual void                            createFlight                            (MissionController* missionController) = 0;
 
 signals:
     void    airspaceVisibleChanged  ();
