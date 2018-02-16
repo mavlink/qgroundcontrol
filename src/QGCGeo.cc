@@ -102,3 +102,10 @@ void convertUTMToGeo(double easting, double northing, int zone, bool southhemi, 
     coord.setLatitude(RadToDeg(latRadians));
     coord.setLongitude(RadToDeg(lonRadians));
 }
+
+double QGCGeoBoundingCube::MaxAlt    =  1000000.0;
+double QGCGeoBoundingCube::MinAlt    = -1000000.0;
+double QGCGeoBoundingCube::MaxNorth  =  90.0;
+double QGCGeoBoundingCube::MaxSouth  = -90.0;
+double QGCGeoBoundingCube::MaxWest   = -180.0;
+double QGCGeoBoundingCube::MaxEast   =  180.0;

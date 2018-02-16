@@ -96,7 +96,7 @@ public:
     // Overrides from ComplexMissionItem
 
     double              complexDistance     (void) const final { return _surveyDistance; }
-    QRectF              boundingBox         (void) const final { return _boundingBox; }
+    QGCGeoBoundingCube  boundingCube        (void) const final { return _boundingCube; }
     double              additionalTimeDelay (void) const final { return _additionalFlightDelaySeconds; }
     int                 lastSequenceNumber  (void) const final;
     bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
@@ -200,7 +200,7 @@ private:
     void _intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines);
     void _adjustLineDirection(const QList<QLineF>& lineList, QList<QLineF>& resultLines);
     void _setSurveyDistance(double surveyDistance);
-    void _setBoundingBox(QRectF bb);
+    void _setBoundingCube(QGCGeoBoundingCube bc);
     void _setCameraShots(int cameraShots);
     void _setCoveredArea(double coveredArea);
     void _cameraValueChanged(void);
@@ -226,6 +226,7 @@ private:
     bool _gridAngleIsNorthSouthTransects();
     double _clampGridAngle90(double gridAngle);
     int _calcMissionCommandCount(QList<QList<QGeoCoordinate>>& transectSegments);
+    void _calcBoundingCube();
 
     int                             _sequenceNumber;
     bool                            _dirty;
@@ -243,12 +244,12 @@ private:
 
     bool            _ignoreRecalc;
     double          _surveyDistance;
-    QRectF          _boundingBox;
     int             _cameraShots;
     double          _coveredArea;
     double          _timeBetweenShots;
     double          _cruiseSpeed;
 
+    QGCGeoBoundingCube _boundingCube;
     QMap<QString, FactMetaData*> _metaDataMap;
 
     SettingsFact    _manualGridFact;

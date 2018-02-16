@@ -440,7 +440,7 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
 
     //-- Keep track of bounding box changes in complex items
     if(!newItem->isSimpleItem()) {
-        connect(newItem, &ComplexMissionItem::boundingBoxChanged, this, &MissionController::_complexBoundingBoxChanged);
+        connect(newItem, &ComplexMissionItem::boundingCubeChanged, this, &MissionController::_complexBoundingBoxChanged);
     }
     newItem->setSequenceNumber(sequenceNumber);
     _initVisualItem(newItem);
@@ -1997,11 +1997,13 @@ void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
 
 void MissionController::_updateTimeout()
 {
-    QRectF boundingBox;
+    QGCGeoBoundingCube boundingCube;
     double north = 0.0;
     double south = 180.0;
     double east  = 0.0;
     double west  = 360.0;
+    double minAlt = QGCGeoBoundingCube::MaxAlt;
+    double maxAlt = QGCGeoBoundingCube::MinAlt;
     for (int i = 1; i < _visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
         if(item->isSimpleItem()) {
@@ -2014,10 +2016,13 @@ void MissionController::_updateTimeout()
                 if(pSimpleItem->coordinate().isValid()) {
                     double lat = pSimpleItem->coordinate().latitude()  + 90.0;
                     double lon = pSimpleItem->coordinate().longitude() + 180.0;
+                    double alt = pSimpleItem->coordinate().altitude();
                     north = fmax(north, lat);
                     south = fmin(south, lat);
                     east  = fmax(east,  lon);
                     west  = fmin(west,  lon);
+                    minAlt = fmin(minAlt, alt);
+                    maxAlt = fmax(maxAlt, alt);
                 }
                 break;
                 default:
@@ -2027,20 +2032,24 @@ void MissionController::_updateTimeout()
         } else {
             ComplexMissionItem* pComplexItem = qobject_cast<ComplexMissionItem*>(item);
             if(pComplexItem) {
-                QRectF bb = pComplexItem->boundingBox();
-                if(!bb.isNull()) {
-                    north = fmax(north, bb.y()      + 90.0);
-                    south = fmin(south, bb.height() + 90.0);
-                    east  = fmax(east,  bb.x()     + 180.0);
-                    west  = fmin(west,  bb.width() + 180.0);
+                QGCGeoBoundingCube bc = pComplexItem->boundingCube();
+                if(bc.isValid()) {
+                    north  = fmax(north, bc.pointNW.latitude()  + 90.0);
+                    south  = fmin(south, bc.pointSE.latitude()  + 90.0);
+                    east   = fmax(east,  bc.pointNW.longitude() + 180.0);
+                    west   = fmin(west,  bc.pointSE.longitude() + 180.0);
+                    minAlt = fmin(minAlt, bc.pointNW.altitude());
+                    maxAlt = fmax(maxAlt, bc.pointSE.altitude());
                 }
             }
         }
     }
-    boundingBox = QRectF(east - 180.0, north - 90.0, west - 180.0, south - 90.0);
-    if(_boundingBox != boundingBox) {
-        _boundingBox = boundingBox;
-        qCDebug(MissionControllerLog) << "Bounding box:" << _boundingBox.y() << _boundingBox.x() << _boundingBox.height() << _boundingBox.width();
+    boundingCube = QGCGeoBoundingCube(
+        QGeoCoordinate(north - 90.0, west - 180.0, minAlt),
+        QGeoCoordinate(south - 90.0, east - 180.0, maxAlt));
+    if(_travelBoundingCube != boundingCube) {
+        _travelBoundingCube = boundingCube;
+        qCDebug(MissionControllerLog) << "Bounding cube:" << _travelBoundingCube.pointNW << _travelBoundingCube.pointSE;
     }
 }
 
