@@ -82,7 +82,7 @@ void JoystickConfigController::setDeadbandValue(int axis, int value)
 JoystickConfigController::~JoystickConfigController()
 {
     if(_activeJoystick) {
-        _activeJoystick->stopCalibrationMode(Joystick::CalibrationModeMonitor);
+        _activeJoystick->setCalibrationMode(false);
     }
 }
 
@@ -582,7 +582,7 @@ void JoystickConfigController::_writeCalibration(void)
 /// @brief Starts the calibration process
 void JoystickConfigController::_startCalibration(void)
 {
-    _activeJoystick->startCalibrationMode(Joystick::CalibrationModeCalibrating);
+    _activeJoystick->setCalibrationMode(true);
     _resetInternalCalibrationValues();
     
     _nextButton->setProperty("text", "Next");
@@ -598,7 +598,7 @@ void JoystickConfigController::_stopCalibration(void)
 {
     _currentStep = -1;
     
-    _activeJoystick->stopCalibrationMode(Joystick::CalibrationModeCalibrating);
+    _activeJoystick->setCalibrationMode(false);
     _setInternalCalibrationValuesFromSettings();
     
     _statusText->setProperty("text", "");
@@ -763,7 +763,6 @@ void JoystickConfigController::_signalAllAttitudeValueChanges(void)
 void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
 {
     bool joystickTransition = false;
-    
     if (_activeJoystick) {
         joystickTransition = true;
         disconnect(_activeJoystick, &Joystick::rawAxisValueChanged, this, &JoystickConfigController::_axisValueChanged);
@@ -781,7 +780,7 @@ void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
         if (joystickTransition) {
             _stopCalibration();
         }
-        _activeJoystick->startCalibrationMode(Joystick::CalibrationModeMonitor);
+        _activeJoystick->setCalibrationMode(false);
         _axisCount = _activeJoystick->axisCount();
         _rgAxisInfo = new struct AxisInfo[_axisCount];
         _axisValueSave = new int[_axisCount];
