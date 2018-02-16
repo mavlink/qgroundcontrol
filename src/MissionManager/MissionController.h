@@ -16,6 +16,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 #include "MavlinkQmlSingleton.h"
+#include "QGCGeo.h"
 
 #include <QHash>
 
@@ -261,7 +262,7 @@ private:
     int                     _currentPlanViewIndex;
     VisualMissionItem*      _currentPlanViewItem;
     QTimer                  _updateTimer;
-    QRectF                  _boundingBox;
+    QGCGeoBoundingCube      _travelBoundingCube;
 
     static const char*  _settingsGroup;
 

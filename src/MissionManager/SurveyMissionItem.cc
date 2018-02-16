@@ -163,11 +163,11 @@ void SurveyMissionItem::_setSurveyDistance(double surveyDistance)
     }
 }
 
-void SurveyMissionItem::_setBoundingBox(QRectF bb)
+void SurveyMissionItem::_setBoundingCube(QGCGeoBoundingCube bc)
 {
-    if (bb != _boundingBox) {
-        _boundingBox = bb;
-        emit boundingBoxChanged();
+    if (bc != _boundingCube) {
+        _boundingCube = bc;
+        emit boundingCubeChanged();
     }
 }
 
@@ -668,6 +668,28 @@ int SurveyMissionItem::_calcMissionCommandCount(QList<QList<QGeoCoordinate>>& tr
 
     return missionCommandCount;
 }
+
+void SurveyMissionItem::_calcBoundingCube()
+{
+    // Calc bounding cube
+    double north = 0.0;
+    double south = 180.0;
+    double east  = 0.0;
+    double west  = 360.0;
+    for (int i = 0; i < _simpleGridPoints.count(); i++) {
+        QGeoCoordinate coord = _simpleGridPoints[i].value<QGeoCoordinate>();
+        double lat = coord.latitude()  + 90.0;
+        double lon = coord.longitude() + 180.0;
+        north  = fmax(north, lat);
+        south  = fmin(south, lat);
+        east   = fmax(east,  lon);
+        west   = fmin(west,  lon);
+    }
+    _setBoundingCube(QGCGeoBoundingCube(
+        QGeoCoordinate(north - 90.0, west - 180.0, _gridAltitudeFact.rawValue().toDouble()),
+        QGeoCoordinate(south - 90.0, east - 180.0, _gridAltitudeFact.rawValue().toDouble())));
+}
+
 void SurveyMissionItem::_generateGrid(void)
 {
     if (_ignoreRecalc) {
@@ -733,28 +755,14 @@ void SurveyMissionItem::_generateGrid(void)
 
     // Calc survey distance
     double surveyDistance = 0.0;
-    for (int i=1; i<_simpleGridPoints.count(); i++) {
+    for (int i = 1; i < _simpleGridPoints.count(); i++) {
         QGeoCoordinate coord1 = _simpleGridPoints[i-1].value<QGeoCoordinate>();
         QGeoCoordinate coord2 = _simpleGridPoints[i].value<QGeoCoordinate>();
         surveyDistance += coord1.distanceTo(coord2);
     }
     _setSurveyDistance(surveyDistance);
-
-    // Calc bounding box
-    double north = 0.0;
-    double south = 180.0;
-    double east  = 0.0;
-    double west  = 360.0;
-    for (int i = 0; i < _simpleGridPoints.count(); i++) {
-        QGeoCoordinate coord = _simpleGridPoints[i].value<QGeoCoordinate>();
-        double lat = coord.latitude()  + 90.0;
-        double lon = coord.longitude() + 180.0;
-        north = fmax(north, lat);
-        south = fmin(south, lat);
-        east  = fmax(east,  lon);
-        west  = fmin(west,  lon);
-    }
-    _setBoundingBox(QRectF(east - 180.0, north - 90.0, west - 180.0, south - 90.0));
+    // Calc bounding cube
+    _calcBoundingCube();
 
     if (cameraShots == 0 && _triggerCamera()) {
         cameraShots = (int)floor(surveyDistance / _triggerDistance());
@@ -1315,6 +1323,7 @@ void SurveyMissionItem::applyNewAltitude(double newAltitude)
 {
     _fixedValueIsAltitudeFact.setRawValue(true);
     _gridAltitudeFact.setRawValue(newAltitude);
+    _calcBoundingCube();
 }
 
 void SurveyMissionItem::setRefly90Degrees(bool refly90Degrees)
