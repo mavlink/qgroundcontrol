@@ -11,7 +11,7 @@
 
 #include "LifetimeChecker.h"
 #include "AirMapSharedState.h"
-#include "AirspaceAuthorization.h"
+#include "AirspaceFlightPlanProvider.h"
 
 #include <QObject>
 #include <QTimer>
@@ -31,7 +31,7 @@ public:
     /// Send flight path to AirMap
     void createFlight(const QList<MissionItem*>& missionItems);
 
-    AirspaceAuthorization::PermitStatus flightPermitStatus() const { return _flightPermitStatus; }
+    AirspaceFlightPlanProvider::PermitStatus flightPermitStatus() const { return _flightPermitStatus; }
 
     const QString& flightID() const { return _currentFlightId; }
 
@@ -96,7 +96,7 @@ private:
     QString                             _currentFlightId; ///< Flight ID, empty if there is none
     QString                             _pendingFlightId; ///< current flight ID, not necessarily accepted yet (once accepted, it's equal to _currentFlightId)
     QString                             _pendingFlightPlan; ///< current flight plan, waiting to be submitted
-    AirspaceAuthorization::PermitStatus _flightPermitStatus = AirspaceAuthorization::PermitUnknown;
+    AirspaceFlightPlanProvider::PermitStatus _flightPermitStatus = AirspaceFlightPlanProvider::PermitUnknown;
     QString                             _pilotID; ///< Pilot ID in the form "auth0|abc123"
     bool                                _noFlightCreatedYet = true;
     QTimer                              _pollTimer; ///< timer to poll for approval check

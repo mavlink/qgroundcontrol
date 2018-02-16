@@ -7,15 +7,16 @@
  *
  ****************************************************************************/
 
-#include "AirMapManager.h"
 #include "AirMapAdvisoryManager.h"
-#include "AirMapWeatherInfoManager.h"
+#include "AirMapFlightPlanManager.h"
+#include "AirMapManager.h"
+#include "AirMapRestrictionManager.h"
 #include "AirMapRulesetsManager.h"
 #include "AirMapSettings.h"
 #include "AirMapTelemetry.h"
-#include "AirMapRestrictionManager.h"
 #include "AirMapTrafficMonitor.h"
 #include "AirMapVehicleManager.h"
+#include "AirMapWeatherInfoManager.h"
 
 #include "QmlObjectListModel.h"
 #include "JsonHelper.h"
@@ -155,8 +156,10 @@ AirMapManager::_instantiateAirspaceRestrictionProvider()
 }
 
 //-----------------------------------------------------------------------------
-void
-AirMapManager::createFlight(MissionController* missionController)
+AirspaceFlightPlanProvider*
+AirMapManager::_instantiateAirspaceFlightPlanProvider()
 {
-    Q_UNUSED(missionController);
+    AirMapFlightPlanManager* flightPlan = new AirMapFlightPlanManager(_shared);
+    connect(flightPlan, &AirMapFlightPlanManager::error, this, &AirMapManager::_error);
+    return flightPlan;
 }

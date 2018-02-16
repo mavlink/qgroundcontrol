@@ -19,11 +19,6 @@
 #include <memory>
 
 class QGCToolbox;
-class AirspaceVehicleManager;
-class AirspaceRulesetsProvider;
-class AirspaceWeatherInfoProvider;
-class AirspaceAdvisoryProvider;
-class AirspaceRestrictionProvider;
 
 Q_DECLARE_LOGGING_CATEGORY(AirMapManagerLog)
 
@@ -45,13 +40,13 @@ public:
 
     QString                         providerName                            () const override { return QString("AirMap"); }
     AirspaceVehicleManager*         instantiateVehicle                      (const Vehicle& vehicle) override;
-    void                            createFlight                            (MissionController* missionController) override;
 
 protected:
     AirspaceRulesetsProvider*       _instantiateRulesetsProvider            () override;
     AirspaceWeatherInfoProvider*    _instatiateAirspaceWeatherInfoProvider  () override;
     AirspaceAdvisoryProvider*       _instatiateAirspaceAdvisoryProvider     () override;
     AirspaceRestrictionProvider*    _instantiateAirspaceRestrictionProvider () override;
+    AirspaceFlightPlanProvider*     _instantiateAirspaceFlightPlanProvider  () override;
 
 private slots:
     void _error             (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);

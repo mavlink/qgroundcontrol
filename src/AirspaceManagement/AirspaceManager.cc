@@ -8,13 +8,14 @@
  ****************************************************************************/
 
 
-#include "AirspaceManager.h"
-#include "AirspaceWeatherInfoProvider.h"
 #include "AirspaceAdvisoryProvider.h"
+#include "AirspaceFlightPlanProvider.h"
+#include "AirspaceManager.h"
 #include "AirspaceRestriction.h"
-#include "AirspaceRulesetsProvider.h"
 #include "AirspaceRestrictionProvider.h"
+#include "AirspaceRulesetsProvider.h"
 #include "AirspaceVehicleManager.h"
+#include "AirspaceWeatherInfoProvider.h"
 
 #include "Vehicle.h"
 #include "QGCApplication.h"
@@ -29,7 +30,7 @@ AirspaceManager::AirspaceManager(QGCApplication* app, QGCToolbox* toolbox)
     _roiUpdateTimer.setSingleShot(true);
     connect(&_roiUpdateTimer, &QTimer::timeout, this, &AirspaceManager::_updateToROI);
     qmlRegisterUncreatableType<AirspaceAdvisoryProvider>    ("QGroundControl.Airspace",      1, 0, "AirspaceAdvisoryProvider",       "Reference only");
-    qmlRegisterUncreatableType<AirspaceAuthorization>       ("QGroundControl.Airspace",      1, 0, "AirspaceAuthorization",          "Reference only");
+    qmlRegisterUncreatableType<AirspaceFlightPlanProvider>  ("QGroundControl.Airspace",      1, 0, "AirspaceFlightPlanProvider",     "Reference only");
     qmlRegisterUncreatableType<AirspaceManager>             ("QGroundControl.Airspace",      1, 0, "AirspaceManager",                "Reference only");
     qmlRegisterUncreatableType<AirspaceRestrictionProvider> ("QGroundControl.Airspace",      1, 0, "AirspaceRestrictionProvider",    "Reference only");
     qmlRegisterUncreatableType<AirspaceRule>                ("QGroundControl.Airspace",      1, 0, "AirspaceRule",                   "Reference only");
@@ -53,6 +54,9 @@ AirspaceManager::~AirspaceManager()
     if(_airspaces) {
         delete _airspaces;
     }
+    if(_flightPlan) {
+        delete _flightPlan;
+    }
 }
 
 void AirspaceManager::setToolbox(QGCToolbox* toolbox)
@@ -63,6 +67,7 @@ void AirspaceManager::setToolbox(QGCToolbox* toolbox)
     _weatherProvider    = _instatiateAirspaceWeatherInfoProvider();
     _advisories         = _instatiateAirspaceAdvisoryProvider();
     _airspaces          = _instantiateAirspaceRestrictionProvider();
+    _flightPlan         = _instantiateAirspaceFlightPlanProvider();
 }
 
 void AirspaceManager::setROI(QGeoCoordinate center, double radiusMeters)

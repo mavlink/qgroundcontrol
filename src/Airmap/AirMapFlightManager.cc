@@ -94,7 +94,7 @@ void AirMapFlightManager::createFlight(const QList<MissionItem*>& missionItems)
                     qCDebug(AirMapManagerLog) << "Got Pilot ID:"<<_pilotID;
                     _uploadFlight();
                 } else {
-                    _flightPermitStatus = AirspaceAuthorization::PermitUnknown;
+                    _flightPermitStatus = AirspaceFlightPlanProvider::PermitUnknown;
                     emit flightPermitStatusChanged();
                     _state = State::Idle;
 
@@ -108,7 +108,7 @@ void AirMapFlightManager::createFlight(const QList<MissionItem*>& missionItems)
         _uploadFlight();
     }
 
-    _flightPermitStatus = AirspaceAuthorization::PermitPending;
+    _flightPermitStatus = AirspaceFlightPlanProvider::PermitPending;
     emit flightPermitStatusChanged();
 }
 
@@ -252,7 +252,7 @@ void AirMapFlightManager::_checkForValidBriefing()
             if (allValid) {
                 _submitPendingFlightPlan();
             } else {
-                _flightPermitStatus = AirspaceAuthorization::PermitRejected;
+                _flightPermitStatus = AirspaceFlightPlanProvider::PermitRejected;
                 emit flightPermitStatusChanged();
                 _state = State::Idle;
             }
@@ -337,9 +337,9 @@ void AirMapFlightManager::_pollBriefing()
 
             if ((rejected || accepted) && !pending) {
                 if (rejected) { // rejected has priority
-                    _flightPermitStatus = AirspaceAuthorization::PermitRejected;
+                    _flightPermitStatus = AirspaceFlightPlanProvider::PermitRejected;
                 } else {
-                    _flightPermitStatus = AirspaceAuthorization::PermitAccepted;
+                    _flightPermitStatus = AirspaceFlightPlanProvider::PermitAccepted;
                 }
                 _currentFlightId = _pendingFlightId;
                 _pendingFlightPlan = "";
@@ -370,7 +370,7 @@ void AirMapFlightManager::endFlight()
     }
     _endFlight(_currentFlightId);
 
-    _flightPermitStatus = AirspaceAuthorization::PermitUnknown;
+    _flightPermitStatus = AirspaceFlightPlanProvider::PermitUnknown;
     emit flightPermitStatusChanged();
 }
 
