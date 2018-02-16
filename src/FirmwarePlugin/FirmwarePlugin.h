@@ -43,11 +43,10 @@ public:
     /// Set of optional capabilites which firmware may support
     typedef enum {
         SetFlightModeCapability =           1 << 0, ///< FirmwarePlugin::setFlightMode method is supported
-        MavCmdPreflightStorageCapability =  1 << 1, ///< MAV_CMD_PREFLIGHT_STORAGE is supported
-        PauseVehicleCapability =            1 << 2, ///< Vehicle supports pausing at current location
-        GuidedModeCapability =              1 << 3, ///< Vehicle supports guided mode commands
-        OrbitModeCapability =               1 << 4, ///< Vehicle supports orbit mode
-        TakeoffVehicleCapability =          1 << 5, ///< Vehicle supports guided takeoff
+        PauseVehicleCapability =            1 << 1, ///< Vehicle supports pausing at current location
+        GuidedModeCapability =              1 << 2, ///< Vehicle supports guided mode commands
+        OrbitModeCapability =               1 << 3, ///< Vehicle supports orbit mode
+        TakeoffVehicleCapability =          1 << 4, ///< Vehicle supports guided takeoff
     } FirmwareCapabilities;
 
     /// Maps from on parameter name to another
