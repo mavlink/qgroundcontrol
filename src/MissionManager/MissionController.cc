@@ -2018,6 +2018,7 @@ void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
 
 void MissionController::_updateTimeout()
 {
+    QGeoCoordinate firstCoordinate;
     QGeoCoordinate takeoffCoordinate;
     QGCGeoBoundingCube boundingCube;
     double north = 0.0;
@@ -2033,11 +2034,14 @@ void MissionController::_updateTimeout()
             if(pSimpleItem) {
                 switch(pSimpleItem->command()) {
                 case MAV_CMD_NAV_TAKEOFF:
-                    takeoffCoordinate = pSimpleItem->coordinate();
-                    // Fall through
                 case MAV_CMD_NAV_WAYPOINT:
                 case MAV_CMD_NAV_LAND:
                 if(pSimpleItem->coordinate().isValid()) {
+                    if(pSimpleItem->command() == MAV_CMD_NAV_TAKEOFF) {
+                        takeoffCoordinate = pSimpleItem->coordinate();
+                    } else if(!firstCoordinate.isValid()) {
+                        firstCoordinate = pSimpleItem->coordinate();
+                    }
                     double lat = pSimpleItem->coordinate().latitude()  + 90.0;
                     double lon = pSimpleItem->coordinate().longitude() + 180.0;
                     double alt = pSimpleItem->coordinate().altitude();
@@ -2058,6 +2062,9 @@ void MissionController::_updateTimeout()
             if(pComplexItem) {
                 QGCGeoBoundingCube bc = pComplexItem->boundingCube();
                 if(bc.isValid()) {
+                    if(!firstCoordinate.isValid() && pComplexItem->coordinate().isValid()) {
+                        firstCoordinate = pComplexItem->coordinate();
+                    }
                     north  = fmax(north, bc.pointNW.latitude()  + 90.0);
                     south  = fmin(south, bc.pointSE.latitude()  + 90.0);
                     east   = fmax(east,  bc.pointNW.longitude() + 180.0);
@@ -2068,6 +2075,15 @@ void MissionController::_updateTimeout()
             }
         }
     }
+    //-- Figure out where this thing is taking off from
+    if(!takeoffCoordinate.isValid()) {
+        if(firstCoordinate.isValid()) {
+            takeoffCoordinate = firstCoordinate;
+        } else {
+            takeoffCoordinate = plannedHomePosition();
+        }
+    }
+    //-- Build bounding "cube"
     boundingCube = QGCGeoBoundingCube(
         QGeoCoordinate(north - 90.0, west - 180.0, minAlt),
         QGeoCoordinate(south - 90.0, east - 180.0, maxAlt));

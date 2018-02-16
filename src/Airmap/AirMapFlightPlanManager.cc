@@ -230,6 +230,35 @@ AirMapFlightPlanManager::_pollBriefing()
 
 //-----------------------------------------------------------------------------
 void
+AirMapFlightPlanManager::_deleteFlightPlan()
+{
+    if(_flightPlan.isEmpty()) {
+        qCDebug(AirMapManagerLog) << "Delete non existing flight plan";
+        return;
+    }
+    qCDebug(AirMapManagerLog) << "Deleting flight plan";
+    _state = State::FlightDelete;
+    std::weak_ptr<LifetimeChecker> isAlive(_instance);
+    FlightPlans::Delete::Parameters params;
+    params.authorization = _shared.loginToken().toStdString();
+    params.id = _flightPlan.toStdString();
+    //-- Delete flight plan
+    _shared.client()->flight_plans().delete_(params, [this, isAlive](const FlightPlans::Delete::Result& result) {
+        if (!isAlive.lock()) return;
+        if (_state != State::FlightDelete) return;
+        if (result) {
+            _flightPlan.clear();
+            qCDebug(AirMapManagerLog) << "Flight plan deleted";
+            _state = State::Idle;
+        } else {
+            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+            emit error("Flight Plan deletion failed", QString::fromStdString(result.error().message()), description);
+        }
+    });
+}
+
+//-----------------------------------------------------------------------------
+void
 AirMapFlightPlanManager::_missionBoundingCubeChanged()
 {
     //-- Creating a new flight plan?
