@@ -199,6 +199,13 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         _initAllVisualItems();
         _updateContainsItems();
         emit newItemsFromVehicle();
+
+        //-- If airspace management enabled, create new flight
+#if defined(QGC_AIRMAP_ENABLED)
+        if(qgcApp()->toolbox()->settingsManager()->airMapSettings()->enableAirMap()->rawValue().toBool()) {
+            qgcApp()->toolbox()->airspaceManager()->createFlight(this);
+        }
+#endif
     }
     _itemsRequested = false;
 }
@@ -361,6 +368,13 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
 
     _recalcAll();
 
+    //-- If airspace management enabled and this is the first item, create new flight
+#if defined(QGC_AIRMAP_ENABLED)
+    if(_visualItems->count() == 2 && qgcApp()->toolbox()->settingsManager()->airMapSettings()->enableAirMap()->rawValue().toBool()) {
+        qgcApp()->toolbox()->airspaceManager()->createFlight(this);
+    }
+#endif
+
     return newItem->sequenceNumber();
 }
 
@@ -446,6 +460,13 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
     _initVisualItem(newItem);
     _visualItems->insert(i, newItem);
     _recalcAll();
+
+    //-- If airspace management enabled and this is the first item, create new flight
+#if defined(QGC_AIRMAP_ENABLED)
+    if(_visualItems->count() == 2 && qgcApp()->toolbox()->settingsManager()->airMapSettings()->enableAirMap()->rawValue().toBool()) {
+        qgcApp()->toolbox()->airspaceManager()->createFlight(this);
+    }
+#endif
 
     return newItem->sequenceNumber();
 }
@@ -1997,6 +2018,7 @@ void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
 
 void MissionController::_updateTimeout()
 {
+    QGeoCoordinate takeoffCoordinate;
     QGCGeoBoundingCube boundingCube;
     double north = 0.0;
     double south = 180.0;
@@ -2010,9 +2032,11 @@ void MissionController::_updateTimeout()
             SimpleMissionItem* pSimpleItem = qobject_cast<SimpleMissionItem*>(item);
             if(pSimpleItem) {
                 switch(pSimpleItem->command()) {
+                case MAV_CMD_NAV_TAKEOFF:
+                    takeoffCoordinate = pSimpleItem->coordinate();
+                    // Fall through
                 case MAV_CMD_NAV_WAYPOINT:
                 case MAV_CMD_NAV_LAND:
-                case MAV_CMD_NAV_TAKEOFF:
                 if(pSimpleItem->coordinate().isValid()) {
                     double lat = pSimpleItem->coordinate().latitude()  + 90.0;
                     double lon = pSimpleItem->coordinate().longitude() + 180.0;
@@ -2047,8 +2071,10 @@ void MissionController::_updateTimeout()
     boundingCube = QGCGeoBoundingCube(
         QGeoCoordinate(north - 90.0, west - 180.0, minAlt),
         QGeoCoordinate(south - 90.0, east - 180.0, maxAlt));
-    if(_travelBoundingCube != boundingCube) {
+    if(_travelBoundingCube != boundingCube || _takeoffCoordinate != takeoffCoordinate) {
+        _takeoffCoordinate  = takeoffCoordinate;
         _travelBoundingCube = boundingCube;
+        emit missionBoundingCubeChanged();
         qCDebug(MissionControllerLog) << "Bounding cube:" << _travelBoundingCube.pointNW << _travelBoundingCube.pointSE;
     }
 }

@@ -153,3 +153,10 @@ AirMapManager::_instantiateAirspaceRestrictionProvider()
     connect(airspaces, &AirMapRestrictionManager::error, this, &AirMapManager::_error);
     return airspaces;
 }
+
+//-----------------------------------------------------------------------------
+void
+AirMapManager::createFlight(MissionController* missionController)
+{
+    Q_UNUSED(missionController);
+}

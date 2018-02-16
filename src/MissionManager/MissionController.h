@@ -125,6 +125,9 @@ public:
     bool loadJsonFile(QFile& file, QString& errorString);
     bool loadTextFile(QFile& file, QString& errorString);
 
+    QGCGeoBoundingCube  travelBoundingCube  () { return _travelBoundingCube; }
+    QGeoCoordinate      takeoffCoordinate   () { return _takeoffCoordinate; }
+
     // Overrides from PlanElementController
     bool supported                  (void) const final { return true; }
     void start                      (bool editMode) final;
@@ -192,6 +195,7 @@ signals:
     void currentMissionIndexChanged     (int currentMissionIndex);
     void currentPlanViewIndexChanged    (void);
     void currentPlanViewItemChanged     (void);
+    void missionBoundingCubeChanged     (void);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
@@ -263,6 +267,7 @@ private:
     VisualMissionItem*      _currentPlanViewItem;
     QTimer                  _updateTimer;
     QGCGeoBoundingCube      _travelBoundingCube;
+    QGeoCoordinate          _takeoffCoordinate;
 
     static const char*  _settingsGroup;
 

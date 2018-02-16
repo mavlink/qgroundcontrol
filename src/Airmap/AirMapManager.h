@@ -45,6 +45,7 @@ public:
 
     QString                         providerName                            () const override { return QString("AirMap"); }
     AirspaceVehicleManager*         instantiateVehicle                      (const Vehicle& vehicle) override;
+    void                            createFlight                            (MissionController* missionController) override;
 
 protected:
     AirspaceRulesetsProvider*       _instantiateRulesetsProvider            () override;
