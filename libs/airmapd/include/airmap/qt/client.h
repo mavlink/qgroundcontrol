@@ -36,6 +36,7 @@ class Client : public QObject, public airmap::Client {
 
   // From airmap::Client
   Authenticator& authenticator() override;
+  Advisory& advisory() override;
   Aircrafts& aircrafts() override;
   Airspaces& airspaces() override;
   FlightPlans& flight_plans() override;

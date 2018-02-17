@@ -61,6 +61,12 @@ AirMapRule::AirMapRule(const airmap::RuleSet::Rule& rule, QObject* parent)
 }
 
 //-----------------------------------------------------------------------------
+AirMapRule::~AirMapRule()
+{
+    _features.deleteListAndContents();
+}
+
+//-----------------------------------------------------------------------------
 AirspaceRule::Status
 AirMapRule::status()
 {
@@ -162,6 +168,10 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
                 //-- Iterate Rules
                 for (const auto& rule : ruleset.rules) {
                     AirMapRule* pRule = new AirMapRule(rule, this);
+                    //-- Iterate Rule Features
+
+                    //-- TODO: Rule features don't make sense as they are
+
                     pRuleSet->_rules.append(pRule);
                 }
                 //-- Sort rules by display order

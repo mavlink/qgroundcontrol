@@ -45,14 +45,16 @@ public:
     Q_PROPERTY(QDateTime            flightEndTime           READ flightEndTime      WRITE  setFlightEndTime     NOTIFY flightEndTimeChanged)        ///< End of flight
     Q_PROPERTY(bool                 valid                   READ valid                                          NOTIFY advisoryChanged)
     Q_PROPERTY(QmlObjectListModel*  advisories              READ advisories                                     NOTIFY advisoryChanged)
+    Q_PROPERTY(QmlObjectListModel*  ruleSets                READ ruleSets                                       NOTIFY advisoryChanged)
     Q_PROPERTY(AirspaceAdvisoryProvider::AdvisoryColor airspaceColor READ airspaceColor                         NOTIFY advisoryChanged)
 
     virtual PermitStatus        flightPermitStatus  () const { return PermitUnknown; }
     virtual QDateTime           flightStartTime     () const = 0;
     virtual QDateTime           flightEndTime       () const = 0;
-    virtual bool                valid               () = 0;     ///< Current advisory list is valid
-    virtual QmlObjectListModel* advisories          () = 0;     ///< List of AirspaceAdvisory
-    virtual AirspaceAdvisoryProvider::AdvisoryColor  airspaceColor () = 0;     ///< Aispace overall color
+    virtual bool                valid               () = 0;                     ///< Current advisory list is valid
+    virtual QmlObjectListModel* advisories          () = 0;                     ///< List of AirspaceAdvisory
+    virtual QmlObjectListModel* ruleSets            () = 0;                     ///< List of AirspaceRuleSet
+    virtual AirspaceAdvisoryProvider::AdvisoryColor  airspaceColor () = 0;      ///< Aispace overall color
 
     virtual void                setFlightStartTime  (QDateTime start) = 0;
     virtual void                setFlightEndTime    (QDateTime end) = 0;
