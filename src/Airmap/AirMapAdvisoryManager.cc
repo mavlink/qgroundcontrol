@@ -69,7 +69,7 @@ AirMapAdvisoryManager::_requestAdvisories()
         return;
     }
     _valid = false;
-    _airspaces.clearAndDeleteContents();
+    _advisories.clearAndDeleteContents();
     Status::GetStatus::Parameters params;
     params.longitude = _lastRoiCenter.longitude();
     params.latitude  = _lastRoiCenter.latitude();
@@ -89,13 +89,13 @@ AirMapAdvisoryManager::_requestAdvisories()
                 pAdvisory->_name        = QString::fromStdString(advisory.airspace.name());
                 pAdvisory->_type        = (AirspaceAdvisory::AdvisoryType)(int)advisory.airspace.type();
                 pAdvisory->_color       = (AirspaceAdvisoryProvider::AdvisoryColor)(int)advisory.color;
-                _airspaces.append(pAdvisory);
+                _advisories.append(pAdvisory);
                 qCDebug(AirMapManagerLog) << "Adding advisory" << pAdvisory->name();
             }
             //-- Sort in order of color (priority)
-            _airspaces.beginReset();
-            std::sort(_airspaces.objectList()->begin(), _airspaces.objectList()->end(), adv_sort);
-            _airspaces.endReset();
+            _advisories.beginReset();
+            std::sort(_advisories.objectList()->begin(), _advisories.objectList()->end(), adv_sort);
+            _advisories.endReset();
             _valid = true;
         } else {
             qCDebug(AirMapManagerLog) << "Advisories Request Failed";

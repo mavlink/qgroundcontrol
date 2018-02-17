@@ -30,6 +30,7 @@ class AirMapAdvisory : public AirspaceAdvisory
 {
     Q_OBJECT
     friend class AirMapAdvisoryManager;
+    friend class AirMapFlightPlanManager;
 public:
     AirMapAdvisory (QObject* parent = NULL);
     QString         id              () override { return _id; }
@@ -55,7 +56,7 @@ public:
     AirMapAdvisoryManager                    (AirMapSharedState &shared, QObject *parent = nullptr);
     bool                valid           () override { return _valid; }
     AdvisoryColor       airspaceColor   () override { return _airspaceColor; }
-    QmlObjectListModel* airspaces       () override { return &_airspaces; }
+    QmlObjectListModel* advisories      () override { return &_advisories; }
     void                setROI          (const QGeoCoordinate& center, double radiusMeters) override;
 signals:
     void                error           (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
@@ -66,6 +67,6 @@ private:
     double              _lastRadius;
     AirMapSharedState&  _shared;
     QGeoCoordinate      _lastRoiCenter;
-    QmlObjectListModel  _airspaces;
+    QmlObjectListModel  _advisories;
     AdvisoryColor       _airspaceColor;
 };

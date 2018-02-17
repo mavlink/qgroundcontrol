@@ -10,6 +10,7 @@
 #include "AirMapFlightPlanManager.h"
 #include "AirMapManager.h"
 #include "AirMapRulesetsManager.h"
+#include "AirMapAdvisoryManager.h"
 #include "QGCApplication.h"
 
 #include "MissionController.h"
@@ -76,7 +77,7 @@ AirMapFlightPlanManager::createFlightPlan(MissionController* missionController)
         return;
     }
 
-    //-- TODO: Check if there is an ongoing flight plan and do something about it
+    //-- TODO: Check if there is an ongoing flight plan and do something about it (Delete it?)
     _createPlan = true;
     if(!_controller) {
         _controller = missionController;
@@ -120,6 +121,7 @@ AirMapFlightPlanManager::_createFlightPlan()
     qCDebug(AirMapManagerLog) << "Flight Start:" << _flightStartTime;
     qCDebug(AirMapManagerLog) << "Flight End:  " << _flightEndTime;
 
+    //-- Not Yet
     return;
 
     if (_pilotID == "") {
@@ -220,6 +222,9 @@ AirMapFlightPlanManager::_uploadFlightPlan()
 void
 AirMapFlightPlanManager::_updateFlightPlan()
 {
+    //-- TODO: This is broken as the parameters for updating the plan have
+    //   little to do with those used when creating it.
+
     qCDebug(AirMapManagerLog) << "Updating flight plan";
     _state = State::FlightUpdate;
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
@@ -230,8 +235,6 @@ AirMapFlightPlanManager::_updateFlightPlan()
         params.authorization  = login_token.toStdString();
         params.flight_plan.id = _flightPlan.toStdString();
         params.flight_plan.pilot.id = _pilotID.toStdString();
-        //-- TODO: This is broken as the parameters for updating the plan have
-        //   little to do with those used when creating it.
         params.flight_plan.altitude_agl.max = _flight.maxAltitude;
         params.flight_plan.buffer = 2.f;
         params.flight_plan.takeoff.latitude  = _flight.takeoffCoord.latitude();
@@ -281,6 +284,16 @@ AirMapFlightPlanManager::_updateFlightPlan()
 }
 
 //-----------------------------------------------------------------------------
+static bool
+adv_sort(QObject* a, QObject* b)
+{
+    AirMapAdvisory* aa = qobject_cast<AirMapAdvisory*>(a);
+    AirMapAdvisory* bb = qobject_cast<AirMapAdvisory*>(b);
+    if(!aa || !bb) return false;
+    return (int)aa->color() > (int)bb->color();
+}
+
+//-----------------------------------------------------------------------------
 void
 AirMapFlightPlanManager::_pollBriefing()
 {
@@ -298,6 +311,27 @@ AirMapFlightPlanManager::_pollBriefing()
         if (result) {
             const FlightPlan::Briefing& briefing = result.value();
             qCDebug(AirMapManagerLog) << "Flight polling/briefing response";
+            //-- Collect advisories
+            _valid = false;
+            _advisories.clearAndDeleteContents();
+            const std::vector<Status::Advisory> advisories = briefing.airspace.advisories;
+            _airspaceColor = (AirspaceAdvisoryProvider::AdvisoryColor)(int)briefing.airspace.color;
+            for (const auto& advisory : advisories) {
+                AirMapAdvisory* pAdvisory = new AirMapAdvisory(this);
+                pAdvisory->_id          = QString::fromStdString(advisory.airspace.id());
+                pAdvisory->_name        = QString::fromStdString(advisory.airspace.name());
+                pAdvisory->_type        = (AirspaceAdvisory::AdvisoryType)(int)advisory.airspace.type();
+                pAdvisory->_color       = (AirspaceAdvisoryProvider::AdvisoryColor)(int)advisory.color;
+                _advisories.append(pAdvisory);
+                qCDebug(AirMapManagerLog) << "Adding briefing advisory" << pAdvisory->name();
+            }
+            //-- Sort in order of color (priority)
+            _advisories.beginReset();
+            std::sort(_advisories.objectList()->begin(), _advisories.objectList()->end(), adv_sort);
+            _advisories.endReset();
+            _valid = true;
+            emit advisoryChanged();
+            //-- Evaluate briefing status
             bool rejected = false;
             bool accepted = false;
             bool pending  = false;
