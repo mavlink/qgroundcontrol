@@ -55,11 +55,9 @@ Item {
         xPositionDelta = 0
         yPositionDelta = 0
         // Center sticks
-        if(!gimbalMode) {
-            stickPositionX = _centerXY
-            if (!yAxisThrottle) {
-                stickPositionY = _centerXY
-            }
+        stickPositionX = _centerXY
+        if (!yAxisThrottle) {
+            stickPositionY = _centerXY
         }
     }
 
