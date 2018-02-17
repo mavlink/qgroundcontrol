@@ -27,18 +27,24 @@ public:
     AirMapFlightPlanManager(AirMapSharedState& shared, QObject *parent = nullptr);
 
     PermitStatus    flightPermitStatus  () const override { return _flightPermitStatus; }
-    void            createFlight        (MissionController* missionController) override;
     QString         flightID            () { return _flightPlan; }
+    QDateTime       flightStartTime     () const override { return _flightStartTime; }
+    QDateTime       flightEndTime       () const override { return _flightEndTime; }
+
+    void            createFlightPlan    (MissionController* missionController) override;
+    void            setFlightStartTime  (QDateTime start) override;
+    void            setFlightEndTime    (QDateTime end) override;
 
 signals:
     void            error               (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
 
 private slots:
     void _pollBriefing                  ();
-    void _missionBoundingCubeChanged    ();
+    void _missionChanged    ();
 
 private:
     void _uploadFlightPlan              ();
+    void _updateFlightPlan              ();
     void _createFlightPlan              ();
     void _deleteFlightPlan              ();
 
@@ -47,6 +53,7 @@ private:
         Idle,
         GetPilotID,
         FlightUpload,
+        FlightUpdate,
         FlightPolling,
         FlightDelete
     };
@@ -69,6 +76,8 @@ private:
     QString                 _pilotID;               ///< Pilot ID in the form "auth0|abc123"
     MissionController*      _controller = nullptr;
     bool                    _createPlan = true;
+    QDateTime               _flightStartTime;
+    QDateTime               _flightEndTime;
 
     AirspaceFlightPlanProvider::PermitStatus _flightPermitStatus = AirspaceFlightPlanProvider::PermitUnknown;
 
