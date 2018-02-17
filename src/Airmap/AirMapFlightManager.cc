@@ -186,15 +186,17 @@ void AirMapFlightManager::_uploadFlight()
         params.pilot.id     = _pilotID.toStdString();
         params.start_time   = Clock::universal_time() + Minutes{5};
         params.end_time     = Clock::universal_time() + Hours{2}; // TODO: user-configurable?
-
         //-- Rules
         AirMapRulesetsManager* pRulesMgr = dynamic_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->ruleSets());
         if(pRulesMgr) {
-            foreach(QString ruleset, pRulesMgr->rulesetsIDs()) {
-                params.rulesets.push_back(ruleset.toStdString());
+            for(int rs = 0; rs < pRulesMgr->ruleSets()->count(); rs++) {
+                AirMapRuleSet* ruleSet = qobject_cast<AirMapRuleSet*>(pRulesMgr->ruleSets()->get(rs));
+                //-- If this ruleset is selected
+                if(ruleSet && ruleSet->selected()) {
+                    params.rulesets.push_back(ruleSet->id().toStdString());
+                }
             }
         }
-
         // geometry: LineString
         Geometry::LineString lineString;
         for (const auto& qcoord : _flight.coords) {

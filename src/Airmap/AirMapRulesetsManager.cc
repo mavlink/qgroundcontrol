@@ -9,8 +9,11 @@
 
 #include "AirMapRulesetsManager.h"
 #include "AirMapManager.h"
+#include <QSettings>
 
 using namespace airmap;
+
+static const char* kAirMapFeatureGroup = "AirMapFeatureGroup";
 
 //-----------------------------------------------------------------------------
 AirMapRuleFeature::AirMapRuleFeature(QObject* parent)
@@ -23,13 +26,27 @@ AirMapRuleFeature::AirMapRuleFeature(airmap::RuleSet::Feature feature, QObject* 
     : AirspaceRuleFeature(parent)
     , _feature(feature)
 {
-    //-- TODO: Read possible saved value from previous runs
+    //-- Restore persisted value (if it exists)
+    QSettings settings;
+    settings.beginGroup(kAirMapFeatureGroup);
+    _value = settings.value(name());
+    settings.endGroup();
 }
 
 //-----------------------------------------------------------------------------
 AirspaceRuleFeature::Type
 AirMapRuleFeature::type()
 {
+    switch(_feature.type) {
+    case RuleSet::Feature::Type::boolean:
+        return AirspaceRuleFeature::Boolean;
+    case RuleSet::Feature::Type::floating_point:
+        return AirspaceRuleFeature::Float;
+    case RuleSet::Feature::Type::string:
+        return AirspaceRuleFeature::String;
+    default:
+        break;
+    }
     return AirspaceRuleFeature::Unknown;
 }
 
@@ -37,6 +54,16 @@ AirMapRuleFeature::type()
 AirspaceRuleFeature::Unit
 AirMapRuleFeature::unit()
 {
+    switch(_feature.unit) {
+    case RuleSet::Feature::Unit::kilograms:
+        return AirspaceRuleFeature::Kilogram;
+    case RuleSet::Feature::Unit::meters:
+        return AirspaceRuleFeature::Meters;
+    case RuleSet::Feature::Unit::meters_per_sec:
+        return AirspaceRuleFeature::MetersPerSecond;
+    default:
+        break;
+    }
     return AirspaceRuleFeature::UnknownUnit;
 }
 
@@ -44,7 +71,30 @@ AirMapRuleFeature::unit()
 AirspaceRuleFeature::Measurement
 AirMapRuleFeature::measurement()
 {
+    switch(_feature.measurement) {
+    case RuleSet::Feature::Measurement::speed:
+        return AirspaceRuleFeature::Speed;
+    case RuleSet::Feature::Measurement::weight:
+        return AirspaceRuleFeature::Weight;
+    case RuleSet::Feature::Measurement::distance:
+        return AirspaceRuleFeature::Distance;
+    default:
+        break;
+    }
     return AirspaceRuleFeature::UnknownMeasurement;
+}
+
+//-----------------------------------------------------------------------------
+void
+AirMapRuleFeature::setValue(const QVariant val)
+{
+    _value = val;
+    //-- Make value persistent
+    QSettings settings;
+    settings.beginGroup(kAirMapFeatureGroup);
+    settings.setValue(name(), _value);
+    settings.endGroup();
+    emit valueChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -96,6 +146,18 @@ AirMapRuleSet::AirMapRuleSet(QObject* parent)
 AirMapRuleSet::~AirMapRuleSet()
 {
     _rules.deleteListAndContents();
+}
+
+//-----------------------------------------------------------------------------
+void
+AirMapRuleSet::setSelected(bool sel)
+{
+    if(_selectionType != AirspaceRuleSet::Required) {
+        _selected = sel;
+    } else {
+        _selected = true;
+    }
+    emit selectedChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -169,16 +231,17 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
                 for (const auto& rule : ruleset.rules) {
                     AirMapRule* pRule = new AirMapRule(rule, this);
                     //-- Iterate Rule Features
-
-                    //-- TODO: Rule features don't make sense as they are
-
+                    for (const auto& feature : rule.features) {
+                        AirMapRuleFeature* pFeature = new AirMapRuleFeature(feature, this);
+                        pRule->_features.append(pFeature);
+                    }
                     pRuleSet->_rules.append(pRule);
                 }
                 //-- Sort rules by display order
                 std::sort(pRuleSet->_rules.objectList()->begin(), pRuleSet->_rules.objectList()->end(), rules_sort);
                 _ruleSets.append(pRuleSet);
-                qCDebug(AirMapManagerLog) << "Adding ruleset" << pRuleSet->name();
                 /*
+                qCDebug(AirMapManagerLog) << "Adding ruleset" << pRuleSet->name();
                 qDebug() << "------------------------------------------";
                 qDebug() << "Jurisdiction:" << ruleset.jurisdiction.name.data() << (int)ruleset.jurisdiction.region;
                 qDebug() << "Name:        " << ruleset.name.data();
@@ -187,20 +250,24 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
                 qDebug() << "Is default:  " << ruleset.is_default;
                 qDebug() << "Applicable to these airspace types:";
                 for (const auto& airspaceType : ruleset.airspace_types) {
-                    qDebug() << airspaceType.data();
+                    qDebug() << "  " << airspaceType.data();
                 }
                 qDebug() << "Rules:";
                 for (const auto& rule : ruleset.rules) {
                     qDebug() << "    --------------------------------------";
-                    qDebug() << "    " << rule.short_text.data();
-                    qDebug() << "    " << rule.description.data();
-                    qDebug() << "    " << rule.display_order;
-                    qDebug() << "    " << (int)rule.status;
-                    qDebug() << "     Features:";
+                    qDebug() << "    short_text:   " << rule.short_text.data();
+                    qDebug() << "    description:  " << rule.description.data();
+                    qDebug() << "    display_order:" << rule.display_order;
+                    qDebug() << "    status:       " << (int)rule.status;
+                    qDebug() << "            ------------------------------";
+                    qDebug() << "            Features:";
                     for (const auto& feature : rule.features) {
-                        qDebug() << "        " << feature.name.data();
-                        qDebug() << "        " << feature.description.data();
-                        qDebug() << "        " << (int)feature.status;
+                        qDebug() << "            name:       " << feature.name.data();
+                        qDebug() << "            description:" << feature.description.data();
+                        qDebug() << "            status:     " << (int)feature.status;
+                        qDebug() << "            type:       " << (int)feature.type;
+                        qDebug() << "            measurement:" << (int)feature.measurement;
+                        qDebug() << "            unit:       " << (int)feature.unit;
                     }
                 }
                 */
@@ -240,18 +307,4 @@ AirMapRulesetsManager::_selectedChanged()
 {
     emit selectedRuleSetsChanged();
     //-- TODO: Do whatever it is you do to select a rule
-}
-
-//-----------------------------------------------------------------------------
-QStringList
-AirMapRulesetsManager::rulesetsIDs()
-{
-    QStringList list;
-    for(int i = 0; i < _ruleSets.count(); i++) {
-        AirMapRuleSet* rule = qobject_cast<AirMapRuleSet*>(_ruleSets.get(i));
-        if(rule && rule->selected()) {
-            list << rule->id();
-        }
-    }
-    return list;
 }
