@@ -29,11 +29,42 @@ AirMapFlightPlanManager::AirMapFlightPlanManager(AirMapSharedState& shared, QObj
     , _shared(shared)
 {
     connect(&_pollTimer, &QTimer::timeout, this, &AirMapFlightPlanManager::_pollBriefing);
+    //-- Set some valid, initial start/end time
+    _flightStartTime = QDateTime::currentDateTime().addSecs(10 * 60);
+    _flightEndTime   = _flightStartTime.addSecs(30 * 60);
 }
 
 //-----------------------------------------------------------------------------
 void
-AirMapFlightPlanManager::createFlight(MissionController* missionController)
+AirMapFlightPlanManager::setFlightStartTime(QDateTime start)
+{
+    if(_flightStartTime != start) {
+        //-- Can't start in the past
+        if(start < QDateTime::currentDateTime()) {
+            start = QDateTime::currentDateTime().addSecs(5 * 60);
+        }
+        _flightStartTime = start;
+        emit flightStartTimeChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+AirMapFlightPlanManager::setFlightEndTime(QDateTime end)
+{
+    if(_flightEndTime != end) {
+        //-- End has to be after start
+        if(end < _flightStartTime) {
+            end = _flightStartTime.addSecs(30 * 60);
+        }
+        _flightEndTime = end;
+        emit flightEndTimeChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+AirMapFlightPlanManager::createFlightPlan(MissionController* missionController)
 {
     if (!_shared.client()) {
         qCDebug(AirMapManagerLog) << "No AirMap client instance. Will not create a flight";
@@ -49,7 +80,8 @@ AirMapFlightPlanManager::createFlight(MissionController* missionController)
     _createPlan = true;
     if(!_controller) {
         _controller = missionController;
-        connect(missionController, &MissionController::missionBoundingCubeChanged, this, &AirMapFlightPlanManager::_missionBoundingCubeChanged);
+        //-- Get notified of mission changes
+        connect(missionController, &MissionController::missionBoundingCubeChanged, this, &AirMapFlightPlanManager::_missionChanged);
     }
 }
 
@@ -72,11 +104,21 @@ AirMapFlightPlanManager::_createFlightPlan()
     _flight.coords.append(QGeoCoordinate(bc.pointSE.latitude(), bc.pointNW.longitude(), _flight.maxAltitude));
     _flight.coords.append(QGeoCoordinate(bc.pointNW.latitude(), bc.pointNW.longitude(), _flight.maxAltitude));
 
-    _flight.maxAltitude += 5; // Add a safety buffer
+    if(_flightStartTime.isNull() || _flightStartTime < QDateTime::currentDateTime()) {
+        _flightStartTime = QDateTime::currentDateTime().addSecs(5 * 60);
+        emit flightStartTimeChanged();
+    }
+
+    if(_flightEndTime.isNull() || _flightEndTime < _flightStartTime) {
+        _flightEndTime = _flightStartTime.addSecs(30 * 60);
+        emit flightEndTimeChanged();
+    }
 
     qCDebug(AirMapManagerLog) << "About to create flight plan";
     qCDebug(AirMapManagerLog) << "Takeoff:     " << _flight.takeoffCoord;
     qCDebug(AirMapManagerLog) << "Bounding box:" << bc.pointNW << bc.pointSE;
+    qCDebug(AirMapManagerLog) << "Flight Start:" << _flightStartTime;
+    qCDebug(AirMapManagerLog) << "Flight End:  " << _flightEndTime;
 
     return;
 
@@ -102,6 +144,7 @@ AirMapFlightPlanManager::_createFlightPlan()
                     _state = State::Idle;
                     QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
                     emit error("Failed to create Flight Plan", QString::fromStdString(result.error().message()), description);
+                    return;
                 }
             });
         });
@@ -129,8 +172,16 @@ AirMapFlightPlanManager::_uploadFlightPlan()
         params.latitude     = _flight.takeoffCoord.latitude();
         params.longitude    = _flight.takeoffCoord.longitude();
         params.pilot.id     = _pilotID.toStdString();
+        /*
+
+        TODO: Convert this to fucking boost
+
+        quint64 start = _flightStartTime.toUTC().toMSecsSinceEpoch();
+        quint64 end   = _flightEndTime.toUTC().toMSecsSinceEpoch();
+
+        */
         params.start_time   = Clock::universal_time() + Minutes{5};
-        params.end_time     = Clock::universal_time() + Hours{2}; // TODO: user-configurable?
+        params.end_time     = Clock::universal_time() + Hours{2};
         //-- Rules
         AirMapRulesetsManager* pRulesMgr = dynamic_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->ruleSets());
         if(pRulesMgr) {
@@ -155,6 +206,70 @@ AirMapFlightPlanManager::_uploadFlightPlan()
             if (result) {
                 _flightPlan = QString::fromStdString(result.value().id);
                 qCDebug(AirMapManagerLog) << "Flight plan created:" << _flightPlan;
+                _state = State::FlightPolling;
+                _pollBriefing();
+            } else {
+                QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+                emit error("Flight Plan creation failed", QString::fromStdString(result.error().message()), description);
+            }
+        });
+    });
+}
+
+//-----------------------------------------------------------------------------
+void
+AirMapFlightPlanManager::_updateFlightPlan()
+{
+    qCDebug(AirMapManagerLog) << "Updating flight plan";
+    _state = State::FlightUpdate;
+    std::weak_ptr<LifetimeChecker> isAlive(_instance);
+    _shared.doRequestWithLogin([this, isAlive](const QString& login_token) {
+        if (!isAlive.lock()) return;
+        if (_state != State::FlightUpdate) return;
+        FlightPlans::Update::Parameters params;
+        params.authorization  = login_token.toStdString();
+        params.flight_plan.id = _flightPlan.toStdString();
+        params.flight_plan.pilot.id = _pilotID.toStdString();
+        //-- TODO: This is broken as the parameters for updating the plan have
+        //   little to do with those used when creating it.
+        params.flight_plan.altitude_agl.max = _flight.maxAltitude;
+        params.flight_plan.buffer = 2.f;
+        params.flight_plan.takeoff.latitude  = _flight.takeoffCoord.latitude();
+        params.flight_plan.takeoff.longitude = _flight.takeoffCoord.longitude();
+        /*
+
+        TODO: Convert this to fucking boost
+
+        quint64 start = _flightStartTime.toUTC().toMSecsSinceEpoch();
+        quint64 end   = _flightEndTime.toUTC().toMSecsSinceEpoch();
+
+        */
+        params.flight_plan.start_time   = Clock::universal_time() + Minutes{5};
+        params.flight_plan.end_time     = Clock::universal_time() + Hours{2};
+        //-- Rules
+        /*
+        AirMapRulesetsManager* pRulesMgr = dynamic_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->ruleSets());
+        if(pRulesMgr) {
+            foreach(QString ruleset, pRulesMgr->rulesetsIDs()) {
+                params.flight_plan.rulesets.push_back(ruleset.toStdString());
+            }
+        }
+        */
+        //-- Geometry: LineString
+        Geometry::LineString lineString;
+        for (const auto& qcoord : _flight.coords) {
+            Geometry::Coordinate coord;
+            coord.latitude  = qcoord.latitude();
+            coord.longitude = qcoord.longitude();
+            lineString.coordinates.push_back(coord);
+        }
+        params.flight_plan.geometry = Geometry(lineString);
+        //-- Update flight plan
+        _shared.client()->flight_plans().update(params, [this, isAlive](const FlightPlans::Update::Result& result) {
+            if (!isAlive.lock()) return;
+            if (_state != State::FlightUpdate) return;
+            if (result) {
+                qCDebug(AirMapManagerLog) << "Flight plan updated:" << _flightPlan;
                 _state = State::FlightPolling;
                 _pollBriefing();
             } else {
@@ -259,7 +374,7 @@ AirMapFlightPlanManager::_deleteFlightPlan()
 
 //-----------------------------------------------------------------------------
 void
-AirMapFlightPlanManager::_missionBoundingCubeChanged()
+AirMapFlightPlanManager::_missionChanged()
 {
     //-- Creating a new flight plan?
     if(_createPlan) {
@@ -267,7 +382,5 @@ AirMapFlightPlanManager::_missionBoundingCubeChanged()
         _createFlightPlan();
     }
     //-- Plan is being modified
-
-
-
+    // _updateFlightPlan();
 }

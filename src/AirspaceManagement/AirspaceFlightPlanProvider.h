@@ -15,6 +15,7 @@
  */
 
 #include <QObject>
+#include <QDateTime>
 
 class MissionController;
 
@@ -33,15 +34,24 @@ public:
 
     Q_ENUM(PermitStatus)
 
-    AirspaceFlightPlanProvider              (QObject *parent = nullptr);
-    virtual ~AirspaceFlightPlanProvider     () {}
+    AirspaceFlightPlanProvider                  (QObject *parent = nullptr);
+    virtual ~AirspaceFlightPlanProvider         () {}
 
-    Q_PROPERTY(PermitStatus  flightPermitStatus     READ flightPermitStatus  NOTIFY flightPermitStatusChanged)   ///< state of flight permission
+    Q_PROPERTY(PermitStatus  flightPermitStatus     READ flightPermitStatus                             NOTIFY flightPermitStatusChanged)   ///< State of flight permission
+    Q_PROPERTY(QDateTime     flightStartTime        READ flightStartTime    WRITE  setFlightStartTime   NOTIFY flightStartTimeChanged)      ///< Start of flight
+    Q_PROPERTY(QDateTime     flightEndTime          READ flightEndTime      WRITE  setFlightEndTime     NOTIFY flightEndTimeChanged)        ///< End of flight
 
-    virtual PermitStatus flightPermitStatus () const { return PermitUnknown; }
-    virtual void         createFlight       (MissionController* missionController) = 0;
+    virtual PermitStatus    flightPermitStatus  () const { return PermitUnknown; }
+    virtual QDateTime       flightStartTime     () const = 0;
+    virtual QDateTime       flightEndTime       () const = 0;
+
+    virtual void            setFlightStartTime  (QDateTime start) = 0;
+    virtual void            setFlightEndTime    (QDateTime end) = 0;
+    virtual void            createFlightPlan    (MissionController* missionController) = 0;
 
 
 signals:
-    void flightPermitStatusChanged          ();
+    void flightPermitStatusChanged              ();
+    void flightStartTimeChanged                 ();
+    void flightEndTimeChanged                   ();
 };

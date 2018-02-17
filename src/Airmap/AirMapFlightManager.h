@@ -20,6 +20,18 @@
 
 class MissionItem;
 
+
+
+/*
+ * TODO: This is here for reference. It will have to modifed quite a bit before it
+ * can be used. This was the original file that combined both the creation of a
+ * flight plan and immediate submission of a flight. The flight plan is now handled
+ * by its own class. This now needs to be made into a proper "Flight Manager".
+*/
+
+
+
+
 //-----------------------------------------------------------------------------
 /// class to upload a flight
 class AirMapFlightManager : public QObject, public LifetimeChecker
