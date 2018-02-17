@@ -194,8 +194,36 @@ AirMapFlightPlanManager::_uploadFlightPlan()
         //-- Rules
         AirMapRulesetsManager* pRulesMgr = dynamic_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->ruleSets());
         if(pRulesMgr) {
-            foreach(QString ruleset, pRulesMgr->rulesetsIDs()) {
-                params.rulesets.push_back(ruleset.toStdString());
+            for(int rs = 0; rs < pRulesMgr->ruleSets()->count(); rs++) {
+                AirMapRuleSet* ruleSet = qobject_cast<AirMapRuleSet*>(pRulesMgr->ruleSets()->get(rs));
+                //-- If this ruleset is selected
+                if(ruleSet && ruleSet->selected()) {
+                    params.rulesets.push_back(ruleSet->id().toStdString());
+                    //-- Features within each rule
+                    for(int r = 0; r < ruleSet->rules()->count(); r++) {
+                        AirMapRule* rule = qobject_cast<AirMapRule*>(ruleSet->rules()->get(r));
+                        if(rule) {
+                            for(int f = 0; f < rule->features()->count(); f++) {
+                                AirMapRuleFeature* feature = qobject_cast<AirMapRuleFeature*>(rule->features()->get(f));
+                                if(feature && feature->value().isValid()) {
+                                    switch(feature->type()) {
+                                    case AirspaceRuleFeature::Boolean:
+                                        params.features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toBool());
+                                        break;
+                                    case AirspaceRuleFeature::Float:
+                                        params.features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toFloat());
+                                        break;
+                                    case AirspaceRuleFeature::String:
+                                        params.features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toString().toStdString());
+                                        break;
+                                    default:
+                                        qCWarning(AirMapManagerLog) << "Unknown type for feature" << feature->name();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
         //-- Geometry: LineString

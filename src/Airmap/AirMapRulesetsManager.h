@@ -39,7 +39,7 @@ public:
     QString         name            () override { return QString::fromStdString(_feature.name);  }
     QString         description     () override { return QString::fromStdString(_feature.description);  }
     QVariant        value           () override { return _value; }
-    void            setValue        (const QVariant val) override { _value = val; emit valueChanged(); }
+    void            setValue        (const QVariant val) override;
 private:
     airmap::RuleSet::Feature _feature;
     QVariant _value;
@@ -49,6 +49,7 @@ private:
 class AirMapRule : public AirspaceRule
 {
     Q_OBJECT
+    friend class AirMapRulesetsManager;
 public:
 
     AirMapRule  (QObject* parent = NULL);
@@ -82,7 +83,7 @@ public:
     QString         shortName       () override { return _shortName; }
     SelectionType   selectionType   () override { return _selectionType; }
     bool            selected        () override { return _selected; }
-    void            setSelected     (bool sel) override { _selected = sel; emit selectedChanged(); }
+    void            setSelected     (bool sel) override;
     QmlObjectListModel* rules       () override { return &_rules; }
 private:
     QString             _id;
@@ -104,13 +105,9 @@ public:
 
     bool                valid       () override { return _valid; }
     QmlObjectListModel* ruleSets    () override { return &_ruleSets; }
-    QmlObjectListModel* features    () override { return &_features; }
     QString         selectedRuleSets() override;
 
     void                setROI      (const QGeoCoordinate& center) override;
-
-    //-- Selected rules
-    QStringList         rulesetsIDs ();
 
 signals:
     void        error               (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
@@ -127,8 +124,6 @@ private:
     State                           _state = State::Idle;
     AirMapSharedState&              _shared;
     QmlObjectListModel              _ruleSets;
-    //-- TODO: Connect to AirMapRuleSet::selectedChanged and rebuild features based on it.
-    QmlObjectListModel              _features;
 };
 
 
