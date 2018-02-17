@@ -39,11 +39,11 @@ public:
 
     Q_PROPERTY(bool                 valid           READ valid          NOTIFY advisoryChanged)
     Q_PROPERTY(AdvisoryColor        airspaceColor   READ airspaceColor  NOTIFY advisoryChanged)
-    Q_PROPERTY(QmlObjectListModel*  airspaces       READ airspaces      NOTIFY advisoryChanged)
+    Q_PROPERTY(QmlObjectListModel*  advisories      READ advisories     NOTIFY advisoryChanged)
 
     virtual bool                valid           () = 0;     ///< Current data is valid
     virtual AdvisoryColor       airspaceColor   () = 0;     ///< Aispace overall color
-    virtual QmlObjectListModel* airspaces       () = 0;     ///< List of AirspaceAdvisory
+    virtual QmlObjectListModel* advisories      () = 0;     ///< List of AirspaceAdvisory
 
     /**
      * Set region of interest that should be queried. When finished, the advisoryChanged() signal will be emmited.

@@ -166,7 +166,7 @@ Item {
                             color:              _textColor
                         }
                         QGCLabel {
-                            text:               _validAdvisories ? QGroundControl.airspaceManager.advisories.airspaces.count + qsTr(" Advisories") : ""
+                            text:               _validAdvisories ? QGroundControl.airspaceManager.advisories.advisories.count + qsTr(" Advisories") : ""
                             color:              _textColor
                             visible:            _validAdvisories
                             font.pointSize:     ScreenTools.smallFontPointSize
@@ -317,7 +317,7 @@ Item {
                             anchors.right:  parent.right
                             anchors.left:   parent.left
                             Repeater {
-                                model:      _validAdvisories ? QGroundControl.airspaceManager.advisories.airspaces : []
+                                model:      _validAdvisories ? QGroundControl.airspaceManager.advisories.advisories : []
                                 delegate: AirspaceRegulation {
                                     regTitle:            object.typeStr
                                     regText:             object.name
