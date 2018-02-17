@@ -36,6 +36,13 @@ AirMapFlightPlanManager::AirMapFlightPlanManager(AirMapSharedState& shared, QObj
 }
 
 //-----------------------------------------------------------------------------
+AirMapFlightPlanManager::~AirMapFlightPlanManager()
+{
+    _advisories.deleteListAndContents();
+    _rulesets.deleteListAndContents();
+}
+
+//-----------------------------------------------------------------------------
 void
 AirMapFlightPlanManager::setFlightStartTime(QDateTime start)
 {
@@ -122,7 +129,7 @@ AirMapFlightPlanManager::_createFlightPlan()
     qCDebug(AirMapManagerLog) << "Flight End:  " << _flightEndTime;
 
     //-- Not Yet
-    return;
+    //return;
 
     if (_pilotID == "") {
         //-- Need to get the pilot id before uploading the flight plan
@@ -294,6 +301,16 @@ adv_sort(QObject* a, QObject* b)
 }
 
 //-----------------------------------------------------------------------------
+static bool
+rules_sort(QObject* a, QObject* b)
+{
+    AirMapRule* aa = qobject_cast<AirMapRule*>(a);
+    AirMapRule* bb = qobject_cast<AirMapRule*>(b);
+    if(!aa || !bb) return false;
+    return (int)aa->status() > (int)bb->status();
+}
+
+//-----------------------------------------------------------------------------
 void
 AirMapFlightPlanManager::_pollBriefing()
 {
@@ -330,6 +347,20 @@ AirMapFlightPlanManager::_pollBriefing()
             std::sort(_advisories.objectList()->begin(), _advisories.objectList()->end(), adv_sort);
             _advisories.endReset();
             _valid = true;
+            //-- Collect Rulesets
+            for(const auto& ruleset : briefing.evaluation.rulesets) {
+                AirMapRuleSet* pRuleSet = new AirMapRuleSet(this);
+                pRuleSet->_id = QString::fromStdString(ruleset.id);
+                //-- Iterate Rules
+                for (const auto& rule : ruleset.rules) {
+                    AirMapRule* pRule = new AirMapRule(rule, this);
+                    pRuleSet->_rules.append(pRule);
+                }
+                //-- Sort rules by relevance order
+                std::sort(pRuleSet->_rules.objectList()->begin(), pRuleSet->_rules.objectList()->end(), rules_sort);
+                _rulesets.append(pRuleSet);
+                qCDebug(AirMapManagerLog) << "Adding briefing ruleset" << pRuleSet->id();
+            }
             emit advisoryChanged();
             //-- Evaluate briefing status
             bool rejected = false;

@@ -24,7 +24,8 @@ class AirMapFlightPlanManager : public AirspaceFlightPlanProvider, public Lifeti
 {
     Q_OBJECT
 public:
-    AirMapFlightPlanManager(AirMapSharedState& shared, QObject *parent = nullptr);
+    AirMapFlightPlanManager     (AirMapSharedState& shared, QObject *parent = nullptr);
+    ~AirMapFlightPlanManager    ();
 
     PermitStatus        flightPermitStatus  () const override { return _flightPermitStatus; }
     QString             flightID            () { return _flightPlan; }
@@ -32,6 +33,7 @@ public:
     QDateTime           flightEndTime       () const override { return _flightEndTime; }
     bool                valid               () override { return _valid; }
     QmlObjectListModel* advisories          () override { return &_advisories; }
+    QmlObjectListModel* ruleSets            () override { return &_rulesets; }
     AirspaceAdvisoryProvider::AdvisoryColor airspaceColor   () override { return _airspaceColor; }
 
     void            createFlightPlan    (MissionController* missionController) override;
@@ -83,6 +85,7 @@ private:
     QDateTime               _flightStartTime;
     QDateTime               _flightEndTime;
     QmlObjectListModel      _advisories;
+    QmlObjectListModel      _rulesets;
 
     AirspaceAdvisoryProvider::AdvisoryColor  _airspaceColor;
     AirspaceFlightPlanProvider::PermitStatus _flightPermitStatus = AirspaceFlightPlanProvider::PermitUnknown;

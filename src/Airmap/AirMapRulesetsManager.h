@@ -51,16 +51,19 @@ class AirMapRule : public AirspaceRule
     Q_OBJECT
 public:
 
-    AirMapRule(QObject* parent = NULL);
-    AirMapRule(const airmap::RuleSet::Rule& rule, QObject* parent = NULL);
+    AirMapRule  (QObject* parent = NULL);
+    AirMapRule  (const airmap::RuleSet::Rule& rule, QObject* parent = NULL);
+    ~AirMapRule ();
 
-    int             order           () { return (int)_rule.display_order; }
-    Status          status          () override;
-    QString         shortText       () override { return QString::fromStdString(_rule.short_text);  }
-    QString         description     () override { return QString::fromStdString(_rule.description); }
+    int                 order           () { return (int)_rule.display_order; }
+    Status              status          () override;
+    QString             shortText       () override { return QString::fromStdString(_rule.short_text);  }
+    QString             description     () override { return QString::fromStdString(_rule.description); }
+    QmlObjectListModel* features        () override { return &_features; }
 
 private:
     airmap::RuleSet::Rule _rule;
+    QmlObjectListModel    _features;
 };
 
 //-----------------------------------------------------------------------------
@@ -68,6 +71,7 @@ class AirMapRuleSet : public AirspaceRuleSet
 {
     Q_OBJECT
     friend class AirMapRulesetsManager;
+    friend class AirMapFlightPlanManager;
 public:
     AirMapRuleSet                   (QObject* parent = NULL);
     ~AirMapRuleSet                  ();

@@ -15,6 +15,7 @@
 
 namespace airmap {
 
+class Advisory;
 class Aircrafts;
 class Airspaces;
 class Authenticator;
@@ -101,6 +102,9 @@ class Client : DoNotCopyOrMove {
 
   /// authenticator returns the Authenticator implementation provided by the client.
   virtual Authenticator& authenticator() = 0;
+
+  /// advisory returns the Advisory implementation provided by the client.
+  virtual Advisory& advisory() = 0;
 
   /// aircrafts returns the Aircrafts implementation provided by the client.
   virtual Aircrafts& aircrafts() = 0;

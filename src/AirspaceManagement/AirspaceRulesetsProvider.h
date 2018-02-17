@@ -81,24 +81,26 @@ class AirspaceRule : public QObject
 public:
 
     enum Status {
-        Unknown,                ///< The status of the rule is unknown.
         Conflicting,            ///< The rule is conflicting.
-        NotConflicting,         ///< The rule is not conflicting, all good to go.
         MissingInfo,            ///< The evaluation requires further information.
-        Informational           ///< The rule is of informational nature.
+        NotConflicting,         ///< The rule is not conflicting, all good to go.
+        Informational,          ///< The rule is of informational nature.
+        Unknown,                ///< The status of the rule is unknown.
     };
 
     Q_ENUM(Status)
 
     AirspaceRule(QObject* parent = NULL);
 
-    Q_PROPERTY(Status           status          READ status         CONSTANT)
-    Q_PROPERTY(QString          shortText       READ shortText      CONSTANT)
-    Q_PROPERTY(QString          description     READ description    CONSTANT)
+    Q_PROPERTY(Status               status          READ status         CONSTANT)
+    Q_PROPERTY(QString              shortText       READ shortText      CONSTANT)
+    Q_PROPERTY(QString              description     READ description    CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  features        READ features       CONSTANT)
 
-    virtual Status          status          () = 0;
-    virtual QString         shortText       () = 0;
-    virtual QString         description     () = 0;
+    virtual Status              status          () = 0;
+    virtual QString             shortText       () = 0;
+    virtual QString             description     () = 0;
+    virtual QmlObjectListModel* features        () = 0;     ///< List of AirspaceRuleFeature
 };
 
 //-----------------------------------------------------------------------------
