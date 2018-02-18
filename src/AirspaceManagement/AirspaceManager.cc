@@ -70,30 +70,29 @@ void AirspaceManager::setToolbox(QGCToolbox* toolbox)
     _flightPlan         = _instantiateAirspaceFlightPlanProvider();
 }
 
-void AirspaceManager::setROI(QGeoCoordinate center, double radiusMeters)
+void AirspaceManager::setROI(const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE)
 {
-    _setROI(center, radiusMeters);
+    _setROI(QGCGeoBoundingCube(pointNW, pointSE));
 }
 
-void AirspaceManager::_setROI(const QGeoCoordinate& center, double radiusMeters)
+void AirspaceManager::_setROI(const QGCGeoBoundingCube& roi)
 {
-    _roiCenter = center;
-    _roiRadius = radiusMeters;
+    _roi = roi;
     _roiUpdateTimer.start();
 }
 
 void AirspaceManager::_updateToROI()
 {
     if(_airspaces) {
-        _airspaces->setROI(_roiCenter, _roiRadius);
+        _airspaces->setROI(_roi);
     }
     if(_ruleSetsProvider) {
-        _ruleSetsProvider->setROI(_roiCenter);
+        _ruleSetsProvider->setROI(_roi);
     }
     if(_weatherProvider) {
-        _weatherProvider->setROI(_roiCenter);
+        _weatherProvider->setROI(_roi);
     }
     if (_advisories) {
-        _advisories->setROI(_roiCenter, _roiRadius);
+        _advisories->setROI(_roi);
     }
 }

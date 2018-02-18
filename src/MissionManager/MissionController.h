@@ -16,7 +16,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 #include "MavlinkQmlSingleton.h"
-#include "QGCGeo.h"
+#include "QGCGeoBoundingCube.h"
 
 #include <QHash>
 

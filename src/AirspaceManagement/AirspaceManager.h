@@ -26,6 +26,7 @@
 #include "QGCToolbox.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
+#include "QGCGeoBoundingCube.h"
 
 #include <QGeoCoordinate>
 #include <QObject>
@@ -63,7 +64,7 @@ public:
     Q_PROPERTY(AirspaceFlightPlanProvider*  flightPlan          READ flightPlan         CONSTANT)
     Q_PROPERTY(bool                         airspaceVisible     READ airspaceVisible    WRITE setAirspaceVisible    NOTIFY airspaceVisibleChanged)
 
-    Q_INVOKABLE void setROI                     (QGeoCoordinate center, double radius);
+    Q_INVOKABLE void setROI                     (const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE);
 
     AirspaceWeatherInfoProvider* weatherInfo    () { return _weatherProvider; }
     AirspaceAdvisoryProvider*    advisories     () { return _advisories; }
@@ -92,7 +93,7 @@ protected:
      * @param center Center coordinate for ROI
      * @param radiusMeters Radius in meters around center which is of interest
      */
-    virtual void                            _setROI                                 (const QGeoCoordinate& center, double radiusMeters);
+    virtual void                            _setROI                                 (const QGCGeoBoundingCube& roi);
 
     /**
      * Factory methods
@@ -111,8 +112,7 @@ protected:
     AirspaceRestrictionProvider*    _airspaces              = nullptr; ///< Airspace info
     AirspaceFlightPlanProvider*     _flightPlan             = nullptr; ///< Flight plan management
     QTimer                          _roiUpdateTimer;
-    QGeoCoordinate                  _roiCenter;
-    double                          _roiRadius;
+    QGCGeoBoundingCube              _roi;
 
 private:
     void _updateToROI   ();

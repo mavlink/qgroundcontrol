@@ -13,6 +13,7 @@
 
 #include "AirspaceWeatherInfoProvider.h"
 #include "AirMapSharedState.h"
+#include "QGCGeoBoundingCube.h"
 
 #include <QGeoCoordinate>
 #include <QTime>
@@ -41,7 +42,7 @@ public:
     quint32     visibility      () override { return _weather.visibility; }
     quint32     precipitation   () override { return _weather.precipitation; }
 
-    void        setROI          (const QGeoCoordinate& center) override;
+    void        setROI          (const QGCGeoBoundingCube& roi) override;
 
 signals:
     void        error           (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);

@@ -12,6 +12,7 @@
 #include "LifetimeChecker.h"
 #include "AirspaceRestrictionProvider.h"
 #include "AirMapSharedState.h"
+#include "QGCGeoBoundingCube.h"
 
 #include <QList>
 #include <QGeoCoordinate>
@@ -30,13 +31,13 @@ public:
     AirMapRestrictionManager            (AirMapSharedState& shared);
     QmlObjectListModel* polygons        () override { return &_polygons; }
     QmlObjectListModel* circles         () override { return &_circles; }
-    void                setROI          (const QGeoCoordinate& center, double radiusMeters) override;
+    void                setROI          (const QGCGeoBoundingCube &roi) override;
 
 signals:
     void error                          (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
 
 private:
-    void            _requestRestrictions(const QGeoCoordinate& center, double radiusMeters);
+    void            _requestRestrictions(const QGCGeoBoundingCube& roi);
     void            _addPolygonToList   (const airmap::Geometry::Polygon& polygon);
 
     enum class State {
@@ -45,8 +46,7 @@ private:
     };
 
     AirMapSharedState&  _shared;
-    double              _lastRadius;
-    QGeoCoordinate      _lastRoiCenter;
+    QGCGeoBoundingCube  _lastROI;
     State               _state = State::Idle;
     QmlObjectListModel  _polygons;
     QmlObjectListModel  _circles;

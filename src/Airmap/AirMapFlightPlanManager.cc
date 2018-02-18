@@ -106,12 +106,7 @@ AirMapFlightPlanManager::_createFlightPlan()
     QGCGeoBoundingCube bc = _controller->travelBoundingCube();
     _flight.maxAltitude   = fmax(bc.pointNW.altitude(), bc.pointSE.altitude());
     _flight.takeoffCoord  = _controller->takeoffCoordinate();
-    _flight.coords.append(QGeoCoordinate(bc.pointNW.latitude(), bc.pointNW.longitude(), _flight.maxAltitude));
-    _flight.coords.append(QGeoCoordinate(bc.pointNW.latitude(), bc.pointSE.longitude(), _flight.maxAltitude));
-    _flight.coords.append(QGeoCoordinate(bc.pointSE.latitude(), bc.pointSE.longitude(), _flight.maxAltitude));
-    _flight.coords.append(QGeoCoordinate(bc.pointSE.latitude(), bc.pointNW.longitude(), _flight.maxAltitude));
-    _flight.coords.append(QGeoCoordinate(bc.pointNW.latitude(), bc.pointNW.longitude(), _flight.maxAltitude));
-
+    _flight.coords        = bc.polygon2D();
     if(_flightStartTime.isNull() || _flightStartTime < QDateTime::currentDateTime()) {
         _flightStartTime = QDateTime::currentDateTime().addSecs(5 * 60);
         emit flightStartTimeChanged();
@@ -382,6 +377,11 @@ AirMapFlightPlanManager::_pollBriefing()
                 //-- Iterate Rules
                 for (const auto& rule : ruleset.rules) {
                     AirMapRule* pRule = new AirMapRule(rule, this);
+                    //-- Iterate Rule Features
+                    for (const auto& feature : rule.features) {
+                        AirMapRuleFeature* pFeature = new AirMapRuleFeature(feature, this);
+                        pRule->_features.append(pFeature);
+                    }
                     pRuleSet->_rules.append(pRule);
                 }
                 //-- Sort rules by relevance order

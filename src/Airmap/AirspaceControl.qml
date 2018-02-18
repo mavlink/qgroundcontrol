@@ -86,10 +86,19 @@ Item {
                 color:                  _textColor
                 anchors.verticalCenter: parent.verticalCenter
             }
-            QGCLabel {
-                text:                   qsTr("Airspace")
-                color:                  _textColor
+            Column {
+                spacing:                0
                 anchors.verticalCenter: parent.verticalCenter
+                QGCLabel {
+                    text:               qsTr("Airspace")
+                    color:              _textColor
+                }
+                QGCLabel {
+                    text:               _validAdvisories ? QGroundControl.airspaceManager.advisories.advisories.count + qsTr(" Advisories") : ""
+                    color:              _textColor
+                    visible:            _validAdvisories
+                    font.pointSize:     ScreenTools.smallFontPointSize
+                }
             }
             Item {
                 width:  ScreenTools.defaultFontPixelWidth

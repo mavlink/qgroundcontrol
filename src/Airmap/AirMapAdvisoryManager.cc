@@ -22,7 +22,6 @@ using namespace airmap;
 //-----------------------------------------------------------------------------
 AirMapAdvisory::AirMapAdvisory(QObject* parent)
     : AirspaceAdvisory(parent)
-    , _radius(0.0)
 {
 }
 
@@ -30,19 +29,17 @@ AirMapAdvisory::AirMapAdvisory(QObject* parent)
 AirMapAdvisoryManager::AirMapAdvisoryManager(AirMapSharedState& shared, QObject *parent)
     : AirspaceAdvisoryProvider(parent)
     , _valid(false)
-    , _lastRadius(0.0)
     , _shared(shared)
 {
 }
 
 //-----------------------------------------------------------------------------
 void
-AirMapAdvisoryManager::setROI(const QGeoCoordinate& center, double radiusMeters)
+AirMapAdvisoryManager::setROI(const QGCGeoBoundingCube& roi)
 {
     //-- If first time or we've moved more than ADVISORY_UPDATE_DISTANCE, ask for updates.
-    if(!_lastRoiCenter.isValid() || _lastRoiCenter.distanceTo(center) > ADVISORY_UPDATE_DISTANCE || _lastRadius != radiusMeters) {
-        _lastRadius    = radiusMeters;
-        _lastRoiCenter = center;
+    if(!_lastROI.isValid() || _lastROI.pointNW.distanceTo(roi.pointNW) > ADVISORY_UPDATE_DISTANCE || _lastROI.pointSE.distanceTo(roi.pointSE) > ADVISORY_UPDATE_DISTANCE) {
+        _lastROI = roi;
         _requestAdvisories();
     }
 }
@@ -71,11 +68,13 @@ AirMapAdvisoryManager::_requestAdvisories()
     _valid = false;
     _advisories.clearAndDeleteContents();
     Status::GetStatus::Parameters params;
-    params.longitude = _lastRoiCenter.longitude();
-    params.latitude  = _lastRoiCenter.latitude();
+    params.longitude = _lastROI.center().longitude();
+    params.latitude  = _lastROI.center().latitude();
     params.types     = Airspace::Type::all;
     params.weather   = false;
-    params.buffer    = _lastRadius;
+    double diagonal  = _lastROI.pointNW.distanceTo(_lastROI.pointSE);
+    params.buffer    = fmax(fmin(diagonal, 10000.0), 500.0);
+    params.flight_date_time = Clock::universal_time();
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->status().get_status_by_point(params, [this, isAlive](const Status::GetStatus::Result& result) {
         if (!isAlive.lock()) return;

@@ -23,17 +23,17 @@ AirMapWeatherInfoManager::AirMapWeatherInfoManager(AirMapSharedState& shared, QO
 }
 
 void
-AirMapWeatherInfoManager::setROI(const QGeoCoordinate& center)
+AirMapWeatherInfoManager::setROI(const QGCGeoBoundingCube& roi)
 {
     //-- If first time or we've moved more than WEATHER_UPDATE_DISTANCE, ask for weather updates.
-    if(!_lastRoiCenter.isValid() || _lastRoiCenter.distanceTo(center) > WEATHER_UPDATE_DISTANCE) {
-        _lastRoiCenter = center;
-        _requestWeatherUpdate(center);
+    if(!_lastRoiCenter.isValid() || _lastRoiCenter.distanceTo(roi.center()) > WEATHER_UPDATE_DISTANCE) {
+        _lastRoiCenter = roi.center();
+        _requestWeatherUpdate(_lastRoiCenter);
         _weatherTime.start();
     } else {
         //-- Check weather once every WEATHER_UPDATE_TIME
         if(_weatherTime.elapsed() > WEATHER_UPDATE_TIME) {
-            _requestWeatherUpdate(center);
+            _requestWeatherUpdate(roi.center());
             _weatherTime.start();
         }
     }
