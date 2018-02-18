@@ -3114,7 +3114,7 @@ but also ignore less noise</short_desc>
       <min>0</min>
       <max>300</max>
       <unit>s</unit>
-      <scope>drivers/iridiumsbd</scope>
+      <scope>drivers/telemetry/iridiumsbd</scope>
     </parameter>
   </group>
   <group name="Land Detector">
@@ -3655,17 +3655,41 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <reboot_required>true</reboot_required>
       <scope>modules/mavlink</scope>
     </parameter>
-    <parameter default="1" name="MAV_TEST_PAR" type="INT32">
-      <short_desc>Test parameter</short_desc>
-      <long_desc>This parameter is not actively used by the system. Its purpose is to allow testing the parameter interface on the communication level.</long_desc>
-      <min>-1000</min>
-      <max>1000</max>
-      <scope>modules/mavlink</scope>
-    </parameter>
     <parameter default="2" name="MAV_TYPE" type="INT32">
       <short_desc>MAVLink airframe type</short_desc>
       <min>1</min>
+      <max>27</max>
       <scope>modules/mavlink</scope>
+      <values>
+        <value code="0">Generic micro air vehicle</value>
+        <value code="1">Fixed wing aircraft</value>
+        <value code="2">Quadrotor</value>
+        <value code="3">Coaxial helicopter</value>
+        <value code="4">Normal helicopter with tail rotor</value>
+        <value code="5">Ground installation</value>
+        <value code="6">Operator control unit / ground control station</value>
+        <value code="7">Airship, controlled</value>
+        <value code="8">Free balloon, uncontrolled</value>
+        <value code="9">Rocket</value>
+        <value code="10">Ground rover</value>
+        <value code="11">Surface vessel, boat, ship</value>
+        <value code="12">Submarine</value>
+        <value code="13">Hexarotor</value>
+        <value code="14">Octorotor</value>
+        <value code="15">Tricopter</value>
+        <value code="16">Flapping wing</value>
+        <value code="17">Kite</value>
+        <value code="18">Onboard companion controller</value>
+        <value code="19">Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter.</value>
+        <value code="20">Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter.</value>
+        <value code="21">Tiltrotor VTOL</value>
+        <value code="22">VTOL reserved 2</value>
+        <value code="23">VTOL reserved 3</value>
+        <value code="24">VTOL reserved 4</value>
+        <value code="25">VTOL reserved 5</value>
+        <value code="26">Onboard gimbal</value>
+        <value code="27">Onboard ADSB peripheral</value>
+      </values>
     </parameter>
     <parameter default="0" name="MAV_USEHILGPS" type="INT32">
       <short_desc>Use/Accept HIL GPS message even if not in HIL mode</short_desc>
@@ -3929,6 +3953,15 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="5">Terminate</value>
         <value code="6">Lockdown</value>
       </values>
+    </parameter>
+    <parameter default="120.0" name="NAV_RCL_LT" type="FLOAT">
+      <short_desc>RC Loss Loiter Time (CASA Outback Challenge rules)</short_desc>
+      <long_desc>The amount of time in seconds the system should loiter at current position before termination. Only applies if NAV_RCL_ACT is set to 2 (CASA Outback Challenge rules). Set to -1 to make the system skip loitering.</long_desc>
+      <min>-1.0</min>
+      <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+      <scope>modules/navigator</scope>
     </parameter>
     <parameter default="1" name="NAV_TRAFF_AVOID" type="INT32">
       <short_desc>Set traffic avoidance mode</short_desc>
@@ -4503,6 +4536,7 @@ the vehicle will accelerate at this rate until the normal position control speed
 is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
       <long_desc>Applies only in AUTO modes (includes also RTL / hold / etc.)</long_desc>
       <min>1.0</min>
+      <max>20.0</max>
       <unit>m/s</unit>
       <decimal>2</decimal>
       <increment>1</increment>
@@ -5568,6 +5602,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC10_TRIM" type="FLOAT">
       <short_desc>RC channel 10 trim</short_desc>
@@ -5606,6 +5644,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC11_TRIM" type="FLOAT">
       <short_desc>RC channel 11 trim</short_desc>
@@ -5644,6 +5686,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC12_TRIM" type="FLOAT">
       <short_desc>RC channel 12 trim</short_desc>
@@ -5682,6 +5728,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC13_TRIM" type="FLOAT">
       <short_desc>RC channel 13 trim</short_desc>
@@ -5720,6 +5770,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC14_TRIM" type="FLOAT">
       <short_desc>RC channel 14 trim</short_desc>
@@ -5758,6 +5812,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC15_TRIM" type="FLOAT">
       <short_desc>RC channel 15 trim</short_desc>
@@ -5796,6 +5854,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC16_TRIM" type="FLOAT">
       <short_desc>RC channel 16 trim</short_desc>
@@ -5834,6 +5896,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC17_TRIM" type="FLOAT">
       <short_desc>RC channel 17 trim</short_desc>
@@ -5872,6 +5938,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC18_TRIM" type="FLOAT">
       <short_desc>RC channel 18 trim</short_desc>
@@ -5911,6 +5981,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500.0" name="RC1_TRIM" type="FLOAT">
       <short_desc>RC channel 1 trim</short_desc>
@@ -5950,6 +6024,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500.0" name="RC2_TRIM" type="FLOAT">
       <short_desc>RC channel 2 trim</short_desc>
@@ -5989,6 +6067,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC3_TRIM" type="FLOAT">
       <short_desc>RC channel 3 trim</short_desc>
@@ -6028,6 +6110,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC4_TRIM" type="FLOAT">
       <short_desc>RC channel 4 trim</short_desc>
@@ -6066,6 +6152,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC5_TRIM" type="FLOAT">
       <short_desc>RC channel 5 trim</short_desc>
@@ -6104,6 +6194,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC6_TRIM" type="FLOAT">
       <short_desc>RC channel 6 trim</short_desc>
@@ -6142,6 +6236,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC7_TRIM" type="FLOAT">
       <short_desc>RC channel 7 trim</short_desc>
@@ -6180,6 +6278,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC8_TRIM" type="FLOAT">
       <short_desc>RC channel 8 trim</short_desc>
@@ -6218,6 +6320,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-1.0</min>
       <max>1.0</max>
       <scope>modules/sensors</scope>
+      <values>
+        <value code="-1.0">Reverse</value>
+        <value code="1.0">Normal</value>
+      </values>
     </parameter>
     <parameter default="1500" name="RC9_TRIM" type="FLOAT">
       <short_desc>RC channel 9 trim</short_desc>
@@ -6243,14 +6349,14 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="10.0" name="RC_FLT_CUTOFF" type="FLOAT">
-      <short_desc>Cutoff frequency for the low pass filter on roll,pitch, yaw and throttle</short_desc>
+      <short_desc>Cutoff frequency for the low pass filter on roll, pitch, yaw and throttle</short_desc>
       <long_desc>Does not get set unless below RC_FLT_SMP_RATE/2 because of filter instability characteristics.</long_desc>
       <min>0.1</min>
       <unit>Hz</unit>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="50.0" name="RC_FLT_SMP_RATE" type="FLOAT">
-      <short_desc>Sample rate of the remote control values for the low pass filter on roll,pitch, yaw and throttle</short_desc>
+      <short_desc>Sample rate of the remote control values for the low pass filter on roll, pitch, yaw and throttle</short_desc>
       <long_desc>Has an influence on the cutoff frequency precision.</long_desc>
       <min>1.0</min>
       <unit>Hz</unit>
@@ -6686,17 +6792,6 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <decimal>2</decimal>
       <increment>0.01</increment>
       <scope>modules/commander</scope>
-    </parameter>
-  </group>
-  <group name="Radio Signal Loss">
-    <parameter default="120.0" name="NAV_RCL_LT" type="FLOAT">
-      <short_desc>Loiter Time</short_desc>
-      <long_desc>The amount of time in seconds the system should loiter at current position before termination Set to -1 to make the system skip loitering</long_desc>
-      <min>-1.0</min>
-      <unit>s</unit>
-      <decimal>1</decimal>
-      <increment>0.1</increment>
-      <scope>modules/navigator</scope>
     </parameter>
   </group>
   <group name="Radio Switches">
@@ -8080,14 +8175,14 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <short_desc>LeddarOne rangefinder</short_desc>
       <boolean />
       <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
+      <scope>drivers/distance_sensor/leddar_one</scope>
     </parameter>
     <parameter default="0" name="SENS_EN_LL40LS" type="INT32">
       <short_desc>Lidar-Lite (LL40LS)</short_desc>
       <min>0</min>
       <max>2</max>
       <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
+      <scope>drivers/distance_sensor/ll40ls</scope>
       <values>
         <value code="0">Disabled</value>
         <value code="1">PWM</value>
@@ -8098,14 +8193,14 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <short_desc>Maxbotix Soanr (mb12xx)</short_desc>
       <boolean />
       <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
+      <scope>drivers/distance_sensor/mb12xx</scope>
     </parameter>
     <parameter default="0" name="SENS_EN_SF0X" type="INT32">
       <short_desc>Lightware laser rangefinder (serial)</short_desc>
       <min>0</min>
       <max>4</max>
       <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
+      <scope>drivers/distance_sensor/sf0x</scope>
       <values>
         <value code="0">Disabled</value>
         <value code="1">SF02</value>
@@ -8120,7 +8215,7 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <min>0</min>
       <max>5</max>
       <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
+      <scope>drivers/distance_sensor/sf1xx</scope>
       <values>
         <value code="0">Disabled</value>
         <value code="1">SF10/a</value>
@@ -8134,7 +8229,7 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <short_desc>Benewake TFmini laser rangefinder</short_desc>
       <boolean />
       <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
+      <scope>drivers/distance_sensor/tfmini</scope>
     </parameter>
     <parameter default="-1" name="SENS_EN_THERMAL" type="INT32">
       <short_desc>Thermal control of sensor temperature</short_desc>
@@ -8149,7 +8244,7 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <min>0</min>
       <max>3</max>
       <reboot_required>true</reboot_required>
-      <scope>modules/sensors</scope>
+      <scope>drivers/distance_sensor/teraranger</scope>
       <values>
         <value code="0">Disabled</value>
         <value code="1">Autodetect</value>
