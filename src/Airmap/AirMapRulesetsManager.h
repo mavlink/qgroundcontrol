@@ -12,6 +12,7 @@
 #include "LifetimeChecker.h"
 #include "AirspaceRulesetsProvider.h"
 #include "AirMapSharedState.h"
+#include "QGCGeoBoundingCube.h"
 
 #include <QGeoCoordinate>
 #include <QStringList>
@@ -50,6 +51,7 @@ class AirMapRule : public AirspaceRule
 {
     Q_OBJECT
     friend class AirMapRulesetsManager;
+    friend class AirMapFlightPlanManager;
 public:
 
     AirMapRule  (QObject* parent = NULL);
@@ -107,7 +109,7 @@ public:
     QmlObjectListModel* ruleSets    () override { return &_ruleSets; }
     QString         selectedRuleSets() override;
 
-    void                setROI      (const QGeoCoordinate& center) override;
+    void                setROI      (const QGCGeoBoundingCube& roi) override;
 
 signals:
     void        error               (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);

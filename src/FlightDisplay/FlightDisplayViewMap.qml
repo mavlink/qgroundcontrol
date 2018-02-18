@@ -57,13 +57,25 @@ FlightMap {
     property bool   _disableVehicleTracking:    false
     property bool   _keepVehicleCentered:       _mainIsMap ? false : true
 
-    // Track last known map position and zoom from Fly view in settings
-    onZoomLevelChanged: QGroundControl.flightMapZoom = zoomLevel
-    onCenterChanged: {
+    function updateAirspace() {
         if(_airspaceEnabled) {
-            QGroundControl.airspaceManager.setROI(center, 1000)
+            var coordinateNW = flightMap.toCoordinate(Qt.point(0,0), false /* clipToViewPort */)
+            var coordinateSE = flightMap.toCoordinate(Qt.point(width,height), false /* clipToViewPort */)
+            if(coordinateNW.isValid && coordinateSE.isValid) {
+                QGroundControl.airspaceManager.setROI(coordinateNW, coordinateSE)
+            }
         }
+    }
+
+    // Track last known map position and zoom from Fly view in settings
+
+    onZoomLevelChanged: {
+        QGroundControl.flightMapZoom = zoomLevel
+        updateAirspace()
+    }
+    onCenterChanged: {
         QGroundControl.flightMapPosition = center
+        updateAirspace()
     }
 
     // When the user pans the map we stop responding to vehicle coordinate updates until the panRecenterTimer fires

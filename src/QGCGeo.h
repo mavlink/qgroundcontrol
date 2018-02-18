@@ -81,46 +81,4 @@ int convertGeoToUTM(const QGeoCoordinate& coord, double& easting, double& northi
 // The function does not return a value.
 void convertUTMToGeo(double easting, double northing, int zone, bool southhemi, QGeoCoordinate& coord);
 
-// A bounding cube
-class QGCGeoBoundingCube {
-public:
-    QGCGeoBoundingCube()
-        : pointNW(QGeoCoordinate(MaxSouth, MaxEast, MaxAlt))
-        , pointSE(QGeoCoordinate(MaxNorth, MaxWest, MinAlt))
-    {
-    }
-    QGCGeoBoundingCube(QGeoCoordinate p1, QGeoCoordinate p2)
-        : pointNW(p1)
-        , pointSE(p2)
-    {
-    }
-    QGeoCoordinate  pointNW;
-    QGeoCoordinate  pointSE;
-    inline bool operator ==(const QGCGeoBoundingCube& other)
-    {
-        return pointNW == other.pointNW && pointSE == other.pointSE;
-    }
-    inline bool operator !=(const QGCGeoBoundingCube& other)
-    {
-        return !(*this == other);
-    }
-    inline QGCGeoBoundingCube operator =(const QGCGeoBoundingCube& other)
-    {
-        pointNW = other.pointNW;
-        pointSE = other.pointSE;
-        return *this;
-    }
-    inline bool isValid()
-    {
-        return pointNW.isValid() && pointSE.isValid() && pointNW.latitude() != MaxSouth && pointSE.latitude() != MaxNorth && \
-               pointNW.longitude() != MaxEast && pointSE.longitude() != MaxWest && pointNW.altitude() < MaxAlt and pointSE.altitude() > MinAlt;
-    }
-    static double MaxAlt;
-    static double MinAlt;
-    static double MaxNorth;
-    static double MaxSouth;
-    static double MaxWest;
-    static double MaxEast;
-};
-
 #endif // QGCGEO_H

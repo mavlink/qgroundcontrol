@@ -16,7 +16,7 @@
 #include "AirspaceAdvisoryProvider.h"
 #include "AirMapSharedState.h"
 
-#include <QGeoCoordinate>
+#include "QGCGeoBoundingCube.h"
 
 #include "airmap/status.h"
 
@@ -53,20 +53,19 @@ class AirMapAdvisoryManager : public AirspaceAdvisoryProvider, public LifetimeCh
 {
     Q_OBJECT
 public:
-    AirMapAdvisoryManager                    (AirMapSharedState &shared, QObject *parent = nullptr);
-    bool                valid           () override { return _valid; }
-    AdvisoryColor       airspaceColor   () override { return _airspaceColor; }
-    QmlObjectListModel* advisories      () override { return &_advisories; }
-    void                setROI          (const QGeoCoordinate& center, double radiusMeters) override;
+    AirMapAdvisoryManager                   (AirMapSharedState &shared, QObject *parent = nullptr);
+    bool                valid               () override { return _valid; }
+    AdvisoryColor       airspaceColor       () override { return _airspaceColor; }
+    QmlObjectListModel* advisories          () override { return &_advisories; }
+    void                setROI              (const QGCGeoBoundingCube& roi) override;
 signals:
-    void                error           (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+    void                error               (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
 private:
-    void              _requestAdvisories();
+    void                _requestAdvisories  ();
 private:
     bool                _valid;
-    double              _lastRadius;
     AirMapSharedState&  _shared;
-    QGeoCoordinate      _lastRoiCenter;
+    QGCGeoBoundingCube  _lastROI;
     QmlObjectListModel  _advisories;
     AdvisoryColor       _airspaceColor;
 };

@@ -14,6 +14,7 @@
  * Weather information provided by the Airspace Managemement
  */
 
+#include "QGCGeoBoundingCube.h"
 #include <QObject>
 #include <QGeoCoordinate>
 
@@ -50,7 +51,7 @@ public:
      * Set region of interest that should be queried. When finished, the weatherChanged() signal will be emmited.
      * @param center Center coordinate for ROI
      */
-    virtual void setROI (const QGeoCoordinate& center) = 0;
+    virtual void setROI (const QGCGeoBoundingCube& roi) = 0;
 
 signals:
     void weatherChanged  ();

@@ -84,6 +84,16 @@ QGCView {
         _missionController.setCurrentPlanViewIndex(sequenceNumber, true)
     }
 
+    function updateAirspace() {
+        if(_airspaceEnabled) {
+            var coordinateNW = editorMap.toCoordinate(Qt.point(0,0), false /* clipToViewPort */)
+            var coordinateSE = editorMap.toCoordinate(Qt.point(width,height), false /* clipToViewPort */)
+            if(coordinateNW.isValid && coordinateSE.isValid) {
+                QGroundControl.airspaceManager.setROI(coordinateNW, coordinateSE)
+            }
+        }
+    }
+
     property bool _firstMissionLoadComplete:    false
     property bool _firstFenceLoadComplete:      false
     property bool _firstRallyLoadComplete:      false
@@ -347,11 +357,8 @@ QGCView {
 
             QGCMapPalette { id: mapPal; lightColors: editorMap.isSatelliteMap }
 
-            onCenterChanged: {
-                if(_airspaceEnabled) {
-                    QGroundControl.airspaceManager.setROI(center, 5000)
-                }
-            }
+            onZoomLevelChanged: updateAirspace()
+            onCenterChanged:    updateAirspace()
 
             MouseArea {
                 //-- It's a whole lot faster to just fill parent and deal with top offset below
@@ -542,7 +549,7 @@ QGCView {
             height:             ScreenTools.availableHeight
             width:              _rightPanelWidth
             color:              qgcPal.window
-            opacity:            0.2
+            opacity:            planExpanded.visible ? 0.2 : 0
             anchors.bottom:     parent.bottom
             anchors.right:      parent.right
             anchors.rightMargin: ScreenTools.defaultFontPixelWidth

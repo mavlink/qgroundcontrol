@@ -20,25 +20,26 @@ using namespace airmap;
 //-----------------------------------------------------------------------------
 AirMapRestrictionManager::AirMapRestrictionManager(AirMapSharedState& shared)
     : _shared(shared)
-    , _lastRadius(0.0)
 {
 }
 
 //-----------------------------------------------------------------------------
 void
-AirMapRestrictionManager::setROI(const QGeoCoordinate& center, double radiusMeters)
+AirMapRestrictionManager::setROI(const QGCGeoBoundingCube& roi)
 {
-    //-- If first time or we've moved more than ADVISORY_UPDATE_DISTANCE, ask for updates.
-    if(!_lastRoiCenter.isValid() || _lastRoiCenter.distanceTo(center) > RESTRICTION_UPDATE_DISTANCE || _lastRadius != radiusMeters) {
-        _lastRadius    = radiusMeters;
-        _lastRoiCenter = center;
-        _requestRestrictions(center, radiusMeters);
+    //-- If first time or we've moved more than RESTRICTION_UPDATE_DISTANCE, ask for updates.
+    if(!_lastROI.isValid() || _lastROI.pointNW.distanceTo(roi.pointNW) > RESTRICTION_UPDATE_DISTANCE || _lastROI.pointSE.distanceTo(roi.pointSE) > RESTRICTION_UPDATE_DISTANCE) {
+        //-- No more than 40000 km^2
+        if(roi.area() < 40000.0) {
+            _lastROI = roi;
+            _requestRestrictions(roi);
+        }
     }
 }
 
 //-----------------------------------------------------------------------------
 void
-AirMapRestrictionManager::_requestRestrictions(const QGeoCoordinate& center, double radiusMeters)
+AirMapRestrictionManager::_requestRestrictions(const QGCGeoBoundingCube& roi)
 {
     if (!_shared.client()) {
         qCDebug(AirMapManagerLog) << "No AirMap client instance. Not updating Airspace";
@@ -48,14 +49,22 @@ AirMapRestrictionManager::_requestRestrictions(const QGeoCoordinate& center, dou
         qCWarning(AirMapManagerLog) << "AirMapRestrictionManager::updateROI: state not idle";
         return;
     }
-    qCDebug(AirMapManagerLog) << "setting ROI";
+    qCDebug(AirMapManagerLog) << "Setting Restriction Manager ROI";
     _polygons.clear();
     _circles.clear();
     _state = State::RetrieveItems;
     Airspaces::Search::Parameters params;
-    params.geometry = Geometry::point(center.latitude(), center.longitude());
-    params.buffer = radiusMeters;
     params.full = true;
+    params.date_time = Clock::universal_time();
+    //-- Geometry: Polygon
+    Geometry::Polygon polygon;
+    for (const auto& qcoord : roi.polygon2D()) {
+        Geometry::Coordinate coord;
+        coord.latitude  = qcoord.latitude();
+        coord.longitude = qcoord.longitude();
+        polygon.outer_ring.coordinates.push_back(coord);
+    }
+    params.geometry = Geometry(polygon);
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->airspaces().search(params,
             [this, isAlive](const Airspaces::Search::Result& result) {

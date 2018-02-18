@@ -30,7 +30,7 @@ Item {
     property var    qgcView
     property bool   useLightColors
     property var    missionController
-    property bool   showValues:             QGroundControl.airspaceManager.airspaceVisible
+    property bool   showValues:             !QGroundControl.airspaceManager.airspaceVisible
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property bool   _isSatellite:           _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true

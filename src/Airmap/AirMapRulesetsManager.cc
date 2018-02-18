@@ -177,7 +177,7 @@ rules_sort(QObject* a, QObject* b)
 }
 
 //-----------------------------------------------------------------------------
-void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
+void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi)
 {
     if (!_shared.client()) {
         qCDebug(AirMapManagerLog) << "No AirMap client instance. Not updating Airspace";
@@ -192,7 +192,15 @@ void AirMapRulesetsManager::setROI(const QGeoCoordinate& center)
     _ruleSets.clearAndDeleteContents();
     _state = State::RetrieveItems;
     RuleSets::Search::Parameters params;
-    params.geometry = Geometry::point(center.latitude(), center.longitude());
+    //-- Geometry: Polygon
+    Geometry::Polygon polygon;
+    for (const auto& qcoord : roi.polygon2D()) {
+        Geometry::Coordinate coord;
+        coord.latitude  = qcoord.latitude();
+        coord.longitude = qcoord.longitude();
+        polygon.outer_ring.coordinates.push_back(coord);
+    }
+    params.geometry = Geometry(polygon);
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->rulesets().search(params,
             [this, isAlive](const RuleSets::Search::Result& result) {
