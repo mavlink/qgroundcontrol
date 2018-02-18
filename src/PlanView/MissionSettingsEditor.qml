@@ -36,6 +36,7 @@ Rectangle {
     property var    _fileExtension:                 QGroundControl.settingsManager.appSettings.missionFileExtension
     property var    _appSettings:                   QGroundControl.settingsManager.appSettings
     property bool   _waypointsOnlyMode:             QGroundControl.corePlugin.options.missionWaypointsOnly
+    property bool   _showCameraSection:             !_waypointsOnlyMode || QGroundControl.corePlugin.showAdvancedUI
 
     readonly property string _firmwareLabel:    qsTr("Firmware")
     readonly property string _vehicleLabel:     qsTr("Vehicle")
@@ -91,6 +92,7 @@ Rectangle {
         CameraSection {
             id:         cameraSection
             checked:    missionItem.cameraSection.settingsSpecified
+            visible:    _showCameraSection
         }
 
         QGCLabel {
@@ -100,7 +102,7 @@ Rectangle {
             wrapMode:               Text.WordWrap
             horizontalAlignment:    Text.AlignHCenter
             font.pointSize:         ScreenTools.smallFontPointSize
-            visible:                cameraSection.checked
+            visible:                _showCameraSection && cameraSection.checked
         }
 
         SectionHeader {
