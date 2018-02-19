@@ -69,11 +69,11 @@ Column {
         }
         QGCButton {
             anchors.horizontalCenter:   parent.horizontalCenter
-            text:                       qsTr("Deploy Gimbal")
+            text:                       (_activeVehicle && !_activeVehicle.gimbalAcknowledged) ? qsTr("Deploy Gimbal") : qsTr("Retract Gimbal")
             width:                      parent.width
             visible:                    _gimbalMode
-            onClicked:                  _activeVehicle.initGimbal()
-            enabled:                    _activeVehicle && !_activeVehicle.gimbalAcknowledged
+            onClicked:                  (_activeVehicle && !_activeVehicle.gimbalAcknowledged) ? _activeVehicle.initGimbal() : _activeVehicle.retractGimbal()
+            //enabled:                    _activeVehicle && !_activeVehicle.gimbalAcknowledged
         }
         Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.125;}
     }

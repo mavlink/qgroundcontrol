@@ -419,6 +419,7 @@ public:
     /// Dumb (PWM) Camera Controls
     Q_INVOKABLE void triggerCamera  (void);
     Q_INVOKABLE void initGimbal     (void);
+    Q_INVOKABLE void retractGimbal     (void);
     Q_INVOKABLE void gimbalControlValue(double pitch, double yaw);
     Q_INVOKABLE void cameraZoomValue(double zoom);
 

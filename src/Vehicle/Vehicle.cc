@@ -2196,15 +2196,15 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
 void Vehicle::gimbalControlValue(double pitch, double yaw)
 {
     //-- Incoming pitch and yaw values are -1.00 to 1.00
-    pitch = (pitch + 1.00) * -45.0;
-    yaw = yaw * 180.0;
+    pitch = pitch * 120.0;
+    yaw = yaw * 120.0f;
     qDebug() << pitch << yaw;
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_DO_MOUNT_CONTROL,
                    false,                               // show errors
-                   pitch,                               // Pitch 0 - 90
-                   0,                                   // Roll (not used)
-                   yaw,                                 // Yaw -180 - 180
+                   pitch,                               // Pitch
+                   0,                                   // Roll
+                   yaw,                                 // Yaw
                    0,                                   // Altitude (not used)
                    0,                                   // Latitude (not used)
                    0,                                   // Longitude (not used)
@@ -2246,6 +2246,21 @@ void Vehicle::initGimbal(void)
                    1,                               // roll input (0 = angle, 1 = angular rate)
                    1,                               // pitch input (0 = angle, 1 = angular rate)
                    1);                              // yaw input (0 = angle, 1 = angular rate)
+}
+
+void Vehicle::retractGimbal(void)
+{
+  sendMavCommand(_defaultComponentId,
+                 MAV_CMD_DO_MOUNT_CONFIGURE,
+                 true,                            // Show errors
+                 MAV_MOUNT_MODE_RETRACT,          // Mode
+                 0,                               // Yes, stabilize roll
+                 0,                               // Yes, stabilize pitch
+                 0,                               // Yes, stabilize yaw
+                 //-- TODO: Angle (0) or Angular Rate (1)?
+                 1,                               // roll input (0 = angle, 1 = angular rate)
+                 1,                               // pitch input (0 = angle, 1 = angular rate)
+                 1);                              // yaw input (0 = angle, 1 = angular rate)
 }
 
 void Vehicle::setConnectionLostEnabled(bool connectionLostEnabled)
@@ -2703,9 +2718,9 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
 
     //-- Dumb (PWM) Gimbal State
     if (ack.command == MAV_CMD_DO_MOUNT_CONFIGURE ) {
-        bool res = (ack.result == MAV_RESULT_ACCEPTED);
-        if (res != _gimbalAcknowledged) {
-            _gimbalAcknowledged = res;
+
+        if (ack.result == MAV_RESULT_ACCEPTED) {
+            _gimbalAcknowledged = !_gimbalAcknowledged;
             emit gimbalAcknowledgedChanged();
         }
     }
