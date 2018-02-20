@@ -1,11 +1,11 @@
 <RCC>
     <qresource prefix="/qml">
-        <file alias="QGroundControl/Airmap/qmldir">QGroundControl.Airmap.qmldir</file>
+        <file alias="AirmapSettings.qml">AirmapSettings.qml</file>
         <file alias="QGroundControl/Airmap/AirspaceControl.qml">AirspaceControl.qml</file>
         <file alias="QGroundControl/Airmap/AirspaceRegulation.qml">AirspaceRegulation.qml</file>
         <file alias="QGroundControl/Airmap/AirspaceWeather.qml">AirspaceWeather.qml</file>
+        <file alias="QGroundControl/Airmap/qmldir">QGroundControl.Airmap.qmldir</file>
         <file alias="QGroundControl/Airmap/RuleSelector.qml">RuleSelector.qml</file>
-        <file alias="AirmapSettings.qml">AirmapSettings.qml</file>
     </qresource>
     <qresource prefix="/json">
         <file alias="AirMap.SettingsGroup.json">AirMap.SettingsGroup.json</file>

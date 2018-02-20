@@ -27,6 +27,7 @@ Item {
     property bool   _validAdvisories:   QGroundControl.airspaceManager.advisories.valid
     property color  _textColor:         qgcPal.text
     property bool   _colapsed:          !QGroundControl.airspaceManager.airspaceVisible
+    property var    _flightPermit:      QGroundControl.airspaceManager.flightPlan.flightPermitStatus
 
     readonly property real      _radius:            ScreenTools.defaultFontPixelWidth * 0.5
     readonly property color     _colorOrange:       "#d75e0d"
@@ -342,6 +343,26 @@ Item {
                 }
             }
             //-- Footer
+            Row {
+                spacing: ScreenTools.defaultFontPixelWidth * 2
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCButton {
+                    text:           qsTr("Details")
+                    backRadius:     4
+                    heightFactor:   0.3333
+                    showBorder:     true
+                    enabled:        _flightPermit !== AirspaceFlightPlanProvider.PermitNone
+                    width:          ScreenTools.defaultFontPixelWidth * 10
+                }
+                QGCButton {
+                    text:           qsTr("File Plan")
+                    backRadius:     4
+                    heightFactor:   0.3333
+                    showBorder:     true
+                    enabled:        _flightPermit !== AirspaceFlightPlanProvider.PermitNone
+                    width:          ScreenTools.defaultFontPixelWidth * 10
+                }
+            }
             QGCLabel {
                 text:           qsTr("Powered by <b>AIRMAP</b>")
                 color:          _textColor

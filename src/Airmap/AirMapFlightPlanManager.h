@@ -88,7 +88,7 @@ private:
     QmlObjectListModel      _rulesets;
 
     AirspaceAdvisoryProvider::AdvisoryColor  _airspaceColor;
-    AirspaceFlightPlanProvider::PermitStatus _flightPermitStatus = AirspaceFlightPlanProvider::PermitUnknown;
+    AirspaceFlightPlanProvider::PermitStatus _flightPermitStatus = AirspaceFlightPlanProvider::PermitNone;
 
 };
 

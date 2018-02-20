@@ -108,7 +108,7 @@ private:
     QString                             _currentFlightId; ///< Flight ID, empty if there is none
     QString                             _pendingFlightId; ///< current flight ID, not necessarily accepted yet (once accepted, it's equal to _currentFlightId)
     QString                             _pendingFlightPlan; ///< current flight plan, waiting to be submitted
-    AirspaceFlightPlanProvider::PermitStatus _flightPermitStatus = AirspaceFlightPlanProvider::PermitUnknown;
+    AirspaceFlightPlanProvider::PermitStatus _flightPermitStatus = AirspaceFlightPlanProvider::PermitNone;
     QString                             _pilotID; ///< Pilot ID in the form "auth0|abc123"
     bool                                _noFlightCreatedYet = true;
     QTimer                              _pollTimer; ///< timer to poll for approval check
